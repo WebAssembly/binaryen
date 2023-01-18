@@ -134,8 +134,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     : module(module), options(options) {
 
     for (auto& element : roots) {
-      used.insert(element);
-      moduleQueue.push_back(element);
+      use(element);
     }
 
     // Globals used in memory/table init expressions are also roots
@@ -188,17 +187,20 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     }
   }
 
-  void maybeAdd(ModuleElement element) {
-    if (used.emplace(element).second) {
+  // Mark an element as used, if it hasn't already been, and if so add it to the
+  // queue so we can process the things it can reach.
+  void use(ModuleElement element) {
+    auto [_, inserted] = used.emplace(element);
+    if (inserted) {
       moduleQueue.emplace_back(element);
     }
   }
 
   // Add a reference to a table and all its segments and elements.
-  void maybeAddTable(Name name) {
-    maybeAdd(ModuleElement(ModuleElementKind::Table, name));
+  void useTable(Name name) {
+    use(ModuleElement(ModuleElementKind::Table, name));
     ModuleUtils::iterTableSegments(*module, name, [&](ElementSegment* segment) {
-      maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+      use(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
     });
   }
 
@@ -269,7 +271,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
       // else. TODO For now, just make it used.
-      maybeAdd(ModuleElement(ModuleElementKind::Global, refGlobal->name));
+      use(ModuleElement(ModuleElementKind::Global, refGlobal->name));
     }
     // As side effects are assumed to not exist, global.set is not an issue.
   }
@@ -277,7 +279,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // Visitors
 
   void visitCall(Call* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
+    use(ModuleElement(ModuleElementKind::Function, curr->target));
 
     if (Intrinsics(*module).isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
@@ -303,7 +305,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     }
   }
 
-  void visitCallIndirect(CallIndirect* curr) { maybeAddTable(curr->table); }
+  void visitCallIndirect(CallIndirect* curr) { useTable(curr->table); }
 
   void visitCallRef(CallRef* curr) {
     // Ignore unreachable code.
@@ -323,7 +325,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       assert(calledSignatures.count(type) == 0);
 
       for (Name target : iter->second) {
-        maybeAdd(ModuleElement(ModuleElementKind::Function, target));
+        use(ModuleElement(ModuleElementKind::Function, target));
       }
 
       uncalledRefFuncMap.erase(iter);
@@ -333,10 +335,10 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
+    use(ModuleElement(ModuleElementKind::Global, curr->name));
   }
   void visitGlobalSet(GlobalSet* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
+    use(ModuleElement(ModuleElementKind::Global, curr->name));
   }
 
   void visitLoad(Load* curr) { usesMemory = true; }
@@ -359,7 +361,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
-      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+      use(ModuleElement(ModuleElementKind::Function, curr->func));
       return;
     }
     auto type = curr->type.getHeapType();
@@ -370,22 +372,22 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       assert(uncalledRefFuncMap.count(type) == 0);
 
       // We've seen a RefFunc for this, so it is used.
-      maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
+      use(ModuleElement(ModuleElementKind::Function, curr->func));
     } else {
       // We've never seen a CallRef for this, but might see one later.
       uncalledRefFuncMap[type].insert(curr->func);
     }
   }
-  void visitTableGet(TableGet* curr) { maybeAddTable(curr->table); }
-  void visitTableSet(TableSet* curr) { maybeAddTable(curr->table); }
-  void visitTableSize(TableSize* curr) { maybeAddTable(curr->table); }
-  void visitTableGrow(TableGrow* curr) { maybeAddTable(curr->table); }
+  void visitTableGet(TableGet* curr) { useTable(curr->table); }
+  void visitTableSet(TableSet* curr) { useTable(curr->table); }
+  void visitTableSize(TableSize* curr) { useTable(curr->table); }
+  void visitTableGrow(TableGrow* curr) { useTable(curr->table); }
   void visitThrow(Throw* curr) {
-    maybeAdd(ModuleElement(ModuleElementKind::Tag, curr->tag));
+    use(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }
   void visitTry(Try* curr) {
     for (auto tag : curr->catchTags) {
-      maybeAdd(ModuleElement(ModuleElementKind::Tag, tag));
+      use(ModuleElement(ModuleElementKind::Tag, tag));
     }
   }
 
@@ -434,7 +436,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         return;
       case NewElem:
         auto segment = module->elementSegments[curr->segment]->name;
-        maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, segment));
+        use(ModuleElement(ModuleElementKind::ElementSegment, segment));
         return;
     }
     WASM_UNREACHABLE("unexpected op");
