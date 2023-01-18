@@ -403,7 +403,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unique_ptr<SubTypes> subTypes;
 
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type.isRef() == Type::unreachable) {
+    if (curr->ref->type == Type::unreachable) {
       return;
     }
 
