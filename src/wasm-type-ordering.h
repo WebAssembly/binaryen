@@ -26,7 +26,7 @@
 namespace wasm::HeapTypeOrdering {
 
 // Given a collection of types, iterate through it such that each type in the
-// collection is visited only after its immediate children in the collection are
+// collection is visited only after its immediate supertype in the collection is
 // visited.
 template<typename T>
 struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
