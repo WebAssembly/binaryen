@@ -841,7 +841,7 @@
   )
 
   ;; CHECK:      (func $b (type $void)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $b (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
@@ -863,7 +863,7 @@
   )
 
   ;; CHECK:      (func $d (type $void)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $d (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
@@ -882,10 +882,11 @@
   (func $e (type $void)
     ;; Side effects on the struct field this appears in cause this to be
     ;; reachable (even though field #0 is never read).
+    ;; XXX
   )
 
   ;; CHECK:      (func $f (type $void)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $f (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
