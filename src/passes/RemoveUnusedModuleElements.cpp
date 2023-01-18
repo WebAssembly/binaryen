@@ -62,6 +62,10 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // The set of all used things we've seen so far.
   std::set<ModuleElement> used;
 
+  // Things for whom there is a reference, but may be unused. It is ok for a
+  // thing to appear both in |used| and here; we will check |used| first anyhow.
+  std::unordered_set<ModuleElement> referenced;
+
   // A queue of used module elements that we need to process. These appear
   // in |used|, and the work we do when we pop them from the queue is to
   // look at the things they reach.
@@ -119,11 +123,6 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unordered_set<StructField> readStructFields;
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
-
-  // Things for whom there is a reference, but may be unused. For example, a
-  // RefFunc in the IR requires us to have a function for it to refer to, even
-  // if that function's contents are unreachable.
-  std::unordered_set<ModuleElement> danglingRefs;
 
   ReachabilityAnalyzer(Module* module,
                        const PassOptions& options,
@@ -259,7 +258,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     // set its body to an unreachable without breaking validation. But others
     // require more care.
     for (auto* refFunc : FindAll<RefFunc>(curr).list) {
-      danglingRefs.insert(
+      referenced.insert(
         ModuleElement(ModuleElementKind::Function, refFunc->func));
     }
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
@@ -544,7 +543,7 @@ struct RemoveUnusedModuleElements : public Pass {
       }
 
       if (uncalledRefFuncs.count(curr->name) || // TODO unify these 2?
-          analyzer.danglingRefs.count(moduleElement)) {
+          analyzer.referenced.count(moduleElement)) {
         // This is not reached, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
