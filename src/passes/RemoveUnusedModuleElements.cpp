@@ -137,63 +137,85 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       use(element);
     }
 
-    // Globals used in memory/table init expressions are also roots
+    // Globals used in memory/table init expressions are also roots.
     for (auto& segment : module->dataSegments) {
       if (!segment->isPassive) {
-        expressionQueue.push_back(segment->offset);
+        use(segment->offset);
       }
     }
     for (auto& segment : module->elementSegments) {
       if (segment->table.is()) {
-        expressionQueue.push_back(segment->offset);
+        use(segment->offset);
       }
     }
 
-    // Main loop on both the module queue and the expression stack.
-    while (expressionQueue.size() || moduleQueue.size()) {
-      while (expressionQueue.size()) {
-        auto* curr = expressionQueue.back();
-        expressionQueue.pop_back();
-
-        visit(curr);
-        maybeWalkChildren(curr);
-      }
-
-      while (moduleQueue.size()) {
-        auto curr = moduleQueue.back();
-        moduleQueue.pop_back();
-
-        assert(used.count(curr));
-        auto& [kind, value] = curr;
-        if (kind == ModuleElementKind::Function) {
-          // if not an import, walk it
-          auto* func = module->getFunction(value);
-          if (!func->imported()) {
-            expressionQueue.push_back(func->body);
-          }
-        } else if (kind == ModuleElementKind::Global) {
-          // if not imported, it has an init expression we can walk
-          auto* global = module->getGlobal(value);
-          if (!global->imported()) {
-            expressionQueue.push_back(global->init);
-          }
-        } else if (kind == ModuleElementKind::Table) {
-          ModuleUtils::iterTableSegments(
-            *module, value, [&](ElementSegment* segment) {
-              expressionQueue.push_back(segment->offset);
-            });
-        }
-      }
-    }
+    // Main loop on both the module and the expression queues.
+    while (processExpressions() || processModule()) {}
   }
 
-  // Mark an element as used, if it hasn't already been, and if so add it to the
+  // Process expressions in the expression queue while we have any, visiting
+  // them and adding children. Returns whether we did any work.
+  bool processExpressions() {
+    bool worked = false;
+    while (expressionQueue.size()) {
+      worked = true;
+
+      auto* curr = expressionQueue.back();
+      expressionQueue.pop_back();
+
+      visit(curr);
+      scanChildren(curr);
+    }
+    return worked;
+  }
+
+  // As processExpressions, but for module elements.
+  bool processModule() {
+    bool worked = false;
+    while (moduleQueue.size()) {
+      worked = true;
+
+      auto curr = moduleQueue.back();
+      moduleQueue.pop_back();
+
+      assert(used.count(curr));
+      auto& [kind, value] = curr;
+      if (kind == ModuleElementKind::Function) {
+        // if not an import, walk it
+        auto* func = module->getFunction(value);
+        if (!func->imported()) {
+          use(func->body);
+        }
+      } else if (kind == ModuleElementKind::Global) {
+        // if not imported, it has an init expression we can walk
+        auto* global = module->getGlobal(value);
+        if (!global->imported()) {
+          use(global->init);
+        }
+      } else if (kind == ModuleElementKind::Table) {
+        ModuleUtils::iterTableSegments(
+          *module, value, [&](ElementSegment* segment) {
+            use(segment->offset);
+          });
+      }
+    }
+    return worked;
+  }
+
+  // Mark something as used, if it hasn't already been, and if so add it to the
   // queue so we can process the things it can reach.
   void use(ModuleElement element) {
     auto [_, inserted] = used.emplace(element);
     if (inserted) {
       moduleQueue.emplace_back(element);
     }
+  }
+
+  void use(Expression* curr) {
+    // For expressions we do not need to check if they have already been seen:
+    // the tree structure guarantees that traversing children, recursively, will
+    // only visit each expression once.
+    expressionQueue.emplace_back(curr);
   }
 
   // Add a reference to a table and all its segments and elements.
@@ -204,10 +226,11 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     });
   }
 
-  void maybeWalkChildren(Expression* curr) {
+  // Add the children of a used expression to be walked, if we should do so.
+  void scanChildren(Expression* curr) {
     auto walkChildren = [&]() {
       for (auto* child : ChildIterator(curr)) {
-        expressionQueue.push_back(child);
+        use(child);
       }
     };
 
@@ -239,7 +262,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         // This data can be read, so just walk it. Or, this has side effects,
         // which is tricky to reason about - the side effects must happen even
         // if we never read the struct field - so give up and walk it.
-        expressionQueue.push_back(operand);
+        use(operand);
       } else {
         // This data does not need to be read now, but might be read later. Note
         // it as unread.
@@ -420,7 +443,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         auto iter = unreadStructFieldExprMap.find(sf);
         if (iter != unreadStructFieldExprMap.end()) {
           for (auto* expr : iter->second) {
-            expressionQueue.push_back(expr);
+            use(expr);
           }
           // TODO erase?
         }
