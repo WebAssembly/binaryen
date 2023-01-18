@@ -43,6 +43,7 @@
 #include "support/small_set.h"
 #include "support/topological_sort.h"
 #include "wasm-builder.h"
+#include "wasm-type-ordering.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -92,31 +93,6 @@ struct CastFinder : public PostWalker<CastFinder> {
   void visitCallIndirect(CallIndirect* curr) {
     if (!trapsNeverHappen) {
       castTypes.insert(curr->heapType);
-    }
-  }
-};
-
-// TODO: This is almost directly copied from type-updating.cpp. Deduplicate
-// this.
-struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst> {
-  SupertypesFirst(const std::vector<HeapType>& types) {
-    std::unordered_set<HeapType> supertypes;
-    for (auto type : types) {
-      if (auto super = type.getSuperType()) {
-        supertypes.insert(*super);
-      }
-    }
-    // Types that are not supertypes of others are the roots.
-    for (auto type : types) {
-      if (!supertypes.count(type)) {
-        push(type);
-      }
-    }
-  }
-
-  void pushPredecessors(HeapType type) {
-    if (auto super = type.getSuperType()) {
-      push(*super);
     }
   }
 };
@@ -195,7 +171,7 @@ void TypeMerging::run(Module* module_) {
 
   // For each type, either create a new partition or add to its supertype's
   // partition.
-  for (auto type : SupertypesFirst(privates)) {
+  for (auto type : HeapTypeOrdering::SupertypesFirst(privates)) {
     // We need partitions for any public children of this type since those
     // children will participate in the DFA we're creating.
     for (auto child : getPublicChildren(type)) {
