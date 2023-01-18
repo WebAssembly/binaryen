@@ -274,15 +274,19 @@ struct Analyzer : public Visitor<Analyzer> {
   }
 
   // Add references to all things appearing in an expression. This is called
-  // when we think an expression will appear in the output, which means it must
+  // when we know an expression will appear in the output, which means it must
   // remain valid IR and not refer to nonexistent things.
   //
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
-  // here).
+  // here). If effects were possible then we'd need to check for pretty much
+  // everything in all the visit*() functions below, such as say GlobalSet; but
+  // without side effects very few things remain possible, and we can just
+  // enumerate them here in a simple way. XXX
   //
   // FIXME: also tags and whatnot. really, we need a nested Analyzer which is in
   //        "ref only, no uses" mode..?
+  //        visit() can append to a vectors used and referred stuffs?
   void addReferences(Expression* curr) {
     for (auto* refFunc : FindAll<RefFunc>(curr).list) {
       referenced.insert(
@@ -307,7 +311,6 @@ struct Analyzer : public Visitor<Analyzer> {
         addReferences(global->init);
       }
     }
-    // As side effects are assumed to not exist, global.set is not an issue.
   }
 
   // Visitors
