@@ -29,7 +29,9 @@
 // function that has no corresponding CallRef to that type. We cannot just
 // remove the function, since the RefFunc must refer to an actual entity in the
 // IR, but we know it isn't actually used/called, so we can change it - we can
-// empty out the body and put an unreachable there, for example.
+// empty out the body and put an unreachable there, for example. That is, a
+// reference forces us to keep something in the IR to be referred to, (but only
+// a use actually makes us keep its contents as well.
 //
 
 #include <memory>
@@ -60,7 +62,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   const PassOptions& options;
 
   // The set of all used things we've seen so far.
-  std::set<ModuleElement> used;
+  std::unordered_set<ModuleElement> used;
 
   // Things for whom there is a reference, but may be unused. It is ok for a
   // thing to appear both in |used| and here; we will check |used| first anyhow.
@@ -70,7 +72,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
 
   // A queue of used module elements that we need to process. These appear
   // in |used|, and the work we do when we pop them from the queue is to
-  // look at the things they reach.
+  // look at the things they reach that might become referenced or used.
   std::vector<ModuleElement> moduleQueue;
 
   // A stack of used expressions to walk. We do *not* use the normal
