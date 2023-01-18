@@ -15,10 +15,21 @@
  */
 
 //
-// Removes module elements that are are never used: functions, globals, and
-// tags, which may be imported or not, and function types (which we merge and
-// remove if unneeded). Basically "global dead code elimination" but not just
-// for code.
+// Removes module elements that are not needed: functions, globals, tags, etc.
+// Basically "global dead code elimination" but not just for code.
+//
+// To do this properly, we need to consider that an element may be in one of
+// three states:
+//
+//  * No references at all. We can simply remove it.
+//  * References, but no uses. We can't remove it, but we can change it.
+//  * Uses (which implies references). We must keep it.
+//
+// An example of something with a reference but *not* a use is a RefFunc to a
+// function that has no corresponding CallRef to that type. We cannot just
+// remove the function, since the RefFunc must refer to an actual entity in the
+// IR, but we know it isn't actually used/called, so we can change it - we can
+// empty out the body and put an unreachable there, for example.
 //
 
 #include <memory>
@@ -48,15 +59,15 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   Module* module;
   const PassOptions& options;
 
-  // The set of all reachable things we've seen so far.
-  std::set<ModuleElement> reachable;
+  // The set of all used things we've seen so far.
+  std::set<ModuleElement> used;
 
-  // A queue of reachable module elements that we need to process. These appear
-  // in |reachable|, and the work we do when we pop them from the queue is to
+  // A queue of used module elements that we need to process. These appear
+  // in |used|, and the work we do when we pop them from the queue is to
   // look at the things they reach.
   std::vector<ModuleElement> moduleQueue;
 
-  // A stack of reachable expressions to walk. We do *not* use the normal
+  // A stack of used expressions to walk. We do *not* use the normal
   // walking mechanism because we need more control. Specifically, we may defer
   // certain walks, such as this:
   //
@@ -64,7 +75,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // i.e.
   //   (struct.new $Foo (ref.func $func1))
   //
-  // If we walked the child immediately then we would make $func1 reachable. But
+  // If we walked the child immediately then we would make $func1 used. But
   // that function is only reached if we actually read that field from the
   // struct. We perform that analysis in readStructFields /
   // unreadStructFieldExprMap, below.
@@ -73,12 +84,13 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   bool usesMemory = false;
 
   // The signatures that we have seen a call_ref for. When we see a RefFunc of a
-  // signature in here, we know it is reachable.
+  // signature in here, we know it is used; otherwise it may only be referred
+  // to.
   std::unordered_set<HeapType> calledSignatures;
 
   // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
   // one of the types here, we know all the RefFuncs corresponding to it are
-  // reachable. This is the reverse side of calledSignatures: for a function to
+  // used. This is the reverse side of calledSignatures: for a function to
   // be reached via a reference, we need the combination of a RefFunc of it as
   // well as a CallRef of that, and we may see them in any order. (Or, if the
   // RefFunc is in a table, we need a CallIndirect, which is handled in the
@@ -141,7 +153,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     : module(module), options(options) {
 
     for (auto& element : roots) {
-      reachable.insert(element);
+      used.insert(element);
       moduleQueue.push_back(element);
     }
 
@@ -171,7 +183,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
         auto curr = moduleQueue.back();
         moduleQueue.pop_back();
 
-        assert(reachable.count(curr));
+        assert(used.count(curr));
         auto& [kind, value] = curr;
         if (kind == ModuleElementKind::Function) {
           // if not an import, walk it
@@ -196,7 +208,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   }
 
   void maybeAdd(ModuleElement element) {
-    if (reachable.emplace(element).second) {
+    if (used.emplace(element).second) {
       moduleQueue.emplace_back(element);
     }
   }
@@ -259,7 +271,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   }
 
   // Add references to all things referred to by an expression, without
-  // necessarily making them reachable.
+  // necessarily making them used.
   //
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
@@ -275,7 +287,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
-      // else. TODO For now, just make it reachable.
+      // else. TODO For now, just make it used.
       maybeAdd(ModuleElement(ModuleElementKind::Global, refGlobal->name));
     }
     // As side effects are assumed to not exist, global.set is not an issue.
@@ -376,7 +388,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
       // any more.
       assert(uncalledRefFuncMap.count(type) == 0);
 
-      // We've seen a RefFunc for this, so it is reachable.
+      // We've seen a RefFunc for this, so it is used.
       maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
     } else {
       // We've never seen a CallRef for this, but might see one later.
@@ -509,7 +521,7 @@ struct RemoveUnusedModuleElements : public Pass {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    // TODO: Compute this based on which ElementSegments are actually reachable,
+    // TODO: Compute this based on which ElementSegments are actually used,
     //       and which functions have a call_indirect of the proper type.
     ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
       roots.emplace_back(ModuleElementKind::Function, name);
@@ -548,7 +560,7 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeFunctions([&](Function* curr) {
       auto moduleElement =
         ModuleElement(ModuleElementKind::Function, curr->name);
-      if (analyzer.reachable.count(moduleElement)) {
+      if (analyzer.used.count(moduleElement)) {
         // This is reached.
         return false;
       }
@@ -567,15 +579,15 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
-      return analyzer.reachable.count(
+      return analyzer.used.count(
                ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
     });
     module->removeTags([&](Tag* curr) {
-      return analyzer.reachable.count(
+      return analyzer.used.count(
                ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return analyzer.reachable.count(ModuleElement(
+      return analyzer.used.count(ModuleElement(
                ModuleElementKind::ElementSegment, curr->name)) == 0;
     });
     // Since we've removed all empty element segments, here we mark all tables
@@ -586,7 +598,7 @@ struct RemoveUnusedModuleElements : public Pass {
       [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
       return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             analyzer.reachable.count(
+             analyzer.used.count(
                ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
     });
     // TODO: After removing elements, we may be able to remove more things, and
