@@ -233,6 +233,35 @@
 (module
   (rec
     ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
+    (type $A (struct         (ref null $X)))
+    (type $B (struct_subtype (ref null $Y) $A))
+    (type $X (struct         (ref null $A)))
+    (type $Y (struct_subtype (ref null $B) $X))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (local $y (ref null $A))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but now the A->B and X->Y chains are not differentiated by the
+    ;; i32 and f32, so all four types can be merged into a single type.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $X (struct (field (ref null $A))))
 
     ;; CHECK:       (type $A (struct (field (ref null $X))))
@@ -249,16 +278,25 @@
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
-    ;; As above, but now the A->B and X->Y chains are not differentiated by the
-    ;; i32 and f32, so all four types can be merged into a single type.
-    ;; TODO: This is not yet implemented. Merge the top level types.
+    ;; As above, but now there is a cast to A that prevents A and X from being
+    ;; merged.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $x (ref null $X))
     (local $y (ref null $Y))
+
+    (drop
+      (ref.cast $A
+        (local.get $a)
+      )
+    )
   )
 )
 

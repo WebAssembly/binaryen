@@ -126,14 +126,35 @@ struct TypeMerging : public Pass {
   std::vector<HeapType> getPublicChildren(HeapType type);
   DFA::State<HeapType> makeDFAState(HeapType type);
   void applyMerges(const TypeUpdates& merges);
+};
 
-  bool mayBeMergeable(HeapType sub, HeapType super);
-  bool mayBeMergeable(const Struct& a, const Struct& b);
-  bool mayBeMergeable(Array a, Array b);
-  bool mayBeMergeable(Signature a, Signature b);
-  bool mayBeMergeable(Field a, Field b);
-  bool mayBeMergeable(Type a, Type b);
-  bool mayBeMergeable(const Tuple& a, const Tuple& b);
+// Hash and equality-compare HeapTypes based on their top-level structure (i.e.
+// "shape"), ignoring nontrivial heap type children that will not be
+// differentiated between until we run the DFA partition refinement.
+bool shapeEq(HeapType a, HeapType b);
+bool shapeEq(const Struct& a, const Struct& b);
+bool shapeEq(Array a, Array b);
+bool shapeEq(Signature a, Signature b);
+bool shapeEq(Field a, Field b);
+bool shapeEq(Type a, Type b);
+bool shapeEq(const Tuple& a, const Tuple& b);
+
+size_t shapeHash(HeapType a);
+size_t shapeHash(const Struct& a);
+size_t shapeHash(Array a);
+size_t shapeHash(Signature a);
+size_t shapeHash(Field a);
+size_t shapeHash(Type a);
+size_t shapeHash(const Tuple& a);
+
+struct ShapeEq {
+  bool operator()(const HeapType& a, const HeapType& b) const {
+    return shapeEq(a, b);
+  }
+};
+
+struct ShapeHash {
+  size_t operator()(const HeapType& type) const { return shapeHash(type); }
 };
 
 void TypeMerging::run(Module* module_) {
@@ -166,11 +187,15 @@ void TypeMerging::run(Module* module_) {
   // Map each type to its partition in the list.
   std::unordered_map<HeapType, Partitions::iterator> typePartitions;
 
+  // Map the top-level structures of root types to their partitions in the list.
+  std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>
+    shapePartitions;
+
 #if TYPE_MERGING_DEBUG
+  using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
+  Fallback printPrivate(privates, "private.");
+  ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
   auto dumpPartitions = [&]() {
-    using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
-    Fallback printPrivate(privates, "private.");
-    ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
     size_t i = 0;
     for (auto& partition : partitions) {
       std::cerr << i++ << ": " << print(partition[0].val) << "\n";
@@ -182,11 +207,24 @@ void TypeMerging::run(Module* module_) {
   };
 #endif // TYPE_MERGING_DEBUG
 
-  // Ensure the type has a partition and return a reference to it.
-  auto ensurePartition = [&](HeapType type) {
+  // Ensure the type has a partition and return a reference to it. Since we
+  // merge up the type tree and visit supertypes first, the partition usually
+  // already exists. The exception is when the supertype is public, in which
+  // case we might not have created a partition for it yet.
+  auto ensurePartition = [&](HeapType type) -> Partitions::iterator {
     auto [it, inserted] = typePartitions.insert({type, partitions.end()});
     if (inserted) {
       it->second = partitions.insert(partitions.end(), {makeDFAState(type)});
+    }
+    return it->second;
+  };
+
+  // Similar to the above, but look up or create a partition associated with the
+  // type's top-level shape rather than its identity.
+  auto ensureShapePartition = [&](HeapType type) -> Partitions::iterator {
+    auto [it, inserted] = shapePartitions.insert({type, partitions.end()});
+    if (inserted) {
+      it->second = partitions.insert(partitions.end(), Partition{});
     }
     return it->second;
   };
@@ -199,19 +237,31 @@ void TypeMerging::run(Module* module_) {
     for (auto child : getPublicChildren(type)) {
       ensurePartition(child);
     }
-    auto super = type.getSuperType();
-    if (!super || !mayBeMergeable(type, *super)) {
-      // Create a new partition containing just this type.
+    // If the type is distinguished by the module or public, we cannot merge it,
+    // so create a new partition for it.
+    if (castTypes.count(type) || !privateTypes.count(type)) {
       ensurePartition(type);
       continue;
     }
-    // The current type and its supertype have the same top-level structure, so
-    // merge the current type's partition into its supertype's partition. First,
-    // find the supertype's partition. The supertype's partition may not exist
-    // yet if the supertype is public since we don't visit public types in this
-    // loop. In that case we can create a new partition for the supertype
-    // because merging private types into public supertypes is fine. (In
-    // contrast, merging public types into their supertypes is not fine.)
+    auto super = type.getSuperType();
+    // If there is no supertype to merge with, then we can still merge with
+    // other root types with the same structure. Find and add to the partition
+    // with other such types.
+    if (!super) {
+      auto it = ensureShapePartition(type);
+      it->push_back(makeDFAState(type));
+      typePartitions[type] = it;
+      continue;
+    }
+    // If this type refines its supertype in some way, then we cannot merge it.
+    // Create a new partition for it.
+    if (!shapeEq(type, *super)) {
+      ensurePartition(type);
+      continue;
+    }
+    // The current type and its supertype have the same top-level structure and
+    // are not distinguished, so add the current type to its supertype's
+    // partition.
     auto it = ensurePartition(*super);
     it->push_back(makeDFAState(type));
     typePartitions[type] = it;
@@ -363,59 +413,89 @@ void TypeMerging::applyMerges(const TypeUpdates& merges) {
   } rewriter(*module, merges);
 }
 
-bool TypeMerging::mayBeMergeable(HeapType sub, HeapType super) {
-  // If the type is distinguishable from its supertype or public, we cannot
-  // merge it.
-  if (castTypes.count(sub) || !privateTypes.count(sub)) {
-    return false;
+bool shapeEq(HeapType a, HeapType b) {
+  // Check whether `a` and `b` have the same top-level structure, including the
+  // position and identity of any children that are not included as transitions
+  // in the DFA, i.e. any children that are not nontrivial references.
+  if (a.isStruct() && b.isStruct()) {
+    return shapeEq(a.getStruct(), b.getStruct());
   }
-  // Check whether `sub` and `super` have the same top-level structure,
-  // including the position and identity of any children that are not included
-  // as transitions in the DFA, i.e. any children that are not nontrivial
-  // references.
-  if (sub.isStruct() && super.isStruct()) {
-    return mayBeMergeable(sub.getStruct(), super.getStruct());
+  if (a.isArray() && b.isArray()) {
+    return shapeEq(a.getArray(), b.getArray());
   }
-  if (sub.isArray() && super.isArray()) {
-    return mayBeMergeable(sub.getArray(), super.getArray());
-  }
-  if (sub.isSignature() && super.isSignature()) {
-    return mayBeMergeable(sub.getSignature(), super.getSignature());
+  if (a.isSignature() && b.isSignature()) {
+    return shapeEq(a.getSignature(), b.getSignature());
   }
   return false;
 }
 
-bool TypeMerging::mayBeMergeable(const Struct& a, const Struct& b) {
+size_t shapeHash(HeapType a) {
+  size_t digest;
+  if (a.isStruct()) {
+    digest = hash(0);
+    hash_combine(digest, shapeHash(a.getStruct()));
+  } else if (a.isArray()) {
+    digest = hash(1);
+    hash_combine(digest, shapeHash(a.getArray()));
+  } else if (a.isSignature()) {
+    digest = hash(2);
+    hash_combine(digest, shapeHash(a.getSignature()));
+  } else {
+    WASM_UNREACHABLE("unexpected kind");
+  }
+  return digest;
+}
+
+bool shapeEq(const Struct& a, const Struct& b) {
   if (a.fields.size() != b.fields.size()) {
     return false;
   }
   for (size_t i = 0; i < a.fields.size(); ++i) {
-    if (!mayBeMergeable(a.fields[i], b.fields[i])) {
+    if (!shapeEq(a.fields[i], b.fields[i])) {
       return false;
     }
   }
   return true;
 }
 
-bool TypeMerging::mayBeMergeable(Array a, Array b) {
-  return mayBeMergeable(a.element, b.element);
+size_t shapeHash(const Struct& a) {
+  size_t digest = hash(a.fields.size());
+  for (size_t i = 0; i < a.fields.size(); ++i) {
+    hash_combine(digest, shapeHash(a.fields[i]));
+  }
+  return digest;
 }
 
-bool TypeMerging::mayBeMergeable(Signature a, Signature b) {
-  return mayBeMergeable(a.params, b.params) &&
-         mayBeMergeable(a.results, b.results);
+bool shapeEq(Array a, Array b) { return shapeEq(a.element, b.element); }
+
+size_t shapeHash(Array a) { return shapeHash(a.element); }
+
+bool shapeEq(Signature a, Signature b) {
+  return shapeEq(a.params, b.params) && shapeEq(a.results, b.results);
 }
 
-bool TypeMerging::mayBeMergeable(Field a, Field b) {
-  return a.packedType == b.packedType && mayBeMergeable(a.type, b.type);
+size_t shapeHash(Signature a) {
+  auto digest = shapeHash(a.params);
+  hash_combine(digest, shapeHash(a.results));
+  return digest;
 }
 
-bool TypeMerging::mayBeMergeable(Type a, Type b) {
+bool shapeEq(Field a, Field b) {
+  return a.packedType == b.packedType && shapeEq(a.type, b.type);
+}
+
+size_t shapeHash(Field a) {
+  auto digest = hash((int)a.packedType);
+  hash_combine(digest, shapeHash(a.type));
+  return digest;
+}
+
+bool shapeEq(Type a, Type b) {
   if (a == b) {
     return true;
   }
   if (a.isTuple() && b.isTuple()) {
-    return mayBeMergeable(a.getTuple(), b.getTuple());
+    return shapeEq(a.getTuple(), b.getTuple());
   }
   // The only thing allowed to differ is the non-basic heap type child, since we
   // don't know before running the DFA partition refinement whether different
@@ -433,16 +513,45 @@ bool TypeMerging::mayBeMergeable(Type a, Type b) {
   return true;
 }
 
-bool TypeMerging::mayBeMergeable(const Tuple& a, const Tuple& b) {
+size_t shapeHash(Type a) {
+  if (a.isTuple()) {
+    auto digest = hash(0);
+    hash_combine(digest, shapeHash(a.getTuple()));
+    return digest;
+  }
+  auto digest = hash(1);
+  if (!a.isRef()) {
+    rehash(digest, 2);
+    return digest;
+  }
+  if (a.getHeapType().isBasic()) {
+    rehash(digest, 3);
+    rehash(digest, a.getHeapType().getID());
+    return digest;
+  }
+  rehash(digest, 4);
+  rehash(digest, (int)a.getNullability());
+  return digest;
+}
+
+bool shapeEq(const Tuple& a, const Tuple& b) {
   if (a.types.size() != b.types.size()) {
     return false;
   }
   for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!mayBeMergeable(a.types[i], b.types[i])) {
+    if (!shapeEq(a.types[i], b.types[i])) {
       return false;
     }
   }
   return true;
+}
+
+size_t shapeHash(const Tuple& a) {
+  auto digest = hash(a.types.size());
+  for (auto type : a.types) {
+    hash_combine(digest, shapeHash(type));
+  }
+  return digest;
 }
 
 } // anonymous namespace
