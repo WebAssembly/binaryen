@@ -53,11 +53,10 @@ enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
-// Finds reachabilities
 // TODO: use Effects to determine if a memory is used
 // This pass does not have multi-memories support
 
-struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
+struct Analyzer : public Visitor<Analyzer> {
   Module* module;
   const PassOptions& options;
 
@@ -80,11 +79,11 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   // certain walks, such as this:
   //
   //   (struct.new $Foo
-  //     (ref.func $func1)
+  //     (global.get $bar)
   //   )
   //
-  // If we walked the child immediately then we would make $func1 used. But
-  // that function is only reached if we actually read that field from the
+  // If we walked the child immediately then we would make $bar used. But
+  // that global is only used if we actually read that field from the
   // struct. We perform that analysis in readStructFields /
   // unreadStructFieldExprMap, below.
   std::vector<Expression*> expressionQueue;
@@ -128,7 +127,7 @@ struct ReachabilityAnalyzer : public Visitor<ReachabilityAnalyzer> {
   std::unordered_map<StructField, std::vector<Expression*>>
     unreadStructFieldExprMap;
 
-  ReachabilityAnalyzer(Module* module,
+  Analyzer(Module* module,
                        const PassOptions& options,
                        const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
@@ -539,7 +538,7 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     // Compute reachability starting from the root set.
     auto& options = getPassOptions();
-    ReachabilityAnalyzer analyzer(module, options, roots);
+    Analyzer analyzer(module, options, roots);
 
     // Remove unreachable elements.
     module->removeFunctions([&](Function* curr) {
