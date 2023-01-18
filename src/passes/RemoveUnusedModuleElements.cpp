@@ -279,19 +279,32 @@ struct Analyzer : public Visitor<Analyzer> {
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
   // here).
+  //
+  // FIXME: also tags and whatnot. really, we need a nested Analyzer which is in
+  //        "ref only, no uses" mode..?
   void addReferences(Expression* curr) {
     for (auto* refFunc : FindAll<RefFunc>(curr).list) {
-      // If a function ends up referenced but not used then later down we will
-      // empty it out by replacing its body with an unreachable, which always
-      // validates.
       referenced.insert(
         ModuleElement(ModuleElementKind::Function, refFunc->func));
+      // If a function ends up referenced but not used then later down we will
+      // empty it out by replacing its body with an unreachable, which always
+      // validates. For that reason all we need to do here is mark the function
+      // as reachable - we don't need to do anything with the body.
     }
     for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
+      referenced.insert(
+        ModuleElement(ModuleElementKind::Global, refGlobal->name));
       // We could try to empty the global out, for example, replace it with a
       // null if it is non-nullable, or replace all gets of it with something
-      // else, but that is not trivial. TODO For now, just mark it used.
-      use(ModuleElement(ModuleElementKind::Global, refGlobal->name));
+      // else, but that is not trivial. TODO
+      //
+      // For now, look into the body of the global, and mark everything there
+      // as referenced as well. Note that infinite recursion is not a danger
+      // here since a global can only refer to previous globals.
+      auto* global = module->getGlobal(refGlobal->name);
+      if (!global->imported()) {
+        addReferences(global->init);
+      }
     }
     // As side effects are assumed to not exist, global.set is not an issue.
   }
@@ -540,17 +553,25 @@ struct RemoveUnusedModuleElements : public Pass {
     auto& options = getPassOptions();
     Analyzer analyzer(module, options, roots);
 
-    // Remove unreachable elements.
+    // Remove unneeded elements.
+
+    auto needed = [&](ModuleElement element) {
+      // We need to emit something in the output if it has either a reference or
+      // a use.
+      return analyzer.used.count(element) ||
+             analyzer.referenced.count(element);
+    };
+    
     module->removeFunctions([&](Function* curr) {
       auto element =
         ModuleElement(ModuleElementKind::Function, curr->name);
       if (analyzer.used.count(element)) {
-        // This is reached.
+        // This is used.
         return false;
       }
 
       if (analyzer.referenced.count(element)) {
-        // This is not reached, but has a reference. See comment above on
+        // This is not used, but has a reference. See comment above on
         // uncalledRefFuncs.
         if (!curr->imported()) {
           curr->body = Builder(*module).makeUnreachable();
@@ -562,16 +583,16 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
-      return analyzer.used.count(
-               ModuleElement(ModuleElementKind::Global, curr->name)) == 0;
+      // See TODO in addReferences - we can do better here.
+      return !needed(ModuleElement(ModuleElementKind::Global, curr->name));
     });
     module->removeTags([&](Tag* curr) {
-      return analyzer.used.count(
-               ModuleElement(ModuleElementKind::Tag, curr->name)) == 0;
+      return !needed(
+               ModuleElement(ModuleElementKind::Tag, curr->name));
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return analyzer.used.count(ModuleElement(
-               ModuleElementKind::ElementSegment, curr->name)) == 0;
+      return !needed(ModuleElement(
+               ModuleElementKind::ElementSegment, curr->name));
     });
     // Since we've removed all empty element segments, here we mark all tables
     // that have a segment left.
@@ -581,8 +602,8 @@ struct RemoveUnusedModuleElements : public Pass {
       [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
       return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             analyzer.used.count(
-               ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
+             !needed(
+               ModuleElement(ModuleElementKind::Table, curr->name));
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
@@ -611,4 +632,4 @@ Pass* createRemoveUnusedNonFunctionModuleElementsPass() {
   return new RemoveUnusedModuleElements(true);
 }
 
-} // namespace wasm
+} // namespace wasm // TODO: grep for "reach"

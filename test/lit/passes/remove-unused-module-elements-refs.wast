@@ -1373,7 +1373,7 @@
   )
 
   ;; CHECK:      (func $f2 (type $void)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $f2 (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
@@ -1509,7 +1509,7 @@
   )
 
   ;; CHECK:      (func $f2 (type $void)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $f2 (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
