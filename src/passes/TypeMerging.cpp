@@ -383,7 +383,8 @@ bool TypeMerging::mayBeMergeable(Type a, Type b) {
   }
   // The only thing allowed to differ is the non-basic heap type child, since we
   // don't know before running the DFA partition refinement whether different
-  // heap type children will end up being merged.
+  // heap type children will end up being merged. Children that won't be merged
+  // will end up being differentiated by the partition refinement.
   if (!a.isRef() || !b.isRef()) {
     return false;
   }
