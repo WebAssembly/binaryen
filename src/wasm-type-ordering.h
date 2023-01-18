@@ -36,9 +36,14 @@ struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
 
   SupertypesFirst(const T& types) {
     for (auto type : types) {
-      typeSet.insert({type, false});
+      typeSet[type] = false;
+    }
+    // Find the supertypes that are in the collection.
+    for (auto [type, _] : typeSet) {
       if (auto super = type.getSuperType()) {
-        typeSet[*super] = true;
+        if (auto it = typeSet.find(*super); it != typeSet.end()) {
+          it->second = true;
+        }
       }
     }
     // Types that are not supertypes of others are the roots.
