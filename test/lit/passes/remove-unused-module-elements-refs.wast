@@ -1285,11 +1285,7 @@
   )
 )
 
-;; Test references to global function references. We do not optimize this fully
-;; yet as once a global is referenced we just mark it used, so when it contains
-;; a function reference that is reached. If the global contained a struct.new
-;; then we could optimize this.
-;; TODO: Optimize this as well.
+;; Test references to global function references.
 (module
   ;; CHECK:      (type $void (func))
   ;; OPEN_WORLD:      (type $void (func))
@@ -1370,6 +1366,7 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f1 (type $void)
+    ;; The global containing this function's reference is used.
   )
 
   ;; CHECK:      (func $f2 (type $void)
@@ -1379,7 +1376,8 @@
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
   (func $f2 (type $void)
-    ;; This could be unreachable, but due to the TODO above it is not.
+    ;; This is unreachable in closed world as the global is referred to from a
+    ;; struct field that is never read from.
   )
 )
 
@@ -1516,5 +1514,6 @@
   ;; OPEN_WORLD-NEXT: )
   (func $f2 (type $void)
     ;; This could be unreachable, but due to the TODO above it is not.
+    ;; XXX
   )
 )
