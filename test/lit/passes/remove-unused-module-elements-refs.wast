@@ -1398,24 +1398,14 @@
   ;; OPEN_WORLD:      (type $B (struct (field (ref $A))))
   (type $B (struct (field (ref $A))))
 
-  ;; CHECK:      (global $g1 (ref $A) (struct.new $A
-  ;; CHECK-NEXT:  (ref.func $f1)
+  ;; CHECK:      (global $g (ref $A) (struct.new $A
+  ;; CHECK-NEXT:  (ref.func $f)
   ;; CHECK-NEXT: ))
-  ;; OPEN_WORLD:      (global $g1 (ref $A) (struct.new $A
-  ;; OPEN_WORLD-NEXT:  (ref.func $f1)
+  ;; OPEN_WORLD:      (global $g (ref $A) (struct.new $A
+  ;; OPEN_WORLD-NEXT:  (ref.func $f)
   ;; OPEN_WORLD-NEXT: ))
-  (global $g1 (ref $A) (struct.new $A
-    (ref.func $f1)
-  ))
-
-  ;; CHECK:      (global $g2 (ref $A) (struct.new $A
-  ;; CHECK-NEXT:  (ref.func $f2)
-  ;; CHECK-NEXT: ))
-  ;; OPEN_WORLD:      (global $g2 (ref $A) (struct.new $A
-  ;; OPEN_WORLD-NEXT:  (ref.func $f2)
-  ;; OPEN_WORLD-NEXT: ))
-  (global $g2 (ref $A) (struct.new $A
-    (ref.func $f2)
+  (global $g (ref $A) (struct.new $A
+    (ref.func $f)
   ))
 
   ;; CHECK:      (elem declare func $func)
@@ -1424,11 +1414,8 @@
 
   ;; CHECK:      (func $func (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $B
-  ;; CHECK-NEXT:    (global.get $g2)
+  ;; CHECK-NEXT:    (global.get $g)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $void
@@ -1448,11 +1435,8 @@
 
   ;; OPEN_WORLD:      (func $func (type $void)
   ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (global.get $g1)
-  ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (struct.new $B
-  ;; OPEN_WORLD-NEXT:    (global.get $g2)
+  ;; OPEN_WORLD-NEXT:    (global.get $g)
   ;; OPEN_WORLD-NEXT:   )
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (call_ref $void
@@ -1467,14 +1451,10 @@
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
   (func $func (export "func")
-    ;; Refer to $g1 directly.
-    (drop
-      (global.get $g1)
-    )
-    ;; Refer to $g2 from a struct field that is never read.
+    ;; Refer to $g from a struct field that is never read.
     (drop
       (struct.new $B
-        (global.get $g2)
+        (global.get $g)
       )
     )
 
@@ -1497,23 +1477,13 @@
     ;; Helper function. This is reached via a call_ref.
   )
 
-  ;; CHECK:      (func $f1 (type $void)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $f1 (type $void)
-  ;; OPEN_WORLD-NEXT:  (nop)
-  ;; OPEN_WORLD-NEXT: )
-  (func $f1 (type $void)
-    ;; This is reached as the global it is in is reached directly from $func.
-  )
-
-  ;; CHECK:      (func $f2 (type $void)
+  ;; CHECK:      (func $f (type $void)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $f2 (type $void)
+  ;; OPEN_WORLD:      (func $f (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
   ;; OPEN_WORLD-NEXT: )
-  (func $f2 (type $void)
+  (func $f (type $void)
     ;; This is unreachable in closed world since $B's field is not read, so the
     ;; global it is in is only referenced and not used.
   )
