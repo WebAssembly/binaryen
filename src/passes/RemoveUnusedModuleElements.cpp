@@ -398,8 +398,8 @@ struct Analyzer {
           for (auto* expr : iter->second) {
             use(expr);
           }
-          // TODO erase?
         }
+        unreadStructFieldExprMap.erase(subStructField);
       });
     }
   }
