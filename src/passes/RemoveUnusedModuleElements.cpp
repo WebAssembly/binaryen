@@ -564,7 +564,8 @@ struct Analyzer {
 
 struct RemoveUnusedModuleElements : public Pass {
   // This pass only removes module elements, it never modifies function
-  // contents.
+  // contents (except to replace an entire body with unreachable, which does not
+  // cause any need for local fixups).
   bool requiresNonNullableLocalFixups() override { return false; }
 
   bool rootAllFunctions;
@@ -584,7 +585,7 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, module->start);
       }
     }
-    // If told to, root all the functions
+    // If told to, root all the functions.
     if (rootAllFunctions) {
       ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
         roots.emplace_back(ModuleElementKind::Function, func->name);
@@ -634,10 +635,10 @@ struct RemoveUnusedModuleElements : public Pass {
     Analyzer analyzer(module, options, roots);
 
     // Remove unneeded elements.
-
     auto needed = [&](ModuleElement element) {
       // We need to emit something in the output if it has either a reference or
-      // a use.
+      // a use. Situations where we can do better (for the case of a reference
+      // without any use) are handled separately below.
       return analyzer.used.count(element) || analyzer.referenced.count(element);
     };
 
@@ -661,7 +662,7 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
-      // See TODO in addReferences - we can do better here.
+      // See TODO in addReferences - we may be able to do better here.
       return !needed(ModuleElement(ModuleElementKind::Global, curr->name));
     });
     module->removeTags([&](Tag* curr) {
