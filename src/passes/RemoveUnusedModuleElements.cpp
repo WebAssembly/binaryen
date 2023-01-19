@@ -68,15 +68,15 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   // code can then process.
   std::vector<ModuleElement> elements;
   std::vector<HeapType> callRefTypes;
-  std::vector<StructField> structFields;
   std::vector<Name> refFuncs;
+  std::vector<StructField> structFields;
   bool usesMemory = false;
 
   // Add an item to the output data structures.
   void note(ModuleElement element) { elements.push_back(element); }
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
-  void note(StructField structField) { structFields.push_back(structField); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
+  void note(StructField structField) { structFields.push_back(structField); }
 
   // Visitors
 
@@ -309,11 +309,11 @@ struct Analyzer {
       for (auto type : finder.callRefTypes) {
         useCallRefType(type);
       }
-      for (auto structField : finder.structFields) {
-        useStructField(structField);
-      }
       for (auto func : finder.refFuncs) {
         useRefFunc(func);
+      }
+      for (auto structField : finder.structFields) {
+        useStructField(structField);
       }
       if (finder.usesMemory) {
         usesMemory = true;
@@ -345,31 +345,6 @@ struct Analyzer {
     calledSignatures.insert(type);
   }
 
-  void useStructField(StructField structField) {
-    if (!readStructFields.count(structField)) {
-      auto [type, index] = structField;
-      // This is the first time we see a read of this data. Note that it is
-      // read, and also all subtypes since we might be reading from them as
-      // well.
-      if (!subTypes) {
-        subTypes = std::make_unique<SubTypes>(*module);
-      }
-      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
-        readStructFields.insert(structField);
-
-        // Walk all the unread data we've queued: we queued it for the
-        // possibility of it ever being read, which just happened.
-        auto iter = unreadStructFieldExprMap.find(structField);
-        if (iter != unreadStructFieldExprMap.end()) {
-          for (auto* expr : iter->second) {
-            use(expr);
-          }
-          // TODO erase?
-        }
-      });
-    }
-  }
-
   void useRefFunc(Name func) {
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
@@ -396,6 +371,31 @@ struct Analyzer {
       uncalledRefFuncMap[type].insert(func);
 
       referenced.insert(element);
+    }
+  }
+
+  void useStructField(StructField structField) {
+    if (!readStructFields.count(structField)) {
+      auto [type, index] = structField;
+      // This is the first time we see a read of this data. Note that it is
+      // read, and also all subtypes since we might be reading from them as
+      // well.
+      if (!subTypes) {
+        subTypes = std::make_unique<SubTypes>(*module);
+      }
+      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
+        readStructFields.insert(structField);
+
+        // Walk all the unread data we've queued: we queued it for the
+        // possibility of it ever being read, which just happened.
+        auto iter = unreadStructFieldExprMap.find(structField);
+        if (iter != unreadStructFieldExprMap.end()) {
+          for (auto* expr : iter->second) {
+            use(expr);
+          }
+          // TODO erase?
+        }
+      });
     }
   }
 
