@@ -2198,7 +2198,6 @@ public:
   Global* getGlobal(Name name);
   Tag* getTag(Name name);
 
-  bool isExported(const Function& func) const;
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   Memory* getMemoryOrNull(Name name);

@@ -1383,16 +1383,6 @@ typename Map::mapped_type getModuleElementOrNull(Map& m, Name name) {
   return iter->second;
 }
 
-bool Module::isExported(const Function& func) const {
-  for (auto& exportFunc : exports) {
-    if (exportFunc->kind == ExternalKind::Function &&
-        exportFunc->value == func.name) {
-      return true;
-    }
-  }
-  return false;
-}
-
 Export* Module::getExportOrNull(Name name) {
   return getModuleElementOrNull(exportsMap, name);
 }

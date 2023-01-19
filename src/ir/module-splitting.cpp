@@ -69,6 +69,7 @@
 
 #include "ir/module-splitting.h"
 #include "ir/element-utils.h"
+#include "ir/export-utils.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -350,7 +351,7 @@ ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
     // wrapper. Exported JSPI functions can still benefit from splitting though
     // since only the JSPI wrapper stub will remain in the primary module.
     if (func->imported() || config.primaryFuncs.count(func->name) ||
-        (config.jspi && primary.isExported(*func))) {
+        (config.jspi && ExportUtils::isExported(primary, *func))) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
