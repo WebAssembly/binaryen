@@ -292,6 +292,21 @@ void TypeMerging::run(Module* module_) {
     }
   }
 
+#if TYPE_MERGING_DEBUG
+  std::cerr << "Merges):\n";
+  std::unordered_map<HeapType, std::vector<HeapType>> mergees;
+  for (auto& [mergee, target] : merges) {
+    mergees[target].push_back(mergee);
+  }
+  for (auto& [target, types] : mergees) {
+    std::cerr << "target: " << print(target) << "\n";
+    for (auto type : types) {
+      std::cerr << "  " << print(type) << "\n";
+    }
+    std::cerr << "\n";
+  }
+#endif // TYPE_MERGING_DEBUG
+
   applyMerges(merges);
 }
 
