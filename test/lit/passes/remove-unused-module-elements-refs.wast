@@ -1214,6 +1214,7 @@
   )
 )
 
+;; Subtyping of struct reads.
 (module
   ;; CHECK:      (type $void (func))
   ;; OPEN_WORLD:      (type $void (func))
@@ -1222,6 +1223,14 @@
   ;; CHECK:      (type $struct (struct (field funcref)))
   ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
   (type $struct (struct (field funcref)))
+
+  ;; CHECK:      (type $substruct (struct_subtype (field funcref) $struct))
+  ;; OPEN_WORLD:      (type $substruct (struct_subtype (field funcref) $struct))
+  (type $substruct (struct_subtype (field funcref) $struct))
+
+  ;; CHECK:      (type $subsubstruct (struct_subtype (field funcref) $substruct))
+  ;; OPEN_WORLD:      (type $subsubstruct (struct_subtype (field funcref) $substruct))
+  (type $subsubstruct (struct_subtype (field funcref) $substruct))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (ref.func $f)
@@ -1233,6 +1242,26 @@
     (ref.func $f)
   ))
 
+  ;; CHECK:      (global $subg (ref $substruct) (struct.new $substruct
+  ;; CHECK-NEXT:  (ref.func $subf)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $subg (ref $substruct) (struct.new $substruct
+  ;; OPEN_WORLD-NEXT:  (ref.func $subf)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $subg (ref $substruct) (struct.new $substruct
+    (ref.func $subf)
+  ))
+
+  ;; CHECK:      (global $subsubg (ref $subsubstruct) (struct.new $subsubstruct
+  ;; CHECK-NEXT:  (ref.func $subsubf)
+  ;; CHECK-NEXT: ))
+  ;; OPEN_WORLD:      (global $subsubg (ref $subsubstruct) (struct.new $subsubstruct
+  ;; OPEN_WORLD-NEXT:  (ref.func $subsubf)
+  ;; OPEN_WORLD-NEXT: ))
+  (global $subsubg (ref $subsubstruct) (struct.new $subsubstruct
+    (ref.func $subsubf)
+  ))
+
   ;; CHECK:      (elem declare func $func)
 
   ;; CHECK:      (export "func" (func $func))
@@ -1240,6 +1269,19 @@
   ;; CHECK:      (func $func (type $void)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $g)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $subg)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $subsubg)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $substruct 0
+  ;; CHECK-NEXT:    (block (result (ref $substruct))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $void
   ;; CHECK-NEXT:   (ref.func $func)
@@ -1253,14 +1295,42 @@
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (global.get $g)
   ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $subg)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (global.get $subsubg)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.get $substruct 0
+  ;; OPEN_WORLD-NEXT:    (block (result (ref $substruct))
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (call_ref $void
   ;; OPEN_WORLD-NEXT:   (ref.func $func)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT: )
   (func $func (export "func")
-    ;; Refer to the global.
+    ;; Refer to the globals.
     (drop
       (global.get $g)
+    )
+    (drop
+      (global.get $subg)
+    )
+    (drop
+      (global.get $subsubg)
+    )
+
+    ;; Read from $substruct's field, but not its super or subtypes.
+    (drop
+      (struct.get $substruct 0
+        (block (result (ref $substruct))
+          (unreachable)
+        )
+      )
     )
 
     ;; Call the function type to allow functions to be used.
@@ -1282,6 +1352,27 @@
   (func $f (type $void)
     ;; This is unreachable in closed world. The global it is in has a reference
     ;; but the struct there has no reads of its field.
+  )
+
+  ;; CHECK:      (func $subf (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $subf (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $subf (type $void)
+    ;; There is a read of $substruct's field, which makes this reachable.
+  )
+
+  ;; CHECK:      (func $subsubf (type $void)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $subsubf (type $void)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $subsubf (type $void)
+    ;; There is a read of $substruct's field, which may read from any subtype,
+    ;; which makes this reachable.
   )
 )
 
@@ -1381,8 +1472,7 @@
   )
 )
 
-;; As above, but now the globals are struct.news. We still do not fully optimize
-;; this. TODO
+;; As above, but now the globals are struct.news.
 (module
   ;; CHECK:      (type $A (struct (field funcref)))
 
