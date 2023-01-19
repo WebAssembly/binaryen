@@ -62,7 +62,8 @@ using StructField = std::pair<HeapType, Index>;
 
 // Visit or walk an expression to find what things are referenced.
 struct ReferenceFinder : public PostWalker<ReferenceFinder> {
-  // Our findings are placed in these data structures:
+  // Our findings are placed in these data structures.
+  // TODO: smallvectors?
   std::vector<ModuleElement> elements;
   std::vector<HeapType> callRefTypes;
   std::vector<StructField> structFields;
@@ -280,7 +281,8 @@ struct Analyzer {
   std::unique_ptr<SubTypes> subTypes;
 
   // Process expressions in the expression queue while we have any, visiting
-  // them and adding children. Returns whether we did any work.
+  // them (using their contents) and adding children. Returns whether we did any
+  // work.
   bool processExpressions() {
     bool worked = false;
     while (expressionQueue.size()) {
@@ -289,7 +291,8 @@ struct Analyzer {
       auto* curr = expressionQueue.back();
       expressionQueue.pop_back();
 
-      // Find references in this expression, and apply them.
+      // Find references in this expression, and apply them. Anything found here
+      // is used.
       ReferenceFinder finder;
       finder.setModule(module);
       finder.visit(curr);
@@ -493,37 +496,50 @@ struct Analyzer {
   //
   // This is only called on things without side effects (if there are such
   // effects then we would have had to assume the worst earlier, and not get
-  // here). If effects were possible then we'd need to check for pretty much
-  // everything in all the visit*() functions below, such as say GlobalSet; but
-  // without side effects very few things remain possible, and we can just
-  // enumerate them here in a simple way. XXX
-  //
-  // FIXME: also tags and whatnot. really, we need a nested Analyzer which is in
-  //        "ref only, no uses" mode..?
-  //        visit() can append to a vectors used and referred stuffs?
+  // here).
   void addReferences(Expression* curr) {
-    for (auto* refFunc : FindAll<RefFunc>(curr).list) {
-      referenced.insert(
-        ModuleElement(ModuleElementKind::Function, refFunc->func));
+    // Find references anywhere in this expression, and apply them.
+    ReferenceFinder finder;
+    finder.setModule(module);
+    finder.walk(curr);
+
+    for (auto element : finder.elements) {
+      referenced.insert(element);
+
+      auto& [kind, value] = element;
+      if (kind == ModuleElementKind::Global) {
+        // Like functions, (non-imported) globals have contents. For functions,
+        // things are simple: if a function ends up with references but no uses
+        // then we can simply empty out the function (by setting its body to an
+        // unreachable). We don't have a simple way to do the same for globals,
+        // unfortunately. For now, scan the global's contents and add references
+        // as needed.
+        // TODO: we could We could try to empty the global out, for example, replace it with a
+        //       null if it is non-nullable, or replace all gets of it with something
+        //       else, but that is not trivial.
+        auto* global = module->getGlobal(value);
+        if (!global->imported()) {
+          // Note that infinite recursion is not a danger here since a global
+          // can only refer to previous globals.
+          addReferences(global->init);
+        }
+      }
+    }
+
+    for (auto func : finder.refFuncs) {
       // If a function ends up referenced but not used then later down we will
       // empty it out by replacing its body with an unreachable, which always
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
-    }
-    for (auto* refGlobal : FindAll<GlobalGet>(curr).list) {
       referenced.insert(
-        ModuleElement(ModuleElementKind::Global, refGlobal->name));
-      // We could try to empty the global out, for example, replace it with a
-      // null if it is non-nullable, or replace all gets of it with something
-      // else, but that is not trivial. TODO
-      //
-      // For now, look into the body of the global, and mark everything there
-      // as referenced as well. Note that infinite recursion is not a danger
-      // here since a global can only refer to previous globals.
-      auto* global = module->getGlobal(refGlobal->name);
-      if (!global->imported()) {
-        addReferences(global->init);
-      }
+        ModuleElement(ModuleElementKind::Function, func));
+    }
+
+    if (finder.usesMemory) {
+      // TODO: We could do better here, but leave that for the full refactor
+      //       here that will also add multimemory. Then this will be as simple
+      //       as supporting tables here (which are just more module elements).
+      usesMemory = true;
     }
   }
 };
