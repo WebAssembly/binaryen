@@ -481,11 +481,13 @@ size_t shapeHash(Signature a) {
 }
 
 bool shapeEq(Field a, Field b) {
-  return a.packedType == b.packedType && shapeEq(a.type, b.type);
+  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
+         shapeEq(a.type, b.type);
 }
 
 size_t shapeHash(Field a) {
   auto digest = hash((int)a.packedType);
+  rehash(digest, (int)a.mutable_);
   hash_combine(digest, shapeHash(a.type));
   return digest;
 }
