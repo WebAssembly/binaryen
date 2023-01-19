@@ -280,10 +280,15 @@ void TypeMerging::run(Module* module_) {
   // The types we can merge mapped to the type we are merging them into.
   TypeUpdates merges;
 
-  // Merge each refined partition into a single type.
+  // Merge each refined partition into a single type. We should only merge into
+  // supertypes or siblings because if we try to merge into a subtype then we
+  // will accidentally set that subtype to be its own supertype.
   for (const auto& partition : refinedPartitions) {
-    for (size_t i = 1; i < partition.size(); ++i) {
-      merges[partition[i]] = partition[0];
+    auto target = *HeapTypeOrdering::SupertypesFirst(partition).begin();
+    for (auto type : partition) {
+      if (type != target) {
+        merges[type] = target;
+      }
     }
   }
 

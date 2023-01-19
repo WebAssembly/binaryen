@@ -232,6 +232,35 @@
 
 (module
   (rec
+    (type $A (struct         (ref null $X)))
+    (type $B (struct_subtype (ref null $Y) $A))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
+    (type $X (struct         (ref null $A)))
+    (type $Y (struct_subtype (ref null $B) $X))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but now the A->B and X->Y chains are not differentiated by the
+    ;; i32 and f32, so all four types can be merged into a single type.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
     (type $A (struct         (ref null $X)))
@@ -640,6 +669,23 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $quux (param (ref $A) (ref $B) (ref $C))
+    (unreachable)
+  )
+)
+
+;; Regression test for a bug in which we tried to merge A into B instead of the
+;; other way around, causing an assertion failure in type-updating.cpp.
+(module
+  (rec
+    ;; CHECK:      (type $A (func (param (ref null $A)) (result (ref null $A))))
+    (type $A (func (param (ref null $B)) (result (ref null $A))))
+    (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+  )
+
+  ;; CHECK:      (func $0 (type $A) (param $0 (ref null $A)) (result (ref null $A))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $0 (type $B) (param $0 (ref null $A)) (result (ref null $B))
     (unreachable)
   )
 )
