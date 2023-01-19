@@ -5453,7 +5453,7 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
   auto* wasm = new Module;
   try {
-    SExpressionParser parser(const_cast<char*>(text));
+    SExpressionParser parser(text);
     Element& root = *parser.root;
     SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
   } catch (ParseException& p) {
