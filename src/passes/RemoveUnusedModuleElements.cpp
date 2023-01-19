@@ -18,19 +18,20 @@
 // Removes module elements that are not needed: functions, globals, tags, etc.
 // Basically "global dead code elimination" but not just for code.
 //
-// To do this properly, we need to consider that an element may be in one of
+// To do this optimally, we need to consider that an element may be in one of
 // three states:
 //
 //  * No references at all. We can simply remove it.
-//  * References, but no uses. We can't remove it, but we can change it.
-//  * Uses (which implies references). We must keep it.
+//  * References, but no uses. We can't remove it, but we can change it (see
+//    below).
+//  * Uses (which imply references). We must keep it as it is.
 //
 // An example of something with a reference but *not* a use is a RefFunc to a
 // function that has no corresponding CallRef to that type. We cannot just
 // remove the function, since the RefFunc must refer to an actual entity in the
 // IR, but we know it isn't actually used/called, so we can change it - we can
 // empty out the body and put an unreachable there, for example. That is, a
-// reference forces us to keep something in the IR to be referred to, (but only
+// reference forces us to keep something in the IR to be referred to, but only
 // a use actually makes us keep its contents as well.
 //
 
@@ -49,21 +50,22 @@
 namespace wasm {
 
 // TODO: Add data segment, multiple memories (#5224)
+// TODO: use Effects below to determine if a memory is used
+// This pass does not have multi-memories support
 enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
+// An element in the module that we track: a kind (function, global, etc.) + the
+// name of the particular element.
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // A pair of a struct type and a field index, together defining a field in a
 // particular type.
 using StructField = std::pair<HeapType, Index>;
 
-// TODO: use Effects to determine if a memory is used
-// This pass does not have multi-memories support
-
 // Visit or walk an expression to find what things are referenced.
 struct ReferenceFinder : public PostWalker<ReferenceFinder> {
-  // Our findings are placed in these data structures.
-  // TODO: smallvectors?
+  // Our findings are placed in these data structures, which the user of this
+  // code can then process.
   std::vector<ModuleElement> elements;
   std::vector<HeapType> callRefTypes;
   std::vector<StructField> structFields;
