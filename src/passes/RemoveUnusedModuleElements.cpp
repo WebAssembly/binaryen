@@ -376,7 +376,11 @@ struct Analyzer {
 
   void useStructField(StructField structField) {
     if (!readStructFields.count(structField)) {
-      auto [type, index] = structField;
+      // Avoid a structured binding as the C++ spec does not allow capturing
+      // them in lambdas, which we need below.
+      auto type = structField.first;
+      auto index = structField.second;
+
       // This is the first time we see a read of this data. Note that it is
       // read, and also all subtypes since we might be reading from them as
       // well.
