@@ -200,12 +200,13 @@ struct Analyzer {
   // Things for whom there is a reference, but may be unused. It is ok for a
   // thing to appear both in |used| and here; we will check |used| first anyhow.
   // (That is, we don't need to be careful to remove things from here if they
-  // begin as referenced and later become used.)
+  // begin as referenced and later become used; and we don't need to add things
+  // to here if they are both used and referenced.)
   std::unordered_set<ModuleElement> referenced;
 
-  // A queue of used module elements that we need to process. These appear
-  // in |used|, and the work we do when we pop them from the queue is to
-  // look at the things they reach that might become referenced or used.
+  // A queue of used module elements that we need to process. These appear in
+  // |used|, and the work we do when we pop them from the queue is to look at
+  // the things they reach that might become referenced or used.
   std::vector<ModuleElement> moduleQueue;
 
   // A stack of used expressions to walk. We do *not* use the normal
@@ -216,10 +217,9 @@ struct Analyzer {
   //     (global.get $bar)
   //   )
   //
-  // If we walked the child immediately then we would make $bar used. But
-  // that global is only used if we actually read that field from the
-  // struct. We perform that analysis in readStructFields /
-  // unreadStructFieldExprMap, below.
+  // If we walked the child immediately then we would make $bar used. But that
+  // global is only used if we actually read that field from the struct. We
+  // perform that analysis in readStructFields  unreadStructFieldExprMap, below.
   std::vector<Expression*> expressionQueue;
 
   bool usesMemory = false;
@@ -262,6 +262,7 @@ struct Analyzer {
            const std::vector<ModuleElement>& roots)
     : module(module), options(options) {
 
+    // All roots are used.
     for (auto& element : roots) {
       use(element);
     }
