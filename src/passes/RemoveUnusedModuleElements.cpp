@@ -293,93 +293,101 @@ struct Analyzer {
       ReferenceFinder finder;
       finder.setModule(module);
       finder.visit(curr);
-
       for (auto element : finder.elements) {
         use(element);
       }
-
       for (auto type : finder.callRefTypes) {
-        // Call all the functions of that signature. We can then forget about
-        // them, as this signature will be marked as called.
-        auto iter = uncalledRefFuncMap.find(type);
-        if (iter != uncalledRefFuncMap.end()) {
-          // We must not have a type in both calledSignatures and
-          // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
-          // it any more.
-          assert(calledSignatures.count(type) == 0);
-
-          for (Name target : iter->second) {
-            use(ModuleElement(ModuleElementKind::Function, target));
-          }
-
-          uncalledRefFuncMap.erase(iter);
-        }
-
-        calledSignatures.insert(type);
+        useCallRefType(type);
       }
-
       for (auto structField : finder.structFields) {
-        if (!readStructFields.count(structField)) {
-          auto [type, index] = structField;
-          // This is the first time we see a read of this data. Note that it is
-          // read, and also all subtypes since we might be reading from them as
-          // well.
-          if (!subTypes) {
-            subTypes = std::make_unique<SubTypes>(*module);
-          }
-          subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
-            auto sf = StructField{type, index};
-            readStructFields.insert(sf);
-
-            // Walk all the unread data we've queued: we queued it for the
-            // possibility of it ever being read, which just happened.
-            auto iter = unreadStructFieldExprMap.find(sf);
-            if (iter != unreadStructFieldExprMap.end()) {
-              for (auto* expr : iter->second) {
-                use(expr);
-              }
-              // TODO erase?
-            }
-          });
-        }
+        useStructField(structField);
       }
-
       for (auto func : finder.refFuncs) {
-        if (!options.closedWorld) {
-          // The world is open, so assume the worst and something (inside or outside
-          // of the module) can call this.
-          use(ModuleElement(ModuleElementKind::Function, func));
-          continue;
-        }
-
-        // Otherwise, we are in a closed world, and so we can try to optimize the
-        // case where the target function is referenced but not used.
-        auto element = ModuleElement(ModuleElementKind::Function, func);
-
-        auto type = module->getFunction(func)->type;
-        if (calledSignatures.count(type)) {
-          // We must not have a type in both calledSignatures and
-          // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
-          // any more.
-          assert(uncalledRefFuncMap.count(type) == 0);
-
-          // We've seen a RefFunc for this, so it is used.
-          use(element);
-        } else {
-          // We've never seen a CallRef for this, but might see one later.
-          uncalledRefFuncMap[type].insert(func);
-
-          referenced.insert(element);
-        }
+        useRefFunc(func);
       }
-
       if (finder.usesMemory) {
         usesMemory = true;
       }
 
+      // Scan the children to continue our work.
       scanChildren(curr);
     }
     return worked;
+  }
+
+  void useCallRefType(HeapType type) {
+    // Call all the functions of that signature. We can then forget about
+    // them, as this signature will be marked as called.
+    auto iter = uncalledRefFuncMap.find(type);
+    if (iter != uncalledRefFuncMap.end()) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+      // it any more.
+      assert(calledSignatures.count(type) == 0);
+
+      for (Name target : iter->second) {
+        use(ModuleElement(ModuleElementKind::Function, target));
+      }
+
+      uncalledRefFuncMap.erase(iter);
+    }
+
+    calledSignatures.insert(type);
+  }
+
+  void useStructField(StructField structField) {
+    if (!readStructFields.count(structField)) {
+      auto [type, index] = structField;
+      // This is the first time we see a read of this data. Note that it is
+      // read, and also all subtypes since we might be reading from them as
+      // well.
+      if (!subTypes) {
+        subTypes = std::make_unique<SubTypes>(*module);
+      }
+      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
+        auto sf = StructField{type, index};
+        readStructFields.insert(sf);
+
+        // Walk all the unread data we've queued: we queued it for the
+        // possibility of it ever being read, which just happened.
+        auto iter = unreadStructFieldExprMap.find(sf);
+        if (iter != unreadStructFieldExprMap.end()) {
+          for (auto* expr : iter->second) {
+            use(expr);
+          }
+          // TODO erase?
+        }
+      });
+    }
+  }
+
+  void useRefFunc(Name func) {
+    if (!options.closedWorld) {
+      // The world is open, so assume the worst and something (inside or outside
+      // of the module) can call this.
+      use(ModuleElement(ModuleElementKind::Function, func));
+      return;
+    }
+
+    // Otherwise, we are in a closed world, and so we can try to optimize the
+    // case where the target function is referenced but not used.
+    auto element = ModuleElement(ModuleElementKind::Function, func);
+
+    auto type = module->getFunction(func)->type;
+    if (calledSignatures.count(type)) {
+      // We must not have a type in both calledSignatures and
+      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
+      // any more.
+      assert(uncalledRefFuncMap.count(type) == 0);
+
+      // We've seen a RefFunc for this, so it is used.
+      use(element);
+    } else {
+      // We've never seen a CallRef for this, but might see one later.
+      uncalledRefFuncMap[type].insert(func);
+
+      referenced.insert(element);
+    }
   }
 
   // As processExpressions, but for module elements.
