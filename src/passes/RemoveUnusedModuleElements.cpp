@@ -451,7 +451,8 @@ struct Analyzer {
   void use(Expression* curr) {
     // For expressions we do not need to check if they have already been seen:
     // the tree structure guarantees that traversing children, recursively, will
-    // only visit each expression once.
+    // only visit each expression once, since each expression has a single
+    // parent.
     expressionQueue.emplace_back(curr);
   }
 
@@ -476,6 +477,8 @@ struct Analyzer {
 
     auto* new_ = curr->dynCast<StructNew>();
     if (!new_) {
+      // This is not a struct.new, which is the one thing we optimize atm, as
+      // mentioned above.
       walkChildren();
       return;
     }
@@ -483,8 +486,8 @@ struct Analyzer {
     auto type = curr->type.getHeapType();
     for (Index i = 0; i < new_->operands.size(); i++) {
       auto* operand = new_->operands[i];
-      auto sf = StructField{type, i};
-      if (readStructFields.count(sf) ||
+      auto structField = StructField{type, i};
+      if (readStructFields.count(structField) ||
           EffectAnalyzer(options, *module, operand).hasSideEffects()) {
         // This data can be read, so just walk it. Or, this has side effects,
         // which is tricky to reason about - the side effects must happen even
@@ -493,10 +496,10 @@ struct Analyzer {
       } else {
         // This data does not need to be read now, but might be read later. Note
         // it as unread.
-        unreadStructFieldExprMap[sf].push_back(operand);
+        unreadStructFieldExprMap[structField].push_back(operand);
 
         // We also must note that anything in this operand is referenced, even
-        // if it never ends up used.
+        // if it never ends up used, so the IR remains valid.
         addReferences(operand);
       }
     }
