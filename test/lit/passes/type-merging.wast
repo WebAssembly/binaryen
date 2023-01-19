@@ -261,10 +261,10 @@
 
 (module
   (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
     (type $A (struct         (ref null $X)))
     (type $B (struct_subtype (ref null $Y) $A))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
     (type $X (struct         (ref null $A)))
     (type $Y (struct_subtype (ref null $B) $X))
   )
@@ -272,10 +272,10 @@
   ;; CHECK:       (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref null $A))
-  ;; CHECK-NEXT:  (local $x (ref null $A))
-  ;; CHECK-NEXT:  (local $y (ref null $A))
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
