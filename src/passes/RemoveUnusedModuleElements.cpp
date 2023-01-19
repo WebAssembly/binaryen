@@ -513,7 +513,7 @@ struct Analyzer {
   // effects then we would have had to assume the worst earlier, and not get
   // here).
   void addReferences(Expression* curr) {
-    // Find references anywhere in this expression, and apply them.
+    // Find references anywhere in this expression so we can apply them.
     ReferenceFinder finder;
     finder.setModule(module);
     finder.walk(curr);
@@ -529,9 +529,8 @@ struct Analyzer {
         // unreachable). We don't have a simple way to do the same for globals,
         // unfortunately. For now, scan the global's contents and add references
         // as needed.
-        // TODO: we could We could try to empty the global out, for example,
-        // replace it with a
-        //       null if it is non-nullable, or replace all gets of it with
+        // TODO: We could try to empty the global out, for example, replace it
+        //       with a null if it is nullable, or replace all gets of it with
         //       something else, but that is not trivial.
         auto* global = module->getGlobal(value);
         if (!global->imported()) {
@@ -556,6 +555,10 @@ struct Analyzer {
       //       as supporting tables here (which are just more module elements).
       usesMemory = true;
     }
+
+    // Note: nothing to do with |callRefTypes| and |structFields|, which only
+    // influence which types will remain in the module (which is not something
+    // this pass is involved in).
   }
 };
 
