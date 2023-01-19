@@ -70,15 +70,9 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   std::vector<Name> refFuncs;
   bool usesMemory = false;
 
-  void note(ModuleElement element) {
-    elements.push_back(element);
-  }
-  void note(HeapType type) {
-    callRefTypes.push_back(type);
-  }
-  void note(StructField structField) {
-    structFields.push_back(structField);
-  }
+  void note(ModuleElement element) { elements.push_back(element); }
+  void note(HeapType type) { callRefTypes.push_back(type); }
+  void note(StructField structField) { structFields.push_back(structField); }
 
   // Visitors
 
@@ -109,7 +103,9 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     }
   }
 
-  void visitCallIndirect(CallIndirect* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitCallIndirect(CallIndirect* curr) {
+    note(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
 
   void visitCallRef(CallRef* curr) {
     // Ignore unreachable code.
@@ -143,13 +139,19 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
-  void visitRefFunc(RefFunc* curr) {
-    refFuncs.push_back(curr->func);
+  void visitRefFunc(RefFunc* curr) { refFuncs.push_back(curr->func); }
+  void visitTableGet(TableGet* curr) {
+    note(ModuleElement(ModuleElementKind::Table, curr->table));
   }
-  void visitTableGet(TableGet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
-  void visitTableSet(TableSet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
-  void visitTableSize(TableSize* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
-  void visitTableGrow(TableGrow* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitTableSet(TableSet* curr) {
+    note(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableSize(TableSize* curr) {
+    note(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableGrow(TableGrow* curr) {
+    note(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
   void visitThrow(Throw* curr) {
     note(ModuleElement(ModuleElementKind::Tag, curr->tag));
   }
@@ -420,7 +422,8 @@ struct Analyzer {
         ModuleUtils::iterTableSegments(
           *module, value, [&](ElementSegment* segment) {
             use(segment->offset);
-            use(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+            use(
+              ModuleElement(ModuleElementKind::ElementSegment, segment->name));
           });
       }
     }
@@ -514,9 +517,10 @@ struct Analyzer {
         // unreachable). We don't have a simple way to do the same for globals,
         // unfortunately. For now, scan the global's contents and add references
         // as needed.
-        // TODO: we could We could try to empty the global out, for example, replace it with a
-        //       null if it is non-nullable, or replace all gets of it with something
-        //       else, but that is not trivial.
+        // TODO: we could We could try to empty the global out, for example,
+        // replace it with a
+        //       null if it is non-nullable, or replace all gets of it with
+        //       something else, but that is not trivial.
         auto* global = module->getGlobal(value);
         if (!global->imported()) {
           // Note that infinite recursion is not a danger here since a global
@@ -531,8 +535,7 @@ struct Analyzer {
       // empty it out by replacing its body with an unreachable, which always
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
-      referenced.insert(
-        ModuleElement(ModuleElementKind::Function, func));
+      referenced.insert(ModuleElement(ModuleElementKind::Function, func));
     }
 
     if (finder.usesMemory) {
