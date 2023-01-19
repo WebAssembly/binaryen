@@ -319,15 +319,16 @@ struct Analyzer {
       }
 
       for (auto structField : finder.structFields) {
-        if (!readStructFields.count({type, curr->index})) {
+        if (!readStructFields.count(structField)) {
+          auto [type, index] = structField;
           // This is the first time we see a read of this data. Note that it is
           // read, and also all subtypes since we might be reading from them as
           // well.
           if (!subTypes) {
-            subTypes = std::make_unique<SubTypes>(*getModule());
+            subTypes = std::make_unique<SubTypes>(*module);
           }
           subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
-            auto sf = StructField{type, curr->index};
+            auto sf = StructField{type, index};
             readStructFields.insert(sf);
 
             // Walk all the unread data we've queued: we queued it for the
@@ -348,14 +349,14 @@ struct Analyzer {
           // The world is open, so assume the worst and something (inside or outside
           // of the module) can call this.
           use(ModuleElement(ModuleElementKind::Function, func));
-          return;
+          continue;
         }
 
         // Otherwise, we are in a closed world, and so we can try to optimize the
         // case where the target function is referenced but not used.
         auto element = ModuleElement(ModuleElementKind::Function, func);
 
-        auto type = module->getFunction(func)->type.getHeapType();
+        auto type = module->getFunction(func)->type;
         if (calledSignatures.count(type)) {
           // We must not have a type in both calledSignatures and
           // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
@@ -366,7 +367,7 @@ struct Analyzer {
           use(element);
         } else {
           // We've never seen a CallRef for this, but might see one later.
-          uncalledRefFuncMap[type].insert(curr->func);
+          uncalledRefFuncMap[type].insert(func);
 
           referenced.insert(element);
         }
