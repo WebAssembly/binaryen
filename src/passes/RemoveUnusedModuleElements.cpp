@@ -53,10 +53,137 @@ enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
+// A pair of a struct type and a field index, together defining a field in a
+// particular type.
+using StructField = std::pair<HeapType, Index>;
+
 // TODO: use Effects to determine if a memory is used
 // This pass does not have multi-memories support
 
-struct Analyzer : public Visitor<Analyzer> {
+// Visit or walk an expression to find what things are referenced.
+struct ReferenceFinder : public PostWalker<ReferenceFinder> {
+  // Our findings are placed in these data structures:
+  std::vector<ModuleElement> elements;
+  std::vector<HeapType> callRefTypes;
+  std::vector<StructField> structFields;
+  std::vector<Name> refFuncs;
+  bool usesMemory = false;
+
+  void note(ModuleElement element) {
+    elements.push_back(element);
+  }
+  void note(HeapType type) {
+    callRefTypes.push_back(type);
+  }
+  void note(StructField structField) {
+    structFields.push_back(structField);
+  }
+
+  // Visitors
+
+  void visitCall(Call* curr) {
+    note(ModuleElement(ModuleElementKind::Function, curr->target));
+
+    if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
+      // A call-without-effects receives a function reference and calls it, the
+      // same as a CallRef. When we have a flag for non-closed-world, we should
+      // handle this automatically by the reference flowing out to an import,
+      // which is what binaryen intrinsics look like. For now, to support use
+      // cases of a closed world but that also use this intrinsic, handle the
+      // intrinsic specifically here. (Without that, the closed world assumption
+      // makes us ignore the function ref that flows to an import, so we are not
+      // aware that it is actually called.)
+      auto* target = curr->operands.back();
+      if (auto* refFunc = target->dynCast<RefFunc>()) {
+        // We can see exactly where this goes.
+        Call call(getModule()->allocator);
+        call.target = refFunc->func;
+        visitCall(&call);
+      } else {
+        // All we can see is the type, so do a CallRef of that.
+        CallRef callRef(getModule()->allocator);
+        callRef.target = target;
+        visitCallRef(&callRef);
+      }
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+
+  void visitCallRef(CallRef* curr) {
+    // Ignore unreachable code.
+    if (!curr->target->type.isRef()) {
+      return;
+    }
+
+    note(curr->target->type.getHeapType());
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    note(ModuleElement(ModuleElementKind::Global, curr->name));
+  }
+  void visitGlobalSet(GlobalSet* curr) {
+    note(ModuleElement(ModuleElementKind::Global, curr->name));
+  }
+
+  void visitLoad(Load* curr) { usesMemory = true; }
+  void visitStore(Store* curr) { usesMemory = true; }
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { usesMemory = true; }
+  void visitAtomicRMW(AtomicRMW* curr) { usesMemory = true; }
+  void visitAtomicWait(AtomicWait* curr) { usesMemory = true; }
+  void visitAtomicNotify(AtomicNotify* curr) { usesMemory = true; }
+  void visitAtomicFence(AtomicFence* curr) { usesMemory = true; }
+  void visitMemoryInit(MemoryInit* curr) { usesMemory = true; }
+  void visitDataDrop(DataDrop* curr) {
+    // TODO: Replace this with a use of a data segment (#5224).
+    usesMemory = true;
+  }
+  void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
+  void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
+  void visitMemorySize(MemorySize* curr) { usesMemory = true; }
+  void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
+  void visitRefFunc(RefFunc* curr) {
+    note(ModuleElement(ModuleElementKind::Function, curr->func));
+  }
+  void visitTableGet(TableGet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitTableSet(TableSet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitTableSize(TableSize* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitTableGrow(TableGrow* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
+  void visitThrow(Throw* curr) {
+    note(ModuleElement(ModuleElementKind::Tag, curr->tag));
+  }
+  void visitTry(Try* curr) {
+    for (auto tag : curr->catchTags) {
+      note(ModuleElement(ModuleElementKind::Tag, tag));
+    }
+  }
+  void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      return;
+    }
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      return;
+    }
+    structFields.push_back({type, curr->index});
+  }
+  void visitArrayNewSeg(ArrayNewSeg* curr) {
+    switch (curr->op) {
+      case NewData:
+        // TODO: Replace this with a use of the specific data segment (#5224).
+        usesMemory = true;
+        return;
+      case NewElem:
+        auto segment = getModule()->elementSegments[curr->segment]->name;
+        note(ModuleElement(ModuleElementKind::ElementSegment, segment));
+        return;
+    }
+    WASM_UNREACHABLE("unexpected op");
+  }
+};
+
+// Analyze a module to find what things are referenced and what things are used.
+struct Analyzer {
   Module* module;
   const PassOptions& options;
 
@@ -112,10 +239,6 @@ struct Analyzer : public Visitor<Analyzer> {
   // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
 
-  // A pair of a struct type and a field index, together defining a field in a
-  // particular type.
-  using StructField = std::pair<HeapType, Index>;
-
   // Similar to calledSignatures/uncalledRefFuncMap, we store the StructFields
   // we've seen reads from, and also expressions stored in such fields that
   // could be read if ever we see a read of that field in the future. That is,
@@ -153,6 +276,9 @@ struct Analyzer : public Visitor<Analyzer> {
     }
   }
 
+  // We'll compute SubTypes if we need them.
+  std::unique_ptr<SubTypes> subTypes;
+
   // Process expressions in the expression queue while we have any, visiting
   // them and adding children. Returns whether we did any work.
   bool processExpressions() {
@@ -163,7 +289,93 @@ struct Analyzer : public Visitor<Analyzer> {
       auto* curr = expressionQueue.back();
       expressionQueue.pop_back();
 
-      visit(curr);
+      // Find references in this expression, and apply them.
+      ReferenceFinder finder;
+      finder.setModule(module);
+      finder.visit(curr);
+
+      for (auto element : finder.elements) {
+        use(element);
+      }
+
+      for (auto type : finder.callRefTypes) {
+        // Call all the functions of that signature. We can then forget about
+        // them, as this signature will be marked as called.
+        auto iter = uncalledRefFuncMap.find(type);
+        if (iter != uncalledRefFuncMap.end()) {
+          // We must not have a type in both calledSignatures and
+          // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+          // it any more.
+          assert(calledSignatures.count(type) == 0);
+
+          for (Name target : iter->second) {
+            use(ModuleElement(ModuleElementKind::Function, target));
+          }
+
+          uncalledRefFuncMap.erase(iter);
+        }
+
+        calledSignatures.insert(type);
+      }
+
+      for (auto structField : finder.structFields) {
+        if (!readStructFields.count({type, curr->index})) {
+          // This is the first time we see a read of this data. Note that it is
+          // read, and also all subtypes since we might be reading from them as
+          // well.
+          if (!subTypes) {
+            subTypes = std::make_unique<SubTypes>(*getModule());
+          }
+          subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
+            auto sf = StructField{type, curr->index};
+            readStructFields.insert(sf);
+
+            // Walk all the unread data we've queued: we queued it for the
+            // possibility of it ever being read, which just happened.
+            auto iter = unreadStructFieldExprMap.find(sf);
+            if (iter != unreadStructFieldExprMap.end()) {
+              for (auto* expr : iter->second) {
+                use(expr);
+              }
+              // TODO erase?
+            }
+          });
+        }
+      }
+
+      for (auto func : finder.refFuncs) {
+        if (!options.closedWorld) {
+          // The world is open, so assume the worst and something (inside or outside
+          // of the module) can call this.
+          use(ModuleElement(ModuleElementKind::Function, func));
+          return;
+        }
+
+        // Otherwise, we are in a closed world, and so we can try to optimize the
+        // case where the target function is referenced but not used.
+        auto element = ModuleElement(ModuleElementKind::Function, func);
+
+        auto type = module->getFunction(func)->type.getHeapType();
+        if (calledSignatures.count(type)) {
+          // We must not have a type in both calledSignatures and
+          // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
+          // any more.
+          assert(uncalledRefFuncMap.count(type) == 0);
+
+          // We've seen a RefFunc for this, so it is used.
+          use(element);
+        } else {
+          // We've never seen a CallRef for this, but might see one later.
+          uncalledRefFuncMap[type].insert(curr->func);
+
+          referenced.insert(element);
+        }
+      }
+
+      if (finder.usesMemory) {
+        usesMemory = true;
+      }
+
       scanChildren(curr);
     }
     return worked;
@@ -196,6 +408,7 @@ struct Analyzer : public Visitor<Analyzer> {
         ModuleUtils::iterTableSegments(
           *module, value, [&](ElementSegment* segment) {
             use(segment->offset);
+            use(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
           });
       }
     }
@@ -216,14 +429,6 @@ struct Analyzer : public Visitor<Analyzer> {
     // the tree structure guarantees that traversing children, recursively, will
     // only visit each expression once.
     expressionQueue.emplace_back(curr);
-  }
-
-  // Add a reference to a table and all its segments and elements.
-  void useTable(Name name) {
-    use(ModuleElement(ModuleElementKind::Table, name));
-    ModuleUtils::iterTableSegments(*module, name, [&](ElementSegment* segment) {
-      use(ModuleElement(ModuleElementKind::ElementSegment, segment->name));
-    });
   }
 
   // Add the children of a used expression to be walked, if we should do so.
@@ -311,179 +516,6 @@ struct Analyzer : public Visitor<Analyzer> {
         addReferences(global->init);
       }
     }
-  }
-
-  // Visitors
-
-  void visitCall(Call* curr) {
-    use(ModuleElement(ModuleElementKind::Function, curr->target));
-
-    if (Intrinsics(*module).isCallWithoutEffects(curr)) {
-      // A call-without-effects receives a function reference and calls it, the
-      // same as a CallRef. When we have a flag for non-closed-world, we should
-      // handle this automatically by the reference flowing out to an import,
-      // which is what binaryen intrinsics look like. For now, to support use
-      // cases of a closed world but that also use this intrinsic, handle the
-      // intrinsic specifically here. (Without that, the closed world assumption
-      // makes us ignore the function ref that flows to an import, so we are not
-      // aware that it is actually called.)
-      auto* target = curr->operands.back();
-      if (auto* refFunc = target->dynCast<RefFunc>()) {
-        // We can see exactly where this goes.
-        Call call(module->allocator);
-        call.target = refFunc->func;
-        visitCall(&call);
-      } else {
-        // All we can see is the type, so do a CallRef of that.
-        CallRef callRef(module->allocator);
-        callRef.target = target;
-        visitCallRef(&callRef);
-      }
-    }
-  }
-
-  void visitCallIndirect(CallIndirect* curr) { useTable(curr->table); }
-
-  void visitCallRef(CallRef* curr) {
-    // Ignore unreachable code.
-    if (!curr->target->type.isRef()) {
-      return;
-    }
-
-    auto type = curr->target->type.getHeapType();
-
-    // Call all the functions of that signature. We can then forget about
-    // them, as this signature will be marked as called.
-    auto iter = uncalledRefFuncMap.find(type);
-    if (iter != uncalledRefFuncMap.end()) {
-      // We must not have a type in both calledSignatures and
-      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
-      // it any more.
-      assert(calledSignatures.count(type) == 0);
-
-      for (Name target : iter->second) {
-        use(ModuleElement(ModuleElementKind::Function, target));
-      }
-
-      uncalledRefFuncMap.erase(iter);
-    }
-
-    calledSignatures.insert(type);
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    use(ModuleElement(ModuleElementKind::Global, curr->name));
-  }
-  void visitGlobalSet(GlobalSet* curr) {
-    use(ModuleElement(ModuleElementKind::Global, curr->name));
-  }
-
-  void visitLoad(Load* curr) { usesMemory = true; }
-  void visitStore(Store* curr) { usesMemory = true; }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { usesMemory = true; }
-  void visitAtomicRMW(AtomicRMW* curr) { usesMemory = true; }
-  void visitAtomicWait(AtomicWait* curr) { usesMemory = true; }
-  void visitAtomicNotify(AtomicNotify* curr) { usesMemory = true; }
-  void visitAtomicFence(AtomicFence* curr) { usesMemory = true; }
-  void visitMemoryInit(MemoryInit* curr) { usesMemory = true; }
-  void visitDataDrop(DataDrop* curr) {
-    // TODO: Replace this with a use of a data segment (#5224).
-    usesMemory = true;
-  }
-  void visitMemoryCopy(MemoryCopy* curr) { usesMemory = true; }
-  void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
-  void visitMemorySize(MemorySize* curr) { usesMemory = true; }
-  void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
-  void visitRefFunc(RefFunc* curr) {
-    if (!options.closedWorld) {
-      // The world is open, so assume the worst and something (inside or outside
-      // of the module) can call this.
-      use(ModuleElement(ModuleElementKind::Function, curr->func));
-      return;
-    }
-
-    // Otherwise, we are in a closed world, and so we can try to optimize the
-    // case where the target function is referenced but not used.
-    auto element = ModuleElement(ModuleElementKind::Function, curr->func);
-
-    auto type = curr->type.getHeapType();
-    if (calledSignatures.count(type)) {
-      // We must not have a type in both calledSignatures and
-      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for it
-      // any more.
-      assert(uncalledRefFuncMap.count(type) == 0);
-
-      // We've seen a RefFunc for this, so it is used.
-      use(element);
-    } else {
-      // We've never seen a CallRef for this, but might see one later.
-      uncalledRefFuncMap[type].insert(curr->func);
-
-      referenced.insert(element);
-    }
-  }
-  void visitTableGet(TableGet* curr) { useTable(curr->table); }
-  void visitTableSet(TableSet* curr) { useTable(curr->table); }
-  void visitTableSize(TableSize* curr) { useTable(curr->table); }
-  void visitTableGrow(TableGrow* curr) { useTable(curr->table); }
-  void visitThrow(Throw* curr) {
-    use(ModuleElement(ModuleElementKind::Tag, curr->tag));
-  }
-  void visitTry(Try* curr) {
-    for (auto tag : curr->catchTags) {
-      use(ModuleElement(ModuleElementKind::Tag, tag));
-    }
-  }
-
-  // We'll compute SubTypes if we need them.
-  std::unique_ptr<SubTypes> subTypes;
-
-  void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      return;
-    }
-
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      return;
-    }
-
-    if (!readStructFields.count({type, curr->index})) {
-      // This is the first time we see a read of this data. Note that it is
-      // read, and also all subtypes since we might be reading from them as
-      // well.
-      if (!subTypes) {
-        subTypes = std::make_unique<SubTypes>(*module);
-      }
-      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
-        auto sf = StructField{type, curr->index};
-        readStructFields.insert(sf);
-
-        // Walk all the unread data we've queued: we queued it for the
-        // possibility of it ever being read, which just happened.
-        auto iter = unreadStructFieldExprMap.find(sf);
-        if (iter != unreadStructFieldExprMap.end()) {
-          for (auto* expr : iter->second) {
-            use(expr);
-          }
-          // TODO erase?
-        }
-      });
-    }
-  }
-
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
-    switch (curr->op) {
-      case NewData:
-        // TODO: Replace this with a use of the specific data segment (#5224).
-        usesMemory = true;
-        return;
-      case NewElem:
-        auto segment = module->elementSegments[curr->segment]->name;
-        use(ModuleElement(ModuleElementKind::ElementSegment, segment));
-        return;
-    }
-    WASM_UNREACHABLE("unexpected op");
   }
 };
 
