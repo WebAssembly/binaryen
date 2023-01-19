@@ -143,7 +143,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    note(ModuleElement(ModuleElementKind::Function, curr->func));
+    refFuncs.push_back(curr->func);
   }
   void visitTableGet(TableGet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
   void visitTableSet(TableSet* curr) { note(ModuleElement(ModuleElementKind::Table, curr->table)); }
