@@ -72,9 +72,11 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   std::vector<Name> refFuncs;
   bool usesMemory = false;
 
+  // Add an item to the output data structures.
   void note(ModuleElement element) { elements.push_back(element); }
-  void note(HeapType type) { callRefTypes.push_back(type); }
+  void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void note(StructField structField) { structFields.push_back(structField); }
+  void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
 
   // Visitors
 
@@ -115,7 +117,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
       return;
     }
 
-    note(curr->target->type.getHeapType());
+    noteCallRef(curr->target->type.getHeapType());
   }
 
   void visitGlobalGet(GlobalGet* curr) {
@@ -141,7 +143,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
-  void visitRefFunc(RefFunc* curr) { refFuncs.push_back(curr->func); }
+  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
   void visitTableGet(TableGet* curr) {
     note(ModuleElement(ModuleElementKind::Table, curr->table));
   }
@@ -170,7 +172,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     if (type.isBottom()) {
       return;
     }
-    structFields.push_back({type, curr->index});
+    note(StructField{type, curr->index});
   }
   void visitArrayNewSeg(ArrayNewSeg* curr) {
     switch (curr->op) {
