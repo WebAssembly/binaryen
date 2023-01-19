@@ -468,7 +468,7 @@ struct Analyzer {
     // we defer walking of to when we know there is a read that can actually
     // read them, see comments above on |expressionQueue|.
 
-    if (!options.closedWorld || curr->type == Type::unreachable) {
+    if (!options.closedWorld || curr->type == Type::unreachable) { // FIXME
       // If we are in open world then we cannot optimize based on which struct
       // fields we see read, since reads can happen on the outside.
       walkChildren();
@@ -483,7 +483,7 @@ struct Analyzer {
       return;
     }
 
-    auto type = curr->type.getHeapType(); // unreach!
+    auto type = curr->type.getHeapType();
     for (Index i = 0; i < new_->operands.size(); i++) {
       auto* operand = new_->operands[i];
       auto structField = StructField{type, i};
