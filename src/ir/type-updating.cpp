@@ -36,7 +36,22 @@ void GlobalTypeRewriter::update() {
   // come before their subtypes.
   Index i = 0;
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
-  for (auto type : HeapTypeOrdering::SupertypesFirst(privateTypes)) {
+
+  // Topological sort to have supertypes first, but we have to account for the
+  // fact that we may be replacing the supertypes to get the order correct.
+  struct SupertypesFirst
+    : HeapTypeOrdering::SupertypesFirstBase<SupertypesFirst> {
+    GlobalTypeRewriter& parent;
+
+    SupertypesFirst(GlobalTypeRewriter& parent,
+                    const std::vector<HeapType>& types)
+      : SupertypesFirstBase(types), parent(parent) {}
+    std::optional<HeapType> getSuperType(HeapType type) {
+      return parent.getSuperType(type);
+    }
+  };
+
+  for (auto type : SupertypesFirst(*this, privateTypes)) {
     typeIndices[type] = i++;
   }
 

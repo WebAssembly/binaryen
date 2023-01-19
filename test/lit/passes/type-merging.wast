@@ -690,6 +690,32 @@
   )
 )
 
+;; Regresssion test for a bug in which we merged A into A', but
+;; type-updating.cpp ordered B before A', so the supertype ordering was
+;; incorrect.
+(module
+ (rec
+  (type $A (struct))
+  (type $B (struct_subtype $A))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (struct (field (ref $A'))))
+  (type $X (struct (ref $B)))
+  ;; CHECK:       (type $A' (struct ))
+  (type $A' (struct))
+ )
+ ;; CHECK:       (type $none_=>_none (func))
+
+ ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $b (ref null $A'))
+ ;; CHECK-NEXT:  (local $x (ref null $X))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $foo
+   (local $b (ref null $A'))
+   (local $x (ref null $X))
+ )
+)
+
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec
