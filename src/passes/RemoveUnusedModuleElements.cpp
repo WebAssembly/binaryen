@@ -383,12 +383,13 @@ struct Analyzer {
       if (!subTypes) {
         subTypes = std::make_unique<SubTypes>(*module);
       }
-      subTypes->iterSubTypes(type, [&](HeapType type, Index depth) {
-        readStructFields.insert(structField);
+      subTypes->iterSubTypes(type, [&](HeapType subType, Index depth) {
+        auto subStructField = StructField{subType, index};
+        readStructFields.insert(subStructField);
 
         // Walk all the unread data we've queued: we queued it for the
         // possibility of it ever being read, which just happened.
-        auto iter = unreadStructFieldExprMap.find(structField);
+        auto iter = unreadStructFieldExprMap.find(subStructField);
         if (iter != unreadStructFieldExprMap.end()) {
           for (auto* expr : iter->second) {
             use(expr);

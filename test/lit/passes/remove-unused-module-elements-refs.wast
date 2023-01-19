@@ -1365,7 +1365,7 @@
   )
 
   ;; CHECK:      (func $subsubf (type $void)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $subsubf (type $void)
   ;; OPEN_WORLD-NEXT:  (nop)
