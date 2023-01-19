@@ -233,6 +233,35 @@
 (module
   (rec
     ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
+    (type $A (struct         (ref null $X)))
+    (type $B (struct_subtype (ref null $Y) $A))
+    (type $X (struct         (ref null $A)))
+    (type $Y (struct_subtype (ref null $B) $X))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (local $y (ref null $A))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but now the A->B and X->Y chains are not differentiated by the
+    ;; i32 and f32, so all four types can be merged into a single type.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $X (struct (field (ref null $A))))
 
     ;; CHECK:       (type $A (struct (field (ref null $X))))
@@ -249,16 +278,141 @@
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
-    ;; As above, but now the A->B and X->Y chains are not differentiated by the
-    ;; i32 and f32, so all four types can be merged into a single type.
-    ;; TODO: This is not yet implemented. Merge the top level types.
+    ;; As above, but now there is a cast to A that prevents A and X from being
+    ;; merged.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $x (ref null $X))
     (local $y (ref null $Y))
+
+    (drop
+      (ref.cast $A
+        (local.get $a)
+      )
+    )
+  )
+)
+
+(module
+  ;; Check that a diversity of root types are merged correctly.
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $M (struct (field i32) (field i32)))
+
+  ;; CHECK:       (type $L (struct (field i32)))
+
+  ;; CHECK:       (type $K (func (param i32 i32 i32) (result i32 i32)))
+
+  ;; CHECK:       (type $J (func (param i32 i32) (result i32 i32 i32)))
+
+  ;; CHECK:       (type $I (array (ref $A)))
+
+  ;; CHECK:       (type $H (array (ref null $A)))
+
+  ;; CHECK:       (type $G (array (ref any)))
+
+  ;; CHECK:       (type $F (array anyref))
+
+  ;; CHECK:       (type $E (array i64))
+
+  ;; CHECK:       (type $D (array i32))
+
+  ;; CHECK:       (type $C (array i16))
+
+  ;; CHECK:       (type $B (array (mut i8)))
+
+  ;; CHECK:       (type $A (array i8))
+  (type $A  (array i8))
+  (type $A' (array i8))
+  (type $B  (array (mut i8)))
+  (type $B' (array (mut i8)))
+  (type $C  (array i16))
+  (type $C' (array i16))
+  (type $D  (array i32))
+  (type $D' (array i32))
+  (type $E  (array i64))
+  (type $E' (array i64))
+  (type $F  (array anyref))
+  (type $F' (array anyref))
+  (type $G  (array (ref any)))
+  (type $G' (array (ref any)))
+  (type $H  (array (ref null $A)))
+  (type $H' (array (ref null $A)))
+  (type $I  (array (ref $A)))
+  (type $I' (array (ref $A)))
+  (type $J  (func (param i32 i32) (result i32 i32 i32)))
+  (type $J' (func (param i32 i32) (result i32 i32 i32)))
+  (type $K  (func (param i32 i32 i32) (result i32 i32)))
+  (type $K' (func (param i32 i32 i32) (result i32 i32)))
+  (type $L  (struct i32))
+  (type $L' (struct i32))
+  (type $M  (struct i32 i32))
+  (type $M' (struct i32 i32))
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $a' (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $b' (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $c' (ref null $C))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $d' (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (local $e' (ref null $E))
+  ;; CHECK-NEXT:  (local $f (ref null $F))
+  ;; CHECK-NEXT:  (local $f' (ref null $F))
+  ;; CHECK-NEXT:  (local $g (ref null $G))
+  ;; CHECK-NEXT:  (local $g' (ref null $G))
+  ;; CHECK-NEXT:  (local $h (ref null $H))
+  ;; CHECK-NEXT:  (local $h' (ref null $H))
+  ;; CHECK-NEXT:  (local $i (ref null $I))
+  ;; CHECK-NEXT:  (local $i' (ref null $I))
+  ;; CHECK-NEXT:  (local $j (ref null $J))
+  ;; CHECK-NEXT:  (local $j' (ref null $J))
+  ;; CHECK-NEXT:  (local $k (ref null $K))
+  ;; CHECK-NEXT:  (local $k' (ref null $K))
+  ;; CHECK-NEXT:  (local $l (ref null $L))
+  ;; CHECK-NEXT:  (local $l' (ref null $L))
+  ;; CHECK-NEXT:  (local $m (ref null $M))
+  ;; CHECK-NEXT:  (local $m' (ref null $M))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $a  (ref null $A))
+    (local $a' (ref null $A'))
+    (local $b  (ref null $B))
+    (local $b' (ref null $B'))
+    (local $c  (ref null $C))
+    (local $c' (ref null $C'))
+    (local $d  (ref null $D))
+    (local $d' (ref null $D'))
+    (local $e  (ref null $E))
+    (local $e' (ref null $E'))
+    (local $f  (ref null $F))
+    (local $f' (ref null $F'))
+    (local $g  (ref null $G))
+    (local $g' (ref null $G'))
+    (local $h  (ref null $H))
+    (local $h' (ref null $H'))
+    (local $i  (ref null $I))
+    (local $i' (ref null $I'))
+    (local $j  (ref null $J))
+    (local $j' (ref null $J'))
+    (local $k  (ref null $K))
+    (local $k' (ref null $K'))
+    (local $l  (ref null $L))
+    (local $l' (ref null $L'))
+    (local $m  (ref null $M))
+    (local $m' (ref null $M'))
   )
 )
 
