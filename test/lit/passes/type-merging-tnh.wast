@@ -88,12 +88,10 @@
   )
 )
 
-;; call_indirect should not inhibit merging if traps never happen, but we
-;; haven't implemented function type merging yet TODO.
+;; call_indirect should not inhibit merging if traps never happen.
 (module
   ;; CHECK:      (type $A (func))
   (type $A (func))
-  ;; CHECK:      (type $B (func_subtype $A))
   (type $B (func_subtype $A))
 
   (table 1 1 (ref null $A))
@@ -101,7 +99,7 @@
   ;; CHECK:      (table $0 1 1 (ref null $A))
 
   ;; CHECK:      (func $test (type $A)
-  ;; CHECK-NEXT:  (call_indirect $0 (type $B)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $A)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

@@ -12,8 +12,8 @@ i31
 i31ref
 (ref i31)
 (func)
-(struct)
-(array i32)
+(type $struct.0 (struct))
+(type $array.0 (array i32))
 
 ;; Signature
 (func)
