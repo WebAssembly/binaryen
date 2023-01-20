@@ -525,6 +525,84 @@
     )
   )
 
+  ;; TNH:      (func $cast-if-null (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (i32.const 1)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $cast-if-null (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (if (result (ref none))
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $cast-if-null (result (ref $struct))
+    ;; We can remove the unreachable arm of the if here in TNH mode. While doing
+    ;; so we must refinalize properly or else we'll hit an error in pass-debug
+    ;; mode.
+    (ref.cast $struct
+      (if (result (ref none))
+       (i32.const 1)
+       (unreachable)
+       (ref.as_non_null
+         (ref.null none)
+       )
+      )
+    )
+  )
+
+  ;; TNH:      (func $cast-if-null-flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (block
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (i32.const 1)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $cast-if-null-flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (if (result (ref none))
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (unreachable)
+  ;; NO_TNH-NEXT: )
+  (func $cast-if-null-flip (result (ref $struct))
+    ;; As above but with arms flipped.
+    (ref.cast $struct
+      (if (result (ref none))
+       (i32.const 1)
+       (ref.as_non_null
+         (ref.null none)
+       )
+       (unreachable)
+      )
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
