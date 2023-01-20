@@ -458,32 +458,24 @@ struct Analyzer {
 
   // Add the children of a used expression to be walked, if we should do so.
   void scanChildren(Expression* curr) {
-    auto walkChildren = [&]() {
+    // For now, the only special handling we have is fields of struct.new, which
+    // we defer walking of to when we know there is a read that can actually
+    // read them, see comments above on |expressionQueue|. We can only do that
+    // optimization in closed world (as otherwise the field might be read
+    // outside of the code we can see), and when it is reached (if it's
+    // unreachable then we don't know the type, and can defer that to DCE to
+    // remove).
+    if (!options.closedWorld || curr->type == Type::unreachable ||
+        !curr->is<StructNew>()) {
       for (auto* child : ChildIterator(curr)) {
         use(child);
       }
-    };
-
-    // For now, the only special handling we have is fields of struct.new, which
-    // we defer walking of to when we know there is a read that can actually
-    // read them, see comments above on |expressionQueue|.
-
-    if (!options.closedWorld || curr->type == Type::unreachable) { // FIXME
-      // If we are in open world then we cannot optimize based on which struct
-      // fields we see read, since reads can happen on the outside.
-      walkChildren();
       return;
     }
 
-    auto* new_ = curr->dynCast<StructNew>();
-    if (!new_) {
-      // This is not a struct.new, which is the one thing we optimize atm, as
-      // mentioned above.
-      walkChildren();
-      return;
-    }
+    auto* new_ = curr->cast<StructNew>();
+    auto type = new_->type.getHeapType();
 
-    auto type = curr->type.getHeapType();
     for (Index i = 0; i < new_->operands.size(); i++) {
       auto* operand = new_->operands[i];
       auto structField = StructField{type, i};
