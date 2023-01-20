@@ -537,6 +537,11 @@ struct Analyzer {
       // empty it out by replacing its body with an unreachable, which always
       // validates. For that reason all we need to do here is mark the function
       // as referenced - we don't need to do anything with the body.
+      //
+      // Note that it is crucial that we do not call useRefFunc() here: we are
+      // just adding a reference to the function, and not actually using the
+      // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
+      // to make a function itself used.)
       referenced.insert(ModuleElement(ModuleElementKind::Function, func));
     }
 
