@@ -686,6 +686,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
@@ -733,6 +744,17 @@
   ;; OPEN_WORLD-NEXT:     (ref.func $g)
   ;; OPEN_WORLD-NEXT:     (ref.func $h)
   ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; OPEN_WORLD-NEXT:    (drop
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:    (drop
+  ;; OPEN_WORLD-NEXT:     (unreachable)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:    (unreachable)
   ;; OPEN_WORLD-NEXT:   )
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (drop
@@ -786,6 +808,14 @@
           (ref.func $g)
           (ref.func $h)
         )
+      )
+    )
+
+    ;; Test that we do not assert on an unreachable struct.new.
+    (drop
+      (struct.new $vtable
+        (unreachable)
+        (unreachable)
       )
     )
 
