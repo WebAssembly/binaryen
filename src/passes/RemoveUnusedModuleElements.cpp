@@ -256,9 +256,6 @@ struct Analyzer {
     }
   }
 
-  // We'll compute SubTypes if we need them.
-  std::unique_ptr<SubTypes> subTypes;
-
   // Process expressions in the expression queue while we have any, visiting
   // them (using their contents) and adding children. Returns whether we did any
   // work.
