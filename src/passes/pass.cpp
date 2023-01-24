@@ -816,7 +816,7 @@ void PassRunner::run() {
     flush();
   }
 
-  // All the passes the users requested to skip should have been seen, and
+  // All the passes the user requested to skip should have been seen, and
   // skipped. If not, the user may have had a typo in the name of a pass to
   // skip, and we will warn.
   for (auto pass : options.passesToSkip) {
