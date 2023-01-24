@@ -5,13 +5,14 @@
 
 ;; Run in both TNH and non-TNH mode. This pass should do nothing atm in non-TNH.
 
-;; $A :> $B :> $C :> $D1,
-;;                   $D2
+;; $A :> $B :> $C :> $D :> $E
 ;;
-;; $A and $C have no struct.news, so we can optimize casts of them in theory.
-;; But for $C the two children prevent that.
+;; $A and $D have no struct.news, so we can optimize casts of them to their
+;; subtypes.
 (module
   ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
@@ -19,21 +20,19 @@
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:      (type $C (struct_subtype  $B))
-  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
 
+  ;; YESTNH:      (type $C (struct_subtype  $B))
   ;; NO_TNH:      (type $C (struct_subtype  $B))
   (type $C (struct_subtype $B))
 
-  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+  ;; YESTNH:      (type $D (struct_subtype  $C))
+  ;; NO_TNH:      (type $D (struct_subtype  $C))
+  (type $D (struct_subtype $C))
 
-  ;; YESTNH:      (type $D1 (struct_subtype  $C))
-  ;; NO_TNH:      (type $D1 (struct_subtype  $C))
-  (type $D1 (struct_subtype $C))
-
-  ;; YESTNH:      (type $D2 (struct_subtype  $C))
-  ;; NO_TNH:      (type $D2 (struct_subtype  $C))
-  (type $D2 (struct_subtype $C))
+  ;; YESTNH:      (type $E (struct_subtype  $D))
+  ;; NO_TNH:      (type $E (struct_subtype  $D))
+  (type $E (struct_subtype $D))
 
   ;; YESTNH:      (global $global anyref (struct.new_default $B))
   ;; NO_TNH:      (global $global anyref (struct.new_default $B))
@@ -41,32 +40,37 @@
 
   ;; YESTNH:      (func $new (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (struct.new_default $D1)
+  ;; YESTNH-NEXT:   (struct.new_default $C)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (struct.new_default $D2)
+  ;; YESTNH-NEXT:   (struct.new_default $E)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $new (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (struct.new_default $D1)
+  ;; NO_TNH-NEXT:   (struct.new_default $C)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (struct.new_default $D2)
+  ;; NO_TNH-NEXT:   (struct.new_default $E)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $new (param $x anyref)
     (drop
-      (struct.new $D1)
+      (struct.new $C)
     )
     (drop
-      (struct.new $D2)
+      (struct.new $E)
     )
   )
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -76,17 +80,12 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast $E
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $D1
-  ;; YESTNH-NEXT:    (local.get $x)
-  ;; YESTNH-NEXT:   )
-  ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $D2
+  ;; YESTNH-NEXT:   (ref.cast $E
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -108,12 +107,12 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $D1
+  ;; NO_TNH-NEXT:   (ref.cast $D
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $D2
+  ;; NO_TNH-NEXT:   (ref.cast $E
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -122,12 +121,12 @@
     ;; List out all possible casts for comprehensiveness. For other instructions
     ;; we are more focused, below.
     (drop
-      (ref.cast $A
+      (ref.cast $A     ;; This will be $B in TNH.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B     ;; This can change to $C.
+      (ref.cast $B
         (local.get $x)
       )
     )
@@ -137,12 +136,12 @@
       )
     )
     (drop
-      (ref.cast $D1
+      (ref.cast $D     ;; This will be $E in TNH.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $D2
+      (ref.cast $E
         (local.get $x)
       )
     )
@@ -150,21 +149,21 @@
 
   ;; YESTNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.test $C
+  ;; YESTNH-NEXT:   (ref.test $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.test $B
+  ;; NO_TNH-NEXT:   (ref.test $A
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $ref.test (param $x anyref)
     (drop
-      (ref.test $B
+      (ref.test $A
         (local.get $x)
       )
     )
@@ -172,9 +171,9 @@
 
   ;; YESTNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block $block (result (ref $C))
+  ;; YESTNH-NEXT:   (block $block (result (ref $B))
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (br_on_cast $block $C
+  ;; YESTNH-NEXT:     (br_on_cast $block $B
   ;; YESTNH-NEXT:      (local.get $x)
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
@@ -186,7 +185,7 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (br_on_cast $block $B
+  ;; NO_TNH-NEXT:     (br_on_cast $block $A
   ;; NO_TNH-NEXT:      (local.get $x)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -198,7 +197,7 @@
     (drop
       (block $block (result anyref)
         (drop
-          (br_on_cast $block $B
+          (br_on_cast $block $A
             (local.get $x)
           )
         )
@@ -207,3 +206,6 @@
     )
   )
 )
+
+;; As above, but with two subtypes for ?
+

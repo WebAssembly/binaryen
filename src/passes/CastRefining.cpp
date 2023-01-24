@@ -45,14 +45,14 @@ using TypeMap = std::unordered_map<HeapType, HeapType>;
 
 // Gather all types in StructNews.
 struct NewFinder : public PostWalker<NewFinder> {
-  Types& abstractTypes;
+  Types& types;
 
-  NewFinder(Types& abstractTypes) : abstractTypes(abstractTypes) {}
+  NewFinder(Types& types) : types(types) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
     if (type != Type::unreachable) {
-      abstractTypes.insert(type.getHeapType());
+      types.insert(type.getHeapType());
     }
   }
 };
@@ -116,26 +116,32 @@ struct CastRefining : public Pass {
     // First, find "abstract" types, that is, types without a struct.new.
 
     ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
-      *module, [&](Function* func, Types& abstractTypes) {
+      *module, [&](Function* func, Types& types) {
         if (func->imported()) {
           return;
         }
 
-        NewFinder(abstractTypes).walk(func->body);
+        NewFinder(types).walk(func->body);
       });
 
-    Types allAbstractTypes;
-    NewFinder(allAbstractTypes).walkModuleCode(module);
+    Types createdTypes;
+    NewFinder(createdTypes).walkModuleCode(module);
 
     // Combine all the types.
-    for (auto& [_, abstractTypes] : analysis.map) {
-      for (auto type : abstractTypes) {
-        allAbstractTypes.insert(type);
+    for (auto& [_, types] : analysis.map) {
+      for (auto type : types) {
+        createdTypes.insert(type);
       }
     }
 
-    if (allAbstractTypes.empty()) {
-      return;
+    // Abstract types are those with no news, i.e., the complement of
+    // |createdTypes|.
+    Types abstractTypes;
+    auto types = ModuleUtils::collectHeapTypes(*module);
+    for (auto type : types) {
+      if (createdTypes.count(type) == 0) {
+        abstractTypes.insert(type);
+      }
     }
 
     // We found abstract types. Next, find which of them are optimizable. We
@@ -146,7 +152,7 @@ struct CastRefining : public Pass {
 
     TypeMap optimizableTypes;
 
-    for (auto type : allAbstractTypes) {
+    for (auto type : abstractTypes) {
       auto& typeSubTypes = subTypes.getStrictSubTypes(type);
       if (typeSubTypes.size() == 1) {
         optimizableTypes[type] = typeSubTypes[0];
