@@ -30,6 +30,8 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -37,6 +39,62 @@
 namespace wasm {
 
 namespace {
+
+using Types = std::unordered_set<HeapType>;
+using TypeMap = std::unordered_map<HeapType, HeapType>;
+
+// Gather all types in StructNews.
+struct NewFinder : public PostWalker<NewFinder> {
+  Types& abstractTypes;
+
+  NewFinder(Types& abstractTypes) : abstractTypes(abstractTypes) {}
+
+  void visitStructNew(StructNew* curr) {
+    auto type = curr->type;
+    if (type != Type::unreachable) {
+      abstractTypes.insert(type.getHeapType());
+    }
+  }
+};
+
+// Given a map of [old type, new type], where each old type can be optimized to
+// the new type in a cast, apply those optimizations.
+struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
+  bool isFunctionParallel() override { return true; }
+
+  TypeMap& optimizableTypes;
+
+  Optimizer(TypeMap& optimizableTypes) : optimizableTypes(optimizableTypes) {}
+
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<Optimizer>(optimizableTypes);
+  }
+
+  template<typename T> void visitCast(T* curr) {
+    auto& type = curr->getCastType();
+    if (type == Type::unreachable) {
+      return;
+    }
+
+    auto iter = optimizableTypes.find(type.getHeapType());
+    if (iter == optimizableTypes.end()) {
+      return;
+    }
+
+    // Success: Apply the new type.
+    type = Type(iter->second, type.getNullability());
+  }
+
+  void visitRefCast(RefCast* curr) {
+    visitCast(curr);
+  }
+
+  void visitRefTest(RefTest* curr) { visitCast(curr); }
+
+  void visitBrOn(BrOn* curr) {
+    visitCast(curr);
+  }
+};
 
 struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
@@ -59,21 +117,7 @@ struct CastRefining : public Pass {
       return;
     }
 
-    // Look for "abstract" types, that is, types without a struct.new.
-    using Types = std::unordered_set<HeapType>;
-
-    struct NewFinder : public PostWalker<NewFinder> {
-      Types& abstractTypes;
-
-      NewFinder(Types& abstractTypes) : abstractTypes(abstractTypes) {}
-
-      void visitStructNew(StructNew* curr) {
-        auto type = curr->type;
-        if (type != Type::unreachable) {
-          abstractTypes.insert(type.getHeapType());
-        }
-      }
-    };
+    // First, find "abstract" types, that is, types without a struct.new.
 
     ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
       *module, [&](Function* func, Types& abstractTypes) {
@@ -84,39 +128,45 @@ struct CastRefining : public Pass {
         NewFinder(abstractTypes).walk(func->body);
       });
 
-    NewFinder(abstractTypes).walkModuleCode(module);
+    Types allAbstractTypes;
+    NewFinder(allAbstractTypes).walkModuleCode(module);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (refinedResults) {
-      // After return types change we need to propagate.
-      // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(getPassRunner(), module);
+    // Combine all the types.
+    for (auto& [_, abstractTypes] : analysis.map) {
+      for (auto type : abstractTypes) {
+        allAbstractTypes.insert(type);
+      }
     }
+
+    if (allAbstractTypes.empty()) {
+      return;
+    }
+
+    // We found abstract types. Next, find which of them are optimizable. We
+    // need an abstract type to have a single subtype, to which we will switch
+    // all of their casts.
+
+    SubTypes subTypes(*module);
+
+    TypeMap optimizableTypes;
+
+    for (auto type : allAbstractTypes) {
+      auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+      if (typeSubTypes.size() == 1) {
+        optimizableTypes[type] = typeSubTypes[0];
+      }
+    }
+
+    if (optimizableTypes.empty()) {
+      return;
+    }
+
+    // We found optimizable types. Apply them.
+    Optimizer optimizer(optimizableTypes);
+    optimizer.run(getPassRunner(), module);
+
+    // Refinalize, as RefCasts may have new types now.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
