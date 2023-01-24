@@ -51,6 +51,9 @@
 ;; CHECK-NEXT:   --avoid-reinterprets                          Tries to avoid reinterpret
 ;; CHECK-NEXT:                                                 operations via more loads
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --cast-refining                               refine cast types using global
+;; CHECK-NEXT:                                                 information
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --cfp                                         propagate constant struct field
 ;; CHECK-NEXT:                                                 values
 ;; CHECK-NEXT:
