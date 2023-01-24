@@ -59,7 +59,7 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
   if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
       curr->is<Try>() || curr->is<Pop>() ||
       BranchUtils::getDefinedName(curr).is()) {
-    // If curr is concrete we must drop if. Or, if it is unreachable or none,
+    // If curr is concrete we must drop it. Or, if it is unreachable or none,
     // then we can leave it as it is.
     if (curr->type.isConcrete()) {
       curr = builder.makeDrop(curr);
