@@ -85,15 +85,11 @@ struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
     type = Type(iter->second, type.getNullability());
   }
 
-  void visitRefCast(RefCast* curr) {
-    visitCast(curr);
-  }
+  void visitRefCast(RefCast* curr) { visitCast(curr); }
 
   void visitRefTest(RefTest* curr) { visitCast(curr); }
 
-  void visitBrOn(BrOn* curr) {
-    visitCast(curr);
-  }
+  void visitBrOn(BrOn* curr) { visitCast(curr); }
 };
 
 struct CastRefining : public Pass {
