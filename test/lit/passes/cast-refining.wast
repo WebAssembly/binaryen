@@ -23,12 +23,62 @@
 
   (global $global anyref (struct.new $B))
 
-  (func $func
+  (func $new (param $x anyref)
     (drop
       (struct.new $D1
     )
     (drop
       (struct.new $D2
+    )
+  )
+
+  (func $ref.cast
+    ;; List out all possible casts for comprehensiveness. For other instructions
+    ;; we are more focused, below.
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $D1
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $D2
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $ref.test
+    (drop
+      (ref.test $A
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $br_on
+    (drop
+      (block (result anyref)
+        (drop
+          (br_on_cast $A
+            (local.get $x)
+          )
+        )
+      )
     )
   )
 )
