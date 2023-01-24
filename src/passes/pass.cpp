@@ -101,6 +101,9 @@ void PassRegistry::registerPasses() {
                "removes arguments to calls in an lto-like manner, and "
                "optimizes where we removed",
                createDAEOptimizingPass);
+  registerPass("cast-refining",
+               "refine cast types using global information",
+               createCastRefiningPass);
   registerPass("coalesce-locals",
                "reduce # of locals by coalescing",
                createCoalesceLocalsPass);
@@ -626,6 +629,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       addIfNoDWARFIssues("remove-unused-types");
       addIfNoDWARFIssues("cfp");
       addIfNoDWARFIssues("gsi");
+      addIfNoDWARFIssues("cast-refining");
     }
   }
   // TODO: generate-global-effects here, right before function passes, then
