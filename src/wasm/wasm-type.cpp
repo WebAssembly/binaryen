@@ -1728,10 +1728,7 @@ bool SubTyper::isSubType(const Field& a, const Field& b) {
 }
 
 bool SubTyper::isSubType(const Signature& a, const Signature& b) {
-  // TODO: Implement proper signature subtyping, covariant in results and
-  // contravariant in params, once V8 implements it.
-  // return isSubType(b.params, a.params) && isSubType(a.results, b.results);
-  return a == b;
+  return isSubType(b.params, a.params) && isSubType(a.results, b.results);
 }
 
 bool SubTyper::isSubType(const Struct& a, const Struct& b) {
@@ -1870,6 +1867,10 @@ std::ostream& TypePrinter::print(HeapType type) {
     }
   }
 
+  os << "(type ";
+  printHeapTypeName(type);
+  os << " ";
+
   if (isTemp(type)) {
     os << "(; temp ;) ";
   }
@@ -1888,7 +1889,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
-  return os;
+  return os << ")";
 }
 
 std::ostream& TypePrinter::print(const Tuple& tuple) {
@@ -2905,11 +2906,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     state.results.push_back(asHeapType(info));
     state.newInfos.emplace_back(std::move(info));
   }
-
-#if TRACE_CANONICALIZATION
-  std::cerr << "Before replacing basic heap types:\n";
-  state.dump();
-#endif
 
   // Eagerly replace references to built basic heap types so the more
   // complicated canonicalization algorithms don't need to consider them.

@@ -1914,34 +1914,10 @@ struct OptimizeInstructions
       return;
     }
 
-    Builder builder(*getModule());
-
-    auto fallthrough =
-      Properties::getFallthrough(curr->ref, getPassOptions(), *getModule());
-
-    auto intendedType = curr->type.getHeapType();
-
-    // If the value is a null, then we know a nullable cast will succeed and a
-    // non-nullable cast will fail. Either way, we do not need the cast. We've
-    // already handled the non-nullable case above, so all we have left is a
-    // nullable one.
-    // Note that we have to avoid changing the type when replacing a cast with
-    // its potentially more refined child, e.g.
-    //   (ref.cast null (ref.as_non_null (.. (ref.null)))
-    if (fallthrough->is<RefNull>() && curr->type.isNullable()) {
-      // Replace the expression to drop the input and directly produce the
-      // null.
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                          builder.makeRefNull(intendedType)));
-      return;
-      // TODO: The optimal ordering of this and the other ref.as_non_null
-      //       stuff later down in this functions is unclear and may be worth
-      //       looking into.
-    }
-
-    // Check whether the cast will definitely fail. Look not just at the
-    // fallthrough but all intermediatary fallthrough values as well, as if any
-    // of them has a type that cannot be cast to us, then we will trap, e.g.
+    // Check whether the cast will definitely fail (or succeed). Look not just
+    // at the fallthrough but all intermediatary fallthrough values as well, as
+    // if any of them has a type that cannot be cast to us, then we will trap,
+    // e.g.
     //
     //   (ref.cast $struct-A
     //     (ref.cast $struct-B
@@ -1950,12 +1926,48 @@ struct OptimizeInstructions
     //
     // The fallthrough is the local.get, but the array cast in the middle
     // proves a trap must happen.
+    Builder builder(*getModule());
+    auto nullType = curr->type.getHeapType().getBottom();
     {
-      auto* ref = curr->ref;
+      auto** refp = &curr->ref;
       while (1) {
+        auto* ref = *refp;
+
         auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
 
-        if (result == GCTypeUtils::Failure) {
+        if (result == GCTypeUtils::Success) {
+          // The cast will succeed. This can only happen if the ref is a subtype
+          // of the cast instruction, which means we can replace the cast with
+          // the ref.
+          assert(Type::isSubType(ref->type, curr->type));
+          if (curr->type != ref->type) {
+            refinalize = true;
+          }
+          // If there were no intermediate expressions, we can just skip the
+          // cast.
+          if (ref == curr->ref) {
+            replaceCurrent(ref);
+            return;
+          }
+          // Otherwise we can't just remove the cast and replace it with `ref`
+          // because the intermediate expressions might have had side effects.
+          // We can replace the cast with a drop followed by a direct return of
+          // the value, though.
+          if (ref->type.isNull()) {
+            // We can materialize the resulting null value directly.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                                builder.makeRefNull(nullType)));
+            return;
+          }
+          // We need to use a tee to return the value since we can't materialize
+          // it directly.
+          auto scratch = builder.addVar(getFunction(), ref->type);
+          *refp = builder.makeLocalTee(scratch, ref, ref->type);
+          replaceCurrent(
+            builder.makeSequence(builder.makeDrop(curr->ref),
+                                 builder.makeLocalGet(scratch, ref->type)));
+          return;
+        } else if (result == GCTypeUtils::Failure) {
           // This cast cannot succeed, so it will trap.
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
@@ -1964,7 +1976,7 @@ struct OptimizeInstructions
             curr->type));
           return;
         } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
-          curr->type = Type(intendedType.getBottom(), Nullable);
+          curr->type = Type(nullType, Nullable);
           // Call replaceCurrent() to make us re-optimize this node, as we may
           // have just unlocked further opportunities. (We could just continue
           // down to the rest, but we'd need to do more work to make sure all
@@ -1974,10 +1986,10 @@ struct OptimizeInstructions
           return;
         }
 
-        auto* last = ref;
-        ref = Properties::getImmediateFallthrough(
-          ref, getPassOptions(), *getModule());
-        if (ref == last) {
+        auto** last = refp;
+        refp = Properties::getImmediateFallthroughPtr(
+          refp, getPassOptions(), *getModule());
+        if (refp == last) {
           break;
         }
       }

@@ -17,7 +17,8 @@
 //
 // Removes module elements that are are never used: functions, globals, and
 // tags, which may be imported or not, and function types (which we merge and
-// remove if unneeded)
+// remove if unneeded). Basically "global dead code elimination" but not just
+// for code.
 //
 
 #include <memory>
@@ -45,8 +46,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   Module* module;
   bool closedWorld;
 
-  std::vector<ModuleElement> queue;
+  // The set of all reachable things we've seen so far.
   std::set<ModuleElement> reachable;
+
+  // A queue of reachable things that we need to process. These appear in
+  // |reachable|, and the work we do when we pop them from the queue is to look
+  // at the things they reach.
+  std::vector<ModuleElement> queue;
+
   bool usesMemory = false;
 
   // The signatures that we have seen a call_ref for. When we see a RefFunc of a
@@ -74,7 +81,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
                        const std::vector<ModuleElement>& roots,
                        bool closedWorld)
     : module(module), closedWorld(closedWorld) {
+
+    for (auto& element : roots) {
+      reachable.insert(element);
+    }
     queue = roots;
+
     // Globals used in memory/table init expressions are also roots
     for (auto& segment : module->dataSegments) {
       if (!segment->isPassive) {
@@ -91,32 +103,31 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     while (queue.size()) {
       auto curr = queue.back();
       queue.pop_back();
-      if (reachable.emplace(curr).second) {
-        auto& [kind, value] = curr;
-        if (kind == ModuleElementKind::Function) {
-          // if not an import, walk it
-          auto* func = module->getFunction(value);
-          if (!func->imported()) {
-            walk(func->body);
-          }
-        } else if (kind == ModuleElementKind::Global) {
-          // if not imported, it has an init expression we need to walk
-          auto* global = module->getGlobal(value);
-          if (!global->imported()) {
-            walk(global->init);
-          }
-        } else if (kind == ModuleElementKind::Table) {
-          ModuleUtils::iterTableSegments(
-            *module, curr.second, [&](ElementSegment* segment) {
-              walk(segment->offset);
-            });
+      assert(reachable.count(curr));
+      auto& [kind, value] = curr;
+      if (kind == ModuleElementKind::Function) {
+        // if not an import, walk it
+        auto* func = module->getFunction(value);
+        if (!func->imported()) {
+          walk(func->body);
         }
+      } else if (kind == ModuleElementKind::Global) {
+        // if not imported, it has an init expression we need to walk
+        auto* global = module->getGlobal(value);
+        if (!global->imported()) {
+          walk(global->init);
+        }
+      } else if (kind == ModuleElementKind::Table) {
+        ModuleUtils::iterTableSegments(
+          *module, curr.second, [&](ElementSegment* segment) {
+            walk(segment->offset);
+          });
       }
     }
   }
 
   void maybeAdd(ModuleElement element) {
-    if (reachable.count(element) == 0) {
+    if (reachable.emplace(element).second) {
       queue.emplace_back(element);
     }
   }

@@ -18,6 +18,7 @@
 #include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
+#include "ir/module-splitting.h"
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -48,6 +49,12 @@
 //
 //      Wrap each export in the comma-separated list. Similar to jspi-imports,
 //      wildcards and separate files are supported.
+//
+//   --pass-arg=jspi-split-module
+//
+//      Enables integration with wasm-split. A JSPI'ed function named
+//      `__load_secondary_module` will be injected that is used by wasm-split to
+//      load a secondary module.
 //
 
 namespace wasm {
@@ -86,6 +93,22 @@ struct JSPI : public Pass {
     auto stateChangingExports = String::trim(read_possible_response_file(
       options.getArgumentOrDefault("jspi-exports", "")));
     String::Split listedExports(stateChangingExports, ",");
+
+    bool wasmSplit = options.hasArgument("jspi-split-module");
+    if (wasmSplit) {
+      // Make an import for the load secondary module function so a JSPI wrapper
+      // version will be created.
+      auto import =
+        Builder::makeFunction(ModuleSplitting::LOAD_SECONDARY_MODULE,
+                              Signature(Type::none, Type::none),
+                              {});
+      import->module = ENV;
+      import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
+      module->addFunction(std::move(import));
+      listedImports.push_back(
+        ENV.toString() + "." +
+        ModuleSplitting::LOAD_SECONDARY_MODULE.toString());
+    }
 
     // Create a global to store the suspender that is passed into exported
     // functions and will then need to be passed out to the imported functions.
@@ -128,7 +151,7 @@ struct JSPI : public Pass {
       if (im->imported() &&
           canChangeState(getFullFunctionName(im->module, im->base),
                          listedImports)) {
-        makeWrapperForImport(im, module, suspender);
+        makeWrapperForImport(im, module, suspender, wasmSplit);
       }
     }
   }
@@ -181,7 +204,10 @@ private:
     return module->addFunction(std::move(wrapperFunc))->name;
   }
 
-  void makeWrapperForImport(Function* im, Module* module, Name suspender) {
+  void makeWrapperForImport(Function* im,
+                            Module* module,
+                            Name suspender,
+                            bool wasmSplit) {
     Builder builder(*module);
     auto wrapperIm = make_unique<Function>();
     wrapperIm->name = Names::getValidFunctionName(
@@ -234,6 +260,15 @@ private:
     stub->body = block;
     wrapperIm->type = Signature(Type(params), call->type);
 
+    if (wasmSplit && im->name == ModuleSplitting::LOAD_SECONDARY_MODULE) {
+      // In non-debug builds the name of the JSPI wrapper function for loading
+      // the secondary module will be removed. Create an export of it so that
+      // wasm-split can find it.
+      module->addExport(
+        builder.makeExport(ModuleSplitting::LOAD_SECONDARY_MODULE,
+                           ModuleSplitting::LOAD_SECONDARY_MODULE,
+                           ExternalKind::Function));
+    }
     module->removeFunction(im->name);
     module->addFunction(std::move(stub));
     module->addFunction(std::move(wrapperIm));

@@ -69,6 +69,7 @@
 
 #include "ir/module-splitting.h"
 #include "ir/element-utils.h"
+#include "ir/export-utils.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -79,6 +80,8 @@
 namespace wasm::ModuleSplitting {
 
 namespace {
+
+static const Name LOAD_SECONDARY_STATUS = "load_secondary_module_status";
 
 template<class F> void forEachElement(Module& module, F f) {
   ModuleUtils::iterActiveElementSegments(module, [&](ElementSegment* segment) {
@@ -273,6 +276,9 @@ struct ModuleSplitter {
   // Map placeholder indices to the names of the functions they replace.
   std::map<size_t, Name> placeholderMap;
 
+  // Internal name of the LOAD_SECONDARY_MODULE function.
+  Name internalLoadSecondaryModule;
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
@@ -281,8 +287,10 @@ struct ModuleSplitter {
 
   // Other helpers
   void exportImportFunction(Name func);
+  Expression* maybeLoadSecondary(Builder& builder, Expression* callIndirect);
 
   // Main splitting steps
+  void setupJSPI();
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectCallsToSecondaryFunctions();
@@ -297,6 +305,9 @@ struct ModuleSplitter {
       primaryFuncs(classifiedFuncs.first),
       secondaryFuncs(classifiedFuncs.second), tableManager(primary),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
+    if (config.jspi) {
+      setupJSPI();
+    }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
@@ -305,6 +316,23 @@ struct ModuleSplitter {
     shareImportableItems();
   }
 };
+
+void ModuleSplitter::setupJSPI() {
+  assert(primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
+         "The load secondary module function must exist");
+  // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
+  // internally.
+  internalLoadSecondaryModule = primary.getExport(LOAD_SECONDARY_MODULE)->value;
+  primary.removeExport(LOAD_SECONDARY_MODULE);
+  Builder builder(primary);
+  // Add a global to track whether the secondary module has been loaded yet.
+  primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
+                                       Type::i32,
+                                       builder.makeConst(int32_t(0)),
+                                       Builder::Mutable));
+  primary.addExport(builder.makeExport(
+    LOAD_SECONDARY_STATUS, LOAD_SECONDARY_STATUS, ExternalKind::Global));
+}
 
 std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   // Create the secondary module and copy trivial properties.
@@ -318,7 +346,12 @@ std::pair<std::set<Name>, std::set<Name>>
 ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
   std::set<Name> primaryFuncs, secondaryFuncs;
   for (auto& func : primary.functions) {
-    if (func->imported() || config.primaryFuncs.count(func->name)) {
+    // In JSPI mode exported functions cannot be moved to the secondary
+    // module since that would make them async when they may not have the JSPI
+    // wrapper. Exported JSPI functions can still benefit from splitting though
+    // since only the JSPI wrapper stub will remain in the primary module.
+    if (func->imported() || config.primaryFuncs.count(func->name) ||
+        (config.jspi && ExportUtils::isExported(primary, *func))) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
@@ -409,6 +442,20 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
   }
 }
 
+Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
+                                               Expression* callIndirect) {
+  if (!config.jspi) {
+    return callIndirect;
+  }
+  // Check if the secondary module is loaded and if it isn't, call the
+  // function to load it.
+  auto* loadSecondary = builder.makeIf(
+    builder.makeUnary(EqZInt32,
+                      builder.makeGlobalGet(LOAD_SECONDARY_STATUS, Type::i32)),
+    builder.makeCall(internalLoadSecondaryModule, {}, Type::none));
+  return builder.makeSequence(loadSecondary, callIndirect);
+}
+
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
@@ -425,12 +472,14 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       }
       auto* func = parent.secondary.getFunction(curr->target);
       auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
-      replaceCurrent(
+
+      replaceCurrent(parent.maybeLoadSecondary(
+        builder,
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
                                  func->type,
-                                 curr->isReturn));
+                                 curr->isReturn)));
     }
     void visitRefFunc(RefFunc* curr) {
       assert(false && "TODO: handle ref.func as well");

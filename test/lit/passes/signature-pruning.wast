@@ -849,3 +849,42 @@
     )
   )
 )
+
+;; Due to function subtyping, we cannot prune fields from $func.B without also
+;; pruning them in $func.A, and vice versa, if they have a subtyping
+;; relationship. Atm we do not prune such "cycles" so we do not optimize here.
+;; TODO
+(module
+  ;; CHECK:      (type $array.A (array (ref $struct.A)))
+
+  ;; CHECK:      (type $array.B (array_subtype (ref $struct.B) $array.A))
+
+  ;; CHECK:      (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
+
+  ;; CHECK:      (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
+
+  ;; CHECK:      (type $struct.A (struct (field i32)))
+  (type $struct.A (struct (field i32)))
+  ;; CHECK:      (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
+  (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
+
+  (type $array.A (array (ref $struct.A)))
+  (type $array.B (array_subtype (ref $struct.B) $array.A))
+
+  (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
+  (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
+
+  ;; CHECK:      (func $func.A (type $func.A) (param $0 (ref $array.B)) (result (ref $array.A))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func.A (type $func.A) (param $0 (ref $array.B)) (result (ref $array.A))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $func.B (type $func.B) (param $0 (ref $array.A)) (result (ref $array.B))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func.B (type $func.B) (param $0 (ref $array.A)) (result (ref $array.B))
+    (unreachable)
+  )
+)

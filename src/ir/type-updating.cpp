@@ -20,6 +20,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "support/topological_sort.h"
+#include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -33,32 +34,24 @@ void GlobalTypeRewriter::update() {
   // be reflected on or used for linking. Figure out where each private type
   // will be located in the builder. Sort the private types so that supertypes
   // come before their subtypes.
-  struct SortedPrivateTypes : TopologicalSort<HeapType, SortedPrivateTypes> {
-    SortedPrivateTypes(Module& wasm) {
-      auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
-      std::unordered_set<HeapType> supertypes;
-      for (auto type : privateTypes) {
-        if (auto super = type.getSuperType()) {
-          supertypes.insert(*super);
-        }
-      }
-      // Types that are not supertypes of others are the roots.
-      for (auto type : privateTypes) {
-        if (!supertypes.count(type)) {
-          push(type);
-        }
-      }
-    }
+  Index i = 0;
+  auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
 
-    void pushPredecessors(HeapType type) {
-      if (auto super = type.getSuperType()) {
-        push(*super);
-      }
+  // Topological sort to have supertypes first, but we have to account for the
+  // fact that we may be replacing the supertypes to get the order correct.
+  struct SupertypesFirst
+    : HeapTypeOrdering::SupertypesFirstBase<SupertypesFirst> {
+    GlobalTypeRewriter& parent;
+
+    SupertypesFirst(GlobalTypeRewriter& parent,
+                    const std::vector<HeapType>& types)
+      : SupertypesFirstBase(types), parent(parent) {}
+    std::optional<HeapType> getSuperType(HeapType type) {
+      return parent.getSuperType(type);
     }
   };
 
-  Index i = 0;
-  for (auto type : SortedPrivateTypes(wasm)) {
+  for (auto type : SupertypesFirst(*this, privateTypes)) {
     typeIndices[type] = i++;
   }
 
@@ -111,7 +104,7 @@ void GlobalTypeRewriter::update() {
     }
 
     // Apply a super, if there is one
-    if (auto super = type.getSuperType()) {
+    if (auto super = getSuperType(type)) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
         assert(it->second < i);
         typeBuilder[i].subTypeOf(typeBuilder[it->second]);

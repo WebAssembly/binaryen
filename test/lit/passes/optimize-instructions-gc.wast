@@ -1108,24 +1108,36 @@
     )
   )
   ;; CHECK:      (func $ref-cast-squared-fallthrough (type $eqref_=>_none) (param $x eqref)
+  ;; CHECK-NEXT:  (local $1 (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
-  ;; CHECK-NEXT:    (local.tee $x
-  ;; CHECK-NEXT:     (ref.cast null $struct
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:   (block (result (ref null $struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:       (ref.cast null $struct
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-squared-fallthrough (type $eqref_=>_none) (param $x eqref)
+  ;; NOMNL-NEXT:  (local $1 (ref null $struct))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct
-  ;; NOMNL-NEXT:    (local.tee $x
-  ;; NOMNL-NEXT:     (ref.cast null $struct
-  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:   (block (result (ref null $struct))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.tee $x
+  ;; NOMNL-NEXT:      (local.tee $1
+  ;; NOMNL-NEXT:       (ref.cast null $struct
+  ;; NOMNL-NEXT:        (local.get $x)
+  ;; NOMNL-NEXT:       )
+  ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $1)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1877,28 +1889,7 @@
   ;; CHECK:      (func $ref-cast-static-null (type $void)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
@@ -1920,32 +1911,35 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.cast null none
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.cast null none
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-null (type $void)
   ;; NOMNL-NEXT:  (local $a (ref null $A))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result nullref)
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (ref.null none)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result nullref)
@@ -1967,30 +1961,44 @@
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result nullref)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result nullref)
+  ;; NOMNL-NEXT:      (ref.cast null none
+  ;; NOMNL-NEXT:       (local.get $a)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result nullref)
+  ;; NOMNL-NEXT:      (ref.cast null none
+  ;; NOMNL-NEXT:       (local.get $a)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-static-null
     (local $a (ref null $A))
     ;; Casting nulls results in a null.
     (drop
       (ref.cast null $A
-        (ref.null $A)
-      )
-    )
-    (drop
-      (ref.cast null $A
-        (ref.null $B)
-      )
-    )
-    (drop
-      (ref.cast null $B
-        (ref.null $A)
+        (ref.null none)
       )
     )
     ;; A fallthrough works too.
     (drop
-      (ref.cast null $A
+      (ref.cast null $B
         (local.tee $a
-          (ref.null $A)
+          (ref.null none)
         )
       )
     )
@@ -1998,7 +2006,27 @@
     (drop
       (ref.cast $A
         (local.tee $a
-          (ref.null $A)
+          (ref.null none)
+        )
+      )
+    )
+    ;; The prior two examples work even if the fallthrough is only later proven
+    ;; to be null.
+    (drop
+      (ref.cast null $B
+        (block (result (ref null $A))
+          (ref.cast null none
+            (local.get $a)
+          )
+        )
+      )
+    )
+    (drop
+      (ref.cast $B
+        (block (result (ref null $A))
+          (ref.cast null none
+            (local.get $a)
+          )
         )
       )
     )
@@ -2443,39 +2471,50 @@
   )
 
   ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
+  ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (block (result (ref eq))
-  ;; CHECK-NEXT:     (call $ref-cast-static-fallthrough-remaining
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.cast $B
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:   (block (result (ref $B))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $B))
+  ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:       (ref.cast $B
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $ref-cast-static-fallthrough-remaining-nonnull (type $ref|eq|_=>_none) (param $x (ref eq))
+  ;; NOMNL-NEXT:  (local $1 (ref $B))
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast $A
-  ;; NOMNL-NEXT:    (block (result (ref eq))
-  ;; NOMNL-NEXT:     (call $ref-cast-static-fallthrough-remaining
-  ;; NOMNL-NEXT:      (local.get $x)
-  ;; NOMNL-NEXT:     )
-  ;; NOMNL-NEXT:     (ref.cast $B
-  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:   (block (result (ref $B))
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (block (result (ref $B))
+  ;; NOMNL-NEXT:      (call $ref-cast-static-fallthrough-remaining
+  ;; NOMNL-NEXT:       (local.get $x)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:      (local.tee $1
+  ;; NOMNL-NEXT:       (ref.cast $B
+  ;; NOMNL-NEXT:        (local.get $x)
+  ;; NOMNL-NEXT:       )
+  ;; NOMNL-NEXT:      )
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (local.get $1)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $ref-cast-static-fallthrough-remaining-nonnull (param $x (ref eq))
-    ;; The input is non-nullable here, and the middle block is of a simpler
-    ;; type than either the parent or the child. This checks that we do not
-    ;; mis-optimize this case: In general the outer cast is not needed, but
-    ;; the middle block prevents us from seeing that (after other opts run,
-    ;; however, we would).
+    ;; The input is non-nullable here, and the middle block is of a simpler type
+    ;; than either the parent or the child. This checks that we do not
+    ;; mis-optimize this case: The outer cast is not needed, so we can optimize
+    ;; it out, but we have to be careful not to remove any side effects.
     (drop
       (ref.cast $A
         (block (result (ref eq))

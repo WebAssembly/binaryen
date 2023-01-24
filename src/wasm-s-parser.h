@@ -91,16 +91,16 @@ public:
 // Generic S-Expression parsing into lists
 //
 class SExpressionParser {
-  char* input;
+  const char* input;
   size_t line;
-  char* lineStart;
+  char const* lineStart;
   SourceLocation* loc = nullptr;
 
   MixedArena allocator;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionParser(char* input);
+  SExpressionParser(const char* input);
   Element* root;
 
 private:
