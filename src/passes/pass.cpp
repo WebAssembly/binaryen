@@ -692,6 +692,9 @@ void PassRunner::run() {
   assert(!ran);
   ran = true;
 
+  // As we run passes, we'll notice which we skip.
+  skippedPasses.clear();
+
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -812,6 +815,16 @@ void PassRunner::run() {
     }
     flush();
   }
+
+  // All the passes the user requested to skip should have been seen, and
+  // skipped. If not, the user may have had a typo in the name of a pass to
+  // skip, and we will warn.
+  for (auto pass : options.passesToSkip) {
+    if (!skippedPasses.count(pass)) {
+      std::cerr << "warning: --" << pass << " was requested to be skipped, "
+                << "but it was not found in the passes that were run.\n";
+    }
+  }
 }
 
 void PassRunner::runOnFunction(Function* func) {
@@ -930,6 +943,13 @@ struct AfterEffectModuleChecker {
 };
 
 void PassRunner::runPass(Pass* pass) {
+  assert(!pass->isFunctionParallel());
+
+  if (options.passesToSkip.count(pass->name)) {
+    skippedPasses.insert(pass->name);
+    return;
+  }
+
   std::unique_ptr<AfterEffectModuleChecker> checker;
   if (getPassDebug()) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
@@ -948,6 +968,11 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
+
+  if (options.passesToSkip.count(pass->name)) {
+    skippedPasses.insert(pass->name);
+    return;
+  }
 
   auto passDebug = getPassDebug();
 
