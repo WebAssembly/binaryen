@@ -284,7 +284,7 @@ struct OptimizationOptions : public ToolOptions {
            OptimizationOptionsCategory,
            Options::Arguments::One,
            [this](Options*, const std::string& pass) {
-             passOptions.skippedPasses.insert(pass);
+             passOptions.passesToSkip.insert(pass);
            });
 
     // add passes in registry
