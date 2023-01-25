@@ -192,10 +192,6 @@ std::cerr << "refinable: " << module->typeNames[type].name << " => "
       }
     }
 
-    if (refinableTypes.empty()) {
-      return;
-    }
-
     // We found optimizable types. Apply them.
     Optimizer optimizer(*this);
     optimizer.run(getPassRunner(), module);
@@ -223,13 +219,30 @@ std::cerr << "refinable: " << module->typeNames[type].name << " => "
         return;
       }
 
-      auto iter = parent.refinableTypes.find(type.getHeapType());
-      if (iter == parent.refinableTypes.end()) {
+      auto heapType = type.getHeapType();
+
+      auto iter = parent.refinableTypes.find(heapType);
+      if (iter != parent.refinableTypes.end()) {
+        // We can refine this cast.
+        type = Type(iter->second, type.getNullability());
         return;
       }
 
-      // Success: Apply the new type.
-      type = Type(iter->second, type.getNullability());
+      if (parent.createdTypesOrSubTypes.count(heapType) == 0) {
+        // Nothing is created of this type or any subtype, so the cast can only
+        // pass through a null, at most.
+        Builder builder(*getModule());
+        Expression* rep;
+        if (type.isNullable()) {
+          rep = builder.makeRefNull(heapType.getBottom());
+        } else {
+          rep = builder.makeUnreachable();
+        }
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr),
+          rep
+        ));
+      }
     }
 
     void visitRefCast(RefCast* curr) { visitCast(curr); }

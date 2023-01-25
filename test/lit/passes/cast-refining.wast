@@ -183,7 +183,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result anyref)
+  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
   ;; NO_TNH-NEXT:    (drop
   ;; NO_TNH-NEXT:     (br_on_cast $block $A
   ;; NO_TNH-NEXT:      (local.get $x)
@@ -342,8 +342,13 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
-  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $B
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
@@ -359,8 +364,13 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
-  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $B
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
@@ -376,8 +386,8 @@
       )
     )
     (drop
-      (ref.cast $B
-        (local.get $x)
+      (ref.cast $B     ;; $B is never created, so this will trap, in both TNH
+        (local.get $x) ;; and non-TNH modes.
       )
     )
     (drop
