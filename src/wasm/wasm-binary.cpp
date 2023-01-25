@@ -7349,7 +7349,7 @@ bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::StringEq) {
     op = StringEqEqual;
   } else if (code == BinaryConsts::StringCompare) {
-    op = StringCompare;
+    op = StringEqCompare;
   } else {
     return false;
   }

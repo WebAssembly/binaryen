@@ -2383,7 +2383,7 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEncode(Ctx&, Index, StringEncodeOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConcat(Ctx&, Index);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index, StringEqOp);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, Index, StringAsOp op);
 template<typename Ctx>
@@ -3589,7 +3589,7 @@ Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, Index pos, StringEqOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 
