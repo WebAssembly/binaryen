@@ -213,43 +213,81 @@ std::cerr << "refinable: " << module->typeNames[type].name << " => "
       return std::make_unique<Optimizer>(parent);
     }
 
-    template<typename T> void visitCast(T* curr) {
+    template<typename T> void refineCast(T* curr) {
       auto& type = curr->getCastType();
-      if (type == Type::unreachable) {
+      if (type == Type::unreachable || !type.isRef()) {
         return;
       }
 
-      auto heapType = type.getHeapType();
-
-      if (parent.createdTypesOrSubTypes.count(heapType) == 0) {
-        // Nothing is created of this type or any subtype, so the cast can only
-        // pass through a null, at most.
-        Builder builder(*getModule());
-        Expression* rep;
-        if (type.isNullable()) {
-          rep = builder.makeRefNull(heapType.getBottom());
-        } else {
-          rep = builder.makeUnreachable();
-        }
-        replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr),
-          rep
-        ));
-        return;
-      }
-
-      auto iter = parent.refinableTypes.find(heapType);
+      auto iter = parent.refinableTypes.find(type.getHeapType());
       if (iter != parent.refinableTypes.end()) {
         // We can refine this cast.
         type = Type(iter->second, type.getNullability());
       }
     }
 
-    void visitRefCast(RefCast* curr) { visitCast(curr); }
+    void visitRefCast(RefCast* curr) {
+      auto& type = curr->getCastType();
+      if (type == Type::unreachable) {
+        return;
+      }
 
-    void visitRefTest(RefTest* curr) { visitCast(curr); }
+      auto heapType = type.getHeapType();
+      if (parent.createdTypesOrSubTypes.count(heapType) == 0) {
+        // Nothing is created of this type or any subtype, so the cast can only
+        // pass through a null, at most.
+        Builder builder(*getModule());
+        Expression* rep = nullptr;
+        if (type.isNullable()) {
+          // TODO: Without TNH we can still optimize here, to do a null check +
+          //       trap.
+          if (parent.trapsNeverHappen) {
+            rep = builder.makeRefNull(heapType.getBottom());
+          }
+        } else {
+          rep = builder.makeUnreachable();
+        }
+        if (rep) {
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr),
+            rep
+          ));
+          return;
+        }
+      }
 
-    void visitBrOn(BrOn* curr) { visitCast(curr); }
+      refineCast(curr);
+    }
+
+    void visitRefTest(RefTest* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+
+      auto castType = curr->getCastType();
+      if (parent.createdTypesOrSubTypes.count(castType.getHeapType()) == 0) {
+        // Nothing is created of this type or any subtype, so the cast can only
+        // succeed if the input is a null, and we allow that.
+        Builder builder(*getModule());
+        if (castType.isNullable()) {
+          replaceCurrent(builder.makeRefIsNull(curr->ref));
+        } else {
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr),
+            builder.makeConst(Literal(int32_t(0)))
+          ));
+        }
+        return;
+      }
+
+      refineCast(curr);
+    }
+
+    void visitBrOn(BrOn* curr) {
+      // TODO: optimize with createdTypesOrSubTypes here
+
+      refineCast(curr);
+    }
   };
 };
 
