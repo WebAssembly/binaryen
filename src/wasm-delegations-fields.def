@@ -757,6 +757,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::StringEqId: {
     DELEGATE_START(StringEq);
+    DELEGATE_FIELD_INT(StringEq, op);
     DELEGATE_FIELD_CHILD(StringEq, right);
     DELEGATE_FIELD_CHILD(StringEq, left);
     DELEGATE_END(StringEq);

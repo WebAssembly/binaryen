@@ -250,6 +250,17 @@
     )
   )
 
+  (func $string.compare (param $a stringref) (param $b stringref)
+    (drop
+      (i32.eqz ;; validate the output is an i32
+        (string.compare
+          (local.get $a)
+          (local.get $b)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $string.is_usv_sequence (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz

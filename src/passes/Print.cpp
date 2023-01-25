@@ -1052,7 +1052,7 @@ struct PrintExpressionContents
       case TruncUFloat64ToInt32:
         o << "i32.trunc_f64_u";
         break;
-      case TruncUFloat64ToInt64:
+      case TruncUFloat64ToInt64: // this is fine
         o << "i64.trunc_f64_u";
         break;
       case ReinterpretFloat32:
@@ -2424,7 +2424,18 @@ struct PrintExpressionContents
   void visitStringConcat(StringConcat* curr) {
     printMedium(o, "string.concat");
   }
-  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringEq(StringEq* curr) {
+    switch (curr->op) {
+      case StringEqEqual:
+        printMedium(o, "string.eq");
+        break;
+      case StringEqCompare:
+        printMedium(o, "string.compare");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.eq*");
+    }
+  }
   void visitStringAs(StringAs* curr) {
     switch (curr->op) {
       case StringAsWTF8:

@@ -1057,8 +1057,9 @@ public:
     ret->finalize();
     return ret;
   }
-  StringEq* makeStringEq(Expression* left, Expression* right) {
+  StringEq* makeStringEq(StringEqOp op, Expression* left, Expression* right) {
     auto* ret = wasm.allocator.alloc<StringEq>();
+    ret->op = op;
     ret->left = left;
     ret->right = right;
     ret->finalize();

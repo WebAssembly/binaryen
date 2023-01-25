@@ -3090,8 +3090,9 @@ Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
                                         parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
-  return Builder(wasm).makeStringEq(parseExpression(s[1]),
+Expression* SExpressionWasmBuilder::makeStringEq(Element& s, StringEqOp op) {
+  return Builder(wasm).makeStringEq(op,
+                                    parseExpression(s[1]),
                                     parseExpression(s[2]));
 }
 

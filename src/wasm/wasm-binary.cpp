@@ -7345,12 +7345,17 @@ bool WasmBinaryBuilder::maybeVisitStringConcat(Expression*& out,
 }
 
 bool WasmBinaryBuilder::maybeVisitStringEq(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::StringEq) {
+  StringEqOp op;
+  if (code == BinaryConsts::StringEq) {
+    op = StringEqEqual;
+  } else if (code == BinaryConsts::StringCompare) {
+    op = StringCompare;
+  } else {
     return false;
   }
   auto* right = popNonVoidExpression();
   auto* left = popNonVoidExpression();
-  out = Builder(wasm).makeStringEq(left, right);
+  out = Builder(wasm).makeStringEq(op, left, right);
   return true;
 }
 

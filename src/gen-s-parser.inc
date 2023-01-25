@@ -3138,13 +3138,21 @@ switch (buf[0]) {
                     }
                   }
                   case 'c': {
-                    switch (buf[10]) {
-                      case 'c':
-                        if (op == "string.concat"sv) { return makeStringConcat(s); }
+                    switch (buf[9]) {
+                      case 'm':
+                        if (op == "string.compare"sv) { return makeStringEq(s, StringEqCompare); }
                         goto parse_error;
-                      case 's':
-                        if (op == "string.const"sv) { return makeStringConst(s); }
-                        goto parse_error;
+                      case 'n': {
+                        switch (buf[10]) {
+                          case 'c':
+                            if (op == "string.concat"sv) { return makeStringConcat(s); }
+                            goto parse_error;
+                          case 's':
+                            if (op == "string.const"sv) { return makeStringConst(s); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
@@ -3178,7 +3186,7 @@ switch (buf[0]) {
                         }
                       }
                       case 'q':
-                        if (op == "string.eq"sv) { return makeStringEq(s); }
+                        if (op == "string.eq"sv) { return makeStringEq(s, StringEqEqual); }
                         goto parse_error;
                       default: goto parse_error;
                     }
@@ -8812,21 +8820,33 @@ switch (buf[0]) {
                     }
                   }
                   case 'c': {
-                    switch (buf[10]) {
-                      case 'c':
-                        if (op == "string.concat"sv) {
-                          auto ret = makeStringConcat(ctx, pos);
+                    switch (buf[9]) {
+                      case 'm':
+                        if (op == "string.compare"sv) {
+                          auto ret = makeStringEq(ctx, pos, StringEqCompare);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case 's':
-                        if (op == "string.const"sv) {
-                          auto ret = makeStringConst(ctx, pos);
-                          CHECK_ERR(ret);
-                          return *ret;
+                      case 'n': {
+                        switch (buf[10]) {
+                          case 'c':
+                            if (op == "string.concat"sv) {
+                              auto ret = makeStringConcat(ctx, pos);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case 's':
+                            if (op == "string.const"sv) {
+                              auto ret = makeStringConst(ctx, pos);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
                         }
-                        goto parse_error;
+                      }
                       default: goto parse_error;
                     }
                   }
@@ -8877,7 +8897,7 @@ switch (buf[0]) {
                       }
                       case 'q':
                         if (op == "string.eq"sv) {
-                          auto ret = makeStringEq(ctx, pos);
+                          auto ret = makeStringEq(ctx, pos, StringEqEqual);
                           CHECK_ERR(ret);
                           return *ret;
                         }
