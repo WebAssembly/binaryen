@@ -129,7 +129,6 @@ struct CastRefining : public Pass {
         }
       }
     }
-for (auto x : createdTypesOrSubTypes) std::cerr << "createdTypesOrSubTypes: " << module->typeNames[x].name << '\n';
 
     if (trapsNeverHappen) {
       // Abstract types are those with no news, i.e., the complement of
@@ -140,7 +139,6 @@ for (auto x : createdTypesOrSubTypes) std::cerr << "createdTypesOrSubTypes: " <<
       for (auto type : types) {
         if (createdTypes.count(type) == 0) {
           abstractTypes.insert(type);
-std::cerr << "abstract: " << module->typeNames[type].name << '\n';
         }
       }
 
@@ -186,8 +184,6 @@ std::cerr << "abstract: " << module->typeNames[type].name << '\n';
           }
 
           refinableTypes[type] = *refinedType;
-std::cerr << "refinable: " << module->typeNames[type].name << " => "
-          << module->typeNames[*refinedType].name << '\n';
         }
       }
     }
