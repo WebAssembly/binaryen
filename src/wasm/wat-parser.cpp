@@ -2383,7 +2383,8 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEncode(Ctx&, Index, StringEncodeOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConcat(Ctx&, Index);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index, StringEqOp);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index, StringEqOp);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, Index, StringAsOp op);
 template<typename Ctx>
