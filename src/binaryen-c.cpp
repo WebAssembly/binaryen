@@ -1880,7 +1880,7 @@ BinaryenExpressionRef BinaryenStringEq(BinaryenModuleRef module,
                                        BinaryenExpressionRef right) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStringEq((Expression*)left, (Expression*)right));
+      .makeStringEq(StringEqEqual, (Expression*)left, (Expression*)right));
 }
 BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
                                        BinaryenOp op,
