@@ -115,6 +115,13 @@ struct CastRefining : public Pass {
       }
     }
 
+    SubTypes subTypes(*module);
+
+    // Compute createdTypesOrSubTypes.
+    for (auto type : subTypes.getDepthSort()) {
+      // ..
+    }
+
     if (trapsNeverHappen) {
       // Abstract types are those with no news, i.e., the complement of
       // |createdTypes|. As mentioned above, we can only optimize this case if
@@ -127,18 +134,42 @@ struct CastRefining : public Pass {
         }
       }
 
-      SubTypes subTypes(*module);
-
       // We found abstract types. Next, find which of them are optimizable. We
       // need an abstract type to have a single subtype, to which we will switch
       // all of their casts.
-      for (auto type : abstractTypes) {
+      //
+      // Do this depth-first, so that we visit subtypes first. That will handle
+      // chains where we want to refine a type A to a subtype of a subtype of
+      // it.
+      for (auto type : subTypes.getDepthSort()) {
         auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+        std::optional<HeapType> refinedType;
         if (typeSubTypes.size() == 1) {
-          refinableTypes[type] = typeSubTypes[0];
+          // There is only a single possibility, so we can definitely use that
+          /// one.
+          refinedType = typeSubTypes[0];
+        } else if (!typeSubTypes.empty()) {
+          // There are multiple possibilities. However, perhaps only one of them
+          // is relevant, if nothing is ever created of the others or their
+          // subtypes.
+          for (auto subType : typeSubTypes) {
+            if (createdTypesOrSubTypes.count(subType)) {
+              if (!refinedType) {
+                refinedType = subType;
+              } else {
+                // We've seen more than one as relevant, so we have failed to
+                // find a singleton.
+                refinedType = {};
+                break;
+              }
+            }
+          }
         }
+        refinableTypes[type] = typeSubTypes[0];
       }
     }
+
+    createdTypesOrSubTypes
 
     if (refinableTypes.empty()) {
       return;
