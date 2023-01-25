@@ -1052,7 +1052,7 @@ struct PrintExpressionContents
       case TruncUFloat64ToInt32:
         o << "i32.trunc_f64_u";
         break;
-      case TruncUFloat64ToInt64: // this is fine
+      case TruncUFloat64ToInt64:
         o << "i64.trunc_f64_u";
         break;
       case ReinterpretFloat32:
