@@ -297,3 +297,180 @@
     )
   )
 )
+
+;; As above, but not $B is never created, so we can optimize casts to $A to
+;; $B1.
+(module
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; YESTNH:      (type $B1 (struct_subtype  $A))
+
+  ;; YESTNH:      (type $B (struct_subtype  $A))
+  ;; NO_TNH:      (type $B1 (struct_subtype  $A))
+
+  ;; NO_TNH:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  (type $B1 (struct_subtype $A)) ;; this is a new type
+
+  ;; YESTNH:      (func $new (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default $B1)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $new (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default $B1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $new (param $x anyref)
+    (drop
+      (struct.new $B1)
+    )
+  )
+
+  ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B1
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast (param $x anyref)
+    (drop
+      (ref.cast $A     ;; This will be optimized to $B1. FIXME
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B1
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; A chain, $A :> $B :> $C, where we can optimize $A all the way to $C.
+(module
+  ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; YESTNH:      (type $B (struct_subtype  $A))
+  ;; NO_TNH:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; YESTNH:      (type $C (struct_subtype  $B))
+  ;; NO_TNH:      (type $C (struct_subtype  $B))
+  (type $C (struct_subtype $B))
+
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; YESTNH:      (func $new (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (struct.new_default $C)
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $new (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (struct.new_default $C)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $new (param $x anyref)
+    (drop
+      (struct.new $C)
+    )
+  )
+
+  ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast (param $x anyref)
+    (drop
+      (ref.cast $A     ;; This can be $C. FIXME
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B     ;; This can also be $C.
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+)
