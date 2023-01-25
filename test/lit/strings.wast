@@ -16,9 +16,9 @@
 
   ;; CHECK:      (type $stringref_=>_none (func (param stringref)))
 
-  ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
-
   ;; CHECK:      (type $stringref_stringref_=>_none (func (param stringref stringref)))
+
+  ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
 
   ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array_subtype (mut i8) data))
@@ -250,6 +250,16 @@
     )
   )
 
+  ;; CHECK:      (func $string.compare (type $stringref_stringref_=>_none) (param $a stringref) (param $b stringref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.compare
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.compare (param $a stringref) (param $b stringref)
     (drop
       (i32.eqz ;; validate the output is an i32
