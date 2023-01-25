@@ -474,6 +474,69 @@
   )
 )
 
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
+    (type $A (struct         anyref))
+    ;; CHECK:       (type $B (struct_subtype (field eqref) $A))
+    (type $B (struct_subtype eqref $A))
+    (type $C (struct_subtype eqref $A))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; This is the same as above, but now B and C refine A such that they have a
+    ;; different top-level structure. They can still be merged.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $c (ref null $C))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
+    (type $A (struct         anyref))
+    (type $B (struct_subtype anyref $A))
+    (type $C (struct_subtype anyref $A))
+    ;; CHECK:       (type $E (struct_subtype (field eqref) $A))
+
+    ;; CHECK:       (type $D (struct_subtype (field eqref) $A))
+    (type $D (struct_subtype eqref $B))
+    (type $E (struct_subtype eqref $C))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $A))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; D and E should be mergeable because they have identical shapes and will
+    ;; be siblings after B and C get merged, but we don't support this case yet.
+    ;; TODO: support this.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $c (ref null $C))
+    (local $d (ref null $D))
+    (local $e (ref null $E))
+  )
+)
+
 ;; Check that we refinalize properly.
 (module
   ;; CHECK:      (rec

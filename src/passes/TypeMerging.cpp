@@ -187,8 +187,20 @@ void TypeMerging::run(Module* module_) {
   // Map each type to its partition in the list.
   std::unordered_map<HeapType, Partitions::iterator> typePartitions;
 
-  // Map the top-level structures of root types to their partitions in the list.
-  std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>
+  // Map optional supertypes and the top-level structures of their refined
+  // children to partitions so that different children that refine the supertype
+  // in the same way can be assigned to the same partition and potentially
+  // merged.
+  // TODO: This is not fully general because it still prevents types from being
+  // merged if they are identical subtypes of two other types that end up being
+  // merged. Fixing this would require 1) merging such input partitions and
+  // re-running DFA minimization until convergence or 2) treating supertypes as
+  // special transitions in the DFA and augmenting Valmari-Lehtinen DFA
+  // minimization so that these special transitions cannot be used to split a
+  // partition if they are self-transitions.
+  std::unordered_map<
+    std::optional<HeapType>,
+    std::unordered_map<HeapType, Partitions::iterator, ShapeHash, ShapeEq>>
     shapePartitions;
 
 #if TYPE_MERGING_DEBUG
@@ -220,9 +232,10 @@ void TypeMerging::run(Module* module_) {
   };
 
   // Similar to the above, but look up or create a partition associated with the
-  // type's top-level shape rather than its identity.
+  // type's supertype and top-level shape rather than its identity.
   auto ensureShapePartition = [&](HeapType type) -> Partitions::iterator {
-    auto [it, inserted] = shapePartitions.insert({type, partitions.end()});
+    auto [it, inserted] =
+      shapePartitions[type.getSuperType()].insert({type, partitions.end()});
     if (inserted) {
       it->second = partitions.insert(partitions.end(), Partition{});
     }
@@ -243,20 +256,14 @@ void TypeMerging::run(Module* module_) {
       ensurePartition(type);
       continue;
     }
+    // If there is no supertype to merge with or if this type refines its
+    // supertype, then we can still potentially merge it with sibling types with
+    // the same structure. Find and add to the partition with other such types.
     auto super = type.getSuperType();
-    // If there is no supertype to merge with, then we can still merge with
-    // other root types with the same structure. Find and add to the partition
-    // with other such types.
-    if (!super) {
+    if (!super || !shapeEq(type, *super)) {
       auto it = ensureShapePartition(type);
       it->push_back(makeDFAState(type));
       typePartitions[type] = it;
-      continue;
-    }
-    // If this type refines its supertype in some way, then we cannot merge it.
-    // Create a new partition for it.
-    if (!shapeEq(type, *super)) {
-      ensurePartition(type);
       continue;
     }
     // The current type and its supertype have the same top-level structure and
