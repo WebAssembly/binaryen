@@ -29,7 +29,7 @@
 //
 // Even without trapsNeverHappen we can optimize certain cases. When we see a
 // cast to a type that is never created, nor any subtype is created, then it
-// must fail (unless it allows null).
+// must fail unless it allows null.
 //
 
 #include "ir/find_all.h"
@@ -65,10 +65,6 @@ struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  // The types that are created (have a struct.new). TODO move into func, some
-  // of theses
-  Types createdTypes;
-
   // The types that are created, or have a subtype that is created.
   Types createdTypesOrSubTypes;
 
@@ -96,20 +92,18 @@ struct CastRefining : public Pass {
       return;
     }
 
-    // First, find "abstract" types, that is, types without a struct.new.
+    // First, find all the created types, that have a struct.new, both in module
+    // code and in functions.
+    Types createdTypes;
+    NewFinder(createdTypes).walkModuleCode(module);
 
     ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
       *module, [&](Function* func, Types& types) {
-        if (func->imported()) {
-          return;
+        if (!func->imported()) {
+          NewFinder(types).walk(func->body);
         }
-
-        NewFinder(types).walk(func->body);
       });
 
-    NewFinder(createdTypes).walkModuleCode(module);
-
-    // Combine all the info from the functions.
     for (auto& [_, types] : analysis.map) {
       for (auto type : types) {
         createdTypes.insert(type);
@@ -136,14 +130,13 @@ struct CastRefining : public Pass {
       // |createdTypes|. As mentioned above, we can only optimize this case if
       // traps never happen.
       Types abstractTypes;
-      auto types = ModuleUtils::collectHeapTypes(*module);
-      for (auto type : types) {
+      for (auto type : subTypes.types) {
         if (createdTypes.count(type) == 0) {
           abstractTypes.insert(type);
         }
       }
 
-      // We found abstract types. Next, find which of them are optimizable. We
+      // We found abstract types. Next, find which of them are refinable. We
       // need an abstract type to have a single subtype, to which we will switch
       // all of their casts.
       //
@@ -154,8 +147,9 @@ struct CastRefining : public Pass {
         if (!abstractTypes.count(type)) {
           continue;
         }
-        auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+
         std::optional<HeapType> refinedType;
+        auto& typeSubTypes = subTypes.getStrictSubTypes(type);
         if (typeSubTypes.size() == 1) {
           // There is only a single possibility, so we can definitely use that
           /// one.
@@ -167,6 +161,8 @@ struct CastRefining : public Pass {
           for (auto subType : typeSubTypes) {
             if (createdTypesOrSubTypes.count(subType)) {
               if (!refinedType) {
+                // This is the first relevant thing, and hopefully will remain
+                // the only one.
                 refinedType = subType;
               } else {
                 // We've seen more than one as relevant, so we have failed to
@@ -197,8 +193,6 @@ struct CastRefining : public Pass {
     ReFinalize().run(getPassRunner(), module);
   }
 
-  // Given a map of [old type, new type], where each old type can be optimized
-  // to the new type in a cast, apply those optimizations.
   struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
 
@@ -261,7 +255,7 @@ struct CastRefining : public Pass {
       auto castType = curr->getCastType();
       if (parent.createdTypesOrSubTypes.count(castType.getHeapType()) == 0) {
         // Nothing is created of this type or any subtype, so the cast can only
-        // succeed if the input is a null, and we allow that.
+        // succeed if the input is a null, if we allow that.
         Builder builder(*getModule());
         if (castType.isNullable()) {
           replaceCurrent(builder.makeRefIsNull(curr->ref));
