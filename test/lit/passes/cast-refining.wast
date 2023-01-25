@@ -183,7 +183,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result anyref)
+  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
   ;; NO_TNH-NEXT:    (drop
   ;; NO_TNH-NEXT:     (br_on_cast $block $A
   ;; NO_TNH-NEXT:      (local.get $x)
@@ -210,11 +210,7 @@
 ;; As above, but with two subtypes for $A. As a result, we cannot optimize it.
 ;; But that does not prevent optimizations on $D.
 (module
-  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
-
   ;; YESTNH:      (type $A (struct ))
-  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
-
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
@@ -228,7 +224,11 @@
 
   ;; YESTNH:      (type $E (struct_subtype  $D))
 
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; YESTNH:      (type $B1 (struct_subtype  $A))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; NO_TNH:      (type $C (struct_subtype  $B))
 
   ;; NO_TNH:      (type $D (struct_subtype  $C))

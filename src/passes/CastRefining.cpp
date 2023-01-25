@@ -27,6 +27,10 @@
 // not trap by assumption, and $C or a subtype of it is all that remains
 // possible.
 //
+// Even without trapsNeverHappen we can optimize certain cases. When we see a
+// cast to a type that is never created, nor any subtype is created, then it
+// must fail (unless it allows null).
+//
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
@@ -57,53 +61,31 @@ struct NewFinder : public PostWalker<NewFinder> {
   }
 };
 
-// Given a map of [old type, new type], where each old type can be optimized to
-// the new type in a cast, apply those optimizations.
-struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
-  bool isFunctionParallel() override { return true; }
-
-  TypeMap& optimizableTypes;
-
-  Optimizer(TypeMap& optimizableTypes) : optimizableTypes(optimizableTypes) {}
-
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<Optimizer>(optimizableTypes);
-  }
-
-  template<typename T> void visitCast(T* curr) {
-    auto& type = curr->getCastType();
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    auto iter = optimizableTypes.find(type.getHeapType());
-    if (iter == optimizableTypes.end()) {
-      return;
-    }
-
-    // Success: Apply the new type.
-    type = Type(iter->second, type.getNullability());
-  }
-
-  void visitRefCast(RefCast* curr) { visitCast(curr); }
-
-  void visitRefTest(RefTest* curr) { visitCast(curr); }
-
-  void visitBrOn(BrOn* curr) { visitCast(curr); }
-};
-
 struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  // The types that are created (have a struct.new).
+  Types createdTypes;
+
+  // The types that are created, or have a subtype that is created.
+  Types createdTypesOrSubTypes;
+
+  // A map of a type to optimize and the type to optimize it to.
+  TypeMap optimizableTypes;
+
+  bool trapsNeverHappen;
+
   void run(Module* module) override {
-    if (!module->features.hasGC() || !getPassOptions().trapsNeverHappen) {
+    if (!module->features.hasGC()) {
       return;
     }
 
     if (!getPassOptions().closedWorld) {
       Fatal() << "CastRefining requires --closed-world";
     }
+
+    trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
     if (!module->tables.empty()) {
       // When there are tables we must also take their types into account, which
@@ -124,10 +106,9 @@ struct CastRefining : public Pass {
         NewFinder(types).walk(func->body);
       });
 
-    Types createdTypes;
     NewFinder(createdTypes).walkModuleCode(module);
 
-    // Combine all the types.
+    // Combine all the info from the functions.
     for (auto& [_, types] : analysis.map) {
       for (auto type : types) {
         createdTypes.insert(type);
@@ -144,14 +125,11 @@ struct CastRefining : public Pass {
       }
     }
 
+    SubTypes subTypes(*module);
+
     // We found abstract types. Next, find which of them are optimizable. We
     // need an abstract type to have a single subtype, to which we will switch
     // all of their casts.
-
-    SubTypes subTypes(*module);
-
-    TypeMap optimizableTypes;
-
     for (auto type : abstractTypes) {
       auto& typeSubTypes = subTypes.getStrictSubTypes(type);
       if (typeSubTypes.size() == 1) {
@@ -164,12 +142,50 @@ struct CastRefining : public Pass {
     }
 
     // We found optimizable types. Apply them.
-    Optimizer optimizer(optimizableTypes);
+    Optimizer optimizer(*this);
     optimizer.run(getPassRunner(), module);
 
     // Refinalize, as RefCasts may have new types now.
     ReFinalize().run(getPassRunner(), module);
   }
+
+  // Given a map of [old type, new type], where each old type can be optimized to
+  // the new type in a cast, apply those optimizations.
+  struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
+    bool isFunctionParallel() override { return true; }
+
+    CastRefining& parent;
+
+    Optimizer(CastRefining& parent) : parent(parent) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Optimizer>(parent);
+    }
+
+    template<typename T> void visitCast(T* curr) {
+      if (!parent.trapsNeverHappen) {
+        return;
+      }
+      auto& type = curr->getCastType();
+      if (type == Type::unreachable) {
+        return;
+      }
+
+      auto iter = parent.optimizableTypes.find(type.getHeapType());
+      if (iter == parent.optimizableTypes.end()) {
+        return;
+      }
+
+      // Success: Apply the new type.
+      type = Type(iter->second, type.getNullability());
+    }
+
+    void visitRefCast(RefCast* curr) { visitCast(curr); }
+
+    void visitRefTest(RefTest* curr) { visitCast(curr); }
+
+    void visitBrOn(BrOn* curr) { visitCast(curr); }
+  };
 };
 
 } // anonymous namespace
