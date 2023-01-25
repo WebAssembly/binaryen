@@ -46,6 +46,9 @@ option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
+# Turn this on to use the Wasm EH feature instead of emscripten EH in the wasm/BinaryenJS builds
+option(EMSCRIPTEN_ENABLE_WASM_EH "Enable Wasm EH feature in emscripten build" OFF)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -309,12 +312,16 @@ if(EMSCRIPTEN)
     # link with -O3 for metadce and other powerful optimizations. note that we
     # must use add_link_options so that this appears after CMake's default -O2
     add_link_options("-O3")
-    add_link_flag("-sSINGLE_FILE")
+    #add_link_flag("-sSINGLE_FILE")
   endif()
 
   add_link_flag("-sALLOW_MEMORY_GROWTH")
-  add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
-  add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
+  if(EMSCRIPTEN_ENABLE_WASM_EH)
+    add_compile_flag("-fwasm-exceptions")
+  else()
+    add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
+    add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
+  endif()
   # make the tools immediately usable on Node.js
   add_link_flag("-sNODERAWFS")
   # in opt builds, LTO helps so much (>20%) it's worth slow compile times
