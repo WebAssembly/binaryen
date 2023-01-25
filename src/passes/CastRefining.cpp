@@ -152,6 +152,9 @@ std::cerr << "abstract: " << module->typeNames[type].name << '\n';
       // chains where we want to refine a type A to a subtype of a subtype of
       // it.
       for (auto type : subTypes.getDepthSort()) {
+        if (!abstractTypes.count(type)) {
+          continue;
+        }
         auto& typeSubTypes = subTypes.getStrictSubTypes(type);
         std::optional<HeapType> refinedType;
         if (typeSubTypes.size() == 1) {
@@ -169,7 +172,7 @@ std::cerr << "abstract: " << module->typeNames[type].name << '\n';
               } else {
                 // We've seen more than one as relevant, so we have failed to
                 // find a singleton.
-                refinedType = {};
+                refinedType = std::nullopt;
                 break;
               }
             }
@@ -183,6 +186,8 @@ std::cerr << "abstract: " << module->typeNames[type].name << '\n';
           }
 
           refinableTypes[type] = *refinedType;
+std::cerr << "refinable: " << module->typeNames[type].name << " => "
+          << module->typeNames[*refinedType].name << '\n';
         }
       }
     }

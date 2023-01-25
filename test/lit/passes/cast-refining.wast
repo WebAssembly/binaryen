@@ -8,7 +8,7 @@
 ;; $A :> $B :> $C :> $D :> $E
 ;;
 ;; $A and $D have no struct.news, so we can optimize casts of them to their
-;; subtypes. XXX all of this
+;; subtypes.
 (module
   ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
@@ -19,6 +19,8 @@
   ;; YESTNH:      (type $B (struct_subtype  $A))
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
+
+  ;; YESTNH:      (type $(null Name) (func (param anyref)))
 
   ;; YESTNH:      (type $C (struct_subtype  $B))
   ;; NO_TNH:      (type $C (struct_subtype  $B))
@@ -31,8 +33,6 @@
   ;; YESTNH:      (type $E (struct_subtype  $D))
   ;; NO_TNH:      (type $E (struct_subtype  $D))
   (type $E (struct_subtype $D))
-
-  ;; YESTNH:      (type $(null Name) (func (param anyref)))
 
   ;; YESTNH:      (global $global anyref (struct.new_default $B))
   ;; NO_TNH:      (global $global anyref (struct.new_default $B))
@@ -65,17 +65,17 @@
 
   ;; YESTNH:      (func $ref.cast (type $(null Name)) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast $C
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -149,7 +149,7 @@
 
   ;; YESTNH:      (func $ref.test (type $(null Name)) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.test $E
+  ;; YESTNH-NEXT:   (ref.test $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -171,9 +171,9 @@
 
   ;; YESTNH:      (func $br_on (type $(null Name)) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block $block (result (ref $E))
+  ;; YESTNH-NEXT:   (block $block (result (ref $B))
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (br_on_cast $block $E
+  ;; YESTNH-NEXT:     (br_on_cast $block $B
   ;; YESTNH-NEXT:      (local.get $x)
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
