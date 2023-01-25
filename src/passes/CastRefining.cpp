@@ -65,7 +65,7 @@ struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  // The types that are created (have a struct.new).
+  // The types that are created (have a struct.new). TODO move into func, some of theses
   Types createdTypes;
 
   // The types that are created, or have a subtype that is created.

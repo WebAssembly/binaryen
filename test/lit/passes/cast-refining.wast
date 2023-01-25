@@ -207,8 +207,7 @@
   )
 )
 
-;; As above, but with two subtypes for $A. As a result, we cannot optimize it.
-;; But that does not prevent optimizations on $D.
+;; $A has two subtypes. As a result, we cannot optimize it.
 (module
   ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $A (struct ))
@@ -218,31 +217,13 @@
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:      (type $C (struct_subtype  $B))
-
-  ;; YESTNH:      (type $D (struct_subtype  $C))
-
-  ;; YESTNH:      (type $E (struct_subtype  $D))
-
   ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; YESTNH:      (type $B1 (struct_subtype  $A))
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
 
-  ;; NO_TNH:      (type $C (struct_subtype  $B))
-
-  ;; NO_TNH:      (type $D (struct_subtype  $C))
-
-  ;; NO_TNH:      (type $E (struct_subtype  $D))
-
   ;; NO_TNH:      (type $B1 (struct_subtype  $A))
   (type $B1 (struct_subtype $A)) ;; this is a new type
-
-  (type $C (struct_subtype $B))
-
-  (type $D (struct_subtype $C))
-
-  (type $E (struct_subtype $D))
 
   ;; YESTNH:      (global $global anyref (struct.new_default $B))
   ;; NO_TNH:      (global $global anyref (struct.new_default $B))
@@ -252,33 +233,15 @@
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (struct.new_default $B1)
   ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (struct.new_default $C)
-  ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (struct.new_default $E)
-  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $new (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.new_default $B1)
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (struct.new_default $C)
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (struct.new_default $E)
-  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $new (param $x anyref)
     (drop
-      (struct.new $B1) ;; This is new.
-    )
-    (drop
-      (struct.new $C)
-    )
-    (drop
-      (struct.new $E)
+      (struct.new $B1)
     )
   )
 
@@ -294,17 +257,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
-  ;; YESTNH-NEXT:    (local.get $x)
-  ;; YESTNH-NEXT:   )
-  ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
-  ;; YESTNH-NEXT:    (local.get $x)
-  ;; YESTNH-NEXT:   )
-  ;; YESTNH-NEXT:  )
-  ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast $B1
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -321,17 +274,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
-  ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $D
-  ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $E
+  ;; NO_TNH-NEXT:   (ref.cast $B1
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -348,17 +291,7 @@
       )
     )
     (drop
-      (ref.cast $C
-        (local.get $x)
-      )
-    )
-    (drop
-      (ref.cast $D     ;; This will still be optimized to $E.
-        (local.get $x)
-      )
-    )
-    (drop
-      (ref.cast $E
+      (ref.cast $B1
         (local.get $x)
       )
     )
