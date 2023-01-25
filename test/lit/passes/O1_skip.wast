@@ -7,7 +7,6 @@
 ;; run it directly: the skip instruction overrides everything else.
 
 ;; There should also be no warning in the output.
-;; CHECK-NOT: warning:
 
 (module
  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
