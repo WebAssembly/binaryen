@@ -221,13 +221,6 @@ std::cerr << "refinable: " << module->typeNames[type].name << " => "
 
       auto heapType = type.getHeapType();
 
-      auto iter = parent.refinableTypes.find(heapType);
-      if (iter != parent.refinableTypes.end()) {
-        // We can refine this cast.
-        type = Type(iter->second, type.getNullability());
-        return;
-      }
-
       if (parent.createdTypesOrSubTypes.count(heapType) == 0) {
         // Nothing is created of this type or any subtype, so the cast can only
         // pass through a null, at most.
@@ -242,6 +235,13 @@ std::cerr << "refinable: " << module->typeNames[type].name << " => "
           builder.makeDrop(curr),
           rep
         ));
+        return;
+      }
+
+      auto iter = parent.refinableTypes.find(heapType);
+      if (iter != parent.refinableTypes.end()) {
+        // We can refine this cast.
+        type = Type(iter->second, type.getNullability());
       }
     }
 

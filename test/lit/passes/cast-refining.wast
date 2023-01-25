@@ -298,7 +298,7 @@
   )
 )
 
-;; As above, but not $B is never created, so we can optimize casts to $A to
+;; As above, but now $B is never created, so we can optimize casts to $A to
 ;; $B1.
 (module
   ;; YESTNH:      (type $A (struct ))
@@ -479,6 +479,492 @@
     )
     (drop
       (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; More testing for cases where no types or subtypes are created. No type is
+;; created here. FIXME from here
+(module
+  ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; YESTNH:      (type $B (struct_subtype  $A))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; YESTNH:      (type $(null Name) (func (param anyref)))
+
+  ;; YESTNH:      (type $C1 (struct_subtype  $B))
+  ;; NO_TNH:      (type $C1 (struct_subtype  $B))
+  (type $C1 (struct_subtype $B))
+
+  ;; YESTNH:      (type $C2 (struct_subtype  $B))
+  ;; NO_TNH:      (type $C2 (struct_subtype  $B))
+  (type $C2 (struct_subtype $B))
+
+  ;; YESTNH:      (type $(null Name) (func (param (ref any))))
+
+  ;; YESTNH:      (func $ref.cast (type $(null Name)) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $B
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C1
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C2
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (type $ref|any|_=>_none (func (param (ref any))))
+
+  ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $A
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $B
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C1
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C2
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast (param $x anyref)
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C1
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C2
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref.cast.null (type $(null Name)) (param $x (ref any))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $B
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C1
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C2
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.cast.null (type $ref|any|_=>_none) (param $x (ref any))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $A
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $B
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C1
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C2
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast.null (param $x (ref any))
+    (drop
+      (ref.cast null $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $C1
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $C2
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref.test (type $(null Name)) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.test $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.test $A
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.test (param $x anyref)
+    (drop
+      (ref.test $A
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $br_on (type $(null Name)) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block $block (result (ref $B))
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (br_on_cast $block $B
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (block
+  ;; NO_TNH-NEXT:      (drop
+  ;; NO_TNH-NEXT:       (br_on_cast $block $A
+  ;; NO_TNH-NEXT:        (local.get $x)
+  ;; NO_TNH-NEXT:       )
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $br_on (param $x anyref)
+    (drop
+      (block $block (result anyref)
+        (drop
+          (br_on_cast $block $A
+            (local.get $x)
+          )
+        )
+        (unreachable)
+      )
+    )
+  )
+)
+
+;; As above, but now $C1 is created.
+(module
+  ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; YESTNH:      (type $B (struct_subtype  $A))
+  ;; NO_TNH:      (type $B (struct_subtype  $A))
+  (type $B (struct_subtype $A))
+
+  ;; YESTNH:      (type $C1 (struct_subtype  $B))
+  ;; NO_TNH:      (type $C1 (struct_subtype  $B))
+  (type $C1 (struct_subtype $B))
+
+  ;; YESTNH:      (type $C2 (struct_subtype  $B))
+  ;; NO_TNH:      (type $C2 (struct_subtype  $B))
+  (type $C2 (struct_subtype $B))
+
+  ;; YESTNH:      (type $(null Name) (func (param anyref)))
+
+  ;; YESTNH:      (type $(null Name) (func (param (ref any))))
+
+  ;; YESTNH:      (global $global anyref (struct.new_default $C1))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (type $ref|any|_=>_none (func (param (ref any))))
+
+  ;; NO_TNH:      (global $global anyref (struct.new_default $C1))
+  (global $global anyref (struct.new $C1))
+
+  ;; YESTNH:      (func $ref.cast (type $(null Name)) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C2
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C1
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C2
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast (param $x anyref)
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C1
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C2
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; YESTNH:      (func $ref.cast.null (type $(null Name)) (param $x (ref any))
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (block
+  ;; YESTNH-NEXT:    (drop
+  ;; YESTNH-NEXT:     (ref.cast $C2
+  ;; YESTNH-NEXT:      (local.get $x)
+  ;; YESTNH-NEXT:     )
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $ref.cast.null (type $ref|any|_=>_none) (param $x (ref any))
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C1
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $C2
+  ;; NO_TNH-NEXT:      (local.get $x)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.cast.null (param $x (ref any))
+    (drop
+      (ref.cast null $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $C1
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast null $C2
         (local.get $x)
       )
     )
