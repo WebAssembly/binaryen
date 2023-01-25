@@ -309,7 +309,7 @@ private:
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);
   Expression* makeStringEncode(Element& s, StringEncodeOp op);
   Expression* makeStringConcat(Element& s);
-  Expression* makeStringEq(Element& s);
+  Expression* makeStringEq(Element& s, StringEqOp op);
   Expression* makeStringAs(Element& s, StringAsOp op);
   Expression* makeStringWTF8Advance(Element& s);
   Expression* makeStringWTF16Get(Element& s);

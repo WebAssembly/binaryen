@@ -2424,7 +2424,18 @@ struct PrintExpressionContents
   void visitStringConcat(StringConcat* curr) {
     printMedium(o, "string.concat");
   }
-  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringEq(StringEq* curr) {
+    switch (curr->op) {
+      case StringEqEqual:
+        printMedium(o, "string.eq");
+        break;
+      case StringEqCompare:
+        printMedium(o, "string.compare");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.eq*");
+    }
+  }
   void visitStringAs(StringAs* curr) {
     switch (curr->op) {
       case StringAsWTF8:

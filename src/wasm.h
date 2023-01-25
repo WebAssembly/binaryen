@@ -605,6 +605,11 @@ enum StringEncodeOp {
   StringEncodeWTF16Array,
 };
 
+enum StringEqOp {
+  StringEqEqual,
+  StringEqCompare,
+};
+
 enum StringAsOp {
   StringAsWTF8,
   StringAsWTF16,
@@ -1747,6 +1752,8 @@ public:
 class StringEq : public SpecificExpression<Expression::StringEqId> {
 public:
   StringEq(MixedArena& allocator) {}
+
+  StringEqOp op;
 
   Expression* left;
   Expression* right;

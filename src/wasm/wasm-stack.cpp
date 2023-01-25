@@ -2370,7 +2370,17 @@ void BinaryInstWriter::visitStringConcat(StringConcat* curr) {
 }
 
 void BinaryInstWriter::visitStringEq(StringEq* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringEq);
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case StringEqEqual:
+      o << U32LEB(BinaryConsts::StringEq);
+      break;
+    case StringEqCompare:
+      o << U32LEB(BinaryConsts::StringCompare);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid string.eq*");
+  }
 }
 
 void BinaryInstWriter::visitStringAs(StringAs* curr) {
