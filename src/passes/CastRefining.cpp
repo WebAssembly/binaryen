@@ -117,10 +117,19 @@ struct CastRefining : public Pass {
 
     SubTypes subTypes(*module);
 
-    // Compute createdTypesOrSubTypes.
+    // Compute createdTypesOrSubTypes by starting with the created types and
+    // then propagating subtypes.
+    createdTypesOrSubTypes = createdTypes;
     for (auto type : subTypes.getDepthSort()) {
-      // ..
+      // If any of our subtypes are created, so are we.
+      for (auto subType : subTypes.getStrictSubTypes(type)) {
+        if (createdTypesOrSubTypes.count(subType)) {
+          createdTypesOrSubTypes.insert(type);
+          break;
+        }
+      }
     }
+for (auto x : createdTypesOrSubTypes) std::cerr << "createdTypesOrSubTypes: " << module->typeNames[x].name << '\n';
 
     if (trapsNeverHappen) {
       // Abstract types are those with no news, i.e., the complement of
@@ -131,6 +140,7 @@ struct CastRefining : public Pass {
       for (auto type : types) {
         if (createdTypes.count(type) == 0) {
           abstractTypes.insert(type);
+std::cerr << "abstract: " << module->typeNames[type].name << '\n';
         }
       }
 
@@ -165,11 +175,17 @@ struct CastRefining : public Pass {
             }
           }
         }
-        refinableTypes[type] = typeSubTypes[0];
+        if (refinedType) {
+          // Propagate anything from the child, to handle chains.
+          auto iter = refinableTypes.find(*refinedType);
+          if (iter != refinableTypes.end()) {
+            *refinedType = iter->second;
+          }
+
+          refinableTypes[type] = *refinedType;
+        }
       }
     }
-
-    createdTypesOrSubTypes
 
     if (refinableTypes.empty()) {
       return;

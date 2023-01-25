@@ -71,7 +71,7 @@ struct SubTypes {
   }
 
   // A topological sort that visits subtypes first.
-  DepthSort getDepthSort() {
+  auto getDepthSort() {
     struct DepthSort : TopologicalSort<HeapType, DepthSort> {
       const SubTypes& parent;
 
