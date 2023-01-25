@@ -570,6 +570,8 @@
 ;; CHECK-NEXT:   --zero-filled-memory,-uim                     Assume that an imported memory
 ;; CHECK-NEXT:                                                 will be zero-initialized
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --skip-pass,-sp                               Skip a pass (do not run it)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
