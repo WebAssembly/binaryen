@@ -65,7 +65,8 @@ struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
-  // The types that are created (have a struct.new). TODO move into func, some of theses
+  // The types that are created (have a struct.new). TODO move into func, some
+  // of theses
   Types createdTypes;
 
   // The types that are created, or have a subtype that is created.
@@ -196,8 +197,8 @@ struct CastRefining : public Pass {
     ReFinalize().run(getPassRunner(), module);
   }
 
-  // Given a map of [old type, new type], where each old type can be optimized to
-  // the new type in a cast, apply those optimizations.
+  // Given a map of [old type, new type], where each old type can be optimized
+  // to the new type in a cast, apply those optimizations.
   struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
     bool isFunctionParallel() override { return true; }
 
@@ -244,10 +245,7 @@ struct CastRefining : public Pass {
           rep = builder.makeUnreachable();
         }
         if (rep) {
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr),
-            rep
-          ));
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr), rep));
           return;
         }
       }
@@ -269,9 +267,7 @@ struct CastRefining : public Pass {
           replaceCurrent(builder.makeRefIsNull(curr->ref));
         } else {
           replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr),
-            builder.makeConst(Literal(int32_t(0)))
-          ));
+            builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
         }
         return;
       }
