@@ -115,25 +115,27 @@ struct CastRefining : public Pass {
       }
     }
 
-    // Abstract types are those with no news, i.e., the complement of
-    // |createdTypes|.
-    Types abstractTypes;
-    auto types = ModuleUtils::collectHeapTypes(*module);
-    for (auto type : types) {
-      if (createdTypes.count(type) == 0) {
-        abstractTypes.insert(type);
+    if (trapsNeverHappen) {
+      // Abstract types are those with no news, i.e., the complement of
+      // |createdTypes|.
+      Types abstractTypes;
+      auto types = ModuleUtils::collectHeapTypes(*module);
+      for (auto type : types) {
+        if (createdTypes.count(type) == 0) {
+          abstractTypes.insert(type);
+        }
       }
-    }
 
-    SubTypes subTypes(*module);
+      SubTypes subTypes(*module);
 
-    // We found abstract types. Next, find which of them are optimizable. We
-    // need an abstract type to have a single subtype, to which we will switch
-    // all of their casts.
-    for (auto type : abstractTypes) {
-      auto& typeSubTypes = subTypes.getStrictSubTypes(type);
-      if (typeSubTypes.size() == 1) {
-        optimizableTypes[type] = typeSubTypes[0];
+      // We found abstract types. Next, find which of them are optimizable. We
+      // need an abstract type to have a single subtype, to which we will switch
+      // all of their casts.
+      for (auto type : abstractTypes) {
+        auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+        if (typeSubTypes.size() == 1) {
+          optimizableTypes[type] = typeSubTypes[0];
+        }
       }
     }
 
@@ -163,9 +165,6 @@ struct CastRefining : public Pass {
     }
 
     template<typename T> void visitCast(T* curr) {
-      if (!parent.trapsNeverHappen) {
-        return;
-      }
       auto& type = curr->getCastType();
       if (type == Type::unreachable) {
         return;

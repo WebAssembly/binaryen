@@ -183,7 +183,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
+  ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (drop
   ;; NO_TNH-NEXT:     (br_on_cast $block $A
   ;; NO_TNH-NEXT:      (local.get $x)
