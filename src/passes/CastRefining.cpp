@@ -71,8 +71,8 @@ struct CastRefining : public Pass {
   // The types that are created, or have a subtype that is created.
   Types createdTypesOrSubTypes;
 
-  // A map of a type to optimize and the type to optimize it to.
-  TypeMap optimizableTypes;
+  // A map of a cast type to refine and the type to refine it to.
+  TypeMap refinableTypes;
 
   bool trapsNeverHappen;
 
@@ -117,7 +117,8 @@ struct CastRefining : public Pass {
 
     if (trapsNeverHappen) {
       // Abstract types are those with no news, i.e., the complement of
-      // |createdTypes|.
+      // |createdTypes|. As mentioned above, we can only optimize this case if
+      // traps never happen.
       Types abstractTypes;
       auto types = ModuleUtils::collectHeapTypes(*module);
       for (auto type : types) {
@@ -134,12 +135,12 @@ struct CastRefining : public Pass {
       for (auto type : abstractTypes) {
         auto& typeSubTypes = subTypes.getStrictSubTypes(type);
         if (typeSubTypes.size() == 1) {
-          optimizableTypes[type] = typeSubTypes[0];
+          refinableTypes[type] = typeSubTypes[0];
         }
       }
     }
 
-    if (optimizableTypes.empty()) {
+    if (refinableTypes.empty()) {
       return;
     }
 
@@ -170,8 +171,8 @@ struct CastRefining : public Pass {
         return;
       }
 
-      auto iter = parent.optimizableTypes.find(type.getHeapType());
-      if (iter == parent.optimizableTypes.end()) {
+      auto iter = parent.refinableTypes.find(type.getHeapType());
+      if (iter == parent.refinableTypes.end()) {
         return;
       }
 
