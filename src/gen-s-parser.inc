@@ -3191,6 +3191,9 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
+                  case 'f':
+                    if (op == "string.from_code_point"sv) { return makeStringNew(s, StringNewFromCodePoint, false); }
+                    goto parse_error;
                   case 'i':
                     if (op == "string.is_usv_sequence"sv) { return makeStringMeasure(s, StringMeasureIsUSV); }
                     goto parse_error;
@@ -8921,6 +8924,13 @@ switch (buf[0]) {
                       default: goto parse_error;
                     }
                   }
+                  case 'f':
+                    if (op == "string.from_code_point"sv) {
+                      auto ret = makeStringNew(ctx, pos, StringNewFromCodePoint, false);
+                      CHECK_ERR(ret);
+                      return *ret;
+                    }
+                    goto parse_error;
                   case 'i':
                     if (op == "string.is_usv_sequence"sv) {
                       auto ret = makeStringMeasure(ctx, pos, StringMeasureIsUSV);
