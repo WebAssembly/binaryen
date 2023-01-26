@@ -7190,6 +7190,7 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     if (code == BinaryConsts::StringNewUTF8Try) {
       try_ = true;
     }
+    // FIXME: the memory index should be an LEB like all other places
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
