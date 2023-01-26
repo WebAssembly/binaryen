@@ -7184,10 +7184,12 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   Expression* length = nullptr;
   Expression* start = nullptr;
   Expression* end = nullptr;
-  bool try_;
+  bool try_ = false;
   if (code == BinaryConsts::StringNewWTF8 ||
       code == BinaryConsts::StringNewUTF8Try) {
-    try_ = code == BinaryConsts::StringNewUTF8Try;
+    if (code == BinaryConsts::StringNewUTF8Try) {
+      try_ = true;
+    }
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
@@ -7214,7 +7216,9 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF8Array ||
              code == BinaryConsts::StringNewUTF8ArrayTry) {
-    try_ = code == BinaryConsts::StringNewUTF8ArrayTry;
+    if (code == BinaryConsts::StringNewUTF8ArrayTry) {
+      try_ = true;
+    }
     auto policy = getU32LEB();
     switch (policy) {
       case BinaryConsts::StringPolicy::UTF8:

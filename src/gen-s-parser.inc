@@ -3223,10 +3223,10 @@ switch (buf[0]) {
                           case '1': {
                             switch (buf[16]) {
                               case '\0':
-                                if (op == "string.new_wtf16"sv) { return makeStringNew(s, StringNewWTF16); }
+                                if (op == "string.new_wtf16"sv) { return makeStringNew(s, StringNewWTF16, false); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array); }
+                                if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array, false); }
                                 goto parse_error;
                               default: goto parse_error;
                             }
@@ -3234,10 +3234,10 @@ switch (buf[0]) {
                           case '8': {
                             switch (buf[15]) {
                               case '\0':
-                                if (op == "string.new_wtf8"sv) { return makeStringNew(s, StringNewWTF8); }
+                                if (op == "string.new_wtf8"sv) { return makeStringNew(s, StringNewWTF8, false); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.new_wtf8_array"sv) { return makeStringNew(s, StringNewWTF8Array); }
+                                if (op == "string.new_wtf8_array"sv) { return makeStringNew(s, StringNewWTF8Array, false); }
                                 goto parse_error;
                               default: goto parse_error;
                             }
@@ -8974,14 +8974,14 @@ switch (buf[0]) {
                             switch (buf[16]) {
                               case '\0':
                                 if (op == "string.new_wtf16"sv) {
-                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16);
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16, false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "string.new_wtf16_array"sv) {
-                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16Array);
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16Array, false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8993,14 +8993,14 @@ switch (buf[0]) {
                             switch (buf[15]) {
                               case '\0':
                                 if (op == "string.new_wtf8"sv) {
-                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8);
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8, false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
                                 if (op == "string.new_wtf8_array"sv) {
-                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8Array);
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8Array, false);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
