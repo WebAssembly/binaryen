@@ -1150,6 +1150,7 @@ enum ASTNodes {
   StringConcat = 0x88,
   StringEq = 0x89,
   StringIsUSV = 0x8a,
+  StringNewUTF8Try = 0x8f,
   StringAsWTF8 = 0x90,
   StringViewWTF8Advance = 0x91,
   StringViewWTF8Slice = 0x93,
@@ -1167,7 +1168,9 @@ enum ASTNodes {
   StringNewWTF16Array = 0xb1,
   StringEncodeWTF8Array = 0xb2,
   StringEncodeWTF16Array = 0xb3,
+  StringNewUTF8ArrayTry = 0xb8,
 };
+
 
 enum MemoryAccess {
   Offset = 0x10,    // bit 4

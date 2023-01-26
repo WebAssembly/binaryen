@@ -1005,23 +1005,26 @@ public:
     return ret;
   }
   StringNew*
-  makeStringNew(StringNewOp op, Expression* ptr, Expression* length) {
+  makeStringNew(StringNewOp op, Expression* ptr, Expression* length, bool try_) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;
     ret->length = length;
+    ret->try_ = try_;
     ret->finalize();
     return ret;
   }
   StringNew* makeStringNew(StringNewOp op,
                            Expression* ptr,
                            Expression* start,
-                           Expression* end) {
+                           Expression* end,
+                           bool try_) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;
     ret->start = start;
     ret->end = end;
+    ret->try_ = try_;
     ret->finalize();
     return ret;
   }

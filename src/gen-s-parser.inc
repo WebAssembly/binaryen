@@ -3206,26 +3206,42 @@ switch (buf[0]) {
                     }
                   }
                   case 'n': {
-                    switch (buf[14]) {
-                      case '1': {
+                    switch (buf[11]) {
+                      case 'u': {
                         switch (buf[16]) {
-                          case '\0':
-                            if (op == "string.new_wtf16"sv) { return makeStringNew(s, StringNewWTF16); }
+                          case 'a':
+                            if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewWTF8Array, true); }
                             goto parse_error;
-                          case '_':
-                            if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array); }
+                          case 't':
+                            if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewWTF8, true); }
                             goto parse_error;
                           default: goto parse_error;
                         }
                       }
-                      case '8': {
-                        switch (buf[15]) {
-                          case '\0':
-                            if (op == "string.new_wtf8"sv) { return makeStringNew(s, StringNewWTF8); }
-                            goto parse_error;
-                          case '_':
-                            if (op == "string.new_wtf8_array"sv) { return makeStringNew(s, StringNewWTF8Array); }
-                            goto parse_error;
+                      case 'w': {
+                        switch (buf[14]) {
+                          case '1': {
+                            switch (buf[16]) {
+                              case '\0':
+                                if (op == "string.new_wtf16"sv) { return makeStringNew(s, StringNewWTF16); }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case '8': {
+                            switch (buf[15]) {
+                              case '\0':
+                                if (op == "string.new_wtf8"sv) { return makeStringNew(s, StringNewWTF8); }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.new_wtf8_array"sv) { return makeStringNew(s, StringNewWTF8Array); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
                           default: goto parse_error;
                         }
                       }
@@ -8932,19 +8948,19 @@ switch (buf[0]) {
                     }
                   }
                   case 'n': {
-                    switch (buf[14]) {
-                      case '1': {
+                    switch (buf[11]) {
+                      case 'u': {
                         switch (buf[16]) {
-                          case '\0':
-                            if (op == "string.new_wtf16"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF16);
+                          case 'a':
+                            if (op == "string.new_utf8_array_try"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewWTF8Array, true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
-                          case '_':
-                            if (op == "string.new_wtf16_array"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF16Array);
+                          case 't':
+                            if (op == "string.new_utf8_try"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewWTF8, true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
@@ -8952,22 +8968,46 @@ switch (buf[0]) {
                           default: goto parse_error;
                         }
                       }
-                      case '8': {
-                        switch (buf[15]) {
-                          case '\0':
-                            if (op == "string.new_wtf8"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF8);
-                              CHECK_ERR(ret);
-                              return *ret;
+                      case 'w': {
+                        switch (buf[14]) {
+                          case '1': {
+                            switch (buf[16]) {
+                              case '\0':
+                                if (op == "string.new_wtf16"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.new_wtf16_array"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF16Array);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
-                          case '_':
-                            if (op == "string.new_wtf8_array"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF8Array);
-                              CHECK_ERR(ret);
-                              return *ret;
+                          }
+                          case '8': {
+                            switch (buf[15]) {
+                              case '\0':
+                                if (op == "string.new_wtf8"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              case '_':
+                                if (op == "string.new_wtf8_array"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewWTF8Array);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           default: goto parse_error;
                         }
                       }

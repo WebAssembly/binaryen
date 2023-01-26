@@ -586,6 +586,8 @@ enum StringNewOp {
   StringNewWTF8Array,
   StringNewReplaceArray,
   StringNewWTF16Array,
+  // Other
+  StringNewFromCodePoint,
 };
 
 enum StringMeasureOp {
@@ -1684,7 +1686,7 @@ public:
   StringNewOp op;
 
   // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array.
+  // GC variations this is an Array. In from_codepoint this is the code point.
   Expression* ptr;
 
   // Used only in linear memory variations.
@@ -1693,6 +1695,10 @@ public:
   // Used only in GC variations.
   Expression* start = nullptr;
   Expression* end = nullptr;
+
+  // The "try" variants will return null if an encoding error happens, rather
+  // than trap.
+  bool try_ = false;
 
   void finalize();
 };

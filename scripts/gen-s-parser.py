@@ -611,6 +611,8 @@ instructions = [
     ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
     ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array)"),
     ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array)"),
+    ("string.new_utf8_try",  "makeStringNew(s, StringNewWTF8, true)"),
+    ("string.new_utf8_array_try",  "makeStringNew(s, StringNewWTF8Array, true)"),
     ("string.const",         "makeStringConst(s)"),
     ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
     ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),

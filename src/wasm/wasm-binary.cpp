@@ -7184,7 +7184,9 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   Expression* length = nullptr;
   Expression* start = nullptr;
   Expression* end = nullptr;
-  if (code == BinaryConsts::StringNewWTF8) {
+  bool try_;
+  if (code == BinaryConsts::StringNewWTF8 || code == BinaryConsts::StringNewUTF8Try) {
+    try_ = code == BinaryConsts::StringNewUTF8Try;
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
@@ -7209,7 +7211,8 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     }
     op = StringNewWTF16;
     length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8Array) {
+  } else if (code == BinaryConsts::StringNewWTF8Array || code == BinaryConsts::StringNewUTF8ArrayTry) {
+    try_ = code == BinaryConsts::StringNewUTF8ArrayTry;
     auto policy = getU32LEB();
     switch (policy) {
       case BinaryConsts::StringPolicy::UTF8:
@@ -7235,9 +7238,9 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   }
   auto* ptr = popNonVoidExpression();
   if (length) {
-    out = Builder(wasm).makeStringNew(op, ptr, length);
+    out = Builder(wasm).makeStringNew(op, ptr, length, try_);
   } else {
-    out = Builder(wasm).makeStringNew(op, ptr, start, end);
+    out = Builder(wasm).makeStringNew(op, ptr, start, end, try_);
   }
   return true;
 }
