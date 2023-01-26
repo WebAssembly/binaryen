@@ -22,12 +22,12 @@
 
   ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array_subtype (mut i8) data))
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array_subtype (mut i16) data))
 
   ;; CHECK:      (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
-
-  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $stringview_wtf16_=>_none (func (param stringview_wtf16)))
 
@@ -581,6 +581,13 @@
     )
   )
 
+  ;; CHECK:      (func $string.from_code_point (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.from_code_point
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.from_code_point
     (drop
       (string.from_code_point
