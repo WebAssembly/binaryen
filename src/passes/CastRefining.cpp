@@ -234,12 +234,13 @@ struct CastRefining : public Pass {
       auto castType = curr->getCastType();
       if (auto heapType = getHeapTypeIfRelevant(castType)) {
         if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
-          // Nothing is created of this type or any subtype, so the cast can only
-          // pass through a null, at most.
+          // Nothing is created of this type or any subtype, so the cast can
+          // only pass through a null, at most.
           Builder builder(*getModule());
           Expression* rep = nullptr;
           if (castType.isNullable()) {
-            // TODO: Without TNH we can still optimize here, to do a null check +
+            // TODO: Without TNH we can still optimize here, to do a null check
+            // +
             //       trap.
             if (parent.trapsNeverHappen) {
               rep = builder.makeRefNull(heapType->getBottom());
@@ -261,8 +262,8 @@ struct CastRefining : public Pass {
       auto castType = curr->getCastType();
       if (auto heapType = getHeapTypeIfRelevant(castType)) {
         if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
-          // Nothing is created of this type or any subtype, so the cast can only
-          // succeed if the input is a null, if we allow that.
+          // Nothing is created of this type or any subtype, so the cast can
+          // only succeed if the input is a null, if we allow that.
           Builder builder(*getModule());
           if (castType.isNullable()) {
             replaceCurrent(builder.makeRefIsNull(curr->ref));
