@@ -205,6 +205,47 @@
       )
     )
   )
+
+  ;; YESTNH:      (func $basic (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast struct
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.as_i31
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $basic (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast struct
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_i31
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $basic (param $x anyref)
+    ;; Casts to basic types should not be modified.
+    (drop
+      (ref.cast struct
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.as_i31
+        (local.get $x)
+      )
+    )
+  )
+)
+
+
 )
 
 ;; $A has two subtypes. As a result, we cannot optimize it.

@@ -204,69 +204,77 @@ struct CastRefining : public Pass {
       return std::make_unique<Optimizer>(parent);
     }
 
-    template<typename T> void refineCast(T* curr) {
-      auto& type = curr->getCastType();
+    std::optional<HeapType> getHeapTypeIfRelevant(Type type) {
       if (type == Type::unreachable || !type.isRef()) {
-        return;
+        return std::nullopt;
       }
 
-      auto iter = parent.refinableTypes.find(type.getHeapType());
-      if (iter != parent.refinableTypes.end()) {
-        // We can refine this cast.
-        type = Type(iter->second, type.getNullability());
+      // We ignore basic types, as in any non-trivial module they will always
+      // have something created of their subtypes. TODO Optimize even there
+      auto heapType = type.getHeapType();
+      if (heapType.isBasic()) {
+        return std::nullopt;
+      }
+
+      return heapType;
+    }
+
+    template<typename T> void refineCast(T* curr) {
+      auto& castType = curr->getCastType();
+      if (auto heapType = getHeapTypeIfRelevant(castType)) {
+        auto iter = parent.refinableTypes.find(*heapType);
+        if (iter != parent.refinableTypes.end()) {
+          // We can refine this cast.
+          castType = Type(iter->second, castType.getNullability());
+        }
       }
     }
 
     void visitRefCast(RefCast* curr) {
-      auto& type = curr->getCastType();
-      if (type == Type::unreachable) {
-        return;
-      }
-
-      auto heapType = type.getHeapType();
-      if (parent.createdTypesOrSubTypes.count(heapType) == 0) {
-        // Nothing is created of this type or any subtype, so the cast can only
-        // pass through a null, at most.
-        Builder builder(*getModule());
-        Expression* rep = nullptr;
-        if (type.isNullable()) {
-          // TODO: Without TNH we can still optimize here, to do a null check +
-          //       trap.
-          if (parent.trapsNeverHappen) {
-            rep = builder.makeRefNull(heapType.getBottom());
+      auto castType = curr->getCastType();
+      if (auto heapType = getHeapTypeIfRelevant(castType)) {
+        if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
+          // Nothing is created of this type or any subtype, so the cast can only
+          // pass through a null, at most.
+          Builder builder(*getModule());
+          Expression* rep = nullptr;
+          if (castType.isNullable()) {
+            // TODO: Without TNH we can still optimize here, to do a null check +
+            //       trap.
+            if (parent.trapsNeverHappen) {
+              rep = builder.makeRefNull(heapType->getBottom());
+            }
+          } else {
+            rep = builder.makeUnreachable();
           }
-        } else {
-          rep = builder.makeUnreachable();
+          if (rep) {
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), rep));
+            return;
+          }
         }
-        if (rep) {
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr), rep));
-          return;
-        }
-      }
 
-      refineCast(curr);
+        refineCast(curr);
+      }
     }
 
     void visitRefTest(RefTest* curr) {
-      if (curr->type == Type::unreachable) {
-        return;
-      }
-
       auto castType = curr->getCastType();
-      if (parent.createdTypesOrSubTypes.count(castType.getHeapType()) == 0) {
-        // Nothing is created of this type or any subtype, so the cast can only
-        // succeed if the input is a null, if we allow that.
-        Builder builder(*getModule());
-        if (castType.isNullable()) {
-          replaceCurrent(builder.makeRefIsNull(curr->ref));
-        } else {
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
+      if (auto heapType = getHeapTypeIfRelevant(castType)) {
+        if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
+          // Nothing is created of this type or any subtype, so the cast can only
+          // succeed if the input is a null, if we allow that.
+          Builder builder(*getModule());
+          if (castType.isNullable()) {
+            replaceCurrent(builder.makeRefIsNull(curr->ref));
+          } else {
+            replaceCurrent(builder.makeSequence(
+              builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
+          }
+          return;
         }
-        return;
-      }
 
-      refineCast(curr);
+        refineCast(curr);
+      }
     }
 
     void visitBrOn(BrOn* curr) {
