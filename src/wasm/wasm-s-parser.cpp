@@ -3035,7 +3035,8 @@ SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
     return Builder(wasm).makeStringNew(
       op, parseExpression(s[i]), start, end, try_);
   } else if (op == StringNewFromCodePoint) {
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), nullptr, try_);
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), nullptr, try_);
   } else {
     throw ParseException("bad string.new op", s.line, s.col);
   }
