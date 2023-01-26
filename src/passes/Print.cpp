@@ -2348,7 +2348,11 @@ struct PrintExpressionContents
         printMedium(o, "string.new_wtf8 utf8");
         break;
       case StringNewWTF8:
-        printMedium(o, "string.new_wtf8 wtf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8 wtf8");
+        } else {
+          printMedium(o, "string.new_utf8_try");
+        }
         break;
       case StringNewReplace:
         printMedium(o, "string.new_wtf8 replace");
@@ -2360,7 +2364,11 @@ struct PrintExpressionContents
         printMedium(o, "string.new_wtf8_array utf8");
         break;
       case StringNewWTF8Array:
-        printMedium(o, "string.new_wtf8_array wtf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8_array wtf8");
+        } else {
+          printMedium(o, "string.new_utf8_array_try");
+        }
         break;
       case StringNewReplaceArray:
         printMedium(o, "string.new_wtf8_array replace");
