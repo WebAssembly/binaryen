@@ -1164,6 +1164,7 @@ enum ASTNodes {
   StringViewIterRewind = 0xa3,
   StringViewIterSlice = 0xa4,
   StringCompare = 0xa8,
+  StringFromCodePoint = 0xa9,
   StringNewWTF8Array = 0xb0,
   StringNewWTF16Array = 0xb1,
   StringEncodeWTF8Array = 0xb2,

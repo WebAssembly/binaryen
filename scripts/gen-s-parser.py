@@ -611,6 +611,7 @@ instructions = [
     ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16, false)"),
     ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array, false)"),
     ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array, false)"),
+    ("string.from_code_point", "makeStringNew(s, StringNewFromCodePoint, false)"),
     ("string.new_utf8_try",  "makeStringNew(s, StringNewWTF8, true)"),
     ("string.new_utf8_array_try",  "makeStringNew(s, StringNewWTF8Array, true)"),
     ("string.const",         "makeStringConst(s)"),

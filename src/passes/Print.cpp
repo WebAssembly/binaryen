@@ -2376,6 +2376,9 @@ struct PrintExpressionContents
       case StringNewWTF16Array:
         printMedium(o, "string.new_wtf16_array");
         break;
+      case StringNewFromCodePoint:
+        printMedium(o, "string.from_code_point");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.new*");
     }

@@ -7239,6 +7239,8 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     op = StringNewWTF16Array;
     end = popNonVoidExpression();
     start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringFromCodePoint) {
+    op = StringNewFromCodePoint;
   } else {
     return false;
   }
