@@ -2345,14 +2345,14 @@ struct PrintExpressionContents
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
       case StringNewUTF8:
-        printMedium(o, "string.new_wtf8 utf8");
-        break;
-      case StringNewWTF8:
         if (!curr->try_) {
-          printMedium(o, "string.new_wtf8 wtf8");
+          printMedium(o, "string.new_wtf8 utf8");
         } else {
           printMedium(o, "string.new_utf8_try");
         }
+        break;
+      case StringNewWTF8:
+        printMedium(o, "string.new_wtf8 wtf8");
         break;
       case StringNewReplace:
         printMedium(o, "string.new_wtf8 replace");
@@ -2361,14 +2361,14 @@ struct PrintExpressionContents
         printMedium(o, "string.new_wtf16");
         break;
       case StringNewUTF8Array:
-        printMedium(o, "string.new_wtf8_array utf8");
-        break;
-      case StringNewWTF8Array:
         if (!curr->try_) {
-          printMedium(o, "string.new_wtf8_array wtf8");
+          printMedium(o, "string.new_wtf8_array utf8");
         } else {
           printMedium(o, "string.new_utf8_array_try");
         }
+        break;
+      case StringNewWTF8Array:
+        printMedium(o, "string.new_wtf8_array wtf8");
         break;
       case StringNewReplaceArray:
         printMedium(o, "string.new_wtf8_array replace");

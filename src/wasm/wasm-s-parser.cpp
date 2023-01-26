@@ -2994,7 +2994,7 @@ Expression*
 SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
   size_t i = 1;
   Expression* length = nullptr;
-  if (op == StringNewWTF8) {
+  if (op == StringNewWTF8 || op == StringNewUTF8) {
     if (!try_) {
       std::string_view str = s[i++]->str().str;
       if (str == "utf8") {
@@ -3012,7 +3012,7 @@ SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
   } else if (op == StringNewWTF16) {
     length = parseExpression(s[i + 1]);
     return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length, try_);
-  } else if (op == StringNewWTF8Array) {
+  } else if (op == StringNewWTF8Array || op == StringNewUTF8Array) {
     if (!try_) {
       std::string_view str = s[i++]->str().str;
       if (str == "utf8") {

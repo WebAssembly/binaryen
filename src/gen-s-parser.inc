@@ -3213,10 +3213,10 @@ switch (buf[0]) {
                       case 'u': {
                         switch (buf[16]) {
                           case 'a':
-                            if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewWTF8Array, true); }
+                            if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
                             goto parse_error;
                           case 't':
-                            if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewWTF8, true); }
+                            if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
                             goto parse_error;
                           default: goto parse_error;
                         }
@@ -8963,14 +8963,14 @@ switch (buf[0]) {
                         switch (buf[16]) {
                           case 'a':
                             if (op == "string.new_utf8_array_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF8Array, true);
+                              auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
                           case 't':
                             if (op == "string.new_utf8_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewWTF8, true);
+                              auto ret = makeStringNew(ctx, pos, StringNewUTF8, true);
                               CHECK_ERR(ret);
                               return *ret;
                             }
