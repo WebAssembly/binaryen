@@ -581,6 +581,14 @@
     )
   )
 
+  (func $string.from_code_point
+    (drop
+      (string.from_code_point
+        (i32.const 1)
+      )
+    )
+  )
+
   ;; CHECK:      (func $string.new_try (type $ref|$array|_=>_none) (param $array (ref $array))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_utf8_try
