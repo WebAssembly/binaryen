@@ -83,14 +83,6 @@ struct CastRefining : public Pass {
 
     trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
-    if (!module->tables.empty()) {
-      // When there are tables we must also take their types into account, which
-      // would require us to take call_indirect, element segments, etc. into
-      // account. For now, do nothing if there are tables.
-      // TODO
-      return;
-    }
-
     // First, find all the created types, that have a struct.new, both in module
     // code and in functions.
     Types createdTypes;
