@@ -1836,9 +1836,10 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenExpressionRef length,
                                         BinaryenExpressionRef start,
                                         BinaryenExpressionRef end) {
-  Builder builder(*(Module*)module);
   // TODO: add API support for this
   bool try_ = false;
+
+  Builder builder(*(Module*)module);
   return static_cast<Expression*>(
     length ? builder.makeStringNew(
                StringNewOp(op), (Expression*)ptr, (Expression*)length, try_)
@@ -1846,7 +1847,7 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                    (Expression*)ptr,
                                    (Expression*)start,
                                    (Expression*)end,
-                                   try_);
+                                   try_));
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                           const char* name) {
