@@ -1843,7 +1843,7 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
            : builder.makeStringNew(StringNewOp(op),
                                    (Expression*)ptr,
                                    (Expression*)start,
-                                   (Expression*)end),
+                                   (Expression*)end,
                                    false /* try */);
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,

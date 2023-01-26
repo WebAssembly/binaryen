@@ -1004,8 +1004,10 @@ public:
     ret->finalize();
     return ret;
   }
-  StringNew*
-  makeStringNew(StringNewOp op, Expression* ptr, Expression* length, bool try_) {
+  StringNew* makeStringNew(StringNewOp op,
+                           Expression* ptr,
+                           Expression* length,
+                           bool try_) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;

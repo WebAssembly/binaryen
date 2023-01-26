@@ -1171,7 +1171,6 @@ enum ASTNodes {
   StringNewUTF8ArrayTry = 0xb8,
 };
 
-
 enum MemoryAccess {
   Offset = 0x10,    // bit 4
   Alignment = 0x80, // bit 7

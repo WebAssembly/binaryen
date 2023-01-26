@@ -2374,7 +2374,8 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx&, Index, RefAsOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx&, Index, StringNewOp op, bool try_);
+Result<typename Ctx::InstrT>
+makeStringNew(Ctx&, Index, StringNewOp op, bool try_);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConst(Ctx&, Index);
 template<typename Ctx>

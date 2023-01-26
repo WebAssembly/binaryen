@@ -2990,7 +2990,8 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, value);
 }
 
-Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
+Expression*
+SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
   size_t i = 1;
   Expression* length = nullptr;
   if (op == StringNewWTF8) {
@@ -3022,11 +3023,13 @@ Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bo
     }
     auto* start = parseExpression(s[i + 1]);
     auto* end = parseExpression(s[i + 2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end, try_);
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), start, end, try_);
   } else if (op == StringNewWTF16Array) {
     auto* start = parseExpression(s[i + 1]);
     auto* end = parseExpression(s[i + 2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end, try_);
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), start, end, try_);
   } else {
     throw ParseException("bad string.new op", s.line, s.col);
   }
