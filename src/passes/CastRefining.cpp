@@ -64,6 +64,9 @@ struct CastRefining : public Pass {
   // Only changes cast types, but not locals.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  // The types that are created (have a struct.new).
+  Types createdTypes;
+
   // The types that are created, or have a subtype that is created.
   Types createdTypesOrSubTypes;
 
@@ -85,7 +88,6 @@ struct CastRefining : public Pass {
 
     // First, find all the created types (that have a struct.new) both in module
     // code and in functions.
-    Types createdTypes;
     NewFinder(createdTypes).walkModuleCode(module);
 
     ModuleUtils::ParallelFunctionAnalysis<Types> analysis(
@@ -117,63 +119,7 @@ struct CastRefining : public Pass {
     }
 
     if (trapsNeverHappen) {
-      // Abstract types are those with no news, i.e., the complement of
-      // |createdTypes|. As mentioned above, we can only optimize this case if
-      // traps never happen.
-      Types abstractTypes;
-      for (auto type : subTypes.types) {
-        if (createdTypes.count(type) == 0) {
-          abstractTypes.insert(type);
-        }
-      }
-
-      // We found abstract types. Next, find which of them are refinable. We
-      // need an abstract type to have a single subtype, to which we will switch
-      // all of their casts.
-      //
-      // Do this depth-first, so that we visit subtypes first. That will handle
-      // chains where we want to refine a type A to a subtype of a subtype of
-      // it.
-      for (auto type : subTypes.getSubTypesFirstSort()) {
-        if (!abstractTypes.count(type)) {
-          continue;
-        }
-
-        std::optional<HeapType> refinedType;
-        auto& typeSubTypes = subTypes.getStrictSubTypes(type);
-        if (typeSubTypes.size() == 1) {
-          // There is only a single possibility, so we can definitely use that
-          /// one.
-          refinedType = typeSubTypes[0];
-        } else if (!typeSubTypes.empty()) {
-          // There are multiple possibilities. However, perhaps only one of them
-          // is relevant, if nothing is ever created of the others or their
-          // subtypes.
-          for (auto subType : typeSubTypes) {
-            if (createdTypesOrSubTypes.count(subType)) {
-              if (!refinedType) {
-                // This is the first relevant thing, and hopefully will remain
-                // the only one.
-                refinedType = subType;
-              } else {
-                // We've seen more than one as relevant, so we have failed to
-                // find a singleton.
-                refinedType = std::nullopt;
-                break;
-              }
-            }
-          }
-        }
-        if (refinedType) {
-          // Propagate anything from the child, to handle chains.
-          auto iter = refinableTypes.find(*refinedType);
-          if (iter != refinableTypes.end()) {
-            *refinedType = iter->second;
-          }
-
-          refinableTypes[type] = *refinedType;
-        }
-      }
+      computeAbstractTypes(subTypes);
     }
 
     // We found optimizable types. Apply them.
@@ -182,6 +128,66 @@ struct CastRefining : public Pass {
 
     // Refinalize, as RefCasts may have new types now.
     ReFinalize().run(getPassRunner(), module);
+  }
+
+  void computeAbstractTypes(const SubTypes& subTypes) {
+    // Abstract types are those with no news, i.e., the complement of
+    // |createdTypes|. As mentioned above, we can only optimize this case if
+    // traps never happen.
+    Types abstractTypes;
+    for (auto type : subTypes.types) {
+      if (createdTypes.count(type) == 0) {
+        abstractTypes.insert(type);
+      }
+    }
+
+    // We found abstract types. Next, find which of them are refinable. We
+    // need an abstract type to have a single subtype, to which we will switch
+    // all of their casts.
+    //
+    // Do this depth-first, so that we visit subtypes first. That will handle
+    // chains where we want to refine a type A to a subtype of a subtype of
+    // it.
+    for (auto type : subTypes.getSubTypesFirstSort()) {
+      if (!abstractTypes.count(type)) {
+        continue;
+      }
+
+      std::optional<HeapType> refinedType;
+      auto& typeSubTypes = subTypes.getStrictSubTypes(type);
+      if (typeSubTypes.size() == 1) {
+        // There is only a single possibility, so we can definitely use that
+        /// one.
+        refinedType = typeSubTypes[0];
+      } else if (!typeSubTypes.empty()) {
+        // There are multiple possibilities. However, perhaps only one of them
+        // is relevant, if nothing is ever created of the others or their
+        // subtypes.
+        for (auto subType : typeSubTypes) {
+          if (createdTypesOrSubTypes.count(subType)) {
+            if (!refinedType) {
+              // This is the first relevant thing, and hopefully will remain
+              // the only one.
+              refinedType = subType;
+            } else {
+              // We've seen more than one as relevant, so we have failed to
+              // find a singleton.
+              refinedType = std::nullopt;
+              break;
+            }
+          }
+        }
+      }
+      if (refinedType) {
+        // Propagate anything from the child, to handle chains.
+        auto iter = refinableTypes.find(*refinedType);
+        if (iter != refinableTypes.end()) {
+          *refinedType = iter->second;
+        }
+
+        refinableTypes[type] = *refinedType;
+      }
+    }
   }
 
   struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
