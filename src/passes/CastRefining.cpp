@@ -83,7 +83,7 @@ struct CastRefining : public Pass {
 
     trapsNeverHappen = getPassOptions().trapsNeverHappen;
 
-    // First, find all the created types, that have a struct.new, both in module
+    // First, find all the created types (that have a struct.new) both in module
     // code and in functions.
     Types createdTypes;
     NewFinder(createdTypes).walkModuleCode(module);
@@ -106,7 +106,7 @@ struct CastRefining : public Pass {
     // Compute createdTypesOrSubTypes by starting with the created types and
     // then propagating subtypes.
     createdTypesOrSubTypes = createdTypes;
-    for (auto type : subTypes.getDepthSort()) {
+    for (auto type : subTypes.getSubTypesFirstSort()) {
       // If any of our subtypes are created, so are we.
       for (auto subType : subTypes.getStrictSubTypes(type)) {
         if (createdTypesOrSubTypes.count(subType)) {
@@ -134,7 +134,7 @@ struct CastRefining : public Pass {
       // Do this depth-first, so that we visit subtypes first. That will handle
       // chains where we want to refine a type A to a subtype of a subtype of
       // it.
-      for (auto type : subTypes.getDepthSort()) {
+      for (auto type : subTypes.getSubTypesFirstSort()) {
         if (!abstractTypes.count(type)) {
           continue;
         }
