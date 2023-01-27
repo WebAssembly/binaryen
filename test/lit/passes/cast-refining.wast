@@ -532,12 +532,12 @@
   ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; YESTNH:      (type $A (struct ))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
   ;; YESTNH:      (type $B (struct_subtype  $A))
-  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
-
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
@@ -659,71 +659,50 @@
 
   ;; YESTNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result nullref)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast null $A
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result nullref)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast null $B
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result nullref)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast null $C1
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result nullref)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast null $C2
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $A
+  ;; NO_TNH-NEXT:   (ref.cast null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $B
+  ;; NO_TNH-NEXT:   (ref.cast null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $C1
+  ;; NO_TNH-NEXT:   (ref.cast null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $C2
+  ;; NO_TNH-NEXT:   (ref.cast null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $ref.cast.null (param $x anyref)
-    ;; These can only pass through a null. We optimize that in TNH mode, and
-    ;; have a TODO for non-TNH.
+    ;; These can only pass through a null.
     (drop
       (ref.cast null $A
         (local.get $x)
@@ -980,13 +959,8 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result nullref)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast null $C2
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (ref.null none)
+  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
@@ -1007,7 +981,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $C2
+  ;; NO_TNH-NEXT:   (ref.cast null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -1029,7 +1003,7 @@
         (local.get $x)
       )
     )
-    ;; This returns null in TNH.
+    ;; This returns null.
     (drop
       (ref.cast null $C2
         (local.get $x)

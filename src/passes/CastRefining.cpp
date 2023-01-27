@@ -241,11 +241,10 @@ struct CastRefining : public Pass {
           Builder builder(*getModule());
           Expression* rep = nullptr;
           if (castType.isNullable()) {
-            // TODO: Without TNH we can still optimize here, to do a null check
-            //       plus trap.
-            if (parent.trapsNeverHappen) {
-              rep = builder.makeRefNull(heapType->getBottom());
-            }
+            // The cast only succeeds if the input is a null, so cast to the
+            // bottom type. Other passes can improve this (in particular, in TNH
+            // mode we know the value must be a null).
+            curr->getCastType() = Type(heapType->getBottom(), Nullable);
           } else {
             rep = builder.makeUnreachable();
           }
