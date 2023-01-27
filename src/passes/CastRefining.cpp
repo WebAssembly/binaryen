@@ -207,6 +207,11 @@ struct CastRefining : public Pass {
         return std::nullopt;
       }
 
+      // For now we only optimize struct types, not arrays or funcs.
+      if (!heapType.isStruct()) {
+        return std::nullopt;
+      }
+
       return heapType;
     }
 
@@ -231,8 +236,7 @@ struct CastRefining : public Pass {
           Expression* rep = nullptr;
           if (castType.isNullable()) {
             // TODO: Without TNH we can still optimize here, to do a null check
-            // +
-            //       trap.
+            //       plus trap.
             if (parent.trapsNeverHappen) {
               rep = builder.makeRefNull(heapType->getBottom());
             }

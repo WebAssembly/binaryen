@@ -1037,3 +1037,204 @@
     )
   )
 )
+
+;; Function subtyping, which is a TODO - for now we do nothing.
+(module
+  ;; YESTNH:      (type $A (func))
+  ;; NO_TNH:      (type $A (func))
+  (type $A (func))
+
+  ;; YESTNH:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; YESTNH:      (type $B (func_subtype $A))
+  ;; NO_TNH:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; NO_TNH:      (type $B (func_subtype $A))
+  (type $B (func_subtype $A))
+
+  ;; YESTNH:      (type $C (func_subtype $B))
+  ;; NO_TNH:      (type $C (func_subtype $B))
+  (type $C (func_subtype $B))
+
+  ;; YESTNH:      (func $A (type $A)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $A (type $A)
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $A (type $A)
+  )
+
+  ;; YESTNH:      (func $C (type $A)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $C (type $A)
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $C (type $A)
+  )
+
+  ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $casts (param $x funcref)
+    ;; $A and $C have functions of their types, so in theory we could optimize
+    ;; $B here.
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; Array subtyping, which is a TODO - for now we do nothing.
+(module
+  ;; YESTNH:      (type $A (array (mut i32)))
+  ;; NO_TNH:      (type $A (array (mut i32)))
+  (type $A (array (mut i32)))
+
+  ;; YESTNH:      (type $B (array_subtype (mut i32) $A))
+  ;; NO_TNH:      (type $B (array_subtype (mut i32) $A))
+  (type $B (array_subtype (mut i32) $A))
+
+  ;; YESTNH:      (type $C (array_subtype (mut i32) $B))
+  ;; NO_TNH:      (type $C (array_subtype (mut i32) $B))
+  (type $C (array_subtype (mut i32) $B))
+
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; YESTNH:      (global $A (ref $A) (array.new $A
+  ;; YESTNH-NEXT:  (i32.const 10)
+  ;; YESTNH-NEXT:  (i32.const 20)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (global $A (ref $A) (array.new $A
+  ;; NO_TNH-NEXT:  (i32.const 10)
+  ;; NO_TNH-NEXT:  (i32.const 20)
+  ;; NO_TNH-NEXT: ))
+  (global $A (ref $A) (array.new $A
+    (i32.const 10)
+    (i32.const 20)
+  ))
+
+  ;; YESTNH:      (global $B (ref $B) (array.new $B
+  ;; YESTNH-NEXT:  (i32.const 10)
+  ;; YESTNH-NEXT:  (i32.const 20)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (global $B (ref $B) (array.new $B
+  ;; NO_TNH-NEXT:  (i32.const 10)
+  ;; NO_TNH-NEXT:  (i32.const 20)
+  ;; NO_TNH-NEXT: ))
+  (global $B (ref $B) (array.new $B
+    (i32.const 10)
+    (i32.const 20)
+  ))
+
+  ;; YESTNH:      (global $C (ref $C) (array.new $C
+  ;; YESTNH-NEXT:  (i32.const 10)
+  ;; YESTNH-NEXT:  (i32.const 20)
+  ;; YESTNH-NEXT: ))
+  ;; NO_TNH:      (global $C (ref $C) (array.new $C
+  ;; NO_TNH-NEXT:  (i32.const 10)
+  ;; NO_TNH-NEXT:  (i32.const 20)
+  ;; NO_TNH-NEXT: ))
+  (global $C (ref $C) (array.new $C
+    (i32.const 10)
+    (i32.const 20)
+  ))
+
+  ;; YESTNH:      (func $casts (type $anyref_=>_none) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $casts (type $anyref_=>_none) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $casts (param $x anyref)
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+)
