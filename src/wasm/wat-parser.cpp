@@ -2374,7 +2374,8 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx&, Index, RefAsOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringNew(Ctx&, Index, StringNewOp op);
+Result<typename Ctx::InstrT>
+makeStringNew(Ctx&, Index, StringNewOp op, bool try_);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConst(Ctx&, Index);
 template<typename Ctx>
@@ -2383,7 +2384,8 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringEncode(Ctx&, Index, StringEncodeOp op);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringConcat(Ctx&, Index);
-template<typename Ctx> Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeStringEq(Ctx&, Index, StringEqOp);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStringAs(Ctx&, Index, StringAsOp op);
 template<typename Ctx>
@@ -3562,7 +3564,7 @@ Result<typename Ctx::InstrT> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeStringNew(Ctx& ctx, Index pos, StringNewOp op) {
+makeStringNew(Ctx& ctx, Index pos, StringNewOp op, bool try_) {
   return ctx.in.err("unimplemented instruction");
 }
 
@@ -3589,7 +3591,7 @@ Result<typename Ctx::InstrT> makeStringConcat(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeStringEq(Ctx& ctx, Index pos, StringEqOp op) {
   return ctx.in.err("unimplemented instruction");
 }
 

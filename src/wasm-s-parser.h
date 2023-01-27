@@ -304,12 +304,12 @@ private:
   Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeRefAsNonNull(Element& s);
-  Expression* makeStringNew(Element& s, StringNewOp op);
+  Expression* makeStringNew(Element& s, StringNewOp op, bool try_);
   Expression* makeStringConst(Element& s);
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);
   Expression* makeStringEncode(Element& s, StringEncodeOp op);
   Expression* makeStringConcat(Element& s);
-  Expression* makeStringEq(Element& s);
+  Expression* makeStringEq(Element& s, StringEqOp op);
   Expression* makeStringAs(Element& s, StringAsOp op);
   Expression* makeStringWTF8Advance(Element& s);
   Expression* makeStringWTF16Get(Element& s);

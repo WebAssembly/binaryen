@@ -1566,11 +1566,17 @@ struct OptimizeInstructions
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
           if (iff->ifTrue->type.isNull()) {
+            if (ref->type != iff->ifFalse->type) {
+              refinalize = true;
+            }
             ref = builder.makeSequence(builder.makeDrop(iff->condition),
                                        iff->ifFalse);
             return false;
           }
           if (iff->ifFalse->type.isNull()) {
+            if (ref->type != iff->ifTrue->type) {
+              refinalize = true;
+            }
             ref = builder.makeSequence(builder.makeDrop(iff->condition),
                                        iff->ifTrue);
             return false;
