@@ -245,9 +245,6 @@
   )
 )
 
-
-)
-
 ;; $A has two subtypes. As a result, we cannot optimize it.
 (module
   ;; YESTNH:      (type $A (struct ))
