@@ -603,6 +603,97 @@
     )
   )
 
+  ;; TNH:      (func $cast-to-bottom (type $ref|any|_anyref_=>_none) (param $ref (ref any)) (param $nullable-ref anyref)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result (ref none))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result (ref none))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $nullable-ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result (ref none))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result nullref)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (local.get $nullable-ref)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (ref.null none)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $cast-to-bottom (type $ref|any|_anyref_=>_none) (param $ref (ref any)) (param $nullable-ref anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result (ref none))
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result (ref none))
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (local.get $nullable-ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result (ref none))
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:    (local.get $nullable-ref)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $cast-to-bottom (param $ref (ref any)) (param $nullable-ref anyref)
+    ;; Non-nullable casts to none must trap.
+    (drop
+      (ref.cast none
+        (local.get $ref)
+      )
+    )
+    (drop
+      (ref.cast none
+        (local.get $nullable-ref)
+      )
+    )
+    ;; Nullable casts might succeed, but can only return a null. In TNH mode we
+    ;; we dismiss the possibility of a trap and just return a null.
+    (drop
+      (ref.cast null none
+        (local.get $ref)
+      )
+    )
+    (drop
+      (ref.cast null none
+        (local.get $nullable-ref)
+      )
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)

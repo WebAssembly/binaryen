@@ -99,6 +99,15 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return SuccessOnlyIfNonNull;
   }
 
+  if (castHeapType.isBottom()) {
+    // We are casting to a null type, which means we are checking for a null.
+    if (refType.isNullable()) {
+      return SuccessOnlyIfNull;
+    } else {
+      return Failure;
+    }
+  }
+
   return Unknown;
 }
 
