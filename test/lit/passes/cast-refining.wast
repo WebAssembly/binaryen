@@ -793,9 +793,9 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
+  ;; NO_TNH-NEXT:   (block $block (result (ref $B))
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (br_on_cast $block $A
+  ;; NO_TNH-NEXT:     (br_on_cast $block $B
   ;; NO_TNH-NEXT:      (local.get $x)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -812,11 +812,12 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $br_on (param $x anyref)
-    ;; We don't optimize here yet. TODO
+    ;; We don't optimize here yet: this cast cannot succeed, but we leave it
+    ;; alone atm. TODO
     (drop
       (block $block (result anyref)
         (drop
-          (br_on_cast $block $A
+          (br_on_cast $block $B
             (local.get $x)
           )
         )
