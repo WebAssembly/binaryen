@@ -2003,11 +2003,12 @@ struct OptimizeInstructions
               auto newType = Type(nullType, Nullable);
               if (curr->type != newType) {
                 curr->type = newType;
-                // Call replaceCurrent() to make us re-optimize this node, as we may
-                // have just unlocked further opportunities. (We could just continue
-                // down to the rest, but we'd need to do more work to make sure all
-                // the local state in this function is in sync which this change; it's
-                // easier to just do another clean pass on this node.)
+                // Call replaceCurrent() to make us re-optimize this node, as we
+                // may have just unlocked further opportunities. (We could just
+                // continue down to the rest, but we'd need to do more work to
+                // make sure all the local state in this function is in sync
+                // which this change; it's easier to just do another clean pass
+                // on this node.)
                 replaceCurrent(curr);
                 return;
               }
