@@ -2490,13 +2490,14 @@ struct CanonicalizationState {
 
 #if TRACE_CANONICALIZATION
   void dump() {
+    IndexedTypeNameGenerator print(results);
     std::cerr << "Results:\n";
     for (size_t i = 0; i < results.size(); ++i) {
-      std::cerr << i << ": " << results[i] << "\n";
+      std::cerr << i << ": " << print(results[i]) << "\n";
     }
     std::cerr << "NewInfos:\n";
     for (size_t i = 0; i < newInfos.size(); ++i) {
-      std::cerr << asHeapType(newInfos[i]) << "\n";
+      std::cerr << print(asHeapType(newInfos[i])) << "\n";
     }
     std::cerr << '\n';
   }
