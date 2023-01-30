@@ -232,6 +232,64 @@
 
 (module
   (rec
+    (type $A (struct         (ref null $X)))
+    (type $B (struct_subtype (ref null $Y) $A))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
+    (type $X (struct         (ref null $A)))
+    (type $Y (struct_subtype (ref null $B) $X))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but now the A->B and X->Y chains are not differentiated by the
+    ;; i32 and f32, so all four types can be merged into a single type.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
+    (type $A (struct         (ref null $X)))
+    (type $B (struct_subtype (ref null $Y) $A))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
+    (type $X (struct         (ref null $A)))
+    (type $Y (struct_subtype (ref null $B) $X))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but now the A->B and X->Y chains are not differentiated by the
+    ;; i32 and f32, so all four types can be merged into a single type.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $X (struct (field (ref null $A))))
 
@@ -249,16 +307,141 @@
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
-    ;; As above, but now the A->B and X->Y chains are not differentiated by the
-    ;; i32 and f32, so all four types can be merged into a single type.
-    ;; TODO: This is not yet implemented. Merge the top level types.
+    ;; As above, but now there is a cast to A that prevents A and X from being
+    ;; merged.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $x (ref null $X))
     (local $y (ref null $Y))
+
+    (drop
+      (ref.cast $A
+        (local.get $a)
+      )
+    )
+  )
+)
+
+(module
+  ;; Check that a diversity of root types are merged correctly.
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $M (struct (field i32) (field i32)))
+
+  ;; CHECK:       (type $L (struct (field i32)))
+
+  ;; CHECK:       (type $K (func (param i32 i32 i32) (result i32 i32)))
+
+  ;; CHECK:       (type $J (func (param i32 i32) (result i32 i32 i32)))
+
+  ;; CHECK:       (type $I (array (ref $A)))
+
+  ;; CHECK:       (type $H (array (ref null $A)))
+
+  ;; CHECK:       (type $G (array (ref any)))
+
+  ;; CHECK:       (type $F (array anyref))
+
+  ;; CHECK:       (type $E (array i64))
+
+  ;; CHECK:       (type $D (array i32))
+
+  ;; CHECK:       (type $C (array i16))
+
+  ;; CHECK:       (type $B (array (mut i8)))
+
+  ;; CHECK:       (type $A (array i8))
+  (type $A  (array i8))
+  (type $A' (array i8))
+  (type $B  (array (mut i8)))
+  (type $B' (array (mut i8)))
+  (type $C  (array i16))
+  (type $C' (array i16))
+  (type $D  (array i32))
+  (type $D' (array i32))
+  (type $E  (array i64))
+  (type $E' (array i64))
+  (type $F  (array anyref))
+  (type $F' (array anyref))
+  (type $G  (array (ref any)))
+  (type $G' (array (ref any)))
+  (type $H  (array (ref null $A)))
+  (type $H' (array (ref null $A)))
+  (type $I  (array (ref $A)))
+  (type $I' (array (ref $A)))
+  (type $J  (func (param i32 i32) (result i32 i32 i32)))
+  (type $J' (func (param i32 i32) (result i32 i32 i32)))
+  (type $K  (func (param i32 i32 i32) (result i32 i32)))
+  (type $K' (func (param i32 i32 i32) (result i32 i32)))
+  (type $L  (struct i32))
+  (type $L' (struct i32))
+  (type $M  (struct i32 i32))
+  (type $M' (struct i32 i32))
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $a' (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $b' (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $c' (ref null $C))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $d' (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (local $e' (ref null $E))
+  ;; CHECK-NEXT:  (local $f (ref null $F))
+  ;; CHECK-NEXT:  (local $f' (ref null $F))
+  ;; CHECK-NEXT:  (local $g (ref null $G))
+  ;; CHECK-NEXT:  (local $g' (ref null $G))
+  ;; CHECK-NEXT:  (local $h (ref null $H))
+  ;; CHECK-NEXT:  (local $h' (ref null $H))
+  ;; CHECK-NEXT:  (local $i (ref null $I))
+  ;; CHECK-NEXT:  (local $i' (ref null $I))
+  ;; CHECK-NEXT:  (local $j (ref null $J))
+  ;; CHECK-NEXT:  (local $j' (ref null $J))
+  ;; CHECK-NEXT:  (local $k (ref null $K))
+  ;; CHECK-NEXT:  (local $k' (ref null $K))
+  ;; CHECK-NEXT:  (local $l (ref null $L))
+  ;; CHECK-NEXT:  (local $l' (ref null $L))
+  ;; CHECK-NEXT:  (local $m (ref null $M))
+  ;; CHECK-NEXT:  (local $m' (ref null $M))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $a  (ref null $A))
+    (local $a' (ref null $A'))
+    (local $b  (ref null $B))
+    (local $b' (ref null $B'))
+    (local $c  (ref null $C))
+    (local $c' (ref null $C'))
+    (local $d  (ref null $D))
+    (local $d' (ref null $D'))
+    (local $e  (ref null $E))
+    (local $e' (ref null $E'))
+    (local $f  (ref null $F))
+    (local $f' (ref null $F'))
+    (local $g  (ref null $G))
+    (local $g' (ref null $G'))
+    (local $h  (ref null $H))
+    (local $h' (ref null $H'))
+    (local $i  (ref null $I))
+    (local $i' (ref null $I'))
+    (local $j  (ref null $J))
+    (local $j' (ref null $J'))
+    (local $k  (ref null $K))
+    (local $k' (ref null $K'))
+    (local $l  (ref null $L))
+    (local $l' (ref null $L'))
+    (local $m  (ref null $M))
+    (local $m' (ref null $M'))
   )
 )
 
@@ -288,6 +471,69 @@
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $c (ref null $C))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
+    (type $A (struct         anyref))
+    ;; CHECK:       (type $B (struct_subtype (field eqref) $A))
+    (type $B (struct_subtype eqref $A))
+    (type $C (struct_subtype eqref $A))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; This is the same as above, but now B and C refine A such that they have a
+    ;; different top-level structure. They can still be merged.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $c (ref null $C))
+  )
+)
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
+    (type $A (struct         anyref))
+    (type $B (struct_subtype anyref $A))
+    (type $C (struct_subtype anyref $A))
+    ;; CHECK:       (type $E (struct_subtype (field eqref) $A))
+
+    ;; CHECK:       (type $D (struct_subtype (field eqref) $A))
+    (type $D (struct_subtype eqref $B))
+    (type $E (struct_subtype eqref $C))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $c (ref null $A))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; D and E should be mergeable because they have identical shapes and will
+    ;; be siblings after B and C get merged, but we don't support this case yet.
+    ;; TODO: support this.
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $c (ref null $C))
+    (local $d (ref null $D))
+    (local $e (ref null $E))
   )
 )
 
@@ -488,6 +734,49 @@
   (func $quux (param (ref $A) (ref $B) (ref $C))
     (unreachable)
   )
+)
+
+;; Regression test for a bug in which we tried to merge A into B instead of the
+;; other way around, causing an assertion failure in type-updating.cpp.
+(module
+  (rec
+    ;; CHECK:      (type $A (func (param (ref null $A)) (result (ref null $A))))
+    (type $A (func (param (ref null $B)) (result (ref null $A))))
+    (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+  )
+
+  ;; CHECK:      (func $0 (type $A) (param $0 (ref null $A)) (result (ref null $A))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $0 (type $B) (param $0 (ref null $A)) (result (ref null $B))
+    (unreachable)
+  )
+)
+
+;; Regresssion test for a bug in which we merged A into A', but
+;; type-updating.cpp ordered B before A', so the supertype ordering was
+;; incorrect.
+(module
+ (rec
+  (type $A (struct))
+  (type $B (struct_subtype $A))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (struct (field (ref $A'))))
+  (type $X (struct (ref $B)))
+  ;; CHECK:       (type $A' (struct ))
+  (type $A' (struct))
+ )
+ ;; CHECK:       (type $none_=>_none (func))
+
+ ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $b (ref null $A'))
+ ;; CHECK-NEXT:  (local $x (ref null $X))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $foo
+   (local $b (ref null $A'))
+   (local $x (ref null $X))
+ )
 )
 
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).

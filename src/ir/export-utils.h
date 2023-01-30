@@ -24,6 +24,16 @@ namespace wasm::ExportUtils {
 std::vector<Function*> getExportedFunctions(Module& wasm);
 std::vector<Global*> getExportedGlobals(Module& wasm);
 
+inline bool isExported(const Module& module, const Function& func) {
+  for (auto& exportFunc : module.exports) {
+    if (exportFunc->kind == ExternalKind::Function &&
+        exportFunc->value == func.name) {
+      return true;
+    }
+  }
+  return false;
+};
+
 } // namespace wasm::ExportUtils
 
 #endif // wasm_ir_export_h

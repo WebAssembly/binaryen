@@ -140,7 +140,7 @@ void Element::dump() {
   std::cout << "dumping " << this << " : " << *this << ".\n";
 }
 
-SExpressionParser::SExpressionParser(char* input) : input(input) {
+SExpressionParser::SExpressionParser(char const* input) : input(input) {
   root = nullptr;
   line = 1;
   lineStart = input;
@@ -190,15 +190,15 @@ Element* SExpressionParser::parse() {
 
 void SExpressionParser::parseDebugLocation() {
   // Extracting debug location (if valid)
-  char* debugLoc = input + 3; // skipping ";;@"
+  char const* debugLoc = input + 3; // skipping ";;@"
   while (debugLoc[0] && debugLoc[0] == ' ') {
     debugLoc++;
   }
-  char* debugLocEnd = debugLoc;
+  char const* debugLocEnd = debugLoc;
   while (debugLocEnd[0] && debugLocEnd[0] != '\n') {
     debugLocEnd++;
   }
-  char* pos = debugLoc;
+  char const* pos = debugLoc;
   while (pos < debugLocEnd && pos[0] != ':') {
     pos++;
   }
@@ -206,7 +206,7 @@ void SExpressionParser::parseDebugLocation() {
     return; // no line number
   }
   std::string name(debugLoc, pos);
-  char* lineStart = ++pos;
+  char const* lineStart = ++pos;
   while (pos < debugLocEnd && pos[0] != ':') {
     pos++;
   }
@@ -279,7 +279,7 @@ Element* SExpressionParser::parseString() {
     input++;
     dollared = true;
   }
-  char* start = input;
+  char const* start = input;
   if (input[0] == '"') {
     // parse escaping \", but leave code escaped - we'll handle escaping in
     // memory segments specifically
@@ -317,12 +317,14 @@ Element* SExpressionParser::parseString() {
   if (start == input) {
     throw ParseException("expected string", line, input - lineStart);
   }
-  char temp = input[0];
-  input[0] = 0;
+
+  std::string temp;
+  temp.assign(start, input - start);
+
   auto ret = allocator.alloc<Element>()
-               ->setString(IString(start, false), dollared, false)
+               ->setString(IString(temp.c_str(), false), dollared, false)
                ->setMetadata(line, start - lineStart, loc);
-  input[0] = temp;
+
   return ret;
 }
 
@@ -2988,43 +2990,53 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, value);
 }
 
-Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+Expression*
+SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
   size_t i = 1;
   Expression* length = nullptr;
-  if (op == StringNewWTF8) {
-    std::string_view str = s[i++]->str().str;
-    if (str == "utf8") {
-      op = StringNewUTF8;
-    } else if (str == "wtf8") {
-      op = StringNewWTF8;
-    } else if (str == "replace") {
-      op = StringNewReplace;
-    } else {
-      throw ParseException("bad string.new op", s.line, s.col);
+  if (op == StringNewWTF8 || op == StringNewUTF8) {
+    if (!try_) {
+      std::string_view str = s[i++]->str().str;
+      if (str == "utf8") {
+        op = StringNewUTF8;
+      } else if (str == "wtf8") {
+        op = StringNewWTF8;
+      } else if (str == "replace") {
+        op = StringNewReplace;
+      } else {
+        throw ParseException("bad string.new op", s.line, s.col);
+      }
     }
     length = parseExpression(s[i + 1]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length, try_);
   } else if (op == StringNewWTF16) {
     length = parseExpression(s[i + 1]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length);
-  } else if (op == StringNewWTF8Array) {
-    std::string_view str = s[i++]->str().str;
-    if (str == "utf8") {
-      op = StringNewUTF8Array;
-    } else if (str == "wtf8") {
-      op = StringNewWTF8Array;
-    } else if (str == "replace") {
-      op = StringNewReplaceArray;
-    } else {
-      throw ParseException("bad string.new op", s.line, s.col);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length, try_);
+  } else if (op == StringNewWTF8Array || op == StringNewUTF8Array) {
+    if (!try_) {
+      std::string_view str = s[i++]->str().str;
+      if (str == "utf8") {
+        op = StringNewUTF8Array;
+      } else if (str == "wtf8") {
+        op = StringNewWTF8Array;
+      } else if (str == "replace") {
+        op = StringNewReplaceArray;
+      } else {
+        throw ParseException("bad string.new op", s.line, s.col);
+      }
     }
     auto* start = parseExpression(s[i + 1]);
     auto* end = parseExpression(s[i + 2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end);
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), start, end, try_);
   } else if (op == StringNewWTF16Array) {
     auto* start = parseExpression(s[i + 1]);
     auto* end = parseExpression(s[i + 2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), start, end);
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), start, end, try_);
+  } else if (op == StringNewFromCodePoint) {
+    return Builder(wasm).makeStringNew(
+      op, parseExpression(s[i]), nullptr, try_);
   } else {
     throw ParseException("bad string.new op", s.line, s.col);
   }
@@ -3088,9 +3100,9 @@ Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
                                         parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringEq(Element& s) {
-  return Builder(wasm).makeStringEq(parseExpression(s[1]),
-                                    parseExpression(s[2]));
+Expression* SExpressionWasmBuilder::makeStringEq(Element& s, StringEqOp op) {
+  return Builder(wasm).makeStringEq(
+    op, parseExpression(s[1]), parseExpression(s[2]));
 }
 
 Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {

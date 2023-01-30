@@ -1836,14 +1836,18 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenExpressionRef length,
                                         BinaryenExpressionRef start,
                                         BinaryenExpressionRef end) {
+  // TODO: add API support for this
+  bool try_ = false;
+
   Builder builder(*(Module*)module);
   return static_cast<Expression*>(
     length ? builder.makeStringNew(
-               StringNewOp(op), (Expression*)ptr, (Expression*)length)
+               StringNewOp(op), (Expression*)ptr, (Expression*)length, try_)
            : builder.makeStringNew(StringNewOp(op),
                                    (Expression*)ptr,
                                    (Expression*)start,
-                                   (Expression*)end));
+                                   (Expression*)end,
+                                   try_));
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                           const char* name) {
@@ -1880,7 +1884,7 @@ BinaryenExpressionRef BinaryenStringEq(BinaryenModuleRef module,
                                        BinaryenExpressionRef right) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStringEq((Expression*)left, (Expression*)right));
+      .makeStringEq(StringEqEqual, (Expression*)left, (Expression*)right));
 }
 BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
                                        BinaryenOp op,
@@ -5453,7 +5457,7 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
   auto* wasm = new Module;
   try {
-    SExpressionParser parser(const_cast<char*>(text));
+    SExpressionParser parser(text);
     Element& root = *parser.root;
     SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
   } catch (ParseException& p) {

@@ -122,7 +122,7 @@ inline void verifyFlatness(Module* module) {
       return std::make_unique<VerifyFlatness>();
     }
 
-    void doVisitFunction(Function* func) { verifyFlatness(func); }
+    void visitFunction(Function* func) { verifyFlatness(func); }
   };
 
   PassRunner runner(module);
