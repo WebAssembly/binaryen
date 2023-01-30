@@ -101,6 +101,12 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
 
   void visitCallIndirect(CallIndirect* curr) {
     note(ModuleElement(ModuleElementKind::Table, curr->table));
+
+    // Note a possible call of a function reference as well, as something might
+    // be written into the table during runtime. With precise tracking of what
+    // is written into the table we could do better here; we could also see
+    // which tables are immutable. TODO
+    noteCallRef(curr->heapType);
   }
 
   void visitCallRef(CallRef* curr) {
