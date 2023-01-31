@@ -16158,8 +16158,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $lt-added-constant (param $x i32)
-    ;; As above, but with lt_s rather than gt_u. We cannot optimize here since
-    ;; the add might overflow (reach the sign bit).
+    ;; As above, but with lt_s rather than gt_u. We can optimize here.
     (drop
       (i32.lt_s
         (i32.add
