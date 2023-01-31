@@ -289,7 +289,7 @@ struct Analyzer {
   }
 
   // We'll compute SubTypes if we need them.
-  std::unique_ptr<SubTypes> subTypes;
+  std::optional<SubTypes> subTypes;
 
   // Process expressions in the expression queue while we have any, visiting
   // them (using their contents) and adding children. Returns whether we did any
@@ -389,7 +389,7 @@ struct Analyzer {
       // read, and also all subtypes since we might be reading from them as
       // well.
       if (!subTypes) {
-        subTypes = std::make_unique<SubTypes>(*module);
+        subTypes = SubTypes(*module);
       }
       subTypes->iterSubTypes(type, [&](HeapType subType, Index depth) {
         auto subStructField = StructField{subType, index};
