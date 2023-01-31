@@ -16145,12 +16145,15 @@
 
   ;; CHECK:      (func $lt-added-constant (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -16813,21 +16816,21 @@
   ;; CHECK-NEXT:    (i32.load
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix (result i32)
     ;; A case of one negative and one positive constant. Here we have
-    ;; [max 31 bits] + 10 >=_s -20 which is always true.
+    ;; [max 16 bits] + 10 >=_s -20 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
           (i32.load
             (i32.const 0)
           )
-          (i32.const 1)
+          (i32.const 16)
         )
         (i32.const 10)
       )
@@ -16842,7 +16845,7 @@
   ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 16)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -16858,7 +16861,7 @@
           (i32.load
             (i32.const 0)
           )
-          (i32.const 1)
+          (i32.const 16)
         )
         (i32.const -20)
       )
@@ -16872,25 +16875,76 @@
   ;; CHECK-NEXT:    (i32.load
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix-flip-other (result i32)
     ;; As above, but with the sign the same while the absolute values are
-    ;; flipped. Here we have [max 31 bits] + 20 >=_s -10 which is always true.
+    ;; flipped. Here we have [max 16 bits] + 20 >=_s -10 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
           (i32.load
             (i32.const 0)
           )
-          (i32.const 1)
+          (i32.const 16)
         )
         (i32.const 20)
       )
       (i32.const -10)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-signed-overflow (result i32)
+  ;; CHECK-NEXT:  (i64.lt_s
+  ;; CHECK-NEXT:   (i64.add
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-signed-overflow (result i32)
+    ;; Adding 1 to 0x7fffffffffffffff turns it into 0x8000000000000000, which
+    ;; when signed is -1, that is, we overflow. So we can't subtract 1 from the
+    ;; gt_s arms.
+    ;; (The i64.or is needed to avoid other opts.)
+    (i64.gt_s
+      (i64.const 2)
+      (i64.add
+        (i64.const 1)
+        (i64.or
+          (i64.const 0)
+          (i64.const 0x7fffffffffffffff)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $added-constants-unsigned (result i32)
+  ;; CHECK-NEXT:  (i64.eqz
+  ;; CHECK-NEXT:   (i64.or
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $added-constants-unsigned (result i32)
+    ;; As above, but unsigned. This is ok, as it can't overflow as unsigned.
+    (i64.gt_u
+      (i64.const 2)
+      (i64.add
+        (i64.const 1)
+        (i64.or
+          (i64.const 0)
+          (i64.const 0x7fffffffffffffff)
+        )
+      )
     )
   )
 )

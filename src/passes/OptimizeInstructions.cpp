@@ -3761,7 +3761,11 @@ private:
 
   // Returns true if the given binary operation can overflow. If we can't be
   // sure either way, we return true, assuming the worst.
-  bool canOverflow(Binary* binary) {
+  //
+  // We can check for an unsigned overflow (more than the max number of bits) or
+  // a signed one (where even reaching the sign bit is an overflow, as that
+  // would turn us from positive to negative).
+  bool canOverflow(Binary* binary, bool signed_) {
     using namespace Abstract;
 
     // If we know nothing about a limit on the amount of bits on either side,
@@ -3774,17 +3778,23 @@ private:
     }
 
     if (binary->op == getBinary(binary->type, Add)) {
-      // Proof this cannot overflow:
-      //
-      // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
-      //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
-      //              =  2^typeMaxBits                           (3)
-      //
-      // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
-      //     and its max value is 2^32 - 1, which is < 2^32).
-      // (2) By the above checks and early returns.
-      // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
-      return false;
+      if (!signed_) {
+        // Proof this cannot overflow:
+        //
+        // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
+        //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
+        //              =  2^typeMaxBits                           (3)
+        //
+        // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
+        //     and its max value is 2^32 - 1, which is < 2^32).
+        // (2) By the above checks and early returns.
+        // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
+        return false;
+      }
+
+      // For a signed comparison, check that the total cannot reach the sign
+      // bit.
+      return leftMaxBits + rightMaxBits >= typeMaxBits;
     }
 
     // TODO subtraction etc.
@@ -4102,7 +4112,7 @@ private:
         Const* c2;
         if (matches(curr,
                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
-            !canOverflow(add)) {
+            !canOverflow(add, isSignedOp(curr->op))) {
           // We want to subtract C2-C1 or C1-C2. When doing so, we must avoid an
           // overflow in that subtraction (so that we keep all the math here
           // properly linear in the mathematical sense). Overflows that concern
