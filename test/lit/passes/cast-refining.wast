@@ -1210,3 +1210,5 @@
     )
   )
 )
+
+;; TODO: test a local type gets modded

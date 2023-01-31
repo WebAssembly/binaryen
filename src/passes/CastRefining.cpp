@@ -34,6 +34,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-type.h"
@@ -44,7 +45,6 @@ namespace wasm {
 namespace {
 
 using Types = std::unordered_set<HeapType>;
-using TypeMap = std::unordered_map<HeapType, HeapType>;
 
 // Gather all types in StructNews.
 struct NewFinder : public PostWalker<NewFinder> {
@@ -71,7 +71,7 @@ struct CastRefining : public Pass {
   Types createdTypesOrSubTypes;
 
   // A map of a cast type to refine and the type to refine it to.
-  TypeMap refinableTypes;
+  TypeMapper::TypeUpdates refinableTypes;
 
   bool trapsNeverHappen;
 
@@ -123,8 +123,7 @@ struct CastRefining : public Pass {
     }
 
     // We found optimizable types. Apply them.
-    Optimizer optimizer(*this);
-    optimizer.run(getPassRunner(), module);
+    optimize(module, subTypes);
 
     // Refinalize, as RefCasts may have new types now.
     ReFinalize().run(getPassRunner(), module);
@@ -190,100 +189,32 @@ struct CastRefining : public Pass {
     }
   }
 
-  struct Optimizer : public WalkerPass<PostWalker<Optimizer>> {
-    bool isFunctionParallel() override { return true; }
+  void optimize(Module* module, const SubTypes& subTypes) {
+    // To optimize we rewrite types. That is, if we want to optimize all casts
+    // of $A to instead cast to the refined type $B, we can do that by simply
+    // replacing all appearances of $A with $B. That is possible here since we
+    // only optimize when we know $A is never created, and we are removing all
+    // casts to it, which means no other references to it are needed - so we can
+    // just rewrite all references to $A to point to $B. Doing such a rewrite
+    // will also remove the unneeded type from the type section, which is nice
+    // for code size.
 
-    CastRefining& parent;
+    // Build the mapping we want. We start with the refinable types.
+    auto mapping = refinableTypes;
 
-    Optimizer(CastRefining& parent) : parent(parent) {}
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<Optimizer>(parent);
-    }
-
-    std::optional<HeapType> getHeapTypeIfRelevant(Type type) {
-      if (type == Type::unreachable || !type.isRef()) {
-        return std::nullopt;
-      }
-
-      // We ignore basic types, as in any non-trivial module they will always
-      // have something created of their subtypes. TODO Optimize even there
-      auto heapType = type.getHeapType();
-      if (heapType.isBasic()) {
-        return std::nullopt;
-      }
-
-      // For now we only optimize struct types, not arrays or funcs.
-      if (!heapType.isStruct()) {
-        return std::nullopt;
-      }
-
-      return heapType;
-    }
-
-    template<typename T> void refineCast(T* curr) {
-      auto& castType = curr->getCastType();
-      if (auto heapType = getHeapTypeIfRelevant(castType)) {
-        auto iter = parent.refinableTypes.find(*heapType);
-        if (iter != parent.refinableTypes.end()) {
-          // We can refine this cast.
-          castType = Type(iter->second, castType.getNullability());
-        }
+    // Next, add a mapping of types that are never created (and none of their
+    // subtypes) to the bottom type. This is valid because all locations of that
+    // type, like a local variable, will only contain null at runtime. Likewise,
+    // if we have a ref.test of such a type, we can only be looking for a null
+    // at best.
+    for (auto type : subTypes.types) {
+      if (createdTypesOrSubTypes.count(type) == 0) {
+        mapping[type] = type.getBottom();
       }
     }
-
-    void visitRefCast(RefCast* curr) {
-      auto castType = curr->getCastType();
-      if (auto heapType = getHeapTypeIfRelevant(castType)) {
-        if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
-          // Nothing is created of this type or any subtype, so the cast can
-          // only pass through a null, at most.
-          Builder builder(*getModule());
-          Expression* rep = nullptr;
-          if (castType.isNullable()) {
-            // The cast only succeeds if the input is a null, so cast to the
-            // bottom type. Other passes can improve this (in particular, in TNH
-            // mode we know the value must be a null).
-            curr->getCastType() = Type(heapType->getBottom(), Nullable);
-          } else {
-            rep = builder.makeUnreachable();
-          }
-          if (rep) {
-            replaceCurrent(builder.makeSequence(builder.makeDrop(curr), rep));
-            return;
-          }
-        }
-
-        refineCast(curr);
-      }
-    }
-
-    void visitRefTest(RefTest* curr) {
-      auto castType = curr->getCastType();
-      if (auto heapType = getHeapTypeIfRelevant(castType)) {
-        if (parent.createdTypesOrSubTypes.count(*heapType) == 0) {
-          // Nothing is created of this type or any subtype, so the cast can
-          // only succeed if the input is a null, if we allow that.
-          Builder builder(*getModule());
-          if (castType.isNullable()) {
-            replaceCurrent(builder.makeRefIsNull(curr->ref));
-          } else {
-            replaceCurrent(builder.makeSequence(
-              builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
-          }
-          return;
-        }
-
-        refineCast(curr);
-      }
-    }
-
-    void visitBrOn(BrOn* curr) {
-      // TODO: optimize with createdTypesOrSubTypes here
-
-      refineCast(curr);
-    }
-  };
+    
+    TypeMapper(*module, mapping);
+  }
 };
 
 } // anonymous namespace

@@ -110,8 +110,6 @@ struct CastFinder : public PostWalker<CastFinder> {
 // refine the partitions so that types that turn out to not be mergeable will be
 // split out into separate partitions.
 struct TypeMerging : public Pass {
-  using TypeUpdates = std::unordered_map<HeapType, HeapType>;
-
   // Only modifies types.
   bool requiresNonNullableLocalFixups() override { return false; }
 
@@ -125,7 +123,7 @@ struct TypeMerging : public Pass {
   CastTypes findCastTypes();
   std::vector<HeapType> getPublicChildren(HeapType type);
   DFA::State<HeapType> makeDFAState(HeapType type);
-  void applyMerges(const TypeUpdates& merges);
+  void applyMerges(const TypeMapper::TypeUpdates& merges);
 };
 
 // Hash and equality-compare HeapTypes based on their top-level structure (i.e.
@@ -285,7 +283,7 @@ void TypeMerging::run(Module* module_) {
   auto refinedPartitions = DFA::refinePartitions(dfa);
 
   // The types we can merge mapped to the type we are merging them into.
-  TypeUpdates merges;
+  TypeMapper::TypeUpdates merges;
 
   // Merge each refined partition into a single type. We should only merge into
   // supertypes or siblings because if we try to merge into a subtype then we
@@ -366,78 +364,14 @@ DFA::State<HeapType> TypeMerging::makeDFAState(HeapType type) {
   return {type, std::move(succs)};
 }
 
-void TypeMerging::applyMerges(const TypeUpdates& merges) {
+void TypeMerging::applyMerges(const TypeMapper::TypeUpdates& merges) {
   if (merges.empty()) {
     return;
   }
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-
-  class TypeInternalsUpdater : public GlobalTypeRewriter {
-    const TypeUpdates& merges;
-
-    std::unordered_map<HeapType, Signature> newSignatures;
-
-  public:
-    TypeInternalsUpdater(Module& wasm, const TypeUpdates& merges)
-      : GlobalTypeRewriter(wasm), merges(merges) {
-
-      // Map the types of expressions (curr->type, etc.) to their merged
-      // types.
-      mapTypes(merges);
-
-      // Update the internals of types (struct fields, signatures, etc.) to
-      // refer to the merged types.
-      update();
-    }
-
-    Type getNewType(Type type) {
-      if (!type.isRef()) {
-        return type;
-      }
-      auto heapType = type.getHeapType();
-      auto iter = merges.find(heapType);
-      if (iter != merges.end()) {
-        return getTempType(Type(iter->second, type.getNullability()));
-      }
-      return getTempType(type);
-    }
-
-    void modifyStruct(HeapType oldType, Struct& struct_) override {
-      auto& oldFields = oldType.getStruct().fields;
-      for (Index i = 0; i < oldFields.size(); i++) {
-        auto& oldField = oldFields[i];
-        auto& newField = struct_.fields[i];
-        newField.type = getNewType(oldField.type);
-      }
-    }
-    void modifyArray(HeapType oldType, Array& array) override {
-      array.element.type = getNewType(oldType.getArray().element.type);
-    }
-    void modifySignature(HeapType oldSignatureType, Signature& sig) override {
-      auto getUpdatedTypeList = [&](Type type) {
-        std::vector<Type> vec;
-        for (auto t : type) {
-          vec.push_back(getNewType(t));
-        }
-        return getTempTupleType(vec);
-      };
-
-      auto oldSig = oldSignatureType.getSignature();
-      sig.params = getUpdatedTypeList(oldSig.params);
-      sig.results = getUpdatedTypeList(oldSig.results);
-    }
-    std::optional<HeapType> getSuperType(HeapType oldType) override {
-      auto super = oldType.getSuperType();
-      if (super) {
-        if (auto it = merges.find(*super); it != merges.end()) {
-          return it->second;
-        }
-      }
-      return super;
-    }
-  } rewriter(*module, merges);
+  TypeMapper(*module, merges);
 }
 
 bool shapeEq(HeapType a, HeapType b) {
