@@ -16812,29 +16812,26 @@
   )
 
   ;; CHECK:      (func $skip-added-constants-mix (result i32)
-  ;; CHECK-NEXT:  (i32.ge_s
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.load
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const -20)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix (result i32)
     ;; A case of one negative and one positive constant. Here we have
-    ;; [max 30 bits] + 10 >=_s -20 which is always true.
+    ;; [max 16 bits] + 10 >=_s -20 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
           (i32.load
             (i32.const 0)
           )
-          (i32.const 2)
+          (i32.const 16)
         )
         (i32.const 10)
       )
@@ -16849,7 +16846,7 @@
   ;; CHECK-NEXT:     (i32.load
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 16)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -16865,7 +16862,7 @@
           (i32.load
             (i32.const 0)
           )
-          (i32.const 2)
+          (i32.const 16)
         )
         (i32.const -20)
       )
@@ -16874,29 +16871,26 @@
   )
 
   ;; CHECK:      (func $skip-added-constants-mix-flip-other (result i32)
-  ;; CHECK-NEXT:  (i32.ge_s
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.load
-  ;; CHECK-NEXT:      (i32.const 0)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 16)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const -10)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $skip-added-constants-mix-flip-other (result i32)
     ;; As above, but with the sign the same while the absolute values are
-    ;; flipped. Here we have [max 30 bits] + 20 >=_s -10 which is always true.
+    ;; flipped. Here we have [max 16 bits] + 20 >=_s -10 which is always true.
     (i32.ge_s
       (i32.add
         (i32.shr_u
           (i32.load
             (i32.const 0)
           )
-          (i32.const 2)
+          (i32.const 16)
         )
         (i32.const 20)
       )
