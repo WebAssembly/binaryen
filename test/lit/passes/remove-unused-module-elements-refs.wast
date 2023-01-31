@@ -7,26 +7,36 @@
 ;; if no calls exist to the right type, the function is not reached.
 
 (module
+  ;; CHECK:      (type $A-super (func))
+  ;; OPEN_WORLD:      (type $A-super (func))
   (type $A-super (func))
 
-  ;; CHECK:      (type $A (func))
-  ;; OPEN_WORLD:      (type $A (func))
+  ;; CHECK:      (type $A (func_subtype $A-super))
+  ;; OPEN_WORLD:      (type $A (func_subtype $A-super))
   (type $A (func_subtype $A-super))
 
+  ;; CHECK:      (type $A-sub (func_subtype $A))
+  ;; OPEN_WORLD:      (type $A-sub (func_subtype $A))
   (type $A-sub (func_subtype $A))
 
   ;; CHECK:      (type $B (func))
   ;; OPEN_WORLD:      (type $B (func))
   (type $B (func))
 
-  ;; CHECK:      (elem declare func $target-A $target-B)
+  ;; CHECK:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $A)
+  ;; CHECK:      (func $foo (type $A-super)
   ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-sub)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $target-A-super)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-B)
@@ -41,14 +51,20 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-A $target-B)
+  ;; OPEN_WORLD:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $A)
+  ;; OPEN_WORLD:      (func $foo (type $A-super)
   ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (ref.func $target-A-sub)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (ref.func $target-A-super)
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-B)
@@ -65,9 +81,15 @@
   ;; OPEN_WORLD-NEXT: )
   (func $foo (export "foo")
     (local $A (ref null $A))
-    ;; This export has two RefFuncs, and one CallRef.
+    ;; This export has some RefFuncs, and one CallRef.
     (drop
       (ref.func $target-A)
+    )
+    (drop
+      (ref.func $target-A-sub)
+    )
+    (drop
+      (ref.func $target-A-super)
     )
     (drop
       (ref.func $target-B)
@@ -98,11 +120,23 @@
     ;; no RefFunc.
   )
 
-  (func $target-A-subtype (type $A-sub)
+  ;; CHECK:      (func $target-A-sub (type $A-sub)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $target-A-sub (type $A-sub)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $target-A-sub (type $A-sub)
     ;; This function is reachable because we have a CallRef of a supertype ($A).
   )
 
-  (func $target-A-supertype (type $A-super)
+  ;; CHECK:      (func $target-A-super (type $A-super)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $target-A-super (type $A-super)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $target-A-super (type $A-super)
     ;; This function is not reachable. We have a CallRef of a subtype ($A), but
     ;; that is not enough.
   )
