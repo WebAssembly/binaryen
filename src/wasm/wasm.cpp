@@ -1134,7 +1134,7 @@ void StringNew::finalize() {
       (length && length->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, NonNullable);
+    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
   }
 }
 

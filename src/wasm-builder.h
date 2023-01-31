@@ -1004,24 +1004,29 @@ public:
     ret->finalize();
     return ret;
   }
-  StringNew*
-  makeStringNew(StringNewOp op, Expression* ptr, Expression* length) {
+  StringNew* makeStringNew(StringNewOp op,
+                           Expression* ptr,
+                           Expression* length,
+                           bool try_) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;
     ret->length = length;
+    ret->try_ = try_;
     ret->finalize();
     return ret;
   }
   StringNew* makeStringNew(StringNewOp op,
                            Expression* ptr,
                            Expression* start,
-                           Expression* end) {
+                           Expression* end,
+                           bool try_) {
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
     ret->ptr = ptr;
     ret->start = start;
     ret->end = end;
+    ret->try_ = try_;
     ret->finalize();
     return ret;
   }
@@ -1057,8 +1062,9 @@ public:
     ret->finalize();
     return ret;
   }
-  StringEq* makeStringEq(Expression* left, Expression* right) {
+  StringEq* makeStringEq(StringEqOp op, Expression* left, Expression* right) {
     auto* ret = wasm.allocator.alloc<StringEq>();
+    ret->op = op;
     ret->left = left;
     ret->right = right;
     ret->finalize();

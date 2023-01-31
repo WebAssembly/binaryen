@@ -28,17 +28,17 @@
 
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   (type $empty (struct))
 
-  ;; CHECK:      (type $void (func))
-
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
@@ -3155,6 +3155,41 @@
           (local.get $externref)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $struct.set.null.fallthrough (type $void)
+  ;; CHECK-NEXT:  (local $temp (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct $i8
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $struct.set.null.fallthrough (type $void)
+  ;; NOMNL-NEXT:  (local $temp (ref null $struct))
+  ;; NOMNL-NEXT:  (struct.set $struct $i8
+  ;; NOMNL-NEXT:   (local.tee $temp
+  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (i32.const 100)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $struct.set.null.fallthrough
+    (local $temp (ref null $struct))
+    ;; The value falling through the tee shows the local.set will trap. We can
+    ;; append an unreachable after it. While doing so we must not emit a drop of
+    ;; the struct.set (which would be valid for a struct.get etc.).
+    (struct.set $struct 0
+      (local.tee $temp
+        (ref.as_non_null
+          (ref.null none)
+        )
+      )
+      (i32.const 100)
     )
   )
 )

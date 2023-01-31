@@ -28,13 +28,14 @@ namespace wasm::HeapTypeOrdering {
 // Given a collection of types, iterate through it such that each type in the
 // collection is visited only after its immediate supertype in the collection is
 // visited.
-template<typename T>
-struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
+template<typename SupertypeProvider>
+struct SupertypesFirstBase
+  : TopologicalSort<HeapType, SupertypesFirstBase<SupertypeProvider>> {
   // For each type in the input collection, whether it is a supertype. Used to
   // track membership in the input collection.
   InsertOrderedMap<HeapType, bool> typeSet;
 
-  SupertypesFirst(const T& types) {
+  template<typename T> SupertypesFirstBase(const T& types) {
     for (auto type : types) {
       typeSet[type] = false;
     }
@@ -56,9 +57,19 @@ struct SupertypesFirst : TopologicalSort<HeapType, SupertypesFirst<T>> {
 
   void pushPredecessors(HeapType type) {
     // Do not visit types that weren't in the input collection.
-    if (auto super = type.getSuperType(); super && typeSet.count(*super)) {
+    if (auto super = static_cast<SupertypeProvider*>(this)->getSuperType(type);
+        super && typeSet.count(*super)) {
       this->push(*super);
     }
+  }
+};
+
+struct SupertypesFirst : SupertypesFirstBase<SupertypesFirst> {
+  template<typename T>
+  SupertypesFirst(const T& types) : SupertypesFirstBase(types) {}
+
+  std::optional<HeapType> getSuperType(HeapType type) {
+    return type.getSuperType();
   }
 };
 

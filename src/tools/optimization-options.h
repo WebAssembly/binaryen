@@ -277,6 +277,14 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
              passOptions.zeroFilledMemory = true;
+           })
+      .add("--skip-pass",
+           "-sp",
+           "Skip a pass (do not run it)",
+           OptimizationOptionsCategory,
+           Options::Arguments::One,
+           [this](Options*, const std::string& pass) {
+             passOptions.passesToSkip.insert(pass);
            });
 
     // add passes in registry

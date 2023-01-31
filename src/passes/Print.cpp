@@ -2345,7 +2345,11 @@ struct PrintExpressionContents
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
       case StringNewUTF8:
-        printMedium(o, "string.new_wtf8 utf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8 utf8");
+        } else {
+          printMedium(o, "string.new_utf8_try");
+        }
         break;
       case StringNewWTF8:
         printMedium(o, "string.new_wtf8 wtf8");
@@ -2357,7 +2361,11 @@ struct PrintExpressionContents
         printMedium(o, "string.new_wtf16");
         break;
       case StringNewUTF8Array:
-        printMedium(o, "string.new_wtf8_array utf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8_array utf8");
+        } else {
+          printMedium(o, "string.new_utf8_array_try");
+        }
         break;
       case StringNewWTF8Array:
         printMedium(o, "string.new_wtf8_array wtf8");
@@ -2367,6 +2375,9 @@ struct PrintExpressionContents
         break;
       case StringNewWTF16Array:
         printMedium(o, "string.new_wtf16_array");
+        break;
+      case StringNewFromCodePoint:
+        printMedium(o, "string.from_code_point");
         break;
       default:
         WASM_UNREACHABLE("invalid string.new*");
@@ -2424,7 +2435,18 @@ struct PrintExpressionContents
   void visitStringConcat(StringConcat* curr) {
     printMedium(o, "string.concat");
   }
-  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringEq(StringEq* curr) {
+    switch (curr->op) {
+      case StringEqEqual:
+        printMedium(o, "string.eq");
+        break;
+      case StringEqCompare:
+        printMedium(o, "string.compare");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.eq*");
+    }
+  }
   void visitStringAs(StringAs* curr) {
     switch (curr->op) {
       case StringAsWTF8:
