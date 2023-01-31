@@ -195,20 +195,26 @@ struct CastRefining : public Pass {
     // will also remove the unneeded type from the type section, which is nice
     // for code size.
 
-    // Build the mapping we want. We start with the refinable types.
-    auto mapping = refinableTypes;
+    TypeMapper::TypeUpdates mapping;
 
-    // Next, add a mapping of types that are never created (and none of their
-    // subtypes) to the bottom type. This is valid because all locations of that
-    // type, like a local variable, will only contain null at runtime. Likewise,
-    // if we have a ref.test of such a type, we can only be looking for a null
-    // at best. This can be seen as "refining" uses of these never-created types
-    // to the bottom type.
     for (auto type : subTypes.types) {
       if (!type.isStruct()) {
         // TODO: support arrays and funcs
         continue;
       }
+
+      // Map refinable types.
+      if (auto iter = refinableTypes.find(type); iter != refinableTypes.end()) {
+        mapping[type] = iter->second;
+        continue;
+      }
+
+      // Also add a mapping of types that are never created (and none of their
+      // subtypes) to the bottom type. This is valid because all locations of that
+      // type, like a local variable, will only contain null at runtime. Likewise,
+      // if we have a ref.test of such a type, we can only be looking for a null
+      // at best. This can be seen as "refining" uses of these never-created types
+      // to the bottom type.
       if (createdTypesOrSubTypes.count(type) == 0) {
         mapping[type] = type.getBottom();
       }
