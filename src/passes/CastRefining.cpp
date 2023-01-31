@@ -203,20 +203,22 @@ struct CastRefining : public Pass {
         continue;
       }
 
-      // Map refinable types.
-      if (auto iter = refinableTypes.find(type); iter != refinableTypes.end()) {
-        mapping[type] = iter->second;
-        continue;
-      }
-
-      // Also add a mapping of types that are never created (and none of their
+      // Add a mapping of types that are never created (and none of their
       // subtypes) to the bottom type. This is valid because all locations of that
       // type, like a local variable, will only contain null at runtime. Likewise,
       // if we have a ref.test of such a type, we can only be looking for a null
       // at best. This can be seen as "refining" uses of these never-created types
       // to the bottom type.
+      //
+      // We check this first as it is the most powerful change.
       if (createdTypesOrSubTypes.count(type) == 0) {
         mapping[type] = type.getBottom();
+        continue;
+      }
+
+      // Map refinable types.
+      if (auto iter = refinableTypes.find(type); iter != refinableTypes.end()) {
+        mapping[type] = iter->second;
       }
     }
 
