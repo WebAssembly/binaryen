@@ -292,7 +292,7 @@ struct Analyzer {
     return worked;
   }
 
-  std::unique_ptr<SubTypes> subTypes;
+  std::optional<SubTypes> subTypes;
 
   void useCallRefType(HeapType type) {
     if (!subTypes) {
