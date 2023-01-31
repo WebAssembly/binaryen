@@ -295,6 +295,12 @@ struct Analyzer {
   std::optional<SubTypes> subTypes;
 
   void useCallRefType(HeapType type) {
+    if (type.isBasic()) {
+      // Nothing to do for something like a bottom type; attempts to call such a
+      // type will trap at runtime.
+      return;
+    }
+
     if (!subTypes) {
       subTypes = SubTypes(*module);
     }
