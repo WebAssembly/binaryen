@@ -371,7 +371,7 @@ void TypeMerging::applyMerges(const TypeMapper::TypeUpdates& merges) {
 
   // We found things to optimize! Rewrite types in the module to apply those
   // changes.
-  TypeMapper(*module, merges);
+  TypeMapper(*module, merges).map();
 }
 
 bool shapeEq(HeapType a, HeapType b) {

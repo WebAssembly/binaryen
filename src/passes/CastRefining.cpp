@@ -227,12 +227,18 @@ struct CastRefining : public Pass {
     //
     // And we see B is never created, so we want to map B to its subtype C. C's
     // supertype must now be A.
+
+
+        for (auto& [a, b] : mapping) std::cout << "map " << module->typeNames[a].name << " to " << module->typeNames[b].name  << '\n';
+
     class CastRefiningTypeMapper : public TypeMapper {
+      Module& wasm;
     public:
-      CastRefiningTypeMapper(Module& wasm, const TypeUpdates& merges)
-        : TypeMapper(wasm, merges) {}
+      CastRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
+        : TypeMapper(wasm, mapping), wasm(wasm) {}
 
       std::optional<HeapType> getSuperType(HeapType oldType) override {
+std::cout << "CRTMsuper!\n";
         auto super = oldType.getSuperType();
         if (!super) {
           return super;
@@ -245,13 +251,14 @@ struct CastRefining : public Pass {
           if (mapping.count(*super)) {
             super = super->getSuperType();
           } else {
+         std::cout << "super of " << wasm.typeNames[oldType].name << " to " << wasm.typeNames[*super].name  << '\n';
             return super;
           }
         }
       }
     };
 
-    CastRefiningTypeMapper(*module, mapping);
+    CastRefiningTypeMapper(*module, mapping).map();
   }
 };
 

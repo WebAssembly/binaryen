@@ -415,8 +415,9 @@ public:
 
 public:
   TypeMapper(Module& wasm, const TypeUpdates& mapping)
-    : GlobalTypeRewriter(wasm), mapping(mapping) {
+    : GlobalTypeRewriter(wasm), mapping(mapping) {}
 
+  void map() {
     // Map the types of expressions (curr->type, etc.) to their merged
     // types.
     mapTypes(mapping);
