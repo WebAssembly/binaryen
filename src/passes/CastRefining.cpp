@@ -122,6 +122,8 @@ struct CastRefining : public Pass {
       computeAbstractTypes(subTypes);
     }
 
+    // Use what we found about abstract types and never-created types to
+    // optimize.
     optimize(module, subTypes);
   }
 
@@ -216,7 +218,7 @@ struct CastRefining : public Pass {
         continue;
       }
 
-      // Map refinable types.
+      // Otherwise, apply a refining if we found one before.
       if (auto iter = refinableTypes.find(type); iter != refinableTypes.end()) {
         mapping[type] = iter->second;
       }
@@ -227,15 +229,13 @@ struct CastRefining : public Pass {
     }
 
     // A TypeMapper that handles the patterns we have in our mapping, where we
-    // end up mapping a type to a *subtype*. Without being careful, that would
-    // make the rewriting make a type be a super of itself. That is, say we have
-    // this:
+    // end up mapping a type to a *subtype*. We need to properly create
+    // supertypes while doing this rewriting. For example, say we have this:
     //
     //  A :> B :> C
     //
-    // And we see B is never created, so we want to map B to its subtype C. C's
+    // Say we see B is never created, so we want to map B to its subtype C. C's
     // supertype must now be A.
-
     class CastRefiningTypeMapper : public TypeMapper {
       Module& wasm;
 
