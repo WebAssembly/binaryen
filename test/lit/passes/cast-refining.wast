@@ -3,20 +3,20 @@
 ;; RUN: foreach %s %t wasm-opt --cast-refining --traps-never-happen -all --closed-world --nominal -S -o - | filecheck %s --check-prefix=YESTNH
 ;; RUN: foreach %s %t wasm-opt --cast-refining                      -all --closed-world --nominal -S -o - | filecheck %s --check-prefix=NO_TNH
 
-;; Run in both TNH and non-TNH mode. This pass should do nothing atm in non-TNH.
+;; Run in both TNH and non-TNH mode.
 
 ;; $A :> $B :> $C :> $D :> $E
 ;;
 ;; $A and $D have no struct.news, so we can optimize casts of them to their
-;; subtypes.
+;; subtypes, in TNH mode. In that mode $A and $D will also not be emitted in
+;; the output anymore.
 (module
-  ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
-  ;; YESTNH:      (type $B (struct_subtype  $A))
+  ;; YESTNH:      (type $B (struct ))
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
@@ -26,11 +26,10 @@
   ;; NO_TNH:      (type $C (struct_subtype  $B))
   (type $C (struct_subtype $B))
 
-  ;; YESTNH:      (type $D (struct_subtype  $C))
   ;; NO_TNH:      (type $D (struct_subtype  $C))
   (type $D (struct_subtype $C))
 
-  ;; YESTNH:      (type $E (struct_subtype  $D))
+  ;; YESTNH:      (type $E (struct_subtype  $C))
   ;; NO_TNH:      (type $E (struct_subtype  $D))
   (type $E (struct_subtype $D))
 
@@ -183,7 +182,7 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result (ref $A))
+  ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (drop
   ;; NO_TNH-NEXT:     (br_on_cast $block $A
   ;; NO_TNH-NEXT:      (local.get $x)
@@ -336,26 +335,21 @@
   )
 )
 
-;; As above, but now $B is never created, so we can optimize casts to $A to
+;; As above, but now $B is never created, so we can optimize casts of $A to
 ;; $B1.
 (module
-  ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
-  ;; YESTNH:      (type $B1 (struct_subtype  $A))
-
-  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; YESTNH:      (type $B (struct_subtype  $A))
-  ;; NO_TNH:      (type $B1 (struct_subtype  $A))
-
-  ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
+  ;; YESTNH:      (type $B1 (struct ))
+  ;; NO_TNH:      (type $B1 (struct_subtype  $A))
   (type $B1 (struct_subtype $A)) ;; this is a new type
+
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; YESTNH:      (func $new (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
@@ -380,13 +374,8 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $B
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
@@ -402,13 +391,8 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $B
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
@@ -438,17 +422,15 @@
 
 ;; A chain, $A :> $B :> $C, where we can optimize $A all the way to $C.
 (module
-  ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
 
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
-  ;; YESTNH:      (type $B (struct_subtype  $A))
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:      (type $C (struct_subtype  $B))
+  ;; YESTNH:      (type $C (struct ))
   ;; NO_TNH:      (type $C (struct_subtype  $B))
   (type $C (struct_subtype $B))
 
@@ -524,109 +506,62 @@
 )
 
 ;; More testing for cases where no types or subtypes are created. No type is
-;; created here.
+;; created here. No type needs to be emitted in the output.
 (module
-  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; YESTNH:      (type $A (struct ))
-  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
-  ;; YESTNH:      (type $B (struct_subtype  $A))
-  ;; NO_TNH:      (type $B (struct_subtype  $A))
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; YESTNH:      (type $B (struct ))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:      (type $C1 (struct_subtype  $B))
-  ;; NO_TNH:      (type $C1 (struct_subtype  $B))
   (type $C1 (struct_subtype $B))
 
-  ;; YESTNH:      (type $C2 (struct_subtype  $B))
-  ;; NO_TNH:      (type $C2 (struct_subtype  $B))
   (type $C2 (struct_subtype $B))
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $A
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $B
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $C1
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $C2
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $A
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $B
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $C1
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $C2
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
@@ -656,7 +591,7 @@
 
   ;; YESTNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast null $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -724,34 +659,24 @@
 
   ;; YESTNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block (result i32)
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.test $A
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (i32.const 0)
+  ;; YESTNH-NEXT:   (ref.test $B
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.is_null
+  ;; YESTNH-NEXT:   (ref.test null $B
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block (result i32)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.test $A
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:   (ref.test none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.is_null
+  ;; NO_TNH-NEXT:   (ref.test null none
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -773,9 +698,9 @@
 
   ;; YESTNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block $block (result (ref $B))
+  ;; YESTNH-NEXT:   (block $block (result (ref none))
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (br_on_cast $block $B
+  ;; YESTNH-NEXT:     (br_on_cast $block none
   ;; YESTNH-NEXT:      (local.get $x)
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
@@ -793,9 +718,9 @@
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $br_on (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block (result (ref $B))
+  ;; NO_TNH-NEXT:   (block $block (result (ref none))
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (br_on_cast $block $B
+  ;; NO_TNH-NEXT:     (br_on_cast $block none
   ;; NO_TNH-NEXT:      (local.get $x)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -812,8 +737,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $br_on (param $x anyref)
-    ;; We don't optimize here yet: this cast cannot succeed, but we leave it
-    ;; alone atm. TODO
+    ;; As above, this can be a cast to the bottom type.
     (drop
       (block $block (result anyref)
         (drop
@@ -824,6 +748,7 @@
         (unreachable)
       )
     )
+    ;; Non-cast br_on* can be ignored.
     (drop
       (block $block (result anyref)
         (br_on_non_null $block
@@ -837,27 +762,23 @@
 
 ;; As above, but now $C1 is created.
 (module
-  ;; YESTNH:      (type $A (struct ))
   ;; NO_TNH:      (type $A (struct ))
   (type $A (struct))
 
-  ;; YESTNH:      (type $B (struct_subtype  $A))
   ;; NO_TNH:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:      (type $C1 (struct_subtype  $B))
+  ;; YESTNH:      (type $C1 (struct ))
   ;; NO_TNH:      (type $C1 (struct_subtype  $B))
   (type $C1 (struct_subtype $B))
 
-  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; YESTNH:      (type $C2 (struct_subtype  $B))
-  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; NO_TNH:      (type $C2 (struct_subtype  $B))
   (type $C2 (struct_subtype $B))
 
+  ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; YESTNH:      (global $global anyref (struct.new_default $C1))
+  ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
   ;; NO_TNH:      (global $global anyref (struct.new_default $C1))
   (global $global anyref (struct.new $C1))
 
@@ -878,13 +799,8 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block
-  ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (ref.cast $C2
-  ;; YESTNH-NEXT:      (local.get $x)
-  ;; YESTNH-NEXT:     )
-  ;; YESTNH-NEXT:    )
-  ;; YESTNH-NEXT:    (unreachable)
+  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
@@ -905,13 +821,8 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $C2
-  ;; NO_TNH-NEXT:      (local.get $x)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
