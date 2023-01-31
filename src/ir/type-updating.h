@@ -409,17 +409,17 @@ class TypeMapper : public GlobalTypeRewriter {
 public:
   using TypeUpdates = std::unordered_map<HeapType, HeapType>;
 
-  const TypeUpdates& merges;
+  const TypeUpdates& mapping;
 
   std::unordered_map<HeapType, Signature> newSignatures;
 
 public:
-  TypeMapper(Module& wasm, const TypeUpdates& merges)
-    : GlobalTypeRewriter(wasm), merges(merges) {
+  TypeMapper(Module& wasm, const TypeUpdates& mapping)
+    : GlobalTypeRewriter(wasm), mapping(mapping) {
 
     // Map the types of expressions (curr->type, etc.) to their merged
     // types.
-    mapTypes(merges);
+    mapTypes(mapping);
 
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
@@ -431,8 +431,8 @@ public:
       return type;
     }
     auto heapType = type.getHeapType();
-    auto iter = merges.find(heapType);
-    if (iter != merges.end()) {
+    auto iter = mapping.find(heapType);
+    if (iter != mapping.end()) {
       return getTempType(Type(iter->second, type.getNullability()));
     }
     return getTempType(type);
@@ -463,9 +463,10 @@ public:
     sig.results = getUpdatedTypeList(oldSig.results);
   }
   std::optional<HeapType> getSuperType(HeapType oldType) override {
+    // If the super is mapped, get it from the mapping.
     auto super = oldType.getSuperType();
     if (super) {
-      if (auto it = merges.find(*super); it != merges.end()) {
+      if (auto it = mapping.find(*super); it != mapping.end()) {
         return it->second;
       }
     }

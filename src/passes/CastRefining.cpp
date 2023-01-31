@@ -206,14 +206,52 @@ struct CastRefining : public Pass {
     // subtypes) to the bottom type. This is valid because all locations of that
     // type, like a local variable, will only contain null at runtime. Likewise,
     // if we have a ref.test of such a type, we can only be looking for a null
-    // at best.
+    // at best. This can be seen as "refining" uses of these never-created types
+    // to the bottom type.
     for (auto type : subTypes.types) {
+      if (!type.isStruct()) {
+        // TODO: support arrays and funcs
+        continue;
+      }
       if (createdTypesOrSubTypes.count(type) == 0) {
         mapping[type] = type.getBottom();
       }
     }
-    
-    TypeMapper(*module, mapping);
+
+    // A TypeMapper that handles the patterns we have in our mapping, where we
+    // end up mapping a type to a *subtype*. Without being careful, that would
+    // make the rewriting make a type be a super of itself. That is, say we have
+    // this:
+    //
+    //  A :> B :> C
+    //
+    // And we see B is never created, so we want to map B to its subtype C. C's
+    // supertype must now be A.
+    class CastRefiningTypeMapper : public TypeMapper {
+    public:
+      CastRefiningTypeMapper(Module& wasm, const TypeUpdates& merges)
+        : TypeMapper(wasm, merges) {}
+
+      std::optional<HeapType> getSuperType(HeapType oldType) override {
+        auto super = oldType.getSuperType();
+        if (!super) {
+          return super;
+        }
+
+        // Go up the chain of supertypes, skipping things we are mapping away,
+        // as those things will not appear in the output. This skips B in the
+        // example above.
+        while (1) {
+          if (mapping.count(*super)) {
+            super = super->getSuperType();
+          } else {
+            return super;
+          }
+        }
+      }
+    };
+
+    CastRefiningTypeMapper(*module, mapping);
   }
 };
 
