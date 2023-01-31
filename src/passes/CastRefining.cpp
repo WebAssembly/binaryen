@@ -122,11 +122,7 @@ struct CastRefining : public Pass {
       computeAbstractTypes(subTypes);
     }
 
-    // We found optimizable types. Apply them.
     optimize(module, subTypes);
-
-    // Refinalize, as RefCasts may have new types now.
-    ReFinalize().run(getPassRunner(), module);
   }
 
   void computeAbstractTypes(const SubTypes& subTypes) {
@@ -218,6 +214,10 @@ struct CastRefining : public Pass {
       }
     }
 
+    if (mapping.empty()) {
+      return;
+    }
+
     // A TypeMapper that handles the patterns we have in our mapping, where we
     // end up mapping a type to a *subtype*. Without being careful, that would
     // make the rewriting make a type be a super of itself. That is, say we have
@@ -254,6 +254,9 @@ struct CastRefining : public Pass {
     };
 
     CastRefiningTypeMapper(*module, mapping).map();
+
+    // Refinalize, as RefCasts may have new types now.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
