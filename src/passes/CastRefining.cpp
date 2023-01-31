@@ -196,6 +196,24 @@ struct CastRefining : public Pass {
     // just rewrite all references to $A to point to $B. Doing such a rewrite
     // will also remove the unneeded type from the type section, which is nice
     // for code size.
+    //
+    // Note that this could in theory limit optimizability, but it does not. It
+    // could in theory because we are merging types here - even though we merge
+    // types that are not needed (so we can't hurt optimizations), those changes
+    // can affect needed types. For example, imagine that we replace all $A with
+    // $B, and we had types like this:
+    //
+    //  $C = [.., $A, ..]
+    //  $D = [.., $B, ..]
+    //
+    // After replacing $A with $B, we cause $C and $D to be structurally
+    // identical. However, we will not actually merge those in the normal course
+    // of optimization: the type rewriter will create a single new rec group for
+    // all new types anyhow, so they all remain distinct from each other. The
+    // only thing that can merge them is if we run TypeMerging, which is not run
+    // by default exactly for this reason, that it can limit optimizations.
+    // Thus, this pass does only "safe" merging, that cannot limit later
+    // optimizations.
 
     TypeMapper::TypeUpdates mapping;
 
