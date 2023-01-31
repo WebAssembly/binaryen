@@ -346,6 +346,67 @@
   )
 )
 
+;; call_indirect can reach things in the table, or that are written to the table
+;; during runtime.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+  ;; OPEN_WORLD:      (type $none_=>_none (func))
+  (type $none_=>_none (func))
+
+  ;; CHECK:      (table $table 22 funcref)
+  ;; OPEN_WORLD:      (table $table 22 funcref)
+  (table $table 22 funcref)
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "run" (func $run))
+
+  ;; CHECK:      (func $run (type $none_=>_none)
+  ;; CHECK-NEXT:  (table.set $table
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_indirect $table (type $none_=>_none)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $func)
+
+  ;; OPEN_WORLD:      (export "run" (func $run))
+
+  ;; OPEN_WORLD:      (func $run (type $none_=>_none)
+  ;; OPEN_WORLD-NEXT:  (table.set $table
+  ;; OPEN_WORLD-NEXT:   (i32.const 0)
+  ;; OPEN_WORLD-NEXT:   (ref.func $func)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT:  (call_indirect $table (type $none_=>_none)
+  ;; OPEN_WORLD-NEXT:   (i32.const 0)
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $run (export "run")
+    ;; Set something in the table, and call it.
+    (table.set $table
+      (i32.const 0)
+      (ref.func $func)
+    )
+    (call_indirect $table (type $none_=>_none)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $func (type $none_=>_none)
+  ;; OPEN_WORLD-NEXT:  (nop)
+  ;; OPEN_WORLD-NEXT: )
+  (func $func (type $none_=>_none)
+    ;; This function will be called indirectly from |run|, so it is reachable
+    ;; and this should not be turned into |unreachable|.
+    (nop)
+  )
+)
+
 ;; The call.without.effects intrinsic does a call to the reference given to it,
 ;; but for now other imports do not (until we add a flag for closed-world).
 (module
