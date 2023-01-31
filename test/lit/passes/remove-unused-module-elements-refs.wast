@@ -7,9 +7,13 @@
 ;; if no calls exist to the right type, the function is not reached.
 
 (module
+  (type $A-super (func))
+
   ;; CHECK:      (type $A (func))
   ;; OPEN_WORLD:      (type $A (func))
-  (type $A (func))
+  (type $A (func_subtype $A-super))
+
+  (type $A-sub (func_subtype $A))
 
   ;; CHECK:      (type $B (func))
   ;; OPEN_WORLD:      (type $B (func))
@@ -92,6 +96,15 @@
   (func $target-A-noref (type $A)
     ;; This function is not reachable. We have a CallRef of the right type, but
     ;; no RefFunc.
+  )
+
+  (func $target-A-subtype (type $A-sub)
+    ;; This function is reachable because we have a CallRef of a supertype ($A).
+  )
+
+  (func $target-A-supertype (type $A-super)
+    ;; This function is not reachable. We have a CallRef of a subtype ($A), but
+    ;; that is not enough.
   )
 
   ;; CHECK:      (func $target-B (type $B)

@@ -40,6 +40,7 @@
 #include "ir/element-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -214,11 +215,11 @@ struct Analyzer {
 
   // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
   // one of the types here, we know all the RefFuncs corresponding to it are
-  // used. This is the reverse side of calledSignatures: for a function to
-  // be used via a reference, we need the combination of a RefFunc of it as
-  // well as a CallRef of that, and we may see them in any order. (Or, if the
-  // RefFunc is in a table, we need a CallIndirect, which is handled in the
-  // table logic.)
+  // potentially used (and also those of subtypes). This is the reverse side of
+  // calledSignatures: for a function to be used via a reference, we need the
+  // combination of a RefFunc of it as well as a CallRef of that, and we may see
+  // them in any order. (Or, if the RefFunc is in a table, we need a
+  // CallIndirect, which is handled in the table logic.)
   //
   // After we see a call for a type, we can clear out the entry here for it, as
   // we'll have that type in calledSignatures, and so this contains only
@@ -291,24 +292,32 @@ struct Analyzer {
     return worked;
   }
 
+  std::unique_ptr<SubTypes> subTypes;
+
   void useCallRefType(HeapType type) {
-    // Call all the functions of that signature. We can then forget about
-    // them, as this signature will be marked as called.
-    auto iter = uncalledRefFuncMap.find(type);
-    if (iter != uncalledRefFuncMap.end()) {
-      // We must not have a type in both calledSignatures and
-      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
-      // it any more.
-      assert(calledSignatures.count(type) == 0);
-
-      for (Name target : iter->second) {
-        use(ModuleElement(ModuleElementKind::Function, target));
-      }
-
-      uncalledRefFuncMap.erase(iter);
+    if (!subTypes) {
+      subTypes = std::make_unique<SubTypes>(*module);
     }
 
-    calledSignatures.insert(type);
+    // Call all the functions of that signature, and subtypes. We can then
+    // forget about them, as those signatures will be marked as called.
+    for (auto subType : subTypes->getAllSubTypes(type)) {
+      auto iter = uncalledRefFuncMap.find(subType);
+      if (iter != uncalledRefFuncMap.end()) {
+        // We must not have a type in both calledSignatures and
+        // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+        // it any more.
+        assert(calledSignatures.count(subType) == 0);
+
+        for (Name target : iter->second) {
+          use(ModuleElement(ModuleElementKind::Function, target));
+        }
+
+        uncalledRefFuncMap.erase(iter);
+      }
+
+      calledSignatures.insert(subType);
+    }
   }
 
   void useRefFunc(Name func) {
