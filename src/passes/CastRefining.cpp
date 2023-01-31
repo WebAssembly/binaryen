@@ -204,11 +204,11 @@ struct CastRefining : public Pass {
       }
 
       // Add a mapping of types that are never created (and none of their
-      // subtypes) to the bottom type. This is valid because all locations of that
-      // type, like a local variable, will only contain null at runtime. Likewise,
-      // if we have a ref.test of such a type, we can only be looking for a null
-      // at best. This can be seen as "refining" uses of these never-created types
-      // to the bottom type.
+      // subtypes) to the bottom type. This is valid because all locations of
+      // that type, like a local variable, will only contain null at runtime.
+      // Likewise, if we have a ref.test of such a type, we can only be looking
+      // for a null at best. This can be seen as "refining" uses of these
+      // never-created types to the bottom type.
       //
       // We check this first as it is the most powerful change.
       if (createdTypesOrSubTypes.count(type) == 0) {
@@ -238,6 +238,7 @@ struct CastRefining : public Pass {
 
     class CastRefiningTypeMapper : public TypeMapper {
       Module& wasm;
+
     public:
       CastRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
         : TypeMapper(wasm, mapping), wasm(wasm) {}
