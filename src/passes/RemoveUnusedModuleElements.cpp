@@ -296,7 +296,7 @@ struct Analyzer {
 
   void useCallRefType(HeapType type) {
     if (!subTypes) {
-      subTypes = std::move(SubTypes(*module));
+      subTypes = SubTypes(*module);
     }
 
     // Call all the functions of that signature, and subtypes. We can then
