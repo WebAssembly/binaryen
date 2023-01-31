@@ -443,7 +443,6 @@ struct Analyzer {
     return worked;
   }
 
-
   // Mark something as used, if it hasn't already been, and if so add it to the
   // queue so we can process the things it can reach.
   void use(ModuleElement element) {
