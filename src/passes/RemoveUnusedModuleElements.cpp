@@ -176,7 +176,7 @@ struct Analyzer {
   Module* module;
   const PassOptions& options;
 
-  // The set of all used things we've seen so far.
+  // The set of all used things we've seen used so far.
   std::unordered_set<ModuleElement> used;
 
   // Things for whom there is a reference, but may be unused. It is ok for a
