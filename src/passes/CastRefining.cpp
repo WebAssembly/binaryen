@@ -255,11 +255,9 @@ struct CastRefining : public Pass {
     // Say we see B is never created, so we want to map B to its subtype C. C's
     // supertype must now be A.
     class CastRefiningTypeMapper : public TypeMapper {
-      Module& wasm;
-
     public:
       CastRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
-        : TypeMapper(wasm, mapping), wasm(wasm) {}
+        : TypeMapper(wasm, mapping) {}
 
       std::optional<HeapType> getSuperType(HeapType oldType) override {
         auto super = oldType.getSuperType();
