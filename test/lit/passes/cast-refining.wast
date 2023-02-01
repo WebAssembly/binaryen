@@ -1067,6 +1067,106 @@
   )
 )
 
+;; As above, but now the functions are also public types (exported). We should
+;; be careful here in the future even when we do optimize function types.
+(module
+  ;; YESTNH:      (type $A (func))
+  ;; NO_TNH:      (type $A (func))
+  (type $A (func))
+
+  ;; YESTNH:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; YESTNH:      (type $B (func_subtype $A))
+  ;; NO_TNH:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; NO_TNH:      (type $B (func_subtype $A))
+  (type $B (func_subtype $A))
+
+  ;; YESTNH:      (type $C (func_subtype $B))
+  ;; NO_TNH:      (type $C (func_subtype $B))
+  (type $C (func_subtype $B))
+
+  ;; YESTNH:      (export "A" (func $A))
+
+  ;; YESTNH:      (export "C" (func $C))
+
+  ;; YESTNH:      (func $A (type $A)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (export "A" (func $A))
+
+  ;; NO_TNH:      (export "C" (func $C))
+
+  ;; NO_TNH:      (func $A (type $A)
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $A (export "A") (type $A)
+  )
+
+  ;; YESTNH:      (func $C (type $A)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $C (type $A)
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $C (export "C") (type $A)
+  )
+
+  ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $casts (param $x funcref)
+    ;; $A and $C have functions of their types, so in theory we could optimize
+    ;; $B here.
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; Array subtyping, which is a TODO - for now we do nothing.
 (module
   ;; YESTNH:      (type $A (array (mut i32)))
