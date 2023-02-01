@@ -1506,7 +1506,8 @@ struct OptimizeInstructions
               if (child == input) {
                 seenInput = true;
               } else if (seenInput) {
-                if (EffectAnalyzer(options, *getModule(), child).hasSideEffects()) {
+                if (EffectAnalyzer(options, *getModule(), child)
+                      .hasSideEffects()) {
                   return;
                 }
               }
