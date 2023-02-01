@@ -32,6 +32,12 @@ Current Trunk
   and JS APIs and `RefIs` has been replaced with `RefIsNull`.
 - Types `Data` and `Dataref` have been replaced with types `Struct` and
   `Structref` in the C and JS APIs.
+* `BinaryenStringNew` now takes an additional last argument, `try_`, indicating
+  whether the instruction is one of `string.new_utf8_try` respectively
+  `string.new_utf8_array_try`.
+* `BinaryenStringEq` now takes an additional second argument, `op`, that is
+  either `BinaryenStringEqEqual()` if the instruction is `string.eq` or
+  `BinaryenStringEqCompare()` if the instruction is `string.compare`.
 
 v111
 ----
