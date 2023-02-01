@@ -555,8 +555,10 @@ struct Analyzer {
     }
 
     // Note: nothing to do with |callRefTypes| and |structFields|, which only
-    // influence which types will remain in the module (which is not something
-    // this pass is involved in).
+    // involve types. This function only cares about references to module
+    // elements like functions, globals, and tables. (References to types are
+    // handled in an entirely different way in Binaryen IR, and we don't need to
+    // worry about it.)
   }
 };
 
