@@ -564,6 +564,7 @@ function initializeConstants() {
     'StringNewWTF8Array',
     'StringNewReplaceArray',
     'StringNewWTF16Array',
+    'StringNewFromCodePoint',
     'StringMeasureUTF8',
     'StringMeasureWTF8',
     'StringMeasureWTF16',
@@ -581,7 +582,9 @@ function initializeConstants() {
     'StringIterMoveAdvance',
     'StringIterMoveRewind',
     'StringSliceWTF8',
-    'StringSliceWTF16'
+    'StringSliceWTF16',
+    'StringEqEqual',
+    'StringEqCompare'
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
