@@ -6936,7 +6936,7 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCast ||
       code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
     bool legacy =
-      code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCastNop;
+      code == BinaryConsts::RefCastStatic;
     auto heapType = legacy ? getIndexedHeapType() : getHeapType();
     auto* ref = popNonVoidExpression();
     Nullability nullability;

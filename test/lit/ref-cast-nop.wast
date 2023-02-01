@@ -15,4 +15,15 @@
    (local.get $x)
   )
  )
+
+ ;; CHECK:      (func $ref.cast_nop.null (type $ref|any|_=>_ref|none|) (param $x (ref any)) (result (ref none))
+ ;; CHECK-NEXT:  (ref.cast_nop none
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref.cast_nop.null (param $x (ref any)) (result (ref none))
+  (ref.cast_nop none
+   (local.get $x)
+  )
+ )
 )
