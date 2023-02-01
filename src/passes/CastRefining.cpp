@@ -61,7 +61,9 @@ struct NewFinder : public PostWalker<NewFinder> {
 };
 
 struct CastRefining : public Pass {
-  // Only changes cast types, but not locals.
+  // Changes types, either by refining them without changing nullability, or
+  // changing them to be null types, so we never add new non-nullable locals
+  // here.
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // The types that are created (have a struct.new).
