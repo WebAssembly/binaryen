@@ -7,9 +7,9 @@
 
 ;; $A :> $B :> $C :> $D :> $E
 ;;
-;; $A and $D have no struct.news, so we can optimize casts of them to their
-;; subtypes, in TNH mode. In that mode $A and $D will also not be emitted in
-;; the output anymore.
+;; $A and $D have no struct.news, so any operations on them must, in TNH mode,
+;; actually refer to a subtype of them (that has a struct.new). As a result, in
+;; TNH mode $A and $D will also not be emitted in the output anymore.
 (module
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
 
@@ -33,7 +33,11 @@
   ;; NO_TNH:      (type $E (struct_subtype  $D))
   (type $E (struct_subtype $D))
 
+  ;; YESTNH:      (type $none_=>_none (func))
+
   ;; YESTNH:      (global $global anyref (struct.new_default $B))
+  ;; NO_TNH:      (type $none_=>_none (func))
+
   ;; NO_TNH:      (global $global anyref (struct.new_default $B))
   (global $global anyref (struct.new $B))
 
@@ -241,6 +245,31 @@
         (local.get $x)
       )
     )
+  )
+
+  ;; YESTNH:      (func $locals (type $none_=>_none)
+  ;; YESTNH-NEXT:  (local $A (ref $B))
+  ;; YESTNH-NEXT:  (local $B (ref $B))
+  ;; YESTNH-NEXT:  (local $C (ref $C))
+  ;; YESTNH-NEXT:  (local $D (ref $E))
+  ;; YESTNH-NEXT:  (local $E (ref $E))
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $locals (type $none_=>_none)
+  ;; NO_TNH-NEXT:  (local $A (ref $A))
+  ;; NO_TNH-NEXT:  (local $B (ref $B))
+  ;; NO_TNH-NEXT:  (local $C (ref $C))
+  ;; NO_TNH-NEXT:  (local $D (ref $D))
+  ;; NO_TNH-NEXT:  (local $E (ref $E))
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $locals
+    ;; Local variable types are also updated.
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C (ref $C))
+    (local $D (ref $D))
+    (local $E (ref $E))
   )
 )
 
@@ -1120,5 +1149,3 @@
     )
   )
 )
-
-;; TODO: test a local type gets modded
