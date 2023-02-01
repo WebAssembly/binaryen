@@ -133,6 +133,11 @@ struct CastRefining : public Pass {
     // Abstract types are those with no news, i.e., the complement of
     // |createdTypes|. As mentioned above, we can only optimize this case if
     // traps never happen.
+    // TODO: We could do some of this even if traps are possible. If an abstract
+    //       type has no casts at all, then no traps are relevant, and we could
+    //       remove it from the module. That might also make sense in MergeTypes
+    //       perhaps (which atm will not merge such types if they add fields,
+    //       in particular).
     Types abstractTypes;
     for (auto type : subTypes.types) {
       if (createdTypes.count(type) == 0) {
