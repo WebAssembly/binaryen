@@ -547,6 +547,8 @@
 
   ;; YESTNH:      (type $anyref_=>_none (func (param anyref)))
 
+  ;; YESTNH:      (type $none_=>_none (func))
+
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (ref.cast none
@@ -570,6 +572,8 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NO_TNH:      (type $none_=>_none (func))
 
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
@@ -785,6 +789,29 @@
         (unreachable)
       )
     )
+  )
+
+  ;; YESTNH:      (func $locals (type $none_=>_none)
+  ;; YESTNH-NEXT:  (local $A (ref none))
+  ;; YESTNH-NEXT:  (local $B (ref none))
+  ;; YESTNH-NEXT:  (local $C1 (ref none))
+  ;; YESTNH-NEXT:  (local $C2 nullref)
+  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $locals (type $none_=>_none)
+  ;; NO_TNH-NEXT:  (local $A (ref none))
+  ;; NO_TNH-NEXT:  (local $B (ref none))
+  ;; NO_TNH-NEXT:  (local $C1 (ref none))
+  ;; NO_TNH-NEXT:  (local $C2 nullref)
+  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT: )
+  (func $locals
+    ;; All these locals can become nullable or even non-nullable null types.
+    ;; This checks no problem happens due to that.
+    (local $A (ref $A))
+    (local $B (ref $B))
+    (local $C1 (ref $C1))
+    (local $C2 (ref null $C2))
   )
 )
 
