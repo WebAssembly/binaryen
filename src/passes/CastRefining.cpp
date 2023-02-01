@@ -268,20 +268,14 @@ struct CastRefining : public Pass {
 
       std::optional<HeapType> getSuperType(HeapType oldType) override {
         auto super = oldType.getSuperType();
-        if (!super) {
-          return super;
-        }
 
         // Go up the chain of supertypes, skipping things we are mapping away,
         // as those things will not appear in the output. This skips B in the
         // example above.
-        while (1) {
-          if (mapping.count(*super)) {
-            super = super->getSuperType();
-          } else {
-            return super;
-          }
+        while (super && mapping.count(*super)) {
+          super = super->getSuperType();
         }
+        return super;
       }
     };
 
