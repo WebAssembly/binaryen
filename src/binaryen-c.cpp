@@ -1023,7 +1023,9 @@ BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
 BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
 BinaryenOp BinaryenStringNewReplaceArray(void) { return StringNewReplaceArray; }
 BinaryenOp BinaryenStringNewWTF16Array(void) { return StringNewWTF16Array; }
-BinaryenOp BinaryenStringNewFromCodePoint(void) { return StringNewFromCodePoint; }
+BinaryenOp BinaryenStringNewFromCodePoint(void) {
+  return StringNewFromCodePoint;
+}
 BinaryenOp BinaryenStringMeasureUTF8(void) { return StringMeasureUTF8; }
 BinaryenOp BinaryenStringMeasureWTF8(void) { return StringMeasureWTF8; }
 BinaryenOp BinaryenStringMeasureWTF16(void) { return StringMeasureWTF16; }
