@@ -281,7 +281,9 @@ struct CastRefining : public Pass {
 
     CastRefiningTypeMapper(*module, mapping).map();
 
-    // Refinalize, as RefCasts may have new types now.
+    // Refinalize to propagate the type changes we made. For example, a refined
+    // cast may lead to a struct.get reading a more refined type using that
+    // type.
     ReFinalize().run(getPassRunner(), module);
   }
 };
