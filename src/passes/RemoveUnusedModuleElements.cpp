@@ -169,13 +169,10 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     }
   }
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      return;
-    }
     note(StructField{type, curr->index});
   }
   void visitArrayNewSeg(ArrayNewSeg* curr) {
