@@ -1903,7 +1903,7 @@
   )
 
   ;; CHECK:      (func $getter (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (func $getter (type $none_=>_i32) (result i32)
   ;; OPEN_WORLD-NEXT:  (i32.const 42)
