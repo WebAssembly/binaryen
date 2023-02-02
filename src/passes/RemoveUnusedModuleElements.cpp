@@ -38,6 +38,7 @@
 #include <memory>
 
 #include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
