@@ -11,6 +11,10 @@
   ;; NO_TNH:      (type $void (func))
   (type $void (func))
 
+  ;; TNH:      (import "a" "b" (func $import (result i32)))
+  ;; NO_TNH:      (import "a" "b" (func $import (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
   ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; TNH-NEXT:  (ref.eq
   ;; TNH-NEXT:   (local.get $a)
@@ -600,6 +604,49 @@
        )
        (unreachable)
       )
+    )
+  )
+
+  ;; TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (local.get $x)
+  ;; TNH-NEXT:   (call $import)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (local.get $x)
+  ;; TNH-NEXT:   (i32.const 10)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (call $import)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (local.get $x)
+  ;; NO_TNH-NEXT:   (i32.const 10)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $null.cast-other.effects (param $x (ref null $struct))
+    (struct.set $struct 0
+      ;; We cannot remove this ref.as_non_null, even though the struct.set will
+      ;; trap if the ref is null, because that would move the trap from before
+      ;; the call to the import to be after it. But in TNH we can assume it does
+      ;; not trap, and remove it.
+      (ref.as_non_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (struct.set $struct 0
+      ;; This one can be removed even without TNH, as there are no effects after
+      ;; it.
+      (ref.as_non_null
+        (local.get $x)
+      )
+      (i32.const 10)
     )
   )
 

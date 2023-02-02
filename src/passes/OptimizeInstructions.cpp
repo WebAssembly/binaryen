@@ -1283,7 +1283,7 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
-    skipNonNullCast(curr->target);
+    skipNonNullCast(curr->target, curr);
     if (trapOnNull(curr, curr->target)) {
       return;
     }
@@ -1473,10 +1473,51 @@ struct OptimizeInstructions
   // See "notes on removing casts", above. However, in most cases removing a
   // non-null cast is obviously safe to do, since we only remove one if another
   // check will happen later.
-  void skipNonNullCast(Expression*& input) {
+  //
+  // We also pass in the parent, because we need to be careful about ordering:
+  // if the parent has other children than |input| then we may not be able to
+  // remove the trap. For example,
+  //
+  //  (struct.set
+  //   (ref.as_non_null X)
+  //   (call $foo)
+  //  )
+  //
+  // If X is null we'd trap before the call to $foo. If we remove the
+  // ref.as_non_null then the struct.set will still trap, of course, but that
+  // will only happen *after* the call, which is wrong.
+  void skipNonNullCast(Expression*& input, Expression* parent) {
+    // Check the other children for the ordering problem only if we find a
+    // possible optimization, to avoid wasted work.
+    bool checkedSiblings = false;
+    auto& options = getPassOptions();
     while (1) {
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull) {
+          // The problem with effect ordering that is described above is not an
+          // issue if traps are assumed to never happen anyhow.
+          if (!checkedSiblings && !options.trapsNeverHappen) {
+            // We need to see if a child with side effects exists after |input|.
+            // If there is such a child, it is a problem as mentioned above (it
+            // is fine for such a child to appear *before* |input|, as then we
+            // wouldn't be reordering effects).
+            bool seenInput = false;
+            for (auto* child : ChildIterator(parent)) {
+              if (child == input) {
+                seenInput = true;
+              } else if (seenInput) {
+                // TODO We could ignore trap effects here (since traps are ok to
+                //      reorder) and also local effects (since a change to a var
+                //      would not be noticeable, unlike say a global).
+                if (EffectAnalyzer(options, *getModule(), child)
+                      .hasSideEffects()) {
+                  return;
+                }
+              }
+            }
+            // If we got here, we've checked the siblings and found no problem.
+            checkedSiblings = true;
+          }
           input = as->value;
           continue;
         }
@@ -1717,12 +1758,12 @@ struct OptimizeInstructions
   }
 
   void visitStructGet(StructGet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitStructSet(StructSet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     if (trapOnNull(curr, curr->ref)) {
       return;
     }
@@ -1878,12 +1919,12 @@ struct OptimizeInstructions
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitArraySet(ArraySet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     if (trapOnNull(curr, curr->ref)) {
       return;
     }
@@ -1895,13 +1936,13 @@ struct OptimizeInstructions
   }
 
   void visitArrayLen(ArrayLen* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitArrayCopy(ArrayCopy* curr) {
-    skipNonNullCast(curr->destRef);
-    skipNonNullCast(curr->srcRef);
+    skipNonNullCast(curr->destRef, curr);
+    skipNonNullCast(curr->srcRef, curr);
     trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
@@ -2155,7 +2196,7 @@ struct OptimizeInstructions
     }
 
     assert(curr->op == RefAsNonNull);
-    skipNonNullCast(curr->value);
+    skipNonNullCast(curr->value, curr);
     if (!curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
       return;
