@@ -1506,6 +1506,9 @@ struct OptimizeInstructions
               if (child == input) {
                 seenInput = true;
               } else if (seenInput) {
+                // TODO We could ignore trap effects here (since traps are ok to
+                //      reorder) and also local effects (since a change to a var
+                //      would not be noticeable, unlike say a global).
                 if (EffectAnalyzer(options, *getModule(), child)
                       .hasSideEffects()) {
                   return;
