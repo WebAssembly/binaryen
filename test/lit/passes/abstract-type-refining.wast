@@ -1084,28 +1084,47 @@
 
   ;; YESTNH:      (type $funcref_=>_none (func (param funcref)))
 
+  ;; YESTNH:      (elem declare func $A $C)
+
   ;; YESTNH:      (export "A" (func $A))
 
   ;; YESTNH:      (func $A (type $A)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.func $A)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; NO_TNH:      (elem declare func $A $C)
 
   ;; NO_TNH:      (export "A" (func $A))
 
   ;; NO_TNH:      (func $A (type $A)
-  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.func $A)
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $A (export "A") (type $A)
+    ;; Also create a function reference to use the type in that way as well.
+    (drop
+      (ref.func $A)
+    )
   )
 
   ;; YESTNH:      (func $C (type $C)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.func $C)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $C (type $C)
-  ;; NO_TNH-NEXT:  (nop)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.func $C)
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $C (type $C)
+    (drop
+      (ref.func $C)
+    )
   )
 
   ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
@@ -1143,8 +1162,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $casts (param $x funcref)
-    ;; $A and $C have functions of their types, so in theory we could optimize
-    ;; $B here.
+    ;; $A and $C have functions of their types, and references to them, so in
+    ;; theory we could optimize $B here.
     (drop
       (ref.cast $A
         (local.get $x)
