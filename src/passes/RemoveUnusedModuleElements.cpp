@@ -511,9 +511,10 @@ struct Analyzer {
       // EffectAnalyzer, but even though for optimization purposes we can ignore
       // effects, the called code *is* actually reached, and it might have side
       // effects. In other words, the point of the intrinsic is to temporarily
-      // ignore those effects during one phase of optimization. We cannot ignore
-      // them here as if we did we might consider the called code unreachable
-      // when it won't be after the intrinsic is lowered away.
+      // ignore those effects during one phase of optimization. Or, put another
+      // way, the intrinsic lets us ignore the effects of computing some value,
+      // but we do still need to compute that value if it is received and used
+      // (if it is not received and used, other passes will remove it).
       if (!useOperandNow) {
         // To detect this, look for any call. A non-intrinsic call would have
         // already been detected when we looked for side effects, so this will
