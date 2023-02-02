@@ -1500,21 +1500,27 @@ struct OptimizeInstructions
             // We need to see if a child with side effects exists after |input|.
             // If there is such a child, it is a problem as mentioned above (it
             // is fine for such a child to appear *before* |input|, as then we
-            // wouldn't be reordering effects).
+            // wouldn't be reordering effects). Thus, all we need to do is
+            // accumulate the effects in children after |input|, as we want to
+            // move the trap across those.
             bool seenInput = false;
+            EffectAnalyzer crossedEffects(options, *getModule());
             for (auto* child : ChildIterator(parent)) {
               if (child == input) {
                 seenInput = true;
               } else if (seenInput) {
-                // TODO We could ignore trap effects here (since traps are ok to
-                //      reorder) and also local effects (since a change to a var
-                //      would not be noticeable, unlike say a global).
-                if (EffectAnalyzer(options, *getModule(), child)
-                      .hasSideEffects()) {
-                  return;
-                }
+                crossedEffects.walk(child);
               }
             }
+
+            // Check if the effects we cross interfere with the effects of the
+            // trap we want to move. (We use a shallow effect analyzer since we
+            // will only move the ref.as_non_null itself.)
+            ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
+            if (crossedEffects.invalidates(movingEffects)) {
+              return;
+            }
+
             // If we got here, we've checked the siblings and found no problem.
             checkedSiblings = true;
           }
