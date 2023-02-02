@@ -1023,6 +1023,9 @@ BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
 BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
 BinaryenOp BinaryenStringNewReplaceArray(void) { return StringNewReplaceArray; }
 BinaryenOp BinaryenStringNewWTF16Array(void) { return StringNewWTF16Array; }
+BinaryenOp BinaryenStringNewFromCodePoint(void) {
+  return StringNewFromCodePoint;
+}
 BinaryenOp BinaryenStringMeasureUTF8(void) { return StringMeasureUTF8; }
 BinaryenOp BinaryenStringMeasureWTF8(void) { return StringMeasureWTF8; }
 BinaryenOp BinaryenStringMeasureWTF16(void) { return StringMeasureWTF16; }
@@ -1045,6 +1048,8 @@ BinaryenOp BinaryenStringIterMoveAdvance(void) { return StringIterMoveAdvance; }
 BinaryenOp BinaryenStringIterMoveRewind(void) { return StringIterMoveRewind; }
 BinaryenOp BinaryenStringSliceWTF8(void) { return StringSliceWTF8; }
 BinaryenOp BinaryenStringSliceWTF16(void) { return StringSliceWTF16; }
+BinaryenOp BinaryenStringEqEqual(void) { return StringEqEqual; }
+BinaryenOp BinaryenStringEqCompare(void) { return StringEqCompare; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -1835,10 +1840,8 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenExpressionRef ptr,
                                         BinaryenExpressionRef length,
                                         BinaryenExpressionRef start,
-                                        BinaryenExpressionRef end) {
-  // TODO: add API support for this
-  bool try_ = false;
-
+                                        BinaryenExpressionRef end,
+                                        bool try_) {
   Builder builder(*(Module*)module);
   return static_cast<Expression*>(
     length ? builder.makeStringNew(
@@ -1880,11 +1883,12 @@ BinaryenExpressionRef BinaryenStringConcat(BinaryenModuleRef module,
       .makeStringConcat((Expression*)left, (Expression*)right));
 }
 BinaryenExpressionRef BinaryenStringEq(BinaryenModuleRef module,
+                                       BinaryenOp op,
                                        BinaryenExpressionRef left,
                                        BinaryenExpressionRef right) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeStringEq(StringEqEqual, (Expression*)left, (Expression*)right));
+      .makeStringEq(StringEqOp(op), (Expression*)left, (Expression*)right));
 }
 BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
                                        BinaryenOp op,
@@ -4506,6 +4510,16 @@ void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
   // may be null (GC only)
   static_cast<StringNew*>(expression)->end = (Expression*)endExpr;
 }
+void BinaryenStringNewSetTry(BinaryenExpressionRef expr, bool try_) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StringNew>());
+  static_cast<StringNew*>(expression)->try_ = try_;
+}
+bool BinaryenStringNewIsTry(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StringNew>());
+  return static_cast<StringNew*>(expression)->try_;
+}
 // StringConst
 const char* BinaryenStringConstGetString(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -4615,6 +4629,16 @@ void BinaryenStringConcatSetRight(BinaryenExpressionRef expr,
   static_cast<StringConcat*>(expression)->right = (Expression*)rightExpr;
 }
 // StringEq
+BinaryenOp BinaryenStringEqGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StringEq>());
+  return static_cast<StringEq*>(expression)->op;
+}
+void BinaryenStringEqSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<StringEq>());
+  static_cast<StringEq*>(expression)->op = StringEqOp(op);
+}
 BinaryenExpressionRef BinaryenStringEqGetLeft(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEq>());

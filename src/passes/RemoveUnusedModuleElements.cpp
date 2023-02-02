@@ -40,6 +40,7 @@
 #include "ir/element-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -56,6 +57,10 @@ enum class ModuleElementKind { Function, Global, Tag, Table, ElementSegment };
 // name of the particular element.
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
+// A pair of a struct type and a field index, together defining a field in a
+// particular type.
+using StructField = std::pair<HeapType, Index>;
+
 // Visit or walk an expression to find what things are referenced.
 struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   // Our findings are placed in these data structures, which the user of this
@@ -63,12 +68,14 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   std::vector<ModuleElement> elements;
   std::vector<HeapType> callRefTypes;
   std::vector<Name> refFuncs;
+  std::vector<StructField> structFields;
   bool usesMemory = false;
 
   // Add an item to the output data structures.
   void note(ModuleElement element) { elements.push_back(element); }
   void noteCallRef(HeapType type) { callRefTypes.push_back(type); }
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
+  void note(StructField structField) { structFields.push_back(structField); }
 
   // Visitors
 
@@ -161,6 +168,13 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
       note(ModuleElement(ModuleElementKind::Tag, tag));
     }
   }
+  void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+      return;
+    }
+    auto type = curr->ref->type.getHeapType();
+    note(StructField{type, curr->index});
+  }
   void visitArrayNewSeg(ArrayNewSeg* curr) {
     switch (curr->op) {
       case NewData:
@@ -207,7 +221,6 @@ struct Analyzer {
   // If we walked the child immediately then we would make $bar used. But that
   // global is only used if we actually read that field from the struct. We
   // perform that analysis in readStructFields  unreadStructFieldExprMap, below.
-  // TODO: this is not implemented yet
   std::vector<Expression*> expressionQueue;
 
   bool usesMemory = false;
@@ -219,11 +232,11 @@ struct Analyzer {
 
   // All the RefFuncs we've seen, grouped by heap type. When we see a CallRef of
   // one of the types here, we know all the RefFuncs corresponding to it are
-  // used. This is the reverse side of calledSignatures: for a function to
-  // be used via a reference, we need the combination of a RefFunc of it as
-  // well as a CallRef of that, and we may see them in any order. (Or, if the
-  // RefFunc is in a table, we need a CallIndirect, which is handled in the
-  // table logic.)
+  // potentially used (and also those of subtypes). This is the reverse side of
+  // calledSignatures: for a function to be used via a reference, we need the
+  // combination of a RefFunc of it as well as a CallRef of that, and we may see
+  // them in any order. (Or, if the RefFunc is in a table, we need a
+  // CallIndirect, which is handled in the table logic.)
   //
   // After we see a call for a type, we can clear out the entry here for it, as
   // we'll have that type in calledSignatures, and so this contains only
@@ -233,6 +246,17 @@ struct Analyzer {
   // could carefully track which types actually escape out to exports or
   // imports.
   std::unordered_map<HeapType, std::unordered_set<Name>> uncalledRefFuncMap;
+
+  // Similar to calledSignatures/uncalledRefFuncMap, we store the StructFields
+  // we've seen reads from, and also expressions stored in such fields that
+  // could be read if ever we see a read of that field in the future. That is,
+  // for an expression stored into a struct field to be read, we need to both
+  // see that expression written to the field, and see some other place read
+  // that field (similar to with functions that we need to see the RefFunc and
+  // also a CallRef that can actually call it).
+  std::unordered_set<StructField> readStructFields;
+  std::unordered_map<StructField, std::vector<Expression*>>
+    unreadStructFieldExprMap;
 
   Analyzer(Module* module,
            const PassOptions& options,
@@ -286,6 +310,9 @@ struct Analyzer {
       for (auto func : finder.refFuncs) {
         useRefFunc(func);
       }
+      for (auto structField : finder.structFields) {
+        useStructField(structField);
+      }
       if (finder.usesMemory) {
         usesMemory = true;
       }
@@ -296,24 +323,39 @@ struct Analyzer {
     return worked;
   }
 
+  // We'll compute SubTypes if we need them.
+  std::optional<SubTypes> subTypes;
+
   void useCallRefType(HeapType type) {
-    // Call all the functions of that signature. We can then forget about
-    // them, as this signature will be marked as called.
-    auto iter = uncalledRefFuncMap.find(type);
-    if (iter != uncalledRefFuncMap.end()) {
-      // We must not have a type in both calledSignatures and
-      // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
-      // it any more.
-      assert(calledSignatures.count(type) == 0);
-
-      for (Name target : iter->second) {
-        use(ModuleElement(ModuleElementKind::Function, target));
-      }
-
-      uncalledRefFuncMap.erase(iter);
+    if (type.isBasic()) {
+      // Nothing to do for something like a bottom type; attempts to call such a
+      // type will trap at runtime.
+      return;
     }
 
-    calledSignatures.insert(type);
+    if (!subTypes) {
+      subTypes = SubTypes(*module);
+    }
+
+    // Call all the functions of that signature, and subtypes. We can then
+    // forget about them, as those signatures will be marked as called.
+    for (auto subType : subTypes->getAllSubTypes(type)) {
+      auto iter = uncalledRefFuncMap.find(subType);
+      if (iter != uncalledRefFuncMap.end()) {
+        // We must not have a type in both calledSignatures and
+        // uncalledRefFuncMap: once it is called, we do not track RefFuncs for
+        // it any more.
+        assert(calledSignatures.count(subType) == 0);
+
+        for (Name target : iter->second) {
+          use(ModuleElement(ModuleElementKind::Function, target));
+        }
+
+        uncalledRefFuncMap.erase(iter);
+      }
+
+      calledSignatures.insert(subType);
+    }
   }
 
   void useRefFunc(Name func) {
@@ -342,6 +384,36 @@ struct Analyzer {
       uncalledRefFuncMap[type].insert(func);
 
       referenced.insert(element);
+    }
+  }
+
+  void useStructField(StructField structField) {
+    if (!readStructFields.count(structField)) {
+      // Avoid a structured binding as the C++ spec does not allow capturing
+      // them in lambdas, which we need below.
+      auto type = structField.first;
+      auto index = structField.second;
+
+      // This is the first time we see a read of this data. Note that it is
+      // read, and also all subtypes since we might be reading from them as
+      // well.
+      if (!subTypes) {
+        subTypes = SubTypes(*module);
+      }
+      subTypes->iterSubTypes(type, [&](HeapType subType, Index depth) {
+        auto subStructField = StructField{subType, index};
+        readStructFields.insert(subStructField);
+
+        // Walk all the unread data we've queued: we queued it for the
+        // possibility of it ever being read, which just happened.
+        auto iter = unreadStructFieldExprMap.find(subStructField);
+        if (iter != unreadStructFieldExprMap.end()) {
+          for (auto* expr : iter->second) {
+            use(expr);
+          }
+        }
+        unreadStructFieldExprMap.erase(subStructField);
+      });
     }
   }
 
@@ -399,9 +471,106 @@ struct Analyzer {
 
   // Add the children of a used expression to be walked, if we should do so.
   void scanChildren(Expression* curr) {
-    for (auto* child : ChildIterator(curr)) {
-      use(child);
+    // For now, the only special handling we have is fields of struct.new, which
+    // we defer walking of to when we know there is a read that can actually
+    // read them, see comments above on |expressionQueue|. We can only do that
+    // optimization in closed world (as otherwise the field might be read
+    // outside of the code we can see), and when it is reached (if it's
+    // unreachable then we don't know the type, and can defer that to DCE to
+    // remove).
+    if (!options.closedWorld || curr->type == Type::unreachable ||
+        !curr->is<StructNew>()) {
+      for (auto* child : ChildIterator(curr)) {
+        use(child);
+      }
+      return;
     }
+
+    auto* new_ = curr->cast<StructNew>();
+    auto type = new_->type.getHeapType();
+
+    for (Index i = 0; i < new_->operands.size(); i++) {
+      auto* operand = new_->operands[i];
+      auto structField = StructField{type, i};
+      if (readStructFields.count(structField) ||
+          EffectAnalyzer(options, *module, operand).hasSideEffects()) {
+        // This data can be read, so just walk it. Or, this has side effects,
+        // which is tricky to reason about - the side effects must happen even
+        // if we never read the struct field - so give up and consider it used.
+        use(operand);
+      } else {
+        // This data does not need to be read now, but might be read later. Note
+        // it as unread.
+        unreadStructFieldExprMap[structField].push_back(operand);
+
+        // We also must note that anything in this operand is referenced, even
+        // if it never ends up used, so the IR remains valid.
+        addReferences(operand);
+      }
+    }
+  }
+
+  // Add references to all things appearing in an expression. This is called
+  // when we know an expression will appear in the output, which means it must
+  // remain valid IR and not refer to nonexistent things.
+  //
+  // This is only called on things without side effects (if there are such
+  // effects then we would have had to assume the worst earlier, and not get
+  // here).
+  void addReferences(Expression* curr) {
+    // Find references anywhere in this expression so we can apply them.
+    ReferenceFinder finder;
+    finder.setModule(module);
+    finder.walk(curr);
+
+    for (auto element : finder.elements) {
+      referenced.insert(element);
+
+      auto& [kind, value] = element;
+      if (kind == ModuleElementKind::Global) {
+        // Like functions, (non-imported) globals have contents. For functions,
+        // things are simple: if a function ends up with references but no uses
+        // then we can simply empty out the function (by setting its body to an
+        // unreachable). We don't have a simple way to do the same for globals,
+        // unfortunately. For now, scan the global's contents and add references
+        // as needed.
+        // TODO: We could try to empty the global out, for example, replace it
+        //       with a null if it is nullable, or replace all gets of it with
+        //       something else, but that is not trivial.
+        auto* global = module->getGlobal(value);
+        if (!global->imported()) {
+          // Note that infinite recursion is not a danger here since a global
+          // can only refer to previous globals.
+          addReferences(global->init);
+        }
+      }
+    }
+
+    for (auto func : finder.refFuncs) {
+      // If a function ends up referenced but not used then later down we will
+      // empty it out by replacing its body with an unreachable, which always
+      // validates. For that reason all we need to do here is mark the function
+      // as referenced - we don't need to do anything with the body.
+      //
+      // Note that it is crucial that we do not call useRefFunc() here: we are
+      // just adding a reference to the function, and not actually using the
+      // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
+      // to make a function itself used.)
+      referenced.insert(ModuleElement(ModuleElementKind::Function, func));
+    }
+
+    if (finder.usesMemory) {
+      // TODO: We could do better here, but leave that for the full refactor
+      //       here that will also add multimemory. Then this will be as simple
+      //       as supporting tables here (which are just more module elements).
+      usesMemory = true;
+    }
+
+    // Note: nothing to do with |callRefTypes| and |structFields|, which only
+    // involve types. This function only cares about references to module
+    // elements like functions, globals, and tables. (References to types are
+    // handled in an entirely different way in Binaryen IR, and we don't need to
+    // worry about it.)
   }
 };
 
@@ -505,6 +674,7 @@ struct RemoveUnusedModuleElements : public Pass {
       return true;
     });
     module->removeGlobals([&](Global* curr) {
+      // See TODO in addReferences - we may be able to do better here.
       return !needed(ModuleElement(ModuleElementKind::Global, curr->name));
     });
     module->removeTags([&](Tag* curr) {

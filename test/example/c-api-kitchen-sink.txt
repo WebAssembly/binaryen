@@ -2209,6 +2209,12 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
+       (string.new_utf8_try
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
        (string.new_wtf8 wtf8
         (i32.const 0)
         (i32.const 0)
@@ -2234,6 +2240,13 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
+       (string.new_utf8_array_try
+        (global.get $i8Array-global)
+        (i32.const 0)
+        (i32.const 0)
+       )
+      )
+      (drop
        (string.new_wtf8_array wtf8
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2252,6 +2265,11 @@ BinaryenFeatureAll: 126975
         (global.get $i16Array-global)
         (i32.const 0)
         (i32.const 0)
+       )
+      )
+      (drop
+       (string.from_code_point
+        (i32.const 1)
        )
       )
       (drop
@@ -2331,6 +2349,12 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (string.eq
+        (global.get $string-global)
+        (global.get $string-global)
+       )
+      )
+      (drop
+       (string.compare
         (global.get $string-global)
         (global.get $string-global)
        )
