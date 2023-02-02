@@ -1074,11 +1074,7 @@
   ;; NO_TNH:      (type $A (func))
   (type $A (func))
 
-  ;; YESTNH:      (type $funcref_=>_none (func (param funcref)))
-
   ;; YESTNH:      (type $B (func_subtype $A))
-  ;; NO_TNH:      (type $funcref_=>_none (func (param funcref)))
-
   ;; NO_TNH:      (type $B (func_subtype $A))
   (type $B (func_subtype $A))
 
@@ -1086,16 +1082,16 @@
   ;; NO_TNH:      (type $C (func_subtype $B))
   (type $C (func_subtype $B))
 
-  ;; YESTNH:      (export "A" (func $A))
+  ;; YESTNH:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; YESTNH:      (export "C" (func $C))
+  ;; YESTNH:      (export "A" (func $A))
 
   ;; YESTNH:      (func $A (type $A)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (export "A" (func $A))
+  ;; NO_TNH:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; NO_TNH:      (export "C" (func $C))
+  ;; NO_TNH:      (export "A" (func $A))
 
   ;; NO_TNH:      (func $A (type $A)
   ;; NO_TNH-NEXT:  (nop)
@@ -1103,13 +1099,13 @@
   (func $A (export "A") (type $A)
   )
 
-  ;; YESTNH:      (func $C (type $A)
+  ;; YESTNH:      (func $C (type $C)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $C (type $A)
+  ;; NO_TNH:      (func $C (type $C)
   ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
-  (func $C (export "C") (type $A)
+  (func $C (type $C)
   )
 
   ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
