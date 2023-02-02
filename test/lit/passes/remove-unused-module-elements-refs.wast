@@ -1841,3 +1841,76 @@
   (func $f (type $void)
   )
 )
+
+;; The call.without.effects intrinsic reports itself as having no side effects.
+;; We do still need to consider the target as being called, however, even if it
+;; is in a struct field.
+(module
+  ;; CHECK:      (type $funcref_=>_i32 (func (param funcref) (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A (struct (field i32)))
+  ;; OPEN_WORLD:      (type $funcref_=>_i32 (func (param funcref) (result i32)))
+
+  ;; OPEN_WORLD:      (type $none_=>_none (func))
+
+  ;; OPEN_WORLD:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+  ;; OPEN_WORLD:      (type $none_=>_i32 (func (result i32)))
+
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+
+  ;; CHECK:      (elem declare func $getter)
+
+  ;; CHECK:      (export "main" (func $main))
+
+  ;; CHECK:      (func $main (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (call $call.without.effects
+  ;; CHECK-NEXT:     (ref.func $getter)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (elem declare func $getter)
+
+  ;; OPEN_WORLD:      (export "main" (func $main))
+
+  ;; OPEN_WORLD:      (func $main (type $none_=>_none)
+  ;; OPEN_WORLD-NEXT:  (drop
+  ;; OPEN_WORLD-NEXT:   (struct.new $A
+  ;; OPEN_WORLD-NEXT:    (call $call.without.effects
+  ;; OPEN_WORLD-NEXT:     (ref.func $getter)
+  ;; OPEN_WORLD-NEXT:    )
+  ;; OPEN_WORLD-NEXT:   )
+  ;; OPEN_WORLD-NEXT:  )
+  ;; OPEN_WORLD-NEXT: )
+  (func $main (export "main")
+    (drop
+      (struct.new $A
+        (call $call.without.effects
+          (ref.func $getter)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $getter (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (func $getter (type $none_=>_i32) (result i32)
+  ;; OPEN_WORLD-NEXT:  (i32.const 42)
+  ;; OPEN_WORLD-NEXT: )
+  (func $getter (result i32)
+    ;; This function body should not be turned into an unreachable. It is
+    ;; reached from $main, even though the call is marked as not having effects.
+    (i32.const 42)
+  )
+)

@@ -38,6 +38,7 @@
 #include <memory>
 
 #include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -492,11 +493,36 @@ struct Analyzer {
     for (Index i = 0; i < new_->operands.size(); i++) {
       auto* operand = new_->operands[i];
       auto structField = StructField{type, i};
-      if (readStructFields.count(structField) ||
-          EffectAnalyzer(options, *module, operand).hasSideEffects()) {
-        // This data can be read, so just walk it. Or, this has side effects,
-        // which is tricky to reason about - the side effects must happen even
-        // if we never read the struct field - so give up and consider it used.
+
+      // If this struct field has already been read, then we should use the
+      // contents there now.
+      auto useOperandNow = readStructFields.count(structField);
+
+      // Side effects are tricky to reason about - the side effects must happen
+      // even if we never read the struct field - so give up and consider it
+      // used.
+      if (!useOperandNow) {
+        useOperandNow =
+          EffectAnalyzer(options, *module, operand).hasSideEffects();
+      }
+
+      // We must handle the call.without.effects intrinsic here in a special
+      // manner. That intrinsic is reported as having no side effects in
+      // EffectAnalyzer, but even though for optimization purposes we can ignore
+      // effects, the called code *is* actually reached, and it might have side
+      // effects. In other words, the point of the intrinsic is to temporarily
+      // ignore those effects during one phase of optimization. Or, put another
+      // way, the intrinsic lets us ignore the effects of computing some value,
+      // but we do still need to compute that value if it is received and used
+      // (if it is not received and used, other passes will remove it).
+      if (!useOperandNow) {
+        // To detect this, look for any call. A non-intrinsic call would have
+        // already been detected when we looked for side effects, so this will
+        // only notice intrinsic calls.
+        useOperandNow = !FindAll<Call>(operand).list.empty();
+      }
+
+      if (useOperandNow) {
         use(operand);
       } else {
         // This data does not need to be read now, but might be read later. Note
