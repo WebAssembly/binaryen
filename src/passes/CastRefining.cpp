@@ -204,23 +204,25 @@ struct CastRefining : public Pass {
     // will also remove the unneeded type from the type section, which is nice
     // for code size.
     //
-    // Note that this could in theory limit optimizability, but it does not. It
-    // could in theory because we are merging types here - even though we merge
-    // types that are not needed (so we can't hurt optimizations), those changes
-    // can affect needed types. For example, imagine that we replace all $A with
-    // $B, and we had types like this:
+    // Even though this pass removes types, it does not on its own inhibit
+    // further optimizations. In more detail, a possible issue could have been
+    // something like this: imagine that we replace all $A with $B, and we had
+    // types like this:
     //
     //  $C = [.., $A, ..]
     //  $D = [.., $B, ..]
     //
     // After replacing $A with $B, we cause $C and $D to be structurally
-    // identical. However, we will not actually merge those in the normal course
-    // of optimization: the type rewriter will create a single new rec group for
-    // all new types anyhow, so they all remain distinct from each other. The
-    // only thing that can merge them is if we run TypeMerging, which is not run
+    // identical. If we merged $C and $D then we might lose some optimization
+    // potential (perhaps different values are written to each, and GUFA or
+    // another pass can optimize each separately, but not if they were merged).
+    // However, the type rewriter will create a single new rec group for all new
+    // types anyhow, so they all remain distinct from each other. The only thing
+    // that would actually merge them is if we run TypeMerging, which is not run
     // by default exactly for this reason, that it can limit optimizations.
     // Thus, this pass does only "safe" merging, that cannot limit later
-    // optimizations.
+    // optimizations - merging $A and $B is of course fine as one of them was
+    // not even used anywhere.
 
     TypeMapper::TypeUpdates mapping;
 
