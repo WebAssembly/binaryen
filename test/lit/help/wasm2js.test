@@ -42,6 +42,9 @@
 ;; CHECK-NEXT: Optimization passes:
 ;; CHECK-NEXT: --------------------
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --abstract-type-refining                      refine and merge abstract
+;; CHECK-NEXT:                                                 (never-created) types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --alignment-lowering                          lower unaligned loads and stores
 ;; CHECK-NEXT:                                                 to smaller aligned ones
 ;; CHECK-NEXT:
@@ -50,9 +53,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --avoid-reinterprets                          Tries to avoid reinterpret
 ;; CHECK-NEXT:                                                 operations via more loads
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --cast-refining                               refine cast types using global
-;; CHECK-NEXT:                                                 information
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --cfp                                         propagate constant struct field
 ;; CHECK-NEXT:                                                 values

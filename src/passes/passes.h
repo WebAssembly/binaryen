@@ -22,10 +22,10 @@ namespace wasm {
 class Pass;
 
 // Normal passes:
+Pass* createAbstractTypeRefiningPass();
 Pass* createAlignmentLoweringPass();
 Pass* createAsyncifyPass();
 Pass* createAvoidReinterpretsPass();
-Pass* createCastRefiningPass();
 Pass* createCoalesceLocalsPass();
 Pass* createCoalesceLocalsWithLearningPass();
 Pass* createCodeFoldingPass();

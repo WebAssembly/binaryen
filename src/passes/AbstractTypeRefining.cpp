@@ -15,7 +15,8 @@
  */
 
 //
-// Apply more specific subtypes to cast instructions where possible.
+// Refine types based on global information about abstract types, that is, types
+// that are not created anywhere (no struct.new etc.).
 //
 // In trapsNeverHappen mode, if we see a cast to $B and the type hierarchy is
 // this:
@@ -60,7 +61,7 @@ struct NewFinder : public PostWalker<NewFinder> {
   }
 };
 
-struct CastRefining : public Pass {
+struct AbstractTypeRefining : public Pass {
   // Changes types, either by refining them without changing nullability, or
   // changing them to be null types, so we never add new non-nullable locals
   // here.
@@ -83,7 +84,7 @@ struct CastRefining : public Pass {
     }
 
     if (!getPassOptions().closedWorld) {
-      Fatal() << "CastRefining requires --closed-world";
+      Fatal() << "AbstractTypeRefining requires --closed-world";
     }
 
     trapsNeverHappen = getPassOptions().trapsNeverHappen;
@@ -263,9 +264,9 @@ struct CastRefining : public Pass {
     //
     // Say we see B is never created, so we want to map B to its subtype C. C's
     // supertype must now be A.
-    class CastRefiningTypeMapper : public TypeMapper {
+    class AbstractTypeRefiningTypeMapper : public TypeMapper {
     public:
-      CastRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
+      AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
         : TypeMapper(wasm, mapping) {}
 
       std::optional<HeapType> getSuperType(HeapType oldType) override {
@@ -281,7 +282,7 @@ struct CastRefining : public Pass {
       }
     };
 
-    CastRefiningTypeMapper(*module, mapping).map();
+    AbstractTypeRefiningTypeMapper(*module, mapping).map();
 
     // Refinalize to propagate the type changes we made. For example, a refined
     // cast may lead to a struct.get reading a more refined type using that
@@ -292,6 +293,6 @@ struct CastRefining : public Pass {
 
 } // anonymous namespace
 
-Pass* createCastRefiningPass() { return new CastRefining(); }
+Pass* createAbstractTypeRefiningPass() { return new AbstractTypeRefining(); }
 
 } // namespace wasm
