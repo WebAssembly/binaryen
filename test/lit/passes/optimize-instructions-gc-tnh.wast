@@ -608,6 +608,7 @@
   )
 
   ;; TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; TNH-NEXT:  (local $i i32)
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (call $import)
@@ -616,8 +617,15 @@
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (i32.const 10)
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (struct.set $struct 0
+  ;; TNH-NEXT:   (local.get $x)
+  ;; TNH-NEXT:   (local.tee $i
+  ;; TNH-NEXT:    (i32.const 10)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; NO_TNH-NEXT:  (local $i i32)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (ref.as_non_null
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -628,8 +636,15 @@
   ;; NO_TNH-NEXT:   (local.get $x)
   ;; NO_TNH-NEXT:   (i32.const 10)
   ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (struct.set $struct 0
+  ;; NO_TNH-NEXT:   (local.get $x)
+  ;; NO_TNH-NEXT:   (local.tee $i
+  ;; NO_TNH-NEXT:    (i32.const 10)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $null.cast-other.effects (param $x (ref null $struct))
+    (local $i i32)
     (struct.set $struct 0
       ;; We cannot remove this ref.as_non_null, even though the struct.set will
       ;; trap if the ref is null, because that would move the trap from before
@@ -647,6 +662,17 @@
         (local.get $x)
       )
       (i32.const 10)
+    )
+    (struct.set $struct 0
+      ;; This one can be removed even without TNH, even though there are effects
+      ;; in it. A tee only has local effects, which do not interfere with a
+      ;; trap.
+      (ref.as_non_null
+        (local.get $x)
+      )
+      (local.tee $i
+        (i32.const 10)
+      )
     )
   )
 
