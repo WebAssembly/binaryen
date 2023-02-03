@@ -626,4 +626,10 @@
       )
     )
   )
+
+  (func $string.hash (param $ref stringref) (result i32)
+    (string.hash
+      (local.get $ref)
+    )
+  )
 )

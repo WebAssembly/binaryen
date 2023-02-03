@@ -2338,6 +2338,9 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
     case StringMeasureWTF16View:
       o << U32LEB(BinaryConsts::StringViewWTF16Length);
       break;
+    case StringMeasureHash:
+      o << U32LEB(BinaryConsts::StringHash);
+      break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
   }
