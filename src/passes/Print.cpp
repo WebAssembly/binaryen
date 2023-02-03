@@ -2404,6 +2404,9 @@ struct PrintExpressionContents
       case StringMeasureWTF16View:
         printMedium(o, "stringview_wtf16.length");
         break;
+      case StringMeasureHash:
+        printMedium(o, "string.hash");
+        break;
       default:
         WASM_UNREACHABLE("invalid string.measure*");
     }
