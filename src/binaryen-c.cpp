@@ -788,6 +788,17 @@ BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
 BinaryenOp BinaryenAndNotVec128(void) { return AndNotVec128; }
 BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
+BinaryenOp BinaryenRelaxedFmaVecF32x4(void) { return RelaxedFmaVecF32x4; }
+BinaryenOp BinaryenRelaxedFmsVecF32x4(void) { return RelaxedFmsVecF32x4; }
+BinaryenOp BinaryenRelaxedFmaVecF64x2(void) { return RelaxedFmaVecF64x2; }
+BinaryenOp BinaryenRelaxedFmsVecF64x2(void) { return RelaxedFmsVecF64x2; }
+BinaryenOp BinaryenLaneselectI8x16(void) { return LaneselectI8x16; }
+BinaryenOp BinaryenLaneselectI16x8(void) { return LaneselectI16x8; }
+BinaryenOp BinaryenLaneselectI32x4(void) { return LaneselectI32x4; }
+BinaryenOp BinaryenLaneselectI64x2(void) { return LaneselectI64x2; }
+BinaryenOp BinaryenDotI8x16I7x16AddSToVecI32x4(void) {
+  return DotI8x16I7x16AddSToVecI32x4;
+}
 BinaryenOp BinaryenAnyTrueVec128(void) { return AnyTrueVec128; }
 BinaryenOp BinaryenAbsVecI8x16(void) { return AbsVecI8x16; }
 BinaryenOp BinaryenNegVecI8x16(void) { return NegVecI8x16; }
@@ -1007,7 +1018,32 @@ BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
 BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
   return PromoteLowVecF32x4ToVecF64x2;
 }
+BinaryenOp BinaryenRelaxedTruncSVecF32x4ToVecI32x4(void) {
+  return RelaxedTruncSVecF32x4ToVecI32x4;
+}
+BinaryenOp BinaryenRelaxedTruncUVecF32x4ToVecI32x4(void) {
+  return RelaxedTruncUVecF32x4ToVecI32x4;
+}
+BinaryenOp BinaryenRelaxedTruncZeroSVecF64x2ToVecI32x4(void) {
+  return RelaxedTruncZeroSVecF64x2ToVecI32x4;
+}
+BinaryenOp BinaryenRelaxedTruncZeroUVecF64x2ToVecI32x4(void) {
+  return RelaxedTruncZeroUVecF64x2ToVecI32x4;
+}
 BinaryenOp BinaryenSwizzleVecI8x16(void) { return SwizzleVecI8x16; }
+BinaryenOp BinaryenRelaxedSwizzleVecI8x16(void) {
+  return RelaxedSwizzleVecI8x16;
+}
+BinaryenOp BinaryenRelaxedMinVecF32x4(void) { return RelaxedMinVecF32x4; }
+BinaryenOp BinaryenRelaxedMaxVecF32x4(void) { return RelaxedMaxVecF32x4; }
+BinaryenOp BinaryenRelaxedMinVecF64x2(void) { return RelaxedMinVecF64x2; }
+BinaryenOp BinaryenRelaxedMaxVecF64x2(void) { return RelaxedMaxVecF64x2; }
+BinaryenOp BinaryenRelaxedQ15MulrSVecI16x8(void) {
+  return RelaxedQ15MulrSVecI16x8;
+}
+BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void) {
+  return DotI8x16I7x16SToVecI16x8;
+}
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
 BinaryenOp BinaryenRefAsExternInternalize(void) { return ExternInternalize; }
 BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternExternalize; }
