@@ -70,16 +70,12 @@ struct SubTypes {
     return ret;
   }
 
-  // Computes the depth of children for each type. This is 0 if the type has no
-  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
-  // and so forth.
-  //
-  // This depth ignores bottom types.
-  std::unordered_map<HeapType, Index> getMaxDepths() {
-    struct DepthSort : TopologicalSort<HeapType, DepthSort> {
+  // A topological sort that visits subtypes first.
+  auto getSubTypesFirstSort() const {
+    struct SubTypesFirstSort : TopologicalSort<HeapType, SubTypesFirstSort> {
       const SubTypes& parent;
 
-      DepthSort(const SubTypes& parent) : parent(parent) {
+      SubTypesFirstSort(const SubTypes& parent) : parent(parent) {
         for (auto type : parent.types) {
           // The roots are types with no supertype.
           if (!type.getSuperType()) {
@@ -97,9 +93,18 @@ struct SubTypes {
       }
     };
 
+    return SubTypesFirstSort(*this);
+  }
+
+  // Computes the depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  //
+  // This depth ignores bottom types.
+  std::unordered_map<HeapType, Index> getMaxDepths() {
     std::unordered_map<HeapType, Index> depths;
 
-    for (auto type : DepthSort(*this)) {
+    for (auto type : getSubTypesFirstSort()) {
       // Begin with depth 0, then take into account the subtype depths.
       Index depth = 0;
       for (auto subType : getStrictSubTypes(type)) {

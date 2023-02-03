@@ -1514,7 +1514,7 @@ public:
 
   void finalize();
 
-  Type getCastType() { return castType; }
+  Type& getCastType() { return castType; }
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1530,7 +1530,7 @@ public:
 
   void finalize();
 
-  Type getCastType() { return type; }
+  Type& getCastType() { return type; }
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1544,7 +1544,7 @@ public:
 
   void finalize();
 
-  Type getCastType() { return castType; }
+  Type& getCastType() { return castType; }
 
   // Returns the type sent on the branch, if it is taken.
   Type getSentType();
