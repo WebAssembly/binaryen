@@ -2036,7 +2036,7 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->safety == RefCast::Unsafe) {
     o << U32LEB(BinaryConsts::RefCastNop);
-    parent.writeIndexedHeapType(curr->type.getHeapType());
+    parent.writeHeapType(curr->type.getHeapType());
   } else {
     // TODO: These instructions are deprecated. Remove them.
     if (auto type = curr->type.getHeapType();
