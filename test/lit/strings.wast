@@ -37,6 +37,8 @@
 
   ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
+  ;; CHECK:      (type $stringref_=>_i32 (func (param stringref) (result i32)))
+
   ;; CHECK:      (global $string-const stringref (string.const "string in a global \01\ff\00\t\t\n\n\r\r\"\"\'\'\\\\"))
   (global $string-const stringref (string.const "string in a global \01\ff\00\t\09\n\0a\r\0d\"\22\'\27\\\5c"))
 
@@ -624,6 +626,17 @@
         (i32.const 3)
         (i32.const 4)
       )
+    )
+  )
+
+  ;; CHECK:      (func $string.hash (type $stringref_=>_i32) (param $ref stringref) (result i32)
+  ;; CHECK-NEXT:  (string.hash
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.hash (param $ref stringref) (result i32)
+    (string.hash
+      (local.get $ref)
     )
   )
 )
