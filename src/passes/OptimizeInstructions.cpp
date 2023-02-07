@@ -2040,6 +2040,7 @@ struct OptimizeInstructions
               {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
               curr->type));
             return;
+          }
 
           // Without trapsNeverHappen we can at least sharpen the type here, if
           // it is not already a null type.
