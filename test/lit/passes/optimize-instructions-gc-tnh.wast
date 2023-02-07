@@ -673,7 +673,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $cast-to-bottom (param $ref (ref any)) (param $nullable-ref anyref)
-    ;; Non-nullable casts to none must trap.
+    ;; Non-nullable casts to none must trap (regardless of whether the input is
+    ;; nullable or not, the output is an impossible type).
     (drop
       (ref.cast none
         (local.get $ref)
@@ -685,7 +686,8 @@
       )
     )
     ;; Nullable casts might succeed, but can only return a null. In TNH mode we
-    ;; we dismiss the possibility of a trap and just return a null.
+    ;; we dismiss the possibility of a trap and just return a null. Or, if the
+    ;; input is non-nullable, we will trap in either mode.
     (drop
       (ref.cast null none
         (local.get $ref)
