@@ -2029,37 +2029,31 @@ struct OptimizeInstructions
             curr->type));
           return;
         } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
-          if (curr->type.isNonNullable()) {
-            // The cast succeeds if null, but we are not null, so this will
-            // trap.
+          // If either cast or ref types were non-nullable then the cast could
+          // never succeed, and we'd have reached |Failure|, above.
+          assert(curr->type.isNullable() && curr->ref->type.isNullable());
+
+          // The cast either returns null, or traps. In trapsNeverHappen mode
+          // we know the result, since it by assumption will not trap.
+          if (getPassOptions().trapsNeverHappen) {
             replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+              {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
               curr->type));
             return;
-          } else {
-            // The cast either returns null, or traps. In trapsNeverHappen mode
-            // we know the result, since it by assumption will not trap.
-            if (getPassOptions().trapsNeverHappen) {
-              replaceCurrent(builder.makeBlock(
-                {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
-                curr->type));
-              return;
-            } else {
-              // Without trapsNeverHappen we can at least sharpen the type here,
-              // if it is not already a null type.
-              auto newType = Type(nullType, Nullable);
-              if (curr->type != newType) {
-                curr->type = newType;
-                // Call replaceCurrent() to make us re-optimize this node, as we
-                // may have just unlocked further opportunities. (We could just
-                // continue down to the rest, but we'd need to do more work to
-                // make sure all the local state in this function is in sync
-                // which this change; it's easier to just do another clean pass
-                // on this node.)
-                replaceCurrent(curr);
-                return;
-              }
-            }
+
+          // Without trapsNeverHappen we can at least sharpen the type here, if
+          // it is not already a null type.
+          auto newType = Type(nullType, Nullable);
+          if (curr->type != newType) {
+            curr->type = newType;
+            // Call replaceCurrent() to make us re-optimize this node, as we
+            // may have just unlocked further opportunities. (We could just
+            // continue down to the rest, but we'd need to do more work to
+            // make sure all the local state in this function is in sync
+            // which this change; it's easier to just do another clean pass
+            // on this node.)
+            replaceCurrent(curr);
+            return;
           }
         }
 

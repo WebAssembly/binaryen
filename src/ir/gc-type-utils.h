@@ -70,6 +70,19 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
   auto refHeapType = refType.getHeapType();
   auto castHeapType = castType.getHeapType();
+
+  if (castHeapType.isBottom()) {
+    // We are casting to a null type, which means we are checking for a null.
+    // Both the reference must be nullable (so a null can appear) and the cast
+    // type as well (or else the cast type is an impossible type, a non-nullable
+    // null).
+    if (refType.isNullable() && castType.isNullable()) {
+      return SuccessOnlyIfNull;
+    } else {
+      return Failure;
+    }
+  }
+
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
   auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
@@ -97,15 +110,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
       return Failure;
     }
     return SuccessOnlyIfNonNull;
-  }
-
-  if (castHeapType.isBottom()) {
-    // We are casting to a null type, which means we are checking for a null.
-    if (refType.isNullable()) {
-      return SuccessOnlyIfNull;
-    } else {
-      return Failure;
-    }
   }
 
   return Unknown;
