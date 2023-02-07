@@ -685,6 +685,7 @@ BINARYEN_API BinaryenOp BinaryenStringNewUTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringNewWTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringNewReplaceArray(void);
 BINARYEN_API BinaryenOp BinaryenStringNewWTF16Array(void);
+BINARYEN_API BinaryenOp BinaryenStringNewFromCodePoint(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureUTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureWTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16(void);
@@ -703,6 +704,8 @@ BINARYEN_API BinaryenOp BinaryenStringIterMoveAdvance(void);
 BINARYEN_API BinaryenOp BinaryenStringIterMoveRewind(void);
 BINARYEN_API BinaryenOp BinaryenStringSliceWTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringSliceWTF16(void);
+BINARYEN_API BinaryenOp BinaryenStringEqEqual(void);
+BINARYEN_API BinaryenOp BinaryenStringEqCompare(void);
 
 BINARYEN_REF(Expression);
 
@@ -1087,7 +1090,8 @@ BinaryenStringNew(BinaryenModuleRef module,
                   BinaryenExpressionRef ptr,
                   BinaryenExpressionRef length,
                   BinaryenExpressionRef start,
-                  BinaryenExpressionRef end);
+                  BinaryenExpressionRef end,
+                  bool try_);
 BINARYEN_API BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                                        const char* name);
 BINARYEN_API BinaryenExpressionRef BinaryenStringMeasure(
@@ -1104,6 +1108,7 @@ BinaryenStringConcat(BinaryenModuleRef module,
                      BinaryenExpressionRef right);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringEq(BinaryenModuleRef module,
+                 BinaryenOp op,
                  BinaryenExpressionRef left,
                  BinaryenExpressionRef right);
 BINARYEN_API BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
@@ -2529,6 +2534,9 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenStringNewGetEnd(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
                                           BinaryenExpressionRef endExpr);
+BINARYEN_API void BinaryenStringNewSetTry(BinaryenExpressionRef expr,
+                                          bool try_);
+BINARYEN_API bool BinaryenStringNewIsTry(BinaryenExpressionRef expr);
 
 // StringConst
 
@@ -2578,6 +2586,9 @@ BINARYEN_API void BinaryenStringConcatSetRight(BinaryenExpressionRef expr,
 
 // StringEq
 
+BINARYEN_API BinaryenOp BinaryenStringEqGetOp(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStringEqSetOp(BinaryenExpressionRef expr,
+                                        BinaryenOp op);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringEqGetLeft(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringEqSetLeft(BinaryenExpressionRef expr,

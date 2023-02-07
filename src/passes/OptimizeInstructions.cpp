@@ -1283,7 +1283,7 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
-    skipNonNullCast(curr->target);
+    skipNonNullCast(curr->target, curr);
     if (trapOnNull(curr, curr->target)) {
       return;
     }
@@ -1473,10 +1473,57 @@ struct OptimizeInstructions
   // See "notes on removing casts", above. However, in most cases removing a
   // non-null cast is obviously safe to do, since we only remove one if another
   // check will happen later.
-  void skipNonNullCast(Expression*& input) {
+  //
+  // We also pass in the parent, because we need to be careful about ordering:
+  // if the parent has other children than |input| then we may not be able to
+  // remove the trap. For example,
+  //
+  //  (struct.set
+  //   (ref.as_non_null X)
+  //   (call $foo)
+  //  )
+  //
+  // If X is null we'd trap before the call to $foo. If we remove the
+  // ref.as_non_null then the struct.set will still trap, of course, but that
+  // will only happen *after* the call, which is wrong.
+  void skipNonNullCast(Expression*& input, Expression* parent) {
+    // Check the other children for the ordering problem only if we find a
+    // possible optimization, to avoid wasted work.
+    bool checkedSiblings = false;
+    auto& options = getPassOptions();
     while (1) {
       if (auto* as = input->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull) {
+          // The problem with effect ordering that is described above is not an
+          // issue if traps are assumed to never happen anyhow.
+          if (!checkedSiblings && !options.trapsNeverHappen) {
+            // We need to see if a child with side effects exists after |input|.
+            // If there is such a child, it is a problem as mentioned above (it
+            // is fine for such a child to appear *before* |input|, as then we
+            // wouldn't be reordering effects). Thus, all we need to do is
+            // accumulate the effects in children after |input|, as we want to
+            // move the trap across those.
+            bool seenInput = false;
+            EffectAnalyzer crossedEffects(options, *getModule());
+            for (auto* child : ChildIterator(parent)) {
+              if (child == input) {
+                seenInput = true;
+              } else if (seenInput) {
+                crossedEffects.walk(child);
+              }
+            }
+
+            // Check if the effects we cross interfere with the effects of the
+            // trap we want to move. (We use a shallow effect analyzer since we
+            // will only move the ref.as_non_null itself.)
+            ShallowEffectAnalyzer movingEffects(options, *getModule(), input);
+            if (crossedEffects.invalidates(movingEffects)) {
+              return;
+            }
+
+            // If we got here, we've checked the siblings and found no problem.
+            checkedSiblings = true;
+          }
           input = as->value;
           continue;
         }
@@ -1717,12 +1764,12 @@ struct OptimizeInstructions
   }
 
   void visitStructGet(StructGet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitStructSet(StructSet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     if (trapOnNull(curr, curr->ref)) {
       return;
     }
@@ -1878,12 +1925,12 @@ struct OptimizeInstructions
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitArraySet(ArraySet* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     if (trapOnNull(curr, curr->ref)) {
       return;
     }
@@ -1895,13 +1942,13 @@ struct OptimizeInstructions
   }
 
   void visitArrayLen(ArrayLen* curr) {
-    skipNonNullCast(curr->ref);
+    skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
   }
 
   void visitArrayCopy(ArrayCopy* curr) {
-    skipNonNullCast(curr->destRef);
-    skipNonNullCast(curr->srcRef);
+    skipNonNullCast(curr->destRef, curr);
+    skipNonNullCast(curr->srcRef, curr);
     trapOnNull(curr, curr->destRef) || trapOnNull(curr, curr->srcRef);
   }
 
@@ -2179,7 +2226,7 @@ struct OptimizeInstructions
     }
 
     assert(curr->op == RefAsNonNull);
-    skipNonNullCast(curr->value);
+    skipNonNullCast(curr->value, curr);
     if (!curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
       return;
@@ -3785,7 +3832,11 @@ private:
 
   // Returns true if the given binary operation can overflow. If we can't be
   // sure either way, we return true, assuming the worst.
-  bool canOverflow(Binary* binary) {
+  //
+  // We can check for an unsigned overflow (more than the max number of bits) or
+  // a signed one (where even reaching the sign bit is an overflow, as that
+  // would turn us from positive to negative).
+  bool canOverflow(Binary* binary, bool signed_) {
     using namespace Abstract;
 
     // If we know nothing about a limit on the amount of bits on either side,
@@ -3798,17 +3849,23 @@ private:
     }
 
     if (binary->op == getBinary(binary->type, Add)) {
-      // Proof this cannot overflow:
-      //
-      // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
-      //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
-      //              =  2^typeMaxBits                           (3)
-      //
-      // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
-      //     and its max value is 2^32 - 1, which is < 2^32).
-      // (2) By the above checks and early returns.
-      // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
-      return false;
+      if (!signed_) {
+        // Proof this cannot overflow:
+        //
+        // left + right <  2^leftMaxBits + 2^rightMaxBits          (1)
+        //              <= 2^(typeMaxBits-1) + 2^(typeMaxBits-1)   (2)
+        //              =  2^typeMaxBits                           (3)
+        //
+        // (1) By the definition of the max bits (e.g. an int32 has 32 max bits,
+        //     and its max value is 2^32 - 1, which is < 2^32).
+        // (2) By the above checks and early returns.
+        // (3) 2^x + 2^x === 2*2^x === 2^(x+1)
+        return false;
+      }
+
+      // For a signed comparison, check that the total cannot reach the sign
+      // bit.
+      return leftMaxBits + rightMaxBits >= typeMaxBits;
     }
 
     // TODO subtraction etc.
@@ -4126,7 +4183,7 @@ private:
         Const* c2;
         if (matches(curr,
                     binary(binary(&add, Add, any(), ival(&c1)), ival(&c2))) &&
-            !canOverflow(add)) {
+            !canOverflow(add, isSignedOp(curr->op))) {
           // We want to subtract C2-C1 or C1-C2. When doing so, we must avoid an
           // overflow in that subtraction (so that we keep all the math here
           // properly linear in the mathematical sense). Overflows that concern

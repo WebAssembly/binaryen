@@ -16,6 +16,7 @@ set(passes_SOURCES
   param-utils.cpp
   pass.cpp
   test_passes.cpp
+  AbstractTypeRefining.cpp
   AlignmentLowering.cpp
   Asyncify.cpp
   AvoidReinterprets.cpp

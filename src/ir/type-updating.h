@@ -405,6 +405,76 @@ private:
   InsertOrderedMap<HeapType, Index> typeIndices;
 };
 
+class TypeMapper : public GlobalTypeRewriter {
+public:
+  using TypeUpdates = std::unordered_map<HeapType, HeapType>;
+
+  const TypeUpdates& mapping;
+
+  std::unordered_map<HeapType, Signature> newSignatures;
+
+public:
+  TypeMapper(Module& wasm, const TypeUpdates& mapping)
+    : GlobalTypeRewriter(wasm), mapping(mapping) {}
+
+  void map() {
+    // Map the types of expressions (curr->type, etc.) to their merged
+    // types.
+    mapTypes(mapping);
+
+    // Update the internals of types (struct fields, signatures, etc.) to
+    // refer to the merged types.
+    update();
+  }
+
+  Type getNewType(Type type) {
+    if (!type.isRef()) {
+      return type;
+    }
+    auto heapType = type.getHeapType();
+    auto iter = mapping.find(heapType);
+    if (iter != mapping.end()) {
+      return getTempType(Type(iter->second, type.getNullability()));
+    }
+    return getTempType(type);
+  }
+
+  void modifyStruct(HeapType oldType, Struct& struct_) override {
+    auto& oldFields = oldType.getStruct().fields;
+    for (Index i = 0; i < oldFields.size(); i++) {
+      auto& oldField = oldFields[i];
+      auto& newField = struct_.fields[i];
+      newField.type = getNewType(oldField.type);
+    }
+  }
+  void modifyArray(HeapType oldType, Array& array) override {
+    array.element.type = getNewType(oldType.getArray().element.type);
+  }
+  void modifySignature(HeapType oldSignatureType, Signature& sig) override {
+    auto getUpdatedTypeList = [&](Type type) {
+      std::vector<Type> vec;
+      for (auto t : type) {
+        vec.push_back(getNewType(t));
+      }
+      return getTempTupleType(vec);
+    };
+
+    auto oldSig = oldSignatureType.getSignature();
+    sig.params = getUpdatedTypeList(oldSig.params);
+    sig.results = getUpdatedTypeList(oldSig.results);
+  }
+  std::optional<HeapType> getSuperType(HeapType oldType) override {
+    // If the super is mapped, get it from the mapping.
+    auto super = oldType.getSuperType();
+    if (super) {
+      if (auto it = mapping.find(*super); it != mapping.end()) {
+        return it->second;
+      }
+    }
+    return super;
+  }
+};
+
 namespace TypeUpdating {
 
 // Checks whether a type is valid as a local, or whether

@@ -42,6 +42,9 @@
 ;; CHECK-NEXT: Optimization passes:
 ;; CHECK-NEXT: --------------------
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --abstract-type-refining                      refine and merge abstract
+;; CHECK-NEXT:                                                 (never-created) types
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --alignment-lowering                          lower unaligned loads and stores
 ;; CHECK-NEXT:                                                 to smaller aligned ones
 ;; CHECK-NEXT:
