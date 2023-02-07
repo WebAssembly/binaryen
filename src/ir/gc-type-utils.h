@@ -71,30 +71,24 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   auto refHeapType = refType.getHeapType();
   auto castHeapType = castType.getHeapType();
 
-  if (castHeapType.isBottom()) {
-    // We are casting to a null type, which means we are checking for a null.
-    // Both the reference must be nullable (so a null can appear) and the cast
-    // type as well (or else the cast type is an impossible type, a non-nullable
-    // null).
-    if (refType.isNullable() && castType.isNullable()) {
-      return SuccessOnlyIfNull;
-    } else {
-      return Failure;
-    }
-  }
-
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
   auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
-  if (!heapTypesCompatible) {
-    // If at least one is not null, then since the heap types are not compatible
-    // we must fail.
+  if (!heapTypesCompatible || castHeapType.isBottom()) {
+    // The cases of the heap types not being compatible, or the cast type being
+    // a bottom type, have the same outcomes:
+    //  * If the heap types are not compatible, and if one is not null, then
+    //    they cannot be equal since a null is the only overlap.
+    //  * If we are casting to a null type, then both the reference must be
+    //    nullable (so a null can appear) and the cast type as well (or else the
+    //    cast type is an impossible type, a non-nullable null).
     if (refType.isNonNullable() || castType.isNonNullable()) {
       return Failure;
     }
 
-    // Otherwise, both are nullable and a null is the only hope of success.
+    // Both are nullable. A null is the only hope of success in either
+    // situation.
     return SuccessOnlyIfNull;
   }
 
