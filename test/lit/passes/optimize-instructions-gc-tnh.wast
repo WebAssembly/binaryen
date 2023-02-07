@@ -685,14 +685,17 @@
         (local.get $nullable-ref)
       )
     )
-    ;; Nullable casts might succeed, but can only return a null. In TNH mode we
-    ;; we dismiss the possibility of a trap and just return a null. Or, if the
-    ;; input is non-nullable, we will trap in either mode.
+    ;; Nullable casts to null have more possibilities. First, if the input is
+    ;; non-nullable then we trap.
     (drop
       (ref.cast null none
         (local.get $ref)
       )
     )
+    ;; Second, if the value may be a null, then we either return a null or we
+    ;; trap. In TNH mode we dismiss the possibility of a trap and so we can just
+    ;; return a null here. (In non-TNH mode we could do a check for null etc.,
+    ;; but we'd be increasing code size.)
     (drop
       (ref.cast null none
         (local.get $nullable-ref)
