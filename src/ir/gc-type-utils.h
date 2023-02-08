@@ -70,18 +70,21 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
   auto refHeapType = refType.getHeapType();
   auto castHeapType = castType.getHeapType();
+
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
   auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
-  if (!heapTypesCompatible) {
-    // If at least one is not null, then since the heap types are not compatible
-    // we must fail.
+  if (!heapTypesCompatible || castHeapType.isBottom()) {
+    // If the heap types are incompatible or if it is impossible to have a
+    // non-null reference to the target heap type, then the only way the cast
+    // can succeed is if it allows nulls and the input is null.
     if (refType.isNonNullable() || castType.isNonNullable()) {
       return Failure;
     }
 
-    // Otherwise, both are nullable and a null is the only hope of success.
+    // Both are nullable. A null is the only hope of success in either
+    // situation.
     return SuccessOnlyIfNull;
   }
 
