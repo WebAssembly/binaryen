@@ -76,7 +76,9 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
   if (!heapTypesCompatible || castHeapType.isBottom()) {
-    // If the heap types are incompatible or if it is impossible to have a non-null reference to the target heap type, then the only way the cast can succeed is if it allows nulls and the input is null.
+    // If the heap types are incompatible or if it is impossible to have a
+    // non-null reference to the target heap type, then the only way the cast
+    // can succeed is if it allows nulls and the input is null.
     if (refType.isNonNullable() || castType.isNonNullable()) {
       return Failure;
     }
