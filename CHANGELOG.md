@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v112
+----
+
 - Add AbstractTypeRefining pass (#5461)
 - Add a mechanism to skip a pass by name (#5448)
 - Add TypeMerging pass (#5321)
