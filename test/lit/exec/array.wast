@@ -15,7 +15,7 @@
      (local.tee $0
       (array.new $array
        (i32.const 10) ;; The value 10 should be printed at the very end, which
-       (i32.const 9)  ;; tests that we execute array.new/get operands the
+       (i32.const 9)  ;; tests that we execute array.new/get operands in the
       )               ;; proper order.
      )
      (i32.const 8)
