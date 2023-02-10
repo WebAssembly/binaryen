@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v112
+----
+
+- Add AbstractTypeRefining pass (#5461)
+- Add a mechanism to skip a pass by name (#5448)
+- Add TypeMerging pass (#5321)
+- Add TypeSSA pass  (#5299)
 - Optimization sequences like `-O3 -Os` now do the expected thing and run `-O3`
   followed by `-Os`. Previously the last of them set the defaults that were used
   by all executions, so `-O3 -Os` was equivalent to `-Os -Os`. (There is no
