@@ -143,11 +143,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // type - if we can do that, replace everything with the children + a
       // dummy value of the proper type.
       if (curr->type.isDefaultable()) {
-        auto* dummy = Builder(*getModule()).makeConstantExpression(Literal::makeZeros(curr->type));
-        return getDroppedChildrenAndAppend(curr,
-                                           *getModule(),
-                                           getPassOptions(),
-                                           dummy);
+        auto* dummy = Builder(*getModule())
+                        .makeConstantExpression(Literal::makeZeros(curr->type));
+        return getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), dummy);
       }
       // Otherwise, give up.
       return curr;
