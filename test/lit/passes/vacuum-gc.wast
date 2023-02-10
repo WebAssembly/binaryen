@@ -90,4 +90,55 @@
       )
     )
   )
+
+  ;; CHECK:      (func $dropped-calls (type $none_=>_none)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dropped-calls
+    ;; The calls' outputs are used in a computation that itself has no effects,
+    ;; and is dropped, so we don't need it. But we can't remove the calls
+    ;; themselves, which should be all that remains, with drops of them (there
+    ;; will also be blocks, which merge-blocks would remove).
+    (drop
+      (i32.add
+        (call $helper-i32)
+        (call $helper-i32)
+      )
+    )
+    (drop
+      (ref.eq
+        (call $helper-ref)
+        (call $helper-ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper-i32 (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $helper-i32 (result i32)
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $helper-ref (type $none_=>_eqref) (result eqref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper-ref (result eqref)
+    (unreachable)
+  )
 )
