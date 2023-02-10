@@ -1595,6 +1595,13 @@ public:
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
+    Flow init;
+    if (!curr->isWithDefault()) {
+      init = self()->visit(curr->init);
+      if (init.breaking()) {
+        return init;
+      }
+    }
     auto size = self()->visit(curr->size);
     if (size.breaking()) {
       return size;
@@ -1618,10 +1625,6 @@ public:
         data[i] = Literal::makeZero(element.type);
       }
     } else {
-      auto init = self()->visit(curr->init);
-      if (init.breaking()) {
-        return init;
-      }
       auto field = curr->type.getHeapType().getArray().element;
       auto value = truncateForPacking(init.getSingleValue(), field);
       for (Index i = 0; i < num; i++) {
