@@ -3,6 +3,12 @@
 
 (module
   ;; CHECK:      (type ${} (struct ))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result anyref)))
+  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
+  (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
+
   (type ${} (struct))
 
   ;; CHECK:      (func $drop-ref-as (type $anyref_=>_none) (param $x anyref)
@@ -108,6 +114,21 @@
   ;; CHECK-NEXT:    (call $helper-ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $call.without.effects.non.null
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:    (call $helper-i32)
+  ;; CHECK-NEXT:    (ref.func $helper-two-refs-non-null)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $dropped-calls
     ;; The calls' outputs are used in a computation that itself has no effects,
@@ -126,6 +147,23 @@
         (call $helper-ref)
       )
     )
+    ;; The call.without.effects can be removed, but not the two calls nested in
+    ;; it.
+    (drop
+      (call $call.without.effects
+        (call $helper-i32)
+        (call $helper-i32)
+        (ref.func $helper-two-refs)
+      )
+    )
+    ;; The non-null case however is tricky, and we do not handle it atm. TODO
+    (drop
+      (call $call.without.effects.non.null
+        (call $helper-i32)
+        (call $helper-i32)
+        (ref.func $helper-two-refs-non-null)
+      )
+    )
   )
 
   ;; CHECK:      (func $helper-i32 (type $none_=>_i32) (result i32)
@@ -139,6 +177,20 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-ref (result eqref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $helper-two-refs (type $i32_i32_=>_anyref) (param $0 i32) (param $1 i32) (result anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper-two-refs (param i32) (param i32) (result (ref null any))
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $helper-two-refs-non-null (type $i32_i32_=>_ref|any|) (param $0 i32) (param $1 i32) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $helper-two-refs-non-null (param i32) (param i32) (result (ref any))
     (unreachable)
   )
 )
