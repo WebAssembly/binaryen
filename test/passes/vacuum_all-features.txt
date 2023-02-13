@@ -111,9 +111,11 @@
   (drop
    (call $int)
   )
-  (drop
-   (i32.add
+  (block
+   (drop
     (call $int)
+   )
+   (drop
     (call $int)
    )
   )
