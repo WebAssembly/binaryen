@@ -9,6 +9,7 @@ set(support_SOURCES
   file.cpp
   istring.cpp
   path.cpp
+  pchar.cpp
   safe_integer.cpp
   threads.cpp
   utilities.cpp
