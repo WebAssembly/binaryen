@@ -48,7 +48,9 @@ class Literal {
     // A reference to GC data, either a Struct or an Array. For both of those
     // we store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
-    // to indicate whether this is a Struct or an Array, and of what type.
+    // to indicate whether this is a Struct or an Array, and of what type. We
+    // also use this to store String data, though that is not very efficient
+    // (one Literal per character), and could be optimized. TODO
     std::shared_ptr<GCData> gcData;
     // TODO: Literals of type `anyref` can only be `null` currently but we
     // will need to represent external values eventually, to
@@ -709,10 +711,10 @@ public:
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
-// A GC Struct or Array is a set of values with a type saying how it should be
-// interpreted.
+// A GC Struct, Array, or String is a set of values with a type saying how it
+// should be interpreted.
 struct GCData {
-  // The type of this struct or array.
+  // The type of this struct, array, or string.
   HeapType type;
 
   // The element or field values.

@@ -1794,7 +1794,45 @@ public:
     }
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
-  Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringNew(StringNew* curr) {
+    Flow ptr = visit(curr->ptr);
+    if (ptr.breaking()) {
+      return ptr;
+    }
+    switch (curr->op) {
+      case StringNewWTF16Array: {
+        Flow start = visit(curr->start);
+        if (start.breaking()) {
+          return start;
+        }
+        Flow end = visit(curr->end);
+        if (end.breaking()) {
+          return end;
+        }
+        auto ptrData = ptr.getSingleValue().getGCData();
+        if (!ptrData) {
+          trap("null ref");
+        }
+        const auto& ptrDataValues = ptrData->values;
+        size_t startVal = startIndex.getSingleValue().getUnsigned();
+        size_t endVal = endIndex.getSingleValue().getUnsigned();
+        if (endVal >= ptrDataValues.size()) {
+          trap("array oob");
+        }
+        Literals contents;
+        if (endVal > startVal) {
+          contents.reserve(endVal - startVal);
+          for (size_t i = startVal; i < endVal; i++) {
+            contents.push_back(ptrDataValues[i]);
+          }
+        }
+        auto heapType = curr->type.getHeapType();
+        return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+      }
+      default:
+        WASM_UNREACHABLE("unimp");
+    }
+  }
   Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2118,7 +2156,6 @@ public:
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitStringNew(StringNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringConst(StringConst* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringMeasure(StringMeasure* curr) {
     return Flow(NONCONSTANT_FLOW);
