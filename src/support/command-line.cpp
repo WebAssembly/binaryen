@@ -162,7 +162,33 @@ Options& Options::add_positional(const std::string& name,
   return *this;
 }
 
-void Options::parse(int argc, const char* argv[]) {
+// This function converts the platform-specific pchar arrays to char arrays, on
+// windows by converting from UTF-16 to UTF-8, then calls parse2.
+//
+// Further processing is the performed on plain chars and strings.
+//
+// For arguments that represent paths, the reverse UTF-8 to UTF-16 encoding will
+// be performed (on windows) by the fspath constructor.
+//
+// On non-windows this is just copying bytes around without conversion.
+void Options::parse(int argc, const pchar* argv[]) {
+  std::vector<std::vector<char>> utf8_argv;
+  std::vector<const char*> utf8_argv_ptrs;
+
+  for (int i = 0; i != argc; ++i) {
+    pstring arg = pstring(argv[i]);
+    std::string utf8_arg = pstring_to_string(arg);
+    std::vector<char> utf8_arg_vec(utf8_arg.begin(), utf8_arg.end());
+    utf8_arg_vec.push_back('\0');
+    auto ptr = utf8_arg_vec.data();
+    utf8_argv.push_back(std::move(utf8_arg_vec));
+    utf8_argv_ptrs.push_back(ptr);
+  }
+
+  Options::parse2(argc, utf8_argv_ptrs.data());
+}
+
+void Options::parse2(int argc, const char* argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {

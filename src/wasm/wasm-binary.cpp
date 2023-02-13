@@ -70,7 +70,7 @@ void WasmBinaryWriter::write() {
   if (sourceMap && !sourceMapUrl.empty()) {
     writeSourceMapUrl();
   }
-  if (symbolMap.size() > 0) {
+  if (symbolMap.stdpath().native().size() > 0) {
     writeSymbolMap();
   }
 
@@ -1108,7 +1108,7 @@ void WasmBinaryWriter::writeSourceMapUrl() {
 }
 
 void WasmBinaryWriter::writeSymbolMap() {
-  std::ofstream file(symbolMap);
+  std::ofstream file(symbolMap.stdpath());
   auto write = [&](Function* func) {
     file << getFunctionIndex(func->name) << ":" << func->name.str << std::endl;
   };

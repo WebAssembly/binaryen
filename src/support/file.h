@@ -26,6 +26,8 @@
 #include <utility>
 #include <vector>
 
+#include "pchar.h"
+
 namespace wasm {
 
 namespace Flags {
@@ -35,23 +37,23 @@ enum BinaryOption { Binary, Text };
 std::vector<char> read_stdin();
 
 template<typename T>
-T read_file(const std::string& filename, Flags::BinaryOption binary);
+T read_file(const wasm::fspath& filename, Flags::BinaryOption binary);
 
 // Declare the valid explicit specializations.
-extern template std::string read_file<>(const std::string&,
+extern template std::string read_file<>(const wasm::fspath&,
                                         Flags::BinaryOption);
-extern template std::vector<char> read_file<>(const std::string&,
+extern template std::vector<char> read_file<>(const wasm::fspath&,
                                               Flags::BinaryOption);
 
 // Given a string which may be a response file (i.e., a filename starting
 // with "@"), if it is a response file read it and return that, or if it
 // is not a response file, return it as is.
-std::string read_possible_response_file(const std::string&);
+std::string read_possible_response_file(const wasm::fspath&);
 
 class Output {
 public:
   // An empty filename or "-" will open stdout instead.
-  Output(const std::string& filename, Flags::BinaryOption binary);
+  Output(const wasm::fspath& filename, Flags::BinaryOption binary);
   ~Output() = default;
   template<typename T> std::ostream& operator<<(const T& v) { return out << v; }
 
@@ -70,10 +72,10 @@ private:
 };
 
 // Copies a file to another file
-void copy_file(std::string input, std::string output);
+void copy_file(wasm::fspath input, wasm::fspath output);
 
 // Retusn the size of a file
-size_t file_size(std::string filename);
+size_t file_size(wasm::fspath filename);
 
 } // namespace wasm
 

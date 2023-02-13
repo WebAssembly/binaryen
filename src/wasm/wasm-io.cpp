@@ -51,15 +51,15 @@ static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
   }
 }
 
-void ModuleReader::readText(std::string filename, Module& wasm) {
-  BYN_TRACE("reading text from " << filename << "\n");
+void ModuleReader::readText(wasm::fspath filename, Module& wasm) {
+  BYN_TRACE("reading text from " << filename.stdpath() << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
   readTextData(input, wasm, profile);
 }
 
 void ModuleReader::readBinaryData(std::vector<char>& input,
                                   Module& wasm,
-                                  std::string sourceMapFilename) {
+                                  wasm::fspath sourceMapFilename) {
   std::unique_ptr<std::ifstream> sourceMapStream;
   // Assume that the wasm has had its initial features applied, and use those
   // while parsing.
@@ -67,9 +67,9 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);
-  if (sourceMapFilename.size()) {
+  if (sourceMapFilename.stdpath().native().size()) {
     sourceMapStream = make_unique<std::ifstream>();
-    sourceMapStream->open(sourceMapFilename);
+    sourceMapStream->open(sourceMapFilename.stdpath());
     parser.setDebugLocations(sourceMapStream.get());
   }
   parser.read();
@@ -78,18 +78,18 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   }
 }
 
-void ModuleReader::readBinary(std::string filename,
+void ModuleReader::readBinary(wasm::fspath filename,
                               Module& wasm,
-                              std::string sourceMapFilename) {
-  BYN_TRACE("reading binary from " << filename << "\n");
+                              wasm::fspath sourceMapFilename) {
+  BYN_TRACE("reading binary from " << filename.stdpath() << "\n");
   auto input(read_file<std::vector<char>>(filename, Flags::Binary));
   readBinaryData(input, wasm, sourceMapFilename);
 }
 
-bool ModuleReader::isBinaryFile(std::string filename) {
+bool ModuleReader::isBinaryFile(wasm::fspath filename) {
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in | std::ifstream::binary;
-  infile.open(filename, flags);
+  infile.open(filename.stdpath(), flags);
   char buffer[4] = {1, 2, 3, 4};
   infile.read(buffer, 4);
   infile.close();
@@ -97,11 +97,11 @@ bool ModuleReader::isBinaryFile(std::string filename) {
          buffer[3] == 'm';
 }
 
-void ModuleReader::read(std::string filename,
+void ModuleReader::read(wasm::fspath filename,
                         Module& wasm,
-                        std::string sourceMapFilename) {
+                        wasm::fspath sourceMapFilename) {
   // empty filename or "-" means read from stdin
-  if (!filename.size() || filename == "-") {
+  if (!filename.stdpath().native().size() || filename.stdpath() == "-") {
     readStdin(wasm, sourceMapFilename);
     return;
   }
@@ -109,7 +109,7 @@ void ModuleReader::read(std::string filename,
     readBinary(filename, wasm, sourceMapFilename);
   } else {
     // default to text
-    if (sourceMapFilename.size()) {
+    if (sourceMapFilename.stdpath().native().size()) {
       std::cerr << "Binaryen ModuleReader::read() - source map filename "
                    "provided, but file appears to not be binary\n";
     }
@@ -119,7 +119,7 @@ void ModuleReader::read(std::string filename,
 
 // TODO: reading into a vector<char> then copying into a string is unnecessarily
 // inefficient. It would be better to read just once into a stringstream.
-void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
+void ModuleReader::readStdin(Module& wasm, wasm::fspath sourceMapFilename) {
   std::vector<char> input = read_stdin();
   if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
       input[2] == 's' && input[3] == 'm') {
@@ -140,8 +140,8 @@ void ModuleWriter::writeText(Module& wasm, Output& output) {
   output.getStream() << wasm;
 }
 
-void ModuleWriter::writeText(Module& wasm, std::string filename) {
-  BYN_TRACE("writing text to " << filename << "\n");
+void ModuleWriter::writeText(Module& wasm, wasm::fspath filename) {
+  BYN_TRACE("writing text to " << filename.stdpath() << "\n");
   Output output(filename, Flags::Text);
   writeText(wasm, output);
 }
@@ -155,12 +155,12 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
     writer.setEmitModuleName(true);
   }
   std::unique_ptr<std::ofstream> sourceMapStream;
-  if (sourceMapFilename.size()) {
+  if (sourceMapFilename.stdpath().native().size()) {
     sourceMapStream = make_unique<std::ofstream>();
-    sourceMapStream->open(sourceMapFilename);
+    sourceMapStream->open(sourceMapFilename.stdpath());
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
-  if (symbolMap.size() > 0) {
+  if (symbolMap.stdpath().native().size() > 0) {
     writer.setSymbolMap(symbolMap);
   }
   writer.write();
@@ -170,8 +170,8 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   }
 }
 
-void ModuleWriter::writeBinary(Module& wasm, std::string filename) {
-  BYN_TRACE("writing binary to " << filename << "\n");
+void ModuleWriter::writeBinary(Module& wasm, wasm::fspath filename) {
+  BYN_TRACE("writing binary to " << filename.stdpath() << "\n");
   Output output(filename, Flags::Binary);
   writeBinary(wasm, output);
 }
@@ -184,8 +184,8 @@ void ModuleWriter::write(Module& wasm, Output& output) {
   }
 }
 
-void ModuleWriter::write(Module& wasm, std::string filename) {
-  if (binary && filename.size() > 0) {
+void ModuleWriter::write(Module& wasm, wasm::fspath filename) {
+  if (binary && filename.stdpath().native().size() > 0) {
     writeBinary(wasm, filename);
   } else {
     writeText(wasm, filename);

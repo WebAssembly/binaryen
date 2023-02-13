@@ -58,17 +58,17 @@ public:
   }
 
   // read text
-  void readText(std::string filename, Module& wasm);
+  void readText(wasm::fspath filename, Module& wasm);
   // read binary
-  void readBinary(std::string filename,
+  void readBinary(wasm::fspath filename,
                   Module& wasm,
-                  std::string sourceMapFilename = "");
+                  wasm::fspath sourceMapFilename = "");
   // read text or binary, checking the contents for what it is. If `filename` is
   // empty, read from stdin.
   void
-  read(std::string filename, Module& wasm, std::string sourceMapFilename = "");
+  read(wasm::fspath filename, Module& wasm, wasm::fspath sourceMapFilename = "");
   // check whether a file is a wasm binary
-  bool isBinaryFile(std::string filename);
+  bool isBinaryFile(wasm::fspath filename);
 
 private:
   bool DWARF = false;
@@ -77,11 +77,11 @@ private:
 
   bool skipFunctionBodies = false;
 
-  void readStdin(Module& wasm, std::string sourceMapFilename);
+  void readStdin(Module& wasm, wasm::fspath sourceMapFilename);
 
   void readBinaryData(std::vector<char>& input,
                       Module& wasm,
-                      std::string sourceMapFilename);
+                      wasm::fspath sourceMapFilename);
 };
 
 class ModuleWriter : public ModuleIOBase {
@@ -90,8 +90,8 @@ class ModuleWriter : public ModuleIOBase {
   // TODO: Remove `emitModuleName`. See the comment in wasm-binary.h
   bool emitModuleName = false;
 
-  std::string symbolMap;
-  std::string sourceMapFilename;
+  wasm::fspath symbolMap;
+  wasm::fspath sourceMapFilename;
   std::string sourceMapUrl;
 
 public:
@@ -100,8 +100,8 @@ public:
   ModuleWriter() { setDebugInfo(false); }
 
   void setBinary(bool binary_) { binary = binary_; }
-  void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
-  void setSourceMapFilename(std::string sourceMapFilename_) {
+  void setSymbolMap(wasm::fspath symbolMap_) { symbolMap = symbolMap_; }
+  void setSourceMapFilename(wasm::fspath sourceMapFilename_) {
     sourceMapFilename = sourceMapFilename_;
   }
   void setSourceMapUrl(std::string sourceMapUrl_) {
@@ -111,15 +111,15 @@ public:
 
   // write text
   void writeText(Module& wasm, Output& output);
-  void writeText(Module& wasm, std::string filename);
+  void writeText(Module& wasm, wasm::fspath filename);
   // write binary
   void writeBinary(Module& wasm, Output& output);
-  void writeBinary(Module& wasm, std::string filename);
+  void writeBinary(Module& wasm, wasm::fspath filename);
   // write text or binary, defaulting to binary unless setBinary(false),
   // and unless there is no output file (in which case we write text
   // to stdout).
   void write(Module& wasm, Output& output);
-  void write(Module& wasm, std::string filename);
+  void write(Module& wasm, wasm::fspath filename);
 };
 
 } // namespace wasm

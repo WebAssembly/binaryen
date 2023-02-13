@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 
+#include "pchar.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -63,9 +64,11 @@ public:
   Options& add_positional(const std::string& name,
                           Arguments arguments,
                           const Action& action);
-  void parse(int argc, const char* argv[]);
+  void parse(int argc, const pchar* argv[]);
 
 private:
+  void parse2(int argc, const char* argv[]);
+
   struct Option {
     std::string longName;
     std::string shortName;

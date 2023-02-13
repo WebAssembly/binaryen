@@ -47,26 +47,26 @@ template<> std::string do_read_stdin<std::string>::operator()() {
 }
 
 template<typename T>
-T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
-  if (filename == "-") {
+T wasm::read_file(const wasm::fspath& filename, Flags::BinaryOption binary) {
+  if (filename.stdpath() == "-") {
     return do_read_stdin<T>{}();
   }
-  BYN_TRACE("Loading '" << filename << "'...\n");
+  BYN_TRACE("Loading '" << filename.stdpath() << "'...\n");
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
   if (binary == Flags::Binary) {
     flags |= std::ifstream::binary;
   }
-  infile.open(filename, flags);
+  infile.open(filename.stdpath(), flags);
   if (!infile.is_open()) {
-    Fatal() << "Failed opening '" << filename << "'";
+    Fatal() << "Failed opening '" << filename.stdpath() << "'";
   }
   infile.seekg(0, std::ios::end);
   std::streampos insize = infile.tellg();
   if (uint64_t(insize) >= std::numeric_limits<size_t>::max()) {
     // Building a 32-bit executable where size_t == 32 bits, we are not able to
     // create strings larger than 2^32 bytes in length, so must abort here.
-    Fatal() << "Failed opening '" << filename
+    Fatal() << "Failed opening '" << filename.stdpath()
             << "': Input file too large: " << insize
             << " bytes. Try rebuilding in 64-bit mode.";
   }
@@ -87,47 +87,50 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   return input;
 }
 
-std::string wasm::read_possible_response_file(const std::string& input) {
-  if (input.size() == 0 || input[0] != '@') {
-    return input;
+std::string wasm::read_possible_response_file(const wasm::fspath& input) {
+  auto input_str = input.stdpath().native();
+  if (input_str.size() == 0 || input_str[0] != '@') {
+    return wasm::pstring_to_string(input.stdpath().native());
   }
-  return wasm::read_file<std::string>(input.substr(1), Flags::Text);
+  auto input_substr = input_str.substr(1);
+  auto real_path = wasm::fspath::from_pstring(input_substr);
+  return wasm::read_file<std::string>(real_path, Flags::Text);
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::string&, Flags::BinaryOption);
-template std::vector<char> wasm::read_file<>(const std::string&,
+template std::string wasm::read_file<>(const wasm::fspath&, Flags::BinaryOption);
+template std::vector<char> wasm::read_file<>(const wasm::fspath&,
                                              Flags::BinaryOption);
 
-wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
+wasm::Output::Output(const wasm::fspath& filename, Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
       // Ensure a single return at the very end, to avoid clang-tidy warnings
       // about the types of different returns here.
       std::streambuf* buffer;
-      if (filename == "-" || filename.empty()) {
+      if (filename.stdpath() == "-" || filename.stdpath().empty()) {
         buffer = std::cout.rdbuf();
       } else {
-        BYN_TRACE("Opening '" << filename << "'\n");
+        BYN_TRACE("Opening '" << filename.stdpath() << "'\n");
         auto flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
         }
-        outfile.open(filename, flags);
+        outfile.open(filename.stdpath(), flags);
         if (!outfile.is_open()) {
-          Fatal() << "Failed opening '" << filename << "'";
+          Fatal() << "Failed opening '" << filename.stdpath() << "'";
         }
         buffer = outfile.rdbuf();
       }
       return buffer;
     }()) {}
 
-void wasm::copy_file(std::string input, std::string output) {
-  std::ifstream src(input, std::ios::binary);
-  std::ofstream dst(output, std::ios::binary);
+void wasm::copy_file(wasm::fspath input, wasm::fspath output) {
+  std::ifstream src(input.stdpath(), std::ios::binary);
+  std::ofstream dst(output.stdpath(), std::ios::binary);
   dst << src.rdbuf();
 }
 
-size_t wasm::file_size(std::string filename) {
-  std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
+size_t wasm::file_size(wasm::fspath filename) {
+  std::ifstream infile(filename.stdpath(), std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }

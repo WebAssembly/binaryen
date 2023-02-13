@@ -29,6 +29,7 @@
 #include "ir/module-utils.h"
 #include "parsing.h"
 #include "support/debug.h"
+#include "support/pchar.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
@@ -1296,7 +1297,7 @@ public:
     sourceMap = set;
     sourceMapUrl = url;
   }
-  void setSymbolMap(std::string set) { symbolMap = set; }
+  void setSymbolMap(wasm::fspath set) { symbolMap = set; }
 
   void write();
   void writeHeader();
@@ -1393,7 +1394,7 @@ private:
 
   std::ostream* sourceMap = nullptr;
   std::string sourceMapUrl;
-  std::string symbolMap;
+  wasm::fspath symbolMap;
 
   MixedArena allocator;
 
