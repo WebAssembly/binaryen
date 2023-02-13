@@ -20,6 +20,7 @@
 
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
@@ -29,7 +30,7 @@
 
 using namespace wasm;
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   bool debugInfo = false;
   std::string symbolMap;
   std::string sourceMapFilename;

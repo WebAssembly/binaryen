@@ -33,6 +33,7 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/json.h"
+#include "support/main.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
@@ -416,7 +417,7 @@ public:
 // main
 //
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   Name entry;
   std::vector<std::string> passes;
   bool emitBinary = true;

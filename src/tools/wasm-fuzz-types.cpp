@@ -20,6 +20,7 @@
 #include <variant>
 
 #include "support/command-line.h"
+#include "support/main.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
 #include "wasm-type-printing.h"
@@ -491,7 +492,7 @@ void Fuzzer::checkCanonicalization() {
 
 } // namespace wasm
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const wasm::pchar* argv[]) {
   using namespace wasm;
 
   const std::string WasmFuzzTypesOption = "wasm-fuzz-types options";

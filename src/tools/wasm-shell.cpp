@@ -27,6 +27,7 @@
 #include "shell-interface.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
@@ -396,7 +397,7 @@ public:
   }
 };
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 

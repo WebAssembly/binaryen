@@ -20,13 +20,14 @@
 
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "wasm-io.h"
 
 #include "tool-options.h"
 
 using namespace wasm;
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   std::string sourceMapFilename;
 
   const std::string WasmDisOption = "wasm-dis options";

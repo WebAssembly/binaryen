@@ -436,7 +436,7 @@ bool WasmSplitOptions::validate() {
   return valid;
 }
 
-void WasmSplitOptions::parse(int argc, const char* argv[]) {
+void WasmSplitOptions::parse(int argc, const pchar* argv[]) {
   ToolOptions::parse(argc, argv);
   // Since --quiet is defined in ToolOptions but --verbose is defined here,
   // --quiet doesn't know to unset --verbose. Fix it up here.

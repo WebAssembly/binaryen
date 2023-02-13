@@ -91,7 +91,7 @@ struct WasmSplitOptions : ToolOptions {
                         Arguments arguments,
                         const Action& action);
   bool validate();
-  void parse(int argc, const char* argv[]);
+  void parse(int argc, const pchar* argv[]);
 };
 
 } // namespace wasm

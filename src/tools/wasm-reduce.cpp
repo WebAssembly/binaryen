@@ -36,6 +36,7 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "support/hash.h"
+#include "support/main.h"
 #include "support/path.h"
 #include "support/timing.h"
 #include "tool-options.h"
@@ -1183,10 +1184,10 @@ struct Reducer
 // main
 //
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   std::string input, test, working, command;
   // By default, look for binaries alongside our own binary.
-  std::string binDir = Path::getDirName(argv[0]);
+  std::string binDir = Path::getDirName(pstring_to_string(argv[0]));
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
 

@@ -24,6 +24,7 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "wasm-s-parser.h"
 
 using namespace cashew;
@@ -877,7 +878,7 @@ void AssertionEmitter::emit() {
 
 // Main
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   Wasm2JSBuilder::Flags flags;
 
   const std::string Wasm2JSOption = "wasm2js options";

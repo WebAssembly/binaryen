@@ -31,6 +31,7 @@
 #include "support/command-line.h"
 #include "support/debug.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
@@ -73,7 +74,7 @@ willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
 // main
 //
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   Name entry;
   bool emitBinary = true;
   bool converge = false;

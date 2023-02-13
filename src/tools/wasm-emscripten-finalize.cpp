@@ -26,6 +26,7 @@
 #include "support/colors.h"
 #include "support/debug.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "tool-options.h"
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
@@ -36,7 +37,7 @@
 
 using namespace wasm;
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   const uint64_t INVALID_BASE = -1;
 
   std::string infile;

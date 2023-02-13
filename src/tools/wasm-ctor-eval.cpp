@@ -33,6 +33,7 @@
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "support/small_set.h"
 #include "support/string.h"
 #include "tool-options.h"
@@ -884,7 +885,7 @@ static bool canEval(Module& wasm) {
 // main
 //
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   Name entry;
   std::vector<std::string> passes;
   bool emitBinary = true;

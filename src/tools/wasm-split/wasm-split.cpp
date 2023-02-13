@@ -22,6 +22,7 @@
 #include "ir/module-splitting.h"
 #include "ir/names.h"
 #include "support/file.h"
+#include "support/main.h"
 #include "support/name.h"
 #include "support/path.h"
 #include "support/utilities.h"
@@ -465,7 +466,7 @@ void printReadableProfile(const WasmSplitOptions& options) {
 
 } // anonymous namespace
 
-int main(int argc, const char* argv[]) {
+int BYN_MAIN(int argc, const pchar* argv[]) {
   WasmSplitOptions options;
   options.parse(argc, argv);
 
