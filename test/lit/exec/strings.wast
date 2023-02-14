@@ -20,4 +20,10 @@
       )
     )
   )
+
+  (func "const"
+    (drop
+      (string.const "hello")
+    )
+  )
 )
