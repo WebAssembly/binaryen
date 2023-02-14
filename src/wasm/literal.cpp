@@ -144,7 +144,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData()) {
+  if (isNull() || isData() || isString()) {
     gcData.~shared_ptr();
   }
 }
@@ -422,7 +422,7 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
-    if (type.isData()) {
+    if (type.isData() || type.isString()) {
       return gcData == other.gcData;
     }
     if (type.getHeapType() == HeapType::i31) {
