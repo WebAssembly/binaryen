@@ -5,9 +5,11 @@
 (module
   (type $array16 (array (mut i16)))
 
+  (global $s (mut stringref) (ref.null string))
+
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   (func "new_wtf16_array"
-    (drop
+    (global.set $s
       (string.new_wtf16_array
         (array.init_static $array16
           (i32.const 104) ;; h
@@ -24,9 +26,13 @@
 
   ;; CHECK:      [fuzz-exec] calling const
   (func "const"
-    (drop
-      (string.const "hello")
+    (global.set $s
+      (string.const "world")
     )
+  )
+
+  (func "get" (result stringref)
+    (global.get $s)
   )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array

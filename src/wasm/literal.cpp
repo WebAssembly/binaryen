@@ -309,7 +309,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData());
+  assert(isNull() || isData() || isString());
   return gcData;
 }
 
