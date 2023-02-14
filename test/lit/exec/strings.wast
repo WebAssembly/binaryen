@@ -5,6 +5,7 @@
 (module
   (type $array16 (array (mut i16)))
 
+  ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   (func "new_wtf16_array"
     (drop
       (string.new_wtf16_array
@@ -21,9 +22,15 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling const
   (func "const"
     (drop
       (string.const "hello")
     )
   )
 )
+;; CHECK:      [fuzz-exec] calling new_wtf16_array
+
+;; CHECK:      [fuzz-exec] calling const
+;; CHECK-NEXT: [fuzz-exec] comparing const
+;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array

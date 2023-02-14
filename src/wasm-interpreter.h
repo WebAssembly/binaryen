@@ -1833,7 +1833,8 @@ public:
         return Literal(std::make_shared<GCData>(heapType, contents), heapType);
       }
       default:
-        WASM_UNREACHABLE("unimp");
+        // TODO: others
+        return Flow(NONCONSTANT_FLOW);
     }
   }
   Flow visitStringConst(StringConst* curr) {
