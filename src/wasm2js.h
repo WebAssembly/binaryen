@@ -2989,7 +2989,8 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
       out << R"(
-  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
+  function wasm2js_atomic_wait_i32(offset, ptr, expected, timeoutLow, timeoutHigh) {
+    ptr = (ptr + offset) >> 2;
     var timeout = Infinity;
     if (timeoutHigh >= 0) {
       // Convert from nanoseconds to milliseconds
@@ -2997,7 +2998,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
       timeout = ((timeoutLow >>> 0) / 1e6) + timeoutHigh * (4294967296 / 1e6);
     }
     var view = new Int32Array(bufferView.buffer); // TODO cache
-    var result = Atomics.wait(view, ptr >> 2, expected, timeout);
+    var result = Atomics.wait(view, ptr, expected, timeout);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
     if (result == 'timed-out') return 2;

@@ -82,8 +82,9 @@ inline void ensureHelpers(Module* wasm, IString specific = IString()) {
   ensureImport(MEMORY_FILL, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(DATA_DROP, {Type::i32}, Type::none);
-  ensureImport(
-    ATOMIC_WAIT_I32, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+  ensureImport(ATOMIC_WAIT_I32,
+               {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32},
+               Type::i32);
   ensureImport(
     ATOMIC_RMW_I64,
     {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32, Type::i32},
