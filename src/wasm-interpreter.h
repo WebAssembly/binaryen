@@ -1814,8 +1814,8 @@ public:
           trap("null ref");
         }
         const auto& ptrDataValues = ptrData->values;
-        size_t startVal = startIndex.getSingleValue().getUnsigned();
-        size_t endVal = endIndex.getSingleValue().getUnsigned();
+        size_t startVal = start.getSingleValue().getUnsigned();
+        size_t endVal = end.getSingleValue().getUnsigned();
         if (endVal >= ptrDataValues.size()) {
           trap("array oob");
         }
