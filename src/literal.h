@@ -93,6 +93,7 @@ public:
   bool isNone() const { return type == Type::none; }
   bool isFunction() const { return type.isFunction(); }
   bool isData() const { return type.isData(); }
+  bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
 

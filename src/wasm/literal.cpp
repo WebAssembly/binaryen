@@ -71,8 +71,9 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, NonNullable) {
-  // The type must be a proper type for GC data.
-  assert((isData() && gcData) || (type.isBottom() && !gcData));
+  // The type must be a proper type for GC data: either a struct, array, or 
+  // string; or a null.
+  assert(((isData() || isString()) && gcData) || (type.isBottom() && !gcData));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -99,7 +100,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData()) {
+  if (other.isData() || other.isString()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }

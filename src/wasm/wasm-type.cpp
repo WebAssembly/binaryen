@@ -897,7 +897,8 @@ bool Type::isFunction() const {
 
 bool Type::isData() const {
   if (isBasic()) {
-    return false;
+    // The only basic type that is considered data is a string.
+    return isString();
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isData();
@@ -923,6 +924,8 @@ bool Type::isNonNullable() const {
 bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
+
+bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
 bool Type::isDefaultable() const {
   // A variable can get a default value if its type is concrete (unreachable
@@ -1295,6 +1298,10 @@ bool HeapType::isArray() const {
   } else {
     return getHeapTypeInfo(*this)->isArray();
   }
+}
+
+bool HeapType::isString() const {
+  return *this == HeapType::string;
 }
 
 bool HeapType::isBottom() const {

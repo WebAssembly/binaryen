@@ -173,6 +173,7 @@ public:
   bool isNull() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isDefaultable() const;
 
   Nullability getNullability() const;
@@ -364,6 +365,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isBottom() const;
 
   Signature getSignature() const;
