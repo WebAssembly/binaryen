@@ -6,29 +6,15 @@
  (type $array (array (mut i8)))
 
  ;; CHECK:      [fuzz-exec] calling func
- ;; CHECK-NEXT: [fuzz-exec] note result: func => 10
+ ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
  (func "func" (result i32)
-  (local $0 (ref $array))
-  (array.get_u $array
-   (array.new $array
-    (array.get_u $array
-     (local.tee $0
-      (array.new $array
-       (i32.const 10) ;; The value 10 should be printed at the very end, which
-       (i32.const 9)  ;; tests that we execute array.new/get operands in the
-      )               ;; proper order.
-     )
-     (i32.const 8)
-    )
-    (array.get_u $array
-     (local.get $0)
-     (i32.const 7)
-    )
-   )
-   (i32.const 6)
+  ;; Verifies the order of execution is correct - we should return 1, not 2.
+  (array.new $array
+   (return (i32.const 1))
+   (return (i32.const 2))
   )
  )
 )
 ;; CHECK:      [fuzz-exec] calling func
-;; CHECK-NEXT: [fuzz-exec] note result: func => 10
+;; CHECK-NEXT: [fuzz-exec] note result: func => 1
 ;; CHECK-NEXT: [fuzz-exec] comparing func
