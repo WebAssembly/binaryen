@@ -5,40 +5,32 @@
 (module
   (type $array16 (array (mut i16)))
 
-  (global $s (mut stringref) (ref.null string))
-
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
   (func "new_wtf16_array" (result stringref)
-    (global.set $s
-      (string.new_wtf16_array
-        (array.init_static $array16
-          (i32.const 104) ;; h
-          (i32.const 101) ;; e
-          (i32.const 108) ;; l
-          (i32.const 108) ;; l
-          (i32.const 111) ;; o
-        )
-        (i32.const 1)
-        (i32.const 5)
+    (string.new_wtf16_array
+      (array.init_static $array16
+        (i32.const 104) ;; h
+        (i32.const 101) ;; e
+        (i32.const 108) ;; l
+        (i32.const 108) ;; l
+        (i32.const 111) ;; o
       )
+      (i32.const 1) ;; start from index 1, to chop off the 'h'
+      (i32.const 5)
     )
-    (global.get $s)
   )
 
   ;; CHECK:      [fuzz-exec] calling const
+  ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
   (func "const" (result stringref)
-    (global.set $s
-      (string.const "world")
-    )
-    (global.get $s)
-  )
-
-  (func "get" (result stringref)
-    (global.get $s)
+    (string.const "world")
   )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
+;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
 
 ;; CHECK:      [fuzz-exec] calling const
+;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
 ;; CHECK-NEXT: [fuzz-exec] comparing const
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array

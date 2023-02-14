@@ -1,0 +1,8 @@
+(module
+ (type $none_=>_stringref (func (result stringref)))
+ (global $s (mut stringref) (string.const "hello, world"))
+ (export "get" (func $1))
+ (func $1 (type $none_=>_stringref) (result stringref)
+  (global.get $s)
+ )
+)
