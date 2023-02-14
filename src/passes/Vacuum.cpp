@@ -19,6 +19,7 @@
 //
 
 #include <ir/block-utils.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
@@ -137,9 +138,17 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr = childrenWithEffects[0];
         continue;
       }
-      // TODO: with multiple children with side effects, we can perhaps figure
-      // out something clever, like a block with drops, or an i32.add for just
-      // two, etc.
+      // The result is not used, but multiple children have side effects, so we
+      // need to keep them around. We must also return something of the proper
+      // type - if we can do that, replace everything with the children + a
+      // dummy value of the proper type.
+      if (curr->type.isDefaultable()) {
+        auto* dummy = Builder(*getModule())
+                        .makeConstantExpression(Literal::makeZeros(curr->type));
+        return getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), dummy);
+      }
+      // Otherwise, give up.
       return curr;
     }
   }

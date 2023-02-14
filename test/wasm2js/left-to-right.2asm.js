@@ -242,19 +242,22 @@ function asmFunc(imports) {
  
  function $35() {
   reset();
-  (i32_left() | 0) + (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $36() {
   reset();
-  (i32_left() | 0) - (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $37() {
   reset();
-  Math_imul(i32_left() | 0, i32_right() | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
@@ -284,97 +287,113 @@ function asmFunc(imports) {
  
  function $42() {
   reset();
-  (i32_left() | 0) & (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $43() {
   reset();
-  i32_left() | 0 | (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $44() {
   reset();
-  (i32_left() | 0) ^ (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $45() {
   reset();
-  (i32_left() | 0) << (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $46() {
   reset();
-  (i32_left() | 0) >>> (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $47() {
   reset();
-  (i32_left() | 0) >> (i32_right() | 0) | 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $48() {
   reset();
-  (i32_left() | 0 | 0) == (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $49() {
   reset();
-  (i32_left() | 0 | 0) != (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $50() {
   reset();
-  (i32_left() | 0 | 0) < (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $51() {
   reset();
-  (i32_left() | 0 | 0) <= (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $52() {
   reset();
-  (i32_left() | 0) >>> 0 < (i32_right() | 0) >>> 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $53() {
   reset();
-  (i32_left() | 0) >>> 0 <= (i32_right() | 0) >>> 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $54() {
   reset();
-  (i32_left() | 0 | 0) > (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $55() {
   reset();
-  (i32_left() | 0 | 0) >= (i32_right() | 0 | 0);
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $56() {
   reset();
-  (i32_left() | 0) >>> 0 > (i32_right() | 0) >>> 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
  function $57() {
   reset();
-  (i32_left() | 0) >>> 0 >= (i32_right() | 0) >>> 0;
+  i32_left() | 0;
+  i32_right() | 0;
   return get() | 0 | 0;
  }
  
@@ -413,9 +432,10 @@ function asmFunc(imports) {
  }
  
  function $63() {
-  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   reset();
-  wasm2js_i32$0 = i32_left() | 0, wasm2js_i32$1 = i32_right() | 0, wasm2js_i32$2 = i32_bool() | 0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1;
+  i32_left() | 0;
+  i32_right() | 0;
+  i32_bool() | 0;
   return get() | 0 | 0;
  }
  
@@ -995,79 +1015,92 @@ function asmFunc(imports) {
  
  function $94() {
   reset();
-  Math_fround(Math_fround(f32_left()) + Math_fround(f32_right()));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $95() {
   reset();
-  Math_fround(Math_fround(f32_left()) - Math_fround(f32_right()));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $96() {
   reset();
-  Math_fround(Math_fround(f32_left()) * Math_fround(f32_right()));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $97() {
   reset();
-  Math_fround(Math_fround(f32_left()) / Math_fround(f32_right()));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $98() {
   reset();
-  (wasm2js_scratch_store_f32(Math_fround(f32_left())), wasm2js_scratch_load_i32(2)) & 2147483647 | 0 | ((wasm2js_scratch_store_f32(Math_fround(f32_right())), wasm2js_scratch_load_i32(2)) & -2147483648 | 0) | 0;
+  (wasm2js_scratch_store_f32(Math_fround(f32_left())), wasm2js_scratch_load_i32(2)) & 2147483647 | 0;
+  (wasm2js_scratch_store_f32(Math_fround(f32_right())), wasm2js_scratch_load_i32(2)) & -2147483648 | 0;
   return get() | 0 | 0;
  }
  
  function $99() {
   reset();
-  Math_fround(f32_left()) == Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $100() {
   reset();
-  Math_fround(f32_left()) != Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $101() {
   reset();
-  Math_fround(f32_left()) < Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $102() {
   reset();
-  Math_fround(f32_left()) <= Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $103() {
   reset();
-  Math_fround(f32_left()) > Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $104() {
   reset();
-  Math_fround(f32_left()) >= Math_fround(f32_right());
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $105() {
   reset();
-  Math_fround(Math_min(Math_fround(f32_left()), Math_fround(f32_right())));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
  function $106() {
   reset();
-  Math_fround(Math_max(Math_fround(f32_left()), Math_fround(f32_right())));
+  Math_fround(f32_left());
+  Math_fround(f32_right());
   return get() | 0 | 0;
  }
  
@@ -1092,33 +1125,38 @@ function asmFunc(imports) {
  }
  
  function $110() {
-  var wasm2js_f32$0 = Math_fround(0), wasm2js_f32$1 = Math_fround(0), wasm2js_i32$0 = 0;
   reset();
-  wasm2js_f32$0 = Math_fround(f32_left()), wasm2js_f32$1 = Math_fround(f32_right()), wasm2js_i32$0 = f32_bool() | 0, wasm2js_i32$0 ? wasm2js_f32$0 : wasm2js_f32$1;
+  Math_fround(f32_left());
+  Math_fround(f32_right());
+  f32_bool() | 0;
   return get() | 0 | 0;
  }
  
  function $111() {
   reset();
-  +f64_left() + +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $112() {
   reset();
-  +f64_left() - +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $113() {
   reset();
-  +f64_left() * +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $114() {
   reset();
-  +f64_left() / +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
@@ -1154,49 +1192,57 @@ function asmFunc(imports) {
  
  function $116() {
   reset();
-  +f64_left() == +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $117() {
   reset();
-  +f64_left() != +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $118() {
   reset();
-  +f64_left() < +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $119() {
   reset();
-  +f64_left() <= +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $120() {
   reset();
-  +f64_left() > +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $121() {
   reset();
-  +f64_left() >= +f64_right();
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $122() {
   reset();
-  Math_min(+f64_left(), +f64_right());
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
  function $123() {
   reset();
-  Math_max(+f64_left(), +f64_right());
+  +f64_left();
+  +f64_right();
   return get() | 0 | 0;
  }
  
@@ -1221,9 +1267,10 @@ function asmFunc(imports) {
  }
  
  function $127() {
-  var wasm2js_f64$0 = 0.0, wasm2js_f64$1 = 0.0, wasm2js_i32$0 = 0;
   reset();
-  wasm2js_f64$0 = +f64_left(), wasm2js_f64$1 = +f64_right(), wasm2js_i32$0 = f64_bool() | 0, wasm2js_i32$0 ? wasm2js_f64$0 : wasm2js_f64$1;
+  +f64_left();
+  +f64_right();
+  f64_bool() | 0;
   return get() | 0 | 0;
  }
  
