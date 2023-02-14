@@ -1300,9 +1300,7 @@ bool HeapType::isArray() const {
   }
 }
 
-bool HeapType::isString() const {
-  return *this == HeapType::string;
-}
+bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
