@@ -231,7 +231,6 @@
   ;; CHECK-NEXT:     (br $l)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br $__inlined_func$nondefaultable-param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-nondefaultable-param

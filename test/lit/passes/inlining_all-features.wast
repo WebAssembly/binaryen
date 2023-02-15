@@ -142,13 +142,11 @@
  ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (block $__inlined_func$0
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (br $__inlined_func$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; NOMNL:      (func $1 (type $none_=>_none)
  ;; NOMNL-NEXT:  (block $__inlined_func$0
  ;; NOMNL-NEXT:   (unreachable)
- ;; NOMNL-NEXT:   (br $__inlined_func$0)
  ;; NOMNL-NEXT:  )
  ;; NOMNL-NEXT: )
  (func $1
