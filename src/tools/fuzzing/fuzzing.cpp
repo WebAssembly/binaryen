@@ -724,17 +724,23 @@ void TranslateToFuzzReader::mutate(Function* func) {
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
+
+    // Whether to replace with unreachable. This can lead to less code getting
+    // executed, so we don't want to do it all the time even in a big function.
+    bool allowUnreachable;
+
     bool refinalize = false;
 
     Modder(Module& wasm, TranslateToFuzzReader& parent)
-      : wasm(wasm), parent(parent) {}
+      : wasm(wasm), parent(parent) {
+      // Half the time, never replace with an unreachable. The other half, do it
+      // sometimes but even so, only rarely.
+      allowUnreachable = parent.oneIn(2);
+    }
 
     void visitExpression(Expression* curr) {
       if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
-        // With small probability, replace with something unreachable (this can
-        // cause code to execute less, which is not great, but it does also test
-        // for handling of unreachable code in nested locations).
-        if (parent.oneIn(20)) {
+        if (allowUnreachable && parent.oneIn(10)) {
           replaceCurrent(parent.make(Type::unreachable));
           refinalize = true;
           return;
