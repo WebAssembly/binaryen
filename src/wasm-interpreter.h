@@ -2167,7 +2167,6 @@ public:
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitStringConst(StringConst* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringMeasure(StringMeasure* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
