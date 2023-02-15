@@ -92,8 +92,8 @@ public:
   bool isConcrete() const { return type.isConcrete(); }
   bool isNone() const { return type == Type::none; }
   bool isFunction() const { return type.isFunction(); }
-  // Whether this is GC data, that is, something stored on the heap (aside from a
-  // null or i31). This includes structs, arrays, and also strings.
+  // Whether this is GC data, that is, something stored on the heap (aside from
+  // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
   bool isString() const { return type.isString(); }
 
