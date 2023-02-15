@@ -445,8 +445,11 @@
 
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (block $__inlined_func$1 (result i32)
- ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   (block $__inlined_func$1
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -470,6 +473,7 @@
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return)
  ;; CHECK-NEXT:  )
@@ -491,11 +495,14 @@
  ;; CHECK:      (func $0 (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (block $__inlined_func$1 (result i32)
+ ;; CHECK-NEXT:   (block $__inlined_func$1
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -561,7 +568,6 @@
  ;; CHECK-NEXT:     (br $__inlined_func$1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $__inlined_func$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
@@ -629,7 +635,6 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (br $__inlined_func$1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $__inlined_func$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
@@ -689,12 +694,12 @@
  ;; CHECK-NEXT:           (i32.const 1)
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:         (unreachable)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (br $__inlined_func$13)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__inlined_func$13)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -719,25 +724,28 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (block $__inlined_func$is_odd (result i32)
+ ;; CHECK-NEXT:    (block $__inlined_func$is_odd
  ;; CHECK-NEXT:     (local.set $1
  ;; CHECK-NEXT:      (i32.sub
  ;; CHECK-NEXT:       (local.get $i)
  ;; CHECK-NEXT:       (i32.const 1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (i32.eqz
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:      (return_call $is_even
- ;; CHECK-NEXT:       (i32.sub
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (i32.eqz
  ;; CHECK-NEXT:        (local.get $1)
- ;; CHECK-NEXT:        (i32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (return_call $is_even
+ ;; CHECK-NEXT:        (i32.sub
+ ;; CHECK-NEXT:         (local.get $1)
+ ;; CHECK-NEXT:         (i32.const 1)
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

@@ -16,7 +16,6 @@
   ;; CHECK:      (func $call-trap (type $none_=>_none)
   ;; CHECK-NEXT:  (block $__inlined_func$trap
   ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (br $__inlined_func$trap)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-trap
@@ -59,7 +58,6 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br $__inlined_func$contents-then-trap)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-contents-then-trap

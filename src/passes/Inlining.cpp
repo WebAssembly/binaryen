@@ -404,14 +404,32 @@ static Expression* doInlining(Module* module,
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
-  // If the function returned a value, we just set the block containing the
-  // inlined code to have that type. or, if the function was void and
-  // contained void, that is fine too. a bad case is a void function in which
-  // we have unreachable code, so we would be replacing a void call with an
-  // unreachable.
-  if (contents->type == Type::unreachable && block->type == Type::none) {
-    // Make the block reachable by adding a break to it
-    block->list.push_back(builder.makeBreak(block->name));
+  // The ReFinalize below will handle propagating unreachability if we need to
+  // do so, that is, if the call was reachable but now the inlined content we
+  // replaced it with was unreachable. The opposite case requires special
+  // handling: ReFinalize works under the assumption that code can become
+  // unreachable, but it does not go back from that state. But inlining can
+  // cause that:
+  //
+  //  (call $A
+  //    (unreachable)
+  //  )
+  // =>
+  //  (block $__inlined_A_body (result i32)
+  //    (unreachable)
+  //  )
+  //
+  // That is, if the called function wraps the input parameter in a block with a
+  // declared type, then the block is not unreachable. And then we might error
+  // if the outside expects the code to be unreachable - perhaps it only
+  // validates that way. Also, this maximizes DCE opportunities.
+  if (contents->type != Type::unreachable && call->type == Type::unreachable) {
+    // Make the block unreachable by adding an unreachable, and also drop the
+    // previous last item if we need to.
+    if (block->list.back()->type.isConcrete()) {
+      block->list.back() = builder.makeDrop(block->list.back());
+    }
+    block->list.push_back(builder.makeUnreachable());
   }
   // Anything we inlined into may now have non-unique label names, fix it up.
   // Note that we must do this before refinalization, as otherwise duplicate
