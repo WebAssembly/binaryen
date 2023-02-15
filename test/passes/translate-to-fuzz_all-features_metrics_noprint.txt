@@ -1,45 +1,45 @@
 total
- [exports]      : 6       
- [funcs]        : 7       
+ [exports]      : 15      
+ [funcs]        : 18      
  [globals]      : 6       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 22      
- [table-data]   : 4       
+ [table-data]   : 6       
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 712     
- [vars]         : 4       
+ [total]        : 541     
+ [vars]         : 31      
  ArrayInit      : 7       
  AtomicFence    : 1       
- AtomicRMW      : 1       
- Binary         : 77      
- Block          : 93      
- Break          : 19      
- Call           : 10      
- CallRef        : 2       
- Const          : 185     
- DataDrop       : 3       
- Drop           : 15      
- GlobalGet      : 48      
- GlobalSet      : 21      
+ AtomicNotify   : 1       
+ Binary         : 68      
+ Block          : 64      
+ Break          : 3       
+ Call           : 14      
+ CallIndirect   : 1       
+ CallRef        : 1       
+ Const          : 119     
+ DataDrop       : 1       
+ Drop           : 9       
+ GlobalGet      : 49      
+ GlobalSet      : 23      
  I31Get         : 1       
- I31New         : 1       
- If             : 32      
- Load           : 19      
- LocalGet       : 24      
+ I31New         : 4       
+ If             : 24      
+ Load           : 16      
+ LocalGet       : 26      
  LocalSet       : 18      
- Loop           : 13      
- MemoryFill     : 1       
- Nop            : 23      
- RefFunc        : 6       
- RefIsNull      : 1       
- RefNull        : 4       
- Return         : 23      
- SIMDExtract    : 1       
- Select         : 3       
- Store          : 5       
- StructNew      : 4       
- TupleExtract   : 2       
- TupleMake      : 10      
- Unary          : 39      
+ Loop           : 5       
+ MemoryCopy     : 1       
+ Nop            : 6       
+ RefFunc        : 7       
+ RefIsNull      : 3       
+ RefNull        : 3       
+ Return         : 26      
+ SIMDTernary    : 1       
+ Select         : 2       
+ Store          : 2       
+ TupleExtract   : 1       
+ TupleMake      : 5       
+ Unary          : 29      
