@@ -724,12 +724,21 @@ void TranslateToFuzzReader::mutate(Function* func) {
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
+    bool refinalize = false;
 
     Modder(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {}
 
     void visitExpression(Expression* curr) {
       if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
+        // With small probability, replace with something unreachable (this can
+        // cause code to execute less, which is not great, but it does also test
+        // for handling of unreachable code in nested locations).
+        if (parent.oneIn(20)) {
+          replaceCurrent(parent.make(Type::unreachable));
+          refinalize = true;
+          return;
+        }
         // For constants, perform only a small tweaking in some cases.
         if (auto* c = curr->dynCast<Const>()) {
           if (parent.oneIn(2)) {
@@ -747,6 +756,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
   };
   Modder modder(wasm, *this);
   modder.walk(func->body);
+  if (modder.refinalize) {
+    ReFinalize().walkFunctionInModule(func, &wasm);
+  }
 }
 
 void TranslateToFuzzReader::fixLabels(Function* func) {
