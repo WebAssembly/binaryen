@@ -411,19 +411,21 @@ static Expression* doInlining(Module* module,
   // unreachable, but it does not go back from that state. But inlining can
   // cause that:
   //
-  //  (call $A
+  //  (call $A                               ;; an unreachable call
   //    (unreachable)
   //  )
   // =>
-  //  (block $__inlined_A_body (result i32)
+  //  (block $__inlined_A_body (result i32)  ;; reachable code after inlining
   //    (unreachable)
   //  )
   //
   // That is, if the called function wraps the input parameter in a block with a
   // declared type, then the block is not unreachable. And then we might error
   // if the outside expects the code to be unreachable - perhaps it only
-  // validates that way. Also, this maximizes DCE opportunities.
-  if (contents->type != Type::unreachable && call->type == Type::unreachable) {
+  // validates that way. To fix, this, if the call was unreachable then we make
+  // the inlined code unreachable as well. That also maximizes DCE
+  // opportunities by propagating unreachability as much as possible.
+  if (call->type == Type::unreachable && contents->type != Type::unreachable) {
     // Make the block unreachable by adding an unreachable, and also drop the
     // previous last item if we need to.
     if (block->list.back()->type.isConcrete()) {
