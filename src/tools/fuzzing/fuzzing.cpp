@@ -734,7 +734,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
     Modder(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {
       // Half the time, never replace with an unreachable. The other half, do it
-      // sometimes but even so, only rarely.
+      // sometimes (but even so, only rarely, see below).
       allowUnreachable = parent.oneIn(2);
     }
 
