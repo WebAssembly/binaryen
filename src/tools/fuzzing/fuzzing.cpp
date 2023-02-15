@@ -545,6 +545,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // Recombination, mutation, etc. can break validation; fix things up
     // after.
     fixLabels(func);
+    ReFinalize().walkFunctionInModule(func, &wasm);
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
@@ -729,8 +730,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    bool refinalize = false;
-
     Modder(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {
       // Half the time, never replace with an unreachable. The other half, do it
@@ -742,7 +741,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
       if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
         if (allowUnreachable && parent.oneIn(10)) {
           replaceCurrent(parent.make(Type::unreachable));
-          refinalize = true;
           return;
         }
         // For constants, perform only a small tweaking in some cases.
@@ -762,9 +760,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   };
   Modder modder(wasm, *this);
   modder.walk(func->body);
-  if (modder.refinalize) {
-    ReFinalize().walkFunctionInModule(func, &wasm);
-  }
+  ReFinalize().walkFunctionInModule(func, &wasm);
 }
 
 void TranslateToFuzzReader::fixLabels(Function* func) {
@@ -874,6 +870,7 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       recombine(func);
       mutate(func);
       fixLabels(func);
+      ReFinalize().walkFunctionInModule(func, &wasm);
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
