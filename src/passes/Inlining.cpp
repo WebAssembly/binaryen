@@ -413,6 +413,11 @@ static Expression* doInlining(Module* module,
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
+  // Inlining unreachable contents can make things in the function we inlined
+  // into unreachable.
+  ReFinalize().walkFunctionInModule(into, module);
+  // New locals we added may require fixups for nondefaultability.
+  // FIXME Is this not done automatically?
   TypeUpdating::handleNonDefaultableLocals(into, *module);
   return block;
 }

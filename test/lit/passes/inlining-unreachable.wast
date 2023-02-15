@@ -102,3 +102,19 @@
     )
   )
 )
+
+(module
+  (type $A (func))
+
+  (func $0
+    (nop)
+    (call_ref $A
+      (ref.null nofunc) ;; In Binaryen IR this makes the call_ref unreachable.
+    )
+  )
+
+  (func $1 (type $A)
+    ;; After inlining, this function body will become unreachable.
+    (call $0)
+  )
+)
