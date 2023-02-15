@@ -544,8 +544,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // with more possible sets.
     // Recombination, mutation, etc. can break validation; fix things up
     // after.
-    fixLabels(func);
-    ReFinalize().walkFunctionInModule(func, &wasm);
+    fixAfterChanges(func);
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
@@ -691,7 +690,6 @@ void TranslateToFuzzReader::recombine(Function* func) {
     Module& wasm;
     Scanner& scanner;
     TranslateToFuzzReader& parent;
-    bool needRefinalize = false;
 
     Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent)
       : wasm(wasm), scanner(scanner), parent(parent) {}
@@ -703,18 +701,11 @@ void TranslateToFuzzReader::recombine(Function* func) {
         assert(!candidates.empty()); // this expression itself must be there
         auto* rep = parent.pick(candidates);
         replaceCurrent(ExpressionManipulator::copy(rep, wasm));
-        if (rep->type != curr->type) {
-          // Subtyping changes require us to finalize later.
-          needRefinalize = true;
-        }
       }
     }
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
-  if (modder.needRefinalize) {
-    ReFinalize().walkFunctionInModule(func, &wasm);
-  }
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
@@ -722,6 +713,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   if (oneIn(2)) {
     return;
   }
+
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
@@ -760,10 +752,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
   };
   Modder modder(wasm, *this);
   modder.walk(func->body);
-  ReFinalize().walkFunctionInModule(func, &wasm);
 }
 
-void TranslateToFuzzReader::fixLabels(Function* func) {
+void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
     : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
@@ -832,6 +823,8 @@ void TranslateToFuzzReader::fixLabels(Function* func) {
   };
   Fixer fixer(wasm, *this);
   fixer.walk(func->body);
+
+  // Refinalize at the end, after labels are all fixed up.
   ReFinalize().walkFunctionInModule(func, &wasm);
 }
 
@@ -869,8 +862,7 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       //       check variations on initial testcases even at the risk of OOB.
       recombine(func);
       mutate(func);
-      fixLabels(func);
-      ReFinalize().walkFunctionInModule(func, &wasm);
+      fixAfterChanges(func);
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
