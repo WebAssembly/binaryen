@@ -1677,7 +1677,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::any:
         return a.getBottom() == HeapType::none;
       case HeapType::eq:
-        return a == HeapType::i31 || a == HeapType::none || a.isData();
+        return a == HeapType::i31 || a == HeapType::none ||
+               a == HeapType::struct_ || a == HeapType::array || a.isStruct() ||
+               a.isArray();
       case HeapType::i31:
         return a == HeapType::none;
       case HeapType::struct_:
