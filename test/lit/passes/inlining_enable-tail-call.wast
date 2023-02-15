@@ -394,7 +394,7 @@
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (block $__inlined_func$1
  ;; CHECK-NEXT:   (call_indirect (type $T)
- ;; CHECK-NEXT:    (if (result i32)
+ ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)

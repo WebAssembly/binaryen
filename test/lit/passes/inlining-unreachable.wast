@@ -32,7 +32,7 @@
   )
 
   ;; CHECK:      (func $call-trap-result (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (block $__inlined_func$trap-result (result i32)
+  ;; CHECK-NEXT:  (block $__inlined_func$trap-result
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -77,12 +77,10 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$callee (result i32)
-  ;; CHECK-NEXT:     (br $__inlined_func$callee
-  ;; CHECK-NEXT:      (call $imported
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $__inlined_func$callee
+  ;; CHECK-NEXT:     (call $imported
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -104,6 +102,7 @@
 )
 
 (module
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
   (func $0
@@ -113,6 +112,14 @@
     )
   )
 
+  ;; CHECK:      (func $1 (type $A)
+  ;; CHECK-NEXT:  (block $__inlined_func$0
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $1 (type $A)
     ;; After inlining, this function body will become unreachable.
     (call $0)

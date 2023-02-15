@@ -441,7 +441,7 @@
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (block $__inlined_func$bar_0
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block $__inlined_func$bar (result i32)
+ ;; CHECK-NEXT:    (block $__inlined_func$bar
  ;; CHECK-NEXT:     (br $__inlined_func$bar_0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -461,8 +461,8 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $__inlined_func$0_0
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (block $__inlined_func$0_0_0 (result i32)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (block $__inlined_func$0_0_0
  ;; CHECK-NEXT:      (local.set $0
  ;; CHECK-NEXT:       (block (result i32)
  ;; CHECK-NEXT:        (br_if $__inlined_func$0_0
