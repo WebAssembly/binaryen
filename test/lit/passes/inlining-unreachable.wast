@@ -32,7 +32,7 @@
   )
 
   ;; CHECK:      (func $call-trap-result (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (block $__inlined_func$trap-result (result i32)
+  ;; CHECK-NEXT:  (block $__inlined_func$trap-result
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -77,12 +77,10 @@
 
   ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$callee (result i32)
-  ;; CHECK-NEXT:     (br $__inlined_func$callee
-  ;; CHECK-NEXT:      (call $imported
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $__inlined_func$callee
+  ;; CHECK-NEXT:     (call $imported
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -98,6 +96,73 @@
   ;; unreachable. Validation will fail if it is not.
   (func $callee (result i32)
     (return_call $imported
+      (unreachable)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+
+  (func $0
+    (nop)
+    (call_ref $A
+      (ref.null nofunc) ;; In Binaryen IR this makes the call_ref unreachable.
+    )
+  )
+
+  ;; CHECK:      (func $1 (type $A)
+  ;; CHECK-NEXT:  (block $__inlined_func$0
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $1 (type $A)
+    ;; After inlining, this function body will become unreachable.
+    (call $0)
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+
+  ;; CHECK:      (func $0 (type $none_=>_f64) (result f64)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $__inlined_func$1
+  ;; CHECK-NEXT:     (block $block0
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (result f64)
+    (block $block
+      (br_if $block
+        (i32.const 0)
+      )
+    )
+    (return
+      ;; The inlined function has the same label, $block. We should not be
+      ;; confused by that when we inline the unreachable code (an error can
+      ;; occur if we mix up the two blocks or think they are identical; to avoid
+      ;; that we should fix up the duplicate labels before doing anything that
+      ;; depends on valid label names, like refinalization).
+      (call $1)
+    )
+  )
+
+  (func $1 (result f64)
+    (block $block
       (unreachable)
     )
   )

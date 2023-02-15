@@ -413,6 +413,16 @@ static Expression* doInlining(Module* module,
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
+  // Anything we inlined into may now have non-unique label names, fix it up.
+  // Note that we must do this before refinalization, as otherwise duplicate
+  // block labels can lead to errors (the IR must be valid before we
+  // refinalize).
+  wasm::UniqueNameMapper::uniquify(into->body);
+  // Inlining unreachable contents can make things in the function we inlined
+  // into unreachable.
+  ReFinalize().walkFunctionInModule(into, module);
+  // New locals we added may require fixups for nondefaultability.
+  // FIXME Is this not done automatically?
   TypeUpdating::handleNonDefaultableLocals(into, *module);
   return block;
 }
@@ -1038,11 +1048,6 @@ struct Inlining : public Pass {
         inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
       }
-    }
-    for (auto func : inlinedInto) {
-      // Anything we inlined into may now have non-unique label names, fix it
-      // up.
-      wasm::UniqueNameMapper::uniquify(func->body);
     }
     if (optimize && inlinedInto.size() > 0) {
       OptUtils::optimizeAfterInlining(inlinedInto, module, getPassRunner());

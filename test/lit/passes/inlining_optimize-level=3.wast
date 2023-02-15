@@ -149,9 +149,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (block $__inlined_func$no-calls1 (result i32)
+  ;; CHECK-NEXT:     (block $__inlined_func$no-calls0 (result i32)
   ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block $__inlined_func$yes2 (result i32)
+  ;; CHECK-NEXT:       (block $__inlined_func$yes1 (result i32)
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -164,7 +164,7 @@
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (block $__inlined_func$yes-calls-but-one-use (result i32)
   ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block $__inlined_func$yes3 (result i32)
+  ;; CHECK-NEXT:       (block $__inlined_func$yes2 (result i32)
   ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -193,7 +193,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$yes-loops-but-one-use (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in2 (result i32)
+  ;; CHECK-NEXT:     (loop $loop-in0 (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -202,7 +202,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-exported (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in3 (result i32)
+  ;; CHECK-NEXT:     (loop $loop-in2 (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -211,7 +211,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-tabled (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in4 (result i32)
+  ;; CHECK-NEXT:     (loop $loop-in3 (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -441,7 +441,7 @@
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (block $__inlined_func$bar_0
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block $__inlined_func$bar (result i32)
+ ;; CHECK-NEXT:    (block $__inlined_func$bar
  ;; CHECK-NEXT:     (br $__inlined_func$bar_0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -461,8 +461,8 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $__inlined_func$0_0
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (block $__inlined_func$0_0_0 (result i32)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (block $__inlined_func$0_0_0
  ;; CHECK-NEXT:      (local.set $0
  ;; CHECK-NEXT:       (block (result i32)
  ;; CHECK-NEXT:        (br_if $__inlined_func$0_0
