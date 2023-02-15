@@ -73,7 +73,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, NonNullable) {
   // The type must be a proper type for GC data: either a struct, array, or
   // string; or a null.
-  assert(((isData() || isString()) && gcData) || (type.isBottom() && !gcData));
+  assert((isData() && gcData) || (type.isBottom() && !gcData));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -100,7 +100,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData() || other.isString()) {
+  if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -144,7 +144,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData() || isString()) {
+  if (isNull() || isData()) {
     gcData.~shared_ptr();
   }
 }
@@ -309,7 +309,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isNull() || isData() || isString());
+  assert(isNull() || isData());
   return gcData;
 }
 
@@ -422,7 +422,7 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
-    if (type.isData() || type.isString()) {
+    if (type.isData()) {
       return gcData == other.gcData;
     }
     if (type.getHeapType() == HeapType::i31) {

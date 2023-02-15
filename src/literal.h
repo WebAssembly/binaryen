@@ -49,8 +49,8 @@ class Literal {
     // we store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type. We
-    // also use this to store String data, though that is not very efficient
-    // (one Literal per character), and could be optimized. TODO
+    // also use this to store String data, as it is similarly stored on the
+    // heap.
     std::shared_ptr<GCData> gcData;
     // TODO: Literals of type `anyref` can only be `null` currently but we
     // will need to represent external values eventually, to
@@ -92,6 +92,8 @@ public:
   bool isConcrete() const { return type.isConcrete(); }
   bool isNone() const { return type == Type::none; }
   bool isFunction() const { return type.isFunction(); }
+  // Whether this is GC data, that is, something stored on the heap (aside for a
+  // null). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
   bool isString() const { return type.isString(); }
 

@@ -1270,7 +1270,7 @@ bool HeapType::isFunction() const {
 
 bool HeapType::isData() const {
   if (isBasic()) {
-    return id == struct_ || id == array;
+    return id == struct_ || id == array || id == string;
   } else {
     return getHeapTypeInfo(*this)->isData();
   }
