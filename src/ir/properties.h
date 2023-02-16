@@ -82,7 +82,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 // runtime will be equal as well. TODO: combine this with
 // isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
-  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>();
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
+         curr->is<StringConst>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {

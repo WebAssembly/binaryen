@@ -897,7 +897,8 @@ bool Type::isFunction() const {
 
 bool Type::isData() const {
   if (isBasic()) {
-    return false;
+    // The only basic type that is considered data is a string.
+    return isString();
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isData();
@@ -923,6 +924,8 @@ bool Type::isNonNullable() const {
 bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
+
+bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
 bool Type::isDefaultable() const {
   // A variable can get a default value if its type is concrete (unreachable
@@ -1267,7 +1270,7 @@ bool HeapType::isFunction() const {
 
 bool HeapType::isData() const {
   if (isBasic()) {
-    return id == struct_ || id == array;
+    return id == struct_ || id == array || id == string;
   } else {
     return getHeapTypeInfo(*this)->isData();
   }
@@ -1296,6 +1299,8 @@ bool HeapType::isArray() const {
     return getHeapTypeInfo(*this)->isArray();
   }
 }
+
+bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
@@ -1672,7 +1677,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::any:
         return a.getBottom() == HeapType::none;
       case HeapType::eq:
-        return a == HeapType::i31 || a == HeapType::none || a.isData();
+        return a == HeapType::i31 || a == HeapType::none ||
+               a == HeapType::struct_ || a == HeapType::array || a.isStruct() ||
+               a.isArray();
       case HeapType::i31:
         return a == HeapType::none;
       case HeapType::struct_:

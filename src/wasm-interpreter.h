@@ -1797,8 +1797,54 @@ public:
     }
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
-  Flow visitStringNew(StringNew* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitStringConst(StringConst* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringNew(StringNew* curr) {
+    Flow ptr = visit(curr->ptr);
+    if (ptr.breaking()) {
+      return ptr;
+    }
+    switch (curr->op) {
+      case StringNewWTF16Array: {
+        Flow start = visit(curr->start);
+        if (start.breaking()) {
+          return start;
+        }
+        Flow end = visit(curr->end);
+        if (end.breaking()) {
+          return end;
+        }
+        auto ptrData = ptr.getSingleValue().getGCData();
+        if (!ptrData) {
+          trap("null ref");
+        }
+        const auto& ptrDataValues = ptrData->values;
+        size_t startVal = start.getSingleValue().getUnsigned();
+        size_t endVal = end.getSingleValue().getUnsigned();
+        if (endVal > ptrDataValues.size()) {
+          trap("array oob");
+        }
+        Literals contents;
+        if (endVal > startVal) {
+          contents.reserve(endVal - startVal);
+          for (size_t i = startVal; i < endVal; i++) {
+            contents.push_back(ptrDataValues[i]);
+          }
+        }
+        auto heapType = curr->type.getHeapType();
+        return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+      }
+      default:
+        // TODO: others
+        return Flow(NONCONSTANT_FLOW);
+    }
+  }
+  Flow visitStringConst(StringConst* curr) {
+    Literals contents;
+    for (size_t i = 0; i < curr->string.size(); i++) {
+      contents.push_back(Literal(int32_t(curr->string[i])));
+    }
+    auto heapType = curr->type.getHeapType();
+    return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+  }
   Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
@@ -2121,8 +2167,6 @@ public:
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitStringNew(StringNew* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringConst(StringConst* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringMeasure(StringMeasure* curr) {
     return Flow(NONCONSTANT_FLOW);
   }

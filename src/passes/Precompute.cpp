@@ -509,6 +509,10 @@ private:
     if (type.isFunction()) {
       return true;
     }
+    // We can emit a StringConst for a string constant.
+    if (type.isString()) {
+      return true;
+    }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
     // evaluate and reevaluate code multiple times in e.g. propagateLocals, see

@@ -159,6 +159,7 @@ public:
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
   bool isFunction() const;
+  // See literal.h.
   bool isData() const;
   // Checks whether a type is a reference and is nullable. This returns false
   // for a value that is not a reference, that is, for which nullability is
@@ -173,6 +174,7 @@ public:
   bool isNull() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isDefaultable() const;
 
   Nullability getNullability() const;
@@ -364,6 +366,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isBottom() const;
 
   Signature getSignature() const;

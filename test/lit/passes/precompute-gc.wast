@@ -23,6 +23,8 @@
  ;; NOMNL:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
+ (type $array16 (array (mut i16)))
+
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
@@ -1427,6 +1429,44 @@
    (return
     (local.get $nn)
    )
+  )
+ )
+
+ ;; CHECK:      (func $strings (type $ref|string|_=>_none) (param $param (ref string))
+ ;; CHECK-NEXT:  (local $s (ref string))
+ ;; CHECK-NEXT:  (local.set $s
+ ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $strings
+ ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $strings
+ ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $strings (type $ref|string|_=>_none) (param $param (ref string))
+ ;; NOMNL-NEXT:  (local $s (ref string))
+ ;; NOMNL-NEXT:  (local.set $s
+ ;; NOMNL-NEXT:   (string.const "hello, world")
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $strings
+ ;; NOMNL-NEXT:   (string.const "hello, world")
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (call $strings
+ ;; NOMNL-NEXT:   (string.const "hello, world")
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $strings (param $param (ref string))
+  (local $s (ref string))
+  (local.set $s
+   (string.const "hello, world")
+  )
+  ;; The constant string should be propagated twice, to both of these calls.
+  (call $strings
+   (local.get $s)
+  )
+  (call $strings
+   (local.get $s)
   )
  )
 )

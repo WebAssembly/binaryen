@@ -1153,6 +1153,14 @@ public:
     if (type.isRef() && type.getHeapType() == HeapType::i31) {
       return makeI31New(makeConst(value.geti31()));
     }
+    if (type.isString()) {
+      // TODO: more than ascii support
+      std::string string;
+      for (auto c : value.getGCData()->values) {
+        string.push_back(c.getInteger());
+      }
+      return makeStringConst(string);
+    }
     TODO_SINGLE_COMPOUND(type);
     WASM_UNREACHABLE("unsupported constant expression");
   }
