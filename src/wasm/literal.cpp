@@ -71,7 +71,8 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   : gcData(gcData), type(type, NonNullable) {
-  // The type must be a proper type for GC data.
+  // The type must be a proper type for GC data: either a struct, array, or
+  // string; or a null.
   assert((isData() && gcData) || (type.isBottom() && !gcData));
 }
 
@@ -577,7 +578,20 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
-        case HeapType::string:
+        case HeapType::string: {
+          auto data = literal.getGCData();
+          if (!data) {
+            o << "nullstring";
+          } else {
+            o << "string(\"";
+            for (auto c : data->values) {
+              // TODO: more than ascii
+              o << char(c.getInteger());
+            }
+            o << "\")";
+          }
+          break;
+        }
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
