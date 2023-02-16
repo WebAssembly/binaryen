@@ -425,7 +425,11 @@ static Expression* doInlining(Module* module,
   // validates that way. To fix, this, if the call was unreachable then we make
   // the inlined code unreachable as well. That also maximizes DCE
   // opportunities by propagating unreachability as much as possible.
-  if (call->type == Type::unreachable && contents->type != Type::unreachable) {
+  //
+  // (Note that we don't need to do this for a return_call, which is always
+  // unreachable anyhow.)
+  if (call->type == Type::unreachable && contents->type != Type::unreachable &&
+      !call->isReturn) {
     // Make the block unreachable by adding an unreachable, and also drop the
     // previous last item if we need to.
     if (block->list.back()->type.isConcrete()) {
