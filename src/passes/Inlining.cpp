@@ -422,7 +422,7 @@ static Expression* doInlining(Module* module,
   // That is, if the called function wraps the input parameter in a block with a
   // declared type, then the block is not unreachable. And then we might error
   // if the outside expects the code to be unreachable - perhaps it only
-  // validates that way. To fix, this, if the call was unreachable then we make
+  // validates that way. To fix this, if the call was unreachable then we make
   // the inlined code unreachable as well. That also maximizes DCE
   // opportunities by propagating unreachability as much as possible.
   //
