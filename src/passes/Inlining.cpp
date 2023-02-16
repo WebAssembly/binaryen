@@ -428,14 +428,15 @@ static Expression* doInlining(Module* module,
   //
   // (Note that we don't need to do this for a return_call, which is always
   // unreachable anyhow.)
-  if (call->type == Type::unreachable && contents->type != Type::unreachable &&
-      !call->isReturn) {
-    // Make the block unreachable by adding an unreachable, and also drop the
-    // previous last item if we need to.
-    if (block->list.back()->type.isConcrete()) {
-      block->list.back() = builder.makeDrop(block->list.back());
+  if (call->type == Type::unreachable && !call->isReturn) {
+    // Make the replacement code unreachable. Note that we can't just add an
+    // unreachable at the end, as the block might have breaks to it (returns are
+    // transformed into those).
+    Expression* old = block;
+    if (old->type.isConcrete()) {
+      old = builder.makeDrop(old);
     }
-    block->list.push_back(builder.makeUnreachable());
+    *action.callSite = builder.makeSequence(old, builder.makeUnreachable());
   }
   // Anything we inlined into may now have non-unique label names, fix it up.
   // Note that we must do this before refinalization, as otherwise duplicate
