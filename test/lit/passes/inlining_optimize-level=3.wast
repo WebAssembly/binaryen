@@ -500,7 +500,8 @@
 ;; turn the code in $B unreachable (when we inline $D), and no later inlining
 ;; (of $C or $A, or even $C's inlining in $A) should turn it into anything else
 ;; than an unreachable - once it is unreachable, we should keep it that way.
-;; (That avoids possible validation problems, and maximizes DCE.)
+;; (That avoids possible validation problems, and maximizes DCE.) To keep it
+;; unreachable we'll add an unreachable instruction after the inlined code.
 (module
  ;; CHECK:      (type $f32_=>_none (func (param f32)))
 
