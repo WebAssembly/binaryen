@@ -89,6 +89,11 @@ private:
   // of bounds (which traps in wasm, and is undefined behavior in C).
   bool allowOOB = true;
 
+  // Whether we allow the fuzzer to add unreachable code when generating changes
+  // to existing code. This is randomized during startup, but could be an option
+  // like the above options eventually if we find that useful.
+  bool allowAddingUnreachableCode;
+
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
 

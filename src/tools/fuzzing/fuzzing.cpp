@@ -31,6 +31,11 @@ namespace {
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
                                              std::vector<char>&& input)
   : wasm(wasm), builder(wasm), random(std::move(input), wasm.features) {
+
+  // Half the time add no unreachable code so that we'll execute the most code
+  // as possible with no early exits.
+  allowAddingUnreachableCode = oneIn(2);
+
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
   // - there's no point in logging anyref because it is opaque
@@ -724,9 +729,10 @@ void TranslateToFuzzReader::mutate(Function* func) {
 
     Modder(Module& wasm, TranslateToFuzzReader& parent)
       : wasm(wasm), parent(parent) {
-      // Half the time, never replace with an unreachable. The other half, do it
-      // sometimes (but even so, only rarely, see below).
-      allowUnreachable = parent.oneIn(2);
+      // If the parent allows it then sometimes replace with an unreachable, and
+      // sometimes not. Even if we allow it, only do it in certain functions
+      // (half the time) and only do it rarely (see below).
+      allowUnreachable = parent.allowAddingUnreachableCode && parent.oneIn(2);
     }
 
     void visitExpression(Expression* curr) {
