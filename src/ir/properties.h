@@ -116,6 +116,8 @@ inline Literal getLiteral(const Expression* curr) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
     }
+  } else if (auto* s = curr->dynCast<StringConst>()) {
+    return Literal(s->string.toString());
   }
   WASM_UNREACHABLE("non-constant expression");
 }
