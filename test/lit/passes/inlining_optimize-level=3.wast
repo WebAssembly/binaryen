@@ -531,16 +531,18 @@
  ;; CHECK-NEXT:  (local $0 f32)
  ;; CHECK-NEXT:  (call $A
  ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block $__inlined_func$C
- ;; CHECK-NEXT:     (local.tee $0
- ;; CHECK-NEXT:      (block
- ;; CHECK-NEXT:       (block $__inlined_func$D
- ;; CHECK-NEXT:        (unreachable)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (block $__inlined_func$C (result f32)
+ ;; CHECK-NEXT:       (local.tee $0
+ ;; CHECK-NEXT:        (block
+ ;; CHECK-NEXT:         (block $__inlined_func$D
+ ;; CHECK-NEXT:          (unreachable)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
