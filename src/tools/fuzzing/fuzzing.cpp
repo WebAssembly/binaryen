@@ -544,7 +544,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // with more possible sets.
     // Recombination, mutation, etc. can break validation; fix things up
     // after.
-    fixLabels(func);
+    fixAfterChanges(func);
   }
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
@@ -690,7 +690,6 @@ void TranslateToFuzzReader::recombine(Function* func) {
     Module& wasm;
     Scanner& scanner;
     TranslateToFuzzReader& parent;
-    bool needRefinalize = false;
 
     Modder(Module& wasm, Scanner& scanner, TranslateToFuzzReader& parent)
       : wasm(wasm), scanner(scanner), parent(parent) {}
@@ -702,18 +701,11 @@ void TranslateToFuzzReader::recombine(Function* func) {
         assert(!candidates.empty()); // this expression itself must be there
         auto* rep = parent.pick(candidates);
         replaceCurrent(ExpressionManipulator::copy(rep, wasm));
-        if (rep->type != curr->type) {
-          // Subtyping changes require us to finalize later.
-          needRefinalize = true;
-        }
       }
     }
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
-  if (modder.needRefinalize) {
-    ReFinalize().walkFunctionInModule(func, &wasm);
-  }
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
@@ -721,15 +713,28 @@ void TranslateToFuzzReader::mutate(Function* func) {
   if (oneIn(2)) {
     return;
   }
+
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
 
+    // Whether to replace with unreachable. This can lead to less code getting
+    // executed, so we don't want to do it all the time even in a big function.
+    bool allowUnreachable;
+
     Modder(Module& wasm, TranslateToFuzzReader& parent)
-      : wasm(wasm), parent(parent) {}
+      : wasm(wasm), parent(parent) {
+      // Half the time, never replace with an unreachable. The other half, do it
+      // sometimes (but even so, only rarely, see below).
+      allowUnreachable = parent.oneIn(2);
+    }
 
     void visitExpression(Expression* curr) {
       if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
+        if (allowUnreachable && parent.oneIn(10)) {
+          replaceCurrent(parent.make(Type::unreachable));
+          return;
+        }
         // For constants, perform only a small tweaking in some cases.
         if (auto* c = curr->dynCast<Const>()) {
           if (parent.oneIn(2)) {
@@ -749,7 +754,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   modder.walk(func->body);
 }
 
-void TranslateToFuzzReader::fixLabels(Function* func) {
+void TranslateToFuzzReader::fixAfterChanges(Function* func) {
   struct Fixer
     : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
     Module& wasm;
@@ -818,6 +823,8 @@ void TranslateToFuzzReader::fixLabels(Function* func) {
   };
   Fixer fixer(wasm, *this);
   fixer.walk(func->body);
+
+  // Refinalize at the end, after labels are all fixed up.
   ReFinalize().walkFunctionInModule(func, &wasm);
 }
 
@@ -855,7 +862,7 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       //       check variations on initial testcases even at the risk of OOB.
       recombine(func);
       mutate(func);
-      fixLabels(func);
+      fixAfterChanges(func);
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only

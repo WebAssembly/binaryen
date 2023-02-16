@@ -193,9 +193,8 @@ private:
   }
   void recombine(Function* func);
   void mutate(Function* func);
-  // Fix up changes that may have broken validation - types are correct in our
-  // modding, but not necessarily labels.
-  void fixLabels(Function* func);
+  // Fix up the IR after recombination and mutation.
+  void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
 
   // Initial wasm contents may have come from a test that uses the drop pattern:
