@@ -2110,6 +2110,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       return builder.makeArrayInit(trivialArray, {});
     }
     case HeapType::string:
+      return builder.makeStringConst(std::to_string(upTo(1024)));
     case HeapType::stringview_wtf8:
     case HeapType::stringview_wtf16:
     case HeapType::stringview_iter:
@@ -3218,6 +3219,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
       case HeapType::string:
+        return HeapType::string;
       case HeapType::stringview_wtf8:
       case HeapType::stringview_wtf16:
       case HeapType::stringview_iter:
