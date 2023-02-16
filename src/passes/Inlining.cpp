@@ -404,14 +404,39 @@ static Expression* doInlining(Module* module,
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
-  // If the function returned a value, we just set the block containing the
-  // inlined code to have that type. or, if the function was void and
-  // contained void, that is fine too. a bad case is a void function in which
-  // we have unreachable code, so we would be replacing a void call with an
-  // unreachable.
-  if (contents->type == Type::unreachable && block->type == Type::none) {
-    // Make the block reachable by adding a break to it
-    block->list.push_back(builder.makeBreak(block->name));
+  // The ReFinalize below will handle propagating unreachability if we need to
+  // do so, that is, if the call was reachable but now the inlined content we
+  // replaced it with was unreachable. The opposite case requires special
+  // handling: ReFinalize works under the assumption that code can become
+  // unreachable, but it does not go back from that state. But inlining can
+  // cause that:
+  //
+  //  (call $A                               ;; an unreachable call
+  //    (unreachable)
+  //  )
+  // =>
+  //  (block $__inlined_A_body (result i32)  ;; reachable code after inlining
+  //    (unreachable)
+  //  )
+  //
+  // That is, if the called function wraps the input parameter in a block with a
+  // declared type, then the block is not unreachable. And then we might error
+  // if the outside expects the code to be unreachable - perhaps it only
+  // validates that way. To fix this, if the call was unreachable then we make
+  // the inlined code unreachable as well. That also maximizes DCE
+  // opportunities by propagating unreachability as much as possible.
+  //
+  // (Note that we don't need to do this for a return_call, which is always
+  // unreachable anyhow.)
+  if (call->type == Type::unreachable && !call->isReturn) {
+    // Make the replacement code unreachable. Note that we can't just add an
+    // unreachable at the end, as the block might have breaks to it (returns are
+    // transformed into those).
+    Expression* old = block;
+    if (old->type.isConcrete()) {
+      old = builder.makeDrop(old);
+    }
+    *action.callSite = builder.makeSequence(old, builder.makeUnreachable());
   }
   // Anything we inlined into may now have non-unique label names, fix it up.
   // Note that we must do this before refinalization, as otherwise duplicate

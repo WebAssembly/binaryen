@@ -495,3 +495,71 @@
   (unreachable)
  )
 )
+
+;; We inline multiple times here, and in the sequence of those inlinings we
+;; turn the code in $B unreachable (when we inline $D), and no later inlining
+;; (of $C or $A, or even $C's inlining in $A) should turn it into anything else
+;; than an unreachable - once it is unreachable, we should keep it that way.
+;; (That avoids possible validation problems, and maximizes DCE.) To keep it
+;; unreachable we'll add an unreachable instruction after the inlined code.
+(module
+ ;; CHECK:      (type $f32_=>_none (func (param f32)))
+
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (func $A (param $0 f32)
+ ;; CHECK-NEXT:  (local $1 f32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result f32)
+ ;; CHECK-NEXT:    (block $__inlined_func$C (result f32)
+ ;; CHECK-NEXT:     (local.set $1
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $A (param $0 f32)
+  (drop
+   (call $C
+    (local.get $0)
+   )
+  )
+ )
+ ;; CHECK:      (func $B
+ ;; CHECK-NEXT:  (local $0 f32)
+ ;; CHECK-NEXT:  (call $A
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block $__inlined_func$C (result f32)
+ ;; CHECK-NEXT:       (local.tee $0
+ ;; CHECK-NEXT:        (block
+ ;; CHECK-NEXT:         (block $__inlined_func$D
+ ;; CHECK-NEXT:          (unreachable)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $B
+  (call $A
+   (call $C
+    (call $D)
+   )
+  )
+ )
+ (func $C (param $0 f32) (result f32)
+  (local.get $0)
+ )
+ (func $D (result f32)
+  (unreachable)
+ )
+)

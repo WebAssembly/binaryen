@@ -561,7 +561,6 @@
  ;; CHECK-NEXT:     (br $__inlined_func$1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $__inlined_func$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
@@ -629,7 +628,6 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (br $__inlined_func$1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $__inlined_func$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
@@ -694,7 +692,6 @@
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__inlined_func$13)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
