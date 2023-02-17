@@ -1862,8 +1862,9 @@ public:
     switch (curr->op) {
       case StringEqEqual: {
         // They are equal if both are null, or both are non-null and equal.
-        result = (!leftData && !rightData) || (leftData && rightData &&
-          leftData->values == rightData->values);
+        result =
+          (!leftData && !rightData) ||
+          (leftData && rightData && leftData->values == rightData->values);
         break;
       }
       case StringEqCompare: {
