@@ -26,6 +26,111 @@
   (func "const" (result stringref)
     (string.const "world")
   )
+
+  (func "eq.1" (result i32)
+    (string.eq
+      (string.const "hello")
+      (string.const "world")
+    )
+  )
+
+  (func "eq.2" (result i32)
+    (string.eq
+      (string.const "hello")
+      (string.const "hello")
+    )
+  )
+
+  (func "eq.3" (result i32)
+    (string.eq
+      (string.const "hello")
+      (ref.null string)
+    )
+  )
+
+  (func "eq.4" (result i32)
+    (string.eq
+      (ref.null string)
+      (string.const "world")
+    )
+  )
+
+  (func "eq.5" (result i32)
+    (string.eq
+      (ref.null string)
+      (ref.null string)
+    )
+  )
+
+  (func "compare.1" (result i32)
+    (string.compare
+      (string.const "hello")
+      (ref.null string)
+    )
+  )
+
+  (func "compare.2" (result i32)
+    (string.compare
+      (ref.null string)
+      (string.const "world")
+    )
+  )
+
+  (func "compare.3" (result i32)
+    (string.compare
+      (ref.null string)
+      (ref.null string)
+    )
+  )
+
+  (func "compare.4" (result i32)
+    (string.compare
+      (string.const "hello")
+      (string.const "hello")
+    )
+  )
+
+  (func "compare.5" (result i32)
+    (string.compare
+      (string.const "hello")
+      (string.const "hezlo")
+    )
+  )
+
+  (func "compare.5" (result i32)
+    (string.compare
+      (string.const "hezlo")
+      (string.const "hello")
+    )
+  )
+
+  (func "compare.6" (result i32)
+    (string.compare
+      (string.const "he")
+      (string.const "hello")
+    )
+  )
+
+  (func "compare.7" (result i32)
+    (string.compare
+      (string.const "hello")
+      (string.const "he")
+    )
+  )
+
+  (func "compare.8" (result i32)
+    (string.compare
+      (string.const "hf")
+      (string.const "hello")
+    )
+  )
+
+  (func "compare.9" (result i32)
+    (string.compare
+      (string.const "hello")
+      (string.const "hf")
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
