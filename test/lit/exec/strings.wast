@@ -27,6 +27,8 @@
     (string.const "world")
   )
 
+  ;; CHECK:      [fuzz-exec] calling eq.1
+  ;; CHECK-NEXT: [fuzz-exec] note result: eq.1 => 0
   (func "eq.1" (result i32)
     (string.eq
       (string.const "hello")
@@ -34,6 +36,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling eq.2
+  ;; CHECK-NEXT: [fuzz-exec] note result: eq.2 => 1
   (func "eq.2" (result i32)
     (string.eq
       (string.const "hello")
@@ -41,6 +45,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling eq.3
+  ;; CHECK-NEXT: [fuzz-exec] note result: eq.3 => 0
   (func "eq.3" (result i32)
     (string.eq
       (string.const "hello")
@@ -48,6 +54,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling eq.4
+  ;; CHECK-NEXT: [fuzz-exec] note result: eq.4 => 0
   (func "eq.4" (result i32)
     (string.eq
       (ref.null string)
@@ -55,6 +63,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling eq.5
+  ;; CHECK-NEXT: [fuzz-exec] note result: eq.5 => 1
   (func "eq.5" (result i32)
     (string.eq
       (ref.null string)
@@ -62,6 +72,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling compare.1
+  ;; CHECK-NEXT: [trap null ref]
   (func "compare.1" (result i32)
     (string.compare
       (string.const "hello")
@@ -69,6 +81,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling compare.2
+  ;; CHECK-NEXT: [trap null ref]
   (func "compare.2" (result i32)
     (string.compare
       (ref.null string)
@@ -76,6 +90,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling compare.3
+  ;; CHECK-NEXT: [trap null ref]
   (func "compare.3" (result i32)
     (string.compare
       (ref.null string)
@@ -83,6 +99,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling compare.4
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.4 => 0
   (func "compare.4" (result i32)
     (string.compare
       (string.const "hello")
@@ -90,6 +108,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling compare.5
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.5 => -1
   (func "compare.5" (result i32)
     (string.compare
       (string.const "hello")
@@ -97,35 +117,45 @@
     )
   )
 
-  (func "compare.5" (result i32)
-    (string.compare
-      (string.const "hezlo")
-      (string.const "hello")
-    )
-  )
-
+  ;; CHECK:      [fuzz-exec] calling compare.6
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.6 => 1
   (func "compare.6" (result i32)
     (string.compare
+      (string.const "hezlo")
+      (string.const "hello")
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling compare.7
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.7 => -1
+  (func "compare.7" (result i32)
+    (string.compare
       (string.const "he")
       (string.const "hello")
     )
   )
 
-  (func "compare.7" (result i32)
+  ;; CHECK:      [fuzz-exec] calling compare.8
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.8 => 1
+  (func "compare.8" (result i32)
     (string.compare
       (string.const "hello")
       (string.const "he")
     )
   )
 
-  (func "compare.8" (result i32)
+  ;; CHECK:      [fuzz-exec] calling compare.9
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.9 => 1
+  (func "compare.9" (result i32)
     (string.compare
       (string.const "hf")
       (string.const "hello")
     )
   )
 
-  (func "compare.9" (result i32)
+  ;; CHECK:      [fuzz-exec] calling compare.10
+  ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
+  (func "compare.10" (result i32)
     (string.compare
       (string.const "hello")
       (string.const "hf")
@@ -137,5 +167,65 @@
 
 ;; CHECK:      [fuzz-exec] calling const
 ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
+
+;; CHECK:      [fuzz-exec] calling eq.1
+;; CHECK-NEXT: [fuzz-exec] note result: eq.1 => 0
+
+;; CHECK:      [fuzz-exec] calling eq.2
+;; CHECK-NEXT: [fuzz-exec] note result: eq.2 => 1
+
+;; CHECK:      [fuzz-exec] calling eq.3
+;; CHECK-NEXT: [fuzz-exec] note result: eq.3 => 0
+
+;; CHECK:      [fuzz-exec] calling eq.4
+;; CHECK-NEXT: [fuzz-exec] note result: eq.4 => 0
+
+;; CHECK:      [fuzz-exec] calling eq.5
+;; CHECK-NEXT: [fuzz-exec] note result: eq.5 => 1
+
+;; CHECK:      [fuzz-exec] calling compare.1
+;; CHECK-NEXT: [trap null ref]
+
+;; CHECK:      [fuzz-exec] calling compare.2
+;; CHECK-NEXT: [trap null ref]
+
+;; CHECK:      [fuzz-exec] calling compare.3
+;; CHECK-NEXT: [trap null ref]
+
+;; CHECK:      [fuzz-exec] calling compare.4
+;; CHECK-NEXT: [fuzz-exec] note result: compare.4 => 0
+
+;; CHECK:      [fuzz-exec] calling compare.5
+;; CHECK-NEXT: [fuzz-exec] note result: compare.5 => -1
+
+;; CHECK:      [fuzz-exec] calling compare.6
+;; CHECK-NEXT: [fuzz-exec] note result: compare.6 => 1
+
+;; CHECK:      [fuzz-exec] calling compare.7
+;; CHECK-NEXT: [fuzz-exec] note result: compare.7 => -1
+
+;; CHECK:      [fuzz-exec] calling compare.8
+;; CHECK-NEXT: [fuzz-exec] note result: compare.8 => 1
+
+;; CHECK:      [fuzz-exec] calling compare.9
+;; CHECK-NEXT: [fuzz-exec] note result: compare.9 => 1
+
+;; CHECK:      [fuzz-exec] calling compare.10
+;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
+;; CHECK-NEXT: [fuzz-exec] comparing compare.1
+;; CHECK-NEXT: [fuzz-exec] comparing compare.10
+;; CHECK-NEXT: [fuzz-exec] comparing compare.2
+;; CHECK-NEXT: [fuzz-exec] comparing compare.3
+;; CHECK-NEXT: [fuzz-exec] comparing compare.4
+;; CHECK-NEXT: [fuzz-exec] comparing compare.5
+;; CHECK-NEXT: [fuzz-exec] comparing compare.6
+;; CHECK-NEXT: [fuzz-exec] comparing compare.7
+;; CHECK-NEXT: [fuzz-exec] comparing compare.8
+;; CHECK-NEXT: [fuzz-exec] comparing compare.9
 ;; CHECK-NEXT: [fuzz-exec] comparing const
+;; CHECK-NEXT: [fuzz-exec] comparing eq.1
+;; CHECK-NEXT: [fuzz-exec] comparing eq.2
+;; CHECK-NEXT: [fuzz-exec] comparing eq.3
+;; CHECK-NEXT: [fuzz-exec] comparing eq.4
+;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
