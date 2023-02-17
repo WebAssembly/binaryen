@@ -1843,7 +1843,72 @@ public:
   Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitStringEq(StringEq* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringEq(StringEq* curr) {
+    NOTE_ENTER("StringEq");
+    Flow flow = visit(curr->left);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto left = flow.getSingleValue();
+    flow = visit(curr->right);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto right = flow.getSingleValue();
+    NOTE_EVAL2(left, right);
+    auto leftData = left.getGCData();
+    auto rightData = right.getGCData();
+    int32_t result;
+    switch (curr->op) {
+      case StringEqEqual: {
+        // They are equal if both are null, or both are non-null and equal.
+        result =
+          (!leftData && !rightData) ||
+          (leftData && rightData && leftData->values == rightData->values);
+        break;
+      }
+      case StringEqCompare: {
+        if (!leftData || !rightData) {
+          trap("null ref");
+        }
+        auto& leftValues = leftData->values;
+        auto& rightValues = rightData->values;
+        Index i = 0;
+        while (1) {
+          if (i == leftValues.size() && i == rightValues.size()) {
+            // We reached the end, and they are equal.
+            result = 0;
+            break;
+          } else if (i == leftValues.size()) {
+            // The left string is short.
+            result = -1;
+            break;
+          } else if (i == rightValues.size()) {
+            result = 1;
+            break;
+          }
+          auto left = leftValues[i].getInteger();
+          auto right = rightValues[i].getInteger();
+          if (left < right) {
+            // The left character is lower.
+            result = -1;
+            break;
+          } else if (left > right) {
+            result = 1;
+            break;
+          } else {
+            // Look further.
+            i++;
+          }
+        }
+        break;
+      }
+      default: {
+        WASM_UNREACHABLE("bad op");
+      }
+    }
+    return Literal(result);
+  }
   Flow visitStringAs(StringAs* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     WASM_UNREACHABLE("unimp");
