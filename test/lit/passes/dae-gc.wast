@@ -247,3 +247,50 @@
  ;; NOMNL-NEXT: )
  (func $c)
 )
+
+;; Test that string constants can be applied.
+(module
+ ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK-NEXT:  (call $1)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $0 (type $none_=>_none)
+ ;; NOMNL-NEXT:  (call $1)
+ ;; NOMNL-NEXT: )
+ (func $0
+  (call $1
+   (string.const "310")
+   (string.const "929")
+  )
+ )
+ ;; CHECK:      (func $1 (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $0 (ref string))
+ ;; CHECK-NEXT:  (local $1 (ref string))
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (string.const "929")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (string.const "310")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $1 (type $none_=>_none)
+ ;; NOMNL-NEXT:  (local $0 (ref string))
+ ;; NOMNL-NEXT:  (local $1 (ref string))
+ ;; NOMNL-NEXT:  (local.set $0
+ ;; NOMNL-NEXT:   (string.const "929")
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT:  (block
+ ;; NOMNL-NEXT:   (local.set $1
+ ;; NOMNL-NEXT:    (string.const "310")
+ ;; NOMNL-NEXT:   )
+ ;; NOMNL-NEXT:   (nop)
+ ;; NOMNL-NEXT:  )
+ ;; NOMNL-NEXT: )
+ (func $1 (param $0 (ref string)) (param $1 (ref string))
+  ;; The parameters here will be removed, and the constant values placed in the
+  ;; function.
+  (nop)
+ )
+)

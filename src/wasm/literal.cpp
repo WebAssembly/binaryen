@@ -76,6 +76,16 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
   assert((isData() && gcData) || (type.isBottom() && !gcData));
 }
 
+Literal::Literal(std::string string)
+  : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
+  // TODO: we could in theory internalize strings
+  Literals contents;
+  for (auto c : string) {
+    contents.push_back(Literal(int32_t(c)));
+  }
+  gcData = std::make_shared<GCData>(HeapType::string, contents);
+}
+
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isBasic()) {
     switch (type.getBasic()) {

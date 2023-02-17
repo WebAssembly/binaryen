@@ -1838,12 +1838,7 @@ public:
     }
   }
   Flow visitStringConst(StringConst* curr) {
-    Literals contents;
-    for (size_t i = 0; i < curr->string.size(); i++) {
-      contents.push_back(Literal(int32_t(curr->string[i])));
-    }
-    auto heapType = curr->type.getHeapType();
-    return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+    return Literal(curr->string.toString());
   }
   Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
