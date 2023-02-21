@@ -770,7 +770,9 @@ template<> struct hash<wasm::Literal> {
         return digest;
       }
       if (a.type.isString()) {
-        for (auto c : a.getGCData()->values) {
+        auto& values = a.getGCData()->values;
+        wasm::rehash(digest, values.size());
+        for (auto c : values) {
           wasm::rehash(digest, c.getInteger());
         }
         return digest;
