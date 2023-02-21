@@ -432,6 +432,9 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
+    if (type.isString()) {
+      return gcData->values == other.gcData->values;
+    }
     if (type.isData()) {
       return gcData == other.gcData;
     }

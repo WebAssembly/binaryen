@@ -247,4 +247,53 @@
    (local.get $nullable)
   )
  )
+
+ ;; CHECK:      (func $string (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $s stringref)
+ ;; CHECK-NEXT:  (local $t stringref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $s)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $s
+ ;; CHECK-NEXT:   (string.const "hello")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (local.get $s)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $s)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (string.const "world!")
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $t
+ ;; CHECK-NEXT:   (local.get $s)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $string
+  (local $s stringref)
+  (local $t stringref)
+  ;; This set is redundant (both are null).
+  (local.set $t
+    (local.get $s)
+  )
+  (local.set $s
+   (string.const "hello")
+  )
+  ;; This set is not (one is not null).
+  (local.set $t
+    (local.get $s)
+  )
+  ;; This set is redundant (both are "hello").
+  (local.set $t
+    (local.get $s)
+  )
+  (local.set $t
+   (string.const "world!")
+  )
+  ;; This set is not (one is "world!").
+  (local.set $t
+    (local.get $s)
+  )
+ )
 )
