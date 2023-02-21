@@ -769,6 +769,12 @@ template<> struct hash<wasm::Literal> {
         wasm::rehash(digest, a.geti31(true));
         return digest;
       }
+      if (a.type.isString()) {
+        for (auto c : a.getGCData()->values) {
+          wasm::rehash(digest, c.getInteger());
+        }
+        return digest;
+      }
       // other non-null reference type literals cannot represent concrete
       // values, i.e. there is no concrete anyref or eqref other than null.
       WASM_UNREACHABLE("unexpected type");
