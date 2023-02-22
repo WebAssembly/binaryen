@@ -59,7 +59,7 @@ constexpr Address USABLE_MEMORY = 16;
 // the number of runtime iterations (function calls, loop backbranches) we
 // allow before we stop execution with a trap, to prevent hangs. 0 means
 // no hang protection.
-constexpr int HANG_LIMIT = 10;
+constexpr int HANG_LIMIT = 100;
 
 //
 constexpr size_t VeryImportant = 4;
