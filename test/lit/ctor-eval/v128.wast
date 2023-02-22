@@ -2,52 +2,42 @@
 ;; RUN: wasm-ctor-eval %s --ctors=v128 --kept-exports=v128 --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $none_=>_v128 (func (result v128)))
+  ;; CHECK:      (type $none_=>_v128 (func (result v128)))
 
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+  ;; CHECK:      (memory $0 (shared 16 17))
+  (memory $0 (shared 16 17))
 
- (func $v128 (export "v128") (result v128)
-  (v128.store
-   (i32.const 23)
-   (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x9028fd85)
+  ;; CHECK:      (data (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")
+
+  ;; CHECK:      (export "v128" (func $v128_0))
+  (export "v128" (func $v128))
+  ;; CHECK:      (export "keepalive" (func $keepalive))
+  (export "keepalive" (func $keepalive))
+
+  (func $v128 (result v128)
+    (v128.store
+      (i32.const 23)
+      (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x90fffd85)
+    )
+    (v128.load
+      (i32.const 23)
+    )
   )
-  (v128.load
-   (i32.const 23)
+
+  ;; CHECK:      (func $keepalive (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.load
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive (param $x i32) (result i32)
+    ;; Keep the memory alive.
+    (i32.load
+      (local.get $x)
+    )
   )
- )
-
- ;; CHECK:      (data (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd(\90")
- ;; CHECK-NEXT: (export "v128" (func $v128_0))
- ;; CHECK-NEXT: (export "keepalive" (func $keepalive))
- ;; CHECK-NEXT: (func $keepalive (type $i32_=>_i32) (param $x i32) (result i32)
- ;; CHECK-NEXT:  (i32.load
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- ;; CHECK-NEXT: (func $v128_0 (type $none_=>_v128) (result v128)
- ;; CHECK-NEXT:  (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x9028fd85)
- ;; CHECK-NEXT: )
- ;; CHECK-NEXT: )
-
- ;; CHECK:      (export "v128" (func $v128_0))
-
- ;; CHECK:      (export "keepalive" (func $keepalive))
-
- ;; CHECK:      (func $keepalive (type $i32_=>_i32) (param $x i32) (result i32)
- ;; CHECK-NEXT:  (i32.load
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $keepalive (export "keepalive") (param $x i32) (result i32)
-  ;; Keep the memory alive.
-  (i32.load
-   (local.get $x)
-  )
- )
 )
 ;; CHECK:      (func $v128_0 (type $none_=>_v128) (result v128)
-;; CHECK-NEXT:  (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x9028fd85)
+;; CHECK-NEXT:  (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x90fffd85)
 ;; CHECK-NEXT: )
