@@ -26,6 +26,9 @@
 ;; CHECK-NEXT:   --ignore-external-input,-ipi         Assumes no env vars are to be read, stdin
 ;; CHECK-NEXT:                                        is empty, etc.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --quiet,-q                           Do not emit verbose logging about the
+;; CHECK-NEXT:                                        eval process
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------
