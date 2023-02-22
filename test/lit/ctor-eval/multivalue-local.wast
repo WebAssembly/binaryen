@@ -16,7 +16,7 @@
   ;; We can eval this line. But we will stop evalling at the line after it, the
   ;; import call. As a result we'll only have a partial evalling of this
   ;; function, as a result of which it will begin with sets of the values in the
-  ;; locals, followed by the import call and the rest
+  ;; locals, followed by the import call and the rest.
   (local.set $0
    (i32.add        ;; This add will be evalled into 42.
     (i32.const 41)
@@ -25,14 +25,11 @@
   )
   (local.set $1
    (tuple.make
-    (local.get $0)   ;; This will turn into 42
+    (local.get $0)   ;; This will turn into 42.
     (i32.const 1000)
    )
   )
 
-  ;; We cannot eval this line. When we reach it we serialize out all the locals
-  ;; (since we succeeded in a partial eval - the last line evalled ok) which
-  ;; includes the multivalue local. We should emit zeros for both its values.
   (call $import)
 
   ;; Use the locals so they are not trivally removed.
