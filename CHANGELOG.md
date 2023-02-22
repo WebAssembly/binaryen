@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add support for Unicode paths on Windows (#4995)
+
 v112
 ----
 
