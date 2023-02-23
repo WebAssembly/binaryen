@@ -126,8 +126,9 @@ struct ValidationInfo {
                     Function* func = nullptr) {
     if (!result) {
       fail("unexpected false: " + std::string(text), curr, func);
+      return false;
     }
-    return result;
+    return true;
   }
 
   // Returns whether the result was in fact false.
