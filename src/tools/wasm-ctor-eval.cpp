@@ -538,8 +538,14 @@ private:
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter != instance->globals.end()) {
         oldGlobal->init = getSerialization(iter->second, name);
-        wasm->addGlobal(std::move(oldGlobal));
       }
+
+      // Add the global back to the module (either with the new serialization we
+      // just computed, or with the previously computed value from work we did
+      // earlier; we do not need to modify that work in any way - we assume we
+      // created it properly for serialization already, when we created a new
+      // defining global - so the init stays the same).
+      wasm->addGlobal(std::move(oldGlobal));
     }
   }
 
