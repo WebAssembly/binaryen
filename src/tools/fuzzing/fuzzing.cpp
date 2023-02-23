@@ -895,8 +895,15 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
   auto invoker = builder.makeFunction(name, Signature(), {});
   Block* body = builder.makeBlock();
   invoker->body = body;
+  if (HANG_LIMIT > 0 && oneIn(2)) {
+    // Clear the hang limit some of the time, to give a function a chance to run
+    // with a fresh hang limit (otherwise, decrements to the limit accumulate
+    // over functions). Don't do this all the time to avoid having all invokes
+    // look the same, which might end up missing coverage somehow.
+    body->list.push_back(builder.makeGlobalSet(
+      HANG_LIMIT_GLOBAL, builder.makeConst(int32_t(HANG_LIMIT))));
+  }
   FunctionCreationContext context(*this, invoker.get());
-  std::vector<Expression*> invocations;
   while (oneIn(2) && !random.finished()) {
     std::vector<Expression*> args;
     for (const auto& type : func->getParams()) {
@@ -906,16 +913,17 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
     if (func->getResults().isConcrete()) {
       invoke = builder.makeDrop(invoke);
     }
-    invocations.push_back(invoke);
+    body->list.push_back(invoke);
     // log out memory in some cases
     if (oneIn(2)) {
-      invocations.push_back(makeMemoryHashLogging());
+      body->list.push_back(makeMemoryHashLogging());
     }
   }
-  if (invocations.empty()) {
+  // Note that there might be no invocations, but a hang limit reset. That is ok
+  // as it does something useful (for the function that runs after it).
+  if (body->list.empty()) {
     return;
   }
-  body->list.set(invocations);
   wasm.addFunction(std::move(invoker));
   wasm.addExport(builder.makeExport(name, name, ExternalKind::Function));
 }
