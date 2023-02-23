@@ -138,8 +138,9 @@ struct ValidationInfo {
                      Function* func = nullptr) {
     if (result) {
       fail("unexpected true: " + std::string(text), curr, func);
+      return false;
     }
-    return result;
+    return true;
   }
 
   template<typename T, typename S>
