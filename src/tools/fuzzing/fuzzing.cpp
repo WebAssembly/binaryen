@@ -426,26 +426,6 @@ void TranslateToFuzzReader::addHangLimitSupport() {
                                  builder.makeConst(int32_t(HANG_LIMIT)),
                                  Builder::Mutable);
   wasm.addGlobal(std::move(glob));
-
-  Name exportName = "hangLimitInitializer";
-  auto funcName = Names::getValidFunctionName(wasm, exportName);
-  auto* func = new Function;
-  func->name = funcName;
-  func->type = Signature(Type::none, Type::none);
-  func->body = builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
-                                     builder.makeConst(int32_t(HANG_LIMIT)));
-  wasm.addFunction(func);
-
-  if (wasm.getExportOrNull(exportName)) {
-    // We must export our actual hang limit function - remove anything
-    // previously existing.
-    wasm.removeExport(exportName);
-  }
-  auto* export_ = new Export;
-  export_->name = exportName;
-  export_->value = func->name;
-  export_->kind = ExternalKind::Function;
-  wasm.addExport(export_);
 }
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
@@ -473,11 +453,17 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
+  // If the hang limit global reaches 0 then we trap and reset it. That allows
+  // calls to other exports to proceed, with hang checking, after the trap halts
+  // the currently called export.
   return builder.makeSequence(
     builder.makeIf(
       builder.makeUnary(UnaryOp::EqZInt32,
                         builder.makeGlobalGet(HANG_LIMIT_GLOBAL, Type::i32)),
-      makeTrivial(Type::unreachable)),
+      builder.makeSequence(
+        builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
+                              builder.makeConst(int32_t(HANG_LIMIT))),
+        builder.makeUnreachable())),
     builder.makeGlobalSet(
       HANG_LIMIT_GLOBAL,
       builder.makeBinary(BinaryOp::SubInt32,

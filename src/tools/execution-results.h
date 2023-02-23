@@ -226,12 +226,8 @@ struct ExecutionResults {
 
   FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
     try {
-      Literals arguments;
-      // init hang support, if present
-      if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
-        instance.callFunction(ex->value, arguments);
-      }
       // call the method
+      Literals arguments;
       for (const auto& param : func->getParams()) {
         // zeros in arguments TODO: more?
         if (!param.isDefaultable()) {
