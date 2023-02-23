@@ -118,7 +118,7 @@ struct ValidationInfo {
 
   // Checking utilities.
 
-  // Returns the result that was passed in.
+  // Returns whether the result was in fact true.
   template<typename T>
   bool shouldBeTrue(bool result,
                     T curr,
@@ -130,8 +130,7 @@ struct ValidationInfo {
     return result;
   }
 
-  // Returns the result that was passed in. Note that it does not return whether
-  // the expectation was met or not, but rather the input result it received.
+  // Returns whether the result was in fact false.
   template<typename T>
   bool shouldBeFalse(bool result,
                      T curr,
@@ -1437,9 +1436,9 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
     "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (shouldBeFalse(getModule()->memories.empty(),
-                    curr,
-                    "Memory operations require a memory")) {
+  if (!shouldBeFalse(getModule()->memories.empty(),
+                     curr,
+                     "Memory operations require a memory")) {
     return;
   }
   shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
