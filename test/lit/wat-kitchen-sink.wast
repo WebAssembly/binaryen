@@ -121,6 +121,9 @@
  ;; CHECK:      (type $s8 (struct (field i32) (field i64) (field $z f32) (field f64) (field (mut i32))))
  (type $s8 (struct i32 (field) i64 (field $z f32) (field f64 (mut i32))))
 
+ ;; CHECK:      (type $s9 (struct_subtype (field i32) $s2))
+ (type $s9) (sub $s2 (struct i64))
+
  ;; CHECK:      (type $a0 (array i32))
  (type $a0 (array i32))
  (type $a1 (array (field i64)))
