@@ -116,8 +116,9 @@ struct ValidationInfo {
     return stream;
   }
 
-  // checking utilities
+  // Checking utilities.
 
+  // Returns whether the result was in fact true.
   template<typename T>
   bool shouldBeTrue(bool result,
                     T curr,
@@ -127,8 +128,10 @@ struct ValidationInfo {
       fail("unexpected false: " + std::string(text), curr, func);
       return false;
     }
-    return result;
+    return true;
   }
+
+  // Returns whether the result was in fact false.
   template<typename T>
   bool shouldBeFalse(bool result,
                      T curr,
@@ -138,7 +141,7 @@ struct ValidationInfo {
       fail("unexpected true: " + std::string(text), curr, func);
       return false;
     }
-    return result;
+    return true;
   }
 
   template<typename T, typename S>
