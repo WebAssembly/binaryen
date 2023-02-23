@@ -73,6 +73,13 @@ public:
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
+
+  Flow visitTableSet(TableSet* curr) {
+    // TODO: Full dynamic table support. For now we stop evalling when we see a
+    //       table.set. (To support this we need to track sets and add code to
+    //       serialize them.)
+    throw FailToEvalException("table.set: TODO");
+  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
