@@ -26,8 +26,9 @@
 )
 
 ;; CHECK:  (func $foo (param $x i32) (param $y i32)
-;; CHECK-NEXT:   ;;@ src.cpp:20:1
+;; CHECK-NEXT:   ;;@ src.cpp:10:1
 ;; CHECK-NEXT:   (if
+;; CHECK-NEXT:    ;;@ src.cpp:20:1
 ;; CHECK-NEXT:    (i32.add
 ;; CHECK-NEXT:     ;;@ src.cpp:30:1
 ;; CHECK-NEXT:     (local.get $x)
