@@ -1156,10 +1156,10 @@ class CtorEval(TestCaseHandler):
         p = re.compile(r'^ [(]export "([\d\w$+-_:.]+)" [(]func')
         exports = []
         for line in wat.splitlines():
-          m = p.match(line)
-          if m:
-              export = m[1]
-              exports.append(export)
+            m = p.match(line)
+            if m:
+                export = m[1]
+                exports.append(export)
         if not exports:
             return
         ctors = ','.join(exports)
@@ -1176,7 +1176,7 @@ class CtorEval(TestCaseHandler):
             return
         if '...success' not in output and \
            '...partial evalling success' not in output:
-           return
+            return
         evalled_wasm_exec = run_bynterp(evalled_wasm, ['--fuzz-exec-before'])
 
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
