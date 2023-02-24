@@ -24,19 +24,21 @@ bool flatten(Module& wasm) {
   if (wasm.memories.size() > 1) {
     return false;
   }
-  // The presence of any MemoryInit instructions is a problem because they care
-  // about segment identity, which flattening gets rid of ( when it merges them
-  // all into one big segment).
+  // The presence of any instruction that cares about segment identity is a
+  // problem because flattening gets rid of that (when it merges them all into
+  // one big segment).
   ModuleUtils::ParallelFunctionAnalysis<bool> analysis(
-    wasm, [&](Function* func, bool& hasMemoryInit) {
+    wasm, [&](Function* func, bool& noticesSegmentIdentity) {
       if (func->imported()) {
         return;
       }
-      hasMemoryInit = FindAll<MemoryInit>(func->body).list.size() > 0;
+      noticesSegmentIdentity =
+        FindAll<MemoryInit>(func->body).list.size() > 0 ||
+        FindAll<DataDrop>(func->body).list.size() > 0;
     });
 
-  for (auto& [func, hasMemoryInit] : analysis.map) {
-    if (hasMemoryInit) {
+  for (auto& [func, noticesSegmentIdentity] : analysis.map) {
+    if (noticesSegmentIdentity) {
       return false;
     }
   }
