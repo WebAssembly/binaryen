@@ -154,6 +154,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // A representation of the contents of wasm memory as we execute.
   std::unordered_map<Name, std::vector<char>> memories;
 
+  // All the names of globals we've seen in the module. We cannot reuse these.
+  // We must track these manually as we will be adding more, and as we do so we
+  // also reorder them, so we remove and re-add globals, which means the module
+  // itself is not aware of all the globals that belong to it (those that have
+  // not yet been re-added are a blind spot for it).
+  std::unordered_set<Name> usedGlobalNames;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
       {}) {
@@ -181,6 +188,10 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
         std::vector<char> data;
         memories[memory->name] = data;
       }
+    }
+
+    for (auto& global : wasm->globals) {
+      usedGlobalNames.insert(global->name);
     }
   }
 
@@ -526,20 +537,21 @@ private:
       Name name;
       if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
         // This has the properties we need of a defining global - immutable and
-        // of the precise type - so use it.
+        // of the precise type - so use it as such.
         name = oldGlobal->name;
       }
 
-      // If there is a value here to serialize, do so. (If there is no value,
-      // then this global was added after the interpreter initialized the
-      // module, which means it is a new global we've added since; we don't need
-      // to do anything for such a global - if it is needed it will show up as a
-      // dependency of something, and be emitted at the right time and place.)
+      // If the instance has an evalled value here, compute the serialization
+      // for it. (If there is no value, then this is a new global we've added
+      // during execution, for whom we've already set up a proper serialized
+      // value when we created it.)
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter != instance->globals.end()) {
         oldGlobal->init = getSerialization(iter->second, name);
-        wasm->addGlobal(std::move(oldGlobal));
       }
+
+      // Add the global back to the module.
+      wasm->addGlobal(std::move(oldGlobal));
     }
   }
 
@@ -616,7 +628,9 @@ public:
       }
 
       // Allocate a new defining global.
-      auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
+      auto name =
+        Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
+      usedGlobalNames.insert(name);
       wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
       definingGlobal = name;
     }
