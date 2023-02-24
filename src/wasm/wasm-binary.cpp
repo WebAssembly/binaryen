@@ -1572,8 +1572,8 @@ void WasmBinaryWriter::writeField(const Field& field) {
 WasmBinaryBuilder::WasmBinaryBuilder(Module& wasm,
                                      FeatureSet features,
                                      const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-    nextDebugLocation(0, {0, 0, 0}), debugLocation() {
+  : wasm(wasm), allocator(wasm.allocator), input(input),
+    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}}, debugLocation() {
   wasm.features = features;
 }
 
@@ -2741,7 +2741,7 @@ void WasmBinaryBuilder::readSourceMapHeader() {
 
   mustReadChar('\"');
   if (maybeReadChar('\"')) { // empty mappings
-    nextDebugLocation.first = 0;
+    nextDebugLocation.availablePos = 0;
     return;
   }
   // read first debug location
@@ -2750,7 +2750,8 @@ void WasmBinaryBuilder::readSourceMapHeader() {
   uint32_t lineNumber =
     readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
   uint32_t columnNumber = readBase64VLQ(*sourceMap);
-  nextDebugLocation = {position, {fileIndex, lineNumber, columnNumber}};
+  nextDebugLocation = {
+    position, position, {fileIndex, lineNumber, columnNumber}};
 }
 
 void WasmBinaryBuilder::readNextDebugLocation() {
@@ -2758,17 +2759,26 @@ void WasmBinaryBuilder::readNextDebugLocation() {
     return;
   }
 
-  while (nextDebugLocation.first && nextDebugLocation.first <= pos) {
+  if (nextDebugLocation.availablePos == 0 &&
+      nextDebugLocation.previousPos <= pos) {
+    // if source map file had already reached the end and cache position also
+    // cannot cover the pos clear the debug location
+    debugLocation.clear();
+    return;
+  }
+
+  while (nextDebugLocation.availablePos &&
+         nextDebugLocation.availablePos <= pos) {
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
-      debugLocation.insert(nextDebugLocation.second);
+      debugLocation.insert(nextDebugLocation.next);
     }
 
     char ch;
     *sourceMap >> ch;
     if (ch == '\"') { // end of records
-      nextDebugLocation.first = 0;
+      nextDebugLocation.availablePos = 0;
       break;
     }
     if (ch != ',') {
@@ -2776,16 +2786,18 @@ void WasmBinaryBuilder::readNextDebugLocation() {
     }
 
     int32_t positionDelta = readBase64VLQ(*sourceMap);
-    uint32_t position = nextDebugLocation.first + positionDelta;
+    uint32_t position = nextDebugLocation.availablePos + positionDelta;
     int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-    uint32_t fileIndex = nextDebugLocation.second.fileIndex + fileIndexDelta;
+    uint32_t fileIndex = nextDebugLocation.next.fileIndex + fileIndexDelta;
     int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber = nextDebugLocation.second.lineNumber + lineNumberDelta;
+    uint32_t lineNumber = nextDebugLocation.next.lineNumber + lineNumberDelta;
     int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
     uint32_t columnNumber =
-      nextDebugLocation.second.columnNumber + columnNumberDelta;
+      nextDebugLocation.next.columnNumber + columnNumberDelta;
 
-    nextDebugLocation = {position, {fileIndex, lineNumber, columnNumber}};
+    nextDebugLocation = {position,
+                         nextDebugLocation.availablePos,
+                         {fileIndex, lineNumber, columnNumber}};
   }
 }
 
