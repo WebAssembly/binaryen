@@ -1430,7 +1430,12 @@ class WasmBinaryBuilder {
   MixedArena& allocator;
   const std::vector<char>& input;
   std::istream* sourceMap;
-  std::tuple<uint32_t, uint32_t, Function::DebugLocation> nextDebugLocation; // available pos, previous pos, next debug location
+  struct NextDebugLocation {
+    uint32_t availablePos;
+    uint32_t previousPos;
+    Function::DebugLocation next;
+  };
+  NextDebugLocation nextDebugLocation;
   bool debugInfo = true;
   bool DWARF = false;
   bool skipFunctionBodies = false;
