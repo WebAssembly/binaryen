@@ -677,7 +677,7 @@ class FuzzExec(TestCaseHandler):
 
 
 class CompareVMs(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.66
 
     def __init__(self):
         super(CompareVMs, self).__init__()
@@ -887,7 +887,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before_wasm_temp = before_wasm + '.temp.wasm'
@@ -1013,7 +1013,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
@@ -1073,7 +1073,7 @@ class Asyncify(TestCaseHandler):
 # and the optimizer was free to make changes to observable behavior there. The
 # fuzzer therefore needs to ignore code that traps.
 class TrapsNeverHappen(TestCaseHandler):
-    frequency = 1
+    frequency = 0.5
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
@@ -1143,6 +1143,45 @@ class TrapsNeverHappen(TestCaseHandler):
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
 
+# Tests wasm-ctor-eval
+class CtorEval(TestCaseHandler):
+    frequency = 0.1
+
+    def handle(self, wasm):
+        # get the expected execution results.
+        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
+
+        # get the list of exports, so we can tell ctor-eval what to eval.
+        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        p = re.compile(r'^ [(]export "([\d\w$+-_:.]+)" [(]func')
+        exports = []
+        for line in wat.splitlines():
+            m = p.match(line)
+            if m:
+                export = m[1]
+                exports.append(export)
+        if not exports:
+            return
+        ctors = ','.join(exports)
+
+        # eval the wasm.
+        # we can use --ignore-external-input because the fuzzer passes in 0 to
+        # all params, which is the same as ctor-eval assumes in this mode.
+        evalled_wasm = wasm + '.evalled.wasm'
+        output = run([in_bin('wasm-ctor-eval'), wasm, '-o', evalled_wasm, '--ctors=' + ctors, '--kept-exports=' + ctors, '--ignore-external-input'] + FEATURE_OPTS)
+
+        # stop here if we could not eval anything at all in the module.
+        if '...stopping since could not flatten memory' in output or \
+           '...stopping since could not create module instance' in output:
+            return
+        if '...success' not in output and \
+           '...partial evalling success' not in output:
+            return
+        evalled_wasm_exec = run_bynterp(evalled_wasm, ['--fuzz-exec-before'])
+
+        compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1164,6 +1203,7 @@ testcase_handlers = [
     Wasm2JS(),
     Asyncify(),
     TrapsNeverHappen(),
+    CtorEval(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
