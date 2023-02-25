@@ -28,6 +28,9 @@
 //  * Remove writes to globals that are always assigned the same value.
 //  * Remove writes to globals that are only read from in order to write (see
 //    below, "readOnlyToWrite").
+//  * Optimize math in init/offset expressions in global locations, which often
+//    read global values, so optimization opportunities can arise from the
+//    previous improvements.
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
@@ -463,6 +466,8 @@ struct SimplifyGlobals : public Pass {
 
     propagateConstantsToCode();
 
+    optimizeInits();
+
     return more;
   }
 
@@ -602,6 +607,7 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
+      // TODO: walkModuleCode as well?
       GlobalUseModifier(&copiedParentMap).run(getPassRunner(), module);
     }
   }
@@ -640,8 +646,25 @@ struct SimplifyGlobals : public Pass {
         constantGlobals.insert(global->name);
       }
     }
-    ConstantGlobalApplier(&constantGlobals, optimize)
-      .run(getPassRunner(), module);
+    ConstantGlobalApplier applier(&constantGlobals, optimize);
+    applier.run(getPassRunner(), module);
+    applier.runOnModuleCode(getPassRunner(), module);
+  }
+
+  // Run basic optimization passes on global init expressions, which can contain
+  // math that is optimizable after the rest of this pass. For example, a global
+  // equal to $other + 1 might become optimizable if we infer a constant value
+  // for $other, as then it is just two added constants.
+  void optimizeInits() {
+    // Interesting math (add, etc.) only happens when we have the proper
+    // feature enabled.
+    if (!module->features.hasExtendedConst()) {
+      return;
+    }
+
+    PassRunner runner(getPassRunner());
+    runner.add("precompute");
+    runner.runOnModuleCode(module);
   }
 };
 

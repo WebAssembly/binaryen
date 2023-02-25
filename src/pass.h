@@ -347,11 +347,14 @@ struct PassRunner {
   // afterwards.
   void addDefaultGlobalOptimizationPostPasses();
 
-  // Run the passes on the module
+  // Run the passes on the module.
   void run();
 
-  // Run the passes on a specific function
+  // Run the passes on a specific function.
   void runOnFunction(Function* func);
+
+  // Run the passes on module-level code.
+  void runOnModuleCode(Module* module);
 
   // When running a pass runner within another pass runner, this
   // flag should be set. This influences how pass debugging works,
@@ -393,6 +396,7 @@ private:
 
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
+  void runPassOnModuleCode(Pass* pass, Module* module);
 
   // After running a pass, handle any changes due to
   // how the pass is defined, such as clearing away any
@@ -421,6 +425,11 @@ public:
   // Implement this with code to run the pass on a single function, for
   // a function-parallel pass
   virtual void runOnFunction(Module* module, Function* function) {
+    WASM_UNREACHABLE("unimplemented");
+  }
+
+  // Implement this with code to run the pass on module-level code.
+  virtual void runOnModuleCode(Module* module) {
     WASM_UNREACHABLE("unimplemented");
   }
 
@@ -539,9 +548,15 @@ public:
     runOnFunction(module, func);
   }
 
+  void runOnModuleCode(Module* module) override {
+    assert(getPassRunner());
+    WalkerType::walkModuleCode(module);
+  }
+
+  // Utility for ad-hoc running.
   void runOnModuleCode(PassRunner* runner, Module* module) {
     setPassRunner(runner);
-    WalkerType::walkModuleCode(module);
+    runOnModuleCode(module);
   }
 };
 
