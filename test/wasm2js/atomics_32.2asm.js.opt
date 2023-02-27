@@ -122,7 +122,7 @@ function asmFunc(imports) {
   wasm2js_memory_init(0, 512, 0, 4);
   wasm2js_memory_init(1, 1024, 4, 2);
   Atomics.notify(HEAP32, 1, 2);
-  Atomics.notify(HEAP32, 4 + 20 >> 2, 2);
+  Atomics.notify(HEAP32, 4 + 20 >> 2, 4294967295);
   Atomics.add(HEAP32, 2, 12);
   Atomics.sub(HEAP32, 2, 12);
   Atomics.and(HEAP32, 2, 12);

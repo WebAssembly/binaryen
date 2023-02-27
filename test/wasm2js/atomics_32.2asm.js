@@ -123,8 +123,8 @@ function asmFunc(imports) {
   wasm2js_atomic_wait_i32(4 | 0, 8 | 0, 16 | 0, -1 | 0, i64toi32_i32$0 | 0) | 0;
   wasm2js_memory_init(0, 512, 0, 4);
   wasm2js_memory_init(1, 1024, 4, 2);
-  Atomics.notify(HEAP32, 4 >> 2, 2);
-  Atomics.notify(HEAP32, (4 + 20 | 0) >> 2, 2);
+  Atomics.notify(HEAP32, 4 >> 2, 2 >>> 0);
+  Atomics.notify(HEAP32, (4 + 20 | 0) >> 2, -1 >>> 0);
   Atomics.add(HEAP32, 8 >> 2, 12);
   Atomics.sub(HEAP32, 8 >> 2, 12);
   Atomics.and(HEAP32, 8 >> 2, 12);

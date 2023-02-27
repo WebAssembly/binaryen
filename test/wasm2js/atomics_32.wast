@@ -16,7 +16,7 @@
     (memory.init 0 (i32.const 512) (i32.const 0) (i32.const 4))
     (memory.init 1 (i32.const 1024) (i32.const 4) (i32.const 2))
     (local.set $x (memory.atomic.notify (i32.const 4) (i32.const 2)))
-    (local.set $x (memory.atomic.notify offset=20 (i32.const 4) (i32.const 2)))
+    (local.set $x (memory.atomic.notify offset=20 (i32.const 4) (i32.const -1)))
     (local.set $x (i32.atomic.rmw.add (i32.const 8) (i32.const 12)))
     (local.set $x (i32.atomic.rmw.sub (i32.const 8) (i32.const 12)))
     (local.set $x (i32.atomic.rmw.and (i32.const 8) (i32.const 12)))

@@ -2135,8 +2135,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       ValueBuilder::appendToCall(
         call,
         ValueBuilder::makePtrShift(makePointer(curr->ptr, curr->offset), 2));
-      ValueBuilder::appendToCall(call,
-                                 visit(curr->notifyCount, EXPRESSION_RESULT));
+      ValueBuilder::appendToCall(
+        call,
+        makeSigning(visit(curr->notifyCount, EXPRESSION_RESULT), JS_UNSIGNED));
       return call;
     }
 
