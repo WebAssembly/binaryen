@@ -588,6 +588,10 @@ def run_vm(cmd):
             # all host limitations are arbitrary and may differ between VMs and also
             # be affected by optimizations, so ignore them.
             HOST_LIMIT_PREFIX,
+            # a host limit can also cause an exception to be thrown. when that
+            # happens, the host limit prefix may not be emitted to stdout in
+            # time before the process is killed, so look for that as well
+            "terminate called after throwing an instance of 'wasm::HostLimitException'",
         ]
         for issue in known_issues:
             if issue in output:
@@ -596,7 +600,7 @@ def run_vm(cmd):
 
     try:
         # some known issues do not cause the entire process to fail
-        return filter_known_issues(run(cmd))
+        return filter_known_issues(run(cmd, stderr=subprocess.STDOUT))
     except subprocess.CalledProcessError:
         # other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
@@ -673,7 +677,7 @@ class FuzzExec(TestCaseHandler):
     frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        run([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
+        run_vm([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
 
 
 class CompareVMs(TestCaseHandler):
