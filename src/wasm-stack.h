@@ -251,12 +251,12 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
     // `curr` is not reachable, so don't emit it.
     return;
   }
+  emitDebugLocation(curr);
   // Control flow requires special handling, but most instructions can be
   // emitted directly after their children.
   if (Properties::isControlFlowStructure(curr)) {
     Visitor<BinaryenIRWriter>::visit(curr);
   } else {
-    emitDebugLocation(curr);
     emit(curr);
   }
 }
