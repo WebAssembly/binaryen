@@ -167,7 +167,7 @@ function test_ids() {
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
   console.log("ArrayNewId: " + binaryen.ArrayNewId);
-  console.log("ArrayInitId: " + binaryen.ArrayInitId);
+  console.log("ArrayNewFixedId: " + binaryen.ArrayNewFixedId);
   console.log("ArrayGetId: " + binaryen.ArrayGetId);
   console.log("ArraySetId: " + binaryen.ArraySetId);
   console.log("ArrayLenId: " + binaryen.ArrayLenId);

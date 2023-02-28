@@ -2925,14 +2925,14 @@ Expression* SExpressionWasmBuilder::makeArrayNewSeg(Element& s,
   return Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayInitStatic(Element& s) {
+Expression* SExpressionWasmBuilder::makeArrayNewFixedStatic(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
   std::vector<Expression*> values;
   while (i < s.size()) {
     values.push_back(parseExpression(*s[i++]));
   }
-  return Builder(wasm).makeArrayInit(heapType, values);
+  return Builder(wasm).makeArrayNewFixed(heapType, values);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {

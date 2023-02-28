@@ -760,7 +760,7 @@ private:
       // segments.
       parent.implicitTrap = true;
     }
-    void visitArrayInit(ArrayInit* curr) {}
+    void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       if (curr->ref->type.isNull()) {
         parent.trap = true;

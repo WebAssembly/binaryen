@@ -948,9 +948,9 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayInit* makeArrayInit(HeapType type,
-                           const std::vector<Expression*>& values) {
-    auto* ret = wasm.allocator.alloc<ArrayInit>();
+  ArrayNewFixed* makeArrayNewFixed(HeapType type,
+                                   const std::vector<Expression*>& values) {
+    auto* ret = wasm.allocator.alloc<ArrayNewFixed>();
     ret->values.set(values);
     ret->type = Type(type, NonNullable);
     ret->finalize();

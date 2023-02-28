@@ -155,8 +155,8 @@ public:
     }
     return getHeapCreationFlow(flow, curr);
   }
-  Flow visitArrayInit(ArrayInit* curr) {
-    auto flow = Super::visitArrayInit(curr);
+  Flow visitArrayNewFixed(ArrayNewFixed* curr) {
+    auto flow = Super::visitArrayNewFixed(curr);
     if (flow.breaking()) {
       return flow;
     }

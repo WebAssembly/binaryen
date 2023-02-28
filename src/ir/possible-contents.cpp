@@ -910,7 +910,7 @@ struct InfoCollector
     }
     WASM_UNREACHABLE("unexpected op");
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }

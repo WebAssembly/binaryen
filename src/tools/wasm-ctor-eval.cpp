@@ -613,7 +613,7 @@ public:
         init = builder.makeStructNew(heapType, args);
       } else if (heapType.isArray()) {
         // TODO: for repeated identical values, can use ArrayNew
-        init = builder.makeArrayInit(heapType, args);
+        init = builder.makeArrayNewFixed(heapType, args);
       } else {
         WASM_UNREACHABLE("bad gc type");
       }

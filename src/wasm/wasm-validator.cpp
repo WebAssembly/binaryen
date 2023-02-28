@@ -456,7 +456,7 @@ public:
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
   void visitArrayNewSeg(ArrayNewSeg* curr);
-  void visitArrayInit(ArrayInit* curr);
+  void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
@@ -2774,7 +2774,7 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
   }
 }
 
-void FunctionValidator::visitArrayInit(ArrayInit* curr) {
+void FunctionValidator::visitArrayNewFixed(ArrayNewFixed* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "array.init requires gc [--enable-gc]");

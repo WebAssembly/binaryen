@@ -10,7 +10,7 @@ total
  [tags]         : 2       
  [total]        : 265     
  [vars]         : 28      
- ArrayInit      : 1       
+ ArrayNewFixed  : 1       
  Binary         : 55      
  Block          : 22      
  Call           : 3       
