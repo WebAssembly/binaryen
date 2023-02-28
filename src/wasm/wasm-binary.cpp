@@ -7111,7 +7111,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
 
 bool WasmBinaryBuilder::maybeVisitArrayNewFixed(Expression*& out,
                                                 uint32_t code) {
-  if (code == BinaryConsts::ArrayNewFixedStatic) {
+  if (code == BinaryConsts::ArrayNewFixed) {
     auto heapType = getIndexedHeapType();
     auto size = getU32LEB();
     std::vector<Expression*> values(size);

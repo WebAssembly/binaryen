@@ -1110,7 +1110,7 @@ enum ASTNodes {
   ArrayLenAnnotated = 0x17,
   ArrayCopy = 0x18,
   ArrayLen = 0x19,
-  ArrayNewFixedStatic = 0x1a,
+  ArrayNewFixed = 0x1a,
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
   ArrayNewData = 0x1d,

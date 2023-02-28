@@ -117,7 +117,7 @@
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.init_static $vector
+  ;; CHECK-NEXT:   (array.new_fixed $vector
   ;; CHECK-NEXT:    (f64.const 1)
   ;; CHECK-NEXT:    (f64.const 2)
   ;; CHECK-NEXT:    (f64.const 4)
@@ -127,7 +127,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $test (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.init_static $vector
+  ;; NOMNL-NEXT:   (array.new_fixed $vector
   ;; NOMNL-NEXT:    (f64.const 1)
   ;; NOMNL-NEXT:    (f64.const 2)
   ;; NOMNL-NEXT:    (f64.const 4)
@@ -137,7 +137,7 @@
   ;; NOMNL-NEXT: )
   (func $test
     (drop
-      (array.init_static $vector
+      (array.new_fixed $vector
         (f64.const 1)
         (f64.const 2)
         (f64.const 4)

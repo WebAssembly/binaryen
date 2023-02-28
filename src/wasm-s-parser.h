@@ -297,7 +297,7 @@ private:
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
   Expression* makeArrayNewSeg(Element& s, ArrayNewSegOp op);
-  Expression* makeArrayNewFixedStatic(Element& s);
+  Expression* makeArrayNewFixed(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);

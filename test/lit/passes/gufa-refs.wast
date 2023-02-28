@@ -877,7 +877,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (array.init_static $vector
+  ;; CHECK-NEXT:    (array.new_fixed $vector
   ;; CHECK-NEXT:     (f64.const 1.1)
   ;; CHECK-NEXT:     (f64.const 2.2)
   ;; CHECK-NEXT:    )
@@ -905,7 +905,7 @@
     )
     (drop
       (ref.as_non_null
-        (array.init_static $vector
+        (array.new_fixed $vector
           (f64.const 1.1)
           (f64.const 2.2)
         )
@@ -3680,14 +3680,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.init_static $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.init_static $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3719,12 +3719,12 @@
     ;; which means two things are possible in $chars, and we can't optimize
     ;; there.
     (local.set $bytes
-      (array.init_static $bytes
+      (array.new_fixed $bytes
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.init_static $chars
+      (array.new_fixed $chars
         (ref.null any)
       )
     )
@@ -3765,14 +3765,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.init_static $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.init_static $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3805,12 +3805,12 @@
     (local $bytes (ref null $bytes))
     (local $chars (ref null $chars))
     (local.set $bytes
-      (array.init_static $bytes
+      (array.new_fixed $bytes
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.init_static $chars
+      (array.new_fixed $chars
         (ref.null any)
       )
     )
@@ -4147,7 +4147,7 @@
   ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.len
-  ;; CHECK-NEXT:    (array.init_static $B
+  ;; CHECK-NEXT:    (array.new_fixed $B
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -4157,7 +4157,7 @@
   (func $arrays (param $B (ref $B))
     (drop
       (array.len $B
-        (array.init_static $B
+        (array.new_fixed $B
           (ref.null none)
           (ref.null none)
         )

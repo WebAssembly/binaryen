@@ -2076,7 +2076,7 @@
 
   ;; CHECK:      (type $ref?|$object|_=>_funcref (func (param (ref null $object)) (result funcref)))
 
-  ;; CHECK:      (global $global (ref $itable) (array.init_static $itable
+  ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable
   ;; CHECK-NEXT:  (struct.new $vtable
   ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
@@ -2084,7 +2084,7 @@
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
-  (global $global (ref $itable) (array.init_static $itable
+  (global $global (ref $itable) (array.new_fixed $itable
     (struct.new $vtable
       (ref.null func)
     )
