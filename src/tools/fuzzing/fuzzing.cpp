@@ -2099,7 +2099,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // --nominal mode.
       static HeapType trivialArray =
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-      return builder.makeArrayInit(trivialArray, {});
+      return builder.makeArrayNewFixed(trivialArray, {});
     }
     case HeapType::string:
       return builder.makeStringConst(std::to_string(upTo(1024)));

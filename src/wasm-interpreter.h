@@ -1635,8 +1635,8 @@ public:
                    curr->type.getHeapType());
   }
   Flow visitArrayNewSeg(ArrayNewSeg* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitArrayInit(ArrayInit* curr) {
-    NOTE_ENTER("ArrayInit");
+  Flow visitArrayNewFixed(ArrayNewFixed* curr) {
+    NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
     if (num >= ArrayLimit) {
       hostLimit("allocation failure");

@@ -1081,10 +1081,10 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
 // TODO: BinaryenArrayNewSeg
 
 BINARYEN_API BinaryenExpressionRef
-BinaryenArrayInit(BinaryenModuleRef module,
-                  BinaryenHeapType type,
-                  BinaryenExpressionRef* values,
-                  BinaryenIndex numValues);
+BinaryenArrayNewFixed(BinaryenModuleRef module,
+                      BinaryenHeapType type,
+                      BinaryenExpressionRef* values,
+                      BinaryenIndex numValues);
 BINARYEN_API BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
                                                     BinaryenExpressionRef ref,
                                                     BinaryenExpressionRef index,
@@ -2453,23 +2453,24 @@ BinaryenArrayNewGetSize(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenArrayNewSetSize(BinaryenExpressionRef expr,
                                           BinaryenExpressionRef sizeExpr);
 
-// ArrayInit
+// ArrayNewFixed
 
 BINARYEN_API BinaryenIndex
-BinaryenArrayInitGetNumValues(BinaryenExpressionRef expr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenArrayInitGetValueAt(BinaryenExpressionRef expr, BinaryenIndex index);
-BINARYEN_API void BinaryenArrayInitSetValueAt(BinaryenExpressionRef expr,
-                                              BinaryenIndex index,
-                                              BinaryenExpressionRef valueExpr);
-BINARYEN_API BinaryenIndex BinaryenArrayInitAppendValue(
+BinaryenArrayNewFixedGetNumValues(BinaryenExpressionRef expr);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayNewFixedGetValueAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
+BINARYEN_API void
+BinaryenArrayNewFixedSetValueAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index,
+                                BinaryenExpressionRef valueExpr);
+BINARYEN_API BinaryenIndex BinaryenArrayNewFixedAppendValue(
   BinaryenExpressionRef expr, BinaryenExpressionRef valueExpr);
 BINARYEN_API void
-BinaryenArrayInitInsertValueAt(BinaryenExpressionRef expr,
-                               BinaryenIndex index,
-                               BinaryenExpressionRef valueExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenArrayInitRemoveValueAt(BinaryenExpressionRef expr, BinaryenIndex index);
+BinaryenArrayNewFixedInsertValueAt(BinaryenExpressionRef expr,
+                                   BinaryenIndex index,
+                                   BinaryenExpressionRef valueExpr);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayNewFixedRemoveValueAt(
+  BinaryenExpressionRef expr, BinaryenIndex index);
 
 // ArrayGet
 

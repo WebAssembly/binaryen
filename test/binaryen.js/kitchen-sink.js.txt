@@ -97,7 +97,7 @@ StructNewId: 60
 StructGetId: 61
 StructSetId: 62
 ArrayNewId: 63
-ArrayInitId: 65
+ArrayNewFixedId: 65
 ArrayGetId: 66
 ArraySetId: 67
 ArrayLenId: 68

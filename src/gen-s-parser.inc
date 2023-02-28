@@ -36,7 +36,7 @@ switch (buf[0]) {
             }
           }
           case 'i':
-            if (op == "array.init_static"sv) { return makeArrayInitStatic(s); }
+            if (op == "array.init_static"sv) { return makeArrayNewFixedStatic(s); }
             goto parse_error;
           case 'l':
             if (op == "array.len"sv) { return makeArrayLen(s); }
@@ -3637,7 +3637,7 @@ switch (buf[0]) {
           }
           case 'i':
             if (op == "array.init_static"sv) {
-              auto ret = makeArrayInitStatic(ctx, pos);
+              auto ret = makeArrayNewFixedStatic(ctx, pos);
               CHECK_ERR(ret);
               return *ret;
             }

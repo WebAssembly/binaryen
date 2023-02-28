@@ -1825,16 +1825,16 @@ BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
     Builder(*(Module*)module)
       .makeArrayNew(HeapType(type), (Expression*)size, (Expression*)init));
 }
-BinaryenExpressionRef BinaryenArrayInit(BinaryenModuleRef module,
-                                        BinaryenHeapType type,
-                                        BinaryenExpressionRef* values,
-                                        BinaryenIndex numValues) {
+BinaryenExpressionRef BinaryenArrayNewFixed(BinaryenModuleRef module,
+                                            BinaryenHeapType type,
+                                            BinaryenExpressionRef* values,
+                                            BinaryenIndex numValues) {
   std::vector<Expression*> vals;
   for (BinaryenIndex i = 0; i < numValues; i++) {
     vals.push_back((Expression*)values[i]);
   }
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeArrayInit(HeapType(type), vals));
+    Builder(*(Module*)module).makeArrayNewFixed(HeapType(type), vals));
 }
 BinaryenExpressionRef BinaryenArrayGet(BinaryenModuleRef module,
                                        BinaryenExpressionRef ref,
@@ -4293,52 +4293,56 @@ void BinaryenArrayNewSetSize(BinaryenExpressionRef expr,
   assert(sizeExpr);
   static_cast<ArrayNew*>(expression)->size = (Expression*)sizeExpr;
 }
-// ArrayInit
-BinaryenIndex BinaryenArrayInitGetNumValues(BinaryenExpressionRef expr) {
+// ArrayNewFixed
+BinaryenIndex BinaryenArrayNewFixedGetNumValues(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
-  return static_cast<ArrayInit*>(expression)->values.size();
+  assert(expression->is<ArrayNewFixed>());
+  return static_cast<ArrayNewFixed*>(expression)->values.size();
 }
-BinaryenExpressionRef BinaryenArrayInitGetValueAt(BinaryenExpressionRef expr,
-                                                  BinaryenIndex index) {
+BinaryenExpressionRef
+BinaryenArrayNewFixedGetValueAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
-  assert(index < static_cast<ArrayInit*>(expression)->values.size());
-  return static_cast<ArrayInit*>(expression)->values[index];
+  assert(expression->is<ArrayNewFixed>());
+  assert(index < static_cast<ArrayNewFixed*>(expression)->values.size());
+  return static_cast<ArrayNewFixed*>(expression)->values[index];
 }
-void BinaryenArrayInitSetValueAt(BinaryenExpressionRef expr,
-                                 BinaryenIndex index,
+void BinaryenArrayNewFixedSetValueAt(BinaryenExpressionRef expr,
+                                     BinaryenIndex index,
+                                     BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<ArrayNewFixed>());
+  assert(index < static_cast<ArrayNewFixed*>(expression)->values.size());
+  assert(valueExpr);
+  static_cast<ArrayNewFixed*>(expression)->values[index] =
+    (Expression*)valueExpr;
+}
+BinaryenIndex
+BinaryenArrayNewFixedAppendValue(BinaryenExpressionRef expr,
                                  BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
-  assert(index < static_cast<ArrayInit*>(expression)->values.size());
+  assert(expression->is<ArrayNewFixed>());
   assert(valueExpr);
-  static_cast<ArrayInit*>(expression)->values[index] = (Expression*)valueExpr;
-}
-BinaryenIndex BinaryenArrayInitAppendValue(BinaryenExpressionRef expr,
-                                           BinaryenExpressionRef valueExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
-  assert(valueExpr);
-  auto& list = static_cast<ArrayInit*>(expression)->values;
+  auto& list = static_cast<ArrayNewFixed*>(expression)->values;
   auto index = list.size();
   list.push_back((Expression*)valueExpr);
   return index;
 }
-void BinaryenArrayInitInsertValueAt(BinaryenExpressionRef expr,
-                                    BinaryenIndex index,
-                                    BinaryenExpressionRef valueExpr) {
+void BinaryenArrayNewFixedInsertValueAt(BinaryenExpressionRef expr,
+                                        BinaryenIndex index,
+                                        BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
+  assert(expression->is<ArrayNewFixed>());
   assert(valueExpr);
-  static_cast<ArrayInit*>(expression)
+  static_cast<ArrayNewFixed*>(expression)
     ->values.insertAt(index, (Expression*)valueExpr);
 }
-BinaryenExpressionRef BinaryenArrayInitRemoveValueAt(BinaryenExpressionRef expr,
-                                                     BinaryenIndex index) {
+BinaryenExpressionRef
+BinaryenArrayNewFixedRemoveValueAt(BinaryenExpressionRef expr,
+                                   BinaryenIndex index) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<ArrayInit>());
-  return static_cast<ArrayInit*>(expression)->values.removeAt(index);
+  assert(expression->is<ArrayNewFixed>());
+  return static_cast<ArrayNewFixed*>(expression)->values.removeAt(index);
 }
 // ArrayGet
 BinaryenExpressionRef BinaryenArrayGetGetRef(BinaryenExpressionRef expr) {

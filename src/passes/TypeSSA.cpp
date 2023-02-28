@@ -68,7 +68,7 @@ struct NewFinder : public PostWalker<NewFinder> {
   void visitStructNew(StructNew* curr) { news.push_back(curr); }
   void visitArrayNew(ArrayNew* curr) { news.push_back(curr); }
   void visitArrayNewSeg(ArrayNewSeg* curr) { news.push_back(curr); }
-  void visitArrayInit(ArrayInit* curr) { news.push_back(curr); }
+  void visitArrayNewFixed(ArrayNewFixed* curr) { news.push_back(curr); }
 };
 
 struct TypeSSA : public Pass {
@@ -289,7 +289,7 @@ struct TypeSSA : public Pass {
     } else if (curr->is<ArrayNewSeg>()) {
       // TODO: If the element segment is immutable perhaps we could inspect it.
       return true;
-    } else if (auto* arrayInit = curr->dynCast<ArrayInit>()) {
+    } else if (auto* arrayInit = curr->dynCast<ArrayNewFixed>()) {
       // All the items must be interesting for us to consider this interesting,
       // as we only track a single value for all indexes in the array, so one
       // boring value means it is all boring.
