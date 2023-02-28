@@ -109,6 +109,7 @@ private:
 
   std::vector<Type> loggableTypes;
 
+  // The heap types we can pick from to generate instructions.
   std::vector<HeapType> heapTypes;
 
   Index numAddedFunctions = 0;
