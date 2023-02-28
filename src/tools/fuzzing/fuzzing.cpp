@@ -3071,10 +3071,20 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
-  if (wasm.features.hasGC() && oneIn(2)) {
-    return getEqReferenceType();
+  if (wasm.features.hasGC()) {
+    // With 50% chance try to pick a non-basic type, in one of type ways.
+    switch (oneIn(4)) {
+      case 0:
+        // Get something of type eq or a subtype.
+        return getEqReferenceType();
+      case 1:
+        // Get something, anything at all, from the existing heap types.
+        return Type(pick(heapTypes), getNullability());
+      default:
+        // Continue below.
+        break;
   }
-  // Pick a non-eq reference type.
+  // Pick a non-eq basic reference type.
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
@@ -3086,15 +3096,14 @@ Type TranslateToFuzzReader::getReferenceType() {
 
 Type TranslateToFuzzReader::getEqReferenceType() {
   if (oneIn(2)) {
-    // Pick from the heap types in the module.
+    // Try to pick from the heap types in the module.
     auto heapType = pick(heapTypes);
     if (HeapType::isSubType(heapType, HeapType::eq)) {
-      auto nullability = oneIn(2) ? Nullable : NonNullable;
-      return Type(heapType, nullability);
+      return Type(heapType, getNullability());
     }
     // Otherwise continue below.
   }
-  // Pick from the basic heap types that are always available.
+  // Pick a basic heap type.
   return pick(
     FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                                Type(HeapType::eq, Nullable),
@@ -3158,10 +3167,7 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
          loggableTypes.end();
 }
 
-Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
-  if (nullability == NonNullable) {
-    return NonNullable;
-  }
+Nullability TranslateToFuzzReader::getNullability() {
   // Without wasm GC, avoid non-nullable types as we cannot create any values
   // of such types. For example, reference types adds eqref, but there is no
   // way to create such a value, only to receive it from the outside, while GC
@@ -3174,7 +3180,15 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   return Nullable;
 }
 
+Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
+  if (nullability == NonNullable) {
+    return NonNullable;
+  }
+  return getNullability();
+}
+
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  // TODO: pick from heapTypes
   if (oneIn(2)) {
     return type;
   }
