@@ -593,7 +593,7 @@ instructions = [
     ("array.new_default",    "makeArrayNew(s, true)"),
     ("array.new_data",       "makeArrayNewSeg(s, NewData)"),
     ("array.new_elem",       "makeArrayNewSeg(s, NewElem)"),
-    ("array.init_static",    "makeArrayNewFixed(s)"), # deprecated
+    ("array.init_static",    "makeArrayNewFixed(s)"),  # deprecated
     ("array.new_fixed",      "makeArrayNewFixed(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),
