@@ -3083,6 +3083,7 @@ Type TranslateToFuzzReader::getReferenceType() {
       default:
         // Continue below.
         break;
+    }
   }
   // Pick a non-eq basic reference type.
   return pick(FeatureOptions<Type>()
