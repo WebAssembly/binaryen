@@ -672,10 +672,10 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayNewSeg);
     break;
   }
-  case Expression::Id::ArrayInitId: {
-    DELEGATE_START(ArrayInit);
-    DELEGATE_FIELD_CHILD_VECTOR(ArrayInit, values);
-    DELEGATE_END(ArrayInit);
+  case Expression::Id::ArrayNewFixedId: {
+    DELEGATE_START(ArrayNewFixed);
+    DELEGATE_FIELD_CHILD_VECTOR(ArrayNewFixed, values);
+    DELEGATE_END(ArrayNewFixed);
     break;
   }
   case Expression::Id::ArrayGetId: {

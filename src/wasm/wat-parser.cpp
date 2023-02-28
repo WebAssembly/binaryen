@@ -2365,7 +2365,7 @@ Result<typename Ctx::InstrT> makeArrayNew(Ctx&, Index, bool default_);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNewSeg(Ctx&, Index, ArrayNewSegOp op);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx&, Index);
+Result<typename Ctx::InstrT> makeArrayNewFixedStatic(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayGet(Ctx&, Index, bool signed_ = false);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx&, Index);
@@ -3525,7 +3525,7 @@ makeArrayNewSeg(Ctx& ctx, Index pos, ArrayNewSegOp op) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInitStatic(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeArrayNewFixedStatic(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

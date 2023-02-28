@@ -2193,9 +2193,9 @@ void BinaryInstWriter::visitArrayNewSeg(ArrayNewSeg* curr) {
   o << U32LEB(curr->segment);
 }
 
-void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
+void BinaryInstWriter::visitArrayNewFixed(ArrayNewFixed* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  o << U32LEB(BinaryConsts::ArrayInitStatic);
+  o << U32LEB(BinaryConsts::ArrayNewFixedStatic);
   parent.writeIndexedHeapType(curr->type.getHeapType());
   o << U32LEB(curr->values.size());
 }

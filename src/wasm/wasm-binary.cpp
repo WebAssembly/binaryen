@@ -3987,7 +3987,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayNewSeg(curr, opcode)) {
         break;
       }
-      if (maybeVisitArrayInit(curr, opcode)) {
+      if (maybeVisitArrayNewFixed(curr, opcode)) {
         break;
       }
       if (maybeVisitArrayGet(curr, opcode)) {
@@ -7109,15 +7109,16 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
   return false;
 }
 
-bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::ArrayInitStatic) {
+bool WasmBinaryBuilder::maybeVisitArrayNewFixed(Expression*& out,
+                                                uint32_t code) {
+  if (code == BinaryConsts::ArrayNewFixedStatic) {
     auto heapType = getIndexedHeapType();
     auto size = getU32LEB();
     std::vector<Expression*> values(size);
     for (size_t i = 0; i < size; i++) {
       values[size - i - 1] = popNonVoidExpression();
     }
-    out = Builder(wasm).makeArrayInit(heapType, values);
+    out = Builder(wasm).makeArrayNewFixed(heapType, values);
     return true;
   }
   return false;

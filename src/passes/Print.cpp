@@ -2285,7 +2285,7 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
     o << ' ' << curr->segment;
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
@@ -2895,7 +2895,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayNewSeg(ArrayNewSeg* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArraySet(ArraySet* curr) {

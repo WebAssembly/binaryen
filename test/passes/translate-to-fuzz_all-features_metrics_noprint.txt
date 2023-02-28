@@ -10,7 +10,7 @@ total
  [tags]         : 1       
  [total]        : 877     
  [vars]         : 40      
- ArrayInit      : 11      
+ ArrayNewFixed  : 11      
  AtomicFence    : 1       
  Binary         : 85      
  Block          : 139     

@@ -717,7 +717,7 @@ public:
     StructSetId,
     ArrayNewId,
     ArrayNewSegId,
-    ArrayInitId,
+    ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
@@ -1615,9 +1615,9 @@ public:
   void finalize();
 };
 
-class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+class ArrayNewFixed : public SpecificExpression<Expression::ArrayNewFixedId> {
 public:
-  ArrayInit(MixedArena& allocator) : values(allocator) {}
+  ArrayNewFixed(MixedArena& allocator) : values(allocator) {}
 
   ExpressionList values;
 

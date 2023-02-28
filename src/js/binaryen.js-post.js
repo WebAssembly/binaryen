@@ -115,7 +115,7 @@ function initializeConstants() {
     'StructGet',
     'StructSet',
     'ArrayNew',
-    'ArrayInit',
+    'ArrayNewFixed',
     'ArrayGet',
     'ArraySet',
     'ArrayLen',

@@ -1063,7 +1063,7 @@ void ArrayNewSeg::finalize() {
   }
 }
 
-void ArrayInit::finalize() {
+void ArrayNewFixed::finalize() {
   for (auto* value : values) {
     if (value->type == Type::unreachable) {
       type = Type::unreachable;
