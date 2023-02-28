@@ -600,7 +600,7 @@ def run_vm(cmd):
 
     try:
         # some known issues do not cause the entire process to fail
-        return filter_known_issues(run(cmd, stderr=subprocess.STDOUT))
+        return filter_known_issues(run(cmd))
     except subprocess.CalledProcessError:
         # other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
