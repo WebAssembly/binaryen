@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
@@ -168,6 +169,7 @@ void TranslateToFuzzReader::build() {
   if (allowMemory) {
     setupMemory();
   }
+  setupHeapTypes();
   setupTables();
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
@@ -268,6 +270,14 @@ void TranslateToFuzzReader::setupMemory() {
     wasm.addExport(builder.makeExport(
       "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
+}
+
+void TranslateToFuzzReader::setupHeapTypes() {
+  // Start with any existing heap types in the module, which may exist in any
+  // initial content we began with.
+  heapTypes = ModuleUtils::collectHeapTypes(wasm);
+
+  // TODO: use heap type fuzzer to add new types in addition to the previous
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
@@ -3043,9 +3053,10 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  // TODO: Nontrivial reference types.
-  // Skip (ref func), (ref extern), and (ref i31) for now
-  // because there is no way to create them in globals. TODO.
+  if (wasm.features.hasReferenceTypes() && oneIn(3)) {
+    return getReferenceType();
+  }
+  // Pick a non-reference type.
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::MVP,
@@ -3056,40 +3067,34 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
-                     Type(HeapType::ext, Nullable))
-                .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                     // Type(HeapType::func, NonNullable),
-                     // Type(HeapType::ext, NonNullable),
-                     Type(HeapType::any, Nullable),
-                     // Type(HeapType::any, NonNullable),
-                     Type(HeapType::eq, Nullable),
-                     Type(HeapType::eq, NonNullable),
-                     Type(HeapType::i31, Nullable),
-                     // Type(HeapType::i31, NonNullable),
-                     Type(HeapType::struct_, Nullable),
-                     Type(HeapType::struct_, NonNullable),
-                     Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::ext, Nullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
+  if (wasm.features.hasGC() && oneIn(2)) {
+    return getEqReferenceType();
+  }
+  // Pick a non-eq reference type.
   return pick(FeatureOptions<Type>()
-                // TODO: Add externref here.
-                .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
+                .add(FeatureSet::ReferenceTypes,
+                     Type(HeapType::func, Nullable),
+                     Type(HeapType::ext, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
-                     Type(HeapType::any, NonNullable),
-                     Type(HeapType::eq, Nullable),
-                     Type(HeapType::eq, NonNullable),
-                     Type(HeapType::i31, Nullable),
-                     Type(HeapType::i31, NonNullable),
-                     Type(HeapType::struct_, Nullable),
-                     Type(HeapType::struct_, NonNullable),
-                     Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::any, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
+  if (oneIn(2)) {
+    // Pick from the heap types in the module.
+    auto heapType = pick(heapTypes);
+    if (HeapType::isSubType(heapType, HeapType::eq)) {
+      auto nullability = oneIn(2) ? Nullable : NonNullable;
+      return Type(heapType, nullability);
+    }
+    // Otherwise continue below.
+  }
+  // Pick from the basic heap types that are always available.
   return pick(
     FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                                Type(HeapType::eq, Nullable),

@@ -109,6 +109,8 @@ private:
 
   std::vector<Type> loggableTypes;
 
+  std::vector<HeapType> heapTypes;
+
   Index numAddedFunctions = 0;
 
   // RAII helper for managing the state used to create a single function.
