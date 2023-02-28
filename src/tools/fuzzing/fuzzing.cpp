@@ -3073,7 +3073,7 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 Type TranslateToFuzzReader::getReferenceType() {
   if (wasm.features.hasGC()) {
     // With 50% chance try to pick a non-basic type, in one of type ways.
-    switch (oneIn(4)) {
+    switch (upTo(4)) {
       case 0:
         // Get something of type eq or a subtype.
         return getEqReferenceType();
