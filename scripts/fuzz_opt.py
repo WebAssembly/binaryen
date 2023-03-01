@@ -588,10 +588,6 @@ def run_vm(cmd):
             # all host limitations are arbitrary and may differ between VMs and also
             # be affected by optimizations, so ignore them.
             HOST_LIMIT_PREFIX,
-            # a host limit can also cause an exception to be thrown. when that
-            # happens, the host limit prefix may not be emitted to stdout in
-            # time before the process is killed, so look for that as well
-            "terminate called after throwing an instance of 'wasm::HostLimitException'",
         ]
         for issue in known_issues:
             if issue in output:
