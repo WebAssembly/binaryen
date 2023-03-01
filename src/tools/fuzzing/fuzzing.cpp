@@ -2166,6 +2166,7 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
         })) {
       // There is a nondefaultable field, which we must create.
       for (auto& field : fields) {
+        // TODO: when in a function context, we don't need to be trivial.
         values.push_back(makeTrivial(field.type));
       }
     }
@@ -2174,6 +2175,7 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
     auto element = heapType.getArray().element;
     Expression* init = nullptr;
     if (!element.type.isDefaultable()) {
+      // TODO: when in a function context, we don't need to be trivial.
       init = makeTrivial(element.type);
     }
     return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32), init);
