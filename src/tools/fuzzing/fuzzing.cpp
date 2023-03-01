@@ -3080,10 +3080,9 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  if (wasm.features.hasReferenceTypes() && oneIn(3)) {
-    return getReferenceType();
-  }
-  // Pick a non-reference type.
+  // TODO: Nontrivial reference types.
+  // Skip (ref func), (ref extern), and (ref i31) for now
+  // because there is no way to create them in globals. TODO.
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
   return pick(FeatureOptions<Type>()
                 .add(FeatureSet::MVP,
@@ -3094,44 +3093,40 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                 .add(FeatureSet::SIMD, WeightedOption{Type::v128, Important})
                 .add(FeatureSet::ReferenceTypes,
                      Type(HeapType::func, Nullable),
-                     Type(HeapType::ext, Nullable)));
+                     Type(HeapType::ext, Nullable))
+                .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                     // Type(HeapType::func, NonNullable),
+                     // Type(HeapType::ext, NonNullable),
+                     Type(HeapType::any, Nullable),
+                     // Type(HeapType::any, NonNullable),
+                     Type(HeapType::eq, Nullable),
+                     Type(HeapType::eq, NonNullable),
+                     Type(HeapType::i31, Nullable),
+                     // Type(HeapType::i31, NonNullable),
+                     Type(HeapType::struct_, Nullable),
+                     Type(HeapType::struct_, NonNullable),
+                     Type(HeapType::array, Nullable),
+                     Type(HeapType::array, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
-  if (wasm.features.hasGC()) {
-    // With 50% chance try to pick a non-basic type, in one of type ways.
-    switch (upTo(4)) {
-      case 0:
-        // Get something of type eq or a subtype.
-        return getEqReferenceType();
-      case 1:
-        // Get something, anything at all, from the existing heap types.
-        return Type(pick(heapTypes), getNullability());
-      default:
-        // Continue below.
-        break;
-    }
-  }
-  // Pick a non-eq basic reference type.
   return pick(FeatureOptions<Type>()
-                .add(FeatureSet::ReferenceTypes,
-                     Type(HeapType::func, Nullable),
-                     Type(HeapType::ext, Nullable))
+                // TODO: Add externref here.
+                .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
                 .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                      Type(HeapType::func, NonNullable),
-                     Type(HeapType::any, NonNullable)));
+                     Type(HeapType::any, NonNullable),
+                     Type(HeapType::eq, Nullable),
+                     Type(HeapType::eq, NonNullable),
+                     Type(HeapType::i31, Nullable),
+                     Type(HeapType::i31, NonNullable),
+                     Type(HeapType::struct_, Nullable),
+                     Type(HeapType::struct_, NonNullable),
+                     Type(HeapType::array, Nullable),
+                     Type(HeapType::array, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
-  if (oneIn(2)) {
-    // Try to pick from the heap types in the module.
-    auto heapType = pick(heapTypes);
-    if (HeapType::isSubType(heapType, HeapType::eq)) {
-      return Type(heapType, getNullability());
-    }
-    // Otherwise continue below.
-  }
-  // Pick a basic heap type.
   return pick(
     FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                                Type(HeapType::eq, Nullable),
