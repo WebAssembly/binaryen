@@ -1984,7 +1984,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // but only rarely if the type is non-nullable (because in that case we'd need
   // to add a ref.as_non_null to validate, and the code will trap when we get
   // here).
-  if ((type.isNullable() && oneIn(2)) || (type.isNonNullable() && oneIn(16))) {
+  if ((type.isNullable() && oneIn(2)) ||
+      (type.isNonNullable() && oneIn(16) && funcContext)) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
       ret = builder.makeRefAs(RefAsNonNull, ret);
