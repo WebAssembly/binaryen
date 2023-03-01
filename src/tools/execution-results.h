@@ -137,7 +137,6 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
-      // may throw in instance creation (init of offsets)
     }
   }
 
