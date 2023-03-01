@@ -132,6 +132,8 @@ struct ExecutionResults {
       }
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
+    } catch (const HostLimitException&) {
+      // may throw in instance creation (e.g. array.new of huge size)
     }
   }
 
@@ -220,6 +222,9 @@ struct ExecutionResults {
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)
+      return {};
+    } catch (const HostLimitException&) {
+      // may throw in instance creation (e.g. array.new of huge size)
       return {};
     }
   }
