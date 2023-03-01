@@ -2925,7 +2925,7 @@ Expression* SExpressionWasmBuilder::makeArrayNewSeg(Element& s,
   return Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNewFixedStatic(Element& s) {
+Expression* SExpressionWasmBuilder::makeArrayNewFixed(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
   std::vector<Expression*> values;

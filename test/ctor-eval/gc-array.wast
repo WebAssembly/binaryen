@@ -5,7 +5,7 @@
 
   ;; This global will remain as it is.
   (global $global1 (ref $array)
-    (array.init_static $array
+    (array.new_fixed $array
       (i32.const 10)
       (i32.const 20)
       (i32.const 30)
@@ -14,7 +14,7 @@
   )
 
   (global $global2 (ref $array)
-    (array.init_static $array
+    (array.new_fixed $array
       (i32.const 42)
       ;; This location will be written with a new value, 1337
       (i32.const 0)

@@ -301,7 +301,7 @@
   )
  )
  (func $16 (type $none_=>_ref|[mut:f64]|) (result (ref $[mut:f64]))
-  (array.init_static $[mut:f64]
+  (array.new_fixed $[mut:f64]
    (f64.const 1)
    (f64.const 2)
    (f64.const 4)
@@ -309,7 +309,7 @@
   )
  )
  (func $17 (type $none_=>_ref|[mut:i8]|) (result (ref $[mut:i8]))
-  (array.init_static $[mut:i8]
+  (array.new_fixed $[mut:i8]
    (i32.const 4)
    (i32.const 2)
    (i32.const 1)

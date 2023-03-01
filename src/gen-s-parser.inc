@@ -36,7 +36,7 @@ switch (buf[0]) {
             }
           }
           case 'i':
-            if (op == "array.init_static"sv) { return makeArrayNewFixedStatic(s); }
+            if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
             goto parse_error;
           case 'l':
             if (op == "array.len"sv) { return makeArrayLen(s); }
@@ -61,6 +61,9 @@ switch (buf[0]) {
                   }
                   case 'e':
                     if (op == "array.new_elem"sv) { return makeArrayNewSeg(s, NewElem); }
+                    goto parse_error;
+                  case 'f':
+                    if (op == "array.new_fixed"sv) { return makeArrayNewFixed(s); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3637,7 +3640,7 @@ switch (buf[0]) {
           }
           case 'i':
             if (op == "array.init_static"sv) {
-              auto ret = makeArrayNewFixedStatic(ctx, pos);
+              auto ret = makeArrayNewFixed(ctx, pos);
               CHECK_ERR(ret);
               return *ret;
             }
@@ -3682,6 +3685,13 @@ switch (buf[0]) {
                   case 'e':
                     if (op == "array.new_elem"sv) {
                       auto ret = makeArrayNewSeg(ctx, pos, NewElem);
+                      CHECK_ERR(ret);
+                      return *ret;
+                    }
+                    goto parse_error;
+                  case 'f':
+                    if (op == "array.new_fixed"sv) {
+                      auto ret = makeArrayNewFixed(ctx, pos);
                       CHECK_ERR(ret);
                       return *ret;
                     }

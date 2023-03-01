@@ -271,10 +271,10 @@
    (array.get_u $bytes (local.get $x) (i32.const 12))
   )
  )
- (func "array.init_static"
+ (func "array.new_fixed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.init_static $bytes
+   (array.new_fixed $bytes
     (i32.const 42) ;; first value
     (i32.const 50) ;; second value
    )
@@ -292,10 +292,10 @@
    (array.get_u $bytes (local.get $x) (i32.const 1))
   )
  )
- (func "array.init_static-packed"
+ (func "array.new_fixed-packed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.init_static $bytes
+   (array.new_fixed $bytes
     (i32.const -11512)
    )
   )

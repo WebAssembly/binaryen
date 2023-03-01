@@ -2289,7 +2289,7 @@ struct PrintExpressionContents
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.init_static");
+    printMedium(o, "array.new_fixed");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
