@@ -1045,7 +1045,7 @@ FeatureSet Type::getFeatures() const {
       // particular, since during load of the wasm we don't know the features
       // yet, so we apply the more refined types), so we don't add that in any
       // case here.
-      FeatureSet feats = FeatureSet::ReferenceTypes;
+      auto feats = FeatureSet::ReferenceTypes;
       if (heapType.getSignature().results.isTuple()) {
         feats |= FeatureSet::Multivalue;
       }
