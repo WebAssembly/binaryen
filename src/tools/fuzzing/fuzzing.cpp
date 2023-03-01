@@ -275,7 +275,7 @@ void TranslateToFuzzReader::setupMemory() {
 void TranslateToFuzzReader::setupHeapTypes() {
   // Start with any existing heap types in the module, which may exist in any
   // initial content we began with.
-  heapTypes = ModuleUtils::collectHeapTypes(wasm);
+  interestingHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
   // TODO: use heap type fuzzer to add new types in addition to the previous
 }
@@ -3080,7 +3080,9 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  // TODO: Nontrivial reference types.
+  if (wasm.features.hasReferenceTypes() && oneIn(3)) {
+    return Type(pick(interestingHeapTypes), getNullability());
+  }
   // Skip (ref func), (ref extern), and (ref i31) for now
   // because there is no way to create them in globals. TODO.
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
@@ -3110,6 +3112,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
+  if (wasm.features.hasReferenceTypes() && oneIn(2)) {
+    return Type(pick(interestingHeapTypes), getNullability());
+  }
   return pick(FeatureOptions<Type>()
                 // TODO: Add externref here.
                 .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
@@ -3127,6 +3132,14 @@ Type TranslateToFuzzReader::getReferenceType() {
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
+  if (oneIn(2)) {
+    // Try to find an interesting eq-compatible type.
+    auto heapType = pick(interestingHeapTypes);
+    if (HeapType::isSubType(heapType, HeapType::eq)) {
+      return Type(heapType, getNullability());
+    }
+    // Otherwise continue below.
+  }
   return pick(
     FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                                Type(HeapType::eq, Nullable),
