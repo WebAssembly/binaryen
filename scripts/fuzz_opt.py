@@ -576,6 +576,14 @@ def fix_spec_output(out):
     return out
 
 
+ignored_vm_runs = 0
+
+
+def note_ignored_vm_run():
+    global ignored_vm_runs
+    ignored_vm_runs += 1
+
+
 def run_vm(cmd):
     def filter_known_issues(output):
         known_issues = [
@@ -591,6 +599,7 @@ def run_vm(cmd):
         ]
         for issue in known_issues:
             if issue in output:
+                note_ignored_vm_run()
                 return IGNORE
         return output
 
@@ -1535,7 +1544,8 @@ if __name__ == '__main__':
               '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
               'speed:', counter / elapsed,
               'iters/sec, ', total_wasm_size / elapsed,
-              'wasm_bytes/sec\n')
+              'wasm_bytes/sec, ', ignored_vm_runs,
+              'ignored\n')
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
