@@ -155,6 +155,9 @@ def parse_output_fuzz_exec(text):
             # in the input.
             name = f'"{func.group("name")}"'
             items.append((('func', name), [line]))
+        elif line.startswith('[host limit'):
+            # Skip mentions of host limits that we hit.
+            pass
         elif line:
             assert items, 'unexpected non-invocation line'
             items[-1][1].append(line)
