@@ -2147,9 +2147,9 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // already handled simple cases of this above, for basic heap types, so what
   // we have left here are user-defined heap types like structs.
   if (type.isStruct()) {
-    auto heapType = type.getHeapType();
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
+    // TODO: use non-default values randomly even when not necessary, sometimes
     if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
           return !field.type.isDefaultable();
         })) {
@@ -2160,7 +2160,12 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
     }
     return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
-    return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32));
+    auto element = heapType.getArray().element;
+    Expression* init = nullptr;
+    if (!element.type.isDefaultable()) {
+      init = makeTrivial(element.type);
+    }
+    return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32), init);
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
   }
