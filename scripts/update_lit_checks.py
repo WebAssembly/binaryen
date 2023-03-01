@@ -155,6 +155,12 @@ def parse_output_fuzz_exec(text):
             # in the input.
             name = f'"{func.group("name")}"'
             items.append((('func', name), [line]))
+        elif line.startswith('[host limit'):
+            # Skip mentions of host limits that we hit. This can happen even
+            # before we reach the execution of a function (if it happens during
+            # instantiation of the module), in which case |items| may be empty,
+            # and we'd error on the code below.
+            pass
         elif line:
             assert items, 'unexpected non-invocation line'
             items[-1][1].append(line)

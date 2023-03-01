@@ -131,9 +131,12 @@ struct ExecutionResults {
         }
       }
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets)
+      // May throw in instance creation (init of offsets).
     } catch (const HostLimitException&) {
-      // may throw in instance creation (e.g. array.new of huge size)
+      // May throw in instance creation (e.g. array.new of huge size).
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
     }
   }
 
@@ -221,10 +224,13 @@ struct ExecutionResults {
       ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets)
+      // May throw in instance creation (init of offsets).
       return {};
     } catch (const HostLimitException&) {
-      // may throw in instance creation (e.g. array.new of huge size)
+      // May throw in instance creation (e.g. array.new of huge size).
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
       return {};
     }
   }
