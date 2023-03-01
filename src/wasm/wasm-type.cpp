@@ -1039,13 +1039,13 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
       // Otherwise, this is a function reference, which requires reference types
-      // and possible also multivalue (if it has multiple returns).
+      // and possibly also multivalue (if it has multiple returns).
       // Note: Technically typed function references also require GC, however,
       // we use these types internally regardless of the presence of GC (in
       // particular, since during load of the wasm we don't know the features
       // yet, so we apply the more refined types), so we don't add that in any
       // case here.
-      FeatureSet feats = FeatureSet::ReferenceTypes;
+      auto feats = FeatureSet::ReferenceTypes;
       if (heapType.getSignature().results.isTuple()) {
         feats |= FeatureSet::Multivalue;
       }
