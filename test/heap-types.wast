@@ -287,7 +287,7 @@
     )
   )
   (func $array-init (result (ref $vector))
-    (array.init_static $vector
+    (array.new_fixed $vector
       (f64.const 1)
       (f64.const 2)
       (f64.const 4)
@@ -295,7 +295,7 @@
     )
   )
   (func $array-init-packed (result (ref $bytes))
-    (array.init_static $bytes
+    (array.new_fixed $bytes
       (i32.const 4)
       (i32.const 2)
       (i32.const 1)

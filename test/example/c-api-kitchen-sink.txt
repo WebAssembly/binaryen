@@ -2298,7 +2298,7 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (array.init_static $[mut:i8]
+       (array.new_fixed $[mut:i8]
         (i32.const 1)
         (i32.const 2)
         (i32.const 3)
