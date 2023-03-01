@@ -610,7 +610,6 @@ def run_vm(cmd):
         # other known issues do make it fail, so re-run without checking for
         # success and see if we should ignore it
         if filter_known_issues(run_unchecked(cmd)) == IGNORE:
-            note_ignored_vm_run()
             return IGNORE
         raise
 
