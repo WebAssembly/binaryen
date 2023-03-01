@@ -2160,10 +2160,9 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
     auto heapType = type.getHeapType();
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
-    if (
-      std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
-        return !field.type.isDefaultable();
-      })) {
+    if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
+          return !field.type.isDefaultable();
+        })) {
       // There is a nondefaultable field, which we must create.
       for (auto& field : fields) {
         values.push_back(makeTrivial(field.type));
