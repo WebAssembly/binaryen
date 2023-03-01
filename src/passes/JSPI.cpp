@@ -140,6 +140,24 @@ struct JSPI : public Pass {
       }
     }
 
+    // Replace any references to the original exports that are in the elements.
+    for (auto& segment : module->elementSegments) {
+      if (!segment->type.isFunction()) {
+        continue;
+      }
+      for (Index i = 0; i < segment->data.size(); i++) {
+        if (auto* get = segment->data[i]->dynCast<RefFunc>()) {
+          auto iter = wrappedExports.find(get->func);
+          if (iter == wrappedExports.end()) {
+            continue;
+          }
+          auto* replacementRef = builder.makeRefFunc(
+            iter->second, module->getFunction(iter->second)->type);
+          segment->data[i] = replacementRef;
+        }
+      }
+    }
+
     // Avoid iterator invalidation later.
     std::vector<Function*> originalFunctions;
     for (auto& func : module->functions) {

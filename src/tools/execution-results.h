@@ -137,6 +137,7 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
+      // may throw in instance creation (init of offsets)
     }
   }
 
@@ -231,6 +232,9 @@ struct ExecutionResults {
       // This should be ignored and not compared with, as optimizations can
       // change whether a host limit is reached.
       ignore = true;
+      return {};
+    } catch (const HostLimitException&) {
+      // may throw in instance creation (e.g. array.new of huge size)
       return {};
     }
   }
