@@ -2146,10 +2146,19 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // to make a constant for the initializer of a global, for example. We've
   // already handled simple cases of this above, for basic heap types, so what
   // we have left here are user-defined heap types like structs.
-  // TODO: support non-defaultable fields. for now, just use default values.
   if (type.isStruct()) {
-    return builder.makeStructNew(type.getHeapType(),
-                                 std::vector<Expression*>{});
+    auto heapType = type.getHeapType();
+    auto& fields = heapType.getStruct().fields;
+    std::vector<Expression*> values;
+    if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
+          return !field.type.isDefaultable();
+        })) {
+      // There is a nondefaultable field, which we must create.
+      for (auto& field : fields) {
+        values.push_back(makeTrivial(field.type));
+      }
+    }
+    return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
     return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32));
   } else {
