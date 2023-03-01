@@ -2168,7 +2168,17 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
       // TODO: when in a function context, we don't need to be trivial.
       init = makeTrivial(element.type);
     }
-    return builder.makeArrayNew(type.getHeapType(), makeConst(Type::i32), init);
+    Expression* count;
+    if (oneIn(100)) {
+      // With low probability pick a totally random count. This can easily be a
+      // super-high number that immediately causes a host limit error on running
+      // out of memory.
+      count = makeConst(Type::i32);
+    } else {
+      // Otherwise, most of the time pick a reasonable/realistic number.
+      count = builder.makeConst(int32_t(upTo(100)));
+    }
+    return builder.makeArrayNew(type.getHeapType(), count, init);
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
   }
