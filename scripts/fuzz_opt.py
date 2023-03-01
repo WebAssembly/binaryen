@@ -673,7 +673,7 @@ class FuzzExec(TestCaseHandler):
     frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
-        run([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
+        run_vm([in_bin('wasm-opt'), before_wasm] + opts + ['--fuzz-exec'])
 
 
 class CompareVMs(TestCaseHandler):
