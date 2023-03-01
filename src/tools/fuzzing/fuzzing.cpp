@@ -1067,7 +1067,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
 
 Expression* TranslateToFuzzReader::makeTrivial(Type type) {
   if (type.isConcrete()) {
-    if (oneIn(2)) {
+    if (oneIn(2) && funcContext) {
       return makeLocalGet(type);
     } else {
       return makeConst(type);
