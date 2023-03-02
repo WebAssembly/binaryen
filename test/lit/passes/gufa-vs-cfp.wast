@@ -679,12 +679,12 @@
 ;; Subtyping: Create both a subtype and a supertype, with identical constants
 ;;            for the shared field, and get the supertype.
 (module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct i32))
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
