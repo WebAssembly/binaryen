@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "tools/fuzzing/heap-types.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
@@ -277,7 +278,18 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // initial content we began with.
   interestingHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
-  // TODO: use heap type fuzzer to add new types in addition to the previous
+  // For GC, also generate random types.
+  if (wasm.features.hasGC()) {
+    auto generator = HeapTypeGenerator::create(random, wasm.features, upTo(20));
+    auto result = generator.builder.build();
+    if (auto* err = result.getError()) {
+      Fatal() << "Failed to build heap types: " << err->reason << " at index "
+              << err->index;
+    }
+    for (auto type : *result) {
+      interestingHeapTypes.push_back(type);
+    }
+  }
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
