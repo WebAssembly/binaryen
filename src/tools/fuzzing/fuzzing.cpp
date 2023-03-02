@@ -3157,7 +3157,9 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
   if (wasm.features.hasReferenceTypes() && oneIn(3)) {
-    return Type(pick(interestingHeapTypes), getNullability());
+    auto heapType = pick(interestingHeapTypes);
+    auto nullability = getNullability();
+    return Type(heapType, nullability);
   }
   // Skip (ref func), (ref extern), and (ref i31) for now
   // because there is no way to create them in globals. TODO.
@@ -3189,7 +3191,9 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 Type TranslateToFuzzReader::getReferenceType() {
   if (wasm.features.hasReferenceTypes() && oneIn(2)) {
-    return Type(pick(interestingHeapTypes), getNullability());
+    auto heapType = pick(interestingHeapTypes);
+    auto nullability = getNullability();
+    return Type(heapType, nullability);
   }
   return pick(FeatureOptions<Type>()
                 // TODO: Add externref here.
@@ -3212,7 +3216,8 @@ Type TranslateToFuzzReader::getEqReferenceType() {
     // Try to find an interesting eq-compatible type.
     auto heapType = pick(interestingHeapTypes);
     if (HeapType::isSubType(heapType, HeapType::eq)) {
-      return Type(heapType, getNullability());
+      auto nullability = getNullability();
+      return Type(heapType, nullability);
     }
     // Otherwise continue below.
   }
