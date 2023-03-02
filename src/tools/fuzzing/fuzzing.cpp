@@ -15,7 +15,6 @@
  */
 
 #include "tools/fuzzing.h"
-#include "tools/fuzzing/heap-types.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
