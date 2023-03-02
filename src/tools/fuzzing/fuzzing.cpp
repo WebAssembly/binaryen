@@ -298,6 +298,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
   const size_t MAX_SEARCH = 100;
   std::unordered_set<HeapType> uninhabitable;
   for (auto t : possibleHeapTypes) {
+    if (t.isBasic()) {
+      // Basic types are handled directly in the random code generators.
+      continue;
+    }
+
     std::vector<HeapType> seen;
     seen.push_back(t);
     size_t next = 0;
