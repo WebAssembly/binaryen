@@ -297,14 +297,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
   const size_t MAX_SEARCH = 100;
   std::unordered_set<HeapType> uninhabitable;
   for (auto t : possibleHeapTypes) {
-    if (t.isBasic()) {
-      // Basic types are handled directly in the random code generators.
+    if (t.isBasic() || t.isBottom()) {
+      // These types are handled directly in the random code generators.
       continue;
     }
 
     std::vector<HeapType> seen;
     seen.push_back(t);
     size_t next = 0;
+    bool fail = false;
 
     // Add a child type (a field in a struct, etc.) to the list of seen types,
     // if it is something we need to look at (that is, if it can cause the
@@ -319,12 +320,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
       auto heapType = type.getHeapType();
       if (heapType.isStruct() || heapType.isArray()) {
         seen.push_back(heapType);
+      } else if (heapType.isBottom()) {
+        // This is a non-nullable bottom type, which is noninhabitable.
+        fail = true;
       }
     };
 
     // Add subtypes at the next position to inspect, and keep doing that until
     // we stop or we reach the limit.
-    while (next < MAX_SEARCH && next < seen.size()) {
+    while (next < MAX_SEARCH && next < seen.size() && !fail) {
       auto curr = seen[next];
       next++;
       if (curr.isStruct()) {
@@ -336,7 +340,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
       }
     }
 
-    if (next < MAX_SEARCH) {
+    if (next < MAX_SEARCH && !fail) {
       // No problem; add it.
       interestingHeapTypes.push_back(t);
     }
@@ -2051,6 +2055,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
       (type.isNonNullable() && oneIn(16) && funcContext)) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
+      assert(funcContext);
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
@@ -2103,6 +2108,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
       if (!type.isNullable()) {
+        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -2186,6 +2192,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
     case HeapType::nofunc: {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
+        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
