@@ -1,225 +1,357 @@
-(module
-  ;; Array types used in tests.
-  (type $i8 (array (mut i8)))
-  (type $i16 (array (mut i16)))
-  (type $i32 (array (mut i32)))
-  (type $anyref (array (mut anyref)))
-  (type $funcref (array (mut funcref)))
-  (type $externref (array (mut externref)))
+;; Bulk instructions
 
-  ;; Array values used in tests. Reset in between tests with the "reset"
-  ;; function.
-  (global $i8 (mut (ref null $i8)) (ref.null none))
-  (global $i16 (mut (ref null $i16)) (ref.null none))
-  (global $i32 (mut (ref null $i32)) (ref.null none))
-  (global $anyref (mut (ref null $anyref)) (ref.null none))
-  (global $funcref (mut (ref null $funcref)) (ref.null none))
-  (global $externref (mut (ref null $externref)) (ref.null none))
+;; invalid uses
 
-  ;; GC objects with distinct identities used in anyref tests.
-  (global $g1 (export "g1") (mut anyref) (array.new_fixed $i8))
-  (global $g2 (export "g2") (mut anyref) (array.new_fixed $i8))
-  (global $g3 (export "g3") (mut anyref) (array.new_fixed $i8))
-  (global $g4 (export "g4") (mut anyref) (array.new_fixed $i8))
-  (global $g5 (export "g5") (mut anyref) (array.new_fixed $i8))
+;; array.copy
+(assert_invalid
+  (module
+    (type $a (array i8))
+    (type $b (array (mut i8)))
 
-  ;; Functions with distinct return values used in funcref tests.
-  (func $f1 (result i32) (i32.const 0))
-  (func $f2 (result i32) (i32.const 1))
-  (func $f3 (result i32) (i32.const 2))
-  (func $f4 (result i32) (i32.const 3))
-  (func $f5 (result i32) (i32.const 4))
+    (func (export "array.copy-immutable") (param $1 (ref $a)) (param $2 (ref $b))
+      (array.copy $a $b (local.get $1) (i32.const 0) (local.get $2) (i32.const 0) (i32.const 0))
+    )
+  )
+  "destination array is immutable"
+)
 
-  ;; Passive element segment used in array.init_elem tests.
-  (elem $elem anyref
-    (array.new_fixed $i8)
-    (array.new_fixed $i8)
-    (array.new_fixed $i8)
-    (array.new_fixed $i8)
-    (array.new_fixed $i8))
+(assert_invalid
+  (module
+    (type $a (array (mut i8)))
+    (type $b (array i16))
 
-  (table $tab anyref 5 5)
+    (func (export "array.copy-packed-invalid") (param $1 (ref $a)) (param $2 (ref $b))
+      (array.copy $a $b (local.get $1) (i32.const 0) (local.get $2) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array types do not match"
+)
 
-  ;; Resets the array globals to known states.
-  (func (export "reset")
-    (global.set $i8
-      (array.new_fixed $i8
-        (i32.const 0)
-        (i32.const 1)
-        (i32.const 2)
-        (i32.const 3)
-        (i32.const 4)))
-    (global.set $i16
-      (array.new_fixed $i16
-        (i32.const 0)
-        (i32.const 1)
-        (i32.const 2)
-        (i32.const 3)
-        (i32.const 4)))
-    (global.set $i32
-      (array.new_fixed $i32
-        (i32.const 0)
-        (i32.const 1)
-        (i32.const 2)
-        (i32.const 3)
-        (i32.const 4)))
-    (global.set $anyref
-      (array.new_fixed $anyref
-        (global.get $g1)
-        (global.get $g2)
-        (global.get $g3)
-        (global.get $g4)
-        (global.get $g5)))
-    (global.set $funcref
-      (array.new_fixed $funcref
-        (ref.func $f1)
-        (ref.func $f2)
-        (ref.func $f3)
-        (ref.func $f4)
-        (ref.func $f5)))
-    (global.set $externref
-      (array.new_fixed $externref
-        (extern.externalize (global.get $g1))
-        (extern.externalize (global.get $g2))
-        (extern.externalize (global.get $g3))
-        (extern.externalize (global.get $g4))
-        (extern.externalize (global.get $g5)))))
+(assert_invalid
+  (module
+    (type $a (array (mut i8)))
+    (type $b (array (mut (ref $a))))
+
+    (func (export "array.copy-ref-invalid-1") (param $1 (ref $a)) (param $2 (ref $b))
+      (array.copy $a $b (local.get $1) (i32.const 0) (local.get $2) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array types do not match"
+)
+
+(assert_invalid
+  (module
+    (type $a (array (mut i8)))
+    (type $b (array (mut (ref $a))))
+    (type $c (array (mut (ref $b))))
+
+    (func (export "array.copy-ref-invalid-1") (param $1 (ref $b)) (param $2 (ref $c))
+      (array.copy $b $c (local.get $1) (i32.const 0) (local.get $2) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array types do not match"
 )
 
 ;; array.fill
+(assert_invalid
+  (module
+    (type $a (array i8))
 
-;; basic i8
-;; basic i16
-;; basic i32
-;; basic anyref
-;; basic funcref
-;; basic externref
-;; basic ref subtype
-;; basic ref nullability subtype
+    (func (export "array.fill-immutable") (param $1 (ref $a)) (param $2 i32)
+      (array.fill $a (local.get $1) (i32.const 0) (local.get $2) (i32.const 0))
+    )
+  )
+  "array is immutable"
+)
 
-;; zero size in bounds
-;; zero size at bounds
-;; zero size out of bounds traps
+(assert_invalid
+  (module
+    (type $a (array (mut i8)))
 
-;; out of bounds index traps
-;; out of bounds size traps
-;; out of bounds index + size traps
+    (func (export "array.fill-invalid-1") (param $1 (ref $a)) (param $2 funcref)
+      (array.fill $a (local.get $1) (i32.const 0) (local.get $2) (i32.const 0))
+    )
+  )
+  "type mismatch"
+)
 
-;; null destination traps
+(assert_invalid
+  (module
+    (type $b (array (mut funcref)))
 
-;; immutable field invalid
-
-;; ref supertype invalid
-;; ref nullability supertype invalid
-
-;; array.copy
-
-;; basic i8
-;; basic i16
-;; basic i32
-;; basic anyref
-;; basic funcref
-;; basic externref
-;; basic ref subtype
-;; basic ref nullability subtype
-
-;; same i8 no overlap
-;; same i8 overlap src first
-;; same i8 overlap dest first
-;; same i8 overlap complete
-
-;; same i32 no overlap
-;; same i32 overlap src first
-;; same i32 overlap dest first
-;; same i32 overlap complete
-
-;; same anyref no overlap
-;; same anyref overloap
-;; same anyref src first
-;; same anyref dest first
-;; same anyref overlap complete
-
-;; zero size in bounds
-;; zero size at dest bounds
-;; zero size at src bounds
-;; zero size out of dest bounds traps
-;; zero size out of src bounds traps
-
-;; out of bounds dest index traps
-;; out of bounds src index traps
-;; out of bounds dest size traps
-;; out of bounds src index traps
-;; out of bounds dest index + size traps
-;; out of bounds src index + size traps
-
-;; null dest traps
-;; null src traps
-
-;; immutable dest field invalid
-;; immutable src field ok
-
-;; ref supertype invalid
-;; ref nullability supertype invalid
+    (func (export "array.fill-invalid-1") (param $1 (ref $b)) (param $2 i32)
+      (array.fill $b (local.get $1) (i32.const 0) (local.get $2) (i32.const 0))
+    )
+  )
+  "type mismatch"
+)
 
 ;; array.init_data
+(assert_invalid
+  (module
+    (type $a (array i8))
 
-;; basic i8
-;; basic i16
-;; basic i32
-;; basic f32
+    (data $d1 "a")
 
-;; zero size in bounds
-;; zero size at dest bounds
-;; zero size at src bounds
-;; zero size out of dest bounds traps
-;; zero size out of src bounds traps
+    (func (export "array.init_data-immutable") (param $1 (ref $a))
+      (array.init_data $a $d1 (local.get $1) (i32.const 0) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array is immutable"
+)
 
-;; out of bounds dest index traps
-;; out of bounds src index traps
-;; out of bounds dest size traps
-;; out of bounds src size traps
-;; out of bounds src multiplied size traps
-;; out of bounds dest index + size traps
-;; out of bounds src index + size traps
-;; out of bounds src index + multiplied size traps
+(assert_invalid
+  (module
+    (type $a (array (mut funcref)))
 
-;; null dest traps
-;; segment dropped traps
+    (data $d1 "a")
 
-;; immutable dest field invalid
-
-;; ref supertype invalid
-;; ref nullability supertype invalid
-
-;; out of bounds segment index invalid
+    (func (export "array.init_data-invalid-1") (param $1 (ref $a))
+      (array.init_data $a $d1 (local.get $1) (i32.const 0) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array type is not numeric or vector"
+)
 
 ;; array.init_elem
+(assert_invalid
+  (module
+    (type $a (array funcref))
 
-;; basic anyref
-;; basic funcref
-;; basic externref
-;; basic ref subtype
-;; basic ref nullability subtype
+    (elem $e1 funcref)
 
-;; zero size in bounds
-;; zero size at dest bounds
-;; zero size at src bounds
-;; zero size out of dest bounds traps
-;; zero size out of src bounds traps
+    (func (export "array.init_elem-immutable") (param $1 (ref $a))
+      (array.init_elem $a $e1 (local.get $1) (i32.const 0) (i32.const 0) (i32.const 0))
+    )
+  )
+  "array is immutable"
+)
 
-;; out of bounds dest index traps
-;; out of bounds src index traps
-;; out of bounds dest size traps
-;; out of bounds src size traps
-;; out of bounds dest index + size traps
-;; out of bounds src index + size traps
+(assert_invalid
+  (module
+    (type $a (array (mut i8)))
 
-;; null dest traps
-;; segment dropped traps
+    (elem $e1 funcref)
 
-;; immutable dest field invalid
+    (func (export "array.init_elem-invalid-1") (param $1 (ref $a))
+      (array.init_elem $a $e1 (local.get $1) (i32.const 0) (i32.const 0) (i32.const 0))
+    )
+  )
+  "type mismatch"
+)
 
-;; ref supertype invalid
-;; ref nullability supertype invalid
+(assert_invalid
+  (module
+    (type $a (array (mut funcref)))
 
-;; out of bounds segment index invalid
+    (elem $e1 externref)
+
+    (func (export "array.init_elem-invalid-2") (param $1 (ref $a))
+      (array.init_elem $a $e1 (local.get $1) (i32.const 0) (i32.const 0) (i32.const 0))
+    )
+  )
+  "type mismatch"
+)
+
+(module
+  (type $t_f (func))
+  (type $arr8 (array i8))
+  (type $arr8_mut (array (mut i8)))
+  (type $arr16_mut (array (mut i16)))
+  (type $arrref (array (ref $t_f)))
+  (type $arrref_mut (array (mut funcref)))
+
+  (global $g_arr8 (ref $arr8) (array.new $arr8 (i32.const 10) (i32.const 12)))
+  (global $g_arr8_mut (mut (ref $arr8_mut)) (array.new_default $arr8_mut (i32.const 12)))
+  (global $g_arr16_mut (ref $arr16_mut) (array.new_default $arr16_mut (i32.const 6)))
+  (global $g_arrref (ref $arrref) (array.new $arrref (ref.func $dummy) (i32.const 12)))
+  (global $g_arrref_mut (ref $arrref_mut) (array.new_default $arrref_mut (i32.const 12)))
+
+  (table $t 1 funcref)
+
+  (data $d1 "abcdefghijkl")
+  (elem $e1 func $dummy $dummy $dummy $dummy $dummy $dummy $dummy $dummy $dummy $dummy $dummy $dummy)
+
+  (func $dummy
+  )
+
+  (func (export "array_get_nth") (param $1 i32) (result i32)
+    (array.get_u $arr8_mut (global.get $g_arr8_mut) (local.get $1))
+  )
+
+  (func (export "array_get_nth_i16") (param $1 i32) (result i32)
+    (array.get_u $arr16_mut (global.get $g_arr16_mut) (local.get $1))
+  )
+
+  (func (export "array_call_nth") (param $1 i32)
+    (table.set $t (i32.const 0) (array.get $arrref_mut (global.get $g_arrref_mut) (local.get $1)))
+    (call_indirect $t (i32.const 0))
+  )
+
+  (func (export "array_copy-null-left")
+    (array.copy $arr8_mut $arr8 (ref.null $arr8_mut) (i32.const 0) (global.get $g_arr8) (i32.const 0) (i32.const 0))
+  )
+
+  (func (export "array_copy-null-right")
+    (array.copy $arr8_mut $arr8 (global.get $g_arr8_mut) (i32.const 0) (ref.null $arr8) (i32.const 0) (i32.const 0))
+  )
+
+  (func (export "array_fill-null")
+    (array.fill $arr8_mut (ref.null $arr8_mut) (i32.const 0) (i32.const 0) (i32.const 0))
+  )
+
+  (func (export "array_init_data-null")
+    (array.init_data $arr8_mut $d1 (ref.null $arr8_mut) (i32.const 0) (i32.const 0) (i32.const 0))
+  )
+
+  (func (export "array_init_elem-null")
+    (array.init_elem $arrref_mut $e1 (ref.null $arrref_mut) (i32.const 0) (i32.const 0) (i32.const 0))
+  )
+
+  (func (export "array_copy") (param $1 i32) (param $2 i32) (param $3 i32)
+    (array.copy $arr8_mut $arr8 (global.get $g_arr8_mut) (local.get $1) (global.get $g_arr8) (local.get $2) (local.get $3))
+  )
+
+  (func (export "array_fill") (param $1 i32) (param $2 i32) (param $3 i32)
+    (array.fill $arr8_mut (global.get $g_arr8_mut) (local.get $1) (local.get $2) (local.get $3))
+  )
+
+  (func (export "array_init_data") (param $1 i32) (param $2 i32) (param $3 i32)
+    (array.init_data $arr8_mut $d1 (global.get $g_arr8_mut) (local.get $1) (local.get $2) (local.get $3))
+  )
+
+  (func (export "array_init_data_i16") (param $1 i32) (param $2 i32) (param $3 i32)
+    (array.init_data $arr16_mut $d1 (global.get $g_arr16_mut) (local.get $1) (local.get $2) (local.get $3))
+  )
+
+  (func (export "array_init_elem") (param $1 i32) (param $2 i32) (param $3 i32)
+    (array.init_elem $arrref_mut $e1 (global.get $g_arrref_mut) (local.get $1) (local.get $2) (local.get $3))
+  )
+
+  (func (export "array_copy_overlap_test-1")
+    (local $1 (ref $arr8_mut))
+    (local.set $1
+      (array.new_data $arr8_mut $d1 (i32.const 0) (i32.const 12))
+    )
+    (array.copy $arr8_mut $arr8_mut (local.get $1) (i32.const 1) (local.get $1) (i32.const 0) (i32.const 11))
+    (global.set $g_arr8_mut (local.get $1))
+  )
+
+  (func (export "array_copy_overlap_test-2")
+    (local $1 (ref $arr8_mut))
+    (local.set $1
+      (array.new_data $arr8_mut $d1 (i32.const 0) (i32.const 12))
+    )
+    (array.copy $arr8_mut $arr8_mut (local.get $1) (i32.const 0) (local.get $1) (i32.const 1) (i32.const 11))
+    (global.set $g_arr8_mut (local.get $1))
+  )
+
+  (func (export "drop_segs")
+    (data.drop $d1)
+    ;; (elem.drop $e1) ;; TODO: implement elem.drop
+  )
+)
+
+;; null array argument traps
+(assert_trap (invoke "array_copy-null-left") "null array reference")
+(assert_trap (invoke "array_copy-null-right") "null array reference")
+(assert_trap (invoke "array_fill-null") "null array reference")
+(assert_trap (invoke "array_init_data-null") "null array reference")
+(assert_trap (invoke "array_init_elem-null") "null array reference")
+
+;; OOB initial index traps
+(assert_trap (invoke "array_copy" (i32.const 13) (i32.const 0) (i32.const 0)) "out of bounds array access")
+(assert_trap (invoke "array_copy" (i32.const 0) (i32.const 13) (i32.const 0)) "out of bounds array access")
+(assert_trap (invoke "array_fill" (i32.const 13) (i32.const 0) (i32.const 0)) "out of bounds array access")
+(assert_trap (invoke "array_init_data" (i32.const 13) (i32.const 0) (i32.const 0)) "out of bounds array access")
+(assert_trap (invoke "array_init_data" (i32.const 0) (i32.const 13) (i32.const 0)) "out of bounds memory access")
+(assert_trap (invoke "array_init_elem" (i32.const 13) (i32.const 0) (i32.const 0)) "out of bounds array access")
+(assert_trap (invoke "array_init_elem" (i32.const 0) (i32.const 13) (i32.const 0)) "out of bounds table access")
+
+;; OOB length traps
+(assert_trap (invoke "array_copy" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_copy" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_fill" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_init_data" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_init_data" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_init_data_i16" (i32.const 0) (i32.const 0) (i32.const 7)) "out of bounds array access")
+(assert_trap (invoke "array_init_elem" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+(assert_trap (invoke "array_init_elem" (i32.const 0) (i32.const 0) (i32.const 13)) "out of bounds array access")
+
+;; start index = array size, len = 0 doesn't trap
+(assert_return (invoke "array_copy" (i32.const 12) (i32.const 0) (i32.const 0)))
+(assert_return (invoke "array_copy" (i32.const 0) (i32.const 12) (i32.const 0)))
+(assert_return (invoke "array_fill" (i32.const 12) (i32.const 0) (i32.const 0)))
+(assert_return (invoke "array_init_data" (i32.const 12) (i32.const 0) (i32.const 0)))
+(assert_return (invoke "array_init_data" (i32.const 0) (i32.const 12) (i32.const 0)))
+(assert_return (invoke "array_init_data_i16" (i32.const 0) (i32.const 6) (i32.const 0)))
+(assert_return (invoke "array_init_elem" (i32.const 12) (i32.const 0) (i32.const 0)))
+(assert_return (invoke "array_init_elem" (i32.const 0) (i32.const 12) (i32.const 0)))
+
+;; check arrays were not modified
+(assert_return (invoke "array_get_nth" (i32.const 0)) (i32.const 0))
+(assert_return (invoke "array_get_nth" (i32.const 5)) (i32.const 0))
+(assert_return (invoke "array_get_nth" (i32.const 11)) (i32.const 0))
+(assert_trap (invoke "array_get_nth" (i32.const 12)) "out of bounds array access")
+(assert_return (invoke "array_get_nth_i16" (i32.const 0)) (i32.const 0))
+(assert_return (invoke "array_get_nth_i16" (i32.const 2)) (i32.const 0))
+(assert_return (invoke "array_get_nth_i16" (i32.const 5)) (i32.const 0))
+(assert_trap (invoke "array_get_nth" (i32.const 12)) "out of bounds array access")
+(assert_trap (invoke "array_call_nth" (i32.const 0)) "uninitialized element")
+(assert_trap (invoke "array_call_nth" (i32.const 5)) "uninitialized element")
+(assert_trap (invoke "array_call_nth" (i32.const 11)) "uninitialized element")
+(assert_trap (invoke "array_call_nth" (i32.const 12)) "out of bounds array access")
+
+;; normal cases
+(assert_return (invoke "array_copy" (i32.const 0) (i32.const 0) (i32.const 2)))
+(assert_return (invoke "array_get_nth" (i32.const 0)) (i32.const 10))
+(assert_return (invoke "array_get_nth" (i32.const 1)) (i32.const 10))
+(assert_return (invoke "array_get_nth" (i32.const 2)) (i32.const 0))
+
+(assert_return (invoke "array_fill" (i32.const 2) (i32.const 11) (i32.const 2)))
+(assert_return (invoke "array_get_nth" (i32.const 1)) (i32.const 10))
+(assert_return (invoke "array_get_nth" (i32.const 2)) (i32.const 11))
+(assert_return (invoke "array_get_nth" (i32.const 3)) (i32.const 11))
+(assert_return (invoke "array_get_nth" (i32.const 4)) (i32.const 0))
+
+(assert_return (invoke "array_init_data" (i32.const 4) (i32.const 2) (i32.const 2)))
+(assert_return (invoke "array_get_nth" (i32.const 3)) (i32.const 11))
+(assert_return (invoke "array_get_nth" (i32.const 4)) (i32.const 99))
+(assert_return (invoke "array_get_nth" (i32.const 5)) (i32.const 100))
+(assert_return (invoke "array_get_nth" (i32.const 6)) (i32.const 0))
+
+(assert_return (invoke "array_init_data_i16" (i32.const 2) (i32.const 5) (i32.const 2)))
+(assert_return (invoke "array_get_nth_i16" (i32.const 1)) (i32.const 0))
+(assert_return (invoke "array_get_nth_i16" (i32.const 2)) (i32.const 0x6766))
+(assert_return (invoke "array_get_nth_i16" (i32.const 3)) (i32.const 0x6968))
+(assert_return (invoke "array_get_nth_i16" (i32.const 4)) (i32.const 0))
+
+(assert_return (invoke "array_init_elem" (i32.const 2) (i32.const 3) (i32.const 2)))
+(assert_trap (invoke "array_call_nth" (i32.const 1)) "uninitialized element")
+(assert_return (invoke "array_call_nth" (i32.const 2)))
+(assert_return (invoke "array_call_nth" (i32.const 3)))
+(assert_trap (invoke "array_call_nth" (i32.const 4)) "uninitialized element")
+
+;; test that overlapping array.copy works as if intermediate copy taken
+(assert_return (invoke "array_copy_overlap_test-1"))
+(assert_return (invoke "array_get_nth" (i32.const 0)) (i32.const 97))
+(assert_return (invoke "array_get_nth" (i32.const 1)) (i32.const 97))
+(assert_return (invoke "array_get_nth" (i32.const 2)) (i32.const 98))
+(assert_return (invoke "array_get_nth" (i32.const 5)) (i32.const 101))
+(assert_return (invoke "array_get_nth" (i32.const 10)) (i32.const 106))
+(assert_return (invoke "array_get_nth" (i32.const 11)) (i32.const 107))
+
+(assert_return (invoke "array_copy_overlap_test-2"))
+(assert_return (invoke "array_get_nth" (i32.const 0)) (i32.const 98))
+(assert_return (invoke "array_get_nth" (i32.const 1)) (i32.const 99))
+(assert_return (invoke "array_get_nth" (i32.const 5)) (i32.const 103))
+(assert_return (invoke "array_get_nth" (i32.const 9)) (i32.const 107))
+(assert_return (invoke "array_get_nth" (i32.const 10)) (i32.const 108))
+(assert_return (invoke "array_get_nth" (i32.const 11)) (i32.const 108))
+
+;; init_data/elem with dropped segments traps for non-zero length
+(assert_return (invoke "drop_segs"))
+(assert_return (invoke "array_init_data" (i32.const 0) (i32.const 0) (i32.const 0)))
+(assert_trap (invoke "array_init_data" (i32.const 0) (i32.const 0) (i32.const 1)) "out of bounds memory access")
+(assert_return (invoke "array_init_elem" (i32.const 0) (i32.const 0) (i32.const 0)))
+;; (assert_trap (invoke "array_init_elem" (i32.const 0) (i32.const 0) (i32.const 1)) "out of bounds table access") ;; TODO: implement elem.drop

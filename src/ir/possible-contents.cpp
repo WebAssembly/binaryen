@@ -988,7 +988,8 @@ struct InfoCollector
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
   }
-
+  void visitArrayFill(ArrayFill* curr) { WASM_UNREACHABLE("unimplemented"); }
+  void visitArrayInit(ArrayInit* curr) { WASM_UNREACHABLE("uimplemented"); }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;

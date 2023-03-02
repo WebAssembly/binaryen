@@ -3041,6 +3041,28 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
     destRef, destIndex, srcRef, srcIndex, length);
 }
 
+Expression* SExpressionWasmBuilder::makeArrayFill(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto ref = parseExpression(*s[2]);
+  validateHeapTypeUsingChild(ref, heapType, s);
+  auto index = parseExpression(*s[3]);
+  auto value = parseExpression(*s[4]);
+  auto size = parseExpression(*s[5]);
+  return Builder(wasm).makeArrayFill(ref, index, value, size);
+}
+
+Expression* SExpressionWasmBuilder::makeArrayInit(Element& s, ArrayInitOp op) {
+  auto heapType = parseHeapType(*s[1]);
+  auto seg =
+    op == InitData ? getDataSegmentName(*s[2]) : getElemSegmentName(*s[2]);
+  auto ref = parseExpression(*s[3]);
+  validateHeapTypeUsingChild(ref, heapType, s);
+  auto index = parseExpression(*s[4]);
+  auto offset = parseExpression(*s[5]);
+  auto size = parseExpression(*s[6]);
+  return Builder(wasm).makeArrayInit(op, seg, ref, index, offset, size);
+}
+
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   auto* value = parseExpression(s[1]);
   if (!value->type.isRef() && value->type != Type::unreachable) {

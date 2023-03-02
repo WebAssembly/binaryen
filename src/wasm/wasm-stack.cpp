@@ -2185,6 +2185,37 @@ void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
   parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());
 }
 
+void BinaryInstWriter::visitArrayFill(ArrayFill* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayFill);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
+  }
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case InitData:
+      o << U32LEB(BinaryConsts::ArrayInitData);
+      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+      o << U32LEB(parent.getDataSegmentIndex(curr->segment));
+      break;
+    case InitElem:
+      o << U32LEB(BinaryConsts::ArrayInitElem);
+      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+      o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected op");
+  }
+}
+
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
     case RefAsNonNull:

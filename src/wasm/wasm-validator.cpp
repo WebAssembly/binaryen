@@ -462,6 +462,8 @@ public:
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
+  void visitArrayFill(ArrayFill* curr);
+  void visitArrayInit(ArrayInit* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2882,8 +2884,10 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   if (!shouldBeSubType(curr->srcRef->type,
                        Type(HeapType::array, Nullable),
                        curr,
-                       "array.copy source should be an array reference") ||
-      !shouldBeSubType(curr->destRef->type,
+                       "array.copy source should be an array reference")) {
+    return;
+  }
+  if (!shouldBeSubType(curr->destRef->type,
                        Type(HeapType::array, Nullable),
                        curr,
                        "array.copy destination should be an array reference")) {
@@ -2891,17 +2895,16 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   }
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
-  if (srcHeapType == HeapType::none || destHeapType == HeapType::none) {
+  if (srcHeapType == HeapType::none ||
+      !shouldBeTrue(srcHeapType.isArray(),
+                    curr,
+                    "array.copy source should be an array reference")) {
     return;
   }
-  if (!shouldBeTrue(
-        srcHeapType != HeapType::array,
-        curr,
-        "array.copy source needs to be a specific array reference") ||
-      !shouldBeTrue(
-        srcHeapType != HeapType::array,
-        curr,
-        "array.copy destination needs to be a specific array reference")) {
+  if (destHeapType == HeapType::none ||
+      !shouldBeTrue(destHeapType.isArray(),
+                    curr,
+                    "array.copy destination should be an array reference")) {
     return;
   }
   const auto& srcElement = srcHeapType.getArray().element;
@@ -2910,7 +2913,102 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
                   destElement.type,
                   curr,
                   "array.copy must have the proper types");
-  shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
+  shouldBeEqual(srcElement.packedType,
+                destElement.packedType,
+                curr,
+                "array.copy types must match");
+  shouldBeTrue(
+    destElement.mutable_, curr, "array.copy destination must be mutable");
+}
+
+void FunctionValidator::visitArrayFill(ArrayFill* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.fill requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.fill index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "array.fill size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::array, Nullable),
+                       curr,
+                       "array.fill destination should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none ||
+      !shouldBeTrue(heapType.isArray(),
+                    curr,
+                    "array.fill destination should be an array reference")) {
+    return;
+  }
+  auto element = heapType.getArray().element;
+  shouldBeSubType(curr->value->type,
+                  element.type,
+                  curr,
+                  "array.fill value must match destination element type");
+  shouldBeTrue(
+    element.mutable_, curr, "array.fill destination must be mutable");
+}
+
+void FunctionValidator::visitArrayInit(ArrayInit* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.init_* requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::array, Nullable),
+                       curr,
+                       "array.init_* destination must be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none ||
+      !shouldBeTrue(heapType.isArray(),
+                    curr,
+                    "array.init_* destination must be an array reference")) {
+    return;
+  }
+  auto element = heapType.getArray().element;
+  shouldBeTrue(
+    element.mutable_, curr, "array.init_* destination must be mutable");
+  if (curr->op == InitData) {
+    shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
+                 curr,
+                 "array.init_data segment must exist");
+    shouldBeTrue(element.type.isNumber(),
+                 curr,
+                 "array.init_data destination must be numeric");
+  } else {
+    assert(curr->op == InitElem);
+    auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
+    if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
+      return;
+    }
+    shouldBeSubType(seg->type,
+                    element.type,
+                    curr,
+                    "array.init_elem segment type must match destination type");
+  }
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

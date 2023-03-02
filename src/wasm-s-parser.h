@@ -306,6 +306,8 @@ private:
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
+  Expression* makeArrayFill(Element& s);
+  Expression* makeArrayInit(Element& s, ArrayInitOp op);
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeRefAsNonNull(Element& s);
   Expression* makeStringNew(Element& s, StringNewOp op, bool try_);

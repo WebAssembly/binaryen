@@ -661,6 +661,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 6 + visit(curr->destRef) + visit(curr->destIndex) +
            visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
+  CostType visitArrayFill(ArrayFill* curr) {
+    return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->value) +
+           visit(curr->size);
+  }
+  CostType visitArrayInit(ArrayInit* curr) {
+    return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
+           visit(curr->size);
+  }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {
     return 8 + visit(curr->ptr) + maybeVisit(curr->length) +
