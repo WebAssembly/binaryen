@@ -1,40 +1,45 @@
 total
- [exports]      : 8       
- [funcs]        : 15      
- [globals]      : 11      
+ [exports]      : 2       
+ [funcs]        : 5       
+ [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 5       
+ [table-data]   : 0       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 538     
- [vars]         : 43      
- ArrayNewFixed  : 1       
+ [total]        : 700     
+ [vars]         : 3       
  AtomicFence    : 2       
- Binary         : 67      
- Block          : 70      
- Break          : 1       
- Call           : 23      
- CallRef        : 1       
- Const          : 116     
- Drop           : 11      
- GlobalGet      : 36      
- GlobalSet      : 34      
- I31New         : 4       
- If             : 19      
- Load           : 16      
- LocalGet       : 35      
+ AtomicNotify   : 1       
+ AtomicRMW      : 1       
+ Binary         : 71      
+ Block          : 109     
+ Break          : 29      
+ Call           : 3       
+ CallRef        : 3       
+ Const          : 157     
+ Drop           : 6       
+ GlobalGet      : 39      
+ GlobalSet      : 39      
+ I31New         : 2       
+ If             : 30      
+ Load           : 17      
+ LocalGet       : 23      
  LocalSet       : 17      
- Loop           : 2       
- MemoryInit     : 1       
- Nop            : 5       
- RefFunc        : 17      
- RefNull        : 5       
- Return         : 4       
+ Loop           : 14      
+ Nop            : 32      
+ RefAs          : 1       
+ RefEq          : 1       
+ RefFunc        : 8       
+ RefIsNull      : 5       
+ RefNull        : 4       
+ Return         : 2       
  SIMDExtract    : 1       
- Store          : 1       
- StructNew      : 5       
- TupleMake      : 9       
- Unary          : 18      
- Unreachable    : 17      
+ Select         : 12      
+ Store          : 5       
+ StructNew      : 2       
+ TupleExtract   : 1       
+ TupleMake      : 1       
+ Unary          : 40      
+ Unreachable    : 22      
