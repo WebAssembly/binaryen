@@ -329,8 +329,6 @@ void TranslateToFuzzReader::setupHeapTypes() {
         }
       } else if (curr.isArray()) {
         maybeAdd(curr.getArray().element.type);
-      } else {
-        assert(curr.isSignature());
       }
     }
 
