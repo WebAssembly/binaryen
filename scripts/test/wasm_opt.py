@@ -21,12 +21,30 @@ from . import support
 
 
 def test_wasm_opt():
+    print('\n[ checking wasm-opt -o notation... ]\n')
+
+    for extra_args in [[], ['--no-validation']]:
+        wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
+        shared.delete_from_orbit('a.wat')
+        out = 'a.wat'
+        cmd = shared.WASM_OPT + [wast, '-o', out, '-S'] + extra_args
+        support.run_command(cmd)
+        shared.fail_if_not_identical_to_file(open(out).read(), wast)
+
+    print('\n[ checking wasm-opt binary reading/writing... ]\n')
+
+    shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wat'), 'a.wat')
+    shared.delete_from_orbit('a.wasm')
+    shared.delete_from_orbit('b.wast')
+    support.run_command(shared.WASM_OPT + ['a.wat', '-o', 'a.wasm'])
+    assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
+    support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
+    assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
+
     print('\n[ checking wasm-opt passes... ]\n')
 
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
-        if 'translate-to-fuzz_all-features_metrics_noprint' not in t:
-            continue
         # windows has some failures that need to be investigated:
         # * ttf tests have different outputs - order of execution of params?
         # * dwarf tests print windows slashes instead of unix
@@ -70,6 +88,51 @@ def test_wasm_opt():
         if 'emit-spec-wrapper' in t:
             with open('a.wat') as actual:
                 shared.fail_if_not_identical_to_file(actual.read(), t + '.wat')
+
+    print('\n[ checking wasm-opt parsing & printing... ]\n')
+
+    for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
+        print('..', os.path.basename(t))
+        wasm = os.path.basename(t).replace('.wast', '')
+        cmd = shared.WASM_OPT + [t, '--print', '-all']
+        print('    ', ' '.join(cmd))
+        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
+        expected_file = os.path.join(shared.get_test_dir('print'), wasm + '.txt')
+        shared.fail_if_not_identical_to_file(actual, expected_file)
+        cmd = shared.WASM_OPT + [os.path.join(shared.get_test_dir('print'), t), '--print-minified', '-all']
+        print('    ', ' '.join(cmd))
+        actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
+        shared.fail_if_not_identical(actual.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
+
+    print('\n[ checking wasm-opt testcases... ]\n')
+
+    for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
+        print('..', os.path.basename(t))
+        f = t + '.from-wast'
+        cmd = shared.WASM_OPT + [t, '--print', '-all']
+        actual = support.run_command(cmd)
+        actual = actual.replace('printing before:\n', '')
+
+        shared.fail_if_not_identical_to_file(actual, f)
+
+        # FIXME Remove this condition after nullref is implemented in V8
+        if 'reference-types.wast' not in t:
+            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
+            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
+
+        shared.minify_check(t)
+
+    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
+
+    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
+        if 'debugInfo' not in t:
+            continue
+        print('..', os.path.basename(t))
+        f = t + '.read-written'
+        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
+        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
+        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
+        shared.fail_if_not_identical_to_file(actual, f)
 
 
 def update_wasm_opt_tests():
