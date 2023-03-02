@@ -277,6 +277,14 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // initial content we began with.
   interestingHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
+  // XXX DEBUG CI nondeterminism between Linux and MacOS
+  for (auto t : interestingHeapTypes) {
+    std::cout << "interesting HT " << t << '\n';
+  }
+  for (auto t : interestingHeapTypes) {
+    std::cout << "interesting HT name: " << wasm.typeNames[t].name << '\n';
+  }
+
   // TODO: use heap type fuzzer to add new types in addition to the previous
 }
 
