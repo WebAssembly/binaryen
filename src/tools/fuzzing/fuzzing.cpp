@@ -320,6 +320,9 @@ void TranslateToFuzzReader::setupHeapTypes() {
       auto heapType = type.getHeapType();
       if (heapType.isStruct() || heapType.isArray()) {
         seen.push_back(heapType);
+        if (seen.size() >= MAX_SEARCH) {
+          fail = true;
+        }
       } else if (heapType.isBottom()) {
         // This is a non-nullable bottom type, which is noninhabitable.
         fail = true;
@@ -328,7 +331,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
     // Add subtypes at the next position to inspect, and keep doing that until
     // we stop or we reach the limit.
-    while (next < MAX_SEARCH && next < seen.size() && !fail) {
+    while (next < seen.size() && !fail) {
       auto curr = seen[next];
       next++;
       if (curr.isStruct()) {
@@ -340,7 +343,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
       }
     }
 
-    if (next < MAX_SEARCH && !fail) {
+    if (!fail) {
       // No problem; add it.
       interestingHeapTypes.push_back(t);
     }
