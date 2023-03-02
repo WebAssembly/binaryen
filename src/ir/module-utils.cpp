@@ -63,6 +63,9 @@ struct CodeScanner
       counts.note(call->target->type);
     } else if (curr->is<RefNull>()) {
       counts.note(curr->type);
+    } else if (curr->is<Select>() && curr->type.isRef()) {
+      // This select will be annotated in the binary, so note it.
+      counts.note(curr->type);
     } else if (curr->is<StructNew>()) {
       counts.note(curr->type);
     } else if (curr->is<ArrayNew>()) {
