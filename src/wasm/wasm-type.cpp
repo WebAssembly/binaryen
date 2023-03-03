@@ -1007,49 +1007,76 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
     if (t.isRef()) {
-      // A reference type implies we need that feature. Some also require more,
-      // such as GC or exceptions.
-      auto heapType = t.getHeapType();
-      if (heapType.isBasic()) {
-        switch (heapType.getBasic()) {
-          case HeapType::ext:
-          case HeapType::func:
-            return FeatureSet::ReferenceTypes;
-          case HeapType::any:
-          case HeapType::eq:
-          case HeapType::i31:
-          case HeapType::struct_:
-          case HeapType::array:
-            return FeatureSet::ReferenceTypes | FeatureSet::GC;
-          case HeapType::string:
-          case HeapType::stringview_wtf8:
-          case HeapType::stringview_wtf16:
-          case HeapType::stringview_iter:
-            return FeatureSet::ReferenceTypes | FeatureSet::Strings;
-          case HeapType::none:
-          case HeapType::noext:
-          case HeapType::nofunc:
-            // Technically introduced in GC, but used internally as part of
-            // ref.null with just reference types.
-            return FeatureSet::ReferenceTypes;
+      // A reference type implies we need that feature. Some also require
+      // more, such as GC or exceptions, and may require us to look into child
+      // types.
+      struct ReferenceFeatureCollector
+        : HeapTypeChildWalker<ReferenceFeatureCollector> {
+        FeatureSet feats = FeatureSet::None;
+
+        void noteChild(HeapType* heapType) {
+          if (heapType->isBasic()) {
+            switch (heapType->getBasic()) {
+              case HeapType::ext:
+              case HeapType::func:
+                feats |= FeatureSet::ReferenceTypes;
+                return;
+              case HeapType::any:
+              case HeapType::eq:
+              case HeapType::i31:
+              case HeapType::struct_:
+              case HeapType::array:
+                feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+                return;
+              case HeapType::string:
+              case HeapType::stringview_wtf8:
+              case HeapType::stringview_wtf16:
+              case HeapType::stringview_iter:
+                feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
+                return;
+              case HeapType::none:
+              case HeapType::noext:
+              case HeapType::nofunc:
+                // Technically introduced in GC, but used internally as part of
+                // ref.null with just reference types.
+                feats |= FeatureSet::ReferenceTypes;
+                return;
+            }
+          }
+
+          if (heapType->isStruct() || heapType->isArray() ||
+              heapType->getRecGroup().size() > 1 || heapType->getSuperType()) {
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+          } else if (heapType->isSignature()) {
+            // This is a function reference, which requires reference types and
+            // possibly also multivalue (if it has multiple returns). Note that
+            // technically typed function references also require GC, however,
+            // we use these types internally regardless of the presence of GC
+            // (in particular, since during load of the wasm we don't know the
+            // features yet, so we apply the more refined types), so we don't
+            // add that in any case here.
+            feats |= FeatureSet::ReferenceTypes;
+            auto sig = heapType->getSignature();
+            if (sig.results.isTuple()) {
+              feats |= FeatureSet::Multivalue;
+            }
+          }
+
+          // In addition, scan their non-ref children, to add dependencies on
+          // things like SIMD.
+          for (auto child : heapType->getTypeChildren()) {
+            if (!child.isRef()) {
+              feats |= child.getFeatures();
+            }
+          }
         }
-      }
-      if (heapType.isStruct() || heapType.isArray() ||
-          heapType.getRecGroup().size() > 1 || heapType.getSuperType()) {
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
-      }
-      // Otherwise, this is a function reference, which requires reference types
-      // and possibly also multivalue (if it has multiple returns).
-      // Note: Technically typed function references also require GC, however,
-      // we use these types internally regardless of the presence of GC (in
-      // particular, since during load of the wasm we don't know the features
-      // yet, so we apply the more refined types), so we don't add that in any
-      // case here.
-      FeatureSet feats = FeatureSet::ReferenceTypes;
-      if (heapType.getSignature().results.isTuple()) {
-        feats |= FeatureSet::Multivalue;
-      }
-      return feats;
+      };
+
+      ReferenceFeatureCollector collector;
+      auto heapType = t.getHeapType();
+      collector.walkRoot(&heapType);
+      collector.noteChild(&heapType);
+      return collector.feats;
     }
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
