@@ -27,7 +27,6 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/insert_ordered.h"
-#include "support/small_set.h"
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
