@@ -116,18 +116,17 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
     if (inRecGroup()) {
       std::cout << ' ';
     }
-    std::cout << "(type $" << i << ' ';
     if (type.isBasic()) {
-      std::cout << print(type) << ")\n";
+      std::cout << "(type $" << i << ' ' << print(type) << ")\n";
       continue;
     }
     auto [it, inserted] = seen.insert({type, i});
     if (inserted) {
       std::cout << print(type);
     } else {
-      std::cout << "identical to $" << it->second;
+      std::cout << "(type $" << i << " identical to $" << it->second << ")";
     }
-    std::cout << ")\n";
+    std::cout << "\n";
   }
   if (inRecGroup()) {
     std::cout << ")\n";
