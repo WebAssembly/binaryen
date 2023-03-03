@@ -1012,7 +1012,7 @@ FeatureSet Type::getFeatures() const {
   SmallUnorderedSet<Type, 2> seen;
 
   std::function<FeatureSet(Type)> getFeaturesInternal =
-    [&](Type t) -> FeatureSet {
+    [&](Type type) -> FeatureSet {
     auto getSingleFeatures = [&](Type t) -> FeatureSet {
       if (seen.count(t)) {
         // We've already seen this, so the features will already be accounted
@@ -1083,14 +1083,14 @@ FeatureSet Type::getFeatures() const {
       }
     };
 
-    if (isTuple()) {
+    if (type.isTuple()) {
       FeatureSet feats = FeatureSet::Multivalue;
-      for (const auto& t : *this) {
+      for (const auto& t : type) {
         feats |= getSingleFeatures(t);
       }
       return feats;
     }
-    return getSingleFeatures(*this);
+    return getSingleFeatures(type);
   };
 
   return getFeaturesInternal(*this);
