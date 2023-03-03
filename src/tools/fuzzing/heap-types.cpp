@@ -761,9 +761,12 @@ void Inhabitator::markNullable(FieldPos field) {
       [[fallthrough]];
     case Contravariant:
       // Mark the field nullable in all subtypes. If the subtype field is
-      // already nullable, that's ok and this will have no effect.
+      // already nullable, that's ok and this will have no effect. TODO: Remove
+      // this extra `index` variable once we have C++20. It's a workaround for
+      // lambdas being unable to capture structured bindings.
+      const size_t index = idx;
       subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
-        nullables.insert({type, idx});
+        nullables.insert({type, index});
       });
       break;
   }
