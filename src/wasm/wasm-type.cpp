@@ -1017,7 +1017,7 @@ FeatureSet Type::getFeatures() const {
 
         void noteChild(HeapType* heapType) {
           if (heapType->isBasic()) {
-            switch (heapType.getBasic()) {
+            switch (heapType->getBasic()) {
               case HeapType::ext:
               case HeapType::func:
                 feats |= FeatureSet::ReferenceTypes;
@@ -1065,7 +1065,8 @@ FeatureSet Type::getFeatures() const {
       };
 
       ReferenceFeatureCollector collector;
-      collector.walkRoot(t.getHeapType());
+      auto heapType = t.getHeapType();
+      collector.walkRoot(&heapType);
       return collector.feats;
     }
     TODO_SINGLE_COMPOUND(t);
@@ -1075,22 +1076,17 @@ FeatureSet Type::getFeatures() const {
       default:
         return FeatureSet::MVP;
     }
+  };
 
-    if (type.isTuple()) {
-      FeatureSet feats = FeatureSet::Multivalue;
-      for (const auto& t : type) {
-        feats |= getSingleFeatures(t);
-      }
-      return feats;
+  if (isTuple()) {
+    FeatureSet feats = FeatureSet::Multivalue;
+    for (const auto& t : *this) {
+      feats |= getSingleFeatures(t);
     }
-    return getSingleFeatures(type);
+    return feats;
   }
-
-  const Tuple&
-  Type::getTuple() const {
-    assert(isTuple());
-    return getTypeInfo(*this)->tuple;
-  }
+  return getSingleFeatures(type);
+}
 
 HeapType Type::getHeapType() const {
   if (isBasic()) {
