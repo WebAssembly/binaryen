@@ -678,6 +678,18 @@ struct Inhabitator {
   // Uniquely identify fields as an index into a type.
   using FieldPos = std::pair<HeapType, Index>;
 
+  // When we make a reference nullable, we typically need to make the same
+  // reference in other types nullable to maintain valid subtyping. Which types
+  // we need to update depends on the variance of the reference, which is
+  // determined by how it is used in its enclosing heap type.
+  //
+  // An invariant field of a heaptype must have the same type in subtypes of
+  // that heaptype. A covariant field of a heaptype must be typed with a subtype
+  // of its original type in subtypes of the heaptype. A contravariant field of
+  // a heap type must be typed with a supertype of its original type in subtypes
+  // of the heaptype.
+  enum Variance { Invariant, Covariant, Contravariant };
+
   // The input types.
   const std::vector<HeapType>& types;
 
@@ -688,8 +700,6 @@ struct Inhabitator {
 
   Inhabitator(const std::vector<HeapType>& types)
     : types(types), subtypes(types) {}
-
-  enum Variance { Invariant, Covariant, Contravariant };
 
   Variance getVariance(FieldPos field);
   void markNullable(FieldPos field);
