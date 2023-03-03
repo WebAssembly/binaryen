@@ -291,7 +291,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
     // effective since it does not reduce the number of types (while the code to
     // filter out uninhabitable ones might remove huge chucks of the type
     // graph).
-    auto inhabitable = HeapTypeGenerator::makeInhabitable(result);
+    auto inhabitable = HeapTypeGenerator::makeInhabitable(*result);
 
     for (auto type : inhabitable) {
       possibleHeapTypes.push_back(type);
