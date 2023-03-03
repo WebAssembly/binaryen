@@ -27,6 +27,7 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/insert_ordered.h"
+#include "support/small_set.h"
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -1005,77 +1006,94 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [](Type t) -> FeatureSet {
-    if (t.isRef()) {
-      // A reference type implies we need that feature. Some also require more,
-      // such as GC or exceptions.
-      auto heapType = t.getHeapType();
-      if (heapType.isBasic()) {
-        switch (heapType.getBasic()) {
-          case HeapType::ext:
-          case HeapType::func:
-            return FeatureSet::ReferenceTypes;
-          case HeapType::any:
-          case HeapType::eq:
-          case HeapType::i31:
-          case HeapType::struct_:
-          case HeapType::array:
-            return FeatureSet::ReferenceTypes | FeatureSet::GC;
-          case HeapType::string:
-          case HeapType::stringview_wtf8:
-          case HeapType::stringview_wtf16:
-          case HeapType::stringview_iter:
-            return FeatureSet::ReferenceTypes | FeatureSet::Strings;
-          case HeapType::none:
-          case HeapType::noext:
-          case HeapType::nofunc:
-            // Technically introduced in GC, but used internally as part of
-            // ref.null with just reference types.
-            return FeatureSet::ReferenceTypes;
+  // Types may recurse, so we need to avoid infinite recursing when finding all
+  // used features. Use a small set as the common case is to have little or no
+  // recursion at all.
+  SmallUnorderedSet<Type, 2> seen;
+
+  std::function<FeatureSet(Type)> getFeaturesInternal =
+    [&](Type t) -> FeatureSet {
+    auto getSingleFeatures = [&](Type t) -> FeatureSet {
+      if (seen.count(t)) {
+        // We've already seen this, so the features will already be accounted
+        // for.
+        return FeatureSet::None;
+      }
+      seen.insert(t);
+
+      if (t.isRef()) {
+        // A reference type implies we need that feature. Some also require
+        // more, such as GC or exceptions.
+        auto heapType = t.getHeapType();
+        if (heapType.isBasic()) {
+          switch (heapType.getBasic()) {
+            case HeapType::ext:
+            case HeapType::func:
+              return FeatureSet::ReferenceTypes;
+            case HeapType::any:
+            case HeapType::eq:
+            case HeapType::i31:
+            case HeapType::struct_:
+            case HeapType::array:
+              return FeatureSet::ReferenceTypes | FeatureSet::GC;
+            case HeapType::string:
+            case HeapType::stringview_wtf8:
+            case HeapType::stringview_wtf16:
+            case HeapType::stringview_iter:
+              return FeatureSet::ReferenceTypes | FeatureSet::Strings;
+            case HeapType::none:
+            case HeapType::noext:
+            case HeapType::nofunc:
+              // Technically introduced in GC, but used internally as part of
+              // ref.null with just reference types.
+              return FeatureSet::ReferenceTypes;
+          }
         }
+        if (heapType.isStruct() || heapType.isArray() ||
+            heapType.getRecGroup().size() > 1 || heapType.getSuperType()) {
+          return FeatureSet::ReferenceTypes | FeatureSet::GC;
+        }
+        // Otherwise, this is a function reference, which requires reference
+        // types and possibly also multivalue (if it has multiple returns).
+        // Note: Technically typed function references also require GC, however,
+        // we use these types internally regardless of the presence of GC (in
+        // particular, since during load of the wasm we don't know the features
+        // yet, so we apply the more refined types), so we don't add that in any
+        // case here.
+        FeatureSet feats = FeatureSet::ReferenceTypes;
+        auto sig = heapType.getSignature();
+        if (sig.results.isTuple()) {
+          feats |= FeatureSet::Multivalue;
+        }
+        // Also add features needed for the params and results.
+        for (auto t : sig.params) {
+          feats |= getFeaturesInternal(t);
+        }
+        for (auto t : sig.results) {
+          feats |= getFeaturesInternal(t);
+        }
+        return feats;
       }
-      if (heapType.isStruct() || heapType.isArray() ||
-          heapType.getRecGroup().size() > 1 || heapType.getSuperType()) {
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
+      TODO_SINGLE_COMPOUND(t);
+      switch (t.getBasic()) {
+        case Type::v128:
+          return FeatureSet::SIMD;
+        default:
+          return FeatureSet::MVP;
       }
-      // Otherwise, this is a function reference, which requires reference types
-      // and possibly also multivalue (if it has multiple returns).
-      // Note: Technically typed function references also require GC, however,
-      // we use these types internally regardless of the presence of GC (in
-      // particular, since during load of the wasm we don't know the features
-      // yet, so we apply the more refined types), so we don't add that in any
-      // case here.
-      FeatureSet feats = FeatureSet::ReferenceTypes;
-      auto sig = heapType.getSignature();
-      if (sig.results.isTuple()) {
-        feats |= FeatureSet::Multivalue;
-      }
-      // Also add features needed for the params and results.
-      for (auto t : sig.params) {
-        feats |= t.getFeatures();
-      }
-      for (auto t : sig.results) {
-        feats |= t.getFeatures();
+    };
+
+    if (isTuple()) {
+      FeatureSet feats = FeatureSet::Multivalue;
+      for (const auto& t : *this) {
+        feats |= getSingleFeatures(t);
       }
       return feats;
     }
-    TODO_SINGLE_COMPOUND(t);
-    switch (t.getBasic()) {
-      case Type::v128:
-        return FeatureSet::SIMD;
-      default:
-        return FeatureSet::MVP;
-    }
+    return getSingleFeatures(*this);
   };
 
-  if (isTuple()) {
-    FeatureSet feats = FeatureSet::Multivalue;
-    for (const auto& t : *this) {
-      feats |= getSingleFeatures(t);
-    }
-    return feats;
-  }
-  return getSingleFeatures(*this);
+  return getFeaturesInternal(*this);
 }
 
 const Tuple& Type::getTuple() const {

@@ -11,6 +11,3 @@
 
 ;; But it passes with the feature enabled.
 ;; RUN: wasm-opt --enable-reference-types --enable-simd %s
-
-
-
