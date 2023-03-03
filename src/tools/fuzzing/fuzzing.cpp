@@ -285,7 +285,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
               << err->index;
     }
-    for (auto type : *result) {
+
+    // Make the new types inhabitable. This is not strictly necessary since the
+    // code below will remove uninhabitable ones, but it can be much more
+    // effective since it does not reduce the number of types (while the code to
+    // filter out uninhabitable ones might remove huge chucks of the type
+    // graph).
+    auto inhabitable = HeapTypeGenerator::makeInhabitable(result);
+
+    for (auto type : inhabitable) {
       possibleHeapTypes.push_back(type);
     }
   }
@@ -297,6 +305,13 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // start at a given type, expand out its children, and continue to expand
   // recursively. If there is a cycle then this would continue forever, so it
   // must hit any fixed limit.
+  //
+  // Note that as mentioned above we ensure that HeapTypeGenerator::create's
+  // output is inhabitable, but we also need to handle existing heap types in
+  // the module from before. Those might already have instructions referring to
+  // them, which would mean we can't just modify the types, we'd also need to
+  // modify instructions. For that reason we both modify newly-generated types
+  // to be inhabitable, and filter out old types and are not inhabitable.
   const size_t MAX_SEARCH = 100;
   for (auto t : possibleHeapTypes) {
     if (t.isBasic() || t.isBottom()) {
