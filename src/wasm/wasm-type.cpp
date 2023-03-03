@@ -1085,7 +1085,12 @@ FeatureSet Type::getFeatures() const {
     }
     return feats;
   }
-  return getSingleFeatures(type);
+  return getSingleFeatures(*this);
+}
+
+const Tuple& Type::getTuple() const {
+  assert(isTuple());
+  return getTypeInfo(*this)->tuple;
 }
 
 HeapType Type::getHeapType() const {
