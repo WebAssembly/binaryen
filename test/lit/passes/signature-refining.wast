@@ -758,3 +758,25 @@
     )
   )
 )
+
+;; If we refine a type, that may require changes to its subtypes. For now, we
+;; skip such optimizations. TODO
+(module
+  (rec
+    ;; CHECK:      (type $A (func (param (ref null $B)) (result (ref null $A))))
+    (type $A (func         (param (ref null $B)) (result (ref null $A))))
+    ;; CHECK:      (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+    (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+  )
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $A) (param $0 (ref null $B)) (result (ref null $A))
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: )
+  (func $func (type $A) (param $0 (ref null $B)) (result (ref null $A))
+    ;; This result is non-nullable, and we could refine type $A accordingly. But
+    ;; if we did that, we'd need to refine $B as well.
+    (ref.func $func)
+  )
+)
