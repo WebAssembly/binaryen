@@ -1046,8 +1046,16 @@ FeatureSet Type::getFeatures() const {
       // yet, so we apply the more refined types), so we don't add that in any
       // case here.
       FeatureSet feats = FeatureSet::ReferenceTypes;
-      if (heapType.getSignature().results.isTuple()) {
+      auto sig = heapType.getSignature();
+      if (sig.results.isTuple()) {
         feats |= FeatureSet::Multivalue;
+      }
+      // Also add features needed for the params and results.
+      for (auto t : sig.params) {
+        feats |= t.getFeatures();
+      }
+      for (auto t : sig.results) {
+        feats |= t.getFeatures();
       }
       return feats;
     }
