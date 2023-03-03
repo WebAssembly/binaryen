@@ -27,6 +27,7 @@
 #include "compiler-support.h"
 #include "support/hash.h"
 #include "support/insert_ordered.h"
+#include "support/small_set.h"
 #include "wasm-features.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
@@ -1005,7 +1006,18 @@ Type Type::reinterpret() const {
 }
 
 FeatureSet Type::getFeatures() const {
-  auto getSingleFeatures = [](Type t) -> FeatureSet {
+  // Types may recurse, so we need to avoid infinite recursing when finding all
+  // used features. Use a small set as the common case is to have little or no
+  // recursion at all.
+  SmallUnorderedSet<Type, 10> seen;
+
+  auto getSingleFeatures = [&](Type t) -> FeatureSet {
+    if (seen.count(t)) {
+      // We've already seen this, so the features will already be accounted for.
+      return FeatureSet::None;
+    }
+    seen.insert(t);
+
     if (t.isRef()) {
       // A reference type implies we need that feature. Some also require more,
       // such as GC or exceptions.
