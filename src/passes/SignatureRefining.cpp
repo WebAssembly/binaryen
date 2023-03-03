@@ -30,6 +30,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -137,6 +138,16 @@ struct SignatureRefining : public Pass {
     //      some kind.
     for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
       allInfo[exportedFunc->type].canModify = false;
+    }
+
+    // For now, do not optimize types that have subtypes. When we modify such a
+    // type we need to modify subtypes as well, similar to the analysis in
+    // TypeRefining, and perhaps we can unify this pass with that. TODO
+    SubTypes subTypes(*module);
+    for (auto& [type, info] : allInfo) {
+      if (!subTypes.getStrictSubTypes(type).empty()) {
+        info.canModify = false;
+      }
     }
 
     bool refinedResults = false;
