@@ -275,9 +275,71 @@ void TranslateToFuzzReader::setupMemory() {
 void TranslateToFuzzReader::setupHeapTypes() {
   // Start with any existing heap types in the module, which may exist in any
   // initial content we began with.
-  interestingHeapTypes = ModuleUtils::collectHeapTypes(wasm);
+  auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
   // TODO: use heap type fuzzer to add new types in addition to the previous
+
+  // Filter away uninhabitable heap types, that is, heap types that we cannot
+  // construct, like a type with a non-nullable reference to itself. For
+  // simplicity, don't look for such type loops of aribtrary size but just limit
+  // the search to a reasonable amount (to avoid possible slowness).
+  const size_t MAX_SEARCH = 100;
+  std::unordered_set<HeapType> uninhabitable;
+  for (auto t : possibleHeapTypes) {
+    if (t.isBasic() || t.isBottom()) {
+      // These types are handled directly in the random code generators.
+      continue;
+    }
+
+    std::vector<HeapType> seen;
+    seen.push_back(t);
+    size_t next = 0;
+    bool fail = false;
+
+    // Add a child type (a field in a struct, etc.) to the list of seen types,
+    // if it is something we need to look at (that is, if it can cause the
+    // original type to be noninhatible).
+    auto maybeAdd = [&](Type type) {
+      // Non-refs are always ok. Nullable refs are ok, since we can create an
+      // instance with a null there.
+      if (!type.isRef() || type.isNullable()) {
+        return;
+      }
+
+      auto heapType = type.getHeapType();
+      if (heapType.isStruct() || heapType.isArray()) {
+        seen.push_back(heapType);
+        if (seen.size() >= MAX_SEARCH) {
+          fail = true;
+        }
+      } else if (heapType.isBottom()) {
+        // This is a non-nullable bottom type, which is noninhabitable.
+        fail = true;
+      } else if (heapType == HeapType::ext) {
+        // We can't create an extern. TODO: import one perhaps
+        fail = true;
+      }
+    };
+
+    // Add subtypes at the next position to inspect, and keep doing that until
+    // we stop or we reach the limit.
+    while (next < seen.size() && !fail) {
+      auto curr = seen[next];
+      next++;
+      if (curr.isStruct()) {
+        for (auto f : curr.getStruct().fields) {
+          maybeAdd(f.type);
+        }
+      } else if (curr.isArray()) {
+        maybeAdd(curr.getArray().element.type);
+      }
+    }
+
+    if (!fail) {
+      // No problem; add it.
+      interestingHeapTypes.push_back(t);
+    }
+  }
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
