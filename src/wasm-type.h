@@ -405,6 +405,8 @@ public:
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(HeapType left, HeapType right);
 
+  std::vector<Type> getTypeChildren() const;
+
   // Return the ordered HeapType children, looking through child Types.
   std::vector<HeapType> getHeapTypeChildren() const;
 

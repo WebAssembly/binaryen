@@ -1050,15 +1050,24 @@ FeatureSet Type::getFeatures() const {
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
           } else if (heapType->isSignature()) {
             // This is a function reference, which requires reference types and
-            // possibly also multivalue (if it has multiple returns). Note:
-            // Technically typed function references also require GC, however,
+            // possibly also multivalue (if it has multiple returns). Note that
+            // technically typed function references also require GC, however,
             // we use these types internally regardless of the presence of GC
             // (in particular, since during load of the wasm we don't know the
             // features yet, so we apply the more refined types), so we don't
             // add that in any case here.
+            feats |= FeatureSet::ReferenceTypes;
             auto sig = heapType->getSignature();
             if (sig.results.isTuple()) {
               feats |= FeatureSet::Multivalue;
+            }
+          }
+
+          // In addition, scan their non-ref children, to add dependencies on
+          // things like SIMD.
+          for (auto child : heapType->getTypeChildren()) {
+            if (!child.isRef()) {
+              feats |= child.getFeatures();
             }
           }
         }
@@ -1067,6 +1076,7 @@ FeatureSet Type::getFeatures() const {
       ReferenceFeatureCollector collector;
       auto heapType = t.getHeapType();
       collector.walkRoot(&heapType);
+      collector.noteChild(&heapType);
       return collector.feats;
     }
     TODO_SINGLE_COMPOUND(t);
@@ -1466,6 +1476,33 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
     return true;
   }
   return SubTyper().isSubType(left, right);
+}
+
+std::vector<Type> HeapType::getTypeChildren() const {
+  if (isBasic()) {
+    return {};
+  }
+  if (isStruct()) {
+    std::vector<Type> children;
+    for (auto& field : getStruct().fields) {
+      children.push_back(field.type);
+    }
+    return children;
+  }
+  if (isArray()) {
+    return {getArray().element.type};
+  }
+  if (isSignature()) {
+    std::vector<Type> children;
+    auto sig = getSignature();
+    for (auto tuple : {sig.params, sig.results}) {
+      for (auto t : tuple) {
+        children.push_back(t);
+      }
+    }
+    return children;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 std::vector<HeapType> HeapType::getHeapTypeChildren() const {
