@@ -287,7 +287,6 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // recursively. If there is a cycle then this would continue forever, so it
   // must hit any fixed limit.
   const size_t MAX_SEARCH = 100;
-  std::unordered_set<HeapType> uninhabitable;
   for (auto t : possibleHeapTypes) {
     if (t.isBasic() || t.isBottom()) {
       // These types are handled directly in the random code generators.
@@ -301,7 +300,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
     // Add a child type (a field in a struct, etc.) to the list of seen types,
     // if it is something we need to look at (that is, if it can cause the
-    // original type to be noninhatible).
+    // original type to be uninhabitable).
     auto maybeAdd = [&](Type type) {
       // Non-refs are always ok. Nullable refs are ok, since we can create an
       // instance with a null there.
