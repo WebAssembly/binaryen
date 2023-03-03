@@ -288,10 +288,9 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // must hit any fixed limit.
   const size_t MAX_SEARCH = 100;
   for (auto t : possibleHeapTypes) {
-    if (t.isBasic() || t.isBottom()) {
-      // These types are handled directly in the random code generators.
-      continue;
-    }
+    // These types are handled directly in the random code generators, and we
+    // assume they are not emitted by the code before us in this function.
+    assert(!t.isBasic() && !t.isBottom());
 
     std::vector<HeapType> seen;
     seen.push_back(t);
