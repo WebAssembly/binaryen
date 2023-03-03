@@ -282,7 +282,10 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // Filter away uninhabitable heap types, that is, heap types that we cannot
   // construct, like a type with a non-nullable reference to itself. For
   // simplicity, don't look for such type loops of aribtrary size but just limit
-  // the search to a reasonable amount (to avoid possible slowness).
+  // the search to a reasonable amount (to avoid possible slowness). That is, we
+  // start at a given type, expand out its children, and continue to expand
+  // recursively. If there is a cycle then this would continue forever, so it
+  // must hit any fixed limit.
   const size_t MAX_SEARCH = 100;
   std::unordered_set<HeapType> uninhabitable;
   for (auto t : possibleHeapTypes) {
