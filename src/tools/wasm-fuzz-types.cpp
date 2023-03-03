@@ -547,7 +547,7 @@ findUninhabitable(HeapType parent,
                   std::unordered_set<HeapType>& visited,
                   std::unordered_set<HeapType>& visiting) {
   if (type.isRef() && type.isNonNullable()) {
-    if (type.getHeapType().isBottom()) {
+    if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
       return parent;
     }
     return findUninhabitable(type.getHeapType(), visited, visiting);

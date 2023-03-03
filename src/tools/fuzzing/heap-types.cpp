@@ -694,6 +694,7 @@ struct Inhabitator {
   Variance getVariance(FieldPos field);
   void markNullable(FieldPos field);
   void markBottomRefsNullable();
+  void markExternRefsNullable();
   void breakNonNullableCycles();
 
   std::vector<HeapType> build();
@@ -774,6 +775,23 @@ void Inhabitator::markBottomRefsNullable() {
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
       if (child.isRef() && child.getHeapType().isBottom() &&
+          child.isNonNullable()) {
+        markNullable({type, i});
+      }
+    }
+  }
+}
+
+void Inhabitator::markExternRefsNullable() {
+  // The fuzzer cannot instantiate non-nullable externrefs, so make sure they
+  // are all nullable.
+  // TODO: Remove this once the fuzzer imports externref globals or gets some
+  // other way to instantiate externrefs.
+  for (auto type : types) {
+    auto children = type.getTypeChildren();
+    for (size_t i = 0; i < children.size(); ++i) {
+      auto child = children[i];
+      if (child.isRef() && child.getHeapType() == HeapType::ext &&
           child.isNonNullable()) {
         markNullable({type, i});
       }
@@ -970,6 +988,7 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   // Construct the new types.
   Inhabitator inhabitator(deduplicated);
   inhabitator.markBottomRefsNullable();
+  inhabitator.markExternRefsNullable();
   inhabitator.breakNonNullableCycles();
   deduplicated = inhabitator.build();
 
