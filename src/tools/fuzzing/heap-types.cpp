@@ -16,6 +16,8 @@
 
 #include <variant>
 
+#include "ir/subtypes.h"
+#include "support/insert_ordered.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
@@ -652,6 +654,368 @@ struct HeapTypeGeneratorImpl {
 HeapTypeGenerator
 HeapTypeGenerator::create(Random& rand, FeatureSet features, size_t n) {
   return HeapTypeGeneratorImpl(rand, features, n).result;
+}
+
+namespace {
+
+// `makeInhabitable` implementation.
+//
+// There are two root causes of uninhabitability: First, a non-nullable
+// reference to a bottom type is always uninhabitable. Second, a cycle in the
+// type graph formed from non-nullable references makes all the types involved
+// in that cycle uninhabitable because there is no way to construct the types
+// one at at time. All types that reference uninhabitable types via non-nullable
+// references are also themselves uninhabitable, but these transitively
+// uninhabitable types will become inhabitable once we fix the root causes, so
+// we don't worry about them.
+//
+// To modify uninhabitable types to make them habitable, it suffices to make all
+// non-nullable references to bottom types nullable and to break all cycles of
+// non-nullable references by making one of the references nullable. To preserve
+// valid subtyping, the newly nullable fields must also be made nullable in any
+// supertypes in which they appear.
+struct Inhabitator {
+  // Uniquely identify fields as an index into a type.
+  using FieldPos = std::pair<HeapType, Index>;
+
+  // When we make a reference nullable, we typically need to make the same
+  // reference in other types nullable to maintain valid subtyping. Which types
+  // we need to update depends on the variance of the reference, which is
+  // determined by how it is used in its enclosing heap type.
+  //
+  // An invariant field of a heaptype must have the same type in subtypes of
+  // that heaptype. A covariant field of a heaptype must be typed with a subtype
+  // of its original type in subtypes of the heaptype. A contravariant field of
+  // a heap type must be typed with a supertype of its original type in subtypes
+  // of the heaptype.
+  enum Variance { Invariant, Covariant, Contravariant };
+
+  // The input types.
+  const std::vector<HeapType>& types;
+
+  // The fields we will make nullable.
+  std::unordered_set<FieldPos> nullables;
+
+  SubTypes subtypes;
+
+  Inhabitator(const std::vector<HeapType>& types)
+    : types(types), subtypes(types) {}
+
+  Variance getVariance(FieldPos field);
+  void markNullable(FieldPos field);
+  void markBottomRefsNullable();
+  void markExternRefsNullable();
+  void breakNonNullableCycles();
+
+  std::vector<HeapType> build();
+};
+
+Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
+  auto [type, idx] = field;
+  assert(!type.isBasic());
+  if (type.isStruct()) {
+    if (type.getStruct().fields[idx].mutable_ == Mutable) {
+      return Invariant;
+    } else {
+      return Covariant;
+    }
+  }
+  if (type.isArray()) {
+    if (type.getArray().element.mutable_ == Mutable) {
+      return Invariant;
+    } else {
+      return Covariant;
+    }
+  }
+  if (type.isSignature()) {
+    if (idx < type.getSignature().params.size()) {
+      return Contravariant;
+    } else {
+      return Covariant;
+    }
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+void Inhabitator::markNullable(FieldPos field) {
+  // Mark the given field nullable in the original type and in other types
+  // necessary to keep subtyping valid.
+  nullables.insert(field);
+  auto [curr, idx] = field;
+  switch (getVariance(field)) {
+    case Covariant:
+      // Mark the field null in all supertypes. If the supertype field is
+      // already nullable or does not exist, that's ok and this will have no
+      // effect.
+      while (auto super = curr.getSuperType()) {
+        nullables.insert({*super, idx});
+        curr = *super;
+      }
+      break;
+    case Invariant:
+      // Find the top type for which this field exists and mark the field
+      // nullable in all of its subtypes.
+      if (curr.isArray()) {
+        while (auto super = curr.getSuperType()) {
+          curr = *super;
+        }
+      } else {
+        assert(curr.isStruct());
+        while (auto super = curr.getSuperType()) {
+          if (super->getStruct().fields.size() <= idx) {
+            break;
+          }
+          curr = *super;
+        }
+      }
+      [[fallthrough]];
+    case Contravariant:
+      // Mark the field nullable in all subtypes. If the subtype field is
+      // already nullable, that's ok and this will have no effect. TODO: Remove
+      // this extra `index` variable once we have C++20. It's a workaround for
+      // lambdas being unable to capture structured bindings.
+      const size_t index = idx;
+      subtypes.iterSubTypes(curr, [&](HeapType type, Index) {
+        nullables.insert({type, index});
+      });
+      break;
+  }
+}
+
+void Inhabitator::markBottomRefsNullable() {
+  for (auto type : types) {
+    auto children = type.getTypeChildren();
+    for (size_t i = 0; i < children.size(); ++i) {
+      auto child = children[i];
+      if (child.isRef() && child.getHeapType().isBottom() &&
+          child.isNonNullable()) {
+        markNullable({type, i});
+      }
+    }
+  }
+}
+
+void Inhabitator::markExternRefsNullable() {
+  // The fuzzer cannot instantiate non-nullable externrefs, so make sure they
+  // are all nullable.
+  // TODO: Remove this once the fuzzer imports externref globals or gets some
+  // other way to instantiate externrefs.
+  for (auto type : types) {
+    auto children = type.getTypeChildren();
+    for (size_t i = 0; i < children.size(); ++i) {
+      auto child = children[i];
+      if (child.isRef() && child.getHeapType() == HeapType::ext &&
+          child.isNonNullable()) {
+        markNullable({type, i});
+      }
+    }
+  }
+}
+
+// Use a depth-first search to find cycles, marking the last found reference in
+// the cycle to be made non-nullable.
+void Inhabitator::breakNonNullableCycles() {
+  // Types we've finished visiting. We don't need to visit them again.
+  std::unordered_set<HeapType> visited;
+
+  // The path of types we are currently visiting. If one of them comes back up,
+  // we've found a cycle. Map the types to the other types they reference and
+  // our current index into that list so we can track where we are in each level
+  // of the search.
+  InsertOrderedMap<HeapType, std::pair<std::vector<Type>, Index>> visiting;
+
+  for (auto root : types) {
+    if (visited.count(root)) {
+      continue;
+    }
+    assert(visiting.size() == 0);
+    visiting.insert({root, {root.getTypeChildren(), 0}});
+
+    while (visiting.size()) {
+      auto& [curr, state] = *std::prev(visiting.end());
+      auto& [children, idx] = state;
+
+      while (idx < children.size()) {
+        // Skip non-reference children because they cannot refer to other types.
+        if (!children[idx].isRef()) {
+          ++idx;
+          continue;
+        }
+        // Skip nullable references because they don't cause uninhabitable
+        // cycles.
+        if (children[idx].isNullable()) {
+          ++idx;
+          continue;
+        }
+        // Skip references that we have already marked nullable to satisfy
+        // subtyping constraints. TODO: We could take such nullable references
+        // into account when detecting cycles by tracking where in the current
+        // search path we have made references nullable.
+        if (nullables.count({curr, idx})) {
+          ++idx;
+          continue;
+        }
+        // Skip references to types that we have finished visiting. We have
+        // visited the full graph reachable from such references, so we know
+        // they cannot cycle back to anything we are currently visiting.
+        auto heapType = children[idx].getHeapType();
+        if (visited.count(heapType)) {
+          ++idx;
+          continue;
+        }
+        // If this ref forms a cycle, break the cycle by marking it nullable and
+        // continue.
+        if (auto it = visiting.find(heapType); it != visiting.end()) {
+          markNullable({curr, idx});
+          ++idx;
+          continue;
+        }
+        break;
+      }
+
+      // If we've finished the DFS on the current type, pop it off the search
+      // path and continue searching the previous type.
+      if (idx == children.size()) {
+        visited.insert(curr);
+        visiting.erase(std::prev(visiting.end()));
+        continue;
+      }
+
+      // Otherwise we have a non-nullable reference we need to search.
+      assert(children[idx].isRef() && children[idx].isNonNullable());
+      auto next = children[idx++].getHeapType();
+      visiting.insert({next, {next.getTypeChildren(), 0}});
+    }
+  }
+}
+
+std::vector<HeapType> Inhabitator::build() {
+  std::unordered_map<HeapType, size_t> typeIndices;
+  for (size_t i = 0; i < types.size(); ++i) {
+    typeIndices.insert({types[i], i});
+  }
+
+  TypeBuilder builder(types.size());
+
+  // Copy types. Update references to point to the corresponding new type and
+  // make them nullable where necessary.
+  auto updateType = [&](FieldPos pos, Type& type) {
+    if (!type.isRef()) {
+      return;
+    }
+    auto heapType = type.getHeapType();
+    auto nullability = type.getNullability();
+    if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+      heapType = builder[it->second];
+    }
+    if (nullables.count(pos)) {
+      nullability = Nullable;
+    }
+    type = builder.getTempRefType(heapType, nullability);
+  };
+
+  for (size_t i = 0; i < types.size(); ++i) {
+    auto type = types[i];
+    if (type.isStruct()) {
+      Struct copy = type.getStruct();
+      for (size_t j = 0; j < copy.fields.size(); ++j) {
+        updateType({type, j}, copy.fields[j].type);
+      }
+      builder[i] = copy;
+      continue;
+    }
+    if (type.isArray()) {
+      Array copy = type.getArray();
+      updateType({type, 0}, copy.element.type);
+      builder[i] = copy;
+      continue;
+    }
+    if (type.isSignature()) {
+      auto sig = type.getSignature();
+      size_t j = 0;
+      std::vector<Type> params;
+      for (auto param : sig.params) {
+        params.push_back(param);
+        updateType({type, j++}, params.back());
+      }
+      std::vector<Type> results;
+      for (auto result : sig.results) {
+        results.push_back(result);
+        updateType({type, j++}, results.back());
+      }
+      builder[i] = Signature(builder.getTempTupleType(params),
+                             builder.getTempTupleType(results));
+      continue;
+    }
+    WASM_UNREACHABLE("unexpected type kind");
+  }
+
+  // Establish rec groups.
+  for (size_t start = 0; start < types.size();) {
+    size_t size = types[start].getRecGroup().size();
+    builder.createRecGroup(start, size);
+    start += size;
+  }
+
+  // Establish supertypes.
+  for (size_t i = 0; i < types.size(); ++i) {
+    if (auto super = types[i].getSuperType()) {
+      if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
+        builder[i].subTypeOf(builder[it->second]);
+      } else {
+        builder[i].subTypeOf(*super);
+      }
+    }
+  }
+
+  auto built = builder.build();
+  assert(!built.getError() && "unexpected build error");
+  return *built;
+}
+
+} // anonymous namespace
+
+std::vector<HeapType>
+HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
+  if (types.empty()) {
+    return {};
+  }
+
+  // Remove duplicate and basic types. We will insert them back at the end.
+  std::unordered_map<HeapType, size_t> typeIndices;
+  std::vector<size_t> deduplicatedIndices;
+  std::vector<HeapType> deduplicated;
+  for (auto type : types) {
+    if (type.isBasic()) {
+      deduplicatedIndices.push_back(-1);
+      continue;
+    }
+    auto [it, inserted] = typeIndices.insert({type, deduplicated.size()});
+    if (inserted) {
+      deduplicated.push_back(type);
+    }
+    deduplicatedIndices.push_back(it->second);
+  }
+  assert(deduplicatedIndices.size() == types.size());
+
+  // Construct the new types.
+  Inhabitator inhabitator(deduplicated);
+  inhabitator.markBottomRefsNullable();
+  inhabitator.markExternRefsNullable();
+  inhabitator.breakNonNullableCycles();
+  deduplicated = inhabitator.build();
+
+  // Re-duplicate and re-insert basic types as necessary.
+  std::vector<HeapType> result;
+  for (size_t i = 0; i < types.size(); ++i) {
+    if (deduplicatedIndices[i] == (size_t)-1) {
+      assert(types[i].isBasic());
+      result.push_back(types[i]);
+    } else {
+      result.push_back(deduplicated[deduplicatedIndices[i]]);
+    }
+  }
+  return result;
 }
 
 } // namespace wasm
