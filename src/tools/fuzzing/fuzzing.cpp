@@ -315,7 +315,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
           fail = true;
         }
       } else if (heapType.isBottom()) {
-        // This is a non-nullable bottom type, which is noninhabitable.
+        // This is a non-nullable bottom type, which is uninhabitable.
         fail = true;
       } else if (heapType == HeapType::ext) {
         // We can't create an extern. TODO: import one perhaps
