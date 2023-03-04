@@ -1025,4 +1025,70 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   return result;
 }
 
+std::vector<HeapType>
+HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+  std::unordered_set<HeapType> visited, visiting;
+  std::vector<HeapType> inhabitable;
+  for (auto type : types) {
+    if (!HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
+      inhabitable.push_back(type);
+    }
+  }
+  return inhabitable;
+}
+
+// Simple recursive DFS through non-nullable references to see if we find any
+// cycles.
+std::optional<HeapType>
+HeapTypeGenerator::findUninhabitable(HeapType type,
+                                     std::unordered_set<HeapType>& visited,
+                                     std::unordered_set<HeapType>& visiting) {
+  if (type.isBasic()) {
+    return std::nullopt;
+  }
+  if (type.isSignature()) {
+    // Function types are always inhabitable.
+    return std::nullopt;
+  }
+  if (visited.count(type)) {
+    return std::nullopt;
+  }
+
+  if (!visiting.insert(type).second) {
+    return type;
+  }
+
+  if (type.isStruct()) {
+    for (auto& field : type.getStruct().fields) {
+      if (auto t = findUninhabitable(type, field.type, visited, visiting)) {
+        return t;
+      }
+    }
+  } else if (type.isArray()) {
+    if (auto t = findUninhabitable(
+          type, type.getArray().element.type, visited, visiting)) {
+      return t;
+    }
+  } else {
+    WASM_UNREACHABLE("unexpected type kind");
+  }
+  visiting.erase(type);
+  visited.insert(type);
+  return {};
+}
+
+std::optional<HeapType>
+HeapTypeGenerator::findUninhabitable(HeapType parent,
+                                     Type type,
+                                     std::unordered_set<HeapType>& visited,
+                                     std::unordered_set<HeapType>& visiting) {
+  if (type.isRef() && type.isNonNullable()) {
+    if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
+      return parent;
+    }
+    return findUninhabitable(type.getHeapType(), visited, visiting);
+  }
+  return std::nullopt;
+}
+
 } // namespace wasm

@@ -277,6 +277,10 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // initial content we began with.
   auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
+  // Filter away uninhabitable heap types, that is, heap types that we cannot
+  // construct, like a type with a non-nullable reference to itself.
+  interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
+
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
     auto generator = HeapTypeGenerator::create(random, wasm.features, upTo(20));
@@ -286,88 +290,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
               << err->index;
     }
 
-    // Make the new types inhabitable. This is not strictly necessary since the
-    // code below will remove uninhabitable ones, but it can be much more
-    // effective since it does not reduce the number of types (while the code to
-    // filter out uninhabitable ones might remove huge chucks of the type
-    // graph).
+    // Make the new types inhabitable. This process modifies existing types, so
+    // it leaves more available compared to HeapTypeGenerator::getInhabitable.
+    // We run that before on existing content, which may have instructions that
+    // use the types, as editing them is not trivial, and for new types here we
+    // are free to modify them so we keep as many as we can. 
     auto inhabitable = HeapTypeGenerator::makeInhabitable(*result);
 
     for (auto type : inhabitable) {
       possibleHeapTypes.push_back(type);
-    }
-  }
-
-  // Filter away uninhabitable heap types, that is, heap types that we cannot
-  // construct, like a type with a non-nullable reference to itself. For
-  // simplicity, don't look for such type loops of aribtrary size but just limit
-  // the search to a reasonable amount (to avoid possible slowness). That is, we
-  // start at a given type, expand out its children, and continue to expand
-  // recursively. If there is a cycle then this would continue forever, so it
-  // must hit any fixed limit.
-  //
-  // Note that as mentioned above we ensure that HeapTypeGenerator::create's
-  // output is inhabitable, but we also need to handle existing heap types in
-  // the module from before. Those might already have instructions referring to
-  // them, which would mean we can't just modify the types, we'd also need to
-  // modify instructions. For that reason we both modify newly-generated types
-  // to be inhabitable, and filter out old types and are not inhabitable.
-  const size_t MAX_SEARCH = 100;
-  for (auto t : possibleHeapTypes) {
-    // These types are handled directly in the random code generators, and we
-    // assume they are not emitted by the code before us in this function.
-    // TODO: find out why they are
-    if (t.isBasic() || t.isBottom()) {
-      continue;
-    }
-
-    std::vector<HeapType> seen;
-    seen.push_back(t);
-    size_t next = 0;
-    bool fail = false;
-
-    // Add a child type (a field in a struct, etc.) to the list of seen types,
-    // if it is something we need to look at (that is, if it can cause the
-    // original type to be uninhabitable).
-    auto maybeAdd = [&](Type type) {
-      // Non-refs are always ok. Nullable refs are ok, since we can create an
-      // instance with a null there.
-      if (!type.isRef() || type.isNullable()) {
-        return;
-      }
-
-      auto heapType = type.getHeapType();
-      if (heapType.isStruct() || heapType.isArray()) {
-        seen.push_back(heapType);
-        if (seen.size() >= MAX_SEARCH) {
-          fail = true;
-        }
-      } else if (heapType.isBottom()) {
-        // This is a non-nullable bottom type, which is uninhabitable.
-        fail = true;
-      } else if (heapType == HeapType::ext) {
-        // We can't create an extern. TODO: import one perhaps
-        fail = true;
-      }
-    };
-
-    // Add subtypes at the next position to inspect, and keep doing that until
-    // we stop or we reach the limit.
-    while (next < seen.size() && !fail) {
-      auto curr = seen[next];
-      next++;
-      if (curr.isStruct()) {
-        for (auto f : curr.getStruct().fields) {
-          maybeAdd(f.type);
-        }
-      } else if (curr.isArray()) {
-        maybeAdd(curr.getArray().element.type);
-      }
-    }
-
-    if (!fail) {
-      // No problem; add it.
-      interestingHeapTypes.push_back(t);
     }
   }
 }
