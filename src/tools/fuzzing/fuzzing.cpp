@@ -280,67 +280,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // TODO: use heap type fuzzer to add new types in addition to the previous
 
   // Filter away uninhabitable heap types, that is, heap types that we cannot
-  // construct, like a type with a non-nullable reference to itself. For
-  // simplicity, don't look for such type loops of aribtrary size but just limit
-  // the search to a reasonable amount (to avoid possible slowness). That is, we
-  // start at a given type, expand out its children, and continue to expand
-  // recursively. If there is a cycle then this would continue forever, so it
-  // must hit any fixed limit.
-  const size_t MAX_SEARCH = 100;
-  for (auto t : possibleHeapTypes) {
-    // These types are handled directly in the random code generators, and we
-    // assume they are not emitted by the code before us in this function.
-    assert(!t.isBasic() && !t.isBottom());
-
-    std::vector<HeapType> seen;
-    seen.push_back(t);
-    size_t next = 0;
-    bool fail = false;
-
-    // Add a child type (a field in a struct, etc.) to the list of seen types,
-    // if it is something we need to look at (that is, if it can cause the
-    // original type to be uninhabitable).
-    auto maybeAdd = [&](Type type) {
-      // Non-refs are always ok. Nullable refs are ok, since we can create an
-      // instance with a null there.
-      if (!type.isRef() || type.isNullable()) {
-        return;
-      }
-
-      auto heapType = type.getHeapType();
-      if (heapType.isStruct() || heapType.isArray()) {
-        seen.push_back(heapType);
-        if (seen.size() >= MAX_SEARCH) {
-          fail = true;
-        }
-      } else if (heapType.isBottom()) {
-        // This is a non-nullable bottom type, which is uninhabitable.
-        fail = true;
-      } else if (heapType == HeapType::ext) {
-        // We can't create an extern. TODO: import one perhaps
-        fail = true;
-      }
-    };
-
-    // Add subtypes at the next position to inspect, and keep doing that until
-    // we stop or we reach the limit.
-    while (next < seen.size() && !fail) {
-      auto curr = seen[next];
-      next++;
-      if (curr.isStruct()) {
-        for (auto f : curr.getStruct().fields) {
-          maybeAdd(f.type);
-        }
-      } else if (curr.isArray()) {
-        maybeAdd(curr.getArray().element.type);
-      }
-    }
-
-    if (!fail) {
-      // No problem; add it.
-      interestingHeapTypes.push_back(t);
-    }
-  }
+  // construct, like a type with a non-nullable reference to itself.
+  interestingHeapTypes = HeapTypeGenerator::findHabitable(possibleHeapTypes);
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables

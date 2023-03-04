@@ -44,6 +44,24 @@ struct HeapTypeGenerator {
   // create values for.
   static std::vector<HeapType>
   makeInhabitable(const std::vector<HeapType>& types);
+
+  // Returns the types in the input that are uninhabitable.
+  static std::vector<HeapType>
+  findUninhabitable(const std::vector<HeapType>& types);
+
+  // Helper functions that return a heap type if it is uninhabitable, and that
+  // receive visited and visiting sets that are used when computing
+  // habitability.
+  static std::optional<HeapType>
+  findUninhabitable(HeapType type,
+                    std::unordered_set<HeapType>& visited,
+                    std::unordered_set<HeapType>& visiting);
+
+  static std::optional<HeapType>
+  findUninhabitable(HeapType parent,
+                    Type type,
+                    std::unordered_set<HeapType>& visited,
+                    std::unordered_set<HeapType>& visiting);
 };
 
 } // namespace wasm
