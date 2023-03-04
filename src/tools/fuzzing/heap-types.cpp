@@ -1029,8 +1029,8 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
 // cycles.
 std::optional<HeapType>
 HeapTypeGenerator::findUninhabitable(HeapType type,
-                  std::unordered_set<HeapType>& visited,
-                  std::unordered_set<HeapType>& visiting) {
+                                     std::unordered_set<HeapType>& visited,
+                                     std::unordered_set<HeapType>& visiting) {
   if (type.isBasic()) {
     return std::nullopt;
   }
@@ -1067,9 +1067,9 @@ HeapTypeGenerator::findUninhabitable(HeapType type,
 
 std::optional<HeapType>
 HeapTypeGenerator::findUninhabitable(HeapType parent,
-                  Type type,
-                  std::unordered_set<HeapType>& visited,
-                  std::unordered_set<HeapType>& visiting) {
+                                     Type type,
+                                     std::unordered_set<HeapType>& visited,
+                                     std::unordered_set<HeapType>& visiting) {
   if (type.isRef() && type.isNonNullable()) {
     if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
       return parent;

@@ -512,7 +512,8 @@ void Fuzzer::checkInhabitable() {
   if (haveUninhabitable) {
     // Verify that the transformed types are inhabitable.
     for (auto type : inhabitable) {
-      if (auto uninhabitable = HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
+      if (auto uninhabitable =
+            HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
         IndexedTypeNameGenerator print(inhabitable);
         Fatal() << "Found uninhabitable type: " << print(*uninhabitable);
       }
