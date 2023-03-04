@@ -45,9 +45,9 @@ struct HeapTypeGenerator {
   static std::vector<HeapType>
   makeInhabitable(const std::vector<HeapType>& types);
 
-  // Returns the types in the input that are uninhabitable.
+  // Returns the types in the input that are inhabitable.
   static std::vector<HeapType>
-  findUninhabitable(const std::vector<HeapType>& types);
+  getInhabitable(const std::vector<HeapType>& types);
 
   // Helper functions that return a heap type if it is uninhabitable, and that
   // receive visited and visiting sets that are used when computing

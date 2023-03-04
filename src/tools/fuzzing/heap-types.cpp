@@ -1025,6 +1025,17 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   return result;
 }
 
+std::vector<HeapType> HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+  std::unordered_set<HeapType> visited, visiting;
+  std::vector<HeapType> inhabitable;
+  for (auto type : types) {
+    if (!HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
+      inhabitable.push_back(type);
+    }
+  }
+  return inhabitable;
+}
+
 // Simple recursive DFS through non-nullable references to see if we find any
 // cycles.
 std::optional<HeapType>
