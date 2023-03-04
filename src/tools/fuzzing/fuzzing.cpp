@@ -281,7 +281,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // Filter away uninhabitable heap types, that is, heap types that we cannot
   // construct, like a type with a non-nullable reference to itself.
-  interestingHeapTypes = HeapTypeGenerator::findHabitable(possibleHeapTypes);
+  interestingHeapTypes = HeapTypeGenerator::findInhabitable(possibleHeapTypes);
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
