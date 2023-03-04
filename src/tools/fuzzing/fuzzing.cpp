@@ -296,9 +296,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
     // use the types, as editing them is not trivial, and for new types here we
     // are free to modify them so we keep as many as we can.
     auto inhabitable = HeapTypeGenerator::makeInhabitable(*result);
-
     for (auto type : inhabitable) {
-      possibleHeapTypes.push_back(type);
+      interestingHeapTypes.push_back(type);
     }
   }
 }
