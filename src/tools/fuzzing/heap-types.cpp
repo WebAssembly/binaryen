@@ -1025,7 +1025,8 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   return result;
 }
 
-std::vector<HeapType> HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+std::vector<HeapType>
+HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
   std::unordered_set<HeapType> visited, visiting;
   std::vector<HeapType> inhabitable;
   for (auto type : types) {
