@@ -685,10 +685,8 @@ struct Inhabitator {
   //
   // An invariant field of a heaptype must have the same type in subtypes of
   // that heaptype. A covariant field of a heaptype must be typed with a subtype
-  // of its original type in subtypes of the heaptype. A contravariant field of
-  // a heap type must be typed with a supertype of its original type in subtypes
-  // of the heaptype.
-  enum Variance { Invariant, Covariant, Contravariant };
+  // of its original type in subtypes of the heaptype.
+  enum Variance { Invariant, Covariant };
 
   // The input types.
   const std::vector<HeapType>& types;
@@ -712,7 +710,7 @@ struct Inhabitator {
 
 Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
   auto [type, idx] = field;
-  assert(!type.isBasic());
+  assert(!type.isBasic() && !type.isSignature());
   if (type.isStruct()) {
     if (type.getStruct().fields[idx].mutable_ == Mutable) {
       return Invariant;
@@ -723,13 +721,6 @@ Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
   if (type.isArray()) {
     if (type.getArray().element.mutable_ == Mutable) {
       return Invariant;
-    } else {
-      return Covariant;
-    }
-  }
-  if (type.isSignature()) {
-    if (idx < type.getSignature().params.size()) {
-      return Contravariant;
     } else {
       return Covariant;
     }
@@ -768,8 +759,6 @@ void Inhabitator::markNullable(FieldPos field) {
           curr = *super;
         }
       }
-      [[fallthrough]];
-    case Contravariant:
       // Mark the field nullable in all subtypes. If the subtype field is
       // already nullable, that's ok and this will have no effect. TODO: Remove
       // this extra `index` variable once we have C++20. It's a workaround for
@@ -784,6 +773,11 @@ void Inhabitator::markNullable(FieldPos field) {
 
 void Inhabitator::markBottomRefsNullable() {
   for (auto type : types) {
+    if (type.isSignature()) {
+      // Functions can always be instantiated, even if their types refer to
+      // uninhabitable types.
+      continue;
+    }
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
@@ -801,6 +795,11 @@ void Inhabitator::markExternRefsNullable() {
   // TODO: Remove this once the fuzzer imports externref globals or gets some
   // other way to instantiate externrefs.
   for (auto type : types) {
+    if (type.isSignature()) {
+      // Functions can always be instantiated, even if their types refer to
+      // uninhabitable types.
+      continue;
+    }
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
@@ -860,6 +859,14 @@ void Inhabitator::breakNonNullableCycles() {
         // they cannot cycle back to anything we are currently visiting.
         auto heapType = children[idx].getHeapType();
         if (visited.count(heapType)) {
+          ++idx;
+          continue;
+        }
+        // Skip references to function types. Functions types can always be
+        // instantiated since functions can be created even with uninhabitable
+        // params or results. Function references therefore break cycles that
+        // would otherwise produce uninhabitability.
+        if (heapType.isSignature()) {
           ++idx;
           continue;
         }

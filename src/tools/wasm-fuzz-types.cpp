@@ -116,18 +116,17 @@ void Fuzzer::printTypes(const std::vector<HeapType>& types) {
     if (inRecGroup()) {
       std::cout << ' ';
     }
-    std::cout << "(type $" << i << ' ';
     if (type.isBasic()) {
-      std::cout << print(type) << ")\n";
+      std::cout << "(type $" << i << ' ' << print(type) << ")\n";
       continue;
     }
     auto [it, inserted] = seen.insert({type, i});
     if (inserted) {
       std::cout << print(type);
     } else {
-      std::cout << "identical to $" << it->second;
+      std::cout << "(type $" << i << " identical to $" << it->second << ")";
     }
-    std::cout << ")\n";
+    std::cout << "\n";
   }
   if (inRecGroup()) {
     std::cout << ")\n";
@@ -503,9 +502,14 @@ static std::optional<HeapType>
 findUninhabitable(HeapType type,
                   std::unordered_set<HeapType>& visited,
                   std::unordered_set<HeapType>& visiting) {
-  if (type.isBasic() || visited.count(type)) {
+  if (type.isBasic()) {
     return std::nullopt;
-  } else if (type.isBasic()) {
+  }
+  if (type.isSignature()) {
+    // Function types are always inhabitable.
+    return std::nullopt;
+  }
+  if (visited.count(type)) {
     return std::nullopt;
   }
 
@@ -523,15 +527,6 @@ findUninhabitable(HeapType type,
     if (auto t = findUninhabitable(
           type, type.getArray().element.type, visited, visiting)) {
       return t;
-    }
-  } else if (type.isSignature()) {
-    auto sig = type.getSignature();
-    for (auto types : {sig.params, sig.results}) {
-      for (auto child : types) {
-        if (auto t = findUninhabitable(type, child, visited, visiting)) {
-          return t;
-        }
-      }
     }
   } else {
     WASM_UNREACHABLE("unexpected type kind");
