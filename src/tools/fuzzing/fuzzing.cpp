@@ -3108,6 +3108,7 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
   if (wasm.features.hasReferenceTypes() && oneIn(3)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
+    // These should be habitable! No pick nofunc + non-nullable. Add a helper for all plaes to call. getInterestingRef
     return Type(heapType, nullability);
   }
   // Skip (ref func), (ref extern), and (ref i31) for now
