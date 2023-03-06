@@ -297,7 +297,13 @@ void TranslateToFuzzReader::setupHeapTypes() {
     // are free to modify them so we keep as many as we can.
     auto inhabitable = HeapTypeGenerator::makeInhabitable(*result);
     for (auto type : inhabitable) {
-      interestingHeapTypes.push_back(type);
+      // Trivial types are already handled specifically in e.g.
+      // getSingleConcreteType(), and we avoid adding them here as then we'd
+      // need to add code to avoid uninhabitable combinations of them (like a
+      // non-nullable bottom heap type).
+      if (!type.isBottom() && !type.isBasic()) {
+        interestingHeapTypes.push_back(type);
+      }
     }
   }
 }
@@ -3108,7 +3114,6 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
   if (wasm.features.hasReferenceTypes() && oneIn(3)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
-    // These should be habitable! No pick nofunc + non-nullable. Add a helper for all plaes to call. getInterestingRef
     return Type(heapType, nullability);
   }
   // Skip (ref func), (ref extern), and (ref i31) for now
