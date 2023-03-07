@@ -589,12 +589,18 @@ def run_vm(cmd):
         known_issues = [
             # can be caused by flatten, ssa, etc. passes
             'local count too large',
+            # can be caused by (array.new $type -1) etc.
+            'requested new array is too large',
             # https://github.com/WebAssembly/binaryen/issues/3767
             # note that this text is a little too broad, but the problem is rare
             # enough that it's unlikely to hide an unrelated issue
             'found br_if of type',
-            # all host limitations are arbitrary and may differ between VMs and also
-            # be affected by optimizations, so ignore them.
+            # all host limitations are arbitrary and may differ between VMs and
+            # also be affected by optimizations, so ignore them.
+            # this is the prefix that the binaryen interpreter emits. For V8,
+            # there is no single host-limit signal, and we have the earlier
+            # strings in this list for known issues (to which more need to be
+            # added as necessary).
             HOST_LIMIT_PREFIX,
         ]
         for issue in known_issues:
