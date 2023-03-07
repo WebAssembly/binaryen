@@ -497,28 +497,26 @@ void Fuzzer::checkInhabitable() {
     printTypes(inhabitable);
   }
 
-  // Check whether any of the original types are uninhabitable.
-  std::unordered_set<HeapType> visited, visiting;
-  bool haveUninhabitable = false;
-  for (auto type : types) {
-    if (HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
-      haveUninhabitable = true;
-      break;
+  // The transformed types must be inhabitable, which we can check by seeing if
+  // the filtered list of inhabitable types is of full size.
+  auto filteredInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
+  if (filteredInhabitable.size() != inhabitable.size()) {
+    // There are uninhabitable types; print them out.
+    std::unordered_set<HeapType> filteredInhabitableSet;
+    for (auto type : filteredInhabitable) {
+      filteredInhabitableSet.insert(type);
     }
-  }
-  visited.clear();
-  visiting.clear();
-
-  if (haveUninhabitable) {
-    // Verify that the transformed types are inhabitable.
     for (auto type : inhabitable) {
-      if (auto uninhabitable =
-            HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
+      if (!filteredInhabitableSet.count(type)) {
         IndexedTypeNameGenerator print(inhabitable);
-        Fatal() << "Found uninhabitable type: " << print(*uninhabitable);
+        std::cerr << "Type was not properly made inhabitable: " << print(type)
+                  << '\n';
       }
     }
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
+    Fatal() << "Found uninhabitable types.";
+  }
+
+  if (getTypeSystem() == TypeSystem::Isorecursive) {
     // Verify the produced inhabitable types are the same as the original types.
     if (types.size() != inhabitable.size()) {
       Fatal() << "Number of inhabitable types does not match number of "

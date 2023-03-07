@@ -1025,24 +1025,18 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   return result;
 }
 
-std::vector<HeapType>
-HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
-  std::unordered_set<HeapType> visited, visiting;
-  std::vector<HeapType> inhabitable;
-  for (auto type : types) {
-    if (!HeapTypeGenerator::findUninhabitable(type, visited, visiting)) {
-      inhabitable.push_back(type);
-    }
-  }
-  return inhabitable;
-}
-
 // Simple recursive DFS through non-nullable references to see if we find any
 // cycles.
-std::optional<HeapType>
-HeapTypeGenerator::findUninhabitable(HeapType type,
-                                     std::unordered_set<HeapType>& visited,
-                                     std::unordered_set<HeapType>& visiting) {
+static std::optional<HeapType>
+findUninhabitable(HeapType parent,
+                  Type type,
+                  std::unordered_set<HeapType>& visited,
+                  std::unordered_set<HeapType>& visiting);
+
+static std::optional<HeapType>
+findUninhabitable(HeapType type,
+                  std::unordered_set<HeapType>& visited,
+                  std::unordered_set<HeapType>& visiting) {
   if (type.isBasic()) {
     return std::nullopt;
   }
@@ -1077,11 +1071,11 @@ HeapTypeGenerator::findUninhabitable(HeapType type,
   return {};
 }
 
-std::optional<HeapType>
-HeapTypeGenerator::findUninhabitable(HeapType parent,
-                                     Type type,
-                                     std::unordered_set<HeapType>& visited,
-                                     std::unordered_set<HeapType>& visiting) {
+static std::optional<HeapType>
+findUninhabitable(HeapType parent,
+                  Type type,
+                  std::unordered_set<HeapType>& visited,
+                  std::unordered_set<HeapType>& visiting) {
   if (type.isRef() && type.isNonNullable()) {
     if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
       return parent;
@@ -1089,6 +1083,18 @@ HeapTypeGenerator::findUninhabitable(HeapType parent,
     return findUninhabitable(type.getHeapType(), visited, visiting);
   }
   return std::nullopt;
+}
+
+std::vector<HeapType>
+HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+  std::unordered_set<HeapType> visited, visiting;
+  std::vector<HeapType> inhabitable;
+  for (auto type : types) {
+    if (!findUninhabitable(type, visited, visiting)) {
+      inhabitable.push_back(type);
+    }
+  }
+  return inhabitable;
 }
 
 } // namespace wasm
