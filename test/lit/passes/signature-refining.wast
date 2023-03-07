@@ -780,3 +780,33 @@
     (ref.func $func)
   )
 )
+
+;; Until we handle contravariance, do not try to optimize a type that has a
+;; supertype. In this example, refining the child's anyref to nullref would
+;; cause an error.
+(module
+  ;; CHECK:      (type $parent (func (param anyref)))
+  (type $parent (func (param anyref)))
+  ;; CHECK:      (type $child (func_subtype (param anyref) $parent))
+  (type $child (func_subtype (param anyref) $parent))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $func (type $child) (param $0 anyref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $func (type $child) (param anyref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $func
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $func
+      (ref.null eq)
+    )
+  )
+)
