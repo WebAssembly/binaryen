@@ -498,8 +498,9 @@ void Fuzzer::checkInhabitable() {
   }
 
   // Check whether any of the original types are uninhabitable.
-  auto originalInhabitable = HeapTypeGenerator::getInhabitable(types);
-  if (originalInhabitable.size() != types.size()) {
+  bool haveUninhabitable =
+    HeapTypeGenerator::getInhabitable(types).size() != types.size();
+  if (haveUninhabitable) {
     // Verify that the transformed types are inhabitable.
     auto verifiedInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
     if (verifiedInhabitable.size() != inhabitable.size()) {
@@ -511,8 +512,11 @@ void Fuzzer::checkInhabitable() {
         }
       }
     }
+    // TODO: We could also check that the transformed types are the same as the
+    // original types up to nullability.
   } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    // Verify the produced inhabitable types are the same as the original types.
+    // Verify the produced inhabitable types are the same as the original types
+    // (which also implies that they are indeed inhabitable).
     if (types.size() != inhabitable.size()) {
       Fatal() << "Number of inhabitable types does not match number of "
                  "original types";
