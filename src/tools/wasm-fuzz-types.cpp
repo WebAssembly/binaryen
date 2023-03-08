@@ -497,27 +497,26 @@ void Fuzzer::checkInhabitable() {
     printTypes(inhabitable);
   }
 
-  // The transformed types must be inhabitable, which we can check by seeing if
-  // the filtered list of inhabitable types is of full size.
-  auto filteredInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
-  if (filteredInhabitable.size() != inhabitable.size()) {
-    // There are uninhabitable types; print them out.
-    std::unordered_set<HeapType> filteredInhabitableSet;
-    for (auto type : filteredInhabitable) {
-      filteredInhabitableSet.insert(type);
-    }
-    for (auto type : inhabitable) {
-      if (!filteredInhabitableSet.count(type)) {
-        IndexedTypeNameGenerator print(inhabitable);
-        std::cerr << "Type was not properly made inhabitable: " << print(type)
-                  << '\n';
+  // Check whether any of the original types are uninhabitable.
+  bool haveUninhabitable =
+    HeapTypeGenerator::getInhabitable(types).size() != types.size();
+  if (haveUninhabitable) {
+    // Verify that the transformed types are inhabitable.
+    auto verifiedInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
+    if (verifiedInhabitable.size() != inhabitable.size()) {
+      IndexedTypeNameGenerator print(inhabitable);
+      for (size_t i = 0; i < inhabitable.size(); ++i) {
+        if (i > verifiedInhabitable.size() ||
+            inhabitable[i] != verifiedInhabitable[i]) {
+          Fatal() << "Found uninhabitable type: " << print(inhabitable[i]);
+        }
       }
     }
-    Fatal() << "Found uninhabitable types.";
-  }
-
-  if (getTypeSystem() == TypeSystem::Isorecursive) {
-    // Verify the produced inhabitable types are the same as the original types.
+    // TODO: We could also check that the transformed types are the same as the
+    // original types up to nullability.
+  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
+    // Verify the produced inhabitable types are the same as the original types
+    // (which also implies that they are indeed inhabitable).
     if (types.size() != inhabitable.size()) {
       Fatal() << "Number of inhabitable types does not match number of "
                  "original types";
