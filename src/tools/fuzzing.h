@@ -109,6 +109,9 @@ private:
 
   std::vector<Type> loggableTypes;
 
+  // The heap types we can pick from to generate instructions.
+  std::vector<HeapType> interestingHeapTypes;
+
   Index numAddedFunctions = 0;
 
   // RAII helper for managing the state used to create a single function.
@@ -315,6 +318,7 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  Nullability getNullability();
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);

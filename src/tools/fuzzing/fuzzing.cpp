@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
@@ -168,6 +169,7 @@ void TranslateToFuzzReader::build() {
   if (allowMemory) {
     setupMemory();
   }
+  setupHeapTypes();
   setupTables();
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
@@ -268,6 +270,18 @@ void TranslateToFuzzReader::setupMemory() {
     wasm.addExport(builder.makeExport(
       "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
+}
+
+void TranslateToFuzzReader::setupHeapTypes() {
+  // Start with any existing heap types in the module, which may exist in any
+  // initial content we began with.
+  auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
+
+  // TODO: use heap type fuzzer to add new types in addition to the previous
+
+  // Filter away uninhabitable heap types, that is, heap types that we cannot
+  // construct, like a type with a non-nullable reference to itself.
+  interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
@@ -3070,7 +3084,11 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  // TODO: Nontrivial reference types.
+  if (wasm.features.hasReferenceTypes() && oneIn(3)) {
+    auto heapType = pick(interestingHeapTypes);
+    auto nullability = getNullability();
+    return Type(heapType, nullability);
+  }
   // Skip (ref func), (ref extern), and (ref i31) for now
   // because there is no way to create them in globals. TODO.
   using WeightedOption = FeatureOptions<Type>::WeightedOption;
@@ -3100,6 +3118,11 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
+  if (wasm.features.hasReferenceTypes() && oneIn(2)) {
+    auto heapType = pick(interestingHeapTypes);
+    auto nullability = getNullability();
+    return Type(heapType, nullability);
+  }
   return pick(FeatureOptions<Type>()
                 // TODO: Add externref here.
                 .add(FeatureSet::ReferenceTypes, Type(HeapType::func, Nullable))
@@ -3117,6 +3140,15 @@ Type TranslateToFuzzReader::getReferenceType() {
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
+  if (oneIn(2)) {
+    // Try to find an interesting eq-compatible type.
+    auto heapType = pick(interestingHeapTypes);
+    if (HeapType::isSubType(heapType, HeapType::eq)) {
+      auto nullability = getNullability();
+      return Type(heapType, nullability);
+    }
+    // Otherwise continue below.
+  }
   return pick(
     FeatureOptions<Type>().add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                                Type(HeapType::eq, Nullable),
@@ -3180,10 +3212,7 @@ bool TranslateToFuzzReader::isLoggableType(Type type) {
          loggableTypes.end();
 }
 
-Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
-  if (nullability == NonNullable) {
-    return NonNullable;
-  }
+Nullability TranslateToFuzzReader::getNullability() {
   // Without wasm GC, avoid non-nullable types as we cannot create any values
   // of such types. For example, reference types adds eqref, but there is no
   // way to create such a value, only to receive it from the outside, while GC
@@ -3196,7 +3225,15 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   return Nullable;
 }
 
+Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
+  if (nullability == NonNullable) {
+    return NonNullable;
+  }
+  return getNullability();
+}
+
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
+  // TODO: pick from heapTypes
   if (oneIn(2)) {
     return type;
   }
