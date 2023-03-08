@@ -490,66 +490,6 @@ void Fuzzer::checkCanonicalization() {
   }
 }
 
-static std::optional<HeapType>
-findUninhabitable(HeapType parent,
-                  Type type,
-                  std::unordered_set<HeapType>& visited,
-                  std::unordered_set<HeapType>& visiting);
-
-// Simple recursive DFS through non-nullable references to see if we find any
-// cycles.
-static std::optional<HeapType>
-findUninhabitable(HeapType type,
-                  std::unordered_set<HeapType>& visited,
-                  std::unordered_set<HeapType>& visiting) {
-  if (type.isBasic()) {
-    return std::nullopt;
-  }
-  if (type.isSignature()) {
-    // Function types are always inhabitable.
-    return std::nullopt;
-  }
-  if (visited.count(type)) {
-    return std::nullopt;
-  }
-
-  if (!visiting.insert(type).second) {
-    return type;
-  }
-
-  if (type.isStruct()) {
-    for (auto& field : type.getStruct().fields) {
-      if (auto t = findUninhabitable(type, field.type, visited, visiting)) {
-        return t;
-      }
-    }
-  } else if (type.isArray()) {
-    if (auto t = findUninhabitable(
-          type, type.getArray().element.type, visited, visiting)) {
-      return t;
-    }
-  } else {
-    WASM_UNREACHABLE("unexpected type kind");
-  }
-  visiting.erase(type);
-  visited.insert(type);
-  return {};
-}
-
-static std::optional<HeapType>
-findUninhabitable(HeapType parent,
-                  Type type,
-                  std::unordered_set<HeapType>& visited,
-                  std::unordered_set<HeapType>& visiting) {
-  if (type.isRef() && type.isNonNullable()) {
-    if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
-      return parent;
-    }
-    return findUninhabitable(type.getHeapType(), visited, visiting);
-  }
-  return std::nullopt;
-}
-
 void Fuzzer::checkInhabitable() {
   std::vector<HeapType> inhabitable = HeapTypeGenerator::makeInhabitable(types);
   if (verbose) {
@@ -558,27 +498,25 @@ void Fuzzer::checkInhabitable() {
   }
 
   // Check whether any of the original types are uninhabitable.
-  std::unordered_set<HeapType> visited, visiting;
-  bool haveUninhabitable = false;
-  for (auto type : types) {
-    if (findUninhabitable(type, visited, visiting)) {
-      haveUninhabitable = true;
-      break;
-    }
-  }
-  visited.clear();
-  visiting.clear();
-
+  bool haveUninhabitable =
+    HeapTypeGenerator::getInhabitable(types).size() != types.size();
   if (haveUninhabitable) {
     // Verify that the transformed types are inhabitable.
-    for (auto type : inhabitable) {
-      if (auto uninhabitable = findUninhabitable(type, visited, visiting)) {
-        IndexedTypeNameGenerator print(inhabitable);
-        Fatal() << "Found uninhabitable type: " << print(*uninhabitable);
+    auto verifiedInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
+    if (verifiedInhabitable.size() != inhabitable.size()) {
+      IndexedTypeNameGenerator print(inhabitable);
+      for (size_t i = 0; i < inhabitable.size(); ++i) {
+        if (i > verifiedInhabitable.size() ||
+            inhabitable[i] != verifiedInhabitable[i]) {
+          Fatal() << "Found uninhabitable type: " << print(inhabitable[i]);
+        }
       }
     }
+    // TODO: We could also check that the transformed types are the same as the
+    // original types up to nullability.
   } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    // Verify the produced inhabitable types are the same as the original types.
+    // Verify the produced inhabitable types are the same as the original types
+    // (which also implies that they are indeed inhabitable).
     if (types.size() != inhabitable.size()) {
       Fatal() << "Number of inhabitable types does not match number of "
                  "original types";
