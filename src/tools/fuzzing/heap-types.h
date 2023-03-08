@@ -44,6 +44,10 @@ struct HeapTypeGenerator {
   // create values for.
   static std::vector<HeapType>
   makeInhabitable(const std::vector<HeapType>& types);
+
+  // Returns the types in the input that are inhabitable.
+  static std::vector<HeapType>
+  getInhabitable(const std::vector<HeapType>& types);
 };
 
 } // namespace wasm

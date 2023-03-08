@@ -1025,4 +1025,74 @@ HeapTypeGenerator::makeInhabitable(const std::vector<HeapType>& types) {
   return result;
 }
 
+namespace {
+
+bool isUninhabitable(Type type,
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting);
+
+// Simple recursive DFS through non-nullable references to see if we find any
+// cycles.
+bool isUninhabitable(HeapType type,
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting) {
+  if (type.isBasic()) {
+    return false;
+  }
+  if (type.isSignature()) {
+    // Function types are always inhabitable.
+    return false;
+  }
+  if (visited.count(type)) {
+    return false;
+  }
+
+  if (!visiting.insert(type).second) {
+    return true;
+  }
+
+  if (type.isStruct()) {
+    for (auto& field : type.getStruct().fields) {
+      if (isUninhabitable(field.type, visited, visiting)) {
+        return true;
+      }
+    }
+  } else if (type.isArray()) {
+    if (isUninhabitable(type.getArray().element.type, visited, visiting)) {
+      return true;
+    }
+  } else {
+    WASM_UNREACHABLE("unexpected type kind");
+  }
+  visiting.erase(type);
+  visited.insert(type);
+  return false;
+}
+
+bool isUninhabitable(Type type,
+                     std::unordered_set<HeapType>& visited,
+                     std::unordered_set<HeapType>& visiting) {
+  if (type.isRef() && type.isNonNullable()) {
+    if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
+      return true;
+    }
+    return isUninhabitable(type.getHeapType(), visited, visiting);
+  }
+  return false;
+}
+
+} // anonymous namespace
+
+std::vector<HeapType>
+HeapTypeGenerator::getInhabitable(const std::vector<HeapType>& types) {
+  std::unordered_set<HeapType> visited, visiting;
+  std::vector<HeapType> inhabitable;
+  for (auto type : types) {
+    if (!isUninhabitable(type, visited, visiting)) {
+      inhabitable.push_back(type);
+    }
+  }
+  return inhabitable;
+}
+
 } // namespace wasm
