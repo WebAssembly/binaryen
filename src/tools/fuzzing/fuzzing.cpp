@@ -3337,7 +3337,8 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability.
     if (nullability == NonNullable && heapType.isBottom() &&
-        !(type.isNonNullable() && type.getHeapType().isBottom()) && !oneIn(20)) {
+        !(type.isNonNullable() && type.getHeapType().isBottom()) &&
+        !oneIn(20)) {
       // The original type was inhabitable, so return that.
       return type;
     }
