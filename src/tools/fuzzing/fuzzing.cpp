@@ -3026,6 +3026,7 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefTest(Type type) {
+  return makeTrivial(type);
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
@@ -3059,6 +3060,9 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       // This unreachable avoids a warning on ref being possible undefined.
       WASM_UNREACHABLE("bad integer");
   }
+  // XXX far too many traps on null refs,
+  // /home/azakai/Dev/binaryen/bin/wasm-opt /home/azakai/Dev/binaryen/out/test/input.dat -ttf -o /home/azakai/Dev/binaryen/out/test/a.wasm -all --fuzz-exec
+  // 
   return builder.makeRefTest(ref, Type(castType, getNullability()));
 }
 
