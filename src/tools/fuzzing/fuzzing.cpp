@@ -1011,6 +1011,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
+                &Self::makeRefTest,
                 &Self::makeI31Get);
   }
   if (type.isTuple()) {
@@ -3024,6 +3025,33 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
   return builder.makeRefEq(left, right);
 }
 
+Expression* TranslateToFuzzReader::makeRefTest(Type type) {
+  assert(type == Type::i32);
+  assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  // The case of the reference and the cast type having a connection is useful,
+  // so give a decent chance for one to be a subtype of the other.
+  Expression* ref;
+  HeapType castType;
+  switch (upTo(3)) {
+    case 0:
+      // Cast is a subtype of ref.
+      ref = make(getReferenceType());
+      castType = getSubType(ref->type.getHeapType());
+      break;
+    case 1:
+      // Ref is a subtype of cast.
+      castType = getHeapType();
+      ref = make(getSubType(Type(castType, Nullable)));
+      break;
+    case 2:
+      // Totally random.
+      ref = make(getReferenceType());
+      castType = getHeapType();
+      break;
+  }
+  return builder.makeRefTest(ref, Type(castType, getNullability()));
+}
+
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
   assert(type.isRef() && type.getHeapType() == HeapType::i31);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
@@ -3115,6 +3143,21 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
                      Type(HeapType::array, NonNullable)));
+}
+
+Type TranslateToFuzzReader::getHeapType() {
+  assert(wasm.features.hasGC());
+  if (oneIn(2)) {
+    return pick(interestingHeapTypes);
+  }
+  // This list includes types for whom we can accept both a nullable and a non-
+  // nullable value. (getReferenceType() can be more precise and support the
+  // ones that we can only do one of the two, but here we return a heap type and
+  // we don't know how it will be used, so we must be conservative.)
+  return pick(HeapType::eq,
+              HeapType::i31,
+              HeapType::struct_,
+              HeapType::array);
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -3233,11 +3276,10 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
-  // TODO: pick from heapTypes
-  if (oneIn(2)) {
+  if (oneIn(3)) {
     return type;
   }
-  if (type.isBasic()) {
+  if (type.isBasic() && oneIn(2)) {
     switch (type.getBasic()) {
       case HeapType::func:
         // TODO: Typed function references.
@@ -3249,7 +3291,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
                       .add(FeatureSet::GC, HeapType::noext));
       case HeapType::any:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::any,
@@ -3259,7 +3300,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType::array,
                     HeapType::none);
       case HeapType::eq:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::eq,
@@ -3270,7 +3310,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::i31:
         return pick(HeapType::i31, HeapType::none);
       case HeapType::struct_:
-        // TODO: nontrivial types as well.
         return pick(HeapType::struct_, HeapType::none);
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
@@ -3286,7 +3325,20 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         break;
     }
   }
-  // TODO: nontrivial types as well.
+  // Look for an interesting subtype.
+  size_t i = 0;
+  while (1) {
+    if (i == TRIES || interestingHeapTypes.empty()) {
+      // We can't find an interesting subtype, give up.
+      break;
+    }
+    auto candidate = pick(interestingHeapTypes);
+    if (HeapType::isSubType(candidate, type)) {
+      return candidate;
+    }
+    i++;
+  }
+  // Failure to do anything interesting, return the type.
   return type;
 }
 

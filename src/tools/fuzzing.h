@@ -300,6 +300,7 @@ private:
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
+  Expression* makeRefTest(Type type);
   Expression* makeI31New(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
@@ -309,6 +310,7 @@ private:
 
   // Getters for Types
   Type getSingleConcreteType();
+  Type getHeapType();
   Type getReferenceType();
   Type getEqReferenceType();
   Type getMVPType();
