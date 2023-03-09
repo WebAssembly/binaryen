@@ -3088,7 +3088,8 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() && oneIn(3)) {
+  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() &&
+      oneIn(3)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
     return Type(heapType, nullability);
@@ -3122,7 +3123,8 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
-  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() && oneIn(2)) {
+  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() &&
+      oneIn(2)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
     return Type(heapType, nullability);
