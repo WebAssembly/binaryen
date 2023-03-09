@@ -3048,6 +3048,8 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       ref = make(getReferenceType());
       castType = getHeapType();
       break;
+    default:
+      WASM_UNREACHABLE("bad integer");
   }
   return builder.makeRefTest(ref, Type(castType, getNullability()));
 }
@@ -3145,7 +3147,7 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::array, NonNullable)));
 }
 
-Type TranslateToFuzzReader::getHeapType() {
+HeapType TranslateToFuzzReader::getHeapType() {
   assert(wasm.features.hasGC());
   if (oneIn(2)) {
     return pick(interestingHeapTypes);
