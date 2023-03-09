@@ -3561,7 +3561,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
 void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   std::unique_ptr<Global> global = make_unique<Global>();
   size_t i = 1;
-  if (s[i]->dollared() && !(s[i]->isStr() && isType(s[i]->str()))) {
+  if (s[i]->dollared()) {
     global->setExplicitName(s[i++]->str());
   } else if (preParseImport) {
     global->name = Name("gimport$" + std::to_string(globalCounter));
@@ -3572,7 +3572,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   globalNames.push_back(global->name);
   bool mutable_ = false;
   Type type = Type::none;
-  bool exported = false;
   Name importModule, importBase;
   while (i < s.size() && s[i]->isList()) {
     auto& inner = *s[i++];
@@ -3585,7 +3584,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
         throw ParseException("duplicate export", s.line, s.col);
       }
       wasm.addExport(ex.release());
-      exported = true;
     } else if (elementStartsWith(inner, IMPORT)) {
       importModule = inner[1]->str();
       importBase = inner[2]->str();
@@ -3597,9 +3595,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
       type = elementToType(inner);
       break;
     }
-  }
-  if (exported && mutable_) {
-    throw ParseException("cannot export a mutable global", s.line, s.col);
   }
   if (type == Type::none) {
     type = stringToType(s[i++]->str());
@@ -3784,11 +3779,6 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
       segment->type = elementToType(*s[i]);
       usesExpressions = true;
       i += 1;
-
-      if (!segment->type.isFunction()) {
-        throw ParseException(
-          "Invalid type for an element segment.", s.line, s.col);
-      }
     }
   }
 

@@ -3405,13 +3405,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
   }
 
   for (auto& segment : module.elementSegments) {
-    // Since element segment items need to be constant expressions, that leaves
-    // us with ref.null, ref.func and global.get. As a result, the only possible
-    // type for element segments will be function references.
-    // TODO: This is not true! Allow GC data here (#4846).
-    info.shouldBeTrue(segment->type.isFunction(),
+    info.shouldBeTrue(segment->type.isRef(),
                       "elem",
-                      "element segment type must be of function type.");
+                      "element segment type must be of reference type.");
     info.shouldBeTrue(
       segment->type.isNullable(),
       "elem",
@@ -3443,18 +3439,15 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         "elem",
                         "non-table segment offset should have no offset");
     }
-    // Avoid double checking items
-    if (module.features.hasReferenceTypes()) {
-      for (auto* expr : segment->data) {
-        info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),
-                          expr,
-                          "element must be a constant expression");
-        info.shouldBeSubType(expr->type,
-                             segment->type,
-                             expr,
-                             "element must be a subtype of the segment type");
-        validator.validate(expr);
-      }
+    for (auto* expr : segment->data) {
+      info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),
+                        expr,
+                        "element must be a constant expression");
+      info.shouldBeSubType(expr->type,
+                           segment->type,
+                           expr,
+                           "element must be a subtype of the segment type");
+      validator.validate(expr);
     }
   }
 }

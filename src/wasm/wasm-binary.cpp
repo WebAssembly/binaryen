@@ -3222,9 +3222,6 @@ void WasmBinaryBuilder::readElementSegments() {
     if (isPassive || hasTableIdx) {
       if (usesExpressions) {
         segment->type = getType();
-        if (!segment->type.isFunction()) {
-          throwError("Invalid type for a usesExpressions element segment");
-        }
       } else {
         auto elemKind = getU32LEB();
         if (elemKind != 0x0) {
