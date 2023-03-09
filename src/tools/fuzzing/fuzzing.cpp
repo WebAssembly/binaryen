@@ -277,11 +277,36 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // initial content we began with.
   auto possibleHeapTypes = ModuleUtils::collectHeapTypes(wasm);
 
-  // TODO: use heap type fuzzer to add new types in addition to the previous
-
   // Filter away uninhabitable heap types, that is, heap types that we cannot
   // construct, like a type with a non-nullable reference to itself.
   interestingHeapTypes = HeapTypeGenerator::getInhabitable(possibleHeapTypes);
+
+  // For GC, also generate random types.
+  if (wasm.features.hasGC()) {
+    auto generator =
+      HeapTypeGenerator::create(random, wasm.features, upTo(MAX_NEW_GC_TYPES));
+    auto result = generator.builder.build();
+    if (auto* err = result.getError()) {
+      Fatal() << "Failed to build heap types: " << err->reason << " at index "
+              << err->index;
+    }
+
+    // Make the new types inhabitable. This process modifies existing types, so
+    // it leaves more available compared to HeapTypeGenerator::getInhabitable.
+    // We run that before on existing content, which may have instructions that
+    // use the types, as editing them is not trivial, and for new types here we
+    // are free to modify them so we keep as many as we can.
+    auto inhabitable = HeapTypeGenerator::makeInhabitable(*result);
+    for (auto type : inhabitable) {
+      // Trivial types are already handled specifically in e.g.
+      // getSingleConcreteType(), and we avoid adding them here as then we'd
+      // need to add code to avoid uninhabitable combinations of them (like a
+      // non-nullable bottom heap type).
+      if (!type.isBottom() && !type.isBasic()) {
+        interestingHeapTypes.push_back(type);
+      }
+    }
+  }
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
@@ -1992,6 +2017,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
       (type.isNonNullable() && oneIn(16) && funcContext)) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
+      assert(funcContext);
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
@@ -2044,6 +2070,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
       if (!type.isNullable()) {
+        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -2127,6 +2154,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
     case HeapType::nofunc: {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
+        assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
