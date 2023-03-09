@@ -3034,21 +3034,29 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   HeapType castType;
   switch (upTo(3)) {
     case 0:
+      // Totally random.
+      ref = make(getReferenceType());
+      castType = getHeapType();
+      // They must share a bottom type in order to validate.
+      if (ref->type.getHeapType().getBottom() == castType.getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1:
       // Cast is a subtype of ref.
       ref = make(getReferenceType());
       castType = getSubType(ref->type.getHeapType());
       break;
-    case 1:
+    case 2:
       // Ref is a subtype of cast.
       castType = getHeapType();
       ref = make(getSubType(Type(castType, Nullable)));
       break;
-    case 2:
-      // Totally random.
-      ref = make(getReferenceType());
-      castType = getHeapType();
       break;
     default:
+      // This unreachable avoids a warning on ref being possible undefined.
       WASM_UNREACHABLE("bad integer");
   }
   return builder.makeRefTest(ref, Type(castType, getNullability()));
