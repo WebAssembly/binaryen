@@ -1969,7 +1969,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     // If there is no last function, and we have others, pick between them. Also
     // pick between them with some random probability even if there is a last
     // function.
-    if (!target || (!wasm.functions.empty() && !oneIn(wasm.functions.size()))) {
+    if (!target && !wasm.functions.empty() && !oneIn(wasm.functions.size())) {
       target = pick(wasm.functions).get();
     }
     if (target) {
