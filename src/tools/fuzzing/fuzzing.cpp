@@ -2173,8 +2173,7 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   assert(!heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
 
-  // Prefer not to emit a null, in general, as we can trap from them. But if we
-  // fail to do anything else will we emit a null at the end.
+  // Prefer not to emit a null, in general, as we can trap from them.
   if (type.isNullable() && oneIn(10)) {
     return builder.makeRefNull(heapType);
   }
