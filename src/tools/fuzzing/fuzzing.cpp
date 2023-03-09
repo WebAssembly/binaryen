@@ -187,6 +187,7 @@ void TranslateToFuzzReader::build() {
   }
   if (allowMemory) {
     finalizeMemory();
+    addHashMemorySupport();
   }
   finalizeTable();
 }
@@ -226,49 +227,6 @@ void TranslateToFuzzReader::setupMemory() {
       auto value = upTo(512);
       wasm.dataSegments[0]->data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
-  }
-  // Add memory hasher helper (for the hash, see hash.h). The function looks
-  // like:
-  // function hashMemory() {
-  //   hash = 5381;
-  //   hash = ((hash << 5) + hash) ^ mem[0];
-  //   hash = ((hash << 5) + hash) ^ mem[1];
-  //   ..
-  //   return hash;
-  // }
-  std::vector<Expression*> contents;
-  contents.push_back(
-    builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
-  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
-  for (Index i = 0; i < USABLE_MEMORY; i++) {
-    contents.push_back(builder.makeLocalSet(
-      0,
-      builder.makeBinary(
-        XorInt32,
-        builder.makeBinary(
-          AddInt32,
-          builder.makeBinary(ShlInt32,
-                             builder.makeLocalGet(0, Type::i32),
-                             builder.makeConst(uint32_t(5))),
-          builder.makeLocalGet(0, Type::i32)),
-        builder.makeLoad(1,
-                         false,
-                         i,
-                         1,
-                         builder.makeConst(zero),
-                         Type::i32,
-                         wasm.memories[0]->name))));
-  }
-  contents.push_back(builder.makeLocalGet(0, Type::i32));
-  auto* body = builder.makeBlock(contents);
-  auto* hasher = wasm.addFunction(builder.makeFunction(
-    "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
-  wasm.addExport(
-    builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
-  // Export memory so JS fuzzing can use it
-  if (!wasm.getExportOrNull("memory")) {
-    wasm.addExport(builder.makeExport(
-      "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
 }
 
@@ -476,6 +434,52 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     func->base = name;
     func->type = Signature(type, Type::none);
     wasm.addFunction(func);
+  }
+}
+
+void TranslateToFuzzReader::addHashMemorySupport() {
+  // Add memory hasher helper (for the hash, see hash.h). The function looks
+  // like:
+  // function hashMemory() {
+  //   hash = 5381;
+  //   hash = ((hash << 5) + hash) ^ mem[0];
+  //   hash = ((hash << 5) + hash) ^ mem[1];
+  //   ..
+  //   return hash;
+  // }
+  std::vector<Expression*> contents;
+  contents.push_back(
+    builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+  auto zero = Literal::makeFromInt32(0, wasm.memories[0]->indexType);
+  for (Index i = 0; i < USABLE_MEMORY; i++) {
+    contents.push_back(builder.makeLocalSet(
+      0,
+      builder.makeBinary(
+        XorInt32,
+        builder.makeBinary(
+          AddInt32,
+          builder.makeBinary(ShlInt32,
+                             builder.makeLocalGet(0, Type::i32),
+                             builder.makeConst(uint32_t(5))),
+          builder.makeLocalGet(0, Type::i32)),
+        builder.makeLoad(1,
+                         false,
+                         i,
+                         1,
+                         builder.makeConst(zero),
+                         Type::i32,
+                         wasm.memories[0]->name))));
+  }
+  contents.push_back(builder.makeLocalGet(0, Type::i32));
+  auto* body = builder.makeBlock(contents);
+  auto* hasher = wasm.addFunction(builder.makeFunction(
+    "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
+  wasm.addExport(
+    builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
+  // Export memory so JS fuzzing can use it
+  if (!wasm.getExportOrNull("memory")) {
+    wasm.addExport(builder.makeExport(
+      "memory", wasm.memories[0]->name, ExternalKind::Memory));
   }
 }
 
@@ -1990,7 +1994,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     // If there is no last function, and we have others, pick between them. Also
     // pick between them with some random probability even if there is a last
     // function.
-    if (!target || (!wasm.functions.empty() && !oneIn(wasm.functions.size()))) {
+    if (!wasm.functions.empty() && (!target || !oneIn(wasm.functions.size()))) {
       target = pick(wasm.functions).get();
     }
     if (target) {
@@ -3112,7 +3116,8 @@ Expression* TranslateToFuzzReader::makeMemoryFill() {
 }
 
 Type TranslateToFuzzReader::getSingleConcreteType() {
-  if (wasm.features.hasReferenceTypes() && oneIn(3)) {
+  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() &&
+      oneIn(3)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
     return Type(heapType, nullability);
@@ -3146,7 +3151,8 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
-  if (wasm.features.hasReferenceTypes() && oneIn(2)) {
+  if (wasm.features.hasReferenceTypes() && !interestingHeapTypes.empty() &&
+      oneIn(2)) {
     auto heapType = pick(interestingHeapTypes);
     auto nullability = getNullability();
     return Type(heapType, nullability);
@@ -3168,7 +3174,7 @@ Type TranslateToFuzzReader::getReferenceType() {
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
-  if (oneIn(2)) {
+  if (oneIn(2) && !interestingHeapTypes.empty()) {
     // Try to find an interesting eq-compatible type.
     auto heapType = pick(interestingHeapTypes);
     if (HeapType::isSubType(heapType, HeapType::eq)) {
