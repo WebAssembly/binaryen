@@ -55,6 +55,9 @@ template<class Specific> class AbstractChildIterator {
 
     Iterator(const Self& parent, Index index) : parent(parent), index(index) {}
 
+    Iterator(Iterator& other) = default;
+    Iterator& operator=(Iterator& other) = default;
+
     bool operator!=(const Iterator& other) const {
       return index != other.index || &parent != &(other.parent);
     }
