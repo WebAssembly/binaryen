@@ -1,13 +1,20 @@
 total
+<<<<<<< HEAD
  [exports]      : 6       
  [funcs]        : 10      
  [globals]      : 11      
+=======
+ [exports]      : 3       
+ [funcs]        : 4       
+ [globals]      : 5       
+>>>>>>> origin/main
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
  [table-data]   : 2       
  [tables]       : 1       
  [tags]         : 0       
+<<<<<<< HEAD
  [total]        : 401     
  [vars]         : 12      
  ArrayNewFixed  : 2       
@@ -34,3 +41,40 @@ total
  TupleMake      : 1       
  Unary          : 17      
  Unreachable    : 12      
+=======
+ [total]        : 682     
+ [vars]         : 3       
+ AtomicCmpxchg  : 1       
+ AtomicFence    : 3       
+ AtomicNotify   : 2       
+ Binary         : 76      
+ Block          : 105     
+ Break          : 15      
+ Call           : 5       
+ CallRef        : 3       
+ Const          : 170     
+ Drop           : 3       
+ GlobalGet      : 42      
+ GlobalSet      : 41      
+ I31Get         : 2       
+ I31New         : 2       
+ If             : 32      
+ Load           : 16      
+ LocalGet       : 23      
+ LocalSet       : 19      
+ Loop           : 16      
+ MemoryCopy     : 1       
+ MemoryFill     : 2       
+ MemoryInit     : 2       
+ Nop            : 23      
+ RefFunc        : 7       
+ RefNull        : 1       
+ Return         : 5       
+ SIMDExtract    : 2       
+ Select         : 4       
+ Store          : 3       
+ StructNew      : 1       
+ TupleMake      : 2       
+ Unary          : 33      
+ Unreachable    : 20      
+>>>>>>> origin/main

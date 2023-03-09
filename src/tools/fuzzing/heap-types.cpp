@@ -541,8 +541,9 @@ struct HeapTypeGeneratorImpl {
   }
 
   Signature generateSubSignature(Signature super) {
-    return Signature(generateSupertype(super.params),
-                     generateSubtype(super.results));
+    auto params = generateSupertype(super.params);
+    auto results = generateSubtype(super.results);
+    return Signature(params, results);
   }
 
   Field generateSubField(Field super) {
