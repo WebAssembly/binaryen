@@ -3345,14 +3345,11 @@
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
 
+  (global $a (import "env" "a") (ref $A))
+
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (global $a (ref $A) (struct.new $A
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: ))
-  (global $a (ref $A) (struct.new $A
-    (i32.const 0)
-  ))
+  ;; CHECK:      (import "env" "a" (global $a (ref $A)))
 
   ;; CHECK:      (global $a-other (ref $A) (struct.new $A
   ;; CHECK-NEXT:  (i32.const 1)
@@ -3364,18 +3361,8 @@
   ;; CHECK:      (global $a-copy (ref $A) (global.get $a))
   (global $a-copy (ref $A) (global.get $a))
 
-  ;; CHECK:      (global $a-mut (mut (ref $A)) (struct.new $A
-  ;; CHECK-NEXT:  (i32.const 2)
-  ;; CHECK-NEXT: ))
-  (global $a-mut (mut (ref $A)) (struct.new $A
-    (i32.const 2)
-  ))
-
   ;; CHECK:      (global $a-mut-copy (mut (ref $A)) (global.get $a))
   (global $a-mut-copy (mut (ref $A)) (global.get $a))
-
-  ;; CHECK:      (global $a-copy-mut (ref $A) (global.get $a-mut))
-  (global $a-copy-mut (ref $A) (global.get $a-mut))
 
   ;; CHECK:      (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
   (global $a-mut-copy-written (mut (ref $A)) (global.get $a))
@@ -3403,18 +3390,6 @@
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (global.get $a)
   ;; CHECK-NEXT:    (global.get $a-other)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $a-mut)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (global.get $a)
-  ;; CHECK-NEXT:    (global.get $a-copy-mut)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a-mut-copy-written
@@ -3460,18 +3435,6 @@
       (ref.eq
         (global.get $a)
         (global.get $a-other)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $a-mut)
-      )
-    )
-    (drop
-      (ref.eq
-        (global.get $a)
-        (global.get $a-copy-mut)
       )
     )
     (global.set $a-mut-copy-written

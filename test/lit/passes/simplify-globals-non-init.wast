@@ -106,24 +106,19 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "import_global" (global $global-0 (mut i32)))
-  (import "env" "import_global" (global $global-0 (mut i32)))
+  ;; CHECK:      (import "env" "import_global" (global $global-0 i32))
+  (import "env" "import_global" (global $global-0 i32))
 
   ;; A global that initializes with another global.
   ;; CHECK:      (global $global-1 (mut i32) (global.get $global-0))
   (global $global-1 (mut i32) (global.get $global-0))
 
   ;; CHECK:      (func $sets (param $unknown i32)
-  ;; CHECK-NEXT:  (global.set $global-0
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $global-1
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $sets (param $unknown i32)
-    (global.set $global-0 (i32.const 0))
-
     (global.set $global-1 (i32.const 1))
   )
 

@@ -15,6 +15,7 @@
  */
 
 #include "ir/properties.h"
+#include "ir/iteration.h"
 #include "wasm-traversal.h"
 
 namespace wasm::Properties {
@@ -34,6 +35,47 @@ bool isGenerative(Expression* curr, FeatureSet features) {
   } scanner;
   scanner.walk(curr);
   return scanner.generative;
+}
+
+static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
+  if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
+      expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<I31New>() ||
+      expr->is<StringConst>()) {
+    return true;
+  }
+
+  if (auto* get = expr->dynCast<GlobalGet>()) {
+    // Only gets of immutable globals are constant. Constant expressions are
+    // also only validated in contexts that exclude locally defined globals, so
+    // they must only refer to imported globals.
+    auto* g = wasm.getGlobalOrNull(get->name);
+    return g && !g->mutable_ && g->imported();
+  }
+
+  if (wasm.features.hasExtendedConst()) {
+    if (auto* bin = expr->dynCast<Binary>()) {
+      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
+          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool isValidConstantExpression(Module& wasm, Expression* expr) {
+  std::vector<Expression*> exprs = {expr};
+  while (!exprs.empty()) {
+    Expression* curr = exprs.back();
+    exprs.pop_back();
+    if (!isValidInConstantExpression(wasm, curr)) {
+      return false;
+    }
+    ChildIterator children(curr);
+    exprs.insert(exprs.end(), children.begin(), children.end());
+  }
+  return true;
 }
 
 } // namespace wasm::Properties

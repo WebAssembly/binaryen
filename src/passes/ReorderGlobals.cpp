@@ -24,7 +24,6 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -84,73 +83,17 @@ struct ReorderGlobals : public Pass {
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
-    // Do a toplogical sort to ensure we keep dependencies before the things
-    // that need them. For example, if $b's definition depends on $a then $b
-    // must appear later:
-    //
-    //   (global $a i32 (i32.const 10))
-    //   (global $b i32 (global.get $a)) ;; $b depends on $a
-    //
-    struct DependencySort : TopologicalSort<Name, DependencySort> {
-      Module& wasm;
-      const NameCountMap& counts;
-
-      std::unordered_map<Name, std::vector<Name>> deps;
-
-      DependencySort(Module& wasm, const NameCountMap& counts)
-        : wasm(wasm), counts(counts) {
-        // Sort a list of global names by their counts.
-        auto sort = [&](std::vector<Name>& globals) {
-          std::stable_sort(
-            globals.begin(), globals.end(), [&](const Name& a, const Name& b) {
-              return counts.at(a) < counts.at(b);
-            });
-        };
-
-        // Sort the globals.
-        std::vector<Name> sortedNames;
-        for (auto& global : wasm.globals) {
-          sortedNames.push_back(global->name);
-        }
-        sort(sortedNames);
-
-        // Everything is a root (we need to emit all globals).
-        for (auto global : sortedNames) {
-          push(global);
-        }
-
-        // The dependencies are the globals referred to.
-        for (auto& global : wasm.globals) {
-          if (global->imported()) {
-            continue;
-          }
-          std::vector<Name> vec;
-          for (auto* get : FindAll<GlobalGet>(global->init).list) {
-            vec.push_back(get->name);
-          }
-          sort(vec);
-          deps[global->name] = std::move(vec);
-        }
-      }
-
-      void pushPredecessors(Name global) {
-        for (auto pred : deps[global]) {
-          push(pred);
-        }
-      }
-    };
-
-    std::unordered_map<Name, Index> sortedIndexes;
-    for (auto global : DependencySort(*module, counts)) {
-      auto index = sortedIndexes.size();
-      sortedIndexes[global] = index;
-    }
-
     std::sort(
       module->globals.begin(),
       module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return sortedIndexes[a->name] < sortedIndexes[b->name];
+        if (a->imported() && !b->imported()) {
+          return true;
+        }
+        if (!a->imported() && b->imported()) {
+          return false;
+        }
+        return counts[a->name] < counts[b->name];
       });
 
     module->updateMaps();

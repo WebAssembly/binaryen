@@ -460,11 +460,7 @@
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
- ;; CHECK:      (global $g (mut i32) (global.get $f))
- (global $g (mut i64) (global.get $f))
  ;; CHECK:      (global $f$hi (mut i32) (i32.const 305419896))
-
- ;; CHECK:      (global $g$hi (mut i32) (global.get $f$hi))
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
@@ -573,11 +569,7 @@
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
- ;; CHECK:      (global $g (mut i32) (global.get $f))
- (global $g (mut i64) (global.get $f))
  ;; CHECK:      (global $f$hi (mut i32) (i32.const 305419896))
-
- ;; CHECK:      (global $g$hi (mut i32) (global.get $f$hi))
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 

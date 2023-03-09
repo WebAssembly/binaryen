@@ -44,6 +44,12 @@ template<class Specific> class AbstractChildIterator {
   using Self = AbstractChildIterator<Specific>;
 
   struct Iterator {
+    using difference_type = std::ptrdiff_t;
+    using value_type = Expression*;
+    using pointer = Expression**;
+    using reference = Expression*&;
+    using iterator_category = std::forward_iterator_tag;
+
     const Self& parent;
     Index index;
 
