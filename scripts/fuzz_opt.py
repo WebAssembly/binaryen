@@ -1398,7 +1398,9 @@ opt_choices = [
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
     ("--type-refining",),
-    ("--type-merging",),
+    # TypeMerging is blocked by
+    # https://github.com/WebAssembly/binaryen/issues/5556
+    # ("--type-merging",),
     ("--type-ssa",),
     ("--vacuum",),
 ]
