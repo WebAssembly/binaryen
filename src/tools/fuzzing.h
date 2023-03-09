@@ -176,6 +176,7 @@ private:
   void prepareHangLimitSupport();
   void addHangLimitSupport();
   void addImportLoggingSupport();
+  void addHashMemorySupport();
 
   // Special expression makers
   Expression* makeHangLimitCheck();
