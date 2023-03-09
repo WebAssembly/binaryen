@@ -2022,6 +2022,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
       assert(funcContext);
+      std::cout << "1nonnull in " << funcContext->func->name << " of " << ret->type << '\n';
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
@@ -2075,6 +2076,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // similar.
       if (!type.isNullable()) {
         assert(funcContext);
+      std::cout << "2nonnull in " << funcContext->func->name << " of NULL for exttttt\n";
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -2159,6 +2161,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
         assert(funcContext);
+      std::cout << "3nonnull in " << funcContext->func->name << " of NULL, for " <<type << "\n";// << ret->type << '\n';
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -2172,28 +2175,16 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   auto heapType = type.getHeapType();
   assert(!heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  if (heapType.isSignature()) {
-    return makeRefFuncConst(type);
-  }
 
-  // We weren't able to directly materialize a non-null constant. Try again to
-  // create a null.
-  if (type.isNullable()) {
+  // Prefer not to emit a null, in general, as we can trap from them. But if we
+  // fail to do anything else will we emit a null at the end.
+  if (type.isNullable() && oneIn(10)) {
     return builder.makeRefNull(heapType);
   }
 
-  // We have to produce a non-null value. Possibly create a null and cast it
-  // to non-null even though that will trap at runtime. We must have a
-  // function context for this because the cast is not allowed in globals.
-  if (funcContext) {
-    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
-  }
-
-  // Otherwise, we are not in a function context. This can happen if we need
-  // to make a constant for the initializer of a global, for example. We've
-  // already handled simple cases of this above, for basic heap types, so what
-  // we have left here are user-defined heap types like structs.
-  if (type.isStruct()) {
+  if (heapType.isSignature()) {
+    return makeRefFuncConst(type);
+  } else if (type.isStruct()) {
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
     // TODO: use non-default values randomly even when not necessary, sometimes
