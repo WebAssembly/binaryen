@@ -2022,8 +2022,6 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
       assert(funcContext);
-      std::cout << "1nonnull in " << funcContext->func->name << " of "
-                << ret->type << '\n';
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
