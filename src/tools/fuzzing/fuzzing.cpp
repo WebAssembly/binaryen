@@ -2022,7 +2022,8 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     Expression* ret = builder.makeRefNull(HeapType::nofunc);
     if (!type.isNullable()) {
       assert(funcContext);
-      std::cout << "1nonnull in " << funcContext->func->name << " of " << ret->type << '\n';
+      std::cout << "1nonnull in " << funcContext->func->name << " of "
+                << ret->type << '\n';
       ret = builder.makeRefAs(RefAsNonNull, ret);
     }
     return ret;
@@ -2076,7 +2077,6 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       // similar.
       if (!type.isNullable()) {
         assert(funcContext);
-      std::cout << "2nonnull in " << funcContext->func->name << " of NULL for exttttt\n";
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
@@ -2161,7 +2161,6 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
         assert(funcContext);
-      std::cout << "3nonnull in " << funcContext->func->name << " of NULL, for " <<type << "\n";// << ret->type << '\n';
         return builder.makeRefAs(RefAsNonNull, null);
       }
       return null;
