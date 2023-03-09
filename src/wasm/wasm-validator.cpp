@@ -21,6 +21,7 @@
 
 #include "ir/eh-utils.h"
 #include "ir/features.h"
+#include "ir/find_all.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
@@ -3228,6 +3229,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
+  std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
     info.shouldBeTrue(curr->type.getFeatures() <= module.features,
                       curr->name,
@@ -3247,6 +3249,18 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
     FunctionValidator(module, &info).validate(curr->init);
+    // If GC is enabled (which means globals can refer to other non-imported
+    // globals), check that globals only refer to preceeding globals.
+    if (module.features.hasGC() && curr->init) {
+      for (auto* get : FindAll<GlobalGet>(curr->init).list) {
+        auto* global = module.getGlobalOrNull(get->name);
+        info.shouldBeTrue(
+          global && (seen.count(global) || global->imported()),
+          curr->init,
+          "global initializer should only refer to previous globals");
+      }
+      seen.insert(curr);
+    }
   });
 }
 

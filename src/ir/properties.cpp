@@ -45,11 +45,18 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   }
 
   if (auto* get = expr->dynCast<GlobalGet>()) {
-    // Only gets of immutable globals are constant. Constant expressions are
-    // also only validated in contexts that exclude locally defined globals, so
-    // they must only refer to imported globals.
     auto* g = wasm.getGlobalOrNull(get->name);
-    return g && !g->mutable_ && g->imported();
+    if (!g) {
+      return false;
+    }
+    // Only gets of immutable globals are constant.
+    if (g->mutable_) {
+      return false;
+    }
+    // Only imported globals are available in constant expressions unless GC is
+    // enabled.
+    return g->imported() || wasm.features.hasGC();
+    // TODO: Check that there are no cycles between globals.
   }
 
   if (wasm.features.hasExtendedConst()) {

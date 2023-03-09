@@ -118,7 +118,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       auto high = builder->makeGlobal(makeHighName(curr->name),
                                       Type::i32,
                                       builder->makeConst(int32_t(0)),
-                                      Builder::Mutable);
+                                      curr->mutable_ ? Builder::Mutable
+                                                     : Builder::Immutable);
       if (curr->imported()) {
         Fatal() << "TODO: imported i64 globals";
       } else {
