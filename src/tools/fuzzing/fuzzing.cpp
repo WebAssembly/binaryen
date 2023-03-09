@@ -3156,10 +3156,7 @@ HeapType TranslateToFuzzReader::getHeapType() {
   // nullable value. (getReferenceType() can be more precise and support the
   // ones that we can only do one of the two, but here we return a heap type and
   // we don't know how it will be used, so we must be conservative.)
-  return pick(HeapType::eq,
-              HeapType::i31,
-              HeapType::struct_,
-              HeapType::array);
+  return pick(HeapType::eq, HeapType::i31, HeapType::struct_, HeapType::array);
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
