@@ -36,4 +36,54 @@ bool isGenerative(Expression* curr, FeatureSet features) {
   return scanner.generative;
 }
 
+static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
+  if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
+      expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<I31New>() ||
+      expr->is<StringConst>()) {
+    return true;
+  }
+
+  if (auto* get = expr->dynCast<GlobalGet>()) {
+    auto* g = wasm.getGlobalOrNull(get->name);
+    // This is called from the validator, so we have to handle non-existent
+    // globals gracefully.
+    if (!g) {
+      return false;
+    }
+    // Only gets of immutable globals are constant.
+    if (g->mutable_) {
+      return false;
+    }
+    // Only imported globals are available in constant expressions unless GC is
+    // enabled.
+    return g->imported() || wasm.features.hasGC();
+    // TODO: Check that there are no cycles between globals.
+  }
+
+  if (wasm.features.hasExtendedConst()) {
+    if (auto* bin = expr->dynCast<Binary>()) {
+      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
+          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+bool isValidConstantExpression(Module& wasm, Expression* expr) {
+  struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    bool valid = true;
+    void visitExpression(Expression* curr) {
+      if (!isValidInConstantExpression(*getModule(), curr)) {
+        valid = false;
+      }
+    }
+  } walker;
+  walker.setModule(&wasm);
+  walker.walk(expr);
+  return walker.valid;
+}
+
 } // namespace wasm::Properties

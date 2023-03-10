@@ -53,24 +53,16 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
   return ret;
 }
 
-inline bool canInitializeGlobal(Expression* curr, FeatureSet features) {
+inline bool canInitializeGlobal(Module& wasm, Expression* curr) {
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!canInitializeGlobal(op, features)) {
+      if (!Properties::isValidConstantExpression(wasm, op)) {
         return false;
       }
     }
     return true;
   }
-  if (Properties::isValidInConstantExpression(curr, features)) {
-    for (auto* child : ChildIterator(curr)) {
-      if (!canInitializeGlobal(child, features)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
+  return Properties::isValidConstantExpression(wasm, curr);
 }
 
 } // namespace wasm::GlobalUtils

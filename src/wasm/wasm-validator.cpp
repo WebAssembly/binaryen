@@ -21,6 +21,7 @@
 
 #include "ir/eh-utils.h"
 #include "ir/features.h"
+#include "ir/find_all.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
@@ -3017,13 +3018,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 }
 
-static bool checkSegmentOffset(Expression* curr,
-                               Address add,
-                               Address max,
-                               FeatureSet features) {
-  return Properties::isValidInConstantExpression(curr, features);
-}
-
 void FunctionValidator::validateAlignment(
   size_t align, Type type, Index bytes, bool isAtomic, Expression* curr) {
   if (isAtomic) {
@@ -3235,6 +3229,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
+  std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
     info.shouldBeTrue(curr->type.getFeatures() <= module.features,
                       curr->name,
@@ -3242,10 +3237,9 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
     assert(curr->init);
-    info.shouldBeTrue(
-      GlobalUtils::canInitializeGlobal(curr->init, module.features),
-      curr->name,
-      "global init must be valid");
+    info.shouldBeTrue(GlobalUtils::canInitializeGlobal(module, curr->init),
+                      curr->name,
+                      "global init must be constant");
 
     if (!info.shouldBeSubType(curr->init->type,
                               curr->type,
@@ -3255,6 +3249,18 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
     FunctionValidator(module, &info).validate(curr->init);
+    // If GC is enabled (which means globals can refer to other non-imported
+    // globals), check that globals only refer to preceeding globals.
+    if (module.features.hasGC() && curr->init) {
+      for (auto* get : FindAll<GlobalGet>(curr->init).list) {
+        auto* global = module.getGlobalOrNull(get->name);
+        info.shouldBeTrue(
+          global && (seen.count(global) || global->imported()),
+          curr->init,
+          "global initializer should only refer to previous globals");
+      }
+      seen.insert(curr);
+    }
   });
 }
 
@@ -3327,12 +3333,10 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
           continue;
         }
       }
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           memory->initial * Memory::kPageSize,
-                                           module.features),
-                        segment->offset,
-                        "memory segment offset should be reasonable");
+      info.shouldBeTrue(
+        Properties::isValidConstantExpression(module, segment->offset),
+        segment->offset,
+        "memory segment offset should be constant");
       FunctionValidator(module, &info).validate(segment->offset);
       // If the memory is imported we don't actually know its initial size.
       // Specifically wasm dll's import a zero sized memory which is perfectly
@@ -3425,12 +3429,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          Type(Type::i32),
                          segment->offset,
                          "element segment offset should be i32");
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           table->initial * Table::kPageSize,
-                                           module.features),
-                        segment->offset,
-                        "table segment offset should be reasonable");
+      info.shouldBeTrue(
+        Properties::isValidConstantExpression(module, segment->offset),
+        segment->offset,
+        "table segment offset should be constant");
       info.shouldBeTrue(
         Type::isSubType(segment->type, table->type),
         "elem",
@@ -3444,22 +3446,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
     // Avoid double checking items
     if (module.features.hasReferenceTypes()) {
       for (auto* expr : segment->data) {
-        if (auto* globalExpr = expr->dynCast<GlobalGet>()) {
-          auto* global = module.getGlobal(globalExpr->name);
-          info.shouldBeFalse(
-            global->mutable_, expr, "expected a constant expression");
-        } else {
-          info.shouldBeTrue(expr->is<RefFunc>() || expr->is<RefNull>() ||
-                              expr->is<GlobalGet>(),
-                            expr,
-                            "element segment items must be one of global.get, "
-                            "ref.func, ref.null func");
-        }
+        info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),
+                          expr,
+                          "element must be a constant expression");
         info.shouldBeSubType(expr->type,
                              segment->type,
                              expr,
-                             "element segment item expressions must return a "
-                             "subtype of the segment type");
+                             "element must be a subtype of the segment type");
         validator.validate(expr);
       }
     }
