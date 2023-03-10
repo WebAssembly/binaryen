@@ -44,13 +44,19 @@ template<class Specific> class AbstractChildIterator {
   using Self = AbstractChildIterator<Specific>;
 
   struct Iterator {
-    const Self& parent;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Expression*;
+    using pointer = Expression**;
+    using reference = Expression*&;
+    using iterator_category = std::forward_iterator_tag;
+
+    const Self* parent;
     Index index;
 
-    Iterator(const Self& parent, Index index) : parent(parent), index(index) {}
+    Iterator(const Self* parent, Index index) : parent(parent), index(index) {}
 
     bool operator!=(const Iterator& other) const {
-      return index != other.index || &parent != &(other.parent);
+      return index != other.index || parent != other.parent;
     }
 
     bool operator==(const Iterator& other) const { return !(*this != other); }
@@ -58,7 +64,7 @@ template<class Specific> class AbstractChildIterator {
     void operator++() { index++; }
 
     Expression*& operator*() {
-      return *parent.children[parent.mapIndex(index)];
+      return *parent->children[parent->mapIndex(index)];
     }
   };
 
@@ -110,8 +116,8 @@ public:
 #include "wasm-delegations-fields.def"
   }
 
-  Iterator begin() const { return Iterator(*this, 0); }
-  Iterator end() const { return Iterator(*this, children.size()); }
+  Iterator begin() const { return Iterator(this, 0); }
+  Iterator end() const { return Iterator(this, children.size()); }
 
   void addChild(Expression* parent, Expression** child) {
     children.push_back(child);
