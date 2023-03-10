@@ -3339,7 +3339,7 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     // inhabitable then return that; avoid adding more uninhabitability.
     auto uninhabitable = nullability == NonNullable && heapType.isBottom();
     auto originalUninhabitable =
-        type.isNonNullable() && type.getHeapType().isBottom();
+      type.isNonNullable() && type.getHeapType().isBottom();
     if (uninhabitable && !originalUninhabitable && !oneIn(20)) {
       return type;
     }
