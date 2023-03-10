@@ -581,6 +581,7 @@ ignored_vm_runs = 0
 
 def note_ignored_vm_run():
     global ignored_vm_runs
+    print('(ignore VM run)')
     ignored_vm_runs += 1
 
 
@@ -849,6 +850,21 @@ class CompareVMs(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
+
+        # if the binaryen interpreter hit a host limitation on the original
+        # testcase, or for some other reason we need to ignore this, then stop
+        # (otherwise, a host limitation on say allocations may be hit in the
+        # 'before' but not in the 'after' as allocations may remove it).
+        #
+        # the binaryen interpreter is the first one we run, so just read that
+        # already-computed data to avoid extra work (but assert it is the
+        # right one so we never reorder and break this; we are best at
+        # recognizing host limitations in the binaryen interpreter, and would
+        # need more work for others)
+        assert(self.vms[0].name == 'binaryen interpreter')
+        if before[0] == IGNORE:
+            return
+
         after = self.run_vms(after_wasm)
         self.compare_before_and_after(before, after)
 
@@ -861,7 +877,6 @@ class CompareVMs(TestCaseHandler):
                 vm_results[vm] = fix_output(vm.run(wasm))
 
         # compare between the vms on this specific input
-
         first_vm = None
         for vm in vm_results.keys():
             if vm.can_compare_to_others():
