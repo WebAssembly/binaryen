@@ -3333,6 +3333,15 @@ Type TranslateToFuzzReader::getSubType(Type type) {
   } else if (type.isRef()) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
+    // We don't want to emit lots of uninhabitable types like (ref none), so
+    // avoid them with high probability. Specifically, if the original type was
+    // inhabitable then return that; avoid adding more uninhabitability.
+    auto uninhabitable = nullability == NonNullable && heapType.isBottom();
+    auto originalUninhabitable =
+      type.isNonNullable() && type.getHeapType().isBottom();
+    if (uninhabitable && !originalUninhabitable && !oneIn(20)) {
+      return type;
+    }
     return Type(heapType, nullability);
   } else {
     // This is an MVP type without subtypes.

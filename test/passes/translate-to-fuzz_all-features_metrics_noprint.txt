@@ -1,6 +1,6 @@
 total
- [exports]      : 6       
- [funcs]        : 13      
+ [exports]      : 8       
+ [funcs]        : 16      
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
@@ -8,36 +8,34 @@ total
  [table-data]   : 3       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 558     
+ [total]        : 653     
  [vars]         : 36      
- ArrayNew       : 7       
- ArrayNewFixed  : 3       
- AtomicCmpxchg  : 1       
- AtomicNotify   : 1       
- Binary         : 70      
- Block          : 73      
- Break          : 2       
- Call           : 21      
- CallRef        : 1       
- Const          : 120     
- Drop           : 9       
- GlobalGet      : 34      
- GlobalSet      : 34      
+ ArrayNew       : 8       
+ ArrayNewFixed  : 4       
+ Binary         : 76      
+ Block          : 90      
+ Break          : 3       
+ Call           : 25      
+ CallRef        : 3       
+ Const          : 134     
+ Drop           : 11      
+ GlobalGet      : 40      
+ GlobalSet      : 40      
  I31New         : 1       
- If             : 22      
- Load           : 18      
- LocalGet       : 38      
- LocalSet       : 19      
- Loop           : 5       
- Nop            : 5       
- RefAs          : 1       
- RefFunc        : 8       
+ If             : 26      
+ Load           : 19      
+ LocalGet       : 43      
+ LocalSet       : 21      
+ Loop           : 6       
+ Nop            : 11      
+ RefFunc        : 13      
  RefNull        : 4       
- Return         : 5       
+ Return         : 3       
  SIMDExtract    : 1       
- Select         : 2       
- StructNew      : 6       
- TupleExtract   : 3       
- TupleMake      : 6       
- Unary          : 20      
- Unreachable    : 18      
+ Select         : 4       
+ Store          : 2       
+ StructNew      : 9       
+ TupleExtract   : 2       
+ TupleMake      : 5       
+ Unary          : 27      
+ Unreachable    : 22      
