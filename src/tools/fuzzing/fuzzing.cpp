@@ -322,10 +322,7 @@ void TranslateToFuzzReader::setupGlobals() {
     }
   }
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
-    // We have a hacky way to work around uninhabitability in general code,
-    // which is to use a RefAsNonNull, but we cannot do so in a global
-    // initializer, so make sure we only create inhabitable types there.
-    auto type = getInhabitableType();
+    auto type = getConcreteType();
     auto global = builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
                                      type,
                                      makeConst(type),
@@ -3353,22 +3350,6 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     assert(type.isBasic());
     return type;
   }
-}
-
-Type TranslateToFuzzReader::getInhabitableType() {
-  auto type = getConcreteType();
-  if (type.isRef()) {
-    // The interesting types are all inhabitable, so if we want a reference,
-    // pick from them.
-    if (!interestingHeapTypes.empty()) {
-      auto heapType = pick(interestingHeapTypes);
-      auto nullability = getNullability();
-      return Type(heapType, nullability);
-    }
-    // Otherwise, give up.
-    return getMVPType();
-  }
-  return type;
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
