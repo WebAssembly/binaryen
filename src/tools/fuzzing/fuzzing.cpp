@@ -324,7 +324,7 @@ void TranslateToFuzzReader::setupGlobals() {
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
     auto* init = makeConst(type);
-    if (type.isRef() && !FindAll<RefAs>(init).list.empty()) {
+    if (!FindAll<RefAs>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
       // which we can break out of using ref.as_non_null of a nullable ref. That
