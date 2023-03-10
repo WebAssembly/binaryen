@@ -334,6 +334,7 @@ private:
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  Type getInhabitableType();
 
   // Utilities
   Name getTargetName(Expression* target);
