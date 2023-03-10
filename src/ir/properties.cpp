@@ -45,6 +45,8 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
 
   if (auto* get = expr->dynCast<GlobalGet>()) {
     auto* g = wasm.getGlobalOrNull(get->name);
+    // This is called from the validator, so we have to handle non-existent
+    // globals gracefully.
     if (!g) {
       return false;
     }
