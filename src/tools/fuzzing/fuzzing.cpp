@@ -2173,8 +2173,20 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   assert(!heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
 
-  // Prefer not to emit a null, in general, as we can trap from them.
-  if (type.isNullable() && oneIn(10)) {
+  // Prefer not to emit a null, in general, as we can trap from them. If it is
+  // nullable, give a small chance to do so; if we hit the nesting limit then we
+  // really have no choice and must emit a null (or else we could infinitely
+  // recurse). For the nesting limit, use a bound that is higher than the normal
+  // one, so that the normal mechanisms should prevent us from getting here;
+  // this limit is really a last resort we want to never reach.
+  //
+  // Note that we might have cycles of types where some are non-nullable. We
+  // will only stop here when we exceed the nesting and reach a nullable one.
+  // (This assumes there is a nullable one, that is, that the types are
+  // inhabitable.)
+  const auto LIMIT = 2 * NESTING_LIMIT;
+  AutoNester nester(*this);
+  if (type.isNullable() && (oneIn(10) || nesting >= LIMIT)) {
     return builder.makeRefNull(heapType);
   }
 
