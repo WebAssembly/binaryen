@@ -2186,7 +2186,8 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // inhabitable.)
   const auto LIMIT = NESTING_LIMIT + 1;
   AutoNester nester(*this);
-  if (type.isNullable() && (oneIn(10) || nesting >= LIMIT || random.finished())) {
+  if (type.isNullable() &&
+      (oneIn(10) || nesting >= LIMIT || random.finished())) {
     return builder.makeRefNull(heapType);
   }
 
