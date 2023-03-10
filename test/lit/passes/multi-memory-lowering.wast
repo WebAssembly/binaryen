@@ -28,10 +28,7 @@
 
   ;; CHECK:      (data (i32.const 0) "a")
 
-  ;; CHECK:      (data (i32.add
-  ;; CHECK-NEXT:  (global.get $memory3_byte_offset)
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: ) "123")
+  ;; CHECK:      (data (i32.const 196609) "123")
 
   ;; CHECK:      (func $loads
   ;; CHECK-NEXT:  (drop
@@ -76,10 +73,7 @@
 
   ;; BOUNDS:      (data (i32.const 0) "a")
 
-  ;; BOUNDS:      (data (i32.add
-  ;; BOUNDS-NEXT:  (global.get $memory3_byte_offset)
-  ;; BOUNDS-NEXT:  (i32.const 1)
-  ;; BOUNDS-NEXT: ) "123")
+  ;; BOUNDS:      (data (i32.const 196609) "123")
 
   ;; BOUNDS:      (func $loads
   ;; BOUNDS-NEXT:  (local $0 i32)

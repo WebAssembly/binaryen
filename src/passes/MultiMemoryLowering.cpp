@@ -413,6 +413,14 @@ struct MultiMemoryLowering : public Pass {
     return offsetGlobalNames[idx - 1];
   }
 
+  size_t getInitialOffset(Index idx) {
+    if (idx == 0) {
+      return 0;
+    }
+    auto* g = wasm->getGlobal(getOffsetGlobal(idx));
+    return g->init->cast<Const>()->value.getUnsigned();
+  }
+
   // Whether the idx represents the last memory. Since there is no offset global
   // for the first memory, the last memory is represented by the size of
   // offsetGlobalNames
@@ -509,17 +517,11 @@ struct MultiMemoryLowering : public Pass {
     ModuleUtils::iterActiveDataSegments(*wasm, [&](DataSegment* dataSegment) {
       auto idx = memoryIdxMap.at(dataSegment->memory);
       dataSegment->memory = combinedMemory;
-      // No need to update the offset of data segments for the first memory
-      if (idx != 0) {
-        assert(dataSegment->offset->is<Const>() &&
-               "TODO: handle non-const segment offsets");
-        assert(wasm->features.hasExtendedConst());
-        auto offsetGlobalName = getOffsetGlobal(idx);
-        dataSegment->offset = builder.makeBinary(
-          Abstract::getBinary(pointerType, Abstract::Add),
-          builder.makeGlobalGet(offsetGlobalName, pointerType),
-          dataSegment->offset);
-      }
+      auto* offset = dataSegment->offset->dynCast<Const>();
+      assert(offset && "TODO: handle non-const segment offsets");
+      size_t originalOffset = offset->value.getUnsigned();
+      auto memOffset = getInitialOffset(idx);
+      offset->value = Literal(int32_t(originalOffset + memOffset));
     });
   }
 

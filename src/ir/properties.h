@@ -453,26 +453,9 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //
 bool isGenerative(Expression* curr, FeatureSet features);
 
-inline bool isValidInConstantExpression(Expression* expr, FeatureSet features) {
-  if (isSingleConstantExpression(expr) || expr->is<GlobalGet>() ||
-      expr->is<StructNew>() || expr->is<ArrayNew>() ||
-      expr->is<ArrayNewFixed>() || expr->is<I31New>() ||
-      expr->is<StringConst>()) {
-    return true;
-  }
-
-  if (features.hasExtendedConst()) {
-    if (expr->is<Binary>()) {
-      auto bin = static_cast<Binary*>(expr);
-      if (bin->op == AddInt64 || bin->op == SubInt64 || bin->op == MulInt64 ||
-          bin->op == AddInt32 || bin->op == SubInt32 || bin->op == MulInt32) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
+// Whether this expression is valid in a context where WebAssembly requires a
+// constant expression, such as a global initializer.
+bool isValidConstantExpression(Module& wasm, Expression* expr);
 
 } // namespace wasm::Properties
 
