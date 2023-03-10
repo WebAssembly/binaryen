@@ -839,7 +839,10 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(),
+        # the binaryen interpreter is specifically useful for various things
+        self.bynterpreter = BinaryenInterpreter()
+
+        self.vms = [bynterpreter,
                     D8(),
                     D8Liftoff(),
                     D8TurboFan(),
@@ -858,14 +861,7 @@ class CompareVMs(TestCaseHandler):
         # testcase, or for some other reason we need to ignore this, then stop
         # (otherwise, a host limitation on say allocations may be hit in the
         # 'before' but not in the 'after' as allocations may remove it).
-        #
-        # the binaryen interpreter is the first one we run, so just read that
-        # already-computed data to avoid extra work (but assert it is the
-        # right one so we never reorder and break this; we are best at
-        # recognizing host limitations in the binaryen interpreter, and would
-        # need more work for others)
-        assert(self.vms[0].name == 'binaryen interpreter')
-        if before[0] == IGNORE:
+        if before[self.bynterpreter] == IGNORE:
             # the ignoring should have been noted during run_vms()
             assert(ignored_vm_runs > ignored_before)
             return
