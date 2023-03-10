@@ -1,105 +1,35 @@
 total
-<<<<<<< HEAD
-<<<<<<< HEAD
- [exports]      : 13      
- [funcs]        : 26      
-=======
- [exports]      : 8       
- [funcs]        : 16      
->>>>>>> origin/main
-=======
- [exports]      : 6       
- [funcs]        : 15      
->>>>>>> origin/fuzz.finished
+ [exports]      : 10      
+ [funcs]        : 24      
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
-<<<<<<< HEAD
-<<<<<<< HEAD
- [table-data]   : 4       
+ [table-data]   : 7       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 727     
- [vars]         : 19      
- ArrayNewFixed  : 3       
- AtomicFence    : 3       
- AtomicNotify   : 1       
- Binary         : 78      
- Block          : 104     
- Break          : 3       
- Call           : 37      
- Const          : 132     
- Drop           : 13      
- GlobalGet      : 50      
- GlobalSet      : 50      
- I31New         : 4       
- If             : 34      
- Load           : 18      
+ [total]        : 553     
+ [vars]         : 35      
+ ArrayNewFixed  : 4       
+ Binary         : 68      
+ Block          : 72      
+ Call           : 30      
+ CallIndirect   : 1       
+ Const          : 117     
+ Drop           : 9       
+ GlobalGet      : 40      
+ GlobalSet      : 40      
+ I31New         : 1       
+ If             : 20      
+ Load           : 16      
  LocalGet       : 35      
- LocalSet       : 25      
- Loop           : 3       
- Nop            : 11      
- RefAs          : 11      
- RefEq          : 1       
- RefFunc        : 11      
- RefNull        : 21      
- Return         : 6       
- Store          : 1       
- StructNew      : 3       
- TupleMake      : 6       
- Unary          : 34      
- Unreachable    : 29      
-=======
- [table-data]   : 3       
-=======
- [table-data]   : 0       
->>>>>>> origin/fuzz.finished
- [tables]       : 1       
- [tags]         : 1       
- [total]        : 869     
- [vars]         : 23      
- ArrayNew       : 2       
- ArrayNewFixed  : 2       
- Binary         : 98      
- Block          : 133     
- Break          : 24      
- Call           : 21      
- CallRef        : 2       
- Const          : 184     
- Drop           : 8       
- GlobalGet      : 54      
- GlobalSet      : 54      
- I31New         : 4       
- If             : 38      
- Load           : 25      
- LocalGet       : 35      
- LocalSet       : 20      
- Loop           : 15      
- MemoryCopy     : 2       
- Nop            : 26      
- RefAs          : 3       
- RefEq          : 2       
- RefFunc        : 5       
- RefIsNull      : 3       
- RefNull        : 7       
- Return         : 3       
-<<<<<<< HEAD
- SIMDExtract    : 1       
- Select         : 4       
- Store          : 2       
- StructNew      : 9       
- TupleExtract   : 2       
- TupleMake      : 5       
- Unary          : 27      
- Unreachable    : 22      
->>>>>>> origin/main
-=======
- Select         : 2       
- Store          : 7       
- StructNew      : 6       
- TupleExtract   : 3       
- TupleMake      : 6       
- Unary          : 45      
- Unreachable    : 30      
->>>>>>> origin/fuzz.finished
+ LocalSet       : 18      
+ Nop            : 2       
+ RefFunc        : 15      
+ RefNull        : 4       
+ Return         : 2       
+ Select         : 1       
+ StructNew      : 10      
+ TupleMake      : 4       
+ Unary          : 21      
+ Unreachable    : 23      
