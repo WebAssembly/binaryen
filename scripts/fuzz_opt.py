@@ -842,7 +842,7 @@ class CompareVMs(TestCaseHandler):
         # the binaryen interpreter is specifically useful for various things
         self.bynterpreter = BinaryenInterpreter()
 
-        self.vms = [bynterpreter,
+        self.vms = [self.bynterpreter,
                     D8(),
                     D8Liftoff(),
                     D8TurboFan(),
