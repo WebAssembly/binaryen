@@ -2178,7 +2178,9 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // really have no choice and must emit a null (or else we could infinitely
   // recurse). For the nesting limit, use a bound that is higher than the normal
   // one, so that the normal mechanisms should prevent us from getting here;
-  // this limit is really a last resort we want to never reach.
+  // this limit is really a last resort we want to never reach. Also, increase
+  // the chance to emit a null as |nesting| rises, to avoid deep recursive
+  // structures.
   //
   // Note that we might have cycles of types where some are non-nullable. We
   // will only stop here when we exceed the nesting and reach a nullable one.
