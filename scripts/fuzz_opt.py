@@ -849,6 +849,9 @@ class CompareVMs(TestCaseHandler):
                     ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        global ignored_vm_runs
+        ignored_before = ignored_vm_runs
+
         before = self.run_vms(before_wasm)
 
         # if the binaryen interpreter hit a host limitation on the original
@@ -863,6 +866,8 @@ class CompareVMs(TestCaseHandler):
         # need more work for others)
         assert(self.vms[0].name == 'binaryen interpreter')
         if before[0] == IGNORE:
+            # the ignoring should have been noted during run_vms()
+            assert(ignored_vm_runs > ignored_before)
             return
 
         after = self.run_vms(after_wasm)
