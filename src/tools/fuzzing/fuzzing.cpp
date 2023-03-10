@@ -323,10 +323,18 @@ void TranslateToFuzzReader::setupGlobals() {
   }
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    auto global = builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
-                                     type,
-                                     makeConst(type),
-                                     Builder::Mutable);
+    auto* init = makeConst(type);
+    if (type.isRef() && !FindAll<RefAs>(init).list.empty()) {
+      // When creating this initial value we ended up emitting a RefAs, which
+      // means we had to stop in the middle of an overly-nested struct or array,
+      // which we can break out of using ref.as_non_null of a nullable ref. That
+      // traps in normal code, which is bad enough, but it does not even
+      // validate in a global. Switch to something safe instead.
+      type = getMVPType();
+      init = makeConst(type);
+    }
+    auto global = builder.makeGlobal(
+      Names::getValidGlobalName(wasm, "global$"), type, init, Builder::Mutable);
     globalsByType[type].push_back(global->name);
     wasm.addGlobal(std::move(global));
   }
