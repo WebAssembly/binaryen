@@ -142,10 +142,6 @@ public:
     return tmp;
   }
 
-  bool operator!=(const DerivedT &RHS) const {
-    return !static_cast<const DerivedT *>(this)->operator==(RHS);
-  }
-
   bool operator>(const DerivedT &RHS) const {
     static_assert(
         IsRandomAccess,

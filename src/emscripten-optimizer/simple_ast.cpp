@@ -28,14 +28,8 @@ bool Ref::operator==(std::string_view str) {
   return get()->isString() && get()->str == str;
 }
 
-bool Ref::operator!=(std::string_view str) { return !(*this == str); }
-
 bool Ref::operator==(const IString& str) {
   return get()->isString() && get()->str == str;
-}
-
-bool Ref::operator!=(const IString& str) {
-  return get()->isString() && get()->str != str;
 }
 
 bool Ref::operator==(Ref other) { return **this == *other; }
