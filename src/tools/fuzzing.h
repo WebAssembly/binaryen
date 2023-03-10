@@ -138,8 +138,19 @@ private:
 
   FunctionCreationContext* funcContext = nullptr;
 
+public:
   int nesting = 0;
 
+  struct AutoNester {
+    TranslateToFuzzReader& parent;
+
+    AutoNester(TranslateToFuzzReader& parent) : parent(parent) {
+      parent.nesting++;
+    }
+    ~AutoNester() { parent.nesting--; }
+  };
+
+private:
   // Generating random data is common enough that it's worth having helpers that
   // forward to `random`.
   int8_t get() { return random.get(); }

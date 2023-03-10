@@ -2172,28 +2172,27 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   auto heapType = type.getHeapType();
   assert(!heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  if (heapType.isSignature()) {
-    return makeRefFuncConst(type);
-  }
 
-  // We weren't able to directly materialize a non-null constant. Try again to
-  // create a null.
-  if (type.isNullable()) {
+  // Prefer not to emit a null, in general, as we can trap from them. If it is
+  // nullable, give a small chance to do so; if we hit the nesting limit then we
+  // really have no choice and must emit a null (or else we could infinitely
+  // recurse). For the nesting limit, use a bound that is higher than the normal
+  // one, so that the normal mechanisms should prevent us from getting here;
+  // this limit is really a last resort we want to never reach.
+  //
+  // Note that we might have cycles of types where some are non-nullable. We
+  // will only stop here when we exceed the nesting and reach a nullable one.
+  // (This assumes there is a nullable one, that is, that the types are
+  // inhabitable.)
+  const auto LIMIT = 2 * NESTING_LIMIT;
+  AutoNester nester(*this);
+  if (type.isNullable() && (oneIn(10) || nesting >= LIMIT)) {
     return builder.makeRefNull(heapType);
   }
 
-  // We have to produce a non-null value. Possibly create a null and cast it
-  // to non-null even though that will trap at runtime. We must have a
-  // function context for this because the cast is not allowed in globals.
-  if (funcContext) {
-    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
-  }
-
-  // Otherwise, we are not in a function context. This can happen if we need
-  // to make a constant for the initializer of a global, for example. We've
-  // already handled simple cases of this above, for basic heap types, so what
-  // we have left here are user-defined heap types like structs.
-  if (type.isStruct()) {
+  if (heapType.isSignature()) {
+    return makeRefFuncConst(type);
+  } else if (type.isStruct()) {
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
     // TODO: use non-default values randomly even when not necessary, sometimes
