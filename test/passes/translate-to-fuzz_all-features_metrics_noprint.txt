@@ -1,15 +1,21 @@
 total
 <<<<<<< HEAD
+<<<<<<< HEAD
  [exports]      : 13      
  [funcs]        : 26      
 =======
  [exports]      : 8       
  [funcs]        : 16      
 >>>>>>> origin/main
+=======
+ [exports]      : 6       
+ [funcs]        : 15      
+>>>>>>> origin/fuzz.finished
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
+<<<<<<< HEAD
 <<<<<<< HEAD
  [table-data]   : 4       
  [tables]       : 1       
@@ -46,31 +52,39 @@ total
  Unreachable    : 29      
 =======
  [table-data]   : 3       
+=======
+ [table-data]   : 0       
+>>>>>>> origin/fuzz.finished
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 653     
- [vars]         : 36      
- ArrayNew       : 8       
- ArrayNewFixed  : 4       
- Binary         : 76      
- Block          : 90      
- Break          : 3       
- Call           : 25      
- CallRef        : 3       
- Const          : 134     
- Drop           : 11      
- GlobalGet      : 40      
- GlobalSet      : 40      
- I31New         : 1       
- If             : 26      
- Load           : 19      
- LocalGet       : 43      
- LocalSet       : 21      
- Loop           : 6       
- Nop            : 11      
- RefFunc        : 13      
- RefNull        : 4       
+ [total]        : 869     
+ [vars]         : 23      
+ ArrayNew       : 2       
+ ArrayNewFixed  : 2       
+ Binary         : 98      
+ Block          : 133     
+ Break          : 24      
+ Call           : 21      
+ CallRef        : 2       
+ Const          : 184     
+ Drop           : 8       
+ GlobalGet      : 54      
+ GlobalSet      : 54      
+ I31New         : 4       
+ If             : 38      
+ Load           : 25      
+ LocalGet       : 35      
+ LocalSet       : 20      
+ Loop           : 15      
+ MemoryCopy     : 2       
+ Nop            : 26      
+ RefAs          : 3       
+ RefEq          : 2       
+ RefFunc        : 5       
+ RefIsNull      : 3       
+ RefNull        : 7       
  Return         : 3       
+<<<<<<< HEAD
  SIMDExtract    : 1       
  Select         : 4       
  Store          : 2       
@@ -80,3 +94,12 @@ total
  Unary          : 27      
  Unreachable    : 22      
 >>>>>>> origin/main
+=======
+ Select         : 2       
+ Store          : 7       
+ StructNew      : 6       
+ TupleExtract   : 3       
+ TupleMake      : 6       
+ Unary          : 45      
+ Unreachable    : 30      
+>>>>>>> origin/fuzz.finished
