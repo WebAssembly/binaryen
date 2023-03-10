@@ -2187,7 +2187,6 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // (This assumes there is a nullable one, that is, that the types are
   // inhabitable.)
   const auto LIMIT = NESTING_LIMIT + 1;
-std::cout << "maek " << type << " : " << type.getHeapType() << " : " << nesting << '\n';
   AutoNester nester(*this);
   if (type.isNullable() &&
       (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
