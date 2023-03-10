@@ -1135,6 +1135,14 @@ class TrapsNeverHappen(TestCaseHandler):
             print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
 
             # also remove the relevant lines from after.
+            if call_line not in after:
+                # the normal run hit a trap, and the tnh run hit a host
+                # limitation that forces us to ignore this run. for example,
+                # after running tnh we may end up doing an unbounded number of
+                # allocations, if that is what the program normally does (and
+                # the normal run only avoided that by trapping).
+                assert IGNORE in after
+                return
             after_index = after.index(call_line)
             after = after[:after_index]
 
