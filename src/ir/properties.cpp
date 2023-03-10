@@ -15,7 +15,6 @@
  */
 
 #include "ir/properties.h"
-#include "ir/iteration.h"
 #include "wasm-traversal.h"
 
 namespace wasm::Properties {
