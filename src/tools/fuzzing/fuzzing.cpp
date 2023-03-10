@@ -2197,7 +2197,7 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // make this validate, but it will trap at runtime which is not ideal. This at
   // least avoids infinite recursion here, and we emit a valid (but not that
   // useful) wasm.
-  if (type.isNonNullable() && random.finished()) {
+  if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
