@@ -72,17 +72,17 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
 }
 
 bool isValidConstantExpression(Module& wasm, Expression* expr) {
-  std::vector<Expression*> exprs = {expr};
-  while (!exprs.empty()) {
-    Expression* curr = exprs.back();
-    exprs.pop_back();
-    if (!isValidInConstantExpression(wasm, curr)) {
-      return false;
+  struct Walker : public PostWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    bool valid = true;
+    void visitExpression(Expression* curr) {
+      if (!isValidInConstantExpression(*getModule(), curr)) {
+        valid = false;
+      }
     }
-    ChildIterator children(curr);
-    exprs.insert(exprs.end(), children.begin(), children.end());
-  }
-  return true;
+  } walker;
+  walker.setModule(&wasm);
+  walker.walk(expr);
+  return walker.valid;
 }
 
 } // namespace wasm::Properties
