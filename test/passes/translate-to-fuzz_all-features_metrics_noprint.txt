@@ -1,10 +1,16 @@
 total
+<<<<<<< HEAD
  [exports]      : 13      
  [funcs]        : 26      
+=======
+ [exports]      : 8       
+ [funcs]        : 16      
+>>>>>>> origin/main
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
+<<<<<<< HEAD
  [table-data]   : 4       
  [tables]       : 1       
  [tags]         : 1       
@@ -38,3 +44,39 @@ total
  TupleMake      : 6       
  Unary          : 34      
  Unreachable    : 29      
+=======
+ [table-data]   : 3       
+ [tables]       : 1       
+ [tags]         : 1       
+ [total]        : 653     
+ [vars]         : 36      
+ ArrayNew       : 8       
+ ArrayNewFixed  : 4       
+ Binary         : 76      
+ Block          : 90      
+ Break          : 3       
+ Call           : 25      
+ CallRef        : 3       
+ Const          : 134     
+ Drop           : 11      
+ GlobalGet      : 40      
+ GlobalSet      : 40      
+ I31New         : 1       
+ If             : 26      
+ Load           : 19      
+ LocalGet       : 43      
+ LocalSet       : 21      
+ Loop           : 6       
+ Nop            : 11      
+ RefFunc        : 13      
+ RefNull        : 4       
+ Return         : 3       
+ SIMDExtract    : 1       
+ Select         : 4       
+ Store          : 2       
+ StructNew      : 9       
+ TupleExtract   : 2       
+ TupleMake      : 5       
+ Unary          : 27      
+ Unreachable    : 22      
+>>>>>>> origin/main

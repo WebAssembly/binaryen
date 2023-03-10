@@ -1,10 +1,10 @@
 ;; Test that shared memory requires atomics
 
-;; RUN: not wasm-opt %s 2>&1 | filecheck %s --check-prefix NO-EXTENDED
-;; RUN: wasm-opt %s --enable-extended-const -o - -S | filecheck %s --check-prefix EXTENDED
+;; RUN: not wasm-opt -all --disable-extended-const %s 2>&1 | filecheck %s --check-prefix NO-EXTENDED
+;; RUN: wasm-opt %s -all -o - -S | filecheck %s --check-prefix EXTENDED
 
-;; NO-EXTENDED: unexpected false: global init must be valid
-;; NO-EXTENDED: unexpected false: memory segment offset should be reasonable
+;; NO-EXTENDED: unexpected false: global init must be constant
+;; NO-EXTENDED: unexpected false: memory segment offset should be constant
 
 ;; EXTENDED: (import "env" "global" (global $gimport$0 i32))
 ;; EXTENDED: (global $1 i32 (i32.add

@@ -33,7 +33,7 @@
  )
 )
 (module
- (import "env" "global-1" (global $g1 (mut i32)))
+ (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
 )
 (module
@@ -47,7 +47,7 @@
  )
 )
 (module
- (import "env" "global-1" (global $g1 (mut i32)))
+ (import "env" "global-1" (global $g1 i32))
  (global $g2 (mut i32) (global.get $g1))
  (export "global-2" (global $g2))
 )
@@ -63,7 +63,7 @@
  (global $g8 i32 (i32.const 3))
  (global $g9 i32 (i32.const 4))
  (global $ga (mut i32) (i32.const 4))
- (global $gb (mut i32) (i32.const 5))
+ (global $gb i32 (i32.const 5))
  (global $gc i32 (i32.const 5))
  (func $foo (type $none_=>_none)
   (drop
@@ -97,16 +97,13 @@
    (global.get $ga)
   )
   (drop
-   (global.get $gb)
+   (i32.const 5)
   )
   (drop
    (i32.const 5)
   )
   (global.set $ga
    (i32.const 6)
-  )
-  (global.set $gb
-   (i32.const 7)
   )
  )
 )
