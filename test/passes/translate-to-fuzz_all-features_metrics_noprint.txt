@@ -1,43 +1,44 @@
 total
  [exports]      : 6       
- [funcs]        : 13      
+ [funcs]        : 15      
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 3       
+ [table-data]   : 0       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 558     
- [vars]         : 36      
- ArrayNew       : 7       
- ArrayNewFixed  : 3       
- AtomicCmpxchg  : 1       
- AtomicNotify   : 1       
- Binary         : 70      
- Block          : 73      
- Break          : 2       
+ [total]        : 869     
+ [vars]         : 23      
+ ArrayNew       : 2       
+ ArrayNewFixed  : 2       
+ Binary         : 98      
+ Block          : 133     
+ Break          : 24      
  Call           : 21      
- CallRef        : 1       
- Const          : 120     
- Drop           : 9       
- GlobalGet      : 34      
- GlobalSet      : 34      
- I31New         : 1       
- If             : 22      
- Load           : 18      
- LocalGet       : 38      
- LocalSet       : 19      
- Loop           : 5       
- Nop            : 5       
- RefAs          : 1       
- RefFunc        : 8       
- RefNull        : 4       
- Return         : 5       
- SIMDExtract    : 1       
+ CallRef        : 2       
+ Const          : 184     
+ Drop           : 8       
+ GlobalGet      : 54      
+ GlobalSet      : 54      
+ I31New         : 4       
+ If             : 38      
+ Load           : 25      
+ LocalGet       : 35      
+ LocalSet       : 20      
+ Loop           : 15      
+ MemoryCopy     : 2       
+ Nop            : 26      
+ RefAs          : 3       
+ RefEq          : 2       
+ RefFunc        : 5       
+ RefIsNull      : 3       
+ RefNull        : 7       
+ Return         : 3       
  Select         : 2       
+ Store          : 7       
  StructNew      : 6       
  TupleExtract   : 3       
  TupleMake      : 6       
- Unary          : 20      
- Unreachable    : 18      
+ Unary          : 45      
+ Unreachable    : 30      
