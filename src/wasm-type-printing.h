@@ -82,7 +82,7 @@ struct IndexedTypeNameGenerator
     }
   }
   template<typename T>
-  IndexedTypeNameGenerator(T& types, const std::string& prefix = "")
+  IndexedTypeNameGenerator(const T& types, const std::string& prefix = "")
     : IndexedTypeNameGenerator(types, defaultGenerator, prefix) {}
 
   TypeNames getNames(HeapType type) {
