@@ -860,7 +860,7 @@ class CompareVMs(TestCaseHandler):
         # if the binaryen interpreter hit a host limitation on the original
         # testcase, or for some other reason we need to ignore this, then stop
         # (otherwise, a host limitation on say allocations may be hit in the
-        # 'before' but not in the 'after' as allocations may remove it).
+        # 'before' but not in the 'after' as optimizations may remove it).
         if before[self.bynterpreter] == IGNORE:
             # the ignoring should have been noted during run_vms()
             assert(ignored_vm_runs > ignored_before)
