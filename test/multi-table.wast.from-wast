@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
  (import "a" "b" (table $t1 1 10 funcref))
- (import "env" "f" (global $g1 (ref null $none_=>_none)))
- (import "env" "g" (global $g2 i32))
+ (global $g1 (ref null $none_=>_none) (ref.func $f))
+ (global $g2 i32 (i32.const 0))
  (table $t2 3 3 funcref)
  (table $t3 4 4 funcref)
  (table $textern 0 externref)

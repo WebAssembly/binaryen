@@ -3409,9 +3409,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
     // us with ref.null, ref.func and global.get. As a result, the only possible
     // type for element segments will be function references.
     // TODO: This is not true! Allow GC data here (#4846).
-    info.shouldBeTrue(segment->type.isRef(),
+    info.shouldBeTrue(segment->type.isFunction(),
                       "elem",
-                      "element segment type must be of reference type.");
+                      "element segment type must be of function type.");
     info.shouldBeTrue(
       segment->type.isNullable(),
       "elem",

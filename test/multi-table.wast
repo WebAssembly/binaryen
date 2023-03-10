@@ -1,8 +1,8 @@
 (module
   (type $none_=>_none (func))
   (type $A (struct))
-  (global $g1 (import "env" "f") (ref null $none_=>_none))
-  (global $g2 (import "env" "g") i32)
+  (global $g1 (ref null $none_=>_none) (ref.func $f))
+  (global $g2 i32 (i32.const 0))
 
   (import "a" "b" (table $t1 1 10 funcref))
   (table $t2 3 3 funcref)
