@@ -323,10 +323,18 @@ void TranslateToFuzzReader::setupGlobals() {
   }
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    auto global = builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
-                                     type,
-                                     makeConst(type),
-                                     Builder::Mutable);
+    auto* init = makeConst(type);
+    if (!FindAll<RefAs>(init).list.empty()) {
+      // When creating this initial value we ended up emitting a RefAs, which
+      // means we had to stop in the middle of an overly-nested struct or array,
+      // which we can break out of using ref.as_non_null of a nullable ref. That
+      // traps in normal code, which is bad enough, but it does not even
+      // validate in a global. Switch to something safe instead.
+      type = getMVPType();
+      init = makeConst(type);
+    }
+    auto global = builder.makeGlobal(
+      Names::getValidGlobalName(wasm, "global$"), type, init, Builder::Mutable);
     globalsByType[type].push_back(global->name);
     wasm.addGlobal(std::move(global));
   }
@@ -2178,16 +2186,27 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
   // really have no choice and must emit a null (or else we could infinitely
   // recurse). For the nesting limit, use a bound that is higher than the normal
   // one, so that the normal mechanisms should prevent us from getting here;
-  // this limit is really a last resort we want to never reach.
+  // this limit is really a last resort we want to never reach. Also, increase
+  // the chance to emit a null as |nesting| rises, to avoid deep recursive
+  // structures.
   //
   // Note that we might have cycles of types where some are non-nullable. We
   // will only stop here when we exceed the nesting and reach a nullable one.
   // (This assumes there is a nullable one, that is, that the types are
   // inhabitable.)
-  const auto LIMIT = 2 * NESTING_LIMIT;
+  const auto LIMIT = NESTING_LIMIT + 1;
   AutoNester nester(*this);
-  if (type.isNullable() && (oneIn(10) || nesting >= LIMIT)) {
+  if (type.isNullable() &&
+      (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
     return builder.makeRefNull(heapType);
+  }
+
+  // If the type is non-nullable, and we've run out of input, emit a cast to
+  // make this validate, but it will trap at runtime which is not ideal. This at
+  // least avoids infinite recursion here, and we emit a valid (but not that
+  // useful) wasm.
+  if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
+    return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
   if (heapType.isSignature()) {
