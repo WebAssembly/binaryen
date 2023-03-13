@@ -313,10 +313,12 @@ void TranslateToFuzzReader::setupGlobals() {
       global->module = global->base = Name();
       global->init = makeConst(global->type);
     } else {
-      // If the initialization referred to an imported global, it no longer
-      // can point to the same global after we make it a non-imported global
-      // (as wasm doesn't allow that - you can only use an imported one).
-      if (global->init->is<GlobalGet>()) {
+      // If the initialization referred to an imported global, it no longer can
+      // point to the same global after we make it a non-imported global unless
+      // GC is enabled, since before GC, Wasm only made imported globals
+      // available in constant expressions.
+      if (!wasm.features.hasGC() &&
+          !FindAll<GlobalGet>(global->init).list.empty()) {
         global->init = makeConst(global->type);
       }
     }
@@ -353,21 +355,21 @@ void TranslateToFuzzReader::finalizeMemory() {
   for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment->data.size();
     if (!segment->isPassive) {
-      if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
-        // Using a non-imported global in a segment offset is not valid in
-        // wasm. This can occur due to us making what used to be an imported
-        // global, in initial contents, be not imported any more. To fix that,
-        // replace such invalid things with a constant.
-        // Note that it is still possible in theory to have imported globals
-        // here, as we only do the above for initial contents. While the
-        // fuzzer doesn't do so as of the time of this comment, do a check
-        // for full generality, so that this code essentially does "if this
-        // is invalid wasm, fix it up."
-        if (!wasm.getGlobal(offset->name)->imported()) {
-          // TODO: It would be better to avoid segment overlap so that
-          //       MemoryPacking can run.
-          segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+      if (!wasm.features.hasGC()) {
+        // Using a non-imported global in a segment offset is not valid in wasm
+        // unless GC is enabled. This can occur due to us adding a local
+        // definition to what used to be an imported global in initial contents.
+        // To fix that, replace such invalid offsets with a constant.
+        for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+          // N.B: We never currently encounter imported globals here, but we do
+          // the check for robustness.
+          if (!wasm.getGlobal(get->name)->imported()) {
+            // TODO: It would be better to avoid segment overlap so that
+            //       MemoryPacking can run.
+            segment->offset =
+              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            break;
+          }
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
