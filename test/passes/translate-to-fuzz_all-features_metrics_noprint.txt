@@ -1,87 +1,42 @@
 total
-<<<<<<< HEAD
- [exports]      : 6       
- [funcs]        : 15      
-=======
- [exports]      : 7       
- [funcs]        : 10      
->>>>>>> origin/fuzzer.limit.array
+ [exports]      : 5       
+ [funcs]        : 13      
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
-<<<<<<< HEAD
  [table-data]   : 0       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 869     
+ [total]        : 460     
  [vars]         : 23      
- ArrayNew       : 2       
- ArrayNewFixed  : 2       
- Binary         : 98      
- Block          : 133     
- Break          : 24      
- Call           : 21      
- CallRef        : 2       
- Const          : 184     
+ ArrayNewFixed  : 1       
+ AtomicCmpxchg  : 1       
+ AtomicRMW      : 1       
+ Binary         : 66      
+ Block          : 56      
+ Break          : 3       
+ Call           : 15      
+ Const          : 98      
  Drop           : 8       
- GlobalGet      : 54      
- GlobalSet      : 54      
- I31New         : 4       
- If             : 38      
- Load           : 25      
- LocalGet       : 35      
- LocalSet       : 20      
- Loop           : 15      
- MemoryCopy     : 2       
- Nop            : 26      
- RefAs          : 3       
- RefEq          : 2       
- RefFunc        : 5       
- RefIsNull      : 3       
- RefNull        : 7       
- Return         : 3       
- Select         : 2       
- Store          : 7       
- StructNew      : 6       
- TupleExtract   : 3       
- TupleMake      : 6       
- Unary          : 45      
-=======
- [table-data]   : 1       
- [tables]       : 1       
- [tags]         : 1       
- [total]        : 849     
- [vars]         : 6       
- ArrayNew       : 2       
- ArrayNewFixed  : 5       
- Binary         : 97      
- Block          : 127     
- Break          : 15      
- Call           : 13      
- CallRef        : 3       
- Const          : 186     
- DataDrop       : 1       
- Drop           : 6       
- GlobalGet      : 58      
- GlobalSet      : 58      
+ GlobalGet      : 26      
+ GlobalSet      : 26      
  I31New         : 2       
- If             : 38      
- Load           : 23      
- LocalGet       : 38      
- LocalSet       : 23      
- Loop           : 20      
- Nop            : 18      
- RefEq          : 1       
- RefFunc        : 7       
- RefNull        : 2       
- Return         : 1       
+ If             : 16      
+ Load           : 17      
+ LocalGet       : 33      
+ LocalSet       : 21      
+ Loop           : 3       
+ Nop            : 9       
+ RefAs          : 2       
+ RefFunc        : 2       
+ RefNull        : 5       
+ Return         : 3       
  SIMDExtract    : 1       
- Select         : 3       
- Store          : 8       
- StructNew      : 6       
- TupleExtract   : 3       
- TupleMake      : 6       
- Unary          : 48      
->>>>>>> origin/fuzzer.limit.array
- Unreachable    : 30      
+ Select         : 1       
+ Store          : 1       
+ StructNew      : 4       
+ TupleExtract   : 2       
+ TupleMake      : 4       
+ Unary          : 17      
+ Unreachable    : 16      
