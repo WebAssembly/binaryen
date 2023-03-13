@@ -1541,14 +1541,15 @@ public:
     const auto& fields = heapType.getStruct().fields;
     Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
+      auto& field = fields[i];
       if (curr->isWithDefault()) {
-        data[i] = Literal::makeZero(fields[i].type);
+        data[i] = Literal::makeZero(field.type);
       } else {
         auto value = self()->visit(curr->operands[i]);
         if (value.breaking()) {
           return value;
         }
-        data[i] = value.getSingleValue();
+        data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
     return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
