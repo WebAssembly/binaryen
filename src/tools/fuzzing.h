@@ -322,7 +322,6 @@ private:
 
   // Getters for Types
   Type getSingleConcreteType();
-  HeapType getHeapType();
   Type getReferenceType();
   Type getEqReferenceType();
   Type getMVPType();

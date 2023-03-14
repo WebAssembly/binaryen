@@ -3074,14 +3074,15 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   // The case of the reference and the cast type having a connection is useful,
   // so give a decent chance for one to be a subtype of the other.
   Expression* ref;
-  HeapType castType;
+  Type castType;
   switch (upTo(3)) {
     case 0:
       // Totally random.
       ref = make(getReferenceType());
-      castType = getHeapType();
+      castType = getReferenceType();
       // They must share a bottom type in order to validate.
-      if (ref->type.getHeapType().getBottom() == castType.getBottom()) {
+      if (ref->type.getHeapType().getBottom() ==
+          castType.getHeapType().getBottom()) {
         break;
       }
       // Otherwise, fall through and generate things in a way that is
@@ -3090,19 +3091,19 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
     case 1:
       // Cast is a subtype of ref.
       ref = make(getReferenceType());
-      castType = getSubType(ref->type.getHeapType());
+      castType = getSubType(ref->type);
       break;
     case 2:
       // Ref is a subtype of cast.
-      castType = getHeapType();
-      ref = make(getSubType(Type(castType, Nullable)));
+      castType = getReferenceType();
+      ref = make(getSubType(castType));
       break;
       break;
     default:
       // This unreachable avoids a warning on ref being possible undefined.
       WASM_UNREACHABLE("bad integer");
   }
-  return builder.makeRefTest(ref, Type(castType, getNullability()));
+  return builder.makeRefTest(ref, castType);
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
@@ -3197,19 +3198,6 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
                      Type(HeapType::array, NonNullable)));
-}
-
-HeapType TranslateToFuzzReader::getHeapType() {
-  assert(wasm.features.hasGC());
-  if (oneIn(2) && !interestingHeapTypes.empty()) {
-    return pick(interestingHeapTypes);
-  }
-  // TODO: Add externref here.
-  return pick(HeapType::func,
-              HeapType::eq,
-              HeapType::i31,
-              HeapType::struct_,
-              HeapType::array);
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
