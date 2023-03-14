@@ -3366,18 +3366,21 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         break;
     }
   }
-  // Look for an interesting subtype.
-  size_t i = 0;
-  while (1) {
-    if (i == TRIES || interestingHeapTypes.empty()) {
-      // We can't find an interesting subtype, give up.
-      break;
+  // Look for an interesting subtype. First, compute the possible interesting
+  // heap types, if we haven't already.
+  auto iter = interestingHeapSubTypes.find(type);
+  if (iter == interestingHeapSubTypes.end()) {
+    std::vector<HeapType> subTypes;
+    for (auto possible : interestingHeapTypes) {
+      if (HeapType::isSubType(possible, type)) {
+        subTypes.push_back(possible);
+      }
     }
-    auto candidate = pick(interestingHeapTypes);
-    if (HeapType::isSubType(candidate, type)) {
-      return candidate;
-    }
-    i++;
+    iter = interestingHeapSubTypes.emplace(type, std::move(subTypes)).first;
+  }
+  auto& subTypes = iter->second;
+  if (!subTypes.empty()) {
+    return pick(subTypes);
   }
   // Failure to do anything interesting, return the type.
   return type;
