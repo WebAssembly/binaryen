@@ -335,8 +335,9 @@ void TranslateToFuzzReader::setupGlobals() {
       type = getMVPType();
       init = makeConst(type);
     }
+    auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
-      Names::getValidGlobalName(wasm, "global$"), type, init, Builder::Mutable);
+      Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
     globalsByType[type].push_back(global->name);
     wasm.addGlobal(std::move(global));
   }
@@ -1471,7 +1472,7 @@ Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
     return makeTrivial(Type::none);
   }
   auto name = pick(it->second);
-  if (isValidGlobal(name)) {
+  if (isValidGlobal(name) && wasm.getGlobal(name)->mutable_) {
     return builder.makeGlobalSet(name, make(type));
   } else {
     return makeTrivial(Type::none);
