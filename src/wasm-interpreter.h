@@ -1785,16 +1785,16 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    if (value.isNull()) {
-      trap("null ref");
-    }
     switch (curr->op) {
       case RefAsNonNull:
-        // We've already checked for a null.
+        if (value.isNull()) {
+          trap("null ref");
+        }
         return value;
       case ExternInternalize:
+        return value.internalize();
       case ExternExternalize:
-        WASM_UNREACHABLE("unimplemented extern conversion");
+        return value.externalize();
     }
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }

@@ -52,10 +52,6 @@ class Literal {
     // also use this to store String data, as it is similarly stored on the
     // heap.
     std::shared_ptr<GCData> gcData;
-    // TODO: Literals of type `anyref` can only be `null` currently but we
-    // will need to represent external values eventually, to
-    // 1) run the spec tests and fuzzer with reference types enabled and
-    // 2) avoid bailing out when seeing a reference typed value in precompute
   };
 
 public:
@@ -664,6 +660,9 @@ public:
   Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
   Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
+
+  Literal externalize() const;
+  Literal internalize() const;
 
 private:
   Literal addSatSI8(const Literal& other) const;
