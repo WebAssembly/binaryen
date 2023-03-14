@@ -3069,7 +3069,6 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeRefTest(Type type) {
-  return makeTrivial(type);
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
