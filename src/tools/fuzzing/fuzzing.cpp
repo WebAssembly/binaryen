@@ -3278,11 +3278,10 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
-  // TODO: pick from heapTypes
-  if (oneIn(2)) {
+  if (oneIn(3)) {
     return type;
   }
-  if (type.isBasic()) {
+  if (type.isBasic() && oneIn(2)) {
     switch (type.getBasic()) {
       case HeapType::func:
         // TODO: Typed function references.
@@ -3294,7 +3293,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
                       .add(FeatureSet::GC, HeapType::noext));
       case HeapType::any:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::any,
@@ -3304,7 +3302,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType::array,
                     HeapType::none);
       case HeapType::eq:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::eq,
@@ -3315,7 +3312,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::i31:
         return pick(HeapType::i31, HeapType::none);
       case HeapType::struct_:
-        // TODO: nontrivial types as well.
         return pick(HeapType::struct_, HeapType::none);
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
@@ -3331,7 +3327,25 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         break;
     }
   }
-  // TODO: nontrivial types as well.
+  // Look for an interesting subtype. First, compute the possible interesting
+  // heap types, if we haven't already.
+  auto iter = interestingHeapSubTypes.find(type);
+  if (iter == interestingHeapSubTypes.end()) {
+    std::vector<HeapType> subTypes;
+    for (auto possible : interestingHeapTypes) {
+      // We avoid storing the type itself among its subtypes since there is
+      // already a good chance to return the type itself from this function.
+      if (possible != type && HeapType::isSubType(possible, type)) {
+        subTypes.push_back(possible);
+      }
+    }
+    iter = interestingHeapSubTypes.emplace(type, std::move(subTypes)).first;
+  }
+  auto& subTypes = iter->second;
+  if (!subTypes.empty()) {
+    return pick(subTypes);
+  }
+  // Failure to do anything interesting, return the type.
   return type;
 }
 
