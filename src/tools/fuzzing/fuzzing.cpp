@@ -3204,7 +3204,11 @@ HeapType TranslateToFuzzReader::getHeapType() {
   if (oneIn(2) && !interestingHeapTypes.empty()) {
     return pick(interestingHeapTypes);
   }
-  return pick(HeapType::func, HeapType::eq, HeapType::i31, HeapType::struct_, HeapType::array);
+  return pick(HeapType::func,
+              HeapType::eq,
+              HeapType::i31,
+              HeapType::struct_,
+              HeapType::array);
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
