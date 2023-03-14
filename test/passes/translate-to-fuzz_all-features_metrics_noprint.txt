@@ -1,44 +1,47 @@
 total
- [exports]      : 9       
- [funcs]        : 20      
+ [exports]      : 3       
+ [funcs]        : 6       
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 6       
+ [table-data]   : 3       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 587     
- [vars]         : 25      
+ [total]        : 440     
+ [vars]         : 6       
  ArrayNew       : 1       
- ArrayNewFixed  : 7       
- Binary         : 67      
- Block          : 73      
- Break          : 6       
- Call           : 26      
- CallIndirect   : 2       
- CallRef        : 2       
- Const          : 125     
- Drop           : 7       
- GlobalGet      : 36      
- GlobalSet      : 36      
- I31New         : 1       
- If             : 22      
- Load           : 16      
- LocalGet       : 35      
- LocalSet       : 18      
- Loop           : 2       
- Nop            : 9       
- RefAs          : 2       
+ ArrayNewFixed  : 1       
+ AtomicCmpxchg  : 1       
+ AtomicFence    : 1       
+ AtomicNotify   : 1       
+ Binary         : 69      
+ Block          : 40      
+ Break          : 13      
+ Call           : 7       
+ Const          : 102     
+ Drop           : 1       
+ GlobalGet      : 16      
+ GlobalSet      : 16      
+ I31Get         : 2       
+ I31New         : 4       
+ If             : 15      
+ Load           : 21      
+ LocalGet       : 48      
+ LocalSet       : 25      
+ Loop           : 3       
+ MemoryInit     : 1       
+ Nop            : 2       
+ RefAs          : 1       
  RefEq          : 1       
- RefFunc        : 16      
- RefIsNull      : 1       
- RefNull        : 7       
- Return         : 1       
+ RefFunc        : 4       
+ RefIsNull      : 2       
+ RefNull        : 5       
+ RefTest        : 1       
  SIMDExtract    : 1       
- Select         : 1       
- StructNew      : 10      
- TupleExtract   : 3       
- TupleMake      : 6       
- Unary          : 26      
- Unreachable    : 21      
+ Store          : 2       
+ StructNew      : 3       
+ TupleExtract   : 1       
+ TupleMake      : 4       
+ Unary          : 16      
+ Unreachable    : 9       
