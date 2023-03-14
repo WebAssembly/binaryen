@@ -112,7 +112,7 @@ private:
   // The heap types we can pick from to generate instructions.
   std::vector<HeapType> interestingHeapTypes;
 
-  // A mapping of a heap type to interesting sub types of it, which is the
+  // A mapping of a heap type to interesting subtypes of it, which is the
   // subset of |interestingHeapTypes| that are subtypes of it. This is computed
   // lazily, that is, when we want a subtype of a type we generate this and then
   // store the results here.
