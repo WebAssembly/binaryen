@@ -23,6 +23,8 @@
  ;; NOMNL:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
+ (type $struct_i8 (struct (field i8)))
+
  (type $array16 (array (mut i16)))
 
  (type $func-return-i32 (func (result i32)))
@@ -1467,6 +1469,22 @@
   )
   (call $strings
    (local.get $s)
+  )
+ )
+
+ ;; CHECK:      (func $struct.new.packed (type $func-return-i32) (result i32)
+ ;; CHECK-NEXT:  (i32.const 120)
+ ;; CHECK-NEXT: )
+ ;; NOMNL:      (func $struct.new.packed (type $func-return-i32) (result i32)
+ ;; NOMNL-NEXT:  (i32.const 120)
+ ;; NOMNL-NEXT: )
+ (func $struct.new.packed (result i32)
+  ;; Truncation happens when we write to this packed i8 field, so the result we
+  ;; read back is 0x12345678 & 0xff which is 0x78 == 120.
+  (struct.get_s $struct_i8 0
+   (struct.new $struct_i8
+    (i32.const 0x12345678)
+   )
   )
  )
 )
