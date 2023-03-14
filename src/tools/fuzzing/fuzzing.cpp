@@ -3201,14 +3201,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
 
 HeapType TranslateToFuzzReader::getHeapType() {
   assert(wasm.features.hasGC());
-  if (oneIn(2)) {
+  if (oneIn(2) && !interestingHeapTypes.empty()) {
     return pick(interestingHeapTypes);
   }
-  // This list includes types for whom we can accept both a nullable and a non-
-  // nullable value. (getReferenceType() can be more precise and support the
-  // ones that we can only do one of the two, but here we return a heap type and
-  // we don't know how it will be used, so we must be conservative.)
-  return pick(HeapType::eq, HeapType::i31, HeapType::struct_, HeapType::array);
+  return pick(HeapType::func, HeapType::eq, HeapType::i31, HeapType::struct_, HeapType::array);
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
