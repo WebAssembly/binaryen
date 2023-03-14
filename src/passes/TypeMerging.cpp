@@ -145,6 +145,11 @@ struct TypeMerging : public Pass {
 
   void run(Module* module_) override;
 
+  // We will do two different kinds of merging: First, we will merge types into
+  // their identical supertypes, and after that we will will merge types into
+  // their identical siblings in the type hierarchy. Doing both kinds of merges
+  // in a single step would be unsound because a type might be merged into its
+  // parent's sibling without being merged with its parent.
   enum MergeKind { Supertypes, Siblings };
   bool merge(MergeKind kind);
 
@@ -221,6 +226,10 @@ void TypeMerging::run(Module* module_) {
   // opportunities, but merging siblings can never unlock more supertype merging
   // opportunities, so it suffices to merge supertypes once followed by repeated
   // merging of siblings.
+  //
+  // Merging can unlock more sibling merging opportunities because two identical
+  // types cannot be merged until their respective identical parents have been
+  // merged in a previous step, making them siblings.
   merge(Supertypes);
   for (int i = 0; i < MAX_ITERATIONS; ++i) {
     if (!merge(Siblings)) {
