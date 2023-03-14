@@ -1130,8 +1130,6 @@ enum ASTNodes {
   BrOnCastNull = 0x4a,
   BrOnCastFailNull = 0x4b,
   RefCastNop = 0x4c,
-  RefIsFunc = 0x50,
-  RefIsI31 = 0x52,
   RefAsFunc = 0x58,
   RefAsI31 = 0x5a,
   BrOnFunc = 0x60,
@@ -1745,7 +1743,6 @@ public:
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
   void visitRefIsNull(RefIsNull* curr);
-  void visitRefIs(RefTest* curr, uint8_t code);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTableGet(TableGet* curr);
