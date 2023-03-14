@@ -3372,7 +3372,9 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   if (iter == interestingHeapSubTypes.end()) {
     std::vector<HeapType> subTypes;
     for (auto possible : interestingHeapTypes) {
-      if (HeapType::isSubType(possible, type)) {
+      // We avoid storing the type itself among its subtypes since there is
+      // already a good chance to return the type itself from this function.
+      if (possible != type && HeapType::isSubType(possible, type)) {
         subTypes.push_back(possible);
       }
     }
