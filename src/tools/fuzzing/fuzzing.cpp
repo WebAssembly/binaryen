@@ -3204,6 +3204,7 @@ HeapType TranslateToFuzzReader::getHeapType() {
   if (oneIn(2) && !interestingHeapTypes.empty()) {
     return pick(interestingHeapTypes);
   }
+  // TODO: Add externref here.
   return pick(HeapType::func,
               HeapType::eq,
               HeapType::i31,
