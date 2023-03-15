@@ -106,6 +106,7 @@ private:
   Name funcrefTableName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
+  std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
 
   std::vector<Type> loggableTypes;
 
