@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
@@ -263,6 +264,28 @@ void TranslateToFuzzReader::setupHeapTypes() {
       if (!type.isBottom() && !type.isBasic()) {
         interestingHeapTypes.push_back(type);
       }
+    }
+  }
+
+  // Compute subtypes ahead of time. It is more efficient to do this all at once
+  // now, rather than lazily later.
+  SubTypes subTypes(interestingHeapTypes);
+  for (auto type : interestingHeapTypes) {
+    for (auto subType : subTypes.getStrictSubTypes(type)) {
+      interestingHeapSubTypes[type].push_back(subType);
+    }
+    // Basic types must be handled directly, since subTypes doesn't look at
+    // those.
+    if (type.isStruct()) {
+      interestingHeapSubTypes[HeapType::struct_].push_back(type);
+      interestingHeapSubTypes[HeapType::eq].push_back(type);
+      interestingHeapSubTypes[HeapType::any].push_back(type);
+    } else if (type.isArray()) {
+      interestingHeapSubTypes[HeapType::array].push_back(type);
+      interestingHeapSubTypes[HeapType::eq].push_back(type);
+      interestingHeapSubTypes[HeapType::any].push_back(type);
+    } else if (type.isSignature()) {
+      interestingHeapSubTypes[HeapType::func].push_back(type);
     }
   }
 }
@@ -3366,23 +3389,13 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         break;
     }
   }
-  // Look for an interesting subtype. First, compute the possible interesting
-  // heap types, if we haven't already.
+  // Look for an interesting subtype.
   auto iter = interestingHeapSubTypes.find(type);
-  if (iter == interestingHeapSubTypes.end()) {
-    std::vector<HeapType> subTypes;
-    for (auto possible : interestingHeapTypes) {
-      // We avoid storing the type itself among its subtypes since there is
-      // already a good chance to return the type itself from this function.
-      if (possible != type && HeapType::isSubType(possible, type)) {
-        subTypes.push_back(possible);
-      }
+  if (iter != interestingHeapSubTypes.end()) {
+    auto& subTypes = iter->second;
+    if (!subTypes.empty()) {
+      return pick(subTypes);
     }
-    iter = interestingHeapSubTypes.emplace(type, std::move(subTypes)).first;
-  }
-  auto& subTypes = iter->second;
-  if (!subTypes.empty()) {
-    return pick(subTypes);
   }
   // Failure to do anything interesting, return the type.
   return type;
