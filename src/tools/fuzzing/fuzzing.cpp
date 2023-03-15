@@ -3120,7 +3120,6 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       castType = getReferenceType();
       refType = getSubType(castType);
       break;
-      break;
     default:
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
