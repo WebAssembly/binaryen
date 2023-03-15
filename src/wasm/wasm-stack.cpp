@@ -2010,20 +2010,6 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  // TODO: These instructions are deprecated. Remove them.
-  if (auto type = curr->castType.getHeapType();
-      curr->castType.isNonNullable() && type.isBasic()) {
-    switch (type.getBasic()) {
-      case HeapType::func:
-        o << U32LEB(BinaryConsts::RefIsFunc);
-        return;
-      case HeapType::i31:
-        o << U32LEB(BinaryConsts::RefIsI31);
-        return;
-      default:
-        break;
-    }
-  }
   if (curr->castType.isNullable()) {
     o << U32LEB(BinaryConsts::RefTestNull);
   } else {

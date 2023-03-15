@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
@@ -263,6 +264,28 @@ void TranslateToFuzzReader::setupHeapTypes() {
       if (!type.isBottom() && !type.isBasic()) {
         interestingHeapTypes.push_back(type);
       }
+    }
+  }
+
+  // Compute subtypes ahead of time. It is more efficient to do this all at once
+  // now, rather than lazily later.
+  SubTypes subTypes(interestingHeapTypes);
+  for (auto type : interestingHeapTypes) {
+    for (auto subType : subTypes.getStrictSubTypes(type)) {
+      interestingHeapSubTypes[type].push_back(subType);
+    }
+    // Basic types must be handled directly, since subTypes doesn't look at
+    // those.
+    if (type.isStruct()) {
+      interestingHeapSubTypes[HeapType::struct_].push_back(type);
+      interestingHeapSubTypes[HeapType::eq].push_back(type);
+      interestingHeapSubTypes[HeapType::any].push_back(type);
+    } else if (type.isArray()) {
+      interestingHeapSubTypes[HeapType::array].push_back(type);
+      interestingHeapSubTypes[HeapType::eq].push_back(type);
+      interestingHeapSubTypes[HeapType::any].push_back(type);
+    } else if (type.isSignature()) {
+      interestingHeapSubTypes[HeapType::func].push_back(type);
     }
   }
 }
@@ -3279,11 +3302,10 @@ Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
 }
 
 HeapType TranslateToFuzzReader::getSubType(HeapType type) {
-  // TODO: pick from heapTypes
-  if (oneIn(2)) {
+  if (oneIn(3)) {
     return type;
   }
-  if (type.isBasic()) {
+  if (type.isBasic() && oneIn(2)) {
     switch (type.getBasic()) {
       case HeapType::func:
         // TODO: Typed function references.
@@ -3295,7 +3317,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
                       .add(FeatureSet::GC, HeapType::noext));
       case HeapType::any:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::any,
@@ -3305,7 +3326,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType::array,
                     HeapType::none);
       case HeapType::eq:
-        // TODO: nontrivial types as well.
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
         return pick(HeapType::eq,
@@ -3316,7 +3336,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::i31:
         return pick(HeapType::i31, HeapType::none);
       case HeapType::struct_:
-        // TODO: nontrivial types as well.
         return pick(HeapType::struct_, HeapType::none);
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
@@ -3332,7 +3351,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         break;
     }
   }
-  // TODO: nontrivial types as well.
+  // Look for an interesting subtype.
+  auto iter = interestingHeapSubTypes.find(type);
+  if (iter != interestingHeapSubTypes.end()) {
+    auto& subTypes = iter->second;
+    if (!subTypes.empty()) {
+      return pick(subTypes);
+    }
+  }
+  // Failure to do anything interesting, return the type.
   return type;
 }
 
