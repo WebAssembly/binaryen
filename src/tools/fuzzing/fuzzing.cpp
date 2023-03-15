@@ -3122,8 +3122,8 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       break;
       break;
     default:
-      // This unreachable avoids a warning on ref being possible undefined.
-      WASM_UNREACHABLE("bad integer");
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
   }
   return builder.makeRefTest(make(refType), castType);
 }
