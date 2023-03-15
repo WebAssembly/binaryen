@@ -4041,12 +4041,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitStringSliceIter(curr, opcode)) {
         break;
       }
-      if (opcode == BinaryConsts::RefIsFunc ||
-          opcode == BinaryConsts::RefIsI31) {
-        visitRefIs((curr = allocator.alloc<RefTest>())->cast<RefTest>(),
-                   opcode);
-        break;
-      }
       if (opcode == BinaryConsts::RefAsFunc ||
           opcode == BinaryConsts::RefAsI31) {
         visitRefAsCast((curr = allocator.alloc<RefCast>())->cast<RefCast>(),
@@ -6615,22 +6609,6 @@ void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
 void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
   BYN_TRACE("zz node: RefIsNull\n");
   curr->value = popNonVoidExpression();
-  curr->finalize();
-}
-
-void WasmBinaryBuilder::visitRefIs(RefTest* curr, uint8_t code) {
-  BYN_TRACE("zz node: RefIs\n");
-  switch (code) {
-    case BinaryConsts::RefIsFunc:
-      curr->castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::RefIsI31:
-      curr->castType = Type(HeapType::i31, NonNullable);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid code for ref.is_*");
-  }
-  curr->ref = popNonVoidExpression();
   curr->finalize();
 }
 
