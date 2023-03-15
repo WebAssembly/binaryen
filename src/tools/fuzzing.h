@@ -112,6 +112,10 @@ private:
   // The heap types we can pick from to generate instructions.
   std::vector<HeapType> interestingHeapTypes;
 
+  // A mapping of a heap type to the subset of interestingHeapTypes that are
+  // subtypes of it.
+  std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
+
   Index numAddedFunctions = 0;
 
   // RAII helper for managing the state used to create a single function.
