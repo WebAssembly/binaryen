@@ -3096,15 +3096,14 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
   // so give a decent chance for one to be a subtype of the other.
-  Expression* ref;
-  Type castType;
+  Type refType, castType;
   switch (upTo(3)) {
     case 0:
       // Totally random.
-      ref = make(getReferenceType());
+      refType = getReferenceType();
       castType = getReferenceType();
       // They must share a bottom type in order to validate.
-      if (ref->type.getHeapType().getBottom() ==
+      if (refType.getHeapType().getBottom() ==
           castType.getHeapType().getBottom()) {
         break;
       }
@@ -3113,20 +3112,20 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
       [[fallthrough]];
     case 1:
       // Cast is a subtype of ref.
-      ref = make(getReferenceType());
-      castType = getSubType(ref->type);
+      refType = getReferenceType();
+      castType = getSubType(refType);
       break;
     case 2:
       // Ref is a subtype of cast.
       castType = getReferenceType();
-      ref = make(getSubType(castType));
+      refType = getSubType(castType);
       break;
       break;
     default:
       // This unreachable avoids a warning on ref being possible undefined.
       WASM_UNREACHABLE("bad integer");
   }
-  return builder.makeRefTest(ref, castType);
+  return builder.makeRefTest(make(refType), castType);
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
