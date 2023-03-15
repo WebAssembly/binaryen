@@ -19,6 +19,7 @@
 
 #include "ir/manipulation.h"
 #include "parsing.h"
+#include "support/small_vector.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -227,6 +228,13 @@ public:
     ret->name = name;
     ret->list.set(items);
     ret->finalize(type);
+    return ret;
+  }
+  template<size_t N>
+  Block* makeBlock(const SmallVector<Expression*, N>& items) {
+    auto* ret = wasm.allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize();
     return ret;
   }
   If* makeIf(Expression* condition,
