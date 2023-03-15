@@ -232,10 +232,10 @@
 
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
     (type $A (struct         (ref null $X)))
     (type $B (struct_subtype (ref null $Y) $A))
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
     (type $X (struct         (ref null $A)))
     (type $Y (struct_subtype (ref null $B) $X))
   )
@@ -243,10 +243,10 @@
   ;; CHECK:       (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $X))
-  ;; CHECK-NEXT:  (local $b (ref null $X))
-  ;; CHECK-NEXT:  (local $x (ref null $X))
-  ;; CHECK-NEXT:  (local $y (ref null $X))
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (local $y (ref null $A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -261,26 +261,54 @@
 
 (module
   (rec
-    (type $A (struct         (ref null $X)))
-    (type $B (struct_subtype (ref null $Y) $A))
+    (type $A (struct (ref null $X) i32))
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
-    (type $X (struct         (ref null $A)))
-    (type $Y (struct_subtype (ref null $B) $X))
-  )
+    ;; CHECK-NEXT:  (type $Y (struct (field (ref null $B)) (field f32)))
 
+    ;; CHECK:       (type $B (struct (field (ref null $Y)) (field i32)))
+    (type $B (struct (ref null $Y) i32))
+    (type $X (struct (ref null $A) f32))
+    (type $Y (struct (ref null $B) f32))
+  )
   ;; CHECK:       (type $none_=>_none (func))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $X))
-  ;; CHECK-NEXT:  (local $b (ref null $X))
-  ;; CHECK-NEXT:  (local $x (ref null $X))
-  ;; CHECK-NEXT:  (local $y (ref null $X))
+  ;; CHECK-NEXT:  (local $a (ref null $B))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $x (ref null $Y))
+  ;; CHECK-NEXT:  (local $y (ref null $Y))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
-    ;; As above, but now the A->B and X->Y chains are not differentiated by the
-    ;; i32 and f32, so all four types can be merged into a single type.
+    ;; As above with the differentiated chains, but now the types are top-level
+    ;; siblings instead of subtypes
+    (local $a (ref null $A))
+    (local $b (ref null $B))
+    (local $x (ref null $X))
+    (local $y (ref null $Y))
+  )
+)
+
+(module
+  (rec
+    (type $A (struct (ref null $X)))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $B (struct (field (ref null $B))))
+    (type $B (struct (ref null $Y)))
+    (type $X (struct (ref null $A)))
+    (type $Y (struct (ref null $B)))
+  )
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $B))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $x (ref null $B))
+  ;; CHECK-NEXT:  (local $y (ref null $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    ;; As above, but with all the types merging into a single type.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $x (ref null $X))
@@ -467,7 +495,7 @@
   ;; CHECK-NEXT: )
   (func $foo
     ;; B and C cannot be merged into A because they refine A's field, but B and
-    ;; C can still be merged with each other even though they are siblings.
+    ;; C can still be merged with each other.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $c (ref null $C))
@@ -479,8 +507,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (struct (field anyref)))
     (type $A (struct         anyref))
-    ;; CHECK:       (type $B (struct_subtype (field eqref) $A))
     (type $B (struct_subtype eqref $A))
+    ;; CHECK:       (type $C (struct_subtype (field eqref) $A))
     (type $C (struct_subtype eqref $A))
   )
 
@@ -488,8 +516,8 @@
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref null $B))
-  ;; CHECK-NEXT:  (local $c (ref null $B))
+  ;; CHECK-NEXT:  (local $b (ref null $C))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -508,10 +536,8 @@
     (type $A (struct         anyref))
     (type $B (struct_subtype anyref $A))
     (type $C (struct_subtype anyref $A))
-    ;; CHECK:       (type $E (struct_subtype (field eqref) $A))
-
-    ;; CHECK:       (type $D (struct_subtype (field eqref) $A))
     (type $D (struct_subtype eqref $B))
+    ;; CHECK:       (type $E (struct_subtype (field eqref) $A))
     (type $E (struct_subtype eqref $C))
   )
 
@@ -521,19 +547,72 @@
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $A))
-  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $d (ref null $E))
   ;; CHECK-NEXT:  (local $e (ref null $E))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
     ;; D and E should be mergeable because they have identical shapes and will
-    ;; be siblings after B and C get merged, but we don't support this case yet.
-    ;; TODO: support this.
+    ;; be siblings after B and C get merged.
     (local $a (ref null $A))
     (local $b (ref null $B))
     (local $c (ref null $C))
     (local $d (ref null $D))
     (local $e (ref null $E))
+  )
+)
+
+;; Check that we fully optimize a type graph that requires multiple iterations
+;; of supertype and sibling merging.
+(module
+  (rec
+    ;; These will get merged in the initial supertype merging stage.
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $B' (struct (field (ref $A))))
+
+    ;; CHECK:       (type $C (struct_subtype (field (ref $A)) (field i32) $B'))
+
+    ;; CHECK:       (type $D' (struct_subtype (field (ref $A)) (field i32) (field i32) $C))
+
+    ;; CHECK:       (type $A (struct ))
+    (type $A (struct))
+    (type $A' (struct_subtype $A))
+
+    ;; These siblings will be merged only after $a and $a' are merged.
+    (type $B (struct (ref $A)))
+    (type $B' (struct (ref $A')))
+
+    ;; These will get merged only after $b and $b' are merged.
+    (type $C (struct_subtype (ref $A) i32 $B))
+    (type $C' (struct_subtype (ref $A') i32 $B'))
+
+    ;; These will get merged only after $c and $c' are merged.
+    (type $D (struct_subtype (ref $A) i32 i32 $C))
+    (type $D' (struct_subtype (ref $A') i32 i32 $C'))
+  )
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $a' (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $B'))
+  ;; CHECK-NEXT:  (local $b' (ref null $B'))
+  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $c' (ref null $C))
+  ;; CHECK-NEXT:  (local $d (ref null $D'))
+  ;; CHECK-NEXT:  (local $d' (ref null $D'))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $foo
+    (local $a (ref null $A))
+    (local $a' (ref null $A'))
+    (local $b (ref null $B))
+    (local $b' (ref null $B'))
+    (local $c (ref null $C))
+    (local $c' (ref null $C'))
+    (local $d (ref null $D))
+    (local $d' (ref null $D'))
   )
 )
 
@@ -758,18 +837,19 @@
 ;; incorrect.
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (struct (field (ref $A))))
+
+  ;; CHECK:       (type $A (struct ))
   (type $A (struct))
   (type $B (struct_subtype $A))
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (struct (field (ref $A'))))
   (type $X (struct (ref $B)))
-  ;; CHECK:       (type $A' (struct ))
   (type $A' (struct))
  )
  ;; CHECK:       (type $none_=>_none (func))
 
  ;; CHECK:      (func $foo (type $none_=>_none)
- ;; CHECK-NEXT:  (local $b (ref null $A'))
+ ;; CHECK-NEXT:  (local $b (ref null $A))
  ;; CHECK-NEXT:  (local $x (ref null $X))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
@@ -777,6 +857,59 @@
    (local $b (ref null $A'))
    (local $x (ref null $X))
  )
+)
+
+;; Regression test for bug where we unsoundly merged supertypes and siblings in
+;; a single step.
+(module
+  (rec
+    ;; $x and $y are structurally identical, but won't be merged because there is
+    ;; a cast to $y.
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $b (struct (field (ref null $x))))
+
+    ;; CHECK:       (type $b1 (struct_subtype (field (ref null $y)) $b))
+
+    ;; CHECK:       (type $x (struct (field anyref)))
+    (type $x (struct anyref))
+    ;; CHECK:       (type $y (struct_subtype (field anyref) $x))
+    (type $y (struct_subtype anyref $x))
+
+    ;; If we did vertical and horizontal merges at the same time, these three
+    ;; types would be put into the same initial partition and $b1 would be merged
+    ;; into $a. This would be incorrect because then $b1 would no longer be a
+    ;; subtype of $b.
+    ;; CHECK:       (type $a (struct (field (ref null $y))))
+    (type $a (struct (ref null $y)))
+    (type $b (struct (ref null $x)))
+    (type $b1 (struct_subtype (ref null $y) $b))
+  )
+
+  ;; CHECK:       (type $none_=>_ref|$b| (func (result (ref $b))))
+
+  ;; CHECK:      (func $test (type $none_=>_ref|$b|) (result (ref $b))
+  ;; CHECK-NEXT:  (local $0 (ref null $a))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test $y
+  ;; CHECK-NEXT:    (struct.new_default $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new_default $b1)
+  ;; CHECK-NEXT: )
+  (func $test (result (ref $b))
+    ;; Use $a to prevent it from being dropped completely.
+    (local (ref null $a))
+
+    ;; Cast to prevent $x and $y from being merged.
+    (drop
+      (ref.test $y
+        (struct.new_default $x)
+      )
+    )
+
+    ;; If $b1 were merged with $a, this would cause a validation failure.
+    (struct.new_default $b1)
+  )
 )
 
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
