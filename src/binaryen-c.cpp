@@ -81,8 +81,8 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::i31:
         WASM_UNREACHABLE("TODO: i31");
       case HeapType::ext:
-      case HeapType::any:
         WASM_UNREACHABLE("TODO: extern literals");
+      case HeapType::any:
       case HeapType::eq:
       case HeapType::func:
       case HeapType::struct_:
