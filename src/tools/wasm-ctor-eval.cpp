@@ -585,8 +585,8 @@ public:
       value = value.internalize();
     }
 
-    // An externalized i31 has original.isData as false and value.isData as
-    // true, so we need to check both. That is, we can hand off for normal
+    // An externalized i31 has both original.isData and value.isData as being
+    // false, so we need to check both. That is, we can hand off for normal
     // handling anything that is not (externalized or not) GC data. GC data is
     // the only thing that requires special handling here by adding globals as
     // needed.
