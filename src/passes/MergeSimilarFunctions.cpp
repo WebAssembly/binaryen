@@ -565,7 +565,9 @@ Function* EquivalentClass::createShared(Module* module,
             operands.push_back(
               ExpressionManipulator::flexibleCopy(operand, *module, copier));
           }
-          return builder.makeCallRef(paramExpr, operands, call->type);
+          auto returnType = module->getFunction(call->target)->getResults();
+          return builder.makeCallRef(
+            paramExpr, operands, returnType, call->isReturn);
         }
       }
     }
