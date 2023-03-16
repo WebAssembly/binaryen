@@ -19,7 +19,6 @@
 
 #include "ir/manipulation.h"
 #include "parsing.h"
-#include "support/small_vector.h"
 #include "wasm.h"
 
 namespace wasm {
