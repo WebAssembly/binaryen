@@ -572,13 +572,28 @@ public:
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
-  Expression* getSerialization(const Literal& value,
+  Expression* getSerialization(Literal value,
                                Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
 
+    // If this is externalized then we want to inspect the inner data, handle
+    // that, and emit a ref.externalize around it as needed. To simplify the
+    // logic here, we save the original (possible externalized) value, and then
+    // look at the internals from here on out.
+    Literal original = value;
+    if (value.type.isRef() && value.type.getHeapType() == HeapType::ext) {
+      value = value.internalize();
+
+      // We cannot serialize truly external things, only data and i31s.
+      assert(value.isData() || value.type.getHeapType() == HeapType::i31);
+    }
+
+    // GC data (structs and arrays) must be handled with the special global-
+    // creating logic later down. But MVP types as well as i31s (even
+    // externalized i31s) can be handled by the general makeConstantExpression
+    // logic (which knows how to handle externalization, for i31s).
     if (!value.isData()) {
-      // This can be handled normally.
-      return builder.makeConstantExpression(value);
+      return builder.makeConstantExpression(original);
     }
 
     // This is GC data, which we must handle in a more careful way.
@@ -637,7 +652,13 @@ public:
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
-    return builder.makeGlobalGet(definingGlobal, value.type);
+    Expression* ret = builder.makeGlobalGet(definingGlobal, value.type);
+    if (original != value) {
+      // The original is externalized.
+      assert(original.type.getHeapType() == HeapType::ext);
+      ret = builder.makeRefAs(ExternExternalize, ret);
+    }
+    return ret;
   }
 
   Expression* getSerialization(const Literals& values,

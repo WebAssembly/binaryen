@@ -1155,6 +1155,10 @@ public:
       }
       return makeStringConst(string);
     }
+    if (type.isRef() && type.getHeapType() == HeapType::ext) {
+      return makeRefAs(ExternExternalize,
+                       makeConstantExpression(value.internalize()));
+    }
     TODO_SINGLE_COMPOUND(type);
     WASM_UNREACHABLE("unsupported constant expression");
   }
