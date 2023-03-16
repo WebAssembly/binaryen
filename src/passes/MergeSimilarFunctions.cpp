@@ -565,7 +565,9 @@ Function* EquivalentClass::createShared(Module* module,
             operands.push_back(
               ExpressionManipulator::flexibleCopy(operand, *module, copier));
           }
-          return builder.makeCallRef(paramExpr, operands, call->type);
+          auto returnType = module->getFunction(call->target)->getResults();
+          return builder.makeCallRef(
+            paramExpr, operands, returnType, call->isReturn);
         }
       }
     }
@@ -616,6 +618,7 @@ EquivalentClass::replaceWithThunk(Builder& builder,
     callOperands.push_back(value);
   }
 
+  // TODO: make a return_call when possible?
   auto ret = builder.makeCall(shared->name, callOperands, target->getResults());
   target->vars.clear();
   target->body = ret;

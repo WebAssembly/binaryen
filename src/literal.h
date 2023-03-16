@@ -45,17 +45,17 @@ class Literal {
     uint8_t v128[16];
     // funcref function name. `isNull()` indicates a `null` value.
     Name func;
-    // A reference to GC data, either a Struct or an Array. For both of those
-    // we store the referred data as a Literals object (which is natural for an
+    // A reference to GC data, either a Struct or an Array. For both of those we
+    // store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type. We
     // also use this to store String data, as it is similarly stored on the
-    // heap.
+    // heap. For externrefs, the gcData is the same as for the corresponding
+    // internal references and the values are only differentiated by the type.
+    // Externalized i31 references have a gcData containing the internal i31
+    // reference as its sole value even though internal i31 references do not
+    // have a gcData.
     std::shared_ptr<GCData> gcData;
-    // TODO: Literals of type `anyref` can only be `null` currently but we
-    // will need to represent external values eventually, to
-    // 1) run the spec tests and fuzzer with reference types enabled and
-    // 2) avoid bailing out when seeing a reference typed value in precompute
   };
 
 public:
@@ -664,6 +664,9 @@ public:
   Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
   Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
   Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
+
+  Literal externalize() const;
+  Literal internalize() const;
 
 private:
   Literal addSatSI8(const Literal& other) const;

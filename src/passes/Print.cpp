@@ -3283,7 +3283,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     } else {
       for (auto* entry : curr->data) {
         o << ' ';
-        printExpression(entry, o);
+        visit(entry);
       }
     }
     o << ')' << maybeNewLine;
