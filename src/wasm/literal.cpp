@@ -2611,9 +2611,8 @@ Literal Literal::externalize() const {
       case HeapType::stringview_iter:
         WASM_UNREACHABLE("TODO: string literals");
       default:
-        break;
+        WASM_UNREACHABLE("unexpected type");
     }
-    WASM_UNREACHABLE("unexpected type");
   }
   return Literal(gcData, HeapType::ext);
 }
@@ -2625,6 +2624,7 @@ Literal Literal::internalize() const {
     return Literal(std::shared_ptr<GCData>{}, HeapType::none);
   }
   if (gcData->type == HeapType::i31) {
+    assert(gcData->values[0].type.getHeapType() == HeapType::i31);
     return gcData->values[0];
   }
   return Literal(gcData, gcData->type);
