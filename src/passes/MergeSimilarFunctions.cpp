@@ -618,6 +618,7 @@ EquivalentClass::replaceWithThunk(Builder& builder,
     callOperands.push_back(value);
   }
 
+  // TODO: make a return_call when possible?
   auto ret = builder.makeCall(shared->name, callOperands, target->getResults());
   target->vars.clear();
   target->body = ret;
