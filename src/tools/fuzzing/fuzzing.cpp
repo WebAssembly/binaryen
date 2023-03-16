@@ -1077,6 +1077,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefEq,
+                &Self::makeRefTest,
                 &Self::makeI31Get);
   }
   if (type.isTuple()) {
@@ -3092,6 +3093,42 @@ Expression* TranslateToFuzzReader::makeRefEq(Type type) {
   auto* left = make(getEqReferenceType());
   auto* right = make(getEqReferenceType());
   return builder.makeRefEq(left, right);
+}
+
+Expression* TranslateToFuzzReader::makeRefTest(Type type) {
+  assert(type == Type::i32);
+  assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  // The case of the reference and the cast type having a connection is useful,
+  // so give a decent chance for one to be a subtype of the other.
+  Type refType, castType;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      refType = getReferenceType();
+      castType = getReferenceType();
+      // They must share a bottom type in order to validate.
+      if (refType.getHeapType().getBottom() ==
+          castType.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1:
+      // Cast is a subtype of ref.
+      refType = getReferenceType();
+      castType = getSubType(refType);
+      break;
+    case 2:
+      // Ref is a subtype of cast.
+      castType = getReferenceType();
+      refType = getSubType(castType);
+      break;
+    default:
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
+  return builder.makeRefTest(make(refType), castType);
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {

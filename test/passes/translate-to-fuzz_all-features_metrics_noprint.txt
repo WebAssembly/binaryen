@@ -1,44 +1,41 @@
 total
- [exports]      : 12      
- [funcs]        : 22      
+ [exports]      : 9       
+ [funcs]        : 18      
  [globals]      : 5       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 9       
+ [table-data]   : 4       
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 781     
- [vars]         : 35      
- ArrayNew       : 4       
- ArrayNewFixed  : 1       
- AtomicNotify   : 1       
- Binary         : 90      
- Block          : 118     
- Break          : 8       
- Call           : 25      
- CallIndirect   : 1       
+ [total]        : 579     
+ [vars]         : 19      
+ ArrayNew       : 5       
+ ArrayNewFixed  : 8       
+ Binary         : 71      
+ Block          : 74      
+ Break          : 2       
+ Call           : 18      
  CallRef        : 2       
- Const          : 171     
- Drop           : 8       
- GlobalGet      : 56      
- GlobalSet      : 56      
- I31New         : 3       
- If             : 36      
- Load           : 21      
- LocalGet       : 36      
- LocalSet       : 17      
- Loop           : 8       
- Nop            : 11      
- RefAs          : 1       
+ Const          : 121     
+ DataDrop       : 1       
+ Drop           : 5       
+ GlobalGet      : 34      
+ GlobalSet      : 34      
+ I31Get         : 2       
+ I31New         : 4       
+ If             : 21      
+ Load           : 19      
+ LocalGet       : 46      
+ LocalSet       : 22      
+ Loop           : 2       
+ Nop            : 9       
+ RefEq          : 1       
  RefFunc        : 16      
  RefNull        : 4       
  Return         : 6       
- SIMDExtract    : 2       
- Select         : 1       
- Store          : 6       
- StructNew      : 4       
- Switch         : 1       
- TupleMake      : 3       
- Unary          : 33      
- Unreachable    : 31      
+ Store          : 1       
+ StructNew      : 5       
+ TupleMake      : 5       
+ Unary          : 20      
+ Unreachable    : 21      
