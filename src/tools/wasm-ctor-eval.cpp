@@ -583,16 +583,16 @@ public:
     Literal original = value;
     if (value.type.isRef() && value.type.getHeapType() == HeapType::ext) {
       value = value.internalize();
+
+      // We cannot serialize truly external things, only data and i31s.
+      assert(value.isData() || value.type.getHeapType() == HeapType::i31);
     }
 
-    // An externalized i31 has both original.isData and value.isData as being
-    // false, so we need to check both. That is, we can hand off for normal
-    // handling anything that is not (externalized or not) GC data. GC data is
-    // the only thing that requires special handling here by adding globals as
-    // needed.
-    if (!original.isData() && !value.isData()) {
-      // This can be handled normally. We can pass in the original value here as
-      // makeConstantExpression() knows how to handle externalization itself.
+    // GC data (structs and arrays) must be handled with the special global-
+    // creating logic later down. But MVP types as well as i31s (even
+    // externalized i31s) can be handled by the general makeConstantExpression
+    // logic (which knows how to handle externalization, for i31s).
+    if (!value.isData()) {
       return builder.makeConstantExpression(original);
     }
 
