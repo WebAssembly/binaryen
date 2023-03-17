@@ -2561,6 +2561,9 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(breakTargetNames.empty());
       if (!exceptionTargetNames.empty()) {
+        // A delegate index existed that did not end up referring to any valid
+        // outer try-catch (we remove valid ones from exceptionTargetNames as we
+        // go).
         throwError("exceptionTargetNames not empty - invalid delegate");
       }
       if (!expressionStack.empty()) {
