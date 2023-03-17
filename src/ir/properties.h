@@ -84,7 +84,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
          curr->is<StringConst>() ||
-         (curr->is<RefAs>() && curr->cast<RefAs>()->op == ExternExternalize);
+         (curr->is<RefAs>() && (curr->cast<RefAs>()->op == ExternExternalize ||
+         curr->cast<RefAs>()->op == ExternInternalize)));
 }
 
 inline bool isConstantExpression(const Expression* curr) {
