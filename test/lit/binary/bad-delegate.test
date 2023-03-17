@@ -1,0 +1,17 @@
+;; Test that we error properly on a file with a bad delegate (a delegate of an
+;; index that does not refer to a valid try-catch).
+
+;; Disassembled binary from wabt:
+;;
+;; (module
+;;   (type (;0;) (func))
+;;   (func (;0;) (type 0)
+;;     block  ;; label = @1
+;;       try  ;; label = @2
+;;         nop
+;;       delegate 0
+;;     end))
+
+;; RUN: not wasm-opt -all %s.wasm 2>&1 | filecheck %s
+
+;; CHECK: exceptionTargetNames not empty - invalid delegate
