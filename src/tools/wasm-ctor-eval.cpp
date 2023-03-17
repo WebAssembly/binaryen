@@ -1064,6 +1064,11 @@ int main(int argc, const char* argv[]) {
   if (canEval(wasm)) {
     evalCtors(wasm, ctors, keptExports);
 
+    if (!WasmValidator().validate(wasm)) {
+      std::cout << wasm << '\n';
+      Fatal() << "error in validating output";
+    }
+
     // Do some useful optimizations after the evalling
     {
       PassRunner passRunner(&wasm);
