@@ -265,7 +265,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
         interestingHeapTypes.push_back(type);
         if (oneIn(2)) {
           // Add a name for this type.
-          wasm.typeNames[type].name = "generated_type$" + std::to_string(interestingHeapTypes.size());
+          wasm.typeNames[type].name =
+            "generated_type$" + std::to_string(interestingHeapTypes.size());
         }
       }
     }
