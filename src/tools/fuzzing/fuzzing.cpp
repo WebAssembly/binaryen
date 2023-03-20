@@ -263,6 +263,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
       // non-nullable bottom heap type).
       if (!type.isBottom() && !type.isBasic()) {
         interestingHeapTypes.push_back(type);
+        if (oneIn(2)) {
+          // Add a name for this type.
+          wasm.typeNames[type].name =
+            "generated_type$" + std::to_string(interestingHeapTypes.size());
+        }
       }
     }
   }

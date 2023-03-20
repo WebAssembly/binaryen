@@ -896,7 +896,7 @@ void WasmBinaryWriter::writeNames() {
   // type names
   {
     std::vector<HeapType> namedTypes;
-    for (auto& [type, _] : indexedTypes.indices) {
+    for (auto type : indexedTypes.types) {
       if (wasm->typeNames.count(type) && wasm->typeNames[type].name.is()) {
         namedTypes.push_back(type);
       }
