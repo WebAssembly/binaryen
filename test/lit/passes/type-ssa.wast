@@ -449,3 +449,86 @@
     )
   )
 )
+
+;; Test that we do not error on externalized/internalized data. As we process
+;; the fields of $struct we check if they are constants that we can handle, and
+;; we should not hit any asserts while doing so. After that, we will decide not
+;; to optimize $struct, since the global contains a struct.new (which we cannot
+;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
+;; but that is not important here.)
+(module
+  ;; CHECK:      (type $empty (struct ))
+  ;; NOMNL:      (type $empty (struct ))
+  (type $empty (struct))
+
+  ;; CHECK:      (type $empty$1 (struct_subtype  $empty))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (type $struct (struct (field externref) (field anyref) (field externref)))
+  ;; NOMNL:      (type $empty$1 (struct_subtype  $empty))
+
+  ;; NOMNL:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; NOMNL:      (type $struct (struct (field externref) (field anyref) (field externref)))
+  (type $struct (struct externref anyref externref))
+
+  ;; CHECK:      (global $g (mut anyref) (struct.new_default $empty$1))
+  ;; NOMNL:      (global $g (mut anyref) (struct.new_default $empty$1))
+  (global $g (mut anyref) (struct.new $empty))
+
+  ;; CHECK:      (func $0 (type $anyref_=>_none) (param $param anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:     (extern.externalize
+  ;; CHECK-NEXT:      (global.get $g)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $0 (type $anyref_=>_none) (param $param anyref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (struct.new $struct
+  ;; NOMNL-NEXT:    (extern.externalize
+  ;; NOMNL-NEXT:     (global.get $g)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (extern.internalize
+  ;; NOMNL-NEXT:     (extern.externalize
+  ;; NOMNL-NEXT:      (global.get $g)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (extern.externalize
+  ;; NOMNL-NEXT:     (local.get $param)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $0 (param $param anyref)
+    (drop
+      (struct.new $struct
+        ;; An externalized global.
+        (extern.externalize
+          (global.get $g)
+        )
+        ;; An externalized and then internalized global.
+        (extern.internalize
+          (extern.externalize
+            (global.get $g)
+          )
+        )
+        ;; An externalized parameter.
+        (extern.externalize
+          (local.get $param)
+        )
+      )
+    )
+  )
+)

@@ -43,6 +43,13 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
     return true;
   }
 
+  if (auto* refAs = expr->dynCast<RefAs>()) {
+    if (refAs->op == ExternExternalize ||
+        refAs->op == ExternInternalize) {
+      return isValidInConstantExpression(wasm, refAs->value);
+    }
+  }
+
   if (auto* get = expr->dynCast<GlobalGet>()) {
     auto* g = wasm.getGlobalOrNull(get->name);
     // This is called from the validator, so we have to handle non-existent
