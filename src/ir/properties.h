@@ -83,8 +83,7 @@ inline bool isNamedControlFlow(Expression* curr) {
 // isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   if (auto* refAs = curr->dynCast<RefAs>()) {
-    if (refAs->op == ExternExternalize ||
-        refAs->op == ExternInternalize) {
+    if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
       return isSingleConstantExpression(refAs->value);
     }
   }
