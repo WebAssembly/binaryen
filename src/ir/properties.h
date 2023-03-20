@@ -82,10 +82,13 @@ inline bool isNamedControlFlow(Expression* curr) {
 // runtime will be equal as well. TODO: combine this with
 // isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
+  if (auto* refAs = curr->dynCast<RefAs>()) {
+    if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
+      return isSingleConstantExpression(refAs->value);
+    }
+  }
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
-         curr->is<StringConst>() ||
-         (curr->is<RefAs>() && (curr->cast<RefAs>()->op == ExternExternalize ||
-                                curr->cast<RefAs>()->op == ExternInternalize));
+         curr->is<StringConst>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {
@@ -120,6 +123,12 @@ inline Literal getLiteral(const Expression* curr) {
     }
   } else if (auto* s = curr->dynCast<StringConst>()) {
     return Literal(s->string.toString());
+  } else if (auto* r = curr->dynCast<RefAs>()) {
+    if (r->op == ExternExternalize) {
+      return getLiteral(r->value).externalize();
+    } else if (r->op == ExternInternalize) {
+      return getLiteral(r->value).internalize();
+    }
   }
   WASM_UNREACHABLE("non-constant expression");
 }
