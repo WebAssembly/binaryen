@@ -36,6 +36,8 @@ bool isGenerative(Expression* curr, FeatureSet features) {
   return scanner.generative;
 }
 
+// Checks an expression in a shallow manner (i.e., does not check children) as
+// to whether it is valid in a wasm constant expression.
 static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
       expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<I31New>() ||
@@ -45,7 +47,7 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
 
   if (auto* refAs = expr->dynCast<RefAs>()) {
     if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
-      return isValidInConstantExpression(wasm, refAs->value);
+      return true;
     }
   }
 
