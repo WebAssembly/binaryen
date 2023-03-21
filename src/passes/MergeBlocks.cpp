@@ -77,6 +77,7 @@
 #include <ir/iteration.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/small_vector.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -330,9 +331,13 @@ static void optimizeBlock(Block* curr,
       }
       // There is something to do!
       bool keepingPart = keepStart < keepEnd;
-      // Create a new merged list, and fill in the code before the
-      // child block we are merging in. TODO better efficiency
-      ExpressionList merged(module->allocator);
+      // Create a new merged list, and fill in the code before the child block
+      // we are merging in. It is efficient to use a small vector here because
+      // most blocks are fairly small, and this way we copy once into the arena
+      // we use for Block lists a single time at the end (arena allocations
+      // can't be freed, so any temporary allocations while we add to the list
+      // would end up wasted).
+      SmallVector<Expression*, 10> merged;
       for (size_t j = 0; j < i; j++) {
         merged.push_back(list[j]);
       }
@@ -383,7 +388,7 @@ static void optimizeBlock(Block* curr,
           }
         }
       }
-      list.swap(merged);
+      list.set(merged);
       more = true;
       changed = true;
       break;
