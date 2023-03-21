@@ -77,6 +77,7 @@
 #include <ir/iteration.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <support/small_vector.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
