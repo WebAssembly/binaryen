@@ -332,7 +332,7 @@ static void optimizeBlock(Block* curr,
       bool keepingPart = keepStart < keepEnd;
       // Create a new merged list, and fill in the code before the
       // child block we are merging in. TODO better efficiency
-      ExpressionList merged(module->allocator);
+      SmallVector<Expression*, 10> merged;
       for (size_t j = 0; j < i; j++) {
         merged.push_back(list[j]);
       }
@@ -383,7 +383,7 @@ static void optimizeBlock(Block* curr,
           }
         }
       }
-      list.swap(merged);
+      list.set(merged);
       more = true;
       changed = true;
       break;
