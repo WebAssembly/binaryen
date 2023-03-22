@@ -444,6 +444,9 @@ HOST_LIMIT_PREFIX = '[host limit '
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
+# --fuzz-exec reports a stack limit using this notation
+STACK_LIMIT = '[trap stack limit]'
+
 
 # compare two strings, strictly
 def compare(x, y, context, verbose=True):
@@ -1056,6 +1059,20 @@ class Asyncify(TestCaseHandler):
         after_wasm = async_after_wasm
         before = fix_output(run_d8_wasm(before_wasm))
         after = fix_output(run_d8_wasm(after_wasm))
+
+        if STACK_LIMIT in run_bynterp(before_wasm, ['--fuzz-exec-before']):
+            # Running out of stack in infinite recursion can be a problem here
+            # as we compare a wasm before and after asyncify, and asyncify can
+            # add a lot of locals, which could mean the host limit can be
+            # reached earlier, and alter the output (less logging before we
+            # reach the host limit and trap).
+            # TODO This is not quite enough, as if we are just under the limit
+            #      then we may only hit the limit after running asyncify. But
+            #      then we'd also need to detect differences in the limit in
+            #      the JS VM's output (which can differ from Binaryen's). For
+            #      now, this rules out infinite recursion at least.
+            print('ignoring due to stack limit being hit')
+            return
 
         try:
             compare(before, after, 'Asyncify (before/after)')
