@@ -681,3 +681,27 @@
   )
  )
 )
+(module
+ ;; Nothing should break if the unused segments precede the used segments.
+ (type $array (array funcref))
+
+ (memory $mem 1 1)
+ (table $tab 1 1 funcref)
+
+ (data $unused "")
+ (elem $unused func)
+
+ (data $used "")
+ (elem $used func)
+
+ (func $user (export "user")
+  (data.drop 1)
+  (drop
+   (array.new_elem $array 1
+    (i32.const 0)
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+)
