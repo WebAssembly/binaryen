@@ -81,7 +81,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   // Visitors
 
   void visitCall(Call* curr) {
-    note(ModuleElement(ModuleElementKind::Function, curr->target));
+    note({ModuleElementKind::Function, curr->target});
 
     if (Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // A call-without-effects receives a function reference and calls it, the
@@ -108,7 +108,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    note(ModuleElement(ModuleElementKind::Table, curr->table));
+    note({ModuleElementKind::Table, curr->table});
     // Note a possible call of a function reference as well, as something might
     // be written into the table during runtime. With precise tracking of what
     // is written into the table we could do better here; we could also see
@@ -126,10 +126,10 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    note(ModuleElement(ModuleElementKind::Global, curr->name));
+    note({ModuleElementKind::Global, curr->name});
   }
   void visitGlobalSet(GlobalSet* curr) {
-    note(ModuleElement(ModuleElementKind::Global, curr->name));
+    note({ModuleElementKind::Global, curr->name});
   }
 
   void visitLoad(Load* curr) { usesMemory = true; }
@@ -150,23 +150,21 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
   void visitTableGet(TableGet* curr) {
-    note(ModuleElement(ModuleElementKind::Table, curr->table));
+    note({ModuleElementKind::Table, curr->table});
   }
   void visitTableSet(TableSet* curr) {
-    note(ModuleElement(ModuleElementKind::Table, curr->table));
+    note({ModuleElementKind::Table, curr->table});
   }
   void visitTableSize(TableSize* curr) {
-    note(ModuleElement(ModuleElementKind::Table, curr->table));
+    note({ModuleElementKind::Table, curr->table});
   }
   void visitTableGrow(TableGrow* curr) {
-    note(ModuleElement(ModuleElementKind::Table, curr->table));
+    note({ModuleElementKind::Table, curr->table});
   }
-  void visitThrow(Throw* curr) {
-    note(ModuleElement(ModuleElementKind::Tag, curr->tag));
-  }
+  void visitThrow(Throw* curr) { note({ModuleElementKind::Tag, curr->tag}); }
   void visitTry(Try* curr) {
     for (auto tag : curr->catchTags) {
-      note(ModuleElement(ModuleElementKind::Tag, tag));
+      note({ModuleElementKind::Tag, tag});
     }
   }
   void visitStructGet(StructGet* curr) {
@@ -184,7 +182,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
         return;
       case NewElem:
         auto segment = getModule()->elementSegments[curr->segment]->name;
-        note(ModuleElement(ModuleElementKind::ElementSegment, segment));
+        note({ModuleElementKind::ElementSegment, segment});
         return;
     }
     WASM_UNREACHABLE("unexpected op");
@@ -349,7 +347,7 @@ struct Analyzer {
         assert(calledSignatures.count(subType) == 0);
 
         for (Name target : iter->second) {
-          use(ModuleElement(ModuleElementKind::Function, target));
+          use({ModuleElementKind::Function, target});
         }
 
         uncalledRefFuncMap.erase(iter);
@@ -363,13 +361,13 @@ struct Analyzer {
     if (!options.closedWorld) {
       // The world is open, so assume the worst and something (inside or outside
       // of the module) can call this.
-      use(ModuleElement(ModuleElementKind::Function, func));
+      use({ModuleElementKind::Function, func});
       return;
     }
 
     // Otherwise, we are in a closed world, and so we can try to optimize the
     // case where the target function is referenced but not used.
-    auto element = ModuleElement(ModuleElementKind::Function, func);
+    auto element = ModuleElement{ModuleElementKind::Function, func};
 
     auto type = module->getFunction(func)->type;
     if (calledSignatures.count(type)) {
@@ -445,8 +443,7 @@ struct Analyzer {
         ModuleUtils::iterTableSegments(
           *module, value, [&](ElementSegment* segment) {
             use(segment->offset);
-            use(
-              ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+            use({ModuleElementKind::ElementSegment, segment->name});
           });
       }
     }
@@ -582,7 +579,7 @@ struct Analyzer {
       // just adding a reference to the function, and not actually using the
       // RefFunc. (Only useRefFunc() + a CallRef of the proper type are enough
       // to make a function itself used.)
-      referenced.insert(ModuleElement(ModuleElementKind::Function, func));
+      referenced.insert({ModuleElementKind::Function, func});
     }
 
     if (finder.usesMemory) {
@@ -681,7 +678,7 @@ struct RemoveUnusedModuleElements : public Pass {
     };
 
     module->removeFunctions([&](Function* curr) {
-      auto element = ModuleElement(ModuleElementKind::Function, curr->name);
+      auto element = ModuleElement{ModuleElementKind::Function, curr->name};
       if (analyzer.used.count(element)) {
         // This is used.
         return false;
@@ -701,14 +698,13 @@ struct RemoveUnusedModuleElements : public Pass {
     });
     module->removeGlobals([&](Global* curr) {
       // See TODO in addReferences - we may be able to do better here.
-      return !needed(ModuleElement(ModuleElementKind::Global, curr->name));
+      return !needed({ModuleElementKind::Global, curr->name});
     });
     module->removeTags([&](Tag* curr) {
-      return !needed(ModuleElement(ModuleElementKind::Tag, curr->name));
+      return !needed({ModuleElementKind::Tag, curr->name});
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return !needed(
-        ModuleElement(ModuleElementKind::ElementSegment, curr->name));
+      return !needed({ModuleElementKind::ElementSegment, curr->name});
     });
     // Since we've removed all empty element segments, here we mark all tables
     // that have a segment left.
@@ -718,7 +714,7 @@ struct RemoveUnusedModuleElements : public Pass {
       [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
       return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             !needed(ModuleElement(ModuleElementKind::Table, curr->name));
+             !needed({ModuleElementKind::Table, curr->name});
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
