@@ -3,7 +3,7 @@
 ;; Test the we can properly parse the annotated array.len format that we no
 ;; longer emit.
 
-;; RUN: wasm-dis %s.wasm -all --nominal | filecheck %s
+;; RUN: wasm-dis %s.wasm -all | filecheck %s
 
 ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
