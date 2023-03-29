@@ -1516,6 +1516,10 @@ def randomize_opt_flags():
     # wasm limitation on function body size which is 128K)
     if random.random() < 0.5:
         ret += ['-fimfs=99999999']
+    # the default for partial-inlining-ifs is 0, so also test with a realistic
+    # value (the same used in j2wasm atm)
+    if random.random() < 0.5:
+        ret += ['-pii=4']
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
