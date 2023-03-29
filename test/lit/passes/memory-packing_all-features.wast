@@ -2297,3 +2297,50 @@
   )
  )
 )
+(module
+ ;; memory64 works!
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
+
+ ;; CHECK:      (memory $0 i64 1 1)
+ (memory $0 i64 1 1)
+ (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00wasm64\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00is cool")
+ ;; CHECK:      (data "wasm64")
+
+ ;; CHECK:      (data "is cool")
+
+ ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i64.const 57)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.init 0
+ ;; CHECK-NEXT:   (i64.const 57)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 6)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:   (i64.const 63)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i64.const 57)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.init 1
+ ;; CHECK-NEXT:   (i64.const 120)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 7)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0
+  (memory.init 0
+   (i64.const 0)
+   (i32.const 0)
+   (i32.const 127)
+  )
+ )
+)
