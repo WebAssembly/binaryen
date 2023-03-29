@@ -1437,12 +1437,7 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
     "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeFalse(getModule()->memories.empty(),
-                     curr,
-                     "Memory operations require a memory")) {
-    return;
-  }
-  shouldBeTrue(getModule()->getDataSegment(curr->segment),
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
                "data.drop segment should exist");
 }
