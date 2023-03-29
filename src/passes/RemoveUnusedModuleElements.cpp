@@ -138,7 +138,6 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitAtomicRMW(AtomicRMW* curr) { usesMemory = true; }
   void visitAtomicWait(AtomicWait* curr) { usesMemory = true; }
   void visitAtomicNotify(AtomicNotify* curr) { usesMemory = true; }
-  void visitAtomicFence(AtomicFence* curr) { usesMemory = true; }
   void visitMemoryInit(MemoryInit* curr) { usesMemory = true; }
   void visitDataDrop(DataDrop* curr) {
     // TODO: Replace this with a use of a data segment (#5224).
