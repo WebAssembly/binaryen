@@ -681,7 +681,9 @@ struct RemoveUnusedModuleElements : public Pass {
       }
     }
 
-    // Active segments that write to imported tables and memories are roots.
+    // Active segments that write to imported tables and memories are roots
+    // because those writes are externally observable even if the module does
+    // not otherwise use the tables or memories.
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
       if (module->getMemory(segment->memory)->imported() &&
           !segment->data.empty()) {
@@ -750,27 +752,8 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeDataSegments([&](DataSegment* curr) {
       return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name));
     });
-    module->removeMemories([&](Memory* curr) {
-      return !needed({ModuleElementKind::Memory, curr->name});
-    });
-    module->removeTables([&](Table* curr) {
-      return !needed({ModuleElementKind::Table, curr->name});
-    });
-    module->removeDataSegments([&](DataSegment* curr) {
-      return !needed({ModuleElementKind::DataSegment, curr->name});
-    });
     module->removeElementSegments([&](ElementSegment* curr) {
       return !needed({ModuleElementKind::ElementSegment, curr->name});
-    });
-    // Since we've removed all empty element segments, here we mark all tables
-    // that have a segment left.
-    std::unordered_set<Name> nonemptyTables;
-    ModuleUtils::iterActiveElementSegments(
-      *module,
-      [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
-    module->removeTables([&](Table* curr) {
-      return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             !needed({ModuleElementKind::Table, curr->name});
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
