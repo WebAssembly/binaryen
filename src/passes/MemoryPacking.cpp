@@ -715,8 +715,10 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
+      Type ptrType = init->dest->type;
       if (auto* c = init->dest->dynCast<Const>()) {
-        dest = builder.makeConst(int32_t(c->value.geti32() + bytesWritten));
+        dest =
+          builder.makeConstPtr(c->value.getInteger() + bytesWritten, ptrType);
       } else {
         auto* get = builder.makeLocalGet(-1, Type::i32);
         getVars.push_back(&get->index);
@@ -729,16 +731,17 @@ void MemoryPacking::createReplacements(Module* module,
 
       // How many bytes are read from this range
       size_t bytes = std::min(range.end, end) - std::max(range.start, start);
-      Expression* size = builder.makeConst(int32_t(bytes));
       bytesWritten += bytes;
 
       // Create new memory.init or memory.fill
       if (range.isZero) {
         Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
+        Expression* size = builder.makeConstPtr(bytes, ptrType);
         appendResult(builder.makeMemoryFill(dest, value, size, init->memory));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
         Expression* offset = builder.makeConst(int32_t(offsetBytes));
+        Expression* size = builder.makeConst(int32_t(bytes));
         appendResult(
           builder.makeMemoryInit(initIndex, dest, offset, size, init->memory));
         initIndex++;
