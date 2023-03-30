@@ -902,7 +902,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element* super = nullptr;
     if (kind == SUB) {
       if (def.size() != 3) {
-        throw ParseException("invalid `sub' form", kind.line, kind.col);
+        throw ParseException("invalid 'sub' form", kind.line, kind.col);
       }
       super = def[1];
       Element &subtype = *def[2];
