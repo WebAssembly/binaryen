@@ -1172,8 +1172,6 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
 }
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
-  shouldBeFalse(
-    getModule()->memories.empty(), curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");

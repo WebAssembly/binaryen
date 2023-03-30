@@ -351,6 +351,19 @@
     (memory.atomic.notify (i32.const 0) (i32.const 0))
   )
 )
+(module ;; atomic.fence does not use a memory, so should not keep the memory alive.
+  (memory $0 (shared 1 1))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (export "fake-user" (func $user))
+  (export "fake-user" $user)
+  ;; CHECK:      (func $user (type $none_=>_none)
+  ;; CHECK-NEXT:  (atomic.fence)
+  ;; CHECK-NEXT: )
+  (func $user
+    (atomic.fence)
+  )
+)
 (module ;; more use checks
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
