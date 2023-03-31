@@ -917,7 +917,7 @@ struct AsyncifyFlow : public Pass {
     module = module_;
     func = func_;
     builder =
-      make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
+      std::make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
     // If the function cannot change our state, we have nothing to do -
     // we will never unwind or rewind the stack here.
     if (!analyzer->needsInstrumentation(func)) {
@@ -1243,7 +1243,7 @@ struct AsyncifyAssertInNonInstrumented : public Pass {
     if (!analyzer->needsInstrumentation(func)) {
       module = module_;
       builder =
-        make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
+        std::make_unique<AsyncifyBuilder>(*module, pointerType, asyncifyMemory);
       addAssertsInNonInstrumented(func);
     }
   }
@@ -1396,8 +1396,8 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     auto unwindIndex = builder->addVar(func, Type::i32);
     rewindIndex = builder->addVar(func, Type::i32);
     // Rewrite the function body.
-    builder =
-      make_unique<AsyncifyBuilder>(*getModule(), pointerType, asyncifyMemory);
+    builder = std::make_unique<AsyncifyBuilder>(
+      *getModule(), pointerType, asyncifyMemory);
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
@@ -1719,7 +1719,7 @@ struct Asyncify : public Pass {
         runner.add("merge-blocks");
       }
       runner.add(
-        make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
+        std::make_unique<AsyncifyFlow>(&analyzer, pointerType, asyncifyMemory));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
       runner.run();
@@ -1728,7 +1728,7 @@ struct Asyncify : public Pass {
       // Add asserts in non-instrumented code. Note we do not use an
       // instrumented pass runner here as we do want to run on all functions.
       PassRunner runner(module);
-      runner.add(make_unique<AsyncifyAssertInNonInstrumented>(
+      runner.add(std::make_unique<AsyncifyAssertInNonInstrumented>(
         &analyzer, pointerType, asyncifyMemory));
       runner.setIsNested(true);
       runner.setValidateGlobally(false);
@@ -1744,8 +1744,8 @@ struct Asyncify : public Pass {
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
-      runner.add(
-        make_unique<AsyncifyLocals>(&analyzer, pointerType, asyncifyMemory));
+      runner.add(std::make_unique<AsyncifyLocals>(
+        &analyzer, pointerType, asyncifyMemory));
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

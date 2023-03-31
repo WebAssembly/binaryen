@@ -981,14 +981,14 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }
-      sexprParser = make_unique<SExpressionParser>(input.data());
+      sexprParser = std::make_unique<SExpressionParser>(input.data());
       root = sexprParser->root;
 
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder =
-        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
+      sexprBuilder = std::make_unique<SExpressionWasmBuilder>(
+        wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

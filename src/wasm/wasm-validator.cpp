@@ -80,7 +80,7 @@ struct ValidationInfo {
     if (iter != outputs.end()) {
       return *(iter->second.get());
     }
-    auto& ret = outputs[func] = make_unique<std::ostringstream>();
+    auto& ret = outputs[func] = std::make_unique<std::ostringstream>();
     return *ret.get();
   }
 

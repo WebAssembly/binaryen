@@ -67,7 +67,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Discover all of the intrinsics that we need to inject, lowering all
     // operations to intrinsic calls while we're at it.
     if (!builder) {
-      builder = make_unique<Builder>(*module);
+      builder = std::make_unique<Builder>(*module);
     }
     PostWalker<RemoveNonJSOpsPass>::doWalkModule(module);
 
@@ -129,7 +129,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     // Add missing globals
     for (auto& [name, type] : neededImportedGlobals) {
       if (!getModule()->getGlobalOrNull(name)) {
-        auto global = make_unique<Global>();
+        auto global = std::make_unique<Global>();
         global->name = name;
         global->type = type;
         global->mutable_ = false;
@@ -157,7 +157,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   void doWalkFunction(Function* func) {
     if (!builder) {
-      builder = make_unique<Builder>(*getModule());
+      builder = std::make_unique<Builder>(*getModule());
     }
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }

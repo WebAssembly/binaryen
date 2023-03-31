@@ -1038,7 +1038,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     }
   }
   if (exportName.is()) {
-    auto ex = make_unique<Export>();
+    auto ex = std::make_unique<Export>();
     ex->name = exportName;
     ex->value = name;
     ex->kind = ExternalKind::Function;
@@ -1071,7 +1071,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     if (!preParseImport) {
       throw ParseException("!preParseImport in func", s.line, s.col);
     }
-    auto im = make_unique<Function>();
+    auto im = std::make_unique<Function>();
     im->setName(name, hasExplicitName);
     im->module = importModule;
     im->base = importBase;
@@ -3236,7 +3236,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(
 }
 
 void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
-  auto memory = make_unique<Memory>();
+  auto memory = std::make_unique<Memory>();
   memory->shared = false;
   Index i = 1;
   if (s[i]->dollared()) {
@@ -3251,7 +3251,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   if (s[i]->isList()) {
     auto& inner = *s[i];
     if (elementStartsWith(inner, EXPORT)) {
-      auto ex = make_unique<Export>();
+      auto ex = std::make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = memory->name;
       ex->kind = ExternalKind::Memory;
@@ -3388,7 +3388,7 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {
-  std::unique_ptr<Export> ex = make_unique<Export>();
+  std::unique_ptr<Export> ex = std::make_unique<Export>();
   ex->name = s[1]->str();
   if (s[2]->isList()) {
     auto& inner = *s[2];
@@ -3484,7 +3484,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
   if (kind == ExternalKind::Function) {
-    auto func = make_unique<Function>();
+    auto func = std::make_unique<Function>();
 
     j = parseTypeUse(inner, j, func->type);
     func->setName(name, hasExplicitName);
@@ -3499,7 +3499,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     global->module = module;
     global->base = base;
   } else if (kind == ExternalKind::Table) {
-    auto table = make_unique<Table>();
+    auto table = std::make_unique<Table>();
     table->setName(name, hasExplicitName);
     table->module = module;
     table->base = base;
@@ -3523,7 +3523,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     j++; // funcref
     // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
-    auto memory = make_unique<Memory>();
+    auto memory = std::make_unique<Memory>();
     memory->setName(name, hasExplicitName);
     memory->module = module;
     memory->base = base;
@@ -3543,7 +3543,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
 
     wasm.addMemory(std::move(memory));
   } else if (kind == ExternalKind::Tag) {
-    auto tag = make_unique<Tag>();
+    auto tag = std::make_unique<Tag>();
     HeapType tagType;
     j = parseTypeUse(inner, j, tagType);
     tag->sig = tagType.getSignature();
@@ -3559,7 +3559,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
 }
 
 void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
-  std::unique_ptr<Global> global = make_unique<Global>();
+  std::unique_ptr<Global> global = std::make_unique<Global>();
   size_t i = 1;
   if (s[i]->dollared()) {
     global->setExplicitName(s[i++]->str());
@@ -3576,7 +3576,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
   while (i < s.size() && s[i]->isList()) {
     auto& inner = *s[i++];
     if (elementStartsWith(inner, EXPORT)) {
-      auto ex = make_unique<Export>();
+      auto ex = std::make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = global->name;
       ex->kind = ExternalKind::Global;
@@ -3607,7 +3607,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
     if (!preParseImport) {
       throw ParseException("!preParseImport in global", s.line, s.col);
     }
-    auto im = make_unique<Global>();
+    auto im = std::make_unique<Global>();
     im->name = global->name;
     im->module = importModule;
     im->base = importBase;
@@ -3636,7 +3636,7 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 }
 
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
-  std::unique_ptr<Table> table = make_unique<Table>();
+  std::unique_ptr<Table> table = std::make_unique<Table>();
   Index i = 1;
   if (s[i]->dollared()) {
     table->setExplicitName(s[i++]->str());
@@ -3649,7 +3649,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   if (s[i]->isList()) {
     auto& inner = *s[i];
     if (elementStartsWith(inner, EXPORT)) {
-      auto ex = make_unique<Export>();
+      auto ex = std::make_unique<Export>();
       ex->name = inner[1]->str();
       ex->value = table->name;
       ex->kind = ExternalKind::Table;
@@ -3859,7 +3859,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
 }
 
 void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
-  auto tag = make_unique<Tag>();
+  auto tag = std::make_unique<Tag>();
   size_t i = 1;
 
   // Parse name
@@ -3910,7 +3910,7 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
       throw ParseException(
         "invalid export name", exportElem[1]->line, exportElem[1]->col);
     }
-    auto ex = make_unique<Export>();
+    auto ex = std::make_unique<Export>();
     ex->name = exportElem[1]->str();
     if (wasm.getExportOrNull(ex->name)) {
       throw ParseException(

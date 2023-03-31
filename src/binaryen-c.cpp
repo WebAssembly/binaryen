@@ -5025,7 +5025,7 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
                                BinaryenType results) {
   auto* func = ((Module*)module)->getFunctionOrNull(internalName);
   if (func == nullptr) {
-    auto func = make_unique<Function>();
+    auto func = std::make_unique<Function>();
     func->name = internalName;
     func->module = externalModuleName;
     func->base = externalBaseName;
@@ -5044,7 +5044,7 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* externalBaseName) {
   auto* table = ((Module*)module)->getTableOrNull(internalName);
   if (table == nullptr) {
-    auto table = make_unique<Table>();
+    auto table = std::make_unique<Table>();
     table->name = internalName;
     table->module = externalModuleName;
     table->base = externalBaseName;
@@ -5062,7 +5062,7 @@ void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              uint8_t shared) {
   auto* memory = ((Module*)module)->getMemoryOrNull(internalName);
   if (memory == nullptr) {
-    auto memory = make_unique<Memory>();
+    auto memory = std::make_unique<Memory>();
     memory->name = internalName;
     memory->module = externalModuleName;
     memory->base = externalBaseName;
@@ -5082,7 +5082,7 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
                              bool mutable_) {
   auto* glob = ((Module*)module)->getGlobalOrNull(internalName);
   if (glob == nullptr) {
-    auto glob = make_unique<Global>();
+    auto glob = std::make_unique<Global>();
     glob->name = internalName;
     glob->module = externalModuleName;
     glob->base = externalBaseName;
@@ -5103,7 +5103,7 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
                           BinaryenType results) {
   auto* tag = ((Module*)module)->getGlobalOrNull(internalName);
   if (tag == nullptr) {
-    auto tag = make_unique<Tag>();
+    auto tag = std::make_unique<Tag>();
     tag->name = internalName;
     tag->module = externalModuleName;
     tag->base = externalBaseName;
@@ -5319,7 +5319,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
   memory->shared = shared;
   memory->indexType = memory64 ? Type::i64 : Type::i32;
   if (exportName) {
-    auto memoryExport = make_unique<Export>();
+    auto memoryExport = std::make_unique<Export>();
     memoryExport->name = exportName;
     memoryExport->value = memory->name;
     memoryExport->kind = ExternalKind::Memory;

@@ -287,11 +287,11 @@ private:
   // JS import
   Name makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
-    auto legalIm = make_unique<Function>();
+    auto legalIm = std::make_unique<Function>();
     legalIm->name = Name(std::string("legalimport$") + im->name.toString());
     legalIm->module = im->module;
     legalIm->base = im->base;
-    auto stub = make_unique<Function>();
+    auto stub = std::make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.toString());
     stub->type = im->type;
 

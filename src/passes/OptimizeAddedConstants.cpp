@@ -296,7 +296,7 @@ struct OptimizeAddedConstants
       helperIndexes.clear();
       propagatable.clear();
       if (propagate) {
-        localGraph = make_unique<LocalGraph>(func);
+        localGraph = std::make_unique<LocalGraph>(func);
         localGraph->computeSetInfluences();
         localGraph->computeSSAIndexes();
         findPropagatable();

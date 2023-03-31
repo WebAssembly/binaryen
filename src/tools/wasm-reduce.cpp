@@ -352,7 +352,7 @@ struct Reducer
   }
 
   void loadWorking() {
-    module = make_unique<Module>();
+    module = std::make_unique<Module>();
     ModuleReader reader;
     try {
       reader.read(working, *module);
@@ -371,7 +371,7 @@ struct Reducer
     // Apply features the user passed on the commandline.
     toolOptions.applyFeatures(*module);
 
-    builder = make_unique<Builder>(*module);
+    builder = std::make_unique<Builder>(*module);
     setModule(module.get());
   }
 

@@ -68,7 +68,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setDWARF(DWARF);
   parser.setSkipFunctionBodies(skipFunctionBodies);
   if (sourceMapFilename.size()) {
-    sourceMapStream = make_unique<std::ifstream>();
+    sourceMapStream = std::make_unique<std::ifstream>();
     sourceMapStream->open(sourceMapFilename);
     parser.setDebugLocations(sourceMapStream.get());
   }
@@ -156,7 +156,7 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   }
   std::unique_ptr<std::ofstream> sourceMapStream;
   if (sourceMapFilename.size()) {
-    sourceMapStream = make_unique<std::ofstream>();
+    sourceMapStream = std::make_unique<std::ofstream>();
     sourceMapStream->open(sourceMapFilename);
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
