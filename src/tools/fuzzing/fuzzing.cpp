@@ -3158,7 +3158,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // Otherwise, fall through and generate things in a way that is
       // guaranteed to validate.
       [[fallthrough]];
-    case 1:
+    case 1: {
       // Cast is a subtype of ref. We can't modify |type|, so find a supertype.
       // TODO: cache these?
       std::vector<Type> supers;
@@ -3174,6 +3174,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       }
       refType = pick(supers);
       break;
+    }
     case 2:
       // Ref is a subtype of cast.
       refType = getSubType(type);
