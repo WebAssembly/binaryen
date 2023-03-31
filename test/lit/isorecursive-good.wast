@@ -16,7 +16,7 @@
     (type $super-struct (struct i32))
     ;; HYBRID:       (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
     ;; NOMINAL:      (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
-    (type $sub-struct (struct_subtype i32 i64 $super-struct))
+    (type $sub-struct (sub $super-struct (struct i32 i64)))
   )
 
   (rec
@@ -24,7 +24,7 @@
     ;; HYBRID-NEXT:  (type $super-array (array (ref $super-struct)))
     (type $super-array (array (ref $super-struct)))
     ;; HYBRID:       (type $sub-array (array_subtype (ref $sub-struct) $super-array))
-    (type $sub-array (array_subtype (ref $sub-struct) $super-array))
+    (type $sub-array (sub $super-array (array (ref $sub-struct))))
   )
 
   (rec
@@ -34,7 +34,7 @@
     (type $super-func (func (param (ref $sub-array)) (result (ref $super-array))))
     ;; HYBRID:       (type $sub-func (func_subtype (param (ref $super-array)) (result (ref $sub-array)) $super-func))
     ;; NOMINAL:      (type $sub-func (func_subtype (param (ref $super-array)) (result (ref $sub-array)) $super-func))
-    (type $sub-func (func_subtype (param (ref $super-array)) (result (ref $sub-array)) $super-func))
+    (type $sub-func (sub $super-func (func (param (ref $super-array)) (result (ref $sub-array)))))
   )
 
   ;; HYBRID:      (func $make-super-struct (type $none_=>_ref|$super-struct|) (result (ref $super-struct))
