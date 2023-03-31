@@ -1090,9 +1090,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   }
   if (type.isRef()) {
     if (type.getHeapType() == HeapType::i31) {
-      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeRefCast);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeRefCast);
   }
   // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
@@ -3108,7 +3110,7 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
   // so give a decent chance for one to be a subtype of the other.
-  Type [refType, castType] = getPossiblyRelatedReferenceTypes();
+  auto [refType, castType] = getPossiblyRelatedReferenceTypes();
   return builder.makeRefTest(make(refType), castType);
 }
 
@@ -3116,7 +3118,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   assert(type.isRef());
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // As with RefTest, use possibly related types.
-  Type [refType, castType] = getPossiblyRelatedReferenceTypes();
+  auto [refType, castType] = getPossiblyRelatedReferenceTypes();
   // TODO: Fuzz unsafe casts?
   return builder.makeRefCast(make(refType), castType, RefCast::Safe);
 }
@@ -3393,7 +3395,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
-std::pair<Type, Type> TranslateToFuzzReader::getPossiblyRelatedReferenceTypes() {
+std::pair<Type, Type>
+TranslateToFuzzReader::getPossiblyRelatedReferenceTypes() {
   // Give a decent chance for one to be a subtype of the other.
   Type first, second;
   switch (upTo(3)) {
@@ -3402,8 +3405,7 @@ std::pair<Type, Type> TranslateToFuzzReader::getPossiblyRelatedReferenceTypes() 
       first = getReferenceType();
       second = getReferenceType();
       // They must share a bottom type.
-      if (first.getHeapType().getBottom() ==
-          second.getHeapType().getBottom()) {
+      if (first.getHeapType().getBottom() == second.getHeapType().getBottom()) {
         break;
       }
       // Otherwise, fall through and generate things in a way that is
