@@ -1088,8 +1088,11 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
-  if (type.isRef() && type.getHeapType() == HeapType::i31) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
+  if (type.isRef()) {
+    if (type.getHeapType() == HeapType::i31) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
+    }
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeRefCast);
   }
   // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
@@ -3105,35 +3108,17 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
   // so give a decent chance for one to be a subtype of the other.
-  Type refType, castType;
-  switch (upTo(3)) {
-    case 0:
-      // Totally random.
-      refType = getReferenceType();
-      castType = getReferenceType();
-      // They must share a bottom type in order to validate.
-      if (refType.getHeapType().getBottom() ==
-          castType.getHeapType().getBottom()) {
-        break;
-      }
-      // Otherwise, fall through and generate things in a way that is
-      // guaranteed to validate.
-      [[fallthrough]];
-    case 1:
-      // Cast is a subtype of ref.
-      refType = getReferenceType();
-      castType = getSubType(refType);
-      break;
-    case 2:
-      // Ref is a subtype of cast.
-      castType = getReferenceType();
-      refType = getSubType(castType);
-      break;
-    default:
-      // This unreachable avoids a warning on refType being possibly undefined.
-      WASM_UNREACHABLE("bad case");
-  }
+  Type [refType, castType] = getPossiblyRelatedReferenceTypes();
   return builder.makeRefTest(make(refType), castType);
+}
+
+Expression* TranslateToFuzzReader::makeRefCast(Type type) {
+  assert(type.isRef());
+  assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  // As with RefTest, use possibly related types.
+  Type [refType, castType] = getPossiblyRelatedReferenceTypes();
+  // TODO: Fuzz unsafe casts?
+  return builder.makeRefCast(make(refType), castType, RefCast::Safe);
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
@@ -3406,6 +3391,39 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   }
   // Failure to do anything interesting, return the type.
   return type;
+}
+
+std::pair<Type, Type> TranslateToFuzzReader::getPossiblyRelatedReferenceTypes() {
+  // Give a decent chance for one to be a subtype of the other.
+  Type first, second;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      first = getReferenceType();
+      second = getReferenceType();
+      // They must share a bottom type.
+      if (first.getHeapType().getBottom() ==
+          second.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1:
+      // Second is a subtype of first.
+      first = getReferenceType();
+      second = getSubType(first);
+      break;
+    case 2:
+      // First is a subtype of second.
+      second = getReferenceType();
+      first = getSubType(second);
+      break;
+    default:
+      // This unreachable avoids a warning on first being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
+  return {first, second};
 }
 
 Type TranslateToFuzzReader::getSubType(Type type) {

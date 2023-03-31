@@ -318,6 +318,7 @@ private:
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
+  Expression* makeRefCast(Type type);
   Expression* makeI31New(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
@@ -340,6 +341,12 @@ private:
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+
+  // Gets two types that have a chance to be related in some manner. In
+  // particular, they will at least share the same bottom type, and have a
+  // decent chance to be subtypes. This is useful for ref.test and ref.cast and
+  // so forth.
+  std::pair<Type, Type> getPossiblyRelatedReferenceTypes();
 
   // Utilities
   Name getTargetName(Expression* target);
