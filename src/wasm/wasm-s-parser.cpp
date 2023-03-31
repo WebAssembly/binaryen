@@ -52,8 +52,7 @@ namespace wasm {
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
   ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
-  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"),
-  SUB("sub");
+  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"), SUB("sub");
 
 static Address getAddress(const Element* s) {
   return std::stoll(s->toString());
@@ -905,12 +904,12 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
         throw ParseException("invalid 'sub' form", kind.line, kind.col);
       }
       super = def[1];
-      Element &subtype = *def[2];
+      Element& subtype = *def[2];
       if (!subtype.isList() || subtype.size() < 1) {
-        throw ParseException("invalid subtype definition", subtype.line,
-                             subtype.col);
+        throw ParseException(
+          "invalid subtype definition", subtype.line, subtype.col);
       }
-      Element &subtypeKind = *subtype[0];
+      Element& subtypeKind = *subtype[0];
       if (subtypeKind == FUNC) {
         builder[index] = parseSignatureDef(subtype, 0);
       } else if (subtypeKind == STRUCT) {
@@ -918,8 +917,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (subtypeKind == ARRAY) {
         builder[index] = parseArrayDef(subtype);
       } else {
-        throw ParseException("unknown subtype kind", subtypeKind.line,
-                             subtypeKind.col);
+        throw ParseException(
+          "unknown subtype kind", subtypeKind.line, subtypeKind.col);
       }
     } else {
       if (kind == FUNC) {
