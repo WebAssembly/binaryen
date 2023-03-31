@@ -342,12 +342,6 @@ private:
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
 
-  // Gets two types that have a chance to be related in some manner. In
-  // particular, they will at least share the same bottom type, and have a
-  // decent chance to be subtypes. This is useful for ref.test and ref.cast and
-  // so forth.
-  std::pair<Type, Type> getPossiblyRelatedReferenceTypes();
-
   // Utilities
   Name getTargetName(Expression* target);
   Type getTargetType(Expression* target);

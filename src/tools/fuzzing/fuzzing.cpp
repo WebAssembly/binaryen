@@ -3110,17 +3110,81 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
   // The case of the reference and the cast type having a connection is useful,
   // so give a decent chance for one to be a subtype of the other.
-  auto [refType, castType] = getPossiblyRelatedReferenceTypes();
+  Type refType, castType;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      refType = getReferenceType();
+      castType = getReferenceType();
+      // They must share a bottom type in order to validate.
+      if (refType.getHeapType().getBottom() ==
+          castType.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1:
+      // Cast is a subtype of ref.
+      refType = getReferenceType();
+      castType = getSubType(refType);
+      break;
+    case 2:
+      // Ref is a subtype of cast.
+      castType = getReferenceType();
+      refType = getSubType(castType);
+      break;
+    default:
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
   return builder.makeRefTest(make(refType), castType);
 }
 
 Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   assert(type.isRef());
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  // As with RefTest, use possibly related types.
-  auto [refType, castType] = getPossiblyRelatedReferenceTypes();
+  // As with RefTest, use possibly related types. Unlike there, we are given the
+  // output type, which is the cast type, so just generate the ref's type.
+  Type refType;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      refType = getReferenceType();
+      // They must share a bottom type in order to validate.
+      if (refType.getHeapType().getBottom() ==
+          type.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1:
+      // Cast is a subtype of ref. We can't modify |type|, so find a supertype.
+      // TODO: cache these?
+      std::vector<Type> supers;
+      auto super = type.getHeapType();
+      while (1) {
+        // Use a random nullability while we add each super, to fuzz that too.
+        supers.push_back(Type(super, getSubType(type.getNullability())));
+        if (auto supe = super.getSuperType()) {
+          super = *supe;
+        } else {
+          break;
+        }
+      }
+      refType = pick(supers);
+      break;
+    case 2:
+      // Ref is a subtype of cast.
+      refType = getSubType(type);
+      break;
+    default:
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
   // TODO: Fuzz unsafe casts?
-  return builder.makeRefCast(make(refType), castType, RefCast::Safe);
+  return builder.makeRefCast(make(refType), type, RefCast::Safe);
 }
 
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
@@ -3393,39 +3457,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   }
   // Failure to do anything interesting, return the type.
   return type;
-}
-
-std::pair<Type, Type>
-TranslateToFuzzReader::getPossiblyRelatedReferenceTypes() {
-  // Give a decent chance for one to be a subtype of the other.
-  Type first, second;
-  switch (upTo(3)) {
-    case 0:
-      // Totally random.
-      first = getReferenceType();
-      second = getReferenceType();
-      // They must share a bottom type.
-      if (first.getHeapType().getBottom() == second.getHeapType().getBottom()) {
-        break;
-      }
-      // Otherwise, fall through and generate things in a way that is
-      // guaranteed to validate.
-      [[fallthrough]];
-    case 1:
-      // Second is a subtype of first.
-      first = getReferenceType();
-      second = getSubType(first);
-      break;
-    case 2:
-      // First is a subtype of second.
-      second = getReferenceType();
-      first = getSubType(second);
-      break;
-    default:
-      // This unreachable avoids a warning on first being possibly undefined.
-      WASM_UNREACHABLE("bad case");
-  }
-  return {first, second};
 }
 
 Type TranslateToFuzzReader::getSubType(Type type) {
