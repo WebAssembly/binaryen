@@ -903,8 +903,7 @@ class CompareVMs(TestCaseHandler):
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
-    # not that important
-    frequency = 0.1
+    frequency = 0.2
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
@@ -921,7 +920,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.25
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before_wasm_temp = before_wasm + '.temp.wasm'
@@ -1047,7 +1046,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-    frequency = 0.25
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
@@ -1121,7 +1120,7 @@ class Asyncify(TestCaseHandler):
 # and the optimizer was free to make changes to observable behavior there. The
 # fuzzer therefore needs to ignore code that traps.
 class TrapsNeverHappen(TestCaseHandler):
-    frequency = 0.5
+    frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
@@ -1201,7 +1200,7 @@ class TrapsNeverHappen(TestCaseHandler):
 
 # Tests wasm-ctor-eval
 class CtorEval(TestCaseHandler):
-    frequency = 0.1
+    frequency = 0.2
 
     def handle(self, wasm):
         # get the expected execution results.
