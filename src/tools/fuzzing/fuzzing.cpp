@@ -3152,8 +3152,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // Totally random.
       refType = getReferenceType();
       // They must share a bottom type in order to validate.
-      if (refType.getHeapType().getBottom() ==
-          type.getHeapType().getBottom()) {
+      if (refType.getHeapType().getBottom() == type.getHeapType().getBottom()) {
         break;
       }
       // Otherwise, fall through and generate things in a way that is
