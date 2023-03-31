@@ -569,7 +569,7 @@ public:
     ret->memory = memory;
     return ret;
   }
-  MemoryInit* makeMemoryInit(uint32_t segment,
+  MemoryInit* makeMemoryInit(Name segment,
                              Expression* dest,
                              Expression* offset,
                              Expression* size,
@@ -583,7 +583,7 @@ public:
     ret->finalize();
     return ret;
   }
-  DataDrop* makeDataDrop(uint32_t segment) {
+  DataDrop* makeDataDrop(Name segment) {
     auto* ret = wasm.allocator.alloc<DataDrop>();
     ret->segment = segment;
     ret->finalize();
@@ -930,7 +930,7 @@ public:
   }
   ArrayNewSeg* makeArrayNewSeg(ArrayNewSegOp op,
                                HeapType type,
-                               Index seg,
+                               Name seg,
                                Expression* offset,
                                Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewSeg>();

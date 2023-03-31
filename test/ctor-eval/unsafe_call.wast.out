@@ -1,7 +1,7 @@
 (module
  (type $none_=>_none (func))
  (memory $0 256 256)
- (data (i32.const 10) "waka waka waka waka waka")
+ (data $0 (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
  (func $test1 (type $none_=>_none)
   (call $unsafe-to-call)

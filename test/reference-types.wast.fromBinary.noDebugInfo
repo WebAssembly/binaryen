@@ -16,7 +16,7 @@
  (global $global$3 (mut anyref) (ref.null none))
  (global $global$4 (mut anyref) (ref.null none))
  (table $0 3 3 funcref)
- (elem (i32.const 0) $0 $1 $2)
+ (elem $0 (i32.const 0) $0 $1 $2)
  (elem declare func $23 $3)
  (tag $tag$0 (param i32))
  (export "export_func" (func $fimport$0))

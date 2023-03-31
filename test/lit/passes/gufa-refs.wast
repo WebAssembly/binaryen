@@ -699,7 +699,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $func-2params-a $func-2params-b $func-3params)
+  ;; CHECK:      (elem $0 (i32.const 0) $func-2params-a $func-2params-b $func-3params)
 
   ;; CHECK:      (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -5402,24 +5402,26 @@
   (type $array-i8 (array i8))
   ;; CHECK:      (type $array-funcref (array funcref))
   (type $array-funcref (array funcref))
+  (data "hello")
+  (elem func $test)
+
   ;; CHECK:      (type $ref|$array-i8|_ref|$array-funcref|_=>_none (func (param (ref $array-i8) (ref $array-funcref))))
 
-  ;; CHECK:      (data "hello")
-  (data "hello")
-  ;; CHECK:      (elem func $test)
-  (elem func $test)
+  ;; CHECK:      (data $0 "hello")
+
+  ;; CHECK:      (elem $0 func $test)
 
   ;; CHECK:      (export "test" (func $test))
 
   ;; CHECK:      (func $test (type $ref|$array-i8|_ref|$array-funcref|_=>_none) (param $array-i8 (ref $array-i8)) (param $array-funcref (ref $array-funcref))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_data $array-i8 0
+  ;; CHECK-NEXT:   (array.new_data $array-i8 $0
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_elem $array-funcref 0
+  ;; CHECK-NEXT:   (array.new_elem $array-funcref $0
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )

@@ -3,7 +3,7 @@
  (type $none_=>_none (func))
  (import "import" "import" (func $import (param i32 i32)))
  (memory $0 256 256)
- (data (i32.const 10) "__s______________")
+ (data $0 (i32.const 10) "__s______________")
  (export "test1" (func $test1_0))
  (func $test1_0 (type $none_=>_none)
   (call $import

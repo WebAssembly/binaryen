@@ -191,14 +191,14 @@
 )
 
 # MemoryInit
-(memory.init $0 5
+(memory.init $0 $5
  (i32.const 6)
  (i32.const 7)
  (i32.const 8)
 )
 
 # DataDrop
-(data.drop 2)
+(data.drop $2)
 
 # MemoryCopy
 (memory.copy $0 $0

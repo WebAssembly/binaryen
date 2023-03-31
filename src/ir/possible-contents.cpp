@@ -903,7 +903,7 @@ struct InfoCollector
         return;
       }
       case NewElem: {
-        Type segType = getModule()->elementSegments[curr->segment]->type;
+        Type segType = getModule()->getElementSegment(curr->segment)->type;
         addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
         return;
       }

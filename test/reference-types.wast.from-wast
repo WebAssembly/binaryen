@@ -16,7 +16,7 @@
  (global $global_anyref (mut anyref) (ref.null none))
  (global $global_anyref2 (mut anyref) (ref.null none))
  (table $0 3 3 funcref)
- (elem (i32.const 0) $take_eqref $take_funcref $take_anyref)
+ (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
  (elem declare func $foo $ref-taken-but-not-in-table)
  (tag $e-i32 (param i32))
  (export "export_func" (func $import_func))

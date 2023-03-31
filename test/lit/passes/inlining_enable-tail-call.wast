@@ -10,7 +10,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $tabled)
+  ;; CHECK:      (elem $0 (i32.const 0) $tabled)
 
   ;; CHECK:      (export "user" (func $user))
 

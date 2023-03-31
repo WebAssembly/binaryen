@@ -26,9 +26,9 @@
 
   ;; CHECK:      (memory $combined_memory 6)
 
-  ;; CHECK:      (data (i32.const 0) "a")
+  ;; CHECK:      (data $0 (i32.const 0) "a")
 
-  ;; CHECK:      (data (i32.const 196609) "123")
+  ;; CHECK:      (data $1 (i32.const 196609) "123")
 
   ;; CHECK:      (func $loads
   ;; CHECK-NEXT:  (drop
@@ -71,9 +71,9 @@
 
   ;; BOUNDS:      (memory $combined_memory 6)
 
-  ;; BOUNDS:      (data (i32.const 0) "a")
+  ;; BOUNDS:      (data $0 (i32.const 0) "a")
 
-  ;; BOUNDS:      (data (i32.const 196609) "123")
+  ;; BOUNDS:      (data $1 (i32.const 196609) "123")
 
   ;; BOUNDS:      (func $loads
   ;; BOUNDS-NEXT:  (local $0 i32)
@@ -737,7 +737,7 @@
   )
 
   ;; CHECK:      (func $memory.init
-  ;; CHECK-NEXT:  (memory.init 0
+  ;; CHECK-NEXT:  (memory.init $0
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
   ;; CHECK-NEXT:    (i32.const 0)
@@ -750,7 +750,7 @@
   ;; BOUNDS-NEXT:  (local $0 i32)
   ;; BOUNDS-NEXT:  (local $1 i32)
   ;; BOUNDS-NEXT:  (local $2 i32)
-  ;; BOUNDS-NEXT:  (memory.init 0
+  ;; BOUNDS-NEXT:  (memory.init $0
   ;; BOUNDS-NEXT:   (block (result i32)
   ;; BOUNDS-NEXT:    (local.set $2
   ;; BOUNDS-NEXT:     (i32.add

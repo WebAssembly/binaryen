@@ -5,7 +5,7 @@
  (memory $memory1 1 500)
  (memory $memory2 1 800)
  (memory $memory3 1 400)
- (data (i32.const 0) "abcd")
+ (data $0 (i32.const 0) "abcd")
  (func $memory.fill (type $none_=>_none)
   (memory.fill $memory2
    (i32.const 0)
@@ -21,7 +21,7 @@
   )
  )
  (func $memory.init (type $none_=>_none)
-  (memory.init $memory1 0
+  (memory.init $memory1 $0
    (i32.const 0)
    (i32.const 0)
    (i32.const 45)

@@ -168,6 +168,9 @@ public:
     std::string symbolsFile;
   };
 
+  // Map data segment names to indices.
+  std::unordered_map<Name, Index> dataIndices;
+
   Wasm2JSBuilder(Flags f, PassOptions options_) : flags(f), options(options_) {
     // We don't try to model wasm's trapping precisely - if we did, each load
     // and store would need to do a check. Given that, we can just ignore
@@ -190,6 +193,12 @@ public:
   // The second pass on an expression: process it fully, generating
   // JS
   Ref processFunctionBody(Module* m, Function* func, bool standalone);
+
+  Index getDataIndex(Name segment) {
+    auto it = dataIndices.find(segment);
+    assert(it != dataIndices.end());
+    return it->second;
+  }
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -332,6 +341,11 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   }
   ElementUtils::iterAllElementFunctionNames(
     wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
+
+  // Collect passive data segment indices.
+  for (Index i = 0; i < wasm->dataSegments.size(); ++i) {
+    dataIndices[wasm->dataSegments[i]->name] = i;
+  }
 
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
@@ -2178,16 +2192,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
     Ref visitMemoryInit(MemoryInit* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_INIT);
-      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
-                                    ValueBuilder::makeNum(curr->segment),
-                                    visit(curr->dest, EXPRESSION_RESULT),
-                                    visit(curr->offset, EXPRESSION_RESULT),
-                                    visit(curr->size, EXPRESSION_RESULT));
+      return ValueBuilder::makeCall(
+        ABI::wasm2js::MEMORY_INIT,
+        ValueBuilder::makeNum(parent->getDataIndex(curr->segment)),
+        visit(curr->dest, EXPRESSION_RESULT),
+        visit(curr->offset, EXPRESSION_RESULT),
+        visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitDataDrop(DataDrop* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::DATA_DROP);
-      return ValueBuilder::makeCall(ABI::wasm2js::DATA_DROP,
-                                    ValueBuilder::makeNum(curr->segment));
+      return ValueBuilder::makeCall(
+        ABI::wasm2js::DATA_DROP,
+        ValueBuilder::makeNum(parent->getDataIndex(curr->segment)));
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_COPY);

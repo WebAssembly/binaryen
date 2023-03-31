@@ -42,7 +42,7 @@ static bool isInvoke(Function* F) {
 }
 
 struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
-  SegmentRemover(Index segment) : segment(segment) {}
+  SegmentRemover(Name segment) : segment(segment) {}
 
   bool isFunctionParallel() override { return true; }
 
@@ -66,19 +66,19 @@ struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
     }
   }
 
-  Index segment;
+  Name segment;
 };
 
 static void calcSegmentOffsets(Module& wasm,
                                std::vector<Address>& segmentOffsets) {
   const Address UNKNOWN_OFFSET(uint32_t(-1));
 
-  std::unordered_map<Index, Address> passiveOffsets;
+  std::unordered_map<Name, Address> passiveOffsets;
   if (wasm.features.hasBulkMemory()) {
     // Fetch passive segment offsets out of memory.init instructions
     struct OffsetSearcher : PostWalker<OffsetSearcher> {
-      std::unordered_map<Index, Address>& offsets;
-      OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+      std::unordered_map<Name, Address>& offsets;
+      OffsetSearcher(std::unordered_map<Name, Address>& offsets)
         : offsets(offsets) {}
       void visitMemoryInit(MemoryInit* curr) {
         // The desitination of the memory.init is either a constant
@@ -108,7 +108,7 @@ static void calcSegmentOffsets(Module& wasm,
   for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
     auto& segment = wasm.dataSegments[i];
     if (segment->isPassive) {
-      auto it = passiveOffsets.find(i);
+      auto it = passiveOffsets.find(segment->name);
       if (it != passiveOffsets.end()) {
         segmentOffsets.push_back(it->second);
       } else {
@@ -126,13 +126,11 @@ static void calcSegmentOffsets(Module& wasm,
   }
 }
 
-static void removeSegment(Module& wasm, Index segment) {
+static void removeSegment(Module& wasm, Name segment) {
   PassRunner runner(&wasm);
   SegmentRemover(segment).run(&runner, &wasm);
-  // Resize the segment to zero.  In theory we should completely remove it
-  // but that would mean re-numbering the segments that follow which is
-  // non-trivial.
-  wasm.dataSegments[segment]->data.resize(0);
+  // Resize the segment to zero. TODO: Remove it entirely instead.
+  wasm.getDataSegment(segment)->data.resize(0);
 }
 
 static Address getExportedAddress(Module& wasm, Export* export_) {
@@ -160,21 +158,21 @@ static void removeData(Module& wasm,
   Address startAddress = getExportedAddress(wasm, start);
   Address endAddress = getExportedAddress(wasm, end);
   for (Index i = 0; i < wasm.dataSegments.size(); i++) {
+    auto& segment = wasm.dataSegments[i];
     Address segmentStart = segmentOffsets[i];
-    size_t segmentSize = wasm.dataSegments[i]->data.size();
+    size_t segmentSize = segment->data.size();
     if (segmentStart <= startAddress &&
         segmentStart + segmentSize >= endAddress) {
-
       if (segmentStart == startAddress &&
           segmentStart + segmentSize == endAddress) {
         BYN_TRACE("removeData: removing whole segment\n");
-        removeSegment(wasm, i);
+        removeSegment(wasm, segment->name);
       } else {
         // If we can't remove the whole segment then just set the string
         // data to zero.
         BYN_TRACE("removeData: removing part of segment\n");
         size_t segmentOffset = startAddress - segmentStart;
-        char* startElem = &wasm.dataSegments[i]->data[segmentOffset];
+        char* startElem = &segment->data[segmentOffset];
         memset(startElem, 0, endAddress - startAddress);
       }
       return;

@@ -12,7 +12,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
+  ;; CHECK:      (elem $0 (i32.const 0) $no-loops-but-one-use-but-tabled)
 
   ;; CHECK:      (export "yes" (func $yes))
   (export "yes" (func $yes))

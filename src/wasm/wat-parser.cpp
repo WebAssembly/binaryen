@@ -1284,7 +1284,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using LocalIdxT = Index;
   using GlobalIdxT = Name;
   using MemoryIdxT = Name;
-  using DataIdxT = uint32_t;
+  using DataIdxT = Name;
 
   using MemargT = Memarg;
 
@@ -1550,20 +1550,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return name;
   }
 
-  Result<uint32_t> getDataFromIdx(uint32_t idx) {
+  Result<Name> getDataFromIdx(uint32_t idx) {
     if (idx >= wasm.dataSegments.size()) {
       return in.err("data index out of bounds");
     }
-    return idx;
+    return wasm.dataSegments[idx]->name;
   }
 
-  Result<uint32_t> getDataFromName(Name name) {
-    for (uint32_t i = 0; i < wasm.dataSegments.size(); ++i) {
-      if (wasm.dataSegments[i]->name == name) {
-        return i;
-      }
+  Result<Name> getDataFromName(Name name) {
+    if (!wasm.getDataSegmentOrNull(name)) {
+      return in.err("data $" + name.toString() + " does not exist");
     }
-    return in.err("data $" + name.toString() + " does not exist");
+    return name;
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1984,7 +1982,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                   op, memarg.offset, memarg.align, lane, *ptr, *vec, *m));
   }
 
-  Result<> makeMemoryInit(Index pos, Name* mem, uint32_t data) {
+  Result<> makeMemoryInit(Index pos, Name* mem, Name data) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     auto size = pop(pos);
@@ -1996,7 +1994,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return push(pos, builder.makeMemoryInit(data, *dest, *offset, *size, *m));
   }
 
-  Result<> makeDataDrop(Index pos, uint32_t data) {
+  Result<> makeDataDrop(Index pos, Name data) {
     return push(pos, builder.makeDataDrop(data));
   }
 
@@ -2147,7 +2145,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return push(pos, builder.makeArrayNew(type, *size));
   }
 
-  Result<> makeArrayNewData(Index pos, HeapType type, uint32_t data) {
+  Result<> makeArrayNewData(Index pos, HeapType type, Name data) {
     if (!type.isArray()) {
       return in.err(pos, "expected array type annotation");
     }

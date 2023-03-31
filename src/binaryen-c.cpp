@@ -1553,14 +1553,14 @@ BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                              getMemoryName(module, memoryName)));
 }
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
-                                         uint32_t segment,
+                                         const char* segment,
                                          BinaryenExpressionRef dest,
                                          BinaryenExpressionRef offset,
                                          BinaryenExpressionRef size,
                                          const char* memoryName) {
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeMemoryInit(segment,
+      .makeMemoryInit(Name(segment),
                       (Expression*)dest,
                       (Expression*)offset,
                       (Expression*)size,
@@ -1568,9 +1568,9 @@ BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
-                                       uint32_t segment) {
+                                       const char* segment) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeDataDrop(segment));
+    Builder(*(Module*)module).makeDataDrop(Name(segment)));
 }
 
 BinaryenExpressionRef BinaryenMemoryCopy(BinaryenModuleRef module,
@@ -3483,16 +3483,16 @@ bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr) {
   return static_cast<SIMDLoadStoreLane*>(expression)->isStore();
 }
 // MemoryInit
-uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
+const char* BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<MemoryInit>());
-  return static_cast<MemoryInit*>(expression)->segment;
+  return static_cast<MemoryInit*>(expression)->segment.str.data();
 }
 void BinaryenMemoryInitSetSegment(BinaryenExpressionRef expr,
-                                  uint32_t segment) {
+                                  const char* segment) {
   auto* expression = (Expression*)expr;
   assert(expression->is<MemoryInit>());
-  static_cast<MemoryInit*>(expression)->segment = segment;
+  static_cast<MemoryInit*>(expression)->segment = Name(segment);
 }
 BinaryenExpressionRef BinaryenMemoryInitGetDest(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3531,15 +3531,16 @@ void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
   static_cast<MemoryInit*>(expression)->size = (Expression*)sizeExpr;
 }
 // DataDrop
-uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr) {
+const char* BinaryenDataDropGetSegment(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<DataDrop>());
-  return static_cast<DataDrop*>(expression)->segment;
+  return static_cast<DataDrop*>(expression)->segment.str.data();
 }
-void BinaryenDataDropSetSegment(BinaryenExpressionRef expr, uint32_t segment) {
+void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
+                                const char* segment) {
   auto* expression = (Expression*)expr;
   assert(expression->is<DataDrop>());
-  static_cast<DataDrop*>(expression)->segment = segment;
+  static_cast<DataDrop*>(expression)->segment = Name(segment);
 }
 // MemoryCopy
 BinaryenExpressionRef BinaryenMemoryCopyGetDest(BinaryenExpressionRef expr) {

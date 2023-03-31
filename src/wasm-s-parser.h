@@ -124,7 +124,9 @@ class SExpressionWasmBuilder {
 
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
+  std::vector<Name> elemSegmentNames;
   std::vector<Name> memoryNames;
+  std::vector<Name> dataSegmentNames;
   std::vector<Name> globalNames;
   std::vector<Name> tagNames;
   int functionCounter = 0;
@@ -170,7 +172,9 @@ private:
 
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
+  Name getElemSegmentName(Element& s);
   Name getMemoryName(Element& s);
+  Name getDataSegmentName(Element& s);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
