@@ -168,8 +168,9 @@ struct SignaturePruning : public Pass {
     //       in some cases, as finding a parameter is a constant and removing it
     //       can lead to another call (that receives that parameter's value) to
     //       now have constant parameters as well, and so it becomes
-    //       optimizable. We could do a topological sort here (but if this is
-    //       rare then just another cycle might be enough).
+    //       optimizable. We could do a topological sort or greatest fixed point
+    //       analysis to be optimal (that could handle a recursive call with a
+    //       constant).
     for (auto& [type, funcs] : sigFuncs) {
       auto sig = type.getSignature();
       auto& info = allInfo[type];
