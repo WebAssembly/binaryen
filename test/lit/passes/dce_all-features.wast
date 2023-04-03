@@ -1444,6 +1444,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if (result anyref)
+    ;; We should not refinalize while doing DCE. The cast should remain a
+    ;; nullable one, and the if should keep returning a nullable value. (If we
+    ;; refinalized only the if then the cast would be invalid, since we cannot
+    ;; have a nullable cast of a non-nullable input.)
+    ;;
+    ;; In other words, we can propagate unreachability in DCE, but should cause
+    ;; no other type changes.
     (ref.cast null i31
       (if (result i31ref)
         (i32.const 0)
@@ -1473,6 +1480,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $try (result anyref)
+    ;; As above, but for try.
     (try (result i31ref)
       (do
         (block (result i31ref)
