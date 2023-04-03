@@ -52,7 +52,7 @@ namespace wasm {
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
   ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
-  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
+  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"), SUB("sub");
 
 static Address getAddress(const Element* s) {
   return std::stoll(s->toString());
@@ -898,30 +898,62 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   forEachType([&](Element& elem, size_t) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
-    bool hasSupertype =
-      kind == FUNC_SUBTYPE || kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE;
-    if (kind == FUNC || kind == FUNC_SUBTYPE) {
-      builder[index] = parseSignatureDef(def, hasSupertype);
-    } else if (kind == STRUCT || kind == STRUCT_SUBTYPE) {
-      builder[index] = parseStructDef(def, index, hasSupertype);
-    } else if (kind == ARRAY || kind == ARRAY_SUBTYPE) {
-      builder[index] = parseArrayDef(def);
-    } else {
-      throw ParseException("unknown heaptype kind", kind.line, kind.col);
-    }
     Element* super = nullptr;
-    if (hasSupertype) {
-      super = def[def.size() - 1];
-      if (super->dollared()) {
-        // OK
-      } else if (kind == FUNC_SUBTYPE && super->str() == FUNC) {
-        // OK; no supertype
-        super = nullptr;
-      } else if ((kind == STRUCT_SUBTYPE || kind == ARRAY_SUBTYPE) &&
-                 super->str() == DATA) {
-        // OK; no supertype
-        super = nullptr;
+    if (kind == SUB) {
+      if (def.size() != 3) {
+        throw ParseException("invalid 'sub' form", kind.line, kind.col);
+      }
+      super = def[1];
+      Element& subtype = *def[2];
+      if (!subtype.isList() || subtype.size() < 1) {
+        throw ParseException(
+          "invalid subtype definition", subtype.line, subtype.col);
+      }
+      Element& subtypeKind = *subtype[0];
+      if (subtypeKind == FUNC) {
+        builder[index] = parseSignatureDef(subtype, 0);
+      } else if (subtypeKind == STRUCT) {
+        builder[index] = parseStructDef(subtype, index, 0);
+      } else if (subtypeKind == ARRAY) {
+        builder[index] = parseArrayDef(subtype);
       } else {
+        throw ParseException(
+          "unknown subtype kind", subtypeKind.line, subtypeKind.col);
+      }
+    } else {
+      if (kind == FUNC) {
+        builder[index] = parseSignatureDef(def, 0);
+      } else if (kind == FUNC_SUBTYPE) {
+        builder[index] = parseSignatureDef(def, 1);
+        super = def[def.size() - 1];
+        if (!super->dollared() && super->str() == FUNC) {
+          // OK; no supertype
+          super = nullptr;
+        }
+      } else if (kind == STRUCT) {
+        builder[index] = parseStructDef(def, index, 0);
+      } else if (kind == STRUCT_SUBTYPE) {
+        builder[index] = parseStructDef(def, index, 1);
+        super = def[def.size() - 1];
+        if (!super->dollared() && super->str() == DATA) {
+          // OK; no supertype
+          super = nullptr;
+        }
+      } else if (kind == ARRAY) {
+        builder[index] = parseArrayDef(def);
+      } else if (kind == ARRAY_SUBTYPE) {
+        builder[index] = parseArrayDef(def);
+        super = def[def.size() - 1];
+        if (!super->dollared() && super->str() == DATA) {
+          // OK; no supertype
+          super = nullptr;
+        }
+      } else {
+        throw ParseException("unknown heaptype kind", kind.line, kind.col);
+      }
+    }
+    if (super) {
+      if (!super->dollared()) {
         throw ParseException("unknown supertype", super->line, super->col);
       }
     } else if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
