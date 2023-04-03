@@ -35,7 +35,7 @@ void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
   indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*wasm);
-  importInfo = wasm::make_unique<ImportInfo>(*wasm);
+  importInfo = std::make_unique<ImportInfo>(*wasm);
 }
 
 void WasmBinaryWriter::write() {
@@ -3628,7 +3628,7 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
 }
 
 void WasmBinaryBuilder::readDylink(size_t payloadLen) {
-  wasm.dylinkSection = make_unique<DylinkSection>();
+  wasm.dylinkSection = std::make_unique<DylinkSection>();
 
   auto sectionPos = pos;
 
@@ -3653,7 +3653,7 @@ void WasmBinaryBuilder::readDylink0(size_t payloadLen) {
   auto sectionPos = pos;
   uint32_t lastType = 0;
 
-  wasm.dylinkSection = make_unique<DylinkSection>();
+  wasm.dylinkSection = std::make_unique<DylinkSection>();
   while (pos < sectionPos + payloadLen) {
     auto oldPos = pos;
     auto dylinkType = getU32LEB();

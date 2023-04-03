@@ -112,7 +112,7 @@ Branch::Branch(std::vector<wasm::Index>&& ValuesInit,
                wasm::Expression* CodeInit)
   : Condition(nullptr), Code(CodeInit) {
   if (ValuesInit.size() > 0) {
-    SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
+    SwitchValues = std::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
   // otherwise, it is the default
 }

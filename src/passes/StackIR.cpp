@@ -40,7 +40,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   void doWalkFunction(Function* func) {
     StackIRGenerator stackIRGen(*getModule(), func);
     stackIRGen.write();
-    func->stackIR = make_unique<StackIR>();
+    func->stackIR = std::make_unique<StackIR>();
     func->stackIR->swap(stackIRGen.getStackIR());
   }
 };
