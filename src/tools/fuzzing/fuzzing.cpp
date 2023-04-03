@@ -1088,8 +1088,13 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
-  if (type.isRef() && type.getHeapType() == HeapType::i31) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
+  if (type.isRef()) {
+    if (type.getHeapType() == HeapType::i31) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
+    }
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeRefCast);
   }
   // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
@@ -3136,6 +3141,41 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   return builder.makeRefTest(make(refType), castType);
 }
 
+Expression* TranslateToFuzzReader::makeRefCast(Type type) {
+  assert(type.isRef());
+  assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+  // As with RefTest, use possibly related types. Unlike there, we are given the
+  // output type, which is the cast type, so just generate the ref's type.
+  Type refType;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      refType = getReferenceType();
+      // They must share a bottom type in order to validate.
+      if (refType.getHeapType().getBottom() == type.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1: {
+      // Cast is a subtype of ref. We can't modify |type|, so find a supertype
+      // for the ref.
+      refType = getSuperType(type);
+      break;
+    }
+    case 2:
+      // Ref is a subtype of cast.
+      refType = getSubType(type);
+      break;
+    default:
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
+  // TODO: Fuzz unsafe casts?
+  return builder.makeRefCast(make(refType), type, RefCast::Safe);
+}
+
 Expression* TranslateToFuzzReader::makeI31New(Type type) {
   assert(type.isRef() && type.getHeapType() == HeapType::i31);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
@@ -3408,6 +3448,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
+static bool isUninhabitable(Type type) {
+  return type.isNonNullable() && type.getHeapType().isBottom();
+}
+
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -3418,21 +3462,52 @@ Type TranslateToFuzzReader::getSubType(Type type) {
   } else if (type.isRef()) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
+    auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.
-    auto uninhabitable = nullability == NonNullable && heapType.isBottom();
-    auto originalUninhabitable =
-      type.isNonNullable() && type.getHeapType().isBottom();
-    if (uninhabitable && !originalUninhabitable && !oneIn(20)) {
+    if (isUninhabitable(subType) && !isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
-    return Type(heapType, nullability);
+    return subType;
   } else {
     // This is an MVP type without subtypes.
     assert(type.isBasic());
     return type;
   }
+}
+
+Nullability TranslateToFuzzReader::getSuperType(Nullability nullability) {
+  if (nullability == Nullable) {
+    return Nullable;
+  }
+  return getNullability();
+}
+
+HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
+  // TODO cache these?
+  std::vector<HeapType> supers;
+  while (1) {
+    supers.push_back(type);
+    if (auto super = type.getSuperType()) {
+      type = *super;
+    } else {
+      break;
+    }
+  }
+  return pick(supers);
+}
+
+Type TranslateToFuzzReader::getSuperType(Type type) {
+  auto heapType = getSuperType(type.getHeapType());
+  auto nullability = getSuperType(type.getNullability());
+  auto superType = Type(heapType, nullability);
+  // As with getSubType, we want to avoid returning an uninhabitable type where
+  // possible. Here all we can do is flip the super's nullability to nullable.
+  if (isUninhabitable(superType)) {
+    superType = Type(heapType, Nullable);
+  }
+  return superType;
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
