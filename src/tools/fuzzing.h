@@ -341,6 +341,9 @@ private:
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  Nullability getSuperType(Nullability nullability);
+  HeapType getSuperType(HeapType type);
+  Type getSuperType(Type type);
 
   // Utilities
   Name getTargetName(Expression* target);

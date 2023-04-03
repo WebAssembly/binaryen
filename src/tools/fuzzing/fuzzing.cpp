@@ -3159,20 +3159,9 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // guaranteed to validate.
       [[fallthrough]];
     case 1: {
-      // Cast is a subtype of ref. We can't modify |type|, so find a supertype.
-      // TODO: cache these?
-      std::vector<Type> supers;
-      auto super = type.getHeapType();
-      while (1) {
-        // Use a random nullability while we add each super, to fuzz that too.
-        supers.push_back(Type(super, getSubType(type.getNullability())));
-        if (auto supe = super.getSuperType()) {
-          super = *supe;
-        } else {
-          break;
-        }
-      }
-      refType = pick(supers);
+      // Cast is a subtype of ref. We can't modify |type|, so find a supertype
+      // for the ref.
+      refType = getSuperType(type);
       break;
     }
     case 2:
@@ -3459,6 +3448,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
+static bool isUninhabitable(Type type) {
+  return type.isNonNullable() && type.getHeapType().isBottom();
+}
+
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -3469,13 +3462,11 @@ Type TranslateToFuzzReader::getSubType(Type type) {
   } else if (type.isRef()) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
+    auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.
-    auto uninhabitable = nullability == NonNullable && heapType.isBottom();
-    auto originalUninhabitable =
-      type.isNonNullable() && type.getHeapType().isBottom();
-    if (uninhabitable && !originalUninhabitable && !oneIn(20)) {
+    if (isUninhabitable(subType) && !isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
     return Type(heapType, nullability);
@@ -3484,6 +3475,40 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     assert(type.isBasic());
     return type;
   }
+}
+
+Nullability TranslateToFuzzReader::getSuperType(Nullability nullability) {
+  if (nullability == Nullable) {
+    return Nullable;
+  }
+  return getNullability();
+}
+
+HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
+  // TODO cache these?
+  std::vector<HeapType> supers;
+  while (1) {
+    // Use a random nullability while we add each super, to fuzz that too.
+    supers.push_back(type);
+    if (auto super = type.getSuperType()) {
+      type = *super;
+    } else {
+      break;
+    }
+  }
+  return pick(supers);
+}
+
+Type TranslateToFuzzReader::getSuperType(Type type) {
+  auto heapType = getSuperType(type.getHeapType());
+  auto nullability = getSubType(type.getNullability());
+  auto superType = Type(heapType, nullability);
+  // As with getSubType, we want to avoid returning an uninhabitable type where
+  // possible. Here all we can do is flip the super's nullability to nullable.
+  if (isUninhabitable(superType)) {
+    superType = Type(heapType, Nullable);
+  }
+  return superType;
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
