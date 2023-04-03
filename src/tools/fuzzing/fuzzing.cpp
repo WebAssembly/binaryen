@@ -3488,7 +3488,6 @@ HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
   // TODO cache these?
   std::vector<HeapType> supers;
   while (1) {
-    // Use a random nullability while we add each super, to fuzz that too.
     supers.push_back(type);
     if (auto super = type.getSuperType()) {
       type = *super;
