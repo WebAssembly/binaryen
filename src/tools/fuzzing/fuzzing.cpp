@@ -3469,7 +3469,7 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     if (isUninhabitable(subType) && !isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
-    return Type(heapType, nullability);
+    return subType;
   } else {
     // This is an MVP type without subtypes.
     assert(type.isBasic());
