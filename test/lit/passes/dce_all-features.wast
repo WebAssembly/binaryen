@@ -1428,3 +1428,73 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (func $if (type $none_=>_anyref) (result anyref)
+  ;; CHECK-NEXT:  (ref.cast null i31
+  ;; CHECK-NEXT:   (if (result i31ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if (result anyref)
+    ;; We should not refinalize while doing DCE. The cast should remain a
+    ;; nullable one, and the if should keep returning a nullable value. (If we
+    ;; refinalized only the if then the cast would be invalid, since we cannot
+    ;; have a nullable cast of a non-nullable input.)
+    ;;
+    ;; In other words, we can propagate unreachability in DCE, but should cause
+    ;; no other type changes.
+    (ref.cast null i31
+      (if (result i31ref)
+        (i32.const 0)
+        (block (result i31ref)
+          (unreachable)
+        )
+        (i31.new
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try (type $none_=>_anyref) (result anyref)
+  ;; CHECK-NEXT:  (try $try (result i31ref)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $try)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try (result anyref)
+    ;; As above, but for try.
+    (try (result i31ref)
+      (do
+        (block (result i31ref)
+          (drop
+            (call $try)
+          )
+          (unreachable)
+        )
+      )
+      (catch_all
+        (i31.new
+          (i32.const 42)
+        )
+      )
+    )
+  )
+)
