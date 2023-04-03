@@ -926,7 +926,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == FUNC_SUBTYPE) {
         builder[index] = parseSignatureDef(def, 1);
         super = def[def.size() - 1];
-        if (super->str() == FUNC) {
+        if (!super->dollared() && super->str() == FUNC) {
           // OK; no supertype
           super = nullptr;
         }
@@ -935,7 +935,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == STRUCT_SUBTYPE) {
         builder[index] = parseStructDef(def, index, 1);
         super = def[def.size() - 1];
-        if (super->str() == DATA) {
+        if (!super->dollared() && super->str() == DATA) {
           // OK; no supertype
           super = nullptr;
         }
@@ -944,7 +944,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == ARRAY_SUBTYPE) {
         builder[index] = parseArrayDef(def);
         super = def[def.size() - 1];
-        if (super->str() == DATA) {
+        if (!super->dollared() && super->str() == DATA) {
           // OK; no supertype
           super = nullptr;
         }
