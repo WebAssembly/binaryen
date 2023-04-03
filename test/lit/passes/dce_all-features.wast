@@ -1428,3 +1428,19 @@
     )
   )
 )
+
+(module
+  (func $foo (result anyref)
+    (ref.cast null i31
+      (if (result (ref null i31))
+        (i32.const 0)
+        (block (result (ref null i31))
+          (unreachable)
+        )
+        (i31.new
+          (i32.const 42)
+        )
+      )
+    )
+  )
+)
