@@ -3500,7 +3500,7 @@ HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
 
 Type TranslateToFuzzReader::getSuperType(Type type) {
   auto heapType = getSuperType(type.getHeapType());
-  auto nullability = getSubType(type.getNullability());
+  auto nullability = getSuperType(type.getNullability());
   auto superType = Type(heapType, nullability);
   // As with getSubType, we want to avoid returning an uninhabitable type where
   // possible. Here all we can do is flip the super's nullability to nullable.
