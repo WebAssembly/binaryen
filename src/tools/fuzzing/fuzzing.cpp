@@ -824,6 +824,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
         // nesting of labels, but we'll fix that up later.)
+        // TODO: pick a subtype of the current type
         replaceCurrent(parent.make(curr->type));
       }
     }
@@ -1090,9 +1091,13 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
   if (type.isRef()) {
-    if (type.getHeapType() == HeapType::i31) {
+    auto heapType = type.getHeapType();
+    if (heapType.isBasic()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeI31New);
+                  &Self::makeBasicRef);
+    } else {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeCompoundRef);
     }
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefCast);
@@ -2096,9 +2101,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
       return builder.makeRefNull(type.getHeapType());
     }
     if (type.getHeapType().isBasic()) {
-      return makeConstBasicRef(type);
+      return makeBasicRef(type);
     } else {
-      return makeConstCompoundRef(type);
+      return makeCompoundRef(type);
     }
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
@@ -2112,7 +2117,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
   }
 }
 
-Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
+Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
@@ -2216,7 +2221,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   WASM_UNREACHABLE("invalid basic ref type");
 }
 
-Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
+Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   assert(!heapType.isBasic());
@@ -2250,28 +2255,43 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
+  // When we make children, they must be trivial if we are not in a function
+  // context.
+  auto makeChild = [&](Type type) {
+    return funcContext ? make(type) : makeTrivial(type);
+  };
+
   if (heapType.isSignature()) {
     return makeRefFuncConst(type);
   } else if (type.isStruct()) {
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
-    // TODO: use non-default values randomly even when not necessary, sometimes
-    if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
-          return !field.type.isDefaultable();
-        })) {
-      // There is a nondefaultable field, which we must create.
+    // If there is a nondefaultable field, we must provide the value and not
+    // depend on defaults. Also do that randomly half the time.
+    if (std::any_of(
+          fields.begin(),
+          fields.end(),
+          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+        oneIn(2)) {
       for (auto& field : fields) {
-        // TODO: when in a function context, we don't need to be trivial.
-        values.push_back(makeTrivial(field.type));
+        values.push_back(makeChild(field.type));
+      }
+      // Add more nesting manually, as we can easily get exponential blowup
+      // here. This nesting makes it much less likely for a recursive data
+      // structure to end up as a massive tree of struct.news, since the nesting
+      // limitation code at the top of this function will kick in.
+      if (!values.empty()) {
+        // Subtract 1 since if there is a single value there cannot be
+        // exponential blowup.
+        nester.add(values.size() - 1);
       }
     }
     return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
     auto element = heapType.getArray().element;
     Expression* init = nullptr;
-    if (!element.type.isDefaultable()) {
-      // TODO: when in a function context, we don't need to be trivial.
-      init = makeTrivial(element.type);
+    if (!element.type.isDefaultable() || oneIn(2)) {
+      init = makeChild(element.type);
     }
     auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
     return builder.makeArrayNew(type.getHeapType(), count, init);
@@ -3175,13 +3195,6 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   }
   // TODO: Fuzz unsafe casts?
   return builder.makeRefCast(make(refType), type, RefCast::Safe);
-}
-
-Expression* TranslateToFuzzReader::makeI31New(Type type) {
-  assert(type.isRef() && type.getHeapType() == HeapType::i31);
-  assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  auto* value = make(Type::i32);
-  return builder.makeI31New(value);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {

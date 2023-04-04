@@ -1,49 +1,43 @@
 total
- [exports]      : 6       
- [funcs]        : 10      
+ [exports]      : 5       
+ [funcs]        : 18      
  [globals]      : 16      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 2       
+ [table-data]   : 4       
  [tables]       : 1       
- [tags]         : 0       
- [total]        : 563     
- [vars]         : 7       
- ArrayNew       : 6       
- ArrayNewFixed  : 6       
+ [tags]         : 2       
+ [total]        : 746     
+ [vars]         : 33      
+ ArrayNew       : 7       
+ AtomicFence    : 1       
  AtomicRMW      : 1       
- Binary         : 78      
- Block          : 63      
- Break          : 5       
- Call           : 18      
+ Binary         : 84      
+ Block          : 91      
+ Break          : 3       
+ Call           : 32      
  CallIndirect   : 1       
- CallRef        : 1       
- Const          : 119     
- DataDrop       : 1       
- Drop           : 6       
- GlobalGet      : 28      
- GlobalSet      : 26      
- I31Get         : 1       
- I31New         : 2       
- If             : 21      
- Load           : 22      
- LocalGet       : 43      
- LocalSet       : 26      
- Loop           : 4       
- MemoryInit     : 1       
- Nop            : 10      
- RefAs          : 2       
- RefCast        : 1       
- RefEq          : 2       
- RefFunc        : 7       
- RefNull        : 6       
- RefTest        : 1       
- Return         : 8       
- SIMDExtract    : 1       
- Select         : 1       
- Store          : 3       
- StructNew      : 2       
- TupleMake      : 6       
- Unary          : 20      
- Unreachable    : 14      
+ CallRef        : 2       
+ Const          : 153     
+ Drop           : 11      
+ GlobalGet      : 48      
+ GlobalSet      : 46      
+ I31New         : 1       
+ If             : 29      
+ Load           : 25      
+ LocalGet       : 48      
+ LocalSet       : 30      
+ Loop           : 7       
+ Nop            : 5       
+ RefFunc        : 18      
+ RefIsNull      : 3       
+ RefNull        : 14      
+ Return         : 6       
+ SIMDExtract    : 2       
+ Select         : 4       
+ StructNew      : 3       
+ TupleExtract   : 1       
+ TupleMake      : 12      
+ Unary          : 32      
+ Unreachable    : 26      
