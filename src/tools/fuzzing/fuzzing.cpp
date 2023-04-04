@@ -2279,7 +2279,11 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       // here. This nesting makes it much less likely for a recursive data
       // structure to end up as a massive tree of struct.news, since the nesting
       // limitation code at the top of this function will kick in.
-      nester.add(values.size());
+      if (!values.empty()) {
+        // Subtract 1 since if there is a single value there cannot be
+        // exponential blowup.
+        nester.add(values.size() - 1);
+      }
     }
     return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
