@@ -216,4 +216,21 @@
    )
   )
  )
+
+ (func $replace-i31-local (result i32)
+  (local $local i31ref)
+  (i32.add
+   (unreachable)
+   (ref.test i31
+    (ref.cast null i31
+     ;; This local.get is in unreachable code, and coalesce-locals will remove
+     ;; it in order to avoid using the local index at all. While doing so it
+     ;; must emit something of the exact same type so validation still works
+     ;; (we can't turn this into a non-nullable reference, in particular - that
+     ;; would hit a validation error as the cast outside of us is nullable).
+     (local.get $local)
+    )
+   )
+  )
+ )
 )
