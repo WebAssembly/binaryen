@@ -2266,9 +2266,11 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     std::vector<Expression*> values;
     // If there is a nondefaultable field, we must provide the value and not
     // depend on defaults. Also do that randomly half the time.
-    if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
-          return !field.type.isDefaultable();
-        }) || oneIn(2)) {
+    if (std::any_of(
+          fields.begin(),
+          fields.end(),
+          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+        oneIn(2)) {
       for (auto& field : fields) {
         values.push_back(makeChild(field.type));
       }
