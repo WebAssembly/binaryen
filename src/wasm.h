@@ -2239,6 +2239,7 @@ public:
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeTags(std::function<bool(Tag*)> pred);
 
+  void updateFunctionsMap();
   void updateDataSegmentsMap();
   void updateMaps();
 

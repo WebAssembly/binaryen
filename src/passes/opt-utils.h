@@ -53,7 +53,7 @@ inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
     func.release();
   }
   all.swap(module->functions);
-  module->updateMaps();
+  module->updateFunctionsMap();
 }
 
 struct FunctionRefReplacer
