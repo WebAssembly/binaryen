@@ -353,15 +353,16 @@
 )
 (module ;; atomic.fence and data.drop do not use a memory, so should not keep the memory alive.
   (memory $0 (shared 1 1))
+  (data "")
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (data "")
-  (data "")
+  ;; CHECK:      (data $0 "")
+
   ;; CHECK:      (export "fake-user" (func $user))
   (export "fake-user" $user)
   ;; CHECK:      (func $user (type $none_=>_none)
   ;; CHECK-NEXT:  (atomic.fence)
-  ;; CHECK-NEXT:  (data.drop 0)
+  ;; CHECK-NEXT:  (data.drop $0)
   ;; CHECK-NEXT: )
   (func $user
     (atomic.fence)
@@ -683,6 +684,9 @@
 )
 (module
  ;; Nothing should break if the unused segments precede the used segments.
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $array (array funcref))
  (type $array (array funcref))
 
  (memory $mem 1 1)
@@ -691,9 +695,22 @@
  (data $unused "")
  (elem $unused func)
 
+ ;; CHECK:      (data $used "")
  (data $used "")
+ ;; CHECK:      (elem $used func)
  (elem $used func)
 
+ ;; CHECK:      (export "user" (func $user))
+
+ ;; CHECK:      (func $user (type $none_=>_none)
+ ;; CHECK-NEXT:  (data.drop $used)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.new_elem $array $used
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $user (export "user")
   (data.drop 1)
   (drop
