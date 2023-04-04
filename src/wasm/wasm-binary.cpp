@@ -651,6 +651,18 @@ uint32_t WasmBinaryWriter::getTagIndex(Name name) const {
   return it->second;
 }
 
+uint32_t WasmBinaryWriter::getDataSegmentIndex(Name name) const {
+  auto it = indexes.dataIndexes.find(name);
+  assert(it != indexes.dataIndexes.end());
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getElementSegmentIndex(Name name) const {
+  auto it = indexes.elemIndexes.find(name);
+  assert(it != indexes.elemIndexes.end());
+  return it->second;
+}
+
 uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   auto it = indexedTypes.indices.find(type);
 #ifndef NDEBUG
@@ -2304,6 +2316,20 @@ Name WasmBinaryBuilder::getTagName(Index index) {
   return wasm.tags[index]->name;
 }
 
+Name WasmBinaryBuilder::getDataName(Index index) {
+  if (index >= wasm.dataSegments.size()) {
+    throwError("invalid data segment index");
+  }
+  return wasm.dataSegments[index]->name;
+}
+
+Name WasmBinaryBuilder::getElemName(Index index) {
+  if (index >= wasm.elementSegments.size()) {
+    throwError("invalid element segment index");
+  }
+  return wasm.elementSegments[index]->name;
+}
+
 Memory* WasmBinaryBuilder::getMemory(Index index) {
   if (index < wasm.memories.size()) {
     return wasm.memories[index].get();
@@ -3113,6 +3139,16 @@ void WasmBinaryBuilder::processNames() {
   for (auto& [index, refs] : tagRefs) {
     for (auto* ref : refs) {
       *ref = getTagName(index);
+    }
+  }
+  for (auto& [index, refs] : dataRefs) {
+    for (auto* ref : refs) {
+      *ref = getDataName(index);
+    }
+  }
+  for (auto& [index, refs] : elemRefs) {
+    for (auto* ref : refs) {
+      *ref = getElemName(index);
     }
   }
 
@@ -5190,10 +5226,11 @@ bool WasmBinaryBuilder::maybeVisitMemoryInit(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->offset = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  curr->segment = getU32LEB();
+  Index segIdx = getU32LEB();
+  dataRefs[segIdx].push_back(&curr->segment);
   Index memIdx = getU32LEB();
-  curr->finalize();
   memoryRefs[memIdx].push_back(&curr->memory);
+  curr->finalize();
   out = curr;
   return true;
 }
@@ -5203,7 +5240,8 @@ bool WasmBinaryBuilder::maybeVisitDataDrop(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<DataDrop>();
-  curr->segment = getU32LEB();
+  Index segIdx = getU32LEB();
+  dataRefs[segIdx].push_back(&curr->segment);
   curr->finalize();
   out = curr;
   return true;
@@ -7080,10 +7118,17 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
       code == BinaryConsts::ArrayNewElem) {
     auto op = code == BinaryConsts::ArrayNewData ? NewData : NewElem;
     auto heapType = getIndexedHeapType();
-    auto seg = getU32LEB();
+    auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
-    out = Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
+    auto* built =
+      Builder(wasm).makeArrayNewSeg(op, heapType, Name(), offset, size);
+    if (op == NewData) {
+      dataRefs[segIdx].push_back(&built->segment);
+    } else {
+      elemRefs[segIdx].push_back(&built->segment);
+    }
+    out = built;
     return true;
   }
   return false;

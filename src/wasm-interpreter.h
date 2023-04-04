@@ -2552,7 +2552,7 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
-  std::unordered_set<size_t> droppedSegments;
+  std::unordered_set<Name> droppedSegments;
 
   struct TableInterfaceInfo {
     // The external interface in which the table is defined.
@@ -2642,14 +2642,14 @@ private:
 
       MemoryInit init;
       init.memory = segment->memory;
-      init.segment = i;
+      init.segment = segment->name;
       init.dest = segment->offset;
       init.offset = &offset;
       init.size = &size;
       init.finalize();
 
       DataDrop drop;
-      drop.segment = i;
+      drop.segment = segment->name;
       drop.finalize();
 
       self()->visit(&init);
@@ -3397,8 +3397,7 @@ public:
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
 
-    assert(curr->segment < wasm.dataSegments.size());
-    auto& segment = wasm.dataSegments[curr->segment];
+    auto* segment = wasm.getDataSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
@@ -3543,9 +3542,8 @@ public:
 
     switch (curr->op) {
       case NewData: {
-        assert(curr->segment < wasm.dataSegments.size());
         assert(elemType.isNumber());
-        const auto& seg = *wasm.dataSegments[curr->segment];
+        const auto& seg = *wasm.getDataSegment(curr->segment);
         auto elemBytes = element.getByteSize();
         auto end = offset + size * elemBytes;
         if ((size != 0ull && droppedSegments.count(curr->segment)) ||
@@ -3560,8 +3558,7 @@ public:
         break;
       }
       case NewElem: {
-        assert(curr->segment < wasm.elementSegments.size());
-        const auto& seg = *wasm.elementSegments[curr->segment];
+        const auto& seg = *wasm.getElementSegment(curr->segment);
         auto end = offset + size;
         // TODO: Handle dropped element segments once we support those.
         if (end > seg.data.size()) {

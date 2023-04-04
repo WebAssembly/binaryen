@@ -510,6 +510,19 @@ Name SExpressionWasmBuilder::getTableName(Element& s) {
   }
 }
 
+Name SExpressionWasmBuilder::getElemSegmentName(Element& s) {
+  if (s.dollared()) {
+    return s.str();
+  } else {
+    // index
+    size_t offset = parseIndex(s);
+    if (offset >= elemSegmentNames.size()) {
+      throw ParseException("unknown elem segment", s.line, s.col);
+    }
+    return elemSegmentNames[offset];
+  }
+}
+
 bool SExpressionWasmBuilder::isMemory64(Name memoryName) {
   auto* memory = wasm.getMemoryOrNull(memoryName);
   if (!memory) {
@@ -532,6 +545,19 @@ Name SExpressionWasmBuilder::getMemoryName(Element& s) {
     // index
     size_t offset = parseIndex(s);
     return getMemoryNameAtIdx(offset);
+  }
+}
+
+Name SExpressionWasmBuilder::getDataSegmentName(Element& s) {
+  if (s.dollared()) {
+    return s.str();
+  } else {
+    // index
+    size_t offset = parseIndex(s);
+    if (offset >= dataSegmentNames.size()) {
+      throw ParseException("unknown data segment", s.line, s.col);
+    }
+    return dataSegmentNames[offset];
   }
 }
 
@@ -2289,7 +2315,7 @@ Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
     memory = getMemoryNameAtIdx(0);
   }
   ret->memory = memory;
-  ret->segment = parseIndex(*s[i++]);
+  ret->segment = getDataSegmentName(*s[i++]);
   ret->dest = parseExpression(s[i++]);
   ret->offset = parseExpression(s[i++]);
   ret->size = parseExpression(s[i]);
@@ -2299,7 +2325,7 @@ Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeDataDrop(Element& s) {
   auto ret = allocator.alloc<DataDrop>();
-  ret->segment = parseIndex(*s[1]);
+  ret->segment = getDataSegmentName(*s[1]);
   ret->finalize();
   return ret;
 }
@@ -2951,7 +2977,8 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
 Expression* SExpressionWasmBuilder::makeArrayNewSeg(Element& s,
                                                     ArrayNewSegOp op) {
   auto heapType = parseHeapType(*s[1]);
-  Index seg = parseIndex(*s[2]);
+  Name seg =
+    op == NewData ? getDataSegmentName(*s[2]) : getElemSegmentName(*s[2]);
   Expression* offset = parseExpression(*s[3]);
   Expression* size = parseExpression(*s[4]);
   return Builder(wasm).makeArrayNewSeg(op, heapType, seg, offset, size);
@@ -3312,8 +3339,9 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       } else {
         offset->set(Literal(int32_t(0)));
       }
-      auto seg = Builder::makeDataSegment(
-        Name::fromInt(dataCounter++), memory->name, false, offset);
+      auto segName = Name::fromInt(dataCounter++);
+      auto seg = Builder::makeDataSegment(segName, memory->name, false, offset);
+      dataSegmentNames.push_back(segName);
       parseInnerData(inner, j, seg);
       memory->initial = seg->data.size();
       wasm.addDataSegment(std::move(seg));
@@ -3358,6 +3386,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
                                               data.data(),
                                               data.size());
       segment->hasExplicitName = false;
+      dataSegmentNames.push_back(segment->name);
       wasm.addDataSegment(std::move(segment));
     } else {
       auto segment = Builder::makeDataSegment(
@@ -3382,6 +3411,7 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     name = s[i++]->str();
     hasExplicitName = true;
   }
+  dataSegmentNames.push_back(name);
 
   if (s[i]->isList()) {
     // Optional (memory <memoryidx>)
@@ -3764,6 +3794,7 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     auto segment = std::make_unique<ElementSegment>(table->name, offset);
     segment->setName(name, hasExplicitName);
+    elemSegmentNames.push_back(name);
     parseElemFinish(s, segment, i, s[i]->isList());
     return;
   }
@@ -3772,6 +3803,7 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     name = s[i++]->str();
     hasExplicitName = true;
   }
+  elemSegmentNames.push_back(name);
   if (s[i]->isStr() && s[i]->str() == DECLARE) {
     // We don't store declared segments in the IR
     return;

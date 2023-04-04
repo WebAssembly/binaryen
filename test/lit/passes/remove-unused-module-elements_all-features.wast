@@ -15,7 +15,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $called_indirect)
+  ;; CHECK:      (elem $0 (i32.const 0) $called_indirect)
 
   ;; CHECK:      (export "memory" (memory $0))
 
@@ -183,7 +183,7 @@
   (import "env" "table2" (table $1 1 1 funcref))
   (elem (table $1) (offset (i32.const 0)) func)
   (elem (table $1) (offset (i32.const 0)) func $f)
-  ;; CHECK:      (elem (i32.const 0) $f)
+  ;; CHECK:      (elem $1 (i32.const 0) $f)
 
   ;; CHECK:      (func $f (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
@@ -219,9 +219,9 @@
   (import "env" "table" (table 1 funcref))
   (data (i32.const 1) "hello, world!")
   (elem (i32.const 0) $waka)
-  ;; CHECK:      (data (i32.const 1) "hello, world!")
+  ;; CHECK:      (data $0 (i32.const 1) "hello, world!")
 
-  ;; CHECK:      (elem (i32.const 0) $waka)
+  ;; CHECK:      (elem $0 (i32.const 0) $waka)
 
   ;; CHECK:      (func $waka (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
@@ -423,9 +423,9 @@
   (import "env" "tableBase" (global $tableBase i32)) ;; used in init
   (data (global.get $memoryBase) "hello, world!")
   (elem (global.get $tableBase) $waka)
-  ;; CHECK:      (data (global.get $memoryBase) "hello, world!")
+  ;; CHECK:      (data $0 (global.get $memoryBase) "hello, world!")
 
-  ;; CHECK:      (elem (global.get $tableBase) $waka)
+  ;; CHECK:      (elem $0 (global.get $tableBase) $waka)
 
   ;; CHECK:      (func $waka (type $none_=>_none)
   ;; CHECK-NEXT:  (nop)
@@ -560,7 +560,7 @@
  ;; CHECK:      (import "env" "table" (table $timport$0 6 6 funcref))
  (import "env" "table" (table 6 6 funcref))
  (elem (i32.const 0) $0)
- ;; CHECK:      (elem (i32.const 0) $0)
+ ;; CHECK:      (elem $0 (i32.const 0) $0)
 
  ;; CHECK:      (func $0 (type $0) (param $var$0 f64) (result f64)
  ;; CHECK-NEXT:  (if (result f64)

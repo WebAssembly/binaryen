@@ -31,7 +31,7 @@
   (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don't know where it will go")
 )
 
-;; CHECK:      (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
+;; CHECK:      (data $0 (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
 (module
   (memory 1 1)
 
@@ -47,19 +47,19 @@
 
   ;; CHECK:      (memory $0 1 1)
 
-  ;; CHECK:      (data (i32.const 1024) "waka this CAN be optimized")
+  ;; CHECK:      (data $0 (i32.const 1024) "waka this CAN be optimized")
 
-  ;; CHECK:      (data (i32.const 1107) "we DO know where it will go")
+  ;; CHECK:      (data $0.1 (i32.const 1107) "we DO know where it will go")
 
-  ;; CHECK:      (data (i32.const 2057) "zeros before")
+  ;; CHECK:      (data $1 (i32.const 2057) "zeros before")
 
-  ;; CHECK:      (data (i32.const 3000) "zeros after")
+  ;; CHECK:      (data $2 (i32.const 3000) "zeros after")
 
-  ;; CHECK:      (data (i32.const 4000) "zeros\00in\00the\00middle")
+  ;; CHECK:      (data $3 (i32.const 4000) "zeros\00in\00the\00middle")
 
-  ;; CHECK:      (data (i32.const 4035) "nice skip here")
+  ;; CHECK:      (data $3.1 (i32.const 4035) "nice skip here")
 
-  ;; CHECK:      (data (i32.const 4066) "another\00but no")
+  ;; CHECK:      (data $3.2 (i32.const 4066) "another\00but no")
 
   ;; CHECK:      (func $nonzero-size-init-of-active-will-trap (type $none_=>_none)
   ;; CHECK-NEXT:  (block
@@ -146,40 +146,41 @@
 
   (data "not referenced, delete me") ;; 0
 
-  ;; CHECK:      (data "zeroes at start")
-
-  ;; CHECK:      (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start")
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start") ;; 1
 
-  ;; CHECK:      (data "\00\00\00few zeroes at start")
+  ;; CHECK:      (data $1 "zeroes at start")
 
-  ;; CHECK:      (data "zeroes at end")
+  ;; CHECK:      (data $2 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start")
 
-  ;; CHECK:      (data "zeroes at end\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
+  ;; CHECK:      (data $3 "\00\00\00few zeroes at start")
 
-  ;; CHECK:      (data "few zeroes at end\00\00\00")
+  ;; CHECK:      (data $4 "zeroes at end")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $5 "zeroes at end\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
 
-  ;; CHECK:      (data "in middle")
+  ;; CHECK:      (data $6 "few zeroes at end\00\00\00")
 
-  ;; CHECK:      (data "zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00in middle")
+  ;; CHECK:      (data $7 "zeroes")
 
-  ;; CHECK:      (data "few zeroes\00\00\00in middle")
+  ;; CHECK:      (data $7.1 "in middle")
 
-  ;; CHECK:      (data "multiple")
+  ;; CHECK:      (data $8 "zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00in middle")
 
-  ;; CHECK:      (data "spans")
+  ;; CHECK:      (data $9 "few zeroes\00\00\00in middle")
 
-  ;; CHECK:      (data "of zeroes")
+  ;; CHECK:      (data $10 "multiple")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $10.1 "spans")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $10.2 "of zeroes")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $11 "even")
 
-  ;; CHECK:      (data "no zeroes")
+  ;; CHECK:      (data $11.1 "more")
+
+  ;; CHECK:      (data $11.2 "zeroes")
+
+  ;; CHECK:      (data $13 "no zeroes")
 
   ;; CHECK:      (func $zeroes-at-start (type $none_=>_none)
   ;; CHECK-NEXT:  (block
@@ -192,7 +193,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 0
+  ;; CHECK-NEXT:   (memory.init $1
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 15)
@@ -202,7 +203,7 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 0)
+  ;; CHECK-NEXT:   (data.drop $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zeroes-at-start
@@ -218,27 +219,27 @@
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start") ;; 2
 
   ;; CHECK:      (func $zeroes-at-start-not-split (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 1
+  ;; CHECK-NEXT:  (memory.init $2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 1
+  ;; CHECK-NEXT:  (memory.init $2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 1
+  ;; CHECK-NEXT:  (memory.init $2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 1
+  ;; CHECK-NEXT:  (memory.init $2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 1)
+  ;; CHECK-NEXT:  (data.drop $2)
   ;; CHECK-NEXT: )
   (func $zeroes-at-start-not-split
     (memory.init 2
@@ -267,12 +268,12 @@
   (data "\00\00\00few zeroes at start") ;; 3
 
   ;; CHECK:      (func $few-zeroes-at-start (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 2
+  ;; CHECK-NEXT:  (memory.init $3
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 22)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 2)
+  ;; CHECK-NEXT:  (data.drop $3)
   ;; CHECK-NEXT: )
   (func $few-zeroes-at-start
     (memory.init 3
@@ -287,7 +288,7 @@
 
   ;; CHECK:      (func $zeroes-at-end (type $none_=>_none)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (memory.init 3
+  ;; CHECK-NEXT:   (memory.init $4
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 13)
@@ -298,7 +299,7 @@
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 3)
+  ;; CHECK-NEXT:  (data.drop $4)
   ;; CHECK-NEXT: )
   (func $zeroes-at-end
     (memory.init 4
@@ -312,27 +313,27 @@
   (data "zeroes at end\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 5
 
   ;; CHECK:      (func $zeroes-at-end-not-split (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 4
+  ;; CHECK-NEXT:  (memory.init $5
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 4
+  ;; CHECK-NEXT:  (memory.init $5
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 4
+  ;; CHECK-NEXT:  (memory.init $5
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 4
+  ;; CHECK-NEXT:  (memory.init $5
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 4)
+  ;; CHECK-NEXT:  (data.drop $5)
   ;; CHECK-NEXT: )
   (func $zeroes-at-end-not-split
     (memory.init 5
@@ -361,12 +362,12 @@
   (data "few zeroes at end\00\00\00") ;; 6
 
   ;; CHECK:      (func $few-zeroes-at-end (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 5
+  ;; CHECK-NEXT:  (memory.init $6
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 5)
+  ;; CHECK-NEXT:  (data.drop $6)
   ;; CHECK-NEXT: )
   (func $few-zeroes-at-end
     (memory.init 6
@@ -381,7 +382,7 @@
 
   ;; CHECK:      (func $zeroes-in-middle (type $none_=>_none)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (memory.init 6
+  ;; CHECK-NEXT:   (memory.init $7
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -391,15 +392,15 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 7
+  ;; CHECK-NEXT:   (memory.init $7.1
   ;; CHECK-NEXT:    (i32.const 36)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 9)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (data.drop 6)
-  ;; CHECK-NEXT:   (data.drop 7)
+  ;; CHECK-NEXT:   (data.drop $7)
+  ;; CHECK-NEXT:   (data.drop $7.1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zeroes-in-middle
@@ -414,17 +415,17 @@
   (data "zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00in middle") ;; 8
 
   ;; CHECK:      (func $zeroes-in-middle-not-split (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 8
+  ;; CHECK-NEXT:  (memory.init $8
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 35)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (memory.init 8
+  ;; CHECK-NEXT:  (memory.init $8
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 8)
+  ;; CHECK-NEXT:  (data.drop $8)
   ;; CHECK-NEXT: )
   (func $zeroes-in-middle-not-split
     (memory.init 8
@@ -443,12 +444,12 @@
   (data "few zeroes\00\00\00in middle") ;; 9
 
   ;; CHECK:      (func $few-zeroes-in-middle (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 9
+  ;; CHECK-NEXT:  (memory.init $9
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 22)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 9)
+  ;; CHECK-NEXT:  (data.drop $9)
   ;; CHECK-NEXT: )
   (func $few-zeroes-in-middle
     (memory.init 9
@@ -463,7 +464,7 @@
 
   ;; CHECK:      (func $multiple-spans-of-zeroes (type $none_=>_none)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (memory.init 10
+  ;; CHECK-NEXT:   (memory.init $10
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 8)
@@ -473,7 +474,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 11
+  ;; CHECK-NEXT:   (memory.init $10.1
   ;; CHECK-NEXT:    (i32.const 38)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 5)
@@ -483,16 +484,16 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 12
+  ;; CHECK-NEXT:   (memory.init $10.2
   ;; CHECK-NEXT:    (i32.const 73)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 9)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (data.drop 10)
-  ;; CHECK-NEXT:   (data.drop 11)
-  ;; CHECK-NEXT:   (data.drop 12)
+  ;; CHECK-NEXT:   (data.drop $10)
+  ;; CHECK-NEXT:   (data.drop $10.1)
+  ;; CHECK-NEXT:   (data.drop $10.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $multiple-spans-of-zeroes
@@ -517,7 +518,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 13
+  ;; CHECK-NEXT:   (memory.init $11
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -527,7 +528,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 14
+  ;; CHECK-NEXT:   (memory.init $11.1
   ;; CHECK-NEXT:    (i32.const 64)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -537,7 +538,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 15
+  ;; CHECK-NEXT:   (memory.init $11.2
   ;; CHECK-NEXT:    (i32.const 98)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -552,9 +553,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 13)
-  ;; CHECK-NEXT:   (data.drop 14)
-  ;; CHECK-NEXT:   (data.drop 15)
+  ;; CHECK-NEXT:   (data.drop $11)
+  ;; CHECK-NEXT:   (data.drop $11.1)
+  ;; CHECK-NEXT:   (data.drop $11.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $even-more-zeroes
@@ -596,12 +597,12 @@
   (data "no zeroes") ;; 13
 
   ;; CHECK:      (func $no-zeroes (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 16
+  ;; CHECK-NEXT:  (memory.init $13
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 9)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 16)
+  ;; CHECK-NEXT:  (data.drop $13)
   ;; CHECK-NEXT: )
   (func $no-zeroes
     (memory.init 13
@@ -688,70 +689,71 @@
   (memory $0 2048 2048)
   (import "env" "param" (global $param i32))
 
-  ;; CHECK:      (data "even")
-
-  ;; CHECK:      (data "more")
-
-  ;; CHECK:      (data "zeroes")
-
-  ;; CHECK:      (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 0
 
-  ;; CHECK:      (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
+  ;; CHECK:      (data $0 "even")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $0.1 "more")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $0.2 "zeroes")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $1 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $2 "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $3 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $3.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $3.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $4 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $4.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $4.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $5 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $5.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $5.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $6 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $6.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $6.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $7 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $7.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $7.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $8 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $8.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $8.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $9 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $9.1 "more")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $9.2 "zeroes")
 
-  ;; CHECK:      (data "more")
+  ;; CHECK:      (data $10 "even")
 
-  ;; CHECK:      (data "zeroes")
+  ;; CHECK:      (data $10.1 "more")
+
+  ;; CHECK:      (data $10.2 "zeroes")
+
+  ;; CHECK:      (data $14 "even")
+
+  ;; CHECK:      (data $14.1 "more")
+
+  ;; CHECK:      (data $14.2 "zeroes")
 
   ;; CHECK:      (func $nonconst-dest (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
@@ -768,7 +770,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 0
+  ;; CHECK-NEXT:   (memory.init $0
   ;; CHECK-NEXT:    (i32.add
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 30)
@@ -784,7 +786,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 1
+  ;; CHECK-NEXT:   (memory.init $0.1
   ;; CHECK-NEXT:    (i32.add
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 64)
@@ -800,7 +802,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 2
+  ;; CHECK-NEXT:   (memory.init $0.2
   ;; CHECK-NEXT:    (i32.add
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 98)
@@ -821,9 +823,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 0)
-  ;; CHECK-NEXT:   (data.drop 1)
-  ;; CHECK-NEXT:   (data.drop 2)
+  ;; CHECK-NEXT:   (data.drop $0)
+  ;; CHECK-NEXT:   (data.drop $0.1)
+  ;; CHECK-NEXT:   (data.drop $0.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nonconst-dest
@@ -838,12 +840,12 @@
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 1
 
   ;; CHECK:      (func $nonconst-offset (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 3
+  ;; CHECK-NEXT:  (memory.init $1
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $param)
   ;; CHECK-NEXT:   (i32.const 134)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 3)
+  ;; CHECK-NEXT:  (data.drop $1)
   ;; CHECK-NEXT: )
   (func $nonconst-offset
     (memory.init 1
@@ -857,12 +859,12 @@
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 2
 
   ;; CHECK:      (func $nonconst-size (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 4
+  ;; CHECK-NEXT:  (memory.init $2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $param)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (data.drop 4)
+  ;; CHECK-NEXT:  (data.drop $2)
   ;; CHECK-NEXT: )
   (func $nonconst-size
     (memory.init 2
@@ -886,7 +888,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 5
+  ;; CHECK-NEXT:   (memory.init $3
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -896,7 +898,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 6
+  ;; CHECK-NEXT:   (memory.init $3.1
   ;; CHECK-NEXT:    (i32.const 54)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -906,7 +908,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 7
+  ;; CHECK-NEXT:   (memory.init $3.2
   ;; CHECK-NEXT:    (i32.const 88)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -921,9 +923,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 5)
-  ;; CHECK-NEXT:   (data.drop 6)
-  ;; CHECK-NEXT:   (data.drop 7)
+  ;; CHECK-NEXT:   (data.drop $3)
+  ;; CHECK-NEXT:   (data.drop $3.1)
+  ;; CHECK-NEXT:   (data.drop $3.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $partial-skip-start
@@ -939,7 +941,7 @@
 
   ;; CHECK:      (func $full-skip-start (type $none_=>_none)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (memory.init 8
+  ;; CHECK-NEXT:   (memory.init $4
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:    (i32.const 2)
@@ -949,7 +951,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 9
+  ;; CHECK-NEXT:   (memory.init $4.1
   ;; CHECK-NEXT:    (i32.const 32)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -959,7 +961,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 10
+  ;; CHECK-NEXT:   (memory.init $4.2
   ;; CHECK-NEXT:    (i32.const 66)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -971,9 +973,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (data.drop 8)
-  ;; CHECK-NEXT:   (data.drop 9)
-  ;; CHECK-NEXT:   (data.drop 10)
+  ;; CHECK-NEXT:   (data.drop $4)
+  ;; CHECK-NEXT:   (data.drop $4.1)
+  ;; CHECK-NEXT:   (data.drop $4.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $full-skip-start
@@ -998,7 +1000,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 11
+  ;; CHECK-NEXT:   (memory.init $5
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -1008,7 +1010,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 12
+  ;; CHECK-NEXT:   (memory.init $5.1
   ;; CHECK-NEXT:    (i32.const 64)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -1018,7 +1020,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 13
+  ;; CHECK-NEXT:   (memory.init $5.2
   ;; CHECK-NEXT:    (i32.const 98)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -1033,9 +1035,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 11)
-  ;; CHECK-NEXT:   (data.drop 12)
-  ;; CHECK-NEXT:   (data.drop 13)
+  ;; CHECK-NEXT:   (data.drop $5)
+  ;; CHECK-NEXT:   (data.drop $5.1)
+  ;; CHECK-NEXT:   (data.drop $5.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $partial-skip-end
@@ -1060,7 +1062,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 14
+  ;; CHECK-NEXT:   (memory.init $6
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -1070,7 +1072,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 15
+  ;; CHECK-NEXT:   (memory.init $6.1
   ;; CHECK-NEXT:    (i32.const 64)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -1080,7 +1082,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 16
+  ;; CHECK-NEXT:   (memory.init $6.2
   ;; CHECK-NEXT:    (i32.const 98)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 4)
@@ -1090,9 +1092,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 14)
-  ;; CHECK-NEXT:   (data.drop 15)
-  ;; CHECK-NEXT:   (data.drop 16)
+  ;; CHECK-NEXT:   (data.drop $6)
+  ;; CHECK-NEXT:   (data.drop $6.1)
+  ;; CHECK-NEXT:   (data.drop $6.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $full-skip-end
@@ -1122,9 +1124,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_3
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 17)
-  ;; CHECK-NEXT:   (data.drop 18)
-  ;; CHECK-NEXT:   (data.drop 19)
+  ;; CHECK-NEXT:   (data.drop $7)
+  ;; CHECK-NEXT:   (data.drop $7.1)
+  ;; CHECK-NEXT:   (data.drop $7.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $slice-zeroes
@@ -1139,15 +1141,15 @@
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 8
 
   ;; CHECK:      (func $slice-nonzeroes (type $none_=>_none)
-  ;; CHECK-NEXT:  (memory.init 20
+  ;; CHECK-NEXT:  (memory.init $8
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (data.drop 20)
-  ;; CHECK-NEXT:   (data.drop 21)
-  ;; CHECK-NEXT:   (data.drop 22)
+  ;; CHECK-NEXT:   (data.drop $8)
+  ;; CHECK-NEXT:   (data.drop $8.1)
+  ;; CHECK-NEXT:   (data.drop $8.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $slice-nonzeroes
@@ -1179,9 +1181,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_4
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 23)
-  ;; CHECK-NEXT:   (data.drop 24)
-  ;; CHECK-NEXT:   (data.drop 25)
+  ;; CHECK-NEXT:   (data.drop $9)
+  ;; CHECK-NEXT:   (data.drop $9.1)
+  ;; CHECK-NEXT:   (data.drop $9.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-size
@@ -1316,9 +1318,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_6
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 29)
-  ;; CHECK-NEXT:   (data.drop 30)
-  ;; CHECK-NEXT:   (data.drop 31)
+  ;; CHECK-NEXT:   (data.drop $14)
+  ;; CHECK-NEXT:   (data.drop $14.1)
+  ;; CHECK-NEXT:   (data.drop $14.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-size-at-bounds-offset
@@ -1346,25 +1348,25 @@
   (memory $0 2048 2048)
   (data "hi\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00hi") ;; 0
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $0 "hi")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $0.1 "even")
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $0.2 "hi")
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $1 "hi")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $1.1 "even")
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $1.2 "hi")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $2 "even")
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $2.1 "hi")
 
-  ;; CHECK:      (data "even")
+  ;; CHECK:      (data $3 "even")
 
-  ;; CHECK:      (data "hi")
+  ;; CHECK:      (data $3.1 "hi")
 
   ;; CHECK:      (func $zero-length-init-zeroes (type $none_=>_none)
   ;; CHECK-NEXT:  (if
@@ -1384,9 +1386,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 0)
-  ;; CHECK-NEXT:   (data.drop 1)
-  ;; CHECK-NEXT:   (data.drop 2)
+  ;; CHECK-NEXT:   (data.drop $0)
+  ;; CHECK-NEXT:   (data.drop $0.1)
+  ;; CHECK-NEXT:   (data.drop $0.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-length-init-zeroes
@@ -1418,9 +1420,9 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 3)
-  ;; CHECK-NEXT:   (data.drop 4)
-  ;; CHECK-NEXT:   (data.drop 5)
+  ;; CHECK-NEXT:   (data.drop $1)
+  ;; CHECK-NEXT:   (data.drop $1.1)
+  ;; CHECK-NEXT:   (data.drop $1.2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-length-init-nonzeroes
@@ -1452,8 +1454,8 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 6)
-  ;; CHECK-NEXT:   (data.drop 7)
+  ;; CHECK-NEXT:   (data.drop $2)
+  ;; CHECK-NEXT:   (data.drop $2.1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-length-init-zeroes-2
@@ -1485,8 +1487,8 @@
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (data.drop 8)
-  ;; CHECK-NEXT:   (data.drop 9)
+  ;; CHECK-NEXT:   (data.drop $3)
+  ;; CHECK-NEXT:   (data.drop $3.1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-length-init-nonzeroes-2
@@ -1506,139 +1508,139 @@
   (memory $0 2048 2048)
   (data "a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00a") ;; 64 ranges of zeroes
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.1 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.2 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.3 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.4 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.5 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.6 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.7 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.8 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.9 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.10 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.11 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.12 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.13 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.14 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.15 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.16 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.17 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.18 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.19 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.20 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.21 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.22 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.23 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.24 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.25 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.26 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.27 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.28 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.29 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.30 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.31 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.32 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.33 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.34 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.35 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.36 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.37 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.38 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.39 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.40 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.41 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.42 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.43 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.44 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.45 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.46 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.47 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.48 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.49 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.50 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.51 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.52 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.53 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.54 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.55 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.56 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.57 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.58 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.59 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.60 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.61 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.62 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.63 "a")
 
-  ;; CHECK:      (data "a")
+  ;; CHECK:      (data $0.64 "a")
 
   ;; CHECK:      (func $init-lots (type $none_=>_none)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (memory.init 0
+  ;; CHECK-NEXT:   (memory.init $0
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1648,7 +1650,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 1
+  ;; CHECK-NEXT:   (memory.init $0.1
   ;; CHECK-NEXT:    (i32.const 31)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1658,7 +1660,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 2
+  ;; CHECK-NEXT:   (memory.init $0.2
   ;; CHECK-NEXT:    (i32.const 62)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1668,7 +1670,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 3
+  ;; CHECK-NEXT:   (memory.init $0.3
   ;; CHECK-NEXT:    (i32.const 93)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1678,7 +1680,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 4
+  ;; CHECK-NEXT:   (memory.init $0.4
   ;; CHECK-NEXT:    (i32.const 124)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1688,7 +1690,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 5
+  ;; CHECK-NEXT:   (memory.init $0.5
   ;; CHECK-NEXT:    (i32.const 155)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1698,7 +1700,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 6
+  ;; CHECK-NEXT:   (memory.init $0.6
   ;; CHECK-NEXT:    (i32.const 186)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1708,7 +1710,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 7
+  ;; CHECK-NEXT:   (memory.init $0.7
   ;; CHECK-NEXT:    (i32.const 217)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1718,7 +1720,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 8
+  ;; CHECK-NEXT:   (memory.init $0.8
   ;; CHECK-NEXT:    (i32.const 248)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1728,7 +1730,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 9
+  ;; CHECK-NEXT:   (memory.init $0.9
   ;; CHECK-NEXT:    (i32.const 279)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1738,7 +1740,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 10
+  ;; CHECK-NEXT:   (memory.init $0.10
   ;; CHECK-NEXT:    (i32.const 310)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1748,7 +1750,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 11
+  ;; CHECK-NEXT:   (memory.init $0.11
   ;; CHECK-NEXT:    (i32.const 341)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1758,7 +1760,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 12
+  ;; CHECK-NEXT:   (memory.init $0.12
   ;; CHECK-NEXT:    (i32.const 372)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1768,7 +1770,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 13
+  ;; CHECK-NEXT:   (memory.init $0.13
   ;; CHECK-NEXT:    (i32.const 403)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1778,7 +1780,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 14
+  ;; CHECK-NEXT:   (memory.init $0.14
   ;; CHECK-NEXT:    (i32.const 434)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1788,7 +1790,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 15
+  ;; CHECK-NEXT:   (memory.init $0.15
   ;; CHECK-NEXT:    (i32.const 465)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1798,7 +1800,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 16
+  ;; CHECK-NEXT:   (memory.init $0.16
   ;; CHECK-NEXT:    (i32.const 496)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1808,7 +1810,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 17
+  ;; CHECK-NEXT:   (memory.init $0.17
   ;; CHECK-NEXT:    (i32.const 527)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1818,7 +1820,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 18
+  ;; CHECK-NEXT:   (memory.init $0.18
   ;; CHECK-NEXT:    (i32.const 558)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1828,7 +1830,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 19
+  ;; CHECK-NEXT:   (memory.init $0.19
   ;; CHECK-NEXT:    (i32.const 589)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1838,7 +1840,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 20
+  ;; CHECK-NEXT:   (memory.init $0.20
   ;; CHECK-NEXT:    (i32.const 620)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1848,7 +1850,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 21
+  ;; CHECK-NEXT:   (memory.init $0.21
   ;; CHECK-NEXT:    (i32.const 651)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1858,7 +1860,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 22
+  ;; CHECK-NEXT:   (memory.init $0.22
   ;; CHECK-NEXT:    (i32.const 682)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1868,7 +1870,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 23
+  ;; CHECK-NEXT:   (memory.init $0.23
   ;; CHECK-NEXT:    (i32.const 713)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1878,7 +1880,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 24
+  ;; CHECK-NEXT:   (memory.init $0.24
   ;; CHECK-NEXT:    (i32.const 744)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1888,7 +1890,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 25
+  ;; CHECK-NEXT:   (memory.init $0.25
   ;; CHECK-NEXT:    (i32.const 775)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1898,7 +1900,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 26
+  ;; CHECK-NEXT:   (memory.init $0.26
   ;; CHECK-NEXT:    (i32.const 806)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1908,7 +1910,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 27
+  ;; CHECK-NEXT:   (memory.init $0.27
   ;; CHECK-NEXT:    (i32.const 837)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1918,7 +1920,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 28
+  ;; CHECK-NEXT:   (memory.init $0.28
   ;; CHECK-NEXT:    (i32.const 868)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1928,7 +1930,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 29
+  ;; CHECK-NEXT:   (memory.init $0.29
   ;; CHECK-NEXT:    (i32.const 899)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1938,7 +1940,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 30
+  ;; CHECK-NEXT:   (memory.init $0.30
   ;; CHECK-NEXT:    (i32.const 930)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1948,7 +1950,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 31
+  ;; CHECK-NEXT:   (memory.init $0.31
   ;; CHECK-NEXT:    (i32.const 961)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1958,7 +1960,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 32
+  ;; CHECK-NEXT:   (memory.init $0.32
   ;; CHECK-NEXT:    (i32.const 992)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1968,7 +1970,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 33
+  ;; CHECK-NEXT:   (memory.init $0.33
   ;; CHECK-NEXT:    (i32.const 1023)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1978,7 +1980,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 34
+  ;; CHECK-NEXT:   (memory.init $0.34
   ;; CHECK-NEXT:    (i32.const 1054)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1988,7 +1990,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 35
+  ;; CHECK-NEXT:   (memory.init $0.35
   ;; CHECK-NEXT:    (i32.const 1085)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1998,7 +2000,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 36
+  ;; CHECK-NEXT:   (memory.init $0.36
   ;; CHECK-NEXT:    (i32.const 1116)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2008,7 +2010,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 37
+  ;; CHECK-NEXT:   (memory.init $0.37
   ;; CHECK-NEXT:    (i32.const 1147)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2018,7 +2020,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 38
+  ;; CHECK-NEXT:   (memory.init $0.38
   ;; CHECK-NEXT:    (i32.const 1178)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2028,7 +2030,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 39
+  ;; CHECK-NEXT:   (memory.init $0.39
   ;; CHECK-NEXT:    (i32.const 1209)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2038,7 +2040,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 40
+  ;; CHECK-NEXT:   (memory.init $0.40
   ;; CHECK-NEXT:    (i32.const 1240)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2048,7 +2050,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 41
+  ;; CHECK-NEXT:   (memory.init $0.41
   ;; CHECK-NEXT:    (i32.const 1271)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2058,7 +2060,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 42
+  ;; CHECK-NEXT:   (memory.init $0.42
   ;; CHECK-NEXT:    (i32.const 1302)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2068,7 +2070,7 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (memory.init 43
+  ;; CHECK-NEXT:   (memory.init $0.43
   ;; CHECK-NEXT:    (i32.const 1333)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
@@ -2080,71 +2082,71 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (data.drop 0)
-  ;; CHECK-NEXT:   (data.drop 1)
-  ;; CHECK-NEXT:   (data.drop 2)
-  ;; CHECK-NEXT:   (data.drop 3)
-  ;; CHECK-NEXT:   (data.drop 4)
-  ;; CHECK-NEXT:   (data.drop 5)
-  ;; CHECK-NEXT:   (data.drop 6)
-  ;; CHECK-NEXT:   (data.drop 7)
-  ;; CHECK-NEXT:   (data.drop 8)
-  ;; CHECK-NEXT:   (data.drop 9)
-  ;; CHECK-NEXT:   (data.drop 10)
-  ;; CHECK-NEXT:   (data.drop 11)
-  ;; CHECK-NEXT:   (data.drop 12)
-  ;; CHECK-NEXT:   (data.drop 13)
-  ;; CHECK-NEXT:   (data.drop 14)
-  ;; CHECK-NEXT:   (data.drop 15)
-  ;; CHECK-NEXT:   (data.drop 16)
-  ;; CHECK-NEXT:   (data.drop 17)
-  ;; CHECK-NEXT:   (data.drop 18)
-  ;; CHECK-NEXT:   (data.drop 19)
-  ;; CHECK-NEXT:   (data.drop 20)
-  ;; CHECK-NEXT:   (data.drop 21)
-  ;; CHECK-NEXT:   (data.drop 22)
-  ;; CHECK-NEXT:   (data.drop 23)
-  ;; CHECK-NEXT:   (data.drop 24)
-  ;; CHECK-NEXT:   (data.drop 25)
-  ;; CHECK-NEXT:   (data.drop 26)
-  ;; CHECK-NEXT:   (data.drop 27)
-  ;; CHECK-NEXT:   (data.drop 28)
-  ;; CHECK-NEXT:   (data.drop 29)
-  ;; CHECK-NEXT:   (data.drop 30)
-  ;; CHECK-NEXT:   (data.drop 31)
-  ;; CHECK-NEXT:   (data.drop 32)
-  ;; CHECK-NEXT:   (data.drop 33)
-  ;; CHECK-NEXT:   (data.drop 34)
-  ;; CHECK-NEXT:   (data.drop 35)
-  ;; CHECK-NEXT:   (data.drop 36)
-  ;; CHECK-NEXT:   (data.drop 37)
-  ;; CHECK-NEXT:   (data.drop 38)
-  ;; CHECK-NEXT:   (data.drop 39)
-  ;; CHECK-NEXT:   (data.drop 40)
-  ;; CHECK-NEXT:   (data.drop 41)
-  ;; CHECK-NEXT:   (data.drop 42)
-  ;; CHECK-NEXT:   (data.drop 43)
-  ;; CHECK-NEXT:   (data.drop 44)
-  ;; CHECK-NEXT:   (data.drop 45)
-  ;; CHECK-NEXT:   (data.drop 46)
-  ;; CHECK-NEXT:   (data.drop 47)
-  ;; CHECK-NEXT:   (data.drop 48)
-  ;; CHECK-NEXT:   (data.drop 49)
-  ;; CHECK-NEXT:   (data.drop 50)
-  ;; CHECK-NEXT:   (data.drop 51)
-  ;; CHECK-NEXT:   (data.drop 52)
-  ;; CHECK-NEXT:   (data.drop 53)
-  ;; CHECK-NEXT:   (data.drop 54)
-  ;; CHECK-NEXT:   (data.drop 55)
-  ;; CHECK-NEXT:   (data.drop 56)
-  ;; CHECK-NEXT:   (data.drop 57)
-  ;; CHECK-NEXT:   (data.drop 58)
-  ;; CHECK-NEXT:   (data.drop 59)
-  ;; CHECK-NEXT:   (data.drop 60)
-  ;; CHECK-NEXT:   (data.drop 61)
-  ;; CHECK-NEXT:   (data.drop 62)
-  ;; CHECK-NEXT:   (data.drop 63)
-  ;; CHECK-NEXT:   (data.drop 64)
+  ;; CHECK-NEXT:   (data.drop $0)
+  ;; CHECK-NEXT:   (data.drop $0.1)
+  ;; CHECK-NEXT:   (data.drop $0.2)
+  ;; CHECK-NEXT:   (data.drop $0.3)
+  ;; CHECK-NEXT:   (data.drop $0.4)
+  ;; CHECK-NEXT:   (data.drop $0.5)
+  ;; CHECK-NEXT:   (data.drop $0.6)
+  ;; CHECK-NEXT:   (data.drop $0.7)
+  ;; CHECK-NEXT:   (data.drop $0.8)
+  ;; CHECK-NEXT:   (data.drop $0.9)
+  ;; CHECK-NEXT:   (data.drop $0.10)
+  ;; CHECK-NEXT:   (data.drop $0.11)
+  ;; CHECK-NEXT:   (data.drop $0.12)
+  ;; CHECK-NEXT:   (data.drop $0.13)
+  ;; CHECK-NEXT:   (data.drop $0.14)
+  ;; CHECK-NEXT:   (data.drop $0.15)
+  ;; CHECK-NEXT:   (data.drop $0.16)
+  ;; CHECK-NEXT:   (data.drop $0.17)
+  ;; CHECK-NEXT:   (data.drop $0.18)
+  ;; CHECK-NEXT:   (data.drop $0.19)
+  ;; CHECK-NEXT:   (data.drop $0.20)
+  ;; CHECK-NEXT:   (data.drop $0.21)
+  ;; CHECK-NEXT:   (data.drop $0.22)
+  ;; CHECK-NEXT:   (data.drop $0.23)
+  ;; CHECK-NEXT:   (data.drop $0.24)
+  ;; CHECK-NEXT:   (data.drop $0.25)
+  ;; CHECK-NEXT:   (data.drop $0.26)
+  ;; CHECK-NEXT:   (data.drop $0.27)
+  ;; CHECK-NEXT:   (data.drop $0.28)
+  ;; CHECK-NEXT:   (data.drop $0.29)
+  ;; CHECK-NEXT:   (data.drop $0.30)
+  ;; CHECK-NEXT:   (data.drop $0.31)
+  ;; CHECK-NEXT:   (data.drop $0.32)
+  ;; CHECK-NEXT:   (data.drop $0.33)
+  ;; CHECK-NEXT:   (data.drop $0.34)
+  ;; CHECK-NEXT:   (data.drop $0.35)
+  ;; CHECK-NEXT:   (data.drop $0.36)
+  ;; CHECK-NEXT:   (data.drop $0.37)
+  ;; CHECK-NEXT:   (data.drop $0.38)
+  ;; CHECK-NEXT:   (data.drop $0.39)
+  ;; CHECK-NEXT:   (data.drop $0.40)
+  ;; CHECK-NEXT:   (data.drop $0.41)
+  ;; CHECK-NEXT:   (data.drop $0.42)
+  ;; CHECK-NEXT:   (data.drop $0.43)
+  ;; CHECK-NEXT:   (data.drop $0.44)
+  ;; CHECK-NEXT:   (data.drop $0.45)
+  ;; CHECK-NEXT:   (data.drop $0.46)
+  ;; CHECK-NEXT:   (data.drop $0.47)
+  ;; CHECK-NEXT:   (data.drop $0.48)
+  ;; CHECK-NEXT:   (data.drop $0.49)
+  ;; CHECK-NEXT:   (data.drop $0.50)
+  ;; CHECK-NEXT:   (data.drop $0.51)
+  ;; CHECK-NEXT:   (data.drop $0.52)
+  ;; CHECK-NEXT:   (data.drop $0.53)
+  ;; CHECK-NEXT:   (data.drop $0.54)
+  ;; CHECK-NEXT:   (data.drop $0.55)
+  ;; CHECK-NEXT:   (data.drop $0.56)
+  ;; CHECK-NEXT:   (data.drop $0.57)
+  ;; CHECK-NEXT:   (data.drop $0.58)
+  ;; CHECK-NEXT:   (data.drop $0.59)
+  ;; CHECK-NEXT:   (data.drop $0.60)
+  ;; CHECK-NEXT:   (data.drop $0.61)
+  ;; CHECK-NEXT:   (data.drop $0.62)
+  ;; CHECK-NEXT:   (data.drop $0.63)
+  ;; CHECK-NEXT:   (data.drop $0.64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $init-lots
@@ -2162,23 +2164,23 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "\00") ;; this tramples the "x", and so must be kept.
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 
-;; CHECK:      (data (i32.const 1024) "\00")
+;; CHECK:      (data $1 (i32.const 1024) "\00")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data (i32.const 1024) "x")
  (data (i32.const 1025) "\00")
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data (i32.const 1024) "x")
  (data (i32.const 1023) "\00")
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
@@ -2186,11 +2188,11 @@
  (data (i32.const 1024) "\00") ;; when we see one bad thing, we give up
  (data (i32.const 4096) "\00")
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 
-;; CHECK:      (data (i32.const 1024) "\00")
+;; CHECK:      (data $1 (i32.const 1024) "\00")
 
-;; CHECK:      (data (i32.const 4096) "\00")
+;; CHECK:      (data $2 (i32.const 4096) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
 
@@ -2200,9 +2202,9 @@
  (data (i32.const 1024) "x")
  (data (global.get $memoryBase) "\00") ;; this could trample, or not
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 
-;; CHECK:      (data (global.get $memoryBase) "\00")
+;; CHECK:      (data $1 (global.get $memoryBase) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
 
@@ -2212,9 +2214,9 @@
  (data (i32.const 1024) "\00") ;; this could trample, or not
  (data (global.get $memoryBase) "x")
 )
-;; CHECK:      (data (i32.const 1024) "\00")
+;; CHECK:      (data $0 (i32.const 1024) "\00")
 
-;; CHECK:      (data (global.get $memoryBase) "x")
+;; CHECK:      (data $1 (global.get $memoryBase) "x")
 (module
  ;; CHECK:      (type $none_=>_none (func))
 
@@ -2223,9 +2225,9 @@
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data "skipped\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00included")
- ;; CHECK:      (data "skipped")
+ ;; CHECK:      (data $0 "skipped")
 
- ;; CHECK:      (data "included")
+ ;; CHECK:      (data $0.1 "included")
 
  ;; CHECK:      (export "func_54" (func $0))
  (export "func_54" (func $0))
@@ -2239,7 +2241,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.init 1
+ ;; CHECK-NEXT:  (memory.init $0.1
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 8)
@@ -2260,9 +2262,9 @@
  (data (i32.const 1024) "x")
  (data (i32.const 2048) "\00")
 )
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 
-;; CHECK:      (data (i32.const 2048) "\00")
+;; CHECK:      (data $1 (i32.const 2048) "\00")
 (module
  ;; we can when not imported
  ;; CHECK:      (memory $0 1 1)
@@ -2271,7 +2273,7 @@
  (data (i32.const 2048) "\00")
 )
 
-;; CHECK:      (data (i32.const 1024) "x")
+;; CHECK:      (data $0 (i32.const 1024) "x")
 (module
  ;; Regression test for a bug where referrers were accidentally associated with
  ;; the wrong segments in the presence of unreferenced segments.
@@ -2280,10 +2282,11 @@
  ;; CHECK:      (memory $0 (shared 1 1))
  (memory $0 (shared 1 1))
  (data (i32.const 0) "")
- ;; CHECK:      (data "foo")
  (data "foo")
+ ;; CHECK:      (data $1 "foo")
+
  ;; CHECK:      (func $0 (type $none_=>_none)
- ;; CHECK-NEXT:  (memory.init 0
+ ;; CHECK-NEXT:  (memory.init $1
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 1)
@@ -2306,9 +2309,9 @@
  ;; CHECK:      (memory $0 i64 1 1)
  (memory $0 i64 1 1)
  (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00wasm64\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00is cool")
- ;; CHECK:      (data "wasm64")
+ ;; CHECK:      (data $0 "wasm64")
 
- ;; CHECK:      (data "is cool")
+ ;; CHECK:      (data $0.1 "is cool")
 
  ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (if
@@ -2320,7 +2323,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i64.const 57)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.init 0
+ ;; CHECK-NEXT:  (memory.init $0
  ;; CHECK-NEXT:   (i64.const 57)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 6)
@@ -2330,7 +2333,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i64.const 57)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.init 1
+ ;; CHECK-NEXT:  (memory.init $0.1
  ;; CHECK-NEXT:   (i64.const 120)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 7)

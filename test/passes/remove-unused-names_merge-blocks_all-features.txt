@@ -7,7 +7,7 @@
  (type $none_=>_f64 (func (result f64)))
  (memory $0 (shared 256 256))
  (table $0 1 1 funcref)
- (elem (i32.const 0) $call-i)
+ (elem $0 (i32.const 0) $call-i)
  (func $call-i (type $i) (param $0 i32)
   (nop)
  )

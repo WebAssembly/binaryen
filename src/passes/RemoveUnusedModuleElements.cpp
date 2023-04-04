@@ -180,8 +180,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
         usesMemory = true;
         return;
       case NewElem:
-        auto segment = getModule()->elementSegments[curr->segment]->name;
-        note({ModuleElementKind::ElementSegment, segment});
+        note({ModuleElementKind::ElementSegment, curr->segment});
         return;
     }
     WASM_UNREACHABLE("unexpected op");

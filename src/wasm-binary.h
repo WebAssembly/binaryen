@@ -1325,6 +1325,8 @@ public:
   uint32_t getMemoryIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getTagIndex(Name name) const;
+  uint32_t getDataSegmentIndex(Name name) const;
+  uint32_t getElementSegmentIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
   uint32_t getStringIndex(Name string) const;
 
@@ -1506,6 +1508,8 @@ public:
   Name getMemoryName(Index index);
   Name getGlobalName(Index index);
   Name getTagName(Index index);
+  Name getDataName(Index index);
+  Name getElemName(Index index);
 
   // gets a memory in the combined import+defined space
   Memory* getMemory(Index index);
@@ -1555,6 +1559,12 @@ public:
 
   // at index i we have all refs to the tag i
   std::map<Index, std::vector<Name*>> tagRefs;
+
+  // at index i we have all refs to the data segment i
+  std::map<Index, std::vector<Name*>> dataRefs;
+
+  // at index i we have all refs to the element segment i
+  std::map<Index, std::vector<Name*>> elemRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);

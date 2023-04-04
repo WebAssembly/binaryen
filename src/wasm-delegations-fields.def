@@ -400,14 +400,14 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, size);
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
-    DELEGATE_FIELD_INT(MemoryInit, segment);
+    DELEGATE_FIELD_NAME(MemoryInit, segment);
     DELEGATE_FIELD_NAME(MemoryInit, memory);
     DELEGATE_END(MemoryInit);
     break;
   }
   case Expression::Id::DataDropId: {
     DELEGATE_START(DataDrop);
-    DELEGATE_FIELD_INT(DataDrop, segment);
+    DELEGATE_FIELD_NAME(DataDrop, segment);
     DELEGATE_END(DataDrop);
     break;
   }
@@ -666,7 +666,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::ArrayNewSegId: {
     DELEGATE_START(ArrayNewSeg);
     DELEGATE_FIELD_INT(ArrayNewSeg, op);
-    DELEGATE_FIELD_INT(ArrayNewSeg, segment);
+    DELEGATE_FIELD_NAME(ArrayNewSeg, segment);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
     DELEGATE_END(ArrayNewSeg);

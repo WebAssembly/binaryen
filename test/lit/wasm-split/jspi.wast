@@ -26,7 +26,7 @@
 
  ;; PRIMARY:      (table $0 1 funcref)
 
- ;; PRIMARY:      (elem (i32.const 0) $placeholder_0)
+ ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
  ;; PRIMARY:      (export "foo" (func $export$foo))
  (export "foo" (func $foo))
@@ -63,7 +63,7 @@
 
  ;; SECONDARY:      (import "primary" "%foo" (func $foo (param i32) (result i32)))
 
- ;; SECONDARY:      (elem (i32.const 0) $bar)
+ ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
 
  ;; SECONDARY:      (func $bar (param $0 i32) (result i32)
  ;; SECONDARY-NEXT:  (call $foo

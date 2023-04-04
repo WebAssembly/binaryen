@@ -27,7 +27,7 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (table $0 2 2 funcref)
- (elem (i32.const 1) $return-f32)
+ (elem $0 (i32.const 1) $return-f32)
  (func $return-f32 (result f32)
   (f32.const 3.141590118408203)
  )

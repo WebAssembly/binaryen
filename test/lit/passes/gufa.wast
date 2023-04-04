@@ -587,7 +587,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $reffed)
+  ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (export "table" (table $0))
   (export "table" (table 0))
@@ -640,7 +640,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $reffed)
+  ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -687,7 +687,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $reffed)
+  ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -737,7 +737,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $reffed)
+  ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -789,7 +789,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $reffed)
+  ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop

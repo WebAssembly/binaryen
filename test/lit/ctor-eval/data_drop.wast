@@ -23,9 +23,9 @@
     (data.drop 1)
   )
 )
-;; CHECK:      (data (i32.const 0) "__________")
+;; CHECK:      (data $0 (i32.const 0) "__________")
 
-;; CHECK:      (data (i32.const 20) "__________")
+;; CHECK:      (data $1 (i32.const 20) "__________")
 
 ;; CHECK:      (export "test" (func $0))
 
@@ -34,5 +34,5 @@
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:   (i32.const 100)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (data.drop 1)
+;; CHECK-NEXT:  (data.drop $1)
 ;; CHECK-NEXT: )

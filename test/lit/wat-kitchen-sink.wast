@@ -188,10 +188,11 @@
  (memory $mem-init (data "hello inline data"))
 
  ;; data segments
- ;; CHECK:      (data (memory $mem-init) (i32.const 0) "hello inline data")
-
- ;; CHECK:      (data "hello world")
  (data "hello world")
+ ;; CHECK:      (data $implicit-data (memory $mem-init) (i32.const 0) "hello inline data")
+
+ ;; CHECK:      (data $0 "hello world")
+
  ;; CHECK:      (data $passive "hello again")
  (data $passive "hello" " " "again")
  ;; CHECK:      (data $active (i32.const 0) "active hello")
@@ -207,7 +208,7 @@
  ;; functions
  (func)
 
- ;; CHECK:      (data (memory $mem-i64) (i64.const 0) "64-bit")
+ ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
 
  ;; CHECK:      (export "g1" (global $g1))
 
@@ -1232,17 +1233,17 @@
  )
 
  ;; CHECK:      (func $memory-init (type $i32_i32_i32_=>_none) (param $0 i32) (param $1 i32) (param $2 i32)
- ;; CHECK-NEXT:  (memory.init $mem-i32 2
+ ;; CHECK-NEXT:  (memory.init $mem-i32 $passive
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.init $mem-i64 1
+ ;; CHECK-NEXT:  (memory.init $mem-i64 $0
  ;; CHECK-NEXT:   (i64.const 0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (memory.init $mem 0
+ ;; CHECK-NEXT:  (memory.init $mem $implicit-data
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:   (local.get $2)
@@ -1264,8 +1265,8 @@
  )
 
  ;; CHECK:      (func $data-drop (type $void)
- ;; CHECK-NEXT:  (data.drop 0)
- ;; CHECK-NEXT:  (data.drop 2)
+ ;; CHECK-NEXT:  (data.drop $implicit-data)
+ ;; CHECK-NEXT:  (data.drop $passive)
  ;; CHECK-NEXT: )
  (func $data-drop
   data.drop 0
@@ -1537,7 +1538,7 @@
  )
 
  ;; CHECK:      (func $array-new-data (type $i32_i32_=>_ref|$a1|) (param $0 i32) (param $1 i32) (result (ref $a1))
- ;; CHECK-NEXT:  (array.new_data $a1 0
+ ;; CHECK-NEXT:  (array.new_data $a1 $implicit-data
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )

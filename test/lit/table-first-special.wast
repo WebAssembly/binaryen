@@ -35,7 +35,7 @@
 
 ;; CHECK-NODEBUG:      (table $0 10 10 (ref null $i32_i32_=>_none))
 
-;; CHECK-NODEBUG:      (elem (table $0) (i32.const 0) (ref null $i32_i32_=>_none))
+;; CHECK-NODEBUG:      (elem $0 (table $0) (i32.const 0) (ref null $i32_i32_=>_none))
 
 ;; CHECK-NODEBUG:      (func $0 (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
 ;; CHECK-NODEBUG-NEXT:  (nop)

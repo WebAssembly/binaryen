@@ -242,6 +242,8 @@
   (type $array-func (array (mut funcref)))
 
 
+  (elem func $array.new)
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $array$1 (array_subtype (mut anyref) $array))
 
@@ -257,15 +259,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (elem func $array.new)
-  ;; NOMNL:      (type $array-func$4 (array_subtype (mut funcref) $array-func))
-
-  ;; NOMNL:      (type $array$5 (array_subtype (mut anyref) $array))
-
-  ;; NOMNL:      (type $array$6 (array_subtype (mut anyref) $array))
-
-  ;; NOMNL:      (elem func $array.new)
-  (elem func $array.new)
+  ;; CHECK:      (elem $0 func $array.new)
 
   ;; CHECK:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
@@ -292,6 +286,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; NOMNL:      (type $array-func$4 (array_subtype (mut funcref) $array-func))
+
+  ;; NOMNL:      (type $array$5 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (type $array$6 (array_subtype (mut anyref) $array))
+
+  ;; NOMNL:      (elem $0 func $array.new)
+
   ;; NOMNL:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (array.new_default $array$1
@@ -349,7 +351,7 @@
 
   ;; CHECK:      (func $array.new_seg (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_elem $array-func$4 0
+  ;; CHECK-NEXT:   (array.new_elem $array-func$4 $0
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:   )
@@ -357,7 +359,7 @@
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $array.new_seg (type $none_=>_none)
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.new_elem $array-func$4 0
+  ;; NOMNL-NEXT:   (array.new_elem $array-func$4 $0
   ;; NOMNL-NEXT:    (i32.const 0)
   ;; NOMNL-NEXT:    (i32.const 3)
   ;; NOMNL-NEXT:   )

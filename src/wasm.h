@@ -1176,7 +1176,7 @@ public:
   MemoryInit() = default;
   MemoryInit(MixedArena& allocator) : MemoryInit() {}
 
-  Index segment;
+  Name segment;
   Expression* dest;
   Expression* offset;
   Expression* size;
@@ -1190,7 +1190,7 @@ public:
   DataDrop() = default;
   DataDrop(MixedArena& allocator) : DataDrop() {}
 
-  Index segment;
+  Name segment;
 
   void finalize();
 };
@@ -1608,7 +1608,7 @@ public:
   ArrayNewSeg(MixedArena& allocator) {}
 
   ArrayNewSegOp op;
-  Index segment;
+  Name segment;
   Expression* offset;
   Expression* size;
 

@@ -961,13 +961,13 @@ BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
                           const char* memoryName);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
-                   uint32_t segment,
+                   const char* segment,
                    BinaryenExpressionRef dest,
                    BinaryenExpressionRef offset,
                    BinaryenExpressionRef size,
                    const char* memoryName);
 BINARYEN_API BinaryenExpressionRef BinaryenDataDrop(BinaryenModuleRef module,
-                                                    uint32_t segment);
+                                                    const char* segment);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryCopy(BinaryenModuleRef module,
                    BinaryenExpressionRef dest,
@@ -2031,11 +2031,12 @@ BINARYEN_API bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr);
 
 // Gets the index of the segment being initialized by a `memory.init`
 // expression.
-BINARYEN_API uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API const char*
+BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
 // Sets the index of the segment being initialized by a `memory.init`
 // expression.
 BINARYEN_API void BinaryenMemoryInitSetSegment(BinaryenExpressionRef expr,
-                                               uint32_t segmentIndex);
+                                               const char* segment);
 // Gets the destination expression of a `memory.init` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInitGetDest(BinaryenExpressionRef expr);
@@ -2058,10 +2059,10 @@ BINARYEN_API void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
 // DataDrop
 
 // Gets the index of the segment being dropped by a `data.drop` expression.
-BINARYEN_API uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
+BINARYEN_API const char* BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
 // Sets the index of the segment being dropped by a `data.drop` expression.
 BINARYEN_API void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
-                                             uint32_t segmentIndex);
+                                             const char* segment);
 
 // MemoryCopy
 

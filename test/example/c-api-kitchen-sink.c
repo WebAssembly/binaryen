@@ -160,11 +160,11 @@ BinaryenExpressionRef makeMemoryInit(BinaryenModuleRef module) {
   BinaryenExpressionRef dest = makeInt32(module, 1024);
   BinaryenExpressionRef offset = makeInt32(module, 0);
   BinaryenExpressionRef size = makeInt32(module, 12);
-  return BinaryenMemoryInit(module, 0, dest, offset, size, "0");
+  return BinaryenMemoryInit(module, "1", dest, offset, size, "0");
 };
 
 BinaryenExpressionRef makeDataDrop(BinaryenModuleRef module) {
-  return BinaryenDataDrop(module, 0);
+  return BinaryenDataDrop(module, "1");
 };
 
 BinaryenExpressionRef makeMemoryCopy(BinaryenModuleRef module) {
