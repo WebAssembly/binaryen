@@ -2276,7 +2276,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
         values.push_back(makeChild(field.type));
       }
       // Add more nesting manually, as we can easily get exponential blowup
-      // here.
+      // here. This nesting makes it much less likely for a recursive data
+      // structure to end up as a massive tree of struct.news, since the nesting
+      // limitation code at the top of this function will kick in.
       nester.add(values.size());
     }
     return builder.makeStructNew(heapType, values);
