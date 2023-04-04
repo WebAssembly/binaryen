@@ -197,11 +197,6 @@ void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
   MemoryUtils::ensureExists(&wasm);
   auto& memory = wasm.memories[0];
-  if (memory->imported()) {
-    // The memory must be defined, as the fuzzing infrastructure doesn't know
-    // how to handle an import there.
-    memory->module = memory->base = Name();
-  }
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
@@ -391,6 +386,7 @@ void TranslateToFuzzReader::setupTags() {
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
+  auto& memory = wasm.memories[0];
   for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment->data.size();
     if (!segment->isPassive) {
@@ -415,26 +411,28 @@ void TranslateToFuzzReader::finalizeMemory() {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    wasm.memories[0]->initial = std::max(
-      wasm.memories[0]->initial,
+    memory->initial = std::max(
+      memory->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  wasm.memories[0]->initial =
-    std::max(wasm.memories[0]->initial, USABLE_MEMORY);
+  memory->initial =
+    std::max(memory->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
-  if (wasm.memories[0]->max == Memory::kUnlimitedSize) {
-    wasm.memories[0]->max = wasm.memories[0]->initial;
+  if (memory->max == Memory::kUnlimitedSize) {
+    memory->max = memory->initial;
   }
-  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
+  if (memory->max <= memory->initial) {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    wasm.memories[0]->max = std::min(Address(wasm.memories[0]->initial + 1),
+    memory->max = std::min(Address(memory->initial + 1),
                                      Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
-  wasm.memories[0]->module = wasm.memories[0]->base = Name();
+  for (auto& memory : wasm.memories) {
+    memory->module = memory->base = Name();
+  }
 }
 
 void TranslateToFuzzReader::finalizeTable() {
