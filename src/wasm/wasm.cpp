@@ -1583,6 +1583,7 @@ void Module::updateDataSegmentsMap() {
 }
 
 void Module::updateMaps() {
+  updateFunctionsMap();
   exportsMap.clear();
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
