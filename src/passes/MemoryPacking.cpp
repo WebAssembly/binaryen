@@ -701,7 +701,7 @@ void MemoryPacking::createReplacements(Module* module,
 
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
-      Type ptrType = init->dest->type;
+      Type ptrType = module->getMemory(init->memory)->indexType;
       if (auto* c = init->dest->dynCast<Const>()) {
         dest =
           builder.makeConstPtr(c->value.getInteger() + bytesWritten, ptrType);

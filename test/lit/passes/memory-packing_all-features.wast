@@ -2347,3 +2347,45 @@
   )
  )
 )
+(module
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
+
+ ;; CHECK:      (memory $0 1 1)
+ (memory $0 i32 1 1)
+ (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00test")
+ ;; CHECK:      (data $0 "test")
+
+ ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local.tee $0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 57)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.init $0
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 57)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0
+  ;; test that unreachable destinations are ok
+  (memory.init 0
+   (unreachable)
+   (i32.const 0)
+   (i32.const 61)
+  )
+ )
+)
