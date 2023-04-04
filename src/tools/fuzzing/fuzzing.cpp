@@ -823,6 +823,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
         // nesting of labels, but we'll fix that up later.)
+        // TODO: pick a subtype of the current type
         replaceCurrent(parent.make(curr->type));
       }
     }
@@ -2276,7 +2277,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
       }
       // Add more nesting manually, as we can easily get exponential blowup
       // here.
-      nesting += values.size();
+      nester.add(values.size());
     }
     return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
