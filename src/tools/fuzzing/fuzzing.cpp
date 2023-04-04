@@ -196,6 +196,12 @@ void TranslateToFuzzReader::build() {
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
   MemoryUtils::ensureExists(&wasm);
+  auto& memory = wasm.memories[0];
+  if (memory->imported()) {
+    // The memory must be defined, as the fuzzing infrastructure doesn't know
+    // how to handle an import there.
+    memory->module = memory->base = Name();
+  }
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
@@ -213,14 +219,14 @@ void TranslateToFuzzReader::setupMemory() {
       if (!segment->isPassive) {
         segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
-        segment->memory = wasm.memories[0]->name;
+        segment->memory = memory->name;
       }
       wasm.addDataSegment(std::move(segment));
     }
   } else {
     // init some data
     auto segment = builder.makeDataSegment();
-    segment->memory = wasm.memories[0]->name;
+    segment->memory = memory->name;
     segment->offset = builder.makeConst(int32_t(0));
     segment->setName(Name::fromInt(0), false);
     wasm.dataSegments.push_back(std::move(segment));
