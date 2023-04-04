@@ -202,7 +202,8 @@ void TranslateToFuzzReader::setupMemory() {
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = builder.makeDataSegment();
-      segment->setName(Name::fromInt(i), false);
+      segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
+                       false);
       segment->isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
       segment->data.resize(segSize);
