@@ -233,4 +233,19 @@
    )
   )
  )
+
+ (func $replace-struct-param (param $unused f64) (param $A (ref null $A)) (result f32)
+  ;; As above, but now the value is a struct reference. Again, we should
+  ;; replace the local.get with something of identical type.
+  (call $replace-struct-param
+   (block (result f64)
+    (unreachable)
+   )
+   (ref.cast null $A
+    (local.tee $A
+     (struct.new_default $A)
+    )
+   )
+  )
+ )
 )
