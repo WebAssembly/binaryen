@@ -252,8 +252,9 @@
  )
 
  (func $replace-struct-param (param $unused f64) (param $A (ref null $A)) (result f32)
-  ;; As above, but now the value is a struct reference. Again, we should
-  ;; replace the local.get with something of identical type.
+  ;; As above, but now the value is a struct reference and it is on a local.tee.
+  ;; Again, we should replace the local operation with something of identical
+  ;; type to avoid a validation error.
   (call $replace-struct-param
    (block (result f64)
     (unreachable)
