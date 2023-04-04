@@ -250,4 +250,32 @@
    )
   )
  )
+
+ ;; CHECK:      (func $replace-struct-param (type $f64_ref?|$A|_=>_f32) (param $0 f64) (param $1 (ref null $A)) (result f32)
+ ;; CHECK-NEXT:  (call $replace-struct-param
+ ;; CHECK-NEXT:   (block (result f64)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.cast null $A
+ ;; CHECK-NEXT:    (block (result (ref null $A))
+ ;; CHECK-NEXT:     (struct.new_default $A)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $replace-struct-param (param $unused f64) (param $A (ref null $A)) (result f32)
+  ;; As above, but now the value is a struct reference and it is on a local.tee.
+  ;; Again, we should replace the local operation with something of identical
+  ;; type to avoid a validation error.
+  (call $replace-struct-param
+   (block (result f64)
+    (unreachable)
+   )
+   (ref.cast null $A
+    (local.tee $A
+     (struct.new_default $A)
+    )
+   )
+  )
+ )
 )
