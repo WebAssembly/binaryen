@@ -415,8 +415,7 @@ void TranslateToFuzzReader::finalizeMemory() {
       memory->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  memory->initial =
-    std::max(memory->initial, USABLE_MEMORY);
+  memory->initial = std::max(memory->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
   if (memory->max == Memory::kUnlimitedSize) {
@@ -426,8 +425,8 @@ void TranslateToFuzzReader::finalizeMemory() {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    memory->max = std::min(Address(memory->initial + 1),
-                                     Address(Memory::kMaxSize32));
+    memory->max =
+      std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
   for (auto& memory : wasm.memories) {
