@@ -823,9 +823,11 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.)
-        // TODO: pick a subtype of the current type
-        replaceCurrent(parent.make(curr->type));
+        // nesting of labels, but we'll fix that up later.) We both pick a
+        // possible subtype here, and then pick something of that type, so that
+        // we should give a possibility for any valid replacement here to
+        // appear.
+        replaceCurrent(parent.make(parent.getSubType(curr->type)));
       }
     }
   };
