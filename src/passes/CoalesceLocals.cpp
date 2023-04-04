@@ -569,7 +569,7 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
             auto originalType = (*action.origin)->type;
             if (originalType != set->value->type) {
               (*action.origin) =
-                Builder(*getModule()).makeBlock({set->value}, originalType); // also below!
+                Builder(*getModule()).makeBlock({set->value}, originalType);
             } else {
               // No special handling, just use the value.
               *action.origin = set->value;
