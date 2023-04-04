@@ -155,8 +155,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i31.new
- ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   (block (result i31ref)
+ ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -217,6 +219,21 @@
   )
  )
 
+ ;; CHECK:      (func $replace-i31-local (type $none_=>_i32) (result i32)
+ ;; CHECK-NEXT:  (local $0 i31ref)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (ref.is_i31
+ ;; CHECK-NEXT:    (ref.cast null i31
+ ;; CHECK-NEXT:     (block (result i31ref)
+ ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $replace-i31-local (result i32)
   (local $local i31ref)
   (i32.add
