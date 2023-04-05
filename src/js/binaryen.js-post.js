@@ -2569,13 +2569,13 @@ function wrapModule(module, self = {}) {
       const segmentOffset = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
         const { data, offset, passive } = segments[i];
-        segmentData[i] = stackAlloc(data.length);
+        segmentData[i] = _malloc(data.length);
         HEAP8.set(data, segmentData[i]);
         segmentDataLen[i] = data.length;
         segmentPassive[i] = passive;
         segmentOffset[i] = offset;
       }
-      return Module['_BinaryenSetMemory'](
+      const ret = Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
         i32sToStack(segmentData),
         i8sToStack(segmentPassive),
@@ -2586,6 +2586,10 @@ function wrapModule(module, self = {}) {
         memory64,
         strToStack(internalName)
       );
+      for (let i = 0; i < segmentsLen; i++) {
+        _free(segmentData[i]);
+      }
+      return ret;
     });
   };
   self['hasMemory'] = function() {
