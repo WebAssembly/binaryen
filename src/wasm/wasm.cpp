@@ -1568,6 +1568,13 @@ void Module::removeTags(std::function<bool(Tag*)> pred) {
   removeModuleElements(tags, tagsMap, pred);
 }
 
+void Module::updateFunctionsMap() {
+  functionsMap.clear();
+  for (auto& curr : functions) {
+    functionsMap[curr->name] = curr.get();
+  }
+}
+
 void Module::updateDataSegmentsMap() {
   dataSegmentsMap.clear();
   for (auto& curr : dataSegments) {
@@ -1576,10 +1583,7 @@ void Module::updateDataSegmentsMap() {
 }
 
 void Module::updateMaps() {
-  functionsMap.clear();
-  for (auto& curr : functions) {
-    functionsMap[curr->name] = curr.get();
-  }
+  updateFunctionsMap();
   exportsMap.clear();
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
