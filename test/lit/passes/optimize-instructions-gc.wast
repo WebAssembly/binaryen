@@ -28,17 +28,17 @@
 
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
-  ;; CHECK:      (type $void (func))
-
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   (type $empty (struct))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
@@ -1579,27 +1579,31 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-null (type $void)
+  ;; CHECK:      (func $incompatible-cast-of-null (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-cast-of-null (type $void)
+  ;; NOMNL:      (func $incompatible-cast-of-null (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:   (block
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:     (ref.as_non_null
+  ;; NOMNL-NEXT:      (local.get $x)
+  ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
@@ -3184,7 +3188,7 @@
   ;; NOMNL-NEXT: )
   (func $struct.set.null.fallthrough
     (local $temp (ref null $struct))
-    ;; The value falling through the tee shows the local.set will trap. We can
+    ;; The value falling through the tee shows the struct.set will trap. We can
     ;; append an unreachable after it. While doing so we must not emit a drop of
     ;; the struct.set (which would be valid for a struct.get etc.).
     (struct.set $struct 0
