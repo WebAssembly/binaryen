@@ -805,7 +805,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
   double t = r;
   t = t / 100;
   t = t * t * t * t * t * t * t * t * t;
-  int percentChance = t * 100;
+  Index percentChance = t * 100;
   if (percentChance == 0) {
     // Give at least a 1% chance, or else we'll be doing nothing here.
     percentChance = 1;
@@ -814,13 +814,13 @@ void TranslateToFuzzReader::mutate(Function* func) {
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
-    int percentChance;
+    Index percentChance;
 
     // Whether to replace with unreachable. This can lead to less code getting
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(Module& wasm, TranslateToFuzzReader& parent, int percentChance)
+    Modder(Module& wasm, TranslateToFuzzReader& parent, Index percentChance)
       : wasm(wasm), parent(parent), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
