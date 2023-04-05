@@ -908,28 +908,32 @@
     )
   )
 
-  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
+  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_anyref_=>_none) (param $x (ref any)) (param $y anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
+  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_anyref_=>_none) (param $x (ref any)) (param $y anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.tee $x
-  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:    (ref.as_non_null
+  ;; NOMNL-NEXT:     (local.get $y)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any)) (param $y (ref null any))
     (drop
       (local.tee $x
         ;; this *cannnot* be moved through the tee outward, as the param is in
         ;; fact non-nullable, and we depend on the ref.as_non_null in order to
         ;; get a valid type to assign to it
         (ref.as_non_null
-          (ref.null any)
+          (local.get $y)
         )
       )
     )
@@ -1601,7 +1605,7 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $incompatible-cast-of-null
+  (func $incompatible-cast-of-null (param $x (ref null $struct))
     (drop
       (ref.cast $array
         ;; The child is null, so the cast will trap. Replace it with an
@@ -1615,7 +1619,7 @@
         ;; transformation. In practice this code will trap before getting to our
         ;; new unreachable.
         (ref.as_non_null
-          (ref.null $struct)
+          (local.get $x)
         )
       )
     )
