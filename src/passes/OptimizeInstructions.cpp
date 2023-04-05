@@ -1644,7 +1644,8 @@ struct OptimizeInstructions
                              builder.makeDrop(select->condition)));
           return false;
         }
-        if (select->ifFalse->type.isNull()) {
+        if (select->ifFalse->type.isNull() &&
+            select->ifTrue->type != Type::unreachable) {
           ref = getResultOfFirst(
             select->ifTrue,
             builder.makeSequence(builder.makeDrop(select->ifFalse),

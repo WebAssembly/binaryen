@@ -817,6 +817,48 @@
     )
   )
 
+  ;; TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH-NEXT:  (select
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:   (ref.as_non_null
+  ;; TNH-NEXT:    (ref.null none)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (select
+  ;; NO_TNH-NEXT:   (block
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.as_non_null
+  ;; NO_TNH-NEXT:      (ref.null none)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $select.unreachable.child.flip (result (ref $struct))
+    ;; Flip case of the above.
+    (ref.cast $struct
+      (select (result (ref $struct))
+        (ref.cast $struct
+          (ref.as_non_null
+            (ref.null none)
+          )
+        )
+        (ref.as_non_null
+          (ref.null none)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
