@@ -775,25 +775,6 @@
 
   ;; TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; TNH-NEXT:  (select
-  ;; TNH-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (unreachable)
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (unreachable)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:   (unreachable)
-  ;; TNH-NEXT:   (i32.const 1)
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (select
-  ;; NO_TNH-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (unreachable)
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
