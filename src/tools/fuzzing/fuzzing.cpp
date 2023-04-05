@@ -802,16 +802,15 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // average. To achieve that, we raise r/100, which is in the range [0, 1], to
   // the 9th power, giving us a number also in the range [0, 1] with a mean of
   //   \integral_0^1 t^9 dx = 0.1 * t^10 |_0^1 = 0.1
-  // As a result, we get a value in the range of 0-100%. We'll adjust 0% to 1%
-  // so we avoid doing nothing at all, and note that 100% is ok since we can't
-  // replace everything anyhow (see below).
+  // As a result, we get a value in the range of 0-100%. (Note that 100% is ok
+  // since we can't replace everything anyhow, see below.)
   double t = r;
   t = t / 100;
-  t = t * t * t * t * t * t * t * t * t;
+  t = pow(t, 9);
   Index percentChance = t * 100;
-  if (percentChance == 0) {
-    percentChance = 1;
-  }
+  // Adjust almost-zero frequencies to at least a few %, just so we have some
+  // reasonable chance of making some changes.
+  percentChance = std::max(percentChance, Index(3));
 
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
@@ -847,11 +846,10 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.) We both pick a
-        // possible subtype here, and then pick something of that type, so that
-        // we should give a possibility for any valid replacement here to
-        // appear.
-        replaceCurrent(parent.make(parent.getSubType(curr->type)));
+        // nesting of labels, but we'll fix that up later.) Note that make()
+        // picks a subtype, so this has a chance to replace us with anything
+        // that is valid to put here.
+        replaceCurrent(parent.make(curr->type));
       }
     }
   };
