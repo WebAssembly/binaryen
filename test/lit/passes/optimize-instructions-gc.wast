@@ -911,18 +911,14 @@
   ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.tee $x
-  ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.null none)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
@@ -1584,11 +1580,9 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null none)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -1599,11 +1593,9 @@
   ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block
+  ;; NOMNL-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (ref.as_non_null
-  ;; NOMNL-NEXT:      (ref.null none)
-  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (unreachable)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
@@ -3160,23 +3152,31 @@
 
   ;; CHECK:      (func $struct.set.null.fallthrough (type $void)
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct $i8
-  ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $struct.set.null.fallthrough (type $void)
   ;; NOMNL-NEXT:  (local $temp (ref null $struct))
-  ;; NOMNL-NEXT:  (struct.set $struct $i8
-  ;; NOMNL-NEXT:   (local.tee $temp
-  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (local.tee $temp
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (i32.const 100)
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (i32.const 100)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $struct.set.null.fallthrough
     (local $temp (ref null $struct))
