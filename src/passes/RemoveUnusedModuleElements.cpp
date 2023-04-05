@@ -154,6 +154,12 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void visitAtomicNotify(AtomicNotify* curr) {
     note({ModuleElementKind::Memory, curr->memory});
   }
+  void visitSIMDLoad(SIMDLoad* curr) {
+    note({ModuleElementKind::Memory, curr->memory});
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    note({ModuleElementKind::Memory, curr->memory});
+  }
   void visitMemoryInit(MemoryInit* curr) {
     note({ModuleElementKind::DataSegment, curr->segment});
     note({ModuleElementKind::Memory, curr->memory});
