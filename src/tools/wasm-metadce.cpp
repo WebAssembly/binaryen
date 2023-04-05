@@ -512,7 +512,7 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  if (!graphFile.empty()) {
+  if (graphFile.empty()) {
     Fatal() << "no graph file provided.";
   }
 
