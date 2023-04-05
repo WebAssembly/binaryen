@@ -438,6 +438,15 @@
       )
       (i32.const 1)
     )
+    ;; The same, but without ref.as_non_null.
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (ref.null none)
+        (ref.null none)
+        (call $get-i32)
+      )
+      (i32.const 1)
+    )
   )
 
   ;; TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
@@ -530,17 +539,15 @@
   ;; NO_TNH:      (func $cast-if-null (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $cast-if-null (result (ref $struct))
+  (func $cast-if-null (param $x (ref any)) (result (ref $struct))
     ;; We can remove the unreachable arm of the if here in TNH mode. While doing
     ;; so we must refinalize properly or else we'll hit an error in pass-debug
     ;; mode.
     (ref.cast $struct
       (if (result (ref none))
-       (i32.const 1)
-       (unreachable)
-       (ref.as_non_null
-         (ref.null none)
-       )
+        (i32.const 1)
+        (unreachable)
+        (local.get $x)
       )
     )
   )
@@ -551,15 +558,13 @@
   ;; NO_TNH:      (func $cast-if-null-flip (type $none_=>_ref|$struct|) (result (ref $struct))
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $cast-if-null-flip (result (ref $struct))
+  (func $cast-if-null-flip (param $x (ref any)) (result (ref $struct))
     ;; As above but with arms flipped.
     (ref.cast $struct
       (if (result (ref none))
-       (i32.const 1)
-       (ref.as_non_null
-         (ref.null none)
-       )
-       (unreachable)
+        (i32.const 1)
+        (local.get $x)
+        (unreachable)
       )
     )
   )
@@ -753,20 +758,16 @@
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $select.unreachable.child (result (ref $struct))
+  (func $select.unreachable.child (param $x (ref $struct)) (param $y (ref i31)) (result (ref $struct))
     ;; We will turn the false arm of the select into an unreachable first, and
     ;; then process the select. While doing so we must not error, as the select
     ;; itself will still have a reachable type (a full refinalize only
     ;; happens at the very end of the function).
     (ref.cast $struct
       (select (result (ref $struct))
-        (ref.as_non_null
-          (ref.null none)
-        )
+        (local.get $x)
         (ref.cast $struct
-          (ref.as_non_null
-            (ref.null none)
-          )
+          (local.get $y)
         )
         (i32.const 1)
       )
@@ -797,18 +798,14 @@
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $select.unreachable.child.flip (result (ref $struct))
+  (func $select.unreachable.child.flip (param $x (ref $struct)) (param $y (ref i31)) (result (ref $struct))
     ;; Flip case of the above.
     (ref.cast $struct
       (select (result (ref $struct))
         (ref.cast $struct
-          (ref.as_non_null
-            (ref.null none)
-          )
+          (local.get $y)
         )
-        (ref.as_non_null
-          (ref.null none)
-        )
+        (local.get $x)
         (i32.const 1)
       )
     )
