@@ -93,7 +93,7 @@ class ModuleWriter : public ModuleIOBase {
 
   std::filesystem::path symbolMap;
   std::filesystem::path sourceMapFilename;
-  std::filesystem::path sourceMapUrl;
+  std::string sourceMapUrl;
 
 public:
   // Writing defaults to not storing the names section. Storing it is a user-

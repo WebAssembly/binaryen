@@ -39,12 +39,12 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   const uint64_t INVALID_BASE = -1;
 
-  std::string infile;
-  std::string outfile;
-  std::string inputSourceMapFilename;
-  std::string outputSourceMapFilename;
+  std::filesystem::path infile;
+  std::filesystem::path outfile;
+  std::filesystem::path inputSourceMapFilename;
+  std::filesystem::path outputSourceMapFilename;
   std::string outputSourceMapUrl;
-  std::string dataSegmentFile;
+  std::filesystem::path dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
   bool DWARF = false;
@@ -213,7 +213,7 @@ int main(int argc, const char* argv[]) {
   // We will write the modified wasm if the user asked us to, either by
   // specifying an output file or requesting text output (which goes to stdout
   // by default).
-  auto writeOutput = outfile.size() > 0 || !emitBinary;
+  auto writeOutput = !outfile.empty() || !emitBinary;
 
   Module wasm;
   options.applyFeatures(wasm);
@@ -314,7 +314,7 @@ int main(int argc, const char* argv[]) {
     writer.setDebugInfo(debugInfo);
     // writer.setSymbolMap(symbolMap);
     writer.setBinary(emitBinary);
-    if (outputSourceMapFilename.size()) {
+    if (!outputSourceMapFilename.empty()) {
       writer.setSourceMapFilename(outputSourceMapFilename);
       writer.setSourceMapUrl(outputSourceMapUrl);
     }

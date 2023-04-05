@@ -27,7 +27,7 @@
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {
-  std::string sourceMapFilename;
+  std::filesystem::path sourceMapFilename;
 
   const std::string WasmDisOption = "wasm-dis options";
 

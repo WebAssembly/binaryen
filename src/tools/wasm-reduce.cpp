@@ -298,7 +298,8 @@ struct Reducer
       // try both combining with a generic shrink (so minor pass overhead is
       // compensated for), and without
       for (auto pass : passes) {
-        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
+        std::string currCommand =
+          Path::getBinaryenBinaryTool("wasm-opt").append(" ");
         currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
         if (!binary) {
           currCommand += " -S ";
@@ -1186,9 +1187,10 @@ struct Reducer
 //
 
 int main(int argc, const char* argv[]) {
-  std::string input, test, working, command;
+  std::filesystem::path input, test, working;
+  std::string command;
   // By default, look for binaries alongside our own binary.
-  std::string binDir = Path::getDirName(argv[0]);
+  std::filesystem::path binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
 
@@ -1300,10 +1302,10 @@ int main(int argc, const char* argv[]) {
     WASM_UNREACHABLE("unexpected type system");
   }
 
-  if (test.size() == 0) {
+  if (test.empty()) {
     Fatal() << "test file not provided\n";
   }
-  if (working.size() == 0) {
+  if (working.empty()) {
     Fatal() << "working file not provided\n";
   }
 
@@ -1321,7 +1323,7 @@ int main(int argc, const char* argv[]) {
   std::cerr << "|extra flags: " << extraFlags << '\n';
 
   // get the expected output
-  copy_file(input, test);
+  wasm::copy_file(input, test);
   expected.getFromExecution(command);
 
   std::cerr << "|expected result:\n" << expected << '\n';
@@ -1363,7 +1365,7 @@ int main(int argc, const char* argv[]) {
           << "running the command on the given input gives the same result as "
              "when running it on either a trivial valid wasm or a file with "
              "nonsense in it. does the script not look at the test file (" +
-               test + ")? (use -f to ignore this check)";
+               test.string() + ")? (use -f to ignore this check)";
       }
     }
   }
@@ -1372,8 +1374,8 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
-               test + " " + extraFlags;
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt").string() + " " +
+               input.string() + " -o " + test.string() + " " + extraFlags;
     if (!binary) {
       cmd += " -S ";
     }
@@ -1390,7 +1392,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  copy_file(input, working);
+  wasm::copy_file(input, working);
   auto workingSize = file_size(working);
   std::cerr << "|input size: " << workingSize << "\n";
 
@@ -1484,5 +1486,5 @@ int main(int argc, const char* argv[]) {
               << '\n';
   }
   std::cerr << "|finished, final size: " << file_size(working) << "\n";
-  copy_file(working, test); // just to avoid confusion
+  wasm::copy_file(working, test); // just to avoid confusion
 }

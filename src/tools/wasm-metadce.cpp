@@ -421,7 +421,7 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
-  std::string graphFile;
+  std::filesystem::path graphFile;
   bool dump = false;
 
   const std::string WasmMetaDCEOption = "wasm-opt options";
@@ -512,7 +512,7 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  if (graphFile.size() == 0) {
+  if (!graphFile.empty()) {
     Fatal() << "no graph file provided.";
   }
 

@@ -31,8 +31,8 @@ using namespace wasm;
 
 int main(int argc, const char* argv[]) {
   bool debugInfo = false;
-  std::string symbolMap;
-  std::string sourceMapFilename;
+  std::filesystem::path symbolMap;
+  std::filesystem::path sourceMapFilename;
   std::string sourceMapUrl;
 
   const std::string WasmAsOption = "wasm-as options";
@@ -142,11 +142,11 @@ int main(int argc, const char* argv[]) {
   ModuleWriter writer;
   writer.setBinary(true);
   writer.setDebugInfo(debugInfo);
-  if (sourceMapFilename.size()) {
+  if (!sourceMapFilename.empty()) {
     writer.setSourceMapFilename(sourceMapFilename);
     writer.setSourceMapUrl(sourceMapUrl);
   }
-  if (symbolMap.size() > 0) {
+  if (!symbolMap.empty() > 0) {
     writer.setSymbolMap(symbolMap);
   }
   writer.write(wasm, options.extra["output"]);
