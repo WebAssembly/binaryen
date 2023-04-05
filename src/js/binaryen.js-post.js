@@ -758,7 +758,7 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenMemoryGrow'](module, value, strToStack(name), memory64);
     },
     'init'(segment, dest, offset, size, name) {
-      return Module['_BinaryenMemoryInit'](module, segment, dest, offset, size, strToStack(name));
+      return preserveStack(() => Module['_BinaryenMemoryInit'](module, strToStack(segment), dest, offset, size, strToStack(name)));
     },
     'copy'(dest, source, size, destMemory, sourceMemory) {
       return Module['_BinaryenMemoryCopy'](module, dest, source, size, strToStack(destMemory), strToStack(sourceMemory));
@@ -781,7 +781,7 @@ function wrapModule(module, self = {}) {
 
   self['data'] = {
     'drop'(segment) {
-      return Module['_BinaryenDataDrop'](module, segment);
+      return preserveStack(() => Module['_BinaryenDataDrop'](module, strToStack(segment)));
     }
   }
 
@@ -3172,7 +3172,7 @@ Module['getExpressionInfo'] = function(expr) {
     case Module['MemoryInitId']:
       return {
         'id': id,
-        'segment': Module['_BinaryenMemoryInitGetSegment'](expr),
+        'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expr)),
         'dest': Module['_BinaryenMemoryInitGetDest'](expr),
         'offset': Module['_BinaryenMemoryInitGetOffset'](expr),
         'size': Module['_BinaryenMemoryInitGetSize'](expr)
@@ -3180,7 +3180,7 @@ Module['getExpressionInfo'] = function(expr) {
     case Module['DataDropId']:
       return {
         'id': id,
-        'segment': Module['_BinaryenDataDropGetSegment'](expr),
+        'segment': UTF8ToString(Module['_BinaryenDataDropGetSegment'](expr)),
       };
     case Module['MemoryCopyId']:
       return {
@@ -4543,10 +4543,10 @@ Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
 
 Module['MemoryInit'] = makeExpressionWrapper({
   'getSegment'(expr) {
-    return Module['_BinaryenMemoryInitGetSegment'](expr);
+    return UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expr));
   },
-  'setSegment'(expr, segmentIndex) {
-    Module['_BinaryenMemoryInitSetSegment'](expr, segmentIndex);
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenMemoryInitSetSegment'](expr, strToStack(segment)));
   },
   'getDest'(expr) {
     return Module['_BinaryenMemoryInitGetDest'](expr);
@@ -4570,10 +4570,10 @@ Module['MemoryInit'] = makeExpressionWrapper({
 
 Module['DataDrop'] = makeExpressionWrapper({
   'getSegment'(expr) {
-    return Module['_BinaryenDataDropGetSegment'](expr);
+    return UTF8ToString(Module['_BinaryenDataDropGetSegment'](expr));
   },
-  'setSegment'(expr, segmentIndex) {
-    Module['_BinaryenDataDropSetSegment'](expr, segmentIndex);
+  'setSegment'(expr, segment) {
+    preserveStack(() => Module['_BinaryenDataDropSetSegment'](expr, strToStack(segment)));
   }
 });
 

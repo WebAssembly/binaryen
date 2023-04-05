@@ -929,13 +929,13 @@ struct PrintExpressionContents
     o << "memory.init";
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
-    o << ' ' << curr->segment;
+    o << " $" << curr->segment;
   }
   void visitDataDrop(DataDrop* curr) {
     prepareColor(o);
     o << "data.drop";
     restoreNormalColor(o);
-    o << ' ' << curr->segment;
+    o << " $" << curr->segment;
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     prepareColor(o);
@@ -2283,7 +2283,7 @@ struct PrintExpressionContents
     }
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
-    o << ' ' << curr->segment;
+    o << " $" << curr->segment;
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -3246,13 +3246,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
     doIndent(o, indent);
     o << '(';
-    printMedium(o, "elem");
-    // If there is no explicit name, and there are multiple segments, use our
-    // internal names to differentiate them.
-    if (curr->hasExplicitName || currModule->elementSegments.size() > 1) {
-      o << ' ';
-      printName(curr->name, o);
-    }
+    printMedium(o, "elem ");
+    printName(curr->name, o);
 
     if (curr->table.is()) {
       if (usesExpressions || currModule->tables.size() > 1) {
@@ -3325,10 +3320,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMajor(o, "data ");
-    if (curr->hasExplicitName) {
-      printName(curr->name, o);
-      o << ' ';
-    }
+    printName(curr->name, o);
+    o << ' ';
     if (!curr->isPassive) {
       assert(!currModule || currModule->memories.size() > 0);
       if (!currModule || curr->memory != currModule->memories[0]->name) {

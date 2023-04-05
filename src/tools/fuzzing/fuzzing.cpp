@@ -196,13 +196,15 @@ void TranslateToFuzzReader::build() {
 void TranslateToFuzzReader::setupMemory() {
   // Add memory itself
   MemoryUtils::ensureExists(&wasm);
+  auto& memory = wasm.memories[0];
   if (wasm.features.hasBulkMemory()) {
     size_t memCovered = 0;
     // need at least one segment for memory.inits
     size_t numSegments = upTo(8) + 1;
     for (size_t i = 0; i < numSegments; i++) {
       auto segment = builder.makeDataSegment();
-      segment->setName(Name::fromInt(i), false);
+      segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(i)),
+                       false);
       segment->isPassive = bool(upTo(2));
       size_t segSize = upTo(USABLE_MEMORY * 2);
       segment->data.resize(segSize);
@@ -212,14 +214,14 @@ void TranslateToFuzzReader::setupMemory() {
       if (!segment->isPassive) {
         segment->offset = builder.makeConst(int32_t(memCovered));
         memCovered += segSize;
-        segment->memory = wasm.memories[0]->name;
+        segment->memory = memory->name;
       }
-      wasm.dataSegments.push_back(std::move(segment));
+      wasm.addDataSegment(std::move(segment));
     }
   } else {
     // init some data
     auto segment = builder.makeDataSegment();
-    segment->memory = wasm.memories[0]->name;
+    segment->memory = memory->name;
     segment->offset = builder.makeConst(int32_t(0));
     segment->setName(Name::fromInt(0), false);
     wasm.dataSegments.push_back(std::move(segment));
@@ -384,6 +386,7 @@ void TranslateToFuzzReader::setupTags() {
 }
 
 void TranslateToFuzzReader::finalizeMemory() {
+  auto& memory = wasm.memories[0];
   for (auto& segment : wasm.dataSegments) {
     Address maxOffset = segment->data.size();
     if (!segment->isPassive) {
@@ -408,26 +411,27 @@ void TranslateToFuzzReader::finalizeMemory() {
         maxOffset = maxOffset + offset->value.getInteger();
       }
     }
-    wasm.memories[0]->initial = std::max(
-      wasm.memories[0]->initial,
+    memory->initial = std::max(
+      memory->initial,
       Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
   }
-  wasm.memories[0]->initial =
-    std::max(wasm.memories[0]->initial, USABLE_MEMORY);
+  memory->initial = std::max(memory->initial, USABLE_MEMORY);
   // Avoid an unlimited memory size, which would make fuzzing very difficult
   // as different VMs will run out of system memory in different ways.
-  if (wasm.memories[0]->max == Memory::kUnlimitedSize) {
-    wasm.memories[0]->max = wasm.memories[0]->initial;
+  if (memory->max == Memory::kUnlimitedSize) {
+    memory->max = memory->initial;
   }
-  if (wasm.memories[0]->max <= wasm.memories[0]->initial) {
+  if (memory->max <= memory->initial) {
     // To allow growth to work (which a testcase may assume), try to make the
     // maximum larger than the initial.
     // TODO: scan the wasm for grow instructions?
-    wasm.memories[0]->max = std::min(Address(wasm.memories[0]->initial + 1),
-                                     Address(Memory::kMaxSize32));
+    memory->max =
+      std::min(Address(memory->initial + 1), Address(Memory::kMaxSize32));
   }
   // Avoid an imported memory (which the fuzz harness would need to handle).
-  wasm.memories[0]->module = wasm.memories[0]->base = Name();
+  for (auto& memory : wasm.memories) {
+    memory->module = memory->base = Name();
+  }
 }
 
 void TranslateToFuzzReader::finalizeTable() {
@@ -785,21 +789,43 @@ void TranslateToFuzzReader::recombine(Function* func) {
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
-  // Don't always do this.
-  if (oneIn(2)) {
+  // We want a 50% chance to not do this at all, and otherwise, we want to pick
+  // a different frequency to do it in each function. That gives us more
+  // diversity between fuzzings of the same initial content (once we might
+  // mutate with 5%, and only change one or two places, while another time we
+  // might mutate with 50% and change quite a lot; without this type of
+  // mechanism, in a large function the amount of mutations will generally be
+  // very close to the mean due to the central limit theorem).
+  auto r = upTo(200);
+  if (r > 100) {
     return;
   }
+
+  // Prefer lower numbers: We want something like a 10% chance to mutate on
+  // average. To achieve that, we raise r/100, which is in the range [0, 1], to
+  // the 9th power, giving us a number also in the range [0, 1] with a mean of
+  //   \integral_0^1 t^9 dx = 0.1 * t^10 |_0^1 = 0.1
+  // As a result, we get a value in the range of 0-100%. (Note that 100% is ok
+  // since we can't replace everything anyhow, see below.)
+  double t = r;
+  t = t / 100;
+  t = pow(t, 9);
+  Index percentChance = t * 100;
+  // Adjust almost-zero frequencies to at least a few %, just so we have some
+  // reasonable chance of making some changes.
+  percentChance = std::max(percentChance, Index(3));
 
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
+    Index percentChance;
 
     // Whether to replace with unreachable. This can lead to less code getting
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(Module& wasm, TranslateToFuzzReader& parent)
-      : wasm(wasm), parent(parent) {
+    Modder(Module& wasm, TranslateToFuzzReader& parent, Index percentChance)
+      : wasm(wasm), parent(parent), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
@@ -807,8 +833,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
     }
 
     void visitExpression(Expression* curr) {
-      if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
-        if (allowUnreachable && parent.oneIn(10)) {
+      if (parent.upTo(100) < percentChance &&
+          parent.canBeArbitrarilyReplaced(curr)) {
+        if (allowUnreachable && parent.oneIn(20)) {
           replaceCurrent(parent.make(Type::unreachable));
           return;
         }
@@ -822,12 +849,14 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.)
+        // nesting of labels, but we'll fix that up later.) Note that make()
+        // picks a subtype, so this has a chance to replace us with anything
+        // that is valid to put here.
         replaceCurrent(parent.make(curr->type));
       }
     }
   };
-  Modder modder(wasm, *this);
+  Modder modder(wasm, *this, percentChance);
   modder.walk(func->body);
 }
 
@@ -1088,8 +1117,17 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
   }
-  if (type.isRef() && type.getHeapType() == HeapType::i31) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeI31New);
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType.isBasic()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeBasicRef);
+    } else {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeCompoundRef);
+    }
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeRefCast);
   }
   // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
@@ -2090,9 +2128,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
       return builder.makeRefNull(type.getHeapType());
     }
     if (type.getHeapType().isBasic()) {
-      return makeConstBasicRef(type);
+      return makeBasicRef(type);
     } else {
-      return makeConstCompoundRef(type);
+      return makeCompoundRef(type);
     }
   } else if (type.isTuple()) {
     std::vector<Expression*> operands;
@@ -2106,7 +2144,7 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
   }
 }
 
-Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
+Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
@@ -2210,7 +2248,7 @@ Expression* TranslateToFuzzReader::makeConstBasicRef(Type type) {
   WASM_UNREACHABLE("invalid basic ref type");
 }
 
-Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
+Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   assert(!heapType.isBasic());
@@ -2244,28 +2282,43 @@ Expression* TranslateToFuzzReader::makeConstCompoundRef(Type type) {
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
+  // When we make children, they must be trivial if we are not in a function
+  // context.
+  auto makeChild = [&](Type type) {
+    return funcContext ? make(type) : makeTrivial(type);
+  };
+
   if (heapType.isSignature()) {
     return makeRefFuncConst(type);
   } else if (type.isStruct()) {
     auto& fields = heapType.getStruct().fields;
     std::vector<Expression*> values;
-    // TODO: use non-default values randomly even when not necessary, sometimes
-    if (std::any_of(fields.begin(), fields.end(), [&](const Field& field) {
-          return !field.type.isDefaultable();
-        })) {
-      // There is a nondefaultable field, which we must create.
+    // If there is a nondefaultable field, we must provide the value and not
+    // depend on defaults. Also do that randomly half the time.
+    if (std::any_of(
+          fields.begin(),
+          fields.end(),
+          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+        oneIn(2)) {
       for (auto& field : fields) {
-        // TODO: when in a function context, we don't need to be trivial.
-        values.push_back(makeTrivial(field.type));
+        values.push_back(makeChild(field.type));
+      }
+      // Add more nesting manually, as we can easily get exponential blowup
+      // here. This nesting makes it much less likely for a recursive data
+      // structure to end up as a massive tree of struct.news, since the nesting
+      // limitation code at the top of this function will kick in.
+      if (!values.empty()) {
+        // Subtract 1 since if there is a single value there cannot be
+        // exponential blowup.
+        nester.add(values.size() - 1);
       }
     }
     return builder.makeStructNew(heapType, values);
   } else if (type.isArray()) {
     auto element = heapType.getArray().element;
     Expression* init = nullptr;
-    if (!element.type.isDefaultable()) {
-      // TODO: when in a function context, we don't need to be trivial.
-      init = makeTrivial(element.type);
+    if (!element.type.isDefaultable() || oneIn(2)) {
+      init = makeChild(element.type);
     }
     auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
     return builder.makeArrayNew(type.getHeapType(), count, init);
@@ -3136,11 +3189,39 @@ Expression* TranslateToFuzzReader::makeRefTest(Type type) {
   return builder.makeRefTest(make(refType), castType);
 }
 
-Expression* TranslateToFuzzReader::makeI31New(Type type) {
-  assert(type.isRef() && type.getHeapType() == HeapType::i31);
+Expression* TranslateToFuzzReader::makeRefCast(Type type) {
+  assert(type.isRef());
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  auto* value = make(Type::i32);
-  return builder.makeI31New(value);
+  // As with RefTest, use possibly related types. Unlike there, we are given the
+  // output type, which is the cast type, so just generate the ref's type.
+  Type refType;
+  switch (upTo(3)) {
+    case 0:
+      // Totally random.
+      refType = getReferenceType();
+      // They must share a bottom type in order to validate.
+      if (refType.getHeapType().getBottom() == type.getHeapType().getBottom()) {
+        break;
+      }
+      // Otherwise, fall through and generate things in a way that is
+      // guaranteed to validate.
+      [[fallthrough]];
+    case 1: {
+      // Cast is a subtype of ref. We can't modify |type|, so find a supertype
+      // for the ref.
+      refType = getSuperType(type);
+      break;
+    }
+    case 2:
+      // Ref is a subtype of cast.
+      refType = getSubType(type);
+      break;
+    default:
+      // This unreachable avoids a warning on refType being possibly undefined.
+      WASM_UNREACHABLE("bad case");
+  }
+  // TODO: Fuzz unsafe casts?
+  return builder.makeRefCast(make(refType), type, RefCast::Safe);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
@@ -3156,8 +3237,9 @@ Expression* TranslateToFuzzReader::makeMemoryInit() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  uint32_t segment = upTo(wasm.dataSegments.size());
-  size_t totalSize = wasm.dataSegments[segment]->data.size();
+  Index segIdx = upTo(wasm.dataSegments.size());
+  Name segment = wasm.dataSegments[segIdx]->name;
+  size_t totalSize = wasm.dataSegments[segIdx]->data.size();
   size_t offsetVal = upTo(totalSize);
   size_t sizeVal = upTo(totalSize - offsetVal);
   Expression* dest = makePointer();
@@ -3171,7 +3253,9 @@ Expression* TranslateToFuzzReader::makeDataDrop() {
   if (!allowMemory) {
     return makeTrivial(Type::none);
   }
-  return builder.makeDataDrop(upTo(wasm.dataSegments.size()));
+  Index segIdx = upTo(wasm.dataSegments.size());
+  Name segment = wasm.dataSegments[segIdx]->name;
+  return builder.makeDataDrop(segment);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryCopy() {
@@ -3408,6 +3492,10 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
+static bool isUninhabitable(Type type) {
+  return type.isNonNullable() && type.getHeapType().isBottom();
+}
+
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -3418,21 +3506,52 @@ Type TranslateToFuzzReader::getSubType(Type type) {
   } else if (type.isRef()) {
     auto heapType = getSubType(type.getHeapType());
     auto nullability = getSubType(type.getNullability());
+    auto subType = Type(heapType, nullability);
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.
-    auto uninhabitable = nullability == NonNullable && heapType.isBottom();
-    auto originalUninhabitable =
-      type.isNonNullable() && type.getHeapType().isBottom();
-    if (uninhabitable && !originalUninhabitable && !oneIn(20)) {
+    if (isUninhabitable(subType) && !isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
-    return Type(heapType, nullability);
+    return subType;
   } else {
     // This is an MVP type without subtypes.
     assert(type.isBasic());
     return type;
   }
+}
+
+Nullability TranslateToFuzzReader::getSuperType(Nullability nullability) {
+  if (nullability == Nullable) {
+    return Nullable;
+  }
+  return getNullability();
+}
+
+HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
+  // TODO cache these?
+  std::vector<HeapType> supers;
+  while (1) {
+    supers.push_back(type);
+    if (auto super = type.getSuperType()) {
+      type = *super;
+    } else {
+      break;
+    }
+  }
+  return pick(supers);
+}
+
+Type TranslateToFuzzReader::getSuperType(Type type) {
+  auto heapType = getSuperType(type.getHeapType());
+  auto nullability = getSuperType(type.getNullability());
+  auto superType = Type(heapType, nullability);
+  // As with getSubType, we want to avoid returning an uninhabitable type where
+  // possible. Here all we can do is flip the super's nullability to nullable.
+  if (isUninhabitable(superType)) {
+    superType = Type(heapType, Nullable);
+  }
+  return superType;
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {

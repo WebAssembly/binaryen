@@ -1632,14 +1632,20 @@ struct OptimizeInstructions
       }
 
       if (auto* select = ref->dynCast<Select>()) {
-        if (select->ifTrue->type.isNull()) {
+        // We must check for unreachability explicitly here because a full
+        // refinalize only happens at the end. That is, the select may stil be
+        // reachable after we turned one child into an unreachable, and we are
+        // calling getResultOfFirst which will error on unreachability.
+        if (select->ifTrue->type.isNull() &&
+            select->ifFalse->type != Type::unreachable) {
           ref = builder.makeSequence(
             builder.makeDrop(select->ifTrue),
             getResultOfFirst(select->ifFalse,
                              builder.makeDrop(select->condition)));
           return false;
         }
-        if (select->ifFalse->type.isNull()) {
+        if (select->ifFalse->type.isNull() &&
+            select->ifTrue->type != Type::unreachable) {
           ref = getResultOfFirst(
             select->ifTrue,
             builder.makeSequence(builder.makeDrop(select->ifFalse),

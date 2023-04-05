@@ -569,7 +569,7 @@ public:
     ret->memory = memory;
     return ret;
   }
-  MemoryInit* makeMemoryInit(uint32_t segment,
+  MemoryInit* makeMemoryInit(Name segment,
                              Expression* dest,
                              Expression* offset,
                              Expression* size,
@@ -583,7 +583,7 @@ public:
     ret->finalize();
     return ret;
   }
-  DataDrop* makeDataDrop(uint32_t segment) {
+  DataDrop* makeDataDrop(Name segment) {
     auto* ret = wasm.allocator.alloc<DataDrop>();
     ret->segment = segment;
     ret->finalize();
@@ -930,7 +930,7 @@ public:
   }
   ArrayNewSeg* makeArrayNewSeg(ArrayNewSegOp op,
                                HeapType type,
-                               Index seg,
+                               Name seg,
                                Expression* offset,
                                Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewSeg>();
@@ -1295,7 +1295,12 @@ public:
       return ExpressionManipulator::refNull(curr, curr->type);
     }
     if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
-      return makeI31New(makeConst(0));
+      Expression* ret = makeI31New(makeConst(0));
+      if (curr->type.isNullable()) {
+        // To keep the type identical, wrap it in a block that adds nullability.
+        ret = makeBlock({ret}, curr->type);
+      }
+      return ret;
     }
     if (!curr->type.isBasic()) {
       // We can't do any better, keep the original.

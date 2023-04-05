@@ -21,6 +21,10 @@
  ;; ROUNDTRIP:      (type $func-array (array (mut funcref)))
  (type $func-array (array (mut funcref)))
 
+ (data "hello")
+ (elem func $len $impossible-len $unreachable-len)
+
+
  ;; CHECK:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; CHECK:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
@@ -29,7 +33,15 @@
 
  ;; CHECK:      (type $none_=>_ref|$func-array| (func (result (ref $func-array))))
 
- ;; CHECK:      (data "hello")
+ ;; CHECK:      (data $0 "hello")
+
+ ;; CHECK:      (elem $0 func $len $impossible-len $unreachable-len)
+
+ ;; CHECK:      (func $len (type $ref|array|_=>_i32) (param $a (ref array)) (result i32)
+ ;; CHECK-NEXT:  (array.len
+ ;; CHECK-NEXT:   (local.get $a)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  ;; ROUNDTRIP:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
  ;; ROUNDTRIP:      (type $nullref_=>_i32 (func (param nullref) (result i32)))
@@ -38,18 +50,10 @@
 
  ;; ROUNDTRIP:      (type $none_=>_ref|$func-array| (func (result (ref $func-array))))
 
- ;; ROUNDTRIP:      (data "hello")
- (data "hello")
- ;; CHECK:      (elem func $len $impossible-len $unreachable-len)
- ;; ROUNDTRIP:      (elem func $len $impossible-len $unreachable-len)
- (elem func $len $impossible-len $unreachable-len)
+ ;; ROUNDTRIP:      (data $0 "hello")
 
+ ;; ROUNDTRIP:      (elem $0 func $len $impossible-len $unreachable-len)
 
- ;; CHECK:      (func $len (type $ref|array|_=>_i32) (param $a (ref array)) (result i32)
- ;; CHECK-NEXT:  (array.len
- ;; CHECK-NEXT:   (local.get $a)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  ;; ROUNDTRIP:      (func $len (type $ref|array|_=>_i32) (param $a (ref array)) (result i32)
  ;; ROUNDTRIP-NEXT:  (array.len
  ;; ROUNDTRIP-NEXT:   (local.get $a)
@@ -109,13 +113,13 @@
  )
 
  ;; CHECK:      (func $new-data (type $none_=>_ref|$byte-array|) (result (ref $byte-array))
- ;; CHECK-NEXT:  (array.new_data $byte-array 0
+ ;; CHECK-NEXT:  (array.new_data $byte-array $0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 5)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ROUNDTRIP:      (func $new-data (type $none_=>_ref|$byte-array|) (result (ref $byte-array))
- ;; ROUNDTRIP-NEXT:  (array.new_data $byte-array 0
+ ;; ROUNDTRIP-NEXT:  (array.new_data $byte-array $0
  ;; ROUNDTRIP-NEXT:   (i32.const 0)
  ;; ROUNDTRIP-NEXT:   (i32.const 5)
  ;; ROUNDTRIP-NEXT:  )
@@ -128,13 +132,13 @@
  )
 
  ;; CHECK:      (func $new-elem (type $none_=>_ref|$func-array|) (result (ref $func-array))
- ;; CHECK-NEXT:  (array.new_elem $func-array 0
+ ;; CHECK-NEXT:  (array.new_elem $func-array $0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 3)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ROUNDTRIP:      (func $new-elem (type $none_=>_ref|$func-array|) (result (ref $func-array))
- ;; ROUNDTRIP-NEXT:  (array.new_elem $func-array 0
+ ;; ROUNDTRIP-NEXT:  (array.new_elem $func-array $0
  ;; ROUNDTRIP-NEXT:   (i32.const 0)
  ;; ROUNDTRIP-NEXT:   (i32.const 3)
  ;; ROUNDTRIP-NEXT:  )

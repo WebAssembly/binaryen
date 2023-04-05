@@ -181,7 +181,7 @@ struct MultiMemoryLowering : public Pass {
     Expression* makeDataSegmentBoundsCheck(MemoryInit* curr,
                                            Index sizeIdx,
                                            Index offsetIdx) {
-      auto& segment = parent.wasm->dataSegments[curr->segment];
+      auto* segment = parent.wasm->getDataSegment(curr->segment);
       Expression* addGtuTrap = makeAddGtuTrap(
         builder.makeLocalGet(offsetIdx, parent.pointerType),
         builder.makeLocalGet(sizeIdx, parent.pointerType),

@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Some C and JS API functions now refer to data and element segments by name
+  instead of index.
+
 v112
 ----
 

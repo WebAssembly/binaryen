@@ -1283,7 +1283,7 @@ console.log("# MemoryInit");
   const module = new binaryen.Module();
   module.setMemory(1, 1, null);
 
-  var segment = 1;
+  var segment = "1";
   var dest = module.i32.const(2);
   var offset = module.i32.const(3);
   var size = module.i32.const(4);
@@ -1296,8 +1296,8 @@ console.log("# MemoryInit");
   assert(theMemoryInit.size === size);
   assert(theMemoryInit.type === binaryen.none);
 
-  theMemoryInit.segment = segment = 5;
-  assert(theMemoryInit.segment === 5);
+  theMemoryInit.segment = segment = "5";
+  assert(theMemoryInit.segment === "5");
   theMemoryInit.dest = dest = module.i32.const(6);
   assert(theMemoryInit.dest === dest);
   theMemoryInit.offset = offset = module.i32.const(7);
@@ -1312,7 +1312,7 @@ console.log("# MemoryInit");
   assert(
     theMemoryInit.toText()
     ==
-    "(memory.init $0 5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
+    "(memory.init $0 $5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
   );
 
   module.dispose();
@@ -1322,15 +1322,15 @@ console.log("# DataDrop");
 (function testDataDrop() {
   const module = new binaryen.Module();
 
-  var segment = 1;
+  var segment = "1";
   const theDataDrop = binaryen.DataDrop(module.data.drop(segment));
   assert(theDataDrop instanceof binaryen.DataDrop);
   assert(theDataDrop instanceof binaryen.Expression);
   assert(theDataDrop.segment === segment);
   assert(theDataDrop.type === binaryen.none);
 
-  theDataDrop.segment = segment = 2;
-  assert(theDataDrop.segment === 2);
+  theDataDrop.segment = segment = "2";
+  assert(theDataDrop.segment === "2");
   theDataDrop.type = binaryen.f64;
   theDataDrop.finalize();
   assert(theDataDrop.type === binaryen.none);
@@ -1339,7 +1339,7 @@ console.log("# DataDrop");
   assert(
     theDataDrop.toText()
     ==
-    "(data.drop 2)\n"
+    "(data.drop $2)\n"
   );
 
   module.dispose();

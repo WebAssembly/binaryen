@@ -125,12 +125,12 @@ public:
 
 private:
   void calcSegmentOffsets() {
-    std::unordered_map<Index, Address> passiveOffsets;
+    std::unordered_map<Name, Address> passiveOffsets;
     if (wasm.features.hasBulkMemory()) {
       // Fetch passive segment offsets out of memory.init instructions
       struct OffsetSearcher : PostWalker<OffsetSearcher> {
-        std::unordered_map<Index, Address>& offsets;
-        OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+        std::unordered_map<Name, Address>& offsets;
+        OffsetSearcher(std::unordered_map<Name, Address>& offsets)
           : offsets(offsets) {}
         void visitMemoryInit(MemoryInit* curr) {
           // The desitination of the memory.init is either a constant
@@ -160,7 +160,7 @@ private:
     for (unsigned i = 0; i < wasm.dataSegments.size(); ++i) {
       auto& segment = wasm.dataSegments[i];
       if (segment->isPassive) {
-        auto it = passiveOffsets.find(i);
+        auto it = passiveOffsets.find(segment->name);
         if (it != passiveOffsets.end()) {
           segmentOffsets.push_back(it->second);
         } else {

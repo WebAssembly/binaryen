@@ -12,7 +12,7 @@
   ;; CHECK:      (table $0 1 1 funcref)
   (table $0 1 1 funcref)
   (elem (i32.const 1) func $update_state)
-  ;; CHECK:      (elem (i32.const 1) $export$update_state)
+  ;; CHECK:      (elem $0 (i32.const 1) $export$update_state)
 
   ;; CHECK:      (export "update_state" (func $export$update_state))
   (export "update_state" (func $update_state))

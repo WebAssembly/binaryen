@@ -1708,7 +1708,7 @@
 (module
  (type $none_=>_none (func))
  (memory $0 256 256)
- (data "hello, there!")
+ (data $0 "hello, there!")
  (func $memory-init-load (type $none_=>_none)
   (local $x i32)
   (local.set $x
@@ -1716,7 +1716,7 @@
     (i32.const 0)
    )
   )
-  (memory.init 0
+  (memory.init $0
    (i32.const 0)
    (i32.const 0)
    (i32.const 5)
@@ -1736,7 +1736,7 @@
     (i32.const 0)
    )
   )
-  (memory.init 0
+  (memory.init $0
    (i32.const 0)
    (i32.const 0)
    (i32.const 5)
@@ -1824,7 +1824,7 @@
     (i32.const 0)
    )
   )
-  (data.drop 0)
+  (data.drop $0)
   (drop
    (local.get $x)
   )
@@ -1840,7 +1840,7 @@
     (i32.const 0)
    )
   )
-  (data.drop 0)
+  (data.drop $0)
   (drop
    (local.get $x)
   )
@@ -1849,7 +1849,7 @@
   (local $x i32)
   (local.set $x
    (block (result i32)
-    (memory.init 0
+    (memory.init $0
      (i32.const 0)
      (i32.const 0)
      (i32.const 5)
@@ -1857,7 +1857,7 @@
     (i32.const 0)
    )
   )
-  (data.drop 0)
+  (data.drop $0)
   (drop
    (local.get $x)
   )

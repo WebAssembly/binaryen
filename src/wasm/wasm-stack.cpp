@@ -687,26 +687,27 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);
-  o << U32LEB(curr->segment) << int8_t(parent.getMemoryIndex(curr->memory));
+  o << U32LEB(parent.getDataSegmentIndex(curr->segment));
+  o << U32LEB(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitDataDrop(DataDrop* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::DataDrop);
-  o << U32LEB(curr->segment);
+  o << U32LEB(parent.getDataSegmentIndex(curr->segment));
 }
 
 void BinaryInstWriter::visitMemoryCopy(MemoryCopy* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryCopy);
-  o << int8_t(parent.getMemoryIndex(curr->destMemory))
-    << int8_t(parent.getMemoryIndex(curr->sourceMemory));
+  o << U32LEB(parent.getMemoryIndex(curr->destMemory));
+  o << U32LEB(parent.getMemoryIndex(curr->sourceMemory));
 }
 
 void BinaryInstWriter::visitMemoryFill(MemoryFill* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryFill);
-  o << int8_t(parent.getMemoryIndex(curr->memory));
+  o << U32LEB(parent.getMemoryIndex(curr->memory));
 }
 
 void BinaryInstWriter::visitConst(Const* curr) {
@@ -2122,15 +2123,17 @@ void BinaryInstWriter::visitArrayNewSeg(ArrayNewSeg* curr) {
   switch (curr->op) {
     case NewData:
       o << U32LEB(BinaryConsts::ArrayNewData);
+      parent.writeIndexedHeapType(curr->type.getHeapType());
+      o << U32LEB(parent.getDataSegmentIndex(curr->segment));
       break;
     case NewElem:
       o << U32LEB(BinaryConsts::ArrayNewElem);
+      parent.writeIndexedHeapType(curr->type.getHeapType());
+      o << U32LEB(parent.getElementSegmentIndex(curr->segment));
       break;
     default:
       WASM_UNREACHABLE("unexpected op");
   }
-  parent.writeIndexedHeapType(curr->type.getHeapType());
-  o << U32LEB(curr->segment);
 }
 
 void BinaryInstWriter::visitArrayNewFixed(ArrayNewFixed* curr) {

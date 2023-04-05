@@ -148,11 +148,18 @@ public:
 
   struct AutoNester {
     TranslateToFuzzReader& parent;
+    size_t amount = 1;
 
     AutoNester(TranslateToFuzzReader& parent) : parent(parent) {
       parent.nesting++;
     }
-    ~AutoNester() { parent.nesting--; }
+    ~AutoNester() { parent.nesting -= amount; }
+
+    // Add more nesting manually.
+    void add(size_t more) {
+      parent.nesting += more;
+      amount += more;
+    }
   };
 
 private:
@@ -289,10 +296,10 @@ private:
   // we may add a GC cast to fixup the type.
   Expression* makeConst(Type type);
 
-  // Like makeConst, but for a type that is a reference type. One function
-  // handles basic types, and the other compound ones.
-  Expression* makeConstBasicRef(Type type);
-  Expression* makeConstCompoundRef(Type type);
+  // Generate reference values. One function handles basic types, and the other
+  // compound ones.
+  Expression* makeBasicRef(Type type);
+  Expression* makeCompoundRef(Type type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -318,7 +325,7 @@ private:
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
-  Expression* makeI31New(Type type);
+  Expression* makeRefCast(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
@@ -340,6 +347,9 @@ private:
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  Nullability getSuperType(Nullability nullability);
+  HeapType getSuperType(HeapType type);
+  Type getSuperType(Type type);
 
   // Utilities
   Name getTargetName(Expression* target);

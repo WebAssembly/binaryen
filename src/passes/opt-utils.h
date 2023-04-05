@@ -37,7 +37,7 @@ inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
   // save the full list of functions on the side
   std::vector<std::unique_ptr<Function>> all;
   all.swap(module->functions);
-  module->updateMaps();
+  module->updateFunctionsMap();
   for (auto& func : funcs) {
     module->addFunction(func);
   }
@@ -53,7 +53,7 @@ inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
     func.release();
   }
   all.swap(module->functions);
-  module->updateMaps();
+  module->updateFunctionsMap();
 }
 
 struct FunctionRefReplacer

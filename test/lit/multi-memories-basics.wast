@@ -13,8 +13,6 @@
   (memory $memory3 1 400)
   (data (memory $memory1) (i32.const 0) "a" "" "bcd")
   (import "env" "memory" (memory $importedMemory 1 1))
-  ;; CHECK:      (data (i32.const 0) "abcd")
-
   ;; CHECK:      (func $memory.fill
   ;; CHECK-NEXT:  (memory.fill $memory2
   ;; CHECK-NEXT:   (i32.const 0)
@@ -44,7 +42,7 @@
     )
   )
   ;; CHECK:      (func $memory.init
-  ;; CHECK-NEXT:  (memory.init $memory1 0
+  ;; CHECK-NEXT:  (memory.init $memory1 $0
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 45)

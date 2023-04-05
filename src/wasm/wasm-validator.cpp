@@ -1425,9 +1425,9 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   if (!shouldBeTrue(!!memory, curr, "memory.init memory must exist")) {
     return;
   }
-  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
-               "memory.init segment index out of bounds");
+               "memory.init segment should exist");
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
@@ -1437,14 +1437,9 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
     "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeFalse(getModule()->memories.empty(),
-                     curr,
-                     "Memory operations require a memory")) {
-    return;
-  }
-  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
-               "data.drop segment index out of bounds");
+               "data.drop segment should exist");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
@@ -2722,16 +2717,16 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     "array.new_{data, elem} size must be an i32");
   switch (curr->op) {
     case NewData:
-      if (!shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+      if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
                         curr,
-                        "array.new_data segment index out of bounds")) {
+                        "array.new_data segment should exist")) {
         return;
       }
       break;
     case NewElem:
-      if (!shouldBeTrue(curr->segment < getModule()->elementSegments.size(),
+      if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
                         curr,
-                        "array.new_elem segment index out of bounds")) {
+                        "array.new_elem segment should exist")) {
         return;
       }
       break;
@@ -2762,7 +2757,7 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
                    "array.new_data result element type should be numeric");
       break;
     case NewElem:
-      shouldBeSubType(getModule()->elementSegments[curr->segment]->type,
+      shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
                       elemType,
                       curr,
                       "array.new_elem segment type should be a subtype of the "

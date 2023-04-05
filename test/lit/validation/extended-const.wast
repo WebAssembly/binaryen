@@ -11,7 +11,7 @@
 ;; EXTENDED:  (global.get $gimport$0)
 ;; EXTENDED:  (i32.const 42)
 ;; EXTENDED: ))
-;; EXTENDED: (data (i32.sub
+;; EXTENDED: (data $0 (i32.sub
 ;; EXTENDED:  (global.get $gimport$0)
 ;; EXTENDED:  (i32.const 10)
 ;; EXTENDED: ) "hello world")

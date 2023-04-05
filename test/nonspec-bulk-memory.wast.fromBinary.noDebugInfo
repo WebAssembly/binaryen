@@ -1,16 +1,16 @@
 (module
  (type $none_=>_none (func))
  (memory $0 1024 1024)
- (data (i32.const 0) "hello, world")
+ (data $0 (i32.const 0) "hello, world")
  (func $0 (type $none_=>_none)
-  (memory.init 0
+  (memory.init $0
    (i32.const 512)
    (i32.const 0)
    (i32.const 12)
   )
  )
  (func $1 (type $none_=>_none)
-  (data.drop 0)
+  (data.drop $0)
  )
  (func $2 (type $none_=>_none)
   (memory.copy

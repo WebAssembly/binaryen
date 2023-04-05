@@ -5,7 +5,7 @@
  (import "env" "imported_twice" (func $imported_twice_a))
  (import "env" "an-imported-table-func" (func $imported_table_func))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
- (elem (i32.const 0) $imported_table_func)
+ (elem $0 (i32.const 0) $imported_table_func)
  (export "stackAlloc" (func $stackAlloc))
  (func $stackAlloc (type $none_=>_none)
   (drop
