@@ -802,12 +802,14 @@ void TranslateToFuzzReader::mutate(Function* func) {
   // average. To achieve that, we raise r/100, which is in the range [0, 1], to
   // the 9th power, giving us a number also in the range [0, 1] with a mean of
   //   \integral_0^1 t^9 dx = 0.1 * t^10 |_0^1 = 0.1
+  // As a result, we get a value in the range of 0-100%. We'll adjust 0% to 1%
+  // so we avoid doing nothing at all, and note that 100% is ok since we can't
+  // replace everything anyhow (see below).
   double t = r;
   t = t / 100;
   t = t * t * t * t * t * t * t * t * t;
   Index percentChance = t * 100;
   if (percentChance == 0) {
-    // Give at least a 1% chance, or else we'll be doing nothing here.
     percentChance = 1;
   }
 
