@@ -25,6 +25,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <memory>
 
 #include "ir/branch-utils.h"
@@ -71,6 +72,7 @@ std::string GetLastErrorStdStr() {
   return std::string();
 }
 #endif
+using std::filesystem::file_size;
 using namespace wasm;
 
 // A timeout on every execution of the command.
