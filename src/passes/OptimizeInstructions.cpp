@@ -2226,6 +2226,9 @@ struct OptimizeInstructions
     }
 
     assert(curr->op == RefAsNonNull);
+    if (trapOnNull(curr, curr->value)) {
+      return;
+    }
     skipNonNullCast(curr->value, curr);
     if (!curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
