@@ -789,21 +789,43 @@ void TranslateToFuzzReader::recombine(Function* func) {
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
-  // Don't always do this.
-  if (oneIn(2)) {
+  // We want a 50% chance to not do this at all, and otherwise, we want to pick
+  // a different frequency to do it in each function. That gives us more
+  // diversity between fuzzings of the same initial content (once we might
+  // mutate with 5%, and only change one or two places, while another time we
+  // might mutate with 50% and change quite a lot; without this type of
+  // mechanism, in a large function the amount of mutations will generally be
+  // very close to the mean due to the central limit theorem).
+  auto r = upTo(200);
+  if (r > 100) {
     return;
   }
+
+  // Prefer lower numbers: We want something like a 10% chance to mutate on
+  // average. To achieve that, we raise r/100, which is in the range [0, 1], to
+  // the 9th power, giving us a number also in the range [0, 1] with a mean of
+  //   \integral_0^1 t^9 dx = 0.1 * t^10 |_0^1 = 0.1
+  // As a result, we get a value in the range of 0-100%. (Note that 100% is ok
+  // since we can't replace everything anyhow, see below.)
+  double t = r;
+  t = t / 100;
+  t = pow(t, 9);
+  Index percentChance = t * 100;
+  // Adjust almost-zero frequencies to at least a few %, just so we have some
+  // reasonable chance of making some changes.
+  percentChance = std::max(percentChance, Index(3));
 
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
     Module& wasm;
     TranslateToFuzzReader& parent;
+    Index percentChance;
 
     // Whether to replace with unreachable. This can lead to less code getting
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(Module& wasm, TranslateToFuzzReader& parent)
-      : wasm(wasm), parent(parent) {
+    Modder(Module& wasm, TranslateToFuzzReader& parent, Index percentChance)
+      : wasm(wasm), parent(parent), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
@@ -811,8 +833,9 @@ void TranslateToFuzzReader::mutate(Function* func) {
     }
 
     void visitExpression(Expression* curr) {
-      if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
-        if (allowUnreachable && parent.oneIn(10)) {
+      if (parent.upTo(100) < percentChance &&
+          parent.canBeArbitrarilyReplaced(curr)) {
+        if (allowUnreachable && parent.oneIn(20)) {
           replaceCurrent(parent.make(Type::unreachable));
           return;
         }
@@ -826,13 +849,14 @@ void TranslateToFuzzReader::mutate(Function* func) {
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
         // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.)
-        // TODO: pick a subtype of the current type
+        // nesting of labels, but we'll fix that up later.) Note that make()
+        // picks a subtype, so this has a chance to replace us with anything
+        // that is valid to put here.
         replaceCurrent(parent.make(curr->type));
       }
     }
   };
-  Modder modder(wasm, *this);
+  Modder modder(wasm, *this, percentChance);
   modder.walk(func->body);
 }
 
