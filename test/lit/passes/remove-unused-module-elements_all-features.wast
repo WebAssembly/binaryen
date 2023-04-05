@@ -722,3 +722,42 @@
   )
  )
 )
+;; SIMD operations can keep memories alive
+(module
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (memory $A 1 1)
+ (memory $A 1 1)
+ ;; CHECK:      (memory $B 1 1)
+ (memory $B 1 1)
+ (memory $C-unused 1 1)
+
+ (func "func"
+  (drop
+   (v128.load64_splat $A
+    (i32.const 0)
+   )
+  )
+  (drop
+   (v128.load16_lane $B 0
+    (i32.const 0)
+    (v128.const i32x4 0 0 0 0)
+   )
+  )
+ )
+)
+;; CHECK:      (export "func" (func $0))
+
+;; CHECK:      (func $0 (type $none_=>_none)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (v128.load64_splat $A
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (v128.load16_lane $B 0
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
