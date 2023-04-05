@@ -833,7 +833,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void visitExpression(Expression* curr) {
       if (parent.upTo(100) < percentChance &&
           parent.canBeArbitrarilyReplaced(curr)) {
-        if (allowUnreachable && parent.oneIn(10)) {
+        if (allowUnreachable && parent.oneIn(20)) {
           replaceCurrent(parent.make(Type::unreachable));
           return;
         }
