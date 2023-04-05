@@ -65,8 +65,9 @@ public:
                   std::filesystem::path sourceMapFilename = "");
   // read text or binary, checking the contents for what it is. If `filename` is
   // empty, read from stdin.
-  void
-  read(std::filesystem::path filename, Module& wasm, std::filesystem::path sourceMapFilename = "");
+  void read(std::filesystem::path filename,
+            Module& wasm,
+            std::filesystem::path sourceMapFilename = "");
   // check whether a file is a wasm binary
   bool isBinaryFile(std::filesystem::path filename);
 
@@ -100,7 +101,9 @@ public:
   ModuleWriter() { setDebugInfo(false); }
 
   void setBinary(bool binary_) { binary = binary_; }
-  void setSymbolMap(std::filesystem::path symbolMap_) { symbolMap = symbolMap_; }
+  void setSymbolMap(std::filesystem::path symbolMap_) {
+    symbolMap = symbolMap_;
+  }
   void setSourceMapFilename(std::filesystem::path sourceMapFilename_) {
     sourceMapFilename = sourceMapFilename_;
   }

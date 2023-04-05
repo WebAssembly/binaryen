@@ -48,7 +48,8 @@ template<> std::string do_read_stdin<std::string>::operator()() {
 }
 
 template<typename T>
-T wasm::read_file(const std::filesystem::path& filename, Flags::BinaryOption binary) {
+T wasm::read_file(const std::filesystem::path& filename,
+                  Flags::BinaryOption binary) {
   if (filename == "-") {
     return do_read_stdin<T>{}();
   }
@@ -96,11 +97,13 @@ std::string wasm::read_possible_response_file(const std::string& input) {
 }
 
 // Explicit instantiations for the explicit specializations.
-template std::string wasm::read_file<>(const std::filesystem::path&, Flags::BinaryOption);
+template std::string wasm::read_file<>(const std::filesystem::path&,
+                                       Flags::BinaryOption);
 template std::vector<char> wasm::read_file<>(const std::filesystem::path&,
                                              Flags::BinaryOption);
 
-wasm::Output::Output(const std::filesystem::path& filename, Flags::BinaryOption binary)
+wasm::Output::Output(const std::filesystem::path& filename,
+                     Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
       // Ensure a single return at the very end, to avoid clang-tidy warnings
       // about the types of different returns here.
@@ -122,7 +125,8 @@ wasm::Output::Output(const std::filesystem::path& filename, Flags::BinaryOption 
       return buffer;
     }()) {}
 
-void wasm::copy_file(std::filesystem::path input, std::filesystem::path output) {
-  std::filesystem::copy_file(input, output, std::filesystem::copy_options::overwrite_existing);
+void wasm::copy_file(std::filesystem::path input,
+                     std::filesystem::path output) {
+  std::filesystem::copy_file(
+    input, output, std::filesystem::copy_options::overwrite_existing);
 }
-

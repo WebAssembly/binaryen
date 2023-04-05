@@ -119,7 +119,8 @@ void ModuleReader::read(std::filesystem::path filename,
 
 // TODO: reading into a vector<char> then copying into a string is unnecessarily
 // inefficient. It would be better to read just once into a stringstream.
-void ModuleReader::readStdin(Module& wasm, std::filesystem::path sourceMapFilename) {
+void ModuleReader::readStdin(Module& wasm,
+                             std::filesystem::path sourceMapFilename) {
   std::vector<char> input = read_stdin();
   if (input.size() >= 4 && input[0] == '\0' && input[1] == 'a' &&
       input[2] == 's' && input[3] == 'm') {

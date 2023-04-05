@@ -73,7 +73,6 @@ private:
 // Copies a file to another file, overwriting if the fiel exists
 void copy_file(std::filesystem::path input, std::filesystem::path output);
 
-
 } // namespace wasm
 
 #endif // wasm_support_file_h
