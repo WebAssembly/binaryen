@@ -1408,6 +1408,8 @@ private:
                                 bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
+  void filterDataContents(PossibleContents& contents,
+                          const DataLoc& dataLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -1718,34 +1720,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
   } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
-    // TODO refactor method
-    auto type = dataLoc->type;
-    Field field;
-    if (type.isStruct()) {
-      field = type.getStruct().fields[dataLoc->index];
-    } else {
-      field = type.getArray().element;
-    }
-    if (field.isPacked()) {
-      // We must handle packed fields carefully.
-      if (contents.isLiteral()) {
-        // This is a constant. We can truncate it and use that value.
-        auto mask =
-          Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
-        contents = PossibleContents::literal(contents.getLiteral().and_(mask));
-      } else {
-        // This is not a constant. We can't even handle a global here, as we'd
-        // need to track that this global's value must be truncated before it is
-        // used, and we don't do that atm. Leave only the type.
-        // TODO Consider tracking packing on GlobalInfo alongside the type.
-        //      Another option is to make GUFA.cpp apply packing on the read,
-        //      like CFP does - but that can only be done when replacing a
-        //      StructGet of a packed field, and not anywhere else we saw that
-        //      value reach.
-        contents = PossibleContents::fromType(contents.getType());
-      }
-      filtered = true;
-    }
+    filterDataContents(contents, dataLoc);
+    filtered = true;
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -1974,6 +1950,36 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       contents.dump(std::cout, &wasm);
       std::cout << '\n';
 #endif
+    }
+  }
+}
+
+void Flower::filterDataContents(PossibleContents& contents,
+                                const DataLoc& dataLoc) {
+  auto type = dataLoc->type;
+  Field field;
+  if (type.isStruct()) {
+    field = type.getStruct().fields[dataLoc->index];
+  } else {
+    field = type.getArray().element;
+  }
+  if (field.isPacked()) {
+    // We must handle packed fields carefully.
+    if (contents.isLiteral()) {
+      // This is a constant. We can truncate it and use that value.
+      auto mask =
+        Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
+      contents = PossibleContents::literal(contents.getLiteral().and_(mask));
+    } else {
+      // This is not a constant. We can't even handle a global here, as we'd
+      // need to track that this global's value must be truncated before it is
+      // used, and we don't do that atm. Leave only the type.
+      // TODO Consider tracking packing on GlobalInfo alongside the type.
+      //      Another option is to make GUFA.cpp apply packing on the read,
+      //      like CFP does - but that can only be done when replacing a
+      //      StructGet of a packed field, and not anywhere else we saw that
+      //      value reach.
+      contents = PossibleContents::fromType(contents.getType());
     }
   }
 }
