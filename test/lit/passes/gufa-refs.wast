@@ -5483,14 +5483,10 @@
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (local $ref (ref $vector))
   ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (array.new_default $vector
+  ;; CHECK-NEXT:   (array.new $vector
+  ;; CHECK-NEXT:    (ref.func $test)
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (array.set $vector
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.init_elem $vector $0
   ;; CHECK-NEXT:   (local.get $ref)
@@ -5508,14 +5504,10 @@
   (func $test
     (local $ref (ref $vector))
     (local.set $ref
-      (array.new_default $vector
+      (array.new $vector
+        (ref.func $test)
         (i32.const 100)
       )
-    )
-    (array.set $vector
-      (local.get $ref)
-      (i32.const 1)
-      (ref.func $test)
     )
     (array.init_elem $vector 0
       (local.get $ref)
