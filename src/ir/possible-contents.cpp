@@ -17,6 +17,7 @@
 #include <optional>
 #include <variant>
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
 #include "ir/local-graph.h"
@@ -1419,7 +1420,7 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex, Field field);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1795,13 +1796,13 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
-      writeToData(set->ref, set->value, set->index);
+      writeToData(set->ref, set->value, set->index, set->ref->type.getHeapType().getStruct().fields[set->index]);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
-      writeToData(set->ref, set->value, 0);
+      writeToData(set->ref, set->value, 0, set->ref->type.getHeapType().getArray().element);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -2040,7 +2041,7 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex, Field field) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -2076,6 +2077,20 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
   // reference and value.)
 
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
+  if (field.isPacked()) {
+    // We must handle packed fields carefully.
+    if (valueContents.isLiteral()) {
+      // This is a constant. We can truncate it.
+      int32_t mask = Bits::lowBitMask(Bits::getBits(field.packedType));
+      valueContents = PossibleContents::literal(valueContents.getLiteral().and_(mask));
+    } else {
+      // This is not a constant. We can't even handle a global here, as we'd
+      // need to track that this global's value must be truncated before it is
+      // used, and we don't do that atm. Leave only the type.
+      // TODO consider tracking packing on GlobalInfo alongside the type
+      valueContents = PossibleContents::fromType(valueContents.getType());
+    }
+  }
 
   // See the related comment in readFromData() as to why these are the only
   // things we need to check, and why the assertion afterwards contains the only

@@ -27,6 +27,7 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include "ir/bits.h"
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
