@@ -5469,14 +5469,46 @@
 
 ;; Verify we do not error or misoptimize with array.init_elem.
 (module
+  ;; CHECK:      (type $vector (array (mut funcref)))
   (type $vector (array (mut funcref)))
 
   (elem func)
 
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem $0 func)
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref $vector))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (array.new_default $vector
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $vector
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.func $test)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_elem $vector $0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $vector
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test
     (local $ref (ref $vector))
-    (local.set $vector
-      (array.new $vector
+    (local.set $ref
+      (array.new_default $vector
         (i32.const 100)
       )
     )
