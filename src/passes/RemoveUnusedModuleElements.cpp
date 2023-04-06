@@ -223,7 +223,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
       case InitData:
         note({ModuleElementKind::DataSegment, curr->segment});
         return;
-      case NewElem:
+      case InitElem:
         note({ModuleElementKind::ElementSegment, curr->segment});
         return;
     }
