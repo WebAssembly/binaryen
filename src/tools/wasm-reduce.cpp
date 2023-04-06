@@ -299,9 +299,10 @@ struct Reducer
       // try both combining with a generic shrink (so minor pass overhead is
       // compensated for), and without
       for (auto pass : passes) {
-        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt").string();
-        currCommand +=
-          " " + working.string() + " -o " + test.string() + " " + pass + " " + extraFlags;
+        std::string currCommand =
+          Path::getBinaryenBinaryTool("wasm-opt").string();
+        currCommand += " " + working.string() + " -o " + test.string() + " " +
+                       pass + " " + extraFlags;
         if (!binary) {
           currCommand += " -S ";
         }
