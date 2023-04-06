@@ -110,7 +110,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // We cannot just pass through a value that is packed, as the input gets
       // truncated.
       auto mask = Bits::lowBitMask(Bits::getBits(field.packedType));
-      value = builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+      value =
+        builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
     }
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
