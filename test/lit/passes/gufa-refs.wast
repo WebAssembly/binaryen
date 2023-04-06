@@ -5466,3 +5466,38 @@
     )
   )
 )
+
+;; Verify we do not error or misoptimize with array.init_elem.
+(module
+  (type $vector (array (mut funcref)))
+
+  (elem func)
+
+  (func $test
+    (local $ref (ref $vector))
+    (local.set $vector
+      (array.new $vector
+        (i32.const 100)
+      )
+    )
+    (array.set $vector
+      (local.get $ref)
+      (i32.const 1)
+      (ref.func $test)
+    )
+    (array.init_elem $vector 0
+      (local.get $ref)
+      (i32.const 1)
+      (i32.const 1)
+      (i32.const 1)
+    )
+    ;; We wrote a specific ref.func earlier, but also we did an init_elem whose
+    ;; values we consider unknown, so we will not optimize this get.
+    (drop
+      (array.get $vector
+        (local.get $ref)
+        (i32.const 1)
+      )
+    )
+  )
+)
