@@ -1420,9 +1420,7 @@ private:
                     Expression* read);
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
-  void writeToData(Expression* ref,
-                   Expression* value,
-                   Index fieldIndex);
+  void writeToData(Expression* ref, Expression* value, Index fieldIndex);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1732,17 +1730,18 @@ bool Flower::updateContents(LocationIndex locationIndex,
       // We must handle packed fields carefully.
       if (contents.isLiteral()) {
         // This is a constant. We can truncate it and use that value.
-        auto mask = Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
-        contents =
-          PossibleContents::literal(contents.getLiteral().and_(mask));
+        auto mask =
+          Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
+        contents = PossibleContents::literal(contents.getLiteral().and_(mask));
       } else {
         // This is not a constant. We can't even handle a global here, as we'd
         // need to track that this global's value must be truncated before it is
         // used, and we don't do that atm. Leave only the type.
         // TODO Consider tracking packing on GlobalInfo alongside the type.
-        //      Another option is to make GUFA.cpp apply packing on the read, like
-        //      CFP does - but that can only be done when replacing a StructGet
-        //      of a packed field, and not anywhere else we saw that value reach.
+        //      Another option is to make GUFA.cpp apply packing on the read,
+        //      like CFP does - but that can only be done when replacing a
+        //      StructGet of a packed field, and not anywhere else we saw that
+        //      value reach.
         contents = PossibleContents::fromType(contents.getType());
       }
       filtered = true;
@@ -1826,17 +1825,13 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<StructSet>()) {
       // |child| is either the reference or the value child of a struct.set.
       assert(set->ref == child || set->value == child);
-      writeToData(set->ref,
-                  set->value,
-                  set->index);
+      writeToData(set->ref, set->value, set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
-      writeToData(set->ref,
-                  set->value,
-                  0);
+      writeToData(set->ref, set->value, 0);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -2075,9 +2070,7 @@ void Flower::readFromData(Type declaredType,
   connectDuringFlow(coneReadLocation, ExpressionLocation{read, 0});
 }
 
-void Flower::writeToData(Expression* ref,
-                         Expression* value,
-                         Index fieldIndex) {
+void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
