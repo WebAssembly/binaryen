@@ -70,7 +70,7 @@ private:
   std::ostream out;
 };
 
-// Copies a file to another file, overwriting if the fiel exists
+// Copies a file to another file, overwriting if the file exists
 void copy_file(std::filesystem::path input, std::filesystem::path output);
 
 } // namespace wasm
