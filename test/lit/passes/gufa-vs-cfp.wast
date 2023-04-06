@@ -2694,8 +2694,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; We can infer values here, but must add proper masks, as the inputs get
-    ;; truncated during packing.
+    ;; We can infer values here, but must mask them.
     (drop
       (struct.get_u $A_8 0
         (struct.new $A_8
@@ -2711,7 +2710,8 @@
       )
     )
     ;; Also test reading a value from an imported global, which is an unknown
-    ;; value at compile time, but which we know must be masked as well.
+    ;; value at compile time, but which we know must be masked as well. Atm
+    ;; GUFA does not handle this, unlike CFP (see TODO in filterDataContents).
     (drop
       (struct.get_u $B_16 0
         (struct.new $B_16
