@@ -162,7 +162,7 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
   if (!symbolMap.empty()) {
-    writer.setSymbolMap(symbolMap);
+    writer.setSymbolMap(symbolMap.string());
   }
   writer.write();
   buffer.writeTo(output);

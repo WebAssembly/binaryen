@@ -232,15 +232,16 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
-  std::string command, test, working;
+  std::string command;
+  std::filesystem::path test, working;
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
   Reducer(std::string command,
-          std::string test,
-          std::string working,
+          std::filesystem::path test,
+          std::filesystem::path working,
           bool binary,
           bool deNan,
           bool verbose,
@@ -298,9 +299,9 @@ struct Reducer
       // try both combining with a generic shrink (so minor pass overhead is
       // compensated for), and without
       for (auto pass : passes) {
-        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt");
+        std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt").string();
         currCommand +=
-          " " + working + " -o " + test + " " + pass + " " + extraFlags;
+          " " + working.string() + " -o " + test.string() + " " + pass + " " + extraFlags;
         if (!binary) {
           currCommand += " -S ";
         }
@@ -315,7 +316,7 @@ struct Reducer
             if (ProgramResult(command) == expected) {
               std::cerr << "|    command \"" << currCommand
                         << "\" succeeded, reduced size to " << newSize << '\n';
-              copy_file(test, working);
+              wasm::copy_file(test, working);
               more = true;
               oldSize = newSize;
             }
@@ -462,7 +463,7 @@ struct Reducer
 
   void noteReduction(size_t amount = 1) {
     reduced += amount;
-    copy_file(test, working);
+    wasm::copy_file(test, working);
   }
 
   // tests a reduction on an arbitrary child
