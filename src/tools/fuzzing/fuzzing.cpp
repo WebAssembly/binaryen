@@ -3263,8 +3263,12 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(arrayType, NonNullable));
   auto* index = make(Type::i32);
-  // Check the index is valid to read from to avoid frequent trapping.
-  // See related logic in ::makePointer().
+  // Check the index is valid to read from to avoid frequent trapping. See
+  // related logic in ::makePointer(), but here we need to do more as the array
+  // length is dynamic, so we emit something like this:
+  //
+  //   index < array.len ? array[index] : ..some fallback value..
+  //
   if (!allowOOB || !oneIn(10)) {
     auto tempRef = builder.addVar(funcContext->func, ref->type);
     auto tempIndex = builder.addVar(funcContext->func, Type::i32);
