@@ -1408,7 +1408,8 @@ private:
                                 bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
-  void filterDataContents(PossibleContents& contents, const DataLoc& dataLoc);
+  void filterDataContents(PossibleContents& contents,
+                          const DataLocation& dataLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -1954,7 +1955,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 }
 
 void Flower::filterDataContents(PossibleContents& contents,
-                                const DataLoc& dataLoc) {
+                                const DataLocation& dataLoc) {
   auto type = dataLoc->type;
   Field field;
   if (type.isStruct()) {
