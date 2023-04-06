@@ -3263,27 +3263,27 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(arrayType, NonNullable));
   auto* index = make(Type::i32);
-  // Check the index is valid to read from to avoid frequent trapping. See
-  // related logic in ::makePointer(), but here we need to do more as the array
-  // length is dynamic, so we emit something like this:
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    // TODO: fuzz signed and unsigned, and also below
+    return builder.makeArrayGet(ref, index, type);
+  }
+  // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
-  if (!allowOOB || !oneIn(10)) {
-    auto tempRef = builder.addVar(funcContext->func, ref->type);
-    auto tempIndex = builder.addVar(funcContext->func, Type::i32);
-    auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
-    auto* teeIndex = builder.makeLocalTee(tempIndex, index, Type::i32);
-    auto* getSize = builder.makeArrayLen(teeRef);
-    auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
-    auto* get = builder.makeArrayGet(builder.makeLocalGet(tempRef, ref->type),
-                                     builder.makeLocalGet(tempIndex, Type::i32),
-                                     type);
-    auto* fallback = makeTrivial(type);
-    index = builder.makeIf(condition, get, fallback);
-  }
-  // TODO: fuzz signed and unsigned
-  return builder.makeArrayGet(ref, index, type);
+  auto tempRef = builder.addVar(funcContext->func, ref->type);
+  auto tempIndex = builder.addVar(funcContext->func, index->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
+  auto* getSize = builder.makeArrayLen(teeRef);
+  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
+  auto* get = builder.makeArrayGet(builder.makeLocalGet(tempRef, ref->type),
+                                   builder.makeLocalGet(tempIndex, index->type),
+                                   type);
+  auto* fallback = makeTrivial(type);
+  return builder.makeIf(condition, get, fallback);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
