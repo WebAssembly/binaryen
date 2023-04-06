@@ -28,17 +28,17 @@
 
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
-  ;; CHECK:      (type $void (func))
-
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   (type $empty (struct))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
@@ -908,32 +908,32 @@
     )
   )
 
-  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
+  ;; CHECK:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_anyref_=>_none) (param $x (ref any)) (param $y anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $x
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_=>_none) (param $x (ref any))
+  ;; NOMNL:      (func $flip-tee-of-as-non-null-non-nullable (type $ref|any|_anyref_=>_none) (param $x (ref any)) (param $y anyref)
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (local.tee $x
   ;; NOMNL-NEXT:    (ref.as_non_null
-  ;; NOMNL-NEXT:     (ref.null none)
+  ;; NOMNL-NEXT:     (local.get $y)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any))
+  (func $flip-tee-of-as-non-null-non-nullable (param $x (ref any)) (param $y (ref null any))
     (drop
       (local.tee $x
         ;; this *cannnot* be moved through the tee outward, as the param is in
         ;; fact non-nullable, and we depend on the ref.as_non_null in order to
         ;; get a valid type to assign to it
         (ref.as_non_null
-          (ref.null any)
+          (local.get $y)
         )
       )
     )
@@ -1579,7 +1579,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-null (type $void)
+  ;; CHECK:      (func $incompatible-cast-of-null (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -1587,14 +1587,14 @@
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $incompatible-cast-of-null (type $void)
+  ;; NOMNL:      (func $incompatible-cast-of-null (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
@@ -1602,14 +1602,14 @@
   ;; NOMNL-NEXT:   (block
   ;; NOMNL-NEXT:    (drop
   ;; NOMNL-NEXT:     (ref.as_non_null
-  ;; NOMNL-NEXT:      (ref.null none)
+  ;; NOMNL-NEXT:      (local.get $x)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (unreachable)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
-  (func $incompatible-cast-of-null
+  (func $incompatible-cast-of-null (param $x (ref null $struct))
     (drop
       (ref.cast $array
         ;; The child is null, so the cast will trap. Replace it with an
@@ -1623,7 +1623,7 @@
         ;; transformation. In practice this code will trap before getting to our
         ;; new unreachable.
         (ref.as_non_null
-          (ref.null $struct)
+          (local.get $x)
         )
       )
     )
@@ -3160,27 +3160,35 @@
 
   ;; CHECK:      (func $struct.set.null.fallthrough (type $void)
   ;; CHECK-NEXT:  (local $temp (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct $i8
-  ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   ;; NOMNL:      (func $struct.set.null.fallthrough (type $void)
   ;; NOMNL-NEXT:  (local $temp (ref null $struct))
-  ;; NOMNL-NEXT:  (struct.set $struct $i8
-  ;; NOMNL-NEXT:   (local.tee $temp
-  ;; NOMNL-NEXT:    (ref.null none)
+  ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (local.tee $temp
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:   (i32.const 100)
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (i32.const 100)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (unreachable)
   ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
   (func $struct.set.null.fallthrough
     (local $temp (ref null $struct))
-    ;; The value falling through the tee shows the local.set will trap. We can
+    ;; The value falling through the tee shows the struct.set will trap. We can
     ;; append an unreachable after it. While doing so we must not emit a drop of
     ;; the struct.set (which would be valid for a struct.get etc.).
     (struct.set $struct 0

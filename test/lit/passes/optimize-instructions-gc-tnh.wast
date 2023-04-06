@@ -398,18 +398,10 @@
   ;; TNH:      (func $null.arm.null.effects (type $void)
   ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; TNH-NEXT:   (drop
-  ;; TNH-NEXT:    (block (result nullref)
-  ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (ref.as_non_null
-  ;; TNH-NEXT:       (ref.null none)
-  ;; TNH-NEXT:      )
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (block (result nullref)
-  ;; TNH-NEXT:      (drop
-  ;; TNH-NEXT:       (call $get-i32)
-  ;; TNH-NEXT:      )
-  ;; TNH-NEXT:      (ref.null none)
-  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    (select
+  ;; TNH-NEXT:     (unreachable)
+  ;; TNH-NEXT:     (ref.null none)
+  ;; TNH-NEXT:     (call $get-i32)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (drop
@@ -417,17 +409,42 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (block
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (block (result nullref)
+  ;; TNH-NEXT:     (drop
+  ;; TNH-NEXT:      (call $get-i32)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:     (ref.null none)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (unreachable)
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $null.arm.null.effects (type $void)
-  ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (select (result (ref null $struct))
-  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (select
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:     (call $get-i32)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (unreachable)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (block
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (block (result nullref)
+  ;; NO_TNH-NEXT:     (drop
+  ;; NO_TNH-NEXT:      (call $get-i32)
+  ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:     (ref.null none)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.null none)
-  ;; NO_TNH-NEXT:    (call $get-i32)
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $null.arm.null.effects
@@ -438,6 +455,15 @@
         (ref.as_non_null
           (ref.null none)
         )
+        (ref.null none)
+        (call $get-i32)
+      )
+      (i32.const 1)
+    )
+    ;; The same, but without ref.as_non_null.
+    (struct.set $struct 0
+      (select (result (ref null $struct))
+        (ref.null none)
         (ref.null none)
         (call $get-i32)
       )
@@ -529,7 +555,7 @@
     )
   )
 
-  ;; TNH:      (func $cast-if-null (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH:      (func $cast-if-null (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
   ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (block
@@ -542,34 +568,30 @@
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $cast-if-null (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH:      (func $cast-if-null (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
   ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:    (ref.as_non_null
-  ;; NO_TNH-NEXT:     (ref.null none)
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $cast-if-null (result (ref $struct))
+  (func $cast-if-null (param $x (ref none)) (result (ref $struct))
     ;; We can remove the unreachable arm of the if here in TNH mode. While doing
     ;; so we must refinalize properly or else we'll hit an error in pass-debug
     ;; mode.
     (ref.cast $struct
       (if (result (ref none))
-       (i32.const 1)
-       (unreachable)
-       (ref.as_non_null
-         (ref.null none)
-       )
+        (i32.const 1)
+        (unreachable)
+        (local.get $x)
       )
     )
   )
 
-  ;; TNH:      (func $cast-if-null-flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH:      (func $cast-if-null-flip (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
   ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (block
@@ -582,27 +604,23 @@
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $cast-if-null-flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH:      (func $cast-if-null-flip (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
-  ;; NO_TNH-NEXT:    (ref.as_non_null
-  ;; NO_TNH-NEXT:     (ref.null none)
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:    (unreachable)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
-  (func $cast-if-null-flip (result (ref $struct))
+  (func $cast-if-null-flip (param $x (ref none)) (result (ref $struct))
     ;; As above but with arms flipped.
     (ref.cast $struct
       (if (result (ref none))
-       (i32.const 1)
-       (ref.as_non_null
-         (ref.null none)
-       )
-       (unreachable)
+        (i32.const 1)
+        (local.get $x)
+        (unreachable)
       )
     )
   )
@@ -772,32 +790,23 @@
     )
   )
 
-  ;; TNH:      (func $select.unreachable.child (type $none_=>_ref|$struct|) (result (ref $struct))
-  ;; TNH-NEXT:  (select
-  ;; TNH-NEXT:   (ref.as_non_null
-  ;; TNH-NEXT:    (ref.null none)
+  ;; TNH:      (func $select.unreachable.child (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (unreachable)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (unreachable)
-  ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.unreachable.child (type $none_=>_ref|$struct|) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (select
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (ref.null none)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.as_non_null
-  ;; NO_TNH-NEXT:      (ref.null none)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH:      (func $select.unreachable.child (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; NO_TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (unreachable)
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $select.unreachable.child (result (ref $struct))
+  (func $select.unreachable.child (param $x (ref $struct)) (result (ref $struct))
     ;; We will turn the false arm of the select into an unreachable first, and
     ;; then process the select. While doing so we must not error, as the select
     ;; itself will still have a reachable type (a full refinalize only
@@ -807,50 +816,31 @@
         (ref.as_non_null
           (ref.null none)
         )
-        (ref.cast $struct
-          (ref.as_non_null
-            (ref.null none)
-          )
-        )
+        (local.get $x)
         (i32.const 1)
       )
     )
   )
 
-  ;; TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH:      (func $select.unreachable.child.flip (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
   ;; TNH-NEXT:  (select
+  ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (unreachable)
-  ;; TNH-NEXT:   (ref.as_non_null
-  ;; TNH-NEXT:    (ref.null none)
-  ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.unreachable.child.flip (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH:      (func $select.unreachable.child.flip (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (select
-  ;; NO_TNH-NEXT:   (block
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.as_non_null
-  ;; NO_TNH-NEXT:      (ref.null none)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (ref.null none)
-  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (local.get $x)
+  ;; NO_TNH-NEXT:   (unreachable)
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $select.unreachable.child.flip (result (ref $struct))
+  (func $select.unreachable.child.flip (param $x (ref $struct)) (result (ref $struct))
     ;; Flip case of the above.
     (ref.cast $struct
       (select (result (ref $struct))
-        (ref.cast $struct
-          (ref.as_non_null
-            (ref.null none)
-          )
-        )
+        (local.get $x)
         (ref.as_non_null
           (ref.null none)
         )
