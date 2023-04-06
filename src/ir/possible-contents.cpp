@@ -1720,7 +1720,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
   } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
-    filterDataContents(contents, dataLoc);
+    filterDataContents(contents, *dataLoc);
     filtered = true;
   }
 
@@ -1956,10 +1956,10 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
-  auto type = dataLoc->type;
+  auto type = dataLoc.type;
   Field field;
   if (type.isStruct()) {
-    field = type.getStruct().fields[dataLoc->index];
+    field = type.getStruct().fields[dataLoc.index];
   } else {
     field = type.getArray().element;
   }
