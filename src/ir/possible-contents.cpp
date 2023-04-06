@@ -197,24 +197,17 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  if (isLiteral() || isGlobal()) {
+  if (isLiteral()) {
     // The information about the value being identical to a particular literal
-    // or immutable global is not removed by intersection, if the type is in the
-    // cone we are intersecting with.
+    // is not removed by intersection, if the type is in the cone we are
+    // intersecting with.
     if (isSubType) {
-      // The heap type is in the cone. For globals we must also check for
-      // nullability because of the situation where we have a nullable global
-      // that is intersected with a non-nullable code. In that case, we can
-      // remain a global but must mark ourselves as non-nullable.
-      if (isGlobal() && type.isNullable() && otherType.isNonNullable()) {
-        value = GlobalInfo{getGlobal(), Type(heapType, NonNullable)};
-      }
       return;
     }
 
     // The type must change in a nontrivial manner, so continue down to the
-    // generic code path. This will stop being a Literal or a Global.
-    // TODO: for Global we could perhaps keep it as a Global in some cases.
+    // generic code path. This will stop being a Literal. TODO: can we do better
+    // here?
   }
 
   // Intersect the cones, as there is no more specific information we can use.
@@ -230,6 +223,14 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     newHeapType = otherHeapType;
   } else {
     newHeapType = heapType;
+  }
+
+  // Note the global's information, if we started as a global. In that case, the
+  // code below will refine our type but we can remain a global, which we will
+  // accomplish by restoring our global status at the end.
+  std::optional<Name> globalName;
+  if (isGlobal()) {
+    globalName = getGlobal();
   }
 
   auto newType = Type(newHeapType, nullability);
@@ -266,6 +267,11 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     }
 
     value = ConeType{newType, newDepth};
+  }
+
+  if (globalName) {
+    // Restore the global but keep the new and refined type.
+    value = GlobalInfo{*globalName, getType()};
   }
 }
 
