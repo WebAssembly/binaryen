@@ -304,7 +304,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
         typeStructFields[fields[i].type].push_back(StructField{type, i});
       }
     } else if (type.isArray()) {
-      typeArrays[type.getArray().element].push_back(type);
+      typeArrays[type.getArray().element.type].push_back(type);
     }
   }
 }
@@ -3253,7 +3253,7 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(structType, NonNullable));
   // TODO: fuzz signed and unsigned
-  return builder.makeStructGet(ref, type);
+  return builder.makeStructGet(fieldIndex, ref, type);
 }
 
 Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
@@ -3263,13 +3263,15 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(arrayType, NonNullable));
   auto* index = make(Type::i32);
-  // See similar logic in ::makePointer().
+  // Normally we want to mask the index so it is unlikely to trap. See similar
+  // logic in ::makePointer(). XXX not enough! the array size may be shorter.
+  // Chak it at runtime?
   if (!allowOOB || !oneIn(10)) {
     index = builder.makeBinary(
-      AndInt32, index, builder.makeConst(int32_t(MAX_ARRAY - 1)));
+      AndInt32, index, builder.makeConst(int32_t(MAX_ARRAY_SIZE - 1)));
   }
   // TODO: fuzz signed and unsigned
-  return builder.makeArrayGet(ref, type);
+  return builder.makeArrayGet(ref, index, type);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {

@@ -122,7 +122,7 @@ private:
   std::unordered_map<Type, std::vector<StructField>> typeStructFields;
 
   // Type => list of array types that have that type.
-  std::unordered_map<Type, HeapType> typeArrays;
+  std::unordered_map<Type, std::vector<HeapType>> typeArrays;
 
   Index numAddedFunctions = 0;
 
