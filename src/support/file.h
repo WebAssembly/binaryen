@@ -21,13 +21,13 @@
 #ifndef wasm_support_file_h
 #define wasm_support_file_h
 
-#include <filesystem>
+#include <experimental/filesystem>
 #include <fstream>
 #include <string>
 #include <utility>
 #include <vector>
 
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 namespace wasm {
 

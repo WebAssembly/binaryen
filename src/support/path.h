@@ -22,10 +22,10 @@
 #define wasm_support_path_h
 
 #include <cstdlib>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <string>
 
-namespace fs = std::filesystem;
+namespace fs = std::experimental::filesystem;
 
 namespace wasm::Path {
 
