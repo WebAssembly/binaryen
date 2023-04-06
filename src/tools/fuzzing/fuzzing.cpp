@@ -3272,16 +3272,11 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
     auto* teeIndex = builder.makeLocalTee(tempIndex, index, Type::i32);
     auto* getSize = builder.makeArraySize(teeRef);
     auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
-    auto* get = builder.makeArrayGet(
-      builder.makeLocalGet(tempRef, ref->type),
-      builder.makeLocalGet(tempIndex, Type::i32)
-    );
+    auto* get =
+      builder.makeArrayGet(builder.makeLocalGet(tempRef, ref->type),
+                           builder.makeLocalGet(tempIndex, Type::i32));
     auto* fallback = makeTrivial(type);
-    index = builder.makeIf(
-      condition,
-      get,
-      fallback
-    );
+    index = builder.makeIf(condition, get, fallback);
   }
   // TODO: fuzz signed and unsigned
   return builder.makeArrayGet(ref, index, type);
