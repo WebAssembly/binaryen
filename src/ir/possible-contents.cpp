@@ -1422,8 +1422,7 @@ private:
   // Similar to readFromData, but does a write for a struct.set or array.set.
   void writeToData(Expression* ref,
                    Expression* value,
-                   Index fieldIndex,
-                   Field field);
+                   Index fieldIndex);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1720,6 +1719,34 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
+  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    // TODO refactor method
+    auto type = dataLoc->type;
+    Field field;
+    if (type.isStruct()) {
+      field = type.getStruct().fields[dataLoc->index];
+    } else {
+      field = type.getArray().element;
+    }
+    if (field.isPacked()) {
+      // We must handle packed fields carefully.
+      if (contents.isLiteral()) {
+        // This is a constant. We can truncate it and use that value.
+        auto mask = Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
+        contents =
+          PossibleContents::literal(contents.getLiteral().and_(mask));
+      } else {
+        // This is not a constant. We can't even handle a global here, as we'd
+        // need to track that this global's value must be truncated before it is
+        // used, and we don't do that atm. Leave only the type.
+        // TODO Consider tracking packing on GlobalInfo alongside the type.
+        //      Another option is to make GUFA.cpp apply packing on the read, like
+        //      CFP does - but that can only be done when replacing a StructGet
+        //      of a packed field, and not anywhere else we saw that value reach.
+        contents = PossibleContents::fromType(contents.getType());
+      }
+      filtered = true;
+    }
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -1801,8 +1828,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref,
                   set->value,
-                  set->index,
-                  set->ref->type.getHeapType().getStruct().fields[set->index]);
+                  set->index);
     } else if (auto* get = parent->dynCast<ArrayGet>()) {
       assert(get->ref == child);
       readFromData(get->ref->type, 0, contents, get);
@@ -1810,8 +1836,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref,
                   set->value,
-                  0,
-                  set->ref->type.getHeapType().getArray().element);
+                  0);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -2052,8 +2077,7 @@ void Flower::readFromData(Type declaredType,
 
 void Flower::writeToData(Expression* ref,
                          Expression* value,
-                         Index fieldIndex,
-                         Field field) {
+                         Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "    add special writes\n";
 #endif
@@ -2089,21 +2113,6 @@ void Flower::writeToData(Expression* ref,
   // reference and value.)
 
   auto valueContents = getContents(getIndex(ExpressionLocation{value, 0}));
-  if (field.isPacked()) {
-    // We must handle packed fields carefully.
-    if (valueContents.isLiteral()) {
-      // This is a constant. We can truncate it.
-      auto mask = Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
-      valueContents =
-        PossibleContents::literal(valueContents.getLiteral().and_(mask));
-    } else {
-      // This is not a constant. We can't even handle a global here, as we'd
-      // need to track that this global's value must be truncated before it is
-      // used, and we don't do that atm. Leave only the type.
-      // TODO consider tracking packing on GlobalInfo alongside the type
-      valueContents = PossibleContents::fromType(valueContents.getType());
-    }
-  }
 
   // See the related comment in readFromData() as to why these are the only
   // things we need to check, and why the assertion afterwards contains the only

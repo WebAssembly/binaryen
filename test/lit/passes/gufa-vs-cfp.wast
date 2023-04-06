@@ -2670,6 +2670,7 @@
 (module
   (type $A_8 (struct (field i8)))
   (type $A_16 (struct (field i16)))
+  ;; CHECK:      (type $B_16 (struct (field i16)))
   (type $B_16 (struct (field i16)))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -2679,13 +2680,17 @@
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 305419896)
+  ;; CHECK-NEXT:   (i32.const 120)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 305419896)
+  ;; CHECK-NEXT:   (i32.const 22136)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $g)
+  ;; CHECK-NEXT:   (struct.get_u $B_16 0
+  ;; CHECK-NEXT:    (struct.new $B_16
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
