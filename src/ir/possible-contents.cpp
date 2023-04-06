@@ -202,13 +202,19 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     // or immutable global is not removed by intersection, if the type is in the
     // cone we are intersecting with.
     if (isSubType) {
+      // The heap type is in the cone. For globals we must also check for
+      // nullability because of the situation where we have a nullable global
+      // that is intersected with a non-nullable code. In that case, we can
+      // remain a global but must mark ourselves as non-nullable.
+      if (isGlobal() && type.isNullable() && otherType.isNonNullable()) {
+        value = GlobalInfo{getGlobal(), Type(heapType, NonNullable)};
+      }
       return;
     }
 
-    // The type must change, so continue down to the generic code path.
-    // TODO: for globals we could perhaps refine the type here, but then the
-    //       type on GlobalInfo would not match the module, so that needs some
-    //       refactoring.
+    // The type must change in a nontrivial manner, so continue down to the
+    // generic code path. This will stop being a Literal or a Global.
+    // TODO: for Global we could perhaps keep it as a Global in some cases.
   }
 
   // Intersect the cones, as there is no more specific information we can use.
