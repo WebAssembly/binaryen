@@ -69,7 +69,7 @@ std::filesystem::path getBinaryenRoot() {
   return ".";
 }
 
-static std::string binDir;
+static std::filesystem::path binDir;
 
 std::filesystem::path getBinaryenBinDir() {
   if (binDir.empty()) {
@@ -81,7 +81,7 @@ std::filesystem::path getBinaryenBinDir() {
 
 void setBinaryenBinDir(const std::filesystem::path& dir) {
   binDir = dir;
-  if (binDir.empty() || binDir.back() != getPathSeparator()) {
+  if (binDir.empty() || binDir.string().back() != getPathSeparator()) {
     binDir += getPathSeparator();
   }
 }
