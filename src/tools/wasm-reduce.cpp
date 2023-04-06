@@ -25,7 +25,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <memory>
 
 #include "ir/branch-utils.h"
@@ -72,7 +71,8 @@ std::string GetLastErrorStdStr() {
   return std::string();
 }
 #endif
-using std::filesystem::file_size;
+
+using fs::file_size;
 using namespace wasm;
 
 // A timeout on every execution of the command.
@@ -233,15 +233,15 @@ static std::unordered_set<Name> functionsWeTriedToRemove;
 struct Reducer
   : public WalkerPass<PostWalker<Reducer, UnifiedExpressionVisitor<Reducer>>> {
   std::string command;
-  std::filesystem::path test, working;
+  fs::path test, working;
   bool binary, deNan, verbose, debugInfo;
   ToolOptions& toolOptions;
 
   // test is the file we write to that the command will operate on
   // working is the current temporary state, the reduction so far
   Reducer(std::string command,
-          std::filesystem::path test,
-          std::filesystem::path working,
+          fs::path test,
+          fs::path working,
           bool binary,
           bool deNan,
           bool verbose,
@@ -1189,10 +1189,10 @@ struct Reducer
 //
 
 int main(int argc, const char* argv[]) {
-  std::filesystem::path input, test, working;
+  fs::path input, test, working;
   std::string command;
   // By default, look for binaries alongside our own binary.
-  std::filesystem::path binDir = Path::getDirName(argv[0]);
+  fs::path binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
 

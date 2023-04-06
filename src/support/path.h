@@ -25,6 +25,8 @@
 #include <filesystem>
 #include <string>
 
+namespace fs = std::filesystem;
+
 namespace wasm::Path {
 
 char getPathSeparator();
@@ -32,16 +34,16 @@ std::string getDirName(const std::string& path);
 std::string getBaseName(const std::string& path);
 
 // Get the binaryen root dor.
-std::filesystem::path getBinaryenRoot();
+fs::path getBinaryenRoot();
 
 // Get the binaryen bin dir.
-std::filesystem::path getBinaryenBinDir();
+fs::path getBinaryenBinDir();
 
 // Set the binaryen bin dir (allows tools to change it based on user input).
-void setBinaryenBinDir(const std::filesystem::path& dir);
+void setBinaryenBinDir(const fs::path& dir);
 
 // Gets the path to a binaryen binary tool, like wasm-opt.
-std::filesystem::path getBinaryenBinaryTool(const std::string& name);
+fs::path getBinaryenBinaryTool(const std::string& name);
 
 } // namespace wasm::Path
 

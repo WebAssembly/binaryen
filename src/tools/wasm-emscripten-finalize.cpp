@@ -39,12 +39,12 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   const uint64_t INVALID_BASE = -1;
 
-  std::filesystem::path infile;
-  std::filesystem::path outfile;
-  std::filesystem::path inputSourceMapFilename;
-  std::filesystem::path outputSourceMapFilename;
+  fs::path infile;
+  fs::path outfile;
+  fs::path inputSourceMapFilename;
+  fs::path outputSourceMapFilename;
   std::string outputSourceMapUrl;
-  std::filesystem::path dataSegmentFile;
+  fs::path dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
   bool DWARF = false;

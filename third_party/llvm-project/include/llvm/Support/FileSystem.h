@@ -1213,7 +1213,7 @@ class directory_entry {
   // when traversing a directory. The design of this class wraps most of the
   // information in basic_file_status, so on platforms where we can't populate
   // that whole structure, callers end up paying for a stat().
-  // std::filesystem::directory_entry may be a better model.
+  // fs::directory_entry may be a better model.
   std::string Path;
   file_type Type = file_type::type_unknown; // Most platforms can provide this.
   bool FollowSymlinks = true;               // Affects the behavior of status().

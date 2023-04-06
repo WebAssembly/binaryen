@@ -61,7 +61,7 @@ std::string getBaseName(const std::string& path) {
   return path;
 }
 
-std::filesystem::path getBinaryenRoot() {
+fs::path getBinaryenRoot() {
   auto* envVar = getenv("BINARYEN_ROOT");
   if (envVar) {
     return envVar;
@@ -69,9 +69,9 @@ std::filesystem::path getBinaryenRoot() {
   return ".";
 }
 
-static std::filesystem::path binDir;
+static fs::path binDir;
 
-std::filesystem::path getBinaryenBinDir() {
+fs::path getBinaryenBinDir() {
   if (binDir.empty()) {
     return getBinaryenRoot() / "bin" / "";
   } else {
@@ -79,7 +79,7 @@ std::filesystem::path getBinaryenBinDir() {
   }
 }
 
-void setBinaryenBinDir(const std::filesystem::path& dir) {
+void setBinaryenBinDir(const fs::path& dir) {
   binDir = dir;
   if (binDir.empty() || binDir.string().back() != getPathSeparator()) {
     binDir += getPathSeparator();
@@ -87,7 +87,7 @@ void setBinaryenBinDir(const std::filesystem::path& dir) {
 }
 
 // Gets the path to a binaryen binary tool, like wasm-opt
-std::filesystem::path getBinaryenBinaryTool(const std::string& name) {
+fs::path getBinaryenBinaryTool(const std::string& name) {
   return getBinaryenBinDir().append(name);
 }
 

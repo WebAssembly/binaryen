@@ -27,6 +27,8 @@
 #include <utility>
 #include <vector>
 
+namespace fs = std::filesystem;
+
 namespace wasm {
 
 namespace Flags {
@@ -36,12 +38,12 @@ enum BinaryOption { Binary, Text };
 std::vector<char> read_stdin();
 
 template<typename T>
-T read_file(const std::filesystem::path& filename, Flags::BinaryOption binary);
+T read_file(const fs::path& filename, Flags::BinaryOption binary);
 
 // Declare the valid explicit specializations.
-extern template std::string read_file<>(const std::filesystem::path&,
+extern template std::string read_file<>(const fs::path&,
                                         Flags::BinaryOption);
-extern template std::vector<char> read_file<>(const std::filesystem::path&,
+extern template std::vector<char> read_file<>(const fs::path&,
                                               Flags::BinaryOption);
 
 // Given a string which may be a response file (i.e., a filename starting
@@ -52,7 +54,7 @@ std::string read_possible_response_file(const std::string&);
 class Output {
 public:
   // An empty filename or "-" will open stdout instead.
-  Output(const std::filesystem::path& filename, Flags::BinaryOption binary);
+  Output(const fs::path& filename, Flags::BinaryOption binary);
   ~Output() = default;
   template<typename T> std::ostream& operator<<(const T& v) { return out << v; }
 
@@ -71,7 +73,7 @@ private:
 };
 
 // Copies a file to another file, overwriting if the file exists
-void copy_file(std::filesystem::path input, std::filesystem::path output);
+void copy_file(fs::path input, fs::path output);
 
 } // namespace wasm
 

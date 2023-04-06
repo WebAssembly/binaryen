@@ -421,7 +421,7 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> passes;
   bool emitBinary = true;
   bool debugInfo = false;
-  std::filesystem::path graphFile;
+  fs::path graphFile;
   bool dump = false;
 
   const std::string WasmMetaDCEOption = "wasm-opt options";

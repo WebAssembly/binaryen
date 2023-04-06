@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # Needed for C++17 (std::variant)
 # TODO(https://github.com/WebAssembly/binaryen/issues/4299): We need
 # to reduce this for compatability with emsdk.
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
 project(binaryen LANGUAGES C CXX VERSION 112)
 include(GNUInstallDirs)

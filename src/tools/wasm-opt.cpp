@@ -88,8 +88,8 @@ int main(int argc, const char* argv[]) {
   std::string emitJSWrapper;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
-  std::filesystem::path inputSourceMapFilename;
-  std::filesystem::path outputSourceMapFilename;
+  fs::path inputSourceMapFilename;
+  fs::path outputSourceMapFilename;
   std::string outputSourceMapUrl;
 
   const std::string WasmOptOption = "wasm-opt options";
@@ -266,7 +266,7 @@ int main(int argc, const char* argv[]) {
   // down in TranslateToFuzzReader, but there is also an optional initial fuzz
   // file that if it exists we read it, then add more fuzz on top.
   if (!translateToFuzz || initialFuzz.size()) {
-    std::filesystem::path inputFile =
+    fs::path inputFile =
       translateToFuzz ? initialFuzz : options.extra["infile"];
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not

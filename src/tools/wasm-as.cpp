@@ -31,8 +31,8 @@ using namespace wasm;
 
 int main(int argc, const char* argv[]) {
   bool debugInfo = false;
-  std::filesystem::path symbolMap;
-  std::filesystem::path sourceMapFilename;
+  fs::path symbolMap;
+  fs::path sourceMapFilename;
   std::string sourceMapUrl;
 
   const std::string WasmAsOption = "wasm-as options";
