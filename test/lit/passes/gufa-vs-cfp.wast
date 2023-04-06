@@ -2665,3 +2665,28 @@
     )
   )
 )
+
+;; Test we handle packed fields properly.
+(module
+  (type $A_8 (struct (field i8)))
+  (type $A_16 (struct (field i16)))
+
+  (func $test
+    ;; We can infer values here, but must add proper masks, as the inputs get
+    ;; truncated during packing.
+    (drop
+      (struct.get_u $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_u $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+  )
+)
