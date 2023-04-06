@@ -710,6 +710,26 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayCopy);
     break;
   }
+  case Expression::Id::ArrayFillId: {
+    DELEGATE_START(ArrayFill);
+    DELEGATE_FIELD_CHILD(ArrayFill, size);
+    DELEGATE_FIELD_CHILD(ArrayFill, value);
+    DELEGATE_FIELD_CHILD(ArrayFill, index);
+    DELEGATE_FIELD_CHILD(ArrayFill, ref);
+    DELEGATE_END(ArrayFill);
+    break;
+  }
+  case Expression::Id::ArrayInitId: {
+    DELEGATE_START(ArrayInit);
+    DELEGATE_FIELD_INT(ArrayInit, op);
+    DELEGATE_FIELD_NAME(ArrayInit, segment);
+    DELEGATE_FIELD_CHILD(ArrayInit, size);
+    DELEGATE_FIELD_CHILD(ArrayInit, offset);
+    DELEGATE_FIELD_CHILD(ArrayInit, index);
+    DELEGATE_FIELD_CHILD(ArrayInit, ref);
+    DELEGATE_END(ArrayInit);
+    break;
+  }
   case Expression::Id::RefAsId: {
     DELEGATE_START(RefAs);
     DELEGATE_FIELD_INT(RefAs, op);

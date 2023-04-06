@@ -1138,6 +1138,9 @@ enum ASTNodes {
   BrOnNonI31 = 0x65,
   ExternInternalize = 0x70,
   ExternExternalize = 0x71,
+  ArrayFill = 0x0f,
+  ArrayInitData = 0x54,
+  ArrayInitElem = 0x55,
   StringNewWTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
@@ -1731,6 +1734,8 @@ public:
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
+  bool maybeVisitArrayFill(Expression*& out, uint32_t code);
+  bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
   bool maybeVisitStringMeasure(Expression*& out, uint32_t code);

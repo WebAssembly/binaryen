@@ -799,6 +799,25 @@ private:
       // traps when a ref is null, or when out of bounds.
       parent.implicitTrap = true;
     }
+    void visitArrayFill(ArrayFill* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // Traps when the destination is null or when out of bounds.
+      parent.implicitTrap = true;
+    }
+    void visitArrayInit(ArrayInit* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // Traps when the destination is null, when out of bounds in source or
+      // destination, or when the source segment has been dropped.
+      parent.implicitTrap = true;
+    }
     void visitRefAs(RefAs* curr) {
       if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
         // These conversions are infallible.

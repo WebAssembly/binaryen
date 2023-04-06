@@ -1758,25 +1758,62 @@ public:
     size_t destVal = destIndex.getSingleValue().getUnsigned();
     size_t srcVal = srcIndex.getSingleValue().getUnsigned();
     size_t lengthVal = length.getSingleValue().getUnsigned();
-    if (lengthVal >= ArrayLimit) {
-      hostLimit("allocation failure");
+    if (destVal + lengthVal > destData->values.size()) {
+      trap("oob");
+    }
+    if (srcVal + lengthVal > srcData->values.size()) {
+      trap("oob");
     }
     std::vector<Literal> copied;
     copied.resize(lengthVal);
     for (size_t i = 0; i < lengthVal; i++) {
-      if (srcVal + i >= srcData->values.size()) {
-        trap("oob");
-      }
       copied[i] = srcData->values[srcVal + i];
     }
     for (size_t i = 0; i < lengthVal; i++) {
-      if (destVal + i >= destData->values.size()) {
-        trap("oob");
-      }
       destData->values[destVal + i] = copied[i];
     }
     return Flow();
   }
+  Flow visitArrayFill(ArrayFill* curr) {
+    NOTE_ENTER("ArrayFill");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow value = self()->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    Literal fillVal = value.getSingleValue();
+    size_t sizeVal = size.getSingleValue().getUnsigned();
+
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    fillVal = truncateForPacking(fillVal, field);
+
+    size_t arraySize = data->values.size();
+    if (indexVal > arraySize || sizeVal > arraySize ||
+        indexVal + sizeVal > arraySize || indexVal + sizeVal < indexVal) {
+      trap("out of bounds array access in array.fill");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      data->values[indexVal + i] = fillVal;
+    }
+    return {};
+  }
+  Flow visitArrayInit(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
     Flow flow = visit(curr->value);
@@ -2214,6 +2251,18 @@ public:
   }
   Flow visitArrayNewSeg(ArrayNewSeg* curr) {
     NOTE_ENTER("ArrayNewSeg");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayCopy(ArrayCopy* curr) {
+    NOTE_ENTER("ArrayCopy");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayFill(ArrayFill* curr) {
+    NOTE_ENTER("ArrayFill");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayInit(ArrayInit* curr) {
+    NOTE_ENTER("ArrayInit");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -3575,6 +3624,77 @@ public:
         WASM_UNREACHABLE("unexpected op");
     }
     return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+  }
+  Flow visitArrayInit(ArrayInit* curr) {
+    NOTE_ENTER("ArrayInit");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    size_t offsetVal = offset.getSingleValue().getUnsigned();
+    size_t sizeVal = size.getSingleValue().getUnsigned();
+
+    size_t arraySize = data->values.size();
+    if ((uint64_t)indexVal + sizeVal > arraySize) {
+      trap("out of bounds array access in array.init");
+    }
+
+    Module& wasm = *self()->getModule();
+
+    switch (curr->op) {
+      case InitData: {
+        auto* seg = wasm.getDataSegment(curr->segment);
+        auto elem = curr->ref->type.getHeapType().getArray().element;
+        size_t elemSize = elem.getByteSize();
+        uint64_t readSize = (uint64_t)sizeVal * elemSize;
+        if (offsetVal + readSize > seg->data.size()) {
+          trap("out of bounds segment access in array.init_data");
+        }
+        if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
+          trap("out of bounds segment access in array.init_data");
+        }
+        for (size_t i = 0; i < sizeVal; i++) {
+          void* addr = (void*)&seg->data[offsetVal + i * elemSize];
+          data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+        }
+        return {};
+      }
+      case InitElem: {
+        auto* seg = wasm.getElementSegment(curr->segment);
+        if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
+          trap("out of bounds segment access in array.init");
+        }
+        // TODO: Check whether the segment has been dropped once we support
+        // dropping element segments.
+        for (size_t i = 0; i < sizeVal; i++) {
+          // TODO: This is not correct because it does not preserve the identity
+          // of references in the table! ArrayNewSeg suffers the same problem.
+          // Fixing it will require changing how we represent segments, at least
+          // in the interpreter.
+          data->values[indexVal + i] =
+            self()->visit(seg->data[i]).getSingleValue();
+        }
+        return {};
+      }
+    };
+    WASM_UNREACHABLE("unexpected op");
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");

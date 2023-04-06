@@ -97,6 +97,8 @@
 
   ;; CHECK:      (type $ref|$a2|_i32_ref|$a2|_i32_i32_=>_none (func (param (ref $a2) i32 (ref $a2) i32 i32)))
 
+  ;; CHECK:      (type $ref|$a2|_i32_f32_i32_=>_none (func (param (ref $a2) i32 f32 i32)))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct ))
   (type $s0 (sub (struct)))
@@ -1625,6 +1627,22 @@
   local.get 3
   local.get 4
   array.copy $a2 $a2
+ )
+
+ ;; CHECK:      (func $array-fill (type $ref|$a2|_i32_f32_i32_=>_none) (param $0 (ref $a2)) (param $1 i32) (param $2 f32) (param $3 i32)
+ ;; CHECK-NEXT:  (array.fill $a2
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-fill (param (ref $a2) i32 f32 i32)
+  local.get 0
+  local.get 1
+  local.get 2
+  local.get 3
+  array.fill $a2
  )
 
  ;; CHECK:      (func $use-types (type $ref|$s0|_ref|$s1|_ref|$s2|_ref|$s3|_ref|$s4|_ref|$s5|_ref|$s6|_ref|$s7|_ref|$s8|_ref|$a0|_ref|$a1|_ref|$a2|_ref|$a3|_ref|$subvoid|_ref|$submany|_=>_none) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))

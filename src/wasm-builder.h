@@ -991,6 +991,34 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayFill* makeArrayFill(Expression* ref,
+                           Expression* index,
+                           Expression* value,
+                           Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayFill>();
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  ArrayInit* makeArrayInit(ArrayInitOp op,
+                           Name seg,
+                           Expression* ref,
+                           Expression* index,
+                           Expression* offset,
+                           Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayInit>();
+    ret->op = op;
+    ret->segment = seg;
+    ret->ref = ref;
+    ret->index = index;
+    ret->offset = offset;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
   RefAs* makeRefAs(RefAsOp op, Expression* value) {
     auto* ret = wasm.allocator.alloc<RefAs>();
     ret->op = op;

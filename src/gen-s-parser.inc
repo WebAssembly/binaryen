@@ -16,6 +16,9 @@ switch (buf[0]) {
           case 'c':
             if (op == "array.copy"sv) { return makeArrayCopy(s); }
             goto parse_error;
+          case 'f':
+            if (op == "array.fill"sv) { return makeArrayFill(s); }
+            goto parse_error;
           case 'g': {
             switch (buf[9]) {
               case '\0':
@@ -35,9 +38,20 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
-          case 'i':
-            if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
-            goto parse_error;
+          case 'i': {
+            switch (buf[11]) {
+              case 'd':
+                if (op == "array.init_data"sv) { return makeArrayInit(s, InitData); }
+                goto parse_error;
+              case 'e':
+                if (op == "array.init_elem"sv) { return makeArrayInit(s, InitElem); }
+                goto parse_error;
+              case 's':
+                if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'l':
             if (op == "array.len"sv) { return makeArrayLen(s); }
             goto parse_error;
@@ -3607,6 +3621,13 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
+          case 'f':
+            if (op == "array.fill"sv) {
+              auto ret = makeArrayFill(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
           case 'g': {
             switch (buf[9]) {
               case '\0':
@@ -3638,13 +3659,32 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
-          case 'i':
-            if (op == "array.init_static"sv) {
-              auto ret = makeArrayNewFixed(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
+          case 'i': {
+            switch (buf[11]) {
+              case 'd':
+                if (op == "array.init_data"sv) {
+                  auto ret = makeArrayInit(ctx, pos, InitData);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 'e':
+                if (op == "array.init_elem"sv) {
+                  auto ret = makeArrayInit(ctx, pos, InitElem);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 's':
+                if (op == "array.init_static"sv) {
+                  auto ret = makeArrayNewFixed(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'l':
             if (op == "array.len"sv) {
               auto ret = makeArrayLen(ctx, pos);

@@ -2339,6 +2339,14 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitArrayFill(ArrayFill* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayInit(ArrayInit* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitStringNew(StringNew* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

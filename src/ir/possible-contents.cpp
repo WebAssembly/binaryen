@@ -988,7 +988,22 @@ struct InfoCollector
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
   }
-
+  void visitArrayFill(ArrayFill* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    Builder builder(*getModule());
+    auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
+    visitArraySet(set);
+  }
+  void visitArrayInit(ArrayInit* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    // TODO: Modeling the write to the array can be similar to the above, but
+    // how should the read from the segment be modeled?
+    WASM_UNREACHABLE("unimplemented");
+  }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;

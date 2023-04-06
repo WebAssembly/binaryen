@@ -218,6 +218,17 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     }
     WASM_UNREACHABLE("unexpected op");
   }
+  void visitArrayInit(ArrayInit* curr) {
+    switch (curr->op) {
+      case InitData:
+        note({ModuleElementKind::DataSegment, curr->segment});
+        return;
+      case InitElem:
+        note({ModuleElementKind::ElementSegment, curr->segment});
+        return;
+    }
+    WASM_UNREACHABLE("unexpected op");
+  }
 };
 
 // Analyze a module to find what things are referenced and what things are used.

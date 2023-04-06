@@ -4040,6 +4040,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayCopy(curr, opcode)) {
         break;
       }
+      if (maybeVisitArrayFill(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayInit(curr, opcode)) {
+        break;
+      }
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
@@ -7213,6 +7219,50 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
   validateHeapTypeUsingChild(srcRef, srcHeapType);
   out =
     Builder(wasm).makeArrayCopy(destRef, destIndex, srcRef, srcIndex, length);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayFill(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArrayFill) {
+    return false;
+  }
+  auto heapType = getIndexedHeapType();
+  auto* size = popNonVoidExpression();
+  auto* value = popNonVoidExpression();
+  auto* index = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType);
+  out = Builder(wasm).makeArrayFill(ref, index, value, size);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
+  ArrayInitOp op;
+  switch (code) {
+    case BinaryConsts::ArrayInitData:
+      op = InitData;
+      break;
+    case BinaryConsts::ArrayInitElem:
+      op = InitElem;
+      break;
+    default:
+      return false;
+  }
+  auto heapType = getIndexedHeapType();
+  Index segIdx = getU32LEB();
+  auto* size = popNonVoidExpression();
+  auto* offset = popNonVoidExpression();
+  auto* index = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType);
+  auto* built =
+    Builder(wasm).makeArrayInit(op, Name(), ref, index, offset, size);
+  if (op == InitData) {
+    dataRefs[segIdx].push_back(&built->segment);
+  } else {
+    elemRefs[segIdx].push_back(&built->segment);
+  }
+  out = built;
   return true;
 }
 

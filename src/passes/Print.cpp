@@ -2273,7 +2273,6 @@ struct PrintExpressionContents
     switch (curr->op) {
       case NewData:
         printMedium(o, "data");
-
         break;
       case NewElem:
         printMedium(o, "elem");
@@ -2326,6 +2325,30 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
+  }
+  void visitArrayFill(ArrayFill* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    printMedium(o, "array.fill ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+  }
+  void visitArrayInit(ArrayInit* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    switch (curr->op) {
+      case InitData:
+        printMedium(o, "array.init_data ");
+        break;
+      case InitElem:
+        printMedium(o, "array.init_elem ");
+        break;
+      default:
+        WASM_UNREACHABLE("unexpected op");
+    }
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    o << " $" << curr->segment;
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {

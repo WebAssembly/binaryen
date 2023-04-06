@@ -568,6 +568,12 @@ enum ArrayNewSegOp {
   NewElem,
 };
 
+// TODO: Deduplicate with ArrayNewSegOp?
+enum ArrayInitOp {
+  InitData,
+  InitElem,
+};
+
 enum BrOnOp {
   BrOnNull,
   BrOnNonNull,
@@ -722,6 +728,8 @@ public:
     ArraySetId,
     ArrayLenId,
     ArrayCopyId,
+    ArrayFillId,
+    ArrayInitId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1665,6 +1673,32 @@ public:
   Expression* srcRef;
   Expression* srcIndex;
   Expression* length;
+
+  void finalize();
+};
+
+class ArrayFill : public SpecificExpression<Expression::ArrayFillId> {
+public:
+  ArrayFill(MixedArena& allocator) {}
+
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+  Expression* size;
+
+  void finalize();
+};
+
+class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+public:
+  ArrayInit(MixedArena& allocator) {}
+
+  ArrayInitOp op;
+  Name segment;
+  Expression* ref;
+  Expression* index;
+  Expression* offset;
+  Expression* size;
 
   void finalize();
 };

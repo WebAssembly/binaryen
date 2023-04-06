@@ -102,20 +102,20 @@ ArrayGetId: 66
 ArraySetId: 67
 ArrayLenId: 68
 ArrayCopy: 69
-RefAs: 70
-StringNew: 71
-StringConst: 72
-StringMeasure: 73
-StringEncode: 74
-StringConcat: 75
-StringEq: 76
-StringAs: 77
-StringWTF8Advance: 78
-StringWTF16Get: 79
-StringIterNext: 80
-StringIterMove: 81
-StringSliceWTF: 82
-StringSliceIter: 83
+RefAs: 72
+StringNew: 73
+StringConst: 74
+StringMeasure: 75
+StringEncode: 76
+StringConcat: 77
+StringEq: 78
+StringAs: 79
+StringWTF8Advance: 80
+StringWTF16Get: 81
+StringIterNext: 82
+StringIterMove: 83
+StringSliceWTF: 84
+StringSliceIter: 85
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)

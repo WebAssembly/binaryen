@@ -800,6 +800,9 @@ struct NullInstrParserCtx {
   InstrT makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
     return Ok{};
   }
+  template<typename HeapTypeT> InstrT makeArrayFill(Index, HeapTypeT) {
+    return Ok{};
+  }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -2212,6 +2215,22 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return push(
       pos, builder.makeArrayCopy(*destRef, *destIdx, *srcRef, *srcIdx, *len));
   }
+
+  Result<> makeArrayFill(Index pos, HeapType type) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto value = pop(pos);
+    CHECK_ERR(value);
+    auto index = pop(pos);
+    CHECK_ERR(index);
+    auto ref = pop(pos);
+    CHECK_ERR(ref);
+    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
+    return push(pos, builder.makeArrayFill(*ref, *index, *value, *size));
+  }
 };
 
 // ================
@@ -2369,6 +2388,9 @@ Result<typename Ctx::InstrT> makeArrayGet(Ctx&, Index, bool signed_ = false);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArraySet(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeArrayFill(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayInit(Ctx&, Index, ArrayInitOp);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx&, Index, RefAsOp op);
 template<typename Ctx>
@@ -3553,6 +3575,19 @@ Result<typename Ctx::InstrT> makeArrayCopy(Ctx& ctx, Index pos) {
   auto srcType = typeidx(ctx);
   CHECK_ERR(srcType);
   return ctx.makeArrayCopy(pos, *destType, *srcType);
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayFill(Ctx& ctx, Index pos) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeArrayFill(pos, *type);
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeArrayInit(Ctx& ctx, Index pos, ArrayInitOp op) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
