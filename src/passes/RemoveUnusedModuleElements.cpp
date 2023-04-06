@@ -41,6 +41,7 @@
 #include "ir/find_all.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
+#include "ir/struct-utils.h"
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -62,10 +63,6 @@ enum class ModuleElementKind {
 // An element in the module that we track: a kind (function, global, etc.) + the
 // name of the particular element.
 using ModuleElement = std::pair<ModuleElementKind, Name>;
-
-// A pair of a struct type and a field index, together defining a field in a
-// particular type.
-using StructField = std::pair<HeapType, Index>;
 
 // Visit or walk an expression to find what things are referenced.
 struct ReferenceFinder : public PostWalker<ReferenceFinder> {

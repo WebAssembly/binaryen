@@ -22,6 +22,10 @@
 
 namespace wasm {
 
+// A pair of a struct type and a field index, together defining a field in a
+// particular type.
+using StructField = std::pair<HeapType, Index>;
+
 namespace StructUtils {
 
 // A vector of a template type's values. One such vector will be used per struct
