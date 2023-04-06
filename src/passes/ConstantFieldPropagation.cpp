@@ -105,6 +105,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     Expression* value = info.makeExpression(*getModule());
+    auto field = type.getHeapType().getStruct().fields[curr->index];
+    if (field.isPacked()) {
+      // We cannot just pass through a value that is packed, as the input gets
+      // truncated.
+      auto mask = Bits::lowBitMask(Bits::getBits(field.packedType));
+      value = builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+    }
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
