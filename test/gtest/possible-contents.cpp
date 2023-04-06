@@ -803,12 +803,12 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   // Filter a global's nullability only.
   auto nonNullFuncRef = Type(HeapType::func, NonNullable);
-  assertIntersection(
-    funcGlobal, PossibleContents::fullConeType(nonNullFuncRef), nonNullFuncGlobal);
+  assertIntersection(funcGlobal,
+                     PossibleContents::fullConeType(nonNullFuncRef),
+                     nonNullFuncGlobal);
 
   // Incompatible global and cone types have no intersection.
-  assertIntersection(
-    funcGlobal, PossibleContents::fullConeType(nullE), none);
+  assertIntersection(funcGlobal, PossibleContents::fullConeType(nullE), none);
 
   // Incompatible hierarchies have no intersection.
   assertIntersection(
