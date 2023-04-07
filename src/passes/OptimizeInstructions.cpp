@@ -1942,7 +1942,7 @@ struct OptimizeInstructions
     }
 
     if (curr->value->type.isInteger()) {
-      if (auto field = GCTypeUtils::getField(curr->ref)) {
+      if (auto field = GCTypeUtils::getField(curr->ref->type)) {
         optimizeStoredValue(curr->value, field->getByteSize());
       }
     }

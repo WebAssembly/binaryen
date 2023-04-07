@@ -127,10 +127,6 @@ inline std::optional<Field> getField(Type type, Index index = 0) {
   return {};
 }
 
-inline std::optional<Field> getField(Expression* ref, Index index = 0) {
-  return getField(ref->type, index);
-}
-
 } // namespace wasm::GCTypeUtils
 
 #endif // wasm_ir_gc_type_utils_h
