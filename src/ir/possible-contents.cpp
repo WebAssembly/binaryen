@@ -1957,7 +1957,6 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
-  auto type = dataLoc.type;
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
   assert(field);
   if (field->isPacked()) {
