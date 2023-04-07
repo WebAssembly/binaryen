@@ -2135,3 +2135,93 @@
     )
   )
 )
+
+;; Test we handle packed fields properly.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A_8 (struct (field i8)))
+  (type $A_8 (struct (field i8)))
+  ;; CHECK:      (type $A_16 (struct (field i16)))
+  (type $A_16 (struct (field i16)))
+  ;; CHECK:      (type $B_16 (struct (field i16)))
+  (type $B_16 (struct (field i16)))
+
+  ;; CHECK:      (import "a" "b" (global $g i32))
+  (import "a" "b" (global $g i32))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_8
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 305419896)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_16
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 305419896)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $B_16
+  ;; CHECK-NEXT:       (global.get $g)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We can infer values here, but must add proper masks, as the inputs get
+    ;; truncated during packing.
+    (drop
+      (struct.get_u $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_u $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    ;; Also test reading a value from an imported global, which is an unknown
+    ;; value at compile time, but which we know must be masked as well.
+    (drop
+      (struct.get_u $B_16 0
+        (struct.new $B_16
+          (global.get $g)
+        )
+      )
+    )
+  )
+)

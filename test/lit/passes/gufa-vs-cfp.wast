@@ -2665,3 +2665,59 @@
     )
   )
 )
+
+;; Test we handle packed fields properly.
+(module
+  (type $A_8 (struct (field i8)))
+  (type $A_16 (struct (field i16)))
+  ;; CHECK:      (type $B_16 (struct (field i16)))
+  (type $B_16 (struct (field i16)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "a" "b" (global $g i32))
+  (import "a" "b" (global $g i32))
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 120)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 22136)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $B_16 0
+  ;; CHECK-NEXT:    (struct.new $B_16
+  ;; CHECK-NEXT:     (global.get $g)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We can infer values here, but must mask them.
+    (drop
+      (struct.get_u $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_u $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    ;; Also test reading a value from an imported global, which is an unknown
+    ;; value at compile time, but which we know must be masked as well. Atm
+    ;; GUFA does not handle this, unlike CFP (see TODO in filterDataContents).
+    (drop
+      (struct.get_u $B_16 0
+        (struct.new $B_16
+          (global.get $g)
+        )
+      )
+    )
+  )
+)

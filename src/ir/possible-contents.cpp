@@ -17,8 +17,10 @@
 #include <optional>
 #include <variant>
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/gc-type-utils.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
@@ -1430,6 +1432,8 @@ private:
                                 bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
+  void filterDataContents(PossibleContents& contents,
+                          const DataLocation& dataLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -1739,6 +1743,9 @@ bool Flower::updateContents(LocationIndex locationIndex,
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
     filtered = true;
+  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    filterDataContents(contents, *dataLoc);
+    filtered = true;
   }
 
   // Check if anything changed after filtering, if we did so.
@@ -1967,6 +1974,30 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       contents.dump(std::cout, &wasm);
       std::cout << '\n';
 #endif
+    }
+  }
+}
+
+void Flower::filterDataContents(PossibleContents& contents,
+                                const DataLocation& dataLoc) {
+  auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
+  assert(field);
+  if (field->isPacked()) {
+    // We must handle packed fields carefully.
+    if (contents.isLiteral()) {
+      // This is a constant. We can truncate it and use that value.
+      auto mask = Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
+      contents = PossibleContents::literal(contents.getLiteral().and_(mask));
+    } else {
+      // This is not a constant. We can't even handle a global here, as we'd
+      // need to track that this global's value must be truncated before it is
+      // used, and we don't do that atm. Leave only the type.
+      // TODO Consider tracking packing on GlobalInfo alongside the type.
+      //      Another option is to make GUFA.cpp apply packing on the read,
+      //      like CFP does - but that can only be done when replacing a
+      //      StructGet of a packed field, and not anywhere else we saw that
+      //      value reach.
+      contents = PossibleContents::fromType(contents.getType());
     }
   }
 }
