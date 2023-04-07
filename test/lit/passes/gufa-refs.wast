@@ -5466,3 +5466,62 @@
     )
   )
 )
+
+;; Verify we do not error or misoptimize with array.init_elem.
+(module
+  ;; CHECK:      (type $vector (array (mut funcref)))
+  (type $vector (array (mut funcref)))
+
+  (elem func)
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem $0 func)
+
+  ;; CHECK:      (elem declare func $test)
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $ref (ref $vector))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (array.new $vector
+  ;; CHECK-NEXT:    (ref.func $test)
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_elem $vector $0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $vector
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $ref (ref $vector))
+    (local.set $ref
+      (array.new $vector
+        (ref.func $test)
+        (i32.const 100)
+      )
+    )
+    (array.init_elem $vector 0
+      (local.get $ref)
+      (i32.const 1)
+      (i32.const 1)
+      (i32.const 1)
+    )
+    ;; We wrote a specific ref.func earlier, but also we did an init_elem whose
+    ;; values we consider unknown, so we will not optimize this get.
+    (drop
+      (array.get $vector
+        (local.get $ref)
+        (i32.const 1)
+      )
+    )
+  )
+)

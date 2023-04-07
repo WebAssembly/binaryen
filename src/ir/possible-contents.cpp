@@ -618,6 +618,7 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
+    // TODO: be more precise
     addRoot(curr);
   }
   void visitTableSet(TableSet* curr) {}
@@ -992,6 +993,7 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
+    // See ArrayCopy, above.
     Builder builder(*getModule());
     auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
     visitArraySet(set);
@@ -1000,9 +1002,18 @@ struct InfoCollector
     if (curr->type == Type::unreachable) {
       return;
     }
-    // TODO: Modeling the write to the array can be similar to the above, but
-    // how should the read from the segment be modeled?
-    WASM_UNREACHABLE("unimplemented");
+    // See ArrayCopy, above. Here an additional complexity is that we need to
+    // model the read from the segment. As in TableGet, for now we just assume
+    // any value is possible there (a root in the graph), which we set up
+    // manually here as a fake unknown value, using a fake local.get that we
+    // root.
+    // TODO: be more precise about what is in the table
+    auto valueType = curr->ref->type.getHeapType().getArray().element.type;
+    Builder builder(*getModule());
+    auto* get = builder.makeLocalGet(-1, valueType);
+    addRoot(get);
+    auto* set = builder.makeArraySet(curr->ref, curr->index, get);
+    visitArraySet(set);
   }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
