@@ -64,10 +64,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return Unknown;
   }
 
-  if (Type::isSubType(refType, castType)) {
-    return Success;
-  }
-
   auto refHeapType = refType.getHeapType();
   auto castHeapType = castType.getHeapType();
 
@@ -88,17 +84,27 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return SuccessOnlyIfNull;
   }
 
-  // If the heap type part of the cast is compatible but the cast as a whole is
-  // not, we must have a nullable input ref that we are casting to a
-  // non-nullable type.
+  if (castType.isNonNullable() && refHeapType.isBottom()) {
+    // Non-null references to bottom types do not exist, so there's no value
+    // that could make the cast succeed. Note that we check this before the
+    // next check because bottom types are subtypes, that is, (ref nofunc)
+    // is a subtype of (ref func), so it seems like the cast would succeed,
+    // but we want to return failure here because that is more precise.
+    return Failure;
+  }
+
   if (refIsHeapSubType) {
+    // The heap type is a subtype. All we need is for nullability to work out as
+    // well, and then the cast must succeed.
+    if (castType.isNullable() || refType.isNonNullable()) {
+      return Success;
+    }
+
+    // If the heap type part of the cast is compatible but the cast as a whole
+    // is not, we must have a nullable input ref that we are casting to a
+    // non-nullable type.
     assert(refType.isNullable());
     assert(castType.isNonNullable());
-    if (refHeapType.isBottom()) {
-      // Non-null references to bottom types do not exist, so there's no value
-      // that could make the cast succeed.
-      return Failure;
-    }
     return SuccessOnlyIfNonNull;
   }
 
