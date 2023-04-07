@@ -19,8 +19,8 @@
 
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/gc-type-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/gc-type-utils.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
@@ -1963,8 +1963,7 @@ void Flower::filterDataContents(PossibleContents& contents,
     // We must handle packed fields carefully.
     if (contents.isLiteral()) {
       // This is a constant. We can truncate it and use that value.
-      auto mask =
-        Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
+      auto mask = Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
       contents = PossibleContents::literal(contents.getLiteral().and_(mask));
     } else {
       // This is not a constant. We can't even handle a global here, as we'd
