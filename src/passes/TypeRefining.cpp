@@ -274,7 +274,11 @@ struct TypeRefining : public Pass {
           //
           // Here ReFinalize will turn the block's result into a bottom type,
           // which means it won't know a type for the struct.get at that point.
-          // Doing it here avoids that issue.
+          // Doing it here avoids that issue (ReFinalize will still get into the
+          // situation where it doesn't know how to update the type of the
+          // struct.get, but it will just leave the existing type - it assumes
+          // no update is needed - which will be correct, since we've updated it
+          // ourselves here, before).
           curr->type = newFieldType;
         } else {
           // This instruction is invalid, so it must be the result of the

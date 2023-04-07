@@ -1046,8 +1046,28 @@
 )
 
 (module
+  ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
   (type $struct (struct (field (mut (ref null struct)))))
 
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $work (param $struct (ref $struct))
     ;; The only set to the field is (ref $struct), so we can refine to that.
     (struct.set $struct 0
