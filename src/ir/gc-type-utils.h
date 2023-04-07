@@ -109,6 +109,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 // One may not exist if the reference is unreachable, or a bottom type.
 //
 // The index is optional as it does not matter for an array.
+//
+// TODO: use in more places
 inline std::optional<Field> getField(Expression* ref, Index index = 0) {
   if (ref->type.isRef()) {
     auto heapType = ref->type.getHeapType();
