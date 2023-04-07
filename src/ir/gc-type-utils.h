@@ -111,16 +111,24 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 // The index is optional as it does not matter for an array.
 //
 // TODO: use in more places
-inline std::optional<Field> getField(Expression* ref, Index index = 0) {
-  if (ref->type.isRef()) {
-    auto heapType = ref->type.getHeapType();
-    if (heapType.isStruct()) {
-      return heapType.getStruct().fields[index];
-    } else if (heapType.isArray()) {
-      return heapType.getArray().element;
-    }
+inline std::optional<Field> getField(HeapType type, Index index = 0) {
+  if (type.isStruct()) {
+    return type.getStruct().fields[index];
+  } else if (type.isArray()) {
+    return type.getArray().element;
   }
   return {};
+}
+
+inline std::optional<Field> getField(Type type, Index index = 0) {
+  if (type.isRef()) {
+    return getField(type.getHeapType(), index);
+  }
+  return {};
+}
+
+inline std::optional<Field> getField(Expression* ref, Index index = 0) {
+  return getField(ref->type, index);
 }
 
 } // namespace wasm::GCTypeUtils
