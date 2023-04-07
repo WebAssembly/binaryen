@@ -448,18 +448,6 @@ inline Index getMinBits(Expression* curr) {
   return 0;
 }
 
-inline Index getBits(Field::PackedType packed) {
-  switch (packed) {
-    case Field::PackedType::i8:
-      return 8;
-    case Field::PackedType::i16:
-      return 16;
-    case Field::PackedType::not_packed:
-      return 32;
-  }
-  WASM_UNREACHABLE("invalid packing");
-}
-
 } // namespace wasm::Bits
 
 #endif // wasm_ir_bits_h

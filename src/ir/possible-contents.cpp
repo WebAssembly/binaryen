@@ -19,6 +19,7 @@
 
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
+#include "ir/gc-type-utils.h"
 #include "ir/eh-utils.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
@@ -1957,18 +1958,14 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
   auto type = dataLoc.type;
-  Field field;
-  if (type.isStruct()) {
-    field = type.getStruct().fields[dataLoc.index];
-  } else {
-    field = type.getArray().element;
-  }
-  if (field.isPacked()) {
+  auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
+  assert(field);
+  if (field->isPacked()) {
     // We must handle packed fields carefully.
     if (contents.isLiteral()) {
       // This is a constant. We can truncate it and use that value.
       auto mask =
-        Literal(int32_t(Bits::lowBitMask(Bits::getBits(field.packedType))));
+        Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
       contents = PossibleContents::literal(contents.getLiteral().and_(mask));
     } else {
       // This is not a constant. We can't even handle a global here, as we'd

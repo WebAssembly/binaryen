@@ -28,6 +28,7 @@
 //
 
 #include "ir/bits.h"
+#include "ir/gc-type-utils.h"
 #include "ir/module-utils.h"
 #include "ir/possible-constant.h"
 #include "ir/struct-utils.h"
@@ -106,11 +107,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
     Expression* value = info.makeExpression(*getModule());
-    auto field = type.getHeapType().getStruct().fields[curr->index];
-    if (field.isPacked()) {
+    auto field = GCTypeUtils::getField(type, curr->index);
+    assert(field);
+    if (field->isPacked()) {
       // We cannot just pass through a value that is packed, as the input gets
       // truncated.
-      auto mask = Bits::lowBitMask(Bits::getBits(field.packedType));
+      auto mask = Bits::lowBitMask(field->getByteSize() * 8);
       value =
         builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
     }
