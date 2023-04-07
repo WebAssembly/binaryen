@@ -2389,3 +2389,31 @@
   )
  )
 )
+(module
+ ;; CHECK:      (type $array (array (mut i32)))
+ (type $array (array (mut i32)))
+ ;; CHECK:      (type $ref|$array|_i32_i32_i32_=>_none (func (param (ref $array) i32 i32 i32)))
+
+ ;; CHECK:      (memory $0 (shared 16 17))
+ (memory $0 (shared 16 17))
+ ;; CHECK:      (data $0 "")
+ (data $0 "")
+ ;; CHECK:      (func $0 (type $ref|$array|_i32_i32_i32_=>_none) (param $0 (ref $array)) (param $1 i32) (param $2 i32) (param $3 i32)
+ ;; CHECK-NEXT:  (array.init_data $array $0
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0 (param $0 (ref $array)) (param $1 i32) (param $2 i32) (param $3 i32)
+  ;; test that we do not improperly optimize out segments referred to by
+  ;; array.init_data instructions.
+  (array.init_data $array $0
+   (local.get $0)
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)

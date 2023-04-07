@@ -278,8 +278,8 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
           return false;
         }
       }
-    } else if (referrer->is<ArrayNewSeg>()) {
-      // TODO: Split segments referenced by array.new_data instructions.
+    } else if (referrer->is<ArrayNewSeg>() || referrer->is<ArrayInit>()) {
+      // TODO: Split segments referenced by GC instructions.
       return false;
     }
   }
@@ -479,8 +479,10 @@ void MemoryPacking::getSegmentReferrers(Module* module,
           referrers[curr->segment].push_back(curr);
         }
       }
-      void doWalkFunction(Function* func) {
-        super::doWalkFunction(func);
+      void visitArrayInit(ArrayInit* curr) {
+        if (curr->op == InitData) {
+          referrers[curr->segment].push_back(curr);
+        }
       }
     } collector(referrers);
     collector.walkFunctionInModule(func, module);
@@ -586,7 +588,7 @@ void MemoryPacking::createSplitSegments(
                                          segment->memory,
                                          segment->isPassive,
                                          offset,
-                                         &segment->data[range.start],
+                                         segment->data.data() + range.start,
                                          range.end - range.start);
     curr->hasExplicitName = hasExplicitName;
     packed.push_back(std::move(curr));
