@@ -588,7 +588,7 @@ void MemoryPacking::createSplitSegments(
                                          segment->memory,
                                          segment->isPassive,
                                          offset,
-                                         &segment->data[range.start],
+                                         segment->data.data() + range.start,
                                          range.end - range.start);
     curr->hasExplicitName = hasExplicitName;
     packed.push_back(std::move(curr));
