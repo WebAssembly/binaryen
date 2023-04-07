@@ -197,18 +197,17 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  if (isLiteral() || isGlobal()) {
+  if (isLiteral()) {
     // The information about the value being identical to a particular literal
-    // or immutable global is not removed by intersection, if the type is in the
-    // cone we are intersecting with.
+    // is not removed by intersection, if the type is in the cone we are
+    // intersecting with.
     if (isSubType) {
       return;
     }
 
-    // The type must change, so continue down to the generic code path.
-    // TODO: for globals we could perhaps refine the type here, but then the
-    //       type on GlobalInfo would not match the module, so that needs some
-    //       refactoring.
+    // The type must change in a nontrivial manner, so continue down to the
+    // generic code path. This will stop being a Literal. TODO: can we do better
+    // here?
   }
 
   // Intersect the cones, as there is no more specific information we can use.
@@ -224,6 +223,14 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     newHeapType = otherHeapType;
   } else {
     newHeapType = heapType;
+  }
+
+  // Note the global's information, if we started as a global. In that case, the
+  // code below will refine our type but we can remain a global, which we will
+  // accomplish by restoring our global status at the end.
+  std::optional<Name> globalName;
+  if (isGlobal()) {
+    globalName = getGlobal();
   }
 
   auto newType = Type(newHeapType, nullability);
@@ -260,6 +267,11 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     }
 
     value = ConeType{newType, newDepth};
+  }
+
+  if (globalName) {
+    // Restore the global but keep the new and refined type.
+    value = GlobalInfo{*globalName, getType()};
   }
 }
 
