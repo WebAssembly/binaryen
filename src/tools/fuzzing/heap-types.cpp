@@ -16,6 +16,7 @@
 
 #include <variant>
 
+#include "ir/gc-type-utils.h"
 #include "ir/subtypes.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/heap-types.h"
@@ -700,7 +701,7 @@ struct Inhabitator {
   Inhabitator(const std::vector<HeapType>& types)
     : types(types), subtypes(types) {}
 
-  Variance getVariance(FieldPos field);
+  Variance getVariance(FieldPos fieldPos);
   void markNullable(FieldPos field);
   void markBottomRefsNullable();
   void markExternRefsNullable();
@@ -709,24 +710,16 @@ struct Inhabitator {
   std::vector<HeapType> build();
 };
 
-Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
-  auto [type, idx] = field;
+Inhabitator::Variance Inhabitator::getVariance(FieldPos fieldPos) {
+  auto [type, idx] = fieldPos;
   assert(!type.isBasic() && !type.isSignature());
-  if (type.isStruct()) {
-    if (type.getStruct().fields[idx].mutable_ == Mutable) {
-      return Invariant;
-    } else {
-      return Covariant;
-    }
+  auto field = GCTypeUtils::getField(type, idx);
+  assert(field);
+  if (field->mutable_ == Mutable) {
+    return Invariant;
+  } else {
+    return Covariant;
   }
-  if (type.isArray()) {
-    if (type.getArray().element.mutable_ == Mutable) {
-      return Invariant;
-    } else {
-      return Covariant;
-    }
-  }
-  WASM_UNREACHABLE("unexpected kind");
 }
 
 void Inhabitator::markNullable(FieldPos field) {
