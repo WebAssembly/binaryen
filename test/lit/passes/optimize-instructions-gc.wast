@@ -3200,4 +3200,23 @@
       (i32.const 100)
     )
   )
+
+  (func $set.array.null
+    (local $temp (ref none))
+
+    ;; The cast of none will be inferred to be an unreachable. That does not
+    ;; propagate through the tee during this pass, however, as it only
+    ;; happens during the refinalize at the very end. We must be careful not to
+    ;; hit an internal error while processing the array.set, as its reference's
+    ;; fallthrough value has null type and not array type.
+    (array.set $array
+      (local.tee $temp
+        (ref.as_non_null
+          (ref.null none)
+        )
+      )
+      (i32.const 2)
+      (i32.const 3)
+    )
+  )
 )

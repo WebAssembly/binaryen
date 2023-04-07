@@ -105,6 +105,22 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   return Unknown;
 }
 
+// Given a reference and a field index, return the field for it, if one exists.
+// One may not exist if the reference is unreachable, or a bottom type.
+//
+// The index is optional as it does not matter for an array.
+inline std::optional<Field> getField(Expression* ref, Index index = 0) {
+  if (ref->type.isRef()) {
+    auto heapType = ref->type.getHeapType();
+    if (heapType.isStruct()) {
+      return heapType.getStruct().fields[index];
+    } else if (heapType.isArray()) {
+      return heapType.getArray().element;
+    }
+  }
+  return {};
+}
+
 } // namespace wasm::GCTypeUtils
 
 #endif // wasm_ir_gc_type_utils_h
