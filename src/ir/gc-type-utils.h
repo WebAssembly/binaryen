@@ -111,14 +111,18 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 // The index is optional as it does not matter for an array.
 //
 // TODO: use in more places
+inline std::optional<Field> getField(HeapType type, Index index = 0) {
+  if (type.isStruct()) {
+    return type.getStruct().fields[index];
+  } else if (type.isArray()) {
+    return type.getArray().element;
+  }
+  return {};
+}
+
 inline std::optional<Field> getField(Type type, Index index = 0) {
   if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    if (heapType.isStruct()) {
-      return heapType.getStruct().fields[index];
-    } else if (heapType.isArray()) {
-      return heapType.getArray().element;
-    }
+    return getField(type.getHeapType(), index);
   }
   return {};
 }
