@@ -28,17 +28,17 @@
 
   (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  ;; NOMNL:      (type $void (func))
+
   ;; NOMNL:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   (type $empty (struct))
 
-  ;; CHECK:      (type $void (func))
-
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
-  ;; NOMNL:      (type $void (func))
-
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
@@ -3201,6 +3201,40 @@
     )
   )
 
+  ;; CHECK:      (func $set.array.null (type $void)
+  ;; CHECK-NEXT:  (local $temp (ref none))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $set.array.null (type $void)
+  ;; NOMNL-NEXT:  (local $temp (ref none))
+  ;; NOMNL-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (local.tee $temp
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (i32.const 2)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (drop
+  ;; NOMNL-NEXT:    (i32.const 3)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (unreachable)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
   (func $set.array.null
     (local $temp (ref none))
 
