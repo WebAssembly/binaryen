@@ -16,6 +16,7 @@
 
 #include <variant>
 
+#include "ir/gc-type-utils.h"
 #include "ir/subtypes.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/heap-types.h"
@@ -712,21 +713,13 @@ struct Inhabitator {
 Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
   auto [type, idx] = field;
   assert(!type.isBasic() && !type.isSignature());
-  if (type.isStruct()) {
-    if (type.getStruct().fields[idx].mutable_ == Mutable) {
-      return Invariant;
-    } else {
-      return Covariant;
-    }
+  auto field = GCTypeUtils::getField(type, idx);
+  assert(field);
+  if (field->.mutable_ == Mutable) {
+    return Invariant;
+  } else {
+    return Covariant;
   }
-  if (type.isArray()) {
-    if (type.getArray().element.mutable_ == Mutable) {
-      return Invariant;
-    } else {
-      return Covariant;
-    }
-  }
-  WASM_UNREACHABLE("unexpected kind");
 }
 
 void Inhabitator::markNullable(FieldPos field) {
