@@ -3342,4 +3342,45 @@
       )
     )
   )
+
+  ;; CHECK:      (func $non-null-bottom (type $none_=>_ref|func|) (result (ref func))
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (loop (result (ref nofunc))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom (type $none_=>_ref|func|) (result (ref func))
+  ;; NOMNL-NEXT:  (local $0 funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.tee $0
+  ;; NOMNL-NEXT:    (loop (result (ref nofunc))
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom (result (ref func))
+    (local $0 (ref null func))
+    ;; This cast will fail since (ignoring the tee) we have a (ref nofunc), a
+    ;; bottom type, which we try to cast to non-null. But at the same time, the
+    ;; loop's type is a subtype of the cast's (since it is non-nullable, and
+    ;; bottom types are subtypes). The tee makes this an interesting corner case
+    ;; since it makes the type nullable again, so if we thought the cast would
+    ;; succeed, and replaced the cast with its child, we'd fail to validate.
+    ;; Instead, since the cast fails, we can replace it with an unreachable
+    ;; after the dropped child).
+    (ref.cast func
+      (local.tee $0
+        (loop (result (ref nofunc))
+          (unreachable)
+        )
+      )
+    )
+  )
 )
