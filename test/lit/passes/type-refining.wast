@@ -1044,3 +1044,32 @@
     )
   )
 )
+
+(module
+  (type $struct (struct (field (mut (ref null struct)))))
+
+  (func $work (param $struct (ref $struct))
+    ;; The only set to the field is (ref $struct), so we can refine to that.
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+    ;; After refining, we must update the get's type properly. ReFinalize by
+    ;; itself would hit a problem here, as it first turns the block's result to
+    ;; a bottom type, after which it can't figure out how to update the
+    ;; struct.get. TypeRefining should handle that internally by updating all
+    ;; struct.gets itself based on the changes it is making.
+    ;;
+    ;; Note that this problem depends on the recursion of a struct.get feeding
+    ;; into a struct.set: after the refining, the struct.set will only
+    ;; validate if we provide it the *refined* type for the field.
+    (struct.set $struct 0
+      (local.get $struct)
+      (struct.get $struct 0
+        (block (result (ref null $struct))
+          (ref.null none)
+        )
+      )
+    )
+  )
+)

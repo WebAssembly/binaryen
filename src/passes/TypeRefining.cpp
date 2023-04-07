@@ -256,7 +256,27 @@ struct TypeRefining : public Pass {
 
         auto oldType = curr->ref->type.getHeapType();
         auto newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
-        if (!Type::isSubType(newFieldType, curr->type)) {
+        if (Type::isSubType(newFieldType, curr->type)) {
+          // This is the normal situation, where the new type is a refinement of
+          // the old type. Apply that here so that the type of the struct.get
+          // matches what is in the refined field. ReFinalize will later
+          // propagate this to parents.
+          //
+          // Note that ReFinalize will also apply the type of the field itself,
+          // automatically, but only if it can find it. A possible problem can
+          // occur in ReFinalize as it also propagates other types:
+          //
+          //  (struct.get $A
+          //    (block (result (ref null $A))
+          //      (ref.null any)
+          //    )
+          //  )
+          //
+          // Here ReFinalize will turn the block's result into a bottom type,
+          // which means it won't know a type for the struct.get at that point.
+          // Doing it here avoids that issue.
+          curr->type = newFieldType;
+        } else {
           // This instruction is invalid, so it must be the result of the
           // situation described above: we ignored the read during our
           // inference, and optimized accordingly, and so now we must remove it
