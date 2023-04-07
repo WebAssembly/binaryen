@@ -1941,9 +1941,10 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
-      auto element = curr->ref->type.getHeapType().getArray().element;
-      optimizeStoredValue(curr->value, element.getByteSize());
+    if (curr->value->type.isInteger()) {
+      if (auto field = GCTypeUtils::getField(curr->ref->type)) {
+        optimizeStoredValue(curr->value, field->getByteSize());
+      }
     }
   }
 
