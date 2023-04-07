@@ -701,7 +701,7 @@ struct Inhabitator {
   Inhabitator(const std::vector<HeapType>& types)
     : types(types), subtypes(types) {}
 
-  Variance getVariance(FieldPos field);
+  Variance getVariance(FieldPos fieldPos);
   void markNullable(FieldPos field);
   void markBottomRefsNullable();
   void markExternRefsNullable();
@@ -710,8 +710,8 @@ struct Inhabitator {
   std::vector<HeapType> build();
 };
 
-Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
-  auto [type, idx] = field;
+Inhabitator::Variance Inhabitator::getVariance(FieldPos fieldPos) {
+  auto [type, idx] = fieldPos;
   assert(!type.isBasic() && !type.isSignature());
   auto field = GCTypeUtils::getField(type, idx);
   assert(field);
