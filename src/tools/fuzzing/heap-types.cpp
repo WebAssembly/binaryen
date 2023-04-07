@@ -715,7 +715,7 @@ Inhabitator::Variance Inhabitator::getVariance(FieldPos field) {
   assert(!type.isBasic() && !type.isSignature());
   auto field = GCTypeUtils::getField(type, idx);
   assert(field);
-  if (field->.mutable_ == Mutable) {
+  if (field->mutable_ == Mutable) {
     return Invariant;
   } else {
     return Covariant;
