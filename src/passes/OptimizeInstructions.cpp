@@ -262,6 +262,11 @@ struct OptimizeInstructions
   bool inReplaceCurrent = false;
 
   void replaceCurrent(Expression* rep) {
+    if (rep->type != getCurrent()->type) {
+      // This operation will change the type, so refinalize.
+      refinalize = true;
+    }
+
     WalkerPass<PostWalker<OptimizeInstructions>>::replaceCurrent(rep);
     // We may be able to apply multiple patterns as one may open opportunities
     // for others. NB: patterns must not have cycles
@@ -1707,8 +1712,6 @@ struct OptimizeInstructions
     if (fallthrough->type.isNull()) {
       replaceCurrent(
         getDroppedChildrenAndAppend(curr, builder.makeUnreachable()));
-      // Propagate the unreachability.
-      refinalize = true;
       return true;
     }
     return false;
@@ -2083,25 +2086,6 @@ struct OptimizeInstructions
 
     if (result == GCTypeUtils::Success) {
       replaceCurrent(curr->ref);
-
-      // We must refinalize here, as we may be returning a more specific
-      // type, which can alter the parent. For example:
-      //
-      //  (struct.get $parent 0
-      //   (ref.cast_static $parent
-      //    (local.get $child)
-      //   )
-      //  )
-      //
-      // Try to cast a $child to its parent, $parent. That always works,
-      // so the cast can be removed.
-      // Then once the cast is removed, the outer struct.get
-      // will have a reference with a different type, making it a
-      // (struct.get $child ..) instead of $parent.
-      // But if $parent and $child have different types on field 0 (the
-      // child may have a more refined one) then the struct.get must be
-      // refinalized so the IR node has the expected type.
-      refinalize = true;
       return;
     } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
       // All we need to do is check for a null here.
@@ -2109,7 +2093,6 @@ struct OptimizeInstructions
       // As above, we must refinalize as we may now be emitting a more refined
       // type (specifically a more refined heap type).
       replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
-      refinalize = true;
       return;
     }
 
@@ -2752,7 +2735,8 @@ private:
           // must drop one value, so 3, while we save the condition, so it's
           // not clear this is worth it, TODO
         } else {
-          // value has no side effects
+          // The value has no side effects, so we can replace ourselves with one
+          // of the two identical values in the arms.
           auto condition = effects(c);
           if (!condition.hasSideEffects()) {
             return ifTrue;
