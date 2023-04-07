@@ -3374,7 +3374,7 @@
     ;; since it makes the type nullable again, so if we thought the cast would
     ;; succeed, and replaced the cast with its child, we'd fail to validate.
     ;; Instead, since the cast fails, we can replace it with an unreachable
-    ;; after the dropped child).
+    ;; (after the dropped child).
     (ref.cast func
       (local.tee $0
         (loop (result (ref nofunc))
