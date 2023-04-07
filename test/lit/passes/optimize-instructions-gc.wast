@@ -38,11 +38,17 @@
 
   (type $empty (struct))
 
+  ;; CHECK:      (type $void2 (func_subtype $void))
+
   ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  ;; NOMNL:      (type $void2 (func_subtype $void))
+
   ;; NOMNL:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   (type $void (func))
+
+  (type $void2 (func_subtype $void))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -3251,6 +3257,89 @@
       )
       (i32.const 2)
       (i32.const 3)
+    )
+  )
+
+  ;; CHECK:      (func $refinalize.select.arm (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $void2
+  ;; CHECK-NEXT:    (ref.func $refinalize.select.arm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $refinalize.select.arm (type $void)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast $void2
+  ;; NOMNL-NEXT:    (ref.func $refinalize.select.arm)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $refinalize.select.arm (type $void)
+    ;; Pick one of the two select sides using the condition. This changes the
+    ;; type (the arms are more refined than the declared type), so we must
+    ;; refinalize or we'll error.
+    (drop
+      (ref.cast null $void2
+        (select (result (ref null $void))
+          (ref.func $refinalize.select.arm)
+          (ref.func $refinalize.select.arm)
+          (i32.const 1)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $refinalize.select.arm.flip (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $void2
+  ;; CHECK-NEXT:    (ref.func $refinalize.select.arm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $refinalize.select.arm.flip (type $void)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast $void2
+  ;; NOMNL-NEXT:    (ref.func $refinalize.select.arm)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $refinalize.select.arm.flip
+    ;; Flipped of the above.
+    (drop
+      (ref.cast null $void2
+        (select (result (ref null $void))
+          (ref.func $refinalize.select.arm)
+          (ref.func $refinalize.select.arm)
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $refinalize.select.arm.unknown (type $i32_=>_none) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $void2
+  ;; CHECK-NEXT:    (ref.func $refinalize.select.arm)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $refinalize.select.arm.unknown (type $i32_=>_none) (param $x i32)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.cast $void2
+  ;; NOMNL-NEXT:    (ref.func $refinalize.select.arm)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $refinalize.select.arm.unknown (param $x i32)
+    ;; As above but use an unknown value at compile time for the condition.
+    (drop
+      (ref.cast null $void2
+        (select (result (ref null $void))
+          (ref.func $refinalize.select.arm)
+          (ref.func $refinalize.select.arm)
+          (local.get $x)
+        )
+      )
     )
   )
 )
