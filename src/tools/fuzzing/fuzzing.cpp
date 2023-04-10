@@ -295,6 +295,18 @@ void TranslateToFuzzReader::setupHeapTypes() {
       interestingHeapSubTypes[HeapType::func].push_back(type);
     }
   }
+
+  // Compute struct and array fields.
+  for (auto type : interestingHeapTypes) {
+    if (type.isStruct()) {
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        typeStructFields[fields[i].type].push_back(StructField{type, i});
+      }
+    } else if (type.isArray()) {
+      typeArrays[type.getArray().element.type].push_back(type);
+    }
+  }
 }
 
 // TODO(reference-types): allow the fuzzer to create multiple tables
@@ -1128,6 +1140,16 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     }
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                 &Self::makeRefCast);
+  }
+  if (wasm.features.hasGC()) {
+    if (typeStructFields.find(type) != typeStructFields.end()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeStructGet);
+    }
+    if (typeArrays.find(type) != typeArrays.end()) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeArrayGet);
+    }
   }
   // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
@@ -3222,6 +3244,46 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   }
   // TODO: Fuzz unsafe casts?
   return builder.makeRefCast(make(refType), type, RefCast::Safe);
+}
+
+Expression* TranslateToFuzzReader::makeStructGet(Type type) {
+  auto& structFields = typeStructFields[type];
+  assert(!structFields.empty());
+  auto [structType, fieldIndex] = pick(structFields);
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(structType, NonNullable));
+  // TODO: fuzz signed and unsigned
+  return builder.makeStructGet(fieldIndex, ref, type);
+}
+
+Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
+  auto& arrays = typeArrays[type];
+  assert(!arrays.empty());
+  auto arrayType = pick(arrays);
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(arrayType, NonNullable));
+  auto* index = make(Type::i32);
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    // TODO: fuzz signed and unsigned, and also below
+    return builder.makeArrayGet(ref, index, type);
+  }
+  // To avoid a trap, check the length dynamically using this pattern:
+  //
+  //   index < array.len ? array[index] : ..some fallback value..
+  //
+  auto tempRef = builder.addVar(funcContext->func, ref->type);
+  auto tempIndex = builder.addVar(funcContext->func, index->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
+  auto* getSize = builder.makeArrayLen(teeRef);
+  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
+  auto* get = builder.makeArrayGet(builder.makeLocalGet(tempRef, ref->type),
+                                   builder.makeLocalGet(tempIndex, index->type),
+                                   type);
+  auto* fallback = makeTrivial(type);
+  return builder.makeIf(condition, get, fallback);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
