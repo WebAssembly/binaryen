@@ -258,13 +258,14 @@ struct TypeRefining : public Pass {
         auto newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
         if (Type::isSubType(newFieldType, curr->type)) {
           // This is the normal situation, where the new type is a refinement of
-          // the old type. Apply that here so that the type of the struct.get
+          // the old type. Apply that type so that the type of the struct.get
           // matches what is in the refined field. ReFinalize will later
           // propagate this to parents.
           //
-          // Note that ReFinalize will also apply the type of the field itself,
-          // automatically, but only if it can find it. A possible problem can
-          // occur in ReFinalize as it also propagates other types:
+          // Note that ReFinalize will also apply the type of the field itself
+          // to a struct.get, so our doing it here in this pass is usually
+          // redundant. But ReFinalize also updates other types while doing so,
+          // which can cause a problem:
           //
           //  (struct.get $A
           //    (block (result (ref null $A))
@@ -274,11 +275,12 @@ struct TypeRefining : public Pass {
           //
           // Here ReFinalize will turn the block's result into a bottom type,
           // which means it won't know a type for the struct.get at that point.
-          // Doing it here avoids that issue (ReFinalize will still get into the
+          // Doing it in this pass avoids that issue, as we have all the
+          // necessary information. (ReFinalize will still get into the
           // situation where it doesn't know how to update the type of the
           // struct.get, but it will just leave the existing type - it assumes
           // no update is needed - which will be correct, since we've updated it
-          // ourselves here, before).
+          // ourselves here, before.)
           curr->type = newFieldType;
         } else {
           // This instruction is invalid, so it must be the result of the
