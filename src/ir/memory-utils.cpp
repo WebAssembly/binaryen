@@ -30,18 +30,15 @@ bool flatten(Module& wasm) {
   struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     std::atomic<bool>& noticesSegmentIdentity;
 
-    Scanner(std::atomic<bool>& noticesSegmentIdentity) : noticesSegmentIdentity(noticesSegmentIdentity) {}
+    Scanner(std::atomic<bool>& noticesSegmentIdentity)
+      : noticesSegmentIdentity(noticesSegmentIdentity) {}
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<Scanner>(noticesSegmentIdentity);
     }
 
-    void visitMemoryInit(MemoryInit* curr) {
-      noticesSegmentIdentity = true;
-    }
-    void visitDataDrop(DataDrop* curr) {
-      noticesSegmentIdentity = true;
-    }
+    void visitMemoryInit(MemoryInit* curr) { noticesSegmentIdentity = true; }
+    void visitDataDrop(DataDrop* curr) { noticesSegmentIdentity = true; }
     void visitArrayNewSeg(ArrayNewSeg* curr) {
       if (curr->op == NewData) {
         noticesSegmentIdentity = true;
