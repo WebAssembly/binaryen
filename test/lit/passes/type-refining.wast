@@ -1044,3 +1044,52 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct (field (mut (ref $struct)))))
+  (type $struct (struct (field (mut (ref null struct)))))
+
+  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+
+  ;; CHECK:      (func $work (type $ref|$struct|_=>_none) (param $struct (ref $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $work (param $struct (ref $struct))
+    ;; The only set to the field is (ref $struct), so we can refine to that.
+    (struct.set $struct 0
+      (local.get $struct)
+      (local.get $struct)
+    )
+    ;; After refining, we must update the get's type properly. ReFinalize by
+    ;; itself would hit a problem here, as it first turns the block's result to
+    ;; a bottom type, after which it can't figure out how to update the
+    ;; struct.get. TypeRefining should handle that internally by updating all
+    ;; struct.gets itself based on the changes it is making.
+    ;;
+    ;; Note that this problem depends on the recursion of a struct.get feeding
+    ;; into a struct.set: after the refining, the struct.set will only
+    ;; validate if we provide it the *refined* type for the field.
+    (struct.set $struct 0
+      (local.get $struct)
+      (struct.get $struct 0
+        (block (result (ref null $struct))
+          (ref.null none)
+        )
+      )
+    )
+  )
+)
