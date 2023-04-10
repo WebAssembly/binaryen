@@ -5525,3 +5525,67 @@
     )
   )
 )
+
+;; Packed field combination.
+(module
+  ;; CHECK:      (type $A (struct (field i8)))
+  (type $A (struct (field i8)))
+  (type $B (struct (field i8)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $A (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $A 0
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (i32.const 305419896)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $A 0
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $A
+    ;; We write two values to $A, which are different, so we cannot infer.
+    (drop
+      (struct.get_u $A 0
+        (struct.new $A
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_u $A 0
+        (struct.new_default $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $B (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $B
+    ;; We write two values to $B, which *seem* different, but given the field is
+    ;; packed they are both actually 0, so we can optimize here.
+    (drop
+      (struct.get_u $B 0
+        (struct.new $B
+          (i32.const 0x12345600) ;; only this changed compared to func $A
+        )
+      )
+    )
+    (drop
+      (struct.get_u $B 0
+        (struct.new_default $B)
+      )
+    )
+  )
+)
