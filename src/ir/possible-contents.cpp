@@ -1712,7 +1712,8 @@ bool Flower::updateContents(LocationIndex locationIndex,
   // For efficiency reasons we aim to only filter once, depending on the type of
   // filtering. Most can be filtered a single time afterwards, while for data
   // locations, where the issue is packed integer fields, it's necessary to do
-  // it before as we've mentioned, and also sufficient.
+  // it before as we've mentioned, and also sufficient (see details in
+  // filterDataContents).
   if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
     filterDataContents(newContents, *dataLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -2021,6 +2022,18 @@ void Flower::filterDataContents(PossibleContents& contents,
       //      value reach.
       contents = PossibleContents::fromType(contents.getType());
     }
+    // Given that the above only (1) turns an i32 into a masked i32 or (2) turns
+    // anything else into an unknown i32, this is safe to run as pre-filtering,
+    // that is, before we combine contents, since
+    //
+    //  (a) two constants are ok as masking is distributive,
+    //        (x & M) U (y & M)  ==  (x U y) & M
+    //  (b) if one is a constant and the other is not then
+    //        (x & M) U ?  ==  ?  ==  (x U ?)  ==  (x U ?) & M
+    //      (where ? is an unknown i32)
+    //  (c) and if both are not constants then likewise we always end up as an
+    //      unknown i32
+    //
   }
 }
 
