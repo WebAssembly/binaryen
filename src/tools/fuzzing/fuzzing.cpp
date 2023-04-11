@@ -3280,11 +3280,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
     return makeTrivial(type);
   }
   auto [structType, fieldIndex] = pick(mutableStructFields);
-  auto& fields = structType.getStruct().fields;
-  if (fields.empty()) {
-    return makeTrivial(type);
-  }
-  auto fieldType = fields[fieldIndex].type;
+  auto fieldType = structType.getStruct().fields[fieldIndex].type;
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(structType, NonNullable));
   auto* value = make(fieldType);
