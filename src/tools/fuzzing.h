@@ -124,6 +124,12 @@ private:
   // Type => list of array types that have that type.
   std::unordered_map<Type, std::vector<HeapType>> typeArrays;
 
+  // All struct fields that are mutable.
+  std::vector<StructField> mutableStructFields;
+
+  // All arrays that are mutable.
+  std::vector<HeapType> mutableArrays;
+
   Index numAddedFunctions = 0;
 
   // RAII helper for managing the state used to create a single function.
