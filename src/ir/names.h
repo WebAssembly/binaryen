@@ -117,7 +117,7 @@ inline Name getValidLocalName(Function& func, Name root) {
   return getValidName(
     root,
     [&](Name test) { return !func.hasLocalIndex(test); },
-    module.functions.size());
+    func.getNumLocals());
 }
 
 template<typename T>
