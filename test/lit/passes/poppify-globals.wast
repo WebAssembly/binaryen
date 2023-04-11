@@ -21,19 +21,19 @@
 
   ;; CHECK:      (global $tuple$2 (mut f32) (f32.const 2))
 
-  ;; CHECK:      (global $tuple$1_0 (mut i64) (i64.const 1))
+  ;; CHECK:      (global $tuple$1_3 (mut i64) (i64.const 1))
 
   ;; CHECK:      (global $tuple$0 (mut i32) (global.get $foo))
 
   ;; CHECK:      (global $other-tuple$2 f32 (global.get $tuple$2))
 
-  ;; CHECK:      (global $other-tuple$1 i64 (global.get $tuple$1_0))
+  ;; CHECK:      (global $other-tuple$1 i64 (global.get $tuple$1_4))
 
   ;; CHECK:      (global $other-tuple$0 i32 (global.get $tuple$0))
 
   ;; CHECK:      (func $global-get-tuple (type $none_=>_i32_i64_f32) (result i32 i64 f32)
   ;; CHECK-NEXT:  (global.get $tuple$0)
-  ;; CHECK-NEXT:  (global.get $tuple$1_0)
+  ;; CHECK-NEXT:  (global.get $tuple$1_4)
   ;; CHECK-NEXT:  (global.get $tuple$2)
   ;; CHECK-NEXT: )
   (func $global-get-tuple (result i32 i64 f32)
@@ -47,7 +47,7 @@
   ;; CHECK-NEXT:  (global.set $tuple$2
   ;; CHECK-NEXT:   (pop f32)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $tuple$1_0
+  ;; CHECK-NEXT:  (global.set $tuple$1_4
   ;; CHECK-NEXT:   (pop i64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $tuple$0

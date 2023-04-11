@@ -14,7 +14,7 @@
 
  ;; CHECK:      (elem declare func $trap)
 
- ;; CHECK:      (export "run" (func $run_0))
+ ;; CHECK:      (export "run" (func $run_3))
  (export "run" (func $run))
 
  (func $run (type $none_=>_none)
@@ -49,7 +49,7 @@
   (unreachable)
  )
 )
-;; CHECK:      (func $run_0 (type $none_=>_none)
+;; CHECK:      (func $run_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (table.set $0
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:   (ref.func $trap)

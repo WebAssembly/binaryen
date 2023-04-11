@@ -218,11 +218,11 @@
   (func $deNan64)
   ;; CHECK:      (func $foo32 (param $x f32) (result f32)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (call $deNan32_0
+  ;; CHECK-NEXT:   (call $deNan32_4
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $deNan32_0
+  ;; CHECK-NEXT:  (call $deNan32_4
   ;; CHECK-NEXT:   (call $foo32
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -233,11 +233,11 @@
   )
   ;; CHECK:      (func $foo64 (param $x f64) (result f64)
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (call $deNan64_0
+  ;; CHECK-NEXT:   (call $deNan64_4
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $deNan64_0
+  ;; CHECK-NEXT:  (call $deNan64_4
   ;; CHECK-NEXT:   (call $foo64
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -249,7 +249,7 @@
 
 )
 
-;; CHECK:      (func $deNan32_0 (param $0 f32) (result f32)
+;; CHECK:      (func $deNan32_4 (param $0 f32) (result f32)
 ;; CHECK-NEXT:  (if (result f32)
 ;; CHECK-NEXT:   (f32.eq
 ;; CHECK-NEXT:    (local.get $0)
@@ -260,7 +260,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $deNan64_0 (param $0 f64) (result f64)
+;; CHECK:      (func $deNan64_4 (param $0 f64) (result f64)
 ;; CHECK-NEXT:  (if (result f64)
 ;; CHECK-NEXT:   (f64.eq
 ;; CHECK-NEXT:    (local.get $0)

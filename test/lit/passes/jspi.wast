@@ -97,9 +97,9 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $export$update_state_param_collision (type $externref_f64_=>_i32) (param $susp_0 externref) (param $susp f64) (result i32)
+;; CHECK:      (func $export$update_state_param_collision (type $externref_f64_=>_i32) (param $susp_1 externref) (param $susp f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
-;; CHECK-NEXT:   (local.get $susp_0)
+;; CHECK-NEXT:   (local.get $susp_1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $update_state_param_collision
 ;; CHECK-NEXT:   (local.get $susp)
