@@ -41,9 +41,9 @@
   )
  )
 )
-;; CHECK:      (export "multivalue-local" (func $multivalue-local_0))
+;; CHECK:      (export "multivalue-local" (func $multivalue-local_2))
 
-;; CHECK:      (func $multivalue-local_0 (type $none_=>_i32) (result i32)
+;; CHECK:      (func $multivalue-local_2 (type $none_=>_i32) (result i32)
 ;; CHECK-NEXT:  (local $0 i32)
 ;; CHECK-NEXT:  (local $1 (i32 i32))
 ;; CHECK-NEXT:  (local.set $0

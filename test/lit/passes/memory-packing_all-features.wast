@@ -137,9 +137,9 @@
 
   ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
-  ;; CHECK:      (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
-
   ;; CHECK:      (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
 
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
@@ -510,7 +510,7 @@
   ;; CHECK:      (func $even-more-zeroes (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_0)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -550,7 +550,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $11)
@@ -572,7 +572,7 @@
   ;; CHECK:      (func $only-zeroes (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -581,7 +581,7 @@
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $__mem_segment_drop_state_1
+  ;; CHECK-NEXT:  (global.set $__mem_segment_drop_state_2
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -671,10 +671,6 @@
 
   ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
-  ;; CHECK:      (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
-
-  ;; CHECK:      (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
-
   ;; CHECK:      (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
@@ -684,6 +680,10 @@
   ;; CHECK:      (global $__mem_segment_drop_state_5 (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__mem_segment_drop_state_6 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $__mem_segment_drop_state_7 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $__mem_segment_drop_state_8 (mut i32) (i32.const 0))
 
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
@@ -880,7 +880,7 @@
   ;; CHECK:      (func $partial-skip-start (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_0)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -920,7 +920,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $3)
@@ -992,7 +992,7 @@
   ;; CHECK:      (func $partial-skip-end (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_3)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -1032,7 +1032,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_3
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $5)
@@ -1054,7 +1054,7 @@
   ;; CHECK:      (func $full-skip-end (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_4)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -1089,7 +1089,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_4
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $6)
@@ -1111,7 +1111,7 @@
   ;; CHECK:      (func $slice-zeroes (type $none_=>_none)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_3)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_5)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
@@ -1121,7 +1121,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_3
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_5
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $7)
@@ -1173,12 +1173,12 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_4)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_6)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_4
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_6
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $9)
@@ -1207,7 +1207,7 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_5)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_7)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -1310,12 +1310,12 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_6)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_8)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_6
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $14)
@@ -1338,11 +1338,11 @@
 
   ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
-  ;; CHECK:      (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
-
   ;; CHECK:      (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
 
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
@@ -1412,12 +1412,12 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_0)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_0
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $1)
@@ -1446,12 +1446,12 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $2)
@@ -1479,12 +1479,12 @@
   ;; CHECK-NEXT:      (i32.const 16)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
+  ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
+  ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_3
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (data.drop $3)

@@ -18,7 +18,7 @@
  ;; CHECK-NEXT:  (i32.const 3)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_0 (ref $struct) (struct.new $struct
+ ;; CHECK:      (global $ctor-eval$global_1 (ref $struct) (struct.new $struct
  ;; CHECK-NEXT:  (extern.externalize
  ;; CHECK-NEXT:   (i31.new
  ;; CHECK-NEXT:    (i32.const 1)
@@ -26,11 +26,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test1" (func $test1_0))
+ ;; CHECK:      (export "test1" (func $test1_3))
  (export "test1" (func $test1))
- ;; CHECK:      (export "test2" (func $test2_0))
+ ;; CHECK:      (export "test2" (func $test2_4))
  (export "test2" (func $test2))
- ;; CHECK:      (export "test3" (func $test3_0))
+ ;; CHECK:      (export "test3" (func $test3_5))
  (export "test3" (func $test3))
 
  (func $test1 (result externref)
@@ -70,7 +70,7 @@
  )
 )
 
-;; CHECK:      (func $test1_0 (type $none_=>_externref) (result externref)
+;; CHECK:      (func $test1_3 (type $none_=>_externref) (result externref)
 ;; CHECK-NEXT:  (extern.externalize
 ;; CHECK-NEXT:   (i31.new
 ;; CHECK-NEXT:    (i32.const 42)
@@ -78,12 +78,12 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $test2_0 (type $none_=>_externref) (result externref)
+;; CHECK:      (func $test2_4 (type $none_=>_externref) (result externref)
 ;; CHECK-NEXT:  (extern.externalize
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $test3_0 (type $none_=>_anyref) (result anyref)
-;; CHECK-NEXT:  (global.get $ctor-eval$global_0)
+;; CHECK:      (func $test3_5 (type $none_=>_anyref) (result anyref)
+;; CHECK-NEXT:  (global.get $ctor-eval$global_1)
 ;; CHECK-NEXT: )

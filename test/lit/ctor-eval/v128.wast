@@ -11,7 +11,7 @@
 
   ;; CHECK:      (data $0 (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")
 
-  ;; CHECK:      (export "v128" (func $v128_0))
+  ;; CHECK:      (export "v128" (func $v128_2))
   (export "v128" (func $v128))
   ;; CHECK:      (export "keepalive" (func $keepalive))
   (export "keepalive" (func $keepalive))
@@ -38,6 +38,6 @@
     )
   )
 )
-;; CHECK:      (func $v128_0 (type $none_=>_v128) (result v128)
+;; CHECK:      (func $v128_2 (type $none_=>_v128) (result v128)
 ;; CHECK-NEXT:  (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x90fffd85)
 ;; CHECK-NEXT: )
