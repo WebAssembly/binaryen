@@ -305,10 +305,10 @@ else()
 endif()
 
 if(EMSCRIPTEN)
-  if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-    add_link_flag("-sERROR_ON_WASM_CHANGES_AFTER_LINK")
-    add_link_flag("-sWASM_BIGINT")
-  else()
+  # Note: to debug with DWARF you will need something like
+  #   -sWASM_BIGINT -sERROR_ON_WASM_CHANGES_AFTER_LINK
+
+  if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
     # link with -O3 for metadce and other powerful optimizations. note that we
     # must use add_link_options so that this appears after CMake's default -O2
     add_link_options("-O3")
