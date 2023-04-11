@@ -49,9 +49,8 @@ inline void ensureNames(Function* func) {
 // name will begin there. This can be used to avoid trying the same 0,1,2,..
 // etc. names each time (which could lead to quadratic behavior in certain
 // cases).
-inline Name getValidName(Name root,
-                         std::function<bool(Name)> check,
-                         Index hint = 0) {
+inline Name
+getValidName(Name root, std::function<bool(Name)> check, Index hint = 0) {
   if (check(root)) {
     return root;
   }
@@ -67,56 +66,66 @@ inline Name getValidName(Name root,
 }
 
 inline Name getValidExportName(Module& module, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !module.getExportOrNull(test); },
-                      module.exports.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !module.getExportOrNull(test); },
+    module.exports.size());
 }
 inline Name getValidGlobalName(Module& module, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !module.getGlobalOrNull(test); },
-                      module.globals.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !module.getGlobalOrNull(test); },
+    module.globals.size());
 }
 inline Name getValidFunctionName(Module& module, Name root) {
   return getValidName(
-    root, [&](Name test) { return !module.getFunctionOrNull(test); },
+    root,
+    [&](Name test) { return !module.getFunctionOrNull(test); },
     module.functions.size());
 }
 inline Name getValidTableName(Module& module, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !module.getTableOrNull(test); },
-                      module.tables.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !module.getTableOrNull(test); },
+    module.tables.size());
 }
 inline Name getValidTagName(Module& module, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !module.getTagOrNull(test); },
-                      module.tags.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !module.getTagOrNull(test); },
+    module.tags.size());
 }
 inline Name getValidElementSegmentName(Module& module, Name root) {
   return getValidName(
-    root, [&](Name test) { return !module.getElementSegmentOrNull(test); },
+    root,
+    [&](Name test) { return !module.getElementSegmentOrNull(test); },
     module.elementSegments.size());
 }
 inline Name getValidDataSegmentName(Module& module, Name root) {
   return getValidName(
-    root, [&](Name test) { return !module.getDataSegmentOrNull(test); },
+    root,
+    [&](Name test) { return !module.getDataSegmentOrNull(test); },
     module.dataSegments.size());
 }
 inline Name getValidMemoryName(Module& module, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !module.getMemoryOrNull(test); },
-                      module.memories.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !module.getMemoryOrNull(test); },
+    module.memories.size());
 }
 inline Name getValidLocalName(Function& func, Name root) {
-  return getValidName(root,
-                      [&](Name test) { return !func.hasLocalIndex(test); },
-                      module.functions.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !func.hasLocalIndex(test); },
+    module.functions.size());
 }
 
 template<typename T>
 inline Name getValidNameGivenExisting(Name root, const T& existingNames) {
-  return getValidName(root,
-                      [&](Name test) { return !existingNames.count(test); },
-                      existingNames.size());
+  return getValidName(
+    root,
+    [&](Name test) { return !existingNames.count(test); },
+    existingNames.size());
 }
 
 class MinifiedNameGenerator {
