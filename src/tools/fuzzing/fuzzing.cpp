@@ -3262,12 +3262,12 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   assert(type == Type::none);
   auto structTypes = interestingHeapSubTypes[HeapType::struct_];
   if (structTypes.empty()) {
-    return makeTrivial(type::none);
+    return makeTrivial(type);
   }
   auto structType = pick(structTypes);
   auto& fields = structType.getStruct().fields;
   if (fields.empty()) {
-    return makeTrivial(type::none);
+    return makeTrivial(type);
   }
   auto fieldIndex = upTo(fields.size());
   auto fieldType = fields[fieldIndex].type;
@@ -3309,16 +3309,16 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
 
 Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   assert(type == Type::none);
-  auto arrayTypes = interestingHeapSubTypes[HeapType::array_];
+  auto arrayTypes = interestingHeapSubTypes[HeapType::array];
   if (arrayTypes.empty()) {
-    return makeTrivial(type::none);
+    return makeTrivial(type);
   }
   auto arrayType = pick(arrayTypes);
   auto elementType = arrayType.getArray().element.type;
   auto* index = make(Type::i32);
   // TODO: also nullable ones? that would increase the risk of traps
   auto* ref = make(Type(arrayType, NonNullable));
-  auto* value = make(fieldType);
+  auto* value = make(elementType);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
