@@ -86,10 +86,21 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
 
   if (castType.isNonNullable() && refHeapType.isBottom()) {
     // Non-null references to bottom types do not exist, so there's no value
-    // that could make the cast succeed. Note that we check this before the
-    // next check because bottom types are subtypes, that is, (ref nofunc)
-    // is a subtype of (ref func), so it seems like the cast would succeed,
-    // but we want to return failure here because that is more precise.
+    // that could make the cast succeed.
+    //
+    // Note that there is an interesting corner case that is relevant here: if
+    // the ref type is uninhabitable, say (ref nofunc), and the cast type is
+    // non-nullable, say (ref func), then we have two contradictory rules that
+    // seem to apply:
+    //
+    //  * A non-nullable cast of a bottom type must fail.
+    //  * A cast of a subtype must succeed.
+    //
+    // In practice the uninhabitable type means that the cast is not even
+    // reached, which is why there is no contradiction here. We can return
+    // either result here (and which we return depends on which of those two
+    // rules we check first). We prefer to return Failure as that requires less
+    // care in the callers in practice.
     return Failure;
   }
 

@@ -2018,6 +2018,22 @@ struct OptimizeInstructions
           // the value, though.
           if (ref->type.isNull()) {
             // We can materialize the resulting null value directly.
+            //
+            // The type must be nullable for us to do that, which it normally
+            // would be, aside from the interesting corner case of
+            // uninhabitable types:
+            //
+            //  (ref.cast func
+            //    (block (result (ref nofunc))
+            //      (unreachable)
+            //    )
+            //  )
+            //
+            // (ref nofunc) is a subtype of (ref func), so the cast might seem
+            // to be successful, but since the input is uninhabitable we won't
+            // even reach the cast. Such casts will be regarded as failing in
+            // evaluateCastCheck, so we'll not hit this assertion.
+            assert(curr->type.isNullable());
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
             return;
