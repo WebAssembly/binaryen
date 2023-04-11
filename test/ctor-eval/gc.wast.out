@@ -7,14 +7,14 @@
  (global $global1 (ref $struct) (struct.new $struct
   (i32.const 1337)
  ))
- (global $ctor-eval$global_1 (ref $struct) (struct.new $struct
+ (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
   (i32.const 42)
  ))
- (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_1))
- (global $ctor-eval$global_2 (ref $struct) (struct.new $struct
+ (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_4))
+ (global $ctor-eval$global_5 (ref $struct) (struct.new $struct
   (i32.const 99)
  ))
- (export "test1" (func $0_0))
+ (export "test1" (func $0_3))
  (export "keepalive" (func $1))
  (func $1 (type $none_=>_i32) (result i32)
   (i32.add
@@ -26,10 +26,10 @@
    )
   )
  )
- (func $0_0 (type $none_=>_none)
+ (func $0_3 (type $none_=>_none)
   (local $0 (ref $struct))
   (local.set $0
-   (global.get $ctor-eval$global_2)
+   (global.get $ctor-eval$global_5)
   )
   (call $import
    (ref.null none)

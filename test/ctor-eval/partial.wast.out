@@ -3,7 +3,7 @@
  (import "import" "import" (func $import))
  (memory $0 256 256)
  (data $0 (i32.const 10) "__s______________")
- (export "test1" (func $test1_0))
+ (export "test1" (func $test1_2))
  (export "keepalive" (func $test1))
  (func $test1 (type $none_=>_none)
   (i32.store8
@@ -16,7 +16,7 @@
    (i32.const 114)
   )
  )
- (func $test1_0 (type $none_=>_none)
+ (func $test1_2 (type $none_=>_none)
   (call $import)
   (i32.store8
    (i32.const 13)
