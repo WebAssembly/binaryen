@@ -3265,6 +3265,10 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
   // TODO: also nullable ones? that would increase the risk of traps
+  // TODO: Ensure a good chance to use a local.get or tee here, as we want to
+  //       test the same reference having multiple sets/gets on it, and not
+  //       gets/sets of struct.news everywhere. Also in struct.set, array.get,
+  //       array.set.
   auto* ref = make(Type(structType, NonNullable));
   // TODO: fuzz signed and unsigned
   return builder.makeStructGet(fieldIndex, ref, type);
