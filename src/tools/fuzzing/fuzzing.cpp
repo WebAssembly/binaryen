@@ -1182,7 +1182,9 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3256,6 +3258,25 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   return builder.makeStructGet(fieldIndex, ref, type);
 }
 
+Expression* TranslateToFuzzReader::makeStructSet(Type type) {
+  assert(type == Type::none);
+  auto structTypes = interestingHeapSubTypes[HeapType::struct_];
+  if (structTypes.empty()) {
+    return makeTrivial(type::none);
+  }
+  auto structType = pick(structTypes);
+  auto& fields = structType.getStruct().fields;
+  if (fields.empty()) {
+    return makeTrivial(type::none);
+  }
+  auto fieldIndex = upTo(fields.size());
+  auto fieldType = fields[fieldIndex].type;
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(structType, NonNullable));
+  auto* value = make(fieldType);
+  return builder.makeStructSet(fieldIndex, ref, value);
+}
+
 Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto& arrays = typeArrays[type];
   assert(!arrays.empty());
@@ -3284,6 +3305,41 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
                                    type);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(condition, get, fallback);
+}
+
+Expression* TranslateToFuzzReader::makeArraySet(Type type) {
+  assert(type == Type::none);
+  auto arrayTypes = interestingHeapSubTypes[HeapType::array_];
+  if (arrayTypes.empty()) {
+    return makeTrivial(type::none);
+  }
+  auto arrayType = pick(arrayTypes);
+  auto elementType = arrayType.getArray().element.type;
+  auto* index = make(Type::i32);
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(arrayType, NonNullable));
+  auto* value = make(fieldType);
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    // TODO: fuzz signed and unsigned, and also below
+    return builder.makeArraySet(ref, index, value);
+  }
+  // To avoid a trap, check the length dynamically using this pattern:
+  //
+  //   array[index] = index < array.len ? value : ..some fallback value..
+  //
+  auto tempRef = builder.addVar(funcContext->func, ref->type);
+  auto tempIndex = builder.addVar(funcContext->func, index->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
+  auto* getSize = builder.makeArrayLen(teeRef);
+  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
+  auto* fallback = makeTrivial(elementType);
+  value = builder.makeIf(condition, value, fallback);
+  auto* refGet = builder.makeLocalGet(tempRef, ref->type);
+  auto* indexGet = builder.makeLocalGet(tempIndex, index->type);
+  return builder.makeArraySet(refGet, indexGet, value);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {

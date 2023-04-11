@@ -334,7 +334,9 @@ private:
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
   Expression* makeStructGet(Type type);
+  Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
+  Expression* makeArraySet(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
