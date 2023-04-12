@@ -3287,7 +3287,10 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   return builder.makeStructSet(fieldIndex, ref, value);
 }
 
-static auto makeArrayBoundsCheck(Expression* ref, Expression* index, Function* func, Builder& builder) {
+static auto makeArrayBoundsCheck(Expression* ref,
+                                 Expression* index,
+                                 Function* func,
+                                 Builder& builder) {
   auto tempRef = builder.addVar(func, ref->type);
   auto tempIndex = builder.addVar(func, index->type);
   auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
@@ -3302,11 +3305,9 @@ static auto makeArrayBoundsCheck(Expression* ref, Expression* index, Function* f
     Expression* getRef;
     // An addition use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-  } result = {
-    builder.makeBinary(LtUInt32, teeIndex, getSize),
-    builder.makeLocalGet(tempRef, ref->type),
-    builder.makeLocalGet(tempIndex, index->type)
-  };
+  } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
+              builder.makeLocalGet(tempRef, ref->type),
+              builder.makeLocalGet(tempIndex, index->type)};
   return result;
 }
 
