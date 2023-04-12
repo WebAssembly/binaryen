@@ -271,6 +271,10 @@ private:
   // Make something with no chance of infinite recursion.
   Expression* makeTrivial(Type type);
 
+  // We must note when we are nested in a makeTrivial() call. When we are, all
+  // operations must try to be as trivial as possible.
+  int trivialNesting = 0;
+
   // Specific expression creators
   Expression* makeBlock(Type type);
   Expression* makeLoop(Type type);

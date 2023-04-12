@@ -1060,6 +1060,10 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
 
 Expression* TranslateToFuzzReader::make(Type type) {
   auto subtype = getSubType(type);
+  if (trivialNesting) {
+    // We are nested under a makeTrivial call, so only emit something trivial.
+    return makeTrivial(type);
+  }
   // When we should stop, emit something small (but not necessarily trivial).
   if (random.finished() || nesting >= 5 * NESTING_LIMIT || // hard limit
       (nesting >= NESTING_LIMIT && !oneIn(3))) {
@@ -1226,6 +1230,14 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
 }
 
 Expression* TranslateToFuzzReader::makeTrivial(Type type) {
+  struct TrivialNester {
+    TranslateToFuzzReader& parent;
+    TrivialNester(TranslateToFuzzReader& parent) : parent(parent) {
+      parent.trivialNesting++;
+    }
+    ~TrivialNester() { parent.trivialNesting--; }
+  } nester(*this);
+
   if (type.isConcrete()) {
     if (oneIn(2) && funcContext) {
       return makeLocalGet(type);
