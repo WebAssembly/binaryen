@@ -77,7 +77,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     return Unknown;
   }
 
-  if (isUninhabitable(castType)) {
+  if (isUninhabitable(refType)) {
+    // No value can appear in the ref, so the cast cannot be reached.
     return Unreachable;
   }
 
@@ -85,6 +86,22 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   auto castHeapType = castType.getHeapType();
 
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+
+  if (refIsHeapSubType) {
+    // The heap type is a subtype. All we need is for nullability to work out as
+    // well, and then the cast must succeed.
+    if (castType.isNullable() || refType.isNonNullable()) {
+      return Success;
+    }
+
+    // If the heap type part of the cast is compatible but the cast as a whole
+    // is not, we must have a nullable input ref that we are casting to a
+    // non-nullable type.
+    assert(refType.isNullable());
+    assert(castType.isNonNullable());
+    return SuccessOnlyIfNonNull;
+  }
+
   auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
@@ -92,6 +109,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // If the heap types are incompatible or if it is impossible to have a
     // non-null reference to the target heap type, then the only way the cast
     // can succeed is if it allows nulls and the input is null.
+    //
+    // Note that this handles uninhabitability of the cast type.
     if (refType.isNonNullable() || castType.isNonNullable()) {
       return Failure;
     }
@@ -118,21 +137,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // we already checked for uninhabitability earlier, and returned
     // Unreachable.
     return Failure;
-  }
-
-  if (refIsHeapSubType) {
-    // The heap type is a subtype. All we need is for nullability to work out as
-    // well, and then the cast must succeed.
-    if (castType.isNullable() || refType.isNonNullable()) {
-      return Success;
-    }
-
-    // If the heap type part of the cast is compatible but the cast as a whole
-    // is not, we must have a nullable input ref that we are casting to a
-    // non-nullable type.
-    assert(refType.isNullable());
-    assert(castType.isNonNullable());
-    return SuccessOnlyIfNonNull;
   }
 
   return Unknown;
