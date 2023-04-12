@@ -83,8 +83,27 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   }
 
   auto refHeapType = refType.getHeapType();
-  auto castHeapType = castType.getHeapType();
 
+  if (castType.isNonNullable() && refHeapType.isBottom()) {
+    // Non-null references to bottom types do not exist, so there's no value
+    // that could make the cast succeed.
+    //
+    // Note that there is an interesting corner case that is relevant here: if
+    // the ref type is uninhabitable, say (ref nofunc), and the cast type is
+    // non-nullable, say (ref func), then we have two contradictory rules that
+    // seem to apply:
+    //
+    //  * A non-nullable cast of a bottom type must fail.
+    //  * A cast of a subtype must succeed.
+    //
+    // In practice the uninhabitable type means that the cast is not even
+    // reached, which is why there is no contradiction here. To avoid ambiguity,
+    // we already checked for uninhabitability earlier, and returned
+    // Unreachable.
+    return Failure;
+  }
+
+  auto castHeapType = castType.getHeapType();
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
 
   if (refIsHeapSubType) {
@@ -118,25 +137,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // Both are nullable. A null is the only hope of success in either
     // situation.
     return SuccessOnlyIfNull;
-  }
-
-  if (castType.isNonNullable() && refHeapType.isBottom()) {
-    // Non-null references to bottom types do not exist, so there's no value
-    // that could make the cast succeed.
-    //
-    // Note that there is an interesting corner case that is relevant here: if
-    // the ref type is uninhabitable, say (ref nofunc), and the cast type is
-    // non-nullable, say (ref func), then we have two contradictory rules that
-    // seem to apply:
-    //
-    //  * A non-nullable cast of a bottom type must fail.
-    //  * A cast of a subtype must succeed.
-    //
-    // In practice the uninhabitable type means that the cast is not even
-    // reached, which is why there is no contradiction here. To avoid ambiguity,
-    // we already checked for uninhabitability earlier, and returned
-    // Unreachable.
-    return Failure;
   }
 
   return Unknown;
