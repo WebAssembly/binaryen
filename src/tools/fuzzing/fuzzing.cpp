@@ -3299,6 +3299,30 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   return builder.makeStructSet(fieldIndex, ref, value);
 }
 
+static auto makeArrayBoundsCheck(Expression* ref,
+                                 Expression* index,
+                                 Function* func,
+                                 Builder& builder) {
+  auto tempRef = builder.addVar(func, ref->type);
+  auto tempIndex = builder.addVar(func, index->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
+  auto* getSize = builder.makeArrayLen(teeRef);
+
+  struct BoundsCheck {
+    // A condition that checks if the index is in bounds.
+    Expression* condition;
+    // An additional use of the reference (we stored the reference in a local,
+    // so this reads from that local).
+    Expression* getRef;
+    // An addition use of the index (as with the ref, it reads from a local).
+    Expression* getIndex;
+  } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
+              builder.makeLocalGet(tempRef, ref->type),
+              builder.makeLocalGet(tempIndex, index->type)};
+  return result;
+}
+
 Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto& arrays = typeArrays[type];
   assert(!arrays.empty());
@@ -3316,17 +3340,10 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
-  auto tempRef = builder.addVar(funcContext->func, ref->type);
-  auto tempIndex = builder.addVar(funcContext->func, index->type);
-  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
-  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
-  auto* getSize = builder.makeArrayLen(teeRef);
-  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
-  auto* get = builder.makeArrayGet(builder.makeLocalGet(tempRef, ref->type),
-                                   builder.makeLocalGet(tempIndex, index->type),
-                                   type);
+  auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type);
   auto* fallback = makeTrivial(type);
-  return builder.makeIf(condition, get, fallback);
+  return builder.makeIf(check.condition, get, fallback);
 }
 
 Expression* TranslateToFuzzReader::makeArraySet(Type type) {
@@ -3350,16 +3367,9 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   //
   //   if (index < array.len) array[index] = value;
   //
-  auto tempRef = builder.addVar(funcContext->func, ref->type);
-  auto tempIndex = builder.addVar(funcContext->func, index->type);
-  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
-  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
-  auto* getSize = builder.makeArrayLen(teeRef);
-  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
-  auto* refGet = builder.makeLocalGet(tempRef, ref->type);
-  auto* indexGet = builder.makeLocalGet(tempIndex, index->type);
-  auto* set = builder.makeArraySet(refGet, indexGet, value);
-  return builder.makeIf(condition, set);
+  auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+  auto* set = builder.makeArraySet(check.getRef, check.getIndex, value);
+  return builder.makeIf(check.condition, set);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
