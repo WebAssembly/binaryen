@@ -1221,9 +1221,7 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
     TrivialNester(TranslateToFuzzReader& parent) : parent(parent) {
       parent.trivialNesting++;
     }
-    ~TrivialNester() {
-      parent.trivialNesting--;
-    }
+    ~TrivialNester() { parent.trivialNesting--; }
   } nester(*this);
 
   if (type.isConcrete()) {
