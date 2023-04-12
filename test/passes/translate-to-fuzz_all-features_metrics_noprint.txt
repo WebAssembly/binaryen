@@ -1,42 +1,43 @@
 total
  [exports]      : 4       
- [funcs]        : 13      
+ [funcs]        : 11      
  [globals]      : 16      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 4       
+ [table-data]   : 2       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 592     
- [vars]         : 27      
- ArrayNew       : 1       
- AtomicNotify   : 1       
- Binary         : 71      
- Block          : 72      
- Break          : 10      
- Call           : 20      
- Const          : 129     
+ [total]        : 521     
+ [vars]         : 21      
+ ArrayLen       : 1       
+ ArrayNew       : 6       
+ ArrayNewFixed  : 1       
+ ArraySet       : 1       
+ Binary         : 66      
+ Block          : 58      
+ Break          : 3       
+ Call           : 7       
+ Const          : 117     
  Drop           : 4       
- GlobalGet      : 33      
- GlobalSet      : 33      
- I31New         : 1       
- If             : 24      
- Load           : 19      
- LocalGet       : 44      
- LocalSet       : 25      
- Loop           : 4       
- Nop            : 7       
- RefAs          : 3       
+ GlobalGet      : 32      
+ GlobalSet      : 32      
+ I31New         : 2       
+ If             : 19      
+ Load           : 17      
+ LocalGet       : 41      
+ LocalSet       : 23      
+ Loop           : 6       
+ Nop            : 3       
+ RefAs          : 4       
  RefEq          : 1       
  RefFunc        : 10      
- RefIsNull      : 1       
- RefNull        : 10      
- RefTest        : 1       
- Return         : 4       
- Store          : 2       
- StructNew      : 4       
- TupleExtract   : 2       
- TupleMake      : 11      
- Unary          : 25      
- Unreachable    : 20      
+ RefNull        : 8       
+ Return         : 1       
+ Select         : 1       
+ StructNew      : 5       
+ StructSet      : 1       
+ TupleExtract   : 1       
+ TupleMake      : 9       
+ Unary          : 22      
+ Unreachable    : 19      

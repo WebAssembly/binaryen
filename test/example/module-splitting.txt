@@ -753,7 +753,7 @@ After:
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%foo" (func $bar))
- (export "%foo_0" (func $foo))
+ (export "%foo_1" (func $foo))
  (export "%table" (table $0))
  (func $foo (type $none_=>_none)
   (nop)
@@ -768,7 +768,7 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $0 1 funcref))
- (import "primary" "%foo_0" (func $foo))
+ (import "primary" "%foo_1" (func $foo))
  (elem $0 (i32.const 0) $bar)
  (func $bar (type $none_=>_none)
   (call $foo)

@@ -27,20 +27,33 @@ bool flatten(Module& wasm) {
   // The presence of any instruction that cares about segment identity is a
   // problem because flattening gets rid of that (when it merges them all into
   // one big segment).
-  ModuleUtils::ParallelFunctionAnalysis<bool> analysis(
-    wasm, [&](Function* func, bool& noticesSegmentIdentity) {
-      if (func->imported()) {
-        return;
-      }
-      noticesSegmentIdentity =
-        FindAll<MemoryInit>(func->body).list.size() > 0 ||
-        FindAll<DataDrop>(func->body).list.size() > 0;
-    });
+  struct Scanner : public WalkerPass<PostWalker<Scanner>> {
+    std::atomic<bool>& noticesSegmentIdentity;
 
-  for (auto& [func, noticesSegmentIdentity] : analysis.map) {
-    if (noticesSegmentIdentity) {
-      return false;
+    Scanner(std::atomic<bool>& noticesSegmentIdentity)
+      : noticesSegmentIdentity(noticesSegmentIdentity) {}
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Scanner>(noticesSegmentIdentity);
     }
+
+    void visitMemoryInit(MemoryInit* curr) { noticesSegmentIdentity = true; }
+    void visitDataDrop(DataDrop* curr) { noticesSegmentIdentity = true; }
+    void visitArrayNewSeg(ArrayNewSeg* curr) {
+      if (curr->op == NewData) {
+        noticesSegmentIdentity = true;
+      }
+    }
+  };
+
+  std::atomic<bool> noticesSegmentIdentity = false;
+  PassRunner runner(&wasm);
+  Scanner scanner(noticesSegmentIdentity);
+  scanner.setPassRunner(&runner);
+  scanner.run(&wasm);
+  scanner.runOnModuleCode(&runner, &wasm);
+  if (noticesSegmentIdentity) {
+    return false;
   }
 
   auto& dataSegments = wasm.dataSegments;

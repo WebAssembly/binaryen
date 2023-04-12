@@ -396,16 +396,16 @@
 
  ;; CHECK:      (func $add-stacky-4 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_0 i32)
  ;; CHECK-NEXT:  (local $scratch_1 i32)
- ;; CHECK-NEXT:  (local.set $scratch_1
+ ;; CHECK-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-NEXT:  (local.set $scratch_2
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $scratch_0
+ ;; CHECK-NEXT:     (local.set $scratch_1
  ;; CHECK-NEXT:      (i32.const 1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (local.get $scratch_0)
+ ;; CHECK-NEXT:     (local.get $scratch_1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block (result i32)
  ;; CHECK-NEXT:     (local.set $scratch
@@ -417,7 +417,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (local.get $scratch_1)
+ ;; CHECK-NEXT:  (local.get $scratch_2)
  ;; CHECK-NEXT: )
  (func $add-stacky-4 (result i32)
   i32.const 1
@@ -610,22 +610,22 @@
 
  ;; CHECK:      (func $big-stack (type $void)
  ;; CHECK-NEXT:  (local $scratch f64)
- ;; CHECK-NEXT:  (local $scratch_0 i64)
- ;; CHECK-NEXT:  (local $scratch_1 f32)
- ;; CHECK-NEXT:  (local $scratch_2 i32)
+ ;; CHECK-NEXT:  (local $scratch_1 i64)
+ ;; CHECK-NEXT:  (local $scratch_2 f32)
+ ;; CHECK-NEXT:  (local $scratch_3 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $scratch_2
+ ;; CHECK-NEXT:    (local.set $scratch_3
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result f32)
- ;; CHECK-NEXT:      (local.set $scratch_1
+ ;; CHECK-NEXT:      (local.set $scratch_2
  ;; CHECK-NEXT:       (f32.const 1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (drop
  ;; CHECK-NEXT:       (block (result i64)
- ;; CHECK-NEXT:        (local.set $scratch_0
+ ;; CHECK-NEXT:        (local.set $scratch_1
  ;; CHECK-NEXT:         (i64.const 2)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (drop
@@ -639,13 +639,13 @@
  ;; CHECK-NEXT:          (local.get $scratch)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (local.get $scratch_0)
+ ;; CHECK-NEXT:        (local.get $scratch_1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $scratch_1)
+ ;; CHECK-NEXT:      (local.get $scratch_2)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $scratch_2)
+ ;; CHECK-NEXT:    (local.get $scratch_3)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -755,10 +755,10 @@
 
  ;; CHECK:      (func $block-mix (type $void)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_0 (i32 i32))
- ;; CHECK-NEXT:  (local $scratch_1 i32)
+ ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
+ ;; CHECK-NEXT:  (local $scratch_2 i32)
  ;; CHECK-NEXT:  (block $0
- ;; CHECK-NEXT:   (local.set $scratch_0
+ ;; CHECK-NEXT:   (local.set $scratch_1
  ;; CHECK-NEXT:    (block $1 (result i32 i32)
  ;; CHECK-NEXT:     (tuple.make
  ;; CHECK-NEXT:      (block $2 (result i32)
@@ -778,17 +778,17 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i32)
- ;; CHECK-NEXT:     (local.set $scratch_1
+ ;; CHECK-NEXT:     (local.set $scratch_2
  ;; CHECK-NEXT:      (tuple.extract 0
- ;; CHECK-NEXT:       (local.get $scratch_0)
+ ;; CHECK-NEXT:       (local.get $scratch_1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (tuple.extract 1
- ;; CHECK-NEXT:       (local.get $scratch_0)
+ ;; CHECK-NEXT:       (local.get $scratch_1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.get $scratch_1)
+ ;; CHECK-NEXT:     (local.get $scratch_2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

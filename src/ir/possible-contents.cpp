@@ -1695,6 +1695,34 @@ bool Flower::updateContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
+  auto location = getLocation(locationIndex);
+
+  // Handle special cases: Some locations can only contain certain contents, so
+  // filter accordingly. In principle we need to filter both before and after
+  // combining with existing content; filtering afterwards is obviously
+  // necessary as combining two things will create something larger than both,
+  // and our representation has limitations (e.g. two different ref types will
+  // result in a cone, potentially a very large one). Filtering beforehand is
+  // necessary for the a more subtle reason: consider a location that contains
+  // an i8 which is sent a 0 and then 0x100. If we filter only after, then we'd
+  // combine 0 and 0x100 first and get "unknown integer"; only by filtering
+  // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0 and
+  // not change anything, which is correct.
+  //
+  // For efficiency reasons we aim to only filter once, depending on the type of
+  // filtering. Most can be filtered a single time afterwards, while for data
+  // locations, where the issue is packed integer fields, it's necessary to do
+  // it before as we've mentioned, and also sufficient (see details in
+  // filterDataContents).
+  if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    filterDataContents(newContents, *dataLoc);
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  pre-filtered contents:\n";
+    newContents.dump(std::cout, &wasm);
+    std::cout << '\n';
+#endif
+  }
+
   contents.combine(newContents);
 
   if (contents.isNone()) {
@@ -1730,9 +1758,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
     return worthSendingMore;
   }
 
-  // Handle special cases: Some locations can only contain certain contents, so
-  // filter accordingly.
-  auto location = getLocation(locationIndex);
+  // Handle filtering (see comment earlier, this is the later filtering stage).
   bool filtered = false;
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     // TODO: Replace this with specific filterFoo or flowBar methods like we
@@ -1742,9 +1768,6 @@ bool Flower::updateContents(LocationIndex locationIndex,
     filtered = true;
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
     filterGlobalContents(contents, *globalLoc);
-    filtered = true;
-  } else if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
-    filterDataContents(contents, *dataLoc);
     filtered = true;
   }
 
@@ -1999,6 +2022,18 @@ void Flower::filterDataContents(PossibleContents& contents,
       //      value reach.
       contents = PossibleContents::fromType(contents.getType());
     }
+    // Given that the above only (1) turns an i32 into a masked i32 or (2) turns
+    // anything else into an unknown i32, this is safe to run as pre-filtering,
+    // that is, before we combine contents, since
+    //
+    //  (a) two constants are ok as masking is distributive,
+    //        (x & M) U (y & M)  ==  (x U y) & M
+    //  (b) if one is a constant and the other is not then
+    //        (x & M) U ?  ==  ?  ==  (x U ?)  ==  (x U ?) & M
+    //      (where ? is an unknown i32)
+    //  (c) and if both are not constants then likewise we always end up as an
+    //      unknown i32
+    //
   }
 }
 

@@ -29,6 +29,7 @@ high chance for set at start of loop
 
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
+#include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
 #include <ir/eh-utils.h>
@@ -116,6 +117,18 @@ private:
   // A mapping of a heap type to the subset of interestingHeapTypes that are
   // subtypes of it.
   std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
+
+  // Type => list of struct fields that have that type.
+  std::unordered_map<Type, std::vector<StructField>> typeStructFields;
+
+  // Type => list of array types that have that type.
+  std::unordered_map<Type, std::vector<HeapType>> typeArrays;
+
+  // All struct fields that are mutable.
+  std::vector<StructField> mutableStructFields;
+
+  // All arrays that are mutable.
+  std::vector<HeapType> mutableArrays;
 
   Index numAddedFunctions = 0;
 
@@ -326,6 +339,10 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeStructGet(Type type);
+  Expression* makeStructSet(Type type);
+  Expression* makeArrayGet(Type type);
+  Expression* makeArraySet(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
