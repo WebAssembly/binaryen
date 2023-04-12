@@ -2160,14 +2160,6 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    if (curr->ref->type.isNull()) {
-      // The input is null, so we know whether this will succeed or fail.
-      int32_t result = curr->castType.isNullable() ? 1 : 0;
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(result))}));
-      return;
-    }
-
     // Parallel to the code in visitRefCast
     switch (GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType)) {
       case GCTypeUtils::Unknown:
