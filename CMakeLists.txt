@@ -313,7 +313,7 @@ if(EMSCRIPTEN)
   # Note that this is debug info for Binaryen itself, that is, when you are
   # debugging Binaryen source code. This flag has no impact on what Binaryen
   # does when run on wasm files.
-  option(ENABLE_BIGINT "Enable wasm Bigint" OFF)
+  option(ENABLE_BIGINT "Enable wasm BigInt support" OFF)
   if(ENABLE_BIGINT)
     add_link_flag("-sERROR_ON_WASM_CHANGES_AFTER_LINK")
     add_link_flag("-sWASM_BIGINT")
