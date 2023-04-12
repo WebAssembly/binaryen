@@ -3439,6 +3439,35 @@
     )
   )
 
+  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (loop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-ref-test-notee (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (local $0 funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (loop
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-ref-test-notee (result i32)
+    (local $0 (ref null func))
+    ;; As above, but without an intermediate local.tee. Now ref.test will see
+    ;; that it is unreachable, as the input is uninhabitable.
+    (ref.test func
+      (loop (result (ref nofunc))
+        (unreachable)
+      )
+    )
+  )
+
   ;; CHECK:      (func $non-null-bottom-test (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
