@@ -287,10 +287,22 @@ void TranslateToFuzzReader::setupHeapTypes() {
       interestingHeapSubTypes[HeapType::struct_].push_back(type);
       interestingHeapSubTypes[HeapType::eq].push_back(type);
       interestingHeapSubTypes[HeapType::any].push_back(type);
+
+      // Note the mutable fields.
+      auto& fields = type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        if (fields[i].mutable_) {
+          mutableStructFields.push_back(StructField{type, i});
+        }
+      }
     } else if (type.isArray()) {
       interestingHeapSubTypes[HeapType::array].push_back(type);
       interestingHeapSubTypes[HeapType::eq].push_back(type);
       interestingHeapSubTypes[HeapType::any].push_back(type);
+
+      if (type.getArray().element.mutable_) {
+        mutableArrays.push_back(type);
+      }
     } else if (type.isSignature()) {
       interestingHeapSubTypes[HeapType::func].push_back(type);
     }
@@ -1182,7 +1194,9 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3251,9 +3265,26 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
   // TODO: also nullable ones? that would increase the risk of traps
+  // TODO: Ensure a good chance to use a local.get or tee here, as we want to
+  //       test the same reference having multiple sets/gets on it, and not
+  //       gets/sets of struct.news everywhere. Also in struct.set, array.get,
+  //       array.set.
   auto* ref = make(Type(structType, NonNullable));
   // TODO: fuzz signed and unsigned
   return builder.makeStructGet(fieldIndex, ref, type);
+}
+
+Expression* TranslateToFuzzReader::makeStructSet(Type type) {
+  assert(type == Type::none);
+  if (mutableStructFields.empty()) {
+    return makeTrivial(type);
+  }
+  auto [structType, fieldIndex] = pick(mutableStructFields);
+  auto fieldType = structType.getStruct().fields[fieldIndex].type;
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(structType, NonNullable));
+  auto* value = make(fieldType);
+  return builder.makeStructSet(fieldIndex, ref, value);
 }
 
 Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
@@ -3284,6 +3315,39 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
                                    type);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(condition, get, fallback);
+}
+
+Expression* TranslateToFuzzReader::makeArraySet(Type type) {
+  assert(type == Type::none);
+  if (mutableArrays.empty()) {
+    return makeTrivial(type);
+  }
+  auto arrayType = pick(mutableArrays);
+  auto elementType = arrayType.getArray().element.type;
+  auto* index = make(Type::i32);
+  // TODO: also nullable ones? that would increase the risk of traps
+  auto* ref = make(Type(arrayType, NonNullable));
+  auto* value = make(elementType);
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+    // TODO: fuzz signed and unsigned, and also below
+    return builder.makeArraySet(ref, index, value);
+  }
+  // To avoid a trap, check the length dynamically using this pattern:
+  //
+  //   if (index < array.len) array[index] = value;
+  //
+  auto tempRef = builder.addVar(funcContext->func, ref->type);
+  auto tempIndex = builder.addVar(funcContext->func, index->type);
+  auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
+  auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
+  auto* getSize = builder.makeArrayLen(teeRef);
+  auto* condition = builder.makeBinary(LtUInt32, teeIndex, getSize);
+  auto* refGet = builder.makeLocalGet(tempRef, ref->type);
+  auto* indexGet = builder.makeLocalGet(tempIndex, index->type);
+  auto* set = builder.makeArraySet(refGet, indexGet, value);
+  return builder.makeIf(condition, set);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
