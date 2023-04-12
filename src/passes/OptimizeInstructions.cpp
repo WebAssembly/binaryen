@@ -2176,6 +2176,10 @@ struct OptimizeInstructions
         replaceCurrent(builder.makeBlock(
           {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
         break;
+      case GCTypeUtils::Unreachable:
+        // The cast check is not reached, so we can return either value. Pick a
+        // "failure" result, which matches the behavior in other callsites to
+        // evaluateCast().
       case GCTypeUtils::Failure:
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                             builder.makeConst(int32_t(0))));

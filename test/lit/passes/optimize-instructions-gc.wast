@@ -3365,12 +3365,10 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (unreachable)
   ;; NOMNL-NEXT: )
-  (func $non-null-bottom (result (ref func))
+  (func $non-null-bottom-ref (result (ref func))
     (local $0 (ref null func))
-    ;; This cast will fail since (ignoring the tee) we have a (ref nofunc), a
-    ;; bottom type, which we try to cast to non-null. But at the same time, the
-    ;; loop's type is a subtype of the cast's (since it is non-nullable, and
-    ;; bottom types are subtypes). The tee makes this an interesting corner case
+    ;; The reference is uninhabitable, a non-null bottom type. The cast is not
+    ;; even reached, but we need to be careful: The tee makes this a corner case
     ;; since it makes the type nullable again, so if we thought the cast would
     ;; succeed, and replaced the cast with its child, we'd fail to validate.
     ;; Instead, since the cast fails, we can replace it with an unreachable
@@ -3381,6 +3379,13 @@
           (unreachable)
         )
       )
+    )
+  )
+
+  (func $non-null-bottom-cast (result (ref func))
+    ;; As above, but now the cast is uninhabitable.
+    (ref.cast (ref nofunc)
+      (ref.func $non-null-bottom-cast)
     )
   )
 )
