@@ -1,79 +1,45 @@
 total
-<<<<<<< HEAD
- [exports]      : 5       
- [funcs]        : 13      
-=======
- [exports]      : 4       
- [funcs]        : 11      
->>>>>>> origin/main
+ [exports]      : 2       
+ [funcs]        : 10      
  [globals]      : 16      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
-<<<<<<< HEAD
- [table-data]   : 1       
+ [table-data]   : 5       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 430     
- [vars]         : 17      
+ [total]        : 500     
+ [vars]         : 9       
  ArrayNew       : 5       
+ AtomicCmpxchg  : 1       
  AtomicFence    : 2       
- Binary         : 61      
- Block          : 45      
- Call           : 19      
- Const          : 97      
- Drop           : 3       
+ AtomicNotify   : 2       
+ Binary         : 66      
+ Block          : 49      
+ Break          : 5       
+ Call           : 4       
+ Const          : 121     
+ Drop           : 1       
  GlobalGet      : 25      
  GlobalSet      : 24      
- I31New         : 1       
- If             : 13      
- Load           : 16      
- LocalGet       : 34      
- LocalSet       : 18      
- Nop            : 3       
- RefAs          : 1       
- RefFunc        : 8       
- RefNull        : 6       
- Return         : 5       
- StructNew      : 8       
- TupleMake      : 7       
- Unary          : 14      
- Unreachable    : 15      
-=======
- [table-data]   : 2       
- [tables]       : 1       
- [tags]         : 2       
- [total]        : 521     
- [vars]         : 21      
- ArrayLen       : 1       
- ArrayNew       : 6       
- ArrayNewFixed  : 1       
- ArraySet       : 1       
- Binary         : 66      
- Block          : 58      
- Break          : 3       
- Call           : 7       
- Const          : 117     
- Drop           : 4       
- GlobalGet      : 32      
- GlobalSet      : 32      
  I31New         : 2       
- If             : 19      
+ If             : 16      
  Load           : 17      
- LocalGet       : 41      
- LocalSet       : 23      
- Loop           : 6       
- Nop            : 3       
- RefAs          : 4       
- RefEq          : 1       
+ LocalGet       : 40      
+ LocalSet       : 28      
+ Loop           : 3       
+ Nop            : 9       
+ RefAs          : 2       
+ RefEq          : 2       
  RefFunc        : 10      
  RefNull        : 8       
- Return         : 1       
- Select         : 1       
- StructNew      : 5       
+ RefTest        : 1       
+ Return         : 2       
+ SIMDExtract    : 2       
+ Select         : 4       
+ StructNew      : 8       
  StructSet      : 1       
  TupleExtract   : 1       
- TupleMake      : 9       
- Unary          : 22      
- Unreachable    : 19      
->>>>>>> origin/main
+ TupleMake      : 8       
+ Unary          : 16      
+ Unreachable    : 15      
