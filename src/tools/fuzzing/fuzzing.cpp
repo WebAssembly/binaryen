@@ -909,9 +909,7 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       }
     }
 
-    void replace() {
-      replaceCurrent(parent.makeTrivial(getCurrent()->type));
-    }
+    void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
 
     bool hasBreakTarget(Name name) {
       if (controlFlowStack.empty()) {
