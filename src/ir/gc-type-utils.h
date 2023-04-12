@@ -21,6 +21,10 @@
 
 namespace wasm::GCTypeUtils {
 
+inline bool isUninhabitable(Type type) {
+  return type.isNonNullable() && type.getHeapType().isBottom();
+}
+
 // Helper code to evaluate a reference at compile time and check if it is of a
 // certain kind. Various wasm instructions check if something is a function or
 // data etc., and that code is shared here.
@@ -37,6 +41,10 @@ enum EvaluationResult {
   // The cast will only succeed if the input is a null, or is not
   SuccessOnlyIfNull,
   SuccessOnlyIfNonNull,
+  // The cast will not even be reached. This can occur if the value being cast
+  // has unreachable type, or is uninhabitable (like a non-nullable bottom
+  // type).
+  Unreachable,
 };
 
 inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
@@ -51,6 +59,8 @@ inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
       return SuccessOnlyIfNonNull;
     case SuccessOnlyIfNonNull:
       return SuccessOnlyIfNull;
+    case Unreachable:
+      return Unreachable;
   }
   WASM_UNREACHABLE("unexpected result");
 }
@@ -59,9 +69,16 @@ inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
 // what we know about the result.
 inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   if (!refType.isRef() || !castType.isRef()) {
-    // Unreachable etc. are meaningless situations in which we can inform the
-    // caller about nothing useful.
+    if (refType == Type::unreachable) {
+      return Unreachable;
+    }
+    // If the cast type is unreachable, we can't tell - perhaps this is a br
+    // instruction of some kind, that has unreachable type normally.
     return Unknown;
+  }
+
+  if (isUninhabitable(castType)) {
+    return Unreachable;
   }
 
   auto refHeapType = refType.getHeapType();
@@ -97,10 +114,9 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     //  * A cast of a subtype must succeed.
     //
     // In practice the uninhabitable type means that the cast is not even
-    // reached, which is why there is no contradiction here. We can return
-    // either result here (and which we return depends on which of those two
-    // rules we check first). We prefer to return Failure as that requires less
-    // care in the callers in practice.
+    // reached, which is why there is no contradiction here. To avoid ambiguity,
+    // we already checked for uninhabitability earlier, and returned
+    // Unreachable.
     return Failure;
   }
 

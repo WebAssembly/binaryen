@@ -754,9 +754,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           replaceCurrent(
             Builder(*getModule()).makeBreak(curr->name, curr->ref));
           worked = true;
-        } else if (result == GCTypeUtils::Failure) {
+        } else if (result == GCTypeUtils::Failure ||
+                   result == GCTypeUtils::Unreachable) {
           // The cast fails, so the branch is never taken, and the value just
-          // flows through.
+          // flows through. Or, the cast cannot even be reached, so it does not
+          // matter what we do, and we can handle it as a failure.
           replaceCurrent(curr->ref);
           worked = true;
         }

@@ -2031,8 +2031,8 @@ struct OptimizeInstructions
             //
             // (ref nofunc) is a subtype of (ref func), so the cast might seem
             // to be successful, but since the input is uninhabitable we won't
-            // even reach the cast. Such casts will be regarded as failing in
-            // evaluateCastCheck, so we'll not hit this assertion.
+            // even reach the cast. Such casts will be evaluated as
+            // Unreachable, so we'll not hit this assertion.
             assert(curr->type.isNullable());
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
@@ -2046,8 +2046,10 @@ struct OptimizeInstructions
             builder.makeSequence(builder.makeDrop(curr->ref),
                                  builder.makeLocalGet(scratch, ref->type)));
           return;
-        } else if (result == GCTypeUtils::Failure) {
-          // This cast cannot succeed, so it will trap.
+        } else if (result == GCTypeUtils::Failure ||
+                   result == GCTypeUtils::Unreachable) {
+          // This cast cannot succeed, or it cannot even be reached, so we can
+          // trap.
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
           replaceCurrent(builder.makeBlock(
