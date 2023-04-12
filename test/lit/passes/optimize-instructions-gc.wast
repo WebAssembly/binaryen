@@ -3342,4 +3342,149 @@
       )
     )
   )
+
+  ;; CHECK:      (func $non-null-bottom-ref (type $none_=>_ref|func|) (result (ref func))
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (loop (result (ref nofunc))
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-ref (type $none_=>_ref|func|) (result (ref func))
+  ;; NOMNL-NEXT:  (local $0 funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (local.tee $0
+  ;; NOMNL-NEXT:    (loop (result (ref nofunc))
+  ;; NOMNL-NEXT:     (unreachable)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-ref (result (ref func))
+    (local $0 (ref null func))
+    ;; The reference is uninhabitable, a non-null bottom type. The cast is not
+    ;; even reached, but we need to be careful: The tee makes this a corner case
+    ;; since it makes the type nullable again, so if we thought the cast would
+    ;; succeed, and replaced the cast with its child, we'd fail to validate.
+    ;; Instead, since the cast fails, we can replace it with an unreachable
+    ;; (after the dropped child).
+    (ref.cast func
+      (local.tee $0
+        (loop (result (ref nofunc))
+          (unreachable)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $non-null-bottom-cast (type $none_=>_ref|nofunc|) (result (ref nofunc))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-cast (type $none_=>_ref|nofunc|) (result (ref nofunc))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.func $non-null-bottom-cast)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-cast (result (ref nofunc))
+    ;; As above, but now the cast is uninhabitable.
+    (ref.cast nofunc
+      (ref.func $non-null-bottom-cast)
+    )
+  )
+
+  ;; CHECK:      (func $non-null-bottom-ref-test (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.tee $0
+  ;; CHECK-NEXT:     (loop (result (ref nofunc))
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-ref-test (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (local $0 funcref)
+  ;; NOMNL-NEXT:  (i32.eqz
+  ;; NOMNL-NEXT:   (ref.is_null
+  ;; NOMNL-NEXT:    (local.tee $0
+  ;; NOMNL-NEXT:     (loop (result (ref nofunc))
+  ;; NOMNL-NEXT:      (unreachable)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-ref-test (result i32)
+    (local $0 (ref null func))
+    ;; As above, but ref.test instead of cast. This is ok - we can turn the test
+    ;; into a ref.is_null. TODO: if ref.test looked into intermediate casts
+    ;; before it, it could do better.
+    (ref.test func
+      (local.tee $0
+        (loop (result (ref nofunc))
+          (unreachable)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (local $0 funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (loop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-ref-test-notee (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (local $0 funcref)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (loop
+  ;; NOMNL-NEXT:    (unreachable)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (unreachable)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-ref-test-notee (result i32)
+    (local $0 (ref null func))
+    ;; As above, but without an intermediate local.tee. Now ref.test will see
+    ;; that it is unreachable, as the input is uninhabitable.
+    (ref.test func
+      (loop (result (ref nofunc))
+        (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $non-null-bottom-test (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $non-null-bottom-cast)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $non-null-bottom-test (type $none_=>_i32) (result i32)
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.func $non-null-bottom-cast)
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (i32.const 0)
+  ;; NOMNL-NEXT: )
+  (func $non-null-bottom-test (result i32)
+    ;; As above, but now the cast type is uninhabitable, and also use ref.test.
+    ;; This cast cannot succeed, so return 0.
+    (ref.test nofunc
+      (ref.func $non-null-bottom-cast)
+    )
+  )
 )

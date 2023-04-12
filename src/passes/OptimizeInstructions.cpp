@@ -2018,6 +2018,22 @@ struct OptimizeInstructions
           // the value, though.
           if (ref->type.isNull()) {
             // We can materialize the resulting null value directly.
+            //
+            // The type must be nullable for us to do that, which it normally
+            // would be, aside from the interesting corner case of
+            // uninhabitable types:
+            //
+            //  (ref.cast func
+            //    (block (result (ref nofunc))
+            //      (unreachable)
+            //    )
+            //  )
+            //
+            // (ref nofunc) is a subtype of (ref func), so the cast might seem
+            // to be successful, but since the input is uninhabitable we won't
+            // even reach the cast. Such casts will be evaluated as
+            // Unreachable, so we'll not hit this assertion.
+            assert(curr->type.isNullable());
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
             return;
@@ -2030,8 +2046,10 @@ struct OptimizeInstructions
             builder.makeSequence(builder.makeDrop(curr->ref),
                                  builder.makeLocalGet(scratch, ref->type)));
           return;
-        } else if (result == GCTypeUtils::Failure) {
-          // This cast cannot succeed, so it will trap.
+        } else if (result == GCTypeUtils::Failure ||
+                   result == GCTypeUtils::Unreachable) {
+          // This cast cannot succeed, or it cannot even be reached, so we can
+          // trap.
           // Make sure to emit a block with the same type as us; leave updating
           // types for other passes.
           replaceCurrent(builder.makeBlock(
@@ -2142,14 +2160,6 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    if (curr->ref->type.isNull()) {
-      // The input is null, so we know whether this will succeed or fail.
-      int32_t result = curr->castType.isNullable() ? 1 : 0;
-      replaceCurrent(builder.makeBlock(
-        {builder.makeDrop(curr->ref), builder.makeConst(int32_t(result))}));
-      return;
-    }
-
     // Parallel to the code in visitRefCast
     switch (GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType)) {
       case GCTypeUtils::Unknown:
@@ -2157,6 +2167,10 @@ struct OptimizeInstructions
       case GCTypeUtils::Success:
         replaceCurrent(builder.makeBlock(
           {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+        break;
+      case GCTypeUtils::Unreachable:
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeUnreachable()));
         break;
       case GCTypeUtils::Failure:
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),

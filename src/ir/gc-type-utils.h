@@ -21,6 +21,10 @@
 
 namespace wasm::GCTypeUtils {
 
+inline bool isUninhabitable(Type type) {
+  return type.isNonNullable() && type.getHeapType().isBottom();
+}
+
 // Helper code to evaluate a reference at compile time and check if it is of a
 // certain kind. Various wasm instructions check if something is a function or
 // data etc., and that code is shared here.
@@ -37,6 +41,10 @@ enum EvaluationResult {
   // The cast will only succeed if the input is a null, or is not
   SuccessOnlyIfNull,
   SuccessOnlyIfNonNull,
+  // The cast will not even be reached. This can occur if the value being cast
+  // has unreachable type, or is uninhabitable (like a non-nullable bottom
+  // type).
+  Unreachable,
 };
 
 inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
@@ -51,6 +59,8 @@ inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
       return SuccessOnlyIfNonNull;
     case SuccessOnlyIfNonNull:
       return SuccessOnlyIfNull;
+    case Unreachable:
+      return Unreachable;
   }
   WASM_UNREACHABLE("unexpected result");
 }
@@ -59,19 +69,58 @@ inline EvaluationResult flipEvaluationResult(EvaluationResult result) {
 // what we know about the result.
 inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
   if (!refType.isRef() || !castType.isRef()) {
-    // Unreachable etc. are meaningless situations in which we can inform the
-    // caller about nothing useful.
+    if (refType == Type::unreachable) {
+      return Unreachable;
+    }
+    // If the cast type is unreachable, we can't tell - perhaps this is a br
+    // instruction of some kind, that has unreachable type normally.
     return Unknown;
   }
 
-  if (Type::isSubType(refType, castType)) {
-    return Success;
+  if (isUninhabitable(refType)) {
+    // No value can appear in the ref, so the cast cannot be reached.
+    return Unreachable;
   }
 
   auto refHeapType = refType.getHeapType();
-  auto castHeapType = castType.getHeapType();
 
+  if (castType.isNonNullable() && refHeapType.isBottom()) {
+    // Non-null references to bottom types do not exist, so there's no value
+    // that could make the cast succeed.
+    //
+    // Note that there is an interesting corner case that is relevant here: if
+    // the ref type is uninhabitable, say (ref nofunc), and the cast type is
+    // non-nullable, say (ref func), then we have two contradictory rules that
+    // seem to apply:
+    //
+    //  * A non-nullable cast of a bottom type must fail.
+    //  * A cast of a subtype must succeed.
+    //
+    // In practice the uninhabitable type means that the cast is not even
+    // reached, which is why there is no contradiction here. To avoid ambiguity,
+    // we already checked for uninhabitability earlier, and returned
+    // Unreachable.
+    return Failure;
+  }
+
+  auto castHeapType = castType.getHeapType();
   auto refIsHeapSubType = HeapType::isSubType(refHeapType, castHeapType);
+
+  if (refIsHeapSubType) {
+    // The heap type is a subtype. All we need is for nullability to work out as
+    // well, and then the cast must succeed.
+    if (castType.isNullable() || refType.isNonNullable()) {
+      return Success;
+    }
+
+    // If the heap type part of the cast is compatible but the cast as a whole
+    // is not, we must have a nullable input ref that we are casting to a
+    // non-nullable type.
+    assert(refType.isNullable());
+    assert(castType.isNonNullable());
+    return SuccessOnlyIfNonNull;
+  }
+
   auto castIsHeapSubType = HeapType::isSubType(castHeapType, refHeapType);
   bool heapTypesCompatible = refIsHeapSubType || castIsHeapSubType;
 
@@ -79,6 +128,8 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // If the heap types are incompatible or if it is impossible to have a
     // non-null reference to the target heap type, then the only way the cast
     // can succeed is if it allows nulls and the input is null.
+    //
+    // Note that this handles uninhabitability of the cast type.
     if (refType.isNonNullable() || castType.isNonNullable()) {
       return Failure;
     }
@@ -86,20 +137,6 @@ inline EvaluationResult evaluateCastCheck(Type refType, Type castType) {
     // Both are nullable. A null is the only hope of success in either
     // situation.
     return SuccessOnlyIfNull;
-  }
-
-  // If the heap type part of the cast is compatible but the cast as a whole is
-  // not, we must have a nullable input ref that we are casting to a
-  // non-nullable type.
-  if (refIsHeapSubType) {
-    assert(refType.isNullable());
-    assert(castType.isNonNullable());
-    if (refHeapType.isBottom()) {
-      // Non-null references to bottom types do not exist, so there's no value
-      // that could make the cast succeed.
-      return Failure;
-    }
-    return SuccessOnlyIfNonNull;
   }
 
   return Unknown;

@@ -15,6 +15,7 @@
  */
 
 #include "tools/fuzzing.h"
+#include "ir/gc-type-utils.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -3635,10 +3636,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
   return type;
 }
 
-static bool isUninhabitable(Type type) {
-  return type.isNonNullable() && type.getHeapType().isBottom();
-}
-
 Type TranslateToFuzzReader::getSubType(Type type) {
   if (type.isTuple()) {
     std::vector<Type> types;
@@ -3653,7 +3650,8 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.
-    if (isUninhabitable(subType) && !isUninhabitable(type) && !oneIn(20)) {
+    if (GCTypeUtils::isUninhabitable(subType) &&
+        !GCTypeUtils::isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
     return subType;
@@ -3691,7 +3689,7 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
   auto superType = Type(heapType, nullability);
   // As with getSubType, we want to avoid returning an uninhabitable type where
   // possible. Here all we can do is flip the super's nullability to nullable.
-  if (isUninhabitable(superType)) {
+  if (GCTypeUtils::isUninhabitable(superType)) {
     superType = Type(heapType, Nullable);
   }
   return superType;
