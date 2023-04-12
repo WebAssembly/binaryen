@@ -3633,7 +3633,8 @@ Type TranslateToFuzzReader::getSubType(Type type) {
     // We don't want to emit lots of uninhabitable types like (ref none), so
     // avoid them with high probability. Specifically, if the original type was
     // inhabitable then return that; avoid adding more uninhabitability.
-    if (GCTypeUtils::isUninhabitable(subType) && !GCTypeUtils::isUninhabitable(type) && !oneIn(20)) {
+    if (GCTypeUtils::isUninhabitable(subType) &&
+        !GCTypeUtils::isUninhabitable(type) && !oneIn(20)) {
       return type;
     }
     return subType;
