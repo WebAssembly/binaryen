@@ -914,13 +914,11 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       });
     }
 
-    bool replaceIfInvalid(Name target) {
+    void replaceIfInvalid(Name target) {
       if (!hasBreakTarget(target)) {
         // There is no valid parent, replace with something trivially safe.
         replace();
-        return true;
       }
-      return false;
     }
 
     void replace() { replaceCurrent(parent.makeTrivial(getCurrent()->type)); }
@@ -932,17 +930,14 @@ void TranslateToFuzzReader::fixAfterChanges(Function* func) {
       Index i = controlFlowStack.size() - 1;
       while (1) {
         auto* curr = controlFlowStack[i];
-        if (auto* block = curr->dynCast<Block>()) {
-          if (name == block->name) {
-            return true;
+        bool has = false;
+        BranchUtils::operateOnScopeNameDefs(curr, [&](Name& def) {
+          if (def == name) {
+            has = true;
           }
-        } else if (auto* loop = curr->dynCast<Loop>()) {
-          if (name == loop->name) {
-            return true;
-          }
-        } else {
-          // an if or a try, ignorable
-          assert(curr->is<If>() || curr->is<Try>());
+        });
+        if (has) {
+          return true;
         }
         if (i == 0) {
           return false;
