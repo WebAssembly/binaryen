@@ -3388,4 +3388,23 @@
       (ref.func $non-null-bottom-cast)
     )
   )
+
+  (func $non-null-bottom-ref-test (result (ref func))
+    (local $0 (ref null func))
+    ;; As above, but ref.test instead of cast.
+    (ref.test func
+      (local.tee $0
+        (loop (result (ref nofunc))
+          (unreachable)
+        )
+      )
+    )
+  )
+
+  (func $non-null-bottom-test (result (ref func))
+    ;; As above, but now the cast is uninhabitable, and also ref.test.
+    (ref.test (ref nofunc)
+      (ref.func $non-null-bottom-cast)
+    )
+  )
 )
