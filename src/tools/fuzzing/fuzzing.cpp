@@ -1055,14 +1055,17 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
+std::cout << "a1\n";
   auto subtype = getSubType(type);
   if (trivialNesting) {
     // We are nested under a makeTrivial call, so only emit something trivial.
     return makeTrivial(type);
   }
+std::cout << "a2\n";
   // When we should stop, emit something small (but not necessarily trivial).
   if (random.finished() || nesting >= 5 * NESTING_LIMIT || // hard limit
       (nesting >= NESTING_LIMIT && !oneIn(3))) {
+std::cout << "a3\n";
     if (type.isConcrete()) {
       if (oneIn(2)) {
         return makeConst(subtype);
@@ -1079,9 +1082,11 @@ Expression* TranslateToFuzzReader::make(Type type) {
     assert(type == Type::unreachable);
     return makeTrivial(type);
   }
+std::cout << "a4\n";
   nesting++;
   Expression* ret = nullptr;
   if (type.isConcrete()) {
+std::cout << "a5\n";
     ret = _makeConcrete(subtype);
   } else if (type == Type::none) {
     ret = _makenone();
@@ -1226,6 +1231,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
 }
 
 Expression* TranslateToFuzzReader::makeTrivial(Type type) {
+std::cout << "makeTrivial\n";
   struct TrivialNester {
     TranslateToFuzzReader& parent;
     TrivialNester(TranslateToFuzzReader& parent) : parent(parent) {
@@ -2165,15 +2171,19 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeConst(Type type) {
+std::cout << "makeConst " << type << "\n";
   if (type.isRef()) {
+std::cout << "  mc1\n";
     assert(wasm.features.hasReferenceTypes());
     // With a low chance, just emit a null if that is valid.
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
     }
+std::cout << "  mc2\n";
     if (type.getHeapType().isBasic()) {
       return makeBasicRef(type);
     } else {
+std::cout << "  mc3\n";
       return makeCompoundRef(type);
     }
   } else if (type.isTuple()) {
@@ -2313,8 +2323,10 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // inhabitable.)
   const auto LIMIT = NESTING_LIMIT + 1;
   AutoNester nester(*this);
+std::cout << "mCC1\n";
   if (type.isNullable() &&
       (random.finished() || nesting >= LIMIT || oneIn(LIMIT - nesting + 1))) {
+std::cout << "mCC2\n";
     return builder.makeRefNull(heapType);
   }
 
@@ -2323,8 +2335,17 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   // least avoids infinite recursion here, and we emit a valid (but not that
   // useful) wasm.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
+std::cout << "mCC3\n";
+    // If we have a function context then we can at least emit a local.get,
+    // perhaps, which is less bad. Note that we need to check typeLocals
+    // manually here to avoid infinite recursion (as makeLocalGet will fall back
+    // to us, if there is no local).
+    if (funcContext && !funcContext->typeLocals[type].empty()) {
+      return makeLocalGet(type);
+    }
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
+std::cout << "mCC4\n";
 
   // When we make children, they must be trivial if we are not in a function
   // context.
@@ -2373,13 +2394,16 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   auto percent = upTo(100);
+std::cout << "waka mTRU " << percent << '\n';
   // Only give a low probability to emit a nullable reference.
   if (percent < 5) {
+std::cout << "maek1 " << *make(Type(type, Nullable)) << '\n';
     return make(Type(type, Nullable));
   }
   // Otherwise, usually emit a non-nullable one.
   auto nonNull = Type(type, NonNullable);
   if (percent < 70 || !funcContext) {
+std::cout << "maek2 " << *make(nonNull) << '\n';
     return make(nonNull);
   }
   // With significant probability, try to use an existing value. it is better to
@@ -2397,12 +2421,18 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   // of reads and writes to the same objects.
   auto& typeLocals = funcContext->typeLocals[nonNull];
   if (!typeLocals.empty()) {
+std::cout << "maek3 " << *builder.makeLocalGet(pick(typeLocals), nonNull) << '\n';
     return builder.makeLocalGet(pick(typeLocals), nonNull);
   }
   // Add a new local and tee it, so later operations can use it.
   auto index = builder.addVar(funcContext->func, nonNull);
+  // Note we must create the child ref here before adding the local to
+  // typeLocals (or else we might end up using it prematurely).
+std::cout << "maek4pre\n";// " << *tee << " for " << nonNull << " : " << type << '\n';
+  auto* tee = builder.makeLocalTee(index, make(nonNull), nonNull);
   funcContext->typeLocals[nonNull].push_back(index);
-  return builder.makeLocalTee(index, make(nonNull), nonNull);
+std::cout << "maek4 " << *tee << " for " << nonNull << " : " << type << '\n';
+  return tee;
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
