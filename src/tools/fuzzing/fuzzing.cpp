@@ -3444,8 +3444,10 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       return builder.makeArraySet(ref, index, value);
     }
     // XXX the bounds check should include the index plus the size.
-    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder, size);
-    auto* fill = builder.makeArrayFill(check.getRef, check.getIndex, value, check.getSize);
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, size);
+    auto* fill =
+      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getSize);
     return builder.makeIf(check.condition, fill);
   } else {
     // ArrayCopy
@@ -3459,10 +3461,17 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       return builder.makeArrayCopy(ref, index, otherRef, otherIndex, length);
     }
     // XXX the bounds check should include the index plus the length, for both.
-    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
-    auto otherCheck = makeArrayBoundsCheck(otherRef, otherIndex, funcContext->func, builder, check.getLength);
-    auto* copy = builder.makeArrayCopy(check.getRef, check.getIndex, otherCheck.getRef, otherCheck.getIndex, otherCheck.getLength);
-    return builder.makeIf(check.condition, builder.makeIf(otherCheck.condition, copy));
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto otherCheck = makeArrayBoundsCheck(
+      otherRef, otherIndex, funcContext->func, builder, check.getLength);
+    auto* copy = builder.makeArrayCopy(check.getRef,
+                                       check.getIndex,
+                                       otherCheck.getRef,
+                                       otherCheck.getIndex,
+                                       otherCheck.getLength);
+    return builder.makeIf(check.condition,
+                          builder.makeIf(otherCheck.condition, copy));
   }
 }
 
