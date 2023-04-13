@@ -3356,7 +3356,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     auto tempLength = builder.addVar(func, length->type);
     auto* teeLength = builder.makeLocalTee(tempLength, length, length->type);
     // The effective index will now include the length.
-    effectiveIndex = builder.makeBinary(AddInt32, effectiveIndex, length);
+    effectiveIndex = builder.makeBinary(AddInt32, effectiveIndex, teeLength);
     getLength = builder.makeLocalGet(tempLength, length->type);
   }
 
@@ -3430,11 +3430,11 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     return makeTrivial(type);
   }
   auto arrayType = pick(mutableArrays);
-  auto elementType = arrayType.getArray().element.type;
   auto* index = make(Type::i32);
   auto* ref = makeTrappingRefUse(arrayType);
   if (oneIn(2)) {
     // ArrayFill
+    auto elementType = arrayType.getArray().element.type;
     auto* value = make(elementType);
     auto* length = make(Type::i32);
     // Only rarely emit a plain get which might trap. See related logic in
@@ -3446,14 +3446,16 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     auto check =
       makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
     auto* fill =
-      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getLength);
+      builder.makeArrayFill(check.getRef,
+                            check.getIndex,
+                            value,
+                            check.getLength);
     return builder.makeIf(check.condition, fill);
   } else {
     // ArrayCopy
     auto otherArrayType = pick(mutableArrays);
-    auto otherElementType = arrayType.getArray().element.type;
     auto* otherIndex = make(Type::i32);
-    auto* otherRef = makeTrappingRefUse(arrayType);
+    auto* otherRef = makeTrappingRefUse(otherArrayType);
     auto* length = make(Type::i32);
     if (allowOOB && oneIn(10)) {
       // TODO: fuzz signed and unsigned, and also below
