@@ -106,7 +106,6 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $ref|$vector|_i32_f64_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $value f64) (param $size i32)
   ;; CHECK-NEXT:  (array.fill $vector
@@ -116,14 +115,6 @@
   ;; CHECK-NEXT:   (local.get $size)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $ref|$vector|_i32_f64_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $value f64) (param $size i32)
-  ;; NOMNL-NEXT:  (array.fill $vector
-  ;; NOMNL-NEXT:   (local.get $ref)
-  ;; NOMNL-NEXT:   (local.get $index)
-  ;; NOMNL-NEXT:   (local.get $value)
-  ;; NOMNL-NEXT:   (local.get $size)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test (param $ref (ref $vector))
               (param $index i32)
               (param $value f64)
@@ -139,7 +130,6 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut i32)))
-  ;; NOMNL:      (type $vector (array (mut i32)))
   (type $vector (array (mut i32)))
   (data "")
   ;; CHECK:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
@@ -150,14 +140,6 @@
   ;; CHECK-NEXT:   (local.get $size)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
-  ;; NOMNL-NEXT:  (array.init_data $vector $0
-  ;; NOMNL-NEXT:   (local.get $ref)
-  ;; NOMNL-NEXT:   (local.get $index)
-  ;; NOMNL-NEXT:   (local.get $offset)
-  ;; NOMNL-NEXT:   (local.get $size)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test (param $ref (ref $vector))
               (param $index i32)
               (param $offset i32)
@@ -173,7 +155,6 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut funcref)))
-  ;; NOMNL:      (type $vector (array (mut funcref)))
   (type $vector (array (mut funcref)))
   (elem func)
   ;; CHECK:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
@@ -184,14 +165,6 @@
   ;; CHECK-NEXT:   (local.get $size)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
-  ;; NOMNL-NEXT:  (array.init_elem $vector $0
-  ;; NOMNL-NEXT:   (local.get $ref)
-  ;; NOMNL-NEXT:   (local.get $index)
-  ;; NOMNL-NEXT:   (local.get $offset)
-  ;; NOMNL-NEXT:   (local.get $size)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test (param $ref (ref $vector))
               (param $index i32)
               (param $offset i32)
