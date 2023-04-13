@@ -3,28 +3,20 @@
 ;; Check that tail calls are parsed, validated, and printed correctly
 
 ;; RUN: foreach %s %t wasm-opt -all -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt -all -S --nominal -o - | filecheck %s --check-prefix NOMNL
 
 (module
-
   ;; CHECK:      (type $void (func))
-  ;; NOMNL:      (type $void (func))
   (type $void (func))
 
   ;; CHECK:      (table $t 1 1 funcref)
-  ;; NOMNL:      (table $t 1 1 funcref)
   (table $t 1 1 funcref)
 
   ;; CHECK:      (elem $e (i32.const 0) $foo)
-  ;; NOMNL:      (elem $e (i32.const 0) $foo)
   (elem $e (i32.const 0) $foo)
 
   ;; CHECK:      (func $foo (type $void)
   ;; CHECK-NEXT:  (return_call $bar)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $foo (type $void)
-  ;; NOMNL-NEXT:  (return_call $bar)
-  ;; NOMNL-NEXT: )
   (func $foo
     (return_call $bar)
   )
@@ -34,11 +26,6 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $bar (type $void)
-  ;; NOMNL-NEXT:  (return_call_indirect $t (type $void)
-  ;; NOMNL-NEXT:   (i32.const 0)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $bar
     (return_call_indirect (type $void) (i32.const 0))
   )
@@ -47,15 +34,9 @@
 ;; Check GC types and subtyping
 (module
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; NOMNL:      (type $return-B (func (result (ref $B))))
-
-  ;; NOMNL:      (type $return-A (func (result (ref null $A))))
-
-  ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct i32))
 
   ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) $A))
-  ;; NOMNL:      (type $B (struct_subtype (field i32) (field i32) $A))
   (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (type $return-B (func (result (ref $B))))
@@ -65,19 +46,14 @@
   (type $return-A (func (result (ref null $A))))
 
   ;; CHECK:      (table $t 1 1 funcref)
-  ;; NOMNL:      (table $t 1 1 funcref)
   (table $t 1 1 funcref)
 
   ;; CHECK:      (elem $e (i32.const 0) $callee)
-  ;; NOMNL:      (elem $e (i32.const 0) $callee)
   (elem $e (i32.const 0) $callee)
 
   ;; CHECK:      (func $caller (type $return-A) (result (ref null $A))
   ;; CHECK-NEXT:  (return_call $callee)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller (type $return-A) (result (ref null $A))
-  ;; NOMNL-NEXT:  (return_call $callee)
-  ;; NOMNL-NEXT: )
   (func $caller (type $return-A)
     (return_call $callee)
   )
@@ -87,11 +63,6 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $caller-indirect (type $return-B) (result (ref $B))
-  ;; NOMNL-NEXT:  (return_call_indirect $t (type $return-B)
-  ;; NOMNL-NEXT:   (i32.const 0)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $caller-indirect (type $return-B)
     (return_call_indirect $t (type $return-B) (i32.const 0))
   )
@@ -99,9 +70,6 @@
   ;; CHECK:      (func $callee (type $return-B) (result (ref $B))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $callee (type $return-B) (result (ref $B))
-  ;; NOMNL-NEXT:  (unreachable)
-  ;; NOMNL-NEXT: )
   (func $callee (type $return-B)
     (unreachable)
   )
