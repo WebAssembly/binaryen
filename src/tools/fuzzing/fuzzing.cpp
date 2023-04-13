@@ -3350,7 +3350,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
 
-  Expression* effectiveIndex = builder.makeLocalGet(tempIndex, index->type);
+  Expression* effectiveIndex = teeIndex;
 
   Expression* getLength = nullptr;
   if (length) {
@@ -3372,9 +3372,9 @@ static auto makeArrayBoundsCheck(Expression* ref,
     Expression* getIndex;
     // An addition use of the length, if it was provided.
     Expression* getLength = nullptr;
-  } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
+  } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
-              effectiveIndex,
+              builder.makeLocalGet(tempIndex, index->type),
               getLength};
   return result;
 }
@@ -3443,7 +3443,7 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     // ::makePointer().
     if (allowOOB && oneIn(10)) {
       // TODO: fuzz signed and unsigned, and also below
-      return builder.makeArraySet(ref, index, value);
+      return builder.makeArrayFill(ref, index, value, length);
     }
     auto check =
       makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
