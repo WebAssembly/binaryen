@@ -1196,7 +1196,8 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3430,11 +3431,11 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     return makeTrivial(type);
   }
   auto arrayType = pick(mutableArrays);
+  auto elementType = arrayType.getArray().element.type;
   auto* index = make(Type::i32);
   auto* ref = makeTrappingRefUse(arrayType);
   if (oneIn(2)) {
     // ArrayFill
-    auto elementType = arrayType.getArray().element.type;
     auto* value = make(elementType);
     auto* length = make(Type::i32);
     // Only rarely emit a plain get which might trap. See related logic in
@@ -3449,26 +3450,35 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       check.getRef, check.getIndex, value, check.getLength);
     return builder.makeIf(check.condition, fill);
   } else {
-    // ArrayCopy
-    auto otherArrayType = pick(mutableArrays);
-    auto* otherIndex = make(Type::i32);
-    auto* otherRef = makeTrappingRefUse(otherArrayType);
+    // ArrayCopy. Here we must pick a source array whose element type is a
+    // subtype of the destination.
+    auto srcArrayType = pick(mutableArrays);
+    auto srcElementType = srcArrayType.getArray().element.type;
+    if (!Type::isSubType(srcElementType, elementType)) {
+      // TODO: A matrix of which arrays are subtypes of others. For now, if we
+      // didn't get what we want randomly, just copy from the same type to
+      // itself.
+      srcArrayType = arrayType;
+      srcElementType = elementType;
+    }
+    auto* srcIndex = make(Type::i32);
+    auto* srcRef = makeTrappingRefUse(srcArrayType);
     auto* length = make(Type::i32);
     if (allowOOB && oneIn(10)) {
       // TODO: fuzz signed and unsigned, and also below
-      return builder.makeArrayCopy(ref, index, otherRef, otherIndex, length);
+      return builder.makeArrayCopy(ref, index, srcRef, srcIndex, length);
     }
     auto check =
       makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
-    auto otherCheck = makeArrayBoundsCheck(
-      otherRef, otherIndex, funcContext->func, builder, check.getLength);
+    auto srcCheck = makeArrayBoundsCheck(
+      srcRef, srcIndex, funcContext->func, builder, check.getLength);
     auto* copy = builder.makeArrayCopy(check.getRef,
                                        check.getIndex,
-                                       otherCheck.getRef,
-                                       otherCheck.getIndex,
-                                       otherCheck.getLength);
+                                       srcCheck.getRef,
+                                       srcCheck.getIndex,
+                                       srcCheck.getLength);
     return builder.makeIf(check.condition,
-                          builder.makeIf(otherCheck.condition, copy));
+                          builder.makeIf(srcCheck.condition, copy));
   }
 }
 
