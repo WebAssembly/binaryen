@@ -8,22 +8,18 @@
 
 (module
   ;; CHECK:      (type $root (struct ))
-
-  ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
-
-  ;; CHECK:      (type $branch (struct_subtype (field i32) (field i64) $trunk))
-
-  ;; CHECK:      (type $twig (struct_subtype (field i32) (field i64) (field f32) $branch))
-
-  ;; CHECK:      (type $leaf (struct_subtype (field i32) (field i64) (field f32) (field f64) $twig))
   (type $root (struct))
 
+  ;; CHECK:      (type $trunk (struct_subtype (field i32) $root))
   (type $trunk (struct_subtype i32 $root))
 
+  ;; CHECK:      (type $branch (struct_subtype (field i32) (field i64) $trunk))
   (type $branch (struct_subtype i32 i64 $trunk))
 
+  ;; CHECK:      (type $twig (struct_subtype (field i32) (field i64) (field f32) $branch))
   (type $twig (struct_subtype i32 i64 f32 $branch))
 
+  ;; CHECK:      (type $leaf (struct_subtype (field i32) (field i64) (field f32) (field f64) $twig))
   (type $leaf (struct_subtype i32 i64 f32 f64 $twig))
 
   ;; CHECK:      (func $make-root (type $ref|$leaf|_=>_ref?|$root|) (param $leaf (ref $leaf)) (result (ref null $root))
