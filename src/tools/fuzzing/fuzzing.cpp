@@ -3431,12 +3431,12 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     return makeTrivial(type);
   }
   auto arrayType = pick(mutableArrays);
-  auto elementType = arrayType.getArray().element.type;
+  auto element = arrayType.getArray().element;
   auto* index = make(Type::i32);
   auto* ref = makeTrappingRefUse(arrayType);
   if (oneIn(2)) {
     // ArrayFill
-    auto* value = make(elementType);
+    auto* value = make(element.type);
     auto* length = make(Type::i32);
     // Only rarely emit a plain get which might trap. See related logic in
     // ::makePointer().
@@ -3453,13 +3453,14 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     // ArrayCopy. Here we must pick a source array whose element type is a
     // subtype of the destination.
     auto srcArrayType = pick(mutableArrays);
-    auto srcElementType = srcArrayType.getArray().element.type;
-    if (!Type::isSubType(srcElementType, elementType)) {
+    auto srcElement = srcArrayType.getArray().element;
+    if (!Type::isSubType(srcElement.type, element.type) ||
+        element.packedType != srcElement.packedType) {
       // TODO: A matrix of which arrays are subtypes of others. For now, if we
       // didn't get what we want randomly, just copy from the same type to
       // itself.
       srcArrayType = arrayType;
-      srcElementType = elementType;
+      srcElement = element;
     }
     auto* srcIndex = make(Type::i32);
     auto* srcRef = makeTrappingRefUse(srcArrayType);
