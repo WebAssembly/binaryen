@@ -2371,6 +2371,40 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   }
 }
 
+Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
+  auto percent = upTo(100);
+  // Only give a low probability to emit a nullable reference.
+  if (percent < 5) {
+    return make(Type(type, Nullable));
+  }
+  // Otherwise, usually emit a non-nullable one.
+  auto nonNull = Type(type, NonNullable);
+  if (percent < 70 || !funcContext) {
+    return make(nonNull);
+  }
+  // With significant probability, try to use an existing value. it is better to
+  // have patterns like this:
+  //
+  //  (local.set $ref (struct.new $..
+  //  (struct.get (local.get $ref))
+  //
+  // Rather than constantly operating on new data each time:
+  //
+  //  (local.set $ref (struct.new $..
+  //  (struct.get (struct.new $..
+  //
+  // By using local values more, we get more coverage of interesting sequences
+  // of reads and writes to the same objects.
+  auto& typeLocals = funcContext->typeLocals[nonNull];
+  if (!typeLocals.empty()) {
+    return builder.makeLocalGet(pick(typeLocals), nonNull);
+  }
+  // Add a new local and tee it, so later operations can use it.
+  auto index = builder.addVar(funcContext->func, nonNull);
+  funcContext->typeLocals[nonNull].push_back(index);
+  return builder.makeLocalTee(index, make(nonNull), nonNull);
+}
+
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
   return builder.makeUnary(args.a, args.b);
 }
@@ -3272,12 +3306,7 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto& structFields = typeStructFields[type];
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
-  // TODO: also nullable ones? that would increase the risk of traps
-  // TODO: Ensure a good chance to use a local.get or tee here, as we want to
-  //       test the same reference having multiple sets/gets on it, and not
-  //       gets/sets of struct.news everywhere. Also in struct.set, array.get,
-  //       array.set.
-  auto* ref = make(Type(structType, NonNullable));
+  auto* ref = makeTrappingRefUse(structType);
   // TODO: fuzz signed and unsigned
   return builder.makeStructGet(fieldIndex, ref, type);
 }
@@ -3289,8 +3318,7 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   }
   auto [structType, fieldIndex] = pick(mutableStructFields);
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(structType, NonNullable));
+  auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
   return builder.makeStructSet(fieldIndex, ref, value);
 }
@@ -3323,8 +3351,7 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto& arrays = typeArrays[type];
   assert(!arrays.empty());
   auto arrayType = pick(arrays);
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(arrayType, NonNullable));
+  auto* ref = makeTrappingRefUse(arrayType);
   auto* index = make(Type::i32);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
@@ -3350,8 +3377,7 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   auto arrayType = pick(mutableArrays);
   auto elementType = arrayType.getArray().element.type;
   auto* index = make(Type::i32);
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(arrayType, NonNullable));
+  auto* ref = makeTrappingRefUse(arrayType);
   auto* value = make(elementType);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
@@ -3371,9 +3397,7 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  // TODO: Maybe this should be nullable?
-  // https://github.com/WebAssembly/gc/issues/312
-  auto* i31 = make(Type(HeapType::i31, NonNullable));
+  auto* i31 = makeTrappingRefUse(HeapType::i31);
   return builder.makeI31Get(i31, bool(oneIn(2)));
 }
 
