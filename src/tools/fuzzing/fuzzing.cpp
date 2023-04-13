@@ -1197,7 +1197,8 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArrayBulkMemoryOp);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+         &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
