@@ -3348,7 +3348,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
 
-  auto* effectiveIndex = builder.makeLocalGet(tempIndex, index->type);
+  Expression* effectiveIndex = builder.makeLocalGet(tempIndex, index->type);
 
   Expression* getLength = nullptr;
   if (length) {
@@ -3369,7 +3369,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An addition use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
     // An addition use of the length, if it was provided.
-    Expression* getIndex = nullptr;
+    Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
               effectiveIndex,
@@ -3436,18 +3436,17 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
   if (oneIn(2)) {
     // ArrayFill
     auto* value = make(elementType);
-    auto* size = make(Type::i32);
+    auto* length = make(Type::i32);
     // Only rarely emit a plain get which might trap. See related logic in
     // ::makePointer().
     if (allowOOB && oneIn(10)) {
       // TODO: fuzz signed and unsigned, and also below
       return builder.makeArraySet(ref, index, value);
     }
-    // XXX the bounds check should include the index plus the size.
     auto check =
-      makeArrayBoundsCheck(ref, index, funcContext->func, builder, size);
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
     auto* fill =
-      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getSize);
+      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getlength);
     return builder.makeIf(check.condition, fill);
   } else {
     // ArrayCopy
@@ -3460,7 +3459,6 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       // TODO: fuzz signed and unsigned, and also below
       return builder.makeArrayCopy(ref, index, otherRef, otherIndex, length);
     }
-    // XXX the bounds check should include the index plus the length, for both.
     auto check =
       makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
     auto otherCheck = makeArrayBoundsCheck(
