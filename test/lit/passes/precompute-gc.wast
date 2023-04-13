@@ -1033,4 +1033,34 @@
    )
   )
  )
+
+ ;; CHECK:      (func $unreachable-set (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $x funcref)
+ ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unreachable-set
+  ;; An unreachable set is not helpful for validation of non-nullable locals
+  ;; since we won't emit it in the binary format. We ignore the set in that
+  ;; computation, and as a result we'll make the local nullable here after
+  ;; this pass runs and the set becomes unreachable (due to calling refinalize
+  ;; which propagates the unreachability).
+  (local $x (ref func))
+  (local.set $x
+   (block (result (ref func))
+    (unreachable)
+   )
+  )
+  (drop
+   (local.get $x)
+  )
+ )
 )
