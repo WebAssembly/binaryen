@@ -109,7 +109,7 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
         // count them.
         return;
       }
-      auto index = (*currp)->cast<LocalSet>()->index;
+      auto index = curr->cast<LocalSet>()->index;
       if (!self->localsSet[index]) {
         // This local is now set until the end of this scope.
         self->localsSet[index] = true;
