@@ -3404,6 +3404,48 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   return builder.makeIf(check.condition, set);
 }
 
+Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
+  assert(type == Type::none);
+  if (mutableArrays.empty()) {
+    return makeTrivial(type);
+  }
+  auto arrayType = pick(mutableArrays);
+  auto elementType = arrayType.getArray().element.type;
+  auto* index = make(Type::i32);
+  auto* ref = makeTrappingRefUse(arrayType);
+  if (oneIn(2)) {
+    // ArrayFill
+    auto* value = make(elementType);
+    auto* size = make(Type::i32);
+    // Only rarely emit a plain get which might trap. See related logic in
+    // ::makePointer().
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArraySet(ref, index, value);
+    }
+    // XXX the bounds check should include the index plus the size.
+    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+    auto* fill = builder.makeArrayFill(check.getRef, check.getIndex, value, size);
+    return builder.makeIf(check.condition, fill);
+  } else {
+    // ArrayCopy
+    auto otherArrayType = pick(mutableArrays);
+    auto otherElementType = arrayType.getArray().element.type;
+    auto* otherIndex = make(Type::i32);
+    auto* otherRef = makeTrappingRefUse(arrayType);
+    auto* length = make(Type::i32);
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArrayCopy(ref, index, otherRef, otherIndex, length);
+    }
+    // XXX the bounds check should include the index plus the length, for both.
+    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
+    auto otherCheck = makeArrayBoundsCheck(otherRef, otherIndex, funcContext->func, builder);
+    auto* copy = builder.makeArrayCopy(check.getRef, check.getIndex, otherCheck.getRef, otherCheck.getIndex, length);
+    return builder.makeIf(check.condition, builder.makeIf(otherCheck.condition, copy));
+  }
+}
+
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
