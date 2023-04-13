@@ -3446,7 +3446,7 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     auto check =
       makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
     auto* fill =
-      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getlength);
+      builder.makeArrayFill(check.getRef, check.getIndex, value, check.getLength);
     return builder.makeIf(check.condition, fill);
   } else {
     // ArrayCopy
