@@ -6,12 +6,10 @@
 ;; type, and hit an error during --roundtrip.
 
 ;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt -all --roundtrip -S --nominal -o - | filecheck %s --check-prefix NOMNL
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct (field i32)))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -20,13 +18,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.test $struct.B
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test
     (drop
       (ref.test $struct.B (ref.null $struct.A))
@@ -37,7 +28,6 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; NOMNL:      (type $struct.B (struct (field i32)))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -46,13 +36,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (ref.cast null $struct.B
-  ;; NOMNL-NEXT:    (ref.null none)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test
     (drop
       (ref.cast null $struct.B (ref.null $struct.A))
@@ -62,18 +45,12 @@
 
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; NOMNL:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (struct.new_default $struct.A)
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test
     (drop
       (struct.new_default $struct.A)
@@ -83,7 +60,6 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -93,14 +69,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.new $vector
-  ;; NOMNL-NEXT:    (f64.const 3.14159)
-  ;; NOMNL-NEXT:    (i32.const 3)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test
     (drop
       (array.new $vector
@@ -113,7 +81,6 @@
 
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
-  ;; NOMNL:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -125,16 +92,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; NOMNL:      (func $test (type $none_=>_none)
-  ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (array.new_fixed $vector
-  ;; NOMNL-NEXT:    (f64.const 1)
-  ;; NOMNL-NEXT:    (f64.const 2)
-  ;; NOMNL-NEXT:    (f64.const 4)
-  ;; NOMNL-NEXT:    (f64.const 8)
-  ;; NOMNL-NEXT:   )
-  ;; NOMNL-NEXT:  )
-  ;; NOMNL-NEXT: )
   (func $test
     (drop
       (array.new_fixed $vector
