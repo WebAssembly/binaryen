@@ -3333,15 +3333,32 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   return builder.makeStructSet(fieldIndex, ref, value);
 }
 
+// Make a bounds check for an array operation, given a ref + index. An optional
+// additional length parameter can be provided, which is added to the index if
+// so (that is useful for something like array.fill, which operations on not a
+// single item like array.set, but a range).
 static auto makeArrayBoundsCheck(Expression* ref,
                                  Expression* index,
                                  Function* func,
-                                 Builder& builder) {
+                                 Builder& builder,
+                                 Expression* length = nullptr) {
   auto tempRef = builder.addVar(func, ref->type);
   auto tempIndex = builder.addVar(func, index->type);
   auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
+
+  auto* effectiveIndex = builder.makeLocalGet(tempIndex, index->type);
+
+  Expression* getLength = nullptr;
+  if (length) {
+    // Store the length so we can reuse it.
+    auto tempLength = builder.addVar(func, length->type);
+    auto* teeLength = builder.makeLocalTee(tempLength, length, length->type);
+    // The effective index will now include the length.
+    effectiveIndex = builder.makeBinary(AddInt32, effectiveIndex, length);
+    getLength = builder.makeLocalGet(tempLength, length->type);
+  }
 
   struct BoundsCheck {
     // A condition that checks if the index is in bounds.
@@ -3351,9 +3368,12 @@ static auto makeArrayBoundsCheck(Expression* ref,
     Expression* getRef;
     // An addition use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
+    // An addition use of the length, if it was provided.
+    Expression* getIndex = nullptr;
   } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
-              builder.makeLocalGet(tempIndex, index->type)};
+              effectiveIndex,
+              getLength};
   return result;
 }
 
@@ -3424,8 +3444,8 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       return builder.makeArraySet(ref, index, value);
     }
     // XXX the bounds check should include the index plus the size.
-    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-    auto* fill = builder.makeArrayFill(check.getRef, check.getIndex, value, size);
+    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder, size);
+    auto* fill = builder.makeArrayFill(check.getRef, check.getIndex, value, check.getSize);
     return builder.makeIf(check.condition, fill);
   } else {
     // ArrayCopy
@@ -3439,9 +3459,9 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
       return builder.makeArrayCopy(ref, index, otherRef, otherIndex, length);
     }
     // XXX the bounds check should include the index plus the length, for both.
-    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-    auto otherCheck = makeArrayBoundsCheck(otherRef, otherIndex, funcContext->func, builder);
-    auto* copy = builder.makeArrayCopy(check.getRef, check.getIndex, otherCheck.getRef, otherCheck.getIndex, length);
+    auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto otherCheck = makeArrayBoundsCheck(otherRef, otherIndex, funcContext->func, builder, check.getLength);
+    auto* copy = builder.makeArrayCopy(check.getRef, check.getIndex, otherCheck.getRef, otherCheck.getIndex, otherCheck.getLength);
     return builder.makeIf(check.condition, builder.makeIf(otherCheck.condition, copy));
   }
 }
