@@ -129,14 +129,15 @@
   ;; As above, but all writes are of $child-A, which allows more optimization
   ;; up to that type.
 
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct (field (mut (ref $child-A)))))
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct (struct (field (mut (ref $child-A)))))
     (type $struct (struct_subtype (field (mut structref)) data))
 
-  ;; CHECK:       (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
+    ;; CHECK:       (type $child-A (struct_subtype (field (mut (ref $child-A))) $struct))
     (type $child-A (struct_subtype (field (mut structref)) $struct))
 
+    ;; CHECK:       (type $child-B (struct_subtype (field (mut (ref $child-A))) $struct))
     (type $child-B (struct_subtype (field (mut structref)) $struct))
   )
 
@@ -166,7 +167,7 @@
   )
 
   ;; CHECK:      (func $keepalive (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $temp (ref null $child-A))
+  ;; CHECK-NEXT:  (local $temp (ref null $child-B))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $keepalive
