@@ -810,3 +810,14 @@
     )
   )
 )
+
+(module
+  (type $F (func))
+
+  (func $func
+    ;; We should not error on a call_ref to a bottom type.
+    (call_ref $F
+      (ref.null nofunc)
+    )
+  )
+)
