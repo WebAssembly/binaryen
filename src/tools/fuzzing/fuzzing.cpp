@@ -2327,6 +2327,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     // perhaps, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
     // to us, if there is no local).
+    // TODO: we could also look for locals containing subtypes
     if (funcContext && !funcContext->typeLocals[type].empty()) {
       return makeLocalGet(type);
     }
