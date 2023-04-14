@@ -253,15 +253,20 @@ struct Reducer
   void reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
     std::vector<std::string> passes = {
+      // Optimization modes.
       "-Oz",
       "-Os",
       "-O1",
       "-O2",
       "-O3",
       "-O4",
+      // Optimization modes + passes that work well with them.
       "--flatten -Os",
       "--flatten -O3",
       "--flatten --simplify-locals-notee-nostructure --local-cse -Os",
+      "--type-ssa -Os --type-merging",
+      "--gufa -O1",
+      // Individual passes or combinations of them.
       "--coalesce-locals --vacuum",
       "--dae",
       "--dae-optimizing",
@@ -287,6 +292,7 @@ struct Reducer
       "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",
+      "--remove-unused-types",
       "--vacuum"};
     auto oldSize = file_size(working);
     bool more = true;
