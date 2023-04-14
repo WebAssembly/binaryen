@@ -2320,15 +2320,16 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return builder.makeRefNull(heapType);
   }
 
-  // If the type is non-nullable, and we've run out of input, emit a cast to
-  // make this validate, but it will trap at runtime which is not ideal. This at
-  // least avoids infinite recursion here, and we emit a valid (but not that
-  // useful) wasm.
+  // If the type is non-nullable, but we've run out of input, then we need to do
+  // something here to avoid infinite recursion. In the worse case we'll emit a
+  // cast to non-null of a null, which validates, but it will trap at runtime
+  // which is not ideal.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
     // If we have a function context then we can at least emit a local.get,
     // perhaps, which is less bad. Note that we need to check typeLocals
     // manually here to avoid infinite recursion (as makeLocalGet will fall back
     // to us, if there is no local).
+    // TODO: we could also look for locals containing subtypes
     if (funcContext && !funcContext->typeLocals[type].empty()) {
       return makeLocalGet(type);
     }
