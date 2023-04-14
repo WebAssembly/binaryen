@@ -1290,13 +1290,6 @@ int main(int argc, const char* argv[]) {
   if (debugInfo) {
     extraFlags += " -g ";
   }
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    extraFlags += " --nominal";
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    extraFlags += " --hybrid";
-  } else {
-    WASM_UNREACHABLE("unexpected type system");
-  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";

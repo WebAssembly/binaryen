@@ -140,23 +140,6 @@ struct ToolOptions : public Options {
              }
              passOptions.arguments[key] = value;
            })
-      .add("--nominal",
-           "",
-           "Force all GC type definitions to be parsed as nominal.",
-           ToolOptionsCategory,
-           Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
-             setTypeSystem(TypeSystem::Nominal);
-           })
-      .add("--hybrid",
-           "",
-           "Force all GC type definitions to be parsed using the isorecursive "
-           "hybrid type system.",
-           ToolOptionsCategory,
-           Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
-             setTypeSystem(TypeSystem::Isorecursive);
-           })
       .add(
         "--closed-world",
         "-cw",

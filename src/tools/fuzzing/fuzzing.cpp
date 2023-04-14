@@ -2260,14 +2260,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       assert(wasm.features.hasGC());
       // TODO: Construct nontrivial types. For now just create a hard coded
       // struct.
-      // Use a local static to avoid creating a fresh nominal types in
-      // --nominal mode.
+      // Use a local static to avoid the expense of canonicalizing a new type
+      // every time.
       static HeapType trivialStruct = HeapType(Struct());
       return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
     }
     case HeapType::array: {
-      // Use a local static to avoid creating a fresh nominal types in
-      // --nominal mode.
       static HeapType trivialArray =
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
       return builder.makeArrayNewFixed(trivialArray, {});
