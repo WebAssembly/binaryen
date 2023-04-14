@@ -16,6 +16,7 @@
 
 #include "support/file.h"
 #include "support/debug.h"
+#include "support/path.h"
 #include "support/utilities.h"
 
 #include <cstdint>
@@ -57,12 +58,13 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   if (binary == Flags::Binary) {
     flags |= std::ifstream::binary;
   }
-  infile.open(filename, flags);
+  infile.open(wasm::Path::string_to_wstring(filename), flags);
   if (!infile.is_open()) {
     Fatal() << "Failed opening '" << filename << "'";
   }
   infile.seekg(0, std::ios::end);
   std::streampos insize = infile.tellg();
+  //std::cerr << "insize " <<insize<< " "<<filename;
   if (uint64_t(insize) >= std::numeric_limits<size_t>::max()) {
     // Building a 32-bit executable where size_t == 32 bits, we are not able to
     // create strings larger than 2^32 bytes in length, so must abort here.
@@ -112,7 +114,7 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
         }
-        outfile.open(filename, flags);
+        outfile.open(wasm::Path::string_to_wstring(filename), flags);
         if (!outfile.is_open()) {
           Fatal() << "Failed opening '" << filename << "'";
         }
@@ -122,12 +124,12 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
     }()) {}
 
 void wasm::copy_file(std::string input, std::string output) {
-  std::ifstream src(input, std::ios::binary);
-  std::ofstream dst(output, std::ios::binary);
+  std::ifstream src(wasm::Path::string_to_wstring(input), std::ios::binary);
+  std::ofstream dst(wasm::Path::string_to_wstring(output), std::ios::binary);
   dst << src.rdbuf();
 }
 
 size_t wasm::file_size(std::string filename) {
-  std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
+  std::ifstream infile(wasm::Path::string_to_wstring(filename), std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }

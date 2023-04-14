@@ -26,6 +26,7 @@
 
 #include "wasm-io.h"
 #include "support/debug.h"
+#include "support/path.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
 #include "wat-parser.h"
@@ -89,7 +90,7 @@ void ModuleReader::readBinary(std::string filename,
 bool ModuleReader::isBinaryFile(std::string filename) {
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in | std::ifstream::binary;
-  infile.open(filename, flags);
+  infile.open(wasm::Path::string_to_wstring(filename), flags);
   char buffer[4] = {1, 2, 3, 4};
   infile.read(buffer, 4);
   infile.close();

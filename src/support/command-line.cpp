@@ -17,6 +17,11 @@
 #include "support/command-line.h"
 #include "config.h"
 #include "support/debug.h"
+#include "support/path.h"
+
+#define NOMINMAX
+#include "windows.h"
+#include "shellapi.h"
 
 using namespace wasm;
 
@@ -163,6 +168,18 @@ Options& Options::add_positional(const std::string& name,
 }
 
 void Options::parse(int argc, const char* argv[]) {
+
+#ifdef WIN32
+  auto argListW = CommandLineToArgvW(GetCommandLineW(), &argc);
+  std::vector<std::string> argList;
+  for (size_t i = 0, e = argc; i < e; ++i) {
+    argList.push_back(wasm::Path::wstring_to_string(argListW[i]));
+    std::cerr << argList[i] << "\n";
+  }
+#else
+  const char** argList = argv;
+#endif
+
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
@@ -174,7 +191,7 @@ void Options::parse(int argc, const char* argv[]) {
     return s.size();
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
-    std::string currentOption = argv[i];
+    std::string currentOption = argList[i];
 
     // "-" alone is a positional option
     if (dashes(currentOption) == 0 || currentOption == "-") {

@@ -26,6 +26,9 @@
 
 namespace wasm::Path {
 
+std::wstring string_to_wstring(const std::string& s);
+std::string wstring_to_string(const std::wstring& s);
+
 char getPathSeparator();
 std::string getDirName(const std::string& path);
 std::string getBaseName(const std::string& path);
