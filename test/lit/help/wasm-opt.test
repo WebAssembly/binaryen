@@ -676,13 +676,6 @@
 ;; CHECK-NEXT:                                                 optimization passes being run.
 ;; CHECK-NEXT:                                                 Must be in the form KEY@VALUE
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                                     Force all GC type definitions to
-;; CHECK-NEXT:                                                 be parsed as nominal.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --hybrid                                      Force all GC type definitions to
-;; CHECK-NEXT:                                                 be parsed using the isorecursive
-;; CHECK-NEXT:                                                 hybrid type system.
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --closed-world,-cw                            Assume code outside of the
 ;; CHECK-NEXT:                                                 module does not inspect or
 ;; CHECK-NEXT:                                                 interact with GC and function

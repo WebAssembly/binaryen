@@ -13,10 +13,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --verbose,-v Print extra information
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal    Use the nominal type system
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --hybrid     Use the isorecursive hybrid type system (default)
-;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------
