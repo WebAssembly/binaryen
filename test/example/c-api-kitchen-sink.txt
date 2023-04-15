@@ -3147,8 +3147,6 @@ optimized:
   (i32.const 4)
  )
 )
-BinaryenTypeSystemNominal: 1
-BinaryenTypeSystemIsorecursive: 0
 TypeBuilderErrorReasonSelfSupertype: 0
 TypeBuilderErrorReasonInvalidSupertype: 1
 TypeBuilderErrorReasonForwardSupertypeReference: 2

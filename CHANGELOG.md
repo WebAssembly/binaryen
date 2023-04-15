@@ -17,9 +17,9 @@ Current Trunk
 
 - Some C and JS API functions now refer to data and element segments by name
   instead of index.
-- The --nominal and --hybrid command line options have been removed. The only
-  supported type system is now the standard isorecursive (i.e. hybrid) type
-  system.
+- The --nominal and --hybrid command line options and related API functions have
+  been removed. The only supported type system is now the standard isorecursive
+  (i.e. hybrid) type system.
 
 v112
 ----

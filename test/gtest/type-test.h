@@ -5,18 +5,11 @@
 #define wasm_test_gtest_type_test_h
 
 // Helper test fixture for managing the global type system state.
-template<wasm::TypeSystem system>
-class TypeSystemTest : public ::testing::Test {
-  wasm::TypeSystem originalSystem;
+class TypeTest : public ::testing::Test {
 
 protected:
-  void SetUp() override {
-    originalSystem = wasm::getTypeSystem();
-    wasm::setTypeSystem(system);
-  }
   void TearDown() override {
     wasm::destroyAllTypesForTestingPurposesOnly();
-    wasm::setTypeSystem(originalSystem);
   }
 
   // Utilities
@@ -31,9 +24,5 @@ protected:
     return Struct(std::move(fields));
   }
 };
-
-using TypeTest = TypeSystemTest<wasm::TypeSystem::Isorecursive>;
-using NominalTest = TypeSystemTest<wasm::TypeSystem::Nominal>;
-using IsorecursiveTest = TypeSystemTest<wasm::TypeSystem::Isorecursive>;
 
 #endif // wasm_test_gtest_type_test_h
