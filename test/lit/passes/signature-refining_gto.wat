@@ -1,19 +1,16 @@
-;; RUN: foreach %s %t wasm-opt --closed-world --nominal --signature-refining --gto                       --roundtrip -all -S -o - | filecheck %s
-;; RUN: foreach %s %t wasm-opt --closed-world           --signature-refining --gto --remove-unused-types --roundtrip -all -S -o - | filecheck %s --check-prefix ISOREC
+;; RUN: wasm-opt %s --closed-world --signature-refining --gto --remove-unused-types --roundtrip -all -S -o - | filecheck %s
 
 ;; Check that type $A is not included in the final binary after the signature
-;; refining optimization. For isorecursive types, this requires an additional
-;; --remove-unused-types pass after signature refining.
+;; refining optimization and an additional --remove-unused-types pass.
 
 (module
  ;; The type $A should not be emitted at all (see below).
  ;; CHECK-NOT: (type $A
- ;; ISOREC-NOT: (type $A
  (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $ref|none|_=>_none (func (param (ref none))))
-
  ;; CHECK:      (type $funcref_i32_=>_none (func (param funcref i32)))
+
+ ;; CHECK:      (type $ref|none|_=>_none (func (param (ref none))))
 
  ;; CHECK:      (func $struct.get (type $ref|none|_=>_none) (param $0 (ref none))
  ;; CHECK-NEXT:  (drop
