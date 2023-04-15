@@ -70,7 +70,10 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setSkipFunctionBodies(skipFunctionBodies);
   if (sourceMapFilename.size()) {
     sourceMapStream = std::make_unique<std::ifstream>();
-    sourceMapStream->open(sourceMapFilename);
+    sourceMapStream->open(wasm::Path::string_to_wstring(sourceMapFilename));
+    if (!sourceMapStream->is_open()) {
+      Fatal() << "Failed opening '" << sourceMapFilename << "'";
+    }
     parser.setDebugLocations(sourceMapStream.get());
   }
   parser.read();
@@ -158,7 +161,10 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   std::unique_ptr<std::ofstream> sourceMapStream;
   if (sourceMapFilename.size()) {
     sourceMapStream = std::make_unique<std::ofstream>();
-    sourceMapStream->open(sourceMapFilename);
+    sourceMapStream->open(wasm::Path::string_to_wstring(sourceMapFilename));
+    if (!sourceMapStream->is_open()) {
+      Fatal() << "Failed opening '" << sourceMapFilename << "'";
+    }
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
   if (symbolMap.size() > 0) {
