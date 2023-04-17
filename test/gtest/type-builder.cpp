@@ -156,7 +156,7 @@ TEST_F(TypeTest, ModuleTypePrinter) {
   EXPECT_EQ(stream.str(), "(type $1 (struct (field i32)))");
 }
 
-TEST_F(IsorecursiveTest, Basics) {
+TEST_F(TypeTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
@@ -207,7 +207,7 @@ TEST_F(IsorecursiveTest, Basics) {
   EXPECT_NE(newRefNullArray, refNullArray);
 }
 
-static void testDirectSelfSupertype() {
+TEST_F(TypeTest, DirectSelfSupertype) {
   // Type is directly a supertype of itself.
   TypeBuilder builder(1);
   builder[0] = Struct{};
@@ -218,19 +218,11 @@ static void testDirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    EXPECT_EQ(error->reason,
-              TypeBuilder::ErrorReason::ForwardSupertypeReference);
-  }
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
-TEST_F(NominalTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
-TEST_F(IsorecursiveTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
-
-static void testIndirectSelfSupertype() {
+TEST_F(TypeTest, IndirectSelfSupertype) {
   // Type is indirectly a supertype of itself.
   TypeBuilder builder(2);
   builder.createRecGroup(0, 2);
@@ -244,21 +236,11 @@ static void testIndirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    EXPECT_EQ(error->reason,
-              TypeBuilder::ErrorReason::ForwardSupertypeReference);
-  } else {
-    WASM_UNREACHABLE("unexpected type system");
-  }
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
-TEST_F(NominalTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
-TEST_F(IsorecursiveTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
-
-static void testInvalidSupertype() {
+TEST_F(TypeTest, InvalidSupertype) {
   TypeBuilder builder(2);
   builder.createRecGroup(0, 2);
   builder[0] = Struct({Field(Type::i32, Immutable)});
@@ -274,10 +256,7 @@ static void testInvalidSupertype() {
   EXPECT_EQ(error->index, 1u);
 }
 
-TEST_F(NominalTest, InvalidSupertype) { testInvalidSupertype(); }
-TEST_F(IsorecursiveTest, InvalidSupertype) { testInvalidSupertype(); }
-
-TEST_F(IsorecursiveTest, ForwardReferencedChild) {
+TEST_F(TypeTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
   Type refA1 = builder.getTempRefType(builder[1], Nullable);
@@ -297,7 +276,7 @@ TEST_F(IsorecursiveTest, ForwardReferencedChild) {
   EXPECT_EQ(error->index, 1u);
 }
 
-TEST_F(IsorecursiveTest, RecGroupIndices) {
+TEST_F(TypeTest, RecGroupIndices) {
   TypeBuilder builder(5);
 
   builder.createRecGroup(0, 2);
@@ -324,7 +303,7 @@ TEST_F(IsorecursiveTest, RecGroupIndices) {
   EXPECT_EQ(built[4].getRecGroupIndex(), 2u);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeGroups) {
+TEST_F(TypeTest, CanonicalizeGroups) {
   // Trivial types in the same group are not equivalent.
   TypeBuilder builderA(2);
   builderA.createRecGroup(0, 2);
@@ -374,7 +353,7 @@ TEST_F(IsorecursiveTest, CanonicalizeGroups) {
   EXPECT_EQ(builtB2[0], builtB[0]);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeUses) {
+TEST_F(TypeTest, CanonicalizeUses) {
   TypeBuilder builder(8);
   builder[0] = makeStruct(builder, {});
   builder[1] = makeStruct(builder, {});
@@ -402,7 +381,7 @@ TEST_F(IsorecursiveTest, CanonicalizeUses) {
   EXPECT_NE(built[4], built[6]);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeSelfReferences) {
+TEST_F(TypeTest, CanonicalizeSelfReferences) {
   TypeBuilder builder(5);
   // Single self-reference
   builder[0] = makeStruct(builder, {0});
@@ -428,7 +407,7 @@ TEST_F(IsorecursiveTest, CanonicalizeSelfReferences) {
   EXPECT_NE(built[3], built[4]);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
+TEST_F(TypeTest, CanonicalizeSupertypes) {
   TypeBuilder builder(6);
   builder[0] = Struct{};
   builder[1] = Struct{};
@@ -455,7 +434,7 @@ TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[4], built[5]);
 }
 
-TEST_F(IsorecursiveTest, HeapTypeConstructors) {
+TEST_F(TypeTest, HeapTypeConstructors) {
   HeapType sig(Signature(Type::i32, Type::i32));
   HeapType struct_(Struct({Field(Type(sig, Nullable), Mutable)}));
   HeapType array(Field(Type(struct_, Nullable), Mutable));
@@ -484,7 +463,7 @@ TEST_F(IsorecursiveTest, HeapTypeConstructors) {
   EXPECT_EQ(array, array2);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
+TEST_F(TypeTest, CanonicalizeTypesBeforeSubtyping) {
   TypeBuilder builder(6);
   // A rec group
   builder.createRecGroup(0, 2);
@@ -510,7 +489,7 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
   EXPECT_TRUE(result);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
+TEST_F(TypeTest, CanonicalizeBasicTypes) {
   TypeBuilder builder(5);
 
   Type anyref = builder.getTempRefType(builder[0], Nullable);
@@ -532,7 +511,7 @@ TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
   EXPECT_EQ(built[3], built[4]);
 }
 
-TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
+TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType ext = HeapType::ext;
   HeapType func = HeapType::func;
   HeapType any = HeapType::any;
@@ -829,7 +808,7 @@ TEST_F(IsorecursiveTest, TestHeapTypeRelations) {
   }
 }
 
-TEST_F(IsorecursiveTest, TestSubtypeErrors) {
+TEST_F(TypeTest, TestSubtypeErrors) {
   Type anyref = Type(HeapType::any, Nullable);
   Type eqref = Type(HeapType::eq, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
@@ -872,7 +851,7 @@ TEST_F(IsorecursiveTest, TestSubtypeErrors) {
 }
 
 // Test SubTypes utility code.
-TEST_F(NominalTest, TestSubTypes) {
+TEST_F(TypeTest, TestSubTypes) {
   Type anyref = Type(HeapType::any, Nullable);
   Type eqref = Type(HeapType::eq, Nullable);
 
@@ -907,40 +886,7 @@ TEST_F(NominalTest, TestSubTypes) {
 }
 
 // Test reuse of a previously built type as supertype.
-TEST_F(NominalTest, TestExistingSuperType) {
-  // Build an initial type A
-  Type A;
-  {
-    TypeBuilder builder(1);
-    builder[0] = Struct();
-    auto result = builder.build();
-    ASSERT_TRUE(result);
-    auto built = *result;
-    A = Type(built[0], Nullable);
-  }
-
-  // Build a type B <: A using a new builder
-  Type B;
-  {
-    TypeBuilder builder(1);
-    builder[0] = Struct();
-    builder.setSubType(0, A.getHeapType());
-    auto result = builder.build();
-    ASSERT_TRUE(result);
-    auto built = *result;
-    B = Type(built[0], Nullable);
-  }
-
-  // Test that B <: A where A is the initial type A
-  auto superOfB = B.getHeapType().getSuperType();
-  ASSERT_TRUE(superOfB);
-  EXPECT_EQ(*superOfB, A.getHeapType());
-  EXPECT_NE(B.getHeapType(), A.getHeapType());
-}
-
-// Test reuse of a previously built type as supertype, where in isorecursive
-// mode canonicalization is performed.
-TEST_F(IsorecursiveTest, TestExistingSuperType) {
+TEST_F(TypeTest, TestExistingSuperType) {
   // Build an initial type A1
   Type A1;
   {
@@ -993,7 +939,7 @@ TEST_F(IsorecursiveTest, TestExistingSuperType) {
 }
 
 // Test .getMaxDepths() helper.
-TEST_F(NominalTest, TestMaxStructDepths) {
+TEST_F(TypeTest, TestMaxStructDepths) {
   /*
       A
       |
@@ -1022,7 +968,7 @@ TEST_F(NominalTest, TestMaxStructDepths) {
   EXPECT_EQ(maxDepths[HeapType::any], Index(4));
 }
 
-TEST_F(NominalTest, TestMaxArrayDepths) {
+TEST_F(TypeTest, TestMaxArrayDepths) {
   HeapType A;
   {
     TypeBuilder builder(1);
@@ -1043,7 +989,7 @@ TEST_F(NominalTest, TestMaxArrayDepths) {
 }
 
 // Test .depth() helper.
-TEST_F(NominalTest, TestDepth) {
+TEST_F(TypeTest, TestDepth) {
   HeapType A, B, C;
   {
     TypeBuilder builder(3);
@@ -1086,7 +1032,7 @@ TEST_F(NominalTest, TestDepth) {
 }
 
 // Test .iterSubTypes() helper.
-TEST_F(NominalTest, TestIterSubTypes) {
+TEST_F(TypeTest, TestIterSubTypes) {
   /*
         A
        / \

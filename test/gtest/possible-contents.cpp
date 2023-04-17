@@ -66,11 +66,6 @@ static std::unique_ptr<Module> parse(std::string module) {
 // that.
 class PossibleContentsTest : public testing::Test {
 protected:
-  void SetUp() override {
-    // Use nominal typing to test struct types.
-    wasm::setTypeSystem(TypeSystem::Nominal);
-  }
-
   Type anyref = Type(HeapType::any, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
   Type i31ref = Type(HeapType::i31, Nullable);
@@ -542,6 +537,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
             D
   */
   TypeBuilder builder(5);
+  builder.createRecGroup(0, 5);
   builder.setHeapType(0, Struct(FieldList{}));
   builder.setHeapType(1, Struct(FieldList{}));
   builder.setHeapType(2, Struct(FieldList{}));

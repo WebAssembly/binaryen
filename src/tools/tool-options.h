@@ -140,23 +140,6 @@ struct ToolOptions : public Options {
              }
              passOptions.arguments[key] = value;
            })
-      .add("--nominal",
-           "",
-           "Force all GC type definitions to be parsed as nominal.",
-           ToolOptionsCategory,
-           Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
-             setTypeSystem(TypeSystem::Nominal);
-           })
-      .add("--hybrid",
-           "",
-           "Force all GC type definitions to be parsed using the isorecursive "
-           "hybrid type system.",
-           ToolOptionsCategory,
-           Options::Arguments::Zero,
-           [](Options* o, const std::string& argument) {
-             setTypeSystem(TypeSystem::Isorecursive);
-           })
       .add(
         "--closed-world",
         "-cw",
@@ -199,10 +182,6 @@ struct ToolOptions : public Options {
   void applyFeatures(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
-    // Non-default type systems only make sense with GC enabled.
-    if (!module.features.hasGC() && getTypeSystem() == TypeSystem::Nominal) {
-      Fatal() << "Nominal typing is only allowed when GC is enabled";
-    }
   }
 
 private:

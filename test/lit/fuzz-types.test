@@ -1,4 +1,4 @@
-;; RUN: wasm-fuzz-types --hybrid -v --seed=1 | filecheck %s
+;; RUN: wasm-fuzz-types -v --seed=1 | filecheck %s
 
 ;; CHECK:      (type $0 (struct))
 ;; CHECK-NEXT: (rec

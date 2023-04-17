@@ -3,8 +3,8 @@
 ;; Test in both "always" mode, which always monomorphizes, and in "careful"
 ;; mode which does it only when it appears to actually help.
 
-;; RUN: foreach %s %t wasm-opt --nominal --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
-;; RUN: foreach %s %t wasm-opt --nominal --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
+;; RUN: foreach %s %t wasm-opt --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
+;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
   ;; ALWAYS:      (type $A (struct ))
@@ -558,14 +558,14 @@
 (module
   ;; Test that we avoid recursive calls.
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
-
   ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
-
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
+  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
   ;; ALWAYS:      (type $B (struct_subtype  $A))
+  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
   ;; CAREFUL:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
