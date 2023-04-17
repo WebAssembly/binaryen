@@ -2173,9 +2173,8 @@ struct OptimizeInstructions
         // code in this pass needing to handle unexpected unreachable code
         // (which is only properly propagated at the end of this pass when we
         // refinalize).
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeUnreachable()},
-                                          Type::i32));
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()}, Type::i32));
         break;
       case GCTypeUtils::Failure:
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
