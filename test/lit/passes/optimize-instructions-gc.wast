@@ -2392,7 +2392,7 @@
   ;; CHECK:      (func $non-null-bottom-ref-test-notee (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (loop
+  ;; CHECK-NEXT:   (loop (result (ref nofunc))
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2420,6 +2420,39 @@
     ;; This cast cannot succeed, so return 0.
     (ref.test nofunc
       (ref.func $non-null-bottom-cast)
+    )
+  )
+
+  ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.test-then-optimizeAddedConstants (result i32)
+    ;; The cast will become unreachable, and then the test as well. We should
+    ;; not error in the subsequent optimizeAddedConstants function that will be
+    ;; called on the adds. The risk here is that that code does not expect an
+    ;; unreachable to appear inside a non-unreachable add, which can happen as
+    ;; we delay updating types til the end of the pass. To avoid that, the
+    ;; ref.test should not change its type, but only replace itself with a block
+    ;; containing an unreachable (but declared as the old type; leaving
+    ;; optimizing it further for other passes).
+    (i32.add
+      (i32.const 1)
+      (i32.add
+        (i32.const 2)
+        (ref.test func
+          (ref.cast func
+            (ref.null nofunc)
+          )
+        )
+      )
     )
   )
 )
