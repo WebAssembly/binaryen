@@ -8,9 +8,7 @@
 class TypeTest : public ::testing::Test {
 
 protected:
-  void TearDown() override {
-    wasm::destroyAllTypesForTestingPurposesOnly();
-  }
+  void TearDown() override { wasm::destroyAllTypesForTestingPurposesOnly(); }
 
   // Utilities
   wasm::Struct makeStruct(wasm::TypeBuilder& builder,
