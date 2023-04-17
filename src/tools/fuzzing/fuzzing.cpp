@@ -1196,7 +1196,9 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+         &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3332,15 +3334,32 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   return builder.makeStructSet(fieldIndex, ref, value);
 }
 
+// Make a bounds check for an array operation, given a ref + index. An optional
+// additional length parameter can be provided, which is added to the index if
+// so (that is useful for something like array.fill, which operations on not a
+// single item like array.set, but a range).
 static auto makeArrayBoundsCheck(Expression* ref,
                                  Expression* index,
                                  Function* func,
-                                 Builder& builder) {
+                                 Builder& builder,
+                                 Expression* length = nullptr) {
   auto tempRef = builder.addVar(func, ref->type);
   auto tempIndex = builder.addVar(func, index->type);
   auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
+
+  Expression* effectiveIndex = teeIndex;
+
+  Expression* getLength = nullptr;
+  if (length) {
+    // Store the length so we can reuse it.
+    auto tempLength = builder.addVar(func, length->type);
+    auto* teeLength = builder.makeLocalTee(tempLength, length, length->type);
+    // The effective index will now include the length.
+    effectiveIndex = builder.makeBinary(AddInt32, effectiveIndex, teeLength);
+    getLength = builder.makeLocalGet(tempLength, length->type);
+  }
 
   struct BoundsCheck {
     // A condition that checks if the index is in bounds.
@@ -3350,9 +3369,12 @@ static auto makeArrayBoundsCheck(Expression* ref,
     Expression* getRef;
     // An addition use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-  } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
+    // An addition use of the length, if it was provided.
+    Expression* getLength = nullptr;
+  } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
-              builder.makeLocalGet(tempIndex, index->type)};
+              builder.makeLocalGet(tempIndex, index->type),
+              getLength};
   return result;
 }
 
@@ -3401,6 +3423,64 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
   auto* set = builder.makeArraySet(check.getRef, check.getIndex, value);
   return builder.makeIf(check.condition, set);
+}
+
+Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
+  assert(type == Type::none);
+  if (mutableArrays.empty()) {
+    return makeTrivial(type);
+  }
+  auto arrayType = pick(mutableArrays);
+  auto element = arrayType.getArray().element;
+  auto* index = make(Type::i32);
+  auto* ref = makeTrappingRefUse(arrayType);
+  if (oneIn(2)) {
+    // ArrayFill
+    auto* value = make(element.type);
+    auto* length = make(Type::i32);
+    // Only rarely emit a plain get which might trap. See related logic in
+    // ::makePointer().
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArrayFill(ref, index, value, length);
+    }
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto* fill = builder.makeArrayFill(
+      check.getRef, check.getIndex, value, check.getLength);
+    return builder.makeIf(check.condition, fill);
+  } else {
+    // ArrayCopy. Here we must pick a source array whose element type is a
+    // subtype of the destination.
+    auto srcArrayType = pick(mutableArrays);
+    auto srcElement = srcArrayType.getArray().element;
+    if (!Type::isSubType(srcElement.type, element.type) ||
+        element.packedType != srcElement.packedType) {
+      // TODO: A matrix of which arrays are subtypes of others. For now, if we
+      // didn't get what we want randomly, just copy from the same type to
+      // itself.
+      srcArrayType = arrayType;
+      srcElement = element;
+    }
+    auto* srcIndex = make(Type::i32);
+    auto* srcRef = makeTrappingRefUse(srcArrayType);
+    auto* length = make(Type::i32);
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArrayCopy(ref, index, srcRef, srcIndex, length);
+    }
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto srcCheck = makeArrayBoundsCheck(
+      srcRef, srcIndex, funcContext->func, builder, check.getLength);
+    auto* copy = builder.makeArrayCopy(check.getRef,
+                                       check.getIndex,
+                                       srcCheck.getRef,
+                                       srcCheck.getIndex,
+                                       srcCheck.getLength);
+    return builder.makeIf(check.condition,
+                          builder.makeIf(srcCheck.condition, copy));
+  }
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {

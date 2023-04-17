@@ -353,6 +353,10 @@ private:
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
+  // Use a single method for the misc array operations, to not give them too
+  // much representation (e.g. compared to struct operations, which only include
+  // get/set).
+  Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
