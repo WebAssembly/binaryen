@@ -228,11 +228,6 @@ void Fuzzer::checkCanonicalization() {
   // Check that structural canonicalization is working correctly by building the
   // types again, choosing randomly between equivalent possible children for
   // each definition from both the new and old sets of built types.
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    // No canonicalization to check.
-    return;
-  }
-
   TypeBuilder builder(types.size());
 
   // Helper for creating new definitions of existing types, randomly choosing
@@ -274,36 +269,29 @@ void Fuzzer::checkCanonicalization() {
       // Set up recursion groups and record group ends to ensure we only select
       // valid children.
       recGroupEnds.reserve(builder.size());
-      if (getTypeSystem() != TypeSystem::Isorecursive) {
-        // No rec groups.
-        for (size_t i = 0; i < builder.size(); ++i) {
-          recGroupEnds.push_back(builder.size());
+      // Set up recursion groups
+      std::optional<RecGroup> currGroup;
+      size_t currGroupStart = 0;
+      auto finishGroup = [&](Index end) {
+        builder.createRecGroup(currGroupStart, end - currGroupStart);
+        for (Index i = currGroupStart; i < end; ++i) {
+          recGroupEnds.push_back(end);
         }
-      } else {
-        // Set up recursion groups
-        std::optional<RecGroup> currGroup;
-        size_t currGroupStart = 0;
-        auto finishGroup = [&](Index end) {
-          builder.createRecGroup(currGroupStart, end - currGroupStart);
-          for (Index i = currGroupStart; i < end; ++i) {
-            recGroupEnds.push_back(end);
-          }
-          currGroupStart = end;
-        };
-        for (Index i = 0; i < types.size(); ++i) {
-          auto type = types[i];
-          if (type.isBasic()) {
-            continue;
-          }
-          auto newGroup = type.getRecGroup();
-          if (!currGroup || newGroup != currGroup ||
-              type == types[currGroupStart]) {
-            finishGroup(i);
-            currGroup = newGroup;
-          }
+        currGroupStart = end;
+      };
+      for (Index i = 0; i < types.size(); ++i) {
+        auto type = types[i];
+        if (type.isBasic()) {
+          continue;
         }
-        finishGroup(builder.size());
+        auto newGroup = type.getRecGroup();
+        if (!currGroup || newGroup != currGroup ||
+            type == types[currGroupStart]) {
+          finishGroup(i);
+          currGroup = newGroup;
+        }
       }
+      finishGroup(builder.size());
 
       // Copy the original types
       for (; index < types.size(); ++index) {
@@ -349,7 +337,7 @@ void Fuzzer::checkCanonicalization() {
         assert(old.isBasic());
         return {OldHeapType{old}};
       }
-      if (!old.isBasic() && getTypeSystem() == TypeSystem::Isorecursive) {
+      if (!old.isBasic()) {
         // Check whether this child heap type is supposed to be a self-reference
         // into the recursion group we are defining. If it is, we must use the
         // corresponding type in the new recursion group, since anything else
@@ -514,7 +502,7 @@ void Fuzzer::checkInhabitable() {
     }
     // TODO: We could also check that the transformed types are the same as the
     // original types up to nullability.
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
+  } else {
     // Verify the produced inhabitable types are the same as the original types
     // (which also implies that they are indeed inhabitable).
     if (types.size() != inhabitable.size()) {

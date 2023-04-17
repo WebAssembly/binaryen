@@ -2122,23 +2122,7 @@ void test_func_opt() {
   BinaryenModuleDispose(module);
 }
 
-void test_typesystem() {
-  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
-  assert(defaultTypeSystem == BinaryenTypeSystemIsorecursive());
-  BinaryenSetTypeSystem(BinaryenTypeSystemNominal());
-  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemNominal());
-  printf("BinaryenTypeSystemNominal: %d\n", BinaryenTypeSystemNominal());
-  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
-  assert(BinaryenGetTypeSystem() == BinaryenTypeSystemIsorecursive());
-  printf("BinaryenTypeSystemIsorecursive: %d\n",
-         BinaryenTypeSystemIsorecursive());
-  BinaryenSetTypeSystem(defaultTypeSystem);
-}
-
 void test_typebuilder() {
-  BinaryenTypeSystem defaultTypeSystem = BinaryenGetTypeSystem();
-  BinaryenSetTypeSystem(BinaryenTypeSystemIsorecursive());
-
   printf("TypeBuilderErrorReasonSelfSupertype: %d\n",
          TypeBuilderErrorReasonSelfSupertype());
   printf("TypeBuilderErrorReasonInvalidSupertype: %d\n",
@@ -2344,8 +2328,6 @@ void test_typebuilder() {
   printf("module with recursive GC types:\n");
   BinaryenModulePrint(module);
   BinaryenModuleDispose(module);
-
-  BinaryenSetTypeSystem(defaultTypeSystem);
 }
 
 int main() {
@@ -2360,7 +2342,6 @@ int main() {
   test_color_status();
   test_for_each();
   test_func_opt();
-  test_typesystem();
   test_typebuilder();
 
   return 0;

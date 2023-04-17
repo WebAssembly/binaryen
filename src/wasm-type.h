@@ -40,17 +40,6 @@
 
 namespace wasm {
 
-enum class TypeSystem {
-  Isorecursive,
-  Nominal,
-};
-
-// This should only ever be called before any Types or HeapTypes have been
-// created. The default system is equirecursive.
-void setTypeSystem(TypeSystem system);
-
-TypeSystem getTypeSystem();
-
 // Dangerous! Frees all types and heap types that have ever been created and
 // resets the type system's internal state. This is only really meant to be used
 // for tests.

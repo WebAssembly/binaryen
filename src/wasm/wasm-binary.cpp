@@ -229,40 +229,22 @@ void WasmBinaryWriter::writeTypes() {
   // the type section. With nominal typing there is always one group and with
   // equirecursive typing there is one group per type.
   size_t numGroups = 0;
-  // MVP types are structural and do not use recursion groups.
-  TypeSystem typeSystem = getTypeSystem();
-  if (!wasm->features.hasGC()) {
-    typeSystem = TypeSystem::Isorecursive;
-  }
-  switch (typeSystem) {
-    case TypeSystem::Nominal:
-      numGroups = 1;
-      break;
-    case TypeSystem::Isorecursive: {
-      std::optional<RecGroup> lastGroup;
-      for (auto type : indexedTypes.types) {
-        auto currGroup = type.getRecGroup();
-        numGroups += lastGroup != currGroup;
-        lastGroup = currGroup;
-      }
+  {
+    std::optional<RecGroup> lastGroup;
+    for (auto type : indexedTypes.types) {
+      auto currGroup = type.getRecGroup();
+      numGroups += lastGroup != currGroup;
+      lastGroup = currGroup;
     }
   }
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(numGroups);
-  if (typeSystem == TypeSystem::Nominal) {
-    // The nominal recursion group contains every type.
-    o << S32LEB(BinaryConsts::EncodedType::Rec)
-      << U32LEB(indexedTypes.types.size());
-  }
   std::optional<RecGroup> lastGroup = std::nullopt;
   for (Index i = 0; i < indexedTypes.types.size(); ++i) {
     auto type = indexedTypes.types[i];
     // Check whether we need to start a new recursion group. Recursion groups of
-    // size 1 are implicit, so only emit a group header for larger groups. This
-    // gracefully handles non-isorecursive type systems, which only have groups
-    // of size 1 internally (even though nominal types are emitted as a single
-    // large group).
+    // size 1 are implicit, so only emit a group header for larger groups.
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
       o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
