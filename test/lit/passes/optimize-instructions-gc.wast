@@ -2438,7 +2438,7 @@
     ;; The cast will become unreachable, and then the test as well. We should
     ;; not error in the subsequent optimizeAddedConstants function that will be
     ;; called on the adds. The risk here is that that code does not expect an
-    ;; unreachable to appear inside a non-unreachable add, which can happen if
+    ;; unreachable to appear inside a non-unreachable add, which can happen as
     ;; we delay updating types til the end of the pass. To avoid that, the
     ;; ref.test should not change its type, but only replace itself with a block
     ;; containing an unreachable (but declared as the old type; leaving
