@@ -830,3 +830,23 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $F (func))
+  (type $F (func))
+
+  ;; CHECK:      (func $func (type $F)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; We should not error on a call_ref to a bottom type.
+    (call_ref $F
+      (ref.null nofunc)
+    )
+  )
+)
