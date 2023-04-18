@@ -16,6 +16,7 @@
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -96,7 +97,19 @@ void ReFinalize::visitSwitch(Switch* curr) {
 void ReFinalize::visitCall(Call* curr) { curr->finalize(); }
 void ReFinalize::visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
 void ReFinalize::visitLocalGet(LocalGet* curr) { curr->finalize(); }
-void ReFinalize::visitLocalSet(LocalSet* curr) { curr->finalize(); }
+void ReFinalize::visitLocalSet(LocalSet* curr) {
+  auto oldType = curr->type;
+  curr->finalize();
+  if (curr->type == Type::unreachable && oldType != curr->type) {
+    // We changed the type of this set from reachable to unreachable. This can
+    // affect non-nullable local validation BLAH BLAH
+    auto localType = getFunction()->getLocalType(curr->index);
+    if (localType.isNonNullable()) {
+      // Perhaps just this local? But this is rare, so maybe not that bad.
+      needNonNullableLocalFixups = true;
+    }
+  }
+}
 void ReFinalize::visitGlobalGet(GlobalGet* curr) { curr->finalize(); }
 void ReFinalize::visitGlobalSet(GlobalSet* curr) { curr->finalize(); }
 void ReFinalize::visitLoad(Load* curr) { curr->finalize(); }
@@ -189,6 +202,12 @@ void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
   curr->finalize();
+}
+
+void ReFinalize::visitFunction(Function* curr) {
+  if (needNonNullableLocalFixups) {
+    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
+  }
 }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }

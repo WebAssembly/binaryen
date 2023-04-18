@@ -174,3 +174,36 @@
     )
   )
 )
+
+(module
+  (type $[i32] (array i32))
+
+  (memory $0 (shared 16 17))
+  (data $0 (i32.const 37) "")
+
+  (func $test
+    (local $temp (ref any))
+    ;; The memory.init will trigger a ReFinalize. That will cause the if to
+    ;; become unreachable, after which the local.set is unreachable. We do not
+    ;; consider such sets to help non-nullable locals to validate (we do not emit
+    ;; unreachable code), so we need to fix up the non-nullable get afterwards).
+    (memory.init $0
+      (i32.const 0)
+      (i32.const 8)
+      (i32.const 5)
+    )
+    (local.set $temp
+      (array.new $[i32]
+        (if (result i32)
+          (i32.const 1)
+          (unreachable)
+          (unreachable)
+        )
+        (i32.const 1)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+  )
+)

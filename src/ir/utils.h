@@ -133,10 +133,16 @@ struct ReFinalize
   // bulk, tracking break value types so we just do a linear pass.
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
 
+  // In certain cases we may affect the validation of non-nullable locals. See
+  // ReFinalize::visitLocalSet().
+  bool needNonNullableLocalFixups = false;
+
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
 #include "wasm-delegations.def"
+
+  void visitFunction(Function* curr);
 
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
