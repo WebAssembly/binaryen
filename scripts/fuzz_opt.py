@@ -43,8 +43,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
-TYPE_SYSTEM_FLAG = '--hybrid'
-
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
@@ -129,9 +127,6 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
-    # Type system flags only make sense when GC is enabled
-    if '--disable-gc' not in FEATURE_OPTS:
-        FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
 
     # Pick closed or open with equal probability as both matter.
     #

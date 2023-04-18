@@ -1196,7 +1196,9 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet);
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+         &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
@@ -2260,14 +2262,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       assert(wasm.features.hasGC());
       // TODO: Construct nontrivial types. For now just create a hard coded
       // struct.
-      // Use a local static to avoid creating a fresh nominal types in
-      // --nominal mode.
+      // Use a local static to avoid the expense of canonicalizing a new type
+      // every time.
       static HeapType trivialStruct = HeapType(Struct());
       return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
     }
     case HeapType::array: {
-      // Use a local static to avoid creating a fresh nominal types in
-      // --nominal mode.
       static HeapType trivialArray =
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
       return builder.makeArrayNewFixed(trivialArray, {});
@@ -2318,11 +2318,19 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return builder.makeRefNull(heapType);
   }
 
-  // If the type is non-nullable, and we've run out of input, emit a cast to
-  // make this validate, but it will trap at runtime which is not ideal. This at
-  // least avoids infinite recursion here, and we emit a valid (but not that
-  // useful) wasm.
+  // If the type is non-nullable, but we've run out of input, then we need to do
+  // something here to avoid infinite recursion. In the worse case we'll emit a
+  // cast to non-null of a null, which validates, but it will trap at runtime
+  // which is not ideal.
   if (type.isNonNullable() && (random.finished() || nesting >= LIMIT)) {
+    // If we have a function context then we can at least emit a local.get,
+    // perhaps, which is less bad. Note that we need to check typeLocals
+    // manually here to avoid infinite recursion (as makeLocalGet will fall back
+    // to us, if there is no local).
+    // TODO: we could also look for locals containing subtypes
+    if (funcContext && !funcContext->typeLocals[type].empty()) {
+      return makeLocalGet(type);
+    }
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
@@ -2369,6 +2377,43 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
   }
+}
+
+Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
+  auto percent = upTo(100);
+  // Only give a low probability to emit a nullable reference.
+  if (percent < 5) {
+    return make(Type(type, Nullable));
+  }
+  // Otherwise, usually emit a non-nullable one.
+  auto nonNull = Type(type, NonNullable);
+  if (percent < 70 || !funcContext) {
+    return make(nonNull);
+  }
+  // With significant probability, try to use an existing value. it is better to
+  // have patterns like this:
+  //
+  //  (local.set $ref (struct.new $..
+  //  (struct.get (local.get $ref))
+  //
+  // Rather than constantly operating on new data each time:
+  //
+  //  (local.set $ref (struct.new $..
+  //  (struct.get (struct.new $..
+  //
+  // By using local values more, we get more coverage of interesting sequences
+  // of reads and writes to the same objects.
+  auto& typeLocals = funcContext->typeLocals[nonNull];
+  if (!typeLocals.empty()) {
+    return builder.makeLocalGet(pick(typeLocals), nonNull);
+  }
+  // Add a new local and tee it, so later operations can use it.
+  auto index = builder.addVar(funcContext->func, nonNull);
+  // Note we must create the child ref here before adding the local to
+  // typeLocals (or else we might end up using it prematurely).
+  auto* tee = builder.makeLocalTee(index, make(nonNull), nonNull);
+  funcContext->typeLocals[nonNull].push_back(index);
+  return tee;
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
@@ -3272,12 +3317,7 @@ Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto& structFields = typeStructFields[type];
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
-  // TODO: also nullable ones? that would increase the risk of traps
-  // TODO: Ensure a good chance to use a local.get or tee here, as we want to
-  //       test the same reference having multiple sets/gets on it, and not
-  //       gets/sets of struct.news everywhere. Also in struct.set, array.get,
-  //       array.set.
-  auto* ref = make(Type(structType, NonNullable));
+  auto* ref = makeTrappingRefUse(structType);
   // TODO: fuzz signed and unsigned
   return builder.makeStructGet(fieldIndex, ref, type);
 }
@@ -3289,21 +3329,37 @@ Expression* TranslateToFuzzReader::makeStructSet(Type type) {
   }
   auto [structType, fieldIndex] = pick(mutableStructFields);
   auto fieldType = structType.getStruct().fields[fieldIndex].type;
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(structType, NonNullable));
+  auto* ref = makeTrappingRefUse(structType);
   auto* value = make(fieldType);
   return builder.makeStructSet(fieldIndex, ref, value);
 }
 
+// Make a bounds check for an array operation, given a ref + index. An optional
+// additional length parameter can be provided, which is added to the index if
+// so (that is useful for something like array.fill, which operations on not a
+// single item like array.set, but a range).
 static auto makeArrayBoundsCheck(Expression* ref,
                                  Expression* index,
                                  Function* func,
-                                 Builder& builder) {
+                                 Builder& builder,
+                                 Expression* length = nullptr) {
   auto tempRef = builder.addVar(func, ref->type);
   auto tempIndex = builder.addVar(func, index->type);
   auto* teeRef = builder.makeLocalTee(tempRef, ref, ref->type);
   auto* teeIndex = builder.makeLocalTee(tempIndex, index, index->type);
   auto* getSize = builder.makeArrayLen(teeRef);
+
+  Expression* effectiveIndex = teeIndex;
+
+  Expression* getLength = nullptr;
+  if (length) {
+    // Store the length so we can reuse it.
+    auto tempLength = builder.addVar(func, length->type);
+    auto* teeLength = builder.makeLocalTee(tempLength, length, length->type);
+    // The effective index will now include the length.
+    effectiveIndex = builder.makeBinary(AddInt32, effectiveIndex, teeLength);
+    getLength = builder.makeLocalGet(tempLength, length->type);
+  }
 
   struct BoundsCheck {
     // A condition that checks if the index is in bounds.
@@ -3313,9 +3369,12 @@ static auto makeArrayBoundsCheck(Expression* ref,
     Expression* getRef;
     // An addition use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-  } result = {builder.makeBinary(LtUInt32, teeIndex, getSize),
+    // An addition use of the length, if it was provided.
+    Expression* getLength = nullptr;
+  } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
-              builder.makeLocalGet(tempIndex, index->type)};
+              builder.makeLocalGet(tempIndex, index->type),
+              getLength};
   return result;
 }
 
@@ -3323,8 +3382,7 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto& arrays = typeArrays[type];
   assert(!arrays.empty());
   auto arrayType = pick(arrays);
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(arrayType, NonNullable));
+  auto* ref = makeTrappingRefUse(arrayType);
   auto* index = make(Type::i32);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
@@ -3350,8 +3408,7 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   auto arrayType = pick(mutableArrays);
   auto elementType = arrayType.getArray().element.type;
   auto* index = make(Type::i32);
-  // TODO: also nullable ones? that would increase the risk of traps
-  auto* ref = make(Type(arrayType, NonNullable));
+  auto* ref = makeTrappingRefUse(arrayType);
   auto* value = make(elementType);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
@@ -3368,12 +3425,68 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   return builder.makeIf(check.condition, set);
 }
 
+Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
+  assert(type == Type::none);
+  if (mutableArrays.empty()) {
+    return makeTrivial(type);
+  }
+  auto arrayType = pick(mutableArrays);
+  auto element = arrayType.getArray().element;
+  auto* index = make(Type::i32);
+  auto* ref = makeTrappingRefUse(arrayType);
+  if (oneIn(2)) {
+    // ArrayFill
+    auto* value = make(element.type);
+    auto* length = make(Type::i32);
+    // Only rarely emit a plain get which might trap. See related logic in
+    // ::makePointer().
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArrayFill(ref, index, value, length);
+    }
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto* fill = builder.makeArrayFill(
+      check.getRef, check.getIndex, value, check.getLength);
+    return builder.makeIf(check.condition, fill);
+  } else {
+    // ArrayCopy. Here we must pick a source array whose element type is a
+    // subtype of the destination.
+    auto srcArrayType = pick(mutableArrays);
+    auto srcElement = srcArrayType.getArray().element;
+    if (!Type::isSubType(srcElement.type, element.type) ||
+        element.packedType != srcElement.packedType) {
+      // TODO: A matrix of which arrays are subtypes of others. For now, if we
+      // didn't get what we want randomly, just copy from the same type to
+      // itself.
+      srcArrayType = arrayType;
+      srcElement = element;
+    }
+    auto* srcIndex = make(Type::i32);
+    auto* srcRef = makeTrappingRefUse(srcArrayType);
+    auto* length = make(Type::i32);
+    if (allowOOB && oneIn(10)) {
+      // TODO: fuzz signed and unsigned, and also below
+      return builder.makeArrayCopy(ref, index, srcRef, srcIndex, length);
+    }
+    auto check =
+      makeArrayBoundsCheck(ref, index, funcContext->func, builder, length);
+    auto srcCheck = makeArrayBoundsCheck(
+      srcRef, srcIndex, funcContext->func, builder, check.getLength);
+    auto* copy = builder.makeArrayCopy(check.getRef,
+                                       check.getIndex,
+                                       srcCheck.getRef,
+                                       srcCheck.getIndex,
+                                       srcCheck.getLength);
+    return builder.makeIf(check.condition,
+                          builder.makeIf(srcCheck.condition, copy));
+  }
+}
+
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
-  // TODO: Maybe this should be nullable?
-  // https://github.com/WebAssembly/gc/issues/312
-  auto* i31 = make(Type(HeapType::i31, NonNullable));
+  auto* i31 = makeTrappingRefUse(HeapType::i31);
   return builder.makeI31Get(i31, bool(oneIn(2)));
 }
 

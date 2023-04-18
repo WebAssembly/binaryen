@@ -65,8 +65,7 @@ struct HeapTypeGeneratorImpl {
     // Set up the subtype relationships. Start with some number of root types,
     // then after that start creating subtypes of existing types. Determine the
     // top-level kind of each type in advance so that we can appropriately use
-    // types we haven't constructed yet. For simplicity, always choose a
-    // supertype to bea previous type, which is valid in all type systems.
+    // types we haven't constructed yet.
     typeKinds.reserve(builder.size());
     supertypeIndices.reserve(builder.size());
     Index numRoots = 1 + rand.upTo(builder.size());
@@ -90,31 +89,23 @@ struct HeapTypeGeneratorImpl {
 
     // Initialize the recursion groups.
     recGroupEnds.reserve(builder.size());
-    if (getTypeSystem() != TypeSystem::Isorecursive) {
-      // Recursion groups don't matter and we can choose children as though we
-      // had a single large recursion group.
-      for (Index i = 0; i < builder.size(); ++i) {
-        recGroupEnds.push_back(builder.size());
-      }
-    } else {
-      // We are using isorecursive types, so create groups. Choose an expected
-      // group size uniformly at random, then create groups with random sizes on
-      // a geometric distribution based on that expected size.
-      size_t expectedSize = 1 + rand.upTo(builder.size());
-      Index groupStart = 0;
-      for (Index i = 0; i < builder.size(); ++i) {
-        if (i == builder.size() - 1 || rand.oneIn(expectedSize)) {
-          // End the old group and create a new group.
-          Index newGroupStart = i + 1;
-          builder.createRecGroup(groupStart, newGroupStart - groupStart);
-          for (Index j = groupStart; j < newGroupStart; ++j) {
-            recGroupEnds.push_back(newGroupStart);
-          }
-          groupStart = newGroupStart;
+    // Create isorecursive recursion groups. Choose an expected group size
+    // uniformly at random, then create groups with random sizes on a geometric
+    // distribution based on that expected size.
+    size_t expectedSize = 1 + rand.upTo(builder.size());
+    Index groupStart = 0;
+    for (Index i = 0; i < builder.size(); ++i) {
+      if (i == builder.size() - 1 || rand.oneIn(expectedSize)) {
+        // End the old group and create a new group.
+        Index newGroupStart = i + 1;
+        builder.createRecGroup(groupStart, newGroupStart - groupStart);
+        for (Index j = groupStart; j < newGroupStart; ++j) {
+          recGroupEnds.push_back(newGroupStart);
         }
+        groupStart = newGroupStart;
       }
-      assert(recGroupEnds.size() == builder.size());
     }
+    assert(recGroupEnds.size() == builder.size());
 
     // Create the heap types.
     for (; index < builder.size(); ++index) {

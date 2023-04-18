@@ -345,7 +345,6 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  TypeSystem system = getTypeSystem();
   Counts counts = getHeapTypeCounts(wasm);
 
   // Types have to be arranged into topologically ordered recursion groups.
@@ -385,32 +384,21 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     // Update the reference count.
     info.useCount += counts.at(type);
     // Collect predecessor groups.
-    switch (system) {
-      case TypeSystem::Isorecursive:
-        for (auto child : type.getReferencedHeapTypes()) {
-          if (!child.isBasic()) {
-            RecGroup otherGroup = child.getRecGroup();
-            if (otherGroup != group) {
-              info.preds.insert(otherGroup);
-            }
-          }
+    for (auto child : type.getReferencedHeapTypes()) {
+      if (!child.isBasic()) {
+        RecGroup otherGroup = child.getRecGroup();
+        if (otherGroup != group) {
+          info.preds.insert(otherGroup);
         }
-        break;
-      case TypeSystem::Nominal:
-        if (auto super = type.getSuperType()) {
-          info.preds.insert(super->getRecGroup());
-        }
-        break;
+      }
     }
   }
 
   // Fix up the use counts to be averages to ensure groups are used comensurate
   // with the amount of index space they occupy. Skip this for nominal types
   // since their internal group size is always 1.
-  if (system != TypeSystem::Nominal) {
-    for (auto& [group, info] : groupInfos) {
-      info.useCount /= group.size();
-    }
+  for (auto& [group, info] : groupInfos) {
+    info.useCount /= group.size();
   }
 
   // Sort the predecessors so the most used will be visited first.

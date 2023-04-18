@@ -2169,8 +2169,12 @@ struct OptimizeInstructions
           {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
         break;
       case GCTypeUtils::Unreachable:
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                            builder.makeUnreachable()));
+        // Make sure to emit a block with the same type as us, to avoid other
+        // code in this pass needing to handle unexpected unreachable code
+        // (which is only properly propagated at the end of this pass when we
+        // refinalize).
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()}, Type::i32));
         break;
       case GCTypeUtils::Failure:
         replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),

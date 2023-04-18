@@ -44,12 +44,6 @@
 
 namespace wasm {
 
-static TypeSystem typeSystem = TypeSystem::Isorecursive;
-
-void setTypeSystem(TypeSystem system) { typeSystem = system; }
-
-TypeSystem getTypeSystem() { return typeSystem; }
-
 namespace {
 
 struct TypeInfo {
@@ -104,11 +98,10 @@ struct HeapTypeInfo {
   // Otherwise, the type definition tree is still being constructed via the
   // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
-  // In nominal or isorecursive mode, the supertype of this HeapType, if it
-  // exists.
+  // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
-  // In isorecursive mode, the recursion group of this type or null if the
-  // recursion group is trivial (i.e. contains only this type).
+  // The recursion group of this type or null if the recursion group is trivial
+  // (i.e. contains only this type).
   RecGroupInfo* recGroup = nullptr;
   size_t recGroupIndex = 0;
   enum Kind {
@@ -714,12 +707,6 @@ private:
       return *canonical;
     }
     std::lock_guard<std::recursive_mutex> lock(mutex);
-    // Nominal HeapTypes are always unique, so don't bother deduplicating them.
-    if constexpr (std::is_same_v<Info, HeapTypeInfo>) {
-      if (typeSystem == TypeSystem::Nominal) {
-        return insertNew();
-      }
-    }
     // Check whether we already have a type for this structural Info.
     auto indexIt = typeIDs.find(std::cref(info));
     if (indexIt != typeIDs.end()) {
@@ -758,34 +745,6 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
   return this == &MetaTypeInfo<typename Info::type_t>::globalStore;
 }
 #endif
-
-// Cache canonical nominal signature types. See comment in
-// `HeapType::HeapType(Signature)`.
-struct SignatureTypeCache {
-  std::unordered_map<Signature, HeapType> cache;
-  std::mutex mutex;
-
-  HeapType getType(Signature sig) {
-    std::lock_guard<std::mutex> lock(mutex);
-    // Try inserting a placeholder type, then replace it with a real type if we
-    // don't already have a canonical type for this signature.
-    auto [entry, inserted] = cache.insert({sig, {}});
-    auto& [_, type] = *entry;
-    if (inserted) {
-      type = globalHeapTypeStore.insert(sig);
-    }
-    return type;
-  }
-
-  void insertType(HeapType type) {
-    std::lock_guard<std::mutex> lock(mutex);
-    cache.insert({type.getSignature(), type});
-  }
-
-  void clear() { cache.clear(); }
-};
-
-static SignatureTypeCache nominalSignatureCache;
 
 // Keep track of the constructed recursion groups.
 struct RecGroupStore {
@@ -841,7 +800,6 @@ static RecGroupStore globalRecGroupStore;
 void destroyAllTypesForTestingPurposesOnly() {
   globalTypeStore.clear();
   globalHeapTypeStore.clear();
-  nominalSignatureCache.clear();
   globalRecGroupStore.clear();
 }
 
@@ -1222,24 +1180,8 @@ const Type& Type::Iterator::operator*() const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  switch (getTypeSystem()) {
-    case TypeSystem::Nominal:
-      // Special case the creation of signature types in nominal mode to return
-      // a "canonical" type for the signature, which happens to be the first one
-      // created. We depend on being able to create new function signatures in
-      // many places, and historically they have always been structural, so
-      // creating a copy of an existing signature did not result in any code
-      // bloat or semantic changes. To avoid regressions or significant changes
-      // of behavior in nominal mode, we cache the canonical heap types for each
-      // signature to emulate structural behavior.
-      new (this) HeapType(nominalSignatureCache.getType(sig));
-      return;
-    case TypeSystem::Isorecursive:
-      new (this) HeapType(
-        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
-      return;
-  }
-  WASM_UNREACHABLE("unexpected type system");
+  new (this)
+    HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
 }
 
 HeapType::HeapType(const Struct& struct_) {
@@ -1248,16 +1190,8 @@ HeapType::HeapType(const Struct& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  switch (getTypeSystem()) {
-    case TypeSystem::Nominal:
-      new (this) HeapType(globalHeapTypeStore.insert(struct_));
-      return;
-    case TypeSystem::Isorecursive:
-      new (this) HeapType(
-        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
-      return;
-  }
-  WASM_UNREACHABLE("unexpected type system");
+  new (this) HeapType(
+    globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
 }
 
 HeapType::HeapType(Struct&& struct_) {
@@ -1266,30 +1200,14 @@ HeapType::HeapType(Struct&& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  switch (getTypeSystem()) {
-    case TypeSystem::Nominal:
-      new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
-      return;
-    case TypeSystem::Isorecursive:
-      new (this) HeapType(globalRecGroupStore.insert(
-        std::make_unique<HeapTypeInfo>(std::move(struct_))));
-      return;
-  }
-  WASM_UNREACHABLE("unexpected type system");
+  new (this) HeapType(globalRecGroupStore.insert(
+    std::make_unique<HeapTypeInfo>(std::move(struct_))));
 }
 
 HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
-  switch (getTypeSystem()) {
-    case TypeSystem::Nominal:
-      new (this) HeapType(globalHeapTypeStore.insert(array));
-      return;
-    case TypeSystem::Isorecursive:
-      new (this) HeapType(
-        globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
-      return;
-  }
-  WASM_UNREACHABLE("unexpected type system");
+  new (this)
+    HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
 }
 
 bool HeapType::isFunction() const {
@@ -2774,39 +2692,6 @@ validateSubtyping(const std::vector<HeapType>& types) {
   return {};
 }
 
-std::optional<TypeBuilder::Error>
-canonicalizeNominal(CanonicalizationState& state) {
-  for (auto& info : state.newInfos) {
-    info->recGroup = nullptr;
-  }
-
-  // Nominal types do not require separate canonicalization, so just validate
-  // that their subtyping is correct.
-
-  // Ensure there are no cycles in the subtype graph. This is the classic DFA
-  // algorithm for detecting cycles, but in the form of a simple loop because
-  // each node (type) has at most one child (supertype).
-  std::unordered_set<HeapTypeInfo*> checked;
-  for (size_t i = 0; i < state.results.size(); ++i) {
-    HeapType type = state.results[i];
-    if (type.isBasic()) {
-      continue;
-    }
-    std::unordered_set<HeapTypeInfo*> path;
-    for (auto* curr = getHeapTypeInfo(type);
-         curr != nullptr && !checked.count(curr);
-         curr = curr->supertype) {
-      if (!path.insert(curr).second) {
-        return TypeBuilder::Error{i, TypeBuilder::ErrorReason::SelfSupertype};
-      }
-    }
-    // None of the types in `path` reach themselves.
-    checked.insert(path.begin(), path.end());
-  }
-
-  return {};
-}
-
 std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   CanonicalizationState& state,
   std::vector<std::unique_ptr<RecGroupInfo>>& recGroupInfos) {
@@ -2992,17 +2877,8 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   auto start = std::chrono::steady_clock::now();
 #endif
 
-  switch (typeSystem) {
-    case TypeSystem::Nominal:
-      if (auto error = canonicalizeNominal(state)) {
-        return {*error};
-      }
-      break;
-    case TypeSystem::Isorecursive:
-      if (auto error = canonicalizeIsorecursive(state, impl->recGroups)) {
-        return {*error};
-      }
-      break;
+  if (auto error = canonicalizeIsorecursive(state, impl->recGroups)) {
+    return {*error};
   }
 
 #if TIME_CANONICALIZATION
@@ -3024,17 +2900,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   // Check that the declared supertypes are structurally valid.
   if (auto error = validateSubtyping(state.results)) {
     return {*error};
-  }
-
-  // Note built signature types. See comment in `HeapType::HeapType(Signature)`.
-  for (auto type : state.results) {
-    // Do not cache types with explicit supertypes (that is, whose supertype is
-    // not HeapType::func). We don't want to reuse such types because then we'd
-    // be adding subtyping relationships that are not in the input.
-    if (type.isSignature() && (getTypeSystem() == TypeSystem::Nominal) &&
-        !type.getSuperType()) {
-      nominalSignatureCache.insertType(type);
-    }
   }
 
   return {state.results};

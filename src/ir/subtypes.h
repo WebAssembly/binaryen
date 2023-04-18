@@ -37,14 +37,21 @@ struct SubTypes {
   SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
 
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) const {
+    // When we return an empty result, use a canonical constant empty vec to
+    // avoid allocation.
+    static const std::vector<HeapType> empty;
+
+    if (type.isBottom()) {
+      // Bottom types have no subtypes.
+      return empty;
+    }
+
     assert(!type.isBasic());
     if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
     }
 
-    // No entry exists. Return a canonical constant empty vec, to avoid
-    // allocation.
-    static const std::vector<HeapType> empty;
+    // No entry exists.
     return empty;
   }
 

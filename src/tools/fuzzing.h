@@ -302,6 +302,7 @@ private:
   Expression* makeLoad(Type type);
   Expression* makeNonAtomicStore(Type type);
   Expression* makeStore(Type type);
+
   // Makes a small change to a constant value.
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
@@ -317,6 +318,11 @@ private:
   // compound ones.
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
+
+  // Similar to makeBasic/CompoundRef, but indicates that this value will be
+  // used in a place that will trap on null. For example, the reference of a
+  // struct.get or array.set would use this.
+  Expression* makeTrappingRefUse(HeapType type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -347,6 +353,10 @@ private:
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);
   Expression* makeArraySet(Type type);
+  // Use a single method for the misc array operations, to not give them too
+  // much representation (e.g. compared to struct operations, which only include
+  // get/set).
+  Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
