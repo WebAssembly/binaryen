@@ -178,15 +178,54 @@
 (module
   (type $[i32] (array i32))
 
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (memory $0 (shared 16 17))
   (memory $0 (shared 16 17))
   (data $0 (i32.const 37) "")
 
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test
     (local $temp (ref any))
     ;; The memory.init will trigger a ReFinalize. That will cause the if to
     ;; become unreachable, after which the local.set is unreachable. We do not
     ;; consider such sets to help non-nullable locals to validate (we do not emit
-    ;; unreachable code), so we need to fix up the non-nullable get afterwards).
+    ;; unreachable code), so we need to fix up the non-nullable get afterwards
+    ;; by making it nullable, and adding a ref.as_non_null).
     (memory.init $0
       (i32.const 0)
       (i32.const 8)
