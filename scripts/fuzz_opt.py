@@ -187,7 +187,7 @@ def randomize_fuzz_settings():
     # and unreachable code interact. see
     #   https://github.com/WebAssembly/binaryen/pull/5665
     #   https://github.com/WebAssembly/binaryen/issues/5599
-    if not all_disallowed(['gc']):
+    if '--disable-gc' not in FEATURE_OPTS:
         FUZZ_OPTS += ['--dce']
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
