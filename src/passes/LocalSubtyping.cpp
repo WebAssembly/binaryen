@@ -75,32 +75,6 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       }
     }
 
-    // Find which vars can be non-nullable.
-    std::unordered_set<Index> cannotBeNonNullable;
-
-    if (getModule()->features.hasGCNNLocals()) {
-      // If the feature is enabled then the only constraint is being able to
-      // read the default value - if it is readable, the local cannot become
-      // non-nullable.
-      for (auto& [get, sets] : localGraph.getSetses) {
-        auto index = get->index;
-        if (func->isVar(index) &&
-            std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
-              return set == nullptr;
-            })) {
-          cannotBeNonNullable.insert(index);
-        }
-      }
-    } else {
-      // Without GCNNLocals, validation rules follow the spec rules: all gets
-      // must be dominated structurally by sets, for the local to be non-
-      // nullable.
-      LocalStructuralDominance info(func, *getModule());
-      for (auto index : info.nonDominatingIndices) {
-        cannotBeNonNullable.insert(index);
-      }
-    }
-
     auto varBase = func->getVarIndexBase();
 
     // Keep iterating while we find things to change. There can be chains like
@@ -124,6 +98,33 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // that utility does not tell us if it changed anything, so we depend on
       // the next step for knowing if there is more work to do.
       ReFinalize().walkFunctionInModule(func, getModule());
+
+      // Find which vars can be non-nullable. Note that we must do this after
+      // refinalizing, as that operation can alter the types of locals.
+      std::unordered_set<Index> cannotBeNonNullable;
+
+      if (getModule()->features.hasGCNNLocals()) {
+        // If the feature is enabled then the only constraint is being able to
+        // read the default value - if it is readable, the local cannot become
+        // non-nullable.
+        for (auto& [get, sets] : localGraph.getSetses) {
+          auto index = get->index;
+          if (func->isVar(index) &&
+              std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
+                return set == nullptr;
+              })) {
+            cannotBeNonNullable.insert(index);
+          }
+        }
+      } else {
+        // Without GCNNLocals, validation rules follow the spec rules: all gets
+        // must be dominated structurally by sets, for the local to be non-
+        // nullable.
+        LocalStructuralDominance info(func, *getModule());
+        for (auto index : info.nonDominatingIndices) {
+          cannotBeNonNullable.insert(index);
+        }
+      }
 
       // Second, find vars whose actual applied values allow a more specific
       // type.
