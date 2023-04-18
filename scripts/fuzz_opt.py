@@ -181,6 +181,15 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
+
+    # if GC is enabled then run --dce at the very end, to ensure that our
+    # binaries validate in other VMs, due to how non-nullable local validation
+    # and unreachable code interact. see
+    #   https://github.com/WebAssembly/binaryen/pull/5665
+    #   https://github.com/WebAssembly/binaryen/issues/5599
+    if not all_disallowed(['gc']):
+        FUZZ_OPTS += ['--dce']
+
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
@@ -1517,13 +1526,6 @@ def randomize_opt_flags():
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
-    # if GC is enabled then run --dce at the very end, to ensure that our
-    # binaries validate in other VMs, due to how non-nullable local validation
-    # and unreachable code interact. see
-    #   https://github.com/WebAssembly/binaryen/pull/5665
-    #   https://github.com/WebAssembly/binaryen/issues/5599
-    if not all_disallowed(['gc']):
-        ret += ['--dce']
     assert ret.count('--flatten') <= 1
     return ret
 
