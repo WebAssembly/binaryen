@@ -25,6 +25,7 @@
 #include <memory>
 
 #include "asmjs/shared-constants.h"
+#include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -740,9 +741,25 @@ public:
   void addStartCycleBreak(Name definingGlobal) {
     assert(!wasm.start.is()); // todo appending
     auto* body = builder.makeBlock();
-    auto& list = body->list;
+    body->list.push_back(makeCycleBreakSetting(definingGlobal));
     wasm.start = Names::getValidFunctionName(wasm, "start");
     wasm.addFunction(builder.makeFunction(wasm.start, Signature{Type::none, Type::none}, {}, body));
+  }
+
+  void makeCycleBreakSetting(Name definingGlobal) {
+    Expression* ret = builder.makeGlobalGet(topLevelGlobal, wasm.getGlobal(topLevelGlobal)->type);
+    for (Index i = 0; i < seenDataIndexes.size(); i++) { // reverse?
+      if (i != seenDataIndexes.size() - 1) {
+        // Emit a nested get.
+        ret = builder.makeStructGet(ret, index, GCTypeUtils::getField(get->type, index));
+      } else {
+        // This is the last one; emit the set of a get of the global we were
+        // asked for.
+        Expression* get = builder.makeGlobalGet(definingGlobal, wasm.getGlobal(definingGlobal)->type);
+        ret = builder.makeStructSet(ret, index,  get);
+      }
+    }
+    return ret;
   }
 };
 
