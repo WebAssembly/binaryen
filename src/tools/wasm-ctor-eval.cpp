@@ -569,6 +569,24 @@ public:
   // reference to another object that is already in a defining global.
   SmallSet<GCData*, 2> seenDataStack;
 
+  // The indexes of fields on the stack as we process them. For example, if we
+  // are emitting
+  //
+  //  (struct.new ..
+  //    (i32.const 1)
+  //    (struct.new ..
+  //      !
+  // then at the time of processing of "!" (a child of the inner struct.new)
+  // we'll have seenDataIndexes == [1], as 1 is the index of the inner struct in
+  // the outer struct.
+  //
+  // This data structure is used to reconstruct the chain of operations to reach
+  // a particular value: starting from the defining global for the outermost
+  // object (topLevelGlobal, see below), we can do a chain of struct.gets of the
+  // indexes here.
+  std::vector<Index> seenDataIndexes;
+  Name topLevelGlobal;
+
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
@@ -610,17 +628,53 @@ public:
       std::vector<Expression*> args;
 
       // The initial values for this allocation may themselves be GC
-      // allocations. Recurse and add globals as necessary.
-      // TODO: Handle cycles. That will require code in the start function. For
-      //       now, just error if we detect an infinite recursion.
-      if (seenDataStack.count(data)) {
-        Fatal() << "Cycle in live GC data, which we cannot serialize yet.";
+      // allocations. Recurse and add globals as necessary. First, pick the
+      // global name (note that we must do so first, as we may need to read from
+      // definingGlobals to find where this global will be, in the case of a
+      // cycle; see below).
+
+      if (possibleDefiningGlobal.is()) {
+        // No need to allocate a new global, as we are in the definition of
+        // one, which will be the defining global.
+        definingGlobal = possibleDefiningGlobal;
+      } else {
+        // Allocate a new defining global.
+        auto name =
+          Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
+        usedGlobalNames.insert(name);
+        definingGlobal = name;
       }
+
+      if (seenDataStack.count(data)) {
+        // This is a cycle in live GC data, so we cannot just emit nested
+        // structs like this:
+        //
+        //   (struct.new (struct.new ..) (struct.new ..))
+        //
+        // We are nested in some such struct.news right now, and trying to get
+        // the data in one of them. To handle this, we'll emit a null right now,
+        // and fill in the data during startup using the start function.
+        addStartCycleBreak(definingGlobal);
+        return builder.makeRefNull(type);
+      }
+
+      if (!topLevelGlobal.is()) {
+        // We are the topmost global. Set that here, and clear it after, the
+        // recursive calls to getSerialization.
+        topLevelGlobal = definingGlobal;
+      }
+
       seenDataStack.insert(data);
-      for (auto& value : values) {
-        args.push_back(getSerialization(value));
+      for (Index i = 0; i < values.size(); i++) {
+        seenDataIndexes.push_back(i);
+        args.push_back(getSerialization(values[i]));
+        seenDataIndexes.pop_back(i);
       }
       seenDataStack.erase(data);
+
+      if (topLevelGlobal == definingGlobal) {
+        topLevelGlobal = Name();
+      }
 
       Expression* init;
       auto heapType = type.getHeapType();
@@ -634,20 +688,13 @@ public:
       }
 
       if (possibleDefiningGlobal.is()) {
-        // No need to allocate a new global, as we are in the definition of
-        // one. Just return the initialization expression, which will be
-        // placed in that global's |init| field, and first note this as the
-        // defining global.
-        definingGlobal = possibleDefiningGlobal;
+        // We didn't need to allocate a new global, as we are in the definition
+        // of one. We can just return the initialization expression, which will
+        // be placed in that global's |init| field.
         return init;
       }
 
-      // Allocate a new defining global.
-      auto name =
-        Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
-      usedGlobalNames.insert(name);
       wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
-      definingGlobal = name;
     }
 
     // Refer to this GC allocation by reading from the global that is
@@ -674,6 +721,28 @@ public:
     }
     assert(values.size() == 1);
     return getSerialization(values[0], possibleDefiningGlobal);
+  }
+
+  // Given the name of a defining global that we are in the midst of creating a
+  // defining global for, and we've run into a cycle, emit code in the start
+  // function to break that cycle. For example, if the data we want to emit is
+  //
+  //    global globalA = new A{ field = &A }; // A has a reference to itself
+  //
+  // then we'll emit
+  //
+  //    global globalA = new A{ field = null };
+  //
+  // and put this in the start function:
+  //
+  //   globalA.field = globalA;
+  //
+  void addStartCycleBreak(Name definingGlobal) {
+    assert(!wasm.start.is()); // todo appending
+    auto* body = builder.makeBlock();
+    auto& list = body->list;
+    wasm.start = Names::getValidFunctionName(wasm, "start");
+    wasm.addFunction(builder.makeFunction(wasm.start, Signature{Type::none, Type::none}, {}, body));
   }
 };
 
