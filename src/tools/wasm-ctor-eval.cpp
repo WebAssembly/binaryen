@@ -695,7 +695,8 @@ public:
         return init;
       }
 
-      wasm->addGlobal(builder.makeGlobal(definingGlobal, type, init, Builder::Immutable));
+      wasm->addGlobal(
+        builder.makeGlobal(definingGlobal, type, init, Builder::Immutable));
     }
 
     // Refer to this GC allocation by reading from the global that is
@@ -744,12 +745,14 @@ public:
     auto* body = builder.makeBlock();
     body->list.push_back(makeCycleBreakSetting(definingGlobal));
     wasm->start = Names::getValidFunctionName(*wasm, "start");
-    wasm->addFunction(builder.makeFunction(wasm->start, Signature{Type::none, Type::none}, {}, body));
+    wasm->addFunction(builder.makeFunction(
+      wasm->start, Signature{Type::none, Type::none}, {}, body));
   }
 
   Expression* makeCycleBreakSetting(Name definingGlobal) {
     Builder builder(*wasm);
-    Expression* ret = builder.makeGlobalGet(topLevelGlobal, wasm->getGlobal(topLevelGlobal)->type);
+    Expression* ret = builder.makeGlobalGet(
+      topLevelGlobal, wasm->getGlobal(topLevelGlobal)->type);
     for (Index i = 0; i < seenDataIndexes.size(); i++) { // reverse?
       auto index = seenDataIndexes[i];
       if (i != seenDataIndexes.size() - 1) {
@@ -760,7 +763,8 @@ public:
       } else {
         // This is the last one; emit the set of a get of the global we were
         // asked for.
-        Expression* get = builder.makeGlobalGet(definingGlobal, wasm->getGlobal(definingGlobal)->type);
+        Expression* get = builder.makeGlobalGet(
+          definingGlobal, wasm->getGlobal(definingGlobal)->type);
         ret = builder.makeStructSet(index, ret, get);
       }
     }
