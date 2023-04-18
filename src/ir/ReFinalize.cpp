@@ -106,7 +106,6 @@ void ReFinalize::visitLocalSet(LocalSet* curr) {
     auto localType = getFunction()->getLocalType(curr->index);
     if (localType.isNonNullable()) {
       // Perhaps just this local? But this is rare, so maybe not that bad.
-std::cout << "nbeed\n";
       needNonNullableLocalFixups = true;
     }
   }
