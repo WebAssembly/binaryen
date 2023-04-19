@@ -289,3 +289,5 @@
 ;; TODO: as above but with non-nullability rather than immutability.
 
 ;; TODO Cycle of 3
+
+;; TODO: Cycle with a struct and an array
