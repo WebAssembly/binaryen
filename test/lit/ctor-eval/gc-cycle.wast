@@ -2,8 +2,19 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $A (struct (field (mut (ref null $A))) (field i32)))
  (type $A (struct (field (mut (ref null $A))) (field i32)))
 
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (global $ctor-eval$global_2 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_2))
  (global $a (mut (ref null $A)) (ref.null $A))
 
  (func "test"
@@ -23,18 +34,39 @@
  )
 
  (func "keepalive" (result i32)
+  ;; Getting $A.0.1 (reading from the reference in the global's first field)
+  ;; checks that we have a proper reference there. If we could do --fuzz-exec
+  ;; here we could validate that (but atm we can't use --output=fuzz-exec at the
+  ;; same time as --all-items in the update_lit_checks.py note).
   (struct.get $A 1
-   (global.get $a)
+   (struct.get $A 0
+    (global.get $a)
+   )
   )
  )
 )
-;; CHECK:      (export "test" (func $0))
+;; CHECK:      (export "test" (func $0_3))
 
-;; CHECK:      (func $0 (type $none_=>_none)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (array.new_data $[i8] $1
-;; CHECK-NEXT:    (i32.const 16)
-;; CHECK-NEXT:    (i32.const 8)
+;; CHECK:      (export "keepalive" (func $1))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (struct.get $A 1
+;; CHECK-NEXT:   (struct.get $A 0
+;; CHECK-NEXT:    (global.get $a)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_2)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref $A))
+;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
