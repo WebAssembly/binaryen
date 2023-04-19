@@ -34,6 +34,7 @@
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/insert_ordered.h"
 #include "support/small_set.h"
 #include "support/string.h"
 #include "support/topological_sort.h"
@@ -572,7 +573,7 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     std::unordered_set<Name> readableGlobals;
 
     // A map of a global name to all the globals it absolutely must be after.
-    using MustBeAfter = std::unordered_map<Name, std::vector<Name>>;
+    using MustBeAfter = std::unordered_map<Name, InsertOrderedSet<Name>>;
     MustBeAfter mustBeAfter;
 
     // Defining globals are emitted first, and they are the only ones we need to
@@ -601,13 +602,15 @@ std::cout << "    loopey c2\n";
             auto field = GCTypeUtils::getField(structNew->type, fieldIndex);
             assert(field);
             if (field->type.isNullable() && field->mutable_ == Mutable) {
+std::cout << "    loopey c3\n";
               addStartSet({global->name, global->type}, fieldIndex, get);
               operand = builder.makeRefNull(get->type.getHeapType());
             } else {
+std::cout << "    loopey c4\n";
               // We can't write a null, or we can't write to the field, so
               // this must be reordered: this global must be after the global it
               // refers to.
-              mustBeAfter[global->name].push_back(get->name);
+              mustBeAfter[global->name].insert(get->name);
             }
           }
         }
@@ -622,13 +625,15 @@ std::cout << "    loopey c2\n";
     }
 
     if (!mustBeAfter.empty()) {
+std::cout << "    sorted!\n";
       // We found constraints that require reordering, so do so.
 
       struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
-        const MustBeAfter& mustBeAfter;
+        MustBeAfter& mustBeAfter;
 
-        MustBeAfterSort(const MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
+        MustBeAfterSort(MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
           for (auto& [global, _] : mustBeAfter) {
+std::cout << "push " << global << '\n';
             push(global);
           }
         }
@@ -638,6 +643,7 @@ std::cout << "    loopey c2\n";
           if (iter != mustBeAfter.end()) {
             for (auto other : iter->second) {
               push(other);
+std::cout << "  push " << other << " to be before " << global << '\n';
             }
           }
         }
@@ -651,14 +657,17 @@ std::cout << "    loopey c2\n";
       }
       // Add the globals that had an important ordering, in the right order.
       for (auto global : MustBeAfterSort(mustBeAfter)) {
+std::cout << "add from MBAS " << global << "\n";
         wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
       }
       // Add all other globals after them.
       for (auto& global : oldGlobals) {
         if (global) {
+std::cout << "also add " << global->name << "\n";
           wasm->addGlobal(std::move(global));
         }
       }
+      // XXX sorting is not enough - we also need to add a StartSet
     }
   }
 
