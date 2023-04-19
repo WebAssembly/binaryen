@@ -642,8 +642,14 @@ std::cout << "    loopey c2\n";
         }
       };
 
-      ..
-
+      auto oldGlobals = std::move(wasm->globals);
+      std::unordered_map<Name, Index> globalIndexes;
+      for (Index i = 0; i < oldGlobals.size(); i++) {
+        globalIndexes[oldGlobals[i]->name] = i;
+      }
+      for (auto global : MustBeAfterSort(mustBeAfter)) {
+        wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
+      }
       wasm->updateMaps();
     }
   }
