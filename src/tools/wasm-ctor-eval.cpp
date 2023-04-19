@@ -592,8 +592,7 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
             }
           }
         }
-      } else if (auto* arrayNew = global->init->dynCast<ArrayNew>()) {
-        WASM_USED(arrayNew);
+      } else if ([[maybe_unused]] auto* arrayNew = global->init->dynCast<ArrayNew>()) {
         WASM_UNREACHABLE("TODO");
       } else {
         WASM_UNREACHABLE("bad defining global init");
