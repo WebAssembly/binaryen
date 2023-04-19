@@ -545,7 +545,7 @@ std::cout << "aGTM\n";
       if (iter != instance->globals.end()) {
 std::cout << "aGTM prepping a serialization for " << name << "\n";
         oldGlobal->init = getSerialization(iter->second, name);
-        /* ? */ wasm->addGlobal(std::move(oldGlobal));
+        /* ? */ wasm->addGlobal(std::move(oldGlobal)); /* if we don't do this here, the number of defining globals (numDefiningGlobals) below cannot be computed, as there are moar */
       }
 
       // Add the global back to the module.
@@ -595,7 +595,7 @@ std::cout << "    loopey c2\n";
               // we can simply use the current global.get in the start function,
               // and then put a null here.
               addStartSet({global->name, global->type}, j, get);
-              operand = builder.makeRefNull(get->type);
+              operand = builder.makeRefNull(get->type.getHeapType());
             }
           }
         }
