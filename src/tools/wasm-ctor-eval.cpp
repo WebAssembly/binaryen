@@ -601,9 +601,8 @@ std::cout << "    loopey c2\n";
         }
       } else if ([[maybe_unused]] auto* arrayNew = global->init->dynCast<ArrayNew>()) {
         WASM_UNREACHABLE("TODO");
-      } else {
-        WASM_UNREACHABLE("bad defining global init");
       }
+      // TODO: what about global.get and other things?
 
       // Only after we've fully processed this global is it ok to be read from,
       // by later globals.
