@@ -720,11 +720,21 @@ public:
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
 
+    auto globalType = wasm->getGlobal(global)->type;
     auto* getGlobal =
-      builder.makeGlobalGet(global, wasm->getGlobal(global)->type);
+      builder.makeGlobalGet(global, globalType);
     auto* getValueGlobal =
       builder.makeGlobalGet(valueGlobal, wasm->getGlobal(valueGlobal)->type);
-    auto* set = builder.makeStructSet(index, getGlobal, getValueGlobal);
+
+    Expression* set;
+    if (globalType.isStruct()) {
+      set = builder.makeStructSet(index, getGlobal, getValueGlobal);
+    } else {
+      set = builder.makeArraySet(getGlobal,
+                                 builder.makeConst(int32_t(index)),
+                                 getValueGlobal);
+    }
+
     body->list.push_back(set);
 
     wasm->start = Names::getValidFunctionName(*wasm, "start");
