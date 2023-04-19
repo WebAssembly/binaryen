@@ -57,7 +57,7 @@ struct TypeInfo {
   } kind;
   struct Ref {
     HeapType heapType;
-    Nullability nullable;
+    Nullability nullability;
   };
   union {
     Tuple tuple;
@@ -73,8 +73,6 @@ struct TypeInfo {
 
   constexpr bool isTuple() const { return kind == TupleKind; }
   constexpr bool isRef() const { return kind == RefKind; }
-
-  bool isNullable() const { return kind == RefKind && ref.nullable; }
 
   // If this TypeInfo represents a Type that can be represented more simply,
   // return that simpler Type. For example, this handles eliminating singleton
@@ -92,11 +90,6 @@ struct HeapTypeInfo {
   // Used in assertions to ensure that temporary types don't leak into the
   // global store.
   bool isTemp = false;
-  // If `isFinalized`, then hashing and equality are performed on the finite
-  // shape of the type definition tree rooted at the HeapTypeInfo.
-  // Otherwise, the type definition tree is still being constructed via the
-  // TypeBuilder interface, so hashing and equality use pointer identity.
-  bool isFinalized = true;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -563,7 +556,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
     case TupleKind:
       return tuple == other.tuple;
     case RefKind:
-      return ref.nullable == other.ref.nullable &&
+      return ref.nullability == other.ref.nullability &&
              ref.heapType == other.ref.heapType;
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -822,8 +815,7 @@ bool Type::isFunction() const {
 
 bool Type::isData() const {
   if (isBasic()) {
-    // The only basic type that is considered data is a string.
-    return isString();
+    return false;
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isData();
@@ -831,16 +823,16 @@ bool Type::isData() const {
 }
 
 bool Type::isNullable() const {
-  if (isBasic()) {
-    return false;
+  if (isRef()) {
+    return getTypeInfo(*this)->ref.nullability == Nullable;
   } else {
-    return getTypeInfo(*this)->isNullable();
+    return false;
   }
 }
 
 bool Type::isNonNullable() const {
   if (isRef()) {
-    return !isNullable();
+    return getTypeInfo(*this)->ref.nullability == NonNullable;
   } else {
     return false;
   }
@@ -1028,28 +1020,8 @@ const Tuple& Type::getTuple() const {
 }
 
 HeapType Type::getHeapType() const {
-  if (isBasic()) {
-    switch (getBasic()) {
-      case Type::none:
-      case Type::unreachable:
-      case Type::i32:
-      case Type::i64:
-      case Type::f32:
-      case Type::f64:
-      case Type::v128:
-        break;
-    }
-    WASM_UNREACHABLE("Unexpected type");
-  } else {
-    auto* info = getTypeInfo(*this);
-    switch (info->kind) {
-      case TypeInfo::TupleKind:
-        break;
-      case TypeInfo::RefKind:
-        return info->ref.heapType;
-    }
-    WASM_UNREACHABLE("Unexpected type");
-  }
+  assert(isRef());
+  return getTypeInfo(*this)->ref.heapType;
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -1992,7 +1964,7 @@ size_t RecGroupHasher::hash(const TypeInfo& info) const {
       hash_combine(digest, hash(info.tuple));
       return digest;
     case TypeInfo::RefKind:
-      rehash(digest, info.ref.nullable);
+      rehash(digest, info.ref.nullability);
       hash_combine(digest, hash(info.ref.heapType));
       return digest;
   }
@@ -2000,7 +1972,6 @@ size_t RecGroupHasher::hash(const TypeInfo& info) const {
 }
 
 size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
-  assert(info.isFinalized);
   size_t digest = wasm::hash(bool(info.supertype));
   if (info.supertype) {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
@@ -2110,7 +2081,7 @@ bool RecGroupEquator::eq(const TypeInfo& a, const TypeInfo& b) const {
     case TypeInfo::TupleKind:
       return eq(a.tuple, b.tuple);
     case TypeInfo::RefKind:
-      return a.ref.nullable == b.ref.nullable &&
+      return a.ref.nullability == b.ref.nullability &&
              eq(a.ref.heapType, b.ref.heapType);
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -2284,7 +2255,6 @@ struct TypeBuilder::Impl {
       hti.recGroup = info->recGroup;
       *info = std::move(hti);
       info->isTemp = true;
-      info->isFinalized = false;
       initialized = true;
     }
     HeapType get() { return HeapType(TypeID(info.get())); }
@@ -2744,7 +2714,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     assert(impl->entries[i].initialized &&
            "Cannot access uninitialized HeapType");
     auto& info = impl->entries[i].info;
-    info->isFinalized = true;
     state.results.push_back(asHeapType(info));
     state.newInfos.emplace_back(std::move(info));
   }
@@ -2861,7 +2830,7 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
       wasm::rehash(digest, info.tuple);
       return digest;
     case wasm::TypeInfo::RefKind:
-      wasm::rehash(digest, info.ref.nullable);
+      wasm::rehash(digest, info.ref.nullability);
       wasm::rehash(digest, info.ref.heapType);
       return digest;
   }
