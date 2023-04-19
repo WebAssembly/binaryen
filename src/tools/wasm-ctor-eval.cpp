@@ -570,24 +570,6 @@ public:
   // reference to another object that is already in a defining global.
   SmallSet<GCData*, 2> seenDataStack;
 
-  // The indexes of fields on the stack as we process them. For example, if we
-  // are emitting
-  //
-  //  (struct.new ..
-  //    (i32.const 1)
-  //    (struct.new ..
-  //      !
-  // then at the time of processing of "!" (a child of the inner struct.new)
-  // we'll have seenDataIndexes == [1], as 1 is the index of the inner struct in
-  // the outer struct.
-  //
-  // This data structure is used to reconstruct the chain of operations to reach
-  // a particular value: starting from the defining global for the outermost
-  // object (topLevelGlobal, see below), we can do a chain of struct.gets of the
-  // indexes here.
-  std::vector<Index> seenDataIndexes;
-  Name topLevelGlobal;
-
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
@@ -646,36 +628,25 @@ public:
         definingGlobal = name;
       }
 
-      if (seenDataStack.count(data)) {
-        // This is a cycle in live GC data, so we cannot just emit nested
-        // structs like this:
-        //
-        //   (struct.new (struct.new ..) (struct.new ..))
-        //
-        // We are nested in some such struct.news right now, and trying to get
-        // the data in one of them. To handle this, we'll emit a null right now,
-        // and fill in the data during startup using the start function.
-        addStartCycleBreak(definingGlobal);
-        return builder.makeRefNull(type);
-      }
-
-      if (!topLevelGlobal.is()) {
-        // We are the topmost global. Set that here, and clear it after, the
-        // recursive calls to getSerialization.
-        topLevelGlobal = definingGlobal;
-      }
-
       seenDataStack.insert(data);
       for (Index i = 0; i < values.size(); i++) {
-        seenDataIndexes.push_back(i);
-        args.push_back(getSerialization(values[i]));
-        seenDataIndexes.pop_back();
+        auto value = values[i];
+        if (value.isData()) {
+          auto* valueData = value.getGCData().get();
+          if (seenDataStack.count(valueData) {
+            // This is a cycle in live GC data, so we cannot just do a normal
+            // recursive call that will return a global.get for the defining
+            // global for that data. To break the cycle, emit a null right now,
+            // and fill in the data during startup using the start function.
+            // TODO: If the field here is non-nullable then we must break the
+            //       cycle higher up.
+            value = Literal::null(value.type);
+            addStartCycleBreak(definingGlobal, i, definingGlobals[valueData]);
+          }
+        }
+        args.push_back(getSerialization(value));
       }
       seenDataStack.erase(data);
-
-      if (topLevelGlobal == definingGlobal) {
-        topLevelGlobal = Name();
-      }
 
       Expression* init;
       auto heapType = type.getHeapType();
@@ -725,9 +696,8 @@ public:
     return getSerialization(values[0], possibleDefiningGlobal);
   }
 
-  // Given the name of a defining global that we are in the midst of creating a
-  // defining global for, and we've run into a cycle, emit code in the start
-  // function to break that cycle. For example, if the data we want to emit is
+  // This is called when we hit a cycle in setting up defining globals. For
+  // example, if the data we want to emit is
   //
   //    global globalA = new A{ field = &A }; // A has a reference to itself
   //
@@ -739,36 +709,26 @@ public:
   //
   //   globalA.field = globalA;
   //
-  void addStartCycleBreak(Name definingGlobal) {
+  // The parameters here are a global and a field index to that global, and the
+  // global we want to assing to it, that is, our goal is to have
+  //
+  //  global[index] = valueGlobal
+  //
+  void addStartCycleBreak(Name global, Index index, Name valueGlobal) {
     assert(!wasm->start.is()); // todo appending
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
-    body->list.push_back(makeCycleBreakSetting(definingGlobal));
+
+    auto* getGlobal = builder.makeGlobalGet(
+      global, wasm->getGlobal(global)->type);
+    auto* getValueGlobal = builder.makeGlobalGet(
+      valueGlobal, wasm->getGlobal(valueGlobal)->type);
+    auto* set = builder.makeStructSet(index, getGlobal, getValueGlobal);
+    body->list.push_back(set);
+    
     wasm->start = Names::getValidFunctionName(*wasm, "start");
     wasm->addFunction(builder.makeFunction(
       wasm->start, Signature{Type::none, Type::none}, {}, body));
-  }
-
-  Expression* makeCycleBreakSetting(Name definingGlobal) {
-    Builder builder(*wasm);
-    Expression* ret = builder.makeGlobalGet(
-      topLevelGlobal, wasm->getGlobal(topLevelGlobal)->type);
-    for (Index i = 0; i < seenDataIndexes.size(); i++) { // reverse?
-      auto index = seenDataIndexes[i];
-      if (i != seenDataIndexes.size() - 1) {
-        // Emit a nested get.
-        auto field = GCTypeUtils::getField(ret->type, index);
-        assert(field);
-        ret = builder.makeStructGet(index, ret, field->type);
-      } else {
-        // This is the last one; emit the set of a get of the global we were
-        // asked for.
-        Expression* get = builder.makeGlobalGet(
-          definingGlobal, wasm->getGlobal(definingGlobal)->type);
-        ret = builder.makeStructSet(index, ret, get);
-      }
-    }
-    return ret;
   }
 };
 
