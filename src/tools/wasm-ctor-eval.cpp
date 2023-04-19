@@ -470,10 +470,6 @@ private:
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
     definingGlobals.clear();
-
-    // When we start to apply the state there should be no previous state left
-    // over.
-    assert(seenDataStack.empty());
   }
 
   void applyMemoryToModule() {
@@ -556,6 +552,19 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
       // Add the global back to the module.
       wasm->addGlobal(std::move(oldGlobal));
     }
+
+    // Finally, we need to fix up cycles. The serialization we just emitted
+    // ignores them, so we can end up with things like this:
+    //
+    //  (global $a (struct.new $A (global.get $a)))
+    //
+    // That global refers to an object that should have a self-reference, and
+    // the serialization logic simply emits global.gets for all references, so
+    // we end up with a situation like this where a global.get refers to a
+    // global before it is valid to do so. To fix this up, we can reorder
+    // globals as needed, and break up cycles by writing a null in the initial
+    // struct.new in the global's definition, and later in the start function we
+    // can perform additional struct.sets that cause cycles to form.
   }
 
 public:
@@ -563,14 +572,6 @@ public:
   // which it is created, and then all other users of it can just global.get
   // that. For each such global we track its name and type.
   std::unordered_map<GCData*, NameType> definingGlobals;
-
-  // The data we have seen so far on the stack. This is used to guard against
-  // infinite recursion, which would otherwise happen if there is a cycle among
-  // the live objects, which we don't handle yet.
-  //
-  // Pick a constant of 2 here to handle the common case of an object with a
-  // reference to another object that is already in a defining global.
-  SmallSet<GCData*, 2> seenDataStack;
 
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
@@ -635,37 +636,12 @@ std::cout << "  getSerial mek new global\n";
       }
       auto definingGlobal = definingGlobals[data].name;
 
-      seenDataStack.insert(data);
       for (Index i = 0; i < values.size(); i++) {
 std::cout << "  getSerial loop " << i << '\n';
         auto value = values[i];
-        if (value.isData()) {
-          auto* valueData = value.getGCData().get();
-          if (seenDataStack.count(valueData)) {
-            // This is a cycle in live GC data, so we cannot just do a normal
-            // recursive call that will return a global.get for the defining
-            // global for that data. We need to break the cycle somehow.
-            auto field = GCTypeUtils::getField(type, i);
-            assert(field);
-            if (field->type.isNullable() && field->mutable_ == Mutable) {
-              // We can emit a null here and set the proper value later in the
-              // start function.
-std::cout << "  getSerial loop    cycle!\n";
-              value = Literal::makeNull(value.type.getHeapType());
-              addStartSet(definingGlobals[data], i, definingGlobals[valueData]);
-            } else {
-              // We cannot write a null here, or we cannot write to the field
-              // later. Oh no!
-              abort();
-            }
-          }
-        }
-        std::cout << "  [[recurse\n";
         args.push_back(getSerialization(value));
-        std::cout << "    unrecurse]]\n";
 std::cout << "  getSerial loop result: " << *args.back() << "\n";
       }
-      seenDataStack.erase(data);
 
       Expression* init;
       auto heapType = type.getHeapType();
