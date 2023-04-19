@@ -719,13 +719,13 @@ public:
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
 
-    auto* getGlobal = builder.makeGlobalGet(
-      global, wasm->getGlobal(global)->type);
-    auto* getValueGlobal = builder.makeGlobalGet(
-      valueGlobal, wasm->getGlobal(valueGlobal)->type);
+    auto* getGlobal =
+      builder.makeGlobalGet(global, wasm->getGlobal(global)->type);
+    auto* getValueGlobal =
+      builder.makeGlobalGet(valueGlobal, wasm->getGlobal(valueGlobal)->type);
     auto* set = builder.makeStructSet(index, getGlobal, getValueGlobal);
     body->list.push_back(set);
-    
+
     wasm->start = Names::getValidFunctionName(*wasm, "start");
     wasm->addFunction(builder.makeFunction(
       wasm->start, Signature{Type::none, Type::none}, {}, body));
