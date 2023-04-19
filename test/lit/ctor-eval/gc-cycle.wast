@@ -19,6 +19,9 @@
 
  (func "test"
   (local $a (ref $A))
+  ;; This generates a self-cycle where the global $a's ref field points to
+  ;; itself. To handle this, wasm-ctor-eval will emit a new global with a null
+  ;; in the ref field, and add a start function that adds the self-reference.
   (global.set $a
    (local.tee $a
     (struct.new $A
