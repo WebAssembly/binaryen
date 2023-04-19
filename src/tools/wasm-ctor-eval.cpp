@@ -36,6 +36,7 @@
 #include "support/file.h"
 #include "support/small_set.h"
 #include "support/string.h"
+#include "support/topological_sort.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -545,11 +546,10 @@ std::cout << "aGTM\n";
       if (iter != instance->globals.end()) {
 std::cout << "aGTM prepping a serialization for " << name << "\n";
         oldGlobal->init = getSerialization(iter->second, name);
-        /* ? */ wasm->addGlobal(std::move(oldGlobal)); /* if we don't do this here, the number of defining globals (numDefiningGlobals) below cannot be computed, as there are moar */
       }
 
       // Add the global back to the module.
-//      wasm->addGlobal(std::move(oldGlobal));
+      wasm->addGlobal(std::move(oldGlobal));
     }
 
     // Finally, we need to fix up cycles. The serialization we just emitted
@@ -572,15 +572,13 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     std::unordered_set<Name> readableGlobals;
 
     // A map of a global name to all the globals it absolutely must be after.
-    using MustBeAfter = std::unordered_map<Name, std::unordered_set<Name>>;
+    using MustBeAfter = std::unordered_map<Name, std::vector<Name>>;
     MustBeAfter mustBeAfter;
 
     // Defining globals are emitted first, and they are the only ones we need to
     // process now.
-    auto numDefiningGlobals = definingGlobals.size();
-std::cout << "nam def glob " << numDefiningGlobals << '\n';
-
-    for (Index i = 0; i < numDefiningGlobals; i++) {
+    auto numGlobals = wasm->globals.size();
+    for (Index i = 0; i < numGlobals; i++) {
       auto& global = wasm->globals[i];
 std::cout << "loopey " << i << " : " << global->name << " : " << *global->init << '\n';
       if (auto* structNew = global->init->dynCast<StructNew>()) {
@@ -636,21 +634,31 @@ std::cout << "    loopey c2\n";
         }
 
         void pushPredecessors(Name global) {
-          for (auto other : mustBeAfter[global]) {
-            push(other);
+          auto iter = mustBeAfter.find(global);
+          if (iter != mustBeAfter.end()) {
+            for (auto other : iter->second) {
+              push(other);
+            }
           }
         }
       };
 
       auto oldGlobals = std::move(wasm->globals);
+      wasm->updateMaps();
       std::unordered_map<Name, Index> globalIndexes;
       for (Index i = 0; i < oldGlobals.size(); i++) {
         globalIndexes[oldGlobals[i]->name] = i;
       }
+      // Add the globals that had an important ordering, in the right order.
       for (auto global : MustBeAfterSort(mustBeAfter)) {
         wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
       }
-      wasm->updateMaps();
+      // Add all other globals after them.
+      for (auto& global : oldGlobals) {
+        if (global) {
+          wasm->addGlobal(std::move(global));
+        }
+      }
     }
   }
 
