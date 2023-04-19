@@ -633,15 +633,15 @@ public:
         auto value = values[i];
         if (value.isData()) {
           auto* valueData = value.getGCData().get();
-          if (seenDataStack.count(valueData) {
+          if (seenDataStack.count(valueData)) {
             // This is a cycle in live GC data, so we cannot just do a normal
             // recursive call that will return a global.get for the defining
             // global for that data. To break the cycle, emit a null right now,
             // and fill in the data during startup using the start function.
             // TODO: If the field here is non-nullable then we must break the
             //       cycle higher up.
-            value = Literal::null(value.type);
-            addStartCycleBreak(definingGlobal, i, definingGlobals[valueData]);
+            value = Literal::makeNull(value.type.getHeapType());
+            addStartSet(definingGlobal, i, definingGlobals[valueData]);
           }
         }
         args.push_back(getSerialization(value));
@@ -714,7 +714,8 @@ public:
   //
   //  global[index] = valueGlobal
   //
-  void addStartCycleBreak(Name global, Index index, Name valueGlobal) {
+  // run during the start function.
+  void addStartSet(Name global, Index index, Name valueGlobal) {
     assert(!wasm->start.is()); // todo appending
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
