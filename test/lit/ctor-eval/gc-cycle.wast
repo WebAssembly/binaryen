@@ -48,6 +48,7 @@
   )
  )
 )
+
 ;; CHECK:      (export "test" (func $0_3))
 
 ;; CHECK:      (export "keepalive" (func $1))
@@ -73,11 +74,27 @@
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
-
-;; A cycle between two globals.
 (module
+ ;; A cycle between two globals.
+
+ ;; CHECK:      (type $A (struct (field (mut (ref null $A))) (field i32)))
  (type $A (struct (field (mut (ref null $A))) (field i32)))
 
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (global $ctor-eval$global_6 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 1337)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $ctor-eval$global_5 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_6)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_5))
  (global $a (mut (ref null $A)) (ref.null $A))
 
  (global $b (mut (ref null $A)) (ref.null $A))
@@ -114,3 +131,27 @@
   )
  )
 )
+;; CHECK:      (export "test" (func $0_3))
+
+;; CHECK:      (export "keepalive" (func $1))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (struct.get $A 1
+;; CHECK-NEXT:   (global.get $a)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_5)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref $A))
+;; CHECK-NEXT:  (local $b (ref $A))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
