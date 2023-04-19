@@ -73,3 +73,44 @@
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
+
+;; A cycle between two globals.
+(module
+ (type $A (struct (field (mut (ref null $A))) (field i32)))
+
+ (global $a (mut (ref null $A)) (ref.null $A))
+
+ (global $b (mut (ref null $A)) (ref.null $A))
+
+ (func "test"
+  (local $a (ref $A))
+  (local $b (ref $A))
+  (global.set $a
+   (local.tee $a
+    (struct.new $A
+     (ref.null $A)
+     (i32.const 42)
+    )
+   )
+  )
+  (global.set $b
+   (local.tee $b
+    (struct.new $A
+     (global.get $a)  ;; $b can refer to $a since we've created $a already.
+     (i32.const 1337)
+    )
+   )
+  )
+  ;; $a needs a set to allow us to create the cycle.
+  (struct.set $A 0
+   (local.get $a)
+   (local.get $b)
+  )
+ )
+
+ (func "keepalive" (result i32)
+  (struct.get $A 1
+   (global.get $a)
+  )
+ )
+)
