@@ -511,6 +511,7 @@ private:
   // data in the interpreter's memory can then be serialized by simply emitting
   // a global.get of that defining global.
   void applyGlobalsToModule() {
+std::cout << "aGTM\n";
     Builder builder(*wasm);
 
     if (!wasm->features.hasGC()) {
@@ -548,6 +549,7 @@ private:
       // value when we created it.)
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter != instance->globals.end()) {
+std::cout << "aGTM prepping a serialization for " << name << "\n";
         oldGlobal->init = getSerialization(iter->second, name);
       }
 
@@ -559,8 +561,8 @@ private:
 public:
   // Maps each GC data in the interpreter to its defining global: the global in
   // which it is created, and then all other users of it can just global.get
-  // that.
-  std::unordered_map<GCData*, Name> definingGlobals;
+  // that. For each such global we track its name and type.
+  std::unordered_map<GCData*, NameType> definingGlobals;
 
   // The data we have seen so far on the stack. This is used to guard against
   // infinite recursion, which would otherwise happen if there is a cycle among
@@ -576,6 +578,7 @@ public:
   Expression* getSerialization(Literal value,
                                Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
+std::cout << "getSerial " << value.type << " : " << possibleDefiningGlobal << "\n";
 
     // If this is externalized then we want to inspect the inner data, handle
     // that, and emit a ref.externalize around it as needed. To simplify the
@@ -596,6 +599,7 @@ public:
     if (!value.isData()) {
       return builder.makeConstantExpression(original);
     }
+std::cout << "  getSerial gc\n";
 
     // This is GC data, which we must handle in a more careful way.
     auto* data = value.getGCData().get();
@@ -603,8 +607,8 @@ public:
 
     // There was actual GC data allocated here.
     auto type = value.type;
-    auto& definingGlobal = definingGlobals[data];
-    if (!definingGlobal.is()) {
+    if (!definingGlobals.count(data)) {
+std::cout << "  getSerial need a new defining global\n";
       // This is the first usage of this allocation. Generate a struct.new /
       // array.new for it.
       auto& values = value.getGCData()->values;
@@ -619,28 +623,21 @@ public:
       if (possibleDefiningGlobal.is()) {
         // No need to allocate a new global, as we are in the definition of
         // one, which will be the defining global.
-        definingGlobal = possibleDefiningGlobal;
+        definingGlobals[data] = NameType{possibleDefiningGlobal, type};
+std::cout << "  getSerial use possible global\n";
       } else {
         // Allocate a new defining global.
         auto name =
           Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
         usedGlobalNames.insert(name);
-        definingGlobal = name;
+        definingGlobals[data] = NameType{name, type};
+std::cout << "  getSerial mek new global\n";
       }
-
-      if (!possibleDefiningGlobal.is()) {
-        // There is no existing defining global, so we must allocate a new one.
-        // Note that we must do this before the recursive calls below us, as in
-        // the case of cycles they may need to access that global.
-        //
-        // We set the global's init to null temporarily, and we'll fix it up
-        // later down after we create the init expression.
-        wasm->addGlobal(
-          builder.makeGlobal(definingGlobal, type, nullptr, Builder::Immutable));
-      }
+      auto definingGlobal = definingGlobals[data].name;
 
       seenDataStack.insert(data);
       for (Index i = 0; i < values.size(); i++) {
+std::cout << "  getSerial loop " << i << '\n';
         auto value = values[i];
         if (value.isData()) {
           auto* valueData = value.getGCData().get();
@@ -651,11 +648,15 @@ public:
             // and fill in the data during startup using the start function.
             // TODO: If the field here is non-nullable then we must break the
             //       cycle higher up.
+std::cout << "  getSerial loop    cycle!\n";
             value = Literal::makeNull(value.type.getHeapType());
-            addStartSet(definingGlobal, i, definingGlobals[valueData]);
+            addStartSet(definingGlobals[data], i, definingGlobals[valueData]);
           }
         }
+        std::cout << "  [[recurse\n";
         args.push_back(getSerialization(value));
+        std::cout << "    unrecurse]]\n";
+std::cout << "  getSerial loop result: " << *args.back() << "\n";
       }
       seenDataStack.erase(data);
 
@@ -677,6 +678,16 @@ public:
         return init;
       }
 
+      // There is no existing defining global, so we must allocate a new one.
+      // Note that we must do this before the recursive calls below us, as in
+      // the case of cycles they may need to access that global.
+      //
+      // We set the global's init to null temporarily, and we'll fix it up
+      // later down after we create the init expression.
+      wasm->addGlobal(
+        builder.makeGlobal(definingGlobal, type, nullptr, Builder::Immutable));
+std::cout << "  getSerial mek new global2: " << definingGlobal << "\n";
+
       // We allocated a new global, and set its init to null temporarily. Fix
       // that up now, then continue down to make a proper instruction to read
       // the global to return to the caller.
@@ -685,12 +696,13 @@ public:
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
-    Expression* ret = builder.makeGlobalGet(definingGlobal, value.type);
+    Expression* ret = builder.makeGlobalGet(definingGlobals[data].name, value.type);
     if (original != value) {
       // The original is externalized.
       assert(original.type.getHeapType() == HeapType::ext);
       ret = builder.makeRefAs(ExternExternalize, ret);
     }
+std::cout << "  getSerial finishing up with global.get " << *ret << '\n';
     return ret;
   }
 
@@ -728,19 +740,18 @@ public:
   //  global[index] = valueGlobal
   //
   // run during the start function.
-  void addStartSet(Name global, Index index, Name valueGlobal) {
+  void addStartSet(NameType global, Index index, NameType valueGlobal) {
     assert(!wasm->start.is()); // todo appending
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
 
-    auto globalType = wasm->getGlobal(global)->type;
     auto* getGlobal =
-      builder.makeGlobalGet(global, globalType);
+      builder.makeGlobalGet(global.name, global.type);
     auto* getValueGlobal =
-      builder.makeGlobalGet(valueGlobal, wasm->getGlobal(valueGlobal)->type);
+      builder.makeGlobalGet(valueGlobal.name, valueGlobal.type);
 
     Expression* set;
-    if (globalType.isStruct()) {
+    if (global.type.isStruct()) {
       set = builder.makeStructSet(index, getGlobal, getValueGlobal);
     } else {
       set = builder.makeArraySet(getGlobal,
