@@ -594,6 +594,7 @@ std::cout << "    loopey c2\n";
               // at that time will be valid to do a global.get of). Concretely,
               // we can simply use the current global.get in the start function,
               // and then put a null here.
+              // TODO chak mutability and nullability
               addStartSet({global->name, global->type}, j, get);
               operand = builder.makeRefNull(get->type.getHeapType());
             }
