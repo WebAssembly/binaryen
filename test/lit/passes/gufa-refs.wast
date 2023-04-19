@@ -5633,9 +5633,9 @@
   ;; CHECK-NEXT: )
   (func $test
     (array.init_data $[mut:i32] $0
-     (ref.as_non_null
-       (ref.null none)
-     )
+      (ref.as_non_null
+        (ref.null none)
+      )
       (i32.const 0)
       (i32.const 0)
       (i32.const 1)
