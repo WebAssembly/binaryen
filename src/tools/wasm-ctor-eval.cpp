@@ -571,6 +571,10 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     // we've seen already, and fully finished processing).
     std::unordered_set<Name> readableGlobals;
 
+    // A map of a global name to all the globals it absolutely must be after.
+    using MustBeAfter = std::unordered_map<Name, std::unordered_set<Name>>;
+    MustBeAfter mustBeAfter;
+
     // Defining globals are emitted first, and they are the only ones we need to
     // process now.
     auto numDefiningGlobals = definingGlobals.size();
@@ -581,22 +585,31 @@ std::cout << "nam def glob " << numDefiningGlobals << '\n';
 std::cout << "loopey " << i << " : " << global->name << " : " << *global->init << '\n';
       if (auto* structNew = global->init->dynCast<StructNew>()) {
 std::cout << "  loopey a\n";
-        for (Index j = 0; j < structNew->operands.size(); j++) {
-          auto*& operand = structNew->operands[j];
-std::cout << "  loopey b " << j << " : " << *operand << "\n";
+        for (Index fieldIndex = 0; fieldIndex < structNew->operands.size(); fieldIndex++) {
+          auto*& operand = structNew->operands[fieldIndex];
+std::cout << "  loopey b " << fieldIndex << " : " << *operand << "\n";
           if (auto* get = operand->dynCast<GlobalGet>()) {
 std::cout << "    loopey c1\n";
-            if (!readableGlobals.count(get->name)) {
+            if (readableGlobals.count(get->name)) {
+              continue;
+            }
 std::cout << "    loopey c2\n";
-              // We can't read this global here. If the value is nullable, and
-              // the field is mutable, then we can simply write a null here and
-              // do a struct.set in the start function to write the value (which
-              // at that time will be valid to do a global.get of). Concretely,
-              // we can simply use the current global.get in the start function,
-              // and then put a null here.
-              // TODO chak mutability and nullability
-              addStartSet({global->name, global->type}, j, get);
+            // We can't read this global here. If the value is nullable, and
+            // the field is mutable, then we can simply write a null here and
+            // do a struct.set in the start function to write the value (which
+            // at that time will be valid to do a global.get of). Concretely,
+            // we can simply use the current global.get in the start function,
+            // and then put a null here.
+            auto field = GCTypeUtils::getField(structNew->type, fieldIndex);
+            assert(field);
+            if (field->type.isNullable() && field->mutable_ == Mutable) {
+              addStartSet({global->name, global->type}, fieldIndex, get);
               operand = builder.makeRefNull(get->type.getHeapType());
+            } else {
+              // We can't write a null, or we can't write to the field, so
+              // this must be reordered: this global must be after the global it
+              // refers to.
+              mustBeAfter[global->name].push_back(get->name);
             }
           }
         }
@@ -608,6 +621,30 @@ std::cout << "    loopey c2\n";
       // Only after we've fully processed this global is it ok to be read from,
       // by later globals.
       readableGlobals.insert(global->name);
+    }
+
+    if (!mustBeAfter.empty()) {
+      // We found constraints that require reordering, so do so.
+
+      struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
+        const MustBeAfter& mustBeAfter;
+
+        MustBeAfterSort(const MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
+          for (auto& [global, _] : mustBeAfter) {
+            push(global);
+          }
+        }
+
+        void pushPredecessors(Name global) {
+          for (auto other : mustBeAfter[global]) {
+            push(other);
+          }
+        }
+      };
+
+      ..
+
+      wasm->updateMaps();
     }
   }
 
