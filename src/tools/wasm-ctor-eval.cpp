@@ -644,13 +644,20 @@ std::cout << "  getSerial loop " << i << '\n';
           if (seenDataStack.count(valueData)) {
             // This is a cycle in live GC data, so we cannot just do a normal
             // recursive call that will return a global.get for the defining
-            // global for that data. To break the cycle, emit a null right now,
-            // and fill in the data during startup using the start function.
-            // TODO: If the field here is non-nullable then we must break the
-            //       cycle higher up.
+            // global for that data. We need to break the cycle somehow.
+            auto field = GCTypeUtils::getField(type, i);
+            assert(field);
+            if (field->type.isNullable() && field->mutable_ == Mutable) {
+              // We can emit a null here and set the proper value later in the
+              // start function.
 std::cout << "  getSerial loop    cycle!\n";
-            value = Literal::makeNull(value.type.getHeapType());
-            addStartSet(definingGlobals[data], i, definingGlobals[valueData]);
+              value = Literal::makeNull(value.type.getHeapType());
+              addStartSet(definingGlobals[data], i, definingGlobals[valueData]);
+            } else {
+              // We cannot write a null here, or we cannot write to the field
+              // later. Oh no!
+              abort();
+            }
           }
         }
         std::cout << "  [[recurse\n";
