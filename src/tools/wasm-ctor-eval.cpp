@@ -545,10 +545,11 @@ std::cout << "aGTM\n";
       if (iter != instance->globals.end()) {
 std::cout << "aGTM prepping a serialization for " << name << "\n";
         oldGlobal->init = getSerialization(iter->second, name);
+        /* ? */ wasm->addGlobal(std::move(oldGlobal));
       }
 
       // Add the global back to the module.
-      wasm->addGlobal(std::move(oldGlobal));
+//      wasm->addGlobal(std::move(oldGlobal));
     }
 
     // Finally, we need to fix up cycles. The serialization we just emitted
@@ -573,14 +574,20 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     // Defining globals are emitted first, and they are the only ones we need to
     // process now.
     auto numDefiningGlobals = definingGlobals.size();
+std::cout << "nam def glob " << numDefiningGlobals << '\n';
 
     for (Index i = 0; i < numDefiningGlobals; i++) {
       auto& global = wasm->globals[i];
+std::cout << "loopey " << i << " : " << global->name << " : " << *global->init << '\n';
       if (auto* structNew = global->init->dynCast<StructNew>()) {
+std::cout << "  loopey a\n";
         for (Index j = 0; j < structNew->operands.size(); j++) {
           auto*& operand = structNew->operands[j];
+std::cout << "  loopey b " << j << " : " << *operand << "\n";
           if (auto* get = operand->dynCast<GlobalGet>()) {
+std::cout << "    loopey c1\n";
             if (!readableGlobals.count(get->name)) {
+std::cout << "    loopey c2\n";
               // We can't read this global here. If the value is nullable, and
               // the field is mutable, then we can simply write a null here and
               // do a struct.set in the start function to write the value (which
@@ -637,7 +644,6 @@ std::cout << "getSerial " << value.type << " : " << possibleDefiningGlobal << "\
     if (!value.isData()) {
       return builder.makeConstantExpression(original);
     }
-std::cout << "  getSerial gc\n";
 
     // This is GC data, which we must handle in a more careful way.
     auto* data = value.getGCData().get();
@@ -646,7 +652,6 @@ std::cout << "  getSerial gc\n";
     // There was actual GC data allocated here.
     auto type = value.type;
     if (!definingGlobals.count(data)) {
-std::cout << "  getSerial need a new defining global\n";
       // This is the first usage of this allocation. Generate a struct.new /
       // array.new for it.
       auto& values = value.getGCData()->values;
@@ -662,22 +667,19 @@ std::cout << "  getSerial need a new defining global\n";
         // No need to allocate a new global, as we are in the definition of
         // one, which will be the defining global.
         definingGlobals[data] = NameType{possibleDefiningGlobal, type};
-std::cout << "  getSerial use possible global\n";
       } else {
         // Allocate a new defining global.
         auto name =
           Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
         usedGlobalNames.insert(name);
         definingGlobals[data] = NameType{name, type};
-std::cout << "  getSerial mek new global\n";
       }
       auto definingGlobal = definingGlobals[data].name;
+std::cout << "added a new dfining global " << definingGlobal << " now there are " << definingGlobals.size() << '\n';
 
       for (Index i = 0; i < values.size(); i++) {
-std::cout << "  getSerial loop " << i << '\n';
         auto value = values[i];
         args.push_back(getSerialization(value));
-std::cout << "  getSerial loop result: " << *args.back() << "\n";
       }
 
       Expression* init;
@@ -706,7 +708,6 @@ std::cout << "  getSerial loop result: " << *args.back() << "\n";
       // later down after we create the init expression.
       wasm->addGlobal(
         builder.makeGlobal(definingGlobal, type, nullptr, Builder::Immutable));
-std::cout << "  getSerial mek new global2: " << definingGlobal << "\n";
 
       // We allocated a new global, and set its init to null temporarily. Fix
       // that up now, then continue down to make a proper instruction to read
@@ -722,7 +723,6 @@ std::cout << "  getSerial mek new global2: " << definingGlobal << "\n";
       assert(original.type.getHeapType() == HeapType::ext);
       ret = builder.makeRefAs(ExternExternalize, ret);
     }
-std::cout << "  getSerial finishing up with global.get " << *ret << '\n';
     return ret;
   }
 
