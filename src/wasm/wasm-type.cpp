@@ -2410,8 +2410,6 @@ struct CanonicalizationState {
   // Updates the HeapType use sites within `info`.
   void updateUses(ReplacementMap& replacements,
                   std::unique_ptr<HeapTypeInfo>& info);
-  // Updates lists and uses.
-  void update(ReplacementMap& replacements);
 
 #if TRACE_CANONICALIZATION
   void dump() {
@@ -2428,16 +2426,6 @@ struct CanonicalizationState {
   }
 #endif // TRACE_CANONICALIZATION
 };
-
-void CanonicalizationState::update(ReplacementMap& replacements) {
-  if (replacements.empty()) {
-    return;
-  }
-  updateShallow(replacements);
-  for (auto& info : newInfos) {
-    updateUses(replacements, info);
-  }
-}
 
 void CanonicalizationState::updateShallow(ReplacementMap& replacements) {
   if (replacements.empty()) {
