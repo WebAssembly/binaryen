@@ -1013,7 +1013,11 @@ struct InfoCollector
     visitArraySet(set);
   }
   void visitArrayInit(ArrayInit* curr) {
-    if (curr->type == Type::unreachable) {
+    // Check for both unreachability and a bottom type. In either case we have
+    // no work to do, and would error on an assertion below in finding the array
+    // type.
+    auto field = GCTypeUtils::getField(curr->ref->type);
+    if (!field) {
       return;
     }
     // See ArrayCopy, above. Here an additional complexity is that we need to
@@ -1022,7 +1026,7 @@ struct InfoCollector
     // manually here as a fake unknown value, using a fake local.get that we
     // root.
     // TODO: be more precise about what is in the table
-    auto valueType = curr->ref->type.getHeapType().getArray().element.type;
+    auto valueType = field->type;
     Builder builder(*getModule());
     auto* get = builder.makeLocalGet(-1, valueType);
     addRoot(get);
