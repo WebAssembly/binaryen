@@ -3525,12 +3525,6 @@ BINARYEN_API TypeBuilderRef TypeBuilderCreate(BinaryenIndex size);
 BINARYEN_API void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count);
 // Gets the size of the backing table of the type builder.
 BINARYEN_API BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder);
-// Sets the heap type at index `index` to a basic heap type. Must not be used in
-// nominal mode.
-BINARYEN_API void
-TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
-                            BinaryenIndex index,
-                            BinaryenBasicHeapType basicHeapType);
 // Sets the heap type at index `index` to a concrete signature type. Expects
 // temporary tuple types if multiple parameter and/or result types include
 // temporary types.
@@ -3551,12 +3545,6 @@ BINARYEN_API void TypeBuilderSetArrayType(TypeBuilderRef builder,
                                           BinaryenType elementType,
                                           BinaryenPackedType elementPackedType,
                                           int elementMutable);
-// Tests if the heap type at index `index` is a basic heap type.
-BINARYEN_API bool TypeBuilderIsBasic(TypeBuilderRef builder,
-                                     BinaryenIndex index);
-// Gets the basic heap type at index `index`.
-BINARYEN_API BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
-                                                       BinaryenIndex index);
 // Gets the temporary heap type to use at index `index`. Temporary heap types
 // may only be used to construct temporary types using the type builder.
 BINARYEN_API BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,

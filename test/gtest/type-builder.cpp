@@ -489,28 +489,6 @@ TEST_F(TypeTest, CanonicalizeTypesBeforeSubtyping) {
   EXPECT_TRUE(result);
 }
 
-TEST_F(TypeTest, CanonicalizeBasicTypes) {
-  TypeBuilder builder(5);
-
-  Type anyref = builder.getTempRefType(builder[0], Nullable);
-  Type anyrefs = builder.getTempTupleType({anyref, anyref});
-
-  Type anyrefCanon = Type(HeapType::any, Nullable);
-
-  builder[0] = HeapType::any;
-  builder[1] = Struct({Field(anyref, Immutable)});
-  builder[2] = Struct({Field(anyrefCanon, Immutable)});
-  builder[3] = Signature(anyrefs, Type::none);
-  builder[4] = Signature({anyrefCanon, anyrefCanon}, Type::none);
-
-  auto result = builder.build();
-  ASSERT_TRUE(result);
-  auto built = *result;
-
-  EXPECT_EQ(built[1], built[2]);
-  EXPECT_EQ(built[3], built[4]);
-}
-
 TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType ext = HeapType::ext;
   HeapType func = HeapType::func;
