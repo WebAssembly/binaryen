@@ -508,8 +508,6 @@ private:
   // a global.get of that defining global.
   void applyGlobalsToModule() {
 std::cout << "aGTM\n";
-    Builder builder(*wasm);
-
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
       for (const auto& [name, values] : instance->globals) {
@@ -565,6 +563,46 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     // globals as needed, and break up cycles by writing a null in the initial
     // struct.new in the global's definition, and later in the start function we
     // can perform additional struct.sets that cause cycles to form.
+
+    Builder builder(*wasm);
+
+    // We'll track the set of readable globals as we go (which are the globals
+    // we've seen already, and fully finished processing).
+    std::unordered_set<Name> readableGlobals;
+
+    // Defining globals are emitted first, and they are the only ones we need to
+    // process now.
+    auto numDefiningGlobals = definingGlobals.size();
+
+    for (Index i = 0; i < numDefiningGlobals; i++) {
+      auto& global = wasm->globals[i];
+      if (auto* structNew = global->init->dynCast<StructNew>()) {
+        for (Index j = 0; j < structNew->operands.size(); j++) {
+          auto*& operand = structNew->operands[j];
+          if (auto* get = operand->dynCast<GlobalGet>()) {
+            if (!readableGlobals.count(get->name)) {
+              // We can't read this global here. If the value is nullable, and
+              // the field is mutable, then we can simply write a null here and
+              // do a struct.set in the start function to write the value (which
+              // at that time will be valid to do a global.get of). Concretely,
+              // we can simply use the current global.get in the start function,
+              // and then put a null here.
+              addStartSet({global->name, global->type}, j, get);
+              operand = builder.makeRefNull(get->type);
+            }
+          }
+        }
+      } else if (auto* arrayNew = global->init->dynCast<ArrayNew>()) {
+        WASM_USED(arrayNew);
+        WASM_UNREACHABLE("TODO");
+      } else {
+        WASM_UNREACHABLE("bad defining global init");
+      }
+
+      // Only after we've fully processed this global is it ok to be read from,
+      // by later globals.
+      readableGlobals.insert(global->name);
+    }
   }
 
 public:
@@ -723,23 +761,21 @@ std::cout << "  getSerial finishing up with global.get " << *ret << '\n';
   //  global[index] = valueGlobal
   //
   // run during the start function.
-  void addStartSet(NameType global, Index index, NameType valueGlobal) {
+  void addStartSet(NameType global, Index index, GlobalGet* value) {
     assert(!wasm->start.is()); // todo appending
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
 
     auto* getGlobal =
       builder.makeGlobalGet(global.name, global.type);
-    auto* getValueGlobal =
-      builder.makeGlobalGet(valueGlobal.name, valueGlobal.type);
 
     Expression* set;
     if (global.type.isStruct()) {
-      set = builder.makeStructSet(index, getGlobal, getValueGlobal);
+      set = builder.makeStructSet(index, getGlobal, value);
     } else {
       set = builder.makeArraySet(getGlobal,
                                  builder.makeConst(int32_t(index)),
-                                 getValueGlobal);
+                                 value);
     }
 
     body->list.push_back(set);
