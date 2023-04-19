@@ -628,6 +628,17 @@ public:
         definingGlobal = name;
       }
 
+      if (!possibleDefiningGlobal.is()) {
+        // There is no existing defining global, so we must allocate a new one.
+        // Note that we must do this before the recursive calls below us, as in
+        // the case of cycles they may need to access that global.
+        //
+        // We set the global's init to null temporarily, and we'll fix it up
+        // later down after we create the init expression.
+        wasm->addGlobal(
+          builder.makeGlobal(definingGlobal, type, nullptr, Builder::Immutable));
+      }
+
       seenDataStack.insert(data);
       for (Index i = 0; i < values.size(); i++) {
         auto value = values[i];
@@ -661,13 +672,15 @@ public:
 
       if (possibleDefiningGlobal.is()) {
         // We didn't need to allocate a new global, as we are in the definition
-        // of one. We can just return the initialization expression, which will
-        // be placed in that global's |init| field.
+        // of one, so just return the initialization expression, which will be
+        // placed in that global's |init| field.
         return init;
       }
 
-      wasm->addGlobal(
-        builder.makeGlobal(definingGlobal, type, init, Builder::Immutable));
+      // We allocated a new global, and set its init to null temporarily. Fix
+      // that up now, then continue down to make a proper instruction to read
+      // the global to return to the caller.
+      wasm->getGlobal(definingGlobal)->init = init;
     }
 
     // Refer to this GC allocation by reading from the global that is
