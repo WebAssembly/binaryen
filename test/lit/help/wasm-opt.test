@@ -399,7 +399,8 @@
 ;; CHECK-NEXT:                                                 signature types where possible
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --signext-lowering                            lower sign-ext operations to
-;; CHECK-NEXT:                                                 wasm mvp
+;; CHECK-NEXT:                                                 wasm mvp and disable the sign
+;; CHECK-NEXT:                                                 extension feature
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --simplify-globals                            miscellaneous globals-related
 ;; CHECK-NEXT:                                                 optimizations
