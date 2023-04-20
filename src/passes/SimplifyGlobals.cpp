@@ -328,6 +328,10 @@ struct ConstantGlobalApplier
   : public WalkerPass<
       LinearExecutionWalker<ConstantGlobalApplier,
                             UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
+  using super = WalkerPass<
+    LinearExecutionWalker<ConstantGlobalApplier,
+                          UnifiedExpressionVisitor<ConstantGlobalApplier>>>;
+
   bool isFunctionParallel() override { return true; }
 
   ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
@@ -335,6 +339,16 @@ struct ConstantGlobalApplier
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<ConstantGlobalApplier>(constantGlobals, optimize);
+  }
+
+  bool refinalize = false;
+
+  void replaceCurrent(Expression* rep) {
+    if (rep->type != getCurrent()->type) {
+      // This operation will change the type, so refinalize.
+      refinalize = true;
+    }
+    super::replaceCurrent(rep);
   }
 
   void visitExpression(Expression* curr) {
@@ -386,10 +400,15 @@ struct ConstantGlobalApplier
   }
 
   void visitFunction(Function* curr) {
-    if (replaced && optimize) {
-      PassRunner runner(getPassRunner());
-      runner.addDefaultFunctionOptimizationPasses();
-      runner.runOnFunction(curr);
+    if (replaced) {
+      if (refinalize) {
+        ReFinalize().walkFunctionInModule(curr, this->getModule());
+      }
+      if (optimize) {
+        PassRunner runner(getPassRunner());
+        runner.addDefaultFunctionOptimizationPasses();
+        runner.runOnFunction(curr);
+      }
     }
   }
 
