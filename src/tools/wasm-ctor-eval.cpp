@@ -583,20 +583,16 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     using MustBeAfter = std::unordered_map<Name, InsertOrderedSet<Name>>;
     MustBeAfter mustBeAfter;
 
-    // Defining globals are emitted first, and they are the only ones we need to
-    // process now.
-    auto numGlobals = wasm->globals.size();
-    for (Index i = 0; i < numGlobals; i++) {
-      auto& global = wasm->globals[i];
+    for (auto& global : wasm->globals) {
       if (!global->init) {
         continue;
       }
-std::cout << "loopey " << i << " : " << global->name << " : " << *global->init << '\n';
+std::cout << "loopey " << global->name << " : " << *global->init << '\n';
 
-      struct InitWalker : PostWalker<InitWalker> {
+      struct InitScanner : PostWalker<InitScanner> {
         std::unordered_set<Name>& readableGlobals;
 
-        InitWalker(std::unordered_set<Name>& readableGlobals) : readableGlobals(readableGlobals) {}
+        InitScanner(std::unordered_set<Name>& readableGlobals) : readableGlobals(readableGlobals) {}
 
         // All the relevant global.gets: those that we are trying to read from
         // but that cannot be read from yet. We need to do something for these.
@@ -615,12 +611,12 @@ std::cout << "loopey " << i << " : " << global->name << " : " << *global->init <
         // can handle it. The index is the position of the child in the parent
         // (which is 0 for all array children, as their position does not
         // matter, they all have the same field info).
-        void handleChild(Expression* curr, Expression* parent, Index fieldIndex) {
-          if (!curr) {
+        void handleChild(Expression* child, Expression* parent, Index fieldIndex) {
+          if (!child) {
             return;
           }
 
-          if (auto* get = curr->dynCast<GlobalGet>()) {
+          if (auto* get = child->dynCast<GlobalGet>()) {
             if (unreadableGets.count(get)) {
               // We can't read this global yet, so we need to do something. If
               // we can't fill it in later, then this is a constraint on our
@@ -651,11 +647,11 @@ std::cout << "loopey " << i << " : " << global->name << " : " << *global->init <
         }
       };
 
-      InitWalker walker(readableGlobals);
-      walker.walk(global->init);
+      InitScanner scanner(readableGlobals);
+      scanner.walk(global->init);
 
       // Any global.gets that could not be handled are constraints.
-      for (auto* get : walker.unreadableGets) {
+      for (auto* get : scanner.unreadableGets) {
         mustBeAfter[global->name].insert(get->name);
       }
 
@@ -710,10 +706,56 @@ std::cout << "also add " << global->name << "\n";
 
       // After sorting, perform the fixups that we need, that is, replace the
       // relevant fields in cycles with a null and prepare a set in the start
-      // function.
-      // TODO: we currently replace both sides of a cycle if they are both
-      //       nullable and mutable; we could replace just one.
-      ...
+      // function. Once more, loop on the globals, noting which gets are too
+      // early and need fixing.
+      readableGlobals.clear();
+      for (auto& global : wasm->globals) {
+        if (!global->init) {
+          continue;
+        }
+std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
+
+        struct InitFixer : PostWalker<InitFixer> {
+          std::unique_ptr<Global>& global;
+          std::unordered_set<Name>& readableGlobals;
+
+          InitFixer(std::unique_ptr<Global>& global, std::unordered_set<Name>& readableGlobals) : global(global), readableGlobals(readableGlobals) {}
+
+          void handleChild(Expression*& child, Expression* parent, Index fieldIndex) {
+            if (!child) {
+              return;
+            }
+
+            if (auto* get = child->dynCast<GlobalGet>()) {
+              if (!readableGlobals.count(get)) {
+                assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
+                addStartSet({global->name, global->type}, fieldIndex, get);
+                child = builder.makeRefNull(get->type.getHeapType());
+              }
+            }
+          }
+
+          void visitStructNew(StructNew* curr) {
+            Index i = 0;
+            for (auto* child : curr->operands) {
+              handleChild(child, curr, i++);
+            }
+          }
+          void visitArrayNew(ArrayNew* curr) {
+            handleChild(child->value, curr);
+          }
+          void visitArrayNewFixed(ArrayNewFixed* curr) {
+            for (auto* child : curr->values) {
+              handleChild(child, curr, 0);
+            }
+          }
+        };
+
+        InitFixer fixer(global->name, readableGlobals);
+        fixer.walk(global->init);
+
+        readableGlobals.insert(global->name);
+      }
     }
   }
 
