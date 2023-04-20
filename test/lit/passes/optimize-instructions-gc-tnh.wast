@@ -319,77 +319,134 @@
   )
 
   ;; TNH:      (func $select.arm.null.effects (type $void)
-  ;; TNH-NEXT:  (local $0 (ref $struct))
+  ;; TNH-NEXT:  (local $temp i32)
   ;; TNH-NEXT:  (local $1 (ref $struct))
+  ;; TNH-NEXT:  (local $2 (ref $struct))
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (block (result (ref $struct))
-  ;; TNH-NEXT:    (local.set $0
-  ;; TNH-NEXT:     (call $get-ref)
+  ;; TNH-NEXT:    (local.set $1
+  ;; TNH-NEXT:     (struct.new $struct
+  ;; TNH-NEXT:      (local.tee $temp
+  ;; TNH-NEXT:       (i32.const 1)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (block
   ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (call $get-null)
+  ;; TNH-NEXT:      (block (result nullref)
+  ;; TNH-NEXT:       (local.set $temp
+  ;; TNH-NEXT:        (i32.const 2)
+  ;; TNH-NEXT:       )
+  ;; TNH-NEXT:       (ref.null none)
+  ;; TNH-NEXT:      )
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (call $get-i32)
+  ;; TNH-NEXT:      (local.get $temp)
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (local.get $0)
+  ;; TNH-NEXT:    (local.get $1)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (block (result (ref $struct))
   ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (call $get-null)
+  ;; TNH-NEXT:     (block (result nullref)
+  ;; TNH-NEXT:      (local.set $temp
+  ;; TNH-NEXT:       (i32.const 2)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (ref.null none)
+  ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (block (result (ref $struct))
-  ;; TNH-NEXT:     (local.set $1
-  ;; TNH-NEXT:      (call $get-ref)
+  ;; TNH-NEXT:     (local.set $2
+  ;; TNH-NEXT:      (struct.new $struct
+  ;; TNH-NEXT:       (local.tee $temp
+  ;; TNH-NEXT:        (i32.const 1)
+  ;; TNH-NEXT:       )
+  ;; TNH-NEXT:      )
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:     (drop
-  ;; TNH-NEXT:      (call $get-i32)
+  ;; TNH-NEXT:      (local.get $temp)
   ;; TNH-NEXT:     )
-  ;; TNH-NEXT:     (local.get $1)
+  ;; TNH-NEXT:     (local.get $2)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 2)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $select.arm.null.effects (type $void)
+  ;; NO_TNH-NEXT:  (local $temp i32)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (select (result (ref null $struct))
-  ;; NO_TNH-NEXT:    (call $get-ref)
-  ;; NO_TNH-NEXT:    (call $get-null)
-  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:    (struct.new $struct
+  ;; NO_TNH-NEXT:     (local.tee $temp
+  ;; NO_TNH-NEXT:      (i32.const 1)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (block (result nullref)
+  ;; NO_TNH-NEXT:     (local.set $temp
+  ;; NO_TNH-NEXT:      (i32.const 2)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $temp)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (select (result (ref null $struct))
-  ;; NO_TNH-NEXT:    (call $get-null)
-  ;; NO_TNH-NEXT:    (call $get-ref)
-  ;; NO_TNH-NEXT:    (call $get-i32)
+  ;; NO_TNH-NEXT:    (block (result nullref)
+  ;; NO_TNH-NEXT:     (local.set $temp
+  ;; NO_TNH-NEXT:      (i32.const 2)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (struct.new $struct
+  ;; NO_TNH-NEXT:     (local.tee $temp
+  ;; NO_TNH-NEXT:      (i32.const 1)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (local.get $temp)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 2)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $select.arm.null.effects
+    (local $temp i32)
     ;; As above but there are conflicting effects and we must add a local when
     ;; we optimize.
     (struct.set $struct 0
       (select (result (ref null $struct))
-        (call $get-ref)
-        (call $get-null)
-        (call $get-i32)
+        (struct.new $struct
+          (local.tee $temp
+            (i32.const 1)
+          )
+        )
+        (block (result (ref null none))
+          (local.set $temp
+            (i32.const 2)
+          )
+          (ref.null none)
+        )
+        (local.get $temp)
       )
       (i32.const 1)
     )
     (struct.set $struct 0
       (select (result (ref null $struct))
-        (call $get-null)
-        (call $get-ref)
-        (call $get-i32)
+        (block (result (ref null none))
+          (local.set $temp
+            (i32.const 2)
+          )
+          (ref.null none)
+        )
+        (struct.new $struct
+          (local.tee $temp
+            (i32.const 1)
+          )
+        )
+        (local.get $temp)
       )
       (i32.const 2)
     )
@@ -841,6 +898,53 @@
           (ref.null none)
         )
         (i32.const 1)
+      )
+    )
+  )
+
+  ;; TNH:      (func $if.null.child.but.no.flow (type $void)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result (ref func))
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (if (result (ref nofunc))
+  ;; TNH-NEXT:      (i32.const 1)
+  ;; TNH-NEXT:      (return)
+  ;; TNH-NEXT:      (unreachable)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (unreachable)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $if.null.child.but.no.flow (type $void)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result (ref func))
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (if (result (ref nofunc))
+  ;; NO_TNH-NEXT:      (i32.const 1)
+  ;; NO_TNH-NEXT:      (return)
+  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $if.null.child.but.no.flow
+    ;; The if's true arm has a bottom type, which the cast would trap on. But we
+    ;; cannot optimize using that fact, as the null does not actually flow out -
+    ;; we return from the function before. So we should not replace the if with
+    ;; the false arm (that would trap, and change the behavior; tnh can remove
+    ;; traps, not add them).
+    (drop
+      (ref.cast func
+        (if (result (ref nofunc))
+          (i32.const 1)
+          (block (result (ref nofunc))
+            (return)
+          )
+          (unreachable)
+        )
       )
     )
   )
