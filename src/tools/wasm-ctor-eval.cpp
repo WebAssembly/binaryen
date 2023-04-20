@@ -53,6 +53,13 @@ struct FailToEvalException {
   FailToEvalException(std::string why) : why(why) {}
 };
 
+// comment
+bool canReplaceChildWithNullAndLaterSet(Expression* parent, Index fieldIndex) {
+  auto field = GCTypeUtils::getField(parent->type, fieldIndex);
+  assert(field);
+  return field->type.isNullable() && field->mutable_ == Mutable;
+}
+
 // The prefix for a recommendation, so it is aligned properly with the rest of
 // the output.
 #define RECOMMENDATION "\n       recommendation: "
@@ -581,43 +588,70 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
     auto numGlobals = wasm->globals.size();
     for (Index i = 0; i < numGlobals; i++) {
       auto& global = wasm->globals[i];
+      if (!global->init) {
+        continue;
+      }
 std::cout << "loopey " << i << " : " << global->name << " : " << *global->init << '\n';
-      if (auto* structNew = global->init->dynCast<StructNew>()) {
-std::cout << "  loopey a\n";
-        for (Index fieldIndex = 0; fieldIndex < structNew->operands.size(); fieldIndex++) {
-          auto*& operand = structNew->operands[fieldIndex];
-std::cout << "  loopey b " << fieldIndex << " : " << *operand << "\n";
-          if (auto* get = operand->dynCast<GlobalGet>()) {
-std::cout << "    loopey c1\n";
-            if (readableGlobals.count(get->name)) {
-              continue;
-            }
-std::cout << "    loopey c2\n";
-            // We can't read this global here. If the value is nullable, and
-            // the field is mutable, then we can simply write a null here and
-            // do a struct.set in the start function to write the value (which
-            // at that time will be valid to do a global.get of). Concretely,
-            // we can simply use the current global.get in the start function,
-            // and then put a null here.
-            auto field = GCTypeUtils::getField(structNew->type, fieldIndex);
-            assert(field);
-            if (field->type.isNullable() && field->mutable_ == Mutable) {
-std::cout << "    loopey c3\n";
-              addStartSet({global->name, global->type}, fieldIndex, get);
-              operand = builder.makeRefNull(get->type.getHeapType());
-            } else {
-std::cout << "    loopey c4\n";
-              // We can't write a null, or we can't write to the field, so
-              // this must be reordered: this global must be after the global it
-              // refers to.
-              mustBeAfter[global->name].insert(get->name);
+
+      struct InitWalker : PostWalker<InitWalker> {
+        std::unordered_set<Name>& readableGlobals;
+
+        InitWalker(std::unordered_set<Name>& readableGlobals) : readableGlobals(readableGlobals) {}
+
+        // All the relevant global.gets: those that we are trying to read from
+        // but that cannot be read from yet. We need to do something for these.
+        // If we find we can handle them then we'll remove them from this list,
+        // and so those remaining at the end will be hard constraints on our
+        // sorting.
+        std::unordered_set<GlobalGet*> unreadableGets;
+
+        void visitGlobalGet(GlobalGet* curr) {
+          if (!readableGlobals.count(curr->name)) {
+            unreadableGets.insert(curr);
+          }
+        }
+
+        // Checks if a child is a global.get that we need to handle, and if we
+        // can handle it. The index is the position of the child in the parent
+        // (which is 0 for all array children, as their position does not
+        // matter, they all have the same field info).
+        void handleChild(Expression* curr, Expression* parent, Index fieldIndex) {
+          if (!curr) {
+            return;
+          }
+
+          if (auto* get = curr->dynCast<GlobalGet>()) {
+            if (unreadableGets.count(get)) {
+              // We can't read this global yet, so we need to do something. If
+              // we can't fill it in later, then this is a constraint on our
+              // ordering.
+              if (canReplaceChildWithNullAndLaterSet(parent, fieldIndex)) {
+                // We can replace the child with a null, and set the value later
+                // (in the start function), so this is not a constraint on our
+                // sorting.
+                unreadableGets.erase(get);
+              }
             }
           }
         }
-      } else if ([[maybe_unused]] auto* arrayNew = global->init->dynCast<ArrayNew>()) {
-        WASM_UNREACHABLE("TODO");
-      }
-      // TODO: what about global.get and other things?
+
+        void visitStructNew(StructNew* curr) {
+          Index i = 0;
+          for (auto* child : curr->operands) {
+            handleChild(child, curr, i++);
+          }
+        }
+        void visitArrayNew(ArrayNew* curr) {
+          handleChild(child->value, curr);
+        }
+        void visitArrayNewFixed(ArrayNewFixed* curr) {
+          for (auto* child : curr->values) {
+            handleChild(child, curr, 0);
+          }
+        }
+      };
+
+      InitWalker(readableGlobals).walk(global->init);
 
       // Only after we've fully processed this global is it ok to be read from,
       // by later globals.
