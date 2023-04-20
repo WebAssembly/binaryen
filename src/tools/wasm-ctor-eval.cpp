@@ -743,7 +743,7 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
             }
           }
           void visitArrayNew(ArrayNew* curr) {
-            handleChild(curr->value, curr);
+            handleChild(curr->init, curr);
           }
           void visitArrayNewFixed(ArrayNewFixed* curr) {
             for (auto* child : curr->values) {
