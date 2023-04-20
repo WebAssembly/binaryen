@@ -575,10 +575,6 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
 
     Builder builder(*wasm);
 
-    // We'll track the set of readable globals as we go (which are the globals
-    // we've seen already, and fully finished processing).
-    std::unordered_set<Name> readableGlobals;
-
     // A map of a global name to all the globals it absolutely must be after.
     using MustBeAfter = std::unordered_map<Name, InsertOrderedSet<Name>>;
     MustBeAfter mustBeAfter;
@@ -590,21 +586,16 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
 std::cout << "loopey " << global->name << " : " << *global->init << '\n';
 
       struct InitScanner : PostWalker<InitScanner> {
-        std::unordered_set<Name>& readableGlobals;
 
-        InitScanner(std::unordered_set<Name>& readableGlobals) : readableGlobals(readableGlobals) {}
-
-        // All the relevant global.gets: those that we are trying to read from
-        // but that cannot be read from yet. We need to do something for these.
-        // If we find we can handle them then we'll remove them from this list,
-        // and so those remaining at the end will be hard constraints on our
-        // sorting.
-        std::unordered_set<GlobalGet*> unreadableGets;
+        // All the global.gets that we can't fix up by replacing the value with
+        // a null and adding a set in the start function. These will be hard
+        // constraints on our sorting.
+        std::unordered_set<GlobalGet*> unfixableGets;
 
         void visitGlobalGet(GlobalGet* curr) {
-          if (!readableGlobals.count(curr->name)) {
-            unreadableGets.insert(curr);
-          }
+          // Assume this is unfixable, unless we reach the parent and see that
+          // it is.
+          unfixableGets.insert(curr);
         }
 
         // Checks if a child is a global.get that we need to handle, and if we
@@ -617,16 +608,11 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (unreadableGets.count(get)) {
-              // We can't read this global yet, so we need to do something. If
-              // we can't fill it in later, then this is a constraint on our
-              // ordering.
-              if (canReplaceChildWithNullAndLaterSet(parent, fieldIndex)) {
-                // We can replace the child with a null, and set the value later
-                // (in the start function), so this is not a constraint on our
-                // sorting.
-                unreadableGets.erase(get);
-              }
+            if (canReplaceChildWithNullAndLaterSet(parent, fieldIndex)) {
+              // We can replace the child with a null, and set the value later
+              // (in the start function), so this is not a constraint on our
+              // sorting.
+              unfixableGets.erase(get);
             }
           }
         }
@@ -647,18 +633,14 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
         }
       };
 
-      InitScanner scanner(readableGlobals);
+      InitScanner scanner;
       scanner.walk(global->init);
 
-      // Any global.gets that could not be handled are constraints.
-      for (auto* get : scanner.unreadableGets) {
+      // Any global.gets that cannot be fixed up are constraints.
+      for (auto* get : scanner.unfixableGets) {
         mustBeAfter[global->name].insert(get->name);
 std::cout << global->name << " must be after " << get->name << '\n';
       }
-
-      // Only after we've fully processed this global is it ok to be read from,
-      // by later globals.
-      readableGlobals.insert(global->name);
     }
 
     if (!mustBeAfter.empty()) {
@@ -709,7 +691,11 @@ std::cout << "also add " << global->name << "\n";
       // relevant fields in cycles with a null and prepare a set in the start
       // function. Once more, loop on the globals, noting which gets are too
       // early and need fixing.
-      readableGlobals.clear();
+
+      // We'll track the set of readable globals as we go (which are the globals
+      // we've seen already, and fully finished processing).
+      std::unordered_set<Name> readableGlobals;
+
       for (auto& global : wasm->globals) {
         if (!global->init) {
           continue;
@@ -758,6 +744,8 @@ std::cout << "replace wit null and post set\n";
         fixer.setModule(wasm);
         fixer.walk(global->init);
 
+        // Only after we've fully processed this global is it ok to be read from
+        // by later globals.
         readableGlobals.insert(global->name);
       }
     }
