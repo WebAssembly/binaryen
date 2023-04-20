@@ -651,7 +651,13 @@ std::cout << "loopey " << i << " : " << global->name << " : " << *global->init <
         }
       };
 
-      InitWalker(readableGlobals).walk(global->init);
+      InitWalker walker(readableGlobals);
+      walker.walk(global->init);
+
+      // Any global.gets that could not be handled are constraints.
+      for (auto* get : walker.unreadableGets) {
+        mustBeAfter[global->name].insert(get->name);
+      }
 
       // Only after we've fully processed this global is it ok to be read from,
       // by later globals.
@@ -701,7 +707,13 @@ std::cout << "also add " << global->name << "\n";
           wasm->addGlobal(std::move(global));
         }
       }
-      // XXX sorting is not enough - we also need to add a StartSet
+
+      // After sorting, perform the fixups that we need, that is, replace the
+      // relevant fields in cycles with a null and prepare a set in the start
+      // function.
+      // TODO: we currently replace both sides of a cycle if they are both
+      //       nullable and mutable; we could replace just one.
+      ...
     }
   }
 
