@@ -329,8 +329,8 @@ struct ConstantGlobalApplier
       LinearExecutionWalker<ConstantGlobalApplier,
                             UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
   using super = WalkerPass<
-      LinearExecutionWalker<ConstantGlobalApplier,
-                            UnifiedExpressionVisitor<ConstantGlobalApplier>>>;
+    LinearExecutionWalker<ConstantGlobalApplier,
+                          UnifiedExpressionVisitor<ConstantGlobalApplier>>>;
 
   bool isFunctionParallel() override { return true; }
 
