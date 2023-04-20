@@ -4,10 +4,21 @@
 ;; RUN: foreach %s %t wasm-opt --simplify-globals -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $A (func))
  (type $A (func))
 
+ ;; CHECK:      (global $global$0 funcref (ref.func $func))
  (global $global$0 (mut funcref) (ref.func $func))
 
+ ;; CHECK:      (elem declare func $func)
+
+ ;; CHECK:      (func $func (type $A)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast $A
+ ;; CHECK-NEXT:    (ref.func $func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $func
   (drop
    (ref.cast null $A
