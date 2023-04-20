@@ -120,7 +120,6 @@ struct HeapTypeInfo {
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
 
-  HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
 };
@@ -594,14 +593,6 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
-  if (&other != this) {
-    this->~HeapTypeInfo();
-    new (this) HeapTypeInfo(other);
-  }
-  return *this;
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
