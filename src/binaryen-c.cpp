@@ -6321,12 +6321,6 @@ void TypeBuilderGrow(TypeBuilderRef builder, BinaryenIndex count) {
 BinaryenIndex TypeBuilderGetSize(TypeBuilderRef builder) {
   return ((TypeBuilder*)builder)->size();
 }
-void TypeBuilderSetBasicHeapType(TypeBuilderRef builder,
-                                 BinaryenIndex index,
-                                 BinaryenBasicHeapType basicHeapType) {
-  ((TypeBuilder*)builder)
-    ->setHeapType(index, HeapType::BasicHeapType(basicHeapType));
-}
 void TypeBuilderSetSignatureType(TypeBuilderRef builder,
                                  BinaryenIndex index,
                                  BinaryenType paramTypes,
@@ -6369,13 +6363,6 @@ void TypeBuilderSetArrayType(TypeBuilderRef builder,
     assert(elementPackedType == Field::PackedType::not_packed);
   }
   B->setHeapType(index, Array(element));
-}
-bool TypeBuilderIsBasic(TypeBuilderRef builder, BinaryenIndex index) {
-  return ((TypeBuilder*)builder)->isBasic(index);
-}
-BinaryenBasicHeapType TypeBuilderGetBasic(TypeBuilderRef builder,
-                                          BinaryenIndex index) {
-  return BinaryenBasicHeapType(((TypeBuilder*)builder)->getBasic(index));
 }
 BinaryenHeapType TypeBuilderGetTempHeapType(TypeBuilderRef builder,
                                             BinaryenIndex index) {

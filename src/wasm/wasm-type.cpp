@@ -77,9 +77,8 @@ struct TypeInfo {
   bool isNullable() const { return kind == RefKind && ref.nullable; }
 
   // If this TypeInfo represents a Type that can be represented more simply,
-  // return that simpler Type. For example, this handles canonicalizing the
-  // TypeInfo representing (ref null any) into the BasicType anyref. It also
-  // handles eliminating singleton tuple types.
+  // return that simpler Type. For example, this handles eliminating singleton
+  // tuple types.
   std::optional<Type> getCanonical() const;
 
   bool operator==(const TypeInfo& other) const;
@@ -105,7 +104,6 @@ struct HeapTypeInfo {
   RecGroupInfo* recGroup = nullptr;
   size_t recGroupIndex = 0;
   enum Kind {
-    BasicKind,
     SignatureKind,
     StructKind,
     ArrayKind,
@@ -117,7 +115,6 @@ struct HeapTypeInfo {
     Array array;
   };
 
-  HeapTypeInfo(HeapType::BasicHeapType basic) : kind(BasicKind), basic(basic) {}
   HeapTypeInfo(Signature sig) : kind(SignatureKind), signature(sig) {}
   HeapTypeInfo(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
   HeapTypeInfo(Struct&& struct_)
@@ -130,11 +127,6 @@ struct HeapTypeInfo {
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
-
-  // If this HeapTypeInfo represents a HeapType that can be represented more
-  // simply, return that simpler HeapType. This handles turning BasicKind
-  // HeapTypes into their corresponding BasicHeapTypes.
-  std::optional<HeapType> getCanonical() const;
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
@@ -455,27 +447,12 @@ bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
 }
 
-// Given a Type that may or may not be backed by the simplest possible
-// representation, return the equivalent type that is definitely backed by the
-// simplest possible representation.
-Type asCanonical(Type type) {
-  if (type.isBasic()) {
-    return type;
-  } else if (auto canon = getTypeInfo(type)->getCanonical()) {
-    return *canon;
-  } else {
-    return type;
-  }
-}
-
 HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   if (type.isBasic()) {
     return type.getBasic();
   }
   auto* info = getHeapTypeInfo(type);
   switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      break;
     case HeapTypeInfo::SignatureKind:
       return HeapType::func;
     case HeapTypeInfo::StructKind:
@@ -597,9 +574,6 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   supertype = other.supertype;
   recGroup = other.recGroup;
   switch (kind) {
-    case BasicKind:
-      new (&basic) auto(other.basic);
-      return;
     case SignatureKind:
       new (&signature) auto(other.signature);
       return;
@@ -615,8 +589,6 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
 
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
-    case BasicKind:
-      return;
     case SignatureKind:
       signature.~Signature();
       return;
@@ -628,13 +600,6 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-std::optional<HeapType> HeapTypeInfo::getCanonical() const {
-  if (isFinalized && kind == BasicKind) {
-    return basic;
-  }
-  return {};
 }
 
 HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
@@ -702,9 +667,11 @@ private:
       return typename Info::type_t(id);
     };
 
-    // Turn e.g. (ref null any) into anyref.
-    if (auto canonical = info.getCanonical()) {
-      return *canonical;
+    // Turn e.g. singleton tuple into non-tuple.
+    if constexpr (std::is_same_v<Info, TypeInfo>) {
+      if (auto canonical = info.getCanonical()) {
+        return *canonical;
+      }
     }
     std::lock_guard<std::recursive_mutex> lock(mutex);
     // Check whether we already have a type for this structural Info.
@@ -1376,8 +1343,6 @@ HeapType::BasicHeapType HeapType::getBottom() const {
   }
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      return HeapType(info->basic).getBottom();
     case HeapTypeInfo::SignatureKind:
       return nofunc;
     case HeapTypeInfo::StructKind:
@@ -1861,10 +1826,7 @@ std::ostream& TypePrinter::print(HeapType type) {
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";)";
 #endif
-  if (getHeapTypeInfo(type)->kind == HeapTypeInfo::BasicKind) {
-    os << "(; noncanonical ;) ";
-    print(getHeapTypeInfo(type)->basic);
-  } else if (type.isSignature()) {
+  if (type.isSignature()) {
     print(type.getSignature(), type.getSuperType());
   } else if (type.isStruct()) {
     print(type.getStruct(), type.getSuperType());
@@ -2045,8 +2007,6 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   }
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
     case HeapTypeInfo::SignatureKind:
       hash_combine(digest, hash(info.signature));
       return digest;
@@ -2171,8 +2131,6 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     return false;
   }
   switch (a.kind) {
-    case HeapTypeInfo::BasicKind:
-      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
     case HeapTypeInfo::SignatureKind:
       return eq(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
@@ -2282,8 +2240,6 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
   }
   auto* info = getHeapTypeInfo(*ht);
   switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      break;
     case HeapTypeInfo::SignatureKind:
       taskList.push_back(Task::scan(&info->signature.results));
       taskList.push_back(Task::scan(&info->signature.params));
@@ -2355,11 +2311,6 @@ void TypeBuilder::grow(size_t n) {
 
 size_t TypeBuilder::size() { return impl->entries.size(); }
 
-void TypeBuilder::setHeapType(size_t i, HeapType::BasicHeapType basic) {
-  assert(i < size() && "Index out of bounds");
-  impl->entries[i].set(basic);
-}
-
 void TypeBuilder::setHeapType(size_t i, Signature signature) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].set(signature);
@@ -2378,16 +2329,6 @@ void TypeBuilder::setHeapType(size_t i, Struct&& struct_) {
 void TypeBuilder::setHeapType(size_t i, Array array) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].set(array);
-}
-
-bool TypeBuilder::isBasic(size_t i) {
-  assert(i < size() && "index out of bounds");
-  return impl->entries[i].info->kind == HeapTypeInfo::BasicKind;
-}
-
-HeapType::BasicHeapType TypeBuilder::getBasic(size_t i) {
-  assert(isBasic(i));
-  return impl->entries[i].info->basic;
 }
 
 HeapType TypeBuilder::getTempHeapType(size_t i) {
@@ -2469,8 +2410,6 @@ struct CanonicalizationState {
   // Updates the HeapType use sites within `info`.
   void updateUses(ReplacementMap& replacements,
                   std::unique_ptr<HeapTypeInfo>& info);
-  // Updates lists and uses.
-  void update(ReplacementMap& replacements);
 
 #if TRACE_CANONICALIZATION
   void dump() {
@@ -2487,16 +2426,6 @@ struct CanonicalizationState {
   }
 #endif // TRACE_CANONICALIZATION
 };
-
-void CanonicalizationState::update(ReplacementMap& replacements) {
-  if (replacements.empty()) {
-    return;
-  }
-  updateShallow(replacements);
-  for (auto& info : newInfos) {
-    updateUses(replacements, info);
-  }
-}
 
 void CanonicalizationState::updateShallow(ReplacementMap& replacements) {
   if (replacements.empty()) {
@@ -2670,8 +2599,6 @@ validateSubtyping(const std::vector<HeapType>& types) {
     }
     SubTyper typer;
     switch (sub->kind) {
-      case HeapTypeInfo::BasicKind:
-        WASM_UNREACHABLE("unexpected kind");
       case HeapTypeInfo::SignatureKind:
         if (!typer.isSubType(sub->signature, super->signature)) {
           return fail();
@@ -2803,43 +2730,6 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   return {};
 }
 
-void canonicalizeBasicTypes(CanonicalizationState& state) {
-  // Replace heap types backed by BasicKind HeapTypeInfos with their
-  // corresponding BasicHeapTypes. The heap types backed by BasicKind
-  // HeapTypeInfos exist only to support building basic types in a TypeBuilder
-  // and are never canonical.
-  CanonicalizationState::ReplacementMap replacements;
-  for (auto& info : state.newInfos) {
-    if (info->kind == HeapTypeInfo::BasicKind) {
-      replacements.insert({asHeapType(info), HeapType(info->basic)});
-    }
-    // Basic supertypes should be implicit.
-    if (info->supertype && info->supertype->kind == HeapTypeInfo::BasicKind) {
-      info->supertype = nullptr;
-    }
-  }
-  state.update(replacements);
-
-  if (replacements.size()) {
-    // Canonicalizing basic heap types may cause their parent types to become
-    // canonicalizable as well, for example after creating `(ref null any)` we
-    // can futher canonicalize to `anyref`.
-    struct TypeCanonicalizer : TypeGraphWalkerBase<TypeCanonicalizer> {
-      void scanType(Type* type) {
-        if (type->isTuple()) {
-          TypeGraphWalkerBase<TypeCanonicalizer>::scanType(type);
-        } else {
-          *type = asCanonical(*type);
-        }
-      }
-    };
-    for (auto& info : state.newInfos) {
-      auto root = asHeapType(info);
-      TypeCanonicalizer{}.walkRoot(&root);
-    }
-  }
-}
-
 } // anonymous namespace
 
 TypeBuilder::BuildResult TypeBuilder::build() {
@@ -2858,10 +2748,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     state.results.push_back(asHeapType(info));
     state.newInfos.emplace_back(std::move(info));
   }
-
-  // Eagerly replace references to built basic heap types so the more
-  // complicated canonicalization algorithms don't need to consider them.
-  canonicalizeBasicTypes(state);
 
 #if TRACE_CANONICALIZATION
   std::cerr << "After replacing basic heap types:\n";

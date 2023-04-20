@@ -579,20 +579,11 @@ struct TypeBuilder {
   // The number of HeapType slots in the TypeBuilder.
   size_t size();
 
-  // Sets the heap type at index `i`. May only be called before `build`. The
-  // BasicHeapType overload may not be used in nominal mode.
-  void setHeapType(size_t i, HeapType::BasicHeapType basic);
+  // Sets the heap type at index `i`. May only be called before `build`.
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
-
-  // This is an ugly hack around the fact that temp heap types initialized with
-  // BasicHeapTypes are not themselves considered basic, so `HeapType::isBasic`
-  // and `HeapType::getBasic` do not work as expected with them. Call these
-  // methods instead.
-  bool isBasic(size_t i);
-  HeapType::BasicHeapType getBasic(size_t i);
 
   // Gets the temporary HeapType at index `i`. This HeapType should only be used
   // to construct temporary Types using the methods below.
@@ -653,10 +644,6 @@ struct TypeBuilder {
     TypeBuilder& builder;
     size_t index;
     operator HeapType() const { return builder.getTempHeapType(index); }
-    Entry& operator=(HeapType::BasicHeapType basic) {
-      builder.setHeapType(index, basic);
-      return *this;
-    }
     Entry& operator=(Signature signature) {
       builder.setHeapType(index, signature);
       return *this;
