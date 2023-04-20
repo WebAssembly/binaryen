@@ -653,6 +653,7 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
       // Any global.gets that could not be handled are constraints.
       for (auto* get : scanner.unreadableGets) {
         mustBeAfter[global->name].insert(get->name);
+std::cout << global->name << " must be after " << get->name << '\n';
       }
 
       // Only after we've fully processed this global is it ok to be read from,
@@ -661,7 +662,7 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
     }
 
     if (!mustBeAfter.empty()) {
-std::cout << "    sorted!\n";
+std::cout << "    sorting!\n";
       // We found constraints that require reordering, so do so.
 
       struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
@@ -729,6 +730,7 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
 
             if (auto* get = child->dynCast<GlobalGet>()) {
               if (!readableGlobals.count(get->name)) {
+std::cout << "replace wit null and post set\n";
                 assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
                 evaller.addStartSet({global->name, global->type}, fieldIndex, get);
                 child = Builder(*getModule()).makeRefNull(get->type.getHeapType());
@@ -738,7 +740,7 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
 
           void visitStructNew(StructNew* curr) {
             Index i = 0;
-            for (auto* child : curr->operands) {
+            for (auto*& child : curr->operands) {
               handleChild(child, curr, i++);
             }
           }
@@ -746,13 +748,14 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
             handleChild(curr->init, curr);
           }
           void visitArrayNewFixed(ArrayNewFixed* curr) {
-            for (auto* child : curr->values) {
+            for (auto*& child : curr->values) {
               handleChild(child, curr);
             }
           }
         };
 
         InitFixer fixer(*this, global, readableGlobals);
+        fixer.setModule(wasm);
         fixer.walk(global->init);
 
         readableGlobals.insert(global->name);
