@@ -1630,8 +1630,7 @@ struct OptimizeInstructions
       // function and the null does not actually flow out. We can only optimize
       // here if a null definitely flows out (as only that would cause a trap).
       auto flowsOutNull = [&](Expression* child) {
-        return child->type.isNull() &&
-               !effects(child).transfersControlFlow();
+        return child->type.isNull() && !effects(child).transfersControlFlow();
       };
 
       if (auto* iff = ref->dynCast<If>()) {
