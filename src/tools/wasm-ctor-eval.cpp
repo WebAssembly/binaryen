@@ -611,7 +611,7 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
         // can handle it. The index is the position of the child in the parent
         // (which is 0 for all array children, as their position does not
         // matter, they all have the same field info).
-        void handleChild(Expression* child, Expression* parent, Index fieldIndex) {
+        void handleChild(Expression* child, Expression* parent, Index fieldIndex = 0) {
           if (!child) {
             return;
           }
@@ -638,11 +638,11 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
           }
         }
         void visitArrayNew(ArrayNew* curr) {
-          handleChild(child->value, curr);
+          handleChild(curr->init, curr);
         }
         void visitArrayNewFixed(ArrayNewFixed* curr) {
           for (auto* child : curr->values) {
-            handleChild(child, curr, 0);
+            handleChild(child, curr);
           }
         }
       };
@@ -716,21 +716,22 @@ std::cout << "also add " << global->name << "\n";
 std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
 
         struct InitFixer : PostWalker<InitFixer> {
+          CtorEvalExternalInterface& evaller;
           std::unique_ptr<Global>& global;
           std::unordered_set<Name>& readableGlobals;
 
-          InitFixer(std::unique_ptr<Global>& global, std::unordered_set<Name>& readableGlobals) : global(global), readableGlobals(readableGlobals) {}
+          InitFixer(CtorEvalExternalInterface& evaller, std::unique_ptr<Global>& global, std::unordered_set<Name>& readableGlobals) : evaller(evaller), global(global), readableGlobals(readableGlobals) {}
 
-          void handleChild(Expression*& child, Expression* parent, Index fieldIndex) {
+          void handleChild(Expression*& child, Expression* parent, Index fieldIndex = 0) {
             if (!child) {
               return;
             }
 
             if (auto* get = child->dynCast<GlobalGet>()) {
-              if (!readableGlobals.count(get)) {
+              if (!readableGlobals.count(get->name)) {
                 assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
-                addStartSet({global->name, global->type}, fieldIndex, get);
-                child = builder.makeRefNull(get->type.getHeapType());
+                evaller.addStartSet({global->name, global->type}, fieldIndex, get);
+                child = Builder(*getModule()).makeRefNull(get->type.getHeapType());
               }
             }
           }
@@ -742,16 +743,16 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
             }
           }
           void visitArrayNew(ArrayNew* curr) {
-            handleChild(child->value, curr);
+            handleChild(curr->value, curr);
           }
           void visitArrayNewFixed(ArrayNewFixed* curr) {
             for (auto* child : curr->values) {
-              handleChild(child, curr, 0);
+              handleChild(child, curr);
             }
           }
         };
 
-        InitFixer fixer(global->name, readableGlobals);
+        InitFixer fixer(*this, global, readableGlobals);
         fixer.walk(global->init);
 
         readableGlobals.insert(global->name);
