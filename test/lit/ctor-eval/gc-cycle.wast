@@ -377,6 +377,30 @@
  )
 )
 
+;; CHECK:      (export "test" (func $0_3))
+
+;; CHECK:      (export "keepalive" (func $1))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (struct.get $A 1
+;; CHECK-NEXT:   (global.get $a)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_5)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref $A))
+;; CHECK-NEXT:  (local $b (ref $B))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
 (module
   ;; A cycle as above, but with non-nullability rather than immutability.
 
@@ -385,7 +409,7 @@
   ;; CHECK-NEXT:  (type $A (struct (field (mut (ref null $B))) (field i32)))
   (type $A (struct (field (mut (ref null $B))) (field i32)))
 
-  ;; CHECK:       (type $B (struct (field (ref null $A)) (field i32)))
+  ;; CHECK:       (type $B (struct (field (mut (ref $A))) (field i32)))
   (type $B (struct (field (mut (ref $A))) (field i32)))
  )
 
@@ -422,7 +446,7 @@
   (global.set $b
    (local.tee $b
     (struct.new $B
-     (global.get $a)
+     (local.get $a)
      (i32.const 1337)
     )
    )
