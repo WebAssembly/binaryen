@@ -903,3 +903,51 @@
 ;; CHECK-NEXT:  (local $c (ref $C))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
+
+(module
+ ;; Multiple independent cycles.
+ (type $A (struct (field (mut (ref null $A))) (field i32)))
+
+ (global $a (mut (ref null $A)) (ref.null $A))
+ (global $b (mut (ref null $A)) (ref.null $A))
+ (global $c (mut (ref null $A)) (ref.null $A))
+
+ (func $makeCycle (result (ref $A))
+  (local $x (ref $A))
+  (local.set $x
+   (struct.new $A
+    (ref.null $A)
+    (i32.const 42)
+   )
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (local.get $x)
+  )
+  (local.get $x)
+ )
+
+ (func "test"
+  (global.set $a
+   (call $makeCycle)
+  )
+  (global.set $b
+   (call $makeCycle)
+  )
+  (global.set $c
+   (call $makeCycle)
+  )
+ )
+
+ (func "keepalive"
+  (drop
+   (global.get $a)
+  )
+  (drop
+   (global.get $b)
+  )
+  (drop
+   (global.get $c)
+  )
+ )
+)

@@ -479,6 +479,11 @@ private:
     // The process of allocating "defining globals" begins here, from scratch
     // each time (things live before may no longer be).
     definingGlobals.clear();
+
+    // Clear any startup operations as well (which may apply to globals that
+    // become no longer live; we'll create new start operations as we need
+    // them).
+    clearStartBlock();
   }
 
   void applyMemoryToModule() {
@@ -895,10 +900,11 @@ public:
   //
   // run during the start function.
   void addStartSet(NameType global, Index index, GlobalGet* value) {
-    assert(!wasm->start.is()); // todo appending
-    Builder builder(*wasm);
-    auto* body = builder.makeBlock();
+    if (!startBlock) {
+      createStartBlock();
+    }
 
+    Builder builder(*wasm);
     auto* getGlobal = builder.makeGlobalGet(global.name, global.type);
 
     Expression* set;
@@ -909,11 +915,33 @@ public:
         getGlobal, builder.makeConst(int32_t(index)), value);
     }
 
-    body->list.push_back(set);
+    startBlock->list.push_back(set);
+  }
 
-    wasm->start = Names::getValidFunctionName(*wasm, "start");
-    wasm->addFunction(builder.makeFunction(
-      wasm->start, Signature{Type::none, Type::none}, {}, body));
+  // A block in the start function where we put the operations we need to occur
+  // during startup.
+  std::optional<Block*> startBlock;
+
+  void createStartBlock() {
+    Builder builder(*wasm);
+    startBlock = builder.makeBlock();
+    if (wasm->start.is()) {
+      // Put our block before any user start code.
+      auto* existingStart = wasm->getFunction(wasm->start);
+      existingStart->body = builder.makeSequence(*startBlock,
+                                                 existingStart->body);
+    } else {
+      // Make a new start function.
+      wasm->start = Names::getValidFunctionName(*wasm, "start");
+      wasm->addFunction(builder.makeFunction(
+        wasm->start, Signature{Type::none, Type::none}, {}, *startBlock));
+    }
+  }
+
+  void clearStartBlock() {
+    if (startBlock) {
+      startBlock->list.clear();
+    }
   }
 };
 
