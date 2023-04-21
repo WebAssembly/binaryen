@@ -688,9 +688,8 @@ private:
 
       // After sorting, perform the fixups that we need, that is, replace the
       // relevant fields in cycles with a null and prepare a set in the start
-      // function. Once more, loop on the globals, noting which gets are too
-      // early and need fixing.
-
+      // function.
+      //
       // We'll track the set of readable globals as we go (which are the globals
       // we've seen already, and fully finished processing).
       std::unordered_set<Name> readableGlobals;
@@ -720,6 +719,10 @@ private:
 
             if (auto* get = child->dynCast<GlobalGet>()) {
               if (!readableGlobals.count(get->name)) {
+                // This get cannot be read - it is a global that appears after
+                // us - and so we must fix it up, using the method mentioned
+                // before (setting it to null now, and later in the start
+                // function writing to it).
                 assert(isNullableAndMutable(parent, fieldIndex));
                 evaller.addStartSet(
                   {global->name, global->type}, fieldIndex, get);
