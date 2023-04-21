@@ -869,8 +869,8 @@ public:
       //
       // We set the global's init to null temporarily, and we'll fix it up
       // later down after we create the init expression.
-      wasm->addGlobal(builder.makeGlobal(
-        definingGlobalName, type, init, Builder::Immutable));
+      wasm->addGlobal(
+        builder.makeGlobal(definingGlobalName, type, init, Builder::Immutable));
     }
 
     // Refer to this GC allocation by reading from the global that is
