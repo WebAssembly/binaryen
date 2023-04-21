@@ -516,7 +516,6 @@ private:
   // data in the interpreter's memory can then be serialized by simply emitting
   // a global.get of that defining global.
   void applyGlobalsToModule() {
-std::cout << "aGTM\n";
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
       for (const auto& [name, values] : instance->globals) {
@@ -552,7 +551,6 @@ std::cout << "aGTM\n";
       // value when we created it.)
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter != instance->globals.end()) {
-std::cout << "aGTM prepping a serialization for " << name << "\n";
         oldGlobal->init = getSerialization(iter->second, name);
       }
 
@@ -583,7 +581,6 @@ std::cout << "aGTM prepping a serialization for " << name << "\n";
       if (!global->init) {
         continue;
       }
-std::cout << "loopey " << global->name << " : " << *global->init << '\n';
 
       struct InitScanner : PostWalker<InitScanner> {
 
@@ -639,12 +636,10 @@ std::cout << "loopey " << global->name << " : " << *global->init << '\n';
       // Any global.gets that cannot be fixed up are constraints.
       for (auto* get : scanner.unfixableGets) {
         mustBeAfter[global->name].insert(get->name);
-std::cout << global->name << " must be after " << get->name << '\n';
       }
     }
 
     if (!mustBeAfter.empty()) {
-std::cout << "    sorting!\n";
       // We found constraints that require reordering, so do so.
 
       struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
@@ -652,7 +647,6 @@ std::cout << "    sorting!\n";
 
         MustBeAfterSort(MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
           for (auto& [global, _] : mustBeAfter) {
-std::cout << "push " << global << '\n';
             push(global);
           }
         }
@@ -662,7 +656,6 @@ std::cout << "push " << global << '\n';
           if (iter != mustBeAfter.end()) {
             for (auto other : iter->second) {
               push(other);
-std::cout << "  push " << other << " to be before " << global << '\n';
             }
           }
         }
@@ -676,13 +669,11 @@ std::cout << "  push " << other << " to be before " << global << '\n';
       }
       // Add the globals that had an important ordering, in the right order.
       for (auto global : MustBeAfterSort(mustBeAfter)) {
-std::cout << "add from MBAS " << global << "\n";
         wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
       }
       // Add all other globals after them.
       for (auto& global : oldGlobals) {
         if (global) {
-std::cout << "also add " << global->name << "\n";
           wasm->addGlobal(std::move(global));
         }
       }
@@ -700,7 +691,6 @@ std::cout << "also add " << global->name << "\n";
         if (!global->init) {
           continue;
         }
-std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
 
         struct InitFixer : PostWalker<InitFixer> {
           CtorEvalExternalInterface& evaller;
@@ -716,7 +706,6 @@ std::cout << "ploopey " << global->name << " : " << *global->init << '\n';
 
             if (auto* get = child->dynCast<GlobalGet>()) {
               if (!readableGlobals.count(get->name)) {
-std::cout << "replace wit null and post set\n";
                 assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
                 evaller.addStartSet({global->name, global->type}, fieldIndex, get);
                 child = Builder(*getModule()).makeRefNull(get->type.getHeapType());
@@ -763,7 +752,6 @@ public:
   Expression* getSerialization(Literal value,
                                Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
-std::cout << "getSerial " << value.type << " : " << possibleDefiningGlobal << "\n";
 
     // If this is externalized then we want to inspect the inner data, handle
     // that, and emit a ref.externalize around it as needed. To simplify the
@@ -815,7 +803,6 @@ std::cout << "getSerial " << value.type << " : " << possibleDefiningGlobal << "\
         definingGlobals[data] = NameType{name, type};
       }
       auto definingGlobal = definingGlobals[data].name;
-std::cout << "added a new dfining global " << definingGlobal << " now there are " << definingGlobals.size() << '\n';
 
       for (Index i = 0; i < values.size(); i++) {
         auto value = values[i];
