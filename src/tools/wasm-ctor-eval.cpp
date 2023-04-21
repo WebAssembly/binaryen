@@ -843,8 +843,7 @@ public:
         definingGlobals[data] = DefiningGlobalInfo{definingGlobalName, type};
       }
 
-      for (Index i = 0; i < values.size(); i++) {
-        auto value = values[i];
+      for (auto& value : values) {
         args.push_back(getSerialization(value));
       }
 
