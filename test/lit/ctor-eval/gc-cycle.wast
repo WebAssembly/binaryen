@@ -765,6 +765,119 @@
   )
  )
 )
+
+;; CHECK:      (export "test" (func $0_3))
+
+;; CHECK:      (export "keepalive" (func $1))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (struct.get $A 1
+;; CHECK-NEXT:   (global.get $a)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_9)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_10)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref $A))
+;; CHECK-NEXT:  (local $b (ref $B))
+;; CHECK-NEXT:  (local $c (ref $C))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+(module
+ ;; As above but with the order of globals reversed once more.
+
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (struct (field (mut (ref null $C))) (field i32)))
+  (type $A (struct (field (mut (ref null $C))) (field i32)))
+  ;; CHECK:       (type $B (array (ref null $A)))
+  (type $B (array (ref null $A)))
+  ;; CHECK:       (type $C (array (mut (ref any))))
+  (type $C (array (mut (ref any))))
+ )
+
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (global $ctor-eval$global_9 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $ctor-eval$global_11 (ref $B) (array.new_fixed $B
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $ctor-eval$global_10 (ref $C) (array.new_fixed $C
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_11)
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_9))
+ (global $a (mut (ref null $A)) (ref.null $A))
+
+ (global $b (mut (ref null $B)) (ref.null $B))
+
+ (global $c (mut (ref null $C)) (ref.null $C))
+
+ (func "test"
+  (local $a (ref $A))
+  (local $b (ref $B))
+  (local $c (ref $C))
+  (global.set $a
+   (local.tee $a
+    (struct.new $A
+     (ref.null $C)
+     (i32.const 42)
+    )
+   )
+  )
+  (global.set $b
+   (local.tee $b
+    (array.new $B
+     (global.get $a)
+     (i32.const 10)
+    )
+   )
+  )
+  (global.set $c
+   (local.tee $c
+    (array.new_fixed $C
+     (local.get $b)
+     (local.get $a)
+    )
+   )
+  )
+  (struct.set $A 0
+   (local.get $a)
+   (global.get $c)
+  )
+ )
+
+ (func "keepalive" (result i32)
+  (struct.get $A 1
+   (global.get $a)
+  )
+ )
+)
 ;; CHECK:      (export "test" (func $0_3))
 
 ;; CHECK:      (export "keepalive" (func $1))
