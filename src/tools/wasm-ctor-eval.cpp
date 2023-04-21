@@ -755,7 +755,11 @@ public:
   // Maps each GC data in the interpreter to its defining global: the global in
   // which it is created, and then all other users of it can just global.get
   // that. For each such global we track its name and type.
-  std::unordered_map<GCData*, NameType> definingGlobals;
+  struct DefiningGlobalInfo {
+    Name name;
+    Type type;
+  };
+  std::unordered_map<GCData*, DefiningGlobalInfo> definingGlobals;
 
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
@@ -805,13 +809,13 @@ public:
       if (possibleDefiningGlobal.is()) {
         // No need to allocate a new global, as we are in the definition of
         // one, which will be the defining global.
-        definingGlobals[data] = NameType{possibleDefiningGlobal, type};
+        definingGlobals[data] = DefiningGlobalInfo{possibleDefiningGlobal, type};
       } else {
         // Allocate a new defining global.
         auto name =
           Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
         usedGlobalNames.insert(name);
-        definingGlobals[data] = NameType{name, type};
+        definingGlobals[data] = DefiningGlobalInfo{name, type};
       }
       auto definingGlobal = definingGlobals[data].name;
 
@@ -899,7 +903,7 @@ public:
   //  global[index] = valueGlobal
   //
   // run during the start function.
-  void addStartSet(NameType global, Index index, GlobalGet* value) {
+  void addStartSet(DefiningGlobalInfo global, Index index, GlobalGet* value) {
     if (!startBlock) {
       createStartBlock();
     }
