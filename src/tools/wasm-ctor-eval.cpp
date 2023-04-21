@@ -913,7 +913,7 @@ public:
   //   globalA.field = globalA;
   //
   // The parameters here are a global and a field index to that global, and the
-  // global we want to assing to it, that is, our goal is to have
+  // global we want to assign to it, that is, our goal is to have
   //
   //  global[index] = valueGlobal
   //
