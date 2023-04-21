@@ -809,7 +809,8 @@ public:
       if (possibleDefiningGlobal.is()) {
         // No need to allocate a new global, as we are in the definition of
         // one, which will be the defining global.
-        definingGlobals[data] = DefiningGlobalInfo{possibleDefiningGlobal, type};
+        definingGlobals[data] =
+          DefiningGlobalInfo{possibleDefiningGlobal, type};
       } else {
         // Allocate a new defining global.
         auto name =
@@ -932,8 +933,8 @@ public:
     if (wasm->start.is()) {
       // Put our block before any user start code.
       auto* existingStart = wasm->getFunction(wasm->start);
-      existingStart->body = builder.makeSequence(*startBlock,
-                                                 existingStart->body);
+      existingStart->body =
+        builder.makeSequence(*startBlock, existingStart->body);
     } else {
       // Make a new start function.
       wasm->start = Names::getValidFunctionName(*wasm, "start");
