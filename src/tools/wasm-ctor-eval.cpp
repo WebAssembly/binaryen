@@ -599,7 +599,9 @@ private:
         // can handle it. The index is the position of the child in the parent
         // (which is 0 for all array children, as their position does not
         // matter, they all have the same field info).
-        void handleChild(Expression* child, Expression* parent, Index fieldIndex = 0) {
+        void handleChild(Expression* child,
+                         Expression* parent,
+                         Index fieldIndex = 0) {
           if (!child) {
             return;
           }
@@ -620,9 +622,7 @@ private:
             handleChild(child, curr, i++);
           }
         }
-        void visitArrayNew(ArrayNew* curr) {
-          handleChild(curr->init, curr);
-        }
+        void visitArrayNew(ArrayNew* curr) { handleChild(curr->init, curr); }
         void visitArrayNewFixed(ArrayNewFixed* curr) {
           for (auto* child : curr->values) {
             handleChild(child, curr);
@@ -697,9 +697,15 @@ private:
           std::unique_ptr<Global>& global;
           std::unordered_set<Name>& readableGlobals;
 
-          InitFixer(CtorEvalExternalInterface& evaller, std::unique_ptr<Global>& global, std::unordered_set<Name>& readableGlobals) : evaller(evaller), global(global), readableGlobals(readableGlobals) {}
+          InitFixer(CtorEvalExternalInterface& evaller,
+                    std::unique_ptr<Global>& global,
+                    std::unordered_set<Name>& readableGlobals)
+            : evaller(evaller), global(global),
+              readableGlobals(readableGlobals) {}
 
-          void handleChild(Expression*& child, Expression* parent, Index fieldIndex = 0) {
+          void handleChild(Expression*& child,
+                           Expression* parent,
+                           Index fieldIndex = 0) {
             if (!child) {
               return;
             }
@@ -707,8 +713,10 @@ private:
             if (auto* get = child->dynCast<GlobalGet>()) {
               if (!readableGlobals.count(get->name)) {
                 assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
-                evaller.addStartSet({global->name, global->type}, fieldIndex, get);
-                child = Builder(*getModule()).makeRefNull(get->type.getHeapType());
+                evaller.addStartSet(
+                  {global->name, global->type}, fieldIndex, get);
+                child =
+                  Builder(*getModule()).makeRefNull(get->type.getHeapType());
               }
             }
           }
@@ -719,9 +727,7 @@ private:
               handleChild(child, curr, i++);
             }
           }
-          void visitArrayNew(ArrayNew* curr) {
-            handleChild(curr->init, curr);
-          }
+          void visitArrayNew(ArrayNew* curr) { handleChild(curr->init, curr); }
           void visitArrayNewFixed(ArrayNewFixed* curr) {
             for (auto*& child : curr->values) {
               handleChild(child, curr);
@@ -844,7 +850,8 @@ public:
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
-    Expression* ret = builder.makeGlobalGet(definingGlobals[data].name, value.type);
+    Expression* ret =
+      builder.makeGlobalGet(definingGlobals[data].name, value.type);
     if (original != value) {
       // The original is externalized.
       assert(original.type.getHeapType() == HeapType::ext);
@@ -892,16 +899,14 @@ public:
     Builder builder(*wasm);
     auto* body = builder.makeBlock();
 
-    auto* getGlobal =
-      builder.makeGlobalGet(global.name, global.type);
+    auto* getGlobal = builder.makeGlobalGet(global.name, global.type);
 
     Expression* set;
     if (global.type.isStruct()) {
       set = builder.makeStructSet(index, getGlobal, value);
     } else {
-      set = builder.makeArraySet(getGlobal,
-                                 builder.makeConst(int32_t(index)),
-                                 value);
+      set = builder.makeArraySet(
+        getGlobal, builder.makeConst(int32_t(index)), value);
     }
 
     body->list.push_back(set);

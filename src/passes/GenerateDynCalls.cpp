@@ -140,7 +140,8 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
   }
   std::vector<NameType> namedParams;
   std::vector<Type> params;
-  namedParams.emplace_back(NameType{"fptr", Type::i32}); // function pointer param
+  namedParams.emplace_back(
+    NameType{"fptr", Type::i32}); // function pointer param
   params.push_back(Type::i32);
   int p = 0;
   for (const auto& param : sig.params) {
