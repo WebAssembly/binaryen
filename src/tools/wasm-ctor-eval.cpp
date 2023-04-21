@@ -595,7 +595,7 @@ private:
         // a null and adding a set in the start function. These will be hard
         // constraints on our sorting (if we could fix things up with a null +
         // set then we would not need to reorder).
-        std::unordered_set<GlobalGet*> unfixableGets;
+        InsertOrderedSet<GlobalGet*> unfixableGets;
 
         void visitGlobalGet(GlobalGet* curr) {
           // Assume this is unfixable, unless we reach the parent and see that
