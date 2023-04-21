@@ -13,26 +13,27 @@
 
  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
- ;; CHECK:      (global $ctor-eval$global_6 (ref $A) (struct.new $A
- ;; CHECK-NEXT:  (ref.null none)
- ;; CHECK-NEXT:  (i32.const 10)
- ;; CHECK-NEXT: ))
-
- ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_6))
- (global $a (mut (ref null $A)) (ref.null $A))
- ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
- ;; CHECK-NEXT:  (ref.null none)
- ;; CHECK-NEXT:  (i32.const 20)
- ;; CHECK-NEXT: ))
-
- ;; CHECK:      (global $b (mut (ref null $A)) (global.get $ctor-eval$global_7))
- (global $b (mut (ref null $A)) (ref.null $A))
  ;; CHECK:      (global $ctor-eval$global_8 (ref $A) (struct.new $A
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT:  (i32.const 30)
  ;; CHECK-NEXT: ))
 
  ;; CHECK:      (global $c (mut (ref null $A)) (global.get $ctor-eval$global_8))
+
+ ;; CHECK:      (global $ctor-eval$global_7 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 10)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_7))
+ (global $a (mut (ref null $A)) (ref.null $A))
+ ;; CHECK:      (global $ctor-eval$global_6 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 20)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $b (mut (ref null $A)) (global.get $ctor-eval$global_6))
+ (global $b (mut (ref null $A)) (ref.null $A))
  (global $c (mut (ref null $A)) (ref.null $A))
 
  (func $makeCycle (param $i i32) (result (ref $A))
@@ -118,16 +119,16 @@
 
 ;; CHECK:      (func $start (type $none_=>_none)
 ;; CHECK-NEXT:  (struct.set $A 0
-;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
-;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (struct.set $A 0
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_7)
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_7)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (struct.set $A 0
-;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
-;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_6)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
