@@ -490,7 +490,7 @@
 ;; CHECK-NEXT: )
 (module
   ;; A cycle as above, but with globals in reverse order and with both non-
-  ;; and immutability.
+  ;; nullability and immutability.
 
  (rec
   ;; CHECK:      (rec
