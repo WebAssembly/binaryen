@@ -1120,12 +1120,12 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (array.set $B
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_11)
-;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_13)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (array.set $B
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_11)
-;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_16)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

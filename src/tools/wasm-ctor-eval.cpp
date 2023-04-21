@@ -710,11 +710,13 @@ private:
             : evaller(evaller), global(global),
               readableGlobals(readableGlobals) {}
 
-          void handleChild(Expression*& child,
+          // Handles a child by fixing things up if needed. Returns true if we
+          // did in fact fix things up.
+          bool handleChild(Expression*& child,
                            Expression* parent,
                            Index fieldIndex = 0) {
             if (!child) {
-              return;
+              return false;
             }
 
             if (auto* get = child->dynCast<GlobalGet>()) {
@@ -728,8 +730,11 @@ private:
                   {global->name, global->type}, fieldIndex, get);
                 child =
                   Builder(*getModule()).makeRefNull(get->type.getHeapType());
+                return true;
               }
             }
+
+            return false;
           }
 
           void visitStructNew(StructNew* curr) {
@@ -738,10 +743,19 @@ private:
               handleChild(child, curr, i++);
             }
           }
-          void visitArrayNew(ArrayNew* curr) { handleChild(curr->init, curr); }
+          void visitArrayNew(ArrayNew* curr) {
+            if (handleChild(curr->init, curr)) {
+              // Handling array.new is tricky as the number of items may be
+              // unknown at compile time, so we'd need to loop at runtime. But,
+              // in practice we emit an array.new_fixed anyhow, so this should
+              // not be needed for now.
+              WASM_UNREACHABLE("TODO: ArrayNew in ctor-eval cycles");
+            }
+          }
           void visitArrayNewFixed(ArrayNewFixed* curr) {
+            Index i = 0;
             for (auto*& child : curr->values) {
-              handleChild(child, curr);
+              handleChild(child, curr, i++);
             }
           }
         };
