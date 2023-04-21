@@ -53,9 +53,11 @@ struct FailToEvalException {
   FailToEvalException(std::string why) : why(why) {}
 };
 
-// comment
-bool canReplaceChildWithNullAndLaterSet(Expression* parent, Index fieldIndex) {
-  auto field = GCTypeUtils::getField(parent->type, fieldIndex);
+// Check whether a field is both nullable and mutable. This is a useful
+// property for breaking cycles of GC data, see below.
+bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
+  // Find the field for the given reference, and check its properties.
+  auto field = GCTypeUtils::getField(ref->type, fieldIndex);
   assert(field);
   return field->type.isNullable() && field->mutable_ == Mutable;
 }
@@ -612,7 +614,7 @@ private:
           }
 
           if (auto* get = child->dynCast<GlobalGet>()) {
-            if (canReplaceChildWithNullAndLaterSet(parent, fieldIndex)) {
+            if (isNullableAndMutable(parent, fieldIndex)) {
               // We can replace the child with a null, and set the value later
               // (in the start function), so this is not a constraint on our
               // sorting.
@@ -717,7 +719,7 @@ private:
 
             if (auto* get = child->dynCast<GlobalGet>()) {
               if (!readableGlobals.count(get->name)) {
-                assert(canReplaceChildWithNullAndLaterSet(parent, fieldIndex));
+                assert(isNullableAndMutable(parent, fieldIndex));
                 evaller.addStartSet(
                   {global->name, global->type}, fieldIndex, get);
                 child =
