@@ -553,8 +553,6 @@
  )
 )
 
-;; TODO: Cycle with a struct and an array
-
 ;; CHECK:      (export "test" (func $0_3))
 
 ;; CHECK:      (export "keepalive" (func $1))
@@ -676,3 +674,62 @@
 ;; CHECK-NEXT:  (local $c (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
+
+(module
+ ;; A cycle between three globals as above, but now using different types and
+ ;; also both structs and arrays. Also reverse the order of globals, make
+ ;; one array immutable and one non-nullable, and make one array refer to the
+ ;; other two.
+
+ (rec
+  (type $A (struct (field (mut (ref null $C))) (field i32)))
+  (type $B (array (ref null any)))
+  (type $C (array (mut (ref any)))
+ )
+
+ (global $c (mut (ref null $C)) (ref.null $C))
+
+ (global $b (mut (ref null $B)) (ref.null $B))
+
+ (global $a (mut (ref null $A)) (ref.null $A))
+
+ (func "test"
+  (local $a (ref $A))
+  (local $b (ref $B))
+  (local $c (ref $C))
+  (global.set $a
+   (local.tee $a
+    (struct.new $A
+     (ref.null $C)
+     (i32.const 42)
+    )
+   )
+  )
+  (global.set $b
+   (local.tee $b
+    (array.new $A
+     (global.get $a)
+     (i32.const 10)
+    )
+   )
+  )
+  (global.set $c
+   (local.tee $c
+    (array.new_fixed $C
+     (local.get $b)
+     (local.get $a)
+    )
+   )
+  )
+  (struct.set $A 0
+   (local.get $a)
+   (global.get $c)
+  )
+ )
+
+ (func "keepalive" (result i32)
+  (struct.get $A 1
+   (global.get $a)
+  )
+ )
+)
