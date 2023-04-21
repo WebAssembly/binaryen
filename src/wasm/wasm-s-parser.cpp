@@ -634,7 +634,7 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
       throw ParseException(
         "params may not have tuple types", s[i]->line, s[i]->col);
     }
-    namedParams.emplace_back(NameType{name, type});
+    namedParams.emplace_back(name, type);
   }
   return namedParams;
 }
@@ -733,7 +733,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
     assert(functionType.isSignature());
     Signature sig = functionType.getSignature();
     for (const auto& param : sig.params) {
-      namedParams.emplace_back(NameType{Name::fromInt(index++), param});
+      namedParams.emplace_back(Name::fromInt(index++), param);
     }
   }
 
