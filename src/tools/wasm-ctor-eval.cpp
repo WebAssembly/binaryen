@@ -852,8 +852,8 @@ public:
       //
       // We set the global's init to null temporarily, and we'll fix it up
       // later down after we create the init expression.
-      wasm->addGlobal(
-        builder.makeGlobal(definingGlobalName, type, nullptr, Builder::Immutable));
+      wasm->addGlobal(builder.makeGlobal(
+        definingGlobalName, type, nullptr, Builder::Immutable));
 
       // We allocated a new global, and set its init to null temporarily. Fix
       // that up now, then continue down to make a proper instruction to read
@@ -863,8 +863,7 @@ public:
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
-    Expression* ret =
-      builder.makeGlobalGet(definingGlobalName, value.type);
+    Expression* ret = builder.makeGlobalGet(definingGlobalName, value.type);
     if (original != value) {
       // The original is externalized.
       assert(original.type.getHeapType() == HeapType::ext);
