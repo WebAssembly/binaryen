@@ -915,7 +915,7 @@ public:
         getGlobal, builder.makeConst(int32_t(index)), value);
     }
 
-    startBlock->list.push_back(set);
+    (*startBlock)->list.push_back(set);
   }
 
   // A block in the start function where we put the operations we need to occur
@@ -940,7 +940,7 @@ public:
 
   void clearStartBlock() {
     if (startBlock) {
-      startBlock->list.clear();
+      (*startBlock)->list.clear();
     }
   }
 };
