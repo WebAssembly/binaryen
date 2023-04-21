@@ -866,18 +866,11 @@ public:
       }
 
       // There is no existing defining global, so we must allocate a new one.
-      // Note that we must do this before the recursive calls below us, as in
-      // the case of cycles they may need to access that global.
       //
       // We set the global's init to null temporarily, and we'll fix it up
       // later down after we create the init expression.
       wasm->addGlobal(builder.makeGlobal(
-        definingGlobalName, type, nullptr, Builder::Immutable));
-
-      // We allocated a new global, and set its init to null temporarily. Fix
-      // that up now, then continue down to make a proper instruction to read
-      // the global to return to the caller.
-      wasm->getGlobal(definingGlobalName)->init = init;
+        definingGlobalName, type, init, Builder::Immutable));
     }
 
     // Refer to this GC allocation by reading from the global that is
