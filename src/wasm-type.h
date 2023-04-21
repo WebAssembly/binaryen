@@ -540,6 +540,7 @@ struct Struct {
 
   // Prevent accidental copies
   Struct& operator=(const Struct&) = delete;
+  Struct& operator=(Struct&&) = default;
 };
 
 struct Array {
@@ -550,6 +551,8 @@ struct Array {
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   std::string toString() const;
+
+  Array& operator=(const Array& other) = default;
 };
 
 // TypeBuilder - allows for the construction of recursive types. Contains a

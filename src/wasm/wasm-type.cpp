@@ -102,7 +102,6 @@ struct HeapTypeInfo {
     ArrayKind,
   } kind;
   union {
-    HeapType::BasicHeapType basic;
     Signature signature;
     Struct struct_;
     Array array;
@@ -121,7 +120,6 @@ struct HeapTypeInfo {
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
 
-  HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
 };
@@ -563,9 +561,11 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 }
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
-  kind = other.kind;
+  isTemp = other.isTemp;
   supertype = other.supertype;
   recGroup = other.recGroup;
+  recGroupIndex = other.recGroupIndex;
+  kind = other.kind;
   switch (kind) {
     case SignatureKind:
       new (&signature) auto(other.signature);
@@ -593,14 +593,6 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
-  if (&other != this) {
-    this->~HeapTypeInfo();
-    new (this) HeapTypeInfo(other);
-  }
-  return *this;
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
@@ -2247,14 +2239,21 @@ struct TypeBuilder::Impl {
       // to refer to it before it is initialized. Arbitrarily choose a default
       // value.
       info = std::make_unique<HeapTypeInfo>(Signature());
-      set(Signature());
-      initialized = false;
+      info->isTemp = true;
     }
     void set(HeapTypeInfo&& hti) {
-      hti.supertype = info->supertype;
-      hti.recGroup = info->recGroup;
-      *info = std::move(hti);
-      info->isTemp = true;
+      info->kind = hti.kind;
+      switch (info->kind) {
+        case HeapTypeInfo::SignatureKind:
+          info->signature = hti.signature;
+          break;
+        case HeapTypeInfo::StructKind:
+          info->struct_ = std::move(hti.struct_);
+          break;
+        case HeapTypeInfo::ArrayKind:
+          info->array = hti.array;
+          break;
+      }
       initialized = true;
     }
     HeapType get() { return HeapType(TypeID(info.get())); }
@@ -2326,18 +2325,22 @@ void TypeBuilder::setSubType(size_t i, HeapType super) {
   sub->supertype = getHeapTypeInfo(super);
 }
 
-void TypeBuilder::createRecGroup(size_t i, size_t length) {
-  assert(i <= size() && i + length <= size() && "group out of bounds");
+void TypeBuilder::createRecGroup(size_t index, size_t length) {
+  assert(index <= size() && index + length <= size() && "group out of bounds");
   // Only materialize nontrivial recursion groups.
   if (length < 2) {
     return;
   }
   auto& groups = impl->recGroups;
   groups.emplace_back(std::make_unique<RecGroupInfo>());
-  for (; length > 0; --length) {
-    auto& info = impl->entries[i + length - 1].info;
+  groups.back()->reserve(length);
+  for (size_t i = 0; i < length; ++i) {
+    auto& info = impl->entries[index + i].info;
     assert(info->recGroup == nullptr && "group already assigned");
-    info->recGroup = groups.back().get();
+    auto* recGroup = groups.back().get();
+    recGroup->push_back(asHeapType(info));
+    info->recGroup = recGroup;
+    info->recGroupIndex = i;
   }
 }
 
@@ -2592,13 +2595,6 @@ validateSubtyping(const std::vector<HeapType>& types) {
 std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
   CanonicalizationState& state,
   std::vector<std::unique_ptr<RecGroupInfo>>& recGroupInfos) {
-  // Fill out the recursion groups.
-  for (auto& info : state.newInfos) {
-    if (info->recGroup != nullptr) {
-      info->recGroupIndex = info->recGroup->size();
-      info->recGroup->push_back(asHeapType(info));
-    }
-  }
 
   // Map rec groups to the unique pointers to their infos.
   std::unordered_map<RecGroup, std::unique_ptr<RecGroupInfo>> groupInfoMap;
@@ -2717,11 +2713,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
     state.results.push_back(asHeapType(info));
     state.newInfos.emplace_back(std::move(info));
   }
-
-#if TRACE_CANONICALIZATION
-  std::cerr << "After replacing basic heap types:\n";
-  state.dump();
-#endif
 
 #if TIME_CANONICALIZATION
   using instant_t = std::chrono::time_point<std::chrono::steady_clock>;
