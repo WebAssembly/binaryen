@@ -28,6 +28,8 @@ namespace wasm {
 struct NameType {
   Name name;
   Type type;
+  NameType() : name(nullptr), type(Type::none) {}
+  NameType(Name name, Type type) : name(name), type(type) {}
 };
 
 // General AST node builder

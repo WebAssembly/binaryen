@@ -190,15 +190,14 @@ private:
     std::vector<Type> wrapperParams;
     std::vector<NameType> namedWrapperParams;
     wrapperParams.push_back(externref);
-    namedWrapperParams.emplace_back(
-      NameType{Names::getValidLocalName(*func, "susp"), externref});
+    namedWrapperParams.emplace_back(Names::getValidLocalName(*func, "susp"),
+                                    externref);
     Index i = 0;
     for (const auto& param : func->getParams()) {
       call->operands.push_back(
         builder.makeLocalGet(wrapperParams.size(), param));
       wrapperParams.push_back(param);
-      namedWrapperParams.emplace_back(
-        NameType{func->getLocalNameOrGeneric(i), param});
+      namedWrapperParams.emplace_back(func->getLocalNameOrGeneric(i), param);
       i++;
     }
     auto* block = builder.makeBlock();
