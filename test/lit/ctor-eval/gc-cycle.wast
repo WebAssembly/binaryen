@@ -1003,13 +1003,13 @@
  )
 )
 
-;; CHECK:      (global $ctor-eval$global_12 (ref $A) (struct.new $A
+;; CHECK:      (global $ctor-eval$global_16 (ref $A) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
 
-;; CHECK:      (global $ctor-eval$global_16 (ref $A) (struct.new $A
+;; CHECK:      (global $ctor-eval$global_12 (ref $A) (struct.new $A
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT:  (ref.null none)
@@ -1077,9 +1077,9 @@
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (global $ctor-eval$global_12 (ref $B) (array.new_fixed $B))
-
  ;; CHECK:      (global $ctor-eval$global_16 (ref $B) (array.new_fixed $B))
+
+ ;; CHECK:      (global $ctor-eval$global_12 (ref $B) (array.new_fixed $B))
 
  ;; CHECK:      (global $ctor-eval$global_11 (ref $A) (struct.new $A
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_12)
