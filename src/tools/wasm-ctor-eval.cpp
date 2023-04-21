@@ -582,7 +582,7 @@ private:
 
     // First, find what constraints we have on the ordering of the globals. We
     // will build up a map of each global to the globals it must be after.
-    using MustBeAfter = std::unordered_map<Name, InsertOrderedSet<Name>>;
+    using MustBeAfter = InsertOrderedMap<Name, InsertOrderedSet<Name>>;
     MustBeAfter mustBeAfter;
 
     for (auto& global : wasm->globals) {
