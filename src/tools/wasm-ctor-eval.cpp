@@ -792,10 +792,14 @@ public:
     auto* data = value.getGCData().get();
     assert(data);
 
-    // There was actual GC data allocated here.
     auto type = value.type;
-    if (!definingGlobals.count(data)) {
-      // This is the first usage of this allocation. Generate a struct.new /
+    Name definingGlobalName;
+
+    if (definingGlobals.count(data)) {
+      // Use the existing defining global.
+      definingGlobalName = definingGlobals[data].name;
+    } else {
+      // This is the first usage of this data. Generate a struct.new /
       // array.new for it.
       auto& values = value.getGCData()->values;
       std::vector<Expression*> args;
@@ -805,20 +809,19 @@ public:
       // global name (note that we must do so first, as we may need to read from
       // definingGlobals to find where this global will be, in the case of a
       // cycle; see below).
-
       if (possibleDefiningGlobal.is()) {
         // No need to allocate a new global, as we are in the definition of
         // one, which will be the defining global.
         definingGlobals[data] =
           DefiningGlobalInfo{possibleDefiningGlobal, type};
+        definingGlobalName = possibleDefiningGlobal;
       } else {
         // Allocate a new defining global.
-        auto name =
+        definingGlobalName =
           Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
-        usedGlobalNames.insert(name);
-        definingGlobals[data] = DefiningGlobalInfo{name, type};
+        usedGlobalNames.insert(definingGlobalName);
+        definingGlobals[data] = DefiningGlobalInfo{definingGlobalName, type};
       }
-      auto definingGlobal = definingGlobals[data].name;
 
       for (Index i = 0; i < values.size(); i++) {
         auto value = values[i];
@@ -850,18 +853,18 @@ public:
       // We set the global's init to null temporarily, and we'll fix it up
       // later down after we create the init expression.
       wasm->addGlobal(
-        builder.makeGlobal(definingGlobal, type, nullptr, Builder::Immutable));
+        builder.makeGlobal(definingGlobalName, type, nullptr, Builder::Immutable));
 
       // We allocated a new global, and set its init to null temporarily. Fix
       // that up now, then continue down to make a proper instruction to read
       // the global to return to the caller.
-      wasm->getGlobal(definingGlobal)->init = init;
+      wasm->getGlobal(definingGlobalName)->init = init;
     }
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
     Expression* ret =
-      builder.makeGlobalGet(definingGlobals[data].name, value.type);
+      builder.makeGlobalGet(definingGlobalName, value.type);
     if (original != value) {
       // The original is externalized.
       assert(original.type.getHeapType() == HeapType::ext);
