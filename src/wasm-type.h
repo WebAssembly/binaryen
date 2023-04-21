@@ -631,6 +631,7 @@ struct TypeBuilder {
     const std::vector<HeapType>& operator*() const {
       return std::get<std::vector<HeapType>>(*this);
     }
+    const std::vector<HeapType>* operator->() const { return &*(*this); }
     const Error* getError() const { return std::get_if<Error>(this); }
   };
 
