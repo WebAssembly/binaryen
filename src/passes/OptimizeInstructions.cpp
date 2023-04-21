@@ -1615,9 +1615,27 @@ struct OptimizeInstructions
       // TODO Worth thinking about an 'assume' instrinsic of some form that
       //      annotates knowledge about a value, or another mechanism to allow
       //      that information to be passed around.
+
+      // Note that we must check that the null is actually flowed out, that is,
+      // that control flow is not transferred before:
+      //
+      //    (if
+      //      (1)
+      //      (block (result null)
+      //        (return)
+      //      )
+      //      (other))
+      //
+      // The true arm has a bottom type, but in fact it just returns out of the
+      // function and the null does not actually flow out. We can only optimize
+      // here if a null definitely flows out (as only that would cause a trap).
+      auto flowsOutNull = [&](Expression* child) {
+        return child->type.isNull() && !effects(child).transfersControlFlow();
+      };
+
       if (auto* iff = ref->dynCast<If>()) {
         if (iff->ifFalse) {
-          if (iff->ifTrue->type.isNull()) {
+          if (flowsOutNull(iff->ifTrue)) {
             if (ref->type != iff->ifFalse->type) {
               refinalize = true;
             }
@@ -1625,7 +1643,7 @@ struct OptimizeInstructions
                                        iff->ifFalse);
             return false;
           }
-          if (iff->ifFalse->type.isNull()) {
+          if (flowsOutNull(iff->ifFalse)) {
             if (ref->type != iff->ifTrue->type) {
               refinalize = true;
             }
@@ -1641,7 +1659,7 @@ struct OptimizeInstructions
         // refinalize only happens at the end. That is, the select may stil be
         // reachable after we turned one child into an unreachable, and we are
         // calling getResultOfFirst which will error on unreachability.
-        if (select->ifTrue->type.isNull() &&
+        if (flowsOutNull(select->ifTrue) &&
             select->ifFalse->type != Type::unreachable) {
           ref = builder.makeSequence(
             builder.makeDrop(select->ifTrue),
@@ -1649,7 +1667,7 @@ struct OptimizeInstructions
                              builder.makeDrop(select->condition)));
           return false;
         }
-        if (select->ifFalse->type.isNull() &&
+        if (flowsOutNull(select->ifFalse) &&
             select->ifTrue->type != Type::unreachable) {
           ref = getResultOfFirst(
             select->ifTrue,

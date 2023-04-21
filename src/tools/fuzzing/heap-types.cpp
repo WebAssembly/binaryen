@@ -40,12 +40,10 @@ struct HeapTypeGeneratorImpl {
   // Top-level kinds, chosen before the types are actually constructed. This
   // allows us to choose HeapTypes that we know will be subtypes of data or func
   // before we actually generate the types.
-  using BasicKind = HeapType::BasicHeapType;
   struct SignatureKind {};
   struct StructKind {};
   struct ArrayKind {};
-  using HeapTypeKind =
-    std::variant<BasicKind, SignatureKind, StructKind, ArrayKind>;
+  using HeapTypeKind = std::variant<SignatureKind, StructKind, ArrayKind>;
   std::vector<HeapTypeKind> typeKinds;
 
   // For each type, the index one past the end of its recursion group, used to
@@ -83,7 +81,7 @@ struct HeapTypeGeneratorImpl {
         builder[i].subTypeOf(builder[super]);
         supertypeIndices[i] = super;
         subtypeIndices[super].push_back(i);
-        typeKinds.push_back(getSubKind(typeKinds[super]));
+        typeKinds.push_back(typeKinds[super]);
       }
     }
 
@@ -110,11 +108,7 @@ struct HeapTypeGeneratorImpl {
     // Create the heap types.
     for (; index < builder.size(); ++index) {
       auto kind = typeKinds[index];
-      if (auto* basic = std::get_if<BasicKind>(&kind)) {
-        // The type is already determined.
-        builder[index] = *basic;
-      } else if (!supertypeIndices[index] ||
-                 builder.isBasic(*supertypeIndices[index])) {
+      if (!supertypeIndices[index]) {
         // No nontrivial supertype, so create a root type.
         if (std::get_if<SignatureKind>(&kind)) {
           builder[index] = generateSignature();
@@ -365,9 +359,7 @@ struct HeapTypeGeneratorImpl {
       // the builder.
       if (rand.oneIn(candidates.size() * 8)) {
         auto* kind = &typeKinds[it->second];
-        if (auto* basic = std::get_if<BasicKind>(kind)) {
-          return HeapType(*basic).getBottom();
-        } else if (std::get_if<SignatureKind>(kind)) {
+        if (std::get_if<SignatureKind>(kind)) {
           return HeapType::nofunc;
         } else {
           return HeapType::none;
@@ -434,9 +426,7 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapType::func);
         return rand.pick(candidates);
       } else {
-        // A constructed basic type. Fall through to add all of the basic
-        // supertypes as well.
-        type = *std::get_if<BasicKind>(kind);
+        WASM_UNREACHABLE("unexpected kind");
       }
     }
     // This is not a constructed type, so it must be a basic type.
@@ -576,69 +566,8 @@ struct HeapTypeGeneratorImpl {
         return StructKind{};
       case 2:
         return ArrayKind{};
-      case 3:
-        return BasicKind{generateBasicHeapType()};
     }
     WASM_UNREACHABLE("unexpected index");
-  }
-
-  HeapTypeKind getSubKind(HeapTypeKind super) {
-    if (rand.oneIn(16)) {
-      // Occasionally go directly to the bottom type.
-      if (auto* basic = std::get_if<BasicKind>(&super)) {
-        return HeapType(*basic).getBottom();
-      } else if (std::get_if<SignatureKind>(&super)) {
-        return HeapType::nofunc;
-      } else if (std::get_if<StructKind>(&super)) {
-        return HeapType::none;
-      } else if (std::get_if<ArrayKind>(&super)) {
-        return HeapType::none;
-      }
-      WASM_UNREACHABLE("unexpected kind");
-    }
-    if (auto* basic = std::get_if<BasicKind>(&super)) {
-      if (rand.oneIn(8)) {
-        return super;
-      }
-      switch (*basic) {
-        case HeapType::func:
-          return SignatureKind{};
-        case HeapType::ext:
-        case HeapType::i31:
-          return super;
-        case HeapType::any:
-          if (rand.oneIn(5)) {
-            return HeapType::eq;
-          }
-          [[fallthrough]];
-        case HeapType::eq:
-          switch (rand.upTo(3)) {
-            case 0:
-              return HeapType::i31;
-            case 1:
-              return StructKind{};
-            case 2:
-              return ArrayKind{};
-          }
-          WASM_UNREACHABLE("unexpected index");
-        case HeapType::struct_:
-          return StructKind{};
-        case HeapType::array:
-          return ArrayKind{};
-        case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-        case HeapType::none:
-        case HeapType::noext:
-        case HeapType::nofunc:
-          return super;
-      }
-      WASM_UNREACHABLE("unexpected kind");
-    } else {
-      // Signature and Data types can only have Signature and Data subtypes.
-      return super;
-    }
   }
 };
 

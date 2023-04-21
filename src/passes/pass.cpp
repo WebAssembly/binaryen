@@ -408,7 +408,8 @@ void PassRegistry::registerPasses() {
                "apply more specific subtypes to signature types where possible",
                createSignatureRefiningPass);
   registerPass("signext-lowering",
-               "lower sign-ext operations to wasm mvp",
+               "lower sign-ext operations to wasm mvp and disable the sign "
+               "extension feature",
                createSignExtLoweringPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",

@@ -5613,3 +5613,32 @@
     )
   )
 )
+
+;; Test that we do not error on array.init of a bottom type.
+(module
+  (type $[mut:i32] (array (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (data $0 "")
+  (data $0 "")
+
+  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (array.init_data $[mut:i32] $0
+      (ref.as_non_null
+        (ref.null none)
+      )
+      (i32.const 0)
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+)

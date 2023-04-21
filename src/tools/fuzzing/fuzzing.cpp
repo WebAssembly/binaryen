@@ -1055,7 +1055,7 @@ void TranslateToFuzzReader::addInvocations(Function* func) {
 }
 
 Expression* TranslateToFuzzReader::make(Type type) {
-  auto subtype = getSubType(type);
+  type = getSubType(type);
   if (trivialNesting) {
     // We are nested under a makeTrivial call, so only emit something trivial.
     return makeTrivial(type);
@@ -1065,9 +1065,9 @@ Expression* TranslateToFuzzReader::make(Type type) {
       (nesting >= NESTING_LIMIT && !oneIn(3))) {
     if (type.isConcrete()) {
       if (oneIn(2)) {
-        return makeConst(subtype);
+        return makeConst(type);
       } else {
-        return makeLocalGet(subtype);
+        return makeLocalGet(type);
       }
     } else if (type == Type::none) {
       if (oneIn(2)) {
@@ -1082,7 +1082,7 @@ Expression* TranslateToFuzzReader::make(Type type) {
   nesting++;
   Expression* ret = nullptr;
   if (type.isConcrete()) {
-    ret = _makeConcrete(subtype);
+    ret = _makeConcrete(type);
   } else if (type == Type::none) {
     ret = _makenone();
   } else {
