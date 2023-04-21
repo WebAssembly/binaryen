@@ -261,6 +261,12 @@
  ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_6))
  (global $a (mut (ref null $A)) (ref.null $A))
 
+ ;; CHECK:      (global $ctor-eval$global_5 (ref $B) (struct.new $B
+ ;; CHECK-NEXT:  (global.get $ctor-eval$global_6)
+ ;; CHECK-NEXT:  (i32.const 1337)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $b (mut (ref null $B)) (global.get $ctor-eval$global_5))
  (global $b (mut (ref null $B)) (ref.null $B))
 
  (func "test"
@@ -289,16 +295,16 @@
  )
 
  (func "keepalive" (result i32)
-  (struct.get $A 1
-   (global.get $a)
+  (i32.add
+   (struct.get $A 1
+    (global.get $a)
+   )
+   (struct.get $B 1
+    (global.get $b)
+   )
   )
  )
 )
-
-;; CHECK:      (global $ctor-eval$global_5 (ref $B) (struct.new $B
-;; CHECK-NEXT:  (global.get $ctor-eval$global_6)
-;; CHECK-NEXT:  (i32.const 1337)
-;; CHECK-NEXT: ))
 
 ;; CHECK:      (export "test" (func $0_3))
 
@@ -307,8 +313,13 @@
 ;; CHECK:      (start $start)
 
 ;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
-;; CHECK-NEXT:  (struct.get $A 1
-;; CHECK-NEXT:   (global.get $a)
+;; CHECK-NEXT:  (i32.add
+;; CHECK-NEXT:   (struct.get $A 1
+;; CHECK-NEXT:    (global.get $a)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (struct.get $B 1
+;; CHECK-NEXT:    (global.get $b)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
