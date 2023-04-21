@@ -553,9 +553,8 @@
  )
 )
 
-;; TODO Cycle of 3
-
 ;; TODO: Cycle with a struct and an array
+
 ;; CHECK:      (export "test" (func $0_3))
 
 ;; CHECK:      (export "keepalive" (func $1))
@@ -578,5 +577,102 @@
 ;; CHECK:      (func $0_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
+;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+(module
+ ;; A cycle between three globals.
+
+ ;; CHECK:      (type $A (struct (field (mut (ref null $A))) (field i32)))
+ (type $A (struct (field (mut (ref null $A))) (field i32)))
+
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (global $ctor-eval$global_9 (ref $A) (struct.new $A
+ ;; CHECK-NEXT:  (ref.null none)
+ ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_9))
+ (global $a (mut (ref null $A)) (ref.null $A))
+
+ (global $b (mut (ref null $A)) (ref.null $A))
+
+ (global $c (mut (ref null $A)) (ref.null $A))
+
+ (func "test"
+  (local $a (ref $A))
+  (local $b (ref $A))
+  (local $c (ref $A))
+  (global.set $a
+   (local.tee $a
+    (struct.new $A
+     (ref.null $A)
+     (i32.const 42)
+    )
+   )
+  )
+  (global.set $b
+   (local.tee $b
+    (struct.new $A
+     (global.get $a)
+     (i32.const 1337)
+    )
+   )
+  )
+  (global.set $c
+   (local.tee $c
+    (struct.new $A
+     (global.get $b)
+     (i32.const 99999)
+    )
+   )
+  )
+  (struct.set $A 0
+   (local.get $a)
+   (local.get $c)
+  )
+ )
+
+ (func "keepalive" (result i32)
+  (struct.get $A 1
+   (global.get $a)
+  )
+ )
+)
+;; CHECK:      (global $ctor-eval$global_11 (ref $A) (struct.new $A
+;; CHECK-NEXT:  (global.get $ctor-eval$global_9)
+;; CHECK-NEXT:  (i32.const 1337)
+;; CHECK-NEXT: ))
+
+;; CHECK:      (global $ctor-eval$global_10 (ref $A) (struct.new $A
+;; CHECK-NEXT:  (global.get $ctor-eval$global_11)
+;; CHECK-NEXT:  (i32.const 99999)
+;; CHECK-NEXT: ))
+
+;; CHECK:      (export "test" (func $0_3))
+
+;; CHECK:      (export "keepalive" (func $1))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (struct.get $A 1
+;; CHECK-NEXT:   (global.get $a)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global_9)
+;; CHECK-NEXT:   (global.get $ctor-eval$global_10)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK-NEXT:  (local $a (ref $A))
+;; CHECK-NEXT:  (local $b (ref $A))
+;; CHECK-NEXT:  (local $c (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
