@@ -580,7 +580,8 @@ private:
 
     Builder builder(*wasm);
 
-    // A map of a global name to all the globals it absolutely must be after.
+    // First, find what constraints we have on the ordering of the globals. We
+    // will build up a map of each global to the globals it must be after.
     using MustBeAfter = std::unordered_map<Name, InsertOrderedSet<Name>>;
     MustBeAfter mustBeAfter;
 
@@ -590,10 +591,10 @@ private:
       }
 
       struct InitScanner : PostWalker<InitScanner> {
-
         // All the global.gets that we can't fix up by replacing the value with
         // a null and adding a set in the start function. These will be hard
-        // constraints on our sorting.
+        // constraints on our sorting (if we could fix things up with a null +
+        // set then we would not need to reorder).
         std::unordered_set<GlobalGet*> unfixableGets;
 
         void visitGlobalGet(GlobalGet* curr) {
@@ -603,8 +604,8 @@ private:
         }
 
         // Checks if a child is a global.get that we need to handle, and if we
-        // can handle it. The index is the position of the child in the parent
-        // (which is 0 for all array children, as their position does not
+        // can fix it if so. The index is the position of the child in the
+        // parent (which is 0 for all array children, as their position does not
         // matter, they all have the same field info).
         void handleChild(Expression* child,
                          Expression* parent,
@@ -617,7 +618,8 @@ private:
             if (isNullableAndMutable(parent, fieldIndex)) {
               // We can replace the child with a null, and set the value later
               // (in the start function), so this is not a constraint on our
-              // sorting.
+              // sorting - we'll just fix it up later, and the order won't be
+              // an issue.
               unfixableGets.erase(get);
             }
           }
@@ -648,7 +650,6 @@ private:
 
     if (!mustBeAfter.empty()) {
       // We found constraints that require reordering, so do so.
-
       struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
         MustBeAfter& mustBeAfter;
 
