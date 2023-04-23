@@ -35,6 +35,7 @@ using namespace wasm;
 
 Name ASSERT_RETURN("assert_return");
 Name ASSERT_TRAP("assert_trap");
+Name ASSERT_EXCEPTION("assert_exception");
 Name ASSERT_INVALID("assert_invalid");
 Name ASSERT_MALFORMED("assert_malformed");
 Name ASSERT_UNLINKABLE("assert_unlinkable");
@@ -114,6 +115,8 @@ protected:
       parseAssertReturn(s);
     } else if (id == ASSERT_TRAP) {
       parseAssertTrap(s);
+    } else if (id == ASSERT_EXCEPTION) {
+      parseAssertException(s);
     } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED)) {
       parseModuleAssertion(s);
     }
@@ -203,11 +206,24 @@ protected:
       parseOperation(inner);
     } catch (const TrapException&) {
       trapped = true;
-    } catch (const WasmException& e) {
-      std::cout << "[exception thrown: " << e << "]" << std::endl;
-      trapped = true;
     }
     assert(trapped);
+  }
+
+  void parseAssertException(Element& s) {
+    [[maybe_unused]] bool thrown = false;
+    auto& inner = *s[1];
+    if (inner[0]->str() == MODULE) {
+      return parseModuleAssertion(s);
+    }
+
+    try {
+      parseOperation(inner);
+    } catch (const WasmException& e) {
+      std::cout << "[exception thrown: " << e << "]" << std::endl;
+      thrown = true;
+    }
+    assert(thrown);
   }
 
   void parseAssertReturn(Element& s) {
@@ -284,7 +300,7 @@ protected:
       ModuleUtils::iterImportedMemories(wasm, reportUnknownImport);
     }
 
-    if (!invalid && id == ASSERT_TRAP) {
+    if (!invalid && (id == ASSERT_TRAP || id == ASSERT_EXCEPTION)) {
       try {
         instantiate(&wasm);
       } catch (const TrapException&) {
