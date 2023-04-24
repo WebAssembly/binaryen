@@ -177,6 +177,16 @@ protected:
     return Flow();
   }
 
+  // This small function is mainly useful to put all GCData allocations in a
+  // single place. We need that because LSan reports leaks on cycles in this
+  // data, as we don't have a cycle collector. Those leaks are not a serious
+  // problem as Binaryen is not really used in long-running tasks, so we ignore
+  // this function in LSan.
+  Literal makeGCData(const Literals& data, Type type) {
+    return Literal(std::make_shared<GCData>(type.getHeapType(), data),
+                   type.getHeapType());
+  }
+
 public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
@@ -1552,8 +1562,7 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1632,8 +1641,7 @@ public:
         data[i] = value;
       }
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitArrayNewSeg(ArrayNewSeg* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -1663,8 +1671,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1867,8 +1874,7 @@ public:
             contents.push_back(ptrDataValues[i]);
           }
         }
-        auto heapType = curr->type.getHeapType();
-        return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+        return makeGCData(contents, curr->type);
       }
       default:
         // TODO: others
@@ -3623,7 +3629,7 @@ public:
       default:
         WASM_UNREACHABLE("unexpected op");
     }
-    return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+    return makeGCData(contents, curr->type);
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
