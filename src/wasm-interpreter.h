@@ -3629,7 +3629,7 @@ public:
       default:
         WASM_UNREACHABLE("unexpected op");
     }
-    return makeGCData(contents, curr->type);
+    return self()->makeGCData(contents, curr->type);
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
