@@ -1,1 +1,4 @@
+# Ignore leaks in creating GC data, as std::shared_ptr does not collect cycles
+# (which occur in cyclic GC data).
+# TODO: add a cycle collector?
 leak:makeGCData
