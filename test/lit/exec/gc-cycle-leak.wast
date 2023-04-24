@@ -5,6 +5,7 @@
 (module
  (type $A (struct (field (mut (ref null $A)))))
 
+ ;; CHECK:      [fuzz-exec] calling test
  (func "test"
   (local $a (ref $A))
   ;; This function makes a self-cycle where the local $a's ref field points to
