@@ -36,6 +36,10 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace wasm {
 
 struct WasmException {
@@ -183,7 +187,15 @@ protected:
   // problem as Binaryen is not really used in long-running tasks, so we ignore
   // this function in LSan.
   Literal makeGCData(const Literals& data, Type type) {
-    return Literal(std::make_shared<GCData>(type.getHeapType(), data),
+    auto allocation = std::make_shared<GCData>(type.getHeapType(), data);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    // GC data with cycles will leak, since shared_ptrs do not handle cycles.
+    // Binaryen is generally not used in long-running programs so we just ignore
+    // such leaks for now.
+    // TODO: Add a cycle collector?
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation,
                    type.getHeapType());
   }
 
