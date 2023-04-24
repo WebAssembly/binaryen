@@ -36,6 +36,10 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace wasm {
 
 struct WasmException {
@@ -175,6 +179,23 @@ protected:
       arguments.push_back(flow.getSingleValue());
     }
     return Flow();
+  }
+
+  // This small function is mainly useful to put all GCData allocations in a
+  // single place. We need that because LSan reports leaks on cycles in this
+  // data, as we don't have a cycle collector. Those leaks are not a serious
+  // problem as Binaryen is not really used in long-running tasks, so we ignore
+  // this function in LSan.
+  Literal makeGCData(const Literals& data, Type type) {
+    auto allocation = std::make_shared<GCData>(type.getHeapType(), data);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    // GC data with cycles will leak, since shared_ptrs do not handle cycles.
+    // Binaryen is generally not used in long-running programs so we just ignore
+    // such leaks for now.
+    // TODO: Add a cycle collector?
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation, type.getHeapType());
   }
 
 public:
@@ -1552,8 +1573,7 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1632,8 +1652,7 @@ public:
         data[i] = value;
       }
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitArrayNewSeg(ArrayNewSeg* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -1663,8 +1682,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return Literal(std::make_shared<GCData>(curr->type.getHeapType(), data),
-                   curr->type.getHeapType());
+    return makeGCData(data, curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1867,8 +1885,7 @@ public:
             contents.push_back(ptrDataValues[i]);
           }
         }
-        auto heapType = curr->type.getHeapType();
-        return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+        return makeGCData(contents, curr->type);
       }
       default:
         // TODO: others
@@ -3623,7 +3640,7 @@ public:
       default:
         WASM_UNREACHABLE("unexpected op");
     }
-    return Literal(std::make_shared<GCData>(heapType, contents), heapType);
+    return self()->makeGCData(contents, curr->type);
   }
   Flow visitArrayInit(ArrayInit* curr) {
     NOTE_ENTER("ArrayInit");
