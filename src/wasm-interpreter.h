@@ -195,8 +195,7 @@ protected:
     // TODO: Add a cycle collector?
     __lsan_ignore_object(allocation.get());
 #endif
-    return Literal(allocation,
-                   type.getHeapType());
+    return Literal(allocation, type.getHeapType());
   }
 
 public:
