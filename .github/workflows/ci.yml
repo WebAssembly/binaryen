@@ -137,6 +137,7 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      LSAN_OPTIONS: "suppressions=lsan.suppressions"
     steps:
     - uses: actions/setup-python@v1
       with:
