@@ -64,19 +64,19 @@ int main(int argc, const char* argv[]) {
          })
     .add_positional("INFILES",
                     Options::Arguments::N,
-                    [](Options* o, const std::string& argument) {
+                    [&inputFiles](Options* o, const std::string& argument) {
                       inputFiles.push_back(argument);
                     })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
-         WasmMetaDCEOption,
+         WasmMergeOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { emitBinary = false; })
     .add("--debuginfo",
          "-g",
          "Emit names section and debug info",
-         WasmMetaDCEOption,
+         WasmMergeOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; });
   options.parse(argc, argv);
