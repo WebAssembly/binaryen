@@ -19,7 +19,6 @@
 
 #include "ir/eh-utils.h"
 #include "ir/module-utils.h"
-#include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
 #include "support/bits.h"
@@ -3348,8 +3347,7 @@ public:
   // Returns a unique, escaped name. Notes that name for the items to follow to
   // keep them unique as well.
   Name process(Name name) {
-    name = WasmBinaryBuilder::escape(name);
-    return deduplicate(name);
+    return deduplicate(WasmBinaryBuilder::escape(name));
   }
 
   // After processing the names section entries, which set explicit names, we
@@ -3369,9 +3367,12 @@ public:
 private:
   std::unordered_set<Name> usedNames;
 
-  Name deduplicate(Name name) {
-    name = Names::getValidNameGivenExisting(name, usedNames);
-    usedNames.insert(name);
+  Name deduplicate(Name base) {
+    Name name = base;
+    // De-duplicate names by appending .1, .2, etc.
+    for (int i = 1; !usedNames.insert(name).second; ++i) {
+      name = std::string(base.str) + std::string(".") + std::to_string(i);
+    }
     return name;
   }
 };
