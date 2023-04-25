@@ -29,80 +29,107 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-io.h"
+#include "wasm.h"
 
 #include "tool-options.h"
 
 using namespace wasm;
 
+namespace {
+
+// Merges an input module into an existing target module.
+void mergeInto(Module& input, Module& target) {
+}
+
+} // anonymous namespace
+
 int main(int argc, const char* argv[]) {
-  std::string sourceMapFilename;
+  std::vector<std::string> inputFiles;
+  bool emitBinary = true;
+  bool debugInfo = false;
 
-  const std::string WasmDisOption = "wasm-dis options";
+  const std::string WasmMergeOption = "wasm-merge options";
 
-  ToolOptions options("wasm-dis",
-                      "Un-assemble a .wasm (WebAssembly binary format) into a "
-                      ".wat (WebAssembly text format)");
+  ToolOptions options("wasm-merge",
+                      "Merge wasm files into one");
   options
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
-         WasmDisOption,
+         WasmMergeOption,
          Options::Arguments::One,
          [](Options* o, const std::string& argument) {
            o->extra["output"] = argument;
            Colors::setEnabled(false);
          })
-    .add(
-      "--source-map",
-      "-sm",
-      "Consume source map from the specified file to add location information",
-      WasmDisOption,
-      Options::Arguments::One,
-      [&sourceMapFilename](Options* o, const std::string& argument) {
-        sourceMapFilename = argument;
-      })
-    .add_positional("INFILE",
-                    Options::Arguments::One,
+    .add_positional("INFILES",
+                    Options::Arguments::N,
                     [](Options* o, const std::string& argument) {
-                      o->extra["infile"] = argument;
-                    });
+                      inputFiles.push_back(argument);
+                    })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file",
+         WasmMetaDCEOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section and debug info",
+         WasmMetaDCEOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { debugInfo = true; });
   options.parse(argc, argv);
 
-  if (options.debug) {
-    std::cerr << "parsing binary..." << std::endl;
-  }
-  Module wasm;
-  options.applyFeatures(wasm);
-  try {
-    ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    std::cerr << '\n';
+  // The module we'll merge into.
+  Module merged;
+
+  // Inputs.
+
+  bool first = true;
+  for (auto& input : inputFiles) {
     if (options.debug) {
-      Fatal() << "error parsing wasm. here is what we read up to the error:\n"
-              << wasm;
-    } else {
-      Fatal() << "error parsing wasm (try --debug for more info)";
+      std::cerr << "reading input '" << input << "'...\n";
     }
-  } catch (MapParseException& p) {
-    p.dump(std::cerr);
-    std::cerr << '\n';
-    Fatal() << "error in parsing wasm source mapping";
+    // For the first input, we'll just read it in directly. For later inputs,
+    // we read them and then merge.
+    std::unique_ptr<Module> laterInput;
+    Module* currModule;
+    if (first) {
+      currModule = &merged;
+      first = false;
+    } else {
+      laterInput = std::make_unique<Module>();
+      currModule = laterInput.get();
+    }
+
+    options.applyFeatures(*currModule);
+
+    ModuleReader reader;
+    try {
+      reader.read(options.extra["infile"], *currModule);
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      Fatal() << "error in parsing wasm input";
+    }
+
+    if (options.passOptions.validate) {
+      if (!WasmValidator().validate(*currModule)) {
+        std::cout << *currModule << '\n';
+        Fatal() << "error in validating input";
+      }
+    }
+
+    if (laterInput) {
+      mergeInto(*currModule, merged);
+    }
   }
 
-  // TODO: Validation. However, validating would mean that users are forced to
-  //       run with  wasm-dis -all  or such, to enable the features (unless the
-  //       features section is present, but that's rare in general). It would be
-  //       better to have an "autodetect" code path that enables used features
-  //       eventually.
-
-  if (options.debug) {
-    std::cerr << "Printing..." << std::endl;
-  }
-  Output output(options.extra["output"], Flags::Text);
-  output.getStream() << wasm << '\n';
-
-  if (options.debug) {
-    std::cerr << "Done." << std::endl;
+  // Output.
+  if (options.extra.count("output") > 0) {
+    ModuleWriter writer;
+    writer.setBinary(emitBinary);
+    writer.setDebugInfo(debugInfo);
+    writer.write(merged, options.extra["output"]);
   }
 }
