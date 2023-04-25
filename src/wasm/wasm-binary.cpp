@@ -3368,6 +3368,9 @@ private:
   std::unordered_set<Name> usedNames;
 
   Name deduplicate(Name base) {
+    // TODO: Consider using Names::getValidNameGivenExisting but that does give
+    //       longer names, and it is very noticeable in this location, so
+    //       perhaps optimize that first.
     Name name = base;
     // De-duplicate names by appending .1, .2, etc.
     for (int i = 1; !usedNames.insert(name).second; ++i) {
