@@ -30,6 +30,7 @@
 #include "support/file.h"
 #include "wasm-io.h"
 #include "wasm.h"
+#include "wasm-validator.h"
 
 #include "tool-options.h"
 
@@ -110,18 +111,25 @@ int main(int argc, const char* argv[]) {
       reader.read(options.extra["infile"], *currModule);
     } catch (ParseException& p) {
       p.dump(std::cerr);
-      Fatal() << "error in parsing wasm input";
+      Fatal() << "error in parsing wasm input: " << input;
     }
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(*currModule)) {
         std::cout << *currModule << '\n';
-        Fatal() << "error in validating input";
+        Fatal() << "error in validating input: " << input;
       }
     }
 
     if (laterInput) {
       mergeInto(*currModule, merged);
+
+      if (options.passOptions.validate) {
+        if (!WasmValidator().validate(merged)) {
+          std::cout << merged << '\n';
+          Fatal() << "error in validating merged after: " << input;
+        }
+      }
     }
   }
 
