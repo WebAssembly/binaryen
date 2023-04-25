@@ -3349,7 +3349,7 @@ public:
   // keep them unique as well.
   Name process(Name name) {
     name = WasmBinaryBuilder::escape(name);
-    return deduplicate(name)
+    return deduplicate(name);
   }
 
   // After processing the names section entries, which set explicit names, we
