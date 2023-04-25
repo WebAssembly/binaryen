@@ -1591,6 +1591,7 @@ void Module::updateFunctionsMap() {
   for (auto& curr : functions) {
     functionsMap[curr->name] = curr.get();
   }
+  assert(functionsMap.size() == functions.size());
 }
 
 void Module::updateDataSegmentsMap() {
@@ -1598,6 +1599,7 @@ void Module::updateDataSegmentsMap() {
   for (auto& curr : dataSegments) {
     dataSegmentsMap[curr->name] = curr.get();
   }
+  assert(dataSegmentsMap.size() == dataSegments.size());
 }
 
 void Module::updateMaps() {
@@ -1606,27 +1608,33 @@ void Module::updateMaps() {
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
   }
+  assert(exportsMap.size() == exports.size());
   tablesMap.clear();
   for (auto& curr : tables) {
     tablesMap[curr->name] = curr.get();
   }
+  assert(tablesMap.size() == tables.size());
   elementSegmentsMap.clear();
   for (auto& curr : elementSegments) {
     elementSegmentsMap[curr->name] = curr.get();
   }
+  assert(elementSegmentsMap.size() == elementSegments.size());
   memoriesMap.clear();
   for (auto& curr : memories) {
     memoriesMap[curr->name] = curr.get();
   }
+  assert(memoriesMap.size() == memories.size());
   updateDataSegmentsMap();
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+  assert(globalsMap.size() == globals.size());
   tagsMap.clear();
   for (auto& curr : tags) {
     tagsMap[curr->name] = curr.get();
   }
+  assert(tagsMap.size() == tags.size());
 }
 
 void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
