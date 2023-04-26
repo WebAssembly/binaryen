@@ -3606,39 +3606,34 @@ public:
 
     Literals contents;
 
-    switch (curr->op) {
-      case NewData: {
-        assert(elemType.isNumber());
-        const auto& seg = *wasm.getDataSegment(curr->segment);
-        auto elemBytes = element.getByteSize();
-        auto end = offset + size * elemBytes;
-        if ((size != 0ull && droppedSegments.count(curr->segment)) ||
-            end > seg.data.size()) {
-          trap("out of bounds segment access in array.new_data");
-        }
-        contents.reserve(size);
-        for (Index i = offset; i < end; i += elemBytes) {
-          auto addr = (void*)&seg.data[i];
-          contents.push_back(Literal::makeFromMemory(addr, element));
-        }
-        break;
+    if (curr->dataSegment.is()) {
+      assert(elemType.isNumber());
+      const auto& seg = *wasm.getDataSegment(curr->dataSegment);
+      auto elemBytes = element.getByteSize();
+      auto end = offset + size * elemBytes;
+      if ((size != 0ull && droppedSegments.count(curr->dataSegment)) ||
+          end > seg.data.size()) {
+        trap("out of bounds segment access in array.new_data");
       }
-      case NewElem: {
-        const auto& seg = *wasm.getElementSegment(curr->segment);
-        auto end = offset + size;
-        // TODO: Handle dropped element segments once we support those.
-        if (end > seg.data.size()) {
-          trap("out of bounds segment access in array.new_elem");
-        }
-        contents.reserve(size);
-        for (Index i = offset; i < end; ++i) {
-          auto val = self()->visit(seg.data[i]).getSingleValue();
-          contents.push_back(val);
-        }
-        break;
+      contents.reserve(size);
+      for (Index i = offset; i < end; i += elemBytes) {
+        auto addr = (void*)&seg.data[i];
+        contents.push_back(Literal::makeFromMemory(addr, element));
       }
-      default:
-        WASM_UNREACHABLE("unexpected op");
+      break;
+    } else {
+      const auto& seg = *wasm.getElementSegment(curr->elemSegment);
+      auto end = offset + size;
+      // TODO: Handle dropped element segments once we support those.
+      if (end > seg.data.size()) {
+        trap("out of bounds segment access in array.new_elem");
+      }
+      contents.reserve(size);
+      for (Index i = offset; i < end; ++i) {
+        auto val = self()->visit(seg.data[i]).getSingleValue();
+        contents.push_back(val);
+      }
+      break;
     }
     return self()->makeGCData(contents, curr->type);
   }
