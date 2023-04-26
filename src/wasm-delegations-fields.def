@@ -80,6 +80,8 @@
 // DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind) - called for a variable-
 //    sized vector of DELEGATE_FIELD_NAME_KIND. If this is not defined, and
 //    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_NAME_KIND is called on them.
+//    Or, if this is not defined by DELEGATE_FIELD_NAME_VECTOR is, then that is
+//    called.
 //
 // DELEGATE_FIELD_TYPE(id, field) - called for a Type.
 //
@@ -174,12 +176,13 @@
 
 #ifndef DELEGATE_FIELD_NAME_KIND_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field)                        \
+#define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_NAME_KIND(id, field[i]);                               \
+    DELEGATE_FIELD_NAME_KIND(id, field[i], kind);                              \
   }
 #else
-#error please define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field)
+#define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
+  DELEGATE_FIELD_NAME_VECTOR(id, field)
 #endif
 #endif
 
@@ -692,7 +695,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(ArrayNewSeg);
     DELEGATE_FIELD_INT(ArrayNewSeg, op);
     DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, dataSegment, ExternalKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, elementSegment, ExternalKind::ElementSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, elemSegment, ExternalKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
     DELEGATE_END(ArrayNewSeg);
@@ -749,7 +752,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(ArrayInit);
     DELEGATE_FIELD_INT(ArrayInit, op);
     DELEGATE_FIELD_NAME_KIND(ArrayInit, dataSegment, ExternalKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(ArrayInit, elementSegment, ExternalKind::ElementSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayInit, elemSegment, ExternalKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayInit, size);
     DELEGATE_FIELD_CHILD(ArrayInit, offset);
     DELEGATE_FIELD_CHILD(ArrayInit, index);

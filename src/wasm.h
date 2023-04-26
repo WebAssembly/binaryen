@@ -1607,7 +1607,7 @@ public:
   // One of the two should be defined, which specifies if this is an
   // array.new_data or array.new_elem.
   Name dataSegment;
-  Name elementSegment;
+  Name elemSegment;
 
   Expression* offset;
   Expression* size;
@@ -1687,7 +1687,7 @@ public:
 
   // As with ArrayNewSeg, one of the two should be defined.
   Name dataSegment;
-  Name elementSegment;
+  Name elemSegment;
 
   Expression* ref;
   Expression* index;
