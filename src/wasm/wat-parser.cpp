@@ -2160,8 +2160,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     CHECK_ERR(size);
     auto offset = pop(pos);
     CHECK_ERR(offset);
-    return push(pos,
-                builder.makeArrayNewSegData(type, data, *offset, *size));
+    return push(pos, builder.makeArrayNewSegData(type, data, *offset, *size));
   }
 
   Result<> makeArrayNewElem(Index pos, HeapType type, Name data) {
@@ -2172,8 +2171,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     CHECK_ERR(size);
     auto offset = pop(pos);
     CHECK_ERR(offset);
-    return push(pos,
-                builder.makeArrayNewSegElem(type, data, *offset, *size));
+    return push(pos, builder.makeArrayNewSegElem(type, data, *offset, *size));
   }
 
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
@@ -3548,8 +3546,7 @@ Result<typename Ctx::InstrT> makeArrayNew(Ctx& ctx, Index pos, bool default_) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewSegData(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeArrayNewSegData(Ctx& ctx, Index pos) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   auto data = dataidx(ctx);
@@ -3558,8 +3555,7 @@ makeArrayNewSegData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewSegElem(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeArrayNewSegElem(Ctx& ctx, Index pos) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   auto data = dataidx(ctx);
@@ -3608,14 +3604,12 @@ Result<typename Ctx::InstrT> makeArrayFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayInitData(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeArrayInitData(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayInitElem(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeArrayInitElem(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

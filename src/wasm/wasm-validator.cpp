@@ -2717,8 +2717,9 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     Type(Type::i32),
     curr,
     "array.new_{data, elem} size must be an i32");
-  shouldBeTrue(
-    curr->dataSegment.is() ^ curr->elemSegment.is(), curr, "array.new_seg_* must refer to one segment");
+  shouldBeTrue(curr->dataSegment.is() ^ curr->elemSegment.is(),
+               curr,
+               "array.new_seg_* must refer to one segment");
   if (curr->dataSegment.is()) {
     if (!shouldBeTrue(getModule()->getDataSegment(curr->dataSegment),
                       curr,
@@ -2983,8 +2984,9 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   auto element = heapType.getArray().element;
   shouldBeTrue(
     element.mutable_, curr, "array.init_* destination must be mutable");
-  shouldBeTrue(
-    curr->dataSegment.is() ^ curr->elemSegment.is(), curr, "array.init_* must refer to one segment");
+  shouldBeTrue(curr->dataSegment.is() ^ curr->elemSegment.is(),
+               curr,
+               "array.init_* must refer to one segment");
   if (curr->dataSegment.is()) {
     shouldBeTrue(getModule()->getDataSegmentOrNull(curr->dataSegment),
                  curr,

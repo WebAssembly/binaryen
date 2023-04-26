@@ -464,7 +464,8 @@ void MemoryPacking::getSegmentReferrers(Module* module,
     if (func->imported()) {
       return;
     }
-    struct Collector : WalkerPass<PostWalker<Collector, UnifiedExpressionVisitor<Collector>>> {
+    struct Collector
+      : WalkerPass<PostWalker<Collector, UnifiedExpressionVisitor<Collector>>> {
       ReferrersMap& referrers;
       Collector(ReferrersMap& referrers) : referrers(referrers) {}
 
@@ -489,9 +490,9 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
-#define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
-  if (kind == ModuleItemKind::DataSegment) { \
-    referrers[cast->field].push_back(curr); \
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (kind == ModuleItemKind::DataSegment) {                                   \
+    referrers[cast->field].push_back(curr);                                    \
   }
 
 #include "wasm-delegations-fields.def"

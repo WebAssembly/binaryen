@@ -27,7 +27,8 @@ bool flatten(Module& wasm) {
   // The presence of any instruction that cares about segment identity is a
   // problem because flattening gets rid of that (when it merges them all into
   // one big segment).
-  struct Scanner : public WalkerPass<PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
+  struct Scanner : public WalkerPass<
+                     PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
     std::atomic<bool>& noticesSegmentIdentity;
 
     Scanner(std::atomic<bool>& noticesSegmentIdentity)
@@ -58,9 +59,9 @@ bool flatten(Module& wasm) {
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
-#define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
-  if (kind == ModuleItemKind::DataSegment) { \
-    noticesSegmentIdentity = true; \
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (kind == ModuleItemKind::DataSegment) {                                   \
+    noticesSegmentIdentity = true;                                             \
   }
 
 #include "wasm-delegations-fields.def"

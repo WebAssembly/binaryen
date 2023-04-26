@@ -2272,7 +2272,8 @@ struct PrintExpressionContents
     printMedium(o, "array.new_");
     printMedium(o, curr->dataSegment.is() ? "data " : "elem ");
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
-    o << " $" << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
+    o << " $"
+      << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2327,9 +2328,11 @@ struct PrintExpressionContents
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
-    printMedium(o, curr->dataSegment.is() ? "array.init_data " : "array.init_elem ");
+    printMedium(
+      o, curr->dataSegment.is() ? "array.init_data " : "array.init_elem ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
-    o << " $" << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
+    o << " $"
+      << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {

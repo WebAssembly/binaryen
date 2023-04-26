@@ -912,8 +912,7 @@ struct InfoCollector
     auto heapType = curr->type.getHeapType();
     if (curr->dataSegment.is()) {
       Type elemType = heapType.getArray().element.type;
-      addRoot(DataLocation{heapType, 0},
-              PossibleContents::fromType(elemType));
+      addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(elemType));
       return;
     } else {
       Type segType = getModule()->getElementSegment(curr->elemSegment)->type;
