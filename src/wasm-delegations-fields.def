@@ -245,7 +245,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::CallId: {
     DELEGATE_START(Call);
     DELEGATE_FIELD_CHILD_VECTOR(Call, operands);
-    DELEGATE_FIELD_NAME_KIND(Call, target, ExternalKind::Function);
+    DELEGATE_FIELD_NAME_KIND(Call, target, ModuleItemKind::Function);
     DELEGATE_FIELD_INT(Call, isReturn);
     DELEGATE_END(Call);
     break;
@@ -253,7 +253,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::CallIndirectId: {
     DELEGATE_START(CallIndirect);
     DELEGATE_FIELD_CHILD(CallIndirect, target);
-    DELEGATE_FIELD_NAME_KIND(CallIndirect, table, ExternalKind::Table);
+    DELEGATE_FIELD_NAME_KIND(CallIndirect, table, ModuleItemKind::Table);
     DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
     DELEGATE_FIELD_HEAPTYPE(CallIndirect, heapType);
     DELEGATE_FIELD_INT(CallIndirect, isReturn);
@@ -294,7 +294,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Load, offset);
     DELEGATE_FIELD_ADDRESS(Load, align);
     DELEGATE_FIELD_INT(Load, isAtomic);
-    DELEGATE_FIELD_NAME_KIND(Load, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(Load, memory, ModuleItemKind::Memory);
     DELEGATE_END(Load);
     break;
   }
@@ -307,7 +307,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Store, align);
     DELEGATE_FIELD_INT(Store, isAtomic);
     DELEGATE_FIELD_TYPE(Store, valueType);
-    DELEGATE_FIELD_NAME_KIND(Store, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(Store, memory, ModuleItemKind::Memory);
     DELEGATE_END(Store);
     break;
   }
@@ -318,7 +318,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(AtomicRMW, op);
     DELEGATE_FIELD_INT(AtomicRMW, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicRMW, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicRMW, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(AtomicRMW, memory, ModuleItemKind::Memory);
     DELEGATE_END(AtomicRMW);
     break;
   }
@@ -329,7 +329,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
     DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicCmpxchg, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(AtomicCmpxchg, memory, ModuleItemKind::Memory);
     DELEGATE_END(AtomicCmpxchg);
     break;
   }
@@ -340,7 +340,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicWait, offset);
     DELEGATE_FIELD_TYPE(AtomicWait, expectedType);
-    DELEGATE_FIELD_NAME_KIND(AtomicWait, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(AtomicWait, memory, ModuleItemKind::Memory);
     DELEGATE_END(AtomicWait);
     break;
   }
@@ -349,7 +349,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicNotify, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicNotify, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(AtomicNotify, memory, ModuleItemKind::Memory);
     DELEGATE_END(AtomicNotify);
     break;
   }
@@ -407,7 +407,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(SIMDLoad, op);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, align);
-    DELEGATE_FIELD_NAME_KIND(SIMDLoad, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(SIMDLoad, memory, ModuleItemKind::Memory);
     DELEGATE_END(SIMDLoad);
     break;
   }
@@ -419,7 +419,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align);
     DELEGATE_FIELD_INT(SIMDLoadStoreLane, index);
-    DELEGATE_FIELD_NAME_KIND(SIMDLoadStoreLane, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(SIMDLoadStoreLane, memory, ModuleItemKind::Memory);
     DELEGATE_END(SIMDLoadStoreLane);
     break;
   }
@@ -428,14 +428,14 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, size);
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryInit, segment, ExternalKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(MemoryInit, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemoryInit, segment, ModuleItemKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(MemoryInit, memory, ModuleItemKind::Memory);
     DELEGATE_END(MemoryInit);
     break;
   }
   case Expression::Id::DataDropId: {
     DELEGATE_START(DataDrop);
-    DELEGATE_FIELD_NAME_KIND(DataDrop, segment, ExternalKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(DataDrop, segment, ModuleItemKind::DataSegment);
     DELEGATE_END(DataDrop);
     break;
   }
@@ -444,8 +444,8 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryCopy, size);
     DELEGATE_FIELD_CHILD(MemoryCopy, source);
     DELEGATE_FIELD_CHILD(MemoryCopy, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryCopy, sourceMemory, ExternalKind::Memory);
-    DELEGATE_FIELD_NAME_KIND(MemoryCopy, destMemory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemoryCopy, sourceMemory, ModuleItemKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemoryCopy, destMemory, ModuleItemKind::Memory);
     DELEGATE_END(MemoryCopy);
     break;
   }
@@ -454,7 +454,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryFill, size);
     DELEGATE_FIELD_CHILD(MemoryFill, value);
     DELEGATE_FIELD_CHILD(MemoryFill, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryFill, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemoryFill, memory, ModuleItemKind::Memory);
     DELEGATE_END(MemoryFill);
     break;
   }
@@ -502,7 +502,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::MemorySizeId: {
     DELEGATE_START(MemorySize);
     DELEGATE_FIELD_TYPE(MemorySize, ptrType);
-    DELEGATE_FIELD_NAME_KIND(MemorySize, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemorySize, memory, ModuleItemKind::Memory);
     DELEGATE_END(MemorySize);
     break;
   }
@@ -510,7 +510,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(MemoryGrow);
     DELEGATE_FIELD_TYPE(MemoryGrow, ptrType);
     DELEGATE_FIELD_CHILD(MemoryGrow, delta);
-    DELEGATE_FIELD_NAME_KIND(MemoryGrow, memory, ExternalKind::Memory);
+    DELEGATE_FIELD_NAME_KIND(MemoryGrow, memory, ModuleItemKind::Memory);
     DELEGATE_END(MemoryGrow);
     break;
   }
@@ -527,7 +527,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefFuncId: {
     DELEGATE_START(RefFunc);
-    DELEGATE_FIELD_NAME_KIND(RefFunc, func, ExternalKind::Function);
+    DELEGATE_FIELD_NAME_KIND(RefFunc, func, ModuleItemKind::Function);
     DELEGATE_END(RefFunc);
     break;
   }
@@ -541,7 +541,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::TableGetId: {
     DELEGATE_START(TableGet);
     DELEGATE_FIELD_CHILD(TableGet, index);
-    DELEGATE_FIELD_NAME_KIND(TableGet, table, ExternalKind::Table);
+    DELEGATE_FIELD_NAME_KIND(TableGet, table, ModuleItemKind::Table);
     DELEGATE_END(TableGet);
     break;
   }
@@ -549,13 +549,13 @@ switch (DELEGATE_ID) {
     DELEGATE_START(TableSet);
     DELEGATE_FIELD_CHILD(TableSet, value);
     DELEGATE_FIELD_CHILD(TableSet, index);
-    DELEGATE_FIELD_NAME_KIND(TableSet, table, ExternalKind::Table);
+    DELEGATE_FIELD_NAME_KIND(TableSet, table, ModuleItemKind::Table);
     DELEGATE_END(TableSet);
     break;
   }
   case Expression::Id::TableSizeId: {
     DELEGATE_START(TableSize);
-    DELEGATE_FIELD_NAME_KIND(TableSize, table, ExternalKind::Table);
+    DELEGATE_FIELD_NAME_KIND(TableSize, table, ModuleItemKind::Table);
     DELEGATE_END(TableSize);
     break;
   }
@@ -563,7 +563,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(TableGrow);
     DELEGATE_FIELD_CHILD(TableGrow, delta);
     DELEGATE_FIELD_CHILD(TableGrow, value);
-    DELEGATE_FIELD_NAME_KIND(TableGrow, table, ExternalKind::Table);
+    DELEGATE_FIELD_NAME_KIND(TableGrow, table, ModuleItemKind::Table);
     DELEGATE_END(TableGrow);
     break;
   }
@@ -571,7 +571,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Try);
     DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget);
     DELEGATE_FIELD_CHILD_VECTOR(Try, catchBodies);
-    DELEGATE_FIELD_NAME_KIND_VECTOR(Try, catchTags, ExternalKind::Tag);
+    DELEGATE_FIELD_NAME_KIND_VECTOR(Try, catchTags, ModuleItemKind::Tag);
     DELEGATE_FIELD_SCOPE_NAME_DEF(Try, name);
     DELEGATE_FIELD_CHILD(Try, body);
     DELEGATE_END(Try);
@@ -580,7 +580,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
-    DELEGATE_FIELD_NAME_KIND(Throw, tag, ExternalKind::Tag);
+    DELEGATE_FIELD_NAME_KIND(Throw, tag, ModuleItemKind::Tag);
     DELEGATE_END(Throw);
     break;
   }
@@ -693,8 +693,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayNewSegId: {
     DELEGATE_START(ArrayNewSeg);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, dataSegment, ExternalKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, elemSegment, ExternalKind::ElementSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, dataSegment, ModuleItemKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, elemSegment, ModuleItemKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
     DELEGATE_END(ArrayNewSeg);
@@ -749,8 +749,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayInitId: {
     DELEGATE_START(ArrayInit);
-    DELEGATE_FIELD_NAME_KIND(ArrayInit, dataSegment, ExternalKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(ArrayInit, elemSegment, ExternalKind::ElementSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayInit, dataSegment, ModuleItemKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayInit, elemSegment, ModuleItemKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayInit, size);
     DELEGATE_FIELD_CHILD(ArrayInit, offset);
     DELEGATE_FIELD_CHILD(ArrayInit, index);

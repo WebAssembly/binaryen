@@ -59,7 +59,7 @@ bool flatten(Module& wasm) {
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
-  if (kind == ExternalKind::DataSegment) { \
+  if (kind == ModuleItemKind::DataSegment) { \
     noticesSegmentIdentity = true; \
   }
 
