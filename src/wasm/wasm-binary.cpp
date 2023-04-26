@@ -7219,13 +7219,12 @@ bool WasmBinaryBuilder::maybeVisitArrayFill(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
-  ArrayInitOp op;
+  bool isData = true;
   switch (code) {
     case BinaryConsts::ArrayInitData:
-      op = InitData;
       break;
     case BinaryConsts::ArrayInitElem:
-      op = InitElem;
+      isData = false;
       break;
     default:
       return false;
@@ -7237,14 +7236,13 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  auto* built =
-    Builder(wasm).makeArrayInit(op, Name(), ref, index, offset, size);
-  if (op == InitData) {
-    dataRefs[segIdx].push_back(&built->segment);
+  if (isData) {
+    out = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
+    dataRefs[segIdx].push_back(&built->dataSegment);
   } else {
-    elemRefs[segIdx].push_back(&built->segment);
-  }
-  out = built;
+    out = Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
+    elemRefs[segIdx].push_back(&built->elemSegment);
+  }  
   return true;
 }
 
