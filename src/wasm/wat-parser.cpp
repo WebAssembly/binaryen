@@ -789,6 +789,10 @@ struct NullInstrParserCtx {
   InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  InstrT makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+    return Ok{};
+  }
   template<typename HeapTypeT> InstrT makeArrayGet(Index, HeapTypeT, bool) {
     return Ok{};
   }
