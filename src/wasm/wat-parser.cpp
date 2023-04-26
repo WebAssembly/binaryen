@@ -2164,6 +2164,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                 builder.makeArrayNewSegData(type, data, *offset, *size));
   }
 
+  Result<> makeArrayNewElem(Index pos, HeapType type, Name data) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto offset = pop(pos);
+    CHECK_ERR(offset);
+    return push(pos,
+                builder.makeArrayNewSegElem(type, data, *offset, *size));
+  }
+
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
     if (!type.isArray()) {
       return in.err(pos, "expected array type annotation");
