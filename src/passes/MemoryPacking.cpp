@@ -491,7 +491,7 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
   if (kind == ModuleItemKind::DataSegment) { \
-    referrers[curr->field].push_back(curr); \
+    referrers[cast->field].push_back(curr); \
   }
 
 #include "wasm-delegations-fields.def"
