@@ -204,27 +204,19 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     note(StructField{type, curr->index});
   }
   void visitArrayNewSeg(ArrayNewSeg* curr) {
-    switch (curr->op) {
-      case NewData: {
-        note({ModuleElementKind::DataSegment, curr->segment});
-        return;
-      case NewElem:
-        note({ModuleElementKind::ElementSegment, curr->segment});
-        return;
-      }
+    if (curr->dataSegment.is()) {
+      note({ModuleElementKind::DataSegment, curr->dataSegment});
+    } else {
+      note({ModuleElementKind::ElementSegment, curr->elemSegment});
     }
-    WASM_UNREACHABLE("unexpected op");
   }
   void visitArrayInit(ArrayInit* curr) {
-    switch (curr->op) {
-      case InitData:
-        note({ModuleElementKind::DataSegment, curr->segment});
-        return;
-      case InitElem:
-        note({ModuleElementKind::ElementSegment, curr->segment});
-        return;
+    // TODO: use delegations-fields
+    if (curr->dataSegment.is()) {
+      note({ModuleElementKind::DataSegment, curr->dataSegment});
+    } else {
+      note({ModuleElementKind::ElementSegment, curr->elemSegment});
     }
-    WASM_UNREACHABLE("unexpected op");
   }
 };
 

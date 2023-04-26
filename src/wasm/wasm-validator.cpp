@@ -2717,23 +2717,21 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     Type(Type::i32),
     curr,
     "array.new_{data, elem} size must be an i32");
-  switch (curr->op) {
-    case NewData:
-      if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
-                        curr,
-                        "array.new_data segment should exist")) {
-        return;
-      }
-      break;
-    case NewElem:
-      if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
-                        curr,
-                        "array.new_elem segment should exist")) {
-        return;
-      }
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
+  shouldBeTrue(curr->dataSegment.is() ^ curr->elemSegment.is(),
+               curr,
+               "array.new_seg_* must refer to one segment");
+  if (curr->dataSegment.is()) {
+    if (!shouldBeTrue(getModule()->getDataSegment(curr->dataSegment),
+                      curr,
+                      "array.new_data segment should exist")) {
+      return;
+    }
+  } else {
+    if (!shouldBeTrue(getModule()->getElementSegment(curr->elemSegment),
+                      curr,
+                      "array.new_elem segment should exist")) {
+      return;
+    }
   }
   if (curr->type == Type::unreachable) {
     return;
@@ -2752,21 +2750,16 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     return;
   }
   auto elemType = heapType.getArray().element.type;
-  switch (curr->op) {
-    case NewData:
-      shouldBeTrue(elemType.isNumber(),
-                   curr,
-                   "array.new_data result element type should be numeric");
-      break;
-    case NewElem:
-      shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
-                      elemType,
-                      curr,
-                      "array.new_elem segment type should be a subtype of the "
-                      "result element type");
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
+  if (curr->dataSegment.is()) {
+    shouldBeTrue(elemType.isNumber(),
+                 curr,
+                 "array.new_data result element type should be numeric");
+  } else {
+    shouldBeSubType(getModule()->getElementSegment(curr->elemSegment)->type,
+                    elemType,
+                    curr,
+                    "array.new_elem segment type should be a subtype of the "
+                    "result element type");
   }
 }
 
@@ -2991,16 +2984,18 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   auto element = heapType.getArray().element;
   shouldBeTrue(
     element.mutable_, curr, "array.init_* destination must be mutable");
-  if (curr->op == InitData) {
-    shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
+  shouldBeTrue(curr->dataSegment.is() ^ curr->elemSegment.is(),
+               curr,
+               "array.init_* must refer to one segment");
+  if (curr->dataSegment.is()) {
+    shouldBeTrue(getModule()->getDataSegmentOrNull(curr->dataSegment),
                  curr,
                  "array.init_data segment must exist");
     shouldBeTrue(element.type.isNumber(),
                  curr,
                  "array.init_data destination must be numeric");
   } else {
-    assert(curr->op == InitElem);
-    auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
+    auto* seg = getModule()->getElementSegmentOrNull(curr->elemSegment);
     if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
       return;
     }

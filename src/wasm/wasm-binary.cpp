@@ -7104,19 +7104,20 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::ArrayNewData ||
       code == BinaryConsts::ArrayNewElem) {
-    auto op = code == BinaryConsts::ArrayNewData ? NewData : NewElem;
+    auto isData = code == BinaryConsts::ArrayNewData;
     auto heapType = getIndexedHeapType();
     auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
-    auto* built =
-      Builder(wasm).makeArrayNewSeg(op, heapType, Name(), offset, size);
-    if (op == NewData) {
-      dataRefs[segIdx].push_back(&built->segment);
+    ArrayNewSeg* curr;
+    if (isData) {
+      curr = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
+      dataRefs[segIdx].push_back(&curr->dataSegment);
     } else {
-      elemRefs[segIdx].push_back(&built->segment);
+      curr = Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
+      elemRefs[segIdx].push_back(&curr->elemSegment);
     }
-    out = built;
+    out = curr;
     return true;
   }
   return false;
@@ -7219,13 +7220,12 @@ bool WasmBinaryBuilder::maybeVisitArrayFill(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
-  ArrayInitOp op;
+  bool isData = true;
   switch (code) {
     case BinaryConsts::ArrayInitData:
-      op = InitData;
       break;
     case BinaryConsts::ArrayInitElem:
-      op = InitElem;
+      isData = false;
       break;
     default:
       return false;
@@ -7237,14 +7237,15 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  auto* built =
-    Builder(wasm).makeArrayInit(op, Name(), ref, index, offset, size);
-  if (op == InitData) {
-    dataRefs[segIdx].push_back(&built->segment);
+  ArrayInit* curr;
+  if (isData) {
+    curr = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
+    dataRefs[segIdx].push_back(&curr->dataSegment);
   } else {
-    elemRefs[segIdx].push_back(&built->segment);
+    curr = Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
+    elemRefs[segIdx].push_back(&curr->elemSegment);
   }
-  out = built;
+  out = curr;
   return true;
 }
 
