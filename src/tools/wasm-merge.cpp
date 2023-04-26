@@ -57,6 +57,12 @@ namespace {
 // The module we'll merge into.
 Module merged;
 
+// Merging two modules is mostly straightforward: copy the functions etc. of the
+// first module into the second, with some renaming to avoid name collisions.
+// The only other thing we need to handle is the mapping of imports to exports
+
+/*
+
 // A map of (kind of thing in the module) to (old name => new name) for things
 // of that kind. For example, one of the maps is of old function names to new
 // function names.
@@ -118,9 +124,7 @@ void noteModuleImportsAndExports(Module& wasm, Name name) {
   }
 }
 
-// Use the the exports from the new input for the current merged target code.
-void useModuleExports(Module& input, Name name) { // XXX
-}
+*/
 
 // First we'll scan the input module to find the names of the items it contains,
 // and pick new names for them that do not cause conflicts in the target.
@@ -229,9 +233,6 @@ void mergeInto(Module& input, Name inputName) {
 
   // The input module's items can now be copied into the target module safely.
   ModuleUtils::copyModuleItems(input, merged);
-
-  // Use the the exports from the new input for the current merged target code.
-  useModuleExports(input, inputName); // XXX
 
   // Note the exports from the new input for future modules to find.
   noteModuleImportsAndExports(input, inputName);
