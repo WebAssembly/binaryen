@@ -7104,19 +7104,18 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::ArrayNewData ||
       code == BinaryConsts::ArrayNewElem) {
-    auto op = code == BinaryConsts::ArrayNewData ? NewData : NewElem;
+    auto isData = code == BinaryConsts::ArrayNewData;
     auto heapType = getIndexedHeapType();
     auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
-    auto* built =
-      Builder(wasm).makeArrayNewSeg(op, heapType, Name(), offset, size);
-    if (op == NewData) {
-      dataRefs[segIdx].push_back(&built->segment);
+    if (isData) {
+      out = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
+      dataRefs[segIdx].push_back(&built->dataSegment);
     } else {
-      elemRefs[segIdx].push_back(&built->segment);
+      out = Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
+      elemRefs[segIdx].push_back(&built->elemSegment);
     }
-    out = built;
     return true;
   }
   return false;
