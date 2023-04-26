@@ -124,6 +124,8 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
 void mergeInto(Module& input, Module& target) {
   KindNameMaps kindNameMaps;
 
+// XXX hook up imports and exports both ways!
+
   // Find the new names we'll use.
   buildKindNameMaps(input, target, kindNameMaps);
 
