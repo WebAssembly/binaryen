@@ -2270,17 +2270,7 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "array.new_");
-    switch (curr->op) {
-      case NewData:
-        printMedium(o, "data");
-        break;
-      case NewElem:
-        printMedium(o, "elem");
-        break;
-      default:
-        WASM_UNREACHABLE("unexpected op");
-    }
-    o << ' ';
+    printMedium(o, curr->dataSegment.is() ? "data " : "elem ");
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
     o << " $" << curr->segment;
   }
@@ -2337,16 +2327,7 @@ struct PrintExpressionContents
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
-    switch (curr->op) {
-      case InitData:
-        printMedium(o, "array.init_data ");
-        break;
-      case InitElem:
-        printMedium(o, "array.init_elem ");
-        break;
-      default:
-        WASM_UNREACHABLE("unexpected op");
-    }
+    printMedium(o, curr->dataSegment.is() ? "array.init_data " : "array.init_elem ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
     o << " $" << curr->segment;
   }
