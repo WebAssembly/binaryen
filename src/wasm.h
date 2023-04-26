@@ -2052,6 +2052,8 @@ enum class ExternalKind {
   Memory = 2,
   Global = 3,
   Tag = 4,
+  DataSegment = 5,
+  ElementSegment = 6,
   Invalid = -1
 };
 
