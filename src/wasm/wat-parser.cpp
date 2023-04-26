@@ -3538,7 +3538,7 @@ makeArrayNewSegData(Ctx& ctx, Index pos) {
   CHECK_ERR(type);
   auto data = dataidx(ctx);
   CHECK_ERR(data);
-  return ctx.makeArrayNewSegData(pos, *type, *data);
+  return ctx.makeArrayNewData(pos, *type, *data);
 }
 
 template<typename Ctx>
@@ -3548,7 +3548,7 @@ makeArrayNewSegElem(Ctx& ctx, Index pos) {
   CHECK_ERR(type);
   auto data = dataidx(ctx);
   CHECK_ERR(data);
-  return ctx.makeArrayNewSegElem(pos, *type, *data);
+  return ctx.makeArrayNewElem(pos, *type, *data);
 }
 
 template<typename Ctx>
