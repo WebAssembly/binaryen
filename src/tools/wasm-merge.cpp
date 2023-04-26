@@ -119,7 +119,7 @@ void noteModuleImportsAndExports(Module& wasm, Name name) {
 }
 
 // Use the the exports from the new input for the current merged target code.
-void useModuleExports(Module& input, Name name) {
+void useModuleExports(Module& input, Name name) { // XXX
 }
 
 // First we'll scan the input module to find the names of the items it contains,
@@ -136,6 +136,7 @@ void buildKindNameMaps(Module& input, KindNameMaps& kindNameMaps) {
   // exists, and otherwise returns the original name.
   auto maybeUseImport = [&](Name name, ModuleItemKind kind, Name module, Name base) {
     if (!module.is()) {
+      // This is
       return name;
     }
     if
@@ -230,10 +231,10 @@ void mergeInto(Module& input, Name inputName) {
   ModuleUtils::copyModuleItems(input, merged);
 
   // Use the the exports from the new input for the current merged target code.
-  useModuleExports(input, inputName);
+  useModuleExports(input, inputName); // XXX
 
   // Note the exports from the new input for future modules to find.
-  noteModuleExports(input, inputName);
+  noteModuleImportsAndExports(input, inputName);
 
   // TODO: remaining things like exports, start, type names, etc.; see
   //       ModuleUtils::copyModule
@@ -316,9 +317,9 @@ int main(int argc, const char* argv[]) {
     }
 
     if (!laterInput) {
-      // This is the first module. All we need to do is note its exports for
-      // later modules to find.
-      noteModuleExports(merged);
+      // This is the first module, so there is nothing to merge in. All we need
+      // to do is note its exports and imports for later.
+      noteModuleImportsAndExports(merged);
     } else {
       // This is a later module: do a full merge.
       mergeInto(*currModule, merged);
