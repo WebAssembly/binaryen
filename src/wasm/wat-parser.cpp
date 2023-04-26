@@ -2380,7 +2380,9 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNew(Ctx&, Index, bool default_);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNewSeg(Ctx&, Index, ArrayNewSegOp op);
+Result<typename Ctx::InstrT> makeArrayNewSegData(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewSegElem(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNewFixed(Ctx&, Index);
 template<typename Ctx>
@@ -3531,19 +3533,22 @@ Result<typename Ctx::InstrT> makeArrayNew(Ctx& ctx, Index pos, bool default_) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT>
-makeArrayNewSeg(Ctx& ctx, Index pos, ArrayNewSegOp op) {
+makeArrayNewSegData(Ctx& ctx, Index pos) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  switch (op) {
-    case NewData: {
-      auto data = dataidx(ctx);
-      CHECK_ERR(data);
-      return ctx.makeArrayNewData(pos, *type, *data);
-    }
-    case NewElem:
-      return ctx.in.err("unimplemented instruction");
-  }
-  WASM_UNREACHABLE("unexpected op");
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayNewData(pos, *type, *data);
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT>
+makeArrayNewSegElem(Ctx& ctx, Index pos) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayNewElem(pos, *type, *data);
 }
 
 template<typename Ctx>
