@@ -2039,7 +2039,7 @@ public:
   void clearDebugInfo();
 };
 
-// The kind of an import or export.
+// The kind of a top-level module item. These can be imported or exported.
 enum class ExternalKind {
   Function = 0,
   Table = 1,
