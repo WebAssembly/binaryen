@@ -22,8 +22,22 @@
 // The result of wasm-merge is a single module that behaves the same as the
 // multiple original modules, but you don't need that JS to set up the
 // connections between the modules any more, and DCE and inlining can help
-// inside the module, etc. (While JS is mentioned here, this could also be
-// helpful with the component model for wasm that is in development.)
+// inside the module, etc. In other words, wasm-merge is sort of like a wasm
+// bundler, where "bundler" means something similar to JS bundlers. (While JS is
+// mentioned here a lot, wasm-merge could also be helpful with the component
+// model for wasm that is in development.)
+//
+// The specific merging model here is to take N wasm modules, each with a given
+// name:
+//
+//   wasm_1, wasm_2, ... , wasm_N
+//   name_1, name_2, ... , name_N
+//
+// We resolve imports and exports using those names as we merge all the code
+// into the final module. That is, if wasm_i imports "foo.bar", and wasm_j has
+// name name_j == "foo" and it exports a function bar, then wasm_i's import of
+// "foo.bar" will turn into a reference to the proper item from wasm_j that
+// corresponds to that export.
 //
 
 #include "ir/names.h"
@@ -75,14 +89,16 @@ void buildKindNameMaps(Module& input, Module& target, KindNameMaps& kindNameMaps
 void updateNames(Module& input, KindNameMaps& kindNameMaps) {
   // Update the input module in place. This is more efficient than making a
   // copy or updating it as we go in some online manner.
-  struct NameMapper : public WalkerPass<NameMapper, UnifiedExpressionVisitor<NameMapper>> {
+  struct NameMapper : public WalkerPass<PostWalker<NameMapper, UnifiedExpressionVisitor<NameMapper>>> {
     bool isFunctionParallel() override { return true; }
-
-    KindNameMaps& kindNameMaps;
 
     std::unique_ptr<Pass> create() override {
       return std::make_unique<NameMapper>(kindNameMaps);
     }
+
+    KindNameMaps& kindNameMaps;
+
+    NameMapper(KindNameMaps& kindNameMaps) : kindNameMaps(kindNameMaps) {}
 
     void visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
@@ -115,7 +131,7 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
 
   PassRunner runner(&input);
   nameMapper.run(&runner, &input);
-  nameNapper.runOnModuleCode(&runner, &input);
+  nameMapper.runOnModuleCode(&runner, &input);
 }
 
 // Merges an input module into an existing target module. The input module can
