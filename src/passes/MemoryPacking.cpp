@@ -821,7 +821,8 @@ void MemoryPacking::replaceSegmentOps(Module* module,
     }
 
     void visitArrayNewSeg(ArrayNewSeg* curr) {
-      if (curr->op == NewData) {
+      // TODO: use delegations-fields
+      if (curr->dataSegment.is()) {
         if (auto replacement = replacements.find(curr);
             replacement != replacements.end()) {
           replaceCurrent(replacement->second(getFunction()));
