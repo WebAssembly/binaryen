@@ -2195,19 +2195,14 @@ void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
     return;
   }
   o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case InitData:
-      o << U32LEB(BinaryConsts::ArrayInitData);
-      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-      o << U32LEB(parent.getDataSegmentIndex(curr->segment));
-      break;
-    case InitElem:
-      o << U32LEB(BinaryConsts::ArrayInitElem);
-      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-      o << U32LEB(parent.getElementSegmentIndex(curr->segment));
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
+  if (curr->dataSegment.is()) {
+    o << U32LEB(BinaryConsts::ArrayInitData);
+    parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+    o << U32LEB(parent.getDataSegmentIndex(curr->dataSegment));
+  } else {
+    o << U32LEB(BinaryConsts::ArrayInitElem);
+    parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+    o << U32LEB(parent.getElementSegmentIndex(curr->elemSegment));
   }
 }
 
