@@ -910,18 +910,15 @@ struct InfoCollector
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
     auto heapType = curr->type.getHeapType();
-    switch (curr->op) {
-      case NewData: {
-        Type elemType = heapType.getArray().element.type;
-        addRoot(DataLocation{heapType, 0},
-                PossibleContents::fromType(elemType));
-        return;
-      }
-      case NewElem: {
-        Type segType = getModule()->getElementSegment(curr->segment)->type;
-        addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
-        return;
-      }
+    if (curr->dataSegment.is()) {
+      Type elemType = heapType.getArray().element.type;
+      addRoot(DataLocation{heapType, 0},
+              PossibleContents::fromType(elemType));
+      return;
+    } else {
+      Type segType = getModule()->getElementSegment(curr->elemSegment)->type;
+      addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
+      return;
     }
     WASM_UNREACHABLE("unexpected op");
   }
