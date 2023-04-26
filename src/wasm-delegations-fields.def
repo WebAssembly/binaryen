@@ -73,9 +73,9 @@
 //    them.
 //
 // DELEGATE_FIELD_NAME_KIND(id, field, kind) - called for a field that contains
-//    the name of an ExternalKind (i.e., an entity that can be imported and
-//    exported, like a table or function). If this is not defined then
-//    DELEGATE_FIELD_NAME is called instead.
+//    the name of a ModuleItemKind (i.e., a top-level module entity like a table
+//    or a function). If this is not defined then DELEGATE_FIELD_NAME is called
+//    instead.
 //
 // DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind) - called for a variable-
 //    sized vector of DELEGATE_FIELD_NAME_KIND. If this is not defined, and
