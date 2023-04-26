@@ -39,36 +39,102 @@ using namespace wasm;
 
 namespace {
 
+// A map of (kind of thing in the module) to (old name => new name) for things
+// of that kind. For example, one of the maps is of old function names to new
+// function names.
+using KindNameMaps = std::unordered_map<ModuleItemKind, std::unordered_map<Name, Name>>;
+
+// First we'll scan the input module to find the names of the items it contains,
+// and pick new names for them that do not cause conflicts in the target.
+void buildKindNameMaps(Module& input, Module& target, KindNameMaps& kindNameMaps) {
+  // build up a mapping of old to new names as we go (which maps the kind of
+  // item to a mapping of old=>new).
+  for (auto& curr : input.functions) {
+    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(target, curr->name);
+  }
+  for (auto& curr : input.globals) {
+    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(target, curr->name);
+  }
+  for (auto& curr : input.tags) {
+    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(target, curr->name);
+  }
+  for (auto& curr : input.elementSegments) {
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(target, curr->name);
+  }
+  for (auto& curr : input.memories) {
+    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(target, curr->name);
+  }
+  for (auto& curr : input.dataSegments) {
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(target, curr->name);
+  }
+  for (auto& curr : input.tables) {
+    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(target, curr->name);
+  }
+}
+
+void updateNames(Module& input, KindNameMaps& kindNameMaps) {
+  // Update the input module in place. This is more efficient than making a
+  // copy or updating it as we go in some online manner.
+  struct NameMapper : public WalkerPass<NameMapper, UnifiedExpressionVisitor<NameMapper>> {
+    bool isFunctionParallel() override { return true; }
+
+    KindNameMaps& kindNameMaps;
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<NameMapper>(kindNameMaps);
+    }
+
+    void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
+  assert(kindNameMaps[kind].count(cast->field)); \
+  cast->field = kindNameMaps[kind][cast->field];
+
+#include "wasm-delegations-fields.def"
+    }
+  } nameMapper(kindNameMaps);
+
+  PassRunner runner(&input);
+  nameMapper.run(&runner, &input);
+  nameNapper.runOnModuleCode(&runner, &input);
+}
+
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
 void mergeInto(Module& input, Module& target) {
-  // First, scan the input module to find the names of the items it contains,
-  // and pick new names for them that do not cause conflicts in the target. We
-  // build up a mapping of old to new names as we go (which maps the kind of
-  // item to a mapping of old=>new).
-  std::unordered_map<ModuleItemKind, std::unordered_map<Name, Name>> kindNameMaps;
-  for (auto& curr : input.functions) {
-    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(input, curr->name);
-  }
-  for (auto& curr : input.globals) {
-    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(input, curr->name);
-  }
-  for (auto& curr : input.tags) {
-    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(input, curr->name);
-  }
-  for (auto& curr : input.elementSegments) {
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(input, curr->name);
-  }
-  for (auto& curr : input.memories) {
-    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(input, curr->name);
-  }
-  for (auto& curr : input.dataSegments) {
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(input, curr->name);
-  }
-  for (auto& curr : input.tables) {
-    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(input, curr->name);
-  }
+  KindNameMaps kindNameMaps;
+
+  // Find the new names we'll use.
+  buildKindNameMaps(input, target, kindNameMaps);
+
+  // Apply the new names in the input module.
+  updateNames(input, kindNameMaps);
+
+  // The input module's items can now be copied into the target module safely.
+  ModuleUtils::copyModuleItems(input, target);
+
+  // TODO: remaining things like exports, start, type names, etc.; see
+  //       ModuleUtils::copyModule
 }
 
 } // anonymous namespace

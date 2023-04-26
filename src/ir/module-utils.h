@@ -132,12 +132,9 @@ inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
   return out.addDataSegment(std::move(ret));
 }
 
-inline void copyModule(const Module& in, Module& out) {
-  // we use names throughout, not raw pointers, so simple copying is fine
-  // for everything *but* expressions
-  for (auto& curr : in.exports) {
-    out.addExport(new Export(*curr));
-  }
+// Copies named toplevel module items (things of kind ModuleItemKind). See
+// copyModule() for something that also copies exports, the start function, etc.
+inline void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.functions) {
     copyFunction(curr.get(), out);
   }
@@ -159,6 +156,15 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
+}
+
+inline void copyModule(const Module& in, Module& out) {
+  // we use names throughout, not raw pointers, so simple copying is fine
+  // for everything *but* expressions
+  for (auto& curr : in.exports) {
+    out.addExport(new Export(*curr));
+  }
+  copyModuleItems(in, out);
   out.start = in.start;
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
