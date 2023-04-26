@@ -360,6 +360,37 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
   iterImportedTags(wasm, visitor);
 }
 
+// Iterates overall module items inheriting from Named. The visitor provided
+// should have signature void(ExternalKind, Named*).
+template<typename T>
+inline void iterNamed(Module& wasm, T visitor) {
+  for (auto& curr : wasm.functions) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Function, curr.get());
+    }
+  }
+  for (auto& curr : wasm.tables) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Table, curr.get());
+    }
+  }
+  for (auto& curr : wasm.memories) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Memory, curr.get());
+    }
+  }
+  for (auto& curr : wasm.globals) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Global, curr.get());
+    }
+  }
+  for (auto& curr : wasm.tags) {
+    if (curr->imported()) {
+      visitor(ExternalKind::Tag, curr.get());
+    }
+  }
+}
+
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.

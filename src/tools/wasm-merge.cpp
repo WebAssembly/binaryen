@@ -40,6 +40,7 @@
 // corresponds to that export.
 //
 
+#include "ir/module-utils.h"
 #include "ir/names.h"
 #include "support/colors.h"
 #include "support/file.h"
@@ -86,9 +87,32 @@ using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
 // The accumulated KindModuleExportMaps of all merged modules thus far.
 KindModuleExportMaps kindModuleExportMaps;
 
+// Similar to exports, we have a data structures to map the imports seen so far.
+// ImportMap maps a (module, base) pair to the name of the item in the merged
+// module. For example, if the module is
+//
+//  (module
+//    (import "foo" "bar" (func $inner))
+//  )
+//
+// then ImportMap would map (foo, bar) => inner.
+using ImportMap = std::unordered_map<std::pair<Name, Name>, Name>;
+
+// A map of ImportMap, one per item kind (one for functions, one for globals,
+// etc.).
+using KindImportMaps = std::unordered_map<ExternalKind, ImportMap>;
+
+KindImportMaps kindImportMaps;
+
 // Notes the exports in a module on KindModuleExportMaps, so later modules can
 // find them.
-void noteModuleExports(Module& wasm, Name name) {
+void noteModuleImportsAndExports(Module& wasm, Name name) {
+  // Imports.
+  ModuleUtils::iterNamed(wasm, [&](ExternalKind kind, Named* curr) {
+    kindImportMaps[kind][{curr->module, curr->base}] = curr->name;
+  });
+
+  // Exports.
   for (auto& ex : wasm.exports) {
     kindModuleExportMaps[ex->kind][name][ex->name] = ex->value;
   }
