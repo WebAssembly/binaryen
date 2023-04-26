@@ -86,10 +86,16 @@ using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
 // The accumulated KindModuleExportMaps of all merged modules thus far.
 KindModuleExportMaps kindModuleExportMaps;
 
+// Notes the exports in a module on KindModuleExportMaps, so later modules can
+// find them.
 void noteModuleExports(Module& wasm, Name name) {
   for (auto& ex : wasm.exports) {
     kindModuleExportMaps[ex->kind][name][ex->name] = ex->value;
   }
+}
+
+// Use the the exports from the new input for the current merged target code.
+void useModuleExports(Module& input, Name name) {
 }
 
 // First we'll scan the input module to find the names of the items it contains,
