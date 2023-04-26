@@ -3059,7 +3059,7 @@ Expression* SExpressionWasmBuilder::makeArrayFill(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeArrayInitData(Element& s) {
   auto heapType = parseHeapType(*s[1]);
-  auto seg = getDataSegmentName(*s[2]) : getElemSegmentName(*s[2]);
+  auto seg = getDataSegmentName(*s[2]);
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[4]);
@@ -3070,7 +3070,7 @@ Expression* SExpressionWasmBuilder::makeArrayInitData(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeArrayInitElem(Element& s) {
   auto heapType = parseHeapType(*s[1]);
-  auto seg = getElemSegmentName(*s[2]) : getElemSegmentName(*s[2]);
+  auto seg = getElemSegmentName(*s[2]);
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[4]);
