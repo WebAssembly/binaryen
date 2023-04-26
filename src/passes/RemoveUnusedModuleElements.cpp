@@ -209,7 +209,6 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     } else {
       note({ModuleElementKind::ElementSegment, curr->elemSegment});
     }
-    WASM_UNREACHABLE("unexpected op");
   }
   void visitArrayInit(ArrayInit* curr) {
     // TODO: use delegations-fields
@@ -218,7 +217,6 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     } else {
       note({ModuleElementKind::ElementSegment, curr->elemSegment});
     }
-    WASM_UNREACHABLE("unexpected op");
   }
 };
 
