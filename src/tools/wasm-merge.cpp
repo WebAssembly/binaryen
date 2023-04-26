@@ -26,6 +26,7 @@
 // helpful with the component model for wasm that is in development.)
 //
 
+#include "ir/names.h"
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-io.h"
@@ -38,8 +39,36 @@ using namespace wasm;
 
 namespace {
 
-// Merges an input module into an existing target module.
+// Merges an input module into an existing target module. The input module can
+// be modified, as it will no longer be needed (so it is intentionally not
+// marked as const here).
 void mergeInto(Module& input, Module& target) {
+  // First, scan the input module to find the names of the items it contains,
+  // and pick new names for them that do not cause conflicts in the target. We
+  // build up a mapping of old to new names as we go (which maps the kind of
+  // item to a mapping of old=>new).
+  std::unordered_map<ModuleItemKind, std::unordered_map<Name, Name>> kindNameMaps;
+  for (auto& curr : input.functions) {
+    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(input, curr->name);
+  }
+  for (auto& curr : input.globals) {
+    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(input, curr->name);
+  }
+  for (auto& curr : input.tags) {
+    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(input, curr->name);
+  }
+  for (auto& curr : input.elementSegments) {
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(input, curr->name);
+  }
+  for (auto& curr : input.memories) {
+    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(input, curr->name);
+  }
+  for (auto& curr : input.dataSegments) {
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(input, curr->name);
+  }
+  for (auto& curr : input.tables) {
+    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(input, curr->name);
+  }
 }
 
 } // anonymous namespace
