@@ -53,36 +53,84 @@ using namespace wasm;
 
 namespace {
 
+// The module we'll merge into.
+Module merged;
+
 // A map of (kind of thing in the module) to (old name => new name) for things
 // of that kind. For example, one of the maps is of old function names to new
 // function names.
-using KindNameMaps = std::unordered_map<ModuleItemKind, std::unordered_map<Name, Name>>;
+using NameMap = std::unordered_map<Name, Name>;
+using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
+
+// Exports in the merged wasm so far: a map of (module name) to (export name =>
+// name inside module). For example, consider this module:
+//
+//  (module ;; linked in as "module_A"
+//    (func $foo (export "bar"))
+//  )
+//
+// Then the ModuleExportMap will be:
+//
+//  {
+//    "module_A": {
+//      "bar": "foo";
+//    }
+//  }
+//
+using ModuleExportMap = std::unordered_map<Name, NameMap>;
+
+// A map of ModuleExportMaps, one per item kind (one for functions, one for
+// globals, etc.).
+using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
+
+// The accumulated KindModuleExportMaps of all merged modules thus far.
+KindModuleExportMaps kindModuleExportMaps;
+
+void noteModuleExports(Module& wasm, Name name) {
+  for (auto& ex : wasm.exports) {
+    kindModuleExportMaps[ex->kind][name][ex->name] = ex->value;
+  }
+}
 
 // First we'll scan the input module to find the names of the items it contains,
 // and pick new names for them that do not cause conflicts in the target.
-void buildKindNameMaps(Module& input, Module& target, KindNameMaps& kindNameMaps) {
-  // build up a mapping of old to new names as we go (which maps the kind of
-  // item to a mapping of old=>new).
+//
+// For things defined in the input module this is trivial: we either use the
+// existing name, if there is no conflict in the target, or if there is then we
+// pick some new unique name. For things imported in the input module, we check
+// if they are provided in the target module, and if so then we point the name
+// to that so we use it directly.
+void buildKindNameMaps(Module& input, KindNameMaps& kindNameMaps) {
+  // Given a name that refers to some kind, and the module.base of an import
+  // operation, returns the proper name of the import in the target, if it
+  // exists, and otherwise returns the original name.
+  auto maybeUseImport = [&](Name name, ModuleItemKind kind, Name module, Name base) {
+    if (!module.is()) {
+      return name;
+    }
+    if
+  }
+
   for (auto& curr : input.functions) {
-    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(target, curr->name);
+    kindNameMaps[ModuleItemKind::Function][curr->name] = maybeUseImport(Names::getValidFunctionName(merged, curr->name), merged.getFunctionOrNull(curr->);
   }
   for (auto& curr : input.globals) {
-    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(target, curr->name);
+    kindNameMaps[ModuleItemKind::Global][curr->name] = maybeUseImport(Names::getValidGlobalName(merged, curr->name), curr);
   }
   for (auto& curr : input.tags) {
-    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(target, curr->name);
+    kindNameMaps[ModuleItemKind::Tag][curr->name] = maybeUseImport(Names::getValidTagName(merged, curr->name), curr);
   }
   for (auto& curr : input.elementSegments) {
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(target, curr->name);
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = maybeUseImport(Names::getValidElementSegmentName(merged, curr->name), curr);
   }
   for (auto& curr : input.memories) {
-    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(target, curr->name);
+    kindNameMaps[ModuleItemKind::Memory][curr->name] = maybeUseImport(Names::getValidMemoryName(merged, curr->name), curr);
   }
   for (auto& curr : input.dataSegments) {
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(target, curr->name);
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = maybeUseImport(Names::getValidDataSegmentName(merged, curr->name), curr);
   }
   for (auto& curr : input.tables) {
-    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(target, curr->name);
+    kindNameMaps[ModuleItemKind::Table][curr->name] = maybeUseImport(Names::getValidTableName(merged, curr->name), curr);
   }
 }
 
@@ -137,19 +185,25 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
-void mergeInto(Module& input, Module& target) {
+void mergeInto(Module& input, Name inputName) {
   KindNameMaps kindNameMaps;
 
 // XXX hook up imports and exports both ways!
 
   // Find the new names we'll use.
-  buildKindNameMaps(input, target, kindNameMaps);
+  buildKindNameMaps(input, kindNameMaps);
 
   // Apply the new names in the input module.
   updateNames(input, kindNameMaps);
 
   // The input module's items can now be copied into the target module safely.
-  ModuleUtils::copyModuleItems(input, target);
+  ModuleUtils::copyModuleItems(input, merged);
+
+  // Use the the exports from the new input for the current merged target code.
+  useModuleExports(input, inputName);
+
+  // Note the exports from the new input for future modules to find.
+  noteModuleExports(input, inputName);
 
   // TODO: remaining things like exports, start, type names, etc.; see
   //       ModuleUtils::copyModule
@@ -195,9 +249,6 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& arguments) { debugInfo = true; });
   options.parse(argc, argv);
 
-  // The module we'll merge into.
-  Module merged;
-
   // Inputs.
 
   bool first = true;
@@ -234,7 +285,12 @@ int main(int argc, const char* argv[]) {
       }
     }
 
-    if (laterInput) {
+    if (!laterInput) {
+      // This is the first module. All we need to do is note its exports for
+      // later modules to find.
+      noteModuleExports(merged);
+    } else {
+      // This is a later module: do a full merge.
       mergeInto(*currModule, merged);
 
       if (options.passOptions.validate) {
