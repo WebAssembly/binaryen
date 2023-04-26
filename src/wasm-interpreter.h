@@ -3620,7 +3620,6 @@ public:
         auto addr = (void*)&seg.data[i];
         contents.push_back(Literal::makeFromMemory(addr, element));
       }
-      break;
     } else {
       const auto& seg = *wasm.getElementSegment(curr->elemSegment);
       auto end = offset + size;
@@ -3633,7 +3632,6 @@ public:
         auto val = self()->visit(seg.data[i]).getSingleValue();
         contents.push_back(val);
       }
-      break;
     }
     return self()->makeGCData(contents, curr->type);
   }
