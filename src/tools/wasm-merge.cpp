@@ -59,7 +59,55 @@ Module merged;
 
 // Merging two modules is mostly straightforward: copy the functions etc. of the
 // first module into the second, with some renaming to avoid name collisions.
-// The only other thing we need to handle is the mapping of imports to exports
+// The only other thing we need to handle is the mapping of imports to exports,
+// which can happen both ways. The way we handle this is to first combine the
+// items into a single module, while tracking the origin module for exports.
+// Then as a later operation we hook up imports and exports.
+//
+// For example, if we have these two modules:
+//
+//  ;; metadata: module "A"
+//  (module
+//    (import "B" "c" (func $d))
+//    (func $e
+//      (call $d)
+//    )
+//  )
+//
+//  ;; metadata: module "B"
+//  (module
+//    (func $f (export "c")
+//      ..
+//    )
+//  )
+//
+// Then the first phase just combines them into this single module:
+//
+//  (module
+//    (import "B" "c" (func $d))
+//    (func $e
+//      (call $d)
+//    )
+//    (func $f (export "c") ;; metadata: exported from "B"
+//      ..
+//    )
+//  )
+//
+// And then we can connect the export "c" which we remember was from "B" to the
+// import of B.c:
+//
+//  (module
+//    (import "B" "c" (func $d))
+//    (func $e
+//      (call $f) ;; only this line changed
+//    )
+//    (func $f (export "c")
+//      ..
+//    )
+//  )
+//
+// Note that we don't both to remove either the export or the import, which we
+// leave for later.
 
 /*
 
