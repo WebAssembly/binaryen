@@ -691,7 +691,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::ArrayNewSegId: {
     DELEGATE_START(ArrayNewSeg);
     DELEGATE_FIELD_INT(ArrayNewSeg, op);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, segment, ExternalKind::Segment XXX XXX XXX);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, dataSegment, ExternalKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSeg, elementSegment, ExternalKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
     DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
     DELEGATE_END(ArrayNewSeg);
@@ -747,7 +748,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::ArrayInitId: {
     DELEGATE_START(ArrayInit);
     DELEGATE_FIELD_INT(ArrayInit, op);
-    DELEGATE_FIELD_NAME_KIND(ArrayInit, segment, ExternalKind::Segment XXX XXX);
+    DELEGATE_FIELD_NAME_KIND(ArrayInit, dataSegment, ExternalKind::DataSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayInit, elementSegment, ExternalKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayInit, size);
     DELEGATE_FIELD_CHILD(ArrayInit, offset);
     DELEGATE_FIELD_CHILD(ArrayInit, index);

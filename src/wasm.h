@@ -563,17 +563,6 @@ enum RefAsOp {
   ExternExternalize,
 };
 
-enum ArrayNewSegOp {
-  NewData,
-  NewElem,
-};
-
-// TODO: Deduplicate with ArrayNewSegOp?
-enum ArrayInitOp {
-  InitData,
-  InitElem,
-};
-
 enum BrOnOp {
   BrOnNull,
   BrOnNonNull,
@@ -1615,8 +1604,11 @@ class ArrayNewSeg : public SpecificExpression<Expression::ArrayNewSegId> {
 public:
   ArrayNewSeg(MixedArena& allocator) {}
 
-  ArrayNewSegOp op;
-  Name segment;
+  // One of the two should be defined, which specifies if this is an
+  // array.new_data or array.new_elem.
+  Name dataSegment;
+  Name elementSegment;
+
   Expression* offset;
   Expression* size;
 
@@ -1693,8 +1685,10 @@ class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
 public:
   ArrayInit(MixedArena& allocator) {}
 
-  ArrayInitOp op;
-  Name segment;
+  // As with ArrayNewSeg, one of the two should be defined.
+  Name dataSegment;
+  Name elementSegment;
+
   Expression* ref;
   Expression* index;
   Expression* offset;
