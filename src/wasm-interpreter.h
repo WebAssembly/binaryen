@@ -3668,43 +3668,38 @@ public:
 
     Module& wasm = *self()->getModule();
 
-    switch (curr->op) {
-      case InitData: {
-        auto* seg = wasm.getDataSegment(curr->segment);
-        auto elem = curr->ref->type.getHeapType().getArray().element;
-        size_t elemSize = elem.getByteSize();
-        uint64_t readSize = (uint64_t)sizeVal * elemSize;
-        if (offsetVal + readSize > seg->data.size()) {
-          trap("out of bounds segment access in array.init_data");
-        }
-        if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
-          trap("out of bounds segment access in array.init_data");
-        }
-        for (size_t i = 0; i < sizeVal; i++) {
-          void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-          data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
-        }
-        return {};
+    if (curr->dataSegment) {
+      auto* seg = wasm.getDataSegment(curr->dataSegment);
+      auto elem = curr->ref->type.getHeapType().getArray().element;
+      size_t elemSize = elem.getByteSize();
+      uint64_t readSize = (uint64_t)sizeVal * elemSize;
+      if (offsetVal + readSize > seg->data.size()) {
+        trap("out of bounds segment access in array.init_data");
       }
-      case InitElem: {
-        auto* seg = wasm.getElementSegment(curr->segment);
-        if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
-          trap("out of bounds segment access in array.init");
-        }
-        // TODO: Check whether the segment has been dropped once we support
-        // dropping element segments.
-        for (size_t i = 0; i < sizeVal; i++) {
-          // TODO: This is not correct because it does not preserve the identity
-          // of references in the table! ArrayNewSeg suffers the same problem.
-          // Fixing it will require changing how we represent segments, at least
-          // in the interpreter.
-          data->values[indexVal + i] =
-            self()->visit(seg->data[i]).getSingleValue();
-        }
-        return {};
+      if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->dataSegment)) {
+        trap("out of bounds segment access in array.init_data");
       }
-    };
-    WASM_UNREACHABLE("unexpected op");
+      for (size_t i = 0; i < sizeVal; i++) {
+        void* addr = (void*)&seg->data[offsetVal + i * elemSize];
+        data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+      }
+    } else {
+      auto* seg = wasm.getElementSegment(curr->elemSegment);
+      if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
+        trap("out of bounds segment access in array.init");
+      }
+      // TODO: Check whether the segment has been dropped once we support
+      // dropping element segments.
+      for (size_t i = 0; i < sizeVal; i++) {
+        // TODO: This is not correct because it does not preserve the identity
+        // of references in the table! ArrayNewSeg suffers the same problem.
+        // Fixing it will require changing how we represent segments, at least
+        // in the interpreter.
+        data->values[indexVal + i] =
+          self()->visit(seg->data[i]).getSingleValue();
+      }
+    }
+    return {};
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
