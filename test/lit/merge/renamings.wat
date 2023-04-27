@@ -4,10 +4,13 @@
 ;; Test that we rename items in the second module to avoid name collisions.
 
 (module
-  ;; This tag has a conflict in second.wat, and so second.wat's $foo
-  ;; will be renamed.
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $array (array (mut funcref)))
+  (type $array (array (mut (ref null func))))
+
+  ;; This tag has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (type $i64_=>_none (func (param i64)))
@@ -15,6 +18,8 @@
   ;; CHECK:      (type $f32_=>_none (func (param f32)))
 
   ;; CHECK:      (type $f64_=>_none (func (param f64)))
+
+  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
   ;; CHECK:      (global $foo i32 (i32.const 1))
 
@@ -78,7 +83,7 @@
     )
   )
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $ref|$array|_=>_none) (param $array (ref $array))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -105,10 +110,22 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $bar)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_elem $array $foo
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_elem $array $bar
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:   (i32.const 6)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call $bar)
   ;; CHECK-NEXT: )
-  (func $uses
+  (func $uses (param $array (ref $array))
     ;; Tags.
     (try
       (do)
@@ -133,6 +150,20 @@
     )
     (drop
       (global.get $bar)
+    )
+
+    ;; Element segments
+    (array.init_elem $array $foo
+      (local.get $array)
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 3)
+    )
+    (array.init_elem $array $bar
+      (local.get $array)
+      (i32.const 4)
+      (i32.const 5)
+      (i32.const 6)
     )
 
     ;; Functions.
