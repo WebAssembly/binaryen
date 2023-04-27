@@ -271,7 +271,6 @@ void copyModuleContents(Module& input, Name inputName) {
     // Note the module origin of this export, for later fusing of imports to
     // exports.
     exportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
-    std::cout << "eMM " << copy->name << " for " << inputName << '\n';
 
     // Add the export.
     merged.addExport(std::move(copy));
@@ -315,8 +314,8 @@ void fuseImportsAndExports() {
   for (auto& ex : merged.exports) {
     assert(exportModuleMap.count(ex.get()));
     ExportInfo& exportInfo = exportModuleMap[ex.get()];
-    kindModuleExportMaps[ex->kind][exportInfo.moduleName][exportInfo.baseName] = ex->value;
-    std::cout << "all exports item " << int(ex->kind) << " : " << exportInfo.moduleName << " : " << exportInfo.baseName << "  ==>  " << ex->value << '\n';
+    kindModuleExportMaps[ex->kind][exportInfo.moduleName][exportInfo.baseName] =
+      ex->value;
   }
 
   // Find all the imports and see which have corresponding exports, which means
