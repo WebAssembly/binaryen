@@ -195,7 +195,7 @@ void buildKindNameMaps(Module& input, KindNameMaps& kindNameMaps) {
   auto maybeUseImport = [&](Name name, ModuleItemKind kind, Name module, Name base) {
     if (!module.is()) {
       // This is
-      return name;
+      return name; // XXX remove all this
     }
     if
   }
@@ -271,18 +271,27 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
   nameMapper.runOnModuleCode(&runner, &input);
 }
 
-void copyModuleContents(Module& input) {
+void copyModuleContents(Module& input, Name inputName) {
   // First, copy the regular module items (functions, globals) etc. which we
   // have proper names for, and can just copy.
   ModuleUtils::copyModuleItems(input, merged);
 
-  // We must handle exports in a special way, as they are not normal named items
-  // in our IR (in particular, they are not importable or exportable).
+  // We must handle exports in a special way, as we need to note their origin
+  // module as we copy them in (also, they are not importable or exportable, so
+  // the ModuleUtils function above does not handle them).
   for (auto& curr : in.exports) {
-    out.addExport(new Export(*curr));
+    auto copy = std::make_unique<Export>(*curr);
+    ExportModuleMap[copy.get()] = inputName;
+    out.addExport(std::move(copy));
   }
 
   // TODO: start, type names, etc. etc.
+}
+
+// Finds pairs of matching imports and exports, and makes uses of the import
+// refer to the exported item (which has been merged into the module).
+void connectImportsAndExports() {
+  ...
 }
 
 // Merges an input module into an existing target module. The input module can
@@ -300,9 +309,11 @@ void mergeInto(Module& input, Name inputName) {
   updateNames(input, kindNameMaps);
 
   // The input module's items can now be copied into the target module safely.
-  copyModuleContents(input);
+  copyModuleContents(input, inputName);
 
-  // 
+  // Connect imports and exports now that everything is all together in the
+  // merged module.
+  connectImportsAndExports();
 
   // Note the exports from the new input for future modules to find.
   noteModuleImportsAndExports(input, inputName);
