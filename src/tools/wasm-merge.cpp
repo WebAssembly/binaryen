@@ -114,9 +114,18 @@ Module merged;
 // lower down).
 //
 // To implement that, we need to track the module origin of exports, which we do
-// with the following data structure, which maps Export objects to their module
-// name.
-using ExportModuleMap = std::unordered_map<Export*, Name>;
+// with the following data structure, which maps Export objects to their info.
+struct ExportInfo {
+  // The name of the module this export originally appeared in.
+  Name moduleName;
+  // The name of the export itself, which is the basename (the export will be
+  // used as module.base). This is normally just the same as export->name, but
+  // we need to stash it here because exports may be renamed/ when merged in, if
+  // there is overlap with the name of another export, and imports refer to the
+  // original name.
+  Name baseName;
+};
+using ExportModuleMap = std::unordered_map<Export*, ExportInfo>;
 ExportModuleMap exportModuleMap;
 
 // A map of (kind of thing in the module) to (old name => new name) for things
@@ -245,7 +254,8 @@ void copyModuleContents(Module& input, Name inputName) {
 
     // Note the module origin of this export, for later fusing of imports to
     // exports.
-    exportModuleMap[copy.get()] = inputName;
+    exportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
+    //std::cout << "eMM " << copy->name << " for " << inputName << '\n';
 
     // Add the export.
     merged.addExport(std::move(copy));
@@ -284,8 +294,9 @@ void fuseImportsAndExports() {
 
   for (auto& ex : merged.exports) {
     assert(exportModuleMap.count(ex.get()));
-    Name moduleOrigin = exportModuleMap[ex.get()];
-    kindModuleExportMaps[ex->kind][moduleOrigin][ex->name] = ex->value;
+    ExportInfo& exportInfo = exportModuleMap[ex.get()];
+    kindModuleExportMaps[ex->kind][exportInfo.moduleName][exportInfo.baseName] = ex->value;
+    //std::cout << "all exports item " << int(ex->kind) << " : " << moduleOrigin << " : " << ex->name << "  ==  " << ex->value << '\n';
   }
 
   // Find all the imports and see which have corresponding exports, which means
@@ -426,7 +437,7 @@ Note that filenames and modules names are interleaved as positional inputs to av
       // This is the very first module, which we read directly into |merged|.
       // The only other operation we need to do is note the exports
       for (auto& curr : merged.exports) {
-        exportModuleMap[curr.get()] = inputFileName;
+        exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
     } else {
       // This is a later module: do a full merge.
