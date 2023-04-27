@@ -123,12 +123,10 @@ ExportModuleMap exportModuleMap;
 // of that kind. For example, one of the maps is of old function names to new
 // function names.
 using NameMap = std::unordered_map<Name, Name>;
-using ModuleItemKindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
-using ExternalKindNameMaps = std::unordered_map<ExternalKind, NameMap>;
+using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 
 // Applies a set of name changes to a module.
-template<typename Maps>
-void updateNames(Module& wasm, Maps& kindNameMaps) {
+void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
   // Update the input module in place. This is more efficient than making a
   // copy or updating it as we go in some online manner.
   struct NameMapper
@@ -140,9 +138,9 @@ void updateNames(Module& wasm, Maps& kindNameMaps) {
       return std::make_unique<NameMapper>(kindNameMaps);
     }
 
-    Maps& kindNameMaps;
+    KindNameMaps& kindNameMaps;
 
-    NameMapper(Maps& kindNameMaps) : kindNameMaps(kindNameMaps) {}
+    NameMapper(KindNameMaps& kindNameMaps) : kindNameMaps(kindNameMaps) {}
 
     void visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
@@ -182,7 +180,7 @@ void updateNames(Module& wasm, Maps& kindNameMaps) {
 // and pick new names for them that do not cause conflicts in the target.
 void renameInputItems(Module& input) {
   // Pick the names.
-  ModuleItemKindNameMaps kindNameMaps;
+  KindNameMaps kindNameMaps;
   for (auto& curr : input.functions) {
     kindNameMaps[ModuleItemKind::Function][curr->name] =
       Names::getValidFunctionName(merged, curr->name);
@@ -277,12 +275,13 @@ void fuseImportsAndExports() {
 
   // Find all the imports and see which have corresponding exports, which means
   // there is an internal item we can refer to.
-  ExternalKindNameMaps kindNameMaps;
+  KindNameMaps kindNameMaps;
   ModuleUtils::iterImportable(merged, [&](ExternalKind kind, Importable* curr) {
     if (curr->imported()) {
       auto internalName = kindModuleExportMaps[kind][curr->module][curr->base];
       if (internalName.is()) {
         // We found something to fuse! Add it to the maps for renaming.
+        auto moduleItemKind = ModuleItemKind(kind);
         kindNameMaps[kind][curr->name] = internalName;
       }
     }
@@ -372,7 +371,7 @@ int main(int argc, const char* argv[]) {
     auto inputFileName = inputFileNames[i];
 
     if (options.debug) {
-      std::cerr << "reading input '" << input << "'...\n";
+      std::cerr << "reading input '" << inputFile << "' as '" << inputFileName << "'...\n";
     }
     // For the first input, we'll just read it in directly. For later inputs,
     // we read them and then merge.
@@ -393,13 +392,13 @@ int main(int argc, const char* argv[]) {
       reader.read(options.extra["infile"], *currModule);
     } catch (ParseException& p) {
       p.dump(std::cerr);
-      Fatal() << "error in parsing wasm input: " << input;
+      Fatal() << "error in parsing wasm input: " << inputFile;
     }
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(*currModule)) {
         std::cout << *currModule << '\n';
-        Fatal() << "error in validating input: " << input;
+        Fatal() << "error in validating input: " << inputFile;
       }
     }
 
@@ -416,7 +415,7 @@ int main(int argc, const char* argv[]) {
       if (options.passOptions.validate) {
         if (!WasmValidator().validate(merged)) {
           std::cout << merged << '\n';
-          Fatal() << "error in validating merged after: " << input;
+          Fatal() << "error in validating merged after: " << inputFile;
         }
       }
     }
