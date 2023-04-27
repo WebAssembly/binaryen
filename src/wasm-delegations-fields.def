@@ -275,14 +275,14 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::GlobalGetId: {
     DELEGATE_START(GlobalGet);
-    DELEGATE_FIELD_INT(GlobalGet, name);
+    DELEGATE_FIELD_NAME(GlobalGet, name, ModuleItemKind::Global);
     DELEGATE_END(GlobalGet);
     break;
   }
   case Expression::Id::GlobalSetId: {
     DELEGATE_START(GlobalSet);
     DELEGATE_FIELD_CHILD(GlobalSet, value);
-    DELEGATE_FIELD_INT(GlobalSet, name);
+    DELEGATE_FIELD_NAME(GlobalSet, name, ModuleItemKind::Global);
     DELEGATE_END(GlobalSet);
     break;
   }
