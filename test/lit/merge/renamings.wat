@@ -24,15 +24,29 @@
 
   ;; CHECK:      (global $bar_2 i32 (i32.const 4))
 
+  ;; CHECK:      (elem $foo func $foo $bar)
+
+  ;; CHECK:      (elem $bar func $bar $foo)
+
+  ;; CHECK:      (elem $other func $foo_3 $other)
+
+  ;; CHECK:      (elem $bar_2 func $other $foo_3)
+
   ;; CHECK:      (tag $foo (param i32))
   (tag $foo (param i32))
 
   ;; CHECK:      (tag $bar (param i64))
   (tag $bar (param i64))
 
+  (elem $foo (ref null func) $foo $bar)
+
+  ;; This global has a conflict in second.wat, and so second.wat's $bar
+  ;; will be renamed.
+  (elem $bar (ref null func) $bar $foo)
+
   (global $foo i32 (i32.const 1))
 
-  ;; This global has a conflict in second.wat, and so second.wat's $foo
+  ;; This global has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
   (global $bar i32 (i32.const 2))
 
@@ -163,7 +177,7 @@
 ;; CHECK-NEXT:   (global.get $other)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (global.get $bar)
+;; CHECK-NEXT:   (global.get $bar_2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $foo_3)
 ;; CHECK-NEXT:  (call $other)

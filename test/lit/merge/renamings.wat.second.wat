@@ -3,6 +3,10 @@
 
   (tag $other (param f64))
 
+  (elem $other (ref null func) $foo $other)
+
+  (elem $bar (ref null func) $other $foo)
+
   (global $other i32 (i32.const 3))
 
   (global $bar i32 (i32.const 4))
