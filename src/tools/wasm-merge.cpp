@@ -178,19 +178,35 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    auto iter = kindNameMaps[kind].find(cast->field);                          \
-    if (iter != kindNameMaps[kind].end()) {                                    \
-      cast->field = kindNameMaps[kind][cast->field];                           \
-    }                                                                          \
+    mapName(kind, cast->field);                                                \
   }
 
 #include "wasm-delegations-fields.def"
+    }
+
+    // Aside from expressions, we have a few other things we need to update.
+
+    void mapModuleFields(Module& wasm) {
+      for (auto& curr : wasm.exports) {
+        mapName(ModuleItemKind(curr->kind), curr->value);
+      }
+
+      // TODO: start
+    }
+
+  private:
+    void mapName(ModuleItemKind kind, Name& name) {
+      auto iter = kindNameMaps[kind].find(name);
+      if (iter != kindNameMaps[kind].end()) {
+        name = kindNameMaps[kind][name];
+      }
     }
   } nameMapper(kindNameMaps);
 
   PassRunner runner(&wasm);
   nameMapper.run(&runner, &wasm);
   nameMapper.runOnModuleCode(&runner, &wasm);
+  nameMapper.mapModuleFields(wasm);
 }
 
 // Scan an input module to find the names of the items it contains, and pick new
@@ -255,7 +271,7 @@ void copyModuleContents(Module& input, Name inputName) {
     // Note the module origin of this export, for later fusing of imports to
     // exports.
     exportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
-    //std::cout << "eMM " << copy->name << " for " << inputName << '\n';
+    std::cout << "eMM " << copy->name << " for " << inputName << '\n';
 
     // Add the export.
     merged.addExport(std::move(copy));
@@ -296,7 +312,7 @@ void fuseImportsAndExports() {
     assert(exportModuleMap.count(ex.get()));
     ExportInfo& exportInfo = exportModuleMap[ex.get()];
     kindModuleExportMaps[ex->kind][exportInfo.moduleName][exportInfo.baseName] = ex->value;
-    //std::cout << "all exports item " << int(ex->kind) << " : " << moduleOrigin << " : " << ex->name << "  ==  " << ex->value << '\n';
+    std::cout << "all exports item " << int(ex->kind) << " : " << exportInfo.moduleName << " : " << exportInfo.baseName << "  ==>  " << ex->value << '\n';
   }
 
   // Find all the imports and see which have corresponding exports, which means

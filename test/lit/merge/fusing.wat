@@ -27,7 +27,7 @@
 
   ;; CHECK:      (export "foo_2" (func $second.foo))
 
-  ;; CHECK:      (export "bar_3" (func $bar))
+  ;; CHECK:      (export "bar_3" (func $bar_5))
 
   ;; CHECK:      (func $first.foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -46,7 +46,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $bar)
+  ;; CHECK-NEXT:  (call $bar_5)
   ;; CHECK-NEXT:  (call $other.missing)
   ;; CHECK-NEXT: )
   (func $bar (export "bar")
@@ -61,5 +61,12 @@
 ;; CHECK-NEXT:  (call $first.foo)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 3)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $bar_5 (type $none_=>_none)
+;; CHECK-NEXT:  (call $bar)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
