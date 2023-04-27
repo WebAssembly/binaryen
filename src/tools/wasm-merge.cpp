@@ -180,7 +180,7 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 // and pick new names for them that do not cause conflicts in the target.
 void renameInputItems(Module& input) {
   // Pick the names.
-  KindNameMaps& kindNameMaps;
+  KindNameMaps kindNameMaps;
   for (auto& curr : input.functions) {
     kindNameMaps[ModuleItemKind::Function][curr->name] =
       Names::getValidFunctionName(merged, curr->name);
@@ -222,7 +222,7 @@ void copyModuleContents(Module& input, Name inputName) {
   // We must handle exports in a special way, as we need to note their origin
   // module as we copy them in (also, they are not importable or exportable, so
   // the ModuleUtils function above does not handle them).
-  for (auto& curr : in.exports) {
+  for (auto& curr : input.exports) {
     auto copy = std::make_unique<Export>(*curr);
 
     // An export may already exist with that name, so fix it up.
@@ -268,15 +268,15 @@ void fuseImportsAndExports() {
   KindModuleExportMaps kindModuleExportMaps;
 
   for (auto& ex : merged.exports) {
-    assert(exportModuleMap.count(ex->get()));
-    Name moduleOrigin = exportModuleMap[ex->get()];
+    assert(exportModuleMap.count(ex.get()));
+    Name moduleOrigin = exportModuleMap[ex.get()];
     kindModuleExportMaps[ex->kind][moduleOrigin][ex->name] = ex->value;
   }
 
   // Find all the imports and see which have corresponding exports, which means
   // there is an internal item we can refer to.
-  KindNameMaps& kindNameMaps;
-  ModuleUtils::iterNamed(merged, [&](ExternalKind kind, Named* curr) {
+  KindNameMaps kindNameMaps;
+  ModuleUtils::iterImportable(merged, [&](ExternalKind kind, Named* curr) {
     if (curr->imported()) {
       auto internalName = kindModuleExportMaps[kind][curr->module][curr->base];
       if (internalName.is()) {
@@ -359,7 +359,7 @@ int main(int argc, const char* argv[]) {
                "(e.g.  foo.wasm foo bar.wasm bar  will read foo.wasm and "
                "bar.wasm, with names 'foo' and 'bar'. "
                "In particular, the number of position inputs must be even as "
-               "each wasm binary must be followed by the name."
+               "each wasm binary must be followed by the name.";
   }
 
   // Inputs.
