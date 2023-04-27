@@ -53,7 +53,7 @@
     (drop
       (i32.const 2)
     )
-    (call $other.bar)
+    (call $other.bar) ;; XXX bad mapping!
     (call $other.missing)
   )
 )
