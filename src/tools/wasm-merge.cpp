@@ -54,7 +54,8 @@ using namespace wasm;
 
 namespace {
 
-// The module we'll merge into.
+// The module we'll merge into. This is a singleton and it is simple to just
+// have it as a global rather than pass it around all the time.
 Module merged;
 
 // Merging two modules is mostly straightforward: copy the functions etc. of the
@@ -106,6 +107,8 @@ Module merged;
 //    )
 //  )
 //
+// We call this "fusing" the imports and exports together.
+//
 // Note that we don't bother to remove either the export or the import, which we
 // leave for later (optimizations can remove the import, and we handle exports
 // lower down).
@@ -114,8 +117,7 @@ Module merged;
 // with the following data structure, which maps Export objects to their module
 // name.
 using ExportModuleMap = std::unordered_map<Export*, Name>;
-
-/*
+ExportModuleMap exportModuleMap;
 
 // A map of (kind of thing in the module) to (old name => new name) for things
 // of that kind. For example, one of the maps is of old function names to new
@@ -123,35 +125,8 @@ using ExportModuleMap = std::unordered_map<Export*, Name>;
 using NameMap = std::unordered_map<Name, Name>;
 using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 
-// Exports in the merged wasm so far: a map of (module name) to (export name =>
-// name inside module). For example, consider this module:
-//
-//  (module ;; linked in as "module_A"
-//    (func $foo (export "bar"))
-//  )
-//
-// Then the ModuleExportMap will be:
-//
-//  {
-//    "module_A": {
-//      "bar": "foo";
-//    }
-//  }
-//
-using ModuleExportMap = std::unordered_map<Name, NameMap>;
+/*
 
-// A map of ModuleExportMaps, one per item kind (one for functions, one for
-// globals, etc.).
-using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
-
-// The accumulated KindModuleExportMaps of all merged modules thus far.
-KindModuleExportMaps kindModuleExportMaps;
-
-// Similar to exports, we have a data structures to map the imports seen so far.
-// ImportMap maps a (module, base) pair to the name of the item in the merged
-// module. For example, if the module is
-//
-//  (module
 //    (import "foo" "bar" (func $inner))
 //  )
 //
@@ -281,8 +256,16 @@ void copyModuleContents(Module& input, Name inputName) {
   // the ModuleUtils function above does not handle them).
   for (auto& curr : in.exports) {
     auto copy = std::make_unique<Export>(*curr);
-    ExportModuleMap[copy.get()] = inputName;
-    out.addExport(std::move(copy));
+
+    // An export may already exist with that name, so fix it up.
+    copy->name = Names::getValidExportName(merged, copy->name);
+
+    // Note the module origin of this export, for later fusing of imports to
+    // exports.
+    exportModuleMap[copy.get()] = inputName;
+
+    // Add the export.
+    merged.addExport(std::move(copy));
   }
 
   // TODO: start, type names, etc. etc.
@@ -290,8 +273,52 @@ void copyModuleContents(Module& input, Name inputName) {
 
 // Finds pairs of matching imports and exports, and makes uses of the import
 // refer to the exported item (which has been merged into the module).
-void connectImportsAndExports() {
-  ...
+void fuseImportsAndExports() {
+  // Scan the exports and build a map.
+
+  // A map of module names to (export name => internal name). For example,
+  // consider this module:
+  //
+  //  (module ;; linked in as "module_A"
+  //    (func $foo (export "bar"))
+  //  )
+  //
+  // Then the ModuleExportMap will be:
+  //
+  //  {
+  //    "module_A": {
+  //      "bar": "foo";
+  //    }
+  //  }
+  //
+  using ModuleExportMap = std::unordered_map<Name, NameMap>;
+
+  // A map of ModuleExportMaps, one per item kind (one for functions, one for
+  // globals, etc.).
+  using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
+  KindModuleExportMaps kindModuleExportMaps;
+
+  for (auto& ex : merged.exports) {
+    assert(exportModuleMap.count(ex->get()));
+    Name moduleOrigin = exportModuleMap[ex->get()];
+    kindModuleExportMaps[ex->kind][moduleOrigin][ex->name] = ex->value;
+  }
+
+  // Find all the imports and see which have corresponding exports, which means
+  // there is an internal item we can refer to.
+  KindNameMaps& kindNameMaps;
+  ModuleUtils::iterNamed(merged, [&](ExternalKind kind, Named* curr) {
+    if (curr->imported()) {
+      auto internalName = kindModuleExportMaps[kind][curr->module][curr->base];
+      if (internalName.is()) {
+        // We found something to fuse! Add it to the maps for renaming.
+        kindNameMaps[kind][curr->name] = internalName;
+      }
+    }
+  });
+
+  // Update the things we found.
+  updateNames(merged, kindNameMaps);
 }
 
 // Merges an input module into an existing target module. The input module can
@@ -299,8 +326,6 @@ void connectImportsAndExports() {
 // marked as const here).
 void mergeInto(Module& input, Name inputName) {
   KindNameMaps kindNameMaps;
-
-// XXX hook up imports and exports both ways!
 
   // Find the new names we'll use.
   buildKindNameMaps(input, kindNameMaps);
@@ -313,7 +338,7 @@ void mergeInto(Module& input, Name inputName) {
 
   // Connect imports and exports now that everything is all together in the
   // merged module.
-  connectImportsAndExports();
+  fuseImportsAndExports();
 
   // Note the exports from the new input for future modules to find.
   noteModuleImportsAndExports(input, inputName);
