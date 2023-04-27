@@ -4,13 +4,15 @@
 ;; Test that we rename items in the second module to avoid name collisions.
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $array (array (mut funcref)))
   (type $array (array (mut (ref null func))))
 
   ;; This tag has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (type $i64_=>_none (func (param i64)))
@@ -18,8 +20,6 @@
   ;; CHECK:      (type $f32_=>_none (func (param f32)))
 
   ;; CHECK:      (type $f64_=>_none (func (param f64)))
-
-  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
   ;; CHECK:      (global $foo i32 (i32.const 1))
 
@@ -183,7 +183,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $uses.second (type $none_=>_none)
+;; CHECK:      (func $uses.second (type $ref|$array|_=>_none) (param $array (ref $array))
 ;; CHECK-NEXT:  (try $try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)
@@ -209,6 +209,18 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (global.get $bar_2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (array.init_elem $array $other
+;; CHECK-NEXT:   (local.get $array)
+;; CHECK-NEXT:   (i32.const 7)
+;; CHECK-NEXT:   (i32.const 8)
+;; CHECK-NEXT:   (i32.const 9)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (array.init_elem $array $bar_2
+;; CHECK-NEXT:   (local.get $array)
+;; CHECK-NEXT:   (i32.const 10)
+;; CHECK-NEXT:   (i32.const 11)
+;; CHECK-NEXT:   (i32.const 12)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $foo_3)
 ;; CHECK-NEXT:  (call $other)
