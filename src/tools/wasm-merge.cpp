@@ -301,6 +301,7 @@ void mergeInto(Module& input, Name inputName) {
 
 int main(int argc, const char* argv[]) {
   std::vector<std::string> inputFiles;
+  std::vector<std::string> inputFileNames;
   bool emitBinary = true;
   bool debugInfo = false;
 
@@ -318,10 +319,16 @@ int main(int argc, const char* argv[]) {
            o->extra["output"] = argument;
            Colors::setEnabled(false);
          })
-    .add_positional("INFILES",
+    .add_positional("INFILE1 NAME1 INFILE2 NAME2 "
+                    "(e.g.  foo.wasm foo bar.wasm bar  will read foo.wasm and "
+                    "bar.wasm, with names 'foo' and 'bar'",
                     Options::Arguments::N,
                     [&inputFiles](Options* o, const std::string& argument) {
-                      inputFiles.push_back(argument);
+                      if (inputFiles.size() == inputFileNames.size()) {
+                        inputFiles.push_back(argument);
+                      } else {
+                        inputFileNames.push_back(argument);
+                      }
                     })
     .add("--emit-text",
          "-S",
@@ -336,6 +343,15 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { debugInfo = true; });
   options.parse(argc, argv);
+
+  if (inputFiles.size() != inputFileNames.size()) {
+    Fatal() << "Please provide input file information in the form of "
+               "wasm-merge INFILE1 NAME1 INFILE2 NAME2 "
+               "(e.g.  foo.wasm foo bar.wasm bar  will read foo.wasm and "
+               "bar.wasm, with names 'foo' and 'bar'. "
+               "In particular, the number of position inputs must be even as "
+               "each wasm binary must be followed by the name."
+  }
 
   // Inputs.
 
@@ -373,9 +389,15 @@ int main(int argc, const char* argv[]) {
       }
     }
 
-    if (laterInput) {
+    if (!laterInput) {
+      // This is the very first module, which we read directly into |merged|.
+      // The only other operation we need to do is note the exports
+      for (auto& curr : in.exports) {
+        exportModuleMap[curr.get()] = name;
+      }
+    } else {
       // This is a later module: do a full merge.
-      mergeInto(*currModule, merged);
+      mergeInto(*currModule, name);
 
       if (options.passOptions.validate) {
         if (!WasmValidator().validate(merged)) {
