@@ -168,8 +168,10 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
-  assert(kindNameMaps[kind].count(cast->field));                               \
-  cast->field = kindNameMaps[kind][cast->field];
+  if (cast->field.is()) {                                                      \
+    assert(kindNameMaps[kind].count(cast->field));                             \
+    cast->field = kindNameMaps[kind][cast->field];                             \
+  }
 
 #include "wasm-delegations-fields.def"
     }
@@ -373,7 +375,7 @@ Note that filenames and modules names are interleaved as positional inputs to av
   options.parse(argc, argv);
 
   if (inputFiles.size() != inputFileNames.size()) {
-    Fatal() << "Please provide input file information in the form of "
+    Fatal() << "Please provide an import name for each input file. "
                "In particular, the number of positional inputs must be even as "
                "each wasm binary must be followed by its name.";
   }

@@ -1,4 +1,6 @@
 (module
+  (type $array (array (mut (ref null func))))
+
   (tag $foo (param f32))
 
   (tag $other (param f64))
@@ -23,7 +25,7 @@
     )
   )
 
-  (func $uses.second
+  (func $uses.second (param $array (ref $array))
     ;; Tags.
     (try
       (do)
@@ -48,6 +50,20 @@
     )
     (drop
       (global.get $bar)
+    )
+
+    ;; Element segments
+    (array.init_elem $array $other
+      (local.get $array)
+      (i32.const 7)
+      (i32.const 8)
+      (i32.const 9)
+    )
+    (array.init_elem $array $bar
+      (local.get $array)
+      (i32.const 10)
+      (i32.const 11)
+      (i32.const 12)
     )
 
     ;; Functions.
