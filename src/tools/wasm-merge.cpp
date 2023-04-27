@@ -371,7 +371,8 @@ int main(int argc, const char* argv[]) {
     auto inputFileName = inputFileNames[i];
 
     if (options.debug) {
-      std::cerr << "reading input '" << inputFile << "' as '" << inputFileName << "'...\n";
+      std::cerr << "reading input '" << inputFile << "' as '" << inputFileName
+                << "'...\n";
     }
     // For the first input, we'll just read it in directly. For later inputs,
     // we read them and then merge.
