@@ -338,7 +338,7 @@ Note that filenames and modules names are interleaved as positional inputs to av
            o->extra["output"] = argument;
            Colors::setEnabled(false);
          })
-    .add_positional("INFILE1 NAME1 INFILE2 NAME2",
+    .add_positional("INFILE1 NAME1 INFILE2 NAME2 [..]",
                     Options::Arguments::N,
                     [&](Options* o, const std::string& argument) {
                       if (inputFiles.size() == inputFileNames.size()) {
@@ -394,7 +394,7 @@ Note that filenames and modules names are interleaved as positional inputs to av
 
     ModuleReader reader;
     try {
-      reader.read(options.extra["infile"], *currModule);
+      reader.read(inputFile, *currModule);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input: " << inputFile;
