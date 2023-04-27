@@ -295,12 +295,6 @@ void mergeInto(Module& input, Name inputName) {
   // Connect imports and exports now that everything is all together in the
   // merged module.
   fuseImportsAndExports();
-
-  // Note the exports from the new input for future modules to find.
-  noteModuleImportsAndExports(input, inputName);
-
-  // TODO: remaining things like exports, start, type names, etc.; see
-  //       ModuleUtils::copyModule
 }
 
 } // anonymous namespace
@@ -379,11 +373,7 @@ int main(int argc, const char* argv[]) {
       }
     }
 
-    if (!laterInput) {
-      // This is the first module, so there is nothing to merge in. All we need
-      // to do is note its exports and imports for later.
-      noteModuleImportsAndExports(merged);
-    } else {
+    if (laterInput) {
       // This is a later module: do a full merge.
       mergeInto(*currModule, merged);
 
