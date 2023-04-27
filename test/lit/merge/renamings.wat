@@ -12,6 +12,10 @@
 
   ;; CHECK:      (type $i64_=>_none (func (param i64)))
 
+  ;; CHECK:      (type $f32_=>_none (func (param f32)))
+
+  ;; CHECK:      (type $f64_=>_none (func (param f64)))
+
   ;; CHECK:      (global $foo i32 (i32.const 1))
 
   ;; CHECK:      (global $bar i32 (i32.const 2))
@@ -32,9 +36,9 @@
   ;; will be renamed.
   (global $bar i32 (i32.const 2))
 
-  ;; CHECK:      (tag $foo_2 (param i32))
+  ;; CHECK:      (tag $foo_2 (param f32))
 
-  ;; CHECK:      (tag $other (param i64))
+  ;; CHECK:      (tag $other (param f64))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -59,8 +63,70 @@
       (i32.const 2)
     )
   )
+
+  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $foo
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $bar
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i64)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $foo)
+  ;; CHECK-NEXT:  (call $bar)
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Tags.
+    (try
+      (do)
+      (catch $foo
+        (drop
+          (pop i32)
+        )
+      )
+    )
+    (try
+      (do)
+      (catch $bar
+        (drop
+          (pop i64)
+        )
+      )
+    )
+
+    ;; Globals
+    (drop
+      (global.get $foo)
+    )
+    (drop
+      (global.get $bar)
+    )
+
+    ;; Functions.
+    (call $foo)
+    (call $bar)
+  )
 )
-;; CHECK:      (func $foo_2 (type $none_=>_none)
+;; CHECK:      (func $foo_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 3)
 ;; CHECK-NEXT:  )
@@ -70,4 +136,35 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $uses.second (type $none_=>_none)
+;; CHECK-NEXT:  (try $try
+;; CHECK-NEXT:   (do
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (catch $foo_2
+;; CHECK-NEXT:    (drop
+;; CHECK-NEXT:     (pop f32)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (try $try0
+;; CHECK-NEXT:   (do
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (catch $other
+;; CHECK-NEXT:    (drop
+;; CHECK-NEXT:     (pop f64)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (global.get $other)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (global.get $bar)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $foo_3)
+;; CHECK-NEXT:  (call $other)
 ;; CHECK-NEXT: )
