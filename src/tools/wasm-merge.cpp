@@ -191,28 +191,34 @@ void renameInputItems(Module& input) {
     curr->name = name;
   }
   for (auto& curr : input.globals) {
-    kindNameMaps[ModuleItemKind::Global][curr->name] =
-      Names::getValidGlobalName(merged, curr->name);
+    auto name = Names::getValidGlobalName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Global][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.tags) {
-    kindNameMaps[ModuleItemKind::Tag][curr->name] =
-      Names::getValidTagName(merged, curr->name);
+    auto name = Names::getValidTagName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Tag][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.elementSegments) {
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] =
-      Names::getValidElementSegmentName(merged, curr->name);
+    auto name = Names::getValidElementSegmentName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.memories) {
-    kindNameMaps[ModuleItemKind::Memory][curr->name] =
-      Names::getValidMemoryName(merged, curr->name);
+    auto name = Names::getValidMemoryName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Memory][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.dataSegments) {
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] =
-      Names::getValidDataSegmentName(merged, curr->name);
+    auto name = Names::getValidDataSegmentName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.tables) {
-    kindNameMaps[ModuleItemKind::Table][curr->name] =
-      Names::getValidTableName(merged, curr->name);
+    auto name = Names::getValidTableName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Table][curr->name] = name;
+    curr->name = name;
   }
 
   // Apply the names to their uses.
