@@ -9,6 +9,10 @@
 
   (memory $other 70 80)
 
+  (data $other (i32.const 3) "ghi")
+
+  (data $bar (i32.const 4) "jkl")
+
   (elem $other (ref null func) $foo $other)
 
   (elem $bar (ref null func) $other $foo)
@@ -59,6 +63,10 @@
         (i32.const 4)
       )
     )
+
+    ;; Data segments
+    (data.drop $other)
+    (data.drop $bar)
 
     ;; Globals
     (drop

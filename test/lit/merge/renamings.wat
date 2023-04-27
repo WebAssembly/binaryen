@@ -37,6 +37,14 @@
 
   ;; CHECK:      (memory $other 70 80)
 
+  ;; CHECK:      (data $foo (i32.const 1) "abc")
+
+  ;; CHECK:      (data $bar (i32.const 2) "def")
+
+  ;; CHECK:      (data $other (i32.const 3) "ghi")
+
+  ;; CHECK:      (data $bar_2 (i32.const 4) "jkl")
+
   ;; CHECK:      (elem $foo func $foo $bar)
 
   ;; CHECK:      (elem $bar func $bar $foo)
@@ -56,6 +64,12 @@
   (memory $foo 10 20)
 
   (memory $bar 30 40)
+
+  (data $foo (i32.const 1) "abc")
+
+  ;; This global has a conflict in second.wat, and so second.wat's $bar
+  ;; will be renamed.
+  (data $bar (i32.const 2) "def")
 
   (elem $foo (ref null func) $foo $bar)
 
@@ -128,6 +142,8 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (data.drop $foo)
+  ;; CHECK-NEXT:  (data.drop $bar)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $foo)
   ;; CHECK-NEXT:  )
@@ -179,6 +195,10 @@
         (i32.const 2)
       )
     )
+
+    ;; Data segments
+    (data.drop $foo)
+    (data.drop $bar)
 
     ;; Globals
     (drop
@@ -250,6 +270,8 @@
 ;; CHECK-NEXT:    (i32.const 4)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (data.drop $other)
+;; CHECK-NEXT:  (data.drop $bar_2)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (global.get $other)
 ;; CHECK-NEXT:  )
