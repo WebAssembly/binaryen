@@ -97,9 +97,23 @@
   ;; will be renamed.
   (global $bar i32 (i32.const 2))
 
+  ;; This export has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
   ;; CHECK:      (tag $foo_2 (param f32))
 
   ;; CHECK:      (tag $other (param f64))
+
+  ;; CHECK:      (export "foo" (func $foo))
+  (export "foo" (func $foo))
+
+  ;; CHECK:      (export "bar" (func $bar))
+  (export "bar" (func $bar))
+
+  ;; CHECK:      (export "foo_2" (func $foo))
+
+  ;; CHECK:      (export "other" (func $other))
+
+  ;; CHECK:      (export "other-b" (func $other))
 
   ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop

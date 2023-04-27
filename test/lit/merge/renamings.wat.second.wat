@@ -25,6 +25,14 @@
 
   (global $bar i32 (i32.const 4))
 
+  (export "foo" (func $foo))
+
+  (export "other" (func $other))
+
+  ;; Also test having a different name for the export as for the internal
+  ;; thing it refers to, to test we don't assume they are identical.
+  (export "other-b" (func $other))
+
   (func $foo
     (drop
       (i32.const 3)
