@@ -282,7 +282,7 @@ void fuseImportsAndExports() {
       if (internalName.is()) {
         // We found something to fuse! Add it to the maps for renaming.
         auto moduleItemKind = ModuleItemKind(kind);
-        kindNameMaps[kind][curr->name] = internalName;
+        kindNameMaps[moduleItemKind][curr->name] = internalName;
       }
     }
   });
