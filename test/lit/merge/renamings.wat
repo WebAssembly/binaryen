@@ -109,7 +109,7 @@
   ;; CHECK:      (export "bar" (func $bar))
   (export "bar" (func $bar))
 
-  ;; CHECK:      (export "foo_2" (func $foo))
+  ;; CHECK:      (export "foo_2" (func $foo_3))
 
   ;; CHECK:      (export "other" (func $other))
 
