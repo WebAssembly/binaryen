@@ -169,8 +169,10 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    assert(kindNameMaps[kind].count(cast->field));                             \
-    cast->field = kindNameMaps[kind][cast->field];                             \
+    auto iter = kindNameMaps[kind].find(cast->field);                          \
+    if (iter != kindNameMaps[kind].end()) {                                    \
+      cast->field = kindNameMaps[kind][cast->field];                           \
+    }                                                                          \
   }
 
 #include "wasm-delegations-fields.def"

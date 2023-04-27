@@ -6,13 +6,36 @@
 (module
   ;; The first two imports here will be resolved to direct calls into the
   ;; second module's merged contents.
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "second" "foo" (func $other.foo))
   (import "second" "foo" (func $other.foo))
 
+  ;; CHECK:      (import "second" "bar" (func $other.bar))
   (import "second" "bar" (func $other.bar))
 
   ;; This import will remain unresolved.
+  ;; CHECK:      (import "third" "missing" (func $other.missing))
   (import "third" "missing" (func $other.missing))
 
+  ;; CHECK:      (import "first" "foo" (func $other.foo_5))
+
+  ;; CHECK:      (import "first" "bar" (func $main.bar))
+
+  ;; CHECK:      (export "foo" (func $first.foo))
+
+  ;; CHECK:      (export "bar" (func $bar))
+
+  ;; CHECK:      (export "foo_2" (func $second.foo))
+
+  ;; CHECK:      (export "bar_3" (func $bar))
+
+  ;; CHECK:      (func $first.foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $other.foo)
+  ;; CHECK-NEXT: )
   (func $first.foo (export "foo")
     (drop
       (i32.const 1)
@@ -20,10 +43,30 @@
     (call $other.foo)
   )
 
+  ;; CHECK:      (func $bar (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $other.bar)
+  ;; CHECK-NEXT: )
   (func $bar (export "bar")
     (drop
       (i32.const 2)
     )
     (call $other.bar)
+    (call $other.missing)
   )
 )
+;; CHECK:      (func $second.foo (type $none_=>_none)
+;; CHECK-NEXT:  (call $first.foo)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 3)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $bar_5 (type $none_=>_none)
+;; CHECK-NEXT:  (call $bar)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 4)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
