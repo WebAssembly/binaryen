@@ -277,7 +277,11 @@ void copyModuleContents(Module& input, Name inputName) {
     merged.addExport(std::move(copy));
   }
 
-  // TODO: start, type names, etc. etc.
+  if (input.start.is()) {
+    Fatal() << "TODO: start function support in later modules";
+  }
+
+  // TODO: type names, etc. etc.
 }
 
 // Finds pairs of matching imports and exports, and makes uses of the import
