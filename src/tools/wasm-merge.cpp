@@ -125,80 +125,8 @@ ExportModuleMap exportModuleMap;
 using NameMap = std::unordered_map<Name, Name>;
 using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 
-/*
-
-//    (import "foo" "bar" (func $inner))
-//  )
-//
-// then ImportMap would map (foo, bar) => inner.
-using ImportMap = std::unordered_map<std::pair<Name, Name>, Name>;
-
-// A map of ImportMap, one per item kind (one for functions, one for globals,
-// etc.).
-using KindImportMaps = std::unordered_map<ExternalKind, ImportMap>;
-
-KindImportMaps kindImportMaps;
-
-// Notes the exports in a module on KindModuleExportMaps, so later modules can
-// find them.
-void noteModuleImportsAndExports(Module& wasm, Name name) {
-  // Imports.
-  ModuleUtils::iterNamed(wasm, [&](ExternalKind kind, Named* curr) {
-    kindImportMaps[kind][{curr->module, curr->base}] = curr->name;
-  });
-
-  // Exports.
-  for (auto& ex : wasm.exports) {
-    kindModuleExportMaps[ex->kind][name][ex->name] = ex->value;
-  }
-}
-
-*/
-
-// First we'll scan the input module to find the names of the items it contains,
-// and pick new names for them that do not cause conflicts in the target.
-//
-// For things defined in the input module this is trivial: we either use the
-// existing name, if there is no conflict in the target, or if there is then we
-// pick some new unique name. For things imported in the input module, we check
-// if they are provided in the target module, and if so then we point the name
-// to that so we use it directly.
-void buildKindNameMaps(Module& input, KindNameMaps& kindNameMaps) {
-  // Given a name that refers to some kind, and the module.base of an import
-  // operation, returns the proper name of the import in the target, if it
-  // exists, and otherwise returns the original name.
-  auto maybeUseImport = [&](Name name, ModuleItemKind kind, Name module, Name base) {
-    if (!module.is()) {
-      // This is
-      return name; // XXX remove all this
-    }
-    if
-  }
-
-  for (auto& curr : input.functions) {
-    kindNameMaps[ModuleItemKind::Function][curr->name] = maybeUseImport(Names::getValidFunctionName(merged, curr->name), merged.getFunctionOrNull(curr->);
-  }
-  for (auto& curr : input.globals) {
-    kindNameMaps[ModuleItemKind::Global][curr->name] = maybeUseImport(Names::getValidGlobalName(merged, curr->name), curr);
-  }
-  for (auto& curr : input.tags) {
-    kindNameMaps[ModuleItemKind::Tag][curr->name] = maybeUseImport(Names::getValidTagName(merged, curr->name), curr);
-  }
-  for (auto& curr : input.elementSegments) {
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = maybeUseImport(Names::getValidElementSegmentName(merged, curr->name), curr);
-  }
-  for (auto& curr : input.memories) {
-    kindNameMaps[ModuleItemKind::Memory][curr->name] = maybeUseImport(Names::getValidMemoryName(merged, curr->name), curr);
-  }
-  for (auto& curr : input.dataSegments) {
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = maybeUseImport(Names::getValidDataSegmentName(merged, curr->name), curr);
-  }
-  for (auto& curr : input.tables) {
-    kindNameMaps[ModuleItemKind::Table][curr->name] = maybeUseImport(Names::getValidTableName(merged, curr->name), curr);
-  }
-}
-
-void updateNames(Module& input, KindNameMaps& kindNameMaps) {
+// Applies a set of name changes to a module.
+void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
   // Update the input module in place. This is more efficient than making a
   // copy or updating it as we go in some online manner.
   struct NameMapper : public WalkerPass<PostWalker<NameMapper, UnifiedExpressionVisitor<NameMapper>>> {
@@ -241,9 +169,40 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
     }
   } nameMapper(kindNameMaps);
 
-  PassRunner runner(&input);
-  nameMapper.run(&runner, &input);
-  nameMapper.runOnModuleCode(&runner, &input);
+  PassRunner runner(&wasm);
+  nameMapper.run(&runner, &wasm);
+  nameMapper.runOnModuleCode(&runner, &wasm);
+}
+
+// Scan an input module to find the names of the items it contains,
+// and pick new names for them that do not cause conflicts in the target.
+void renameInputItems(Module& input) {
+  // Pick the names.
+  KindNameMaps& kindNameMaps;
+  for (auto& curr : input.functions) {
+    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(merged, curr->name);
+  }
+  for (auto& curr : input.globals) {
+    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(merged, curr->name);
+  }
+  for (auto& curr : input.tags) {
+    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(merged, curr->name);
+  }
+  for (auto& curr : input.elementSegments) {
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(merged, curr->name);
+  }
+  for (auto& curr : input.memories) {
+    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(merged, curr->name);
+  }
+  for (auto& curr : input.dataSegments) {
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(merged, curr->name);
+  }
+  for (auto& curr : input.tables) {
+    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(merged, curr->name);
+  }
+
+  // Apply the names.
+  updateNames(input, kindNameMaps);
 }
 
 void copyModuleContents(Module& input, Name inputName) {
@@ -325,13 +284,10 @@ void fuseImportsAndExports() {
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
 void mergeInto(Module& input, Name inputName) {
-  KindNameMaps kindNameMaps;
-
-  // Find the new names we'll use.
-  buildKindNameMaps(input, kindNameMaps);
+  // Find the new names we'll use for items in the input.
+  renameInputItems(input);
 
   // Apply the new names in the input module.
-  updateNames(input, kindNameMaps);
 
   // The input module's items can now be copied into the target module safely.
   copyModuleContents(input, inputName);
