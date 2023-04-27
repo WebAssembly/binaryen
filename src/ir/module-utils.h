@@ -362,8 +362,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 
 // Iterates overall module items inheriting from Named. The visitor provided
 // should have signature void(ExternalKind, Named*).
-template<typename T>
-inline void iterNamed(Module& wasm, T visitor) {
+template<typename T> inline void iterNamed(Module& wasm, T visitor) {
   for (auto& curr : wasm.functions) {
     if (curr->imported()) {
       visitor(ExternalKind::Function, curr.get());

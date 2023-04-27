@@ -45,8 +45,8 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "wasm-io.h"
-#include "wasm.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 #include "tool-options.h"
 
@@ -129,7 +129,9 @@ using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
   // Update the input module in place. This is more efficient than making a
   // copy or updating it as we go in some online manner.
-  struct NameMapper : public WalkerPass<PostWalker<NameMapper, UnifiedExpressionVisitor<NameMapper>>> {
+  struct NameMapper
+    : public WalkerPass<
+        PostWalker<NameMapper, UnifiedExpressionVisitor<NameMapper>>> {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
@@ -161,8 +163,8 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
-#define DELEGATE_FIELD_NAME_KIND(id, field, kind) \
-  assert(kindNameMaps[kind].count(cast->field)); \
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  assert(kindNameMaps[kind].count(cast->field));                               \
   cast->field = kindNameMaps[kind][cast->field];
 
 #include "wasm-delegations-fields.def"
@@ -180,25 +182,32 @@ void renameInputItems(Module& input) {
   // Pick the names.
   KindNameMaps& kindNameMaps;
   for (auto& curr : input.functions) {
-    kindNameMaps[ModuleItemKind::Function][curr->name] = Names::getValidFunctionName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Function][curr->name] =
+      Names::getValidFunctionName(merged, curr->name);
   }
   for (auto& curr : input.globals) {
-    kindNameMaps[ModuleItemKind::Global][curr->name] = Names::getValidGlobalName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Global][curr->name] =
+      Names::getValidGlobalName(merged, curr->name);
   }
   for (auto& curr : input.tags) {
-    kindNameMaps[ModuleItemKind::Tag][curr->name] = Names::getValidTagName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Tag][curr->name] =
+      Names::getValidTagName(merged, curr->name);
   }
   for (auto& curr : input.elementSegments) {
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = Names::getValidElementSegmentName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] =
+      Names::getValidElementSegmentName(merged, curr->name);
   }
   for (auto& curr : input.memories) {
-    kindNameMaps[ModuleItemKind::Memory][curr->name] = Names::getValidMemoryName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Memory][curr->name] =
+      Names::getValidMemoryName(merged, curr->name);
   }
   for (auto& curr : input.dataSegments) {
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = Names::getValidDataSegmentName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::DataSegment][curr->name] =
+      Names::getValidDataSegmentName(merged, curr->name);
   }
   for (auto& curr : input.tables) {
-    kindNameMaps[ModuleItemKind::Table][curr->name] = Names::getValidTableName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Table][curr->name] =
+      Names::getValidTableName(merged, curr->name);
   }
 
   // Apply the names.
@@ -254,7 +263,8 @@ void fuseImportsAndExports() {
 
   // A map of ModuleExportMaps, one per item kind (one for functions, one for
   // globals, etc.).
-  using KindModuleExportMaps = std::unordered_map<ExternalKind, ModuleExportMap>;
+  using KindModuleExportMaps =
+    std::unordered_map<ExternalKind, ModuleExportMap>;
   KindModuleExportMaps kindModuleExportMaps;
 
   for (auto& ex : merged.exports) {
@@ -307,8 +317,7 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmMergeOption = "wasm-merge options";
 
-  ToolOptions options("wasm-merge",
-                      "Merge wasm files into one");
+  ToolOptions options("wasm-merge", "Merge wasm files into one");
   options
     .add("--output",
          "-o",
