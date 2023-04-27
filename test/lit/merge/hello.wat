@@ -2,15 +2,40 @@
 ;; RUN: wasm-merge %s first %s.second.wat second -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $foo
+    ;; This function has a conflict in second.wat, and so second.wat's $foo
+    ;; will be renamed.
     (drop
       (i32.const 1)
     )
   )
 
+  ;; CHECK:      (func $bar
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $bar
     (drop
       (i32.const 2)
     )
   )
 )
+;; CHECK:      (func $foo_2
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 3)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $other
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 4)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )

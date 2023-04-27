@@ -127,6 +127,10 @@ using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 
 // Applies a set of name changes to a module.
 void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
+  if (kindNameMaps.empty()) {
+    return;
+  }
+
   // Update the input module in place. This is more efficient than making a
   // copy or updating it as we go in some online manner.
   struct NameMapper
@@ -176,14 +180,15 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
   nameMapper.runOnModuleCode(&runner, &wasm);
 }
 
-// Scan an input module to find the names of the items it contains,
-// and pick new names for them that do not cause conflicts in the target.
+// Scan an input module to find the names of the items it contains, and pick new
+// names for them that do not cause conflicts in the target.
 void renameInputItems(Module& input) {
-  // Pick the names.
+  // Pick the names, and apply them to the items themselves.
   KindNameMaps kindNameMaps;
   for (auto& curr : input.functions) {
-    kindNameMaps[ModuleItemKind::Function][curr->name] =
-      Names::getValidFunctionName(merged, curr->name);
+    auto name = Names::getValidFunctionName(merged, curr->name);
+    kindNameMaps[ModuleItemKind::Function][curr->name] = name;
+    curr->name = name;
   }
   for (auto& curr : input.globals) {
     kindNameMaps[ModuleItemKind::Global][curr->name] =
@@ -210,7 +215,7 @@ void renameInputItems(Module& input) {
       Names::getValidTableName(merged, curr->name);
   }
 
-  // Apply the names.
+  // Apply the names to their uses.
   updateNames(input, kindNameMaps);
 }
 
