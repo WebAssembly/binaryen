@@ -45,6 +45,14 @@
 
   ;; CHECK:      (data $bar_2 (i32.const 4) "jkl")
 
+  ;; CHECK:      (table $foo 10 20 funcref)
+
+  ;; CHECK:      (table $bar 30 40 funcref)
+
+  ;; CHECK:      (table $foo_2 50 60 funcref)
+
+  ;; CHECK:      (table $other 70 80 funcref)
+
   ;; CHECK:      (elem $foo func $foo $bar)
 
   ;; CHECK:      (elem $bar func $bar $foo)
@@ -59,7 +67,7 @@
   ;; CHECK:      (tag $bar (param i64))
   (tag $bar (param i64))
 
-  ;; This global has a conflict in second.wat, and so second.wat's $foo
+  ;; This memory has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
   (memory $foo 10 20)
 
@@ -67,9 +75,15 @@
 
   (data $foo (i32.const 1) "abc")
 
-  ;; This global has a conflict in second.wat, and so second.wat's $bar
+  ;; This data segment has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
   (data $bar (i32.const 2) "def")
+
+  ;; This table has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
+  (table $foo 10 20 funcref)
+
+  (table $bar 30 40 funcref)
 
   (elem $foo (ref null func) $foo $bar)
 
@@ -145,10 +159,14 @@
   ;; CHECK-NEXT:  (data.drop $foo)
   ;; CHECK-NEXT:  (data.drop $bar)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $foo)
+  ;; CHECK-NEXT:   (table.get $foo
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $bar)
+  ;; CHECK-NEXT:   (table.get $bar
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (array.init_elem $array $foo
   ;; CHECK-NEXT:   (local.get $array)
@@ -161,6 +179,12 @@
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:   (i32.const 6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call $bar)
@@ -200,12 +224,16 @@
     (data.drop $foo)
     (data.drop $bar)
 
-    ;; Globals
+    ;; Tables
     (drop
-      (global.get $foo)
+      (table.get $foo
+        (i32.const 1)
+      )
     )
     (drop
-      (global.get $bar)
+      (table.get $bar
+        (i32.const 2)
+      )
     )
 
     ;; Element segments
@@ -220,6 +248,14 @@
       (i32.const 4)
       (i32.const 5)
       (i32.const 6)
+    )
+
+    ;; Globals
+    (drop
+      (global.get $foo)
+    )
+    (drop
+      (global.get $bar)
     )
 
     ;; Functions.
@@ -273,10 +309,14 @@
 ;; CHECK-NEXT:  (data.drop $other)
 ;; CHECK-NEXT:  (data.drop $bar_2)
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (global.get $other)
+;; CHECK-NEXT:   (table.get $foo_2
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (global.get $bar_2)
+;; CHECK-NEXT:   (table.get $other
+;; CHECK-NEXT:    (i32.const 4)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (array.init_elem $array $other
 ;; CHECK-NEXT:   (local.get $array)
@@ -289,6 +329,12 @@
 ;; CHECK-NEXT:   (i32.const 10)
 ;; CHECK-NEXT:   (i32.const 11)
 ;; CHECK-NEXT:   (i32.const 12)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (global.get $other)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (global.get $bar_2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $foo_3)
 ;; CHECK-NEXT:  (call $other)

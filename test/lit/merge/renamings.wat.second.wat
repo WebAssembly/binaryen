@@ -13,6 +13,10 @@
 
   (data $bar (i32.const 4) "jkl")
 
+  (table $foo 50 60 funcref)
+
+  (table $other 70 80 funcref)
+
   (elem $other (ref null func) $foo $other)
 
   (elem $bar (ref null func) $other $foo)
@@ -68,12 +72,16 @@
     (data.drop $other)
     (data.drop $bar)
 
-    ;; Globals
+    ;; Tables
     (drop
-      (global.get $other)
+      (table.get $foo
+        (i32.const 3)
+      )
     )
     (drop
-      (global.get $bar)
+      (table.get $other
+        (i32.const 4)
+      )
     )
 
     ;; Element segments
@@ -88,6 +96,14 @@
       (i32.const 10)
       (i32.const 11)
       (i32.const 12)
+    )
+
+    ;; Globals
+    (drop
+      (global.get $other)
+    )
+    (drop
+      (global.get $bar)
     )
 
     ;; Functions.
