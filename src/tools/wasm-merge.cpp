@@ -106,8 +106,14 @@ Module merged;
 //    )
 //  )
 //
-// Note that we don't both to remove either the export or the import, which we
-// leave for later.
+// Note that we don't bother to remove either the export or the import, which we
+// leave for later (optimizations can remove the import, and we handle exports
+// lower down).
+//
+// To implement that, we need to track the module origin of exports, which we do
+// with the following data structure, which maps Export objects to their module
+// name.
+using ExportModuleMap = std::unordered_map<Export*, Name>;
 
 /*
 
@@ -265,6 +271,20 @@ void updateNames(Module& input, KindNameMaps& kindNameMaps) {
   nameMapper.runOnModuleCode(&runner, &input);
 }
 
+void copyModuleContents(Module& input) {
+  // First, copy the regular module items (functions, globals) etc. which we
+  // have proper names for, and can just copy.
+  ModuleUtils::copyModuleItems(input, merged);
+
+  // We must handle exports in a special way, as they are not normal named items
+  // in our IR (in particular, they are not importable or exportable).
+  for (auto& curr : in.exports) {
+    out.addExport(new Export(*curr));
+  }
+
+  // TODO: start, type names, etc. etc.
+}
+
 // Merges an input module into an existing target module. The input module can
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
@@ -280,7 +300,9 @@ void mergeInto(Module& input, Name inputName) {
   updateNames(input, kindNameMaps);
 
   // The input module's items can now be copied into the target module safely.
-  ModuleUtils::copyModuleItems(input, merged);
+  copyModuleContents(input);
+
+  // 
 
   // Note the exports from the new input for future modules to find.
   noteModuleImportsAndExports(input, inputName);
