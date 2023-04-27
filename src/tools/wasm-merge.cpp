@@ -318,7 +318,16 @@ int main(int argc, const char* argv[]) {
 
   const std::string WasmMergeOption = "wasm-merge options";
 
-  ToolOptions options("wasm-merge", "Merge wasm files into one");
+  ToolOptions options("wasm-merge", R"(Merge wasm files into one.
+
+For example,
+
+  wasm-merge foo.wasm foo bar.wasm bar -o merged.wasm
+
+will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if the second imports from 'foo', we will see that as an import from the first module after the merge. The merged output will be written to merged.wasm.
+
+Note that filenames and modules names are interleaved as positional inputs to avoid issues with escaping.)");
+
   options
     .add("--output",
          "-o",
@@ -329,9 +338,7 @@ int main(int argc, const char* argv[]) {
            o->extra["output"] = argument;
            Colors::setEnabled(false);
          })
-    .add_positional("INFILE1 NAME1 INFILE2 NAME2 "
-                    "(e.g.  foo.wasm foo bar.wasm bar  will read foo.wasm and "
-                    "bar.wasm, with names 'foo' and 'bar'",
+    .add_positional("INFILE1 NAME1 INFILE2 NAME2",
                     Options::Arguments::N,
                     [&](Options* o, const std::string& argument) {
                       if (inputFiles.size() == inputFileNames.size()) {
@@ -356,11 +363,8 @@ int main(int argc, const char* argv[]) {
 
   if (inputFiles.size() != inputFileNames.size()) {
     Fatal() << "Please provide input file information in the form of "
-               "wasm-merge INFILE1 NAME1 INFILE2 NAME2 "
-               "(e.g.  foo.wasm foo bar.wasm bar  will read foo.wasm and "
-               "bar.wasm, with names 'foo' and 'bar'. "
-               "In particular, the number of position inputs must be even as "
-               "each wasm binary must be followed by the name.";
+               "In particular, the number of positional inputs must be even as "
+               "each wasm binary must be followed by its name.";
   }
 
   // Process the inputs.
