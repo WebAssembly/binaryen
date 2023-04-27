@@ -29,6 +29,14 @@
 
   ;; CHECK:      (global $bar_2 i32 (i32.const 4))
 
+  ;; CHECK:      (memory $foo 10 20)
+
+  ;; CHECK:      (memory $bar 30 40)
+
+  ;; CHECK:      (memory $foo_2 50 60)
+
+  ;; CHECK:      (memory $other 70 80)
+
   ;; CHECK:      (elem $foo func $foo $bar)
 
   ;; CHECK:      (elem $bar func $bar $foo)
@@ -42,6 +50,12 @@
 
   ;; CHECK:      (tag $bar (param i64))
   (tag $bar (param i64))
+
+  ;; This global has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
+  (memory $foo 10 20)
+
+  (memory $bar 30 40)
 
   (elem $foo (ref null func) $foo $bar)
 
@@ -105,6 +119,16 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load $foo
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load $bar
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -141,6 +165,18 @@
         (drop
           (pop i64)
         )
+      )
+    )
+
+    ;; Memories
+    (drop
+      (i32.load $foo
+        (i32.const 1)
+      )
+    )
+    (drop
+      (i32.load $bar
+        (i32.const 2)
       )
     )
 
@@ -202,6 +238,16 @@
 ;; CHECK-NEXT:    (drop
 ;; CHECK-NEXT:     (pop f64)
 ;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.load $foo_2
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.load $other
+;; CHECK-NEXT:    (i32.const 4)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop

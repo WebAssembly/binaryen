@@ -5,6 +5,10 @@
 
   (tag $other (param f64))
 
+  (memory $foo 50 60)
+
+  (memory $other 70 80)
+
   (elem $other (ref null func) $foo $other)
 
   (elem $bar (ref null func) $other $foo)
@@ -41,6 +45,18 @@
         (drop
           (pop f64)
         )
+      )
+    )
+
+    ;; Memories
+    (drop
+      (i32.load $foo
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.load $other
+        (i32.const 4)
       )
     )
 
