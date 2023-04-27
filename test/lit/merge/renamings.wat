@@ -4,7 +4,20 @@
 ;; Test that we rename items in the second module to avoid name collisions.
 
 (module
+
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $foo i32 (i32.const 1))
+  (global $foo i32 (i32.const 1))
+
+  ;; This global has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
+  ;; CHECK:      (global $bar i32 (i32.const 2))
+  (global $bar i32 (i32.const 2))
+
+  ;; CHECK:      (global $other i32 (i32.const 3))
+
+  ;; CHECK:      (global $bar_2 i32 (i32.const 4))
 
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (drop
