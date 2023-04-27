@@ -281,7 +281,7 @@ void copyModuleContents(Module& input, Name inputName) {
     Fatal() << "TODO: start function support in later modules";
   }
 
-  // TODO: type names, etc. etc.
+  // TODO: type names, features, debug info, custom sections, dylink info, etc.
 }
 
 // Finds pairs of matching imports and exports, and makes uses of the import
@@ -455,7 +455,7 @@ Note that filenames and modules names are interleaved as positional inputs to av
 
     if (!laterInput) {
       // This is the very first module, which we read directly into |merged|.
-      // The only other operation we need to do is note the exports
+      // The only other operation we need to do is note the exports for later.
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
