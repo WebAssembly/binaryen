@@ -456,8 +456,7 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
-  template<typename ArrayNewSeg>
-  void visitArrayNewSeg(ArrayNewSeg* curr);
+  template<typename ArrayNewSeg> void visitArrayNewSeg(ArrayNewSeg* curr);
   void visitArrayNewSegData(ArrayNewSegData* curr);
   void visitArrayNewSegElem(ArrayNewSegElem* curr);
   void visitArrayNewFixed(ArrayNewFixed* curr);
@@ -466,8 +465,7 @@ public:
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
   void visitArrayFill(ArrayFill* curr);
-  template<typename ArrayInit>
-  void visitArrayInit(ArrayInit* curr);
+  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr);
   void visitArrayInitData(ArrayInitData* curr);
   void visitArrayInitElem(ArrayInitElem* curr);
   void visitFunction(Function* curr);

@@ -929,9 +929,9 @@ public:
     return ret;
   }
   ArrayNewSegData* makeArrayNewSegData(HeapType type,
-                                   Name seg,
-                                   Expression* offset,
-                                   Expression* size) {
+                                       Name seg,
+                                       Expression* offset,
+                                       Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewSegData>();
     ret->segment = seg;
     ret->offset = offset;
@@ -941,9 +941,9 @@ public:
     return ret;
   }
   ArrayNewSegElem* makeArrayNewSegElem(HeapType type,
-                                   Name seg,
-                                   Expression* offset,
-                                   Expression* size) {
+                                       Name seg,
+                                       Expression* offset,
+                                       Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewSegElem>();
     ret->segment = seg;
     ret->offset = offset;
@@ -1014,10 +1014,10 @@ public:
     return ret;
   }
   ArrayInitData* makeArrayInitData(Name seg,
-                               Expression* ref,
-                               Expression* index,
-                               Expression* offset,
-                               Expression* size) {
+                                   Expression* ref,
+                                   Expression* index,
+                                   Expression* offset,
+                                   Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayInitData>();
     ret->segment = seg;
     ret->ref = ref;
@@ -1028,10 +1028,10 @@ public:
     return ret;
   }
   ArrayInitElem* makeArrayInitElem(Name seg,
-                               Expression* ref,
-                               Expression* index,
-                               Expression* offset,
-                               Expression* size) {
+                                   Expression* ref,
+                                   Expression* index,
+                                   Expression* offset,
+                                   Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayInitElem>();
     ret->segment = seg;
     ret->ref = ref;
