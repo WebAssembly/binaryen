@@ -5,8 +5,6 @@
 ;; second does, so we'll refer to it's start function in the merged module.
 
 (module
-  ;; This has the name start, but is *not* the start function. Late functions
-  ;; will need their names deduplicated.
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (start $start_1)
@@ -17,6 +15,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $start
+    ;; This function has the name start, but is *not* the start function. The
+    ;; other module's start will need to get a new deduplicated name.
     (drop
       (i32.const 0)
     )
