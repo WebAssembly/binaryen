@@ -3325,18 +3325,52 @@ Name WasmBinaryBuilder::escape(Name name) {
   return escaped;
 }
 
+namespace {
+
 // Performs necessary processing of names from the name section before using
 // them. Specifically it escapes and deduplicates them.
+//
+// Deduplication is not trivial, since we can't only consider things in the name
+// section itself. The issue is that we have already given everything a
+// temporary name. Consider if we gave these two temp names:
+//
+//  $foo$0
+//  $foo$1
+//
+// and imagine that the first appears in the name section, where it is given the
+// the name $foo$1, and the second does not appear in the name section. In that
+// case, we'd rename the second to the same name as the first. If we left things
+// there that would be invalid, so we need to pick another temp name for the
+// second item to resolve that.
 class NameProcessor {
 public:
+  // Returns a unique, escaped name. Notes that name for the items to follow to
+  // keep them unique as well.
   Name process(Name name) {
     return deduplicate(WasmBinaryBuilder::escape(name));
+  }
+
+  // After processing the names section entries, which set explicit names, we
+  // also handle the remaining items here, which handles the corner case
+  // described above.
+  //
+  // TODO: This handles vectors of Named objects; we should also do this for
+  //       local names and type names etc.
+  template<typename T> void deduplicateUnexplicitlyNamed(std::vector<T>& vec) {
+    for (auto& x : vec) {
+      if (!x->hasExplicitName) {
+        x->name = deduplicate(x->name);
+      }
+    }
   }
 
 private:
   std::unordered_set<Name> usedNames;
 
   Name deduplicate(Name base) {
+    // TODO: Consider using Names::getValidNameGivenExisting but that does give
+    //       longer names, and it is very noticeable in this location, so
+    //       perhaps optimize that first.
     Name name = base;
     // De-duplicate names by appending .1, .2, etc.
     for (int i = 1; !usedNames.insert(name).second; ++i) {
@@ -3345,6 +3379,8 @@ private:
     return name;
   }
 };
+
+} // anonymous namespace
 
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
   BYN_TRACE("== readNames\n");
@@ -3378,6 +3414,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.functions);
     } else if (nameType == Subsection::NameLocal) {
       auto numFuncs = getU32LEB();
       for (size_t i = 0; i < numFuncs; i++) {
@@ -3454,6 +3491,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.tables);
     } else if (nameType == Subsection::NameElem) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3471,6 +3509,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.elementSegments);
     } else if (nameType == Subsection::NameMemory) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3487,6 +3526,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.memories);
     } else if (nameType == Subsection::NameData) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3503,6 +3543,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.dataSegments);
     } else if (nameType == Subsection::NameGlobal) {
       auto num = getU32LEB();
       NameProcessor processor;
@@ -3519,6 +3560,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.globals);
     } else if (nameType == Subsection::NameField) {
       auto numTypes = getU32LEB();
       for (size_t i = 0; i < numTypes; i++) {
@@ -3555,6 +3597,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                     << std::to_string(index) << std::endl;
         }
       }
+      processor.deduplicateUnexplicitlyNamed(wasm.tags);
     } else {
       std::cerr << "warning: unknown name subsection with id "
                 << std::to_string(nameType) << " at " << pos << std::endl;
