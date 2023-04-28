@@ -278,7 +278,8 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
           return false;
         }
       }
-    } else if (referrer->is<ArrayNewSeg>() || referrer->is<ArrayInit>()) {
+    } else if (referrer->is<ArrayNewSegData>() ||
+               referrer->is<ArrayInitData>()) {
       // TODO: Split segments referenced by GC instructions.
       return false;
     }
@@ -821,13 +822,10 @@ void MemoryPacking::replaceSegmentOps(Module* module,
       }
     }
 
-    void visitArrayNewSeg(ArrayNewSeg* curr) {
-      // TODO: use delegations-fields
-      if (curr->dataSegment.is()) {
-        if (auto replacement = replacements.find(curr);
-            replacement != replacements.end()) {
-          replaceCurrent(replacement->second(getFunction()));
-        }
+    void visitArrayNewSegData(ArrayNewSegData* curr) {
+      if (auto replacement = replacements.find(curr);
+          replacement != replacements.end()) {
+        replaceCurrent(replacement->second(getFunction()));
       }
     }
   } replacer(replacements);

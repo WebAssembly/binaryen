@@ -711,14 +711,16 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
-    ArrayNewSegId,
+    ArrayNewSegDataId,
+    ArrayNewSegElemId,
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
-    ArrayInitId,
+    ArrayInitDataId,
+    ArrayInitElemId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1600,15 +1602,24 @@ public:
   void finalize();
 };
 
-class ArrayNewSeg : public SpecificExpression<Expression::ArrayNewSegId> {
+class ArrayNewSegData
+  : public SpecificExpression<Expression::ArrayNewSegDataId> {
 public:
-  ArrayNewSeg(MixedArena& allocator) {}
+  ArrayNewSegData(MixedArena& allocator) {}
 
-  // One of the two should be defined, which specifies if this is an
-  // array.new_data or array.new_elem.
-  Name dataSegment;
-  Name elemSegment;
+  Name segment;
+  Expression* offset;
+  Expression* size;
 
+  void finalize();
+};
+
+class ArrayNewSegElem
+  : public SpecificExpression<Expression::ArrayNewSegElemId> {
+public:
+  ArrayNewSegElem(MixedArena& allocator) {}
+
+  Name segment;
   Expression* offset;
   Expression* size;
 
@@ -1681,14 +1692,24 @@ public:
   void finalize();
 };
 
-class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+class ArrayInitData : public SpecificExpression<Expression::ArrayInitDataId> {
 public:
-  ArrayInit(MixedArena& allocator) {}
+  ArrayInitData(MixedArena& allocator) {}
 
-  // As with ArrayNewSeg, one of the two should be defined.
-  Name dataSegment;
-  Name elemSegment;
+  Name segment;
+  Expression* ref;
+  Expression* index;
+  Expression* offset;
+  Expression* size;
 
+  void finalize();
+};
+
+class ArrayInitElem : public SpecificExpression<Expression::ArrayInitElemId> {
+public:
+  ArrayInitElem(MixedArena& allocator) {}
+
+  Name segment;
   Expression* ref;
   Expression* index;
   Expression* offset;

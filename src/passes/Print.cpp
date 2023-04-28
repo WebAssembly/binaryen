@@ -2265,12 +2265,21 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
+  void visitArrayNewSegData(ArrayNewSegData* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.new_");
-    printMedium(o, curr->dataSegment.is() ? "data " : "elem ");
+    printMedium(o, "array.new_data");
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayNewSegElem(ArrayNewSegElem* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.new_elem");
+    o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
     o << " $"
       << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
@@ -2324,12 +2333,19 @@ struct PrintExpressionContents
     printMedium(o, "array.fill ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayInitData(ArrayInitData* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
-    printMedium(
-      o, curr->dataSegment.is() ? "array.init_data " : "array.init_elem ");
+    printMedium(o, "array.init_data ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    printMedium(o, "array.init_elem ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
     o << " $"
       << (curr->dataSegment.is() ? curr->dataSegment : curr->elemSegment);
@@ -2899,7 +2915,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayNew(ArrayNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
+  void visitArrayNewSegData(ArrayNewSegData* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewSegElem(ArrayNewSegElem* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
