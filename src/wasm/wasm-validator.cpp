@@ -22,6 +22,7 @@
 #include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/find_all.h"
+#include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
@@ -2735,7 +2736,7 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
   if (!shouldBeTrue(
         heapType.isArray(),
         curr,
-        "array.new_{data, elem} type shoudl be an array reference")) {
+        "array.new_{data, elem} type should be an array reference")) {
     return;
   }
 }
@@ -2749,12 +2750,12 @@ void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
     return;
   }
 
-  if (curr->type == Type::unreachable) {
+  auto field = GCTypeUtils::getField(curr);
+  if (!field) {
+    // A bottom type, or unreachable.
     return;
   }
-  auto heapType = curr->type.getHeapType();
-  auto elemType = heapType.getArray().element.type;
-  shouldBeTrue(elemType.isNumber(),
+  shouldBeTrue(field->type.isNumber(),
                curr,
                "array.new_data result element type should be numeric");
 }
@@ -2768,13 +2769,13 @@ void FunctionValidator::visitArrayNewSegElem(ArrayNewSegElem* curr) {
     return;
   }
 
-  if (curr->type == Type::unreachable) {
+  auto field = GCTypeUtils::getField(curr);
+  if (!field) {
+    // A bottom type, or unreachable.
     return;
   }
-  auto heapType = curr->type.getHeapType();
-  auto elemType = heapType.getArray().element.type;
   shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
-                  elemType,
+                  field->type,
                   curr,
                   "array.new_elem segment type should be a subtype of the "
                   "result element type");
@@ -3007,16 +3008,16 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
 void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
   visitArrayInit(curr);
 
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  auto heapType = curr->ref->type.getHeapType();
-  auto element = heapType.getArray().element;
-
   shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
                "array.init_data segment must exist");
-  shouldBeTrue(element.type.isNumber(),
+
+  auto field = GCTypeUtils::getField(curr->ref);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeTrue(field->type.isNumber(),
                curr,
                "array.init_data destination must be numeric");
 }
@@ -3024,18 +3025,19 @@ void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
 void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
   visitArrayInit(curr);
 
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  auto heapType = curr->ref->type.getHeapType();
-  auto element = heapType.getArray().element;
-
   auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
   if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
     return;
   }
+
+  auto field = GCTypeUtils::getField(curr->ref);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+
   shouldBeSubType(seg->type,
-                  element.type,
+                  field->type,
                   curr,
                   "array.init_elem segment type must match destination type");
 }

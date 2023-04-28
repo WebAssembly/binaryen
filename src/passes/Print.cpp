@@ -2278,7 +2278,7 @@ struct PrintExpressionContents
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.new_data");
+    printMedium(o, "array.new_elem");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
     o << " $" << curr->segment;
