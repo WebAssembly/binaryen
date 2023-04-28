@@ -712,8 +712,8 @@ private:
         InitFixer(CtorEvalExternalInterface& evaller,
                   std::unique_ptr<Global>& global,
                   std::unordered_set<Name>& readableGlobals)
-          : evaller(evaller), global(global),
-            readableGlobals(readableGlobals) {}
+          : evaller(evaller), global(global), readableGlobals(readableGlobals) {
+        }
 
         // Handles a child by fixing things up if needed. Returns true if we
         // did in fact fix things up.
