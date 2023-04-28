@@ -685,89 +685,89 @@ private:
           wasm->addGlobal(std::move(global));
         }
       }
+    }
 
-      // After sorting, perform the fixups that we need, that is, replace the
-      // relevant fields in cycles with a null and prepare a set in the start
-      // function.
-      //
-      // We'll track the set of readable globals as we go (which are the globals
-      // we've seen already, and fully finished processing).
-      std::unordered_set<Name> readableGlobals;
+    // After sorting, perform the fixups that we need, that is, replace the
+    // relevant fields in cycles with a null and prepare a set in the start
+    // function.
+    //
+    // We'll track the set of readable globals as we go (which are the globals
+    // we've seen already, and fully finished processing).
+    std::unordered_set<Name> readableGlobals;
 
-      for (auto& global : wasm->globals) {
-        if (!global->init) {
-          continue;
-        }
+    for (auto& global : wasm->globals) {
+      if (!global->init) {
+        continue;
+      }
 
-        struct InitFixer : PostWalker<InitFixer> {
-          CtorEvalExternalInterface& evaller;
-          std::unique_ptr<Global>& global;
-          std::unordered_set<Name>& readableGlobals;
+      struct InitFixer : PostWalker<InitFixer> {
+        CtorEvalExternalInterface& evaller;
+        std::unique_ptr<Global>& global;
+        std::unordered_set<Name>& readableGlobals;
 
-          InitFixer(CtorEvalExternalInterface& evaller,
-                    std::unique_ptr<Global>& global,
-                    std::unordered_set<Name>& readableGlobals)
-            : evaller(evaller), global(global),
-              readableGlobals(readableGlobals) {}
+        InitFixer(CtorEvalExternalInterface& evaller,
+                  std::unique_ptr<Global>& global,
+                  std::unordered_set<Name>& readableGlobals)
+          : evaller(evaller), global(global),
+            readableGlobals(readableGlobals) {}
 
-          // Handles a child by fixing things up if needed. Returns true if we
-          // did in fact fix things up.
-          bool handleChild(Expression*& child,
-                           Expression* parent,
-                           Index fieldIndex = 0) {
-            if (!child) {
-              return false;
-            }
-
-            if (auto* get = child->dynCast<GlobalGet>()) {
-              if (!readableGlobals.count(get->name)) {
-                // This get cannot be read - it is a global that appears after
-                // us - and so we must fix it up, using the method mentioned
-                // before (setting it to null now, and later in the start
-                // function writing to it).
-                assert(isNullableAndMutable(parent, fieldIndex));
-                evaller.addStartSet(
-                  {global->name, global->type}, fieldIndex, get);
-                child =
-                  Builder(*getModule()).makeRefNull(get->type.getHeapType());
-                return true;
-              }
-            }
-
+        // Handles a child by fixing things up if needed. Returns true if we
+        // did in fact fix things up.
+        bool handleChild(Expression*& child,
+                         Expression* parent,
+                         Index fieldIndex = 0) {
+          if (!child) {
             return false;
           }
 
-          void visitStructNew(StructNew* curr) {
-            Index i = 0;
-            for (auto*& child : curr->operands) {
-              handleChild(child, curr, i++);
+          if (auto* get = child->dynCast<GlobalGet>()) {
+            if (!readableGlobals.count(get->name)) {
+              // This get cannot be read - it is a global that appears after
+              // us - and so we must fix it up, using the method mentioned
+              // before (setting it to null now, and later in the start
+              // function writing to it).
+              assert(isNullableAndMutable(parent, fieldIndex));
+              evaller.addStartSet(
+                {global->name, global->type}, fieldIndex, get);
+              child =
+                Builder(*getModule()).makeRefNull(get->type.getHeapType());
+              return true;
             }
           }
-          void visitArrayNew(ArrayNew* curr) {
-            if (handleChild(curr->init, curr)) {
-              // Handling array.new is tricky as the number of items may be
-              // unknown at compile time, so we'd need to loop at runtime. But,
-              // in practice we emit an array.new_fixed anyhow, so this should
-              // not be needed for now.
-              WASM_UNREACHABLE("TODO: ArrayNew in ctor-eval cycles");
-            }
-          }
-          void visitArrayNewFixed(ArrayNewFixed* curr) {
-            Index i = 0;
-            for (auto*& child : curr->values) {
-              handleChild(child, curr, i++);
-            }
-          }
-        };
 
-        InitFixer fixer(*this, global, readableGlobals);
-        fixer.setModule(wasm);
-        fixer.walk(global->init);
+          return false;
+        }
 
-        // Only after we've fully processed this global is it ok to be read from
-        // by later globals.
-        readableGlobals.insert(global->name);
-      }
+        void visitStructNew(StructNew* curr) {
+          Index i = 0;
+          for (auto*& child : curr->operands) {
+            handleChild(child, curr, i++);
+          }
+        }
+        void visitArrayNew(ArrayNew* curr) {
+          if (handleChild(curr->init, curr)) {
+            // Handling array.new is tricky as the number of items may be
+            // unknown at compile time, so we'd need to loop at runtime. But,
+            // in practice we emit an array.new_fixed anyhow, so this should
+            // not be needed for now.
+            WASM_UNREACHABLE("TODO: ArrayNew in ctor-eval cycles");
+          }
+        }
+        void visitArrayNewFixed(ArrayNewFixed* curr) {
+          Index i = 0;
+          for (auto*& child : curr->values) {
+            handleChild(child, curr, i++);
+          }
+        }
+      };
+
+      InitFixer fixer(*this, global, readableGlobals);
+      fixer.setModule(wasm);
+      fixer.walk(global->init);
+
+      // Only after we've fully processed this global is it ok to be read from
+      // by later globals.
+      readableGlobals.insert(global->name);
     }
   }
 
@@ -1068,7 +1068,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       }
 
       // So far so good! Apply the results.
-      interface.applyToModule();
+      interface.applyToModule(); // XXX do we need this if we do it later?
       appliedLocals = scope.locals;
       successes++;
 
@@ -1126,6 +1126,11 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       // nop in that position (since we've evalled at least one item in the
       // block, and replaced it with a nop), so we can overwrite it.
       copyBlock->list[0] = builder.makeBlock(localSets);
+
+      // After applying the locals we need to re-apply global state to the
+      // module, as we may have altered it. For example, while applying locals
+      // we might have added GC data that needs to to be stored in globals.
+      interface.applyToModule();
 
       // Interesting optimizations may be possible both due to removing some but
       // not all of the code, and due to the locals we just added.

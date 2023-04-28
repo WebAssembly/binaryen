@@ -1254,7 +1254,57 @@
   )
  )
 )
+
 ;; CHECK:      (func $0_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+(module
+ ;; CHECK:      (type $A (struct (field (mut (ref null $A)))))
+ (type $A (struct (field (mut (ref null $A)))))
+
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+ ;; CHECK:      (import "a" "b" (func $import (param anyref)))
+ (import "a" "b" (func $import (param anyref)))
+
+ (func "test"
+  (local $a (ref $A))
+  (struct.set $A 0
+   (local.tee $a
+    (struct.new_default $A)
+   )
+   (local.get $a)
+  )
+  ;; The previous instructions created a cycle, which we now send to an import.
+  ;; The import will block us from evalling the entire function, and we will
+  ;; only partially eval it, removing the statements before the call. Note that
+  ;; the cycle only exists in local state - there is no global it is copied to -
+  ;; and so this test verifies that we handle cycles in local state.
+  (call $import
+   (local.get $a)
+  )
+ )
+)
+;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new $A
+;; CHECK-NEXT:  (ref.null none)
+;; CHECK-NEXT: ))
+
+;; CHECK:      (export "test" (func $0_2))
+
+;; CHECK:      (start $start)
+
+;; CHECK:      (func $0_2 (type $none_=>_none)
+;; CHECK-NEXT:  (call $import
+;; CHECK-NEXT:   (global.get $ctor-eval$global)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK-NEXT:  (struct.set $A 0
+;; CHECK-NEXT:   (global.get $ctor-eval$global)
+;; CHECK-NEXT:   (global.get $ctor-eval$global)
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
