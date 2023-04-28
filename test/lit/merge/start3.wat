@@ -6,35 +6,23 @@
 ;; the third's.
 
 (module
-  ;; This has the name start, but is *not* the start function. Late functions
-  ;; will need their names deduplicated.
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (start $merged.start)
-
-  ;; CHECK:      (func $start (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $start
-    (drop
-      (i32.const 0)
-    )
-  )
 )
-;; CHECK:      (func $start_1 (type $none_=>_none)
+;; CHECK:      (type $none_=>_none (func))
+
+;; CHECK:      (start $merged.start)
+
+;; CHECK:      (func $start (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $user (type $none_=>_none)
-;; CHECK-NEXT:  (call $start_1)
-;; CHECK-NEXT:  (call $start_1)
+;; CHECK-NEXT:  (call $start)
+;; CHECK-NEXT:  (call $start)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $start_3 (type $none_=>_none)
+;; CHECK:      (func $start_2 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )
