@@ -745,7 +745,7 @@ private:
 
   Function* doSplit(Function* func) {
     auto iter = splits.find(func->name);
-    assert (iter != splits.end());
+    assert(iter != splits.end());
 
     auto& split = iter->second;
     if (split.inlineable) {
@@ -753,7 +753,7 @@ private:
       return split.inlineable;
     }
 
-    assert (split.splitKind != Split::Kind::None);
+    assert(split.splitKind != Split::Kind::None);
 
     Builder builder(*module);
 
@@ -779,7 +779,7 @@ private:
       return split.inlineable;
     }
 
-    assert (split.splitKind == Split::Kind::PatternB);
+    assert(split.splitKind == Split::Kind::PatternB);
 
     split.inlineable = copyFunction(func, "inlineable-B");
 
