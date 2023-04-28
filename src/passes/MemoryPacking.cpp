@@ -474,15 +474,11 @@ void MemoryPacking::getSegmentReferrers(Module* module,
       void visitDataDrop(DataDrop* curr) {
         referrers[curr->segment].push_back(curr);
       }
-      void visitArrayNewSeg(ArrayNewSeg* curr) {
-        if (curr->op == NewData) {
-          referrers[curr->segment].push_back(curr);
-        }
+      void visitArrayNewSegData(ArrayNewSegData* curr) {
+        referrers[curr->segment].push_back(curr);
       }
-      void visitArrayInit(ArrayInit* curr) {
-        if (curr->op == InitData) {
-          referrers[curr->segment].push_back(curr);
-        }
+      void visitArrayInitData(ArrayInitData* curr) {
+        referrers[curr->segment].push_back(curr);
       }
     } collector(referrers);
     collector.walkFunctionInModule(func, module);
@@ -808,12 +804,10 @@ void MemoryPacking::replaceSegmentOps(Module* module,
       }
     }
 
-    void visitArrayNewSeg(ArrayNewSeg* curr) {
-      if (curr->op == NewData) {
-        if (auto replacement = replacements.find(curr);
-            replacement != replacements.end()) {
-          replaceCurrent(replacement->second(getFunction()));
-        }
+    void visitArrayNewSegData(ArrayNewSegData* curr) {
+      if (auto replacement = replacements.find(curr);
+          replacement != replacements.end()) {
+        replaceCurrent(replacement->second(getFunction()));
       }
     }
   } replacer(replacements);
