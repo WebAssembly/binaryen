@@ -67,7 +67,8 @@ struct NewFinder : public PostWalker<NewFinder> {
 
   void visitStructNew(StructNew* curr) { news.push_back(curr); }
   void visitArrayNew(ArrayNew* curr) { news.push_back(curr); }
-  void visitArrayNewSeg(ArrayNewSeg* curr) { news.push_back(curr); }
+  void visitArrayNewSegData(ArrayNewSegData* curr) { news.push_back(curr); }
+  void visitArrayNewSegElem(ArrayNewSegElem* curr) { news.push_back(curr); }
   void visitArrayNewFixed(ArrayNewFixed* curr) { news.push_back(curr); }
 };
 
