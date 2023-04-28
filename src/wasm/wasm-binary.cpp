@@ -7155,10 +7155,10 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
     Expression* curr;
     if (isData) {
       curr = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
-      dataRefs[segIdx].push_back(&curr->dataSegment);
+      dataRefs[segIdx].push_back(&curr->segment);
     } else {
       curr = Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
-      elemRefs[segIdx].push_back(&curr->elemSegment);
+      elemRefs[segIdx].push_back(&curr->segment);
     }
     out = curr;
     return true;
@@ -7283,10 +7283,10 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   Expression* curr;
   if (isData) {
     curr = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
-    dataRefs[segIdx].push_back(&curr->dataSegment);
+    dataRefs[segIdx].push_back(&curr->segment);
   } else {
     curr = Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
-    elemRefs[segIdx].push_back(&curr->elemSegment);
+    elemRefs[segIdx].push_back(&curr->segment);
   }
   out = curr;
   return true;
