@@ -3012,8 +3012,8 @@ void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  auto element = heapType.getArray().element;
   auto heapType = curr->ref->type.getHeapType();
+  auto element = heapType.getArray().element;
 
   shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
@@ -3029,8 +3029,8 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  auto element = heapType.getArray().element;
   auto heapType = curr->ref->type.getHeapType();
+  auto element = heapType.getArray().element;
 
   auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
   if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
