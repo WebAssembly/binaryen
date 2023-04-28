@@ -2288,11 +2288,11 @@ public:
     NOTE_ENTER("ArrayFill");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayInit(ArrayInitData* curr) {
+  Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInitData");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayInit(ArrayInitElem* curr) {
+  Flow visitArrayInitElem(ArrayInitElem* curr) {
     NOTE_ENTER("ArrayInitElem");
     return Flow(NONCONSTANT_FLOW);
   }
