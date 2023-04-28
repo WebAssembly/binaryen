@@ -3650,7 +3650,6 @@ public:
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
 
     auto heapType = curr->type.getHeapType();
-    const auto& element = heapType.getArray().element;
     [[maybe_unused]] auto elemType = heapType.getArray().element.type;
 
     Literals contents;

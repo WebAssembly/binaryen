@@ -278,7 +278,7 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
           return false;
         }
       }
-    } else if (referrer->is<ArrayNewSeg>() || referrer->is<ArrayInit>()) {
+    } else if (referrer->is<ArrayNewSegData>() || referrer->is<ArrayInitData>()) {
       // TODO: Split segments referenced by GC instructions.
       return false;
     }
