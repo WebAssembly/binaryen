@@ -75,7 +75,32 @@
   )
  )
 
- (func "keepalive" (result i32)
+ ;; CHECK:      (export "test1" (func $1_6))
+
+ ;; CHECK:      (export "test2" (func $2_7))
+
+ ;; CHECK:      (export "test3" (func $3_8))
+
+ ;; CHECK:      (export "keepalive" (func $keepalive))
+
+ ;; CHECK:      (start $start)
+
+ ;; CHECK:      (func $keepalive (type $none_=>_i32) (result i32)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (struct.get $A 1
+ ;; CHECK-NEXT:    (global.get $a)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (struct.get $A 1
+ ;; CHECK-NEXT:     (global.get $b)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (struct.get $A 1
+ ;; CHECK-NEXT:     (global.get $c)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $keepalive (export "keepalive") (result i32)
   (i32.add
    (struct.get $A 1
     (global.get $a)
@@ -91,32 +116,6 @@
   )
  )
 )
-;; CHECK:      (export "test1" (func $1_6))
-
-;; CHECK:      (export "test2" (func $2_7))
-
-;; CHECK:      (export "test3" (func $3_8))
-
-;; CHECK:      (export "keepalive" (func $4))
-
-;; CHECK:      (start $start)
-
-;; CHECK:      (func $4 (type $none_=>_i32) (result i32)
-;; CHECK-NEXT:  (i32.add
-;; CHECK-NEXT:   (struct.get $A 1
-;; CHECK-NEXT:    (global.get $a)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (i32.add
-;; CHECK-NEXT:    (struct.get $A 1
-;; CHECK-NEXT:     (global.get $b)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (struct.get $A 1
-;; CHECK-NEXT:     (global.get $c)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $start (type $none_=>_none)
 ;; CHECK-NEXT:  (struct.set $A 0
 ;; CHECK-NEXT:   (global.get $ctor-eval$global_8)
