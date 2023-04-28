@@ -539,6 +539,7 @@ private:
     // and refer to it. Put another way, we place the existing globals back into
     // the module one at a time, adding their dependencies as we go.
     auto oldGlobals = std::move(wasm->globals);
+    // After clearing the globals vector, clear the map as well.
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
@@ -670,7 +671,9 @@ private:
       };
 
       auto oldGlobals = std::move(wasm->globals);
+      // After clearing the globals vector, clear the map as well.
       wasm->updateMaps();
+
       std::unordered_map<Name, Index> globalIndexes;
       for (Index i = 0; i < oldGlobals.size(); i++) {
         globalIndexes[oldGlobals[i]->name] = i;
