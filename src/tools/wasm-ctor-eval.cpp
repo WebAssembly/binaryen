@@ -1045,14 +1045,18 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
     // in a single function scope for all the executions.
     EvallingModuleRunner::FunctionScope scope(func, params, instance);
 
-    // After we successfully eval a line we will apply the changes here. This is
-    // the same idea as applyToModule() - we must only do it after an entire
-    // atomic "chunk" has been processed, we do not want partial updates from
-    // an item in the block that we only partially evalled.
-    std::vector<Literals> appliedLocals;
+    // After we successfully eval a line we will store the operations to set up
+    // the locals here. That is, we need to save the local state in the
+    // function, which we do by setting up at the entry. We update this list of
+    // local.sets at the same time as applyToModule() - we must only do it after
+    // an entire atomic "chunk" has been processed succesfully, we do not want
+    // partial updates from an item in the block that we only partially evalled.
+    std::vector<Expression*> localSets;
 
+    Builder builder(wasm);
     Literals results;
     Index successes = 0;
+
     for (auto* curr : block->list) {
       Flow flow;
       try {
@@ -1071,9 +1075,25 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
         break;
       }
 
-      // So far so good! Apply the results.
+      // So far so good! Serialize the values of locals, and apply to the
+      // module. Note that we must serialize the locals now as doing so may
+      // cause changes that must be applied to the module (e.g. GC data may
+      // cause globals to be added). And we must apply to the module now, and
+      // not later, as we must do so right after a successfull partial eval
+      // (after any failure to eval, the global state is no long valid to be
+      // applied to the module, as incomplete changes may have occurred).
+      //
+      // Note that we make no effort to optimize locals: we just write out all
+      // of them, and leave it to the optimizer to remove redundant or
+      // unnecessary operations. We just recompute the entire local
+      // serialization sets from scratch each time here, for all locals.
+      localSets.clear();
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        auto value = scope.locals[i];
+        localSets.push_back(
+          builder.makeLocalSet(i, interface.getSerialization(value)));
+      }
       interface.applyToModule();
-      appliedLocals = scope.locals;
       successes++;
 
       // Note the values here, if any. If we are exiting the function now then
@@ -1109,32 +1129,15 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       wasm.getExport(exportName)->value = copyName;
 
       // Remove the items we've evalled.
-      Builder builder(wasm);
       auto* copyBlock = copyFunc->body->cast<Block>();
       for (Index i = 0; i < successes; i++) {
         copyBlock->list[i] = builder.makeNop();
-      }
-
-      // Write out the values of locals, that is the local state after evalling
-      // the things we've just nopped. For simplicity we just write out all of
-      // locals, and leave it to the optimizer to remove redundant or
-      // unnecessary operations.
-      std::vector<Expression*> localSets;
-      for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
-        auto value = appliedLocals[i];
-        localSets.push_back(
-          builder.makeLocalSet(i, interface.getSerialization(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
       // nop in that position (since we've evalled at least one item in the
       // block, and replaced it with a nop), so we can overwrite it.
       copyBlock->list[0] = builder.makeBlock(localSets);
-
-      // After applying the locals we need to re-apply global state to the
-      // module, as we may have altered it. For example, while serializing
-      // locals we might have added GC data to globals.
-      interface.applyToModule();
 
       // Interesting optimizations may be possible both due to removing some but
       // not all of the code, and due to the locals we just added.

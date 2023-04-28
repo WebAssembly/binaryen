@@ -4,7 +4,7 @@
 (module
  ;; CHECK:      (type $none_=>_none (func))
 
- ;; CHECK:      (global $global (mut i32) (i32.const 999))
+ ;; CHECK:      (global $global (mut i32) (i32.const 0))
  (global $global (mut i32) (i32.const 0))
 
  (func "test"
