@@ -687,12 +687,16 @@ private:
       }
     }
 
-    // After sorting, perform the fixups that we need, that is, replace the
+    // After sorting (*), perform the fixups that we need, that is, replace the
     // relevant fields in cycles with a null and prepare a set in the start
     // function.
     //
     // We'll track the set of readable globals as we go (which are the globals
     // we've seen already, and fully finished processing).
+    //
+    // (*) Note that we may need these fixups even if we didn't need to do any
+    //     sorting. There may be a single global with a cycle in it, for
+    //     example.
     std::unordered_set<Name> readableGlobals;
 
     for (auto& global : wasm->globals) {
@@ -1068,7 +1072,7 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       }
 
       // So far so good! Apply the results.
-      interface.applyToModule(); // XXX do we need this if we do it later?
+      interface.applyToModule();
       appliedLocals = scope.locals;
       successes++;
 
@@ -1128,8 +1132,8 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       copyBlock->list[0] = builder.makeBlock(localSets);
 
       // After applying the locals we need to re-apply global state to the
-      // module, as we may have altered it. For example, while applying locals
-      // we might have added GC data that needs to to be stored in globals.
+      // module, as we may have altered it. For example, while serializing
+      // locals we might have added GC data to globals.
       interface.applyToModule();
 
       // Interesting optimizations may be possible both due to removing some but
