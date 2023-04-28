@@ -563,17 +563,6 @@ enum RefAsOp {
   ExternExternalize,
 };
 
-enum ArrayNewSegOp {
-  NewData,
-  NewElem,
-};
-
-// TODO: Deduplicate with ArrayNewSegOp?
-enum ArrayInitOp {
-  InitData,
-  InitElem,
-};
-
 enum BrOnOp {
   BrOnNull,
   BrOnNonNull,
@@ -722,14 +711,16 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
-    ArrayNewSegId,
+    ArrayNewSegDataId,
+    ArrayNewSegElemId,
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
-    ArrayInitId,
+    ArrayInitDataId,
+    ArrayInitElemId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1689,11 +1680,23 @@ public:
   void finalize();
 };
 
-class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+class ArrayInitData : public SpecificExpression<Expression::ArrayInitDataId> {
 public:
-  ArrayInit(MixedArena& allocator) {}
+  ArrayInitData(MixedArena& allocator) {}
 
-  ArrayInitOp op;
+  Name segment;
+  Expression* ref;
+  Expression* index;
+  Expression* offset;
+  Expression* size;
+
+  void finalize();
+};
+
+class ArrayInitElem : public SpecificExpression<Expression::ArrayInitElemId> {
+public:
+  ArrayInitElem(MixedArena& allocator) {}
+
   Name segment;
   Expression* ref;
   Expression* index;
