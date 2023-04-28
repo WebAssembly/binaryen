@@ -928,14 +928,24 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNewSeg* makeArrayNewSeg(ArrayNewSegOp op,
-                               HeapType type,
-                               Name seg,
-                               Expression* offset,
-                               Expression* size) {
+  ArrayNewSeg* makeArrayNewSegData(HeapType type,
+                                   Name seg,
+                                   Expression* offset,
+                                   Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewSeg>();
-    ret->op = op;
-    ret->segment = seg;
+    ret->dataSegment = seg;
+    ret->offset = offset;
+    ret->size = size;
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  ArrayNewSeg* makeArrayNewSegElem(HeapType type,
+                                   Name seg,
+                                   Expression* offset,
+                                   Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayNewSeg>();
+    ret->elemSegment = seg;
     ret->offset = offset;
     ret->size = size;
     ret->type = Type(type, NonNullable);
@@ -1003,15 +1013,27 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayInit* makeArrayInit(ArrayInitOp op,
-                           Name seg,
-                           Expression* ref,
-                           Expression* index,
-                           Expression* offset,
-                           Expression* size) {
+  ArrayInit* makeArrayInitData(Name seg,
+                               Expression* ref,
+                               Expression* index,
+                               Expression* offset,
+                               Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayInit>();
-    ret->op = op;
-    ret->segment = seg;
+    ret->dataSegment = seg;
+    ret->ref = ref;
+    ret->index = index;
+    ret->offset = offset;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
+  ArrayInit* makeArrayInitElem(Name seg,
+                               Expression* ref,
+                               Expression* index,
+                               Expression* offset,
+                               Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayInit>();
+    ret->elemSegment = seg;
     ret->ref = ref;
     ret->index = index;
     ret->offset = offset;
