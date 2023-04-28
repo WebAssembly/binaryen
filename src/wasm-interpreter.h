@@ -3668,7 +3668,7 @@ public:
     }
     return self()->makeGCData(contents, curr->type);
   }
-  Flow visitArrayInit(ArrayInit* curr) {
+  Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
     Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
@@ -3717,7 +3717,7 @@ public:
     }
     return {};
   }
-  Flow visitArrayInit(ArrayInit* curr) {
+  Flow visitArrayInitElem(ArrayInitElem* curr) {
     NOTE_ENTER("ArrayInit");
     Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
