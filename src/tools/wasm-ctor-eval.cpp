@@ -755,6 +755,13 @@ private:
           return false;
         }
 
+        // This code will need to be updated for all new GC-creating
+        // instructions that we use when serializing GC data, that is, things we
+        // put in defining globals. (All other instructions, even constant ones
+        // in globals, will simply end up referring to them using a global.get,
+        // but will not be referred to. That is, cycles will only appear in
+        // defining globals.)
+
         void visitStructNew(StructNew* curr) {
           Index i = 0;
           for (auto*& child : curr->operands) {
