@@ -298,7 +298,8 @@ void copyModuleContents(Module& input, Name inputName) {
       auto mergedName = Names::getValidFunctionName(merged, "merged.start");
       Builder builder(merged);
       auto* mergedBody = builder.makeSequence(oldStart->body, newStart->body);
-      auto mergedFunc = builder.makeFunction(mergedName, Signature{Type::none, Type::none}, {}, mergedBody);
+      auto mergedFunc = builder.makeFunction(
+        mergedName, Signature{Type::none, Type::none}, {}, mergedBody);
       merged.addFunction(std::move(mergedFunc));
       merged.start = mergedName;
     }
