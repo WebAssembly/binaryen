@@ -755,7 +755,12 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
-    void visitArrayNewSeg(ArrayNewSeg* curr) {
+    void visitArrayNewSegData(ArrayNewSegData* curr) {
+      // Traps on out of bounds access to segments or access to dropped
+      // segments.
+      parent.implicitTrap = true;
+    }
+    void visitArrayNewSegElem(ArrayNewSegElem* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
       parent.implicitTrap = true;
@@ -808,6 +813,7 @@ private:
       // Traps when the destination is null or when out of bounds.
       parent.implicitTrap = true;
     }
+    template<typename ArrayInit>
     void visitArrayInit(ArrayInit* curr) {
       if (curr->ref->type.isNull()) {
         parent.trap = true;
@@ -817,6 +823,12 @@ private:
       // Traps when the destination is null, when out of bounds in source or
       // destination, or when the source segment has been dropped.
       parent.implicitTrap = true;
+    }
+    void visitArrayInitData(ArrayInitData* curr) {
+      visitArrayInit(curr);
+    }
+    void visitArrayInitElem(ArrayInitElem* curr) {
+      visitArrayInit(curr);
     }
     void visitRefAs(RefAs* curr) {
       if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
