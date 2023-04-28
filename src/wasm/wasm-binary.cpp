@@ -7152,7 +7152,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
     auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
-    ArrayNewSeg* curr;
+    Expression* curr;
     if (isData) {
       curr = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
       dataRefs[segIdx].push_back(&curr->dataSegment);
@@ -7280,7 +7280,7 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  ArrayInit* curr;
+  Expression* curr;
   if (isData) {
     curr = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
     dataRefs[segIdx].push_back(&curr->dataSegment);
