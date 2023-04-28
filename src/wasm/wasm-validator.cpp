@@ -2750,7 +2750,7 @@ void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
     return;
   }
 
-  auto field = GCTypeUtils::getField(curr);
+  auto field = GCTypeUtils::getField(curr->type);
   if (!field) {
     // A bottom type, or unreachable.
     return;
@@ -2769,7 +2769,7 @@ void FunctionValidator::visitArrayNewSegElem(ArrayNewSegElem* curr) {
     return;
   }
 
-  auto field = GCTypeUtils::getField(curr);
+  auto field = GCTypeUtils::getField(curr->type);
   if (!field) {
     // A bottom type, or unreachable.
     return;
@@ -3012,7 +3012,7 @@ void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
                curr,
                "array.init_data segment must exist");
 
-  auto field = GCTypeUtils::getField(curr->ref);
+  auto field = GCTypeUtils::getField(curr->ref->type);
   if (!field) {
     // A bottom type, or unreachable.
     return;
@@ -3030,7 +3030,7 @@ void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
     return;
   }
 
-  auto field = GCTypeUtils::getField(curr->ref);
+  auto field = GCTypeUtils::getField(curr->ref->type);
   if (!field) {
     // A bottom type, or unreachable.
     return;
