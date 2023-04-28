@@ -744,7 +744,7 @@ private:
               // before (setting it to null now, and later in the start
               // function writing to it).
               assert(isNullableAndMutable(parent, fieldIndex));
-              evaller.addStartSet(
+              evaller.addStartFixup(
                 {global->name, global->type}, fieldIndex, get);
               child =
                 Builder(*getModule()).makeRefNull(get->type.getHeapType());
@@ -935,7 +935,7 @@ public:
   //  global[index] = valueGlobal
   //
   // run during the start function.
-  void addStartSet(DefiningGlobalInfo global, Index index, GlobalGet* value) {
+  void addStartFixup(DefiningGlobalInfo global, Index index, GlobalGet* value) {
     if (!startBlock) {
       createStartBlock();
     }
