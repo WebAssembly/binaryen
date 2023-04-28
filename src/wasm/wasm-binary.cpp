@@ -7152,15 +7152,15 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
     auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
-    Expression* curr;
     if (isData) {
-      curr = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
+      auto* curr = Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
       dataRefs[segIdx].push_back(&curr->segment);
+      out = curr;
     } else {
-      curr = Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
+      auto* curr = Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
       elemRefs[segIdx].push_back(&curr->segment);
+      out = curr;
     }
-    out = curr;
     return true;
   }
   return false;
@@ -7280,15 +7280,15 @@ bool WasmBinaryBuilder::maybeVisitArrayInit(Expression*& out, uint32_t code) {
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  Expression* curr;
   if (isData) {
-    curr = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
+    auto* curr = Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
     dataRefs[segIdx].push_back(&curr->segment);
+    out = curr;
   } else {
-    curr = Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
+    auto* curr = Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
     elemRefs[segIdx].push_back(&curr->segment);
+    out = curr;
   }
-  out = curr;
   return true;
 }
 

@@ -2724,24 +2724,6 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     Type(Type::i32),
     curr,
     "array.new_{data, elem} size must be an i32");
-  switch (curr->op) {
-    case NewData:
-      if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
-                        curr,
-                        "array.new_data segment should exist")) {
-        return;
-      }
-      break;
-    case NewElem:
-      if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
-                        curr,
-                        "array.new_elem segment should exist")) {
-        return;
-      }
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
-  }
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -2763,6 +2745,12 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
 void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
   visitArrayNewSeg(curr);
 
+  if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
+                    curr,
+                    "array.new_data segment should exist")) {
+    return;
+  }
+
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -2775,6 +2763,12 @@ void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
 
 void FunctionValidator::visitArrayNewSegElem(ArrayNewSegElem* curr) {
   visitArrayNewSeg(curr);
+
+  if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
+                    curr,
+                    "array.new_elem segment should exist")) {
+    return;
+  }
 
   if (curr->type == Type::unreachable) {
     return;
