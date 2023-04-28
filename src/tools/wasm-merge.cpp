@@ -39,6 +39,15 @@
 // "foo.bar" will turn into a reference to the proper item from wasm_j that
 // corresponds to that export.
 //
+// Note that we allow "forward references" - a reference from an earlier module
+// to a later one. If one instantiates the wasm modules in sequence then that is
+// impossible to do, and to work around it e.g. emscripten dynamic linking
+// support will add a thunk, but ES module support should allow it for wasm, and
+// so we support it here.
+//
+// The order of modules does matter in one way, however: if the modules have
+// start functions then those are called in the given order of the modules.
+//
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -191,7 +200,7 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
         mapName(ModuleItemKind(curr->kind), curr->value);
       }
 
-      // TODO: start
+      mapName(ModuleItemKind::Function, wasm.start);
     }
 
   private:
@@ -276,8 +285,18 @@ void copyModuleContents(Module& input, Name inputName) {
     merged.addExport(std::move(copy));
   }
 
+  // Start functions must be merged.
   if (input.start.is()) {
-    Fatal() << "TODO: start function support in later modules";
+    if (!merged.start.is()) {
+      // No previous start; just refer to the new one.
+      merged.start = input.start;
+    } else {
+      // Merge them, keeping the order.
+      auto* oldStart = merged.getFunction(merged.start);
+      auto* newStart = merged.getFunction(input.start);
+      oldStart->body = Builder(merged).makeSequence(oldStart->body,
+                                                    newStart->body);
+    }
   }
 
   // TODO: type names, features, debug info, custom sections, dylink info, etc.
