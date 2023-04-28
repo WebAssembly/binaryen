@@ -19,6 +19,8 @@
   ;; CHECK:      (import "third" "reverse" (func $third.reverse))
   (import "third" "reverse" (func $third.reverse))
 
+
+
   ;; CHECK:      (import "first" "forward" (func $first.forward))
 
   ;; CHECK:      (import "first" "reverse" (func $first.reverse))
@@ -73,7 +75,6 @@
     (call $third.reverse)
   )
 )
-
 ;; CHECK:      (func $forward_6 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
