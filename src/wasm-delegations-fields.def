@@ -701,7 +701,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayNewSegElemId: {
     DELEGATE_START(ArrayNewSegElem);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewSegElem, segment, ModuleItemKind::ElemSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayNewSegElem, segment, ModuleItemKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayNewSegElem, size);
     DELEGATE_FIELD_CHILD(ArrayNewSegElem, offset);
     DELEGATE_END(ArrayNewSegElem);
@@ -766,7 +766,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayInitElemId: {
     DELEGATE_START(ArrayInitElem);
-    DELEGATE_FIELD_NAME_KIND(ArrayInitElem, segment, ModuleItemKind::ElemSegment);
+    DELEGATE_FIELD_NAME_KIND(ArrayInitElem, segment, ModuleItemKind::ElementSegment);
     DELEGATE_FIELD_CHILD(ArrayInitElem, size);
     DELEGATE_FIELD_CHILD(ArrayInitElem, offset);
     DELEGATE_FIELD_CHILD(ArrayInitElem, index);
