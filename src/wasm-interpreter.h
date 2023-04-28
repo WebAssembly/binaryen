@@ -1654,8 +1654,12 @@ public:
     }
     return makeGCData(data, curr->type);
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
+  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
@@ -3757,8 +3761,7 @@ public:
       // of references in the table! ArrayNewSeg suffers the same problem.
       // Fixing it will require changing how we represent segments, at least
       // in the interpreter.
-      data->values[indexVal + i] =
-        self()->visit(seg->data[i]).getSingleValue();
+      data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
     }
     return {};
   }
