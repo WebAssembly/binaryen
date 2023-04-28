@@ -287,8 +287,8 @@ struct TypeSSA : public Pass {
       if (isInterestingRelevantTo(arrayNew->init, element.type)) {
         return true;
       }
-    } else if (curr->is<ArrayNewSeg>()) {
-      // TODO: If the element segment is immutable perhaps we could inspect it.
+    } else if (curr->is<ArrayNewSegData>() || curr->is<ArrayNewSegElem>()) {
+      // TODO: If the segment is immutable perhaps we could inspect it.
       return true;
     } else if (auto* arrayInit = curr->dynCast<ArrayNewFixed>()) {
       // All the items must be interesting for us to consider this interesting,
