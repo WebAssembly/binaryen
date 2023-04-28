@@ -839,9 +839,9 @@ public:
     auto type = value.type;
     Name definingGlobalName;
 
-    if (definingGlobals.count(data)) {
+    if (auto it = definingGlobals.find(data); it != definingGlobals.end()) {
       // Use the existing defining global.
-      definingGlobalName = definingGlobals[data].name;
+      definingGlobalName = it->second.name;
     } else {
       // This is the first usage of this data. Generate a struct.new /
       // array.new for it.
