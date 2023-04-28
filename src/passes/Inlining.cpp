@@ -544,87 +544,10 @@ struct FunctionSplitter {
       return false;
     }
 
-    return maybeSplit(func);
-  }
-
-  // Returns the function we should inline, after we split the function into two
-  // pieces as described above (that is, in the example above, this would return
-  // foo$inlineable).
-  //
-  // This is called when we are definitely inlining the function, and so it will
-  // perform the splitting (if that has not already been done before).
-  Function* getInlineableSplitFunction(Function* func) {
-    Function* inlineable = nullptr;
-    [[maybe_unused]] auto success = maybeSplit(func, &inlineable);
-    assert(success && inlineable);
-    return inlineable;
-  }
-
-  // Clean up. When we are done we no longer need the inlineable functions on
-  // the module, as they have been inlined into all the places we wanted them
-  // for.
-  //
-  // Returns a list of the names of the functions we split.
-  std::vector<Name> finish() {
-    std::vector<Name> ret;
-    std::unordered_set<Name> inlineableNames;
-    for (auto& [func, split] : splits) {
-      auto* inlineable = split.inlineable;
-      if (inlineable) {
-        inlineableNames.insert(inlineable->name);
-        ret.push_back(func);
-      }
-    }
-    module->removeFunctions([&](Function* func) {
-      return inlineableNames.find(func->name) != inlineableNames.end();
-    });
-    return ret;
-  }
-
-private:
-  // Information about splitting a function.
-  struct Split {
-    // Whether we can split the function. If this is false, the other two will
-    // remain nullptr forever; if this is true then we will populate them the
-    // first time we need them.
-    bool splittable = false;
-
-    // The inlineable function out of the two that we generate by splitting.
-    // That is, foo$inlineable from above.
-    Function* inlineable = nullptr;
-
-    // The outlined function, that is, foo$outlined from above.
-    Function* outlined = nullptr;
-  };
-
-  // All the splitting we have already performed.
-  //
-  // Note that this maps from function names, and not Function*, as the main
-  // inlining code can remove functions as it goes, but we can rely on names
-  // staying constant.
-  std::unordered_map<Name, Split> splits;
-
-  // Check if we can split a function. Returns whether we can. If the out param
-  // is provided, also actually does the split, and returns the inlineable split
-  // function in that out param.
-  bool maybeSplit(Function* func, Function** inlineableOut = nullptr) {
     // Check if we've processed this input before.
     auto iter = splits.find(func->name);
     if (iter != splits.end()) {
-      if (!iter->second.splittable) {
-        // We've seen before that this cannot be split.
-        return false;
-      }
-      // We can split this function. If we've already done so, return that
-      // cached result.
-      if (iter->second.inlineable) {
-        if (inlineableOut) {
-          *inlineableOut = iter->second.inlineable;
-        }
-        return true;
-      }
-      // Otherwise, we are splittable but have not performed the split yet;
-      // proceed to do so.
+      return iter->second.splitKind != Split::Kind::None;
     }
 
     // The default value of split.splittable is false, so if we fail we just
@@ -655,8 +578,6 @@ private:
       return false;
     }
 
-    Builder builder(*module);
-
     // Pattern A: Check if the function begins with
     //
     //  if (simple) return;
@@ -669,31 +590,8 @@ private:
       // return), and we would not even attempt to do splitting.
       assert(body->is<Block>());
 
-      split.splittable = true;
-      // If we were just checking, stop and report success.
-      if (!inlineableOut) {
-        return true;
-      }
+      split.splitKind = Split::Kind::PatternA;
 
-      // Note that "A" in the name here identifies this as being a split from
-      // pattern A. The second pattern B will have B in the name.
-      split.inlineable = copyFunction(func, "inlineable-A");
-      auto* outlined = copyFunction(func, "outlined-A");
-
-      // The inlineable function should only have the if, which will call the
-      // outlined function with a flipped condition.
-      auto* inlineableIf = getIf(split.inlineable->body);
-      inlineableIf->condition =
-        builder.makeUnary(EqZInt32, inlineableIf->condition);
-      inlineableIf->ifTrue = builder.makeCall(
-        outlined->name, getForwardedArgs(func, builder), Type::none);
-      split.inlineable->body = inlineableIf;
-
-      // The outlined function no longer needs the initial if.
-      auto& outlinedList = outlined->body->cast<Block>()->list;
-      outlinedList.erase(outlinedList.begin());
-
-      *inlineableOut = split.inlineable;
       return true;
     }
 
@@ -773,20 +671,118 @@ private:
       }
     }
 
-    // Success, this matches the pattern. Exit if we were just checking.
-    split.splittable = true;
-    if (!inlineableOut) {
-      return true;
+    // Success, this matches the pattern.
+    split.splitKind = Split::Kind::PatternB;
+
+    return true;
+  }
+
+  // Returns the function we should inline, after we split the function into two
+  // pieces as described above (that is, in the example above, this would return
+  // foo$inlineable).
+  //
+  // This is called when we are definitely inlining the function, and so it will
+  // perform the splitting (if that has not already been done before).
+  Function* getInlineableSplitFunction(Function* func) {
+    auto iter = splits.find(func->name);
+    assert(iter != splits.end());
+
+    auto& split = iter->second;
+    if (!split.inlineable) {
+      // We haven't performed the split, do it now.
+      assert(split.splitKind != Split::Kind::None);
+      split.inlineable = doSplit(func, split.splitKind);
     }
 
-    split.inlineable = copyFunction(func, "inlineable-B");
+    return split.inlineable;
+  }
+
+  // Clean up. When we are done we no longer need the inlineable functions on
+  // the module, as they have been inlined into all the places we wanted them
+  // for.
+  //
+  // Returns a list of the names of the functions we split.
+  std::vector<Name> finish() {
+    std::vector<Name> ret;
+    std::unordered_set<Name> inlineableNames;
+    for (auto& [func, split] : splits) {
+      auto* inlineable = split.inlineable;
+      if (inlineable) {
+        inlineableNames.insert(inlineable->name);
+        ret.push_back(func);
+      }
+    }
+    module->removeFunctions([&](Function* func) {
+      return inlineableNames.find(func->name) != inlineableNames.end();
+    });
+    return ret;
+  }
+
+private:
+  // Information about splitting a function.
+  struct Split {
+    enum class Kind { None, PatternA, PatternB };
+
+    // Whether we can split the function. If this is None, the other two will
+    // remain nullptr forever; if this is set then we will populate them the
+    // first time we need them.
+    Kind splitKind = Kind::None;
+
+    // The inlineable function out of the two that we generate by splitting.
+    // That is, foo$inlineable from above.
+    Function* inlineable = nullptr;
+
+    // The outlined function, that is, foo$outlined from above.
+    Function* outlined = nullptr;
+  };
+
+  // All the splitting we have already performed.
+  //
+  // Note that this maps from function names, and not Function*, as the main
+  // inlining code can remove functions as it goes, but we can rely on names
+  // staying constant.
+  std::unordered_map<Name, Split> splits;
+
+  Function* doSplit(Function* func, Split::Kind splitKind) {
+    Builder builder(*module);
+
+    if (splitKind == Split::Kind::PatternA) {
+      // Note that "A" in the name here identifies this as being a split from
+      // pattern A. The second pattern B will have B in the name.
+      Function* inlineable = copyFunction(func, "inlineable-A");
+      auto* outlined = copyFunction(func, "outlined-A");
+
+      // The inlineable function should only have the if, which will call the
+      // outlined function with a flipped condition.
+      auto* inlineableIf = getIf(inlineable->body);
+      inlineableIf->condition =
+        builder.makeUnary(EqZInt32, inlineableIf->condition);
+      inlineableIf->ifTrue = builder.makeCall(
+        outlined->name, getForwardedArgs(func, builder), Type::none);
+      inlineable->body = inlineableIf;
+
+      // The outlined function no longer needs the initial if.
+      auto& outlinedList = outlined->body->cast<Block>()->list;
+      outlinedList.erase(outlinedList.begin());
+
+      return inlineable;
+    }
+
+    assert(splitKind == Split::Kind::PatternB);
+
+    Function* inlineable = copyFunction(func, "inlineable-B");
+
+    const Index MaxIfs = options.inlining.partialInliningIfs;
 
     // The inlineable function should only have the ifs, which will call the
     // outlined heavy work.
-    for (Index i = 0; i < numIfs; i++) {
+    for (Index i = 0; i < MaxIfs; i++) {
       // For each if, create an outlined function with the body of that if,
       // and call that from the if.
-      auto* inlineableIf = getIf(split.inlineable->body, i);
+      auto* inlineableIf = getIf(inlineable->body, i);
+      if (!inlineableIf) {
+        break;
+      }
       auto* outlined = copyFunction(func, "outlined-B");
       outlined->body = inlineableIf->ifTrue;
 
@@ -803,10 +799,7 @@ private:
       }
     }
 
-    // We can just leave the final value at the end, if it exists.
-
-    *inlineableOut = split.inlineable;
-    return true;
+    return inlineable;
   }
 
   Function* copyFunction(Function* func, std::string prefix) {
