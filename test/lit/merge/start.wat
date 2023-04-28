@@ -10,7 +10,7 @@
   ;; will need their names deduplicated.
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (start $start_1)
+  ;; CHECK:      (start $merged.start)
 
   ;; CHECK:      (func $start (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -27,12 +27,23 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $user (type $none_=>_none)
+;; CHECK-NEXT:  (call $start_1)
+;; CHECK-NEXT:  (call $start_1)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $start_2 (type $none_=>_none)
+;; CHECK:      (func $merged.start (type $none_=>_none)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 1)
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )

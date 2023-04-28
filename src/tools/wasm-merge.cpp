@@ -291,11 +291,16 @@ void copyModuleContents(Module& input, Name inputName) {
       // No previous start; just refer to the new one.
       merged.start = input.start;
     } else {
-      // Merge them, keeping the order.
+      // Merge them, keeping the order. Note that we need to create a new
+      // function as they may both have other references.
       auto* oldStart = merged.getFunction(merged.start);
       auto* newStart = merged.getFunction(input.start);
-      oldStart->body = Builder(merged).makeSequence(oldStart->body,
-                                                    newStart->body);
+      auto mergedName = Names::getValidFunctionName(merged, "merged.start");
+      Builder builder(merged);
+      auto* mergedBody = builder.makeSequence(oldStart->body, newStart->body);
+      auto mergedFunc = builder.makeFunction(mergedName, Signature{Type::none, Type::none}, {}, mergedBody);
+      merged.addFunction(std::move(mergedFunc));
+      merged.start = mergedName;
     }
   }
 
