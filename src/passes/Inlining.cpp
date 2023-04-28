@@ -85,10 +85,7 @@ struct FunctionInfo {
   }
 
   // See pass.h for how defaults for these options were chosen.
-  bool worthInlining(PassOptions& options) {
-    if (uninlineable) {
-      return false;
-    }
+  bool worthDirectInlining(PassOptions& options) {
     // Until we have proper support for try-delegate, ignore such functions.
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
@@ -540,10 +537,6 @@ struct FunctionSplitter {
   // the number of iterations, etc.). Therefore this function will only find out
   // if we *can* split, but not actually do any splitting.
   bool canSplit(Function* func) {
-    if (!canHandleParams(func)) {
-      return false;
-    }
-
     // Check if we've processed this input before.
     auto iter = splits.find(func->name);
     if (iter != splits.end()) {
@@ -1080,8 +1073,15 @@ struct Inlining : public Pass {
   }
 
   bool worthInlining(Name name) {
+    auto& info = infos[name];
+
+    if (info.uninlineable) {
+      // Don't need to further analyze uninlineable functions.
+      return false;
+    }
+
     // Check if the function itself is worth inlining as it is.
-    if (infos[name].worthInlining(getPassOptions())) {
+    if (infos[name].worthDirectInlining(getPassOptions())) {
       return true;
     }
 
@@ -1104,7 +1104,7 @@ struct Inlining : public Pass {
   // are guaranteed to inline after this.
   Function* getActuallyInlinedFunction(Function* func) {
     // If we want to inline this function itself, do so.
-    if (infos[func->name].worthInlining(getPassOptions())) {
+    if (infos[func->name].worthDirectInlining(getPassOptions())) {
       return func;
     }
 
