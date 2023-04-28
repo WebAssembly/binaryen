@@ -540,7 +540,6 @@ struct FunctionSplitter {
   // the number of iterations, etc.). Therefore this function will only find out
   // if we *can* split, but not actually do any splitting.
   bool canSplit(Function* func) {
-    // TODO: we should not get here if function marked uninlineable.
     if (!canHandleParams(func)) {
       return false;
     }
