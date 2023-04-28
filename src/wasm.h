@@ -1602,11 +1602,21 @@ public:
   void finalize();
 };
 
-class ArrayNewSeg : public SpecificExpression<Expression::ArrayNewSegId> {
+class ArrayNewSegData : public SpecificExpression<Expression::ArrayNewSegDataId> {
 public:
-  ArrayNewSeg(MixedArena& allocator) {}
+  ArrayNewSegData(MixedArena& allocator) {}
 
-  ArrayNewSegOp op;
+  Name segment;
+  Expression* offset;
+  Expression* size;
+
+  void finalize();
+};
+
+class ArrayNewSegElem : public SpecificExpression<Expression::ArrayNewSegElemId> {
+public:
+  ArrayNewSegElem(MixedArena& allocator) {}
+
   Name segment;
   Expression* offset;
   Expression* size;
