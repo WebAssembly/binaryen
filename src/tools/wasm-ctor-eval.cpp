@@ -578,6 +578,16 @@ private:
     // globals as needed, and break up cycles by writing a null in the initial
     // struct.new in the global's definition, and later in the start function we
     // can perform additional struct.sets that cause cycles to form.
+    //
+    // The existing algorithm here is rather simple: we find things that
+    // definitely force a certain order and sort according to them. Then in that
+    // order we break forward references with fixups as described above. This is
+    // not always the best, as there may be a more optimal order, and we may end
+    // up doing more fixups than are absolutely necessary, but this algorithm is
+    // simple and works in linear time (or nlogn including the sort). The
+    // general problem here is NP-hard (the maximum acyclic subgraph problem),
+    // but there are probably greedy algorithms we could consider if we need to
+    // do better.
 
     Builder builder(*wasm);
 
