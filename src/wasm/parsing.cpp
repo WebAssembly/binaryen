@@ -16,6 +16,7 @@
 
 #include "parsing.h"
 #include "ir/branch-utils.h"
+#include "support/small_set.h"
 
 namespace wasm {
 
@@ -105,6 +106,39 @@ void UniqueNameMapper::clear() {
 }
 
 void UniqueNameMapper::uniquify(Expression* curr) {
+  // First, scan the code to see if anything needs to be fixed up, since in the
+  // common case nothing needs fixing, and we can verify that very quickly.
+  struct Scanner
+    : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+
+    // Whether things are ok. If not, we need to fix things up.
+    bool ok = true;
+
+    // It is rare to have many nested names in general, so track the seen names
+    // as we go in an efficient way.
+    SmallUnorderedSet<Name, 10> seen;
+
+    void visitExpression(Expression* curr) {
+      BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+        if (!name.is()) {
+          return;
+        }
+        if (seen.count(name)) {
+          // A name has been defined more than once; we'll need to fix that.
+          ok = false;
+        } else {
+          seen.insert(name);
+        }
+      });
+    }
+  } scanner;
+
+  scanner.walk(curr);
+
+  if (scanner.ok) {
+    return;
+  }
+
   struct Walker
     : public ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
     UniqueNameMapper mapper;
@@ -132,9 +166,8 @@ void UniqueNameMapper::uniquify(Expression* curr) {
         }
       });
     }
-  };
+  } walker;
 
-  Walker walker;
   walker.walk(curr);
 }
 
