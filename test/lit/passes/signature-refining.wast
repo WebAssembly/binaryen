@@ -850,3 +850,21 @@
     )
   )
 )
+
+(module
+ (type $[i8] (array i8))
+
+ (func $0
+  (call $1
+   (array.new_fixed $[i8])
+  )
+ )
+
+ (func $1 (param $2 anyref)
+  (drop
+   (ref.cast null struct
+    (local.get $2)
+   )
+  )
+ )
+) ;; TODO
