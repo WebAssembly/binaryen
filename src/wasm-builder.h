@@ -928,11 +928,11 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNewSegData* makeArrayNewSegData(HeapType type,
-                                       Name seg,
-                                       Expression* offset,
-                                       Expression* size) {
-    auto* ret = wasm.allocator.alloc<ArrayNewSegData>();
+  ArrayNewData* makeArrayNewData(HeapType type,
+                                 Name seg,
+                                 Expression* offset,
+                                 Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayNewData>();
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;
@@ -940,11 +940,11 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNewSegElem* makeArrayNewSegElem(HeapType type,
-                                       Name seg,
-                                       Expression* offset,
-                                       Expression* size) {
-    auto* ret = wasm.allocator.alloc<ArrayNewSegElem>();
+  ArrayNewElem* makeArrayNewElem(HeapType type,
+                                 Name seg,
+                                 Expression* offset,
+                                 Expression* size) {
+    auto* ret = wasm.allocator.alloc<ArrayNewElem>();
     ret->segment = seg;
     ret->offset = offset;
     ret->size = size;

@@ -904,7 +904,7 @@ struct InfoCollector
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
-  void visitArrayNewSegData(ArrayNewSegData* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -913,7 +913,7 @@ struct InfoCollector
     Type elemType = heapType.getArray().element.type;
     addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(elemType));
   }
-  void visitArrayNewSegElem(ArrayNewSegElem* curr) {
+  void visitArrayNewElem(ArrayNewElem* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }

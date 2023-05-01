@@ -2315,11 +2315,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitArrayNewSegData(ArrayNewSegData* curr) {
+    Ref visitArrayNewData(ArrayNewData* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitArrayNewSegElem(ArrayNewSegElem* curr) {
+    Ref visitArrayNewElem(ArrayNewElem* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

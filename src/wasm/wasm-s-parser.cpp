@@ -2974,20 +2974,20 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
   return Builder(wasm).makeArrayNew(heapType, size, init);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNewSegData(Element& s) {
+Expression* SExpressionWasmBuilder::makeArrayNewData(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   Name seg = getDataSegmentName(*s[2]);
   Expression* offset = parseExpression(*s[3]);
   Expression* size = parseExpression(*s[4]);
-  return Builder(wasm).makeArrayNewSegData(heapType, seg, offset, size);
+  return Builder(wasm).makeArrayNewData(heapType, seg, offset, size);
 }
 
-Expression* SExpressionWasmBuilder::makeArrayNewSegElem(Element& s) {
+Expression* SExpressionWasmBuilder::makeArrayNewElem(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   Name seg = getElemSegmentName(*s[2]);
   Expression* offset = parseExpression(*s[3]);
   Expression* size = parseExpression(*s[4]);
-  return Builder(wasm).makeArrayNewSegElem(heapType, seg, offset, size);
+  return Builder(wasm).makeArrayNewElem(heapType, seg, offset, size);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayNewFixed(Element& s) {

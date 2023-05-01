@@ -2118,14 +2118,14 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
-void BinaryInstWriter::visitArrayNewSegData(ArrayNewSegData* curr) {
+void BinaryInstWriter::visitArrayNewData(ArrayNewData* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   o << U32LEB(BinaryConsts::ArrayNewData);
   parent.writeIndexedHeapType(curr->type.getHeapType());
   o << U32LEB(parent.getDataSegmentIndex(curr->segment));
 }
 
-void BinaryInstWriter::visitArrayNewSegElem(ArrayNewSegElem* curr) {
+void BinaryInstWriter::visitArrayNewElem(ArrayNewElem* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   o << U32LEB(BinaryConsts::ArrayNewElem);
   parent.writeIndexedHeapType(curr->type.getHeapType());

@@ -204,10 +204,10 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     note(StructField{type, curr->index});
   }
   // TODO: use delegations-fields
-  void visitArrayNewSegData(ArrayNewSegData* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     note({ModuleElementKind::DataSegment, curr->segment});
   }
-  void visitArrayNewSegElem(ArrayNewSegElem* curr) {
+  void visitArrayNewElem(ArrayNewElem* curr) {
     note({ModuleElementKind::ElementSegment, curr->segment});
   }
   void visitArrayInitData(ArrayInitData* curr) {

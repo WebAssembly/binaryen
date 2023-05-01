@@ -1057,13 +1057,13 @@ void ArrayNew::finalize() {
   }
 }
 
-void ArrayNewSegData::finalize() {
+void ArrayNewData::finalize() {
   if (offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;
   }
 }
 
-void ArrayNewSegElem::finalize() {
+void ArrayNewElem::finalize() {
   if (offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;
   }

@@ -1654,12 +1654,8 @@ public:
     }
     return makeGCData(data, curr->type);
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
-    WASM_UNREACHABLE("unimp");
-  }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
-    WASM_UNREACHABLE("unimp");
-  }
+  Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
@@ -2272,12 +2268,12 @@ public:
     NOTE_ENTER("SIMDLoadStoreLane");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
-    NOTE_ENTER("ArrayNewSegData");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
-    NOTE_ENTER("ArrayNewSegElem");
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
@@ -3600,8 +3596,8 @@ public:
     }
     return {};
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
-    NOTE_ENTER("ArrayNewSegData");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
     auto offsetFlow = self()->visit(curr->offset);
     if (offsetFlow.breaking()) {
       return offsetFlow;
@@ -3616,11 +3612,8 @@ public:
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    [[maybe_unused]] auto elemType = heapType.getArray().element.type;
-
     Literals contents;
 
-    assert(elemType.isNumber());
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
     auto end = offset + size * elemBytes;
@@ -3635,8 +3628,8 @@ public:
     }
     return self()->makeGCData(contents, curr->type);
   }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
-    NOTE_ENTER("ArrayNewSegElem");
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
     auto offsetFlow = self()->visit(curr->offset);
     if (offsetFlow.breaking()) {
       return offsetFlow;
@@ -3648,9 +3641,6 @@ public:
 
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
-
-    auto heapType = curr->type.getHeapType();
-    [[maybe_unused]] auto elemType = heapType.getArray().element.type;
 
     Literals contents;
 
@@ -3757,7 +3747,7 @@ public:
     // dropping element segments.
     for (size_t i = 0; i < sizeVal; i++) {
       // TODO: This is not correct because it does not preserve the identity
-      // of references in the table! ArrayNewSeg suffers the same problem.
+      // of references in the table! ArrayNew suffers the same problem.
       // Fixing it will require changing how we represent segments, at least
       // in the interpreter.
       data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
