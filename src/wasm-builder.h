@@ -929,9 +929,9 @@ public:
     return ret;
   }
   ArrayNewData* makeArrayNewData(HeapType type,
-                                       Name seg,
-                                       Expression* offset,
-                                       Expression* size) {
+                                 Name seg,
+                                 Expression* offset,
+                                 Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewData>();
     ret->segment = seg;
     ret->offset = offset;
@@ -941,9 +941,9 @@ public:
     return ret;
   }
   ArrayNewElem* makeArrayNewElem(HeapType type,
-                                       Name seg,
-                                       Expression* offset,
-                                       Expression* size) {
+                                 Name seg,
+                                 Expression* offset,
+                                 Expression* size) {
     auto* ret = wasm.allocator.alloc<ArrayNewElem>();
     ret->segment = seg;
     ret->offset = offset;

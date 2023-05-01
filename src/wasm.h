@@ -1602,8 +1602,7 @@ public:
   void finalize();
 };
 
-class ArrayNewData
-  : public SpecificExpression<Expression::ArrayNewDataId> {
+class ArrayNewData : public SpecificExpression<Expression::ArrayNewDataId> {
 public:
   ArrayNewData(MixedArena& allocator) {}
 
@@ -1614,8 +1613,7 @@ public:
   void finalize();
 };
 
-class ArrayNewElem
-  : public SpecificExpression<Expression::ArrayNewElemId> {
+class ArrayNewElem : public SpecificExpression<Expression::ArrayNewElemId> {
 public:
   ArrayNewElem(MixedArena& allocator) {}
 

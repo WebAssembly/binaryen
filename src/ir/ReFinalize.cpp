@@ -164,12 +164,8 @@ void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
-void ReFinalize::visitArrayNewData(ArrayNewData* curr) {
-  curr->finalize();
-}
-void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) {
-  curr->finalize();
-}
+void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNewFixed(ArrayNewFixed* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }

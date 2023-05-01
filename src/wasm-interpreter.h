@@ -1654,12 +1654,8 @@ public:
     }
     return makeGCData(data, curr->type);
   }
-  Flow visitArrayNewData(ArrayNewData* curr) {
-    WASM_UNREACHABLE("unimp");
-  }
-  Flow visitArrayNewElem(ArrayNewElem* curr) {
-    WASM_UNREACHABLE("unimp");
-  }
+  Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
