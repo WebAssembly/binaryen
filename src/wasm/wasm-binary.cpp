@@ -7130,7 +7130,8 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitArrayNewData(Expression*& out, uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitArrayNewData(Expression*& out,
+                                               uint32_t code) {
   if (code == BinaryConsts::ArrayNew || code == BinaryConsts::ArrayNewDefault) {
     auto heapType = getIndexedHeapType();
     auto* size = popNonVoidExpression();
@@ -7144,7 +7145,8 @@ bool WasmBinaryBuilder::maybeVisitArrayNewData(Expression*& out, uint32_t code) 
   return false;
 }
 
-bool WasmBinaryBuilder::maybeVisitArrayNewElem(Expression*& out, uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitArrayNewElem(Expression*& out,
+                                               uint32_t code) {
   if (code == BinaryConsts::ArrayNewData ||
       code == BinaryConsts::ArrayNewElem) {
     auto isData = code == BinaryConsts::ArrayNewData;
