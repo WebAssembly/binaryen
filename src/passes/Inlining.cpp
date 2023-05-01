@@ -1089,6 +1089,7 @@ struct Inlining : public Pass {
     });
   }
 
+  // See explanation in doInlining() for the parameter nameHint.
   Index inlinedNameHint = 0;
 
   bool worthInlining(Name name) {
