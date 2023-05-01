@@ -51,9 +51,15 @@ namespace wasm {
 namespace {
 
 enum class InliningMode {
+  // We do not know yet if this function can be inlined, as that has
+  // not been computed yet.
   Unknown,
+  // This function cannot be inlinined in any way.
   Uninlineable,
+  // This function can be inlined normally.
   Direct,
+  // This function cannot be inlined normally, but we can use split inlining,
+  // using pattern "A" or "B" (see below).
   SplitPatternA,
   SplitPatternB
 };
@@ -205,6 +211,7 @@ struct InliningAction {
 };
 
 struct InliningState {
+  // Maps functions worth inlining to the mode with which we can inline them.
   std::unordered_map<Name, InliningMode> inlinableFunctions;
   // function name => actions that can be performed in it
   std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction;
@@ -671,6 +678,7 @@ struct FunctionSplitter {
   // perform the splitting (if that has not already been done before).
   Function* getInlineableSplitFunction(Function* func,
                                        InliningMode inliningMode) {
+    assert(inliningMode == InliningMode::SplitPatternA || inliningMode == InliningMode::SplitPatternB);
     auto& split = splits[func->name];
 
     if (!split.inlineable) {
