@@ -663,20 +663,20 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayNew);
     break;
   }
-  case Expression::Id::ArrayNewSegDataId: {
-    DELEGATE_START(ArrayNewSegData);
-    DELEGATE_FIELD_NAME(ArrayNewSegData, segment);
-    DELEGATE_FIELD_CHILD(ArrayNewSegData, size);
-    DELEGATE_FIELD_CHILD(ArrayNewSegData, offset);
-    DELEGATE_END(ArrayNewSegData);
+  case Expression::Id::ArrayNewDataId: {
+    DELEGATE_START(ArrayNewData);
+    DELEGATE_FIELD_NAME(ArrayNewData, segment);
+    DELEGATE_FIELD_CHILD(ArrayNewData, size);
+    DELEGATE_FIELD_CHILD(ArrayNewData, offset);
+    DELEGATE_END(ArrayNewData);
     break;
   }
-  case Expression::Id::ArrayNewSegElemId: {
-    DELEGATE_START(ArrayNewSegElem);
-    DELEGATE_FIELD_NAME(ArrayNewSegElem, segment);
-    DELEGATE_FIELD_CHILD(ArrayNewSegElem, size);
-    DELEGATE_FIELD_CHILD(ArrayNewSegElem, offset);
-    DELEGATE_END(ArrayNewSegElem);
+  case Expression::Id::ArrayNewElemId: {
+    DELEGATE_START(ArrayNewElem);
+    DELEGATE_FIELD_NAME(ArrayNewElem, segment);
+    DELEGATE_FIELD_CHILD(ArrayNewElem, size);
+    DELEGATE_FIELD_CHILD(ArrayNewElem, offset);
+    DELEGATE_END(ArrayNewElem);
     break;
   }
   case Expression::Id::ArrayNewFixedId: {
