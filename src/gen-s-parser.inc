@@ -65,7 +65,7 @@ switch (buf[0]) {
                   case 'd': {
                     switch (buf[11]) {
                       case 'a':
-                        if (op == "array.new_data"sv) { return makeArrayNewSegData(s); }
+                        if (op == "array.new_data"sv) { return makeArrayNewData(s); }
                         goto parse_error;
                       case 'e':
                         if (op == "array.new_default"sv) { return makeArrayNew(s, true); }
@@ -74,7 +74,7 @@ switch (buf[0]) {
                     }
                   }
                   case 'e':
-                    if (op == "array.new_elem"sv) { return makeArrayNewSegElem(s); }
+                    if (op == "array.new_elem"sv) { return makeArrayNewElem(s); }
                     goto parse_error;
                   case 'f':
                     if (op == "array.new_fixed"sv) { return makeArrayNewFixed(s); }
@@ -3707,7 +3707,7 @@ switch (buf[0]) {
                     switch (buf[11]) {
                       case 'a':
                         if (op == "array.new_data"sv) {
-                          auto ret = makeArrayNewSegData(ctx, pos);
+                          auto ret = makeArrayNewData(ctx, pos);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3724,7 +3724,7 @@ switch (buf[0]) {
                   }
                   case 'e':
                     if (op == "array.new_elem"sv) {
-                      auto ret = makeArrayNewSegElem(ctx, pos);
+                      auto ret = makeArrayNewElem(ctx, pos);
                       CHECK_ERR(ret);
                       return *ret;
                     }

@@ -3642,7 +3642,6 @@ public:
     uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
 
-    auto heapType = curr->type.getHeapType();
     Literals contents;
 
     const auto& seg = *wasm.getElementSegment(curr->segment);
