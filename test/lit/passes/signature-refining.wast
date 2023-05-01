@@ -879,6 +879,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $1 (param $2 anyref)
+  ;; The param will become non-nullable after we refine. We must refinalize
+  ;; after doing so, so the cast becomes non-nullable as well.
   (drop
    (ref.cast null struct
     (local.get $2)
