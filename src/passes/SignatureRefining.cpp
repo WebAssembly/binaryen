@@ -156,8 +156,6 @@ struct SignatureRefining : public Pass {
       }
     }
 
-    bool refinedResults = false;
-
     // Compute optimal LUBs.
     std::unordered_set<HeapType> seen;
     for (auto& func : module->functions) {
@@ -225,8 +223,6 @@ struct SignatureRefining : public Pass {
       newSignatures[type] = Signature(newParams, newResults);
 
       if (newResults != func->getResults()) {
-        refinedResults = true;
-
         // Update the types of calls using the signature.
         for (auto* call : info.calls) {
           if (call->type != Type::unreachable) {
@@ -288,11 +284,8 @@ struct SignatureRefining : public Pass {
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
-    if (refinedResults) {
-      // After return types change we need to propagate.
-      // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(getPassRunner(), module);
-    }
+    // TODO: we could do this only in relevant functions perhaps
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
