@@ -290,9 +290,7 @@ else()
   elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
   endif()
-  add_debug_compile_flag("-O0")
   add_debug_compile_flag("-g3")
-  add_nondebug_compile_flag("-O2")
   if(BYN_ENABLE_ASSERTIONS)
     # On non-Debug builds cmake automatically defines NDEBUG, so we
     # explicitly undefine it:
@@ -320,10 +318,12 @@ if(EMSCRIPTEN)
   endif()
 
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-    # link with -O3 for metadce and other powerful optimizations. note that we
-    # must use add_link_options so that this appears after CMake's default -O2
-    add_link_options("-O3")
     add_link_flag("-sSINGLE_FILE")
+    # Extra check that cmake has set -O3 in its release flags.
+    # This is really as an assertion that cmake is behaving as we expect.
+    if(NOT CMAKE_CXX_FLAGS_RELEASE_INIT MATCHES "-O3")
+      message(FATAL_ERROR "Expected -O3 to be in release link flags")
+    endif()
   endif()
 
   add_link_flag("-sALLOW_MEMORY_GROWTH")
