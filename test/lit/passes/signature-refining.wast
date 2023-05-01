@@ -852,14 +852,32 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $ref|$[i8]|_=>_none (func (param (ref $[i8]))))
+
+ ;; CHECK:       (type $[i8] (array i8))
  (type $[i8] (array i8))
 
+ ;; CHECK:       (type $none_=>_none (func))
+
+ ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK-NEXT:  (call $1
+ ;; CHECK-NEXT:   (array.new_fixed $[i8])
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $0
   (call $1
    (array.new_fixed $[i8])
   )
  )
 
+ ;; CHECK:      (func $1 (type $ref|$[i8]|_=>_none) (param $2 (ref $[i8]))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast struct
+ ;; CHECK-NEXT:    (local.get $2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $1 (param $2 anyref)
   (drop
    (ref.cast null struct
