@@ -3616,11 +3616,8 @@ public:
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    [[maybe_unused]] auto elemType = heapType.getArray().element.type;
-
     Literals contents;
 
-    assert(elemType.isNumber());
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
     auto end = offset + size * elemBytes;
@@ -3650,8 +3647,6 @@ public:
     uint64_t size = sizeFlow.getSingleValue().getUnsigned();
 
     auto heapType = curr->type.getHeapType();
-    [[maybe_unused]] auto elemType = heapType.getArray().element.type;
-
     Literals contents;
 
     const auto& seg = *wasm.getElementSegment(curr->segment);
