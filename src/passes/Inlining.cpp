@@ -678,7 +678,8 @@ struct FunctionSplitter {
   // perform the splitting (if that has not already been done before).
   Function* getInlineableSplitFunction(Function* func,
                                        InliningMode inliningMode) {
-    assert(inliningMode == InliningMode::SplitPatternA || inliningMode == InliningMode::SplitPatternB);
+    assert(inliningMode == InliningMode::SplitPatternA ||
+           inliningMode == InliningMode::SplitPatternB);
     auto& split = splits[func->name];
 
     if (!split.inlineable) {
