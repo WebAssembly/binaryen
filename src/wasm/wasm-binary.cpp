@@ -4047,7 +4047,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitArrayNew(curr, opcode)) {
         break;
       }
-      if (maybeVisitArrayNewSeg(curr, opcode)) {
+      if (maybeVisitArrayNew(curr, opcode)) {
         break;
       }
       if (maybeVisitArrayNewFixed(curr, opcode)) {
@@ -7144,7 +7144,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
   return false;
 }
 
-bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
+bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::ArrayNewData ||
       code == BinaryConsts::ArrayNewElem) {
     auto isData = code == BinaryConsts::ArrayNewData;
@@ -7154,12 +7154,12 @@ bool WasmBinaryBuilder::maybeVisitArrayNewSeg(Expression*& out, uint32_t code) {
     auto* offset = popNonVoidExpression();
     if (isData) {
       auto* curr =
-        Builder(wasm).makeArrayNewSegData(heapType, Name(), offset, size);
+        Builder(wasm).makeArrayNewData(heapType, Name(), offset, size);
       dataRefs[segIdx].push_back(&curr->segment);
       out = curr;
     } else {
       auto* curr =
-        Builder(wasm).makeArrayNewSegElem(heapType, Name(), offset, size);
+        Builder(wasm).makeArrayNewElem(heapType, Name(), offset, size);
       elemRefs[segIdx].push_back(&curr->segment);
       out = curr;
     }

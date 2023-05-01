@@ -711,8 +711,8 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
-    ArrayNewSegDataId,
-    ArrayNewSegElemId,
+    ArrayNewDataId,
+    ArrayNewElemId,
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
@@ -1602,10 +1602,10 @@ public:
   void finalize();
 };
 
-class ArrayNewSegData
-  : public SpecificExpression<Expression::ArrayNewSegDataId> {
+class ArrayNewData
+  : public SpecificExpression<Expression::ArrayNewDataId> {
 public:
-  ArrayNewSegData(MixedArena& allocator) {}
+  ArrayNewData(MixedArena& allocator) {}
 
   Name segment;
   Expression* offset;
@@ -1614,10 +1614,10 @@ public:
   void finalize();
 };
 
-class ArrayNewSegElem
-  : public SpecificExpression<Expression::ArrayNewSegElemId> {
+class ArrayNewElem
+  : public SpecificExpression<Expression::ArrayNewElemId> {
 public:
-  ArrayNewSegElem(MixedArena& allocator) {}
+  ArrayNewElem(MixedArena& allocator) {}
 
   Name segment;
   Expression* offset;

@@ -457,9 +457,9 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
-  template<typename ArrayNewSeg> void visitArrayNewSeg(ArrayNewSeg* curr);
-  void visitArrayNewSegData(ArrayNewSegData* curr);
-  void visitArrayNewSegElem(ArrayNewSegElem* curr);
+  template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
+  void visitArrayNewData(ArrayNewData* curr);
+  void visitArrayNewElem(ArrayNewElem* curr);
   void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
@@ -2708,8 +2708,8 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   }
 }
 
-template<typename ArrayNewSeg>
-void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
+template<typename ArrayNew>
+void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "array.new_{data, elem} requires gc [--enable-gc]");
@@ -2741,8 +2741,8 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
   }
 }
 
-void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
-  visitArrayNewSeg(curr);
+void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
+  visitArrayNew(curr);
 
   if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
                     curr,
@@ -2760,8 +2760,8 @@ void FunctionValidator::visitArrayNewSegData(ArrayNewSegData* curr) {
                "array.new_data result element type should be numeric");
 }
 
-void FunctionValidator::visitArrayNewSegElem(ArrayNewSegElem* curr) {
-  visitArrayNewSeg(curr);
+void FunctionValidator::visitArrayNewElem(ArrayNewElem* curr) {
+  visitArrayNew(curr);
 
   if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
                     curr,

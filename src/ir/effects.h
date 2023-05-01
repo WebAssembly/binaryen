@@ -755,12 +755,12 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
-    void visitArrayNewSegData(ArrayNewSegData* curr) {
+    void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
       parent.implicitTrap = true;
     }
-    void visitArrayNewSegElem(ArrayNewSegElem* curr) {
+    void visitArrayNewElem(ArrayNewElem* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
       parent.implicitTrap = true;

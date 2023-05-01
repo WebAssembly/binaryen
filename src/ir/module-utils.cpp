@@ -70,9 +70,9 @@ struct CodeScanner
       counts.note(curr->type);
     } else if (curr->is<ArrayNew>()) {
       counts.note(curr->type);
-    } else if (curr->is<ArrayNewSegData>()) {
+    } else if (curr->is<ArrayNewData>()) {
       counts.note(curr->type);
-    } else if (curr->is<ArrayNewSegElem>()) {
+    } else if (curr->is<ArrayNewElem>()) {
       counts.note(curr->type);
     } else if (curr->is<ArrayNewFixed>()) {
       counts.note(curr->type);

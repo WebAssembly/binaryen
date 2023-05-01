@@ -203,10 +203,10 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     auto type = curr->ref->type.getHeapType();
     note(StructField{type, curr->index});
   }
-  void visitArrayNewSegData(ArrayNewSegData* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     note({ModuleElementKind::DataSegment, curr->segment});
   }
-  void visitArrayNewSegElem(ArrayNewSegElem* curr) {
+  void visitArrayNewElem(ArrayNewElem* curr) {
     note({ModuleElementKind::ElementSegment, curr->segment});
   }
   void visitArrayInitData(ArrayInitData* curr) {

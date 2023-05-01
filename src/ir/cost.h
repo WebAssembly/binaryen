@@ -636,10 +636,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitArrayNew(ArrayNew* curr) {
     return 4 + visit(curr->size) + maybeVisit(curr->init);
   }
-  CostType visitArrayNewSegData(ArrayNewSegData* curr) {
+  CostType visitArrayNewData(ArrayNewData* curr) {
     return 4 + visit(curr->offset) + visit(curr->size);
   }
-  CostType visitArrayNewSegElem(ArrayNewSegElem* curr) {
+  CostType visitArrayNewElem(ArrayNewElem* curr) {
     return 4 + visit(curr->offset) + visit(curr->size);
   }
   CostType visitArrayNewFixed(ArrayNewFixed* curr) {

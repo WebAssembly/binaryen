@@ -1654,10 +1654,10 @@ public:
     }
     return makeGCData(data, curr->type);
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
+  Flow visitArrayNewData(ArrayNewData* curr) {
     WASM_UNREACHABLE("unimp");
   }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
     WASM_UNREACHABLE("unimp");
   }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -2272,12 +2272,12 @@ public:
     NOTE_ENTER("SIMDLoadStoreLane");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
-    NOTE_ENTER("ArrayNewSegData");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
-    NOTE_ENTER("ArrayNewSegElem");
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
@@ -3600,8 +3600,8 @@ public:
     }
     return {};
   }
-  Flow visitArrayNewSegData(ArrayNewSegData* curr) {
-    NOTE_ENTER("ArrayNewSegData");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
     auto offsetFlow = self()->visit(curr->offset);
     if (offsetFlow.breaking()) {
       return offsetFlow;
@@ -3632,8 +3632,8 @@ public:
     }
     return self()->makeGCData(contents, curr->type);
   }
-  Flow visitArrayNewSegElem(ArrayNewSegElem* curr) {
-    NOTE_ENTER("ArrayNewSegElem");
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
     auto offsetFlow = self()->visit(curr->offset);
     if (offsetFlow.breaking()) {
       return offsetFlow;
@@ -3752,7 +3752,7 @@ public:
     // dropping element segments.
     for (size_t i = 0; i < sizeVal; i++) {
       // TODO: This is not correct because it does not preserve the identity
-      // of references in the table! ArrayNewSeg suffers the same problem.
+      // of references in the table! ArrayNew suffers the same problem.
       // Fixing it will require changing how we represent segments, at least
       // in the interpreter.
       data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
