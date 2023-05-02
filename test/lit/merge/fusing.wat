@@ -3,7 +3,7 @@
 ;; Remove unused module elements is run so that we can see that all the imports
 ;; that should be removed are in fact removed.
 
-;; RUN: wasm-merge %s first %s.second.wat second -all -S -o %t.wasm
+;; RUN: wasm-merge %s first %s.second second -all -S -o %t.wasm
 ;; RUN: wasm-opt %t.wasm --remove-unused-module-elements -all -S -o - | filecheck %s
 
 ;; Test that we fuse imports to exports across modules.
