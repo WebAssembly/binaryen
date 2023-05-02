@@ -683,9 +683,10 @@ first.exports.main();
 What `wasm-merge` does is basically what that JS does: it hooks up imports to
 exports, resolving names using the module names you provided. That is, by
 running `wasm-merge` we are moving the work of connecting the modules from
-runtime using JS to compile-time. As a result, after running `wasm-merge` we
+runtime to compile-time. As a result, after running `wasm-merge` we
 need a lot less JS to get the same result:
 
+```js
 // Compile the single module.
 var merged = await fetch("merged.wasm");
 merged = new WebAssembly.Module(merged);
