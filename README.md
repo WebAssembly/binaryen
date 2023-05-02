@@ -567,11 +567,11 @@ example, in Emscripten `wasm-ctor-eval` is even run on `main()` when possible.
 
 ### wasm-merge
 
-`wasm-merge` combines wasm files together. For example, if you have a project
-that uses wasm files from multiple toolchains, then it can be helpful to merge
-them all into a single wasm file before shipping. In the single wasm file the
-calls between the modules become just normal calls inside a module, which allows
-them to be inlined, dead code eliminated, and so forth.
+`wasm-merge` combines wasm files together. For example, imagine you have a
+project that uses wasm files from multiple toolchains. Then it can be helpful to
+merge them all into a single wasm file before shipping, since in a single wasm
+file the calls between the modules become just normal calls inside a module,
+which allows them to be inlined, dead code eliminated, and so forth.
 
 For example, imagine we have these two wasm files:
 
@@ -609,7 +609,7 @@ That is, we want the first module's import of `"second.bar"` to call the
 function `$func` in the second module. Here is a wasm-merge command for them:
 
 ```
-bin/wasm-merge a.wasm first b.wasm second -o output.wasm
+wasm-merge a.wasm first b.wasm second -o output.wasm
 ```
 
 We give it the first wasm file, then its name, and then the second wasm file
@@ -635,16 +635,19 @@ and then its name. The merged output is this:
 )
 ```
 
-Note how `$func` calls `$func_2`, which is exactly what we wanted: `$func_2` is
-the function from the second module, but it was renamed to avoid a name
-collision. `wasm-merge` fixes up all such name collisions, connects
-corresponding imports to exports, and emits the merged was file for us.
+`wasm-merge` combined the two files into one, merging their functions, imports,
+etc., all while fixing up name conflicts and connecting corresponding imports to
+exports. In particular, note how `$func` calls `$func_2`, which is exactly what
+we wanted: `$func_2` is the function from the second module (renamed to avoid a
+name collision).
 
-Note that the wasm file could benefit from additional optimization, as we may
-not need the import of `"second.bar"` anymore. You can use
-[wasm-metadce](https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports)
-for that, after which running general optimizations with `wasm-opt` can remove
-unused code and inline and so forth.
+Note that the wasm output in this example could benefit from additional
+optimization. First, the call to `$func_2` can now be easily inlined, so we can
+run `wasm-opt -O3` or so to do that for us. Also, we may not need all the
+imports and exports, for which we can run
+[wasm-metadce](https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports).
+A good workflow could be to run `wasm-merge`, then `wasm-metadce`, then finish
+with `wasm-opt`.
 
 ## Testing
 
