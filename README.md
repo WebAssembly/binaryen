@@ -649,6 +649,60 @@ imports and exports, for which we can run
 A good workflow could be to run `wasm-merge`, then `wasm-metadce`, then finish
 with `wasm-opt`.
 
+`wasm-merge` is kind of like a bundler for wasm files, in the sense of a "JS
+bundler" but for wasm. That is, with the wasm files above, imagine that we had
+this JS code to instantiate and connect them at runtime:
+
+```js
+// Compile the first module.
+var first = await fetch("a.wasm");
+first = new WebAssembly.Module(first);
+
+// Compile the first module.
+var second = await fetch("b.wasm");
+second = new WebAssembly.Module(second);
+
+// Instantiate the second, with a JS import.
+second = new WebAssembly.Instance(second, {
+  outside: {
+    log: (value) => {
+      console.log('value:', value);
+    }
+  }
+});
+
+// Instantiate the first, importing from the second.
+first = new WebAssembly.Instance(first, {
+  second: second.exports
+});
+
+// Call the main function.
+first.exports.main();
+```
+
+What `wasm-merge` does is basically what that JS does: it hooks up imports to
+exports, resolving names using the module names you provided. That is, by
+running `wasm-merge` we are moving the work of connecting the modules from
+runtime using JS to compile-time. As a result, after running `wasm-merge` we
+need a lot less JS to get the same result:
+
+// Compile the single module.
+var merged = await fetch("merged.wasm");
+merged = new WebAssembly.Module(merged);
+
+// Instantiate it with a JS import.
+merged = new WebAssembly.Instance(merged, {
+  outside: {
+    log: (value) => {
+      console.log('value:', value);
+    }
+  }
+});
+
+// Call the main function.
+merged.exports.main();
+```
+
 ## Testing
 
 ```
