@@ -408,12 +408,12 @@ Note that filenames and modules names are interleaved (which is hopefully less c
     .add("--output",
          "-o",
          "Output file (stdout if not specified)",
-                      WasmMergeOption,
-                      Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["output"] = argument;
-                        Colors::setEnabled(false);
-                      })
+         WasmMergeOption,
+         Options::Arguments::One,
+         [](Options* o, const std::string& argument) {
+           o->extra["output"] = argument;
+           Colors::setEnabled(false);
+         })
     .add_positional("INFILE1 NAME1 INFILE2 NAME2 [..]",
                     Options::Arguments::N,
                     [&](Options* o, const std::string& argument) {
