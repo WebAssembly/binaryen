@@ -402,7 +402,7 @@ For example,
 
 will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if the second imports from 'foo', we will see that as an import from the first module after the merge. The merged output will be written to merged.wasm.
 
-Note that filenames and modules names are interleaved (which is hopefully less confusing).");
+Note that filenames and modules names are interleaved (which is hopefully less confusing).)");
 
   options
     .add("--output",
