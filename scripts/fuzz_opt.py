@@ -1251,9 +1251,14 @@ class Merge(TestCaseHandler):
     frequency = 1
 
     def handle(self, wasm):
-        # generate a second wasm file to merge
+        # generate a second wasm file to merge. note that we intentionally pick
+        # a smaller size than the main wasm file, so that reduction is
+        # effective (i.e., as we reduce the main wasm to small sizes, we also
+        # end up with small secondary wasms)
         # TODO: add imports and exports that connect between the two
-        make_random_input(random_size(), 'second_input.dat')
+        wasm_size = os.stat(wasm).st_size
+        second_size = min(wasm_size, random_size())
+        make_random_input(second_size, 'second_input.dat')
         run([in_bin('wasm-opt'), 'second_input.dat', '-ttf', '-o', abspath('second.wasm')] + FUZZ_OPTS + FEATURE_OPTS)
 
         # TODO: optimize the second input sometimes
