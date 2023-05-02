@@ -194,10 +194,17 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 #include "wasm-delegations-fields.def"
     }
 
-    // Aside from expressions, we have a few other things we need to update.
+    // Aside from expressions, we have a few other things we need to update at
+    // the module scope.
     void mapModuleFields(Module& wasm) {
       for (auto& curr : wasm.exports) {
         mapName(ModuleItemKind(curr->kind), curr->value);
+      }
+      for (auto& curr : wasm.elementSegments) {
+        mapName(ModuleItemKind::Table, curr->table);
+      }
+      for (auto& curr : wasm.dataSegments) {
+        mapName(ModuleItemKind::Memory, curr->memory);
       }
 
       mapName(ModuleItemKind::Function, wasm.start);
