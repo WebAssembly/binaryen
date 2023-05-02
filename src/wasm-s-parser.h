@@ -300,8 +300,8 @@ private:
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayNewSegData(Element& s);
-  Expression* makeArrayNewSegElem(Element& s);
+  Expression* makeArrayNewData(Element& s);
+  Expression* makeArrayNewElem(Element& s);
   Expression* makeArrayNewFixed(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);

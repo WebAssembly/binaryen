@@ -591,8 +591,8 @@ instructions = [
     ("struct.set",           "makeStructSet(s)"),
     ("array.new",            "makeArrayNew(s, false)"),
     ("array.new_default",    "makeArrayNew(s, true)"),
-    ("array.new_data",       "makeArrayNewSegData(s)"),
-    ("array.new_elem",       "makeArrayNewSegElem(s)"),
+    ("array.new_data",       "makeArrayNewData(s)"),
+    ("array.new_elem",       "makeArrayNewElem(s)"),
     ("array.init_static",    "makeArrayNewFixed(s)"),  # deprecated
     ("array.new_fixed",      "makeArrayNewFixed(s)"),
     ("array.get",            "makeArrayGet(s)"),

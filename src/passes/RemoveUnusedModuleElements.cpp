@@ -203,20 +203,18 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     auto type = curr->ref->type.getHeapType();
     note(StructField{type, curr->index});
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
-    if (curr->dataSegment.is()) {
-      note({ModuleElementKind::DataSegment, curr->dataSegment});
-    } else {
-      note({ModuleElementKind::ElementSegment, curr->elemSegment});
-    }
+  // TODO: use delegations-fields
+  void visitArrayNewData(ArrayNewData* curr) {
+    note({ModuleElementKind::DataSegment, curr->segment});
   }
-  void visitArrayInit(ArrayInit* curr) {
-    // TODO: use delegations-fields
-    if (curr->dataSegment.is()) {
-      note({ModuleElementKind::DataSegment, curr->dataSegment});
-    } else {
-      note({ModuleElementKind::ElementSegment, curr->elemSegment});
-    }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    note({ModuleElementKind::ElementSegment, curr->segment});
+  }
+  void visitArrayInitData(ArrayInitData* curr) {
+    note({ModuleElementKind::DataSegment, curr->segment});
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    note({ModuleElementKind::ElementSegment, curr->segment});
   }
 };
 
