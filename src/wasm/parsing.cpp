@@ -108,7 +108,8 @@ void UniqueNameMapper::clear() {
 namespace {
 
 struct DuplicateNameScanner
-  : public PostWalker<DuplicateNameScanner, UnifiedExpressionVisitor<DuplicateNameScanner>> {
+  : public PostWalker<DuplicateNameScanner,
+                      UnifiedExpressionVisitor<DuplicateNameScanner>> {
 
   // Whether things are ok. If not, we need to fix things up.
   bool ok = true;
