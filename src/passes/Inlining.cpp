@@ -546,12 +546,12 @@ struct FunctionSplitter {
   // Check if an function could be split in order to at least inline part of it,
   // in a worthwhile manner.
   //
-  // Even if this returns true, we may not end up inlining the function, as the
-  // main inlining logic has a few other considerations to take into account
-  // (like limitations on which functions can be inlined into in each iteration,
-  // the number of iterations, etc.). Therefore this function will only find out
-  // if we *can* split, but not actually do any splitting.
-  InliningMode getSplitDrivenInliningMode(Function* func) {
+  // Even if this returns a split inlining mode, we may not end up inlining the
+  // function, as the main inlining logic has a few other considerations to take
+  // into account (like limitations on which functions can be inlined into in
+  // each iteration, the number of iterations, etc.). Therefore this function
+  // may only find out if we *can* split, but not actually do any splitting.
+  InliningMode getSplitInliningMode(Function* func) {
     auto* body = func->body;
 
     // If the body is a block, and we have breaks to that block, then we cannot
@@ -1084,7 +1084,7 @@ struct Inlining : public Pass {
     // interested in such things.
     if (functionSplitter) {
       info.inliningMode =
-        functionSplitter->getSplitDrivenInliningMode(module->getFunction(name));
+        functionSplitter->getSplitInliningMode(module->getFunction(name));
       return info.inliningMode;
     }
 
