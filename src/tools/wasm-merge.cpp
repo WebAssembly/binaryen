@@ -297,11 +297,13 @@ void copyModuleContents(Module& input, Name inputName) {
     } else {
       // Merge them, keeping the order. Note that we need to create a new
       // function as there may be other references.
-      auto* oldStart = merged.getFunction(merged.start);
-      auto* newStart = merged.getFunction(input.start);
-      auto mergedName = Names::getValidFunctionName(merged, "merged.start");
       Builder builder(merged);
-      auto* mergedBody = builder.makeSequence(oldStart->body, newStart->body);
+      auto mergedName = Names::getValidFunctionName(merged, "merged.start");
+      auto* oldStart = merged.getFunction(merged.start);
+      auto* oldStartBody = ExpressionManipulator::copy(oldStart->body, merged);
+      auto* newStart = merged.getFunction(input.start);
+      auto* newStartBody = ExpressionManipulator::copy(newStart->body, merged);
+      auto* mergedBody = builder.makeSequence(oldStartBody, newStartBody);
       auto mergedFunc = builder.makeFunction(
         mergedName, Signature{Type::none, Type::none}, {}, mergedBody);
       merged.addFunction(std::move(mergedFunc));
