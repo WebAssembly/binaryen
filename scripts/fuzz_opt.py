@@ -81,6 +81,11 @@ def random_size():
     return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
+def make_random_input(input_size, raw_input_data):
+    with open(raw_input_data, 'wb') as f:
+        f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+
+
 def run(cmd, stderr=None, silent=False):
     if not silent:
         print(' '.join(cmd))
@@ -1241,6 +1246,29 @@ class CtorEval(TestCaseHandler):
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
 
 
+# Tests wasm-merge
+class Merge(TestCaseHandler):
+    frequency = 1
+
+    def handle(self, wasm):
+        # generate a second wasm file to merge
+        # TODO: add imports and exports that connect between the two
+        make_random_input(random_size(), 'second_input.dat')
+        run([in_bin('wasm-opt'), 'second_input.dat', '-ttf', '-o', abspath('second.wasm')] + FUZZ_OPTS + FEATURE_OPTS)
+
+        # TODO: optimize the second input sometimes
+
+        # merge the wasm files. note that we must pass -all, as even if the two
+        # inputs are MVP, the output may have multiple tables and multiple
+        # memories (and we must also do that in the commands later down).
+        run([in_bin('wasm-merge'), wasm, 'first', 'second.wasm', 'second', '-o', 'merged.wasm'] + FEATURE_OPTS + ['-all'])
+
+        # verify that merging in the second module did not alter the output
+        output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+        merged_output = run_bynterp('merged.wasm', ['--fuzz-exec-before', '-all'])
+        compare_between_vms(fix_output(output), fix_output(merged_output), 'Merge')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1263,6 +1291,7 @@ testcase_handlers = [
     Asyncify(),
     TrapsNeverHappen(),
     CtorEval(),
+    Merge(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
@@ -1600,8 +1629,7 @@ if __name__ == '__main__':
               'iters/sec, ', total_wasm_size / elapsed,
               'wasm_bytes/sec, ', ignored_vm_runs,
               'ignored\n')
-        with open(raw_input_data, 'wb') as f:
-            f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        make_random_input(input_size, raw_input_data)
         assert os.path.getsize(raw_input_data) == input_size
         # remove the generated wasm file, so that we can tell if the fuzzer
         # fails to create one
