@@ -24,8 +24,9 @@
 // connections between the modules any more, and DCE and inlining can help
 // inside the module, etc. In other words, wasm-merge is sort of like a wasm
 // bundler, where "bundler" means something similar to JS bundlers. (While JS is
-// mentioned here a lot, wasm-merge could also be helpful with the component
-// model for wasm that is in development.)
+// mentioned here a lot, wasm-merge could in principle also be helpful with
+// optimizing other ways of connecting modules at compile time instead of
+// runtime, like perhaps the component model for wasm that is in development.)
 //
 // The specific merging model here is to take N wasm modules, each with a given
 // name:
@@ -35,18 +36,57 @@
 //
 // We resolve imports and exports using those names as we merge all the code
 // into the final module. That is, if wasm_i imports "foo.bar", and wasm_j has
-// name name_j == "foo" and it exports a function bar, then wasm_i's import of
+// name name_j == "foo" and it exports a function "bar" then wasm_i's import of
 // "foo.bar" will turn into a reference to the proper item from wasm_j that
-// corresponds to that export.
+// corresponds to that export:
+//
+//  ;; metadata: module wasm_i
+//  (module
+//    (import "foo" "bar" (func $foo.bar))
+//    (func $other
+//      (call $foo.bar)
+//    )
+//  )
+//
+//  ;; metadata: module wasm_j, which has name "foo"
+//  (module
+//    (func $f (export "bar")
+//      ..
+//    )
+//  )
+//
+// => wasm-merge =>
+//
+//  (module
+//    ..
+//    (func $other
+//      (call $f) ;; call $f directly since "foo.bar" resolved as $f
+//    )
+//    (func $f
+//      ..
+//    )
+//  )
+//
+// We call that process "fusing" of imports to exports. Note that we don't
+// bother to optimize here - we don't remove either the export or the import,
+// even if we fuse - as it is simple to leave that for later optimizations
+// (removing unwanted exports can be done using wasm-metadce, see
+// https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
+// ).
+//
+// To implement that, we need to track the module origin of exports, which we do
+// with the following data structure, which maps Export objects to their info.
+
 //
 // Note that we allow "forward references" - a reference from an earlier module
 // to a later one. If one instantiates the wasm modules in sequence then that is
 // impossible to do, and to work around it e.g. emscripten dynamic linking
 // support will add a thunk, but ES module support should allow it for wasm, and
-// so we support it here.
+// so we support it here for full generality.
 //
-// The order of modules does matter in one way, however: if the modules have
-// start functions then those are called in the given order of the modules.
+// Despite resolving imports and exports without regard for the order of
+// modules, the order does matter in one way: if the modules have start
+// functions then those are called in the given order of the modules.
 //
 
 #include "ir/module-utils.h"
@@ -70,66 +110,29 @@ Module merged;
 // Merging two modules is mostly straightforward: copy the functions etc. of the
 // first module into the second, with some renaming to avoid name collisions.
 // The only other thing we need to handle is the mapping of imports to exports,
-// which can happen both ways. The way we handle this is to first combine the
-// items into a single module, while tracking the origin module for exports.
-// Then as a later operation we hook up imports and exports.
+// as explained earlier. The way we handle this is to first combine the modules
+// into a single module, then connect imports and imports. To do that we track
+// the origin of each export.
 //
-// For example, if we have these two modules:
+// For example, in the example from earlier we have this as the second module:
 //
-//  ;; metadata: module "A"
+//  ;; metadata: module wasm_j, which has name "foo"
 //  (module
-//    (import "B" "c" (func $d))
-//    (func $e
-//      (call $d)
-//    )
-//  )
-//
-//  ;; metadata: module "B"
-//  (module
-//    (func $f (export "c")
+//    (func $f (export "bar")
 //      ..
 //    )
 //  )
 //
-// Then the first phase just combines them into this single module:
-//
-//  (module
-//    (import "B" "c" (func $d))
-//    (func $e
-//      (call $d)
-//    )
-//    (func $f (export "c") ;; metadata: exported from "B"
-//      ..
-//    )
-//  )
-//
-// And then we can connect the export "c" which we remember was from "B" to the
-// import of B.c:
-//
-//  (module
-//    (import "B" "c" (func $d))
-//    (func $e
-//      (call $f) ;; only this line changed
-//    )
-//    (func $f (export "c")
-//      ..
-//    )
-//  )
-//
-// We call this "fusing" the imports and exports together.
-//
-// Note that we don't bother to remove either the export or the import, which we
-// leave for later (optimizations can remove the import, and we handle exports
-// lower down).
-//
-// To implement that, we need to track the module origin of exports, which we do
-// with the following data structure, which maps Export objects to their info.
+// We will annotate that exported function as being from module "foo", so that
+// we can resolve imports to "foo.bar" to it. The ExportInfo data structure
+// tracks the extra info we need for exports as we go.
 struct ExportInfo {
-  // The name of the module this export originally appeared in.
+  // The name of the module this export originally appeared in, as just
+  // explained.
   Name moduleName;
   // The name of the export itself, which is the basename (the export will be
   // used as module.base). This is normally just the same as export->name, but
-  // we need to stash it here because exports may be renamed/ when merged in, if
+  // we need to stash it here because exports may be renamed when merged in, if
   // there is overlap with the name of another export, and imports refer to the
   // original name.
   Name baseName;
@@ -137,20 +140,18 @@ struct ExportInfo {
 using ExportModuleMap = std::unordered_map<Export*, ExportInfo>;
 ExportModuleMap exportModuleMap;
 
-// A map of (kind of thing in the module) to (old name => new name) for things
-// of that kind. For example, one of the maps is of old function names to new
-// function names.
+// A map of [kind of thing in the module] to [old name => new name] for things
+// of that kind. For example, that NameMap for functions is a map of old
+// function names to new function names.
 using NameMap = std::unordered_map<Name, Name>;
 using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
 
-// Applies a set of name changes to a module.
+// Apply a set of name changes to a module.
 void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
   if (kindNameMaps.empty()) {
     return;
   }
 
-  // Update the input module in place. This is more efficient than making a
-  // copy or updating it as we go in some online manner.
   struct NameMapper
     : public WalkerPass<
         PostWalker<NameMapper, UnifiedExpressionVisitor<NameMapper>>> {
@@ -194,7 +195,6 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
     }
 
     // Aside from expressions, we have a few other things we need to update.
-
     void mapModuleFields(Module& wasm) {
       for (auto& curr : wasm.exports) {
         mapName(ModuleItemKind(curr->kind), curr->value);
@@ -219,9 +219,13 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 }
 
 // Scan an input module to find the names of the items it contains, and pick new
-// names for them that do not cause conflicts in the target.
+// names for them that do not cause conflicts with things already in the merged
+// module.
 void renameInputItems(Module& input) {
   // Pick the names, and apply them to the items themselves.
+  // TODO Add ModuleUtils::iterAll + getValidName(kind, ..)? Then we could
+  //      avoid hardcoded loops here, but it's unclear those would help
+  //      anywhere else.
   KindNameMaps kindNameMaps;
   for (auto& curr : input.functions) {
     auto name = Names::getValidFunctionName(merged, curr->name);
