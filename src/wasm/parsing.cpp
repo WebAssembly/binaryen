@@ -123,6 +123,9 @@ void UniqueNameMapper::uniquify(Expression* curr) {
         if (!name.is()) {
           return;
         }
+        // TODO: This could be done in a single insert operation that checks
+        //       whether we actually inserted, if we improved
+        //       SmallSetBase::insert to return a value like std::set does.
         if (seen.count(name)) {
           // A name has been defined more than once; we'll need to fix that.
           ok = false;
