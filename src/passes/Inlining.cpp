@@ -50,6 +50,21 @@ namespace wasm {
 
 namespace {
 
+enum class InliningMode {
+  // We do not know yet if this function can be inlined, as that has
+  // not been computed yet.
+  Unknown,
+  // This function cannot be inlinined in any way.
+  Uninlineable,
+  // This function can be inlined fully, that is, normally: the entire function
+  // can be inlined. This is in contrast to partial inlining, see below.
+  Full,
+  // This function cannot be inlined normally, but we can use split inlining,
+  // using pattern "A" or "B" (see below).
+  SplitPatternA,
+  SplitPatternB
+};
+
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
   std::atomic<Index> refs;
@@ -58,7 +73,7 @@ struct FunctionInfo {
   bool hasLoops;
   bool hasTryDelegate;
   bool usedGlobally; // in a table or export
-  bool uninlineable;
+  InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
 
@@ -69,7 +84,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
-    uninlineable = false;
+    inliningMode = InliningMode::Unknown;
   }
 
   // Provide an explicit = operator as the |refs| field lacks one by default.
@@ -80,15 +95,12 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
-    uninlineable = other.uninlineable;
+    inliningMode = other.inliningMode;
     return *this;
   }
 
   // See pass.h for how defaults for these options were chosen.
-  bool worthInlining(PassOptions& options) {
-    if (uninlineable) {
-      return false;
-    }
+  bool worthFullInlining(PassOptions& options) {
     // Until we have proper support for try-delegate, ignore such functions.
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
@@ -181,7 +193,7 @@ struct FunctionInfoScanner
     auto& info = (*infos)[curr->name];
 
     if (!canHandleParams(curr)) {
-      info.uninlineable = true;
+      info.inliningMode = InliningMode::Uninlineable;
     }
 
     info.size = Measurer::measure(curr->body);
@@ -200,7 +212,8 @@ struct InliningAction {
 };
 
 struct InliningState {
-  std::unordered_set<Name> worthInlining;
+  // Maps functions worth inlining to the mode with which we can inline them.
+  std::unordered_map<Name, InliningMode> inlinableFunctions;
   // function name => actions that can be performed in it
   std::unordered_map<Name, std::vector<InliningAction>> actionsForFunction;
 };
@@ -228,7 +241,7 @@ struct Planner : public WalkerPass<PostWalker<Planner>> {
     } else {
       isUnreachable = curr->type == Type::unreachable;
     }
-    if (state->worthInlining.count(curr->target) && !isUnreachable &&
+    if (state->inlinableFunctions.count(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
       // nest the call in a block. that way the location of the pointer to the
       // call will not change even if we inline multiple times into the same
@@ -534,34 +547,19 @@ struct FunctionSplitter {
   // Check if an function could be split in order to at least inline part of it,
   // in a worthwhile manner.
   //
-  // Even if this returns true, we may not end up inlining the function, as the
-  // main inlining logic has a few other considerations to take into account
-  // (like limitations on which functions can be inlined into in each iteration,
-  // the number of iterations, etc.). Therefore this function will only find out
-  // if we *can* split, but not actually do any splitting.
-  bool canSplit(Function* func) {
-    if (!canHandleParams(func)) {
-      return false;
-    }
-
-    // Check if we've processed this input before.
-    auto iter = splits.find(func->name);
-    if (iter != splits.end()) {
-      return iter->second.splitKind != Split::Kind::None;
-    }
-
-    // The default value of split.splittable is false, so if we fail we just
-    // need to return false from this function. If, on the other hand, we can
-    // split, then we will update this split info accordingly.
-    auto& split = splits[func->name];
-
+  // Even if this returns a split inlining mode, we may not end up inlining the
+  // function, as the main inlining logic has a few other considerations to take
+  // into account (like limitations on which functions can be inlined into in
+  // each iteration, the number of iterations, etc.). Therefore this function
+  // may only find out if we *can* split, but not actually do any splitting.
+  InliningMode getSplitInliningMode(Function* func) {
     auto* body = func->body;
 
     // If the body is a block, and we have breaks to that block, then we cannot
     // outline any code - we can't outline a break without the break's target.
     if (auto* block = body->dynCast<Block>()) {
       if (BranchUtils::BranchSeeker::has(block, block->name)) {
-        return false;
+        return InliningMode::Uninlineable;
       }
     }
 
@@ -569,13 +567,13 @@ struct FunctionSplitter {
     // of the function.
     auto* iff = getIf(body);
     if (!iff) {
-      return false;
+      return InliningMode::Uninlineable;
     }
 
     // If the condition is not very simple, the benefits of this optimization
     // are not obvious.
     if (!isSimple(iff->condition)) {
-      return false;
+      return InliningMode::Uninlineable;
     }
 
     // Pattern A: Check if the function begins with
@@ -590,9 +588,7 @@ struct FunctionSplitter {
       // return), and we would not even attempt to do splitting.
       assert(body->is<Block>());
 
-      split.splitKind = Split::Kind::PatternA;
-
-      return true;
+      return InliningMode::SplitPatternA;
     }
 
     // Pattern B: Represents a function whose entire body looks like
@@ -637,7 +633,7 @@ struct FunctionSplitter {
       numIfs++;
     }
     if (numIfs == 0 || numIfs > MaxIfs) {
-      return false;
+      return InliningMode::Uninlineable;
     }
 
     // Look for a final item after the ifs.
@@ -645,24 +641,24 @@ struct FunctionSplitter {
 
     // The final item must be simple (or not exist, which is simple enough).
     if (finalItem && !isSimple(finalItem)) {
-      return false;
+      return InliningMode::Uninlineable;
     }
 
     // There must be no other items after the optional final one.
     if (finalItem && getItem(body, numIfs + 1)) {
-      return false;
+      return InliningMode::Uninlineable;
     }
     // This has the general shape we seek. Check each if.
     for (Index i = 0; i < numIfs; i++) {
       auto* iff = getIf(body, i);
       // The if must have a simple condition and no else arm.
       if (!isSimple(iff->condition) || iff->ifFalse) {
-        return false;
+        return InliningMode::Uninlineable;
       }
       if (iff->ifTrue->type == Type::none) {
         // This must have no returns.
         if (!FindAll<Return>(iff->ifTrue).list.empty()) {
-          return false;
+          return InliningMode::Uninlineable;
         }
       } else {
         // This is an if without an else, and so the type is either none of
@@ -672,9 +668,7 @@ struct FunctionSplitter {
     }
 
     // Success, this matches the pattern.
-    split.splitKind = Split::Kind::PatternB;
-
-    return true;
+    return InliningMode::SplitPatternB;
   }
 
   // Returns the function we should inline, after we split the function into two
@@ -683,15 +677,15 @@ struct FunctionSplitter {
   //
   // This is called when we are definitely inlining the function, and so it will
   // perform the splitting (if that has not already been done before).
-  Function* getInlineableSplitFunction(Function* func) {
-    auto iter = splits.find(func->name);
-    assert(iter != splits.end());
+  Function* getInlineableSplitFunction(Function* func,
+                                       InliningMode inliningMode) {
+    assert(inliningMode == InliningMode::SplitPatternA ||
+           inliningMode == InliningMode::SplitPatternB);
+    auto& split = splits[func->name];
 
-    auto& split = iter->second;
     if (!split.inlineable) {
       // We haven't performed the split, do it now.
-      assert(split.splitKind != Split::Kind::None);
-      split.inlineable = doSplit(func, split.splitKind);
+      split.inlineable = doSplit(func, inliningMode);
     }
 
     return split.inlineable;
@@ -721,13 +715,6 @@ struct FunctionSplitter {
 private:
   // Information about splitting a function.
   struct Split {
-    enum class Kind { None, PatternA, PatternB };
-
-    // Whether we can split the function. If this is None, the other two will
-    // remain nullptr forever; if this is set then we will populate them the
-    // first time we need them.
-    Kind splitKind = Kind::None;
-
     // The inlineable function out of the two that we generate by splitting.
     // That is, foo$inlineable from above.
     Function* inlineable = nullptr;
@@ -743,10 +730,10 @@ private:
   // staying constant.
   std::unordered_map<Name, Split> splits;
 
-  Function* doSplit(Function* func, Split::Kind splitKind) {
+  Function* doSplit(Function* func, InliningMode inliningMode) {
     Builder builder(*module);
 
-    if (splitKind == Split::Kind::PatternA) {
+    if (inliningMode == InliningMode::SplitPatternA) {
       // Note that "A" in the name here identifies this as being a split from
       // pattern A. The second pattern B will have B in the name.
       Function* inlineable = copyFunction(func, "inlineable-A");
@@ -768,7 +755,7 @@ private:
       return inlineable;
     }
 
-    assert(splitKind == Split::Kind::PatternB);
+    assert(inliningMode == InliningMode::SplitPatternB);
 
     Function* inlineable = copyFunction(func, "inlineable-B");
 
@@ -1003,11 +990,13 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      if (worthInlining(func->name)) {
-        state.worthInlining.insert(func->name);
+      InliningMode inliningMode = getInliningMode(func->name);
+      assert(inliningMode != InliningMode::Unknown);
+      if (inliningMode != InliningMode::Uninlineable) {
+        state.inlinableFunctions[func->name] = inliningMode;
       }
     });
-    if (state.worthInlining.size() == 0) {
+    if (state.inlinableFunctions.empty()) {
       return;
     }
     // Fill in actionsForFunction, as we operate on it in parallel (each
@@ -1079,20 +1068,29 @@ struct Inlining : public Pass {
     });
   }
 
-  bool worthInlining(Name name) {
+  InliningMode getInliningMode(Name name) {
+    auto& info = infos[name];
+
+    if (info.inliningMode != InliningMode::Unknown) {
+      return info.inliningMode;
+    }
+
     // Check if the function itself is worth inlining as it is.
-    if (infos[name].worthInlining(getPassOptions())) {
-      return true;
+    if (info.worthFullInlining(getPassOptions())) {
+      info.inliningMode = InliningMode::Full;
+      return info.inliningMode;
     }
 
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
-    if (functionSplitter &&
-        functionSplitter->canSplit(module->getFunction(name))) {
-      return true;
+    if (functionSplitter) {
+      info.inliningMode =
+        functionSplitter->getSplitInliningMode(module->getFunction(name));
+      return info.inliningMode;
     }
 
-    return false;
+    info.inliningMode = InliningMode::Uninlineable;
+    return info.inliningMode;
   }
 
   // Gets the actual function to be inlined. Normally this is the function
@@ -1103,15 +1101,16 @@ struct Inlining : public Pass {
   // This is called right before actually performing the inlining, that is, we
   // are guaranteed to inline after this.
   Function* getActuallyInlinedFunction(Function* func) {
+    InliningMode inliningMode = infos[func->name].inliningMode;
     // If we want to inline this function itself, do so.
-    if (infos[func->name].worthInlining(getPassOptions())) {
+    if (inliningMode == InliningMode::Full) {
       return func;
     }
 
     // Otherwise, this is a case where we want to inline part of it, after
     // splitting.
     assert(functionSplitter);
-    return functionSplitter->getInlineableSplitFunction(func);
+    return functionSplitter->getInlineableSplitFunction(func, inliningMode);
   }
 
   // Checks if the combined size of the code after inlining is under the
