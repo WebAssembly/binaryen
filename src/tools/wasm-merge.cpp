@@ -281,8 +281,8 @@ void copyModuleContents(Module& input, Name inputName) {
     // An export may already exist with that name, so fix it up.
     copy->name = Names::getValidExportName(merged, copy->name);
 
-    // Note the module origin of this export, for later fusing of imports to
-    // exports.
+    // Note the module origin and original name of this export, for later fusing
+    // of imports to exports.
     exportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
 
     // Add the export.
@@ -296,7 +296,7 @@ void copyModuleContents(Module& input, Name inputName) {
       merged.start = input.start;
     } else {
       // Merge them, keeping the order. Note that we need to create a new
-      // function as they may both have other references.
+      // function as there may be other references.
       auto* oldStart = merged.getFunction(merged.start);
       auto* newStart = merged.getFunction(input.start);
       auto mergedName = Names::getValidFunctionName(merged, "merged.start");
@@ -312,13 +312,11 @@ void copyModuleContents(Module& input, Name inputName) {
   // TODO: type names, features, debug info, custom sections, dylink info, etc.
 }
 
-// Finds pairs of matching imports and exports, and makes uses of the import
-// refer to the exported item (which has been merged into the module).
+// Find pairs of matching imports and exports, and make uses of the import refer
+// to the exported item (which has been merged into the module).
 void fuseImportsAndExports() {
-  // Scan the exports and build a map.
-
-  // A map of module names to (export name => internal name). For example,
-  // consider this module:
+  // First, scan the exports and build a map. We build a map of [module name] to
+  // [export name => internal name]. For example, consider this module:
   //
   //  (module ;; linked in as "module_A"
   //    (func $foo (export "bar"))
@@ -348,7 +346,8 @@ void fuseImportsAndExports() {
   }
 
   // Find all the imports and see which have corresponding exports, which means
-  // there is an internal item we can refer to.
+  // there is an internal item we can refer to. We build up a map of the names
+  // that we should update.
   KindNameMaps kindNameMaps;
   ModuleUtils::iterImportable(merged, [&](ExternalKind kind, Importable* curr) {
     if (curr->imported()) {
@@ -369,16 +368,16 @@ void fuseImportsAndExports() {
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
 void mergeInto(Module& input, Name inputName) {
-  // Find the new names we'll use for items in the input.
+  // Find the new names we'll use for items in the input. We do so in place for
+  // efficiency.
   renameInputItems(input);
 
-  // Apply the new names in the input module.
-
-  // The input module's items can now be copied into the target module safely.
+  // The input module's items can now be copied into the target module safely,
+  // as names will not conflict.
   copyModuleContents(input, inputName);
 
-  // Connect imports and exports now that everything is all together in the
-  // merged module.
+  // Fuse imports and exports now that everything is all together in the merged
+  // module.
   fuseImportsAndExports();
 }
 
@@ -400,7 +399,7 @@ For example,
 
 will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if the second imports from 'foo', we will see that as an import from the first module after the merge. The merged output will be written to merged.wasm.
 
-Note that filenames and modules names are interleaved as positional inputs to avoid issues with escaping.)");
+Note that filenames and modules names are interleaved (which is hopefully less confusing).");
 
   options
     .add("--output",
