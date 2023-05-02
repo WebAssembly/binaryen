@@ -1258,15 +1258,18 @@ class Merge(TestCaseHandler):
         # TODO: add imports and exports that connect between the two
         wasm_size = os.stat(wasm).st_size
         second_size = min(wasm_size, random_size())
-        make_random_input(second_size, 'second_input.dat')
-        run([in_bin('wasm-opt'), 'second_input.dat', '-ttf', '-o', abspath('second.wasm')] + FUZZ_OPTS + FEATURE_OPTS)
+        second_input = abspath('second_input.dat')
+        make_random_input(second_size, second_input)
+        second_wasm = abspath('second.wasm')
+        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + FUZZ_OPTS + FEATURE_OPTS)
 
         # TODO: optimize the second input sometimes
 
         # merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
         # memories (and we must also do that in the commands later down).
-        run([in_bin('wasm-merge'), wasm, 'first', 'second.wasm', 'second', '-o', 'merged.wasm'] + FEATURE_OPTS + ['-all'])
+        merged = abspath('merged.wasm')
+        run([in_bin('wasm-merge'), wasm, 'first', abspath('second.wasm'), 'second', '-o', merged] + FEATURE_OPTS + ['-all'])
 
         # verify that merging in the second module did not alter the output
         # XXX to do this we need to remove the second module's exports, or else
