@@ -451,6 +451,7 @@ Note that filenames and modules names are interleaved (which is hopefully less c
       std::cerr << "reading input '" << inputFile << "' as '" << inputFileName
                 << "'...\n";
     }
+
     // For the first input, we'll just read it in directly. For later inputs,
     // we read them and then merge.
     std::unique_ptr<Module> laterInput;
