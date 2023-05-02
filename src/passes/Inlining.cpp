@@ -56,8 +56,9 @@ enum class InliningMode {
   Unknown,
   // This function cannot be inlinined in any way.
   Uninlineable,
-  // This function can be inlined normally.
-  Direct,
+  // This function can be inlined fully, that is, normally: the entire function
+  // can be inlined. This is in contrast to partial inlining, see below.
+  Full,
   // This function cannot be inlined normally, but we can use split inlining,
   // using pattern "A" or "B" (see below).
   SplitPatternA,
@@ -99,7 +100,7 @@ struct FunctionInfo {
   }
 
   // See pass.h for how defaults for these options were chosen.
-  bool worthDirectInlining(PassOptions& options) {
+  bool worthFullInlining(PassOptions& options) {
     // Until we have proper support for try-delegate, ignore such functions.
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
@@ -1075,8 +1076,8 @@ struct Inlining : public Pass {
     }
 
     // Check if the function itself is worth inlining as it is.
-    if (info.worthDirectInlining(getPassOptions())) {
-      info.inliningMode = InliningMode::Direct;
+    if (info.worthFullInlining(getPassOptions())) {
+      info.inliningMode = InliningMode::Full;
       return info.inliningMode;
     }
 
@@ -1102,7 +1103,7 @@ struct Inlining : public Pass {
   Function* getActuallyInlinedFunction(Function* func) {
     InliningMode inliningMode = infos[func->name].inliningMode;
     // If we want to inline this function itself, do so.
-    if (inliningMode == InliningMode::Direct) {
+    if (inliningMode == InliningMode::Full) {
       return func;
     }
 
