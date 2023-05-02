@@ -441,6 +441,9 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   }
 
   // Process the inputs.
+  // TODO: If the inputs are a very large number of small modules then it might
+  //       make sense to parallelize this. (If so, then changing the existing
+  //       parallelism above in NameMapper might make sense.)
 
   bool first = true;
   for (Index i = 0; i < inputFiles.size(); i++) {
