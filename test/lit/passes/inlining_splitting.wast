@@ -813,7 +813,8 @@
       (return)
     )
     ;; 6x3 = 18 items, close to the default size limit of 20. With the if, we
-    ;; hit that limit
+    ;; hit that limit and are too big. But if we did partial inlining then the
+    ;; lines below us are small enough to then be inlined normally.
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
