@@ -1766,6 +1766,8 @@
 
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
   ;; CHECK:      (func $call-$middle-size-A (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
@@ -1913,10 +1915,206 @@
   (func $call-$big-size-A
     ;; Normal inlining can't work here, so we'll just do partial inlining.
     (call $big-size-A
-     (i32.const 0)
+      (i32.const 0)
     )
     (call $big-size-A
-     (i32.const 1)
+      (i32.const 1)
+    )
+  )
+
+  (func $middle-size-B (param $x i32) (result i32)
+    ;; As above, but for pattern B and not A.
+    (if
+      (local.get $x)
+      (block
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (unreachable)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-$middle-size-B (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B (result i32)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B0 (result i32)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-$middle-size-B
+    ;; We will normally inline here.
+    (drop
+      (call $middle-size-B
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $middle-size-B
+        (i32.const 1)
+      )
+    )
+  )
+
+  (func $big-size-B (param $x i32) (result i32)
+    ;; As above, but a little larger - so large that we won't normally inline
+    ;; it.
+    (if
+      (local.get $x)
+      (block
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+        (unreachable)
+      )
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-$big-size-B (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B (result i32)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B
+  ;; CHECK-NEXT:        (call $byn-split-outlined-B$big-size-B
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B0 (result i32)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B0
+  ;; CHECK-NEXT:        (call $byn-split-outlined-B$big-size-B
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-$big-size-B
+    ;; We'll partially inline here.
+    (drop
+      (call $big-size-B
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $big-size-B
+        (i32.const 1)
+      )
     )
   )
 )
@@ -1957,4 +2155,44 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$big-size-B (type $i32_=>_i32) (param $x i32) (result i32)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
