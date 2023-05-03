@@ -16,7 +16,6 @@
 
 #include "parsing.h"
 #include "ir/branch-utils.h"
-#include "ir/names.h"
 #include "support/small_set.h"
 
 namespace wasm {
@@ -115,7 +114,7 @@ struct DuplicateNameScanner
   // Whether things are ok. If not, we need to fix things up.
   bool ok = true;
 
-  // It is rare to have many names in general, so track the seen names
+  // It is rare to have many nested names in general, so track the seen names
   // as we go in an efficient way.
   SmallUnorderedSet<Name, 10> seen;
 
@@ -142,99 +141,36 @@ struct DuplicateNameScanner
 void UniqueNameMapper::uniquify(Expression* curr) {
   // First, scan the code to see if anything needs to be fixed up, since in the
   // common case nothing needs fixing, and we can verify that very quickly.
-#if 1
   DuplicateNameScanner scanner;
   scanner.walk(curr);
   if (scanner.ok) {
     return;
   }
-#endif
 
   struct Walker
     : public ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
-    // Track all seen scope name defs so far. This lets us see when there is a
-    // duplication, which is something we need to fix. That is rare, so we want
-    // to detect it quickly and do almost no work otherwise.
-    SmallUnorderedSet<Name, 10> seenDefs;
-
-    // Whether we've seen a duplicate name. Branching on this in the code below
-    // will avoid work in the common case where there are no fixups at all.
-    bool seenDupe = false;
-
-    // A stack of name changes, mapping a current name to the name we should
-    // use instead. We need to use a stack here because of nested duplication:
-    //
-    //  (block $x
-    //    (block $x    ;; this must be replaced with say $y
-    //      (block $x  ;; this must be replaced with say $z
-    //
-    std::unordered_map<Name, SmallVector<Name, 1>> nameChangeStack;
+    UniqueNameMapper mapper;
 
     static void doPreVisitControlFlow(Walker* self, Expression** currp) {
       BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
         if (name.is()) {
-          // TODO: This could be done in a single insert operation that checks
-          //       whether we actually inserted, if we improved
-          //       SmallSetBase::insert to return a value like std::set does.
-          if (self->seenDefs.count(name)) {
-            // A name has been defined more than once; we'll need to fix that in
-            // all uses of this name.
-            self->seenDupe = true;
-
-            // Pick a new, unique name. Note that we do not apply it yet, as we
-            // need to do more work in doPostVisitControlFlow, and use the name
-            // to find the matching post for this pre. We'll update the name
-            // there.
-            auto newName = Names::getValidNameGivenExisting(name, self->seenDefs);
-            self->nameChangeStack[name].push_back(newName);
-          } else {
-            // No duplication here. Note the name to check for later dupes of
-            // this name.
-            self->seenDefs.insert(name);
-          }
+          name = self->mapper.pushLabelName(name);
         }
       });
     }
 
     static void doPostVisitControlFlow(Walker* self, Expression** currp) {
-      if (!self->seenDupe) {
-        return;
-      }
-
       BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
         if (name.is()) {
-          auto iter = self->nameChangeStack.find(name);
-          if (iter != self->nameChangeStack.end()) {
-            // This is a name we've been fixing up. Pop it from the stack as we
-            // just ended its scope, and apply the new name now (see above for
-            // why we didn't do it earlier).
-            auto& stack = iter->second;
-            assert(!stack.empty());
-            name = stack.back();
-            stack.pop_back();
-            if (stack.empty()) {
-              // We've finished fixups for this name.
-              self->nameChangeStack.erase(iter);
-            }
-          }
+          self->mapper.popLabelName(name);
         }
       });
     }
 
     void visitExpression(Expression* curr) {
-      if (!seenDupe) {
-        return;
-      }
-
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
         if (name.is()) {
-          auto iter = nameChangeStack.find(name);
-          if (iter != nameChangeStack.end()) {
-            // This is a name we are fixing up. Apply it.
-            auto& stack = iter->second;
-            assert(!stack.empty());
-            name = stack.back();
-          }
+          name = mapper.sourceToUnique(name);
         }
       });
     }
