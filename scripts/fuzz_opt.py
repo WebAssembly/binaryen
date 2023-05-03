@@ -1273,7 +1273,9 @@ class Merge(TestCaseHandler):
 
         # verify that merging in the second module did not alter the output.
         # a complication is that the second module's exports are appended, so we
-        # have extra output. to handle that, just prune the tail.
+        # have extra output. to handle that, just prune the tail, so that we
+        # only compare the original exports from the first module.
+        # TODO: compare the second module's exports to themselves as well
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = merged_output[:len(output)]
