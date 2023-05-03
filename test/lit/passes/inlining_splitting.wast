@@ -768,7 +768,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_69
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_71
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -783,7 +783,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_69
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_71
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -812,11 +812,8 @@
       (local.get $x)
       (return)
     )
-    ;; 3x6 = 18 items, close to the default size limit of 20. With the if, we
+    ;; 6x3 = 18 items, close to the default size limit of 20. With the if, we
     ;; hit that limit
-    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
-    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
-    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
@@ -860,6 +857,52 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-$middle-size-A
+    ;; This will be normally inlined, see the comment in the above function.
+    ;; We can see it is normally inlined and not partially from the string
+    ;; "__inlined_func" in the code (instead of "split" appearing anywhere).
+    (call $middle-size-A
+     (i32.const 0)
+    )
+  )
+
+  (func $big-size-A (param $x i32)
+    ;; As above, but a little larger - so large that we won't normally inline
+    ;; it.
+    (if
+      (local.get $x)
+      (return)
+    )
+    ;; 6x4 = 24 items, which is more than the inlining limit.
+    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+    (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
+  )
+
+  ;; CHECK:      (func $call-$big-size-A (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block $__inlined_func$big-size-A
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (br $__inlined_func$big-size-A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -890,11 +933,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $call-$middle-size-A
-    ;; This will be normally inlined, see the comment in the above function.
-    ;; We can see it is normally inlined and not partially from the string
-    ;; "__inlined_func" in the code (instead of "split" appearing anywhere).
-    (call $middle-size-A
+  (func $call-$big-size-A
+    ;; We will not inline in any way here.
+    (call $big-size-A
      (i32.const 0)
     )
   )
@@ -1338,7 +1379,7 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_78
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_80
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1369,7 +1410,7 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_78
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_80
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1521,7 +1562,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$colliding-name_69 (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$colliding-name_71 (type $i32_=>_none) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
@@ -1544,7 +1585,7 @@
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$multi-if_78 (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$multi-if_80 (type $anyref_=>_none) (param $x anyref)
 ;; CHECK-NEXT:  (loop $x
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br_if $x
