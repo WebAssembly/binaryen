@@ -224,8 +224,8 @@ This repository contains code that builds the following tools in `bin/`:
  * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
    at compile time.
  * **wasm-merge**: Merges multiple wasm files into a single file, connecting
-   corresponding imports to exports as it does so (like a bundler for JS, but
-   for wasm).
+   corresponding imports to exports as it does so. Like a bundler for JS, but
+   for wasm.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
 Usage instructions for each are below.
@@ -571,7 +571,8 @@ example, in Emscripten `wasm-ctor-eval` is even run on `main()` when possible.
 project that uses wasm files from multiple toolchains. Then it can be helpful to
 merge them all into a single wasm file before shipping, since in a single wasm
 file the calls between the modules become just normal calls inside a module,
-which allows them to be inlined, dead code eliminated, and so forth.
+which allows them to be inlined, dead code eliminated, and so forth, potentially
+improving speed and size.
 
 For example, imagine we have these two wasm files:
 
@@ -604,9 +605,10 @@ For example, imagine we have these two wasm files:
 ```
 
 The filenames on your local drive are `a.wasm` and `b.wasm`, but for merging /
-bundling purposes the first is known as `"first"` and the second as `"second"`.
-That is, we want the first module's import of `"second.bar"` to call the
-function `$func` in the second module. Here is a wasm-merge command for them:
+bundling purposes let's say that the first is known as `"first"` and the second
+as `"second"`. That is, we want the first module's import of `"second.bar"` to
+call the function `$func` in the second module. Here is a wasm-merge command for
+that:
 
 ```
 wasm-merge a.wasm first b.wasm second -o output.wasm
@@ -643,8 +645,8 @@ name collision).
 
 Note that the wasm output in this example could benefit from additional
 optimization. First, the call to `$func_2` can now be easily inlined, so we can
-run `wasm-opt -O3` or so to do that for us. Also, we may not need all the
-imports and exports, for which we can run
+run `wasm-opt -O3` to do that for us. Also, we may not need all the imports and
+exports, for which we can run
 [wasm-metadce](https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports).
 A good workflow could be to run `wasm-merge`, then `wasm-metadce`, then finish
 with `wasm-opt`.
@@ -683,8 +685,8 @@ first.exports.main();
 What `wasm-merge` does is basically what that JS does: it hooks up imports to
 exports, resolving names using the module names you provided. That is, by
 running `wasm-merge` we are moving the work of connecting the modules from
-runtime to compile-time. As a result, after running `wasm-merge` we
-need a lot less JS to get the same result:
+runtime to compile time. As a result, after running `wasm-merge` we need a lot
+less JS to get the same result:
 
 ```js
 // Compile the single module.
@@ -703,6 +705,9 @@ merged = new WebAssembly.Instance(merged, {
 // Call the main function.
 merged.exports.main();
 ```
+
+We still need to fetch and compile the merged wasm, and to provide it the JS
+import, but the work to connect two wasm modules is not needed any more.
 
 ## Testing
 
