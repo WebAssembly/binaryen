@@ -588,8 +588,7 @@ struct FunctionSplitter {
       // return), and we would not even attempt to do splitting.
       assert(body->is<Block>());
 
-      auto outlinedFunctionSize =
-        info.size - Measurer::measure(iff);
+      auto outlinedFunctionSize = info.size - Measurer::measure(iff);
       // If outlined function will be worth normal inline, skip the intermediate
       // state and inline fully.
       if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
@@ -676,8 +675,8 @@ struct FunctionSplitter {
     }
     // Success, this matches the pattern.
 
-    // If the outlined function will be worth inlining normally, skip the intermediate
-    // state and inline fully.
+    // If the outlined function will be worth inlining normally, skip the
+    // intermediate state and inline fully.
     if (numIfs == 1) {
       auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
       if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
@@ -754,8 +753,7 @@ private:
     // loop or calls even though this section may not have.
     // This is a conservative estimate, that is, it will return true only when
     // it should, but might return false when a more precise analysis would
-    return true. And it is a practical
-    // estimation to avoid extra future work.
+    // return true. And it is a practical estimation to avoid extra future work.
     info = origin;
     info.size = sizeEstimate;
     return info.worthFullInlining(options);
