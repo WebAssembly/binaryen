@@ -70,7 +70,7 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
   parser.setSkipFunctionBodies(skipFunctionBodies);
   if (sourceMapFilename.size()) {
     sourceMapStream = std::make_unique<std::ifstream>();
-    sourceMapStream->open(wasm::Path::string_to_wstring(sourceMapFilename));
+    sourceMapStream->open(wasm::Path::to_path(sourceMapFilename));
     if (!sourceMapStream->is_open()) {
       Fatal() << "Failed opening '" << sourceMapFilename << "'";
     }
@@ -93,7 +93,7 @@ void ModuleReader::readBinary(std::string filename,
 bool ModuleReader::isBinaryFile(std::string filename) {
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in | std::ifstream::binary;
-  infile.open(wasm::Path::string_to_wstring(filename), flags);
+  infile.open(wasm::Path::to_path(filename), flags);
   char buffer[4] = {1, 2, 3, 4};
   infile.read(buffer, 4);
   infile.close();
@@ -161,7 +161,7 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   std::unique_ptr<std::ofstream> sourceMapStream;
   if (sourceMapFilename.size()) {
     sourceMapStream = std::make_unique<std::ofstream>();
-    sourceMapStream->open(wasm::Path::string_to_wstring(sourceMapFilename));
+    sourceMapStream->open(wasm::Path::to_path(sourceMapFilename));
     if (!sourceMapStream->is_open()) {
       Fatal() << "Failed opening '" << sourceMapFilename << "'";
     }

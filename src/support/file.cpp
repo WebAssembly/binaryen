@@ -58,7 +58,7 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   if (binary == Flags::Binary) {
     flags |= std::ifstream::binary;
   }
-  infile.open(wasm::Path::string_to_wstring(filename), flags);
+  infile.open(wasm::Path::to_path(filename), flags);
   if (!infile.is_open()) {
     Fatal() << "Failed opening '" << filename << "'";
   }
@@ -114,7 +114,7 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
         }
-        outfile.open(wasm::Path::string_to_wstring(filename), flags);
+        outfile.open(wasm::Path::to_path(filename), flags);
         if (!outfile.is_open()) {
           Fatal() << "Failed opening '" << filename << "'";
         }
@@ -124,12 +124,12 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
     }()) {}
 
 void wasm::copy_file(std::string input, std::string output) {
-  std::ifstream src(wasm::Path::string_to_wstring(input), std::ios::binary);
-  std::ofstream dst(wasm::Path::string_to_wstring(output), std::ios::binary);
+  std::ifstream src(wasm::Path::to_path(input), std::ios::binary);
+  std::ofstream dst(wasm::Path::to_path(output), std::ios::binary);
   dst << src.rdbuf();
 }
 
 size_t wasm::file_size(std::string filename) {
-  std::ifstream infile(wasm::Path::string_to_wstring(filename), std::ifstream::ate | std::ifstream::binary);
+  std::ifstream infile(wasm::Path::to_path(filename), std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }

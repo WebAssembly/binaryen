@@ -19,29 +19,37 @@
 //
 
 #include "support/path.h"
+#ifdef _WIN32
 #include "windows.h"
+#endif
 
 namespace wasm::Path {
 
+#ifdef _WIN32
+PathString to_path(const std::string& s) { return string_to_wstring(s); }
+
 std::wstring string_to_wstring(const std::string& s) {
-  auto inptr = s.data();
-  auto inlen = s.size();
-  auto outlen = MultiByteToWideChar(CP_UTF8, 0, inptr, inlen, NULL, 0);
-  auto outstr = std::wstring(outlen, 0);
-  auto outptr = outstr.data();
+  const char* inptr = s.data();
+  size_t inlen = s.size();
+  size_t outlen = MultiByteToWideChar(CP_UTF8, 0, inptr, inlen, NULL, 0);
+  std::wstring outstr(outlen, 0);
+  const LPWSTR outptr = outstr.data();
   MultiByteToWideChar(CP_UTF8, 0, inptr, inlen, outptr, outlen);
   return outstr;
 }
 
 std::string wstring_to_string(const std::wstring& s) {
-  auto inptr = s.data();
-  auto inlen = s.size();
-  auto outlen = WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, NULL, 0, NULL, NULL);
-  auto outstr = std::string(outlen, 0);
-  auto outptr = outstr.data();
+  const wchar_t* inptr = s.data();
+  size_t inlen = s.size();
+  size_t outlen = WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, NULL, 0, NULL, NULL);
+  std::string outstr(outlen, 0);
+  const LPSTR outptr = outstr.data();
   WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, outptr, outlen, NULL, NULL);
   return outstr;
 }
+#else
+PathString to_path(const std::string& s) { return s; }
+#endif
 
 char getPathSeparator() {
   // TODO: use c++17's path separator

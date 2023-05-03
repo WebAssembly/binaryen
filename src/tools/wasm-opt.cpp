@@ -331,19 +331,19 @@ int main(int argc, const char* argv[]) {
 
   if (emitJSWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(wasm::Path::string_to_wstring(emitJSWrapper), std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitJSWrapper), std::ofstream::out);
     outfile << generateJSWrapper(wasm);
     outfile.close();
   }
   if (emitSpecWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(wasm::Path::string_to_wstring(emitSpecWrapper), std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitSpecWrapper), std::ofstream::out);
     outfile << generateSpecWrapper(wasm);
     outfile.close();
   }
   if (emitWasm2CWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(wasm::Path::string_to_wstring(emitWasm2CWrapper), std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitWasm2CWrapper), std::ofstream::out);
     outfile << generateWasm2CWrapper(wasm);
     outfile.close();
   }
