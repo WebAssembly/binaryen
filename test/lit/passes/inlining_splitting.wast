@@ -768,7 +768,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_65
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_67
   ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -783,7 +783,7 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_65
+  ;; CHECK-NEXT:     (call $byn-split-outlined-A$colliding-name_67
   ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1028,25 +1028,67 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-reachable-if-body
-    ;; Note that the above contains
-    ;;
-    ;;  (block $__inlined_func$byn-split-outlined-B$reachable-if-body
-    ;;
-    ;; which indicates that we've inlined the outlined function. That seems odd,
-    ;; but it is the result of the if's body being just a call. When we outline,
-    ;; we end up with a function that all it does is make that call - which is
-    ;; worth inlining in the normal way (to avoid two calls). As a result of all
-    ;; that, we end up inlining *all* of $reachable-if-body, just by a
-    ;; roundabout way (split, outline, then inline). While this seems odd, each
-    ;; step along the way makes sense, and the result is a good one (might be a
-    ;; little hard to see before opts remove the extra block cruft etc.).
-    ;;
-    ;; We could avoid this if we detected that the if body is just a call, and
-    ;; not done any outlining - just done that call. That would be more
-    ;; efficient, but it would make the code more complicated, and the result is
-    ;; the same.
     (drop (call $reachable-if-body (ref.null any)))
     (drop (call $reachable-if-body (ref.null any)))
+  )
+
+  (func $reachable-if-body-noloop (param $x anyref) (result anyref)
+    ;; As above, but without a loop.
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (call $import)
+    )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-reachable-if-body-noloop (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop (result anyref)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop0 (result anyref)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $import)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-reachable-if-body-noloop
+    ;; As above, but the called function has no loop. In that case, even though
+    ;; it fits the pattern for partial inlining we can just inline the entire
+    ;; thing normally.
+    (drop (call $reachable-if-body-noloop (ref.null any)))
+    (drop (call $reachable-if-body-noloop (ref.null any)))
   )
 
   ;; CHECK:      (func $reachable-if-body-return (type $anyref_=>_anyref) (param $x anyref) (result anyref)
@@ -1200,7 +1242,7 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_74
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_76
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1231,7 +1273,7 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_74
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$multi-if_76
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -1383,7 +1425,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$colliding-name_65 (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$colliding-name_67 (type $i32_=>_none) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
@@ -1406,7 +1448,7 @@
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$multi-if_74 (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$multi-if_76 (type $anyref_=>_none) (param $x anyref)
 ;; CHECK-NEXT:  (loop $x
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br_if $x
