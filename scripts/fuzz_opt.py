@@ -1271,12 +1271,13 @@ class Merge(TestCaseHandler):
         merged = abspath('merged.wasm')
         run([in_bin('wasm-merge'), wasm, 'first', abspath('second.wasm'), 'second', '-o', merged] + FEATURE_OPTS + ['-all'])
 
-        # verify that merging in the second module did not alter the output
-        # XXX to do this we need to remove the second module's exports, or else
-        #     more exports and more output appears
-        # output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
-        # merged_output = run_bynterp('merged.wasm', ['--fuzz-exec-before', '-all'])
-        # compare_between_vms(fix_output(output), fix_output(merged_output), 'Merge')
+        # verify that merging in the second module did not alter the output.
+        # a complication is that the second module's exports are appended, so we
+        # have extra output. to handle that, just prune the tail.
+        output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+        merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
+        merged_output = merged_output[:len(output)]
+        compare_between_vms(fix_output(output), fix_output(merged_output), 'Merge')
 
 
 # Check that the text format round-trips without error.
