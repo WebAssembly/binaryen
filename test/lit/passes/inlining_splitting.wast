@@ -972,7 +972,13 @@
       ;; It is ok if the body is not unreachable (so long as it contains no
       ;; returns). We will optimize this, and just do a call to the outlined
       ;; code, without a return of a value here.
-      (call $import)
+      (block
+        ;; We need to have a loop here to avoid normal inlining from kicking in
+        ;; on the outlined code.
+        (loop $loop
+          (call $import)
+        )
+      )
     )
     (local.get $x)
   )
@@ -980,8 +986,6 @@
   ;; CHECK:      (func $call-reachable-if-body (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
-  ;; CHECK-NEXT:  (local $2 anyref)
-  ;; CHECK-NEXT:  (local $3 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
   ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$reachable-if-body (result anyref)
@@ -993,11 +997,8 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$reachable-if-body
-  ;; CHECK-NEXT:        (local.set $2
-  ;; CHECK-NEXT:         (local.get $0)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$reachable-if-body
+  ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $0)
@@ -1016,11 +1017,8 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$reachable-if-body0
-  ;; CHECK-NEXT:        (local.set $3
-  ;; CHECK-NEXT:         (local.get $1)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
+  ;; CHECK-NEXT:       (call $byn-split-outlined-B$reachable-if-body
+  ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $1)
@@ -1395,6 +1393,12 @@
 ;; CHECK:      (func $byn-split-outlined-B$error-if-null (type $anyref_=>_anyref) (param $x anyref) (result anyref)
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT:  (unreachable)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $byn-split-outlined-B$reachable-if-body (type $anyref_=>_none) (param $x anyref)
+;; CHECK-NEXT:  (loop $loop
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (type $anyref_=>_none) (param $x anyref)
