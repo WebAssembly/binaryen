@@ -677,9 +677,10 @@
  ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (result i32)
   ;; The result of this function can be removed, which makes us modify the
-  ;; returns (we should not return a value any more). The returns here are
-  ;; nested in each other, and one is a recursive call to this function itself,
-  ;; which makes this a corner case we might emit invalid code for.
+  ;; returns (we should not return a value any more) and also the calls (the
+  ;; calls must be dropped). The returns here are nested in each other, and one
+  ;; is a recursive call to this function itself, which makes this a corner case
+  ;; we might emit invalid code for.
   (return
    (drop
     (call $0
