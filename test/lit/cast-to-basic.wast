@@ -18,12 +18,14 @@
 
   ;; CHECK:      (func $cast (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null struct
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast
+    ;; Note that this will not round-trip precisely because Binaryen IR will
+    ;; apply the more refined type to the cast automatically (in finalize).
     (drop
       (ref.cast null struct
         (ref.null none)
