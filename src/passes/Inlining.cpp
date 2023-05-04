@@ -552,7 +552,12 @@ struct FunctionSplitter {
   // into account (like limitations on which functions can be inlined into in
   // each iteration, the number of iterations, etc.). Therefore this function
   // may only find out if we *can* split, but not actually do any splitting.
-  InliningMode getSplitInliningMode(Function* func) {
+  //
+  // Note that to avoid wasteful work, this function may return "Full' inlining
+  // mode instead of a split inining. That is; if it detects that a partial
+  // inlining will trigger a follow up full inline of the splitted function
+  // it will instead return "InliningMode::Full" directly.
+  InliningMode getSplitDrivenInliningMode(Function* func, FunctionInfo& info) {
     auto* body = func->body;
 
     // If the body is a block, and we have breaks to that block, then we cannot
@@ -587,6 +592,13 @@ struct FunctionSplitter {
       // would be easily inlineable (just an if with a simple condition and a
       // return), and we would not even attempt to do splitting.
       assert(body->is<Block>());
+
+      auto outlinedFunctionSize = info.size - Measurer::measure(iff);
+      // If outlined function will be worth normal inline, skip the intermediate
+      // state and inline fully now.
+      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+        return InliningMode::Full;
+      }
 
       return InliningMode::SplitPatternA;
     }
@@ -666,8 +678,17 @@ struct FunctionSplitter {
         assert(iff->ifTrue->type == Type::unreachable);
       }
     }
-
     // Success, this matches the pattern.
+
+    // If the outlined function will be worth inlining normally, skip the
+    // intermediate state and inline fully now.
+    if (numIfs == 1) {
+      auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
+      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+        return InliningMode::Full;
+      }
+    }
+
     return InliningMode::SplitPatternB;
   }
 
@@ -729,6 +750,19 @@ private:
   // inlining code can remove functions as it goes, but we can rely on names
   // staying constant.
   std::unordered_map<Name, Split> splits;
+
+  bool outlinedFunctionWorthInlining(FunctionInfo& origin, Index sizeEstimate) {
+    FunctionInfo info;
+    // Start with a copy of the origin's info, and apply the size estimate.
+    // This is not accurate, for example the origin function may have
+    // loop or calls even though this section may not have.
+    // This is a conservative estimate, that is, it will return true only when
+    // it should, but might return false when a more precise analysis would
+    // return true. And it is a practical estimation to avoid extra future work.
+    info = origin;
+    info.size = sizeEstimate;
+    return info.worthFullInlining(options);
+  }
 
   Function* doSplit(Function* func, InliningMode inliningMode) {
     Builder builder(*module);
@@ -1084,8 +1118,8 @@ struct Inlining : public Pass {
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
     if (functionSplitter) {
-      info.inliningMode =
-        functionSplitter->getSplitInliningMode(module->getFunction(name));
+      info.inliningMode = functionSplitter->getSplitDrivenInliningMode(
+        module->getFunction(name), info);
       return info.inliningMode;
     }
 
