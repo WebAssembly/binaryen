@@ -947,7 +947,17 @@ void RefCast::finalize() {
     type = Type::unreachable;
     return;
   }
-  // Do not unnecessarily lose non-nullability information.
+
+  // Do not unnecessarily lose heap type information. We could leave this for
+  // optimizations, but doing it here as part of finalization/refinalization
+  // ensures that type information flows through in an optimal manner and can be
+  // used as soon as possible.
+  if (Type::isSubType(ref->type, type)) {
+    type = Type(ref->type.getHeapType(), type.getNullability());
+  }
+
+  // Do not unnecessarily lose non-nullability information, as above for heap
+  // types.
   if (ref->type.isNonNullable() && type.isNullable()) {
     type = Type(type.getHeapType(), NonNullable);
   }
