@@ -335,8 +335,7 @@ private:
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
       Module* module;
-      Function* func;
-      ReturnUpdater(Function* func, Module* module) : module(module), func(func) {
+      ReturnUpdater(Function* func, Module* module) : module(module) {
         walk(func->body);
       }
       void visitReturn(Return* curr) {
