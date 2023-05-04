@@ -956,7 +956,7 @@ void RefCast::finalize() {
     type = Type(type.getHeapType(), NonNullable);
   }
 
-  // Do not unnecessarily lose heap type infor, as above for nullability.
+  // Do not unnecessarily lose heap type info, as above for nullability.
   if (HeapType::isSubType(ref->type.getHeapType(), type.getHeapType())) {
     type = Type(ref->type.getHeapType(), type.getNullability());
   }
