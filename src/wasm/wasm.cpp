@@ -1057,7 +1057,13 @@ void ArrayNew::finalize() {
   }
 }
 
-void ArrayNewSeg::finalize() {
+void ArrayNewData::finalize() {
+  if (offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void ArrayNewElem::finalize() {
   if (offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;
   }
@@ -1118,7 +1124,16 @@ void ArrayFill::finalize() {
   }
 }
 
-void ArrayInit::finalize() {
+void ArrayInitData::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayInitElem::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;

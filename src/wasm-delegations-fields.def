@@ -663,13 +663,20 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayNew);
     break;
   }
-  case Expression::Id::ArrayNewSegId: {
-    DELEGATE_START(ArrayNewSeg);
-    DELEGATE_FIELD_INT(ArrayNewSeg, op);
-    DELEGATE_FIELD_NAME(ArrayNewSeg, segment);
-    DELEGATE_FIELD_CHILD(ArrayNewSeg, size);
-    DELEGATE_FIELD_CHILD(ArrayNewSeg, offset);
-    DELEGATE_END(ArrayNewSeg);
+  case Expression::Id::ArrayNewDataId: {
+    DELEGATE_START(ArrayNewData);
+    DELEGATE_FIELD_NAME(ArrayNewData, segment);
+    DELEGATE_FIELD_CHILD(ArrayNewData, size);
+    DELEGATE_FIELD_CHILD(ArrayNewData, offset);
+    DELEGATE_END(ArrayNewData);
+    break;
+  }
+  case Expression::Id::ArrayNewElemId: {
+    DELEGATE_START(ArrayNewElem);
+    DELEGATE_FIELD_NAME(ArrayNewElem, segment);
+    DELEGATE_FIELD_CHILD(ArrayNewElem, size);
+    DELEGATE_FIELD_CHILD(ArrayNewElem, offset);
+    DELEGATE_END(ArrayNewElem);
     break;
   }
   case Expression::Id::ArrayNewFixedId: {
@@ -719,15 +726,24 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayFill);
     break;
   }
-  case Expression::Id::ArrayInitId: {
-    DELEGATE_START(ArrayInit);
-    DELEGATE_FIELD_INT(ArrayInit, op);
-    DELEGATE_FIELD_NAME(ArrayInit, segment);
-    DELEGATE_FIELD_CHILD(ArrayInit, size);
-    DELEGATE_FIELD_CHILD(ArrayInit, offset);
-    DELEGATE_FIELD_CHILD(ArrayInit, index);
-    DELEGATE_FIELD_CHILD(ArrayInit, ref);
-    DELEGATE_END(ArrayInit);
+  case Expression::Id::ArrayInitDataId: {
+    DELEGATE_START(ArrayInitData);
+    DELEGATE_FIELD_NAME(ArrayInitData, segment);
+    DELEGATE_FIELD_CHILD(ArrayInitData, size);
+    DELEGATE_FIELD_CHILD(ArrayInitData, offset);
+    DELEGATE_FIELD_CHILD(ArrayInitData, index);
+    DELEGATE_FIELD_CHILD(ArrayInitData, ref);
+    DELEGATE_END(ArrayInitData);
+    break;
+  }
+  case Expression::Id::ArrayInitElemId: {
+    DELEGATE_START(ArrayInitElem);
+    DELEGATE_FIELD_NAME(ArrayInitElem, segment);
+    DELEGATE_FIELD_CHILD(ArrayInitElem, size);
+    DELEGATE_FIELD_CHILD(ArrayInitElem, offset);
+    DELEGATE_FIELD_CHILD(ArrayInitElem, index);
+    DELEGATE_FIELD_CHILD(ArrayInitElem, ref);
+    DELEGATE_END(ArrayInitElem);
     break;
   }
   case Expression::Id::RefAsId: {

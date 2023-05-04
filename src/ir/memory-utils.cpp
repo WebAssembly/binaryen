@@ -39,10 +39,8 @@ bool flatten(Module& wasm) {
 
     void visitMemoryInit(MemoryInit* curr) { noticesSegmentIdentity = true; }
     void visitDataDrop(DataDrop* curr) { noticesSegmentIdentity = true; }
-    void visitArrayNewSeg(ArrayNewSeg* curr) {
-      if (curr->op == NewData) {
-        noticesSegmentIdentity = true;
-      }
+    void visitArrayNewData(ArrayNewData* curr) {
+      noticesSegmentIdentity = true;
     }
   };
 

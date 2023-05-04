@@ -203,28 +203,17 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     auto type = curr->ref->type.getHeapType();
     note(StructField{type, curr->index});
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
-    switch (curr->op) {
-      case NewData: {
-        note({ModuleElementKind::DataSegment, curr->segment});
-        return;
-      case NewElem:
-        note({ModuleElementKind::ElementSegment, curr->segment});
-        return;
-      }
-    }
-    WASM_UNREACHABLE("unexpected op");
+  void visitArrayNewData(ArrayNewData* curr) {
+    note({ModuleElementKind::DataSegment, curr->segment});
   }
-  void visitArrayInit(ArrayInit* curr) {
-    switch (curr->op) {
-      case InitData:
-        note({ModuleElementKind::DataSegment, curr->segment});
-        return;
-      case InitElem:
-        note({ModuleElementKind::ElementSegment, curr->segment});
-        return;
-    }
-    WASM_UNREACHABLE("unexpected op");
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    note({ModuleElementKind::ElementSegment, curr->segment});
+  }
+  void visitArrayInitData(ArrayInitData* curr) {
+    note({ModuleElementKind::DataSegment, curr->segment});
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    note({ModuleElementKind::ElementSegment, curr->segment});
   }
 };
 

@@ -1727,8 +1727,8 @@ public:
   bool maybeVisitStructNew(Expression*& out, uint32_t code);
   bool maybeVisitStructGet(Expression*& out, uint32_t code);
   bool maybeVisitStructSet(Expression*& out, uint32_t code);
-  bool maybeVisitArrayNew(Expression*& out, uint32_t code);
-  bool maybeVisitArrayNewSeg(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNewData(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNewElem(Expression*& out, uint32_t code);
   bool maybeVisitArrayNewFixed(Expression*& out, uint32_t code);
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);

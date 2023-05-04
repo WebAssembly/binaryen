@@ -1654,7 +1654,8 @@ public:
     }
     return makeGCData(data, curr->type);
   }
-  Flow visitArrayNewSeg(ArrayNewSeg* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
@@ -1831,7 +1832,8 @@ public:
     }
     return {};
   }
-  Flow visitArrayInit(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
     Flow flow = visit(curr->value);
@@ -2266,8 +2268,12 @@ public:
     NOTE_ENTER("SIMDLoadStoreLane");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayNewSeg(ArrayNewSeg* curr) {
-    NOTE_ENTER("ArrayNewSeg");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitArrayCopy(ArrayCopy* curr) {
@@ -2278,8 +2284,12 @@ public:
     NOTE_ENTER("ArrayFill");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitArrayInit(ArrayInit* curr) {
-    NOTE_ENTER("ArrayInit");
+  Flow visitArrayInitData(ArrayInitData* curr) {
+    NOTE_ENTER("ArrayInitData");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayInitElem(ArrayInitElem* curr) {
+    NOTE_ENTER("ArrayInitElem");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -3586,8 +3596,8 @@ public:
     }
     return {};
   }
-  Flow visitArrayNewSeg(ArrayNewSeg* curr) {
-    NOTE_ENTER("ArrayNewSeg");
+  Flow visitArrayNewData(ArrayNewData* curr) {
+    NOTE_ENTER("ArrayNewData");
     auto offsetFlow = self()->visit(curr->offset);
     if (offsetFlow.breaking()) {
       return offsetFlow;
@@ -3602,47 +3612,52 @@ public:
 
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
-    [[maybe_unused]] auto elemType = heapType.getArray().element.type;
-
     Literals contents;
 
-    switch (curr->op) {
-      case NewData: {
-        assert(elemType.isNumber());
-        const auto& seg = *wasm.getDataSegment(curr->segment);
-        auto elemBytes = element.getByteSize();
-        auto end = offset + size * elemBytes;
-        if ((size != 0ull && droppedSegments.count(curr->segment)) ||
-            end > seg.data.size()) {
-          trap("out of bounds segment access in array.new_data");
-        }
-        contents.reserve(size);
-        for (Index i = offset; i < end; i += elemBytes) {
-          auto addr = (void*)&seg.data[i];
-          contents.push_back(Literal::makeFromMemory(addr, element));
-        }
-        break;
-      }
-      case NewElem: {
-        const auto& seg = *wasm.getElementSegment(curr->segment);
-        auto end = offset + size;
-        // TODO: Handle dropped element segments once we support those.
-        if (end > seg.data.size()) {
-          trap("out of bounds segment access in array.new_elem");
-        }
-        contents.reserve(size);
-        for (Index i = offset; i < end; ++i) {
-          auto val = self()->visit(seg.data[i]).getSingleValue();
-          contents.push_back(val);
-        }
-        break;
-      }
-      default:
-        WASM_UNREACHABLE("unexpected op");
+    const auto& seg = *wasm.getDataSegment(curr->segment);
+    auto elemBytes = element.getByteSize();
+    auto end = offset + size * elemBytes;
+    if ((size != 0ull && droppedSegments.count(curr->segment)) ||
+        end > seg.data.size()) {
+      trap("out of bounds segment access in array.new_data");
+    }
+    contents.reserve(size);
+    for (Index i = offset; i < end; i += elemBytes) {
+      auto addr = (void*)&seg.data[i];
+      contents.push_back(Literal::makeFromMemory(addr, element));
     }
     return self()->makeGCData(contents, curr->type);
   }
-  Flow visitArrayInit(ArrayInit* curr) {
+  Flow visitArrayNewElem(ArrayNewElem* curr) {
+    NOTE_ENTER("ArrayNewElem");
+    auto offsetFlow = self()->visit(curr->offset);
+    if (offsetFlow.breaking()) {
+      return offsetFlow;
+    }
+    auto sizeFlow = self()->visit(curr->size);
+    if (sizeFlow.breaking()) {
+      return sizeFlow;
+    }
+
+    uint64_t offset = offsetFlow.getSingleValue().getUnsigned();
+    uint64_t size = sizeFlow.getSingleValue().getUnsigned();
+
+    Literals contents;
+
+    const auto& seg = *wasm.getElementSegment(curr->segment);
+    auto end = offset + size;
+    // TODO: Handle dropped element segments once we support those.
+    if (end > seg.data.size()) {
+      trap("out of bounds segment access in array.new_elem");
+    }
+    contents.reserve(size);
+    for (Index i = offset; i < end; ++i) {
+      auto val = self()->visit(seg.data[i]).getSingleValue();
+      contents.push_back(val);
+    }
+    return self()->makeGCData(contents, curr->type);
+  }
+  Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
     Flow ref = self()->visit(curr->ref);
     if (ref.breaking()) {
@@ -3675,43 +3690,69 @@ public:
 
     Module& wasm = *self()->getModule();
 
-    switch (curr->op) {
-      case InitData: {
-        auto* seg = wasm.getDataSegment(curr->segment);
-        auto elem = curr->ref->type.getHeapType().getArray().element;
-        size_t elemSize = elem.getByteSize();
-        uint64_t readSize = (uint64_t)sizeVal * elemSize;
-        if (offsetVal + readSize > seg->data.size()) {
-          trap("out of bounds segment access in array.init_data");
-        }
-        if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
-          trap("out of bounds segment access in array.init_data");
-        }
-        for (size_t i = 0; i < sizeVal; i++) {
-          void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-          data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
-        }
-        return {};
-      }
-      case InitElem: {
-        auto* seg = wasm.getElementSegment(curr->segment);
-        if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
-          trap("out of bounds segment access in array.init");
-        }
-        // TODO: Check whether the segment has been dropped once we support
-        // dropping element segments.
-        for (size_t i = 0; i < sizeVal; i++) {
-          // TODO: This is not correct because it does not preserve the identity
-          // of references in the table! ArrayNewSeg suffers the same problem.
-          // Fixing it will require changing how we represent segments, at least
-          // in the interpreter.
-          data->values[indexVal + i] =
-            self()->visit(seg->data[i]).getSingleValue();
-        }
-        return {};
-      }
-    };
-    WASM_UNREACHABLE("unexpected op");
+    auto* seg = wasm.getDataSegment(curr->segment);
+    auto elem = curr->ref->type.getHeapType().getArray().element;
+    size_t elemSize = elem.getByteSize();
+    uint64_t readSize = (uint64_t)sizeVal * elemSize;
+    if (offsetVal + readSize > seg->data.size()) {
+      trap("out of bounds segment access in array.init_data");
+    }
+    if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
+      trap("out of bounds segment access in array.init_data");
+    }
+    for (size_t i = 0; i < sizeVal; i++) {
+      void* addr = (void*)&seg->data[offsetVal + i * elemSize];
+      data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+    }
+    return {};
+  }
+  Flow visitArrayInitElem(ArrayInitElem* curr) {
+    NOTE_ENTER("ArrayInit");
+    Flow ref = self()->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = self()->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    size_t indexVal = index.getSingleValue().getUnsigned();
+    size_t offsetVal = offset.getSingleValue().getUnsigned();
+    size_t sizeVal = size.getSingleValue().getUnsigned();
+
+    size_t arraySize = data->values.size();
+    if ((uint64_t)indexVal + sizeVal > arraySize) {
+      trap("out of bounds array access in array.init");
+    }
+
+    Module& wasm = *self()->getModule();
+
+    auto* seg = wasm.getElementSegment(curr->segment);
+    if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
+      trap("out of bounds segment access in array.init");
+    }
+    // TODO: Check whether the segment has been dropped once we support
+    // dropping element segments.
+    for (size_t i = 0; i < sizeVal; i++) {
+      // TODO: This is not correct because it does not preserve the identity
+      // of references in the table! ArrayNew suffers the same problem.
+      // Fixing it will require changing how we represent segments, at least
+      // in the interpreter.
+      data->values[indexVal + i] = self()->visit(seg->data[i]).getSingleValue();
+    }
+    return {};
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
