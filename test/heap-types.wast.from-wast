@@ -371,7 +371,7 @@
    )
   )
   (drop
-   (ref.cast null $struct.B
+   (ref.cast null none
     (ref.null none)
    )
   )
