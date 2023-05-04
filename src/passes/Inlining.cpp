@@ -552,6 +552,11 @@ struct FunctionSplitter {
   // into account (like limitations on which functions can be inlined into in
   // each iteration, the number of iterations, etc.). Therefore this function
   // may only find out if we *can* split, but not actually do any splitting.
+  //
+  // Note that to avoid wasteful work, this function may return "Full' inlining
+  // mode instead of a split inining. That is; if it detects that a partial
+  // inlining will trigger a follow up full inline of the splitted function
+  // it will instead return "InliningMode::Full" directly.
   InliningMode getSplitDrivenInliningMode(Function* func, FunctionInfo& info) {
     auto* body = func->body;
 
@@ -590,7 +595,7 @@ struct FunctionSplitter {
 
       auto outlinedFunctionSize = info.size - Measurer::measure(iff);
       // If outlined function will be worth normal inline, skip the intermediate
-      // state and inline fully.
+      // state and inline fully now.
       if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
@@ -676,7 +681,7 @@ struct FunctionSplitter {
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
-    // intermediate state and inline fully.
+    // intermediate state and inline fully now.
     if (numIfs == 1) {
       auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
       if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
