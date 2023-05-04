@@ -590,11 +590,20 @@ void WasmBinaryWriter::writeDataSegments() {
   o << U32LEB(wasm->dataSegments.size());
   for (auto& segment : wasm->dataSegments) {
     uint32_t flags = 0;
+    Index memoryIndex = 0;
     if (segment->isPassive) {
       flags |= BinaryConsts::IsPassive;
+    } else {
+      memoryIndex = getMemoryIndex(segment->memory);
+      if (memoryIndex) {
+        flags |= BinaryConsts::HasIndex;
+      }
     }
     o << U32LEB(flags);
     if (!segment->isPassive) {
+      if (memoryIndex) {
+        o << U32LEB(memoryIndex);
+      }
       writeExpression(segment->offset);
       o << int8_t(BinaryConsts::End);
     }

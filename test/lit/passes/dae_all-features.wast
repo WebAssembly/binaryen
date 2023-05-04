@@ -658,3 +658,37 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+ ;; CHECK:      (func $0 (type $i32_=>_none) (param $0 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $0
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (return)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return)
+ ;; CHECK-NEXT: )
+ (func $0 (param $0 i32) (result i32)
+  ;; The result of this function can be removed, which makes us modify the
+  ;; returns (we should not return a value any more) and also the calls (the
+  ;; calls must be dropped). The returns here are nested in each other, and one
+  ;; is a recursive call to this function itself, which makes this a corner case
+  ;; we might emit invalid code for.
+  (return
+   (drop
+    (call $0
+     (return
+      (i32.const 1)
+     )
+    )
+   )
+  )
+ )
+)
