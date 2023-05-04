@@ -15,12 +15,12 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (ref.cast null ${}
+;; CHECK-NEXT:   (ref.cast null none
 ;; CHECK-NEXT:    (ref.null none)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (ref.cast_nop ${}
+;; CHECK-NEXT:   (ref.cast_nop none
 ;; CHECK-NEXT:    (ref.null none)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
