@@ -317,11 +317,26 @@ private:
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
     func->setResults(Type::none);
-    Builder builder(*module);
+    // Remove the drops on the calls. Note that we must do this before updating
+    // returns in ReturnUpdater, as there may be recursive calls of this
+    // function to itself. So we first use the information in allDroppedCalls
+    // before the ReturnUpdater potentially invalidates that information as it
+    // modifies the function.
+    for (auto* call : calls) {
+      auto iter = allDroppedCalls.find(call);
+      assert(iter != allDroppedCalls.end());
+      Expression** location = iter->second;
+      *location = call;
+      // Update the call's type.
+      if (call->type != Type::unreachable) {
+        call->type = Type::none;
+      }
+    }
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
       Module* module;
-      ReturnUpdater(Function* func, Module* module) : module(module) {
+      Function* func;
+      ReturnUpdater(Function* func, Module* module) : module(module), func(func) {
         walk(func->body);
       }
       void visitReturn(Return* curr) {
@@ -334,18 +349,7 @@ private:
     } returnUpdater(func, module);
     // Remove any value flowing out.
     if (func->body->type.isConcrete()) {
-      func->body = builder.makeDrop(func->body);
-    }
-    // Remove the drops on the calls.
-    for (auto* call : calls) {
-      auto iter = allDroppedCalls.find(call);
-      assert(iter != allDroppedCalls.end());
-      Expression** location = iter->second;
-      *location = call;
-      // Update the call's type.
-      if (call->type != Type::unreachable) {
-        call->type = Type::none;
-      }
+      func->body = Builder(*module).makeDrop(func->body);
     }
   }
 
