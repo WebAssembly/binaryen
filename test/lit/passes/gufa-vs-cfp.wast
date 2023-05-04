@@ -2039,17 +2039,19 @@
     )
   )
   ;; CHECK:      (func $set (type $none_=>_none)
-  ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:  (struct.set $C 0
+  ;; CHECK-NEXT:   (ref.cast $C
   ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set
-    ;; Set of $A, but the reference is actually a $C. We add a cast to make sure
-    ;; the type is $A, which should not confuse us: this set does alias the data
-    ;; in $C, which means we cannot optimize in the function $get below.
+    ;; Set of $A, but the reference is actually a $C. We add a cast to try to
+    ;; make sure the type is $A, which should not confuse us: this set does
+    ;; alias the data in $C, which means we cannot optimize in the function $get
+    ;; below. (Note that finalize will turn the cast into a cast of $C
+    ;; automatically; that is not part of GUFA.)
     (struct.set $A 0
       (ref.cast $A
         (call $create-C)
