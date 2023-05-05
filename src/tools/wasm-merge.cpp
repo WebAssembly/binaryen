@@ -381,8 +381,8 @@ void fuseImportsAndExports() {
 // be modified, as it will no longer be needed (so it is intentionally not
 // marked as const here).
 void mergeInto(Module& input, Name inputName) {
-  // Find the new names we'll use for items in the input. We do so in place for
-  // efficiency.
+  // Rename things in the input module so that there are no conflicts with names
+  // in the merged module. We do so in place for efficiency.
   renameInputItems(input);
 
   // The input module's items can now be copied into the target module safely,
