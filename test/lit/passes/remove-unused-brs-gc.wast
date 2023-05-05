@@ -338,7 +338,7 @@
  ;; CHECK-NEXT:   (if (result anyref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast null $struct
+ ;; CHECK-NEXT:    (ref.cast null none
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

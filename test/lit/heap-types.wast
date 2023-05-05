@@ -26,17 +26,18 @@
 )
 
 (module
-  ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct.A
+  ;; CHECK-NEXT:   (ref.cast null none
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
+    ;; Note that this will not round-trip precisely because Binaryen IR will
+    ;; apply the more refined type to the cast automatically (in finalize).
     (drop
       (ref.cast null $struct.B (ref.null $struct.A))
     )

@@ -31,7 +31,7 @@
   )
 
   ;; CHECK:      (func $call-trap-result (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (block $__inlined_func$trap-result
+  ;; CHECK-NEXT:  (block $__inlined_func$trap-result$1
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -49,7 +49,7 @@
     (unreachable)
   )
   ;; CHECK:      (func $call-contents-then-trap (type $none_=>_none)
-  ;; CHECK-NEXT:  (block $__inlined_func$contents-then-trap
+  ;; CHECK-NEXT:  (block $__inlined_func$contents-then-trap$2
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (drop

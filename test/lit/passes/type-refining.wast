@@ -1125,3 +1125,45 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field (ref $B))))
+    (type $A (struct (field (ref struct))))
+    ;; CHECK:       (type $B (struct ))
+    (type $B (struct))
+  )
+
+  ;; CHECK:       (type $none_=>_ref|$A| (func (result (ref $A))))
+
+  ;; CHECK:      (func $0 (type $none_=>_ref|$A|) (result (ref $A))
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (struct.new_default $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (result (ref $A))
+    ;; The cast in the middle here will be skipped in the analysis, as we have
+    ;; a copy: a read from $A.0 to a write, with only a cast in the middle
+    ;; (which does not alter the value). While that is valid to do, we need to
+    ;; properly propagate the new output type of the struct.get (which goes from
+    ;; (ref struct) to (ref $B) to the cast, so that the cast has that type as
+    ;; well, as otherwise the struct.new will not validate - we can't write a
+    ;; (ref struct) to a field of (ref $B).
+    (struct.new $A
+      (ref.cast struct
+        (struct.get $A 0
+          (struct.new $A
+            (struct.new_default $B)
+          )
+        )
+      )
+    )
+  )
+)

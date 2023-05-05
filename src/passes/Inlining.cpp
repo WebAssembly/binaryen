@@ -329,17 +329,27 @@ struct Updater : public PostWalker<Updater> {
 
 // Core inlining logic. Modifies the outside function (adding locals as
 // needed), and returns the inlined code.
+//
+// An optional name hint can be provided, which will then be used in the name of
+// the block we put the inlined code in. Using a unique name hint in each call
+// of this function can reduce the risk of name overlaps (which cause fixup work
+// in UniqueNameMapper::uniquify).
 static Expression* doInlining(Module* module,
                               Function* into,
                               const InliningAction& action,
-                              PassOptions& options) {
+                              PassOptions& options,
+                              Index nameHint = 0) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
   Type retType = module->getFunction(call->target)->getResults();
   Builder builder(*module);
   auto* block = builder.makeBlock();
-  block->name = Name(std::string("__inlined_func$") + from->name.toString());
+  auto name = std::string("__inlined_func$") + from->name.toString();
+  if (nameHint) {
+    name += '$' + std::to_string(nameHint);
+  }
+  block->name = Name(name);
   // In the unlikely event that the function already has a branch target with
   // this name, fix that up, as otherwise we can get unexpected capture of our
   // branches, that is, we could end up with this:
@@ -1084,7 +1094,7 @@ struct Inlining : public Pass {
         action.contents = getActuallyInlinedFunction(action.contents);
 
         // Perform the inlining and update counts.
-        doInlining(module, func, action, getPassOptions());
+        doInlining(module, func, action, getPassOptions(), inlinedNameHint++);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
         assert(inlinedUses[inlinedName] <= infos[inlinedName].refs);
@@ -1101,6 +1111,9 @@ struct Inlining : public Pass {
              !info.usedGlobally;
     });
   }
+
+  // See explanation in doInlining() for the parameter nameHint.
+  Index inlinedNameHint = 0;
 
   InliningMode getInliningMode(Name name) {
     auto& info = infos[name];

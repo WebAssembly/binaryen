@@ -26,7 +26,7 @@
 
  ;; CHECK:      (func $caller-non-nullable (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 (ref func))
- ;; CHECK-NEXT:  (block $__inlined_func$target-non-nullable
+ ;; CHECK-NEXT:  (block $__inlined_func$target-non-nullable$1
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
