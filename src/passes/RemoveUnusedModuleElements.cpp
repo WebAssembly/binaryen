@@ -203,6 +203,7 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     auto type = curr->ref->type.getHeapType();
     note(StructField{type, curr->index});
   }
+  // TODO: use delegations-fields
   void visitArrayNewData(ArrayNewData* curr) {
     note({ModuleElementKind::DataSegment, curr->segment});
   }

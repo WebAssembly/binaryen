@@ -27,7 +27,8 @@ bool flatten(Module& wasm) {
   // The presence of any instruction that cares about segment identity is a
   // problem because flattening gets rid of that (when it merges them all into
   // one big segment).
-  struct Scanner : public WalkerPass<PostWalker<Scanner>> {
+  struct Scanner : public WalkerPass<
+                     PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
     std::atomic<bool>& noticesSegmentIdentity;
 
     Scanner(std::atomic<bool>& noticesSegmentIdentity)
@@ -37,10 +38,33 @@ bool flatten(Module& wasm) {
       return std::make_unique<Scanner>(noticesSegmentIdentity);
     }
 
-    void visitMemoryInit(MemoryInit* curr) { noticesSegmentIdentity = true; }
-    void visitDataDrop(DataDrop* curr) { noticesSegmentIdentity = true; }
-    void visitArrayNewData(ArrayNewData* curr) {
-      noticesSegmentIdentity = true;
+    void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (kind == ModuleItemKind::DataSegment) {                                   \
+    noticesSegmentIdentity = true;                                             \
+  }
+
+#include "wasm-delegations-fields.def"
     }
   };
 

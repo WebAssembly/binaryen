@@ -464,21 +464,38 @@ void MemoryPacking::getSegmentReferrers(Module* module,
     if (func->imported()) {
       return;
     }
-    struct Collector : WalkerPass<PostWalker<Collector>> {
+    struct Collector
+      : WalkerPass<PostWalker<Collector, UnifiedExpressionVisitor<Collector>>> {
       ReferrersMap& referrers;
       Collector(ReferrersMap& referrers) : referrers(referrers) {}
 
-      void visitMemoryInit(MemoryInit* curr) {
-        referrers[curr->segment].push_back(curr);
-      }
-      void visitDataDrop(DataDrop* curr) {
-        referrers[curr->segment].push_back(curr);
-      }
-      void visitArrayNewData(ArrayNewData* curr) {
-        referrers[curr->segment].push_back(curr);
-      }
-      void visitArrayInitData(ArrayInitData* curr) {
-        referrers[curr->segment].push_back(curr);
+      void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (kind == ModuleItemKind::DataSegment) {                                   \
+    referrers[cast->field].push_back(curr);                                    \
+  }
+
+#include "wasm-delegations-fields.def"
       }
     } collector(referrers);
     collector.walkFunctionInModule(func, module);

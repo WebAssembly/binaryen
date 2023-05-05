@@ -2068,6 +2068,21 @@ enum class ExternalKind {
   Invalid = -1
 };
 
+// The kind of a top-level module item. (This overlaps with ExternalKind, but
+// C++ has no good way to extend an enum.) All such items are referred to by
+// name in the IR (that is, the IR is relocatable), and so they are subclasses
+// of the Named class.
+enum class ModuleItemKind {
+  Function = 0,
+  Table = 1,
+  Memory = 2,
+  Global = 3,
+  Tag = 4,
+  DataSegment = 5,
+  ElementSegment = 6,
+  Invalid = -1
+};
+
 class Export {
 public:
   // exported name - note that this is the key, as the internal name is
