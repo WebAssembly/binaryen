@@ -76,7 +76,6 @@
 //
 // To implement that, we need to track the module origin of exports, which we do
 // with the following data structure, which maps Export objects to their info.
-
 //
 // Note that we allow "forward references" - a reference from an earlier module
 // to a later one. If one instantiates the wasm modules in sequence then that is
@@ -87,6 +86,11 @@
 // Despite resolving imports and exports without regard for the order of
 // modules, the order does matter in one way: if the modules have start
 // functions then those are called in the given order of the modules.
+//
+// wasm-merge works in linear time (linear in the total code in all the linked
+// modules). Each input module is traversed once to fix up names before being
+// merged, and at the end we traverse the entire merged module once to fuse
+// imports and exports.
 //
 
 #include "ir/module-utils.h"
