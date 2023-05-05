@@ -142,7 +142,7 @@ using ExportModuleMap = std::unordered_map<Export*, ExportInfo>;
 ExportModuleMap exportModuleMap;
 
 // A map of [kind of thing in the module] to [old name => new name] for things
-// of that kind. For example, that NameMap for functions is a map of old
+// of that kind. For example, the NameMap for functions is a map of old
 // function names to new function names.
 using NameMap = std::unordered_map<Name, Name>;
 using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
