@@ -2,7 +2,7 @@
 ;; RUN: wasm-merge %s first %s.second second -all -S -o - | filecheck %s
 
 ;; Test that we merge start functions. The first module here has none, but the
-;; second does, so we'll refer to it's start function in the merged module.
+;; second does, so we'll refer to its start function in the merged module.
 
 (module
   ;; CHECK:      (type $none_=>_none (func))
