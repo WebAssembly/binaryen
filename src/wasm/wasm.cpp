@@ -947,9 +947,23 @@ void RefCast::finalize() {
     type = Type::unreachable;
     return;
   }
-  // Do not unnecessarily lose non-nullability information.
+
+  // Do not unnecessarily lose non-nullability info. We could leave this for
+  // optimizations, but doing it here as part of finalization/refinalization
+  // ensures that type information flows through in an optimal manner and can be
+  // used as soon as possible.
   if (ref->type.isNonNullable() && type.isNullable()) {
     type = Type(type.getHeapType(), NonNullable);
+  }
+
+  // Do not unnecessarily lose heap type info, as above for nullability. Note
+  // that we must check if the ref has a heap type, as we reach this before
+  // validation, which will error if the ref does not in fact have a heap type.
+  // (This is a downside of propagating type information here, as opposed to
+  // leaving it for an optimization pass.)
+  if (ref->type.isRef() &&
+      HeapType::isSubType(ref->type.getHeapType(), type.getHeapType())) {
+    type = Type(ref->type.getHeapType(), type.getNullability());
   }
 }
 
@@ -1057,7 +1071,13 @@ void ArrayNew::finalize() {
   }
 }
 
-void ArrayNewSeg::finalize() {
+void ArrayNewData::finalize() {
+  if (offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void ArrayNewElem::finalize() {
   if (offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;
   }
@@ -1118,7 +1138,16 @@ void ArrayFill::finalize() {
   }
 }
 
-void ArrayInit::finalize() {
+void ArrayInitData::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayInitElem::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable ||
       offset->type == Type::unreachable || size->type == Type::unreachable) {
     type = Type::unreachable;

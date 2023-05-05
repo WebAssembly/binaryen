@@ -2315,7 +2315,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitArrayNewSeg(ArrayNewSeg* curr) {
+    Ref visitArrayNewData(ArrayNewData* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayNewElem(ArrayNewElem* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2343,7 +2347,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitArrayInit(ArrayInit* curr) {
+    Ref visitArrayInitData(ArrayInitData* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayInitElem(ArrayInitElem* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

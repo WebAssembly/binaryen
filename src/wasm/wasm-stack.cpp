@@ -2118,22 +2118,18 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   parent.writeIndexedHeapType(curr->type.getHeapType());
 }
 
-void BinaryInstWriter::visitArrayNewSeg(ArrayNewSeg* curr) {
+void BinaryInstWriter::visitArrayNewData(ArrayNewData* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case NewData:
-      o << U32LEB(BinaryConsts::ArrayNewData);
-      parent.writeIndexedHeapType(curr->type.getHeapType());
-      o << U32LEB(parent.getDataSegmentIndex(curr->segment));
-      break;
-    case NewElem:
-      o << U32LEB(BinaryConsts::ArrayNewElem);
-      parent.writeIndexedHeapType(curr->type.getHeapType());
-      o << U32LEB(parent.getElementSegmentIndex(curr->segment));
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
-  }
+  o << U32LEB(BinaryConsts::ArrayNewData);
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+  o << U32LEB(parent.getDataSegmentIndex(curr->segment));
+}
+
+void BinaryInstWriter::visitArrayNewElem(ArrayNewElem* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  o << U32LEB(BinaryConsts::ArrayNewElem);
+  parent.writeIndexedHeapType(curr->type.getHeapType());
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
 }
 
 void BinaryInstWriter::visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -2194,26 +2190,26 @@ void BinaryInstWriter::visitArrayFill(ArrayFill* curr) {
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
-void BinaryInstWriter::visitArrayInit(ArrayInit* curr) {
+void BinaryInstWriter::visitArrayInitData(ArrayInitData* curr) {
   if (curr->ref->type.isNull()) {
     emitUnreachable();
     return;
   }
   o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case InitData:
-      o << U32LEB(BinaryConsts::ArrayInitData);
-      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-      o << U32LEB(parent.getDataSegmentIndex(curr->segment));
-      break;
-    case InitElem:
-      o << U32LEB(BinaryConsts::ArrayInitElem);
-      parent.writeIndexedHeapType(curr->ref->type.getHeapType());
-      o << U32LEB(parent.getElementSegmentIndex(curr->segment));
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
+  o << U32LEB(BinaryConsts::ArrayInitData);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(parent.getDataSegmentIndex(curr->segment));
+}
+
+void BinaryInstWriter::visitArrayInitElem(ArrayInitElem* curr) {
+  if (curr->ref->type.isNull()) {
+    emitUnreachable();
+    return;
   }
+  o << int8_t(BinaryConsts::GCPrefix);
+  o << U32LEB(BinaryConsts::ArrayInitElem);
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {

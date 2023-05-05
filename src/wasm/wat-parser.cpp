@@ -789,6 +789,10 @@ struct NullInstrParserCtx {
   InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  InstrT makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+    return Ok{};
+  }
   template<typename HeapTypeT> InstrT makeArrayGet(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -2156,8 +2160,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     CHECK_ERR(size);
     auto offset = pop(pos);
     CHECK_ERR(offset);
-    return push(pos,
-                builder.makeArrayNewSeg(NewData, type, data, *offset, *size));
+    return push(pos, builder.makeArrayNewData(type, data, *offset, *size));
+  }
+
+  Result<> makeArrayNewElem(Index pos, HeapType type, Name data) {
+    if (!type.isArray()) {
+      return in.err(pos, "expected array type annotation");
+    }
+    auto size = pop(pos);
+    CHECK_ERR(size);
+    auto offset = pop(pos);
+    CHECK_ERR(offset);
+    return push(pos, builder.makeArrayNewElem(type, data, *offset, *size));
   }
 
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
@@ -2380,7 +2394,9 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeStructSet(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNew(Ctx&, Index, bool default_);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayNewSeg(Ctx&, Index, ArrayNewSegOp op);
+Result<typename Ctx::InstrT> makeArrayNewData(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewElem(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeArrayNewFixed(Ctx&, Index);
 template<typename Ctx>
@@ -2390,7 +2406,9 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeArrayLen(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArrayCopy(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeArrayFill(Ctx&, Index);
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeArrayInit(Ctx&, Index, ArrayInitOp);
+Result<typename Ctx::InstrT> makeArrayInitData(Ctx&, Index);
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayInitElem(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeRefAs(Ctx&, Index, RefAsOp op);
 template<typename Ctx>
@@ -3528,20 +3546,21 @@ Result<typename Ctx::InstrT> makeArrayNew(Ctx& ctx, Index pos, bool default_) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayNewSeg(Ctx& ctx, Index pos, ArrayNewSegOp op) {
+Result<typename Ctx::InstrT> makeArrayNewData(Ctx& ctx, Index pos) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
-  switch (op) {
-    case NewData: {
-      auto data = dataidx(ctx);
-      CHECK_ERR(data);
-      return ctx.makeArrayNewData(pos, *type, *data);
-    }
-    case NewElem:
-      return ctx.in.err("unimplemented instruction");
-  }
-  WASM_UNREACHABLE("unexpected op");
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayNewData(pos, *type, *data);
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayNewElem(Ctx& ctx, Index pos) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayNewElem(pos, *type, *data);
 }
 
 template<typename Ctx>
@@ -3585,8 +3604,12 @@ Result<typename Ctx::InstrT> makeArrayFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeArrayInit(Ctx& ctx, Index pos, ArrayInitOp op) {
+Result<typename Ctx::InstrT> makeArrayInitData(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
+Result<typename Ctx::InstrT> makeArrayInitElem(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

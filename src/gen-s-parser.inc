@@ -41,10 +41,10 @@ switch (buf[0]) {
           case 'i': {
             switch (buf[11]) {
               case 'd':
-                if (op == "array.init_data"sv) { return makeArrayInit(s, InitData); }
+                if (op == "array.init_data"sv) { return makeArrayInitData(s); }
                 goto parse_error;
               case 'e':
-                if (op == "array.init_elem"sv) { return makeArrayInit(s, InitElem); }
+                if (op == "array.init_elem"sv) { return makeArrayInitElem(s); }
                 goto parse_error;
               case 's':
                 if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
@@ -65,7 +65,7 @@ switch (buf[0]) {
                   case 'd': {
                     switch (buf[11]) {
                       case 'a':
-                        if (op == "array.new_data"sv) { return makeArrayNewSeg(s, NewData); }
+                        if (op == "array.new_data"sv) { return makeArrayNewData(s); }
                         goto parse_error;
                       case 'e':
                         if (op == "array.new_default"sv) { return makeArrayNew(s, true); }
@@ -74,7 +74,7 @@ switch (buf[0]) {
                     }
                   }
                   case 'e':
-                    if (op == "array.new_elem"sv) { return makeArrayNewSeg(s, NewElem); }
+                    if (op == "array.new_elem"sv) { return makeArrayNewElem(s); }
                     goto parse_error;
                   case 'f':
                     if (op == "array.new_fixed"sv) { return makeArrayNewFixed(s); }
@@ -3663,14 +3663,14 @@ switch (buf[0]) {
             switch (buf[11]) {
               case 'd':
                 if (op == "array.init_data"sv) {
-                  auto ret = makeArrayInit(ctx, pos, InitData);
+                  auto ret = makeArrayInitData(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
               case 'e':
                 if (op == "array.init_elem"sv) {
-                  auto ret = makeArrayInit(ctx, pos, InitElem);
+                  auto ret = makeArrayInitElem(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -3707,7 +3707,7 @@ switch (buf[0]) {
                     switch (buf[11]) {
                       case 'a':
                         if (op == "array.new_data"sv) {
-                          auto ret = makeArrayNewSeg(ctx, pos, NewData);
+                          auto ret = makeArrayNewData(ctx, pos);
                           CHECK_ERR(ret);
                           return *ret;
                         }
@@ -3724,7 +3724,7 @@ switch (buf[0]) {
                   }
                   case 'e':
                     if (op == "array.new_elem"sv) {
-                      auto ret = makeArrayNewSeg(ctx, pos, NewElem);
+                      auto ret = makeArrayNewElem(ctx, pos);
                       CHECK_ERR(ret);
                       return *ret;
                     }

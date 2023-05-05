@@ -70,7 +70,9 @@ struct CodeScanner
       counts.note(curr->type);
     } else if (curr->is<ArrayNew>()) {
       counts.note(curr->type);
-    } else if (curr->is<ArrayNewSeg>()) {
+    } else if (curr->is<ArrayNewData>()) {
+      counts.note(curr->type);
+    } else if (curr->is<ArrayNewElem>()) {
       counts.note(curr->type);
     } else if (curr->is<ArrayNewFixed>()) {
       counts.note(curr->type);
@@ -79,7 +81,9 @@ struct CodeScanner
       counts.note(copy->srcRef->type);
     } else if (auto* fill = curr->dynCast<ArrayFill>()) {
       counts.note(fill->ref->type);
-    } else if (auto* init = curr->dynCast<ArrayInit>()) {
+    } else if (auto* init = curr->dynCast<ArrayInitData>()) {
+      counts.note(init->ref->type);
+    } else if (auto* init = curr->dynCast<ArrayInitElem>()) {
       counts.note(init->ref->type);
     } else if (auto* cast = curr->dynCast<RefCast>()) {
       counts.note(cast->type);

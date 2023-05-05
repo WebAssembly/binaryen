@@ -300,14 +300,16 @@ private:
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayNewSeg(Element& s, ArrayNewSegOp op);
+  Expression* makeArrayNewData(Element& s);
+  Expression* makeArrayNewElem(Element& s);
   Expression* makeArrayNewFixed(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
   Expression* makeArrayFill(Element& s);
-  Expression* makeArrayInit(Element& s, ArrayInitOp op);
+  Expression* makeArrayInitData(Element& s);
+  Expression* makeArrayInitElem(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
   Expression* makeRefAsNonNull(Element& s);
   Expression* makeStringNew(Element& s, StringNewOp op, bool try_);
