@@ -618,6 +618,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
+      // TODO: infinite recursion is possible here, if the data is cyclic
       o << "[ref " << data->type << ' ' << data->values << ']';
     }
   }

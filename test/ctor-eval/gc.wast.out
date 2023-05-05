@@ -4,14 +4,14 @@
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
  (import "import" "import" (func $import (param anyref)))
+ (global $ctor-eval$global_5 (ref $struct) (struct.new $struct
+  (i32.const 42)
+ ))
+ (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_5))
  (global $global1 (ref $struct) (struct.new $struct
   (i32.const 1337)
  ))
  (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
-  (i32.const 42)
- ))
- (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_4))
- (global $ctor-eval$global_5 (ref $struct) (struct.new $struct
   (i32.const 99)
  ))
  (export "test1" (func $0_3))
@@ -29,7 +29,7 @@
  (func $0_3 (type $none_=>_none)
   (local $0 (ref $struct))
   (local.set $0
-   (global.get $ctor-eval$global_5)
+   (global.get $ctor-eval$global_4)
   )
   (call $import
    (ref.null none)
