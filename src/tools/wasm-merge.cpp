@@ -74,9 +74,6 @@
 // https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
 // ).
 //
-// To implement that, we need to track the module origin of exports, which we do
-// with the following data structure, which maps Export objects to their info.
-//
 // Note that we allow "forward references" - a reference from an earlier module
 // to a later one. If one instantiates the wasm modules in sequence then that is
 // impossible to do, and to work around it e.g. emscripten dynamic linking
