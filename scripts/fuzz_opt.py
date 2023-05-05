@@ -1273,10 +1273,10 @@ class Merge(TestCaseHandler):
 
         # sometimes also optimize the merged module
         if random.random() < 0.5:
-          opts = get_random_opts()
-          opt_merged = merged + '.opt.wasm'
-          run([in_bin('wasm-opt'), merged, '-o', opt_merged, '-all'] + FEATURE_OPTS + opts)
-          merged = opt_merged
+            opts = get_random_opts()
+            opt_merged = merged + '.opt.wasm'
+            run([in_bin('wasm-opt'), merged, '-o', opt_merged, '-all'] + FEATURE_OPTS + opts)
+            merged = opt_merged
 
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
