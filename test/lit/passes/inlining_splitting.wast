@@ -997,16 +997,8 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $0)
   ;; CHECK-NEXT:       )
-<<<<<<< HEAD
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$reachable-if-body$28
-  ;; CHECK-NEXT:        (local.set $2
-  ;; CHECK-NEXT:         (local.get $0)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
-=======
   ;; CHECK-NEXT:       (call $byn-split-outlined-B$reachable-if-body
   ;; CHECK-NEXT:        (local.get $0)
->>>>>>> origin/main
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $0)
@@ -1025,16 +1017,8 @@
   ;; CHECK-NEXT:       (ref.is_null
   ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-<<<<<<< HEAD
-  ;; CHECK-NEXT:       (block $__inlined_func$byn-split-outlined-B$reachable-if-body$29
-  ;; CHECK-NEXT:        (local.set $3
-  ;; CHECK-NEXT:         (local.get $1)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (call $import)
-=======
   ;; CHECK-NEXT:       (call $byn-split-outlined-B$reachable-if-body
   ;; CHECK-NEXT:        (local.get $1)
->>>>>>> origin/main
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $1)
@@ -1064,7 +1048,7 @@
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop$24 (result anyref)
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1082,7 +1066,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop0 (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$reachable-if-body-noloop$25 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1174,7 +1158,7 @@
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result$24
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result$26
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -1189,7 +1173,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result$25
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-B$unreachable-if-body-no-result$27
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -1238,7 +1222,7 @@
   ;; CHECK-NEXT:  (local $3 anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if$26 (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if$28 (result anyref)
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1269,7 +1253,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result anyref)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if$27 (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$multi-if$29 (result anyref)
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1828,14 +1812,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$middle-size-A0
+  ;; CHECK-NEXT:   (block $__inlined_func$middle-size-A$1
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (if
   ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (br $__inlined_func$middle-size-A0)
+  ;; CHECK-NEXT:      (br $__inlined_func$middle-size-A$1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (i32.const 0)
@@ -1898,7 +1882,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$big-size-A
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$big-size-A$2
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -1913,7 +1897,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$big-size-A0
+  ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$big-size-A$3
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -1957,7 +1941,7 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B$4 (result i32)
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
@@ -2002,7 +1986,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B0 (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$middle-size-B$5 (result i32)
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
@@ -2081,14 +2065,14 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B$6 (result i32)
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B
+  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B$6
   ;; CHECK-NEXT:        (call $byn-split-outlined-B$big-size-B
   ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
@@ -2101,14 +2085,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B0 (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$byn-split-inlineable-B$big-size-B$7 (result i32)
   ;; CHECK-NEXT:     (local.set $1
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B0
+  ;; CHECK-NEXT:       (br $__inlined_func$byn-split-inlineable-B$big-size-B$7
   ;; CHECK-NEXT:        (call $byn-split-outlined-B$big-size-B
   ;; CHECK-NEXT:         (local.get $1)
   ;; CHECK-NEXT:        )
