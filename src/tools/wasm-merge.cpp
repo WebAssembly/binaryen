@@ -384,10 +384,6 @@ void mergeInto(Module& input, Name inputName) {
   // The input module's items can now be copied into the target module safely,
   // as names will not conflict.
   copyModuleContents(input, inputName);
-
-  // Fuse imports and exports now that everything is all together in the merged
-  // module.
-  fuseImportsAndExports();
 }
 
 } // anonymous namespace
@@ -512,6 +508,10 @@ Note that filenames and modules names are interleaved (which is hopefully less c
       }
     }
   }
+
+  // Fuse imports and exports now that everything is all together in the merged
+  // module.
+  fuseImportsAndExports();
 
   // Output.
   if (options.extra.count("output") > 0) {
