@@ -1263,7 +1263,10 @@ class Merge(TestCaseHandler):
         second_wasm = abspath('second.wasm')
         run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + FUZZ_OPTS + FEATURE_OPTS)
 
-        # TODO: optimize the second input sometimes
+        # sometimes also optimize the second module
+        if random.random() < 0.5:
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
 
         # merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
@@ -1274,9 +1277,7 @@ class Merge(TestCaseHandler):
         # sometimes also optimize the merged module
         if random.random() < 0.5:
             opts = get_random_opts()
-            opt_merged = merged + '.opt.wasm'
-            run([in_bin('wasm-opt'), merged, '-o', opt_merged, '-all'] + FEATURE_OPTS + opts)
-            merged = opt_merged
+            run([in_bin('wasm-opt'), merged, '-o', merged, '-all'] + FEATURE_OPTS + opts)
 
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
