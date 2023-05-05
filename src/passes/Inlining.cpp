@@ -563,10 +563,53 @@ struct FunctionSplitter {
   // each iteration, the number of iterations, etc.). Therefore this function
   // may only find out if we *can* split, but not actually do any splitting.
   //
-  // Note that to avoid wasteful work, this function may return "Full' inlining
-  // mode instead of a split inining. That is; if it detects that a partial
+  // Note that to avoid wasteful work, this function may return "Full" inlining
+  // mode instead of a split inlining. That is, if it detects that a partial
   // inlining will trigger a follow up full inline of the splitted function
-  // it will instead return "InliningMode::Full" directly.
+  // then it will instead return "InliningMode::Full" directly. In more detail,
+  // imagine we have
+  //
+  //   foo(10);
+  //
+  // which calls
+  //
+  //   func foo(x) {
+  //     if (x) {
+  //       CODE
+  //     }
+  //   }
+  //
+  // If we partially inline then the call becomes
+  //
+  //   if (10) {
+  //     outlined-CODE()
+  //   }
+  //
+  // That is, we've only inlined the |if| out of foo(), and we call a function
+  // that contains the code in CODE. But if CODE is small enough to be inlined
+  // then a later iteration of the inliner will do just that. The result of this
+  // split inlining and then full inlining of the outlined code is exactly the
+  // same as if we normally inlined from the beginning, but it adds more work,
+  // so we'd like to avoid it, which we do by seeing when a split would be
+  // followed by inlining the remainder, and then we return Full here and just
+  // inline it all normally.
+  //
+  // Note that the above issue shows that we may in some cases inline more than
+  // the normal inlining limit. That is, if the inlining limit is 20, and CODE
+  // in the example above was 19, then foo()'s size was 21 (when we add the if
+  // and get of |x|). That leads to the situation where foo() is too big to
+  // normally inline, but the outlined CODE can then be inlined. And this shows
+  // that we end up inlining a function of size 21, even though it is larger
+  // than our inlining limit. We consider this acceptable because it only
+  // occurs on functions slightly larger than the inlining limit, and only if
+  // they have the simple forms that split inlining recognizes, that we think
+  // are useful to inline. Alternatively, if we wanted to avoid this, it would
+  // add complexity because we'd need to recognize the outlined function with
+  // CODE in it and *not* inline it even though it is small enough, after
+  // splitting, to be inlined. That is, splitting creates smaller functions, so
+  // it can lead to more inlining (but, again, that makes sense since we only
+  // split on very specific patterns we believe are worth handling in that
+  // manner).
   InliningMode getSplitDrivenInliningMode(Function* func, FunctionInfo& info) {
     auto* body = func->body;
 
