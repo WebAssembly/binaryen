@@ -904,26 +904,24 @@ struct InfoCollector
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
     auto heapType = curr->type.getHeapType();
-    switch (curr->op) {
-      case NewData: {
-        Type elemType = heapType.getArray().element.type;
-        addRoot(DataLocation{heapType, 0},
-                PossibleContents::fromType(elemType));
-        return;
-      }
-      case NewElem: {
-        Type segType = getModule()->getElementSegment(curr->segment)->type;
-        addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
-        return;
-      }
+    Type elemType = heapType.getArray().element.type;
+    addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(elemType));
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
     }
-    WASM_UNREACHABLE("unexpected op");
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    auto heapType = curr->type.getHeapType();
+    Type segType = getModule()->getElementSegment(curr->segment)->type;
+    addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
+    return;
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr->type == Type::unreachable) {
@@ -1012,7 +1010,7 @@ struct InfoCollector
     auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
     visitArraySet(set);
   }
-  void visitArrayInit(ArrayInit* curr) {
+  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
     // Check for both unreachability and a bottom type. In either case we have
     // no work to do, and would error on an assertion below in finding the array
     // type.
@@ -1033,6 +1031,8 @@ struct InfoCollector
     auto* set = builder.makeArraySet(curr->ref, curr->index, get);
     visitArraySet(set);
   }
+  void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
+  void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;

@@ -67,7 +67,8 @@ struct NewFinder : public PostWalker<NewFinder> {
 
   void visitStructNew(StructNew* curr) { news.push_back(curr); }
   void visitArrayNew(ArrayNew* curr) { news.push_back(curr); }
-  void visitArrayNewSeg(ArrayNewSeg* curr) { news.push_back(curr); }
+  void visitArrayNewData(ArrayNewData* curr) { news.push_back(curr); }
+  void visitArrayNewElem(ArrayNewElem* curr) { news.push_back(curr); }
   void visitArrayNewFixed(ArrayNewFixed* curr) { news.push_back(curr); }
 };
 
@@ -286,8 +287,8 @@ struct TypeSSA : public Pass {
       if (isInterestingRelevantTo(arrayNew->init, element.type)) {
         return true;
       }
-    } else if (curr->is<ArrayNewSeg>()) {
-      // TODO: If the element segment is immutable perhaps we could inspect it.
+    } else if (curr->is<ArrayNewData>() || curr->is<ArrayNewElem>()) {
+      // TODO: If the segment is immutable perhaps we could inspect it.
       return true;
     } else if (auto* arrayInit = curr->dynCast<ArrayNewFixed>()) {
       // All the items must be interesting for us to consider this interesting,

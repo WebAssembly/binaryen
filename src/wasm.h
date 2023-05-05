@@ -563,17 +563,6 @@ enum RefAsOp {
   ExternExternalize,
 };
 
-enum ArrayNewSegOp {
-  NewData,
-  NewElem,
-};
-
-// TODO: Deduplicate with ArrayNewSegOp?
-enum ArrayInitOp {
-  InitData,
-  InitElem,
-};
-
 enum BrOnOp {
   BrOnNull,
   BrOnNonNull,
@@ -722,14 +711,16 @@ public:
     StructGetId,
     StructSetId,
     ArrayNewId,
-    ArrayNewSegId,
+    ArrayNewDataId,
+    ArrayNewElemId,
     ArrayNewFixedId,
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
     ArrayCopyId,
     ArrayFillId,
-    ArrayInitId,
+    ArrayInitDataId,
+    ArrayInitElemId,
     RefAsId,
     StringNewId,
     StringConstId,
@@ -1611,11 +1602,21 @@ public:
   void finalize();
 };
 
-class ArrayNewSeg : public SpecificExpression<Expression::ArrayNewSegId> {
+class ArrayNewData : public SpecificExpression<Expression::ArrayNewDataId> {
 public:
-  ArrayNewSeg(MixedArena& allocator) {}
+  ArrayNewData(MixedArena& allocator) {}
 
-  ArrayNewSegOp op;
+  Name segment;
+  Expression* offset;
+  Expression* size;
+
+  void finalize();
+};
+
+class ArrayNewElem : public SpecificExpression<Expression::ArrayNewElemId> {
+public:
+  ArrayNewElem(MixedArena& allocator) {}
+
   Name segment;
   Expression* offset;
   Expression* size;
@@ -1689,11 +1690,23 @@ public:
   void finalize();
 };
 
-class ArrayInit : public SpecificExpression<Expression::ArrayInitId> {
+class ArrayInitData : public SpecificExpression<Expression::ArrayInitDataId> {
 public:
-  ArrayInit(MixedArena& allocator) {}
+  ArrayInitData(MixedArena& allocator) {}
 
-  ArrayInitOp op;
+  Name segment;
+  Expression* ref;
+  Expression* index;
+  Expression* offset;
+  Expression* size;
+
+  void finalize();
+};
+
+class ArrayInitElem : public SpecificExpression<Expression::ArrayInitElemId> {
+public:
+  ArrayInitElem(MixedArena& allocator) {}
+
   Name segment;
   Expression* ref;
   Expression* index;
@@ -2052,6 +2065,21 @@ enum class ExternalKind {
   Memory = 2,
   Global = 3,
   Tag = 4,
+  Invalid = -1
+};
+
+// The kind of a top-level module item. (This overlaps with ExternalKind, but
+// C++ has no good way to extend an enum.) All such items are referred to by
+// name in the IR (that is, the IR is relocatable), and so they are subclasses
+// of the Named class.
+enum class ModuleItemKind {
+  Function = 0,
+  Table = 1,
+  Memory = 2,
+  Global = 3,
+  Tag = 4,
+  DataSegment = 5,
+  ElementSegment = 6,
   Invalid = -1
 };
 

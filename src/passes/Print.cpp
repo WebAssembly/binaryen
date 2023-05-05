@@ -2265,21 +2265,20 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.new_");
-    switch (curr->op) {
-      case NewData:
-        printMedium(o, "data");
-        break;
-      case NewElem:
-        printMedium(o, "elem");
-        break;
-      default:
-        WASM_UNREACHABLE("unexpected op");
+    printMedium(o, "array.new_data");
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
     }
+    printMedium(o, "array.new_elem");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
     o << " $" << curr->segment;
@@ -2333,20 +2332,19 @@ struct PrintExpressionContents
     printMedium(o, "array.fill ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayInitData(ArrayInitData* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
-    switch (curr->op) {
-      case InitData:
-        printMedium(o, "array.init_data ");
-        break;
-      case InitElem:
-        printMedium(o, "array.init_elem ");
-        break;
-      default:
-        WASM_UNREACHABLE("unexpected op");
+    printMedium(o, "array.init_data ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
     }
+    printMedium(o, "array.init_elem ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
     o << " $" << curr->segment;
   }
@@ -2915,7 +2913,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayNew(ArrayNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
-  void visitArrayNewSeg(ArrayNewSeg* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {

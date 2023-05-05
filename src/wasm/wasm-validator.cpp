@@ -22,6 +22,7 @@
 #include "ir/eh-utils.h"
 #include "ir/features.h"
 #include "ir/find_all.h"
+#include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
@@ -456,14 +457,18 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
-  void visitArrayNewSeg(ArrayNewSeg* curr);
+  template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
+  void visitArrayNewData(ArrayNewData* curr);
+  void visitArrayNewElem(ArrayNewElem* curr);
   void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
   void visitArrayFill(ArrayFill* curr);
-  void visitArrayInit(ArrayInit* curr);
+  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr);
+  void visitArrayInitData(ArrayInitData* curr);
+  void visitArrayInitElem(ArrayInitElem* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2703,7 +2708,8 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   }
 }
 
-void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
+template<typename ArrayNew>
+void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "array.new_{data, elem} requires gc [--enable-gc]");
@@ -2717,24 +2723,6 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
     Type(Type::i32),
     curr,
     "array.new_{data, elem} size must be an i32");
-  switch (curr->op) {
-    case NewData:
-      if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
-                        curr,
-                        "array.new_data segment should exist")) {
-        return;
-      }
-      break;
-    case NewElem:
-      if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
-                        curr,
-                        "array.new_elem segment should exist")) {
-        return;
-      }
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
-  }
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -2748,26 +2736,49 @@ void FunctionValidator::visitArrayNewSeg(ArrayNewSeg* curr) {
   if (!shouldBeTrue(
         heapType.isArray(),
         curr,
-        "array.new_{data, elem} type shoudl be an array reference")) {
+        "array.new_{data, elem} type should be an array reference")) {
     return;
   }
-  auto elemType = heapType.getArray().element.type;
-  switch (curr->op) {
-    case NewData:
-      shouldBeTrue(elemType.isNumber(),
-                   curr,
-                   "array.new_data result element type should be numeric");
-      break;
-    case NewElem:
-      shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
-                      elemType,
-                      curr,
-                      "array.new_elem segment type should be a subtype of the "
-                      "result element type");
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected op");
+}
+
+void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
+  visitArrayNew(curr);
+
+  if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
+                    curr,
+                    "array.new_data segment should exist")) {
+    return;
   }
+
+  auto field = GCTypeUtils::getField(curr->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeTrue(field->type.isNumber(),
+               curr,
+               "array.new_data result element type should be numeric");
+}
+
+void FunctionValidator::visitArrayNewElem(ArrayNewElem* curr) {
+  visitArrayNew(curr);
+
+  if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
+                    curr,
+                    "array.new_elem segment should exist")) {
+    return;
+  }
+
+  auto field = GCTypeUtils::getField(curr->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
+                  field->type,
+                  curr,
+                  "array.new_elem segment type should be a subtype of the "
+                  "result element type");
 }
 
 void FunctionValidator::visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -2956,6 +2967,7 @@ void FunctionValidator::visitArrayFill(ArrayFill* curr) {
     element.mutable_, curr, "array.fill destination must be mutable");
 }
 
+template<typename ArrayInit>
 void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
@@ -2991,24 +3003,43 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   auto element = heapType.getArray().element;
   shouldBeTrue(
     element.mutable_, curr, "array.init_* destination must be mutable");
-  if (curr->op == InitData) {
-    shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
-                 curr,
-                 "array.init_data segment must exist");
-    shouldBeTrue(element.type.isNumber(),
-                 curr,
-                 "array.init_data destination must be numeric");
-  } else {
-    assert(curr->op == InitElem);
-    auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
-    if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
-      return;
-    }
-    shouldBeSubType(seg->type,
-                    element.type,
-                    curr,
-                    "array.init_elem segment type must match destination type");
+}
+
+void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
+  visitArrayInit(curr);
+
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
+               curr,
+               "array.init_data segment must exist");
+
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
   }
+  shouldBeTrue(field->type.isNumber(),
+               curr,
+               "array.init_data destination must be numeric");
+}
+
+void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
+  visitArrayInit(curr);
+
+  auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
+  if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
+    return;
+  }
+
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+
+  shouldBeSubType(seg->type,
+                  field->type,
+                  curr,
+                  "array.init_elem segment type must match destination type");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
