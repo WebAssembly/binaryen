@@ -10,11 +10,19 @@
  (func "test"
   ;; The nop can be evalled away, but not the loop. We should not apply any
   ;; partial results from the loop - in particular, the global must remain at
-  ;; 0.
+  ;; 0. That is, the global.set of 999 below must not be applied to the global.
+  ;;
+  ;; (It is true that in this simple module it would be ok to set 999 to the
+  ;; global, but if the global were exported for example then that would not
+  ;; be the case, nor would it be the case if the code did $global = $global + 1
+  ;; or such. That is, since the global.set is not evalled away, its effects
+  ;; must not be applied; we do both atomically or neither, so that the
+  ;; global.set's execution only happens once.)
+
   (nop)
   (loop
    (global.set $global
-    (i32.const 999) ;; this must not be applied to the global!
+    (i32.const 999)
    )
    (unreachable)
   )
