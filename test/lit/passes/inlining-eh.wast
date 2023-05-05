@@ -90,7 +90,7 @@
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (block $__inlined_func$callee-a (result i32)
+  ;; CHECK-NEXT:   (block $__inlined_func$callee-a$1 (result i32)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -119,7 +119,7 @@
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block $__inlined_func$callee-b
+  ;; CHECK-NEXT:     (block $__inlined_func$callee-b$2
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )

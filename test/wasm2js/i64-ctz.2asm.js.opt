@@ -35,7 +35,7 @@ function asmFunc(imports) {
  
  function legalstub$ctz64($0, $1) {
   var $2 = 0, $3 = 0, $4 = 0, $5 = 0;
-  __inlined_func$__wasm_ctz_i64 : {
+  __inlined_func$__wasm_ctz_i64$1 : {
    if ($0 | $1) {
     $2 = $1 - 1 | 0;
     $3 = $2 + 1 | 0;
@@ -47,7 +47,7 @@ function asmFunc(imports) {
     $1 = 63 - $0 | 0;
     i64toi32_i32$HIGH_BITS = 0 - ($0 >>> 0 > 63) | 0;
     $0 = $1;
-    break __inlined_func$__wasm_ctz_i64;
+    break __inlined_func$__wasm_ctz_i64$1;
    }
    i64toi32_i32$HIGH_BITS = 0;
    $0 = 64;

@@ -1386,8 +1386,8 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $__inlined_func$~lib/internal/memory/memset
- ;; CHECK-NEXT:   (br_if $__inlined_func$~lib/internal/memory/memset
+ ;; CHECK-NEXT:  (block $__inlined_func$~lib/internal/memory/memset$8
+ ;; CHECK-NEXT:   (br_if $__inlined_func$~lib/internal/memory/memset$8
  ;; CHECK-NEXT:    (i32.le_u
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:     (i32.const 8)
@@ -1426,7 +1426,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br_if $__inlined_func$~lib/internal/memory/memset
+ ;; CHECK-NEXT:   (br_if $__inlined_func$~lib/internal/memory/memset$8
  ;; CHECK-NEXT:    (i32.le_u
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:     (i32.const 24)
