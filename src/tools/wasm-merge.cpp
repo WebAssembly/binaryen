@@ -213,9 +213,10 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 
   private:
     void mapName(ModuleItemKind kind, Name& name) {
-      auto iter = kindNameMaps[kind].find(name);
-      if (iter != kindNameMaps[kind].end()) {
-        name = kindNameMaps[kind][name];
+      auto& nameMap = kindNameMaps[kind];
+      auto iter = nameMap.find(name);
+      if (iter != nameMap.end()) {
+        name = iter->second;
       }
     }
   } nameMapper(kindNameMaps);
@@ -235,40 +236,43 @@ void renameInputItems(Module& input) {
   //      avoid hardcoded loops here, but it's unclear those would help
   //      anywhere else.
   KindNameMaps kindNameMaps;
+
+  // Add a mapping of a name to a new name, in a particular kind. If the new
+  // name is the same as the old, do nothing.
+  auto maybeAdd = [&](ModuleItemKind kind, Name& name, const Name newName) {
+    if (newName != name) {
+      kindNameMaps[kind][name] = newName;
+      name = newName;
+    }
+  };
+
   for (auto& curr : input.functions) {
     auto name = Names::getValidFunctionName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::Function][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::Function, curr->name, name);
   }
   for (auto& curr : input.globals) {
     auto name = Names::getValidGlobalName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::Global][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::Global, curr->name, name);
   }
   for (auto& curr : input.tags) {
     auto name = Names::getValidTagName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::Tag][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::Tag, curr->name, name);
   }
   for (auto& curr : input.elementSegments) {
     auto name = Names::getValidElementSegmentName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::ElementSegment][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::ElementSegment, curr->name, name);
   }
   for (auto& curr : input.memories) {
     auto name = Names::getValidMemoryName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::Memory][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::Memory, curr->name, name);
   }
   for (auto& curr : input.dataSegments) {
     auto name = Names::getValidDataSegmentName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::DataSegment][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::DataSegment, curr->name, name);
   }
   for (auto& curr : input.tables) {
     auto name = Names::getValidTableName(merged, curr->name);
-    kindNameMaps[ModuleItemKind::Table][curr->name] = name;
-    curr->name = name;
+    maybeAdd(ModuleItemKind::Table, curr->name, name);
   }
 
   // Apply the names to their uses.
