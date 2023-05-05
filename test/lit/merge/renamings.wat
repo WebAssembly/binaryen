@@ -41,9 +41,9 @@
 
   ;; CHECK:      (data $bar (i32.const 2) "def")
 
-  ;; CHECK:      (data $other (i32.const 3) "ghi")
+  ;; CHECK:      (data $other (memory $foo_2) (i32.const 3) "ghi")
 
-  ;; CHECK:      (data $bar_2 (i32.const 4) "jkl")
+  ;; CHECK:      (data $bar_2 (memory $foo_2) (i32.const 4) "jkl")
 
   ;; CHECK:      (table $foo 10 20 funcref)
 
