@@ -17,7 +17,7 @@
  ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_3))
  (global $a (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   ;; This generates a self-cycle where the global $a's ref field points to
   ;; itself. To handle this, wasm-ctor-eval will emit a new global with a null
@@ -36,7 +36,7 @@
   )
  )
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -69,7 +69,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
@@ -92,7 +92,7 @@
  ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_3))
  (global $a (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (global.set $a
    (local.tee $a
@@ -108,7 +108,7 @@
   )
  )
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -137,7 +137,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
@@ -167,7 +167,7 @@
  ;; CHECK:      (global $b (mut (ref null $A)) (global.get $ctor-eval$global_7))
  (global $b (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $A))
   (global.set $a
@@ -193,7 +193,7 @@
   )
  )
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -228,7 +228,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $A))
 ;; CHECK-NEXT:  (nop)
@@ -266,7 +266,7 @@
  ;; CHECK:      (global $b (mut (ref null $B)) (global.get $ctor-eval$global_7))
  (global $b (mut (ref null $B)) (ref.null $B))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (global.set $a
@@ -291,7 +291,7 @@
   )
  )
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -326,7 +326,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (nop)
@@ -365,7 +365,7 @@
 
  (global $a (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (global.set $a
@@ -390,7 +390,7 @@
   )
  )
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -425,7 +425,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (nop)
@@ -456,7 +456,7 @@
 
  (global $b (mut (ref null $B)) (ref.null $B))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (global.set $a
@@ -486,7 +486,7 @@
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -511,7 +511,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (nop)
@@ -544,7 +544,7 @@
  ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_8))
  (global $a (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (global.set $a
@@ -574,7 +574,7 @@
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -599,7 +599,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (nop)
@@ -631,7 +631,7 @@
 
  (global $c (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $A))
   (local $c (ref $A))
@@ -670,7 +670,7 @@
  ;; CHECK-NEXT:  (i32.const 99999)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -699,7 +699,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $A))
 ;; CHECK-NEXT:  (local $c (ref $A))
@@ -750,7 +750,7 @@
  ;; CHECK:      (global $a (mut (ref null $A)) (global.get $ctor-eval$global_14))
  (global $a (mut (ref null $A)) (ref.null $A))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (local $c (ref $C))
@@ -789,7 +789,7 @@
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -814,7 +814,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (local $c (ref $C))
@@ -862,7 +862,7 @@
 
  (global $c (mut (ref null $C)) (ref.null $C))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (local $b (ref $B))
   (local $c (ref $C))
@@ -901,7 +901,7 @@
  ;; CHECK-NEXT:  (global.get $ctor-eval$global_14)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -926,7 +926,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (local $c (ref $C))
@@ -958,7 +958,7 @@
  (global $a (mut (ref null $A)) (ref.null $A))
  (global $b (mut (ref null $B)) (ref.null $B))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (global.set $a
    (local.tee $a
@@ -1008,7 +1008,7 @@
 
  ;; CHECK:      (global $ctor-eval$global_18 (ref $B) (array.new_fixed $B))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -1041,7 +1041,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
@@ -1080,7 +1080,7 @@
  (global $a (mut (ref null $A)) (ref.null $A))
  (global $b (mut (ref null $B)) (ref.null $B))
 
- (func "test"
+ (func $test (export "test")
   (local $b (ref $B))
   (global.set $b
    (local.tee $b
@@ -1121,7 +1121,7 @@
  ;; CHECK-NEXT:  (ref.null none)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -1157,7 +1157,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $b (ref $B))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
@@ -1182,14 +1182,14 @@
  ;; CHECK:      (global $b (mut (ref null $A)) (ref.null none))
  (global $b (mut (ref null $A)) (ref.null $A))
 
- ;; CHECK:      (export "test" (func $0_3))
+ ;; CHECK:      (export "test" (func $test_3))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
  ;; CHECK:      (start $start)
  (start $start)
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (global.set $a
    (local.tee $a
@@ -1242,7 +1242,7 @@
  )
 )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (local $a (ref $A))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
@@ -1257,7 +1257,7 @@
  ;; CHECK:      (import "a" "b" (func $import (param anyref)))
  (import "a" "b" (func $import (param anyref)))
 
- (func "test"
+ (func $test (export "test")
   (local $a (ref $A))
   (struct.set $A 0
    (local.tee $a
@@ -1279,7 +1279,7 @@
 ;; CHECK-NEXT:  (ref.null none)
 ;; CHECK-NEXT: ))
 
-;; CHECK:      (export "test" (func $0_3))
+;; CHECK:      (export "test" (func $test_3))
 
 ;; CHECK:      (start $start)
 
@@ -1290,7 +1290,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_3 (type $none_=>_none)
+;; CHECK:      (func $test_3 (type $none_=>_none)
 ;; CHECK-NEXT:  (call $import
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )

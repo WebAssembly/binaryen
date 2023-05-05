@@ -51,7 +51,7 @@
   (local.get $x)
  )
 
- (func "test1"
+ (func $test1 (export "test1")
   (global.set $a
    (call $makeCycle
     (i32.const 10)
@@ -59,7 +59,7 @@
   )
  )
 
- (func "test2"
+ (func $test2 (export "test2")
   (global.set $b
    (call $makeCycle
     (i32.const 20)
@@ -67,7 +67,7 @@
   )
  )
 
- (func "test3"
+ (func $test3 (export "test3")
   (global.set $c
    (call $makeCycle
     (i32.const 30)
@@ -75,11 +75,11 @@
   )
  )
 
- ;; CHECK:      (export "test1" (func $1_6))
+ ;; CHECK:      (export "test1" (func $test1_6))
 
- ;; CHECK:      (export "test2" (func $2_7))
+ ;; CHECK:      (export "test2" (func $test2_7))
 
- ;; CHECK:      (export "test3" (func $3_8))
+ ;; CHECK:      (export "test3" (func $test3_8))
 
  ;; CHECK:      (export "keepalive" (func $keepalive))
 
@@ -131,14 +131,14 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $1_6 (type $none_=>_none)
+;; CHECK:      (func $test1_6 (type $none_=>_none)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $2_7 (type $none_=>_none)
+;; CHECK:      (func $test2_7 (type $none_=>_none)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $3_8 (type $none_=>_none)
+;; CHECK:      (func $test3_8 (type $none_=>_none)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

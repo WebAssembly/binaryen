@@ -7,7 +7,7 @@
  ;; CHECK:      (global $global (mut i32) (i32.const 0))
  (global $global (mut i32) (i32.const 0))
 
- (func "test"
+ (func $test (export "test")
   ;; The nop can be evalled away, but not the loop. We should not apply any
   ;; partial results from the loop - in particular, the global must remain at
   ;; 0. That is, the global.set of 999 below must not be applied to the global.
@@ -29,9 +29,9 @@
  )
 )
 
-;; CHECK:      (export "test" (func $0_1))
+;; CHECK:      (export "test" (func $test_1))
 
-;; CHECK:      (func $0_1 (type $none_=>_none)
+;; CHECK:      (func $test_1 (type $none_=>_none)
 ;; CHECK-NEXT:  (global.set $global
 ;; CHECK-NEXT:   (i32.const 999)
 ;; CHECK-NEXT:  )
