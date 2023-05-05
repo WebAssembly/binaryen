@@ -1271,6 +1271,13 @@ class Merge(TestCaseHandler):
         merged = abspath('merged.wasm')
         run([in_bin('wasm-merge'), wasm, 'first', abspath('second.wasm'), 'second', '-o', merged] + FEATURE_OPTS + ['-all'])
 
+        # sometimes also optimize the merged module
+        if random.random() < 0.5:
+          opts = get_random_opts()
+          opt_merged = merged + '.opt.wasm'
+          run([in_bin('wasm-opt'), merged, '-o', opt_merged, '-all'] + FEATURE_OPTS + opts)
+          merged = opt_merged
+
         # verify that merging in the second module did not alter the output.
         output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
         output = fix_output(output)
@@ -1331,7 +1338,7 @@ def test_one(random_input, given_wasm):
     randomize_fuzz_settings()
     pick_initial_contents()
 
-    opts = randomize_opt_flags()
+    opts = get_random_opts()
     print('randomized opts:', '\n  ' + '\n  '.join(opts))
     print()
 
@@ -1505,7 +1512,7 @@ requires_closed_world = {("--type-refining",),
                          ("--type-merging",)}
 
 
-def randomize_opt_flags():
+def get_random_opts():
     flag_groups = []
     has_flatten = False
 
