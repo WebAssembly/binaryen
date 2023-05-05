@@ -1101,7 +1101,7 @@
   ;; CHECK-NEXT:      (br $block1
   ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast null $child
+  ;; CHECK-NEXT:         (ref.cast null none
   ;; CHECK-NEXT:          (ref.null none)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -2452,10 +2452,10 @@
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-
   ;; CHECK:      (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
   (type $subsubstruct (struct_subtype (field i32) (field i32) (field i32) $substruct))
+
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (type $other (struct ))
   (type $other (struct_subtype data))
@@ -2494,7 +2494,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast $subsubstruct
   ;; CHECK-NEXT:    (struct.new $subsubstruct
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 4)
@@ -2539,7 +2539,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null $struct
+  ;; CHECK-NEXT:     (ref.cast null none
   ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $import)
