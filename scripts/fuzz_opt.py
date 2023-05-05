@@ -1248,7 +1248,7 @@ class CtorEval(TestCaseHandler):
 
 # Tests wasm-merge
 class Merge(TestCaseHandler):
-    frequency = 1 # FIXME
+    frequency = 0.25
 
     def handle(self, wasm):
         # generate a second wasm file to merge. note that we intentionally pick
