@@ -170,7 +170,7 @@
  (func $drop-if-both-unreachable (type $1) (param $0 i32)
   (block $out
    (drop
-    (if (result i32)
+    (if
      (local.get $0)
      (br $out)
      (br $out)
@@ -178,7 +178,7 @@
    )
   )
   (drop
-   (if (result i32)
+   (if
     (local.get $0)
     (unreachable)
     (unreachable)
@@ -207,6 +207,12 @@
    )
    (return)
   )
+  (block $out2
+   (block $in2
+    (br $in2)
+   )
+   (return)
+  )
  )
  (func $block-unreachable-but-last-element-concrete (type $0)
   (local $2 i32)
@@ -225,14 +231,16 @@
   )
  )
  (func $leave-block-even-if-br-not-taken (type $none_=>_f64) (result f64)
-  (block $label$0 (result f64)
+  (block $label$0
    (f64.store align=1
     (i32.const 879179022)
-    (br_if $label$0
+    (block
      (loop $label$9
       (br $label$9)
      )
-     (i32.const 677803374)
+     (drop
+      (i32.const 677803374)
+     )
     )
    )
   )

@@ -492,10 +492,24 @@
       )
       (return)
     )
+    ;; The second br will be removed.
     (block $out2
       (block $in2
         (br $in2)
         (br $out2)
+      )
+      (return)
+    )
+    ;; This is the state after removing the second br. We will optimize all the
+    ;; rest of here away. This shows that the previous expression can be
+    ;; removed in two cycles of vacuum. (Note that it would also be removed by
+    ;; --remove-unused-brs --vacuum, which is how this sort of thing is commonly
+    ;; optimized away in practice. We could also in theory optimize the entire
+    ;; thing away by running multiple cycles inside vacuum, but the extra
+    ;; overhead would only rarely help.)
+    (block $out3
+      (block $in3
+        (br $in3)
       )
       (return)
     )
@@ -527,6 +541,9 @@
     (f64.store align=1
      (i32.const 879179022)
      (br_if $label$0
+      ;; This loop never exits, so it is unreachable. We don't have much to
+      ;; optimize here, but we can remove the br_if and leave an unreachable
+      ;; block with the other contents for dce to clean up.
       (loop $label$9
        (br $label$9)
       )
