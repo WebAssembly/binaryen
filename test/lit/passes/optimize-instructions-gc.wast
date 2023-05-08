@@ -38,6 +38,7 @@
 
   (type $void2 (func_subtype $void))
 
+  ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -2458,6 +2459,18 @@
     )
   )
 
+  ;; CHECK:      (func $gc_to_unreachable_in_added_constants (type $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.wrap_i64
+  ;; CHECK-NEXT:    (i64.add
+  ;; CHECK-NEXT:     (call $struct_i64_helper
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i64.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $gc_to_unreachable_in_added_constants
     (drop
       (i32.wrap_i64
@@ -2472,7 +2485,7 @@
               (ref.as_non_null
                 (ref.null none)
               )
-              (ref.func $1)
+              (ref.func $struct_i64_helper)
             )
           )
         )
@@ -2480,7 +2493,10 @@
     )
   )
 
-  (func $helper (type $struct_i64) (param $0 (ref null struct)) (result i64)
+  ;; CHECK:      (func $struct_i64_helper (type $struct_i64) (param $0 structref) (result i64)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $struct_i64_helper (type $struct_i64) (param $0 (ref null struct)) (result i64)
     (unreachable)
   )
 )
