@@ -38,6 +38,8 @@
 
   (type $void2 (func_subtype $void))
 
+  (type $struct_i64 (func (param (ref null struct)) (result i64)))
+
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
@@ -2454,5 +2456,31 @@
         )
       )
     )
+  )
+
+  (func $gc_to_unreachable_in_added_constants
+    (drop
+      (i32.wrap_i64
+        (i64.add
+          (i64.const 1)
+          (i64.add
+            (i64.const 1)
+            (call_ref $struct_i64
+              ;; This will turn into an unreachable. That should not cause an
+              ;; error in later i64 add optimizations (optimizeAddedConstants),
+              ;; which should not assume this is an i64-typed expression.
+              (ref.as_non_null
+                (ref.null none)
+              )
+              (ref.func $1)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  (func $helper (type $struct_i64) (param $0 (ref null struct)) (result i64)
+    (unreachable)
   )
 )
