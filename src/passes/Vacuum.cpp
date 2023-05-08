@@ -36,27 +36,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   std::unique_ptr<Pass> create() override { return std::make_unique<Vacuum>(); }
 
-  // If we change types, or if we remove or alter things that affect types
-  // (like branches), then we may need to refinalize.
-  bool refinalize = false;
-
-  Expression* replaceCurrent(Expression* expression) {
-    auto* old = getCurrent();
-    if (expression->type != old->type &&
-        expression->type != Type::unreachable) {
-      // We are changing this to a new type that is not unreachable, so it is a
-      // refinement that we need to use refinalize to propagate up.
-      refinalize = true;
-    }
-    super::replaceCurrent(expression);
-    return expression;
-  }
-
   void doWalkFunction(Function* func) {
     walk(func->body);
-    if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
+    ReFinalize().walkFunctionInModule(func, getModule());
   }
 
   // Returns nullptr if curr is dead, curr if it must stay as is, or one of its
@@ -180,11 +162,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
       if (!optimized) {
-        refinalize = true;
         skip++;
       } else {
         if (optimized != child) {
-          refinalize = true;
           list[z] = optimized;
         }
         if (skip > 0) {
@@ -193,14 +173,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
         // if this is unreachable, the rest is dead code
         if (list[z - skip]->type == Type::unreachable && z < size - 1) {
-          for (Index i = z - skip + 1; i < list.size(); i++) {
-            auto* remove = list[i];
-            if (remove) {
-              refinalize = true;
-            }
-          }
           list.resize(z - skip + 1);
-          refinalize = true;
           skip = 0; // nothing more to do on the list
           break;
         }
@@ -208,7 +181,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     if (skip > 0) {
       list.resize(size - skip);
-      refinalize = true;
     }
     // the block may now be a trivial one that we can get rid of and just leave
     // its contents
@@ -222,15 +194,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       Expression* child;
       if (value->value.getInteger()) {
         child = curr->ifTrue;
-        if (curr->ifFalse) {
-          refinalize = true;
-        }
       } else {
         if (curr->ifFalse) {
           child = curr->ifFalse;
-          refinalize = true;
         } else {
-          refinalize = true;
           ExpressionManipulator::nop(curr);
           return;
         }
@@ -240,10 +207,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     // if the condition is unreachable, just return it
     if (curr->condition->type == Type::unreachable) {
-      refinalize = true;
-      if (curr->ifFalse) {
-        refinalize = true;
-      }
       replaceCurrent(curr->condition);
       return;
     }
@@ -379,7 +342,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // the try's body.
     if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
       replaceCurrent(curr->body);
-      refinalize = true;
       return;
     }
 
@@ -391,7 +353,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (curr->type == Type::none && curr->hasCatchAll() &&
         !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
-      refinalize = true;
       ExpressionManipulator::nop(curr);
     }
   }
