@@ -173,7 +173,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
         // This code can be removed! Turn it into a nop, and leave it for the
         // code lower down to finish cleaning up.
-        typeUpdater.noteRecursiveRemoval(list[i]);
         ExpressionManipulator::nop(list[i]);
       }
     }
@@ -272,7 +271,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         if (!arm->is<Unreachable>()) {
           return false;
         }
-        typeUpdater.noteRecursiveRemoval(arm);
         Builder builder(*getModule());
         Expression* rep = builder.makeDrop(curr->condition);
         if (otherArm) {
