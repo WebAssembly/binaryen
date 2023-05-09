@@ -23,7 +23,6 @@
 #include <ir/effects.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
-#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
