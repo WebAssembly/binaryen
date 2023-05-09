@@ -492,24 +492,12 @@
       )
       (return)
     )
-    ;; The second br will be removed.
+    ;; The second br will be removed. (The entire expression after us can also
+    ;; be removed, which will be done by --remove-unused-brs --vacuum.)
     (block $out2
       (block $in2
         (br $in2)
         (br $out2)
-      )
-      (return)
-    )
-    ;; This is the state after removing the second br. We will optimize all the
-    ;; rest of here away. This shows that the previous expression can be
-    ;; removed in two cycles of vacuum. (Note that it would also be removed by
-    ;; --remove-unused-brs --vacuum, which is how this sort of thing is commonly
-    ;; optimized away in practice. We could also in theory optimize the entire
-    ;; thing away by running multiple cycles inside vacuum, but the extra
-    ;; overhead would only rarely help.)
-    (block $out3
-      (block $in3
-        (br $in3)
       )
       (return)
     )
