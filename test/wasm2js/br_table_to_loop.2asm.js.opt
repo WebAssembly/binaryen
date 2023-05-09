@@ -1,6 +1,4 @@
 
-function wasm2js_trap() { throw new Error('abort'); }
-
 function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
@@ -13,7 +11,7 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  function $0() {
-  wasm2js_trap();
+  while (1) continue;
  }
  
  function $1() {
