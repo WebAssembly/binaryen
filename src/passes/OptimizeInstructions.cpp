@@ -2924,6 +2924,11 @@ private:
         }
       }
     };
+    // Noting the type here not only simplifies the code below, but is also
+    // necessary to avoid an error: if we look at walked->type then it may
+    // actually differ from the original type, say if the walk ended up turning
+    // |binary| into a simpler unreachable expression.
+    auto type = binary->type;
     Expression* walked = binary;
     ZeroRemover remover(getPassOptions());
     remover.setModule(getModule());
@@ -2936,14 +2941,14 @@ private:
       // Accumulated 64-bit constant value in 32-bit context will be wrapped
       // during downcasting. So it's valid unification for 32-bit and 64-bit
       // values.
-      c->value = Literal::makeFromInt64(constant, c->type);
+      c->value = Literal::makeFromInt64(constant, type);
       return c;
     }
     Builder builder(*getModule());
     return builder.makeBinary(
-      Abstract::getBinary(walked->type, Abstract::Add),
+      Abstract::getBinary(type, Abstract::Add),
       walked,
-      builder.makeConst(Literal::makeFromInt64(constant, walked->type)));
+      builder.makeConst(Literal::makeFromInt64(constant, type)));
   }
 
   // Given an i64.wrap operation, see if we can remove it. If all the things
