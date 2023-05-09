@@ -1,13 +1,16 @@
-;; RUN: foreach %s %t wasm-opt --nominal --signature-refining --gto --roundtrip -all -S -o - | filecheck %s
+;; RUN: wasm-opt %s --closed-world --signature-refining --gto --remove-unused-types --roundtrip -all -S -o - | filecheck %s
+
+;; Check that type $A is not included in the final binary after the signature
+;; refining optimization and an additional --remove-unused-types pass.
 
 (module
  ;; The type $A should not be emitted at all (see below).
  ;; CHECK-NOT: (type $A
- (type $A (struct_subtype (field (mut (ref null $A))) data))
+ (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $ref|none|_=>_none (func_subtype (param (ref none)) func))
+ ;; CHECK:      (type $funcref_i32_=>_none (func (param funcref i32)))
 
- ;; CHECK:      (type $funcref_i32_=>_none (func_subtype (param funcref i32) func))
+ ;; CHECK:      (type $ref|none|_=>_none (func (param (ref none))))
 
  ;; CHECK:      (func $struct.get (type $ref|none|_=>_none) (param $0 (ref none))
  ;; CHECK-NEXT:  (drop

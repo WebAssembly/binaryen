@@ -43,8 +43,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 
 # parameters
 
-TYPE_SYSTEM_FLAG = '--nominal'
-
 # feature options that are always passed to the tools.
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
@@ -55,6 +53,8 @@ INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 PRINT_WATS = False
 
 given_seed = None
+
+CLOSED_WORLD_FLAG = '--closed-world'
 
 
 # utilities
@@ -127,9 +127,14 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
-    # Type system flags only make sense when GC is enabled
-    if '--disable-gc' not in FEATURE_OPTS:
-        FEATURE_OPTS.append(TYPE_SYSTEM_FLAG)
+
+    # Pick closed or open with equal probability as both matter.
+    #
+    # Closed world is not a feature flag, technically, since it only makes sense
+    # to pass to wasm-opt (and not other tools). But decide on whether we'll
+    # be fuzzing in that mode now, as it determinies how we set other things up.
+    global CLOSED_WORLD
+    CLOSED_WORLD = random.random() < 0.5
 
 
 ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
@@ -176,13 +181,22 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
+
+    # if GC is enabled then run --dce at the very end, to ensure that our
+    # binaries validate in other VMs, due to how non-nullable local validation
+    # and unreachable code interact. see
+    #   https://github.com/WebAssembly/binaryen/pull/5665
+    #   https://github.com/WebAssembly/binaryen/issues/5599
+    if '--disable-gc' not in FEATURE_OPTS:
+        FUZZ_OPTS += ['--dce']
+
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
 
 
 def init_important_initial_contents():
     FIXED_IMPORTANT_INITIAL_CONTENTS = [
         # Perenially-important passes
-        os.path.join('lit', 'passes', 'optimize-instructions.wast'),
+        os.path.join('lit', 'passes', 'optimize-instructions-mvp.wast'),
         os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
     ]
     MANUAL_RECENT_INITIAL_CONTENTS = [
@@ -297,6 +311,9 @@ INITIAL_CONTENTS_IGNORE = [
     # TODO: fuzzer support for internalize/externalize
     'optimize-instructions-gc-extern.wast',
     'gufa-extern.wast',
+    # the fuzzer does not support imported memories
+    'multi-memory-lowering-import.wast',
+    'multi-memory-lowering-import-error.wast',
 ]
 
 
@@ -402,9 +419,14 @@ def pick_initial_contents():
             return
         test_name = temp_test_name
 
-    # next, test the wasm.
+    # Next, test the wasm. Note that we must check for closed world explicitly
+    # here, as a testcase may only work in an open world, which means we need to
+    # skip it.
+    args = FEATURE_OPTS
+    if CLOSED_WORLD:
+        args.append(CLOSED_WORLD_FLAG)
     try:
-        run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
+        run([in_bin('wasm-opt'), test_name] + args,
             stderr=subprocess.PIPE,
             silent=True)
     except Exception:
@@ -425,6 +447,9 @@ HOST_LIMIT_PREFIX = '[host limit '
 
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
+
+# --fuzz-exec reports a stack limit using this notation
+STACK_LIMIT = '[trap stack limit]'
 
 
 # compare two strings, strictly
@@ -558,21 +583,37 @@ def fix_spec_output(out):
     return out
 
 
+ignored_vm_runs = 0
+
+
+def note_ignored_vm_run():
+    global ignored_vm_runs
+    print('(ignore VM run)')
+    ignored_vm_runs += 1
+
+
 def run_vm(cmd):
     def filter_known_issues(output):
         known_issues = [
             # can be caused by flatten, ssa, etc. passes
             'local count too large',
+            # can be caused by (array.new $type -1) etc.
+            'requested new array is too large',
             # https://github.com/WebAssembly/binaryen/issues/3767
             # note that this text is a little too broad, but the problem is rare
             # enough that it's unlikely to hide an unrelated issue
             'found br_if of type',
-            # all host limitations are arbitrary and may differ between VMs and also
-            # be affected by optimizations, so ignore them.
+            # all host limitations are arbitrary and may differ between VMs and
+            # also be affected by optimizations, so ignore them.
+            # this is the prefix that the binaryen interpreter emits. For V8,
+            # there is no single host-limit signal, and we have the earlier
+            # strings in this list for known issues (to which more need to be
+            # added as necessary).
             HOST_LIMIT_PREFIX,
         ]
         for issue in known_issues:
             if issue in output:
+                note_ignored_vm_run()
                 return IGNORE
         return output
 
@@ -659,7 +700,7 @@ class FuzzExec(TestCaseHandler):
 
 
 class CompareVMs(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.66
 
     def __init__(self):
         super(CompareVMs, self).__init__()
@@ -805,7 +846,10 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(),
+        # the binaryen interpreter is specifically useful for various things
+        self.bynterpreter = BinaryenInterpreter()
+
+        self.vms = [self.bynterpreter,
                     D8(),
                     D8Liftoff(),
                     D8TurboFan(),
@@ -815,7 +859,20 @@ class CompareVMs(TestCaseHandler):
                     ]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
+        global ignored_vm_runs
+        ignored_before = ignored_vm_runs
+
         before = self.run_vms(before_wasm)
+
+        # if the binaryen interpreter hit a host limitation on the original
+        # testcase, or for some other reason we need to ignore this, then stop
+        # (otherwise, a host limitation on say allocations may be hit in the
+        # 'before' but not in the 'after' as optimizations may remove it).
+        if before[self.bynterpreter] == IGNORE:
+            # the ignoring should have been noted during run_vms()
+            assert(ignored_vm_runs > ignored_before)
+            return
+
         after = self.run_vms(after_wasm)
         self.compare_before_and_after(before, after)
 
@@ -828,7 +885,6 @@ class CompareVMs(TestCaseHandler):
                 vm_results[vm] = fix_output(vm.run(wasm))
 
         # compare between the vms on this specific input
-
         first_vm = None
         for vm in vm_results.keys():
             if vm.can_compare_to_others():
@@ -851,8 +907,7 @@ class CompareVMs(TestCaseHandler):
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
-    # not that important
-    frequency = 0.1
+    frequency = 0.2
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
@@ -869,7 +924,7 @@ class CheckDeterminism(TestCaseHandler):
 
 
 class Wasm2JS(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before_wasm_temp = before_wasm + '.temp.wasm'
@@ -995,7 +1050,7 @@ class Wasm2JS(TestCaseHandler):
 
 
 class Asyncify(TestCaseHandler):
-    frequency = 0.6
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # we must legalize in order to run in JS
@@ -1007,6 +1062,20 @@ class Asyncify(TestCaseHandler):
         after_wasm = async_after_wasm
         before = fix_output(run_d8_wasm(before_wasm))
         after = fix_output(run_d8_wasm(after_wasm))
+
+        if STACK_LIMIT in run_bynterp(before_wasm, ['--fuzz-exec-before']):
+            # Running out of stack in infinite recursion can be a problem here
+            # as we compare a wasm before and after asyncify, and asyncify can
+            # add a lot of locals, which could mean the host limit can be
+            # reached earlier, and alter the output (less logging before we
+            # reach the host limit and trap).
+            # TODO This is not quite enough, as if we are just under the limit
+            #      then we may only hit the limit after running asyncify. But
+            #      then we'd also need to detect differences in the limit in
+            #      the JS VM's output (which can differ from Binaryen's). For
+            #      now, this rules out infinite recursion at least.
+            print('ignoring due to stack limit being hit')
+            return
 
         try:
             compare(before, after, 'Asyncify (before/after)')
@@ -1055,7 +1124,7 @@ class Asyncify(TestCaseHandler):
 # and the optimizer was free to make changes to observable behavior there. The
 # fuzzer therefore needs to ignore code that traps.
 class TrapsNeverHappen(TestCaseHandler):
-    frequency = 1
+    frequency = 0.25
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
@@ -1102,6 +1171,14 @@ class TrapsNeverHappen(TestCaseHandler):
             print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
 
             # also remove the relevant lines from after.
+            if call_line not in after:
+                # the normal run hit a trap, and the tnh run hit a host
+                # limitation that forces us to ignore this run. for example,
+                # after running tnh we may end up doing an unbounded number of
+                # allocations, if that is what the program normally does (and
+                # the normal run only avoided that by trapping).
+                assert IGNORE in after
+                return
             after_index = after.index(call_line)
             after = after[:after_index]
 
@@ -1125,6 +1202,45 @@ class TrapsNeverHappen(TestCaseHandler):
         compare_between_vms(before, after, 'TrapsNeverHappen')
 
 
+# Tests wasm-ctor-eval
+class CtorEval(TestCaseHandler):
+    frequency = 0.2
+
+    def handle(self, wasm):
+        # get the expected execution results.
+        wasm_exec = run_bynterp(wasm, ['--fuzz-exec-before'])
+
+        # get the list of exports, so we can tell ctor-eval what to eval.
+        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        p = re.compile(r'^ [(]export "([\d\w$+-_:.]+)" [(]func')
+        exports = []
+        for line in wat.splitlines():
+            m = p.match(line)
+            if m:
+                export = m[1]
+                exports.append(export)
+        if not exports:
+            return
+        ctors = ','.join(exports)
+
+        # eval the wasm.
+        # we can use --ignore-external-input because the fuzzer passes in 0 to
+        # all params, which is the same as ctor-eval assumes in this mode.
+        evalled_wasm = wasm + '.evalled.wasm'
+        output = run([in_bin('wasm-ctor-eval'), wasm, '-o', evalled_wasm, '--ctors=' + ctors, '--kept-exports=' + ctors, '--ignore-external-input'] + FEATURE_OPTS)
+
+        # stop here if we could not eval anything at all in the module.
+        if '...stopping since could not flatten memory' in output or \
+           '...stopping since could not create module instance' in output:
+            return
+        if '...success' not in output and \
+           '...partial evalling success' not in output:
+            return
+        evalled_wasm_exec = run_bynterp(evalled_wasm, ['--fuzz-exec-before'])
+
+        compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1146,6 +1262,7 @@ testcase_handlers = [
     Wasm2JS(),
     Asyncify(),
     TrapsNeverHappen(),
+    CtorEval(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
@@ -1256,80 +1373,107 @@ def write_commands(commands, filename):
 # main
 
 opt_choices = [
-    [],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
-    ["--cfp"],
-    ["--coalesce-locals"],
-    # XXX slow, non-default ["--coalesce-locals-learning"],
-    ["--code-pushing"],
-    ["--code-folding"],
-    ["--const-hoisting"],
-    ["--dae"],
-    ["--dae-optimizing"],
-    ["--dce"],
-    ["--directize"],
-    ["--discard-global-effects"],
-    ["--flatten", "--dfo"],
-    ["--duplicate-function-elimination"],
-    ["--flatten"],
-    # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
-    ["--inlining"],
-    ["--inlining-optimizing"],
-    ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
+    (),
+    ('-O1',), ('-O2',), ('-O3',), ('-O4',), ('-Os',), ('-Oz',),
+    ("--abstract-type-refining",),
+    ("--cfp",),
+    ("--coalesce-locals",),
+    # XXX slow, non-default ("--coalesce-locals-learning",),
+    ("--code-pushing",),
+    ("--code-folding",),
+    ("--const-hoisting",),
+    ("--dae",),
+    ("--dae-optimizing",),
+    ("--dce",),
+    ("--directize",),
+    ("--discard-global-effects",),
+    ("--flatten", "--dfo",),
+    ("--duplicate-function-elimination",),
+    ("--flatten",),
+    # ("--fpcast-emu",), # removes indirect call failures as it makes them go through regardless of type
+    ("--inlining",),
+    ("--inlining-optimizing",),
+    ("--flatten", "--simplify-locals-notee-nostructure", "--local-cse",),
     # note that no pass we run here should add effects to a function, so it is
     # ok to run this pass and let the passes after it use the effects to
     # optimize
-    ["--generate-global-effects"],
-    ["--global-refining"],
-    ["--gsi"],
-    ["--gto"],
-    ["--gufa"],
-    ["--gufa-optimizing"],
-    ["--local-cse"],
-    ["--heap2local"],
-    ["--remove-unused-names", "--heap2local"],
-    ["--generate-stack-ir"],
-    ["--licm"],
-    ["--local-subtyping"],
-    ["--memory-packing"],
-    ["--merge-blocks"],
-    ['--merge-locals'],
-    ['--once-reduction'],
-    ["--optimize-instructions"],
-    ["--optimize-stack-ir"],
-    ["--generate-stack-ir", "--optimize-stack-ir"],
-    ["--pick-load-signs"],
-    ["--precompute"],
-    ["--precompute-propagate"],
-    ["--print"],
-    ["--remove-unused-brs"],
-    ["--remove-unused-nonfunction-module-elements"],
-    ["--remove-unused-module-elements"],
-    ["--remove-unused-names"],
-    ["--reorder-functions"],
-    ["--reorder-locals"],
-    ["--flatten", "--rereloop"],
-    ["--roundtrip"],
-    ["--rse"],
-    ["--signature-pruning"],
-    ["--signature-refining"],
-    ["--simplify-locals"],
-    ["--simplify-locals-nonesting"],
-    ["--simplify-locals-nostructure"],
-    ["--simplify-locals-notee"],
-    ["--simplify-locals-notee-nostructure"],
-    ["--ssa"],
-    ["--type-refining"],
-    ["--vacuum"],
+    ("--generate-global-effects",),
+    ("--global-refining",),
+    ("--gsi",),
+    ("--gto",),
+    ("--gufa",),
+    ("--gufa-optimizing",),
+    ("--local-cse",),
+    ("--heap2local",),
+    ("--remove-unused-names", "--heap2local",),
+    ("--generate-stack-ir",),
+    ("--licm",),
+    ("--local-subtyping",),
+    ("--memory-packing",),
+    ("--merge-blocks",),
+    ('--merge-locals',),
+    ('--monomorphize',),
+    ('--monomorphize-always',),
+    ('--once-reduction',),
+    ("--optimize-casts",),
+    ("--optimize-instructions",),
+    ("--optimize-stack-ir",),
+    ("--generate-stack-ir", "--optimize-stack-ir",),
+    ("--pick-load-signs",),
+    ("--precompute",),
+    ("--precompute-propagate",),
+    ("--print",),
+    ("--remove-unused-brs",),
+    ("--remove-unused-nonfunction-module-elements",),
+    ("--remove-unused-module-elements",),
+    ("--remove-unused-names",),
+    ("--remove-unused-types",),
+    ("--reorder-functions",),
+    ("--reorder-locals",),
+    ("--flatten", "--rereloop",),
+    ("--roundtrip",),
+    ("--rse",),
+    ("--signature-pruning",),
+    ("--signature-refining",),
+    ("--simplify-locals",),
+    ("--simplify-locals-nonesting",),
+    ("--simplify-locals-nostructure",),
+    ("--simplify-locals-notee",),
+    ("--simplify-locals-notee-nostructure",),
+    ("--ssa",),
+    ("--type-refining",),
+    ("--type-merging",),
+    ("--type-ssa",),
+    ("--vacuum",),
 ]
+
+# TODO: Fix these passes so that they still work without --closed-world!
+requires_closed_world = {("--type-refining",),
+                         ("--signature-pruning",),
+                         ("--signature-refining",),
+                         ("--gto",),
+                         ("--remove-unused-types",),
+                         ("--abstract-type-refining",),
+                         ("--cfp",),
+                         ("--gsi",),
+                         ("--type-ssa",),
+                         ("--type-merging",)}
 
 
 def randomize_opt_flags():
     flag_groups = []
     has_flatten = False
+
+    if CLOSED_WORLD:
+        usable_opt_choices = opt_choices
+    else:
+        usable_opt_choices = [choice
+                              for choice in opt_choices
+                              if choice not in requires_closed_world]
+
     # core opts
     while 1:
-        choice = random.choice(opt_choices)
+        choice = random.choice(usable_opt_choices)
         if '--flatten' in choice or '-O4' in choice:
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
@@ -1356,7 +1500,7 @@ def randomize_opt_flags():
     # maybe add an extra round trip
     if random.random() < 0.5:
         pos = random.randint(0, len(flag_groups))
-        flag_groups = flag_groups[:pos] + [['--roundtrip']] + flag_groups[pos:]
+        flag_groups = flag_groups[:pos] + [('--roundtrip',)] + flag_groups[pos:]
     ret = [flag for group in flag_groups for flag in group]
     # modifiers (if not already implied by a -O? option)
     if '-O' not in str(ret):
@@ -1375,6 +1519,13 @@ def randomize_opt_flags():
     # wasm limitation on function body size which is 128K)
     if random.random() < 0.5:
         ret += ['-fimfs=99999999']
+    # the default for partial-inlining-ifs is 0, so also test with a realistic
+    # value (the same used in j2wasm atm)
+    if random.random() < 0.5:
+        ret += ['-pii=4']
+    # test both closed and open world
+    if CLOSED_WORLD:
+        ret += [CLOSED_WORLD_FLAG]
     assert ret.count('--flatten') <= 1
     return ret
 
@@ -1447,7 +1598,8 @@ if __name__ == '__main__':
               '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
               'speed:', counter / elapsed,
               'iters/sec, ', total_wasm_size / elapsed,
-              'wasm_bytes/sec\n')
+              'wasm_bytes/sec, ', ignored_vm_runs,
+              'ignored\n')
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size

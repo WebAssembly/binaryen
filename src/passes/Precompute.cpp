@@ -155,8 +155,8 @@ public:
     }
     return getHeapCreationFlow(flow, curr);
   }
-  Flow visitArrayInit(ArrayInit* curr) {
-    auto flow = Super::visitArrayInit(curr);
+  Flow visitArrayNewFixed(ArrayNewFixed* curr) {
+    auto flow = Super::visitArrayNewFixed(curr);
     if (flow.breaking()) {
       return flow;
     }
@@ -507,6 +507,10 @@ private:
     // A function is fine to emit a constant for - we'll emit a RefFunc, which
     // is compact and immutable, so there can't be a problem.
     if (type.isFunction()) {
+      return true;
+    }
+    // We can emit a StringConst for a string constant.
+    if (type.isString()) {
       return true;
     }
     // All other reference types cannot be precomputed. Even an immutable GC

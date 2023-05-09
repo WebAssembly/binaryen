@@ -28,9 +28,9 @@
  (memory $0 10)
  ;; CHECK:      (table $0 1 1 funcref)
 
- ;; CHECK:      (elem (i32.const 0) $call-me)
+ ;; CHECK:      (elem $0 (i32.const 0) $call-me)
 
- ;; CHECK:      (func $a1
+ ;; CHECK:      (func $a1 (type $1)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (i32.add
@@ -45,7 +45,7 @@
  (func $a1
   (drop (i32.add (i32.const 0) (i32.const 1)))
  )
- ;; CHECK:      (func $a2 (result i32)
+ ;; CHECK:      (func $a2 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (i32.add
@@ -60,7 +60,7 @@
  (func $a2 (result i32)
   (i32.add (i32.const 0) (i32.const 1))
  )
- ;; CHECK:      (func $a3 (result i32)
+ ;; CHECK:      (func $a3 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -90,7 +90,7 @@
    )
   )
  )
- ;; CHECK:      (func $a4
+ ;; CHECK:      (func $a4 (type $1)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -122,7 +122,7 @@
    )
   )
  )
- ;; CHECK:      (func $a5 (result i32)
+ ;; CHECK:      (func $a5 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -164,7 +164,7 @@
    )
   )
  )
- ;; CHECK:      (func $a6 (result i32)
+ ;; CHECK:      (func $a6 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -226,7 +226,7 @@
    )
   )
  )
- ;; CHECK:      (func $a7 (result i32)
+ ;; CHECK:      (func $a7 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -300,7 +300,7 @@
    )
   )
  )
- ;; CHECK:      (func $a8 (result i32)
+ ;; CHECK:      (func $a8 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -401,7 +401,7 @@
    )
   )
  )
- ;; CHECK:      (func $a9 (result i32)
+ ;; CHECK:      (func $a9 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -457,7 +457,7 @@
    )
   )
  )
- ;; CHECK:      (func $a10 (result i32)
+ ;; CHECK:      (func $a10 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -565,7 +565,7 @@
    (br $outer (i32.const 8))
   )
  )
- ;; CHECK:      (func $a11
+ ;; CHECK:      (func $a11 (type $1)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (drop
@@ -578,7 +578,7 @@
    (drop (i32.const 1))
   )
  )
- ;; CHECK:      (func $a12 (result i32)
+ ;; CHECK:      (func $a12 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (if
@@ -603,7 +603,7 @@
    (i32.const 2)
   )
  )
- ;; CHECK:      (func $a13 (result i32)
+ ;; CHECK:      (func $a13 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -653,7 +653,7 @@
    )
   )
  )
- ;; CHECK:      (func $a14 (result i32)
+ ;; CHECK:      (func $a14 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -688,7 +688,7 @@
    )
   )
  )
- ;; CHECK:      (func $a15
+ ;; CHECK:      (func $a15 (type $1)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 f32)
  ;; CHECK-NEXT:  (local $2 f32)
@@ -733,7 +733,7 @@
    )
   )
  )
- ;; CHECK:      (func $a16 (result i32)
+ ;; CHECK:      (func $a16 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -809,7 +809,7 @@
    (i32.const 0)
   )
  )
- ;; CHECK:      (func $a17 (result f32)
+ ;; CHECK:      (func $a17 (type $none_=>_f32) (result f32)
  ;; CHECK-NEXT:  (local $var$0 f32)
  ;; CHECK-NEXT:  (local $1 f32)
  ;; CHECK-NEXT:  (local $2 f32)
@@ -858,7 +858,7 @@
    )
   )
  )
- ;; CHECK:      (func $a18 (result i32)
+ ;; CHECK:      (func $a18 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $label$1
@@ -897,7 +897,7 @@
    )
   )
  )
- ;; CHECK:      (func $a19 (result f32)
+ ;; CHECK:      (func $a19 (type $none_=>_f32) (result f32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$1
  ;; CHECK-NEXT:    (unreachable)
@@ -933,13 +933,13 @@
    )
   )
  )
- ;; CHECK:      (func $call-me (param $0 i32) (param $1 i32)
+ ;; CHECK:      (func $call-me (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call-me (param $0 i32) (param $1 i32)
   (nop)
  )
- ;; CHECK:      (func $code-to-kill
+ ;; CHECK:      (func $code-to-kill (type $1)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -1866,7 +1866,7 @@
    (i32.const 1337)
   )
  )
- ;; CHECK:      (func $killer
+ ;; CHECK:      (func $killer (type $1)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (unreachable)
@@ -1882,7 +1882,7 @@
    (i32.const 1000)
   )
  )
- ;; CHECK:      (func $target
+ ;; CHECK:      (func $target (type $1)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 2000)
  ;; CHECK-NEXT:  )
@@ -1892,7 +1892,7 @@
    (i32.const 2000)
   )
  )
- ;; CHECK:      (func $typed-block-none-then-unreachable (result i32)
+ ;; CHECK:      (func $typed-block-none-then-unreachable (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $top-typed
@@ -1929,7 +1929,7 @@
    )
   )
  )
- ;; CHECK:      (func $typed-block-remove-br-changes-type (param $$$0 i32) (result i32)
+ ;; CHECK:      (func $typed-block-remove-br-changes-type (type $3) (param $$$0 i32) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
@@ -1998,7 +1998,7 @@
    (i32.const 0)
   )
  )
- ;; CHECK:      (func $global
+ ;; CHECK:      (func $global (type $1)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (unreachable)
@@ -2024,7 +2024,7 @@
    (i32.const 1)
   )
  )
- ;; CHECK:      (func $ret (result i32)
+ ;; CHECK:      (func $ret (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block
@@ -2051,7 +2051,7 @@
   (nop)
   (i32.const 0)
  )
- ;; CHECK:      (func $unreachable-br (result i32)
+ ;; CHECK:      (func $unreachable-br (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $out
@@ -2078,7 +2078,7 @@
    )
   )
  )
- ;; CHECK:      (func $unreachable-br-loop (result i32)
+ ;; CHECK:      (func $unreachable-br-loop (type $2) (result i32)
  ;; CHECK-NEXT:  (loop $out
  ;; CHECK-NEXT:   (br $out)
  ;; CHECK-NEXT:   (unreachable)
@@ -2090,7 +2090,7 @@
    (br $out)
   )
  )
- ;; CHECK:      (func $unreachable-block-ends-switch (result i32)
+ ;; CHECK:      (func $unreachable-block-ends-switch (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $label$0
@@ -2127,7 +2127,7 @@
    (i32.const 19)
   )
  )
- ;; CHECK:      (func $unreachable-block-ends-br_if (result i32)
+ ;; CHECK:      (func $unreachable-block-ends-br_if (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $label$0
@@ -2164,7 +2164,7 @@
    (i32.const 19)
   )
  )
- ;; CHECK:      (func $unreachable-brs-3 (result i32)
+ ;; CHECK:      (func $unreachable-brs-3 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $label$0
@@ -2200,7 +2200,7 @@
    (i32.const 21)
   )
  )
- ;; CHECK:      (func $unreachable-brs-4 (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $unreachable-brs-4 (type $3) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
@@ -2268,7 +2268,7 @@
    )
   )
  )
- ;; CHECK:      (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
+ ;; CHECK:      (func $call-unreach (type $4) (param $var$0 i64) (param $var$1 i64) (result i64)
  ;; CHECK-NEXT:  (local $2 i64)
  ;; CHECK-NEXT:  (local $3 i64)
  ;; CHECK-NEXT:  (local $4 i32)
@@ -2399,7 +2399,7 @@
  )
 
   ;; flatten-specific
-  ;; CHECK:      (func $test-flatten
+  ;; CHECK:      (func $test-flatten (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2945,7 +2945,7 @@
       )
     )
   )
-  ;; CHECK:      (func $flatten-return-value (result i32)
+  ;; CHECK:      (func $flatten-return-value (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -2975,7 +2975,7 @@
     (drop (i32.add (i32.const 1) (return (i32.const 2))))
     (i32.const 3)
   )
-  ;; CHECK:      (func $unbug
+  ;; CHECK:      (func $unbug (type $1)
   ;; CHECK-NEXT:  (local $12 i32)
   ;; CHECK-NEXT:  (local $432 i32)
   ;; CHECK-NEXT:  (local $430 i32)
@@ -3155,7 +3155,7 @@
     )
    )
   )
-  ;; CHECK:      (func $outer-block-typed (param $var$0 i32) (result i32)
+  ;; CHECK:      (func $outer-block-typed (type $3) (param $var$0 i32) (result i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -3197,7 +3197,7 @@
     )
    )
   )
-  ;; CHECK:      (func $nested-br_if-with-value (result i32)
+  ;; CHECK:      (func $nested-br_if-with-value (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3254,7 +3254,7 @@
     (i32.const 1)
    )
   )
-  ;; CHECK:      (func $switch-unreachable
+  ;; CHECK:      (func $switch-unreachable (type $1)
   ;; CHECK-NEXT:  (block $label$3
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (br_table $label$3
@@ -3270,7 +3270,7 @@
     )
    )
   )
-  ;; CHECK:      (func $br_if_order (param $x i32) (result i32)
+  ;; CHECK:      (func $br_if_order (type $3) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -3348,7 +3348,7 @@
     )
    )
   )
-  ;; CHECK:      (func $tees (param $x i32) (param $y i32)
+  ;; CHECK:      (func $tees (type $ii) (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -3391,7 +3391,7 @@
     (drop (local.tee $x (unreachable)))
     (drop (local.tee $y (local.tee $x (i32.const 2))))
   )
-  ;; CHECK:      (func $return (param $x i32) (result i32)
+  ;; CHECK:      (func $return (type $3) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (i32.sub
@@ -3415,7 +3415,7 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  ;; CHECK:      (func $subtype (result anyref)
+  ;; CHECK:      (func $subtype (type $none_=>_anyref) (result anyref)
   ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 nullref)
@@ -3483,7 +3483,7 @@
 
  ;; CHECK:      (export "test" (func $1))
 
- ;; CHECK:      (func $0 (param $0 i64) (param $1 f32)
+ ;; CHECK:      (func $0 (type $i64_f32_=>_none) (param $0 i64) (param $1 f32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0 (param $0 i64) (param $1 f32)
@@ -3501,7 +3501,7 @@
 )
 ;; non-nullable temp vars we add must be handled properly, as non-nullable
 ;; locals are not allowed
-;; CHECK:      (func $1 (result i32)
+;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.const -111)
@@ -3516,7 +3516,7 @@
  (type $none_=>_none (func))
  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
- ;; CHECK:      (func $0 (result funcref)
+ ;; CHECK:      (func $0 (type $none_=>_funcref) (result funcref)
  ;; CHECK-NEXT:  (local $0 (ref nofunc))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (ref.as_non_null

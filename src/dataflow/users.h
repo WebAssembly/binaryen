@@ -34,7 +34,7 @@ namespace wasm::DataFlow {
 // where y, z etc. are nodes that use x, that is, x is in their
 // values vector.
 class Users {
-  typedef std::unordered_set<DataFlow::Node*> UserSet;
+  using UserSet = std::unordered_set<DataFlow::Node*>;
 
   std::unordered_map<DataFlow::Node*, UserSet> users;
 

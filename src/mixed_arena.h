@@ -253,8 +253,9 @@ public:
     if (allocatedElements < size) {
       static_cast<SubType*>(this)->allocate(size);
     }
-    for (size_t i = 0; i < size; i++) {
-      data[i] = list[i];
+    size_t i = 0;
+    for (auto elem : list) {
+      data[i++] = elem;
     }
     usedElements = size;
   }

@@ -84,7 +84,7 @@ struct DAEFunctionInfo {
   DAEFunctionInfo() { hasUnseenCalls = false; }
 };
 
-typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
+using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
 
 struct DAEScanner
   : public WalkerPass<PostWalker<DAEScanner, Visitor<DAEScanner>>> {
@@ -317,7 +317,21 @@ private:
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
     func->setResults(Type::none);
-    Builder builder(*module);
+    // Remove the drops on the calls. Note that we must do this before updating
+    // returns in ReturnUpdater, as there may be recursive calls of this
+    // function to itself. So we first use the information in allDroppedCalls
+    // before the ReturnUpdater potentially invalidates that information as it
+    // modifies the function.
+    for (auto* call : calls) {
+      auto iter = allDroppedCalls.find(call);
+      assert(iter != allDroppedCalls.end());
+      Expression** location = iter->second;
+      *location = call;
+      // Update the call's type.
+      if (call->type != Type::unreachable) {
+        call->type = Type::none;
+      }
+    }
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
       Module* module;
@@ -334,18 +348,7 @@ private:
     } returnUpdater(func, module);
     // Remove any value flowing out.
     if (func->body->type.isConcrete()) {
-      func->body = builder.makeDrop(func->body);
-    }
-    // Remove the drops on the calls.
-    for (auto* call : calls) {
-      auto iter = allDroppedCalls.find(call);
-      assert(iter != allDroppedCalls.end());
-      Expression** location = iter->second;
-      *location = call;
-      // Update the call's type.
-      if (call->type != Type::unreachable) {
-        call->type = Type::none;
-      }
+      func->body = Builder(*module).makeDrop(func->body);
     }
   }
 
@@ -381,8 +384,8 @@ private:
       auto& lub = lubs[i];
       for (auto* call : calls) {
         auto* operand = call->operands[i];
-        lub.noteUpdatableExpression(operand);
-        if (lub.getBestPossible() == originalType) {
+        lub.note(operand->type);
+        if (lub.getLUB() == originalType) {
           // We failed to refine this parameter to anything more specific.
           break;
         }
@@ -392,7 +395,7 @@ private:
       if (!lub.noted()) {
         return;
       }
-      newParamTypes.push_back(lub.getBestPossible());
+      newParamTypes.push_back(lub.getLUB());
     }
 
     // Check if we are able to optimize here before we do the work to scan the
@@ -405,12 +408,7 @@ private:
     // We can do this!
     TypeUpdating::updateParamTypes(func, newParamTypes, *module);
 
-    // Update anything the lubs need to update.
-    for (auto& lub : lubs) {
-      lub.updateNulls();
-    }
-
-    // Also update the function's type.
+    // Update the function's type.
     func->setParams(newParams);
   }
 
@@ -436,9 +434,8 @@ private:
     if (!lub.noted()) {
       return false;
     }
-    auto newType = lub.getBestPossible();
+    auto newType = lub.getLUB();
     if (newType != func->getResults()) {
-      lub.updateNulls();
       func->setResults(newType);
       for (auto* call : calls) {
         if (call->type != Type::unreachable) {

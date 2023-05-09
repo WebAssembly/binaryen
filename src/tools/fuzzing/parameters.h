@@ -38,6 +38,9 @@ constexpr int MAX_TUPLE_SIZE = 6;
 // The maximum number of struct fields.
 static const int MAX_STRUCT_SIZE = 6;
 
+// The maximum number of elements in an array.
+static const int MAX_ARRAY_SIZE = 100;
+
 // The number of nontrivial heap types to generate.
 constexpr int MIN_HEAPTYPES = 4;
 constexpr int MAX_HEAPTYPES = 20;
@@ -59,7 +62,10 @@ constexpr Address USABLE_MEMORY = 16;
 // the number of runtime iterations (function calls, loop backbranches) we
 // allow before we stop execution with a trap, to prevent hangs. 0 means
 // no hang protection.
-constexpr int HANG_LIMIT = 10;
+constexpr int HANG_LIMIT = 100;
+
+// the maximum amount of new GC types (structs, etc.) to create
+constexpr int MAX_NEW_GC_TYPES = 25;
 
 //
 constexpr size_t VeryImportant = 4;

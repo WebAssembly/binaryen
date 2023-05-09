@@ -38,7 +38,7 @@
   (func "keepalive" (result i32)
     (select
       (struct.get $struct 0
-        (ref.cast_static $struct
+        (ref.cast $struct
           (global.get $global1)
         )
       )
@@ -51,4 +51,3 @@
     )
   )
 )
-

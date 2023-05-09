@@ -55,10 +55,8 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 // for later operations.
 #define DELEGATE_START(id)                                                     \
   copy = wasm.allocator.alloc<id>();                                           \
-  auto* castOriginal = original->cast<id>();                                   \
-  WASM_UNUSED(castOriginal);                                                   \
-  auto* castCopy = copy->cast<id>();                                           \
-  WASM_UNUSED(castCopy);
+  [[maybe_unused]] auto* castOriginal = original->cast<id>();                  \
+  [[maybe_unused]] auto* castCopy = copy->cast<id>();
 
 // Handle each type of field, copying it appropriately.
 #define DELEGATE_FIELD_CHILD(id, field)                                        \

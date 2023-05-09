@@ -128,7 +128,7 @@ void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitMemorySize(MemorySize* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
-void ReFinalize::visitRefIs(RefIs* curr) { curr->finalize(); }
+void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefFunc(RefFunc* curr) {
   // TODO: should we look up the function and update the type from there? This
   // could handle a change to the function's type, but is also not really what
@@ -164,11 +164,16 @@ void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
 void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
 void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
-void ReFinalize::visitArrayInit(ArrayInit* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNewData(ArrayNewData* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNewElem(ArrayNewElem* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNewFixed(ArrayNewFixed* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
 void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
+void ReFinalize::visitArrayFill(ArrayFill* curr) { curr->finalize(); }
+void ReFinalize::visitArrayInitData(ArrayInitData* curr) { curr->finalize(); }
+void ReFinalize::visitArrayInitElem(ArrayInitElem* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitStringNew(StringNew* curr) { curr->finalize(); }
 void ReFinalize::visitStringConst(StringConst* curr) { curr->finalize(); }

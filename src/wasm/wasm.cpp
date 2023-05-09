@@ -27,7 +27,7 @@ Name RETURN_FLOW("*return:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 
 namespace BinaryConsts {
-namespace UserSections {
+namespace CustomSections {
 const char* Name = "name";
 const char* SourceMapUrl = "sourceMappingURL";
 const char* Dylink = "dylink";
@@ -51,7 +51,7 @@ const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoriesFeature = "multi-memories";
-} // namespace UserSections
+} // namespace CustomSections
 } // namespace BinaryConsts
 
 Name STACK_POINTER("__stack_pointer");
@@ -805,7 +805,7 @@ void RefNull::finalize(Type type_) { type = type_; }
 
 void RefNull::finalize() {}
 
-void RefIs::finalize() {
+void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
@@ -945,10 +945,25 @@ void RefTest::finalize() {
 void RefCast::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    // The output of ref.cast may be null if the input is null (in that case the
-    // null is passed through).
-    type = Type(intendedType, ref->type.getNullability());
+    return;
+  }
+
+  // Do not unnecessarily lose non-nullability info. We could leave this for
+  // optimizations, but doing it here as part of finalization/refinalization
+  // ensures that type information flows through in an optimal manner and can be
+  // used as soon as possible.
+  if (ref->type.isNonNullable() && type.isNullable()) {
+    type = Type(type.getHeapType(), NonNullable);
+  }
+
+  // Do not unnecessarily lose heap type info, as above for nullability. Note
+  // that we must check if the ref has a heap type, as we reach this before
+  // validation, which will error if the ref does not in fact have a heap type.
+  // (This is a downside of propagating type information here, as opposed to
+  // leaving it for an optimization pass.)
+  if (ref->type.isRef() &&
+      HeapType::isSubType(ref->type.getHeapType(), type.getHeapType())) {
+    type = Type(ref->type.getHeapType(), type.getNullability());
   }
 }
 
@@ -968,25 +983,24 @@ void BrOn::finalize() {
       type = Type::none;
       break;
     case BrOnCast:
-    case BrOnFunc:
-    case BrOnData:
-    case BrOnI31:
-      // If we do not branch, we return the input in this case.
-      type = ref->type;
+      if (castType.isNullable()) {
+        // Nulls take the branch, so the result is non-nullable.
+        type = Type(ref->type.getHeapType(), NonNullable);
+      } else {
+        // Nulls do not take the branch, so the result is non-nullable only if
+        // the input is.
+        type = ref->type;
+      }
       break;
     case BrOnCastFail:
-      // If we do not branch, the cast worked, and we have something of the cast
-      // type.
-      type = Type(intendedType, NonNullable);
-      break;
-    case BrOnNonFunc:
-      type = Type(HeapType::func, NonNullable);
-      break;
-    case BrOnNonData:
-      type = Type(HeapType::data, NonNullable);
-      break;
-    case BrOnNonI31:
-      type = Type(HeapType::i31, NonNullable);
+      if (castType.isNullable()) {
+        // Nulls do not take the branch, so the result is non-nullable only if
+        // the input is.
+        type = Type(castType.getHeapType(), ref->type.getNullability());
+      } else {
+        // Nulls take the branch, so the result is non-nullable.
+        type = castType;
+      }
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
@@ -1007,21 +1021,22 @@ Type BrOn::getSentType() {
       // BrOnNonNull sends the non-nullable type on the branch.
       return Type(ref->type.getHeapType(), NonNullable);
     case BrOnCast:
+      // The same as the result type of br_on_cast_fail.
+      if (castType.isNullable()) {
+        return Type(castType.getHeapType(), ref->type.getNullability());
+      } else {
+        return castType;
+      }
+    case BrOnCastFail:
+      // The same as the result type of br_on_cast (if reachable).
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
-      return Type(intendedType, NonNullable);
-    case BrOnFunc:
-      return Type(HeapType::func, NonNullable);
-    case BrOnData:
-      return Type(HeapType::data, NonNullable);
-    case BrOnI31:
-      return Type(HeapType::i31, NonNullable);
-    case BrOnCastFail:
-    case BrOnNonFunc:
-    case BrOnNonData:
-    case BrOnNonI31:
-      return ref->type;
+      if (castType.isNullable()) {
+        return Type(ref->type.getHeapType(), NonNullable);
+      } else {
+        return ref->type;
+      }
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
@@ -1053,11 +1068,22 @@ void ArrayNew::finalize() {
   if (size->type == Type::unreachable ||
       (init && init->type == Type::unreachable)) {
     type = Type::unreachable;
-    return;
   }
 }
 
-void ArrayInit::finalize() {
+void ArrayNewData::finalize() {
+  if (offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void ArrayNewElem::finalize() {
+  if (offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void ArrayNewFixed::finalize() {
   for (auto* value : values) {
     if (value->type == Type::unreachable) {
       type = Type::unreachable;
@@ -1103,6 +1129,33 @@ void ArrayCopy::finalize() {
   }
 }
 
+void ArrayFill::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayInitData::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayInitElem::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      offset->type == Type::unreachable || size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 void RefAs::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
@@ -1111,15 +1164,6 @@ void RefAs::finalize() {
   switch (op) {
     case RefAsNonNull:
       type = Type(value->type.getHeapType(), NonNullable);
-      break;
-    case RefAsFunc:
-      type = Type(HeapType::func, NonNullable);
-      break;
-    case RefAsData:
-      type = Type(HeapType::data, NonNullable);
-      break;
-    case RefAsI31:
-      type = Type(HeapType::i31, NonNullable);
       break;
     case ExternInternalize:
       type = Type(HeapType::any, value->type.getNullability());
@@ -1137,7 +1181,7 @@ void StringNew::finalize() {
       (length && length->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, NonNullable);
+    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
   }
 }
 
@@ -1571,43 +1615,55 @@ void Module::removeTags(std::function<bool(Tag*)> pred) {
   removeModuleElements(tags, tagsMap, pred);
 }
 
+void Module::updateFunctionsMap() {
+  functionsMap.clear();
+  for (auto& curr : functions) {
+    functionsMap[curr->name] = curr.get();
+  }
+  assert(functionsMap.size() == functions.size());
+}
+
 void Module::updateDataSegmentsMap() {
   dataSegmentsMap.clear();
   for (auto& curr : dataSegments) {
     dataSegmentsMap[curr->name] = curr.get();
   }
+  assert(dataSegmentsMap.size() == dataSegments.size());
 }
 
 void Module::updateMaps() {
-  functionsMap.clear();
-  for (auto& curr : functions) {
-    functionsMap[curr->name] = curr.get();
-  }
+  updateFunctionsMap();
   exportsMap.clear();
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
   }
+  assert(exportsMap.size() == exports.size());
   tablesMap.clear();
   for (auto& curr : tables) {
     tablesMap[curr->name] = curr.get();
   }
+  assert(tablesMap.size() == tables.size());
   elementSegmentsMap.clear();
   for (auto& curr : elementSegments) {
     elementSegmentsMap[curr->name] = curr.get();
   }
+  assert(elementSegmentsMap.size() == elementSegments.size());
   memoriesMap.clear();
   for (auto& curr : memories) {
     memoriesMap[curr->name] = curr.get();
   }
+  assert(memoriesMap.size() == memories.size());
   updateDataSegmentsMap();
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
+  assert(globalsMap.size() == globals.size());
   tagsMap.clear();
   for (auto& curr : tags) {
     tagsMap[curr->name] = curr.get();
   }
+  assert(tagsMap.size() == tags.size());
 }
 
 void Module::clearDebugInfo() { debugInfoFileNames.clear(); }

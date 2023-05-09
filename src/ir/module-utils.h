@@ -160,7 +160,7 @@ inline void copyModule(const Module& in, Module& out) {
     copyDataSegment(curr.get(), out);
   }
   out.start = in.start;
-  out.userSections = in.userSections;
+  out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
   out.typeNames = in.typeNames;
@@ -368,10 +368,10 @@ template<typename T,
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef MapT<Function*, T> Map;
+  using Map = MapT<Function*, T>;
   Map map;
 
-  typedef std::function<void(Function*, T&)> Func;
+  using Func = std::function<void(Function*, T&)>;
 
   ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
     // Fill in map, as we operate on it in parallel (each function to its own
@@ -438,10 +438,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
     bool hasNonDirectCall = false;
   };
 
-  typedef std::map<Function*, T> Map;
+  using Map = std::map<Function*, T>;
   Map map;
 
-  typedef std::function<void(Function*, T&)> Func;
+  using Func = std::function<void(Function*, T&)>;
 
   CallGraphPropertyAnalysis(Module& wasm, Func work) : wasm(wasm) {
     ParallelFunctionAnalysis<T> analysis(wasm, [&](Function* func, T& info) {
@@ -518,6 +518,14 @@ template<typename T> struct CallGraphPropertyAnalysis {
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
 std::vector<HeapType> collectHeapTypes(Module& wasm);
+
+// Collect all the heap types visible on the module boundary that cannot be
+// changed. TODO: For open world use cases, this needs to include all subtypes
+// of public types as well.
+std::vector<HeapType> getPublicHeapTypes(Module& wasm);
+
+// getHeapTypes - getPublicHeapTypes
+std::vector<HeapType> getPrivateHeapTypes(Module& wasm);
 
 struct IndexedHeapTypes {
   std::vector<HeapType> types;

@@ -20,7 +20,7 @@
 
   ;; Properly ensure unique try labels after an inlining
 
-  ;; CHECK:      (func $caller-with-label (param $x i32)
+  ;; CHECK:      (func $caller-with-label (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (loop $label
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block $__inlined_func$callee-with-label
@@ -51,7 +51,7 @@
   )
 
   ;; ---------------------------------------------------------------------------
-  ;; CHECK:      (func $callee-with-try-delegate
+  ;; CHECK:      (func $callee-with-try-delegate (type $none_=>_none)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -68,7 +68,7 @@
 
   ;; For now, do not inline a try-delegate
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $callee-with-try-delegate)
   ;; CHECK-NEXT: )
   (func $caller
@@ -82,7 +82,7 @@
 
   ;; Properly support inlining into a function with a try-delegate
 
-  ;; CHECK:      (func $caller-with-try-delegate (result i32)
+  ;; CHECK:      (func $caller-with-try-delegate (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -90,7 +90,7 @@
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (block $__inlined_func$callee-a (result i32)
+  ;; CHECK-NEXT:   (block $__inlined_func$callee-a$1 (result i32)
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -107,7 +107,7 @@
   ;; ---------------------------------------------------------------------------
   (func $callee-b (param i32))
 
-  ;; CHECK:      (func $caller-with-pop
+  ;; CHECK:      (func $caller-with-pop (type $none_=>_none)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try $try
@@ -119,7 +119,7 @@
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block $__inlined_func$callee-b
+  ;; CHECK-NEXT:     (block $__inlined_func$callee-b$2
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )

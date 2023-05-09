@@ -70,9 +70,21 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
 }
 
 Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
-  : gcData(gcData), type(type, NonNullable) {
-  // The type must be a proper type for GC data.
-  assert((isData() && gcData) || (type.isBottom() && !gcData));
+  : gcData(gcData), type(type, gcData ? NonNullable : Nullable) {
+  // The type must be a proper type for GC data: either a struct, array, or
+  // string; or an externalized version of the same; or a null.
+  assert((isData() && gcData) || (type == HeapType::ext && gcData) ||
+         (type.isBottom() && !gcData));
+}
+
+Literal::Literal(std::string string)
+  : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
+  // TODO: we could in theory internalize strings
+  Literals contents;
+  for (auto c : string) {
+    contents.push_back(Literal(int32_t(c)));
+  }
+  gcData = std::make_shared<GCData>(HeapType::string, contents);
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -99,7 +111,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData()) {
+  if (other.isData() || other.type.getHeapType() == HeapType::ext) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -115,17 +127,17 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::i31:
           i32 = other.i32;
           return;
+        case HeapType::ext:
+          gcData = other.gcData;
+          return;
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
-          // Null
-          return;
-        case HeapType::ext:
+          WASM_UNREACHABLE("null literals should already have been handled");
         case HeapType::any:
-          WASM_UNREACHABLE("TODO: extern literals");
         case HeapType::eq:
         case HeapType::func:
-        case HeapType::data:
+        case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
@@ -143,7 +155,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData()) {
+  if (isNull() || isData() || type.getHeapType() == HeapType::ext) {
     gcData.~shared_ptr();
   }
 }
@@ -233,6 +245,57 @@ Literal Literal::makeOne(Type type) {
 Literal Literal::makeNegOne(Type type) {
   assert(type.isNumber());
   return makeFromInt32(-1, type);
+}
+
+Literal Literal::makeFromMemory(void* p, Type type) {
+  assert(type.isNumber());
+  switch (type.getBasic()) {
+    case Type::i32: {
+      int32_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(i);
+    }
+    case Type::i64: {
+      int64_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(i);
+    }
+    case Type::f32: {
+      int32_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(bit_cast<float>(i));
+    }
+    case Type::f64: {
+      int64_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(bit_cast<double>(i));
+    }
+    case Type::v128: {
+      uint8_t bytes[16];
+      memcpy(bytes, p, sizeof(bytes));
+      return Literal(bytes);
+    }
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+}
+
+Literal Literal::makeFromMemory(void* p, const Field& field) {
+  switch (field.packedType) {
+    case Field::not_packed:
+      return makeFromMemory(p, field.type);
+    case Field::i8: {
+      int8_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(int32_t(i));
+    }
+    case Field::i16: {
+      int16_t i;
+      memcpy(&i, p, sizeof(i));
+      return Literal(int32_t(i));
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Literal Literal::standardizeNaN(const Literal& input) {
@@ -369,6 +432,9 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isFunction()) {
       assert(func.is() && other.func.is());
       return func == other.func;
+    }
+    if (type.isString()) {
+      return gcData->values == other.gcData->values;
     }
     if (type.isData()) {
       return gcData == other.gcData;
@@ -519,14 +585,28 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           o << "nullfuncref";
           break;
         case HeapType::ext:
+          o << "externref";
+          break;
         case HeapType::any:
-          WASM_UNREACHABLE("TODO: extern literals");
         case HeapType::eq:
         case HeapType::func:
-        case HeapType::data:
+        case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
-        case HeapType::string:
+        case HeapType::string: {
+          auto data = literal.getGCData();
+          if (!data) {
+            o << "nullstring";
+          } else {
+            o << "string(\"";
+            for (auto c : data->values) {
+              // TODO: more than ascii
+              o << char(c.getInteger());
+            }
+            o << "\")";
+          }
+          break;
+        }
         case HeapType::stringview_wtf8:
         case HeapType::stringview_wtf16:
         case HeapType::stringview_iter:
@@ -538,6 +618,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
+      // TODO: infinite recursion is possible here, if the data is cyclic
       o << "[ref " << data->type << ' ' << data->values << ']';
     }
   }
@@ -2510,6 +2591,44 @@ Literal Literal::relaxedFmaF64x2(const Literal& left,
 Literal Literal::relaxedFmsF64x2(const Literal& left,
                                  const Literal& right) const {
   return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
+}
+
+Literal Literal::externalize() const {
+  assert(Type::isSubType(type, Type(HeapType::any, Nullable)) &&
+         "can only externalize internal references");
+  if (isNull()) {
+    return Literal(std::shared_ptr<GCData>{}, HeapType::noext);
+  }
+  auto heapType = type.getHeapType();
+  if (heapType.isBasic()) {
+    switch (heapType.getBasic()) {
+      case HeapType::i31: {
+        return Literal(std::make_shared<GCData>(HeapType::i31, Literals{*this}),
+                       HeapType::ext);
+      }
+      case HeapType::string:
+      case HeapType::stringview_wtf8:
+      case HeapType::stringview_wtf16:
+      case HeapType::stringview_iter:
+        WASM_UNREACHABLE("TODO: string literals");
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  return Literal(gcData, HeapType::ext);
+}
+
+Literal Literal::internalize() const {
+  assert(Type::isSubType(type, Type(HeapType::ext, Nullable)) &&
+         "can only internalize external references");
+  if (isNull()) {
+    return Literal(std::shared_ptr<GCData>{}, HeapType::none);
+  }
+  if (gcData->type == HeapType::i31) {
+    assert(gcData->values[0].type.getHeapType() == HeapType::i31);
+    return gcData->values[0];
+  }
+  return Literal(gcData, gcData->type);
 }
 
 } // namespace wasm

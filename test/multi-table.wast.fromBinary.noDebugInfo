@@ -17,15 +17,15 @@
  (elem $7 (ref null $none_=>_none) (ref.func $0) (ref.func $1) (ref.null nofunc) (global.get $global$0))
  (elem $8 func)
  (elem $9 (table $3) (i32.const 0) (ref null $none_=>_none) (ref.func $0) (ref.func $2))
- (func $0
+ (func $0 (type $none_=>_none)
   (drop
    (ref.func $2)
   )
  )
- (func $1
+ (func $1 (type $none_=>_none)
   (nop)
  )
- (func $2
+ (func $2 (type $none_=>_none)
   (nop)
  )
 )

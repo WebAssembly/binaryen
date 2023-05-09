@@ -8,20 +8,28 @@
 ;; testcases.
 
 (module
+ ;; CHECK:      (type $A (struct (field structref)))
+
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
+
+ (type $A (struct_subtype (field (ref null struct)) data))
+
+ ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
+ (type $B (struct_subtype (field (ref struct)) $A))
+
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (param $0 (ref data))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $ref|struct|_=>_none) (param $0 (ref struct))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result (ref data))
+ ;; CHECK-NEXT:   (block (result (ref struct))
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $test-dead-get-non-nullable (param $func (ref data))
+ (func $test-dead-get-non-nullable (param $func (ref struct))
   (unreachable)
   (drop
    ;; A useless get (that does not read from any set, or from the inputs to the
@@ -31,7 +39,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (param $0 (ref null $array)) (result (ref null $array))
+ ;; CHECK:      (func $br_on_null (type $ref?|$array|_=>_ref?|$array|) (param $0 (ref null $array)) (result (ref null $array))
  ;; CHECK-NEXT:  (block $label$1 (result (ref null $array))
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (br $label$1
@@ -67,7 +75,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead
+ ;; CHECK:      (func $nn-dead (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -106,7 +114,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead-nameless
+ ;; CHECK:      (func $nn-dead-nameless (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -137,7 +145,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-null
+ ;; CHECK:      (func $unreachable-get-null (type $none_=>_none)
  ;; CHECK-NEXT:  (local $0 anyref)
  ;; CHECK-NEXT:  (local $1 i31ref)
  ;; CHECK-NEXT:  (unreachable)
@@ -147,8 +155,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i31.new
- ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   (block (result i31ref)
+ ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -163,6 +173,109 @@
   )
   (drop
    (local.get $null-i31)
+  )
+ )
+
+ ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
+ ;; CHECK-NEXT:  (struct.get $A 0
+ ;; CHECK-NEXT:   (block (result (ref null $A))
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $remove-tee-refinalize
+  (param $a (ref null $A))
+  (param $b (ref null $B))
+  (result (ref null struct))
+  ;; The local.tee receives a $B and flows out an $A. We want to avoid changing
+  ;; types here, so we'll wrap it in a block, and leave further improvements
+  ;; for other passes.
+  (struct.get $A 0
+   (local.tee $a
+    (local.get $b)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
+ ;; CHECK-NEXT:  (struct.get $A 0
+ ;; CHECK-NEXT:   (block (result (ref null $A))
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $remove-tee-refinalize-2
+  (param $a (ref null $A))
+  (param $b (ref null $B))
+  (result (ref null struct))
+  ;; As above, but with an extra tee in the middle. The result should be the
+  ;; same.
+  (struct.get $A 0
+   (local.tee $a
+    (local.tee $a
+     (local.get $b)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $replace-i31-local (type $none_=>_i32) (result i32)
+ ;; CHECK-NEXT:  (local $0 i31ref)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (ref.is_i31
+ ;; CHECK-NEXT:    (ref.cast null i31
+ ;; CHECK-NEXT:     (block (result i31ref)
+ ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $replace-i31-local (result i32)
+  (local $local i31ref)
+  (i32.add
+   (unreachable)
+   (ref.test i31
+    (ref.cast null i31
+     ;; This local.get is in unreachable code, and coalesce-locals will remove
+     ;; it in order to avoid using the local index at all. While doing so it
+     ;; must emit something of the exact same type so validation still works
+     ;; (we can't turn this into a non-nullable reference, in particular - that
+     ;; would hit a validation error as the cast outside of us is nullable).
+     (local.get $local)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $replace-struct-param (type $f64_ref?|$A|_=>_f32) (param $0 f64) (param $1 (ref null $A)) (result f32)
+ ;; CHECK-NEXT:  (call $replace-struct-param
+ ;; CHECK-NEXT:   (block (result f64)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.cast null $A
+ ;; CHECK-NEXT:    (block (result (ref null $A))
+ ;; CHECK-NEXT:     (struct.new_default $A)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $replace-struct-param (param $unused f64) (param $A (ref null $A)) (result f32)
+  ;; As above, but now the value is a struct reference and it is on a local.tee.
+  ;; Again, we should replace the local operation with something of identical
+  ;; type to avoid a validation error.
+  (call $replace-struct-param
+   (block (result f64)
+    (unreachable)
+   )
+   (ref.cast null $A
+    (local.tee $A
+     (struct.new_default $A)
+    )
+   )
   )
  )
 )

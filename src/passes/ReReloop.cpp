@@ -102,7 +102,7 @@ struct ReReloop final : public Pass {
     virtual void run() { WASM_UNREACHABLE("unimpl"); }
   };
 
-  typedef std::shared_ptr<Task> TaskPtr;
+  using TaskPtr = std::shared_ptr<Task>;
   std::vector<TaskPtr> stack;
 
   struct TriageTask final : public Task {
@@ -299,8 +299,8 @@ struct ReReloop final : public Pass {
     // since control flow is flattened, this is pretty simple
     // first, traverse the function body. note how we don't need to traverse
     // into expressions, as we know they contain no control flow
-    builder = make_unique<Builder>(*module);
-    relooper = make_unique<CFG::Relooper>(module);
+    builder = std::make_unique<Builder>(*module);
+    relooper = std::make_unique<CFG::Relooper>(module);
     auto* entry = startCFGBlock();
     stack.push_back(TaskPtr(new TriageTask(*this, function->body)));
     // main loop

@@ -101,6 +101,9 @@ void PassRegistry::registerPasses() {
                "removes arguments to calls in an lto-like manner, and "
                "optimizes where we removed",
                createDAEOptimizingPass);
+  registerPass("abstract-type-refining",
+               "refine and merge abstract (never-created) types",
+               createAbstractTypeRefiningPass);
   registerPass("coalesce-locals",
                "reduce # of locals by coalescing",
                createCoalesceLocalsPass);
@@ -272,9 +275,20 @@ void PassRegistry::registerPasses() {
   registerPass("mod-asyncify-never-unwind",
                "apply the assumption that asyncify never unwinds",
                createModAsyncifyNeverUnwindPass);
+  registerPass("monomorphize",
+               "creates specialized versions of functions",
+               createMonomorphizePass);
+  registerPass("monomorphize-always",
+               "creates specialized versions of functions (even if unhelpful)",
+               createMonomorphizeAlwaysPass);
   registerPass("multi-memory-lowering",
                "combines multiple memories into a single memory",
                createMultiMemoryLoweringPass);
+  registerPass(
+    "multi-memory-lowering-with-bounds-checks",
+    "combines multiple memories into a single memory, trapping if the read or "
+    "write is larger than the length of the memory's data",
+    createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("once-reduction",
@@ -287,6 +301,8 @@ void PassRegistry::registerPasses() {
                "optimizes added constants into load/store offsets, propagating "
                "them across locals too",
                createOptimizeAddedConstantsPropagatePass);
+  registerPass(
+    "optimize-casts", "eliminate and reuse casts", createOptimizeCastsPass);
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
@@ -356,6 +372,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-names",
                "removes names from locations that are never branched to",
                createRemoveUnusedNamesPass);
+  registerPass("remove-unused-types",
+               "remove unused private GC types",
+               createRemoveUnusedTypesPass);
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
@@ -388,6 +407,10 @@ void PassRegistry::registerPasses() {
   registerPass("signature-refining",
                "apply more specific subtypes to signature types where possible",
                createSignatureRefiningPass);
+  registerPass("signext-lowering",
+               "lower sign-ext operations to wasm mvp and disable the sign "
+               "extension feature",
+               createSignExtLoweringPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
@@ -450,6 +473,12 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("type-merging",
+               "merge types to their supertypes where possible",
+               createTypeMergingPass);
+  registerPass("type-ssa",
+               "create new nominal types to help other optimizations",
+               createTypeSSAPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -537,6 +566,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
+    addIfNoDWARFIssues("optimize-casts");
     // Coalescing may prevent subtyping (as a coalesced local must have the
     // supertype of all those combined into it), so subtype first.
     // TODO: when optimizing for size, maybe the order should reverse?
@@ -581,22 +611,27 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
   }
-  if (wasm->features.hasGC() &&
-      (getTypeSystem() == TypeSystem::Nominal ||
-       getTypeSystem() == TypeSystem::Isorecursive) &&
-      options.optimizeLevel >= 2) {
-    addIfNoDWARFIssues("type-refining");
-    addIfNoDWARFIssues("signature-pruning");
-    addIfNoDWARFIssues("signature-refining");
+  if (wasm->features.hasGC() && options.optimizeLevel >= 2) {
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("type-refining");
+      addIfNoDWARFIssues("signature-pruning");
+      addIfNoDWARFIssues("signature-refining");
+    }
     addIfNoDWARFIssues("global-refining");
     // Global type optimization can remove fields that are not needed, which can
     // remove ref.funcs that were once assigned to vtables but are no longer
     // needed, which can allow more code to be removed globally. After those,
     // constant field propagation can be more effective.
-    addIfNoDWARFIssues("gto");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("gto");
+    }
     addIfNoDWARFIssues("remove-unused-module-elements");
-    addIfNoDWARFIssues("cfp");
-    addIfNoDWARFIssues("gsi");
+    if (options.closedWorld) {
+      addIfNoDWARFIssues("remove-unused-types");
+      addIfNoDWARFIssues("cfp");
+      addIfNoDWARFIssues("gsi");
+      addIfNoDWARFIssues("abstract-type-refining");
+    }
   }
   // TODO: generate-global-effects here, right before function passes, then
   //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems
@@ -640,8 +675,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
 }
 
-static void dumpWast(Name name, Module* wasm) {
-  // write out the wat
+static void dumpWasm(Name name, Module* wasm) {
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {
@@ -655,13 +689,16 @@ static void dumpWast(Name name, Module* wasm) {
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
   ModuleWriter writer;
-  writer.writeText(*wasm, fullName + ".wast");
+  writer.setDebugInfo(true);
   writer.writeBinary(*wasm, fullName + ".wasm");
 }
 
 void PassRunner::run() {
   assert(!ran);
   ran = true;
+
+  // As we run passes, we'll notice which we skip.
+  skippedPasses.clear();
 
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
@@ -673,10 +710,6 @@ void PassRunner::run() {
     // for debug logging purposes, run each pass in full before running the
     // other
     auto totalTime = std::chrono::duration<double>(0);
-    WasmValidator::Flags validationFlags = WasmValidator::Minimal;
-    if (options.validateGlobally) {
-      validationFlags = validationFlags | WasmValidator::Globally;
-    }
     auto what = isNested ? "nested passes" : "passes";
     std::cerr << "[PassRunner] running " << what << std::endl;
     size_t padding = 0;
@@ -684,7 +717,7 @@ void PassRunner::run() {
       padding = std::max(padding, pass->name.size());
     }
     if (passDebug >= 3 && !isNested) {
-      dumpWast("before", wasm);
+      dumpWasm("before", wasm);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
@@ -713,7 +746,7 @@ void PassRunner::run() {
       if (options.validate && !isNested) {
         // validate, ignoring the time
         std::cerr << "[PassRunner]   (validating)\n";
-        if (!WasmValidator().validate(*wasm, validationFlags)) {
+        if (!WasmValidator().validate(*wasm, options)) {
           std::cout << *wasm << '\n';
           if (passDebug >= 2) {
             Fatal() << "Last pass (" << pass->name
@@ -728,14 +761,14 @@ void PassRunner::run() {
         }
       }
       if (passDebug >= 3) {
-        dumpWast(pass->name, wasm);
+        dumpWasm(pass->name, wasm);
       }
     }
     std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
               << " seconds." << std::endl;
     if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
-      if (!WasmValidator().validate(*wasm, validationFlags)) {
+      if (!WasmValidator().validate(*wasm, options)) {
         std::cout << *wasm << '\n';
         Fatal() << "final module does not validate\n";
       }
@@ -786,6 +819,20 @@ void PassRunner::run() {
       }
     }
     flush();
+  }
+
+  if (!isNested) {
+    // All the passes the user requested to skip should have been seen, and
+    // skipped. If not, the user may have had a typo in the name of a pass to
+    // skip, and we will warn. (We don't do this in a nested runner because
+    // those are used for various internal tasks inside passes, which would lead
+    // to many spurious warnings.)
+    for (auto pass : options.passesToSkip) {
+      if (!skippedPasses.count(pass)) {
+        std::cerr << "warning: --" << pass << " was requested to be skipped, "
+                  << "but it was not found in the passes that were run.\n";
+      }
+    }
   }
 }
 
@@ -905,6 +952,13 @@ struct AfterEffectModuleChecker {
 };
 
 void PassRunner::runPass(Pass* pass) {
+  assert(!pass->isFunctionParallel());
+
+  if (options.passesToSkip.count(pass->name)) {
+    skippedPasses.insert(pass->name);
+    return;
+  }
+
   std::unique_ptr<AfterEffectModuleChecker> checker;
   if (getPassDebug()) {
     checker = std::unique_ptr<AfterEffectModuleChecker>(
@@ -923,6 +977,11 @@ void PassRunner::runPass(Pass* pass) {
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
+
+  if (options.passesToSkip.count(pass->name)) {
+    skippedPasses.insert(pass->name);
+    return;
+  }
 
   auto passDebug = getPassDebug();
 

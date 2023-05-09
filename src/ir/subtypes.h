@@ -29,10 +29,6 @@ namespace wasm {
 // This only scans user types, and not basic types like HeapType::eq.
 struct SubTypes {
   SubTypes(const std::vector<HeapType>& types) : types(types) {
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "SubTypes requires explicit supers";
-    }
     for (auto type : types) {
       note(type);
     }
@@ -41,14 +37,21 @@ struct SubTypes {
   SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
 
   const std::vector<HeapType>& getStrictSubTypes(HeapType type) const {
+    // When we return an empty result, use a canonical constant empty vec to
+    // avoid allocation.
+    static const std::vector<HeapType> empty;
+
+    if (type.isBottom()) {
+      // Bottom types have no subtypes.
+      return empty;
+    }
+
     assert(!type.isBasic());
     if (auto iter = typeSubTypes.find(type); iter != typeSubTypes.end()) {
       return iter->second;
     }
 
-    // No entry exists. Return a canonical constant empty vec, to avoid
-    // allocation.
-    static const std::vector<HeapType> empty;
+    // No entry exists.
     return empty;
   }
 
@@ -74,16 +77,12 @@ struct SubTypes {
     return ret;
   }
 
-  // Computes the depth of children for each type. This is 0 if the type has no
-  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
-  // and so forth.
-  //
-  // This depth ignores bottom types.
-  std::unordered_map<HeapType, Index> getMaxDepths() {
-    struct DepthSort : TopologicalSort<HeapType, DepthSort> {
+  // A topological sort that visits subtypes first.
+  auto getSubTypesFirstSort() const {
+    struct SubTypesFirstSort : TopologicalSort<HeapType, SubTypesFirstSort> {
       const SubTypes& parent;
 
-      DepthSort(const SubTypes& parent) : parent(parent) {
+      SubTypesFirstSort(const SubTypes& parent) : parent(parent) {
         for (auto type : parent.types) {
           // The roots are types with no supertype.
           if (!type.getSuperType()) {
@@ -101,9 +100,18 @@ struct SubTypes {
       }
     };
 
+    return SubTypesFirstSort(*this);
+  }
+
+  // Computes the depth of children for each type. This is 0 if the type has no
+  // subtypes, 1 if it has subtypes but none of those have subtypes themselves,
+  // and so forth.
+  //
+  // This depth ignores bottom types.
+  std::unordered_map<HeapType, Index> getMaxDepths() {
     std::unordered_map<HeapType, Index> depths;
 
-    for (auto type : DepthSort(*this)) {
+    for (auto type : getSubTypesFirstSort()) {
       // Begin with depth 0, then take into account the subtype depths.
       Index depth = 0;
       for (auto subType : getStrictSubTypes(type)) {
@@ -117,7 +125,7 @@ struct SubTypes {
     for (auto type : types) {
       HeapType basic;
       if (type.isStruct()) {
-        basic = HeapType::data;
+        basic = HeapType::struct_;
       } else if (type.isArray()) {
         basic = HeapType::array;
       } else {
@@ -127,9 +135,8 @@ struct SubTypes {
       depths[basic] = std::max(depths[basic], depths[type] + 1);
     }
 
-    depths[HeapType::data] =
-      std::max(depths[HeapType::data], depths[HeapType::array] + 1);
-    depths[HeapType::eq] = std::max(Index(1), depths[HeapType::data] + 1);
+    depths[HeapType::eq] =
+      std::max(depths[HeapType::struct_], depths[HeapType::array]) + 1;
     depths[HeapType::any] = depths[HeapType::eq] + 1;
 
     return depths;
@@ -176,6 +183,11 @@ struct SubTypes {
         }
       }
     }
+  }
+
+  // As above, but iterate to the maximum depth.
+  template<typename F> void iterSubTypes(HeapType type, F func) {
+    return iterSubTypes(type, std::numeric_limits<Index>::max(), func);
   }
 
   // All the types in the program. This is computed here anyhow, and can be

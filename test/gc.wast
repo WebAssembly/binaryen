@@ -16,7 +16,7 @@
 
   (func $test
     (param $local_i31ref i31ref)
-    (param $local_dataref dataref)
+    (param $local_structref structref)
 
     (local $local_i32 i32)
     (local $local_anyref anyref)
@@ -74,7 +74,7 @@
   (func $test-variants
     (param $local_i31refnull (ref null i31))
     (param $local_i31refnonnull (ref i31))
-    (param $local_datarefnull (ref null data))
-    (param $local_datarefnonnull (ref data))
+    (param $local_structrefnull (ref null struct))
+    (param $local_structrefnonnull (ref struct))
   )
 )

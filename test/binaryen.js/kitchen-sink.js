@@ -145,7 +145,7 @@ function test_ids() {
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
   console.log("PopId: " + binaryen.PopId);
   console.log("RefNullId: " + binaryen.RefNullId);
-  console.log("RefIsId: " + binaryen.RefIsId);
+  console.log("RefIsNullId: " + binaryen.RefIsNullId);
   console.log("RefFuncId: " + binaryen.RefFuncId);
   console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TableGetId: " + binaryen.TableGetId);
@@ -167,7 +167,7 @@ function test_ids() {
   console.log("StructGetId: " + binaryen.StructGetId);
   console.log("StructSetId: " + binaryen.StructSetId);
   console.log("ArrayNewId: " + binaryen.ArrayNewId);
-  console.log("ArrayInitId: " + binaryen.ArrayInitId);
+  console.log("ArrayNewFixedId: " + binaryen.ArrayNewFixedId);
   console.log("ArrayGetId: " + binaryen.ArrayGetId);
   console.log("ArraySetId: " + binaryen.ArraySetId);
   console.log("ArrayLenId: " + binaryen.ArrayLenId);
@@ -555,8 +555,8 @@ function test_core() {
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
-    module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),
-    module.data.drop(0),
+    module.memory.init("0", makeInt32(1024), makeInt32(0), makeInt32(12)),
+    module.data.drop("0"),
     module.memory.copy(makeInt32(2048), makeInt32(1024), makeInt32(12)),
     module.memory.fill(makeInt32(0), makeInt32(42), makeInt32(1024)),
     // All the rest
@@ -658,7 +658,7 @@ function test_core() {
     module.anyref.pop(),
     module.eqref.pop(),
     module.i31ref.pop(),
-    module.dataref.pop(),
+    module.structref.pop(),
     module.stringref.pop(),
     module.stringview_wtf8.pop(),
     module.stringview_wtf16.pop(),

@@ -66,14 +66,14 @@
 ;; KEEP-NONE-PRIMARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-NONE-PRIMARY-NEXT:  (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
 ;; KEEP-NONE-PRIMARY-NEXT:  (table $table 1 1 funcref)
-;; KEEP-NONE-PRIMARY-NEXT:  (elem (i32.const 0) $placeholder_0)
+;; KEEP-NONE-PRIMARY-NEXT:  (elem $0 (i32.const 0) $placeholder_0)
 ;; KEEP-NONE-PRIMARY-NEXT:  (export "%table" (table $table))
 ;; KEEP-NONE-PRIMARY-NEXT: )
 
 ;; KEEP-NONE-SECONDARY:      (module
 ;; KEEP-NONE-SECONDARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-NONE-SECONDARY-NEXT:  (import "primary" "%table" (table $table 1 1 funcref))
-;; KEEP-NONE-SECONDARY-NEXT:  (elem (i32.const 0) $foo)
+;; KEEP-NONE-SECONDARY-NEXT:  (elem $0 (i32.const 0) $foo)
 ;; KEEP-NONE-SECONDARY-NEXT:  (func $bar (param $0 i32) (result i32)
 ;; KEEP-NONE-SECONDARY-NEXT:   (call $foo
 ;; KEEP-NONE-SECONDARY-NEXT:    (i32.const 1)
@@ -93,7 +93,7 @@
 ;; KEEP-FOO-PRIMARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-FOO-PRIMARY-NEXT:  (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
 ;; KEEP-FOO-PRIMARY-NEXT:  (table $table 2 2 funcref)
-;; KEEP-FOO-PRIMARY-NEXT:  (elem (i32.const 0) $foo $placeholder_1)
+;; KEEP-FOO-PRIMARY-NEXT:  (elem $0 (i32.const 0) $foo $placeholder_1)
 ;; KEEP-FOO-PRIMARY-NEXT:  (export "%foo" (func $foo))
 ;; KEEP-FOO-PRIMARY-NEXT:  (export "%table" (table $table))
 ;; KEEP-FOO-PRIMARY-NEXT:  (func $foo (param $0 i32) (result i32)
@@ -108,7 +108,7 @@
 ;; KEEP-FOO-SECONDARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-FOO-SECONDARY-NEXT:  (import "primary" "%table" (table $table 2 2 funcref))
 ;; KEEP-FOO-SECONDARY-NEXT:  (import "primary" "%foo" (func $foo (param i32) (result i32)))
-;; KEEP-FOO-SECONDARY-NEXT:  (elem (i32.const 1) $bar)
+;; KEEP-FOO-SECONDARY-NEXT:  (elem $0 (i32.const 1) $bar)
 ;; KEEP-FOO-SECONDARY-NEXT:  (func $bar (param $0 i32) (result i32)
 ;; KEEP-FOO-SECONDARY-NEXT:   (call $foo
 ;; KEEP-FOO-SECONDARY-NEXT:    (i32.const 1)
@@ -123,7 +123,7 @@
 ;; KEEP-BAR-PRIMARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-BAR-PRIMARY-NEXT:  (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
 ;; KEEP-BAR-PRIMARY-NEXT:  (table $table 1 1 funcref)
-;; KEEP-BAR-PRIMARY-NEXT:  (elem (i32.const 0) $placeholder_0)
+;; KEEP-BAR-PRIMARY-NEXT:  (elem $0 (i32.const 0) $placeholder_0)
 ;; KEEP-BAR-PRIMARY-NEXT:  (export "%bar" (func $bar))
 ;; KEEP-BAR-PRIMARY-NEXT:  (export "%table" (table $table))
 ;; KEEP-BAR-PRIMARY-NEXT:  (func $bar (param $0 i32) (result i32)
@@ -138,7 +138,7 @@
 ;; KEEP-BAR-SECONDARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-BAR-SECONDARY-NEXT:  (import "primary" "%table" (table $table 1 1 funcref))
 ;; KEEP-BAR-SECONDARY-NEXT:  (import "primary" "%bar" (func $bar (param i32) (result i32)))
-;; KEEP-BAR-SECONDARY-NEXT:  (elem (i32.const 0) $foo)
+;; KEEP-BAR-SECONDARY-NEXT:  (elem $0 (i32.const 0) $foo)
 ;; KEEP-BAR-SECONDARY-NEXT:  (func $foo (param $0 i32) (result i32)
 ;; KEEP-BAR-SECONDARY-NEXT:   (call $bar
 ;; KEEP-BAR-SECONDARY-NEXT:    (i32.const 0)
@@ -153,7 +153,7 @@
 ;; KEEP-BOTH-PRIMARY:      (module
 ;; KEEP-BOTH-PRIMARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-BOTH-PRIMARY-NEXT:  (table $table 1 1 funcref)
-;; KEEP-BOTH-PRIMARY-NEXT:  (elem (i32.const 0) $foo)
+;; KEEP-BOTH-PRIMARY-NEXT:  (elem $0 (i32.const 0) $foo)
 ;; KEEP-BOTH-PRIMARY-NEXT:  (export "%table" (table $table))
 ;; KEEP-BOTH-PRIMARY-NEXT:  (func $foo (param $0 i32) (result i32)
 ;; KEEP-BOTH-PRIMARY-NEXT:   (call $bar

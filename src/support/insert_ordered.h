@@ -32,7 +32,7 @@ template<typename T> struct InsertOrderedSet {
   std::unordered_map<T, typename std::list<T>::iterator> Map;
   std::list<T> List;
 
-  typedef typename std::list<T>::iterator iterator;
+  using iterator = typename std::list<T>::iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
 
@@ -50,12 +50,13 @@ template<typename T> struct InsertOrderedSet {
   }
 
   // cheating a bit, not returning the iterator
-  void insert(const T& val) {
-    auto it = Map.find(val);
-    if (it == Map.end()) {
+  bool insert(const T& val) {
+    auto [it, inserted] = Map.insert({val, List.begin()});
+    if (inserted) {
       List.push_back(val);
-      Map.insert(std::make_pair(val, --List.end()));
+      it->second = --List.end();
     }
+    return inserted;
   }
 
   size_t size() const { return Map.size(); }
@@ -87,7 +88,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
     Map;
   std::list<std::pair<const Key, T>> List;
 
-  typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
+  using iterator = typename std::list<std::pair<const Key, T>>::iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
 

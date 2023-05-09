@@ -561,7 +561,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 1 + visit(curr->left) + visit(curr->right);
   }
   CostType visitRefNull(RefNull* curr) { return 1; }
-  CostType visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
+  CostType visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   CostType visitRefFunc(RefFunc* curr) { return 1; }
   CostType visitRefEq(RefEq* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
@@ -636,7 +636,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitArrayNew(ArrayNew* curr) {
     return 4 + visit(curr->size) + maybeVisit(curr->init);
   }
-  CostType visitArrayInit(ArrayInit* curr) {
+  CostType visitArrayNewData(ArrayNewData* curr) {
+    return 4 + visit(curr->offset) + visit(curr->size);
+  }
+  CostType visitArrayNewElem(ArrayNewElem* curr) {
+    return 4 + visit(curr->offset) + visit(curr->size);
+  }
+  CostType visitArrayNewFixed(ArrayNewFixed* curr) {
     CostType ret = 4;
     for (auto* child : curr->values) {
       ret += visit(child);
@@ -657,6 +663,18 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // Similar to MemoryCopy.
     return 6 + visit(curr->destRef) + visit(curr->destIndex) +
            visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
+  }
+  CostType visitArrayFill(ArrayFill* curr) {
+    return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->value) +
+           visit(curr->size);
+  }
+  CostType visitArrayInitData(ArrayInitData* curr) {
+    return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
+           visit(curr->size);
+  }
+  CostType visitArrayInitElem(ArrayInitElem* curr) {
+    return 6 + visit(curr->ref) + visit(curr->index) + visit(curr->offset) +
+           visit(curr->size);
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {

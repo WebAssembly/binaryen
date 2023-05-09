@@ -44,9 +44,7 @@ inline bool isBranchReachable(Expression* expr) {
 template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_ID expr->_id
 
-#define DELEGATE_START(id)                                                     \
-  auto* cast = expr->cast<id>();                                               \
-  WASM_UNUSED(cast);
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = expr->cast<id>();
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
@@ -110,9 +108,7 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
 template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 #define DELEGATE_ID expr->_id
 
-#define DELEGATE_START(id)                                                     \
-  auto* cast = expr->cast<id>();                                               \
-  WASM_UNUSED(cast);
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = expr->cast<id>();
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
 
@@ -330,6 +326,12 @@ struct BranchAccumulator
   void visitExpression(Expression* curr) {
     auto selfBranches = getUniqueTargets(curr);
     branches.insert(selfBranches.begin(), selfBranches.end());
+  }
+
+  static NameSet get(Expression* tree) {
+    BranchAccumulator accumulator;
+    accumulator.walk(tree);
+    return accumulator.branches;
   }
 };
 

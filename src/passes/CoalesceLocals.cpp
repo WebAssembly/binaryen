@@ -236,9 +236,8 @@ void CoalesceLocals::calculateInterferences() {
       auto index = action.index;
       if (action.isGet()) {
         if (endsLiveRange[i]) {
-          bool erased = live.erase(action.index);
+          [[maybe_unused]] bool erased = live.erase(action.index);
           assert(erased);
-          WASM_UNUSED(erased);
         }
         continue;
       }
@@ -523,7 +522,10 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
           }
         }
         if (auto* subSet = set->value->dynCast<LocalSet>()) {
-          if (subSet->index == set->index) {
+          // Only do so if not only the index matches but also the type. If the
+          // inner type is more refined, leave that for other passes.
+          if (subSet->index == set->index &&
+              subSet->value->type == subSet->type) {
             set->value = subSet->value;
             continue;
           }
@@ -550,12 +552,28 @@ void CoalesceLocals::applyIndices(std::vector<Index>& indices,
         if (!action.effective) {
           // value may have no side effects, further optimizations can eliminate
           // it
-          *action.origin = set->value;
+          auto* value = set->value;
           if (!set->isTee()) {
             // we need to drop it
             Drop* drop = ExpressionManipulator::convert<LocalSet, Drop>(set);
-            drop->value = *action.origin;
+            drop->value = value;
             *action.origin = drop;
+          } else {
+            // This is a tee, and so, as earlier in this function, we must be
+            // careful of subtyping. Above we simply avoided the problem by
+            // leaving it for other passes, but we do want to remove ineffective
+            // stores - nothing else does that as well as this pass. Instead,
+            // create a block to cast back to the original type, which avoids
+            // changing types here, and leave it to other passes to refine types
+            // and remove the block.
+            auto originalType = (*action.origin)->type;
+            if (originalType != set->value->type) {
+              (*action.origin) =
+                Builder(*getModule()).makeBlock({set->value}, originalType);
+            } else {
+              // No special handling, just use the value.
+              *action.origin = set->value;
+            }
           }
           continue;
         }

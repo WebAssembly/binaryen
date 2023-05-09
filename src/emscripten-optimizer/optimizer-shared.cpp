@@ -19,6 +19,8 @@
 #include "optimizer.h"
 #include "support/safe_integer.h"
 
+using namespace cashew;
+
 IString JS_FLOAT_ZERO;
 
 IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check");

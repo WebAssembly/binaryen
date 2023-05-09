@@ -56,11 +56,6 @@ inline size_t alignAddr(size_t address, size_t alignment) {
   return ((address + alignment - 1) & ~(alignment - 1));
 }
 
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args) {
-  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 // For fatal errors which could arise from input (i.e. not assertion failures)
 class Fatal {
 private:

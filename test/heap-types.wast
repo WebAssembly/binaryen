@@ -30,8 +30,8 @@
   (type $words (array (mut i32)))
 
   (type $parent (struct))
-  (type $child (struct i32))
-  (type $grandchild (struct i32 i64))
+  (type $child (struct_subtype i32 $parent))
+  (type $grandchild (struct_subtype i32 i64 $child))
 
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))
@@ -182,41 +182,22 @@
     (unreachable)
   )
   (func $ref.is_X (param $x anyref)
-    (if (ref.is_func (local.get $x)) (unreachable))
-    (if (ref.is_data (local.get $x)) (unreachable))
+    (if (ref.is_null (local.get $x)) (unreachable))
     (if (ref.is_i31 (local.get $x)) (unreachable))
   )
-  (func $ref.as_X (param $x anyref)
+  (func $ref.as_X (param $x anyref) (param $f funcref)
     (drop (ref.as_non_null (local.get $x)))
-    (drop (ref.as_func (local.get $x)))
-    (drop (ref.as_data (local.get $x)))
+    (drop (ref.as_func (local.get $f)))
     (drop (ref.as_i31 (local.get $x)))
   )
   (func $br_on_X (param $x anyref)
     (local $y anyref)
     (local $z (ref null any))
     (local $temp-func (ref null func))
-    (local $temp-data (ref null data))
     (local $temp-i31 (ref null i31))
     (block $null
       (local.set $z
         (br_on_null $null (local.get $x))
-      )
-    )
-    (drop
-      (block $func (result funcref)
-        (local.set $y
-          (br_on_func $func (local.get $x))
-        )
-        (ref.null func)
-      )
-    )
-    (drop
-      (block $data (result (ref null data))
-        (local.set $y
-          (br_on_data $data (local.get $x))
-        )
-        (ref.null data)
       )
     )
     (drop
@@ -231,22 +212,6 @@
       (block $non-null (result (ref any))
         (br_on_non_null $non-null (local.get $x))
         (unreachable)
-      )
-    )
-    (drop
-      (block $non-func (result anyref)
-        (local.set $temp-func
-          (br_on_non_func $non-func (local.get $x))
-        )
-        (ref.null any)
-      )
-    )
-    (drop
-      (block $non-data (result anyref)
-        (local.set $temp-data
-          (br_on_non_data $non-data (local.get $x))
-        )
-        (ref.null any)
       )
     )
     (drop
@@ -322,7 +287,7 @@
     )
   )
   (func $array-init (result (ref $vector))
-    (array.init_static $vector
+    (array.new_fixed $vector
       (f64.const 1)
       (f64.const 2)
       (f64.const 4)
@@ -330,7 +295,7 @@
     )
   )
   (func $array-init-packed (result (ref $bytes))
-    (array.init_static $bytes
+    (array.new_fixed $bytes
       (i32.const 4)
       (i32.const 2)
       (i32.const 1)
@@ -340,15 +305,15 @@
     (local $temp.A (ref null $struct.A))
     (local $temp.B (ref null $struct.B))
     (drop
-      (ref.test_static $struct.B (ref.null $struct.A))
+      (ref.test $struct.B (ref.null $struct.A))
     )
     (drop
-      (ref.cast_static $struct.B (ref.null $struct.A))
+      (ref.cast null $struct.B (ref.null $struct.A))
     )
     (drop
       (block $out-B (result (ref $struct.B))
         (local.set $temp.A
-          (br_on_cast_static $out-B $struct.B (ref.null $struct.A))
+          (br_on_cast $out-B $struct.B (ref.null $struct.A))
         )
         (unreachable)
       )
@@ -356,7 +321,7 @@
     (drop
       (block $out-A (result (ref null $struct.A))
         (local.set $temp.B
-          (br_on_cast_static_fail $out-A $struct.B (ref.null $struct.A))
+          (br_on_cast_fail $out-A $struct.B (ref.null $struct.A))
         )
         (unreachable)
       )

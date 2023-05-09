@@ -8,7 +8,7 @@
   (type (array f32))
   (type (array f64))
   (type (array anyref))
-  (type (array (ref data)))
+  (type (array (ref struct)))
   (type (array (ref 0)))
   (type (array (ref null 1)))
   (type (array (mut i8)))
@@ -18,7 +18,7 @@
   (type (array (mut i32)))
   (type (array (mut i64)))
   (type (array (mut anyref)))
-  (type (array (mut (ref data))))
+  (type (array (mut (ref struct))))
   (type (array (mut (ref 0))))
   (type (array (mut (ref null i31))))
 )
@@ -35,12 +35,15 @@
 ;; Binding structure
 
 (module
-  (type $s0 (array (ref $s1)))
-  (type $s1 (array (ref $s0)))
+  (rec
+    (type $s0 (array (ref $s1)))
+    (type $s1 (array (ref $s0)))
+  )
 
-  (func (param (ref $forward)))
-
-  (type $forward (array i32))
+  (rec
+    (func (param (ref $forward)))
+    (type $forward (array i32))
+  )
 )
 
 (assert_invalid

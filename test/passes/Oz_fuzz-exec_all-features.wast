@@ -1,6 +1,6 @@
 (module
  (type $struct (struct (mut i32)))
- (type $extendedstruct (struct (mut i32) f64))
+ (type $extendedstruct (struct_subtype (mut i32) f64 $struct))
  (type $bytes (array (mut i8)))
 
  (type $void_func (func))
@@ -84,9 +84,9 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast_static $block $struct
+       (br_on_cast $block $struct
         ;; first, try to cast our simple $struct to an extended, which will fail
-        (br_on_cast_static $extendedblock $extendedstruct
+        (br_on_cast $extendedblock $extendedstruct
          (local.get $any)
         )
        )
@@ -113,7 +113,7 @@
     (drop
      ;; try to cast our simple $struct to an extended, which will fail, and
      ;; so we will branch, skipping the next logging.
-     (br_on_cast_static_fail $any $extendedstruct
+     (br_on_cast_fail $any $extendedstruct
       (local.get $any)
      )
     )
@@ -134,7 +134,7 @@
     (drop
      ;; try to cast our simple $struct to an extended, which will succeed, and
      ;; so we will continue to the next logging.
-     (br_on_cast_static_fail $any $extendedstruct
+     (br_on_cast_fail $any $extendedstruct
       (local.get $any)
      )
     )
@@ -148,75 +148,13 @@
   ;; array or a struct, so our casting code should not assume it is. it is ok
   ;; to try to cast it, and the result should be 0.
   (call $log
-   (ref.test_static $struct
+   (ref.test $struct
     (ref.null any)
    )
   )
  )
- (func $get_data (result dataref)
+ (func $get_struct (result structref)
   (struct.new_default $struct)
- )
- (func "br_on_data" (param $x anyref)
-  (local $y anyref)
-  (drop
-   (block $data (result dataref)
-    (local.set $y
-     (br_on_data $data (local.get $x))
-    )
-    (call $log (i32.const 1))
-    (call $get_data)
-   )
-  )
- )
- (func "br_on_non_data-null"
-  (local $x anyref)
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x is a null, and so it is not data, and the branch will be taken, and no
-    ;; logging will occur.
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
- )
- (func "br_on_non_data-data"
-  (local $x anyref)
-  ;; set x to valid data
-  (local.set $x
-   (struct.new_default $struct)
-  )
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x refers to valid data, and so we will not branch, and will log.
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
- )
- (func "br_on_non_data-other"
-  (local $x anyref)
-  ;; set x to something that is not null, but also not data
-  (local.set $x
-   (i31.new
-    (i32.const 0)
-   )
-  )
-  (drop
-   (block $any (result anyref)
-    (drop
-     (br_on_non_data $any (local.get $x))
-    )
-    ;; $x refers to an i31, so we will branch, and not log
-    (call $log (i32.const 1))
-    (ref.null any)
-   )
-  )
  )
  (func "br-on_non_null"
   (drop
@@ -239,29 +177,6 @@
    )
   )
  )
- (func "ref-as-data-of-func"
-  (drop
-   ;; This should trap.
-   (ref.as_data
-    (ref.func $0)
-   )
-  )
- )
- (func "ref-as-data-of-data"
-  (drop
-   (ref.as_data
-    (struct.new_default $struct)
-   )
-  )
- )
- (func "ref-as-func-of-data"
-  (drop
-   ;; This should trap.
-   (ref.as_func
-    (struct.new_default $struct)
-   )
-  )
- )
  (func "ref-as-func-of-func"
   (drop
    (ref.as_func
@@ -275,13 +190,13 @@
  (func "cast-on-func"
   (call $log (i32.const 0))
   ;; a valid cast
-  (call_ref
-   (ref.cast_static $void_func (ref.func $a-void-func))
+  (call_ref $void_func
+   (ref.cast $void_func (ref.func $a-void-func))
   )
   (call $log (i32.const 1))
   ;; an invalid cast
-  (drop (call_ref
-   (ref.cast_static $int_func (ref.func $a-void-func))
+  (drop (call_ref $int_func
+   (ref.cast $int_func (ref.func $a-void-func))
   ))
   ;; will never be reached
   (call $log (i32.const 2))
@@ -309,14 +224,6 @@
  )
  (func $call-target (param $0 eqref)
   (nop)
- )
- (func "cast-func-to-struct"
-  (drop
-   ;; An impossible cast of a function to a struct, which should fail.
-   (ref.cast_static $struct
-    (ref.func $call-target)
-   )
-  )
  )
  (func "array-copy"
   (local $x (ref null $bytes))
@@ -364,10 +271,10 @@
    (array.get_u $bytes (local.get $x) (i32.const 12))
   )
  )
- (func "array.init"
+ (func "array.new_fixed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.init_static $bytes
+   (array.new_fixed $bytes
     (i32.const 42) ;; first value
     (i32.const 50) ;; second value
    )
@@ -385,10 +292,10 @@
    (array.get_u $bytes (local.get $x) (i32.const 1))
   )
  )
- (func "array.init-packed"
+ (func "array.new_fixed-packed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.init_static $bytes
+   (array.new_fixed $bytes
     (i32.const -11512)
    )
   )
@@ -400,15 +307,15 @@
  (func "static-casts"
   ;; Casting null returns null.
   (call $log (ref.is_null
-   (ref.cast_static $struct (ref.null $struct))
+   (ref.cast null $struct (ref.null $struct))
   ))
   ;; Testing null returns 0.
   (call $log
-   (ref.test_static $struct (ref.null $struct))
+   (ref.test $struct (ref.null $struct))
   )
   ;; Testing something completely wrong (struct vs array) returns 0.
   (call $log
-   (ref.test_static $struct
+   (ref.test $struct
     (array.new $bytes
      (i32.const 20)
      (i32.const 10)
@@ -417,19 +324,19 @@
   )
   ;; Testing a thing with the same type returns 1.
   (call $log
-   (ref.test_static $struct
+   (ref.test $struct
     (struct.new_default $struct)
    )
   )
   ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
   (call $log
-   (ref.test_static $extendedstruct
+   (ref.test $extendedstruct
     (struct.new_default $struct)
    )
   )
   ;; Casting to a supertype works.
   (call $log
-   (ref.test_static $struct
+   (ref.test $struct
     (struct.new_default $extendedstruct)
    )
   )
@@ -446,9 +353,9 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast_static $block $struct
+       (br_on_cast $block $struct
         ;; first, try to cast our simple $struct to an extended, which will fail
-        (br_on_cast_static $extendedblock $extendedstruct
+        (br_on_cast $extendedblock $extendedstruct
          (local.get $any)
         )
        )
@@ -473,7 +380,7 @@
    (block $failblock (result anyref)
     (drop
       ;; try to cast our simple $struct to an extended, which will fail
-     (br_on_cast_static_fail $failblock $extendedstruct
+     (br_on_cast_fail $failblock $extendedstruct
       (local.get $any)
      )
     )

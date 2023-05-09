@@ -22,7 +22,7 @@
 
 ;; CHECK:      (memory $0 i64 0 65536)
 
-;; CHECK:      (data (i64.const 0) "")
+;; CHECK:      (data $0 (i64.const 0) "")
 
 ;; CHECK:      (export "use_stack" (func $0))
 
@@ -79,7 +79,7 @@
 )
 ;; CHECK:      (memory $0 i64 0 65536)
 
-;; CHECK:      (data (i64.const 0) "")
+;; CHECK:      (data $0 (i64.const 0) "")
 
 ;; CHECK:      (export "__set_stack_limits" (func $__set_stack_limits))
 

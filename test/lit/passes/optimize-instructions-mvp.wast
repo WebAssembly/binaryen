@@ -16145,12 +16145,15 @@
 
   ;; CHECK:      (func $lt-added-constant (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.shr_u
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -16591,6 +16594,356 @@
           (i64.const 255)
         )
         (i64.const 255)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-overflow (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -2147483648)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-overflow (result i32)
+    ;; If we subtracted 0x80000000 - 1 we'd get something that changes sign if
+    ;; the comparison is signed (as the sign bit is no longer set). To avoid
+    ;; that we skip optimizing cases where subtracting the constants might lead
+    ;; to an overflow.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-overflow-unsigned (result i32)
+  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 2147483647)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-overflow-unsigned (result i32)
+    ;; As above, but unsigned. This is ok for us to optimize.
+    (i32.ge_u
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-zero (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero (result i32)
+    ;; A zero in either constant means we should not optimize using an added
+    ;; constant. However, other optimizations kick in here, as adding zero does
+    ;; nothing, and we end up with [max 31 bits] >=_s MIN_INT which is true.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 0)
+      )
+      (i32.const 0x80000000)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-zero-a (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -2147483648)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero-a (result i32)
+    ;; A zero in the last constant means we should not optimize.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-zero-b (result i32)
+  ;; CHECK-NEXT:  (i32.ge_u
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-zero-b (result i32)
+    ;; Parallel case to the above, with a zero in the added constant. We do not
+    ;; optimize.
+    (i32.ge_u
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const 1)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-negative (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-negative (result i32)
+    ;; Reasonable negative constants can be optimized. But the add is
+    ;; canoncalized into a sub, and atm we do not optimize such added constants.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const -10)
+      )
+      (i32.const -20)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-negative-flip (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-negative-flip (result i32)
+    ;; As above, but flipped. The add is canoncalized into a sub, and atm we do
+    ;; not optimize such added constants.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 1)
+        )
+        (i32.const -20)
+      )
+      (i32.const -10)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-mix (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-mix (result i32)
+    ;; A case of one negative and one positive constant. Here we have
+    ;; [max 16 bits] + 10 >=_s -20 which is always true.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 16)
+        )
+        (i32.const 10)
+      )
+      (i32.const -20)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-mix-flip (result i32)
+  ;; CHECK-NEXT:  (i32.ge_s
+  ;; CHECK-NEXT:   (i32.sub
+  ;; CHECK-NEXT:    (i32.shr_u
+  ;; CHECK-NEXT:     (i32.load
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-mix-flip (result i32)
+    ;; As above, but with sign flipped. The add is canoncalized into a sub, and
+    ;; atm we do not optimize such added constants.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 16)
+        )
+        (i32.const -20)
+      )
+      (i32.const 10)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-mix-flip-other (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shr_u
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 16)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-mix-flip-other (result i32)
+    ;; As above, but with the sign the same while the absolute values are
+    ;; flipped. Here we have [max 16 bits] + 20 >=_s -10 which is always true.
+    (i32.ge_s
+      (i32.add
+        (i32.shr_u
+          (i32.load
+            (i32.const 0)
+          )
+          (i32.const 16)
+        )
+        (i32.const 20)
+      )
+      (i32.const -10)
+    )
+  )
+
+  ;; CHECK:      (func $skip-added-constants-signed-overflow (result i32)
+  ;; CHECK-NEXT:  (i64.lt_s
+  ;; CHECK-NEXT:   (i64.add
+  ;; CHECK-NEXT:    (i64.or
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:     (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $skip-added-constants-signed-overflow (result i32)
+    ;; Adding 1 to 0x7fffffffffffffff turns it into 0x8000000000000000, which
+    ;; when signed is -1, that is, we overflow. So we can't subtract 1 from the
+    ;; gt_s arms.
+    ;; (The i64.or is needed to avoid other opts.)
+    (i64.gt_s
+      (i64.const 2)
+      (i64.add
+        (i64.const 1)
+        (i64.or
+          (i64.const 0)
+          (i64.const 0x7fffffffffffffff)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $added-constants-unsigned (result i32)
+  ;; CHECK-NEXT:  (i64.eqz
+  ;; CHECK-NEXT:   (i64.or
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (i64.const 9223372036854775807)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $added-constants-unsigned (result i32)
+    ;; As above, but unsigned. This is ok, as it can't overflow as unsigned.
+    (i64.gt_u
+      (i64.const 2)
+      (i64.add
+        (i64.const 1)
+        (i64.or
+          (i64.const 0)
+          (i64.const 0x7fffffffffffffff)
+        )
       )
     )
   )

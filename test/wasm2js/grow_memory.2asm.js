@@ -19,8 +19,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  function $0(var$0) {
   var$0 = var$0 | 0;
   return __wasm_memory_grow(var$0 | 0) | 0;

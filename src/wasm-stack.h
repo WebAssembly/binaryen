@@ -232,7 +232,6 @@ void BinaryenIRWriter<SubType>::visitPossibleBlockContents(Expression* curr) {
 
 template<typename SubType>
 void BinaryenIRWriter<SubType>::visit(Expression* curr) {
-  emitDebugLocation(curr);
   // We emit unreachable instructions that create unreachability, but not
   // unreachable instructions that just inherit unreachability from their
   // children, since the latter won't be reached. This (together with logic in
@@ -252,6 +251,7 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
     // `curr` is not reachable, so don't emit it.
     return;
   }
+  emitDebugLocation(curr);
   // Control flow requires special handling, but most instructions can be
   // emitted directly after their children.
   if (Properties::isControlFlowStructure(curr)) {

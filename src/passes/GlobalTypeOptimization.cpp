@@ -117,9 +117,9 @@ struct GlobalTypeOptimization : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "GlobalTypeOptimization requires nominal/isorecursive typing";
+
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "GTO requires --closed-world";
     }
 
     // Find and analyze struct operations inside each function.
@@ -247,7 +247,9 @@ struct GlobalTypeOptimization : public Pass {
     }
 
     // Update the types in the entire module.
-    updateTypes(*module);
+    if (!indexesAfterRemovals.empty() || !canBecomeImmutable.empty()) {
+      updateTypes(*module);
+    }
   }
 
   void updateTypes(Module& wasm) {

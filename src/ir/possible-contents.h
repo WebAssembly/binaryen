@@ -66,10 +66,15 @@ class PossibleContents {
 
   struct GlobalInfo {
     Name name;
-    // The type of the global in the module. We stash this here so that we do
-    // not need to pass around a module all the time.
-    // TODO: could we save size in this variant if we did pass around the
-    //       module?
+    // The type of contents. Note that this may not match the type of the
+    // global, if we were filtered. For example:
+    //
+    //  (ref.as_non_null
+    //    (global.get $nullable-global)
+    //  )
+    //
+    // The contents flowing out will be a Global, but of a non-nullable type,
+    // unlike the original global.
     Type type;
     bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
@@ -287,6 +292,9 @@ public:
       return builder.makeConstantExpression(getLiteral());
     } else {
       auto name = getGlobal();
+      // Note that we load the type from the module, rather than use the type
+      // in the GlobalInfo, as that type may not match the global (see comment
+      // in the GlobalInfo declaration above).
       return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
     }
   }
@@ -321,7 +329,7 @@ public:
         o << " HT: " << h;
       }
     } else if (isGlobal()) {
-      o << "GlobalInfo $" << getGlobal();
+      o << "GlobalInfo $" << getGlobal() << " T: " << getType();
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       auto t = coneType->type;
       o << "ConeType " << t;

@@ -45,7 +45,9 @@ var Asyncify = {
   sleeps: 0,
   maxDepth: 0,
   DATA_ADDR: 4,
-  DATA_MAX: 65536,
+  // The fuzzer emits memories of size 16 (pages). Allow us to use almost all of
+  // that (we start from offset 4, so we can't use them all).
+  DATA_MAX: 15 * 65536,
   savedMemory: null,
   instrumentImports: function(imports) {
     var ret = {};

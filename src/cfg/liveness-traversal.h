@@ -36,7 +36,7 @@ namespace wasm {
 // may be a great many potential elements but actual sets
 // may be fairly small. Specifically, we use a sorted
 // vector.
-typedef SortedVector SetOfLocals;
+using SetOfLocals = SortedVector;
 
 // A liveness-relevant action. Supports a get, a set, or an
 // "other" which can be used for other purposes, to mark
@@ -152,7 +152,16 @@ struct LivenessWalker : public CFGWalker<SubType, VisitorType, Liveness> {
     // if it has side effects)
     if (!self->currBasicBlock) {
       if (curr->isTee()) {
-        *currp = curr->value;
+        // We can remove the tee, but must leave something of the exact same
+        // type.
+        auto originalType = curr->type;
+        if (originalType != curr->value->type) {
+          *currp =
+            Builder(*self->getModule()).makeBlock({curr->value}, originalType);
+        } else {
+          // No special handling, just use the value.
+          *currp = curr->value;
+        }
       } else {
         *currp = Builder(*self->getModule()).makeDrop(curr->value);
       }

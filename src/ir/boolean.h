@@ -26,9 +26,11 @@ inline bool emitsBoolean(Expression* curr) {
     return unary->isRelational();
   } else if (auto* binary = curr->dynCast<Binary>()) {
     return binary->isRelational();
-  } else if (curr->is<RefIs>() || curr->is<RefEq>() || curr->is<RefTest>() ||
-             curr->is<StringEq>()) {
+  } else if (curr->is<RefIsNull>() || curr->is<RefEq>() ||
+             curr->is<RefTest>()) {
     return true;
+  } else if (auto* eq = curr->dynCast<StringEq>()) {
+    return eq->op == StringEqEqual;
   }
   return false;
 }

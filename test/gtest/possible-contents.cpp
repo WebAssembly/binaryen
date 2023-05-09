@@ -66,15 +66,10 @@ static std::unique_ptr<Module> parse(std::string module) {
 // that.
 class PossibleContentsTest : public testing::Test {
 protected:
-  void SetUp() override {
-    // Use nominal typing to test struct types.
-    wasm::setTypeSystem(TypeSystem::Nominal);
-  }
-
   Type anyref = Type(HeapType::any, Nullable);
   Type funcref = Type(HeapType::func, Nullable);
   Type i31ref = Type(HeapType::i31, Nullable);
-  Type dataref = Type(HeapType::data, Nullable);
+  Type structref = Type(HeapType::struct_, Nullable);
 
   PossibleContents none = PossibleContents::none();
 
@@ -104,7 +99,7 @@ protected:
   PossibleContents exactI32 = PossibleContents::exactType(Type::i32);
   PossibleContents exactAnyref = PossibleContents::exactType(anyref);
   PossibleContents exactFuncref = PossibleContents::exactType(funcref);
-  PossibleContents exactDataref = PossibleContents::exactType(dataref);
+  PossibleContents exactStructref = PossibleContents::exactType(structref);
   PossibleContents exactI31ref = PossibleContents::exactType(i31ref);
   PossibleContents exactNonNullAnyref =
     PossibleContents::exactType(Type(HeapType::any, NonNullable));
@@ -494,7 +489,7 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
                                                   exactI32,
                                                   exactAnyref,
                                                   exactFuncref,
-                                                  exactDataref,
+                                                  exactStructref,
                                                   exactI31ref,
                                                   exactNonNullAnyref,
                                                   exactNonNullFuncref,
@@ -542,6 +537,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
             D
   */
   TypeBuilder builder(5);
+  builder.createRecGroup(0, 5);
   builder.setHeapType(0, Struct(FieldList{}));
   builder.setHeapType(1, Struct(FieldList{}));
   builder.setHeapType(2, Struct(FieldList{}));
@@ -591,36 +587,36 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertCombination(exactA, exactB, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactA, exactD, PossibleContents::coneType(nullA, 2));
-  assertCombination(exactA, exactE, PossibleContents::coneType(dataref, 1));
+  assertCombination(exactA, exactE, PossibleContents::coneType(structref, 1));
   assertCombination(
-    exactA, exactDataref, PossibleContents::coneType(dataref, 1));
+    exactA, exactStructref, PossibleContents::coneType(structref, 1));
 
   assertCombination(exactB, exactB, exactB);
   assertCombination(exactB, exactC, PossibleContents::coneType(nullA, 1));
   assertCombination(exactB, exactD, PossibleContents::coneType(nullA, 2));
-  assertCombination(exactB, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactB, exactE, PossibleContents::coneType(structref, 2));
   assertCombination(
-    exactB, exactDataref, PossibleContents::coneType(dataref, 2));
+    exactB, exactStructref, PossibleContents::coneType(structref, 2));
 
   assertCombination(exactC, exactC, exactC);
   assertCombination(exactC, exactD, PossibleContents::coneType(nullC, 1));
-  assertCombination(exactC, exactE, PossibleContents::coneType(dataref, 2));
+  assertCombination(exactC, exactE, PossibleContents::coneType(structref, 2));
   assertCombination(
-    exactC, exactDataref, PossibleContents::coneType(dataref, 2));
+    exactC, exactStructref, PossibleContents::coneType(structref, 2));
 
   assertCombination(exactD, exactD, exactD);
-  assertCombination(exactD, exactE, PossibleContents::coneType(dataref, 3));
+  assertCombination(exactD, exactE, PossibleContents::coneType(structref, 3));
   assertCombination(
-    exactD, exactDataref, PossibleContents::coneType(dataref, 3));
+    exactD, exactStructref, PossibleContents::coneType(structref, 3));
 
   assertCombination(exactE, exactE, exactE);
   assertCombination(
-    exactE, exactDataref, PossibleContents::coneType(dataref, 1));
+    exactE, exactStructref, PossibleContents::coneType(structref, 1));
 
-  assertCombination(exactDataref, exactDataref, exactDataref);
+  assertCombination(exactStructref, exactStructref, exactStructref);
 
   assertCombination(
-    exactDataref, exactAnyref, PossibleContents::coneType(anyref, 2));
+    exactStructref, exactAnyref, PossibleContents::coneType(anyref, 2));
 
   // Combinations of cones.
   assertCombination(PossibleContents::coneType(nullA, 5),
@@ -640,11 +636,11 @@ TEST_F(PossibleContentsTest, TestStructCones) {
 
   assertCombination(PossibleContents::coneType(nullA, 5),
                     PossibleContents::coneType(nullE, 7),
-                    PossibleContents::coneType(dataref, 8));
+                    PossibleContents::coneType(structref, 8));
 
   assertCombination(PossibleContents::coneType(nullB, 4),
-                    PossibleContents::coneType(dataref, 1),
-                    PossibleContents::coneType(dataref, 6));
+                    PossibleContents::coneType(structref, 1),
+                    PossibleContents::coneType(structref, 6));
 
   // Combinations of cones and exact types.
   assertCombination(exactA,
@@ -658,18 +654,18 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::coneType(nullA, 3));
   assertCombination(exactA,
                     PossibleContents::coneType(nullE, 2),
-                    PossibleContents::coneType(dataref, 3));
+                    PossibleContents::coneType(structref, 3));
 
   assertCombination(exactA,
-                    PossibleContents::coneType(dataref, 1),
-                    PossibleContents::coneType(dataref, 1));
+                    PossibleContents::coneType(structref, 1),
+                    PossibleContents::coneType(structref, 1));
   assertCombination(exactA,
-                    PossibleContents::coneType(dataref, 2),
-                    PossibleContents::coneType(dataref, 2));
+                    PossibleContents::coneType(structref, 2),
+                    PossibleContents::coneType(structref, 2));
 
-  assertCombination(exactDataref,
+  assertCombination(exactStructref,
                     PossibleContents::coneType(nullB, 3),
-                    PossibleContents::coneType(dataref, 5));
+                    PossibleContents::coneType(structref, 5));
 
   // Full cones.
   assertCombination(PossibleContents::fullConeType(nullA),
@@ -694,7 +690,7 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                     PossibleContents::fullConeType(nullA));
   assertCombination(PossibleContents::fullConeType(nullA),
                     PossibleContents::fullConeType(nullE),
-                    PossibleContents::fullConeType(dataref));
+                    PossibleContents::fullConeType(structref));
 
   // Intersections. Test with non-nullable types to avoid the null being a
   // possible intersection.
@@ -787,18 +783,28 @@ TEST_F(PossibleContentsTest, TestStructCones) {
                      PossibleContents::fullConeType(nnD),
                      none);
 
-  // Globals stay as globals if their type is in the cone. Otherwise, they lose
-  // the global info and we compute a normal cone intersection on them. The
-  // same for literals.
+  // Globals stay as globals, but their type might get refined.
   assertIntersection(
     funcGlobal, PossibleContents::fullConeType(funcref), funcGlobal);
 
+  // No global filtering.
   auto signature = Type(Signature(Type::none, Type::none), Nullable);
   assertIntersection(
     nonNullFunc, PossibleContents::fullConeType(signature), nonNullFunc);
+
+  // Filter a global to a more specific type.
   assertIntersection(funcGlobal,
                      PossibleContents::fullConeType(signature),
-                     PossibleContents::fullConeType(signature));
+                     PossibleContents::global("funcGlobal", signature));
+
+  // Filter a global's nullability only.
+  auto nonNullFuncRef = Type(HeapType::func, NonNullable);
+  assertIntersection(funcGlobal,
+                     PossibleContents::fullConeType(nonNullFuncRef),
+                     nonNullFuncGlobal);
+
+  // Incompatible global and cone types have no intersection.
+  assertIntersection(funcGlobal, PossibleContents::fullConeType(nullE), none);
 
   // Incompatible hierarchies have no intersection.
   assertIntersection(
@@ -902,7 +908,7 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   auto bodyContents =
     oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
   ASSERT_TRUE(bodyContents.isConeType());
-  EXPECT_EQ(bodyContents.getType().getHeapType(), HeapType::data);
+  EXPECT_EQ(bodyContents.getType().getHeapType(), HeapType::struct_);
   EXPECT_EQ(bodyContents.getCone().depth, Index(1));
 }
 

@@ -45,15 +45,17 @@ class Literal {
     uint8_t v128[16];
     // funcref function name. `isNull()` indicates a `null` value.
     Name func;
-    // A reference to GC data, either a Struct or an Array. For both of those
-    // we store the referred data as a Literals object (which is natural for an
+    // A reference to GC data, either a Struct or an Array. For both of those we
+    // store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
-    // to indicate whether this is a Struct or an Array, and of what type.
+    // to indicate whether this is a Struct or an Array, and of what type. We
+    // also use this to store String data, as it is similarly stored on the
+    // heap. For externrefs, the gcData is the same as for the corresponding
+    // internal references and the values are only differentiated by the type.
+    // Externalized i31 references have a gcData containing the internal i31
+    // reference as its sole value even though internal i31 references do not
+    // have a gcData.
     std::shared_ptr<GCData> gcData;
-    // TODO: Literals of type `anyref` can only be `null` currently but we
-    // will need to represent external values eventually, to
-    // 1) run the spec tests and fuzzer with reference types enabled and
-    // 2) avoid bailing out when seeing a reference typed value in precompute
   };
 
 public:
@@ -83,6 +85,7 @@ public:
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
+  explicit Literal(std::string string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -90,7 +93,10 @@ public:
   bool isConcrete() const { return type.isConcrete(); }
   bool isNone() const { return type == Type::none; }
   bool isFunction() const { return type.isFunction(); }
+  // Whether this is GC data, that is, something stored on the heap (aside from
+  // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
+  bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
 
@@ -197,6 +203,10 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+
+  static Literal makeFromMemory(void* p, Type type);
+  static Literal makeFromMemory(void* p, const Field& field);
+
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
       case Type::i32:
@@ -655,6 +665,9 @@ public:
   Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
   Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
 
+  Literal externalize() const;
+  Literal internalize() const;
+
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
@@ -705,10 +718,10 @@ public:
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 
-// A GC Struct or Array is a set of values with a type saying how it should be
-// interpreted.
+// A GC Struct, Array, or String is a set of values with a type saying how it
+// should be interpreted.
 struct GCData {
-  // The type of this struct or array.
+  // The type of this struct, array, or string.
   HeapType type;
 
   // The element or field values.
@@ -757,6 +770,14 @@ template<> struct hash<wasm::Literal> {
       }
       if (a.type.getHeapType() == wasm::HeapType::i31) {
         wasm::rehash(digest, a.geti31(true));
+        return digest;
+      }
+      if (a.type.isString()) {
+        auto& values = a.getGCData()->values;
+        wasm::rehash(digest, values.size());
+        for (auto c : values) {
+          wasm::rehash(digest, c.getInteger());
+        }
         return digest;
       }
       // other non-null reference type literals cannot represent concrete

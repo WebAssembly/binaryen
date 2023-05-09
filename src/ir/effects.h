@@ -648,7 +648,7 @@ private:
       parent.isAtomic = true;
     }
     void visitRefNull(RefNull* curr) {}
-    void visitRefIs(RefIs* curr) {}
+    void visitRefIsNull(RefIsNull* curr) {}
     void visitRefFunc(RefFunc* curr) {}
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {
@@ -755,7 +755,17 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
-    void visitArrayInit(ArrayInit* curr) {}
+    void visitArrayNewData(ArrayNewData* curr) {
+      // Traps on out of bounds access to segments or access to dropped
+      // segments.
+      parent.implicitTrap = true;
+    }
+    void visitArrayNewElem(ArrayNewElem* curr) {
+      // Traps on out of bounds access to segments or access to dropped
+      // segments.
+      parent.implicitTrap = true;
+    }
+    void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       if (curr->ref->type.isNull()) {
         parent.trap = true;
@@ -794,6 +804,27 @@ private:
       // traps when a ref is null, or when out of bounds.
       parent.implicitTrap = true;
     }
+    void visitArrayFill(ArrayFill* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // Traps when the destination is null or when out of bounds.
+      parent.implicitTrap = true;
+    }
+    template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+      if (curr->ref->type.isNull()) {
+        parent.trap = true;
+        return;
+      }
+      parent.writesArray = true;
+      // Traps when the destination is null, when out of bounds in source or
+      // destination, or when the source segment has been dropped.
+      parent.implicitTrap = true;
+    }
+    void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
+    void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
     void visitRefAs(RefAs* curr) {
       if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
         // These conversions are infallible.

@@ -75,7 +75,7 @@ MemoryCopyId: 38
 MemoryFillId: 39
 PopId: 40
 RefNullId: 41
-RefIsId: 42
+RefIsNullId: 42
 RefFuncId: 43
 RefEqId: 44
 TableGetId: 45
@@ -97,25 +97,25 @@ StructNewId: 60
 StructGetId: 61
 StructSetId: 62
 ArrayNewId: 63
-ArrayInitId: 64
-ArrayGetId: 65
-ArraySetId: 66
-ArrayLenId: 67
-ArrayCopy: 68
-RefAs: 69
-StringNew: 70
-StringConst: 71
-StringMeasure: 72
-StringEncode: 73
-StringConcat: 74
-StringEq: 75
-StringAs: 76
-StringWTF8Advance: 77
-StringWTF16Get: 78
-StringIterNext: 79
-StringIterMove: 80
-StringSliceWTF: 81
-StringSliceIter: 82
+ArrayNewFixedId: 66
+ArrayGetId: 67
+ArraySetId: 68
+ArrayLenId: 69
+ArrayCopy: 70
+RefAs: 74
+StringNew: 75
+StringConst: 76
+StringMeasure: 77
+StringEncode: 78
+StringConcat: 79
+StringEq: 80
+StringAs: 81
+StringWTF8Advance: 82
+StringWTF16Get: 83
+StringIterNext: 84
+StringIterMove: 85
+StringSliceWTF: 86
+StringSliceIter: 87
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -140,8 +140,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
- (data (i32.const 10) "hello, world")
- (data "I am passive")
+ (data $0 (i32.const 10) "hello, world")
+ (data $1 "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
  (tag $a-tag (param i32))
@@ -150,7 +150,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -1914,12 +1914,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (memory.init 0
+      (memory.init $0
        (i32.const 1024)
        (i32.const 0)
        (i32.const 12)
       )
-      (data.drop 0)
+      (data.drop $0)
       (memory.copy
        (i32.const 2048)
        (i32.const 1024)
@@ -2179,7 +2179,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop i31ref)
       )
       (drop
-       (pop dataref)
+       (pop structref)
       )
       (drop
        (pop stringref)
@@ -2228,7 +2228,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter
+ (func $starter (type $none_=>_none)
   (nop)
  )
 )
@@ -2244,8 +2244,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
- (data (i32.const 10) "hello, world")
- (data "I am passive")
+ (data $0 (i32.const 10) "hello, world")
+ (data $1 "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) "$kitchen()sinker")
  (tag $a-tag (param i32))
@@ -2254,7 +2254,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -4018,12 +4018,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (memory.init 0
+      (memory.init $0
        (i32.const 1024)
        (i32.const 0)
        (i32.const 12)
       )
-      (data.drop 0)
+      (data.drop $0)
       (memory.copy
        (i32.const 2048)
        (i32.const 1024)
@@ -4283,7 +4283,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop i31ref)
       )
       (drop
-       (pop dataref)
+       (pop structref)
       )
       (drop
        (pop stringref)
@@ -4332,7 +4332,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter
+ (func $starter (type $none_=>_none)
   (nop)
  )
 )
@@ -4813,7 +4813,7 @@ module loaded from binary form:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32 i32))
- (func $adder (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4855,7 +4855,7 @@ test_parsing text:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $adder (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4869,7 +4869,7 @@ module loaded from text form:
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $ADD_ER (param $0 i32) (param $1 i32) (result i32)
+ (func $ADD_ER (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4884,9 +4884,9 @@ sizeof Literal: 24
  (global $a-global2 i32 (i32.const 2))
  (global $a-global3 i32 (i32.const 3))
  (memory $0 1 256)
- (data (i32.const 10) "hello, world")
- (data (global.get $a-global) "segment data 2")
- (data "hello, passive")
+ (data $0 (i32.const 10) "hello, world")
+ (data $1 (global.get $a-global) "segment data 2")
+ (data $2 "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))

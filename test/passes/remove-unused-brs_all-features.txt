@@ -7,10 +7,9 @@
  (type $none_=>_f64 (func (result f64)))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_funcref (func (param i32) (result funcref)))
- (type $none_=>_none (func))
  (import "out" "log" (func $log (param i32)))
- (elem declare func $br_on-to-br $br_on-to-flow $i32_=>_none $none_=>_i32)
- (func $foo (result (ref null $struct))
+ (elem declare func $br_on-to-br $i32_=>_none $none_=>_i32)
+ (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
   (if (result (ref null $struct))
    (i32.const 1)
    (struct.new $struct
@@ -21,7 +20,7 @@
    (ref.null none)
   )
  )
- (func $test-prefinalize (result f64)
+ (func $test-prefinalize (type $none_=>_f64) (result f64)
   (loop $loop (result f64)
    (if (result f64)
     (i32.const 1)
@@ -38,20 +37,20 @@
    )
   )
  )
- (func $none_=>_i32 (result i32)
+ (func $none_=>_i32 (type $none_=>_i32) (result i32)
   (unreachable)
  )
- (func $i32_=>_none (param $0 i32)
+ (func $i32_=>_none (type $i32_=>_none) (param $0 i32)
   (nop)
  )
- (func $selectify (param $x i32) (result funcref)
+ (func $selectify (type $i32_=>_funcref) (param $x i32) (result funcref)
   (select (result funcref)
    (ref.func $none_=>_i32)
    (ref.func $i32_=>_none)
    (local.get $x)
   )
  )
- (func $br_on-to-br (param $func (ref func))
+ (func $br_on-to-br (type $ref|func|_=>_none) (param $func (ref func))
   (call $log
    (i32.const 0)
   )
@@ -83,26 +82,6 @@
    (i32.const 4)
   )
   (drop
-   (block $data (result (ref $vector))
-    (drop
-     (br $data
-      (array.new_default $vector
-       (i32.const 1)
-      )
-     )
-    )
-    (call $log
-     (i32.const 5)
-    )
-    (array.new_default $vector
-     (i32.const 2)
-    )
-   )
-  )
-  (call $log
-   (i32.const 6)
-  )
-  (drop
    (block $i31 (result (ref i31))
     (drop
      (br $i31
@@ -112,7 +91,7 @@
      )
     )
     (call $log
-     (i32.const 7)
+     (i32.const 5)
     )
     (i31.new
      (i32.const 1337)
@@ -120,7 +99,7 @@
    )
   )
   (call $log
-   (i32.const 8)
+   (i32.const 6)
   )
   (drop
    (block $non-null (result (ref $ref|func|_=>_none))
@@ -128,67 +107,9 @@
      (ref.func $br_on-to-br)
     )
     (call $log
-     (i32.const 9)
+     (i32.const 7)
     )
     (ref.func $br_on-to-br)
-   )
-  )
- )
- (func $br_on-to-flow
-  (drop
-   (block $data (result nullref)
-    (drop
-     (ref.func $br_on-to-flow)
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $datab (result nullref)
-    (drop
-     (i31.new
-      (i32.const 1337)
-     )
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $func (result nullfuncref)
-    (drop
-     (array.new_default $vector
-      (i32.const 2)
-     )
-    )
-    (ref.null nofunc)
-   )
-  )
-  (drop
-   (block $funcb (result nullfuncref)
-    (drop
-     (i31.new
-      (i32.const 1337)
-     )
-    )
-    (ref.null nofunc)
-   )
-  )
-  (drop
-   (block $i31 (result nullref)
-    (drop
-     (array.new_default $vector
-      (i32.const 2)
-     )
-    )
-    (ref.null none)
-   )
-  )
-  (drop
-   (block $i31b (result nullref)
-    (drop
-     (ref.func $br_on-to-flow)
-    )
-    (ref.null none)
    )
   )
  )

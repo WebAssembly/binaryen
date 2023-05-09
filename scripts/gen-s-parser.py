@@ -539,7 +539,7 @@ instructions = [
 
     # reference types instructions
     ("ref.null",             "makeRefNull(s)"),
-    ("ref.is_null",          "makeRefIs(s, RefIsNull)"),
+    ("ref.is_null",          "makeRefIsNull(s)"),
     ("ref.func",             "makeRefFunc(s)"),
     ("ref.eq",               "makeRefEq(s)"),
     # table instructions
@@ -567,59 +567,69 @@ instructions = [
     ("i31.new",              "makeI31New(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),
-    ("ref.test_static",      "makeRefTestStatic(s)"),
-    ("ref.cast_static",      "makeRefCastStatic(s)"),
-    ("ref.cast_nop_static",  "makeRefCastNopStatic(s)"),
-    ("br_on_null",           "makeBrOn(s, BrOnNull)"),
-    ("br_on_non_null",       "makeBrOn(s, BrOnNonNull)"),
-    ("br_on_cast",           "makeBrOn(s, BrOnCast)"),
-    ("br_on_cast_static",    "makeBrOnStatic(s, BrOnCast)"),
-    ("br_on_cast_fail",      "makeBrOn(s, BrOnCastFail)"),
-    ("br_on_cast_static_fail", "makeBrOnStatic(s, BrOnCastFail)"),
-    ("br_on_func",           "makeBrOn(s, BrOnFunc)"),
-    ("br_on_non_func",       "makeBrOn(s, BrOnNonFunc)"),
-    ("br_on_data",           "makeBrOn(s, BrOnData)"),
-    ("br_on_non_data",       "makeBrOn(s, BrOnNonData)"),
-    ("br_on_i31",            "makeBrOn(s, BrOnI31)"),
-    ("br_on_non_i31",        "makeBrOn(s, BrOnNonI31)"),
-    ("struct.new",           "makeStructNewStatic(s, false)"),
-    ("struct.new_default",   "makeStructNewStatic(s, true)"),
+    ("ref.test",             "makeRefTest(s)"),
+    ("ref.test_static",      "makeRefTest(s)"),
+    ("ref.cast",             "makeRefCast(s)"),
+    ("ref.cast_static",      "makeRefCast(s)"),
+    ("ref.cast_nop",         "makeRefCastNop(s)"),
+    ("ref.cast_nop_static",  "makeRefCastNop(s)"),
+    ("br_on_null",           "makeBrOnNull(s)"),
+    ("br_on_non_null",       "makeBrOnNull(s, true)"),
+    ("br_on_cast",           "makeBrOnCast(s, std::nullopt)"),
+    ("br_on_cast_static",    "makeBrOnCast(s, std::nullopt)"),
+    ("br_on_cast_fail",      "makeBrOnCast(s, std::nullopt, true)"),
+    ("br_on_cast_static_fail", "makeBrOnCast(s, std::nullopt, true)"),
+    ("br_on_func",           "makeBrOnCast(s, Type(HeapType::func, NonNullable))"),
+    ("br_on_non_func",       "makeBrOnCast(s, Type(HeapType::func, NonNullable), true)"),
+    ("br_on_i31",            "makeBrOnCast(s, Type(HeapType::i31, NonNullable))"),
+    ("br_on_non_i31",        "makeBrOnCast(s, Type(HeapType::i31, NonNullable), true)"),
+    ("struct.new",           "makeStructNew(s, false)"),
+    ("struct.new_default",   "makeStructNew(s, true)"),
     ("struct.get",           "makeStructGet(s)"),
     ("struct.get_s",         "makeStructGet(s, true)"),
     ("struct.get_u",         "makeStructGet(s, false)"),
     ("struct.set",           "makeStructSet(s)"),
-    ("array.new",            "makeArrayNewStatic(s, false)"),
-    ("array.new_default",    "makeArrayNewStatic(s, true)"),
-    ("array.init_static",    "makeArrayInitStatic(s)"),
+    ("array.new",            "makeArrayNew(s, false)"),
+    ("array.new_default",    "makeArrayNew(s, true)"),
+    ("array.new_data",       "makeArrayNewData(s)"),
+    ("array.new_elem",       "makeArrayNewElem(s)"),
+    ("array.init_static",    "makeArrayNewFixed(s)"),  # deprecated
+    ("array.new_fixed",      "makeArrayNewFixed(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),
     ("array.get_u",          "makeArrayGet(s, false)"),
     ("array.set",            "makeArraySet(s)"),
     ("array.len",            "makeArrayLen(s)"),
     ("array.copy",           "makeArrayCopy(s)"),
-    ("ref.is_func",          "makeRefIs(s, RefIsFunc)"),
-    ("ref.is_data",          "makeRefIs(s, RefIsData)"),
-    ("ref.is_i31",           "makeRefIs(s, RefIsI31)"),
+    ("array.fill",           "makeArrayFill(s)"),
+    ("array.init_data",      "makeArrayInitData(s)"),
+    ("array.init_elem",      "makeArrayInitElem(s)"),
+    ("ref.is_func",          "makeRefTest(s, Type(HeapType::func, NonNullable))"),
+    ("ref.is_i31",           "makeRefTest(s, Type(HeapType::i31, NonNullable))"),
     ("ref.as_non_null",      "makeRefAs(s, RefAsNonNull)"),
-    ("ref.as_func",          "makeRefAs(s, RefAsFunc)"),
-    ("ref.as_data",          "makeRefAs(s, RefAsData)"),
-    ("ref.as_i31",           "makeRefAs(s, RefAsI31)"),
+    ("ref.as_func",          "makeRefCast(s, Type(HeapType::func, NonNullable))"),
+    ("ref.as_i31",           "makeRefCast(s, Type(HeapType::i31, NonNullable))"),
     ("extern.internalize",   "makeRefAs(s, ExternInternalize)"),
     ("extern.externalize",   "makeRefAs(s, ExternExternalize)"),
-    ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8)"),
-    ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16)"),
-    ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array)"),
-    ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array)"),
+    ("string.new_wtf8",      "makeStringNew(s, StringNewWTF8, false)"),
+    ("string.new_wtf16",     "makeStringNew(s, StringNewWTF16, false)"),
+    ("string.new_wtf8_array",  "makeStringNew(s, StringNewWTF8Array, false)"),
+    ("string.new_wtf16_array", "makeStringNew(s, StringNewWTF16Array, false)"),
+    ("string.from_code_point", "makeStringNew(s, StringNewFromCodePoint, false)"),
+    ("string.new_utf8_try",  "makeStringNew(s, StringNewUTF8, true)"),
+    ("string.new_utf8_array_try",  "makeStringNew(s, StringNewUTF8Array, true)"),
     ("string.const",         "makeStringConst(s)"),
     ("string.measure_wtf8",  "makeStringMeasure(s, StringMeasureWTF8)"),
     ("string.measure_wtf16", "makeStringMeasure(s, StringMeasureWTF16)"),
     ("string.is_usv_sequence", "makeStringMeasure(s, StringMeasureIsUSV)"),
+    ("string.hash",          "makeStringMeasure(s, StringMeasureHash)"),
     ("string.encode_wtf8",   "makeStringEncode(s, StringEncodeWTF8)"),
     ("string.encode_wtf16",  "makeStringEncode(s, StringEncodeWTF16)"),
     ("string.encode_wtf8_array",   "makeStringEncode(s, StringEncodeWTF8Array)"),
     ("string.encode_wtf16_array",  "makeStringEncode(s, StringEncodeWTF16Array)"),
     ("string.concat",        "makeStringConcat(s)"),
-    ("string.eq",            "makeStringEq(s)"),
+    ("string.eq",            "makeStringEq(s, StringEqEqual)"),
+    ("string.compare",       "makeStringEq(s, StringEqCompare)"),
     ("string.as_wtf8",       "makeStringAs(s, StringAsWTF8)"),
     ("string.as_wtf16",      "makeStringAs(s, StringAsWTF16)"),
     ("string.as_iter",       "makeStringAs(s, StringAsIter)"),
@@ -711,16 +721,14 @@ def instruction_parser(new_parser=False):
 
     printer = CodePrinter()
 
-    printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
-
     if new_parser:
-        printer.print_line("auto str = *keyword;")
+        printer.print_line("auto op = *keyword;")
     else:
         printer.print_line("using namespace std::string_view_literals;")
-        printer.print_line("auto str = s[0]->str().str;")
+        printer.print_line("auto op = s[0]->str().str;")
 
-    printer.print_line("memcpy(buf, str.data(), str.size());")
-    printer.print_line("std::string_view op = {buf, str.size()};")
+    printer.print_line("char buf[{}] = {{}};".format(inst_length + 1))
+    printer.print_line("memcpy(buf, op.data(), op.size());")
 
     def print_leaf(expr, inst):
         if new_parser:
@@ -739,7 +747,7 @@ def instruction_parser(new_parser=False):
 
     def emit(node, idx=0):
         assert node.children
-        printer.print_line("switch (op[{}]) {{".format(idx))
+        printer.print_line("switch (buf[{}]) {{".format(idx))
         with printer.indent():
             if node.expr:
                 printer.print_line("case '\\0':")
@@ -764,7 +772,7 @@ def instruction_parser(new_parser=False):
     printer.print_line("parse_error:")
     with printer.indent():
         if new_parser:
-            printer.print_line("return ctx.in.err(\"unrecognized instruction\");")
+            printer.print_line("return ctx.in.err(pos, \"unrecognized instruction\");")
         else:
             printer.print_line("throw ParseException(std::string(op), s.line, s.col);")
 

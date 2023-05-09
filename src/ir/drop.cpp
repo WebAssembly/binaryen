@@ -59,7 +59,12 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
   if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
       curr->is<Try>() || curr->is<Pop>() ||
       BranchUtils::getDefinedName(curr).is()) {
-    return builder.makeSequence(builder.makeDrop(curr), last);
+    // If curr is concrete we must drop it. Or, if it is unreachable or none,
+    // then we can leave it as it is.
+    if (curr->type.isConcrete()) {
+      curr = builder.makeDrop(curr);
+    }
+    return builder.makeSequence(curr, last);
   }
 
   std::vector<Expression*> contents;
@@ -67,11 +72,10 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
     if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
       continue;
     }
+    // See above.
     if (child->type.isConcrete()) {
       contents.push_back(builder.makeDrop(child));
     } else {
-      // The child is unreachable, or none (none is possible as a child of a
-      // block or loop, etc.); in both cases we do not need a drop.
       contents.push_back(child);
     }
   }

@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-typedef std::vector<Literal> Loggings;
+using Loggings = std::vector<Literal>;
 
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
@@ -116,19 +116,27 @@ struct ExecutionResults {
           if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
             auto resultType = func->getResults();
-            if (resultType.isRef()) {
+            if (resultType.isRef() && !resultType.isString()) {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
               // optimizations.
               std::cout << resultType << '\n';
             } else {
+              // Non-references can be printed in full. So can strings, since we
+              // always know how to print them and there is just one string
+              // type.
               std::cout << *values << '\n';
             }
           }
         }
       }
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets)
+      // May throw in instance creation (init of offsets).
+    } catch (const HostLimitException&) {
+      // May throw in instance creation (e.g. array.new of huge size).
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
     }
   }
 
@@ -143,25 +151,17 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    // We allow nulls to have different types (as they compare equal regardless)
-    // but anything else must have an identical type.
-    // We cannot do this in nominal typing, however, as different modules will
-    // have different types in general. We could perhaps compare the entire
-    // graph structurally TODO
-    if (getTypeSystem() != TypeSystem::Nominal) {
-      if (a.type != b.type && !(a.isNull() && b.isNull())) {
-        std::cout << "types not identical! " << a << " != " << b << '\n';
-        return false;
-      }
-    }
     if (a.type.isRef()) {
-      // Don't compare references - only their types. There are several issues
-      // here that we can't fully handle, see
-      // https://github.com/WebAssembly/binaryen/issues/3378, but the core issue
-      // is that we are comparing results between two separate wasm modules (and
-      // a separate instance of each) - we can't really identify an identical
-      // reference between such things. We can only compare things structurally,
-      // for which we compare the types.
+      // Don't compare references. There are several issues here that we can't
+      // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
+      // but the core issue is that since we optimize assuming a closed world,
+      // the types and structure of GC data can arbitrarily change after
+      // optimizations, even in ways that are externally visible from outside
+      // the module.
+      //
+      // TODO: Once we support optimizing under some form of open-world
+      // assumption, we should be able to check that the types and/or structure
+      // of GC data passed out of the module does not change.
       return true;
     }
     if (a != b) {
@@ -224,19 +224,21 @@ struct ExecutionResults {
       ModuleRunner instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
-      // may throw in instance creation (init of offsets)
+      // May throw in instance creation (init of offsets).
+      return {};
+    } catch (const HostLimitException&) {
+      // May throw in instance creation (e.g. array.new of huge size).
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
       return {};
     }
   }
 
   FunctionResult run(Function* func, Module& wasm, ModuleRunner& instance) {
     try {
-      Literals arguments;
-      // init hang support, if present
-      if (auto* ex = wasm.getExportOrNull("hangLimitInitializer")) {
-        instance.callFunction(ex->value, arguments);
-      }
       // call the method
+      Literals arguments;
       for (const auto& param : func->getParams()) {
         // zeros in arguments TODO: more?
         if (!param.isDefaultable()) {

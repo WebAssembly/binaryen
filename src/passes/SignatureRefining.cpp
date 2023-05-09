@@ -30,6 +30,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -53,10 +54,6 @@ struct SignatureRefining : public Pass {
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
-    }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "SignatureRefining requires nominal/hybrid typing";
     }
 
     if (!module->tables.empty()) {
@@ -143,7 +140,21 @@ struct SignatureRefining : public Pass {
       allInfo[exportedFunc->type].canModify = false;
     }
 
-    bool refinedResults = false;
+    // For now, do not optimize types that have subtypes. When we modify such a
+    // type we need to modify subtypes as well, similar to the analysis in
+    // TypeRefining, and perhaps we can unify this pass with that. TODO
+    SubTypes subTypes(*module);
+    for (auto& [type, info] : allInfo) {
+      if (!subTypes.getStrictSubTypes(type).empty()) {
+        info.canModify = false;
+      } else if (type.getSuperType()) {
+        // Also avoid modifying types with supertypes, as we do not handle
+        // contravariance here. That is, when we refine parameters we look for
+        // a more refined type, but the type must be *less* refined than the
+        // param type for the parent (or equal) TODO
+        info.canModify = false;
+      }
+    }
 
     // Compute optimal LUBs.
     std::unordered_set<HeapType> seen;
@@ -165,7 +176,7 @@ struct SignatureRefining : public Pass {
 
       auto updateLUBs = [&](const ExpressionList& operands) {
         for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].noteUpdatableExpression(operands[i]);
+          paramLUBs[i].note(operands[i]->type);
         }
       };
 
@@ -182,7 +193,7 @@ struct SignatureRefining : public Pass {
         if (!lub.noted()) {
           break;
         }
-        newParamsTypes.push_back(lub.getBestPossible());
+        newParamsTypes.push_back(lub.getLUB());
       }
       Type newParams;
       if (newParamsTypes.size() < numParams) {
@@ -201,7 +212,7 @@ struct SignatureRefining : public Pass {
         // value, or it can return a value but traps instead etc.).
         newResults = func->getResults();
       } else {
-        newResults = resultsLUB.getBestPossible();
+        newResults = resultsLUB.getLUB();
       }
 
       if (newParams == func->getParams() && newResults == func->getResults()) {
@@ -211,16 +222,7 @@ struct SignatureRefining : public Pass {
       // We found an improvement!
       newSignatures[type] = Signature(newParams, newResults);
 
-      // Update nulls as necessary, now that we are changing things.
-      if (newParams != func->getParams()) {
-        for (auto& lub : paramLUBs) {
-          lub.updateNulls();
-        }
-      }
       if (newResults != func->getResults()) {
-        resultsLUB.updateNulls();
-        refinedResults = true;
-
         // Update the types of calls using the signature.
         for (auto* call : info.calls) {
           if (call->type != Type::unreachable) {
@@ -282,11 +284,8 @@ struct SignatureRefining : public Pass {
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
-    if (refinedResults) {
-      // After return types change we need to propagate.
-      // TODO: we could do this only in relevant functions perhaps
-      ReFinalize().run(getPassRunner(), module);
-    }
+    // TODO: we could do this only in relevant functions perhaps
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 

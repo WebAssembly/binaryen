@@ -25,7 +25,7 @@
   )
 
   ;; CHECK:      (func $call-grow (result i64)
-  ;; CHECK-NEXT:  (block $__inlined_func$grow (result i64)
+  ;; CHECK-NEXT:  (block $__inlined_func$grow$1 (result i64)
   ;; CHECK-NEXT:   (memory.grow
   ;; CHECK-NEXT:    (i64.const 1)
   ;; CHECK-NEXT:   )

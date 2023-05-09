@@ -103,22 +103,60 @@ TEST_F(TypeTest, IndexedTypePrinter) {
 
   std::stringstream stream;
   stream << print(built[0]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $array1)) data)");
+  EXPECT_EQ(stream.str(),
+            "(type $struct0 (struct (field (ref null $array1))))");
 
   stream.str("");
   stream << print(built[1]);
-  EXPECT_EQ(stream.str(), "(struct_subtype (field (ref null $struct0)) data)");
+  EXPECT_EQ(stream.str(),
+            "(type $struct1 (struct (field (ref null $struct0))))");
 
   stream.str("");
   stream << print(built[2]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $struct1) data)");
+  EXPECT_EQ(stream.str(), "(type $array0 (array (ref null $struct1)))");
 
   stream.str("");
   stream << print(built[3]);
-  EXPECT_EQ(stream.str(), "(array_subtype (ref null $array0) data)");
+  EXPECT_EQ(stream.str(), "(type $array1 (array (ref null $array0)))");
 }
 
-TEST_F(EquirecursiveTest, Basics) {
+TEST_F(TypeTest, ModuleTypePrinter) {
+  TypeBuilder builder(2);
+  builder.createRecGroup(0, 2);
+  builder[0] = Struct({Field(Type::i32, Immutable)});
+  builder[1] = Struct({Field(Type::i32, Immutable)});
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  Module module;
+  module.typeNames[built[0]] = {"A", {}};
+
+  ModuleTypeNameGenerator printDefault(module);
+
+  std::stringstream stream;
+  stream << printDefault(built[0]);
+  EXPECT_EQ(stream.str(), "(type $A (struct (field i32)))");
+
+  stream.str("");
+  stream << printDefault(built[1]);
+  EXPECT_EQ(stream.str(), "(type $struct.0 (struct (field i32)))");
+
+  using IndexedFallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
+  IndexedTypeNameGenerator fallback(built);
+  ModuleTypeNameGenerator<IndexedFallback> printIndexed(module, fallback);
+
+  stream.str("");
+  stream << printIndexed(built[0]);
+  EXPECT_EQ(stream.str(), "(type $A (struct (field i32)))");
+
+  stream.str("");
+  stream << printIndexed(built[1]);
+  EXPECT_EQ(stream.str(), "(type $1 (struct (field i32)))");
+}
+
+TEST_F(TypeTest, Basics) {
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array))))
   // (type $array (array (mut anyref)))
@@ -138,6 +176,8 @@ TEST_F(EquirecursiveTest, Basics) {
   builder[0] = sig;
   builder[1] = struct_;
   builder[2] = array;
+
+  builder.createRecGroup(0, 3);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -167,7 +207,7 @@ TEST_F(EquirecursiveTest, Basics) {
   EXPECT_NE(newRefNullArray, refNullArray);
 }
 
-static void testDirectSelfSupertype() {
+TEST_F(TypeTest, DirectSelfSupertype) {
   // Type is directly a supertype of itself.
   TypeBuilder builder(1);
   builder[0] = Struct{};
@@ -178,19 +218,11 @@ static void testDirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    EXPECT_EQ(error->reason,
-              TypeBuilder::ErrorReason::ForwardSupertypeReference);
-  }
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
-TEST_F(NominalTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
-TEST_F(IsorecursiveTest, DirectSelfSupertype) { testDirectSelfSupertype(); }
-
-static void testIndirectSelfSupertype() {
+TEST_F(TypeTest, IndirectSelfSupertype) {
   // Type is indirectly a supertype of itself.
   TypeBuilder builder(2);
   builder.createRecGroup(0, 2);
@@ -204,21 +236,11 @@ static void testIndirectSelfSupertype() {
 
   const auto* error = result.getError();
   ASSERT_TRUE(error);
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::SelfSupertype);
-  } else if (getTypeSystem() == TypeSystem::Isorecursive) {
-    EXPECT_EQ(error->reason,
-              TypeBuilder::ErrorReason::ForwardSupertypeReference);
-  } else {
-    WASM_UNREACHABLE("unexpected type system");
-  }
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::ForwardSupertypeReference);
   EXPECT_EQ(error->index, 0u);
 }
 
-TEST_F(NominalTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
-TEST_F(IsorecursiveTest, IndirectSelfSupertype) { testIndirectSelfSupertype(); }
-
-static void testInvalidSupertype() {
+TEST_F(TypeTest, InvalidSupertype) {
   TypeBuilder builder(2);
   builder.createRecGroup(0, 2);
   builder[0] = Struct({Field(Type::i32, Immutable)});
@@ -234,10 +256,7 @@ static void testInvalidSupertype() {
   EXPECT_EQ(error->index, 1u);
 }
 
-TEST_F(NominalTest, InvalidSupertype) { testInvalidSupertype(); }
-TEST_F(IsorecursiveTest, InvalidSupertype) { testInvalidSupertype(); }
-
-TEST_F(IsorecursiveTest, ForwardReferencedChild) {
+TEST_F(TypeTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
   Type refA1 = builder.getTempRefType(builder[1], Nullable);
@@ -257,7 +276,7 @@ TEST_F(IsorecursiveTest, ForwardReferencedChild) {
   EXPECT_EQ(error->index, 1u);
 }
 
-TEST_F(IsorecursiveTest, RecGroupIndices) {
+TEST_F(TypeTest, RecGroupIndices) {
   TypeBuilder builder(5);
 
   builder.createRecGroup(0, 2);
@@ -284,7 +303,7 @@ TEST_F(IsorecursiveTest, RecGroupIndices) {
   EXPECT_EQ(built[4].getRecGroupIndex(), 2u);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeGroups) {
+TEST_F(TypeTest, CanonicalizeGroups) {
   // Trivial types in the same group are not equivalent.
   TypeBuilder builderA(2);
   builderA.createRecGroup(0, 2);
@@ -334,7 +353,7 @@ TEST_F(IsorecursiveTest, CanonicalizeGroups) {
   EXPECT_EQ(builtB2[0], builtB[0]);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeUses) {
+TEST_F(TypeTest, CanonicalizeUses) {
   TypeBuilder builder(8);
   builder[0] = makeStruct(builder, {});
   builder[1] = makeStruct(builder, {});
@@ -362,7 +381,7 @@ TEST_F(IsorecursiveTest, CanonicalizeUses) {
   EXPECT_NE(built[4], built[6]);
 }
 
-TEST_F(IsorecursiveTest, DISABLED_CanonicalizeSelfReferences) {
+TEST_F(TypeTest, CanonicalizeSelfReferences) {
   TypeBuilder builder(5);
   // Single self-reference
   builder[0] = makeStruct(builder, {0});
@@ -388,7 +407,7 @@ TEST_F(IsorecursiveTest, DISABLED_CanonicalizeSelfReferences) {
   EXPECT_NE(built[3], built[4]);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
+TEST_F(TypeTest, CanonicalizeSupertypes) {
   TypeBuilder builder(6);
   builder[0] = Struct{};
   builder[1] = Struct{};
@@ -415,7 +434,7 @@ TEST_F(IsorecursiveTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[4], built[5]);
 }
 
-TEST_F(IsorecursiveTest, HeapTypeConstructors) {
+TEST_F(TypeTest, HeapTypeConstructors) {
   HeapType sig(Signature(Type::i32, Type::i32));
   HeapType struct_(Struct({Field(Type(sig, Nullable), Mutable)}));
   HeapType array(Field(Type(struct_, Nullable), Mutable));
@@ -444,7 +463,7 @@ TEST_F(IsorecursiveTest, HeapTypeConstructors) {
   EXPECT_EQ(array, array2);
 }
 
-TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
+TEST_F(TypeTest, CanonicalizeTypesBeforeSubtyping) {
   TypeBuilder builder(6);
   // A rec group
   builder.createRecGroup(0, 2);
@@ -470,42 +489,13 @@ TEST_F(IsorecursiveTest, CanonicalizeTypesBeforeSubtyping) {
   EXPECT_TRUE(result);
 }
 
-static void testCanonicalizeBasicTypes() {
-  TypeBuilder builder(5);
-
-  Type anyref = builder.getTempRefType(builder[0], Nullable);
-  Type anyrefs = builder.getTempTupleType({anyref, anyref});
-
-  Type anyrefCanon = Type(HeapType::any, Nullable);
-
-  builder[0] = HeapType::any;
-  builder[1] = Struct({Field(anyref, Immutable)});
-  builder[2] = Struct({Field(anyrefCanon, Immutable)});
-  builder[3] = Signature(anyrefs, Type::none);
-  builder[4] = Signature({anyrefCanon, anyrefCanon}, Type::none);
-
-  auto result = builder.build();
-  ASSERT_TRUE(result);
-  auto built = *result;
-
-  EXPECT_EQ(built[1], built[2]);
-  EXPECT_EQ(built[3], built[4]);
-}
-
-TEST_F(EquirecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
-}
-TEST_F(IsorecursiveTest, CanonicalizeBasicTypes) {
-  testCanonicalizeBasicTypes();
-}
-
-TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
+TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType ext = HeapType::ext;
   HeapType func = HeapType::func;
   HeapType any = HeapType::any;
   HeapType eq = HeapType::eq;
   HeapType i31 = HeapType::i31;
-  HeapType data = HeapType::data;
+  HeapType struct_ = HeapType::struct_;
   HeapType array = HeapType::array;
   HeapType string = HeapType::string;
   HeapType stringview_wtf8 = HeapType::stringview_wtf8;
@@ -551,7 +541,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(ext, any, {});
   assertLUB(ext, eq, {});
   assertLUB(ext, i31, {});
-  assertLUB(ext, data, {});
+  assertLUB(ext, struct_, {});
   assertLUB(ext, array, {});
   assertLUB(ext, string, {});
   assertLUB(ext, stringview_wtf8, {});
@@ -568,7 +558,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(func, any, {});
   assertLUB(func, eq, {});
   assertLUB(func, i31, {});
-  assertLUB(func, data, {});
+  assertLUB(func, struct_, {});
   assertLUB(func, array, {});
   assertLUB(func, string, {});
   assertLUB(func, stringview_wtf8, {});
@@ -584,7 +574,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(any, any, any);
   assertLUB(any, eq, any);
   assertLUB(any, i31, any);
-  assertLUB(any, data, any);
+  assertLUB(any, struct_, any);
   assertLUB(any, array, any);
   assertLUB(any, string, any);
   assertLUB(any, stringview_wtf8, any);
@@ -599,7 +589,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
 
   assertLUB(eq, eq, eq);
   assertLUB(eq, i31, eq);
-  assertLUB(eq, data, eq);
+  assertLUB(eq, struct_, eq);
   assertLUB(eq, array, eq);
   assertLUB(eq, string, any);
   assertLUB(eq, stringview_wtf8, any);
@@ -613,7 +603,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(eq, defArray, eq);
 
   assertLUB(i31, i31, i31);
-  assertLUB(i31, data, eq);
+  assertLUB(i31, struct_, eq);
   assertLUB(i31, array, eq);
   assertLUB(i31, string, any);
   assertLUB(i31, stringview_wtf8, any);
@@ -626,18 +616,18 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(i31, defStruct, eq);
   assertLUB(i31, defArray, eq);
 
-  assertLUB(data, data, data);
-  assertLUB(data, array, data);
-  assertLUB(data, string, any);
-  assertLUB(data, stringview_wtf8, any);
-  assertLUB(data, stringview_wtf16, any);
-  assertLUB(data, stringview_iter, any);
-  assertLUB(data, none, data);
-  assertLUB(data, noext, {});
-  assertLUB(data, nofunc, {});
-  assertLUB(data, defFunc, {});
-  assertLUB(data, defStruct, data);
-  assertLUB(data, defArray, data);
+  assertLUB(struct_, struct_, struct_);
+  assertLUB(struct_, array, eq);
+  assertLUB(struct_, string, any);
+  assertLUB(struct_, stringview_wtf8, any);
+  assertLUB(struct_, stringview_wtf16, any);
+  assertLUB(struct_, stringview_iter, any);
+  assertLUB(struct_, none, struct_);
+  assertLUB(struct_, noext, {});
+  assertLUB(struct_, nofunc, {});
+  assertLUB(struct_, defFunc, {});
+  assertLUB(struct_, defStruct, struct_);
+  assertLUB(struct_, defArray, eq);
 
   assertLUB(array, array, array);
   assertLUB(array, string, any);
@@ -648,7 +638,7 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
   assertLUB(array, defFunc, {});
-  assertLUB(array, defStruct, data);
+  assertLUB(array, defStruct, eq);
   assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
@@ -712,13 +702,134 @@ TEST_F(IsorecursiveTest, TestBasicTypeRelations) {
   assertLUB(defFunc, defArray, {});
 
   assertLUB(defStruct, defStruct, defStruct);
-  assertLUB(defStruct, defArray, data);
+  assertLUB(defStruct, defArray, eq);
 
   assertLUB(defArray, defArray, defArray);
+
+  Type anyref = Type(any, Nullable);
+  Type eqref = Type(eq, Nullable);
+
+  {
+    // Nullable and non-nullable references.
+    Type nonNullable(any, NonNullable);
+    EXPECT_TRUE(Type::isSubType(nonNullable, anyref));
+    EXPECT_FALSE(Type::isSubType(anyref, nonNullable));
+    EXPECT_TRUE(Type::hasLeastUpperBound(anyref, nonNullable));
+    EXPECT_EQ(Type::getLeastUpperBound(anyref, nonNullable), anyref);
+  }
+
+  {
+    // Immutable array fields are covariant.
+    TypeBuilder builder(2);
+    builder[0] = Array(Field(anyref, Immutable));
+    builder[1] = Array(Field(eqref, Immutable));
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Depth subtyping
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(eqref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Width subtyping
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+
+  {
+    // Nested structs
+    TypeBuilder builder(4);
+    auto ref0 = builder.getTempRefType(builder[0], Nullable);
+    auto ref1 = builder.getTempRefType(builder[1], Nullable);
+    builder[0] = Struct({Field(anyref, Immutable)});
+    builder[1] = Struct({Field(eqref, Immutable)});
+    builder[2] = Struct({Field(ref0, Immutable)});
+    builder[3] = Struct({Field(ref1, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    builder[3].subTypeOf(builder[2]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[3], built[2]));
+  }
+
+  {
+    // Recursive structs
+    TypeBuilder builder(2);
+    auto ref0 = builder.getTempRefType(builder[0], Nullable);
+    auto ref1 = builder.getTempRefType(builder[1], Nullable);
+    builder[0] = Struct({Field(ref0, Immutable)});
+    builder[1] = Struct({Field(ref1, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    EXPECT_TRUE(HeapType::isSubType(built[1], built[0]));
+  }
+}
+
+TEST_F(TypeTest, TestSubtypeErrors) {
+  Type anyref = Type(HeapType::any, Nullable);
+  Type eqref = Type(HeapType::eq, Nullable);
+  Type funcref = Type(HeapType::func, Nullable);
+
+  {
+    // Incompatible signatures.
+    TypeBuilder builder(2);
+    builder[0] = Signature(Type::none, anyref);
+    builder[1] = Signature(anyref, Type::none);
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Signatures incompatible in tuple size.
+    TypeBuilder builder(2);
+    builder[0] = Signature(Type::none, {anyref, anyref});
+    builder[1] = Signature(Type::none, {anyref, anyref, anyref});
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Mutable array fields are invariant.
+    TypeBuilder builder(2);
+    builder[0] = Array(Field(anyref, Mutable));
+    builder[1] = Array(Field(eqref, Mutable));
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
+
+  {
+    // Incompatible struct prefixes
+    TypeBuilder builder(2);
+    builder[0] = Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
+    builder[1] = Struct({Field(funcref, Immutable), Field(anyref, Immutable)});
+    builder[1].subTypeOf(builder[0]);
+    EXPECT_FALSE(builder.build());
+  }
 }
 
 // Test SubTypes utility code.
-TEST_F(NominalTest, TestSubTypes) {
+TEST_F(TypeTest, TestSubTypes) {
   Type anyref = Type(HeapType::any, Nullable);
   Type eqref = Type(HeapType::eq, Nullable);
 
@@ -753,40 +864,7 @@ TEST_F(NominalTest, TestSubTypes) {
 }
 
 // Test reuse of a previously built type as supertype.
-TEST_F(NominalTest, TestExistingSuperType) {
-  // Build an initial type A
-  Type A;
-  {
-    TypeBuilder builder(1);
-    builder[0] = Struct();
-    auto result = builder.build();
-    ASSERT_TRUE(result);
-    auto built = *result;
-    A = Type(built[0], Nullable);
-  }
-
-  // Build a type B <: A using a new builder
-  Type B;
-  {
-    TypeBuilder builder(1);
-    builder[0] = Struct();
-    builder.setSubType(0, A.getHeapType());
-    auto result = builder.build();
-    ASSERT_TRUE(result);
-    auto built = *result;
-    B = Type(built[0], Nullable);
-  }
-
-  // Test that B <: A where A is the initial type A
-  auto superOfB = B.getHeapType().getSuperType();
-  ASSERT_TRUE(superOfB);
-  EXPECT_EQ(*superOfB, A.getHeapType());
-  EXPECT_NE(B.getHeapType(), A.getHeapType());
-}
-
-// Test reuse of a previously built type as supertype, where in isorecursive
-// mode canonicalization is performed.
-TEST_F(IsorecursiveTest, TestExistingSuperType) {
+TEST_F(TypeTest, TestExistingSuperType) {
   // Build an initial type A1
   Type A1;
   {
@@ -839,7 +917,7 @@ TEST_F(IsorecursiveTest, TestExistingSuperType) {
 }
 
 // Test .getMaxDepths() helper.
-TEST_F(NominalTest, TestMaxStructDepths) {
+TEST_F(TypeTest, TestMaxStructDepths) {
   /*
       A
       |
@@ -863,11 +941,12 @@ TEST_F(NominalTest, TestMaxStructDepths) {
 
   EXPECT_EQ(maxDepths[B], Index(0));
   EXPECT_EQ(maxDepths[A], Index(1));
-  EXPECT_EQ(maxDepths[HeapType::data], Index(2));
+  EXPECT_EQ(maxDepths[HeapType::struct_], Index(2));
   EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
+  EXPECT_EQ(maxDepths[HeapType::any], Index(4));
 }
 
-TEST_F(NominalTest, TestMaxArrayDepths) {
+TEST_F(TypeTest, TestMaxArrayDepths) {
   HeapType A;
   {
     TypeBuilder builder(1);
@@ -883,12 +962,12 @@ TEST_F(NominalTest, TestMaxArrayDepths) {
 
   EXPECT_EQ(maxDepths[A], Index(0));
   EXPECT_EQ(maxDepths[HeapType::array], Index(1));
-  EXPECT_EQ(maxDepths[HeapType::data], Index(2));
-  EXPECT_EQ(maxDepths[HeapType::eq], Index(3));
+  EXPECT_EQ(maxDepths[HeapType::eq], Index(2));
+  EXPECT_EQ(maxDepths[HeapType::any], Index(3));
 }
 
 // Test .depth() helper.
-TEST_F(NominalTest, TestDepth) {
+TEST_F(TypeTest, TestDepth) {
   HeapType A, B, C;
   {
     TypeBuilder builder(3);
@@ -904,14 +983,14 @@ TEST_F(NominalTest, TestDepth) {
     C = built[2];
   }
 
-  // any :> eq :> data :> array :> specific array types
+  // any :> eq :> array :> specific array types
   EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
   EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
-  EXPECT_EQ(HeapType(HeapType::data).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 3U);
+  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 2U);
+  EXPECT_EQ(HeapType(HeapType::struct_).getDepth(), 2U);
   EXPECT_EQ(A.getDepth(), 3U);
   EXPECT_EQ(B.getDepth(), 4U);
-  EXPECT_EQ(C.getDepth(), 4U);
+  EXPECT_EQ(C.getDepth(), 3U);
 
   // Signature types are subtypes of func.
   EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);
@@ -931,7 +1010,7 @@ TEST_F(NominalTest, TestDepth) {
 }
 
 // Test .iterSubTypes() helper.
-TEST_F(NominalTest, TestIterSubTypes) {
+TEST_F(TypeTest, TestIterSubTypes) {
   /*
         A
        / \

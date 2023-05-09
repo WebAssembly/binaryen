@@ -53,7 +53,7 @@ struct FieldInfoScanner
                       HeapType type,
                       Index index,
                       FieldInfo& info) {
-    info.noteUpdatableExpression(expr);
+    info.note(expr->type);
   }
 
   void
@@ -61,7 +61,7 @@ struct FieldInfoScanner
     // Default values do not affect what the heap type of a field can be turned
     // into. Note them, however, as they force us to keep the type nullable.
     if (fieldType.isRef()) {
-      info.noteNullDefault();
+      info.note(Type(fieldType.getHeapType().getBottom(), Nullable));
     }
   }
 
@@ -103,9 +103,9 @@ struct TypeRefining : public Pass {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "TypeRefining requires nominal/hybrid typing";
+
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "TypeRefining requires --closed-world";
     }
 
     // Find and analyze struct operations inside each function.
@@ -173,9 +173,9 @@ struct TypeRefining : public Pass {
       if (auto super = type.getSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
-          auto newSuperType = finalInfos[*super][i].getBestPossible();
+          auto newSuperType = finalInfos[*super][i].getLUB();
           auto& info = finalInfos[type][i];
-          auto newType = info.getBestPossible();
+          auto newType = info.getLUB();
           if (!Type::isSubType(newType, newSuperType)) {
             // To ensure we are a subtype of the super's field, simply copy that
             // value, which is more specific than us.
@@ -210,10 +210,9 @@ struct TypeRefining : public Pass {
       for (Index i = 0; i < fields.size(); i++) {
         auto oldType = fields[i].type;
         auto& lub = finalInfos[type][i];
-        auto newType = lub.getBestPossible();
+        auto newType = lub.getLUB();
         if (newType != oldType) {
           canOptimize = true;
-          lub.updateNulls();
         }
       }
 
@@ -256,9 +255,34 @@ struct TypeRefining : public Pass {
         }
 
         auto oldType = curr->ref->type.getHeapType();
-        auto newFieldType =
-          parent.finalInfos[oldType][curr->index].getBestPossible();
-        if (!Type::isSubType(newFieldType, curr->type)) {
+        auto newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
+        if (Type::isSubType(newFieldType, curr->type)) {
+          // This is the normal situation, where the new type is a refinement of
+          // the old type. Apply that type so that the type of the struct.get
+          // matches what is in the refined field. ReFinalize will later
+          // propagate this to parents.
+          //
+          // Note that ReFinalize will also apply the type of the field itself
+          // to a struct.get, so our doing it here in this pass is usually
+          // redundant. But ReFinalize also updates other types while doing so,
+          // which can cause a problem:
+          //
+          //  (struct.get $A
+          //    (block (result (ref null $A))
+          //      (ref.null any)
+          //    )
+          //  )
+          //
+          // Here ReFinalize will turn the block's result into a bottom type,
+          // which means it won't know a type for the struct.get at that point.
+          // Doing it in this pass avoids that issue, as we have all the
+          // necessary information. (ReFinalize will still get into the
+          // situation where it doesn't know how to update the type of the
+          // struct.get, but it will just leave the existing type - it assumes
+          // no update is needed - which will be correct, since we've updated it
+          // ourselves here, before.)
+          curr->type = newFieldType;
+        } else {
           // This instruction is invalid, so it must be the result of the
           // situation described above: we ignored the read during our
           // inference, and optimized accordingly, and so now we must remove it
@@ -298,7 +322,7 @@ struct TypeRefining : public Pass {
           if (!oldType.isRef()) {
             continue;
           }
-          auto newType = parent.finalInfos[oldStructType][i].getBestPossible();
+          auto newType = parent.finalInfos[oldStructType][i].getLUB();
           newFields[i].type = getTempType(newType);
         }
       }

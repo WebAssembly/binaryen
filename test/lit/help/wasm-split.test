@@ -66,10 +66,10 @@
 ;; CHECK-NEXT:                                        import placeholder functions into the
 ;; CHECK-NEXT:                                        primary module.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --asyncify                           [split] Transform the module to support
-;; CHECK-NEXT:                                        unwinding the stack from placeholder
-;; CHECK-NEXT:                                        functions and rewinding it once the
-;; CHECK-NEXT:                                        secondary module has been loaded.
+;; CHECK-NEXT:   --jspi                               [split] Transform the module to support
+;; CHECK-NEXT:                                        asynchronously loading the secondary
+;; CHECK-NEXT:                                        module before any placeholder functions
+;; CHECK-NEXT:                                        have been called.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
 ;; CHECK-NEXT:                                        to new export names created by module
@@ -228,16 +228,12 @@
 ;; CHECK-NEXT:                                        passes being run. Must be in the form
 ;; CHECK-NEXT:                                        KEY@VALUE
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --nominal                            Force all GC type definitions to be
-;; CHECK-NEXT:                                        parsed as nominal.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --structural                         Force all GC type definitions to be
-;; CHECK-NEXT:                                        parsed as structural (i.e.
-;; CHECK-NEXT:                                        equirecursive). This is the default.
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --hybrid                             Force all GC type definitions to be
-;; CHECK-NEXT:                                        parsed using the isorecursive hybrid type
-;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
+;; CHECK-NEXT:                                        not inspect or interact with GC and
+;; CHECK-NEXT:                                        function references, even if they are
+;; CHECK-NEXT:                                        passed out. The outside may hold on to
+;; CHECK-NEXT:                                        them and pass them back in, but not
+;; CHECK-NEXT:                                        inspect their contents or call them.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

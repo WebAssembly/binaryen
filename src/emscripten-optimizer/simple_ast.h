@@ -120,7 +120,7 @@ struct Value {
 
   Type type = Null;
 
-  typedef std::unordered_map<IString, Ref> ObjectStorage;
+  using ObjectStorage = std::unordered_map<IString, Ref>;
 
   // MSVC does not allow unrestricted unions:
   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2544.pdf
@@ -919,25 +919,17 @@ struct JSPrinter {
   void printName(Ref node) { emit(node->getCString()); }
 
   static char* numToString(double d, bool finalize = true) {
-    // If this number is NaN or infinite then things are a bit tricky. In JS we
-    // want to eventually use `NaN` and/or `Infinity`, but neither of those
-    // identifiers are valid in asm.js. Instead we have to explicitly import
-    // `NaN` and `Infinity` from the global environment, and those names are
-    // bound locally in an asm function as `nan` and `infinity`.
-    //
-    // TODO: the JS names of `NaN` and `Infinity` should be used once literal
-    // asm.js code isn't generated any more
     if (std::isnan(d)) {
       if (std::signbit(d)) {
-        return (char*)"-nan";
+        return (char*)"-NaN";
       } else {
-        return (char*)"nan";
+        return (char*)"NaN";
       }
     } else if (!std::isfinite(d)) {
       if (std::signbit(d)) {
-        return (char*)"-infinity";
+        return (char*)"-Infinity";
       } else {
-        return (char*)"infinity";
+        return (char*)"Infinity";
       }
     }
     bool neg = d < 0;
@@ -1193,10 +1185,10 @@ struct JSPrinter {
       ensure(1);                  // we temporarily append a 0
       char* curr = buffer + last; // ensure might invalidate
       buffer[used] = 0;
-      if (strstr(curr, "infinity")) {
+      if (strstr(curr, "Infinity")) {
         return;
       }
-      if (strstr(curr, "nan")) {
+      if (strstr(curr, "NaN")) {
         return;
       }
       if (strchr(curr, '.')) {

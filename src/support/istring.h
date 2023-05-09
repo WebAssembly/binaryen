@@ -67,7 +67,7 @@ public:
 
   char operator[](int x) const { return str[x]; }
 
-  operator bool() const { return str.data() != nullptr; }
+  explicit operator bool() const { return str.data() != nullptr; }
 
   // TODO: deprecate?
   bool is() const { return bool(*this); }

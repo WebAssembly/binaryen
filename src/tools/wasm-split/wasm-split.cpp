@@ -170,8 +170,8 @@ void getFunctionsToKeepAndSplit(Module& wasm,
   ProfileData profile = readProfile(profileFile);
   if (profile.hash != wasmHash) {
     Fatal() << "error: checksum in profile does not match module checksum. "
-            << "The split module must be the original module that was "
-            << "instrumented to generate the profile.";
+            << "The module to split must be the original, uninstrumented "
+               "module, not the module used to generate the profile.";
   }
 
   size_t i = 0;
@@ -248,6 +248,11 @@ void splitModule(const WasmSplitOptions& options) {
     }
   }
 
+  if (options.jspi) {
+    // The load secondary module function must be kept in the main module.
+    keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
+  }
+
   if (!options.quiet && keepFuncs.size() == 0) {
     std::cerr << "warning: not keeping any functions in the primary module\n";
   }
@@ -300,21 +305,12 @@ void splitModule(const WasmSplitOptions& options) {
     config.newExportPrefix = options.exportPrefix;
   }
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
+  config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
   auto& secondary = splitResults.secondary;
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
-
-  // Run asyncify on the primary module
-  if (options.asyncify) {
-    PassOptions passOptions;
-    passOptions.optimizeLevel = 1;
-    passOptions.arguments.insert({"asyncify-ignore-imports", ""});
-    PassRunner runner(&wasm, passOptions);
-    runner.add("asyncify");
-    runner.run();
-  }
 
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.primaryOutput + ".symbols");

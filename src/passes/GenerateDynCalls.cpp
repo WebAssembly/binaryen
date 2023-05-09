@@ -118,6 +118,16 @@ static void exportFunction(Module& wasm, Name name, bool must_export) {
 
 void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
   Signature sig = funcType.getSignature();
+
+  if (sig.results.isTuple()) {
+    // Emscripten output is assumed to be MVP, and not to have multiple return
+    // values. In particular, signatures in Emscripten all look like "abcd"
+    // where "a" is the single return value, and "bcd" are the (in this case
+    // three) parameters.
+    Fatal() << "GenerateDynCalls: Cannot operate on multiple return values:"
+            << sig.results;
+  }
+
   if (onlyI64 && !hasI64(sig)) {
     return;
   }

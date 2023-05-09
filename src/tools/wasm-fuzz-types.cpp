@@ -47,12 +47,13 @@ struct Fuzzer {
   // Generate types and run checkers on them.
   void run(uint64_t seed);
 
-  void printTypes();
+  static void printTypes(const std::vector<HeapType>&);
 
   // Checkers for various properties.
   void checkSubtypes() const;
   void checkLUBs() const;
   void checkCanonicalization();
+  void checkInhabitable();
 };
 
 void Fuzzer::run(uint64_t seed) {
@@ -80,15 +81,16 @@ void Fuzzer::run(uint64_t seed) {
   subtypeIndices = std::move(generator.subtypeIndices);
 
   if (verbose) {
-    printTypes();
+    printTypes(types);
   }
 
   checkSubtypes();
   checkLUBs();
   checkCanonicalization();
+  checkInhabitable();
 }
 
-void Fuzzer::printTypes() {
+void Fuzzer::printTypes(const std::vector<HeapType>& types) {
   std::cout << "Built " << types.size() << " types:\n";
   struct FatalTypeNameGenerator
     : TypeNameGeneratorBase<FatalTypeNameGenerator> {
@@ -102,7 +104,7 @@ void Fuzzer::printTypes() {
   auto inRecGroup = [&]() { return currRecGroup && currRecGroup->size() > 1; };
   for (size_t i = 0; i < types.size(); ++i) {
     auto type = types[i];
-    if (!type.isBasic() && type.getRecGroup() != currRecGroup) {
+    if (type.getRecGroup() != currRecGroup) {
       if (inRecGroup()) {
         std::cout << ")\n";
       }
@@ -114,18 +116,13 @@ void Fuzzer::printTypes() {
     if (inRecGroup()) {
       std::cout << ' ';
     }
-    std::cout << "(type $" << i << ' ';
-    if (type.isBasic()) {
-      std::cout << print(type) << ")\n";
-      continue;
-    }
     auto [it, inserted] = seen.insert({type, i});
     if (inserted) {
       std::cout << print(type);
     } else {
-      std::cout << "identical to $" << it->second;
+      std::cout << "(type $" << i << " identical to $" << it->second << ")";
     }
-    std::cout << ")\n";
+    std::cout << "\n";
   }
   if (inRecGroup()) {
     std::cout << ")\n";
@@ -227,11 +224,6 @@ void Fuzzer::checkCanonicalization() {
   // Check that structural canonicalization is working correctly by building the
   // types again, choosing randomly between equivalent possible children for
   // each definition from both the new and old sets of built types.
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    // No canonicalization to check.
-    return;
-  }
-
   TypeBuilder builder(types.size());
 
   // Helper for creating new definitions of existing types, randomly choosing
@@ -273,43 +265,30 @@ void Fuzzer::checkCanonicalization() {
       // Set up recursion groups and record group ends to ensure we only select
       // valid children.
       recGroupEnds.reserve(builder.size());
-      if (getTypeSystem() != TypeSystem::Isorecursive) {
-        // No rec groups.
-        for (size_t i = 0; i < builder.size(); ++i) {
-          recGroupEnds.push_back(builder.size());
+      // Set up recursion groups
+      std::optional<RecGroup> currGroup;
+      size_t currGroupStart = 0;
+      auto finishGroup = [&](Index end) {
+        builder.createRecGroup(currGroupStart, end - currGroupStart);
+        for (Index i = currGroupStart; i < end; ++i) {
+          recGroupEnds.push_back(end);
         }
-      } else {
-        // Set up recursion groups
-        std::optional<RecGroup> currGroup;
-        size_t currGroupStart = 0;
-        auto finishGroup = [&](Index end) {
-          builder.createRecGroup(currGroupStart, end - currGroupStart);
-          for (Index i = currGroupStart; i < end; ++i) {
-            recGroupEnds.push_back(end);
-          }
-          currGroupStart = end;
-        };
-        for (Index i = 0; i < types.size(); ++i) {
-          auto type = types[i];
-          if (type.isBasic()) {
-            continue;
-          }
-          auto newGroup = type.getRecGroup();
-          if (!currGroup || newGroup != currGroup ||
-              type == types[currGroupStart]) {
-            finishGroup(i);
-            currGroup = newGroup;
-          }
+        currGroupStart = end;
+      };
+      for (Index i = 0; i < types.size(); ++i) {
+        auto newGroup = types[i].getRecGroup();
+        if (!currGroup || newGroup != currGroup ||
+            types[i] == types[currGroupStart]) {
+          finishGroup(i);
+          currGroup = newGroup;
         }
-        finishGroup(builder.size());
       }
+      finishGroup(builder.size());
 
       // Copy the original types
       for (; index < types.size(); ++index) {
         auto type = types[index];
-        if (type.isBasic()) {
-          builder[index] = type.getBasic();
-        } else if (type.isSignature()) {
+        if (type.isSignature()) {
           builder[index] = getSignature(type.getSignature());
         } else if (type.isStruct()) {
           builder[index] = getStruct(type.getStruct());
@@ -344,28 +323,27 @@ void Fuzzer::checkCanonicalization() {
     CopiedHeapType getChildHeapType(HeapType old) {
       auto it = typeIndices.find(old);
       if (it == typeIndices.end()) {
-        // This is a basic heap type that wasn't explicitly built.
+        // This is a basic heap type and wasn't explicitly built.
         assert(old.isBasic());
         return {OldHeapType{old}};
       }
-      if (!old.isBasic() && getTypeSystem() == TypeSystem::Isorecursive) {
-        // Check whether this child heap type is supposed to be a self-reference
-        // into the recursion group we are defining. If it is, we must use the
-        // corresponding type in the new recursion group, since anything else
-        // would break isorecursive equivalence.
-        auto group = old.getRecGroup();
-        if (group == types[index].getRecGroup()) {
-          // This is a self-reference, so find the correct index, which is the
-          // last matching index less than the end of this rec group.
-          std::optional<Index> i;
-          for (auto candidate : it->second) {
-            if (candidate >= recGroupEnds[index]) {
-              break;
-            }
-            i = candidate;
+      assert(!old.isBasic());
+      // Check whether this child heap type is supposed to be a self-reference
+      // into the recursion group we are defining. If it is, we must use the
+      // corresponding type in the new recursion group, since anything else
+      // would break isorecursive equivalence.
+      auto group = old.getRecGroup();
+      if (group == types[index].getRecGroup()) {
+        // This is a self-reference, so find the correct index, which is the
+        // last matching index less than the end of this rec group.
+        std::optional<Index> i;
+        for (auto candidate : it->second) {
+          if (candidate >= recGroupEnds[index]) {
+            break;
           }
-          return {NewHeapType{builder[*i]}};
+          i = candidate;
         }
+        return {NewHeapType{builder[*i]}};
       }
       // Choose whether to use an old type or a new type
       if (rand.oneIn(2)) {
@@ -377,12 +355,7 @@ void Fuzzer::checkCanonicalization() {
             candidateIndices.push_back(i);
           }
         }
-        if (candidateIndices.empty()) {
-          // This is a basic type that was only ever created after the current
-          // rec group, so we can't refer to a new copy of it after all.
-          assert(old.isBasic());
-          return {OldHeapType{old}};
-        }
+        assert(!candidateIndices.empty());
         Index i = rand.pick(candidateIndices);
         return {NewHeapType{builder[i]}};
       } else {
@@ -489,6 +462,47 @@ void Fuzzer::checkCanonicalization() {
   }
 }
 
+void Fuzzer::checkInhabitable() {
+  std::vector<HeapType> inhabitable = HeapTypeGenerator::makeInhabitable(types);
+  if (verbose) {
+    std::cout << "\nInhabitable types:\n\n";
+    printTypes(inhabitable);
+  }
+
+  // Check whether any of the original types are uninhabitable.
+  bool haveUninhabitable =
+    HeapTypeGenerator::getInhabitable(types).size() != types.size();
+  if (haveUninhabitable) {
+    // Verify that the transformed types are inhabitable.
+    auto verifiedInhabitable = HeapTypeGenerator::getInhabitable(inhabitable);
+    if (verifiedInhabitable.size() != inhabitable.size()) {
+      IndexedTypeNameGenerator print(inhabitable);
+      for (size_t i = 0; i < inhabitable.size(); ++i) {
+        if (i > verifiedInhabitable.size() ||
+            inhabitable[i] != verifiedInhabitable[i]) {
+          Fatal() << "Found uninhabitable type: " << print(inhabitable[i]);
+        }
+      }
+    }
+    // TODO: We could also check that the transformed types are the same as the
+    // original types up to nullability.
+  } else {
+    // Verify the produced inhabitable types are the same as the original types
+    // (which also implies that they are indeed inhabitable).
+    if (types.size() != inhabitable.size()) {
+      Fatal() << "Number of inhabitable types does not match number of "
+                 "original types";
+    }
+    for (size_t i = 0; i < types.size(); ++i) {
+      if (types[i] != inhabitable[i]) {
+        IndexedTypeNameGenerator print(types);
+        Fatal() << "makeInhabitable incorrectly changed type "
+                << print(types[i]);
+      }
+    }
+  }
+}
+
 } // namespace wasm
 
 int main(int argc, const char* argv[]) {
@@ -517,34 +531,7 @@ int main(int argc, const char* argv[]) {
               Options::Arguments::Zero,
               [&](Options*, const std::string& arg) { verbose = true; });
 
-  TypeSystem system = TypeSystem::Nominal;
-  options.add(
-    "--nominal",
-    "",
-    "Use the nominal type system (default)",
-    WasmFuzzTypesOption,
-    Options::Arguments::Zero,
-    [&](Options*, const std::string& arg) { system = TypeSystem::Nominal; });
-  options.add("--structural",
-              "",
-              "Use the equirecursive type system",
-              WasmFuzzTypesOption,
-              Options::Arguments::Zero,
-              [&](Options*, const std::string& arg) {
-                system = TypeSystem::Equirecursive;
-              });
-  options.add("--hybrid",
-              "",
-              "Use the isorecursive hybrid type system",
-              WasmFuzzTypesOption,
-              Options::Arguments::Zero,
-              [&](Options*, const std::string& arg) {
-                system = TypeSystem::Isorecursive;
-              });
-
   options.parse(argc, argv);
-
-  setTypeSystem(system);
 
   Fuzzer fuzzer{verbose};
   if (seed) {

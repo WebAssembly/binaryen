@@ -91,8 +91,6 @@ inline std::string generateJSWrapper(Module& wasm) {
       continue; // something exported other than a function
     }
     auto* func = wasm.getFunction(exp->value);
-    ret += "if (instance.exports.hangLimitInitializer) "
-           "instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
     ret += std::string("  console.log('[fuzz-exec] calling ") +
            exp->name.toString() + "');\n";

@@ -433,14 +433,10 @@
     (drop (call $import2))
   )
   ;; CHECK:      (func $calls-nothing
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 17)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-nothing

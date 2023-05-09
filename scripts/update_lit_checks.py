@@ -40,6 +40,11 @@ MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 ALL_ITEMS = '|'.join(['type', 'import', 'global', 'memory', 'data', 'table',
                       'elem', 'tag', 'export', 'start', 'func'])
 ITEM_NAME = r'\$?[^\s()]*|"[^\s()]*"'
+# FIXME: This does not handle nested string contents. For example,
+#  (data (i32.const 10) "hello(")
+# will look unterminated, due to the '(' inside the string. As a result, the
+# code below will consider more elements after the |data| to be part of it,
+# until it sees enough closing ')' symbols.
 ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM_NAME + ').*$',
                      re.MULTILINE)
 
@@ -150,6 +155,12 @@ def parse_output_fuzz_exec(text):
             # in the input.
             name = f'"{func.group("name")}"'
             items.append((('func', name), [line]))
+        elif line.startswith('[host limit'):
+            # Skip mentions of host limits that we hit. This can happen even
+            # before we reach the execution of a function (if it happens during
+            # instantiation of the module), in which case |items| may be empty,
+            # and we'd error on the code below.
+            pass
         elif line:
             assert items, 'unexpected non-invocation line'
             items[-1][1].append(line)

@@ -1283,7 +1283,7 @@ console.log("# MemoryInit");
   const module = new binaryen.Module();
   module.setMemory(1, 1, null);
 
-  var segment = 1;
+  var segment = "1";
   var dest = module.i32.const(2);
   var offset = module.i32.const(3);
   var size = module.i32.const(4);
@@ -1296,8 +1296,8 @@ console.log("# MemoryInit");
   assert(theMemoryInit.size === size);
   assert(theMemoryInit.type === binaryen.none);
 
-  theMemoryInit.segment = segment = 5;
-  assert(theMemoryInit.segment === 5);
+  theMemoryInit.segment = segment = "5";
+  assert(theMemoryInit.segment === "5");
   theMemoryInit.dest = dest = module.i32.const(6);
   assert(theMemoryInit.dest === dest);
   theMemoryInit.offset = offset = module.i32.const(7);
@@ -1312,7 +1312,7 @@ console.log("# MemoryInit");
   assert(
     theMemoryInit.toText()
     ==
-    "(memory.init $0 5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
+    "(memory.init $0 $5\n (i32.const 6)\n (i32.const 7)\n (i32.const 8)\n)\n"
   );
 
   module.dispose();
@@ -1322,15 +1322,15 @@ console.log("# DataDrop");
 (function testDataDrop() {
   const module = new binaryen.Module();
 
-  var segment = 1;
+  var segment = "1";
   const theDataDrop = binaryen.DataDrop(module.data.drop(segment));
   assert(theDataDrop instanceof binaryen.DataDrop);
   assert(theDataDrop instanceof binaryen.Expression);
   assert(theDataDrop.segment === segment);
   assert(theDataDrop.type === binaryen.none);
 
-  theDataDrop.segment = segment = 2;
-  assert(theDataDrop.segment === 2);
+  theDataDrop.segment = segment = "2";
+  assert(theDataDrop.segment === "2");
   theDataDrop.type = binaryen.f64;
   theDataDrop.finalize();
   assert(theDataDrop.type === binaryen.none);
@@ -1339,7 +1339,7 @@ console.log("# DataDrop");
   assert(
     theDataDrop.toText()
     ==
-    "(data.drop 2)\n"
+    "(data.drop $2)\n"
   );
 
   module.dispose();
@@ -1417,49 +1417,28 @@ console.log("# MemoryFill");
   module.dispose();
 })();
 
-console.log("# RefIs");
-(function testRefIs() {
+console.log("# RefIsNull");
+(function testRefIsNull() {
   const module = new binaryen.Module();
 
-  var op = binaryen.Operations.RefIsNull;
   var value = module.local.get(1, binaryen.externref);
-  const theRefIs = binaryen.RefIs(module.ref.is_null(value));
-  assert(theRefIs instanceof binaryen.RefIs);
-  assert(theRefIs instanceof binaryen.Expression);
-  assert(theRefIs.op === op);
-  assert(theRefIs.value === value);
-  assert(theRefIs.type === binaryen.i32);
+  const theRefIsNull = binaryen.RefIsNull(module.ref.is_null(value));
+  assert(theRefIsNull instanceof binaryen.RefIsNull);
+  assert(theRefIsNull instanceof binaryen.Expression);
+  assert(theRefIsNull.value === value);
+  assert(theRefIsNull.type === binaryen.i32);
 
-  theRefIs.op = op = binaryen.Operations.RefIsFunc;
-  assert(theRefIs.op === op);
-  theRefIs.op = op = binaryen.Operations.RefIsNull;
-  theRefIs.value = value = module.local.get(2, binaryen.externref);
-  assert(theRefIs.value === value);
-  theRefIs.type = binaryen.f64;
-  theRefIs.finalize();
-  assert(theRefIs.type === binaryen.i32);
+  theRefIsNull.value = value = module.local.get(2, binaryen.externref);
+  assert(theRefIsNull.value === value);
+  theRefIsNull.type = binaryen.f64;
+  theRefIsNull.finalize();
+  assert(theRefIsNull.type === binaryen.i32);
 
-  console.log(theRefIs.toText());
+  console.log(theRefIsNull.toText());
   assert(
-    theRefIs.toText()
+    theRefIsNull.toText()
     ==
     "(ref.is_null\n (local.get $2)\n)\n"
-  );
-
-  assert(
-    binaryen.RefIs(module.ref.is_func(value)).toText()
-    ==
-    "(ref.is_func\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefIs(module.ref.is_data(value)).toText()
-    ==
-    "(ref.is_data\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefIs(module.ref.is_i31(value)).toText()
-    ==
-    "(ref.is_i31\n (local.get $2)\n)\n"
   );
 
   module.dispose();
@@ -1471,6 +1450,7 @@ console.log("# RefAs");
 
   var op = binaryen.Operations.RefAsNonNull;
   var value = module.local.get(1, binaryen.anyref);
+  var externref = module.local.get(3, binaryen.externref);
   const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
   assert(theRefAs instanceof binaryen.RefAs);
   assert(theRefAs instanceof binaryen.Expression);
@@ -1478,9 +1458,9 @@ console.log("# RefAs");
   assert(theRefAs.value === value);
   assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
 
-  theRefAs.op = op = binaryen.Operations.RefAsFunc;
+  theRefAs.op = op = binaryen.Operations.RefAsExternExternalize;
   assert(theRefAs.op === op);
-  theRefAs.op = op = binaryen.Operations.RefAsNull;
+  theRefAs.op = op = binaryen.Operations.RefAsNonNull;
   theRefAs.value = value = module.local.get(2, binaryen.anyref);
   assert(theRefAs.value === value);
   theRefAs.type = binaryen.f64;
@@ -1494,21 +1474,7 @@ console.log("# RefAs");
     "(ref.as_non_null\n (local.get $2)\n)\n"
   );
 
-  assert(
-    binaryen.RefAs(module.ref.as_func(value)).toText()
-    ==
-    "(ref.as_func\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefAs(module.ref.as_data(value)).toText()
-    ==
-    "(ref.as_data\n (local.get $2)\n)\n"
-  );
-  assert(
-    binaryen.RefAs(module.ref.as_i31(value)).toText()
-    ==
-    "(ref.as_i31\n (local.get $2)\n)\n"
-  );
+  // TODO: extern.externalize and extern.internalize
 
   module.dispose();
 })();

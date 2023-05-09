@@ -8,7 +8,6 @@
 ;; testcases.
 
 (module
-  ;; CHECK:      (type ${} (struct ))
   (type ${} (struct_subtype data))
 
   (type ${i32} (struct_subtype (field i32) data))
@@ -22,7 +21,7 @@
 
   ;; Refinalization can find a more specific type, where the declared type was
   ;; not the optimal LUB.
-  ;; CHECK:      (func $refinalize (param $x i32)
+  ;; CHECK:      (func $refinalize (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref i31))
   ;; CHECK-NEXT:    (local.get $x)
@@ -68,7 +67,7 @@
   ;; A simple case where a local has a single assignment that we can use as a
   ;; more specific type. A similar thing with a parameter, however, is not a
   ;; thing we can optimize. Also, ignore a local with zero assignments.
-  ;; CHECK:      (func $simple-local-but-not-param (param $x funcref)
+  ;; CHECK:      (func $simple-local-but-not-param (type $funcref_=>_none) (param $x funcref)
   ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local $unused funcref)
   ;; CHECK-NEXT:  (local.set $x
@@ -89,10 +88,10 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments (param $data dataref)
+  ;; CHECK:      (func $locals-with-multiple-assignments (type $structref_=>_none) (param $struct structref)
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (local $y (ref i31))
-  ;; CHECK-NEXT:  (local $z dataref)
+  ;; CHECK-NEXT:  (local $z structref)
   ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i31.new
@@ -100,7 +99,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (i31.new
@@ -113,10 +112,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $z
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $w
   ;; CHECK-NEXT:   (ref.func $i32)
@@ -125,7 +124,7 @@
   ;; CHECK-NEXT:   (ref.func $i64)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $locals-with-multiple-assignments (param $data (ref null data))
+  (func $locals-with-multiple-assignments (param $struct (ref null struct))
     (local $x anyref)
     (local $y anyref)
     (local $z anyref)
@@ -135,7 +134,7 @@
       (i31.new (i32.const 0))
     )
     (local.set $x
-      (local.get $data)
+      (local.get $struct)
     )
     ;; y and z are assigned the same more specific type twice
     (local.set $y
@@ -145,10 +144,10 @@
       (i31.new (i32.const 1))
     )
     (local.set $z
-      (local.get $data)
+      (local.get $struct)
     )
     (local.set $z
-      (local.get $data)
+      (local.get $struct)
     )
     ;; w is assigned two different types *without* a new LUB heap type possible,
     ;; as it already had the optimal LUB heap type (but it can become non-
@@ -163,7 +162,7 @@
 
   ;; In some cases multiple iterations are necessary, as one inferred new type
   ;; applies to a get which then allows another inference.
-  ;; CHECK:      (func $multiple-iterations
+  ;; CHECK:      (func $multiple-iterations (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local $z (ref $none_=>_i32))
@@ -193,7 +192,7 @@
   )
 
   ;; Sometimes a refinalize is necessary in between the iterations.
-  ;; CHECK:      (func $multiple-iterations-refinalize (param $i i32)
+  ;; CHECK:      (func $multiple-iterations-refinalize (type $i32_=>_none) (param $i i32)
   ;; CHECK-NEXT:  (local $x (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local $y (ref $none_=>_i64))
   ;; CHECK-NEXT:  (local $z (ref func))
@@ -230,7 +229,7 @@
     )
   )
 
-  ;; CHECK:      (func $nondefaultable
+  ;; CHECK:      (func $nondefaultable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (funcref funcref))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (tuple.make
@@ -251,7 +250,7 @@
     )
   )
 
-  ;; CHECK:      (func $uses-default (param $i i32)
+  ;; CHECK:      (func $uses-default (type $i32_=>_none) (param $i i32)
   ;; CHECK-NEXT:  (local $x (ref null $i32_=>_none))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
@@ -277,7 +276,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachables (result funcref)
+  ;; CHECK:      (func $unreachables (type $none_=>_funcref) (result funcref)
   ;; CHECK-NEXT:  (local $temp (ref $none_=>_funcref))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $unreachables)
@@ -312,7 +311,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $incompatible-sets (result i32)
+  ;; CHECK:      (func $incompatible-sets (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $incompatible-sets)
@@ -361,50 +360,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $update-nulls
-  ;; CHECK-NEXT:  (local $x (ref null ${}))
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (struct.new_default ${})
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $update-nulls
-    (local $x anyref)
-    (local.set $x (ref.null any))
-    (local.set $x (ref.null eq))
-    ;; All the nulls can be changed into other nulls here, for the new LUB,
-    ;; which will be ${}
-    (local.set $x (struct.new ${}))
-    (local.set $x (ref.null data))
-    ;; Note that this func null is even of a type that is incompatible with the
-    ;; new lub (array vs struct). Still, we can just update it along with the
-    ;; others.
-    (local.set $x (ref.null $array))
-    ;; This null is equal to the LUB we'll find, and will not change.
-    (local.set $x (ref.null ${}))
-    ;; This null is more specific than the LUB we'll find, and will not change,
-    ;; as there is no point to making something less specific in type.
-    (local.set $x (ref.null ${i32}))
-  )
-
-  ;; CHECK:      (func $become-non-nullable
+  ;; CHECK:      (func $become-non-nullable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref $none_=>_none))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $become-non-nullable)
@@ -423,7 +379,7 @@
     )
   )
 
-  ;; CHECK:      (func $already-non-nullable
+  ;; CHECK:      (func $already-non-nullable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref $none_=>_none))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $already-non-nullable)
@@ -442,7 +398,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-become-non-nullable
+  ;; CHECK:      (func $cannot-become-non-nullable (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref null $none_=>_none))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
@@ -470,7 +426,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-become-non-nullable-block
+  ;; CHECK:      (func $cannot-become-non-nullable-block (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref null $none_=>_none))
   ;; CHECK-NEXT:  (block $name
   ;; CHECK-NEXT:   (br_if $name
@@ -501,7 +457,7 @@
     )
   )
 
-  ;; CHECK:      (func $become-non-nullable-block-unnamed
+  ;; CHECK:      (func $become-non-nullable-block-unnamed (type $none_=>_none)
   ;; CHECK-NEXT:  (local $x (ref $none_=>_none))
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (local.set $x

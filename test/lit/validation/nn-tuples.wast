@@ -6,7 +6,7 @@
 ;; Test for non-nullable types in tuples
 
 (module
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $foo (type $none_=>_none)
   ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )

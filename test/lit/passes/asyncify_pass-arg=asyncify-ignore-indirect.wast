@@ -26,7 +26,7 @@
 
   ;; CHECK:      (table $0 2 2 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $calls-import2-drop $calls-import2-drop)
+  ;; CHECK:      (elem $0 (i32.const 0) $calls-import2-drop $calls-import2-drop)
 
   ;; CHECK:      (export "asyncify_start_unwind" (func $asyncify_start_unwind))
 
@@ -485,12 +485,8 @@
     )
   )
   ;; CHECK:      (func $calls-indirect (param $x i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_indirect (type $f)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-indirect (param $x i32)

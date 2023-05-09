@@ -35,7 +35,7 @@
 
 namespace wasm {
 
-typedef std::unordered_map<Name, std::atomic<Index>> NameCountMap;
+using NameCountMap = std::unordered_map<Name, std::atomic<Index>>;
 
 struct CallCountScanner : public WalkerPass<PostWalker<CallCountScanner>> {
   bool isFunctionParallel() override { return true; }
@@ -80,6 +80,8 @@ struct ReorderFunctions : public Pass {
     }
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name& name) { counts[name]++; });
+    // TODO: count all RefFunc as well
+    // TODO: count the declaration section as well, which adds another mention
     // sort
     std::sort(module->functions.begin(),
               module->functions.end(),

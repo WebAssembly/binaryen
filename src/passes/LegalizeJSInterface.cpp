@@ -62,13 +62,9 @@ struct LegalizeJSInterface : public Pass {
     setTempRet0 = nullptr;
     getTempRet0 = nullptr;
     auto exportOriginals =
-      !getPassOptions()
-         .getArgumentOrDefault("legalize-js-interface-export-originals", "")
-         .empty();
+      getPassOptions().hasArgument("legalize-js-interface-export-originals");
     exportedHelpers =
-      !getPassOptions()
-         .getArgumentOrDefault("legalize-js-interface-exported-helpers", "")
-         .empty();
+      getPassOptions().hasArgument("legalize-js-interface-exported-helpers");
     // for each illegal export, we must export a legalized stub instead
     std::vector<std::unique_ptr<Export>> newExports;
     for (auto& ex : module->exports) {
@@ -291,11 +287,11 @@ private:
   // JS import
   Name makeLegalStubForCalledImport(Function* im, Module* module) {
     Builder builder(*module);
-    auto legalIm = make_unique<Function>();
+    auto legalIm = std::make_unique<Function>();
     legalIm->name = Name(std::string("legalimport$") + im->name.toString());
     legalIm->module = im->module;
     legalIm->base = im->base;
-    auto stub = make_unique<Function>();
+    auto stub = std::make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.toString());
     stub->type = im->type;
 

@@ -1094,53 +1094,55 @@ TEST(LexerTest, LexInfinity) {
 }
 
 TEST(LexerTest, LexNan) {
+  const double posNan = std::copysign(NAN, 1.0);
+  const double negNan = std::copysign(NAN, -1.0);
   {
     Lexer lexer("nan"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"nan"sv, FloatTok{{}, NAN}};
+    Token expected{"nan"sv, FloatTok{{}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+nan"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"+nan"sv, FloatTok{{}, NAN}};
+    Token expected{"+nan"sv, FloatTok{{}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-nan"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"-nan"sv, FloatTok{{}, -NAN}};
+    Token expected{"-nan"sv, FloatTok{{}, negNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0x01"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"nan:0x01"sv, FloatTok{{1}, NAN}};
+    Token expected{"nan:0x01"sv, FloatTok{{1}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("+nan:0x01"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"+nan:0x01"sv, FloatTok{{1}, NAN}};
+    Token expected{"+nan:0x01"sv, FloatTok{{1}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("-nan:0x01"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"-nan:0x01"sv, FloatTok{{1}, -NAN}};
+    Token expected{"-nan:0x01"sv, FloatTok{{1}, negNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0x1234"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"nan:0x1234"sv, FloatTok{{0x1234}, NAN}};
+    Token expected{"nan:0x1234"sv, FloatTok{{0x1234}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0xf_ffff_ffff_ffff"sv);
     ASSERT_FALSE(lexer.empty());
     Token expected{"nan:0xf_ffff_ffff_ffff"sv,
-                   FloatTok{{0xfffffffffffff}, NAN}};
+                   FloatTok{{0xfffffffffffff}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
@@ -1182,14 +1184,14 @@ TEST(LexerTest, LexNan) {
   {
     Lexer lexer("nan:0x0"sv);
     ASSERT_FALSE(lexer.empty());
-    Token expected{"nan:0x0"sv, FloatTok{{0}, NAN}};
+    Token expected{"nan:0x0"sv, FloatTok{{0}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {
     Lexer lexer("nan:0x10_0000_0000_0000"sv);
     ASSERT_FALSE(lexer.empty());
     Token expected{"nan:0x10_0000_0000_0000"sv,
-                   FloatTok{{0x10000000000000}, NAN}};
+                   FloatTok{{0x10000000000000}, posNan}};
     EXPECT_EQ(*lexer, expected);
   }
   {

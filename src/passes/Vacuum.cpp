@@ -19,10 +19,10 @@
 //
 
 #include <ir/block-utils.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
-#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -35,19 +35,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   std::unique_ptr<Pass> create() override { return std::make_unique<Vacuum>(); }
 
-  TypeUpdater typeUpdater;
-
-  Expression* replaceCurrent(Expression* expression) {
-    auto* old = getCurrent();
-    super::replaceCurrent(expression);
-    // also update the type updater
-    typeUpdater.noteReplacement(old, expression);
-    return expression;
-  }
-
   void doWalkFunction(Function* func) {
-    typeUpdater.walk(func->body);
     walk(func->body);
+    ReFinalize().walkFunctionInModule(func, getModule());
   }
 
   // Returns nullptr if curr is dead, curr if it must stay as is, or one of its
@@ -124,9 +114,17 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         curr = childrenWithEffects[0];
         continue;
       }
-      // TODO: with multiple children with side effects, we can perhaps figure
-      // out something clever, like a block with drops, or an i32.add for just
-      // two, etc.
+      // The result is not used, but multiple children have side effects, so we
+      // need to keep them around. We must also return something of the proper
+      // type - if we can do that, replace everything with the children + a
+      // dummy value of the proper type.
+      if (curr->type.isDefaultable()) {
+        auto* dummy = Builder(*getModule())
+                        .makeConstantExpression(Literal::makeZeros(curr->type));
+        return getDroppedChildrenAndAppend(
+          curr, *getModule(), getPassOptions(), dummy);
+      }
+      // Otherwise, give up.
       return curr;
     }
   }
@@ -210,11 +208,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
       if (!optimized) {
-        typeUpdater.noteRecursiveRemoval(child);
         skip++;
       } else {
         if (optimized != child) {
-          typeUpdater.noteReplacement(child, optimized);
           list[z] = optimized;
         }
         if (skip > 0) {
@@ -223,14 +219,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
         // if this is unreachable, the rest is dead code
         if (list[z - skip]->type == Type::unreachable && z < size - 1) {
-          for (Index i = z - skip + 1; i < list.size(); i++) {
-            auto* remove = list[i];
-            if (remove) {
-              typeUpdater.noteRecursiveRemoval(remove);
-            }
-          }
           list.resize(z - skip + 1);
-          typeUpdater.maybeUpdateTypeToUnreachable(curr);
           skip = 0; // nothing more to do on the list
           break;
         }
@@ -238,7 +227,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     if (skip > 0) {
       list.resize(size - skip);
-      typeUpdater.maybeUpdateTypeToUnreachable(curr);
     }
     // the block may now be a trivial one that we can get rid of and just leave
     // its contents
@@ -252,15 +240,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       Expression* child;
       if (value->value.getInteger()) {
         child = curr->ifTrue;
-        if (curr->ifFalse) {
-          typeUpdater.noteRecursiveRemoval(curr->ifFalse);
-        }
       } else {
         if (curr->ifFalse) {
           child = curr->ifFalse;
-          typeUpdater.noteRecursiveRemoval(curr->ifTrue);
         } else {
-          typeUpdater.noteRecursiveRemoval(curr);
           ExpressionManipulator::nop(curr);
           return;
         }
@@ -270,10 +253,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
     // if the condition is unreachable, just return it
     if (curr->condition->type == Type::unreachable) {
-      typeUpdater.noteRecursiveRemoval(curr->ifTrue);
-      if (curr->ifFalse) {
-        typeUpdater.noteRecursiveRemoval(curr->ifFalse);
-      }
       replaceCurrent(curr->condition);
       return;
     }
@@ -442,9 +421,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // the try's body.
     if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
       replaceCurrent(curr->body);
-      for (auto* catchBody : curr->catchBodies) {
-        typeUpdater.noteRecursiveRemoval(catchBody);
-      }
       return;
     }
 
@@ -456,7 +432,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (curr->type == Type::none && curr->hasCatchAll() &&
         !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
-      typeUpdater.noteRecursiveRemoval(curr);
       ExpressionManipulator::nop(curr);
     }
   }

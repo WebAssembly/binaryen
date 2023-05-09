@@ -97,9 +97,9 @@
  (global $tempRet0 (mut i32) (i32.const 0))
  (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
  (data (i32.const 1024) "emcc_hello_world.asm.js")
- ;; CHECK:      (data (i32.const 1024) "emcc_hello_world.asm.js")
+ ;; CHECK:      (data $0 (i32.const 1024) "emcc_hello_world.asm.js")
 
- ;; CHECK:      (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
+ ;; CHECK:      (elem $0 (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
 
  ;; CHECK:      (export "_i64Subtract" (func $_i64Subtract))
  (export "_i64Subtract" (func $_i64Subtract))
@@ -7917,16 +7917,6 @@
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                             )
  ;; CHECK-NEXT:                             (block $do-once99
- ;; CHECK-NEXT:                              (local.set $20
- ;; CHECK-NEXT:                               (select
- ;; CHECK-NEXT:                                (local.get $11)
- ;; CHECK-NEXT:                                (i32.add
- ;; CHECK-NEXT:                                 (local.get $12)
- ;; CHECK-NEXT:                                 (i32.const 4)
- ;; CHECK-NEXT:                                )
- ;; CHECK-NEXT:                                (local.get $26)
- ;; CHECK-NEXT:                               )
- ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                              (call $_pad
  ;; CHECK-NEXT:                               (local.get $0)
  ;; CHECK-NEXT:                               (i32.const 48)
@@ -7937,6 +7927,16 @@
  ;; CHECK-NEXT:                                  (i32.const 0)
  ;; CHECK-NEXT:                                 )
  ;; CHECK-NEXT:                                 (block (result i32)
+ ;; CHECK-NEXT:                                  (local.set $20
+ ;; CHECK-NEXT:                                   (select
+ ;; CHECK-NEXT:                                    (local.get $11)
+ ;; CHECK-NEXT:                                    (i32.add
+ ;; CHECK-NEXT:                                     (local.get $12)
+ ;; CHECK-NEXT:                                     (i32.const 4)
+ ;; CHECK-NEXT:                                    )
+ ;; CHECK-NEXT:                                    (local.get $26)
+ ;; CHECK-NEXT:                                   )
+ ;; CHECK-NEXT:                                  )
  ;; CHECK-NEXT:                                  (local.set $18
  ;; CHECK-NEXT:                                   (i32.eqz
  ;; CHECK-NEXT:                                    (local.get $18)
@@ -8418,7 +8418,7 @@
  ;; CHECK-NEXT:                      (br $__rjti$8)
  ;; CHECK-NEXT:                     )
  ;; CHECK-NEXT:                     (block $label$break$L8
- ;; CHECK-NEXT:                      (block $__rjti$28
+ ;; CHECK-NEXT:                      (block $__rjti$20
  ;; CHECK-NEXT:                       (if
  ;; CHECK-NEXT:                        (i32.and
  ;; CHECK-NEXT:                         (local.tee $9
@@ -8441,15 +8441,15 @@
  ;; CHECK-NEXT:                         (local.set $8
  ;; CHECK-NEXT:                          (local.get $5)
  ;; CHECK-NEXT:                         )
- ;; CHECK-NEXT:                         (loop $while-in9
- ;; CHECK-NEXT:                          (br_if $__rjti$28
+ ;; CHECK-NEXT:                         (loop $while-in5
+ ;; CHECK-NEXT:                          (br_if $__rjti$20
  ;; CHECK-NEXT:                           (i32.eqz
  ;; CHECK-NEXT:                            (i32.load8_u
  ;; CHECK-NEXT:                             (local.get $8)
  ;; CHECK-NEXT:                            )
  ;; CHECK-NEXT:                           )
  ;; CHECK-NEXT:                          )
- ;; CHECK-NEXT:                          (br_if $while-in9
+ ;; CHECK-NEXT:                          (br_if $while-in5
  ;; CHECK-NEXT:                           (i32.and
  ;; CHECK-NEXT:                            (local.tee $9
  ;; CHECK-NEXT:                             (i32.ne
@@ -8482,7 +8482,7 @@
  ;; CHECK-NEXT:                         (local.get $5)
  ;; CHECK-NEXT:                        )
  ;; CHECK-NEXT:                       )
- ;; CHECK-NEXT:                       (br_if $__rjti$28
+ ;; CHECK-NEXT:                       (br_if $__rjti$20
  ;; CHECK-NEXT:                        (local.get $9)
  ;; CHECK-NEXT:                       )
  ;; CHECK-NEXT:                       (local.set $9
@@ -8498,15 +8498,15 @@
  ;; CHECK-NEXT:                        (local.get $8)
  ;; CHECK-NEXT:                       )
  ;; CHECK-NEXT:                       (block
- ;; CHECK-NEXT:                        (block $__rjto$010
- ;; CHECK-NEXT:                         (block $__rjti$011
- ;; CHECK-NEXT:                          (br_if $__rjti$011
+ ;; CHECK-NEXT:                        (block $__rjto$06
+ ;; CHECK-NEXT:                         (block $__rjti$07
+ ;; CHECK-NEXT:                          (br_if $__rjti$07
  ;; CHECK-NEXT:                           (i32.le_u
  ;; CHECK-NEXT:                            (local.get $9)
  ;; CHECK-NEXT:                            (i32.const 3)
  ;; CHECK-NEXT:                           )
  ;; CHECK-NEXT:                          )
- ;; CHECK-NEXT:                          (loop $while-in312
+ ;; CHECK-NEXT:                          (loop $while-in38
  ;; CHECK-NEXT:                           (if
  ;; CHECK-NEXT:                            (i32.eqz
  ;; CHECK-NEXT:                             (i32.and
@@ -8534,7 +8534,7 @@
  ;; CHECK-NEXT:                               (i32.const 4)
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                             )
- ;; CHECK-NEXT:                             (br_if $while-in312
+ ;; CHECK-NEXT:                             (br_if $while-in38
  ;; CHECK-NEXT:                              (i32.gt_u
  ;; CHECK-NEXT:                               (local.tee $9
  ;; CHECK-NEXT:                                (i32.sub
@@ -8545,11 +8545,11 @@
  ;; CHECK-NEXT:                               (i32.const 3)
  ;; CHECK-NEXT:                              )
  ;; CHECK-NEXT:                             )
- ;; CHECK-NEXT:                             (br $__rjti$011)
+ ;; CHECK-NEXT:                             (br $__rjti$07)
  ;; CHECK-NEXT:                            )
  ;; CHECK-NEXT:                           )
  ;; CHECK-NEXT:                          )
- ;; CHECK-NEXT:                          (br $__rjto$010)
+ ;; CHECK-NEXT:                          (br $__rjto$06)
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                         (if
  ;; CHECK-NEXT:                          (i32.eqz
@@ -8564,7 +8564,7 @@
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                        )
  ;; CHECK-NEXT:                        (local.set $9
- ;; CHECK-NEXT:                         (loop $while-in5 (result i32)
+ ;; CHECK-NEXT:                         (loop $while-in59 (result i32)
  ;; CHECK-NEXT:                          (br_if $label$break$L8
  ;; CHECK-NEXT:                           (i32.eqz
  ;; CHECK-NEXT:                            (i32.load8_u
@@ -8578,7 +8578,7 @@
  ;; CHECK-NEXT:                            (i32.const 1)
  ;; CHECK-NEXT:                           )
  ;; CHECK-NEXT:                          )
- ;; CHECK-NEXT:                          (br_if $while-in5
+ ;; CHECK-NEXT:                          (br_if $while-in59
  ;; CHECK-NEXT:                           (local.tee $9
  ;; CHECK-NEXT:                            (i32.sub
  ;; CHECK-NEXT:                             (local.get $9)

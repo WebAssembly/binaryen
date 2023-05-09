@@ -11,8 +11,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var nan = NaN;
- var infinity = Infinity;
  var mod_ule = imports["mod.ule"];
  var base = mod_ule["ba.se"];
  function $0() {

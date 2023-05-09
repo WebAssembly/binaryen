@@ -8,4 +8,4 @@
 )
 
 ;; All nulls compare equal, regardless of their type.
-(assert_return (invoke "compare" (ref.null data) (ref.null eq)) (i32.const 1))
+(assert_return (invoke "compare" (ref.null none) (ref.null eq)) (i32.const 1))

@@ -253,15 +253,20 @@ struct Reducer
   void reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
     std::vector<std::string> passes = {
+      // Optimization modes.
       "-Oz",
       "-Os",
       "-O1",
       "-O2",
       "-O3",
       "-O4",
+      // Optimization modes + passes that work well with them.
       "--flatten -Os",
       "--flatten -O3",
       "--flatten --simplify-locals-notee-nostructure --local-cse -Os",
+      "--type-ssa -Os --type-merging",
+      "--gufa -O1",
+      // Individual passes or combinations of them.
       "--coalesce-locals --vacuum",
       "--dae",
       "--dae-optimizing",
@@ -287,6 +292,7 @@ struct Reducer
       "--simplify-globals",
       "--simplify-locals --vacuum",
       "--strip",
+      "--remove-unused-types",
       "--vacuum"};
     auto oldSize = file_size(working);
     bool more = true;
@@ -352,7 +358,7 @@ struct Reducer
   }
 
   void loadWorking() {
-    module = make_unique<Module>();
+    module = std::make_unique<Module>();
     ModuleReader reader;
     try {
       reader.read(working, *module);
@@ -371,7 +377,7 @@ struct Reducer
     // Apply features the user passed on the commandline.
     toolOptions.applyFeatures(*module);
 
-    builder = make_unique<Builder>(*module);
+    builder = std::make_unique<Builder>(*module);
     setModule(module.get());
   }
 
@@ -935,7 +941,6 @@ struct Reducer
     // process things here, we may replace the module, so we should never again
     // refer to curr.
     assert(curr == module.get());
-    WASM_UNUSED(curr);
     curr = nullptr;
 
     // Reduction of entire functions at a time is very effective, and we do it
@@ -1290,12 +1295,6 @@ int main(int argc, const char* argv[]) {
 
   if (debugInfo) {
     extraFlags += " -g ";
-  }
-  if (getTypeSystem() == TypeSystem::Nominal) {
-    extraFlags += " --nominal";
-  }
-  if (getTypeSystem() == TypeSystem::Isorecursive) {
-    extraFlags += " --hybrid";
   }
 
   if (test.size() == 0) {

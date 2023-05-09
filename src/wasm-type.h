@@ -40,18 +40,6 @@
 
 namespace wasm {
 
-enum class TypeSystem {
-  Equirecursive,
-  Nominal,
-  Isorecursive,
-};
-
-// This should only ever be called before any Types or HeapTypes have been
-// created. The default system is equirecursive.
-void setTypeSystem(TypeSystem system);
-
-TypeSystem getTypeSystem();
-
 // Dangerous! Frees all types and heap types that have ever been created and
 // resets the type system's internal state. This is only really meant to be used
 // for tests.
@@ -145,7 +133,7 @@ public:
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
   // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
   // │ i31ref      ║ x │   │ x │ x │    n  │ │
-  // │ dataref     ║ x │   │ x │ x │    n  │ │
+  // │ structref   ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -160,6 +148,7 @@ public:
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
   bool isFunction() const;
+  // See literal.h.
   bool isData() const;
   // Checks whether a type is a reference and is nullable. This returns false
   // for a value that is not a reference, that is, for which nullability is
@@ -174,6 +163,7 @@ public:
   bool isNull() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isDefaultable() const;
 
   Nullability getNullability() const;
@@ -324,7 +314,7 @@ public:
     any,
     eq,
     i31,
-    data,
+    struct_,
     array,
     string,
     stringview_wtf8,
@@ -365,6 +355,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isString() const;
   bool isBottom() const;
 
   Signature getSignature() const;
@@ -402,6 +393,8 @@ public:
 
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(HeapType left, HeapType right);
+
+  std::vector<Type> getTypeChildren() const;
 
   // Return the ordered HeapType children, looking through child Types.
   std::vector<HeapType> getHeapTypeChildren() const;
@@ -460,7 +453,7 @@ public:
   HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
-typedef std::vector<Type> TypeList;
+using TypeList = std::vector<Type>;
 
 // Passed by reference rather than by value because it can own an unbounded
 // amount of data.
@@ -531,7 +524,7 @@ struct Field {
   unsigned getByteSize() const;
 };
 
-typedef std::vector<Field> FieldList;
+using FieldList = std::vector<Field>;
 
 // Passed by reference rather than by value because it can own an unbounded
 // amount of data.
@@ -547,6 +540,7 @@ struct Struct {
 
   // Prevent accidental copies
   Struct& operator=(const Struct&) = delete;
+  Struct& operator=(Struct&&) = default;
 };
 
 struct Array {
@@ -557,6 +551,8 @@ struct Array {
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   std::string toString() const;
+
+  Array& operator=(const Array& other) = default;
 };
 
 // TypeBuilder - allows for the construction of recursive types. Contains a
@@ -586,20 +582,11 @@ struct TypeBuilder {
   // The number of HeapType slots in the TypeBuilder.
   size_t size();
 
-  // Sets the heap type at index `i`. May only be called before `build`. The
-  // BasicHeapType overload may not be used in nominal mode.
-  void setHeapType(size_t i, HeapType::BasicHeapType basic);
+  // Sets the heap type at index `i`. May only be called before `build`.
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
-
-  // This is an ugly hack around the fact that temp heap types initialized with
-  // BasicHeapTypes are not themselves considered basic, so `HeapType::isBasic`
-  // and `HeapType::getBasic` do not work as expected with them. Call these
-  // methods instead.
-  bool isBasic(size_t i);
-  HeapType::BasicHeapType getBasic(size_t i);
 
   // Gets the temporary HeapType at index `i`. This HeapType should only be used
   // to construct temporary Types using the methods below.
@@ -660,10 +647,6 @@ struct TypeBuilder {
     TypeBuilder& builder;
     size_t index;
     operator HeapType() const { return builder.getTempHeapType(index); }
-    Entry& operator=(HeapType::BasicHeapType basic) {
-      builder.setHeapType(index, basic);
-      return *this;
-    }
     Entry& operator=(Signature signature) {
       builder.setHeapType(index, signature);
       return *this;
@@ -680,8 +663,7 @@ struct TypeBuilder {
       builder.setHeapType(index, array);
       return *this;
     }
-    Entry& subTypeOf(Entry other) {
-      assert(&builder == &other.builder);
+    Entry& subTypeOf(HeapType other) {
       builder.setSubType(index, other);
       return *this;
     }

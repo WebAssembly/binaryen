@@ -29,6 +29,7 @@ high chance for set at start of loop
 
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
+#include "ir/struct-utils.h"
 #include "support/insert_ordered.h"
 #include "tools/fuzzing/random.h"
 #include <ir/eh-utils.h>
@@ -89,6 +90,11 @@ private:
   // of bounds (which traps in wasm, and is undefined behavior in C).
   bool allowOOB = true;
 
+  // Whether we allow the fuzzer to add unreachable code when generating changes
+  // to existing code. This is randomized during startup, but could be an option
+  // like the above options eventually if we find that useful.
+  bool allowAddingUnreachableCode;
+
   // Whether to emit atomic waits (which in single-threaded mode, may hang...)
   static const bool ATOMIC_WAITS = false;
 
@@ -101,8 +107,28 @@ private:
   Name funcrefTableName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
+  std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
 
   std::vector<Type> loggableTypes;
+
+  // The heap types we can pick from to generate instructions.
+  std::vector<HeapType> interestingHeapTypes;
+
+  // A mapping of a heap type to the subset of interestingHeapTypes that are
+  // subtypes of it.
+  std::unordered_map<HeapType, std::vector<HeapType>> interestingHeapSubTypes;
+
+  // Type => list of struct fields that have that type.
+  std::unordered_map<Type, std::vector<StructField>> typeStructFields;
+
+  // Type => list of array types that have that type.
+  std::unordered_map<Type, std::vector<HeapType>> typeArrays;
+
+  // All struct fields that are mutable.
+  std::vector<StructField> mutableStructFields;
+
+  // All arrays that are mutable.
+  std::vector<HeapType> mutableArrays;
 
   Index numAddedFunctions = 0;
 
@@ -130,8 +156,26 @@ private:
 
   FunctionCreationContext* funcContext = nullptr;
 
+public:
   int nesting = 0;
 
+  struct AutoNester {
+    TranslateToFuzzReader& parent;
+    size_t amount = 1;
+
+    AutoNester(TranslateToFuzzReader& parent) : parent(parent) {
+      parent.nesting++;
+    }
+    ~AutoNester() { parent.nesting -= amount; }
+
+    // Add more nesting manually.
+    void add(size_t more) {
+      parent.nesting += more;
+      amount += more;
+    }
+  };
+
+private:
   // Generating random data is common enough that it's worth having helpers that
   // forward to `random`.
   int8_t get() { return random.get(); }
@@ -168,6 +212,7 @@ private:
   void prepareHangLimitSupport();
   void addHangLimitSupport();
   void addImportLoggingSupport();
+  void addHashMemorySupport();
 
   // Special expression makers
   Expression* makeHangLimitCheck();
@@ -193,9 +238,8 @@ private:
   }
   void recombine(Function* func);
   void mutate(Function* func);
-  // Fix up changes that may have broken validation - types are correct in our
-  // modding, but not necessarily labels.
-  void fixLabels(Function* func);
+  // Fix up the IR after recombination and mutation.
+  void fixAfterChanges(Function* func);
   void modifyInitialFunctions();
 
   // Initial wasm contents may have come from a test that uses the drop pattern:
@@ -227,6 +271,10 @@ private:
   // Make something with no chance of infinite recursion.
   Expression* makeTrivial(Type type);
 
+  // We must note when we are nested in a makeTrivial() call. When we are, all
+  // operations must try to be as trivial as possible.
+  int trivialNesting = 0;
+
   // Specific expression creators
   Expression* makeBlock(Type type);
   Expression* makeLoop(Type type);
@@ -254,6 +302,7 @@ private:
   Expression* makeLoad(Type type);
   Expression* makeNonAtomicStore(Type type);
   Expression* makeStore(Type type);
+
   // Makes a small change to a constant value.
   Literal tweak(Literal value);
   Literal makeLiteral(Type type);
@@ -265,10 +314,15 @@ private:
   // we may add a GC cast to fixup the type.
   Expression* makeConst(Type type);
 
-  // Like makeConst, but for a type that is a reference type. One function
-  // handles basic types, and the other compound ones.
-  Expression* makeConstBasicRef(Type type);
-  Expression* makeConstCompoundRef(Type type);
+  // Generate reference values. One function handles basic types, and the other
+  // compound ones.
+  Expression* makeBasicRef(Type type);
+  Expression* makeCompoundRef(Type type);
+
+  // Similar to makeBasic/CompoundRef, but indicates that this value will be
+  // used in a place that will trap on null. For example, the reference of a
+  // struct.get or array.set would use this.
+  Expression* makeTrappingRefUse(HeapType type);
 
   Expression* buildUnary(const UnaryArgs& args);
   Expression* makeUnary(Type type);
@@ -293,7 +347,16 @@ private:
   // TODO: support other RefIs variants, and rename this
   Expression* makeRefIsNull(Type type);
   Expression* makeRefEq(Type type);
-  Expression* makeI31New(Type type);
+  Expression* makeRefTest(Type type);
+  Expression* makeRefCast(Type type);
+  Expression* makeStructGet(Type type);
+  Expression* makeStructSet(Type type);
+  Expression* makeArrayGet(Type type);
+  Expression* makeArraySet(Type type);
+  // Use a single method for the misc array operations, to not give them too
+  // much representation (e.g. compared to struct operations, which only include
+  // get/set).
+  Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
@@ -311,9 +374,13 @@ private:
   Type getStorableType();
   Type getLoggableType();
   bool isLoggableType(Type type);
+  Nullability getNullability();
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);
+  Nullability getSuperType(Nullability nullability);
+  HeapType getSuperType(HeapType type);
+  Type getSuperType(Type type);
 
   // Utilities
   Name getTargetName(Expression* target);

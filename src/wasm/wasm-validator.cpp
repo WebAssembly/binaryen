@@ -21,6 +21,8 @@
 
 #include "ir/eh-utils.h"
 #include "ir/features.h"
+#include "ir/find_all.h"
+#include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/intrinsics.h"
 #include "ir/local-graph.h"
@@ -61,6 +63,7 @@ struct ValidationInfo {
   bool validateWeb;
   bool validateGlobally;
   bool quiet;
+  bool closedWorld;
 
   std::atomic<bool> valid;
 
@@ -78,7 +81,7 @@ struct ValidationInfo {
     if (iter != outputs.end()) {
       return *(iter->second.get());
     }
-    auto& ret = outputs[func] = make_unique<std::ostringstream>();
+    auto& ret = outputs[func] = std::make_unique<std::ostringstream>();
     return *ret.get();
   }
 
@@ -115,8 +118,9 @@ struct ValidationInfo {
     return stream;
   }
 
-  // checking utilities
+  // Checking utilities.
 
+  // Returns whether the result was in fact true.
   template<typename T>
   bool shouldBeTrue(bool result,
                     T curr,
@@ -126,8 +130,10 @@ struct ValidationInfo {
       fail("unexpected false: " + std::string(text), curr, func);
       return false;
     }
-    return result;
+    return true;
   }
+
+  // Returns whether the result was in fact false.
   template<typename T>
   bool shouldBeFalse(bool result,
                      T curr,
@@ -137,7 +143,7 @@ struct ValidationInfo {
       fail("unexpected true: " + std::string(text), curr, func);
       return false;
     }
-    return result;
+    return true;
   }
 
   template<typename T, typename S>
@@ -426,7 +432,7 @@ public:
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
-  void visitRefIs(RefIs* curr);
+  void visitRefIsNull(RefIsNull* curr);
   void visitRefAs(RefAs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
@@ -451,11 +457,18 @@ public:
   void visitStructGet(StructGet* curr);
   void visitStructSet(StructSet* curr);
   void visitArrayNew(ArrayNew* curr);
-  void visitArrayInit(ArrayInit* curr);
+  template<typename ArrayNew> void visitArrayNew(ArrayNew* curr);
+  void visitArrayNewData(ArrayNewData* curr);
+  void visitArrayNewElem(ArrayNewElem* curr);
+  void visitArrayNewFixed(ArrayNewFixed* curr);
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
   void visitArrayCopy(ArrayCopy* curr);
+  void visitArrayFill(ArrayFill* curr);
+  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr);
+  void visitArrayInitData(ArrayInitData* curr);
+  void visitArrayInitElem(ArrayInitElem* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -1166,8 +1179,6 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
 }
 
 void FunctionValidator::visitAtomicFence(AtomicFence* curr) {
-  shouldBeFalse(
-    getModule()->memories.empty(), curr, "Memory operations require a memory");
   shouldBeTrue(getModule()->features.hasAtomics(),
                curr,
                "Atomic operations require threads [--enable-threads]");
@@ -1421,9 +1432,9 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   if (!shouldBeTrue(!!memory, curr, "memory.init memory must exist")) {
     return;
   }
-  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
-               "memory.init segment index out of bounds");
+               "memory.init segment should exist");
 }
 
 void FunctionValidator::visitDataDrop(DataDrop* curr) {
@@ -1433,14 +1444,9 @@ void FunctionValidator::visitDataDrop(DataDrop* curr) {
     "Bulk memory operations require bulk memory [--enable-bulk-memory]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::none), curr, "data.drop must have type none");
-  if (!shouldBeFalse(getModule()->memories.empty(),
-                     curr,
-                     "Memory operations require a memory")) {
-    return;
-  }
-  shouldBeTrue(curr->segment < getModule()->dataSegments.size(),
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
-               "data.drop segment index out of bounds");
+               "data.drop segment should exist");
 }
 
 void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
@@ -2130,14 +2136,15 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
     curr->type.isNull(), curr, "ref.null must have a bottom heap type");
 }
 
-void FunctionValidator::visitRefIs(RefIs* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
-               curr,
-               "ref.is_* requires reference-types [--enable-reference-types]");
+void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
+  shouldBeTrue(
+    getModule()->features.hasReferenceTypes(),
+    curr,
+    "ref.is_null requires reference-types [--enable-reference-types]");
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
                curr->value,
-               "ref.is_*'s argument should be a reference type");
+               "ref.is_null's argument should be a reference type");
 }
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
@@ -2503,52 +2510,68 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
   }
-  shouldBeUnequal(curr->intendedType,
-                  HeapType(),
-                  curr,
-                  "static ref.test must set intendedType field");
-  shouldBeTrue(
-    !curr->intendedType.isBasic(), curr, "ref.test must test a non-basic");
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "ref.test ref must have ref type")) {
+    return;
+  }
+  shouldBeEqual(
+    curr->castType.getHeapType().getBottom(),
+    curr->ref->type.getHeapType().getBottom(),
+    curr,
+    "ref.test target type and ref type must have a common supertype");
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
   }
-  shouldBeUnequal(curr->intendedType,
-                  HeapType(),
-                  curr,
-                  "static ref.cast must set intendedType field");
-  shouldBeTrue(
-    !curr->intendedType.isBasic(), curr, "ref.cast must cast to a non-basic");
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "ref.cast ref must have ref type")) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type.getHeapType().getBottom(),
+    curr->ref->type.getHeapType().getBottom(),
+    curr,
+    "ref.cast target type and ref type must have a common supertype");
+
+  // We should never have a nullable cast of a non-nullable reference, since
+  // that unnecessarily loses type information.
+  shouldBeTrue(curr->ref->type.isNullable() || curr->type.isNonNullable(),
+               curr,
+               "ref.cast null of non-nullable references are not allowed");
 }
 
 void FunctionValidator::visitBrOn(BrOn* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "br_on_cast requires gc [--enable-gc]");
-  if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(
-      curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type")) {
+    return;
   }
   if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-    shouldBeUnequal(curr->intendedType,
-                    HeapType(),
-                    curr,
-                    "static br_on_cast* must set intendedType field");
-    shouldBeTrue(!curr->intendedType.isBasic(),
-                 curr,
-                 "br_on_cast* must cast to a non-basic");
+    if (!shouldBeTrue(curr->castType.isRef(),
+                      curr,
+                      "br_on_cast must have reference cast type")) {
+      return;
+    }
+    shouldBeEqual(
+      curr->castType.getHeapType().getBottom(),
+      curr->ref->type.getHeapType().getBottom(),
+      curr,
+      "br_on_cast* target type and ref type must have a common supertype");
   } else {
-    shouldBeEqual(curr->intendedType,
-                  HeapType(),
+    shouldBeEqual(curr->castType,
+                  Type(Type::none),
                   curr,
                   "non-cast br_on* must not set intendedType field");
   }
@@ -2585,10 +2608,12 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                       "struct.new must have the right number of operands")) {
       // All the fields must have the proper type.
       for (Index i = 0; i < fields.size(); i++) {
-        shouldBeSubType(curr->operands[i]->type,
-                        fields[i].type,
-                        curr,
-                        "struct.new operand must have proper type");
+        if (!Type::isSubType(curr->operands[i]->type, fields[i].type)) {
+          info.fail("struct.new operand " + std::to_string(i) +
+                      " must have proper type",
+                    curr,
+                    getFunction());
+        }
       }
     }
   }
@@ -2683,7 +2708,80 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
   }
 }
 
-void FunctionValidator::visitArrayInit(ArrayInit* curr) {
+template<typename ArrayNew>
+void FunctionValidator::visitArrayNew(ArrayNew* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.new_{data, elem} requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    Type(Type::i32),
+    curr,
+    "array.new_{data, elem} size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->type.isRef(),
+        curr,
+        "array.new_{data, elem} type should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->type.getHeapType();
+  if (!shouldBeTrue(
+        heapType.isArray(),
+        curr,
+        "array.new_{data, elem} type should be an array reference")) {
+    return;
+  }
+}
+
+void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
+  visitArrayNew(curr);
+
+  if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
+                    curr,
+                    "array.new_data segment should exist")) {
+    return;
+  }
+
+  auto field = GCTypeUtils::getField(curr->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeTrue(field->type.isNumber(),
+               curr,
+               "array.new_data result element type should be numeric");
+}
+
+void FunctionValidator::visitArrayNewElem(ArrayNewElem* curr) {
+  visitArrayNew(curr);
+
+  if (!shouldBeTrue(getModule()->getElementSegment(curr->segment),
+                    curr,
+                    "array.new_elem segment should exist")) {
+    return;
+  }
+
+  auto field = GCTypeUtils::getField(curr->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeSubType(getModule()->getElementSegment(curr->segment)->type,
+                  field->type,
+                  curr,
+                  "array.new_elem segment type should be a subtype of the "
+                  "result element type");
+}
+
+void FunctionValidator::visitArrayNewFixed(ArrayNewFixed* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "array.init requires gc [--enable-gc]");
@@ -2797,8 +2895,10 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   if (!shouldBeSubType(curr->srcRef->type,
                        Type(HeapType::array, Nullable),
                        curr,
-                       "array.copy source should be an array reference") ||
-      !shouldBeSubType(curr->destRef->type,
+                       "array.copy source should be an array reference")) {
+    return;
+  }
+  if (!shouldBeSubType(curr->destRef->type,
                        Type(HeapType::array, Nullable),
                        curr,
                        "array.copy destination should be an array reference")) {
@@ -2806,17 +2906,16 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   }
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
-  if (srcHeapType == HeapType::none || destHeapType == HeapType::none) {
+  if (srcHeapType == HeapType::none ||
+      !shouldBeTrue(srcHeapType.isArray(),
+                    curr,
+                    "array.copy source should be an array reference")) {
     return;
   }
-  if (!shouldBeTrue(
-        srcHeapType != HeapType::array,
-        curr,
-        "array.copy source needs to be a specific array reference") ||
-      !shouldBeTrue(
-        srcHeapType != HeapType::array,
-        curr,
-        "array.copy destination needs to be a specific array reference")) {
+  if (destHeapType == HeapType::none ||
+      !shouldBeTrue(destHeapType.isArray(),
+                    curr,
+                    "array.copy destination should be an array reference")) {
     return;
   }
   const auto& srcElement = srcHeapType.getArray().element;
@@ -2825,7 +2924,122 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
                   destElement.type,
                   curr,
                   "array.copy must have the proper types");
-  shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
+  shouldBeEqual(srcElement.packedType,
+                destElement.packedType,
+                curr,
+                "array.copy types must match");
+  shouldBeTrue(
+    destElement.mutable_, curr, "array.copy destination must be mutable");
+}
+
+void FunctionValidator::visitArrayFill(ArrayFill* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.fill requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.fill index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "array.fill size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::array, Nullable),
+                       curr,
+                       "array.fill destination should be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none ||
+      !shouldBeTrue(heapType.isArray(),
+                    curr,
+                    "array.fill destination should be an array reference")) {
+    return;
+  }
+  auto element = heapType.getArray().element;
+  shouldBeSubType(curr->value->type,
+                  element.type,
+                  curr,
+                  "array.fill value must match destination element type");
+  shouldBeTrue(
+    element.mutable_, curr, "array.fill destination must be mutable");
+}
+
+template<typename ArrayInit>
+void FunctionValidator::visitArrayInit(ArrayInit* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.init_* requires gc [--enable-gc]");
+  shouldBeEqualOrFirstIsUnreachable(curr->index->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.init_* size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeSubType(curr->ref->type,
+                       Type(HeapType::array, Nullable),
+                       curr,
+                       "array.init_* destination must be an array reference")) {
+    return;
+  }
+  auto heapType = curr->ref->type.getHeapType();
+  if (heapType == HeapType::none ||
+      !shouldBeTrue(heapType.isArray(),
+                    curr,
+                    "array.init_* destination must be an array reference")) {
+    return;
+  }
+  auto element = heapType.getArray().element;
+  shouldBeTrue(
+    element.mutable_, curr, "array.init_* destination must be mutable");
+}
+
+void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
+  visitArrayInit(curr);
+
+  shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
+               curr,
+               "array.init_data segment must exist");
+
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+  shouldBeTrue(field->type.isNumber(),
+               curr,
+               "array.init_data destination must be numeric");
+}
+
+void FunctionValidator::visitArrayInitElem(ArrayInitElem* curr) {
+  visitArrayInit(curr);
+
+  auto* seg = getModule()->getElementSegmentOrNull(curr->segment);
+  if (!shouldBeTrue(seg, curr, "array.init_elem segment must exist")) {
+    return;
+  }
+
+  auto field = GCTypeUtils::getField(curr->ref->type);
+  if (!field) {
+    // A bottom type, or unreachable.
+    return;
+  }
+
+  shouldBeSubType(seg->type,
+                  field->type,
+                  curr,
+                  "array.init_elem segment type must match destination type");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
@@ -2835,6 +3049,11 @@ void FunctionValidator::visitFunction(Function* curr) {
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
+  // Check for things like having a rec group with GC enabled. The type we're
+  // checking is a reference type even if this an MVP function type, so ignore
+  // the reference types feature here.
+  features |=
+    (Type(curr->type, Nullable).getFeatures() & ~FeatureSet::ReferenceTypes);
   for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
@@ -2921,13 +3140,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 }
 
-static bool checkSegmentOffset(Expression* curr,
-                               Address add,
-                               Address max,
-                               FeatureSet features) {
-  return Properties::isValidInConstantExpression(curr, features);
-}
-
 void FunctionValidator::validateAlignment(
   size_t align, Type type, Index bytes, bool isAtomic, Expression* curr) {
   if (isAtomic) {
@@ -2999,8 +3211,11 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
         bool validControlFlowStructureChange =
           Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
           newType == Type::unreachable;
-        if (!Type::isSubType(newType, oldType) &&
-            !validControlFlowStructureChange) {
+        // It's ok in general for types to get refined as long as they don't
+        // become unreachable.
+        bool validRefinement =
+          Type::isSubType(newType, oldType) && newType != Type::unreachable;
+        if (!validRefinement && !validControlFlowStructureChange) {
           std::ostringstream ss;
           ss << "stale type found in " << scope << " on " << curr
              << "\n(marked as " << oldType << ", should be " << newType
@@ -3136,6 +3351,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
 }
 
 static void validateGlobals(Module& module, ValidationInfo& info) {
+  std::unordered_set<Global*> seen;
   ModuleUtils::iterDefinedGlobals(module, [&](Global* curr) {
     info.shouldBeTrue(curr->type.getFeatures() <= module.features,
                       curr->name,
@@ -3143,10 +3359,9 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(
       curr->init != nullptr, curr->name, "global init must be non-null");
     assert(curr->init);
-    info.shouldBeTrue(
-      GlobalUtils::canInitializeGlobal(curr->init, module.features),
-      curr->name,
-      "global init must be valid");
+    info.shouldBeTrue(GlobalUtils::canInitializeGlobal(module, curr->init),
+                      curr->name,
+                      "global init must be constant");
 
     if (!info.shouldBeSubType(curr->init->type,
                               curr->type,
@@ -3156,6 +3371,18 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
     FunctionValidator(module, &info).validate(curr->init);
+    // If GC is enabled (which means globals can refer to other non-imported
+    // globals), check that globals only refer to preceeding globals.
+    if (module.features.hasGC() && curr->init) {
+      for (auto* get : FindAll<GlobalGet>(curr->init).list) {
+        auto* global = module.getGlobalOrNull(get->name);
+        info.shouldBeTrue(
+          global && (seen.count(global) || global->imported()),
+          curr->init,
+          "global initializer should only refer to previous globals");
+      }
+      seen.insert(curr);
+    }
   });
 }
 
@@ -3228,12 +3455,10 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
           continue;
         }
       }
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           memory->initial * Memory::kPageSize,
-                                           module.features),
-                        segment->offset,
-                        "memory segment offset should be reasonable");
+      info.shouldBeTrue(
+        Properties::isValidConstantExpression(module, segment->offset),
+        segment->offset,
+        "memory segment offset should be constant");
       FunctionValidator(module, &info).validate(segment->offset);
       // If the memory is imported we don't actually know its initial size.
       // Specifically wasm dll's import a zero sized memory which is perfectly
@@ -3302,13 +3527,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
   }
 
   for (auto& segment : module.elementSegments) {
-    // Since element segment items need to be constant expressions, that leaves
-    // us with ref.null, ref.func and global.get. As a result, the only possible
-    // type for element segments will be function references.
-    // TODO: This is not true! Allow GC data here (#4846).
-    info.shouldBeTrue(segment->type.isFunction(),
+    info.shouldBeTrue(segment->type.isRef(),
                       "elem",
-                      "element segment type must be of function type.");
+                      "element segment type must be of reference type.");
     info.shouldBeTrue(
       segment->type.isNullable(),
       "elem",
@@ -3326,12 +3547,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          Type(Type::i32),
                          segment->offset,
                          "element segment offset should be i32");
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           table->initial * Table::kPageSize,
-                                           module.features),
-                        segment->offset,
-                        "table segment offset should be reasonable");
+      info.shouldBeTrue(
+        Properties::isValidConstantExpression(module, segment->offset),
+        segment->offset,
+        "table segment offset should be constant");
       info.shouldBeTrue(
         Type::isSubType(segment->type, table->type),
         "elem",
@@ -3342,27 +3561,15 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         "elem",
                         "non-table segment offset should have no offset");
     }
-    // Avoid double checking items
-    if (module.features.hasReferenceTypes()) {
-      for (auto* expr : segment->data) {
-        if (auto* globalExpr = expr->dynCast<GlobalGet>()) {
-          auto* global = module.getGlobal(globalExpr->name);
-          info.shouldBeFalse(
-            global->mutable_, expr, "expected a constant expression");
-        } else {
-          info.shouldBeTrue(expr->is<RefFunc>() || expr->is<RefNull>() ||
-                              expr->is<GlobalGet>(),
-                            expr,
-                            "element segment items must be one of global.get, "
-                            "ref.func, ref.null func");
-        }
-        info.shouldBeSubType(expr->type,
-                             segment->type,
-                             expr,
-                             "element segment item expressions must return a "
-                             "subtype of the segment type");
-        validator.validate(expr);
-      }
+    for (auto* expr : segment->data) {
+      info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),
+                        expr,
+                        "element must be a constant expression");
+      info.shouldBeSubType(expr->type,
+                           segment->type,
+                           expr,
+                           "element must be a subtype of the segment type");
+      validator.validate(expr);
     }
   }
 }
@@ -3417,6 +3624,32 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
   }
 }
 
+static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
+  // Error if there are any publicly exposed heap types beyond the types of
+  // publicly exposed functions.
+  std::unordered_set<HeapType> publicFuncTypes;
+  ModuleUtils::iterImportedFunctions(
+    module, [&](Function* func) { publicFuncTypes.insert(func->type); });
+  for (auto& ex : module.exports) {
+    if (ex->kind == ExternalKind::Function) {
+      publicFuncTypes.insert(module.getFunction(ex->value)->type);
+    }
+  }
+
+  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
+    if (!publicFuncTypes.count(type)) {
+      auto name = type.toString();
+      if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
+        name = it->second.name.toString();
+      }
+      info.fail("publicly exposed type disallowed with a closed world: $" +
+                  name,
+                type,
+                nullptr);
+    }
+  }
+}
+
 // TODO: If we want the validator to be part of libwasm rather than libpasses,
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
@@ -3425,6 +3658,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;
+  info.closedWorld = (flags & ClosedWorld) != 0;
   // parallel wasm logic validation
   PassRunner runner(&module);
   FunctionValidator(module, &info).validate(&runner);
@@ -3439,6 +3673,9 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateTags(module, info);
     validateModule(module, info);
     validateFeatures(module, info);
+    if (info.closedWorld) {
+      validateClosedWorldInterface(module, info);
+    }
   }
   // validate additional internal IR details when in pass-debug mode
   if (PassRunner::getPassDebug()) {
@@ -3452,6 +3689,14 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     std::cerr << info.getStream(nullptr).str();
   }
   return info.valid.load();
+}
+
+bool WasmValidator::validate(Module& module, const PassOptions& options) {
+  Flags flags = options.validateGlobally ? Globally : Minimal;
+  if (options.closedWorld) {
+    flags |= ClosedWorld;
+  }
+  return validate(module, flags);
 }
 
 bool WasmValidator::validate(Function* func, Module& module, Flags flags) {

@@ -16,7 +16,8 @@
 
 //
 // Finds types which are only created in assignments to immutable globals. For
-// such types we can replace a struct.get with this pattern:
+// such types we can replace a struct.get with a global.get when there is a
+// single possible global, or if there are two then with this pattern:
 //
 //  (struct.get $foo i
 //    (..ref..))
@@ -44,6 +45,8 @@
 // comparison. But we can compare structs, so if the function references are in
 // vtables, and the vtables follow the above pattern, then we can optimize.
 //
+// TODO: Only do the case with a select when shrinkLevel == 0?
+//
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
@@ -61,16 +64,19 @@ struct GlobalStructInference : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // Maps optimizable struct types to the globals whose init is a struct.new of
-  // them. If a global is not present here, it cannot be optimized.
+  // them.
+  //
+  // We will remove unoptimizable types from here, so in practice, if a type is
+  // optimizable it will have an entry here, and not if not.
   std::unordered_map<HeapType, std::vector<Name>> typeGlobals;
 
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
     }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "GlobalStructInference requires nominal/isorecursive typing";
+
+    if (!getPassOptions().closedWorld) {
+      Fatal() << "GSI requires --closed-world";
     }
 
     // First, find all the information we need. We need to know which struct
@@ -124,6 +130,16 @@ struct GlobalStructInference : public Pass {
 
       auto type = global->init->type.getHeapType();
 
+      // The global's declared type must match the init's type. If not, say if
+      // we had a global declared as type |any| but that contains (ref $A), then
+      // that is not something we can optimize, as ref.eq on a global.get of
+      // that global will not validate. (This should not be a problem after
+      // GlobalSubtyping runs, which will specialize the type of the global.)
+      if (global->type != global->init->type) {
+        unoptimizable.insert(type);
+        continue;
+      }
+
       // We cannot optimize mutable globals.
       if (global->mutable_) {
         unoptimizable.insert(type);
@@ -141,9 +157,17 @@ struct GlobalStructInference : public Pass {
     // unoptimizable type makes all its supertypes unoptimizable as well.
     // TODO: this could be specific per field (and not all supers have all
     //       fields)
-    for (auto type : unoptimizable) {
+    // Iterate on a copy to avoid invalidation as we insert.
+    auto unoptimizableCopy = unoptimizable;
+    for (auto type : unoptimizableCopy) {
       while (1) {
+        unoptimizable.insert(type);
+
+        // Also erase the globals, as we will never read them anyhow. This can
+        // allow us to skip unneeded work, when we check if typeGlobals is
+        // empty, below.
         typeGlobals.erase(type);
+
         auto super = type.getSuperType();
         if (!super) {
           break;
@@ -163,8 +187,12 @@ struct GlobalStructInference : public Pass {
           break;
         }
         curr = *super;
-        for (auto global : globals) {
-          typeGlobals[curr].push_back(global);
+
+        // As above, avoid adding pointless data for anything unoptimizable.
+        if (!unoptimizable.count(curr)) {
+          for (auto global : globals) {
+            typeGlobals[curr].push_back(global);
+          }
         }
       }
     }
@@ -198,15 +226,44 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        auto iter = parent.typeGlobals.find(type.getHeapType());
+        // We must ignore the case of a non-struct heap type, that is, a bottom
+        // type (which is all that is left after we've already ruled out
+        // unreachable). Such things will not be in typeGlobals, which we are
+        // checking now anyhow.
+        auto heapType = type.getHeapType();
+        auto iter = parent.typeGlobals.find(heapType);
         if (iter == parent.typeGlobals.end()) {
           return;
         }
 
+        // This cannot be a bottom type as we found it in the typeGlobals map,
+        // which only contains types of struct.news.
+        assert(heapType.isStruct());
+
         // The field must be immutable.
         auto fieldIndex = curr->index;
-        auto& field = type.getHeapType().getStruct().fields[fieldIndex];
+        auto& field = heapType.getStruct().fields[fieldIndex];
         if (field.mutable_ == Mutable) {
+          return;
+        }
+
+        const auto& globals = iter->second;
+        if (globals.size() == 0) {
+          return;
+        }
+
+        auto& wasm = *getModule();
+        Builder builder(wasm);
+
+        if (globals.size() == 1) {
+          // Leave it to other passes to infer the constant value of the field,
+          // if there is one: just change the reference to the global, which
+          // will unlock those other optimizations. Note we must trap if the ref
+          // is null, so add RefAsNonNull here.
+          auto global = globals[0];
+          curr->ref = builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
           return;
         }
 
@@ -229,10 +286,6 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 1337)
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
-        const auto& globals = iter->second;
-        if (globals.size() < 2) {
-          return;
-        }
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
@@ -240,7 +293,6 @@ struct GlobalStructInference : public Pass {
         std::vector<std::vector<Name>> globalsForValue;
 
         // Check if the relevant fields contain constants.
-        auto& wasm = *getModule();
         auto fieldType = field.type;
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
@@ -276,10 +328,14 @@ struct GlobalStructInference : public Pass {
         }
 
         // We have some globals (at least 2), and so must have at least one
-        // value. And we have already exited if we have more than 2, so that
-        // only leaves 1 and 2. We are looking for the case of 2 here, since
-        // other passes (ConstantFieldPropagation) can handle 1.
+        // value. And we have already exited if we have more than 2 values (see
+        // the early return above) so that only leaves 1 and 2.
         if (values.size() == 1) {
+          // The case of 1 value is simple: trap if the ref is null, and
+          // otherwise return the value.
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            builder.makeConstantExpression(values[0])));
           return;
         }
         assert(values.size() == 2);
@@ -302,7 +358,6 @@ struct GlobalStructInference : public Pass {
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
         auto checkGlobal = globalsForValue[0][0];
-        Builder builder(wasm);
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(

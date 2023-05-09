@@ -18,6 +18,7 @@
 // Apply more specific subtypes to global variables where possible.
 //
 
+#include "ir/export-utils.h"
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
@@ -37,10 +38,6 @@ struct GlobalRefining : public Pass {
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
-    }
-    if (getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      Fatal() << "GlobalRefining requires nominal/isorecursive typing";
     }
 
     // First, find all the global.sets.
@@ -63,21 +60,31 @@ struct GlobalRefining : public Pass {
     // Combine all the information we gathered and compute lubs.
     for (auto& [func, info] : analysis.map) {
       for (auto* set : info.sets) {
-        lubs[set->name].noteUpdatableExpression(set->value);
+        lubs[set->name].note(set->value->type);
+      }
+    }
+
+    // In closed world we cannot change the types of exports, as we might change
+    // from a public type to a private that would cause a validation error.
+    // TODO We could refine to a type that is still public, however.
+    std::unordered_set<Name> unoptimizable;
+    if (getPassOptions().closedWorld) {
+      for (auto* global : ExportUtils::getExportedGlobals(*module)) {
+        unoptimizable.insert(global->name);
       }
     }
 
     bool optimized = false;
 
     for (auto& global : module->globals) {
-      if (global->imported()) {
+      if (global->imported() || unoptimizable.count(global->name)) {
         continue;
       }
 
       auto& lub = lubs[global->name];
 
       // Note the initial value.
-      lub.noteUpdatableExpression(global->init);
+      lub.note(global->init->type);
 
       // The initial value cannot be unreachable, but it might be null, and all
       // other values might be too. In that case, we've noted nothing useful
@@ -87,12 +94,11 @@ struct GlobalRefining : public Pass {
       }
 
       auto oldType = global->type;
-      auto newType = lub.getBestPossible();
+      auto newType = lub.getLUB();
       if (newType != oldType) {
         // We found an improvement!
         assert(Type::isSubType(newType, oldType));
         global->type = newType;
-        lub.updateNulls();
         optimized = true;
       }
     }

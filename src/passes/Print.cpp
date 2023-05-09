@@ -105,8 +105,8 @@ bool maybePrintRefShorthand(std::ostream& o, Type type) {
       case HeapType::i31:
         o << "i31ref";
         return true;
-      case HeapType::data:
-        o << "dataref";
+      case HeapType::struct_:
+        o << "structref";
         return true;
       case HeapType::array:
         o << "arrayref";
@@ -423,6 +423,25 @@ std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
     }
   }
   return os << '"';
+}
+
+// Print a name from the type section, if available. Otherwise print the type
+// normally.
+void printTypeOrName(Type type, std::ostream& o, Module* wasm) {
+  if (type.isRef() && wasm) {
+    auto heapType = type.getHeapType();
+    auto iter = wasm->typeNames.find(heapType);
+    if (iter != wasm->typeNames.end()) {
+      o << iter->second.name;
+      if (type.isNullable()) {
+        o << " null";
+      }
+      return;
+    }
+  }
+
+  // No luck with a name, just print the test as best we can.
+  o << type;
 }
 
 } // anonymous namespace
@@ -910,13 +929,13 @@ struct PrintExpressionContents
     o << "memory.init";
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
-    o << ' ' << curr->segment;
+    o << " $" << curr->segment;
   }
   void visitDataDrop(DataDrop* curr) {
     prepareColor(o);
     o << "data.drop";
     restoreNormalColor(o);
-    o << ' ' << curr->segment;
+    o << " $" << curr->segment;
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     prepareColor(o);
@@ -1981,24 +2000,7 @@ struct PrintExpressionContents
     printMedium(o, "ref.null ");
     printHeapType(o, curr->type.getHeapType(), wasm);
   }
-  void visitRefIs(RefIs* curr) {
-    switch (curr->op) {
-      case RefIsNull:
-        printMedium(o, "ref.is_null");
-        break;
-      case RefIsFunc:
-        printMedium(o, "ref.is_func");
-        break;
-      case RefIsData:
-        printMedium(o, "ref.is_data");
-        break;
-      case RefIsI31:
-        printMedium(o, "ref.is_i31");
-        break;
-      default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
-    }
-  }
+  void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
     printName(curr->func, o);
@@ -2090,60 +2092,118 @@ struct PrintExpressionContents
     printHeapType(o, curr->target->type.getHeapType(), wasm);
   }
   void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test_static ");
-    printHeapType(o, curr->intendedType, wasm);
+    // TODO: These instructions are deprecated. Remove them.
+    if (auto type = curr->castType.getHeapType();
+        curr->castType.isNonNullable() && type.isBasic()) {
+      switch (type.getBasic()) {
+        case HeapType::func:
+          printMedium(o, "ref.is_func");
+          return;
+        case HeapType::i31:
+          printMedium(o, "ref.is_i31");
+          return;
+        default:
+          break;
+      }
+    }
+    printMedium(o, "ref.test ");
+    if (curr->castType.isNullable()) {
+      printMedium(o, "null ");
+    }
+    printHeapType(o, curr->castType.getHeapType(), wasm);
   }
   void visitRefCast(RefCast* curr) {
-    if (curr->safety == RefCast::Unsafe) {
-      printMedium(o, "ref.cast_nop_static ");
-    } else {
-      printMedium(o, "ref.cast_static ");
+    if (printUnreachableReplacement(curr)) {
+      return;
     }
-    printHeapType(o, curr->intendedType, wasm);
+    if (curr->safety == RefCast::Unsafe) {
+      printMedium(o, "ref.cast_nop ");
+    } else {
+      // TODO: These instructions are deprecated. Remove them.
+      if (auto type = curr->type.getHeapType();
+          type.isBasic() && curr->type.isNonNullable()) {
+        switch (type.getBasic()) {
+          case HeapType::func:
+            printMedium(o, "ref.as_func");
+            return;
+          case HeapType::i31:
+            printMedium(o, "ref.as_i31");
+            return;
+          default:
+            break;
+        }
+      }
+      if (curr->type.isNullable()) {
+        printMedium(o, "ref.cast null ");
+      } else {
+        printMedium(o, "ref.cast ");
+      }
+    }
+    printHeapType(o, curr->type.getHeapType(), wasm);
   }
 
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
         printMedium(o, "br_on_null ");
-        break;
+        printName(curr->name, o);
+        return;
       case BrOnNonNull:
         printMedium(o, "br_on_non_null ");
-        break;
+        printName(curr->name, o);
+        return;
       case BrOnCast:
-        printMedium(o, "br_on_cast_static ");
+        // TODO: These instructions are deprecated, so stop emitting them.
+        if (auto type = curr->castType.getHeapType();
+            type.isBasic() && curr->castType.isNonNullable()) {
+          switch (type.getBasic()) {
+            case HeapType::func:
+              printMedium(o, "br_on_func ");
+              printName(curr->name, o);
+              return;
+            case HeapType::i31:
+              printMedium(o, "br_on_i31 ");
+              printName(curr->name, o);
+              return;
+            default:
+              break;
+          }
+        }
+        printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
-        printHeapType(o, curr->intendedType, wasm);
+        if (curr->castType.isNullable()) {
+          printMedium(o, "null ");
+        }
+        printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
       case BrOnCastFail:
-        printMedium(o, "br_on_cast_static_fail ");
+        // TODO: These instructions are deprecated, so stop emitting them.
+        if (auto type = curr->castType.getHeapType();
+            type.isBasic() && curr->castType.isNonNullable()) {
+          switch (type.getBasic()) {
+            case HeapType::func:
+              printMedium(o, "br_on_non_func ");
+              printName(curr->name, o);
+              return;
+            case HeapType::i31:
+              printMedium(o, "br_on_non_i31 ");
+              printName(curr->name, o);
+              return;
+            default:
+              break;
+          }
+        }
+        printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
-        printHeapType(o, curr->intendedType, wasm);
+        if (curr->castType.isNullable()) {
+          printMedium(o, "null ");
+        }
+        printHeapType(o, curr->castType.getHeapType(), wasm);
         return;
-      case BrOnFunc:
-        printMedium(o, "br_on_func ");
-        break;
-      case BrOnNonFunc:
-        printMedium(o, "br_on_non_func ");
-        break;
-      case BrOnData:
-        printMedium(o, "br_on_data ");
-        break;
-      case BrOnNonData:
-        printMedium(o, "br_on_non_data ");
-        break;
-      case BrOnI31:
-        printMedium(o, "br_on_i31 ");
-        break;
-      case BrOnNonI31:
-        printMedium(o, "br_on_non_i31 ");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid ref.is_*");
     }
-    printName(curr->name, o);
+    WASM_UNREACHABLE("Unexpected br_on* op");
   }
   void visitStructNew(StructNew* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2205,11 +2265,29 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    printMedium(o, "array.init_static");
+    printMedium(o, "array.new_data");
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.new_elem");
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    if (printUnreachableReplacement(curr)) {
+      return;
+    }
+    printMedium(o, "array.new_fixed");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
   }
@@ -2247,19 +2325,33 @@ struct PrintExpressionContents
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
   }
+  void visitArrayFill(ArrayFill* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    printMedium(o, "array.fill ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+  }
+  void visitArrayInitData(ArrayInitData* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    printMedium(o, "array.init_data ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    o << " $" << curr->segment;
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    if (printUnreachableOrNullReplacement(curr->ref)) {
+      return;
+    }
+    printMedium(o, "array.init_elem ");
+    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    o << " $" << curr->segment;
+  }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
       case RefAsNonNull:
         printMedium(o, "ref.as_non_null");
-        break;
-      case RefAsFunc:
-        printMedium(o, "ref.as_func");
-        break;
-      case RefAsData:
-        printMedium(o, "ref.as_data");
-        break;
-      case RefAsI31:
-        printMedium(o, "ref.as_i31");
         break;
       case ExternInternalize:
         printMedium(o, "extern.internalize");
@@ -2274,7 +2366,11 @@ struct PrintExpressionContents
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
       case StringNewUTF8:
-        printMedium(o, "string.new_wtf8 utf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8 utf8");
+        } else {
+          printMedium(o, "string.new_utf8_try");
+        }
         break;
       case StringNewWTF8:
         printMedium(o, "string.new_wtf8 wtf8");
@@ -2286,7 +2382,11 @@ struct PrintExpressionContents
         printMedium(o, "string.new_wtf16");
         break;
       case StringNewUTF8Array:
-        printMedium(o, "string.new_wtf8_array utf8");
+        if (!curr->try_) {
+          printMedium(o, "string.new_wtf8_array utf8");
+        } else {
+          printMedium(o, "string.new_utf8_array_try");
+        }
         break;
       case StringNewWTF8Array:
         printMedium(o, "string.new_wtf8_array wtf8");
@@ -2296,6 +2396,9 @@ struct PrintExpressionContents
         break;
       case StringNewWTF16Array:
         printMedium(o, "string.new_wtf16_array");
+        break;
+      case StringNewFromCodePoint:
+        printMedium(o, "string.from_code_point");
         break;
       default:
         WASM_UNREACHABLE("invalid string.new*");
@@ -2321,6 +2424,9 @@ struct PrintExpressionContents
         break;
       case StringMeasureWTF16View:
         printMedium(o, "stringview_wtf16.length");
+        break;
+      case StringMeasureHash:
+        printMedium(o, "string.hash");
         break;
       default:
         WASM_UNREACHABLE("invalid string.measure*");
@@ -2353,7 +2459,18 @@ struct PrintExpressionContents
   void visitStringConcat(StringConcat* curr) {
     printMedium(o, "string.concat");
   }
-  void visitStringEq(StringEq* curr) { printMedium(o, "string.eq"); }
+  void visitStringEq(StringEq* curr) {
+    switch (curr->op) {
+      case StringEqEqual:
+        printMedium(o, "string.eq");
+        break;
+      case StringEqCompare:
+        printMedium(o, "string.compare");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid string.eq*");
+    }
+  }
   void visitStringAs(StringAs* curr) {
     switch (curr->op) {
       case StringAsWTF8:
@@ -2531,7 +2648,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       doIndent(o, indent);
     }
     if (full) {
-      o << "[" << expression->type << "] ";
+      o << "[";
+      printTypeOrName(expression->type, o, currModule);
+      o << "] ";
     }
     visit(expression);
     o << maybeNewLine;
@@ -2578,7 +2697,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       stack.push_back(curr);
       if (full) {
-        o << "[" << curr->type << "] ";
+        o << "[";
+        printTypeOrName(curr->type, o, currModule);
+        o << "]";
       }
       o << '(';
       printExpressionContents(curr);
@@ -2777,6 +2898,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitCallRef(CallRef* curr) {
     maybePrintUnreachableOrNullReplacement(curr, curr->target->type);
   }
+  void visitRefCast(RefCast* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
   void visitStructNew(StructNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
@@ -2789,7 +2913,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayNew(ArrayNew* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     maybePrintUnreachableReplacement(curr, curr->type);
   }
   void visitArraySet(ArraySet* curr) {
@@ -2809,9 +2939,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    bool hasSupertype =
-      !name.is() && (getTypeSystem() == TypeSystem::Nominal ||
-                     getTypeSystem() == TypeSystem::Isorecursive);
+    bool hasSupertype = !name.is() && !!curr.getSuperType();
     if (hasSupertype) {
       o << "(func_subtype";
     } else {
@@ -2868,8 +2996,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     if (hasSupertype) {
       o << "(array_subtype ";
     } else {
@@ -2883,8 +3010,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ')';
   }
   void handleStruct(HeapType curr) {
-    bool hasSupertype = getTypeSystem() == TypeSystem::Nominal ||
-                        getTypeSystem() == TypeSystem::Isorecursive;
+    bool hasSupertype = !!curr.getSuperType();
     const auto& fields = curr.getStruct().fields;
     if (hasSupertype) {
       o << "(struct_subtype ";
@@ -3015,8 +3141,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (getTypeSystem() == TypeSystem::Nominal ||
-        getTypeSystem() == TypeSystem::Isorecursive) {
+    if (currModule && currModule->features.hasGC()) {
       o << " (type ";
       printHeapType(o, curr->type, currModule) << ')';
     }
@@ -3145,13 +3270,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
     doIndent(o, indent);
     o << '(';
-    printMedium(o, "elem");
-    // If there is no explicit name, and there are multiple segments, use our
-    // internal names to differentiate them.
-    if (curr->hasExplicitName || currModule->elementSegments.size() > 1) {
-      o << ' ';
-      printName(curr->name, o);
-    }
+    printMedium(o, "elem ");
+    printName(curr->name, o);
 
     if (curr->table.is()) {
       if (usesExpressions || currModule->tables.size() > 1) {
@@ -3182,7 +3302,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     } else {
       for (auto* entry : curr->data) {
         o << ' ';
-        printExpression(entry, o);
+        visit(entry);
       }
     }
     o << ')' << maybeNewLine;
@@ -3224,11 +3344,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMajor(o, "data ");
-    if (curr->hasExplicitName) {
-      printName(curr->name, o);
-      o << ' ';
-    }
+    printName(curr->name, o);
+    o << ' ';
     if (!curr->isPassive) {
+      assert(!currModule || currModule->memories.size() > 0);
+      if (!currModule || curr->memory != currModule->memories[0]->name) {
+        o << "(memory $" << curr->memory << ") ";
+      }
       visit(curr->offset);
       o << ' ';
     }
@@ -3347,7 +3469,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->dylinkSection) {
       printDylinkSection(curr->dylinkSection);
     }
-    for (auto& section : curr->userSections) {
+    for (auto& section : curr->customSections) {
       doIndent(o, indent);
       o << ";; custom section \"" << section.name << "\", size "
         << section.data.size();
@@ -3469,7 +3591,9 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[" << expression->type << "] ";
+    o << "[";
+    printTypeOrName(expression->type, o, wasm);
+    o << "] ";
   }
   print.visit(expression);
   return o;

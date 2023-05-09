@@ -105,7 +105,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void doWalkModule(Module* module) {
     if (!builder) {
-      builder = make_unique<Builder>(*module);
+      builder = std::make_unique<Builder>(*module);
     }
     // add new globals for high bits
     for (size_t i = 0, globals = module->globals.size(); i < globals; ++i) {
@@ -118,7 +118,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       auto high = builder->makeGlobal(makeHighName(curr->name),
                                       Type::i32,
                                       builder->makeConst(int32_t(0)),
-                                      Builder::Mutable);
+                                      curr->mutable_ ? Builder::Mutable
+                                                     : Builder::Immutable);
       if (curr->imported()) {
         Fatal() << "TODO: imported i64 globals";
       } else {
@@ -153,7 +154,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     Flat::verifyFlatness(func);
     // create builder here if this is first entry to module for this object
     if (!builder) {
-      builder = make_unique<Builder>(*getModule());
+      builder = std::make_unique<Builder>(*getModule());
     }
     indexMap.clear();
     highBitVars.clear();
@@ -478,10 +479,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
 
   void visitAtomicWait(AtomicWait* curr) {
     // The last parameter is an i64, so we cannot leave it as it is
-    assert(curr->offset == 0);
     replaceCurrent(builder->makeCall(
       ABI::wasm2js::ATOMIC_WAIT_I32,
-      {curr->ptr,
+      {builder->makeConst(int32_t(curr->offset)),
+       curr->ptr,
        curr->expected,
        curr->timeout,
        builder->makeLocalGet(fetchOutParam(curr->timeout), Type::i32)},

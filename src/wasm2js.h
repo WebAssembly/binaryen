@@ -168,13 +168,19 @@ public:
     std::string symbolsFile;
   };
 
+  // Map data segment names to indices.
+  std::unordered_map<Name, Index> dataIndices;
+
   Wasm2JSBuilder(Flags f, PassOptions options_) : flags(f), options(options_) {
     // We don't try to model wasm's trapping precisely - if we did, each load
     // and store would need to do a check. Given that, we can just ignore
     // implicit traps like those when optimizing. (When not optimizing, it's
     // nice to see codegen that matches wasm more precisely.)
+    // It is also important to prevent the optimizer from adding new things that
+    // require additional lowering, as we could hit a cycle.
     if (options.optimizeLevel > 0) {
       options.ignoreImplicitTraps = true;
+      options.targetJS = true;
     }
   }
 
@@ -187,6 +193,12 @@ public:
   // The second pass on an expression: process it fully, generating
   // JS
   Ref processFunctionBody(Module* m, Function* func, bool standalone);
+
+  Index getDataIndex(Name segment) {
+    auto it = dataIndices.find(segment);
+    assert(it != dataIndices.end());
+    return it->second;
+  }
 
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
@@ -330,6 +342,11 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ElementUtils::iterAllElementFunctionNames(
     wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
 
+  // Collect passive data segment indices.
+  for (Index i = 0; i < wasm->dataSegments.size(); ++i) {
+    dataIndices[wasm->dataSegments[i]->name] = i;
+  }
+
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
   ABI::wasm2js::ensureHelpers(wasm);
@@ -338,7 +355,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // First, do the lowering to a JS-friendly subset.
   {
     PassRunner runner(wasm, options);
-    runner.add(make_unique<AutoDrop>());
+    runner.add(std::make_unique<AutoDrop>());
     // TODO: only legalize if necessary - emscripten would already do so, and
     //       likely other toolchains. but spec test suite needs that.
     runner.add("legalize-js-interface");
@@ -574,15 +591,6 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
   addMath(MATH_CEIL, CEIL);
   addMath(MATH_TRUNC, TRUNC);
   addMath(MATH_SQRT, SQRT);
-  // TODO: this shouldn't be needed once we stop generating literal asm.js code
-  // NaN and Infinity variables
-  Ref nanVar = ValueBuilder::makeVar();
-  ast->push_back(nanVar);
-  ValueBuilder::appendToVar(nanVar, "nan", ValueBuilder::makeName("NaN"));
-  Ref infinityVar = ValueBuilder::makeVar();
-  ast->push_back(infinityVar);
-  ValueBuilder::appendToVar(
-    infinityVar, "infinity", ValueBuilder::makeName("Infinity"));
 }
 
 static bool needsQuoting(Name name) {
@@ -2141,8 +2149,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       ValueBuilder::appendToCall(
         call,
         ValueBuilder::makePtrShift(makePointer(curr->ptr, curr->offset), 2));
-      ValueBuilder::appendToCall(call,
-                                 visit(curr->notifyCount, EXPRESSION_RESULT));
+      ValueBuilder::appendToCall(
+        call,
+        makeSigning(visit(curr->notifyCount, EXPRESSION_RESULT), JS_UNSIGNED));
       return call;
     }
 
@@ -2183,16 +2192,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
     Ref visitMemoryInit(MemoryInit* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_INIT);
-      return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
-                                    ValueBuilder::makeNum(curr->segment),
-                                    visit(curr->dest, EXPRESSION_RESULT),
-                                    visit(curr->offset, EXPRESSION_RESULT),
-                                    visit(curr->size, EXPRESSION_RESULT));
+      return ValueBuilder::makeCall(
+        ABI::wasm2js::MEMORY_INIT,
+        ValueBuilder::makeNum(parent->getDataIndex(curr->segment)),
+        visit(curr->dest, EXPRESSION_RESULT),
+        visit(curr->offset, EXPRESSION_RESULT),
+        visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitDataDrop(DataDrop* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::DATA_DROP);
-      return ValueBuilder::makeCall(ABI::wasm2js::DATA_DROP,
-                                    ValueBuilder::makeNum(curr->segment));
+      return ValueBuilder::makeCall(
+        ABI::wasm2js::DATA_DROP,
+        ValueBuilder::makeNum(parent->getDataIndex(curr->segment)));
     }
     Ref visitMemoryCopy(MemoryCopy* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_COPY);
@@ -2212,7 +2223,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitRefIs(RefIs* curr) {
+    Ref visitRefIsNull(RefIsNull* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2304,7 +2315,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitArrayInit(ArrayInit* curr) {
+    Ref visitArrayNewData(ArrayNewData* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayNewElem(ArrayNewElem* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayNewFixed(ArrayNewFixed* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2321,6 +2340,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitArrayCopy(ArrayCopy* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayFill(ArrayFill* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayInitData(ArrayInitData* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayInitElem(ArrayInitElem* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2991,7 +3022,8 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     } else if (import->base == ABI::wasm2js::ATOMIC_WAIT_I32) {
       out << R"(
-  function wasm2js_atomic_wait_i32(ptr, expected, timeoutLow, timeoutHigh) {
+  function wasm2js_atomic_wait_i32(offset, ptr, expected, timeoutLow, timeoutHigh) {
+    ptr = (ptr + offset) >> 2;
     var timeout = Infinity;
     if (timeoutHigh >= 0) {
       // Convert from nanoseconds to milliseconds
@@ -2999,7 +3031,7 @@ void Wasm2JSGlue::emitSpecialSupport() {
       timeout = ((timeoutLow >>> 0) / 1e6) + timeoutHigh * (4294967296 / 1e6);
     }
     var view = new Int32Array(bufferView.buffer); // TODO cache
-    var result = Atomics.wait(view, ptr >> 2, expected, timeout);
+    var result = Atomics.wait(view, ptr, expected, timeout);
     if (result == 'ok') return 0;
     if (result == 'not-equal') return 1;
     if (result == 'timed-out') return 2;

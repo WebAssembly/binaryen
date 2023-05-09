@@ -112,7 +112,7 @@ Branch::Branch(std::vector<wasm::Index>&& ValuesInit,
                wasm::Expression* CodeInit)
   : Condition(nullptr), Code(CodeInit) {
   if (ValuesInit.size() > 0) {
-    SwitchValues = wasm::make_unique<std::vector<wasm::Index>>(ValuesInit);
+    SwitchValues = std::make_unique<std::vector<wasm::Index>>(ValuesInit);
   }
   // otherwise, it is the default
 }
@@ -526,7 +526,7 @@ LoopShape* Relooper::AddLoopShape() {
 
 namespace {
 
-typedef std::list<Block*> BlockList;
+using BlockList = std::list<Block*>;
 
 struct RelooperRecursor {
   Relooper* Parent;
@@ -554,7 +554,7 @@ struct Liveness : public RelooperRecursor {
   }
 };
 
-typedef std::pair<Branch*, Block*> BranchBlock;
+using BranchBlock = std::pair<Branch*, Block*>;
 
 struct Optimizer : public RelooperRecursor {
   Block* Entry;
@@ -1251,7 +1251,7 @@ void Relooper::Calculate(Block* Entry) {
     void FindIndependentGroups(BlockSet& Entries,
                                BlockBlockSetMap& IndependentGroups,
                                BlockSet* Ignore = nullptr) {
-      typedef std::map<Block*, Block*> BlockBlockMap;
+      using BlockBlockMap = std::map<Block*, Block*>;
 
       struct HelperClass {
         BlockBlockSetMap& IndependentGroups;

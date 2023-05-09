@@ -42,7 +42,7 @@ public:
 // An element in an S-Expression: a list or a string
 //
 class Element {
-  typedef ArenaVector<Element*> List;
+  using List = ArenaVector<Element*>;
 
   bool isList_ = true;
   List list_;
@@ -91,16 +91,16 @@ public:
 // Generic S-Expression parsing into lists
 //
 class SExpressionParser {
-  char* input;
+  const char* input;
   size_t line;
-  char* lineStart;
+  char const* lineStart;
   SourceLocation* loc = nullptr;
 
   MixedArena allocator;
 
 public:
   // Assumes control of and modifies the input.
-  SExpressionParser(char* input);
+  SExpressionParser(const char* input);
   Element* root;
 
 private:
@@ -124,7 +124,9 @@ class SExpressionWasmBuilder {
 
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
+  std::vector<Name> elemSegmentNames;
   std::vector<Name> memoryNames;
+  std::vector<Name> dataSegmentNames;
   std::vector<Name> globalNames;
   std::vector<Name> tagNames;
   int functionCounter = 0;
@@ -170,7 +172,9 @@ private:
 
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
+  Name getElemSegmentName(Element& s);
   Name getMemoryName(Element& s);
+  Name getDataSegmentName(Element& s);
   Name getGlobalName(Element& s);
   Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
@@ -267,7 +271,7 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeRefNull(Element& s);
-  Expression* makeRefIs(Element& s, RefIsOp op);
+  Expression* makeRefIsNull(Element& s);
   Expression* makeRefFunc(Element& s);
   Expression* makeRefEq(Element& s);
   Expression* makeTableGet(Element& s);
@@ -283,28 +287,37 @@ private:
   Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
-  Expression* makeRefTestStatic(Element& s);
-  Expression* makeRefCastStatic(Element& s);
-  Expression* makeRefCastNopStatic(Element& s);
-  Expression* makeBrOn(Element& s, BrOnOp op);
-  Expression* makeBrOnStatic(Element& s, BrOnOp op);
-  Expression* makeStructNewStatic(Element& s, bool default_);
+  Expression* makeRefTest(Element& s,
+                          std::optional<Type> castType = std::nullopt);
+  Expression* makeRefCast(Element& s,
+                          std::optional<Type> castType = std::nullopt);
+  Expression* makeRefCastNop(Element& s);
+  Expression* makeBrOnNull(Element& s, bool onFail = false);
+  Expression*
+  makeBrOnCast(Element& s, std::optional<Type> castType, bool onFail = false);
+  Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
-  Expression* makeArrayNewStatic(Element& s, bool default_);
-  Expression* makeArrayInitStatic(Element& s);
+  Expression* makeArrayNew(Element& s, bool default_);
+  Expression* makeArrayNewData(Element& s);
+  Expression* makeArrayNewElem(Element& s);
+  Expression* makeArrayNewFixed(Element& s);
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
   Expression* makeArrayCopy(Element& s);
+  Expression* makeArrayFill(Element& s);
+  Expression* makeArrayInitData(Element& s);
+  Expression* makeArrayInitElem(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
-  Expression* makeStringNew(Element& s, StringNewOp op);
+  Expression* makeRefAsNonNull(Element& s);
+  Expression* makeStringNew(Element& s, StringNewOp op, bool try_);
   Expression* makeStringConst(Element& s);
   Expression* makeStringMeasure(Element& s, StringMeasureOp op);
   Expression* makeStringEncode(Element& s, StringEncodeOp op);
   Expression* makeStringConcat(Element& s);
-  Expression* makeStringEq(Element& s);
+  Expression* makeStringEq(Element& s, StringEqOp op);
   Expression* makeStringAs(Element& s, StringAsOp op);
   Expression* makeStringWTF8Advance(Element& s);
   Expression* makeStringWTF16Get(Element& s);

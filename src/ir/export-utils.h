@@ -21,15 +21,18 @@
 
 namespace wasm::ExportUtils {
 
-inline std::vector<Function*> getExportedFunctions(Module& wasm) {
-  std::vector<Function*> ret;
-  for (auto& ex : wasm.exports) {
-    if (ex->kind == ExternalKind::Function) {
-      ret.push_back(wasm.getFunction(ex->value));
+std::vector<Function*> getExportedFunctions(Module& wasm);
+std::vector<Global*> getExportedGlobals(Module& wasm);
+
+inline bool isExported(const Module& module, const Function& func) {
+  for (auto& exportFunc : module.exports) {
+    if (exportFunc->kind == ExternalKind::Function &&
+        exportFunc->value == func.name) {
+      return true;
     }
   }
-  return ret;
-}
+  return false;
+};
 
 } // namespace wasm::ExportUtils
 

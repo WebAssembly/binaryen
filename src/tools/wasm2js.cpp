@@ -788,13 +788,6 @@ void AssertionEmitter::fixCalls(Ref asmjs, Name asmModule) {
 }
 
 void AssertionEmitter::emit() {
-  // TODO: nan and infinity shouldn't be needed once literal asm.js code isn't
-  // generated
-  out << R"(
-    var nan = NaN;
-    var infinity = Infinity;
-  )";
-
   // When equating floating point values in spec tests we want to use bitwise
   // equality like wasm does. Unfortunately though NaN makes this tricky. JS
   // implementations like Spidermonkey and JSC will canonicalize NaN loads from
@@ -988,14 +981,14 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }
-      sexprParser = make_unique<SExpressionParser>(input.data());
+      sexprParser = std::make_unique<SExpressionParser>(input.data());
       root = sexprParser->root;
 
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder =
-        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
+      sexprBuilder = std::make_unique<SExpressionWasmBuilder>(
+        wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

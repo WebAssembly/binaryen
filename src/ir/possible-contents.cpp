@@ -17,18 +17,15 @@
 #include <optional>
 #include <variant>
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
+#include "ir/gc-type-utils.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
-#include "wasm.h"
-
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
-// Use an insert-ordered set for easier debugging with deterministic queue
-// ordering.
 #include "support/insert_ordered.h"
-#endif
+#include "wasm.h"
 
 namespace std {
 
@@ -202,18 +199,17 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  if (isLiteral() || isGlobal()) {
+  if (isLiteral()) {
     // The information about the value being identical to a particular literal
-    // or immutable global is not removed by intersection, if the type is in the
-    // cone we are intersecting with.
+    // is not removed by intersection, if the type is in the cone we are
+    // intersecting with.
     if (isSubType) {
       return;
     }
 
-    // The type must change, so continue down to the generic code path.
-    // TODO: for globals we could perhaps refine the type here, but then the
-    //       type on GlobalInfo would not match the module, so that needs some
-    //       refactoring.
+    // The type must change in a nontrivial manner, so continue down to the
+    // generic code path. This will stop being a Literal. TODO: can we do better
+    // here?
   }
 
   // Intersect the cones, as there is no more specific information we can use.
@@ -229,6 +225,14 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     newHeapType = otherHeapType;
   } else {
     newHeapType = heapType;
+  }
+
+  // Note the global's information, if we started as a global. In that case, the
+  // code below will refine our type but we can remain a global, which we will
+  // accomplish by restoring our global status at the end.
+  std::optional<Name> globalName;
+  if (isGlobal()) {
+    globalName = getGlobal();
   }
 
   auto newType = Type(newHeapType, nullability);
@@ -265,6 +269,11 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     }
 
     value = ConeType{newType, newDepth};
+  }
+
+  if (globalName) {
+    // Restore the global but keep the new and refined type.
+    value = GlobalInfo{*globalName, getType()};
   }
 }
 
@@ -493,12 +502,6 @@ struct InfoCollector
         }
       }
     }
-    if (type.isRef() && getTypeSystem() != TypeSystem::Nominal &&
-        getTypeSystem() != TypeSystem::Isorecursive) {
-      // We need explicit supers in the SubTyping helper class. Without that,
-      // cannot handle refs, and consider them irrelevant.
-      return false;
-    }
     return true;
   }
 
@@ -598,7 +601,7 @@ struct InfoCollector
       curr,
       PossibleContents::literal(Literal::makeNull(curr->type.getHeapType())));
   }
-  void visitRefIs(RefIs* curr) {
+  void visitRefIsNull(RefIsNull* curr) {
     // TODO: Optimize when possible. For example, if we can infer an exact type
     //       here which allows us to know the result then we should do so. This
     //       is unlike the case in visitUnary, above: the information that lets
@@ -629,6 +632,7 @@ struct InfoCollector
     addRoot(curr);
   }
   void visitTableGet(TableGet* curr) {
+    // TODO: be more precise
     addRoot(curr);
   }
   void visitTableSet(TableSet* curr) {}
@@ -660,9 +664,7 @@ struct InfoCollector
     addRoot(curr);
   }
 
-  void visitRefCast(RefCast* curr) {
-    addChildParentLink(curr->ref, curr);
-  }
+  void visitRefCast(RefCast* curr) { receiveChildValue(curr->ref, curr); }
   void visitRefTest(RefTest* curr) { addRoot(curr); }
   void visitBrOn(BrOn* curr) {
     // TODO: optimize when possible
@@ -770,6 +772,12 @@ struct InfoCollector
       });
   }
   template<typename T> void handleIndirectCall(T* curr, HeapType targetType) {
+    // If the heap type is not a signature, which is the case for a bottom type
+    // (null) then nothing can be called.
+    if (!targetType.isSignature()) {
+      assert(targetType.isBottom());
+      return;
+    }
     handleCall(
       curr,
       [&](Index i) {
@@ -817,7 +825,7 @@ struct InfoCollector
       // We can't see where this goes. We must be pessimistic and assume it
       // can call anything of the proper type, the same as a CallRef. (We could
       // look at the possible contents of |target| during the flow, but that
-      // would require special logic like we have for RefCast etc., and the
+      // would require special logic like we have for StructGet etc., and the
       // intrinsics will be lowered away anyhow, so just running after that is
       // a workaround.)
       handleIndirectCall(curr, target->type);
@@ -896,7 +904,26 @@ struct InfoCollector
     }
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
-  void visitArrayInit(ArrayInit* curr) {
+  void visitArrayNewData(ArrayNewData* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    auto heapType = curr->type.getHeapType();
+    Type elemType = heapType.getArray().element.type;
+    addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(elemType));
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    addRoot(curr, PossibleContents::exactType(curr->type));
+    auto heapType = curr->type.getHeapType();
+    Type segType = getModule()->getElementSegment(curr->segment)->type;
+    addRoot(DataLocation{heapType, 0}, PossibleContents::fromType(segType));
+    return;
+  }
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -974,7 +1001,38 @@ struct InfoCollector
     auto* set = builder.makeArraySet(curr->destRef, curr->destIndex, get);
     visitArraySet(set);
   }
-
+  void visitArrayFill(ArrayFill* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    // See ArrayCopy, above.
+    Builder builder(*getModule());
+    auto* set = builder.makeArraySet(curr->ref, curr->index, curr->value);
+    visitArraySet(set);
+  }
+  template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
+    // Check for both unreachability and a bottom type. In either case we have
+    // no work to do, and would error on an assertion below in finding the array
+    // type.
+    auto field = GCTypeUtils::getField(curr->ref->type);
+    if (!field) {
+      return;
+    }
+    // See ArrayCopy, above. Here an additional complexity is that we need to
+    // model the read from the segment. As in TableGet, for now we just assume
+    // any value is possible there (a root in the graph), which we set up
+    // manually here as a fake unknown value, using a fake local.get that we
+    // root.
+    // TODO: be more precise about what is in the table
+    auto valueType = field->type;
+    Builder builder(*getModule());
+    auto* get = builder.makeLocalGet(-1, valueType);
+    addRoot(get);
+    auto* set = builder.makeArraySet(curr->ref, curr->index, get);
+    visitArraySet(set);
+  }
+  void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
+  void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
   void visitStringNew(StringNew* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1317,11 +1375,19 @@ private:
   // possible is helpful as anything reading them meanwhile (before we get to
   // their work item in the queue) will see the newer value, possibly avoiding
   // flowing an old value that would later be overwritten.
-#ifdef POSSIBLE_CONTENTS_INSERT_ORDERED
+  //
+  // This must be ordered to avoid nondeterminism. The problem is that our
+  // operations are imprecise and so the transitive property does not hold:
+  // (AvB)vC may differ from Av(BvC). Likewise (AvB)^C may differ from
+  // (A^C)v(B^C). An example of the latter is if a location is sent a null func
+  // and an i31, and the location can only contain funcref. If the null func
+  // arrives first, then later we'd merge null func + i31 which ends up as Many,
+  // and then we filter that to funcref and get funcref. But if the i31 arrived
+  // first, we'd filter it into nothing, and then the null func that arrives
+  // later would be the final result. This would not happen if our operations
+  // were precise, but we only make approximations here to avoid unacceptable
+  // overhead, such as cone types but not arbitrary unions, etc.
   InsertOrderedSet<LocationIndex> workQueue;
-#else
-  std::unordered_set<LocationIndex> workQueue;
-#endif
 
   // All existing links in the graph. We keep this to know when a link we want
   // to add is new or not.
@@ -1370,6 +1436,8 @@ private:
                                 bool& worthSendingMore);
   void filterGlobalContents(PossibleContents& contents,
                             const GlobalLocation& globalLoc);
+  void filterDataContents(PossibleContents& contents,
+                          const DataLocation& dataLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -1383,10 +1451,6 @@ private:
 
   // Similar to readFromData, but does a write for a struct.set or array.set.
   void writeToData(Expression* ref, Expression* value, Index fieldIndex);
-
-  // Special handling for RefCast during the flow: RefCast only admits valid
-  // values to flow through it.
-  void flowRefCast(const PossibleContents& contents, RefCast* cast);
 
   // We will need subtypes during the flow, so compute them once ahead of time.
   std::unique_ptr<SubTypes> subTypes;
@@ -1558,11 +1622,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "struct phase\n";
 #endif
 
-  if (getTypeSystem() == TypeSystem::Nominal ||
-      getTypeSystem() == TypeSystem::Isorecursive) {
-    subTypes = std::make_unique<SubTypes>(wasm);
-    maxDepths = subTypes->getMaxDepths();
-  }
+  subTypes = std::make_unique<SubTypes>(wasm);
+  maxDepths = subTypes->getMaxDepths();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "Link-targets phase\n";
@@ -1638,6 +1699,34 @@ bool Flower::updateContents(LocationIndex locationIndex,
   std::cout << '\n';
 #endif
 
+  auto location = getLocation(locationIndex);
+
+  // Handle special cases: Some locations can only contain certain contents, so
+  // filter accordingly. In principle we need to filter both before and after
+  // combining with existing content; filtering afterwards is obviously
+  // necessary as combining two things will create something larger than both,
+  // and our representation has limitations (e.g. two different ref types will
+  // result in a cone, potentially a very large one). Filtering beforehand is
+  // necessary for the a more subtle reason: consider a location that contains
+  // an i8 which is sent a 0 and then 0x100. If we filter only after, then we'd
+  // combine 0 and 0x100 first and get "unknown integer"; only by filtering
+  // 0x100 to 0 beforehand (since 0x100 & 0xff => 0) will we combine 0 and 0 and
+  // not change anything, which is correct.
+  //
+  // For efficiency reasons we aim to only filter once, depending on the type of
+  // filtering. Most can be filtered a single time afterwards, while for data
+  // locations, where the issue is packed integer fields, it's necessary to do
+  // it before as we've mentioned, and also sufficient (see details in
+  // filterDataContents).
+  if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
+    filterDataContents(newContents, *dataLoc);
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+    std::cout << "  pre-filtered contents:\n";
+    newContents.dump(std::cout, &wasm);
+    std::cout << '\n';
+#endif
+  }
+
   contents.combine(newContents);
 
   if (contents.isNone()) {
@@ -1673,15 +1762,12 @@ bool Flower::updateContents(LocationIndex locationIndex,
     return worthSendingMore;
   }
 
-  // Handle special cases: Some locations can only contain certain contents, so
-  // filter accordingly.
-  auto location = getLocation(locationIndex);
+  // Handle filtering (see comment earlier, this is the later filtering stage).
   bool filtered = false;
   if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
     // TODO: Replace this with specific filterFoo or flowBar methods like we
-    //       have for flowRefCast and filterGlobalContents. That could save a
-    //       little wasted work here. Might be best to do that after the spec is
-    //       fully stable.
+    //       have for filterGlobalContents. That could save a little wasted work
+    //       here. Might be best to do that after the spec is fully stable.
     filterExpressionContents(contents, *exprLoc, worthSendingMore);
     filtered = true;
   } else if (auto* globalLoc = std::get_if<GlobalLocation>(&location)) {
@@ -1751,8 +1837,7 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     // This is indeed one of the special cases where it is the child of a
     // parent, and we need to do some special handling because of that child-
     // parent connection.
-    auto* child = exprLoc->expr;
-    WASM_UNUSED(child);
+    [[maybe_unused]] auto* child = exprLoc->expr;
     auto parentIndex = iter->second;
     auto* parent = std::get<ExpressionLocation>(getLocation(parentIndex)).expr;
 
@@ -1774,9 +1859,6 @@ void Flower::flowAfterUpdate(LocationIndex locationIndex) {
     } else if (auto* set = parent->dynCast<ArraySet>()) {
       assert(set->ref == child || set->value == child);
       writeToData(set->ref, set->value, 0);
-    } else if (auto* cast = parent->dynCast<RefCast>()) {
-      assert(cast->ref == child);
-      flowRefCast(contents, cast);
     } else {
       // TODO: ref.test and all other casts can be optimized (see the cast
       //       helper code used in OptimizeInstructions and RemoveUnusedBrs)
@@ -1920,6 +2002,42 @@ void Flower::filterGlobalContents(PossibleContents& contents,
       std::cout << '\n';
 #endif
     }
+  }
+}
+
+void Flower::filterDataContents(PossibleContents& contents,
+                                const DataLocation& dataLoc) {
+  auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
+  assert(field);
+  if (field->isPacked()) {
+    // We must handle packed fields carefully.
+    if (contents.isLiteral()) {
+      // This is a constant. We can truncate it and use that value.
+      auto mask = Literal(int32_t(Bits::lowBitMask(field->getByteSize() * 8)));
+      contents = PossibleContents::literal(contents.getLiteral().and_(mask));
+    } else {
+      // This is not a constant. We can't even handle a global here, as we'd
+      // need to track that this global's value must be truncated before it is
+      // used, and we don't do that atm. Leave only the type.
+      // TODO Consider tracking packing on GlobalInfo alongside the type.
+      //      Another option is to make GUFA.cpp apply packing on the read,
+      //      like CFP does - but that can only be done when replacing a
+      //      StructGet of a packed field, and not anywhere else we saw that
+      //      value reach.
+      contents = PossibleContents::fromType(contents.getType());
+    }
+    // Given that the above only (1) turns an i32 into a masked i32 or (2) turns
+    // anything else into an unknown i32, this is safe to run as pre-filtering,
+    // that is, before we combine contents, since
+    //
+    //  (a) two constants are ok as masking is distributive,
+    //        (x & M) U (y & M)  ==  (x U y) & M
+    //  (b) if one is a constant and the other is not then
+    //        (x & M) U ?  ==  ?  ==  (x U ?)  ==  (x U ?) & M
+    //      (where ? is an unknown i32)
+    //  (c) and if both are not constants then likewise we always end up as an
+    //      unknown i32
+    //
   }
 }
 
@@ -2071,25 +2189,6 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     });
 }
 
-void Flower::flowRefCast(const PossibleContents& contents, RefCast* cast) {
-  // RefCast only allows valid values to go through: nulls and things of the
-  // cast type. Filter anything else out.
-  // TODO: Remove this method, as it just filters by the type, which we do
-  //       automatically now in filterExpressionContents.
-  auto intendedCone =
-    PossibleContents::fullConeType(Type(cast->intendedType, Nullable));
-  PossibleContents filtered = contents;
-  filtered.intersectWithFullCone(intendedCone);
-  if (!filtered.isNone()) {
-#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "    ref.cast passing through\n";
-    filtered.dump(std::cout);
-    std::cout << '\n';
-#endif
-    updateContents(ExpressionLocation{cast, 0}, filtered);
-  }
-}
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
@@ -2115,11 +2214,9 @@ void Flower::dump(Location location) {
   } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
     std::cout << "  branchloc " << loc->func->name << " : " << loc->target
               << " tupleIndex " << loc->tupleIndex << '\n';
-  } else if (auto* loc = std::get_if<SignatureParamLocation>(&location)) {
-    WASM_UNUSED(loc);
+  } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
-  } else if (auto* loc = std::get_if<SignatureResultLocation>(&location)) {
-    WASM_UNUSED(loc);
+  } else if (std::get_if<SignatureResultLocation>(&location)) {
     std::cout << "  sigresultloc " << '\n';
   } else if (auto* loc = std::get_if<NullLocation>(&location)) {
     std::cout << "  Nullloc " << loc->type << '\n';

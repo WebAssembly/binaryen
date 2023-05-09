@@ -28,15 +28,15 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem (i32.const 0) $call-me)
+  ;; CHECK:      (elem $0 (i32.const 0) $call-me)
 
-  ;; CHECK:      (func $call-me (param $0 i32) (param $1 i32)
+  ;; CHECK:      (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $call-me (type $ii) (param $0 i32) (param $1 i32)
     (nop)
   )
-  ;; CHECK:      (func $code-to-kill
+  ;; CHECK:      (func $code-to-kill (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (br $out)
@@ -672,7 +672,7 @@
       (i32.const 1337)
     )
   )
-  ;; CHECK:      (func $killer
+  ;; CHECK:      (func $killer (type $1)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $killer (type $1)
@@ -681,7 +681,7 @@
       (i32.const 1000)
     )
   )
-  ;; CHECK:      (func $target
+  ;; CHECK:      (func $target (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2000)
   ;; CHECK-NEXT:  )
@@ -691,7 +691,7 @@
       (i32.const 2000)
     )
   )
-  ;; CHECK:      (func $typed-block-none-then-unreachable (result i32)
+  ;; CHECK:      (func $typed-block-none-then-unreachable (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (block $top-typed
   ;; CHECK-NEXT:   (block $switch$0
   ;; CHECK-NEXT:    (return
@@ -713,7 +713,7 @@
       )
     )
   )
-  ;; CHECK:      (func $typed-block-remove-br-changes-type (param $$$0 i32) (result i32)
+  ;; CHECK:      (func $typed-block-remove-br-changes-type (type $i32_=>_i32) (param $$$0 i32) (result i32)
   ;; CHECK-NEXT:  (block $switch$7
   ;; CHECK-NEXT:   (block $switch-default$10
   ;; CHECK-NEXT:    (block $switch-case$9
@@ -755,7 +755,7 @@
       (i32.const 0)
     )
   )
-  ;; CHECK:      (func $global
+  ;; CHECK:      (func $global (type $1)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $global
@@ -763,7 +763,7 @@
     (drop (global.get $x))
     (global.set $x (i32.const 1))
   )
-  ;; CHECK:      (func $ret (result i32)
+  ;; CHECK:      (func $ret (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -775,7 +775,7 @@
     (nop)
     (i32.const 0)
   )
-  ;; CHECK:      (func $unreachable-br (result i32)
+  ;; CHECK:      (func $unreachable-br (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (block $out (result i32)
   ;; CHECK-NEXT:   (br $out
   ;; CHECK-NEXT:    (i32.const 0)
@@ -789,7 +789,7 @@
       )
     )
   )
-  ;; CHECK:      (func $unreachable-br-loop (result i32)
+  ;; CHECK:      (func $unreachable-br-loop (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (loop $out
   ;; CHECK-NEXT:   (br $out)
   ;; CHECK-NEXT:  )
@@ -799,7 +799,7 @@
       (br $out)
     )
   )
- ;; CHECK:      (func $unreachable-block-ends-switch (result i32)
+ ;; CHECK:      (func $unreachable-block-ends-switch (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$3
  ;; CHECK-NEXT:    (nop)
@@ -819,7 +819,7 @@
    (i32.const 19)
   )
  )
- ;; CHECK:      (func $unreachable-block-ends-br_if (result i32)
+ ;; CHECK:      (func $unreachable-block-ends-br_if (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (nop)
@@ -839,7 +839,7 @@
    (i32.const 19)
   )
  )
- ;; CHECK:      (func $unreachable-brs-3 (result i32)
+ ;; CHECK:      (func $unreachable-brs-3 (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0 (result i32)
  ;; CHECK-NEXT:   (br $label$0
  ;; CHECK-NEXT:    (i32.const 18)
@@ -858,7 +858,7 @@
    (i32.const 21)
   )
  )
- ;; CHECK:      (func $unreachable-brs-4 (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $unreachable-brs-4 (type $i32_=>_i32) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -892,7 +892,7 @@
    )
   )
  )
- ;; CHECK:      (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
+ ;; CHECK:      (func $call-unreach (type $i64_i64_=>_i64) (param $var$0 i64) (param $var$1 i64) (result i64)
  ;; CHECK-NEXT:  (local $2 i64)
  ;; CHECK-NEXT:  (if (result i64)
  ;; CHECK-NEXT:   (i64.eqz
@@ -954,7 +954,7 @@
    )
   )
  )
- ;; CHECK:      (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (type $i32_=>_i32) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (nop)
@@ -978,7 +978,7 @@
    )
   )
  )
- ;; CHECK:      (func $br-with-unreachable-value-should-not-give-a-block-a-value (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $br-with-unreachable-value-should-not-give-a-block-a-value (type $i32_=>_i32) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0 (result i32)
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
@@ -1007,7 +1007,7 @@
    (i32.const 16)
   )
  )
- ;; CHECK:      (func $replace-br-value-of-i32-with-unreachable (result i32)
+ ;; CHECK:      (func $replace-br-value-of-i32-with-unreachable (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$1
  ;; CHECK-NEXT:    (nop)
@@ -1025,7 +1025,7 @@
    )
   )
  )
- ;; CHECK:      (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
+ ;; CHECK:      (func $shorten-block-requires-sync-refinalize (type $ii) (param $var$0 i32) (param $var$1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
@@ -1039,7 +1039,7 @@
    )
   )
  )
- ;; CHECK:      (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $block-with-type-but-is-unreachable (type $i32_=>_i32) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $block
  ;; CHECK-NEXT:    (nop)
@@ -1057,7 +1057,7 @@
    )
   )
  )
- ;; CHECK:      (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
+ ;; CHECK:      (func $if-with-type-but-is-unreachable (type $i32_=>_i32) (param $var$0 i32) (result i32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (local.get $var$0)
@@ -1077,7 +1077,7 @@
    )
   )
  )
- ;; CHECK:      (func $unreachable-loop
+ ;; CHECK:      (func $unreachable-loop (type $1)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $unreachable-loop
@@ -1086,7 +1086,7 @@
    (br $label$2)
   )
  )
- ;; CHECK:      (func $br-block-from-unary (result i32)
+ ;; CHECK:      (func $br-block-from-unary (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block $label$6 (result i32)
  ;; CHECK-NEXT:   (block $label$7
  ;; CHECK-NEXT:    (br $label$6
@@ -1106,7 +1106,7 @@
    )
   )
  )
- ;; CHECK:      (func $replace-unary-with-br-child
+ ;; CHECK:      (func $replace-unary-with-br-child (type $1)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$6 (result i32)
  ;; CHECK-NEXT:    (br $label$6
@@ -1126,7 +1126,7 @@
    )
   )
  )
- ;; CHECK:      (func $br_if-unreach-then-br_if-normal
+ ;; CHECK:      (func $br_if-unreach-then-br_if-normal (type $1)
  ;; CHECK-NEXT:  (block $out
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:   (unreachable)
@@ -1143,7 +1143,7 @@
     )
   )
  )
- ;; CHECK:      (func $replace-with-unreachable-affects-parent (param $var$0 f32) (param $var$1 i64)
+ ;; CHECK:      (func $replace-with-unreachable-affects-parent (type $f32_i64_=>_none) (param $var$0 f32) (param $var$1 i64)
  ;; CHECK-NEXT:  (block $top
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
@@ -1186,7 +1186,7 @@
    (nop) ;; this is not reachable due to the above code, so we replace it with unreachable. type should go to parent
   )
  )
- ;; CHECK:      (func $replace-block-changes-later-when-if-goes
+ ;; CHECK:      (func $replace-block-changes-later-when-if-goes (type $1)
  ;; CHECK-NEXT:  (block $top
  ;; CHECK-NEXT:   (global.set $x
  ;; CHECK-NEXT:    (i32.const 0)
@@ -1232,7 +1232,7 @@
    )
   )
  )
- ;; CHECK:      (func $helper (param $var$0 f32) (param $var$1 i64) (result i32)
+ ;; CHECK:      (func $helper (type $f32_i64_=>_i32) (param $var$0 f32) (param $var$1 i64) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
  (func $helper (param $var$0 f32) (param $var$1 i64) (result i32)
@@ -1245,7 +1245,7 @@
 
  ;; CHECK:      (global $global (mut f64) (f64.const 0))
  (global $global (mut f64) (f64.const 0))
- ;; CHECK:      (func $0
+ ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (unreachable)
@@ -1265,7 +1265,7 @@
 (module
  ;; CHECK:      (type $none_=>_none (func))
 
- ;; CHECK:      (func $0
+ ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (local $local f64)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1290,7 +1290,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (func $unnecessary-concrete-block (result i32)
+  ;; CHECK:      (func $unnecessary-concrete-block (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (block $foo
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:   (unreachable)
@@ -1302,7 +1302,7 @@
       (unreachable)
     )
   )
-  ;; CHECK:      (func $necessary-concrete-block (result i32)
+  ;; CHECK:      (func $necessary-concrete-block (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (block $foo (result i32)
   ;; CHECK-NEXT:   (br $foo
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1315,7 +1315,7 @@
       (unreachable)
     )
   )
-  ;; CHECK:      (func $unnecessary-concrete-if (result i32)
+  ;; CHECK:      (func $unnecessary-concrete-if (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (return
@@ -1331,7 +1331,7 @@
       (unreachable)
     )
   )
-  ;; CHECK:      (func $unnecessary-concrete-try (result i32)
+  ;; CHECK:      (func $unnecessary-concrete-try (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
@@ -1351,7 +1351,7 @@
       )
     )
   )
-  ;; CHECK:      (func $note-loss-of-if-children
+  ;; CHECK:      (func $note-loss-of-if-children (type $none_=>_none)
   ;; CHECK-NEXT:  (block $label$1
   ;; CHECK-NEXT:   (block $label$2
   ;; CHECK-NEXT:    (nop)
@@ -1373,7 +1373,7 @@
       )
     )
   )
-  ;; CHECK:      (func $note-loss-of-non-control-flow-children
+  ;; CHECK:      (func $note-loss-of-non-control-flow-children (type $none_=>_none)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (nop)
@@ -1398,10 +1398,10 @@
 (module
   ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
 
-  ;; CHECK:      (func $foo (result (ref any))
+  ;; CHECK:      (func $br_on_non_null (type $none_=>_ref|any|) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $foo (result (ref any))
+  (func $br_on_non_null (result (ref any))
     (block $label$1 (result (ref any))
       ;; this break has an unreachable input, and so it does not have a heap type
       ;; there, and no heap type to send on the branch. this tests we do not hit
@@ -1412,6 +1412,89 @@
         )
       )
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $br_on_cast_fail (type $none_=>_ref|any|) (result (ref any))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $br_on_cast_fail (result (ref any))
+    (block $label$1 (result (ref none))
+      ;; Similar to the above, but using br_on_cast_fail.
+      (br_on_cast_fail $label$1 null struct
+        (unreachable)
+      )
+      (unreachable)
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (func $if (type $none_=>_anyref) (result anyref)
+  ;; CHECK-NEXT:  (ref.cast null i31
+  ;; CHECK-NEXT:   (if (result i31ref)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if (result anyref)
+    ;; We should not refinalize while doing DCE. The cast should remain a
+    ;; nullable one, and the if should keep returning a nullable value. (If we
+    ;; refinalized only the if then the cast would be invalid, since we cannot
+    ;; have a nullable cast of a non-nullable input.)
+    ;;
+    ;; In other words, we can propagate unreachability in DCE, but should cause
+    ;; no other type changes.
+    (ref.cast null i31
+      (if (result i31ref)
+        (i32.const 0)
+        (block (result i31ref)
+          (unreachable)
+        )
+        (i31.new
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try (type $none_=>_anyref) (result anyref)
+  ;; CHECK-NEXT:  (try $try (result i31ref)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $try)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try (result anyref)
+    ;; As above, but for try.
+    (try (result i31ref)
+      (do
+        (block (result i31ref)
+          (drop
+            (call $try)
+          )
+          (unreachable)
+        )
+      )
+      (catch_all
+        (i31.new
+          (i32.const 42)
+        )
+      )
     )
   )
 )

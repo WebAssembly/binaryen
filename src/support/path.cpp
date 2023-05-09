@@ -81,7 +81,7 @@ std::string getBinaryenBinDir() {
 
 void setBinaryenBinDir(const std::string& dir) {
   binDir = dir;
-  if (binDir.back() != getPathSeparator()) {
+  if (binDir.empty() || binDir.back() != getPathSeparator()) {
     binDir += getPathSeparator();
   }
 }

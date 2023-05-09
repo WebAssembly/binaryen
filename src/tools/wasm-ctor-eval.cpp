@@ -25,6 +25,7 @@
 #include <memory>
 
 #include "asmjs/shared-constants.h"
+#include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -33,8 +34,10 @@
 #include "pass.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "support/insert_ordered.h"
 #include "support/small_set.h"
 #include "support/string.h"
+#include "support/topological_sort.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -49,6 +52,15 @@ struct FailToEvalException {
   std::string why;
   FailToEvalException(std::string why) : why(why) {}
 };
+
+// Check whether a field is both nullable and mutable. This is a useful
+// property for breaking cycles of GC data, see below.
+bool isNullableAndMutable(Expression* ref, Index fieldIndex) {
+  // Find the field for the given reference, and check its properties.
+  auto field = GCTypeUtils::getField(ref->type, fieldIndex);
+  assert(field);
+  return field->type.isNullable() && field->mutable_ == Mutable;
+}
 
 // The prefix for a recommendation, so it is aligned properly with the rest of
 // the output.
@@ -72,6 +84,13 @@ public:
     }
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
+  }
+
+  Flow visitTableSet(TableSet* curr) {
+    // TODO: Full dynamic table support. For now we stop evalling when we see a
+    //       table.set. (To support this we need to track sets and add code to
+    //       serialize them.)
+    throw FailToEvalException("table.set: TODO");
   }
 };
 
@@ -147,6 +166,13 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // A representation of the contents of wasm memory as we execute.
   std::unordered_map<Name, std::vector<char>> memories;
 
+  // All the names of globals we've seen in the module. We cannot reuse these.
+  // We must track these manually as we will be adding more, and as we do so we
+  // also reorder them, so we remove and re-add globals, which means the module
+  // itself is not aware of all the globals that belong to it (those that have
+  // not yet been re-added are a blind spot for it).
+  std::unordered_set<Name> usedGlobalNames;
+
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
       {}) {
@@ -174,6 +200,10 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
         std::vector<char> data;
         memories[memory->name] = data;
       }
+    }
+
+    for (auto& global : wasm->globals) {
+      usedGlobalNames.insert(global->name);
     }
   }
 
@@ -366,6 +396,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   uint64_t load64u(Address addr, Name memoryName) override {
     return doLoad<uint64_t>(addr, memoryName);
   }
+  std::array<uint8_t, 16> load128(Address addr, Name memoryName) override {
+    return doLoad<std::array<uint8_t, 16>>(addr, memoryName);
+  }
 
   void store8(Address addr, int8_t value, Name memoryName) override {
     doStore<int8_t>(addr, value, memoryName);
@@ -378,6 +411,11 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
   void store64(Address addr, int64_t value, Name memoryName) override {
     doStore<int64_t>(addr, value, memoryName);
+  }
+  void store128(Address addr,
+                const std::array<uint8_t, 16>& value,
+                Name memoryName) override {
+    doStore<std::array<uint8_t, 16>>(addr, value, memoryName);
   }
 
   bool growMemory(Name memoryName,
@@ -444,9 +482,10 @@ private:
     // each time (things live before may no longer be).
     definingGlobals.clear();
 
-    // When we start to apply the state there should be no previous state left
-    // over.
-    assert(seenDataStack.empty());
+    // Clear any startup operations as well (which may apply to globals that
+    // become no longer live; we'll create new start operations as we need
+    // them).
+    clearStartBlock();
   }
 
   void applyMemoryToModule() {
@@ -484,8 +523,6 @@ private:
   // data in the interpreter's memory can then be serialized by simply emitting
   // a global.get of that defining global.
   void applyGlobalsToModule() {
-    Builder builder(*wasm);
-
     if (!wasm->features.hasGC()) {
       // Without GC, we can simply serialize the globals in place as they are.
       for (const auto& [name, values] : instance->globals) {
@@ -502,6 +539,7 @@ private:
     // and refer to it. Put another way, we place the existing globals back into
     // the module one at a time, adding their dependencies as we go.
     auto oldGlobals = std::move(wasm->globals);
+    // After clearing the globals vector, clear the map as well.
     wasm->updateMaps();
 
     for (auto& oldGlobal : oldGlobals) {
@@ -511,74 +549,327 @@ private:
       Name name;
       if (!oldGlobal->mutable_ && oldGlobal->type == oldGlobal->init->type) {
         // This has the properties we need of a defining global - immutable and
-        // of the precise type - so use it.
+        // of the precise type - so use it as such.
         name = oldGlobal->name;
       }
 
-      // If there is a value here to serialize, do so. (If there is no value,
-      // then this global was added after the interpreter initialized the
-      // module, which means it is a new global we've added since; we don't need
-      // to do anything for such a global - if it is needed it will show up as a
-      // dependency of something, and be emitted at the right time and place.)
+      // If the instance has an evalled value here, compute the serialization
+      // for it. (If there is no value, then this is a new global we've added
+      // during execution, for whom we've already set up a proper serialized
+      // value when we created it.)
       auto iter = instance->globals.find(oldGlobal->name);
       if (iter != instance->globals.end()) {
         oldGlobal->init = getSerialization(iter->second, name);
-        wasm->addGlobal(std::move(oldGlobal));
       }
+
+      // Add the global back to the module.
+      wasm->addGlobal(std::move(oldGlobal));
+    }
+
+    // Finally, we need to fix up cycles. The serialization we just emitted
+    // ignores them, so we can end up with things like this:
+    //
+    //  (global $a (struct.new $A (global.get $a)))
+    //
+    // That global refers to an object that should have a self-reference, and
+    // the serialization logic simply emits global.gets for all references, so
+    // we end up with a situation like this where a global.get refers to a
+    // global before it is valid to do so. To fix this up, we can reorder
+    // globals as needed, and break up cycles by writing a null in the initial
+    // struct.new in the global's definition, and later in the start function we
+    // can perform additional struct.sets that cause cycles to form.
+    //
+    // The existing algorithm here is rather simple: we find things that
+    // definitely force a certain order and sort according to them. Then in that
+    // order we break forward references with fixups as described above. This is
+    // not always the best, as there may be a more optimal order, and we may end
+    // up doing more fixups than are absolutely necessary, but this algorithm is
+    // simple and works in linear time (or nlogn including the sort). The
+    // general problem here is NP-hard (the maximum acyclic subgraph problem),
+    // but there are probably greedy algorithms we could consider if we need to
+    // do better.
+
+    Builder builder(*wasm);
+
+    // First, find what constraints we have on the ordering of the globals. We
+    // will build up a map of each global to the globals it must be after.
+    using MustBeAfter = InsertOrderedMap<Name, InsertOrderedSet<Name>>;
+    MustBeAfter mustBeAfter;
+
+    for (auto& global : wasm->globals) {
+      if (!global->init) {
+        continue;
+      }
+
+      struct InitScanner : PostWalker<InitScanner> {
+        // All the global.gets that we can't fix up by replacing the value with
+        // a null and adding a set in the start function. These will be hard
+        // constraints on our sorting (if we could fix things up with a null +
+        // set then we would not need to reorder).
+        InsertOrderedSet<GlobalGet*> unfixableGets;
+
+        void visitGlobalGet(GlobalGet* curr) {
+          // Assume this is unfixable, unless we reach the parent and see that
+          // it is.
+          unfixableGets.insert(curr);
+        }
+
+        // Checks if a child is a global.get that we need to handle, and if we
+        // can fix it if so. The index is the position of the child in the
+        // parent (which is 0 for all array children, as their position does not
+        // matter, they all have the same field info).
+        void handleChild(Expression* child,
+                         Expression* parent,
+                         Index fieldIndex = 0) {
+          if (!child) {
+            return;
+          }
+
+          if (auto* get = child->dynCast<GlobalGet>()) {
+            if (isNullableAndMutable(parent, fieldIndex)) {
+              // We can replace the child with a null, and set the value later
+              // (in the start function), so this is not a constraint on our
+              // sorting - we'll just fix it up later, and the order won't be
+              // an issue.
+              unfixableGets.erase(get);
+            }
+          }
+        }
+
+        void visitStructNew(StructNew* curr) {
+          Index i = 0;
+          for (auto* child : curr->operands) {
+            handleChild(child, curr, i++);
+          }
+        }
+        void visitArrayNew(ArrayNew* curr) { handleChild(curr->init, curr); }
+        void visitArrayNewFixed(ArrayNewFixed* curr) {
+          for (auto* child : curr->values) {
+            handleChild(child, curr);
+          }
+        }
+      };
+
+      InitScanner scanner;
+      scanner.walk(global->init);
+
+      // Any global.gets that cannot be fixed up are constraints.
+      for (auto* get : scanner.unfixableGets) {
+        mustBeAfter[global->name].insert(get->name);
+      }
+    }
+
+    if (!mustBeAfter.empty()) {
+      // We found constraints that require reordering, so do so.
+      struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
+        MustBeAfter& mustBeAfter;
+
+        MustBeAfterSort(MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
+          for (auto& [global, _] : mustBeAfter) {
+            push(global);
+          }
+        }
+
+        void pushPredecessors(Name global) {
+          auto iter = mustBeAfter.find(global);
+          if (iter != mustBeAfter.end()) {
+            for (auto other : iter->second) {
+              push(other);
+            }
+          }
+        }
+      };
+
+      auto oldGlobals = std::move(wasm->globals);
+      // After clearing the globals vector, clear the map as well.
+      wasm->updateMaps();
+
+      std::unordered_map<Name, Index> globalIndexes;
+      for (Index i = 0; i < oldGlobals.size(); i++) {
+        globalIndexes[oldGlobals[i]->name] = i;
+      }
+      // Add the globals that had an important ordering, in the right order.
+      for (auto global : MustBeAfterSort(mustBeAfter)) {
+        wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
+      }
+      // Add all other globals after them.
+      for (auto& global : oldGlobals) {
+        if (global) {
+          wasm->addGlobal(std::move(global));
+        }
+      }
+    }
+
+    // After sorting (*), perform the fixups that we need, that is, replace the
+    // relevant fields in cycles with a null and prepare a set in the start
+    // function.
+    //
+    // We'll track the set of readable globals as we go (which are the globals
+    // we've seen already, and fully finished processing).
+    //
+    // (*) Note that we may need these fixups even if we didn't need to do any
+    //     sorting. There may be a single global with a cycle in it, for
+    //     example.
+    std::unordered_set<Name> readableGlobals;
+
+    for (auto& global : wasm->globals) {
+      if (!global->init) {
+        continue;
+      }
+
+      struct InitFixer : PostWalker<InitFixer> {
+        CtorEvalExternalInterface& evaller;
+        std::unique_ptr<Global>& global;
+        std::unordered_set<Name>& readableGlobals;
+
+        InitFixer(CtorEvalExternalInterface& evaller,
+                  std::unique_ptr<Global>& global,
+                  std::unordered_set<Name>& readableGlobals)
+          : evaller(evaller), global(global), readableGlobals(readableGlobals) {
+        }
+
+        // Handles a child by fixing things up if needed. Returns true if we
+        // did in fact fix things up.
+        bool handleChild(Expression*& child,
+                         Expression* parent,
+                         Index fieldIndex = 0) {
+          if (!child) {
+            return false;
+          }
+
+          if (auto* get = child->dynCast<GlobalGet>()) {
+            if (!readableGlobals.count(get->name)) {
+              // This get cannot be read - it is a global that appears after
+              // us - and so we must fix it up, using the method mentioned
+              // before (setting it to null now, and later in the start
+              // function writing to it).
+              assert(isNullableAndMutable(parent, fieldIndex));
+              evaller.addStartFixup(
+                {global->name, global->type}, fieldIndex, get);
+              child =
+                Builder(*getModule()).makeRefNull(get->type.getHeapType());
+              return true;
+            }
+          }
+
+          return false;
+        }
+
+        // This code will need to be updated for all new GC-creating
+        // instructions that we use when serializing GC data, that is, things we
+        // put in defining globals. (All other instructions, even constant ones
+        // in globals, will simply end up referring to them using a global.get,
+        // but will not be referred to. That is, cycles will only appear in
+        // defining globals.)
+
+        void visitStructNew(StructNew* curr) {
+          Index i = 0;
+          for (auto*& child : curr->operands) {
+            handleChild(child, curr, i++);
+          }
+        }
+        void visitArrayNew(ArrayNew* curr) {
+          if (handleChild(curr->init, curr)) {
+            // Handling array.new is tricky as the number of items may be
+            // unknown at compile time, so we'd need to loop at runtime. But,
+            // in practice we emit an array.new_fixed anyhow, so this should
+            // not be needed for now.
+            WASM_UNREACHABLE("TODO: ArrayNew in ctor-eval cycles");
+          }
+        }
+        void visitArrayNewFixed(ArrayNewFixed* curr) {
+          Index i = 0;
+          for (auto*& child : curr->values) {
+            handleChild(child, curr, i++);
+          }
+        }
+      };
+
+      InitFixer fixer(*this, global, readableGlobals);
+      fixer.setModule(wasm);
+      fixer.walk(global->init);
+
+      // Only after we've fully processed this global is it ok to be read from
+      // by later globals.
+      readableGlobals.insert(global->name);
     }
   }
 
 public:
   // Maps each GC data in the interpreter to its defining global: the global in
   // which it is created, and then all other users of it can just global.get
-  // that.
-  std::unordered_map<GCData*, Name> definingGlobals;
-
-  // The data we have seen so far on the stack. This is used to guard against
-  // infinite recursion, which would otherwise happen if there is a cycle among
-  // the live objects, which we don't handle yet.
-  //
-  // Pick a constant of 2 here to handle the common case of an object with a
-  // reference to another object that is already in a defining global.
-  SmallSet<GCData*, 2> seenDataStack;
+  // that. For each such global we track its name and type.
+  struct DefiningGlobalInfo {
+    Name name;
+    Type type;
+  };
+  std::unordered_map<GCData*, DefiningGlobalInfo> definingGlobals;
 
   // If |possibleDefiningGlobal| is provided, it is the name of a global that we
   // are in the init expression of, and which can be reused as defining global,
   // if the other conditions are suitable.
-  Expression* getSerialization(const Literal& value,
+  Expression* getSerialization(Literal value,
                                Name possibleDefiningGlobal = Name()) {
     Builder builder(*wasm);
 
+    // If this is externalized then we want to inspect the inner data, handle
+    // that, and emit a ref.externalize around it as needed. To simplify the
+    // logic here, we save the original (possible externalized) value, and then
+    // look at the internals from here on out.
+    Literal original = value;
+    if (value.type.isRef() && value.type.getHeapType() == HeapType::ext) {
+      value = value.internalize();
+
+      // We cannot serialize truly external things, only data and i31s.
+      assert(value.isData() || value.type.getHeapType() == HeapType::i31);
+    }
+
+    // GC data (structs and arrays) must be handled with the special global-
+    // creating logic later down. But MVP types as well as i31s (even
+    // externalized i31s) can be handled by the general makeConstantExpression
+    // logic (which knows how to handle externalization, for i31s).
     if (!value.isData()) {
-      // This can be handled normally.
-      return builder.makeConstantExpression(value);
+      return builder.makeConstantExpression(original);
     }
 
     // This is GC data, which we must handle in a more careful way.
     auto* data = value.getGCData().get();
     assert(data);
 
-    // There was actual GC data allocated here.
     auto type = value.type;
-    auto& definingGlobal = definingGlobals[data];
-    if (!definingGlobal.is()) {
-      // This is the first usage of this allocation. Generate a struct.new /
+    Name definingGlobalName;
+
+    if (auto it = definingGlobals.find(data); it != definingGlobals.end()) {
+      // Use the existing defining global.
+      definingGlobalName = it->second.name;
+    } else {
+      // This is the first usage of this data. Generate a struct.new /
       // array.new for it.
       auto& values = value.getGCData()->values;
       std::vector<Expression*> args;
 
       // The initial values for this allocation may themselves be GC
-      // allocations. Recurse and add globals as necessary.
-      // TODO: Handle cycles. That will require code in the start function. For
-      //       now, just error if we detect an infinite recursion.
-      if (seenDataStack.count(data)) {
-        Fatal() << "Cycle in live GC data, which we cannot serialize yet.";
+      // allocations. Recurse and add globals as necessary. First, pick the
+      // global name (note that we must do so first, as we may need to read from
+      // definingGlobals to find where this global will be, in the case of a
+      // cycle; see below).
+      if (possibleDefiningGlobal.is()) {
+        // No need to allocate a new global, as we are in the definition of
+        // one, which will be the defining global.
+        definingGlobals[data] =
+          DefiningGlobalInfo{possibleDefiningGlobal, type};
+        definingGlobalName = possibleDefiningGlobal;
+      } else {
+        // Allocate a new defining global.
+        definingGlobalName =
+          Names::getValidNameGivenExisting("ctor-eval$global", usedGlobalNames);
+        usedGlobalNames.insert(definingGlobalName);
+        definingGlobals[data] = DefiningGlobalInfo{definingGlobalName, type};
       }
-      seenDataStack.insert(data);
+
       for (auto& value : values) {
         args.push_back(getSerialization(value));
       }
-      seenDataStack.erase(data);
 
       Expression* init;
       auto heapType = type.getHeapType();
@@ -586,37 +877,119 @@ public:
         init = builder.makeStructNew(heapType, args);
       } else if (heapType.isArray()) {
         // TODO: for repeated identical values, can use ArrayNew
-        init = builder.makeArrayInit(heapType, args);
+        init = builder.makeArrayNewFixed(heapType, args);
       } else {
         WASM_UNREACHABLE("bad gc type");
       }
 
       if (possibleDefiningGlobal.is()) {
-        // No need to allocate a new global, as we are in the definition of
-        // one. Just return the initialization expression, which will be
-        // placed in that global's |init| field, and first note this as the
-        // defining global.
-        definingGlobal = possibleDefiningGlobal;
+        // We didn't need to allocate a new global, as we are in the definition
+        // of one, so just return the initialization expression, which will be
+        // placed in that global's |init| field.
         return init;
       }
 
-      // Allocate a new defining global.
-      auto name = Names::getValidGlobalName(*wasm, "ctor-eval$global");
-      wasm->addGlobal(builder.makeGlobal(name, type, init, Builder::Immutable));
-      definingGlobal = name;
+      // There is no existing defining global, so we must allocate a new one.
+      //
+      // We set the global's init to null temporarily, and we'll fix it up
+      // later down after we create the init expression.
+      wasm->addGlobal(
+        builder.makeGlobal(definingGlobalName, type, init, Builder::Immutable));
     }
 
     // Refer to this GC allocation by reading from the global that is
     // designated to contain it.
-    return builder.makeGlobalGet(definingGlobal, value.type);
+    Expression* ret = builder.makeGlobalGet(definingGlobalName, value.type);
+    if (original != value) {
+      // The original is externalized.
+      assert(original.type.getHeapType() == HeapType::ext);
+      ret = builder.makeRefAs(ExternExternalize, ret);
+    }
+    return ret;
   }
 
   Expression* getSerialization(const Literals& values,
                                Name possibleDefiningGlobal = Name()) {
+    if (values.size() > 1) {
+      // We do not support multivalues in defining globals, which store GC refs.
+      assert(possibleDefiningGlobal.isNull());
+      std::vector<Expression*> children;
+      for (const auto& value : values) {
+        children.push_back(getSerialization(value));
+      }
+      return Builder(*wasm).makeTupleMake(children);
+    }
     assert(values.size() == 1);
     return getSerialization(values[0], possibleDefiningGlobal);
   }
+
+  // This is called when we hit a cycle in setting up defining globals. For
+  // example, if the data we want to emit is
+  //
+  //    global globalA = new A{ field = &A }; // A has a reference to itself
+  //
+  // then we'll emit
+  //
+  //    global globalA = new A{ field = null };
+  //
+  // and put this in the start function:
+  //
+  //   globalA.field = globalA;
+  //
+  // The parameters here are a global and a field index to that global, and the
+  // global we want to assign to it, that is, our goal is to have
+  //
+  //  global[index] = valueGlobal
+  //
+  // run during the start function.
+  void addStartFixup(DefiningGlobalInfo global, Index index, GlobalGet* value) {
+    if (!startBlock) {
+      createStartBlock();
+    }
+
+    Builder builder(*wasm);
+    auto* getGlobal = builder.makeGlobalGet(global.name, global.type);
+
+    Expression* set;
+    if (global.type.isStruct()) {
+      set = builder.makeStructSet(index, getGlobal, value);
+    } else {
+      set = builder.makeArraySet(
+        getGlobal, builder.makeConst(int32_t(index)), value);
+    }
+
+    (*startBlock)->list.push_back(set);
+  }
+
+  // A block in the start function where we put the operations we need to occur
+  // during startup.
+  std::optional<Block*> startBlock;
+
+  void createStartBlock() {
+    Builder builder(*wasm);
+    startBlock = builder.makeBlock();
+    if (wasm->start.is()) {
+      // Put our block before any user start code.
+      auto* existingStart = wasm->getFunction(wasm->start);
+      existingStart->body =
+        builder.makeSequence(*startBlock, existingStart->body);
+    } else {
+      // Make a new start function.
+      wasm->start = Names::getValidFunctionName(*wasm, "start");
+      wasm->addFunction(builder.makeFunction(
+        wasm->start, Signature{Type::none, Type::none}, {}, *startBlock));
+    }
+  }
+
+  void clearStartBlock() {
+    if (startBlock) {
+      (*startBlock)->list.clear();
+    }
+  }
 };
+
+// Whether to emit informative logging to stdout about the eval process.
+static bool quiet = false;
 
 // The outcome of evalling a ctor is one of three states:
 //
@@ -642,8 +1015,10 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   // We don't know the values of parameters, so give up if there are any, unless
   // we are ignoring them.
   if (func->getNumParams() > 0 && !ignoreExternalInput) {
-    std::cout << "  ...stopping due to params\n";
-    std::cout << RECOMMENDATION "consider --ignore-external-input";
+    if (!quiet) {
+      std::cout << "  ...stopping due to params\n";
+      std::cout << RECOMMENDATION "consider --ignore-external-input";
+    }
     return EvalCtorOutcome();
   }
 
@@ -657,7 +1032,9 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   for (Index i = 0; i < func->getNumParams(); i++) {
     auto type = func->getLocalType(i);
     if (!LiteralUtils::canMakeZero(type)) {
-      std::cout << "  ...stopping due to non-zeroable param\n";
+      if (!quiet) {
+        std::cout << "  ...stopping due to non-zeroable param\n";
+      }
       return EvalCtorOutcome();
     }
     params.push_back(Literal::makeZero(type));
@@ -688,33 +1065,55 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
     // in a single function scope for all the executions.
     EvallingModuleRunner::FunctionScope scope(func, params, instance);
 
-    // After we successfully eval a line we will apply the changes here. This is
-    // the same idea as applyToModule() - we must only do it after an entire
-    // atomic "chunk" has been processed, we do not want partial updates from
-    // an item in the block that we only partially evalled.
-    std::vector<Literals> appliedLocals;
+    // After we successfully eval a line we will store the operations to set up
+    // the locals here. That is, we need to save the local state in the
+    // function, which we do by setting up at the entry. We update this list of
+    // local.sets at the same time as applyToModule() - we must only do it after
+    // an entire atomic "chunk" has been processed succesfully, we do not want
+    // partial updates from an item in the block that we only partially evalled.
+    std::vector<Expression*> localSets;
 
+    Builder builder(wasm);
     Literals results;
     Index successes = 0;
+
     for (auto* curr : block->list) {
       Flow flow;
       try {
         flow = instance.visit(curr);
       } catch (FailToEvalException& fail) {
-        if (successes == 0) {
-          std::cout << "  ...stopping (in block) since could not eval: "
-                    << fail.why << "\n";
-        } else {
-          std::cout << "  ...partial evalling successful, but stopping since "
-                       "could not eval: "
-                    << fail.why << "\n";
+        if (!quiet) {
+          if (successes == 0) {
+            std::cout << "  ...stopping (in block) since could not eval: "
+                      << fail.why << "\n";
+          } else {
+            std::cout << "  ...partial evalling successful, but stopping since "
+                         "could not eval: "
+                      << fail.why << "\n";
+          }
         }
         break;
       }
 
-      // So far so good! Apply the results.
+      // So far so good! Serialize the values of locals, and apply to the
+      // module. Note that we must serialize the locals now as doing so may
+      // cause changes that must be applied to the module (e.g. GC data may
+      // cause globals to be added). And we must apply to the module now, and
+      // not later, as we must do so right after a successfull partial eval
+      // (after any failure to eval, the global state is no long valid to be
+      // applied to the module, as incomplete changes may have occurred).
+      //
+      // Note that we make no effort to optimize locals: we just write out all
+      // of them, and leave it to the optimizer to remove redundant or
+      // unnecessary operations. We just recompute the entire local
+      // serialization sets from scratch each time here, for all locals.
+      localSets.clear();
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        auto value = scope.locals[i];
+        localSets.push_back(
+          builder.makeLocalSet(i, interface.getSerialization(value)));
+      }
       interface.applyToModule();
-      appliedLocals = scope.locals;
       successes++;
 
       // Note the values here, if any. If we are exiting the function now then
@@ -725,7 +1124,9 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
         // We are returning out of the function (either via a return, or via a
         // break to |block|, which has the same outcome. That means we don't
         // need to execute any more lines, and can consider them to be executed.
-        std::cout << "  ...stopping in block due to break\n";
+        if (!quiet) {
+          std::cout << "  ...stopping in block due to break\n";
+        }
 
         // Mark us as having succeeded on the entire block, since we have: we
         // are skipping the rest, which means there is no problem there. We must
@@ -748,21 +1149,9 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       wasm.getExport(exportName)->value = copyName;
 
       // Remove the items we've evalled.
-      Builder builder(wasm);
       auto* copyBlock = copyFunc->body->cast<Block>();
       for (Index i = 0; i < successes; i++) {
         copyBlock->list[i] = builder.makeNop();
-      }
-
-      // Write out the values of locals, that is the local state after evalling
-      // the things we've just nopped. For simplicity we just write out all of
-      // locals, and leave it to the optimizer to remove redundant or
-      // unnecessary operations.
-      std::vector<Expression*> localSets;
-      for (Index i = 0; i < copyFunc->getNumLocals(); i++) {
-        auto value = appliedLocals[i];
-        localSets.push_back(
-          builder.makeLocalSet(i, interface.getSerialization(value)));
       }
 
       // Put the local sets at the front of the block. We know there must be a
@@ -795,7 +1184,9 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   try {
     results = instance.callFunction(funcName, params);
   } catch (FailToEvalException& fail) {
-    std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
+    if (!quiet) {
+      std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
+    }
     return EvalCtorOutcome();
   }
 
@@ -827,7 +1218,9 @@ void evalCtors(Module& wasm,
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {
-      std::cout << "trying to eval " << ctor << '\n';
+      if (!quiet) {
+        std::cout << "trying to eval " << ctor << '\n';
+      }
       Export* ex = wasm.getExportOrNull(ctor);
       if (!ex) {
         Fatal() << "export not found: " << ctor;
@@ -835,12 +1228,16 @@ void evalCtors(Module& wasm,
       auto funcName = ex->value;
       auto outcome = evalCtor(instance, interface, funcName, ctor);
       if (!outcome) {
-        std::cout << "  ...stopping\n";
+        if (!quiet) {
+          std::cout << "  ...stopping\n";
+        }
         return;
       }
 
       // Success! And we can continue to try more.
-      std::cout << "  ...success on " << ctor << ".\n";
+      if (!quiet) {
+        std::cout << "  ...success on " << ctor << ".\n";
+      }
 
       // Remove the export if we should.
       auto* exp = wasm.getExport(ctor);
@@ -862,8 +1259,10 @@ void evalCtors(Module& wasm,
     }
   } catch (FailToEvalException& fail) {
     // that's it, we failed to even create the instance
-    std::cout << "  ...stopping since could not create module instance: "
-              << fail.why << "\n";
+    if (!quiet) {
+      std::cout << "  ...stopping since could not create module instance: "
+                << fail.why << "\n";
+    }
     return;
   }
 }
@@ -872,7 +1271,9 @@ static bool canEval(Module& wasm) {
   // Check if we can flatten memory. We need to do so currently because of how
   // we assume memory is simple and flat. TODO
   if (!MemoryUtils::flatten(wasm)) {
-    std::cout << "  ...stopping since could not flatten memory\n";
+    if (!quiet) {
+      std::cout << "  ...stopping since could not flatten memory\n";
+    }
     return false;
   }
   return true;
@@ -943,6 +1344,12 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& argument) {
            ignoreExternalInput = true;
          })
+    .add("--quiet",
+         "-q",
+         "Do not emit verbose logging about the eval process",
+         WasmCtorEvalOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { quiet = true; })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
@@ -975,6 +1382,11 @@ int main(int argc, const char* argv[]) {
 
   if (canEval(wasm)) {
     evalCtors(wasm, ctors, keptExports);
+
+    if (!WasmValidator().validate(wasm)) {
+      std::cout << wasm << '\n';
+      Fatal() << "error in validating output";
+    }
 
     // Do some useful optimizations after the evalling
     {
