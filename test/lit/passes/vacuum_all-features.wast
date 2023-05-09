@@ -627,7 +627,7 @@
   ;; CHECK:      (func $drop-if-both-unreachable (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (br $out)
   ;; CHECK-NEXT:     (br $out)
@@ -635,7 +635,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
@@ -701,6 +701,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $out2
+  ;; CHECK-NEXT:   (block $in2
+  ;; CHECK-NEXT:    (br $in2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $block-resize-br-gone
     (block $out
@@ -760,14 +766,16 @@
     )
   )
   ;; CHECK:      (func $leave-block-even-if-br-not-taken (type $none_=>_f64) (result f64)
-  ;; CHECK-NEXT:  (block $label$0 (result f64)
+  ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (f64.store align=1
   ;; CHECK-NEXT:    (i32.const 879179022)
-  ;; CHECK-NEXT:    (br_if $label$0
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (loop $label$9
   ;; CHECK-NEXT:      (br $label$9)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 677803374)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 677803374)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
