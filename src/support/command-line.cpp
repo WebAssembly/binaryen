@@ -172,12 +172,12 @@ Options& Options::add_positional(const std::string& name,
 void Options::parse(int argc, const char* argv[]) {
 
 #ifdef _WIN32
-  auto argListW = CommandLineToArgvW(GetCommandLineW(), &argc);
+  LPWSTR* argListW = CommandLineToArgvW(GetCommandLineW(), &argc);
   std::vector<std::string> argList;
-  std::cerr << "cmd line ";
+  //std::cerr << "cmd line ";
   for (size_t i = 0, e = argc; i < e; ++i) {
     argList.push_back(wasm::Path::wstring_to_string(argListW[i]));
-    std::cerr << argListW[i] << " " << argList[i] << "\n";
+    //std::cerr << *argListW[i] << " " << argList[i] << "\n";
   }
 #else
   const char** argList = argv;

@@ -110,13 +110,13 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
         buffer = std::cout.rdbuf();
       } else {
         BYN_TRACE("Opening '" << filename << "'\n");
-        auto flags = std::ofstream::out | std::ofstream::trunc;
+        std::ios_base::openmode flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
         }
         outfile.open(wasm::Path::to_path(filename), flags);
         if (!outfile.is_open()) {
-          Fatal() << "Failed opening '" << filename << "'";
+          Fatal() << "Failed opening output file '" << filename << "': " << strerror(errno);
         }
         buffer = outfile.rdbuf();
       }
