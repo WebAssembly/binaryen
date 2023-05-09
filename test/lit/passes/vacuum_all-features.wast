@@ -627,7 +627,7 @@
   ;; CHECK:      (func $drop-if-both-unreachable (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (br $out)
   ;; CHECK-NEXT:     (br $out)
@@ -635,7 +635,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
@@ -701,6 +701,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $out2
+  ;; CHECK-NEXT:   (block $in2
+  ;; CHECK-NEXT:    (br $in2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $block-resize-br-gone
     (block $out
@@ -711,6 +717,8 @@
       )
       (return)
     )
+    ;; The second br will be removed. (The entire expression after us can also
+    ;; be removed, which will be done by --remove-unused-brs --vacuum.)
     (block $out2
       (block $in2
         (br $in2)
@@ -758,14 +766,16 @@
     )
   )
   ;; CHECK:      (func $leave-block-even-if-br-not-taken (type $none_=>_f64) (result f64)
-  ;; CHECK-NEXT:  (block $label$0 (result f64)
+  ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (f64.store align=1
   ;; CHECK-NEXT:    (i32.const 879179022)
-  ;; CHECK-NEXT:    (br_if $label$0
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (loop $label$9
   ;; CHECK-NEXT:      (br $label$9)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.const 677803374)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 677803374)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -775,6 +785,9 @@
     (f64.store align=1
      (i32.const 879179022)
      (br_if $label$0
+      ;; This loop never exits, so it is unreachable. We don't have much to
+      ;; optimize here, but we can remove the br_if and leave an unreachable
+      ;; block with the other contents for dce to clean up.
       (loop $label$9
        (br $label$9)
       )
