@@ -3,25 +3,44 @@
 ;; Test code that can be partially inlined, with and without that option.
 ;;
 ;; This is similar to inlining_splitting.wast but focuses on testing that we
-;; only partially inline when the commandline flag is provided.
+;; only partially inline when the commandline flag is provided. In both of the
+;; $call-* functions below, we should partially inline when that flag is set.
 
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3                          --all-features -S -o - | filecheck %s --check-prefix NORMAL_
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 --partial-inlining-ifs=1 --all-features -S -o - | filecheck %s --check-prefix PARTIAL
 
 (module
+  ;; NORMAL_:      (type $none_=>_none (func))
+
+  ;; NORMAL_:      (type $i32_=>_none (func (param i32)))
+
+  ;; NORMAL_:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; NORMAL_:      (import "a" "b" (func $import))
+  ;; PARTIAL:      (type $none_=>_none (func))
+
+  ;; PARTIAL:      (type $i32_=>_none (func (param i32)))
+
+  ;; PARTIAL:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; PARTIAL:      (import "a" "b" (func $import))
   (import "a" "b" (func $import))
 
   ;; Pattern A: functions beginning with
   ;;
   ;;   if (simple) return;
 
+  ;; NORMAL_:      (func $pattern-A (type $i32_=>_none) (param $x i32)
+  ;; NORMAL_-NEXT:  (if
+  ;; NORMAL_-NEXT:   (local.get $x)
+  ;; NORMAL_-NEXT:   (return)
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT:  (loop $l
+  ;; NORMAL_-NEXT:   (call $import)
+  ;; NORMAL_-NEXT:   (br $l)
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT: )
   (func $pattern-A (param $x i32)
-    ;; A function that does a quick check before any heavy work. We can outline
-    ;; the heavy work, so that the condition can be inlined.
-    ;;
-    ;; This function (and others lower down that we also optimize) will vanish
-    ;; in the output. Part of it will be inlined into its caller, below, and
-    ;; the rest will be outlined into a new function with suffix "outlined".
     (if
       (local.get $x)
       (return)
@@ -32,14 +51,49 @@
     )
   )
 
+  ;; NORMAL_:      (func $call-pattern-A (type $none_=>_none)
+  ;; NORMAL_-NEXT:  (call $pattern-A
+  ;; NORMAL_-NEXT:   (i32.const 1)
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT:  (call $pattern-A
+  ;; NORMAL_-NEXT:   (i32.const 2)
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT: )
+  ;; PARTIAL:      (func $call-pattern-A (type $none_=>_none)
+  ;; PARTIAL-NEXT:  (local $0 i32)
+  ;; PARTIAL-NEXT:  (local $1 i32)
+  ;; PARTIAL-NEXT:  (block
+  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-A$pattern-A
+  ;; PARTIAL-NEXT:    (local.set $0
+  ;; PARTIAL-NEXT:     (i32.const 1)
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:    (if
+  ;; PARTIAL-NEXT:     (i32.eqz
+  ;; PARTIAL-NEXT:      (local.get $0)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (call $byn-split-outlined-A$pattern-A
+  ;; PARTIAL-NEXT:      (local.get $0)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:  )
+  ;; PARTIAL-NEXT:  (block
+  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-A$pattern-A$1
+  ;; PARTIAL-NEXT:    (local.set $1
+  ;; PARTIAL-NEXT:     (i32.const 2)
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:    (if
+  ;; PARTIAL-NEXT:     (i32.eqz
+  ;; PARTIAL-NEXT:      (local.get $1)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (call $byn-split-outlined-A$pattern-A
+  ;; PARTIAL-NEXT:      (local.get $1)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:  )
+  ;; PARTIAL-NEXT: )
   (func $call-pattern-A
-    ;; Call the above function to verify that we can in fact inline it after
-    ;; splitting. We should see each of these three calls replaced by inlined
-    ;; code performing the if from $pattern-A, and depending on that
-    ;; result they each call the outlined code that must *not* be inlined.
-    ;;
-    ;; Note that we must call more than once, otherwise given a single use we
-    ;; will always inline the entire thing.
     (call $pattern-A (i32.const 1))
     (call $pattern-A (i32.const 2))
   )
@@ -50,6 +104,18 @@
   ;;   if (simple..) heavy-work-that-is-unreachable;
   ;;   simplek
 
+  ;; NORMAL_:      (func $pattern-B (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; NORMAL_-NEXT:  (if
+  ;; NORMAL_-NEXT:   (i32.eqz
+  ;; NORMAL_-NEXT:    (local.get $x)
+  ;; NORMAL_-NEXT:   )
+  ;; NORMAL_-NEXT:   (block
+  ;; NORMAL_-NEXT:    (call $import)
+  ;; NORMAL_-NEXT:    (unreachable)
+  ;; NORMAL_-NEXT:   )
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT:  (local.get $x)
+  ;; NORMAL_-NEXT: )
   (func $pattern-B (param $x i32) (result i32)
     (if
       (i32.eqz
@@ -63,8 +129,79 @@
     (local.get $x)
   )
 
+  ;; NORMAL_:      (func $call-pattern-B (type $none_=>_none)
+  ;; NORMAL_-NEXT:  (drop
+  ;; NORMAL_-NEXT:   (call $pattern-B
+  ;; NORMAL_-NEXT:    (i32.const 1)
+  ;; NORMAL_-NEXT:   )
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT:  (drop
+  ;; NORMAL_-NEXT:   (call $pattern-B
+  ;; NORMAL_-NEXT:    (i32.const 2)
+  ;; NORMAL_-NEXT:   )
+  ;; NORMAL_-NEXT:  )
+  ;; NORMAL_-NEXT: )
+  ;; PARTIAL:      (func $call-pattern-B (type $none_=>_none)
+  ;; PARTIAL-NEXT:  (local $0 i32)
+  ;; PARTIAL-NEXT:  (local $1 i32)
+  ;; PARTIAL-NEXT:  (drop
+  ;; PARTIAL-NEXT:   (block (result i32)
+  ;; PARTIAL-NEXT:    (block $__inlined_func$byn-split-inlineable-B$pattern-B$2 (result i32)
+  ;; PARTIAL-NEXT:     (local.set $0
+  ;; PARTIAL-NEXT:      (i32.const 1)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (block (result i32)
+  ;; PARTIAL-NEXT:      (if
+  ;; PARTIAL-NEXT:       (i32.eqz
+  ;; PARTIAL-NEXT:        (local.get $0)
+  ;; PARTIAL-NEXT:       )
+  ;; PARTIAL-NEXT:       (br $__inlined_func$byn-split-inlineable-B$pattern-B$2
+  ;; PARTIAL-NEXT:        (call $byn-split-outlined-B$pattern-B
+  ;; PARTIAL-NEXT:         (local.get $0)
+  ;; PARTIAL-NEXT:        )
+  ;; PARTIAL-NEXT:       )
+  ;; PARTIAL-NEXT:      )
+  ;; PARTIAL-NEXT:      (local.get $0)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:  )
+  ;; PARTIAL-NEXT:  (drop
+  ;; PARTIAL-NEXT:   (block (result i32)
+  ;; PARTIAL-NEXT:    (block $__inlined_func$byn-split-inlineable-B$pattern-B$3 (result i32)
+  ;; PARTIAL-NEXT:     (local.set $1
+  ;; PARTIAL-NEXT:      (i32.const 2)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (block (result i32)
+  ;; PARTIAL-NEXT:      (if
+  ;; PARTIAL-NEXT:       (i32.eqz
+  ;; PARTIAL-NEXT:        (local.get $1)
+  ;; PARTIAL-NEXT:       )
+  ;; PARTIAL-NEXT:       (br $__inlined_func$byn-split-inlineable-B$pattern-B$3
+  ;; PARTIAL-NEXT:        (call $byn-split-outlined-B$pattern-B
+  ;; PARTIAL-NEXT:         (local.get $1)
+  ;; PARTIAL-NEXT:        )
+  ;; PARTIAL-NEXT:       )
+  ;; PARTIAL-NEXT:      )
+  ;; PARTIAL-NEXT:      (local.get $1)
+  ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:  )
+  ;; PARTIAL-NEXT: )
   (func $call-pattern-B
-    (drop (call $error-if-null (ref.null any)))
-    (drop (call $error-if-null (ref.null any)))
+    (drop (call $pattern-B (i32.const 1)))
+    (drop (call $pattern-B (i32.const 2)))
   )
 )
+;; PARTIAL:      (func $byn-split-outlined-A$pattern-A (type $i32_=>_none) (param $x i32)
+;; PARTIAL-NEXT:  (loop $l
+;; PARTIAL-NEXT:   (call $import)
+;; PARTIAL-NEXT:   (br $l)
+;; PARTIAL-NEXT:  )
+;; PARTIAL-NEXT: )
+
+;; PARTIAL:      (func $byn-split-outlined-B$pattern-B (type $i32_=>_i32) (param $x i32) (result i32)
+;; PARTIAL-NEXT:  (call $import)
+;; PARTIAL-NEXT:  (unreachable)
+;; PARTIAL-NEXT: )
