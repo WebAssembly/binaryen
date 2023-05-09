@@ -186,7 +186,14 @@
   )
 
   ;; YESTNH:      (func $drop-loop (type $none_=>_none)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (loop $loop (result i32)
+  ;; YESTNH-NEXT:    (br_if $loop
+  ;; YESTNH-NEXT:     (i32.const 1)
+  ;; YESTNH-NEXT:    )
+  ;; YESTNH-NEXT:    (i32.const 10)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $drop-loop (type $none_=>_none)
   ;; NO_TNH-NEXT:  (drop
@@ -199,8 +206,8 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $drop-loop
-    ;; A loop has effects, since it might infinite loop (and hit a timeout trap
-    ;; eventually), so we do not vacuum it out unless we are ignoring traps.
+    ;; A loop has the effect of potentially being infinite. Even in TNH mode we
+    ;; do not optimize out such loops.
     (drop
       (loop $loop (result i32)
         (br_if $loop
