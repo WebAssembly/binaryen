@@ -1073,8 +1073,7 @@ struct Inlining : public Pass {
     auto& options = getPassOptions();
     if (options.optimizeLevel >= 3 && !options.shrinkLevel &&
         options.inlining.partialInliningIfs) {
-      functionSplitter =
-        std::make_unique<FunctionSplitter>(module, options);
+      functionSplitter = std::make_unique<FunctionSplitter>(module, options);
     }
   }
 
