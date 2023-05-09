@@ -162,7 +162,7 @@ inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
   for (auto& curr : in.exports) {
-    out.addExport(new Export(*curr));
+    out.addExport(std::make_unique<Export>(*curr));
   }
   copyModuleItems(in, out);
   out.start = in.start;
