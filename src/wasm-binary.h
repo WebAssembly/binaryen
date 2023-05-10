@@ -1154,6 +1154,7 @@ enum ASTNodes {
   StringIsUSV = 0x8a,
   StringNewLossyUTF8 = 0x8b,
   StringNewWTF8 = 0x8c,
+  StringEncodeLossyUTF8 = 0x8d,
   StringEncodeWTF8 = 0x8e,
   StringNewUTF8Try = 0x8f,
   StringAsWTF8 = 0x90,
@@ -1177,6 +1178,7 @@ enum ASTNodes {
   StringEncodeWTF16Array = 0xb3,
   StringNewLossyUTF8Array = 0xb4,
   StringNewWTF8Array = 0xb5,
+  StringEncodeLossyUTF8Array = 0xb6,
   StringEncodeWTF8Array = 0xb7,
   StringNewUTF8ArrayTry = 0xb8,
 };

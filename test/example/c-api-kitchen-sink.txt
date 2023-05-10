@@ -2434,6 +2434,12 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
+       (string.encode_wtf8 replace
+        (global.get $string-global)
+        (i32.const 0)
+       )
+      )
+      (drop
        (string.encode_wtf8 wtf8
         (global.get $string-global)
         (i32.const 0)
@@ -2447,6 +2453,13 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (string.encode_wtf8_array utf8
+        (global.get $string-global)
+        (global.get $i8Array-global)
+        (i32.const 0)
+       )
+      )
+      (drop
+       (string.encode_wtf8_array replace
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)

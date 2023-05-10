@@ -184,6 +184,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.encode_wtf8 replace
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.encode_wtf8 utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 20)
@@ -200,6 +208,14 @@
     (drop
       (i32.eqz ;; validate the output is i32
         (string.encode_wtf8 wtf8
+          (local.get $ref)
+          (i32.const 10)
+        )
+      )
+    )
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.encode_wtf8 replace
           (local.get $ref)
           (i32.const 10)
         )
@@ -546,6 +562,15 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (string.encode_wtf8_array replace
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (local.get $array)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.encode_wtf8_array utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
@@ -564,6 +589,15 @@
     (drop
       (i32.eqz ;; validate the output is i32
         (string.encode_wtf8_array wtf8
+          (local.get $ref)
+          (local.get $array)
+          (i32.const 10)
+        )
+      )
+    )
+    (drop
+      (i32.eqz ;; validate the output is i32
+        (string.encode_wtf8_array replace
           (local.get $ref)
           (local.get $array)
           (i32.const 10)

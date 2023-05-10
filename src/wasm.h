@@ -596,9 +596,11 @@ enum StringMeasureOp {
 
 enum StringEncodeOp {
   StringEncodeUTF8,
+  StringEncodeLossyUTF8,
   StringEncodeWTF8,
   StringEncodeWTF16,
   StringEncodeUTF8Array,
+  StringEncodeLossyUTF8Array,
   StringEncodeWTF8Array,
   StringEncodeWTF16Array,
 };

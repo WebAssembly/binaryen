@@ -7428,6 +7428,11 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
       throwError("Unexpected nonzero memory index");
     }
     op = StringEncodeUTF8;
+  } else if (code == BinaryConsts::StringEncodeLossyUTF8) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
+    op = StringEncodeLossyUTF8;
   } else if (code == BinaryConsts::StringEncodeWTF8) {
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
@@ -7440,6 +7445,9 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
     op = StringEncodeWTF16;
   } else if (code == BinaryConsts::StringEncodeUTF8Array) {
     op = StringEncodeUTF8Array;
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
+    op = StringEncodeLossyUTF8Array;
     start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringEncodeWTF8Array) {
     op = StringEncodeWTF8Array;

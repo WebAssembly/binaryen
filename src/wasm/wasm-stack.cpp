@@ -2315,6 +2315,10 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
       o << U32LEB(BinaryConsts::StringEncodeUTF8);
       o << int8_t(0); // Memory index.
       break;
+    case StringEncodeLossyUTF8:
+      o << U32LEB(BinaryConsts::StringEncodeLossyUTF8);
+      o << int8_t(0); // Memory index.
+      break;
     case StringEncodeWTF8:
       o << U32LEB(BinaryConsts::StringEncodeWTF8);
       o << int8_t(0); // Memory index.
@@ -2325,6 +2329,9 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
       break;
     case StringEncodeUTF8Array:
       o << U32LEB(BinaryConsts::StringEncodeUTF8Array);
+      break;
+    case StringEncodeLossyUTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeLossyUTF8Array);
       break;
     case StringEncodeWTF8Array:
       o << U32LEB(BinaryConsts::StringEncodeWTF8Array);

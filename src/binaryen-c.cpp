@@ -1057,9 +1057,13 @@ BinaryenOp BinaryenStringMeasureWTF16View(void) {
   return StringMeasureWTF16View;
 }
 BinaryenOp BinaryenStringEncodeUTF8(void) { return StringEncodeUTF8; }
+BinaryenOp BinaryenStringEncodeLossyUTF8(void) { return StringEncodeLossyUTF8; }
 BinaryenOp BinaryenStringEncodeWTF8(void) { return StringEncodeWTF8; }
 BinaryenOp BinaryenStringEncodeWTF16(void) { return StringEncodeWTF16; }
 BinaryenOp BinaryenStringEncodeUTF8Array(void) { return StringEncodeUTF8Array; }
+BinaryenOp BinaryenStringEncodeLossyUTF8Array(void) {
+  return StringEncodeLossyUTF8Array;
+}
 BinaryenOp BinaryenStringEncodeWTF8Array(void) { return StringEncodeWTF8Array; }
 BinaryenOp BinaryenStringEncodeWTF16Array(void) {
   return StringEncodeWTF16Array;

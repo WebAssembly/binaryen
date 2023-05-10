@@ -320,9 +320,23 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf16
+  ;; CHECK-NEXT:   (string.encode_wtf8 replace
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf16
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (i32.const 40)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -366,9 +380,23 @@
       )
     )
     (drop
-      (string.encode_wtf16
+      (string.encode_wtf8 replace
         (local.get $ref)
         (i32.const 30)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (i32.load
+        (i32.const 1)
+      )
+    )
+    (drop
+      (string.encode_wtf16
+        (local.get $ref)
+        (i32.const 40)
       )
     )
     (drop
@@ -417,10 +445,26 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.encode_wtf8_array replace
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:    (local.get $array)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.encode_wtf16_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array16)
-  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (i32.const 40)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -470,10 +514,26 @@
       )
     )
     (drop
+      (string.encode_wtf8_array replace
+        (local.get $ref)
+        (local.get $array)
+        (i32.const 30)
+      )
+    )
+    (drop
+      (local.get $temp)
+    )
+    (local.set $temp
+      (array.get $array
+        (local.get $array)
+        (i32.const 0)
+      )
+    )
+    (drop
       (string.encode_wtf16_array
         (local.get $ref)
         (local.get $array16)
-        (i32.const 30)
+        (i32.const 40)
       )
     )
     (drop

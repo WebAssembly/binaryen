@@ -2437,6 +2437,9 @@ struct PrintExpressionContents
       case StringEncodeUTF8:
         printMedium(o, "string.encode_wtf8 utf8");
         break;
+      case StringEncodeLossyUTF8:
+        printMedium(o, "string.encode_wtf8 replace");
+        break;
       case StringEncodeWTF8:
         printMedium(o, "string.encode_wtf8 wtf8");
         break;
@@ -2445,6 +2448,9 @@ struct PrintExpressionContents
         break;
       case StringEncodeUTF8Array:
         printMedium(o, "string.encode_wtf8_array utf8");
+        break;
+      case StringEncodeLossyUTF8Array:
+        printMedium(o, "string.encode_wtf8_array replace");
         break;
       case StringEncodeWTF8Array:
         printMedium(o, "string.encode_wtf8_array wtf8");

@@ -3170,6 +3170,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     std::string_view str = s[i++]->str().str;
     if (str == "utf8") {
       op = StringEncodeUTF8;
+    } else if (str == "replace") {
+      op = StringEncodeLossyUTF8;
     } else if (str == "wtf8") {
       op = StringEncodeWTF8;
     } else {
@@ -3179,6 +3181,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     std::string_view str = s[i++]->str().str;
     if (str == "utf8") {
       op = StringEncodeUTF8Array;
+    } else if (str == "replace") {
+      op = StringEncodeLossyUTF8Array;
     } else if (str == "wtf8") {
       op = StringEncodeWTF8Array;
     } else {
