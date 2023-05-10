@@ -4,6 +4,8 @@
 
 ;; Test we rename memories and data segments properly at the module scope.
 ;; Memory $bar has a name collision, and both of the element segments' names.
+;; This test verifies that data segments refer to the right tables even after
+;; such name changes.
 
 (module
   ;; CHECK:      (memory $foo 1)

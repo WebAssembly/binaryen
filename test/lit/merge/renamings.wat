@@ -87,7 +87,7 @@
 
   (elem $foo (ref null func) $foo $bar)
 
-  ;; This global has a conflict in second.wat, and so second.wat's $bar
+  ;; This elem has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
   (elem $bar (ref null func) $bar $foo)
 

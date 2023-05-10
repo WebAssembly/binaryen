@@ -4,7 +4,8 @@
 
 ;; Test we rename tables and element segments properly at the module scope.
 ;; Table $foo has a name collision, and both of the element segments' names do
-;; as well.
+;; as well. This test verifies that element segments refer to the right tables
+;; even after such name changes.
 
 (module
   ;; CHECK:      (type $vec (array funcref))
