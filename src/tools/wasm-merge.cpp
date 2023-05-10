@@ -75,8 +75,12 @@
 // Note that we allow "forward references" - a reference from an earlier module
 // to a later one. If one instantiates the wasm modules in sequence then that is
 // impossible to do, and to work around it e.g. emscripten dynamic linking
-// support will add a thunk, but ES module support should allow it for wasm, and
-// so we support it here for full generality.
+// support will add a thunk. Note that ES6 modules support such circular imports
+// for JS, but they are considered annoying even there; one of the solutions to
+// such import loops in JS is to merge the modules together, and similarly
+// wasm-merge can help wasm build systems avoid such cycles. (Note that ES6
+// module support for *wasm* is not intended to support cycles, unlike JS, and
+// so avoiding cycles is important.)
 //
 // Despite resolving imports and exports without regard for the order of
 // modules, the order does matter in one way: if the modules have start
