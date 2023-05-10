@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "cfg.h"
+
 namespace wasm::analysis {
 
 struct BasicBlock::Predecessors {
