@@ -57,7 +57,7 @@ enum class InliningMode {
   // This function cannot be inlinined in any way.
   Uninlineable,
   // This function can be inlined fully, that is, normally: the entire function
-  // can be inlined. This is in contrast to partial inlining, see below.
+  // can be inlined. This is in contrast to split/partial inlining, see below.
   Full,
   // This function cannot be inlined normally, but we can use split inlining,
   // using pattern "A" or "B" (see below).
@@ -611,6 +611,9 @@ struct FunctionSplitter {
   // split on very specific patterns we believe are worth handling in that
   // manner).
   InliningMode getSplitDrivenInliningMode(Function* func, FunctionInfo& info) {
+    const Index MaxIfs = options.inlining.partialInliningIfs;
+    assert(MaxIfs > 0);
+
     auto* body = func->body;
 
     // If the body is a block, and we have breaks to that block, then we cannot
@@ -692,7 +695,6 @@ struct FunctionSplitter {
     // without an else.
 
     // Find the number of ifs.
-    const Index MaxIfs = options.inlining.partialInliningIfs;
     Index numIfs = 0;
     while (getIf(body, numIfs) && numIfs <= MaxIfs) {
       numIfs++;
@@ -847,6 +849,7 @@ private:
     Function* inlineable = copyFunction(func, "inlineable-B");
 
     const Index MaxIfs = options.inlining.partialInliningIfs;
+    assert(MaxIfs > 0);
 
     // The inlineable function should only have the ifs, which will call the
     // outlined heavy work.
@@ -1066,10 +1069,11 @@ struct Inlining : public Pass {
     }
 
     // When optimizing heavily for size, we may potentially split functions in
-    // order to inline parts of them.
-    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
-      functionSplitter =
-        std::make_unique<FunctionSplitter>(module, getPassOptions());
+    // order to inline parts of them, if partialInliningIfs is enabled.
+    auto& options = getPassOptions();
+    if (options.optimizeLevel >= 3 && !options.shrinkLevel &&
+        options.inlining.partialInliningIfs) {
+      functionSplitter = std::make_unique<FunctionSplitter>(module, options);
     }
   }
 
