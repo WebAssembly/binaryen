@@ -138,14 +138,14 @@ struct ExportInfo {
 std::unordered_map<Export*, ExportInfo> exportModuleMap;
 
 // A map of [kind of thing in the module] to [old name => new name] for things
-// of that kind. For example, the NameMap for functions is a map of old
+// of that kind. For example, the NameUpdates for functions is a map of old
 // function names to new function names.
-using NameMap = std::unordered_map<Name, Name>;
-using KindNameMaps = std::unordered_map<ModuleItemKind, NameMap>;
+using NameUpdates = std::unordered_map<Name, Name>;
+using KindNameUpdates = std::unordered_map<ModuleItemKind, NameUpdates>;
 
 // Apply a set of name changes to a module.
-void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
-  if (kindNameMaps.empty()) {
+void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
+  if (kindNameUpdates.empty()) {
     return;
   }
 
@@ -155,12 +155,13 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
-      return std::make_unique<NameMapper>(kindNameMaps);
+      return std::make_unique<NameMapper>(kindNameUpdates);
     }
 
-    KindNameMaps& kindNameMaps;
+    KindNameUpdates& kindNameUpdates;
 
-    NameMapper(KindNameMaps& kindNameMaps) : kindNameMaps(kindNameMaps) {}
+    NameMapper(KindNameUpdates& kindNameUpdates)
+      : kindNameUpdates(kindNameUpdates) {}
 
     void visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
@@ -209,17 +210,17 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 
   private:
     void mapName(ModuleItemKind kind, Name& name) {
-      auto iter = kindNameMaps.find(kind);
-      if (iter == kindNameMaps.end()) {
+      auto iter = kindNameUpdates.find(kind);
+      if (iter == kindNameUpdates.end()) {
         return;
       }
-      auto& nameMap = iter->second;
-      auto iter2 = nameMap.find(name);
-      if (iter2 != nameMap.end()) {
+      auto& nameUpdates = iter->second;
+      auto iter2 = nameUpdates.find(name);
+      if (iter2 != nameUpdates.end()) {
         name = iter2->second;
       }
     }
-  } nameMapper(kindNameMaps);
+  } nameMapper(kindNameUpdates);
 
   PassRunner runner(&wasm);
   nameMapper.run(&runner, &wasm);
@@ -235,13 +236,13 @@ void renameInputItems(Module& input) {
   // TODO Add ModuleUtils::iterAll + getValidName(kind, ..)? Then we could
   //      avoid hardcoded loops here, but it's unclear those would help
   //      anywhere else.
-  KindNameMaps kindNameMaps;
+  KindNameUpdates kindNameUpdates;
 
   // Add a mapping of a name to a new name, in a particular kind. If the new
   // name is the same as the old, do nothing.
   auto maybeAdd = [&](ModuleItemKind kind, Name& name, const Name newName) {
     if (newName != name) {
-      kindNameMaps[kind][name] = newName;
+      kindNameUpdates[kind][name] = newName;
       name = newName;
     }
   };
@@ -276,7 +277,7 @@ void renameInputItems(Module& input) {
   }
 
   // Apply the names to their uses.
-  updateNames(input, kindNameMaps);
+  updateNames(input, kindNameUpdates);
 }
 
 void copyModuleContents(Module& input, Name inputName) {
@@ -344,7 +345,7 @@ void fuseImportsAndExports() {
   //    }
   //  }
   //
-  using ModuleExportMap = std::unordered_map<Name, NameMap>;
+  using ModuleExportMap = std::unordered_map<Name, NameUpdates>;
 
   // A map of ModuleExportMaps, one per item kind (one for functions, one for
   // globals, etc.).
@@ -362,19 +363,19 @@ void fuseImportsAndExports() {
   // Find all the imports and see which have corresponding exports, which means
   // there is an internal item we can refer to. We build up a map of the names
   // that we should update.
-  KindNameMaps kindNameMaps;
+  KindNameUpdates kindNameUpdates;
   ModuleUtils::iterImportable(merged, [&](ExternalKind kind, Importable* curr) {
     if (curr->imported()) {
       auto internalName = kindModuleExportMaps[kind][curr->module][curr->base];
       if (internalName.is()) {
         // We found something to fuse! Add it to the maps for renaming.
-        kindNameMaps[ModuleItemKind(kind)][curr->name] = internalName;
+        kindNameUpdates[ModuleItemKind(kind)][curr->name] = internalName;
       }
     }
   });
 
   // Update the things we found.
-  updateNames(merged, kindNameMaps);
+  updateNames(merged, kindNameUpdates);
 }
 
 // Merges an input module into an existing target module. The input module can
