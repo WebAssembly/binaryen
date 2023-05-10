@@ -6,6 +6,10 @@
   ;; Use a different prefix than in first ($main instead of $other).
   (import "first" "bar" (func $main.bar))
 
+  (memory $second.mem 2)
+
+  (export "mem" (memory $second.mem))
+
   (func $second.foo (export "foo")
     (call $other.foo)
     (drop

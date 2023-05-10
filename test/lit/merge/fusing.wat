@@ -3,6 +3,10 @@
 ;; RUN: wasm-merge %s first %s.second second -all -S -o - | filecheck %s
 
 ;; Test that we fuse imports to exports across modules.
+;;
+;; We test functions and memories here, and not every possible entity in a
+;; comprehensive way, since they all go through the same code path. (But we test
+;; two to at least verify we differentiate them.)
 
 (module
   ;; The first two imports here will be resolved to direct calls into the
@@ -11,19 +15,29 @@
 
   (import "second" "bar" (func $other.bar))
 
+  (import "second" "mem" (memory $other.mem 1))
+
   ;; This import will remain unresolved.
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
   ;; CHECK:      (import "third" "missing" (func $other.missing))
   (import "third" "missing" (func $other.missing))
+
+  ;; CHECK:      (memory $second.mem 2)
 
   ;; CHECK:      (export "foo" (func $first.foo))
 
   ;; CHECK:      (export "bar" (func $bar))
 
-  ;; CHECK:      (export "foo_2" (func $second.foo))
+  ;; CHECK:      (export "keepalive" (func $keepalive))
 
-  ;; CHECK:      (export "bar_3" (func $bar_5))
+  ;; CHECK:      (export "mem" (memory $second.mem))
+
+  ;; CHECK:      (export "foo_4" (func $second.foo))
+
+  ;; CHECK:      (export "bar_5" (func $bar_6))
 
   ;; CHECK:      (func $first.foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -42,7 +56,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $bar_5)
+  ;; CHECK-NEXT:  (call $bar_6)
   ;; CHECK-NEXT:  (call $other.missing)
   ;; CHECK-NEXT: )
   (func $bar (export "bar")
@@ -52,6 +66,18 @@
     (call $other.bar)
     (call $other.missing)
   )
+
+  ;; CHECK:      (func $keepalive (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.load
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive (export "keepalive") (result i32)
+    ;; Load from the memory imported from the second module.
+    (i32.load $other.mem
+      (i32.const 10)
+    )
+  )
 )
 ;; CHECK:      (func $second.foo (type $none_=>_none)
 ;; CHECK-NEXT:  (call $first.foo)
@@ -60,7 +86,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $bar_5 (type $none_=>_none)
+;; CHECK:      (func $bar_6 (type $none_=>_none)
 ;; CHECK-NEXT:  (call $bar)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 4)
