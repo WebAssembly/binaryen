@@ -40,16 +40,14 @@
 // "foo.bar" will turn into a reference to the proper item from wasm_j that
 // corresponds to that export:
 //
-//  ;; metadata: module wasm_i
-//  (module
+//  (module "first"
 //    (import "foo" "bar" (func $foo.bar))
 //    (func $other
 //      (call $foo.bar)
 //    )
 //  )
 //
-//  ;; metadata: module wasm_j, which has name "foo"
-//  (module
+//  (module "foo"
 //    (func $f (export "bar")
 //      ..
 //    )
@@ -117,8 +115,7 @@ Module merged;
 //
 // For example, in the example from earlier we have this as the second module:
 //
-//  ;; metadata: module wasm_j, which has name "foo"
-//  (module
+//  (module "foo"
 //    (func $f (export "bar")
 //      ..
 //    )
@@ -332,7 +329,7 @@ void fuseImportsAndExports() {
   // First, scan the exports and build a map. We build a map of [module name] to
   // [export name => internal name]. For example, consider this module:
   //
-  //  (module ;; linked in as "module_A"
+  //  (module "module_A"
   //    (func $foo (export "bar"))
   //  )
   //
