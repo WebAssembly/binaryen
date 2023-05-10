@@ -574,12 +574,12 @@ enum StringNewOp {
   // Linear memory
   StringNewUTF8,
   StringNewWTF8,
-  StringNewReplace,
+  StringNewLossyUTF8,
   StringNewWTF16,
   // GC
   StringNewUTF8Array,
   StringNewWTF8Array,
-  StringNewReplaceArray,
+  StringNewLossyUTF8Array,
   StringNewWTF16Array,
   // Other
   StringNewFromCodePoint,

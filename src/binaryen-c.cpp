@@ -1038,11 +1038,13 @@ BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
 BinaryenOp BinaryenBrOnCastFail(void) { return BrOnCastFail; };
 BinaryenOp BinaryenStringNewUTF8(void) { return StringNewUTF8; }
 BinaryenOp BinaryenStringNewWTF8(void) { return StringNewWTF8; }
-BinaryenOp BinaryenStringNewReplace(void) { return StringNewReplace; }
+BinaryenOp BinaryenStringNewLossyUTF8(void) { return StringNewLossyUTF8; }
 BinaryenOp BinaryenStringNewWTF16(void) { return StringNewWTF16; }
 BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
 BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
-BinaryenOp BinaryenStringNewReplaceArray(void) { return StringNewReplaceArray; }
+BinaryenOp BinaryenStringNewLossyUTF8Array(void) {
+  return StringNewLossyUTF8Array;
+}
 BinaryenOp BinaryenStringNewWTF16Array(void) { return StringNewWTF16Array; }
 BinaryenOp BinaryenStringNewFromCodePoint(void) {
   return StringNewFromCodePoint;

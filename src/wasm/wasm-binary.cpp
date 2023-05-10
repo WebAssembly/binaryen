@@ -7331,7 +7331,7 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
         op = StringNewWTF8;
         break;
       case BinaryConsts::StringPolicy::Replace:
-        op = StringNewReplace;
+        op = StringNewLossyUTF8;
         break;
       default:
         throwError("bad policy for string.new");
@@ -7357,7 +7357,7 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
         op = StringNewWTF8Array;
         break;
       case BinaryConsts::StringPolicy::Replace:
-        op = StringNewReplaceArray;
+        op = StringNewLossyUTF8Array;
         break;
       default:
         throwError("bad policy for string.new");

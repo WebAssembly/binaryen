@@ -2247,7 +2247,7 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
       o << int8_t(0); // Memory index.
       o << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
-    case StringNewReplace:
+    case StringNewLossyUTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8);
       o << int8_t(0); // Memory index.
       o << U32LEB(BinaryConsts::StringPolicy::Replace);
@@ -2268,7 +2268,7 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
       o << U32LEB(BinaryConsts::StringNewWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
-    case StringNewReplaceArray:
+    case StringNewLossyUTF8Array:
       o << U32LEB(BinaryConsts::StringNewWTF8Array)
         << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;

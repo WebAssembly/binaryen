@@ -2375,7 +2375,7 @@ struct PrintExpressionContents
       case StringNewWTF8:
         printMedium(o, "string.new_wtf8 wtf8");
         break;
-      case StringNewReplace:
+      case StringNewLossyUTF8:
         printMedium(o, "string.new_wtf8 replace");
         break;
       case StringNewWTF16:
@@ -2391,7 +2391,7 @@ struct PrintExpressionContents
       case StringNewWTF8Array:
         printMedium(o, "string.new_wtf8_array wtf8");
         break;
-      case StringNewReplaceArray:
+      case StringNewLossyUTF8Array:
         printMedium(o, "string.new_wtf8_array replace");
         break;
       case StringNewWTF16Array:

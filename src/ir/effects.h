@@ -847,13 +847,13 @@ private:
       switch (curr->op) {
         case StringNewUTF8:
         case StringNewWTF8:
-        case StringNewReplace:
+        case StringNewLossyUTF8:
         case StringNewWTF16:
           parent.readsMemory = true;
           break;
         case StringNewUTF8Array:
         case StringNewWTF8Array:
-        case StringNewReplaceArray:
+        case StringNewLossyUTF8Array:
         case StringNewWTF16Array:
           parent.readsArray = true;
           break;
