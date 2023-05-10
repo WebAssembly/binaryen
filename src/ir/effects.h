@@ -122,10 +122,6 @@ public:
   // *do* mark a potentially infinite number of allocations as trapping, as all
   // VMs would trap eventually, and the same for potentially infinite recursion,
   // etc.
-  //   * We assume that VMs will timeout eventually, so any loop that we cannot
-  //     prove terminates is considered to trap. (Some VMs might not have
-  //     such timeouts, but even they will error before the heat death of the
-  //     universe, which is a kind of trap.)
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
@@ -145,6 +141,9 @@ public:
   // If this expression contains 'pop's that are not enclosed in 'catch' body.
   // For example, (drop (pop i32)) should set this to true.
   bool danglingPop = false;
+  // Whether this code may "hang" and not eventually complete. An infinite loop,
+  // or a continuation that is never continued, are examples of that.
+  bool mayNotReturn = false;
 
   // Helper functions to check for various effect types
 
@@ -184,7 +183,7 @@ public:
 
   bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           throws() || transfersControlFlow();
+           throws() || transfersControlFlow() || mayNotReturn;
   }
 
   bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
@@ -419,12 +418,7 @@ private:
     void visitIf(If* curr) {}
     void visitLoop(Loop* curr) {
       if (curr->name.is() && parent.breakTargets.erase(curr->name) > 0) {
-        // Breaks to this loop exist, which we just removed as they do not have
-        // further effect outside of this loop. One additional thing we need to
-        // take into account is infinite looping, which is a noticeable side
-        // effect we can't normally remove - eventually the VM will time out and
-        // error (see more details in the comment on trapping above).
-        parent.implicitTrap = true;
+        parent.mayNotReturn = true;
       }
     }
     void visitBreak(Break* curr) { parent.breakTargets.insert(curr->name); }
