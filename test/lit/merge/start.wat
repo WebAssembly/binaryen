@@ -15,10 +15,19 @@
 )
 ;; CHECK:      (type $none_=>_none (func))
 
+;; CHECK:      (export "start" (func $start_1))
+
+;; CHECK:      (export "user" (func $user))
+
 ;; CHECK:      (start $start_1)
 
 ;; CHECK:      (func $start_1 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $user (type $none_=>_none)
+;; CHECK-NEXT:  (call $start_1)
+;; CHECK-NEXT:  (call $start_1)
 ;; CHECK-NEXT: )
