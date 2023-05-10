@@ -456,7 +456,6 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   //       make sense to parallelize this. (If so, then changing the existing
   //       parallelism above in NameMapper might make sense.)
 
-  bool first = true;
   for (Index i = 0; i < inputFiles.size(); i++) {
     auto inputFile = inputFiles[i];
     auto inputFileName = inputFileNames[i];
@@ -470,9 +469,8 @@ Note that filenames and modules names are interleaved (which is hopefully less c
     // we read them and then merge.
     std::unique_ptr<Module> laterInput;
     Module* currModule;
-    if (first) {
+    if (i == 0) {
       currModule = &merged;
-      first = false;
     } else {
       laterInput = std::make_unique<Module>();
       currModule = laterInput.get();
