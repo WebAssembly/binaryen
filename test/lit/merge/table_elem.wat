@@ -3,7 +3,8 @@
 ;; RUN: wasm-merge %s first %s.second second -all -S -o - | filecheck %s
 
 ;; Test we rename tables and element segments properly at the module scope.
-;; Table $foo has a name collision, and both of the element segments' names.
+;; Table $foo has a name collision, and both of the element segments' names do
+;; as well.
 
 (module
   ;; CHECK:      (type $vec (array funcref))
