@@ -135,8 +135,7 @@ struct ExportInfo {
   // original name.
   Name baseName;
 };
-using ExportModuleMap = std::unordered_map<Export*, ExportInfo>;
-ExportModuleMap exportModuleMap;
+std::unordered_map<Export*, ExportInfo> exportModuleMap;
 
 // A map of [kind of thing in the module] to [old name => new name] for things
 // of that kind. For example, the NameMap for functions is a map of old
@@ -210,10 +209,14 @@ void updateNames(Module& wasm, KindNameMaps& kindNameMaps) {
 
   private:
     void mapName(ModuleItemKind kind, Name& name) {
-      auto& nameMap = kindNameMaps[kind];
-      auto iter = nameMap.find(name);
-      if (iter != nameMap.end()) {
-        name = iter->second;
+      auto iter = kindNameMaps.find(kind);
+      if (iter == kindNameMaps.end()) {
+        return;
+      }
+      auto& nameMap = iter->second;
+      auto iter2 = nameMap.find(name);
+      if (iter2 != nameMap.end()) {
+        name = iter2->second;
       }
     }
   } nameMapper(kindNameMaps);
