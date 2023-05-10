@@ -549,8 +549,9 @@
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $block-unreachable-but-call
-    ;; A call cannot be removed, even if it leads to a trap, since it might
-    ;; throw or call an import. We can remove the store after it, though.
+    ;; A call cannot be removed, even if it leads to a trap, since it might have
+    ;; non-trap effects (like mayNotReturn). We can remove the store after it,
+    ;; though.
     (i32.store
       (i32.const 0)
       (i32.const 1)

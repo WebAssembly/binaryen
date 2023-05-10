@@ -13,12 +13,12 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $block-unreachable-but-call
-    ;; A call cannot be removed, even if it leads to a trap, since it might call
-    ;; an import. We can remove the store after it, though.
+    ;; A call cannot be removed, even if it leads to a trap, since it might have
+    ;; non-trap effects (like mayNotReturn). We can remove the store after it,
+    ;; though.
     ;;
-    ;; This duplicates a test in vacuum-tnh but in MVP mode. With -all, calls
-    ;; can throw as well, but in MVP the only reason we won't remove them is
-    ;; their ability to call an import.
+    ;; This duplicates a test in vacuum-tnh but in MVP mode (to check for a
+    ;; possible bug with the throws effect which varies based on features).
     (i32.store
       (i32.const 0)
       (i32.const 1)
