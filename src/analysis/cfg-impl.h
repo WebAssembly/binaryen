@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef wasm_analysis_cfg_impl_h
+#define wasm_analysis_cfg_impl_h
+
 #include "cfg.h"
 
 namespace wasm::analysis {
@@ -132,3 +135,5 @@ inline bool BasicBlock::operator!=(const BasicBlock& other) const {
 }
 
 } // namespace wasm::analysis
+
+#endif // wasm_analysis_cfg_impl_h
