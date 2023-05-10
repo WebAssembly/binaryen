@@ -180,8 +180,8 @@ private:
         getDroppedChildrenAndAppend(original,
                                     *getModule(),
                                     getPassOptions(),
-                                    builder.makeUnreachable(),
-                                    DropMode::IgnoreParentEffects)));
+                                    Builder(*getModule()).makeUnreachable(),
+                                    DropMode::IgnoreParentEffects));
       changedTypes = true;
       return;
     }
