@@ -33,6 +33,7 @@
 #include <unordered_map>
 
 #include "call-utils.h"
+#include "ir/drop.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -170,12 +171,18 @@ private:
       // We don't know anything here.
       return;
     }
-    // If the index is invalid, or the type is wrong, we can
-    // emit an unreachable here, since in Binaryen it is ok to
-    // reorder/replace traps when optimizing (but never to
+    // If the index is invalid, or the type is wrong, we can skip the call and
+    // emit an unreachable here (with dropped children as needed), since in
+    // Binaryen it is ok to reorder/replace traps when optimizing (but never to
     // remove them, at least not by default).
     if (std::get_if<CallUtils::Trap>(&info)) {
-      replaceCurrent(replaceWithUnreachable(operands));
+      replaceCurrent(
+        getDroppedChildrenAndAppend(original,
+                                    *getModule(),
+                                    getPassOptions(),
+                                    Builder(*getModule()).makeUnreachable(),
+                                    DropMode::IgnoreParentEffects));
+      changedTypes = true;
       return;
     }
 
@@ -184,19 +191,6 @@ private:
     replaceCurrent(
       Builder(*getModule())
         .makeCall(name, operands, original->type, original->isReturn));
-  }
-
-  Expression* replaceWithUnreachable(const std::vector<Expression*>& operands) {
-    // Emitting an unreachable means we must update parent types.
-    changedTypes = true;
-
-    Builder builder(*getModule());
-    std::vector<Expression*> newOperands;
-    for (auto* operand : operands) {
-      newOperands.push_back(builder.makeDrop(operand));
-    }
-    return builder.makeSequence(builder.makeBlock(newOperands),
-                                builder.makeUnreachable());
   }
 };
 
