@@ -21,7 +21,17 @@
 
   ;; CHECK:      (data $b (memory $bar) (i32.const 0) "b")
   (data $b (memory $bar) (i32.const 0) "b")
-)
-;; CHECK:      (data $a_2 (memory $other) (i32.const 0) "a2")
 
-;; CHECK:      (data $b_2 (memory $bar_2) (i32.const 0) "b2")
+  ;; CHECK:      (data $a_2 (memory $other) (i32.const 0) "a2")
+
+  ;; CHECK:      (data $b_2 (memory $bar_2) (i32.const 0) "b2")
+
+  ;; CHECK:      (export "keepalive" (memory $foo))
+  (export "keepalive" (memory $foo))
+
+  ;; CHECK:      (export "keepalive1" (memory $bar))
+  (export "keepalive1" (memory $bar))
+)
+;; CHECK:      (export "keepalive_2" (memory $other))
+
+;; CHECK:      (export "keepalive1_3" (memory $bar_2))

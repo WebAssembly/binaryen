@@ -109,9 +109,14 @@
   ;; CHECK:      (export "bar" (func $bar))
   (export "bar" (func $bar))
 
-  ;; CHECK:      (export "foo_2" (func $foo_3))
+  ;; CHECK:      (export "keepalive" (func $uses))
+  (export "keepalive" (func $uses))
+
+  ;; CHECK:      (export "foo_3" (func $foo_3))
 
   ;; CHECK:      (export "other" (func $other))
+
+  ;; CHECK:      (export "keepalive_5" (func $uses.second))
 
   ;; CHECK:      (export "other-b" (func $other))
 

@@ -5,37 +5,17 @@
 ;; imports from the third, and we have a reverse cycle as well.
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (import "second" "forward" (func $second.forward))
   (import "second" "forward" (func $second.forward))
 
-  ;; CHECK:      (import "second" "reverse" (func $second.reverse))
   (import "second" "reverse" (func $second.reverse))
 
-  ;; CHECK:      (import "third" "forward" (func $third.forward))
   (import "third" "forward" (func $third.forward))
 
-  ;; CHECK:      (import "third" "reverse" (func $third.reverse))
   (import "third" "reverse" (func $third.reverse))
 
 
 
-  ;; CHECK:      (import "first" "forward" (func $first.forward))
-
-  ;; CHECK:      (import "first" "reverse" (func $first.reverse))
-
-  ;; CHECK:      (import "third" "forward" (func $third.forward_6))
-
-  ;; CHECK:      (import "third" "reverse" (func $third.reverse_6))
-
-  ;; CHECK:      (import "first" "forward" (func $first.forward_12))
-
-  ;; CHECK:      (import "first" "reverse" (func $first.reverse_12))
-
-  ;; CHECK:      (import "second" "forward" (func $second.forward_12))
-
-  ;; CHECK:      (import "second" "reverse" (func $second.reverse_12))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (export "forward" (func $forward))
 

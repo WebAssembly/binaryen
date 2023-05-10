@@ -5,15 +5,6 @@
 ;; second does, so we'll refer to its start function in the merged module.
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (start $start_1)
-
-  ;; CHECK:      (func $start (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $start
     ;; This function has the name start, but is *not* the start function. The
     ;; other module's start will need to get a new deduplicated name.
@@ -22,13 +13,12 @@
     )
   )
 )
+;; CHECK:      (type $none_=>_none (func))
+
+;; CHECK:      (start $start_1)
+
 ;; CHECK:      (func $start_1 (type $none_=>_none)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $user (type $none_=>_none)
-;; CHECK-NEXT:  (call $start_1)
-;; CHECK-NEXT:  (call $start_1)
 ;; CHECK-NEXT: )

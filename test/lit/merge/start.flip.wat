@@ -21,8 +21,3 @@
   )
 )
 
-;; CHECK:      (func $start_1 (type $none_=>_none)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )

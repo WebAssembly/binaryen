@@ -514,6 +514,17 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   // module.
   fuseImportsAndExports();
 
+  // Remove unused things. This is obviously a useful optimization, but it also
+  // makes using the output easier: if an import was resolved by an export
+  // during the merge, then that import will have no more uses and it will be
+  // optimized out (while if we didn't optimize it out then instantiating the
+  // module would still be forced to provide something for that import).
+  {
+    PassRunner passRunner(&merged);
+    passRunner.add("remove-unused-module-elements");
+    passRunner.run();
+  }
+
   // Output.
   if (options.extra.count("output") > 0) {
     ModuleWriter writer;
