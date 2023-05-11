@@ -1133,13 +1133,11 @@ def filter_exports(wasm, output, keep):
     # https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
 
     # build json to represent the exports we want.
-    graph = [
-        {
-          'name': 'outside',
-          'reaches': [f'export-{export}' for export in keep],
-          'root': True
-        }
-    ]
+    graph = [{
+        'name': 'outside',
+        'reaches': [f'export-{export}' for export in keep],
+        'root': True
+    }]
     for export in keep:
         graph.append({
             'name': f'export-{export}',
