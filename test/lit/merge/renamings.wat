@@ -24,18 +24,18 @@
   ;; CHECK:      (global $foo i32 (i32.const 1))
   (global $foo i32 (i32.const 1))
 
-  ;; CHECK:      (global $bar i32 (i32.const 2))
   ;; This global has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
+  ;; CHECK:      (global $bar i32 (i32.const 2))
   (global $bar i32 (i32.const 2))
 
+  ;; This memory has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
   ;; CHECK:      (global $other i32 (i32.const 3))
 
   ;; CHECK:      (global $bar_2 i32 (i32.const 4))
 
   ;; CHECK:      (memory $foo 10 20)
-  ;; This memory has a conflict in second.wat, and so second.wat's $foo
-  ;; will be renamed.
   (memory $foo 10 20)
 
   ;; CHECK:      (memory $bar 30 40)
@@ -48,18 +48,18 @@
   ;; CHECK:      (data $foo (i32.const 1) "abc")
   (data $foo (i32.const 1) "abc")
 
-  ;; CHECK:      (data $bar (i32.const 2) "def")
   ;; This data segment has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
+  ;; CHECK:      (data $bar (i32.const 2) "def")
   (data $bar (i32.const 2) "def")
 
+  ;; This table has a conflict in second.wat, and so second.wat's $foo
+  ;; will be renamed.
   ;; CHECK:      (data $other (memory $foo_2) (i32.const 3) "ghi")
 
   ;; CHECK:      (data $bar_2 (memory $foo_2) (i32.const 4) "jkl")
 
   ;; CHECK:      (table $foo 10 20 funcref)
-  ;; This table has a conflict in second.wat, and so second.wat's $foo
-  ;; will be renamed.
   (table $foo 10 20 funcref)
 
   ;; CHECK:      (table $bar 30 40 funcref)
@@ -72,9 +72,9 @@
   ;; CHECK:      (elem $foo func $foo $bar)
   (elem $foo (ref null func) $foo $bar)
 
-  ;; CHECK:      (elem $bar func $bar $foo)
   ;; This elem has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
+  ;; CHECK:      (elem $bar func $bar $foo)
   (elem $bar (ref null func) $bar $foo)
 
   ;; CHECK:      (elem $other func $foo_3 $other)
