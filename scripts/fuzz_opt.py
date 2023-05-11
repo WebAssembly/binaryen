@@ -1221,7 +1221,6 @@ class TrapsNeverHappen(TestCaseHandler):
 
             # re-execute the now safe wasm
             before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
-            print(before)
             assert TRAP_PREFIX not in before, 'we should have fixed this problem'
 
         after_wasm_tnh = after_wasm + '.tnh.wasm'
