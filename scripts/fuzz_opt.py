@@ -586,9 +586,12 @@ def fix_spec_output(out):
 ignored_vm_runs = 0
 
 
-def note_ignored_vm_run():
+def note_ignored_vm_run(reason=None):
     global ignored_vm_runs
-    print('(ignore VM run)')
+    if reason:
+        print(f'(ignore VM run:{reason})')
+    else:
+        print('(ignore VM run)')
     ignored_vm_runs += 1
 
 
@@ -1128,8 +1131,31 @@ class TrapsNeverHappen(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
+
         after_wasm_tnh = after_wasm + '.tnh.wasm'
         run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
+
+        # If a trap happened in the original program then we must be careful,
+        # because ignoring it might lead to a DOS, e.g.:
+        #
+        #  while (1) {
+        #    if (condition) trap();
+        #  }
+        #
+        # If we assume traps never happen then that if can be optimized out, but
+        # then the loop runs forever. We have logic below to ignore the output
+        # after the trap (see below), but we must also handle an infinite loop
+        # so we do not hang forever in the fuzzer.
+        if TRAP_PREFIX in before:
+            proc = subprocess.Popen([in_bin('wasm-opt'), '-all', after_wasm_tnh, '--fuzz-exec-before'] + FEATURE_OPTS, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                proc.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                note_ignored_vm_run('tnh optimized code timeout')
+                return
+
+        # It is safe to run the optimized program; do so.
         after = run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
 
         # if a trap happened, we must stop comparing from that.
