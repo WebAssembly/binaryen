@@ -1132,6 +1132,12 @@ class TrapsNeverHappen(TestCaseHandler):
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
 
+        if before == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything, and there is a risk since if we did so we might run
+            # into an infinite loop (see below).
+            return
+
         after_wasm_tnh = after_wasm + '.tnh.wasm'
         run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
 
@@ -1147,6 +1153,7 @@ class TrapsNeverHappen(TestCaseHandler):
         # after the trap (see below), but we must also handle an infinite loop
         # so we do not hang forever in the fuzzer.
         if TRAP_PREFIX in before:
+            print('(checking for hang in tnh optimized code')
             proc = subprocess.Popen([in_bin('wasm-opt'), '-all', after_wasm_tnh, '--fuzz-exec-before'] + FEATURE_OPTS, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
                 proc.communicate(timeout=10)
