@@ -12,15 +12,6 @@
 ;; RUN: wasm-merge %s first %s.second second --keep-only-first-module-exports -S -o - | filecheck %s --check-prefix KEEP_0
 
 (module
-  ;; KEEP_1:      (type $none_=>_none (func))
-
-  ;; KEEP_1:      (export "func" (func $func0))
-
-  ;; KEEP_1:      (func $func0
-  ;; KEEP_1-NEXT:  (drop
-  ;; KEEP_1-NEXT:   (i32.const 0)
-  ;; KEEP_1-NEXT:  )
-  ;; KEEP_1-NEXT: )
   ;; RENAME:      (type $none_=>_none (func))
 
   ;; RENAME:      (export "func" (func $func0))
