@@ -25,6 +25,7 @@ script covers different options being passed)
 import contextlib
 import os
 import difflib
+import json
 import math
 import shutil
 import subprocess
@@ -450,6 +451,13 @@ FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
+
+
+# given a call line that includes FUZZ_EXEC_CALL_PREFIX, return the export that
+# is called
+def get_export_from_call_line(call_line):
+    assert FUZZ_EXEC_CALL_PREFIX in call_line
+    return call_line.split(FUZZ_EXEC_CALL_PREFIX)[1].strip()
 
 
 # compare two strings, strictly
@@ -1119,6 +1127,30 @@ class Asyncify(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multi-memories'])
 
 
+# given a wasm and a list of exports we want to keep, remove all other exports.
+def filter_exports(wasm, output, keep):
+    # based on
+    # https://github.com/WebAssembly/binaryen/wiki/Pruning-unneeded-code-in-wasm-files-with-wasm-metadce#example-pruning-exports
+
+    # build json to represent the exports we want.
+    graph = [{
+        'name': 'outside',
+        'reaches': [f'export-{export}' for export in keep],
+        'root': True
+    }]
+    for export in keep:
+        graph.append({
+            'name': f'export-{export}',
+            'export': export
+        })
+
+    with open('graph.json', 'w') as f:
+        f.write(json.dumps(graph))
+
+    # prune the exports
+    run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json', '-all'])
+
+
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
 # happen mode is that if a trap *does* happen then that is undefined behavior,
 # and the optimizer was free to make changes to observable behavior there. The
@@ -1128,20 +1160,24 @@ class TrapsNeverHappen(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
-        after_wasm_tnh = after_wasm + '.tnh.wasm'
-        run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
-        after = run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
+
+        if before == IGNORE:
+            # There is no point to continue since we can't compare this output
+            # to anything, and there is a risk since if we did so we might run
+            # into an infinite loop (see below).
+            return
 
         # if a trap happened, we must stop comparing from that.
         if TRAP_PREFIX in before:
             trap_index = before.index(TRAP_PREFIX)
             # we can't test this function, which the trap is in the middle of
             # (tnh could move the trap around, so even things before the trap
-            # are unsafe). erase everything from this function's output and
-            # onward, so we only compare the previous trap-free code. first,
-            # find the function call during which the trap happened, by finding
-            # the call line right before us. that is, the output looks like
-            # this:
+            # are unsafe). we can only safely call exports before this one, so
+            # remove those from the binary.
+            #
+            # first, find the function call during which the trap happened, by
+            # finding the call line right before us. that is, the output looks
+            # like this:
             #
             #   [fuzz-exec] calling foo
             #   .. stuff happening during foo ..
@@ -1164,23 +1200,30 @@ class TrapsNeverHappen(TestCaseHandler):
             # happens, which is something like "[fuzz-exec] calling bar", and
             # it is unique since it contains the function being called.
             call_line = before[call_start:call_end]
-            # remove everything from that call line onward.
-            lines_pre = before.count(os.linesep)
-            before = before[:call_start]
-            lines_post = before.count(os.linesep)
-            print(f'ignoring code due to trap (from "{call_line}"), lines to compare goes {lines_pre} => {lines_post} ')
+            trapping_export = get_export_from_call_line(call_line)
 
-            # also remove the relevant lines from after.
-            if call_line not in after:
-                # the normal run hit a trap, and the tnh run hit a host
-                # limitation that forces us to ignore this run. for example,
-                # after running tnh we may end up doing an unbounded number of
-                # allocations, if that is what the program normally does (and
-                # the normal run only avoided that by trapping).
-                assert IGNORE in after
-                return
-            after_index = after.index(call_line)
-            after = after[:after_index]
+            # now that we know the trapping export, we can leave only the safe
+            # ones that are before it
+            safe_exports = []
+            for line in before.splitlines():
+                if FUZZ_EXEC_CALL_PREFIX in line:
+                    export = get_export_from_call_line(line)
+                    if export == trapping_export:
+                        break
+                    safe_exports.append(export)
+
+            # filter out the other exports
+            filtered = before_wasm + '.filtered.wasm'
+            filter_exports(before_wasm, filtered, safe_exports)
+            before_wasm = filtered
+
+            # re-execute the now safe wasm
+            before = run_bynterp(before_wasm, ['--fuzz-exec-before'])
+            assert TRAP_PREFIX not in before, 'we should have fixed this problem'
+
+        after_wasm_tnh = after_wasm + '.tnh.wasm'
+        run([in_bin('wasm-opt'), before_wasm, '-o', after_wasm_tnh, '-tnh'] + opts + FEATURE_OPTS)
+        after = run_bynterp(after_wasm_tnh, ['--fuzz-exec-before'])
 
         # some results cannot be compared, so we must filter them out here.
         def ignore_references(out):
