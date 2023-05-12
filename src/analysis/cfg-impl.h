@@ -21,8 +21,6 @@
 
 namespace wasm::analysis {
 
-namespace {
-
 // An iterator over a sequence of contiguous pointers (represented as a pointer
 // to a pointer in the sequence) that dereferences the pointed-to pointer.
 // TODO: Move this to its own public header if there is ever another use for it.
@@ -119,8 +117,6 @@ template<typename T> struct _indirect_ptr_vec {
   iterator begin() const { return {&vec.data()[0]}; }
   iterator end() const { return {&vec.data()[vec.size()]}; }
 };
-
-} // anonymous namespace
 
 struct BasicBlock::Predecessors : _indirect_ptr_vec<BasicBlock> {
   Predecessors(const BasicBlock& block)
