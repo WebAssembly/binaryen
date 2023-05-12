@@ -319,7 +319,7 @@ void copyModuleContents(Module& input, Name inputName) {
     // An export may already exist with that name, so fix it up.
     copy->name = Names::getValidExportName(merged, copy->name);
     if (copy->name != curr->name && exportMergeMode == ErrorOnExportConflicts) {
-      Fatal() << "Export name conflict: " << curr->name << " (consider
+      Fatal() << "Export name conflict: " << curr->name << " (consider"
               << " --rename-export-conflicts or"
               << " --keep-only-first-module-exports)\n";
     }
