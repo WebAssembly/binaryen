@@ -119,7 +119,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
       if (func->imported())
         continue;
 
-      Index currentFunctionIndex = (Index)stringToIndex(func->name.c_str());
+      Index currentFunctionIndex = (Index)stringToIndex(func->name.toString().c_str());
       if (currentFunctionIndex != (Index)-1) {
         if (currentFunctionIndex != idx)
           std::cerr << "Functions are not in ordinal order! currentFunctionIndex=" << currentFunctionIndex << ", vs idx=" << idx << std::endl;
@@ -127,7 +127,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
       else
         currentFunctionIndex = idx;
       functionOrdinals[func.get()] = idx;
-      std::cerr << "Function " << func->name.c_str() << " has ordinal " << idx << std::endl;
+      std::cerr << "Function " << func->name.toString() << " has ordinal " << idx << std::endl;
       nextFreeIndex = std::max(nextFreeIndex, currentFunctionIndex + 1);
       ++idx;
     }
