@@ -2308,7 +2308,15 @@ public:
   void clearDebugInfo();
 };
 
+// Utility for printing an expression with named types.
 using ModuleExpression = std::pair<Module&, Expression*>;
+
+// Utility for printing only the top level of an expression. Named types will be
+// used if `module` is non-null.
+struct ShallowExpression {
+  Expression* expr;
+  Module* module = nullptr;
+};
 
 } // namespace wasm
 
@@ -2322,6 +2330,7 @@ template<> struct hash<wasm::Address> {
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
+std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
 

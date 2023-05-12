@@ -3776,6 +3776,17 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
   return wasm::printExpression(pair.second, o, false, false, &pair.first);
 }
 
+std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
+  if (expression.module) {
+    wasm::PrintExpressionContents printer(expression.module, nullptr, o);
+    printer.visit(expression.expr);
+  } else {
+    wasm::PrintExpressionContents printer(nullptr, o);
+    printer.visit(expression.expr);
+  }
+  return o;
+}
+
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return wasm::printStackInst(&inst, o);
 }

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_drop_h
-#define wasm_ir_drop_h
-
+#include "ir/drop.h"
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/iteration.h"
@@ -25,27 +23,26 @@
 
 namespace wasm {
 
-// Given an expression, returns a new expression that drops the given
-// expression's children that cannot be removed outright due to their side
-// effects. Note that this only operates on children that execute
-// unconditionally. That is the case in almost all expressions, except for those
-// with conditional execution, like if, which unconditionally executes the
-// condition but then conditionally executes one of the two arms.
-Expression* getDroppedChildrenAndAppend(Expression* curr,
+Expression* getDroppedChildrenAndAppend(Expression* parent,
                                         Module& wasm,
                                         const PassOptions& options,
-                                        Expression* last) {
-  // We check for shallow effects here, since we may be able to remove |curr|
+                                        Expression* last,
+                                        DropMode mode) {
+  // We check for shallow effects here, since we may be able to remove |parent|
   // itself but keep its children around - we don't want effects in the children
   // to stop us from improving the code. Note that there are cases where the
-  // combined curr+children has fewer effects than curr itself, such as if curr
-  // is a block and the child branches to it, but in such cases we cannot remove
-  // curr anyhow (those cases are ruled out below), so looking at non-shallow
-  // effects would never help us (and would be slower to run).
-  ShallowEffectAnalyzer effects(options, wasm, curr);
-  // Ignore a trap, as the unreachable replacement would trap too.
-  if (last->is<Unreachable>()) {
-    effects.trap = false;
+  // combined parent+children has fewer effects than parent itself, such as if
+  // parent is a block and the child branches to it, but in such cases we cannot
+  // remove parent anyhow (those cases are ruled out below), so looking at
+  // non-shallow effects would never help us (and would be slower to run).
+  bool keepParent = false;
+  if (mode == DropMode::NoticeParentEffects) {
+    ShallowEffectAnalyzer effects(options, wasm, parent);
+    // Ignore a trap, as the unreachable replacement would trap too.
+    if (last->is<Unreachable>()) {
+      effects.trap = false;
+    }
+    keepParent = effects.hasUnremovableSideEffects();
   }
 
   // We cannot remove
@@ -56,19 +53,18 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
   // 5. Branch targets: We will need the target for the branches to it to
   //                    validate.
   Builder builder(wasm);
-  if (effects.hasUnremovableSideEffects() || curr->is<If>() ||
-      curr->is<Try>() || curr->is<Pop>() ||
-      BranchUtils::getDefinedName(curr).is()) {
-    // If curr is concrete we must drop it. Or, if it is unreachable or none,
+  if (keepParent || parent->is<If>() || parent->is<Try>() ||
+      parent->is<Pop>() || BranchUtils::getDefinedName(parent).is()) {
+    // If parent is concrete we must drop it. Or, if it is unreachable or none,
     // then we can leave it as it is.
-    if (curr->type.isConcrete()) {
-      curr = builder.makeDrop(curr);
+    if (parent->type.isConcrete()) {
+      parent = builder.makeDrop(parent);
     }
-    return builder.makeSequence(curr, last);
+    return builder.makeSequence(parent, last);
   }
 
   std::vector<Expression*> contents;
-  for (auto* child : ChildIterator(curr)) {
+  for (auto* child : ChildIterator(parent)) {
     if (!EffectAnalyzer(options, wasm, child).hasUnremovableSideEffects()) {
       continue;
     }
@@ -87,5 +83,3 @@ Expression* getDroppedChildrenAndAppend(Expression* curr,
 }
 
 } // namespace wasm
-
-#endif // wasm_ir_drop_h

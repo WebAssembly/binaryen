@@ -541,22 +541,16 @@
   (unreachable)
  )
  ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $y
  ;; CHECK-NEXT:    (local.get $y)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (drop
- ;; IMMUT-NEXT:    (local.get $x)
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (drop
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (local.tee $y
  ;; IMMUT-NEXT:    (local.get $y)
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
@@ -565,7 +559,10 @@
  (func $bar (param $x i32) (param $y i32)
   (call_indirect (type $ii)
    (local.get $x)
-   (local.get $y)
+   ;; Use a local.tee to show that an operand with side effects is kept/dropped.
+   (local.tee $y
+    (local.get $y)
+   )
    (i32.const 5)
   )
  )
@@ -594,25 +591,9 @@
   (unreachable)
  )
  ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (drop
- ;; IMMUT-NEXT:    (local.get $x)
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (drop
- ;; IMMUT-NEXT:    (local.get $y)
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $bar (param $x i32) (param $y i32)
@@ -651,25 +632,9 @@
   (unreachable)
  )
  ;; CHECK:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (drop
- ;; IMMUT-NEXT:    (local.get $x)
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (drop
- ;; IMMUT-NEXT:    (local.get $y)
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $bar (param $x i32) (param $y i32)
@@ -710,19 +675,11 @@
  (table $0 8 8 funcref)
  ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $0 (type $none_=>_none)
  ;; IMMUT-NEXT:  (nop)
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (block
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
  (func $0
   (block ;; the type of this block will change
@@ -1444,32 +1401,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $bar (type $ii) (param $x i32) (param $y i32)
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (block
- ;; IMMUT-NEXT:    (drop
- ;; IMMUT-NEXT:     (local.get $x)
- ;; IMMUT-NEXT:    )
- ;; IMMUT-NEXT:    (drop
- ;; IMMUT-NEXT:     (local.get $y)
- ;; IMMUT-NEXT:    )
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT:  (call $foo1
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
  ;; IMMUT-NEXT:  )
- ;; IMMUT-NEXT:  (block
- ;; IMMUT-NEXT:   (block
- ;; IMMUT-NEXT:    (drop
- ;; IMMUT-NEXT:     (local.get $x)
- ;; IMMUT-NEXT:    )
- ;; IMMUT-NEXT:    (drop
- ;; IMMUT-NEXT:     (local.get $y)
- ;; IMMUT-NEXT:    )
- ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT:  (call $foo2
  ;; IMMUT-NEXT:   (local.get $x)
  ;; IMMUT-NEXT:   (local.get $y)
