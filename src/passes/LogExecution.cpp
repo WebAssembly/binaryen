@@ -30,10 +30,10 @@
 
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
+#include <map>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
-#include <map>
 
 namespace wasm {
 
@@ -44,17 +44,22 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   Index nextFreeIndex = 0;
 
-  // Tries to convert a string to a function index. Returns (Index)-1 on failure.
-  Index stringToIndex(const char *s) {
-     for(const char *q = s; *q; ++q)
-        if (!isdigit(*q))
-           return (Index)-1;
-     return std::stoi(s);
+  // Tries to convert a string to a function index. Returns (Index)-1 on
+  // failure.
+  Index stringToIndex(const char* s) {
+    for (const char* q = s; *q; ++q)
+      if (!isdigit(*q))
+        return (Index)-1;
+    return std::stoi(s);
   }
 
-  void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body, nextFreeIndex++); }
+  void visitLoop(Loop* curr) {
+    curr->body = makeLogCall(curr->body, nextFreeIndex++);
+  }
 
-  void visitReturn(Return* curr) { replaceCurrent(makeLogCall(curr, nextFreeIndex++)); }
+  void visitReturn(Return* curr) {
+    replaceCurrent(makeLogCall(curr, nextFreeIndex++));
+  }
 
   void visitFunction(Function* curr) {
     if (curr->imported()) {
@@ -68,63 +73,66 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     }
 
     if (functionOrdinals.find(curr) == functionOrdinals.end()) {
-       Fatal() << "LogExecution: Internal mismatch in mapping functions to their ordinals for logging execution!";
+      Fatal() << "LogExecution: Internal mismatch in mapping functions to "
+                 "their ordinals for logging execution!";
     }
 
     curr->body = makeLogCall(curr->body, functionOrdinals.find(curr)->second);
   }
 
   void doWalkModule(Module* curr) {
-      // Add the import
-      auto import =
-        Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
+    // Add the import
+    auto import =
+      Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
 
-      // Import the log function from import "env" if the module
-      // imports other functions from that name.
+    // Import the log function from import "env" if the module
+    // imports other functions from that name.
+    for (auto& func : curr->functions) {
+      if (func->imported() && func->module == ENV) {
+        import->module = func->module;
+        break;
+      }
+    }
+
+    // If not, then pick the import name of the first function we find.
+    if (!import->module) {
       for (auto& func : curr->functions) {
-        if (func->imported() && func->module == ENV) {
+        if (func->imported()) {
           import->module = func->module;
           break;
         }
       }
+    }
 
-      // If not, then pick the import name of the first function we find.
-      if (!import->module) {
-        for (auto& func : curr->functions) {
-          if (func->imported()) {
-            import->module = func->module;
-            break;
-          }
-        }
+    import->base = LOGGER;
+    curr->addFunction(std::move(import));
+
+    // Reserve all function indices up front for the function names. This is
+    // so that the logged ordinal numbers will match up with the function ordinals.
+    int idx = 0;
+    for (auto& func : curr->functions) {
+       if (func->imported())
+         ++idx;
+    }
+
+    for (auto& func : curr->functions) {
+      if (func->imported())
+        continue;
+
+      Index currentFunctionIndex = (Index)stringToIndex(func->name.c_str());
+      if (currentFunctionIndex != (Index)-1) {
+        if (currentFunctionIndex != idx)
+          std::cerr << "Functions are not in ordinal order! currentFunctionIndex=" << currentFunctionIndex << ", vs idx=" << idx << std::endl;
       }
+      else
+        currentFunctionIndex = idx;
+      functionOrdinals[func.get()] = idx;
+      std::cerr << "Function " << func->name.c_str() << " has ordinal " << idx << std::endl;
+      nextFreeIndex = std::max(nextFreeIndex, currentFunctionIndex + 1);
+      ++idx;
+    }
 
-      import->base = LOGGER;
-      curr->addFunction(std::move(import));
-
-     // Reserve all function indices up front for the function names. This is
-     // so that the logged ordinal numbers will match up with the function ordinals.
-     int idx = 0;
-     for (auto& func : curr->functions) {
-        if (func->imported()) ++idx;
-     }
-
-     for (auto& func : curr->functions) {
-        if (func->imported()) continue;
-
-        Index currentFunctionIndex = (Index)stringToIndex(func->name.c_str());
-        if (currentFunctionIndex != (Index)-1) {
-           if (currentFunctionIndex != idx)
-              std::cerr << "Functions are not in ordinal order! currentFunctionIndex=" << currentFunctionIndex << ", vs idx=" << idx << std::endl;
-        }
-        else
-           currentFunctionIndex = idx;
-        functionOrdinals[func.get()] = idx;
-        std::cerr << "Function " << func->name.c_str() << " has ordinal " << idx << std::endl;
-        nextFreeIndex = std::max(nextFreeIndex, currentFunctionIndex + 1);
-        ++idx;
-     }
-
-     PostWalker<LogExecution>::doWalkModule(curr);
+    PostWalker<LogExecution>::doWalkModule(curr);
   }
 
 private:
