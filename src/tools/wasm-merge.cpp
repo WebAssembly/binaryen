@@ -466,13 +466,17 @@ Note that filenames and modules names are interleaved (which is hopefully less c
          "Rename exports to avoid conflicts (rather than error)",
          WasmMergeOption,
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { exportMergeMode = RenameExportConflicts; })
+         [&](Options* o, const std::string& argument) {
+           exportMergeMode = RenameExportConflicts;
+         })
     .add("--keep-only-first-module-exports",
          "-kofme",
          "Keep exports from the first module and ignore all others",
          WasmMergeOption,
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { exportMergeMode = KeepOnlyFirstModuleExports; })
+         [&](Options* o, const std::string& argument) {
+           exportMergeMode = KeepOnlyFirstModuleExports;
+         })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
