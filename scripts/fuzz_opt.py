@@ -1314,8 +1314,14 @@ class Merge(TestCaseHandler):
         # merge the wasm files. note that we must pass -all, as even if the two
         # inputs are MVP, the output may have multiple tables and multiple
         # memories (and we must also do that in the commands later down).
+        #
+        # Use --keep-only-first-module-exports as that is all we compare for
+        # now. TODO: compare the second module's exports as well, but we'd need
+        # to handle renaming of conflicting exports.
         merged = abspath('merged.wasm')
-        run([in_bin('wasm-merge'), wasm, 'first', abspath('second.wasm'), 'second', '-o', merged] + FEATURE_OPTS + ['-all'])
+        run([in_bin('wasm-merge'), wasm, 'first',
+            abspath('second.wasm'), 'second', '-o', merged,
+            '--keep-only-first-module-exports'] + FEATURE_OPTS + ['-all'])
 
         # sometimes also optimize the merged module
         if random.random() < 0.5:
@@ -1327,12 +1333,6 @@ class Merge(TestCaseHandler):
         output = fix_output(output)
         merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
         merged_output = fix_output(merged_output)
-        # a complication is that the second module's exports are appended, so we
-        # have extra output. to handle that, just prune the tail, so that we
-        # only compare the original exports from the first module.
-        # TODO: compare the second module's exports to themselves as well, but
-        #       they may have been renamed due to overlaps...
-        merged_output = merged_output[:len(output)]
         compare_between_vms(output, merged_output, 'Merge')
 
 
