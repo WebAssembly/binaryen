@@ -3099,7 +3099,7 @@ SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
       } else if (str == "wtf8") {
         op = StringNewWTF8;
       } else if (str == "replace") {
-        op = StringNewReplace;
+        op = StringNewLossyUTF8;
       } else {
         throw ParseException("bad string.new op", s.line, s.col);
       }
@@ -3117,7 +3117,7 @@ SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
       } else if (str == "wtf8") {
         op = StringNewWTF8Array;
       } else if (str == "replace") {
-        op = StringNewReplaceArray;
+        op = StringNewLossyUTF8Array;
       } else {
         throw ParseException("bad string.new op", s.line, s.col);
       }
@@ -3170,6 +3170,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     std::string_view str = s[i++]->str().str;
     if (str == "utf8") {
       op = StringEncodeUTF8;
+    } else if (str == "replace") {
+      op = StringEncodeLossyUTF8;
     } else if (str == "wtf8") {
       op = StringEncodeWTF8;
     } else {
@@ -3179,6 +3181,8 @@ Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
     std::string_view str = s[i++]->str().str;
     if (str == "utf8") {
       op = StringEncodeUTF8Array;
+    } else if (str == "replace") {
+      op = StringEncodeLossyUTF8Array;
     } else if (str == "wtf8") {
       op = StringEncodeWTF8Array;
     } else {

@@ -1174,7 +1174,7 @@ void test_core() {
                       0,
                       false),
     BinaryenStringNew(module,
-                      BinaryenStringNewReplace(),
+                      BinaryenStringNewLossyUTF8(),
                       makeInt32(module, 0),
                       makeInt32(module, 0),
                       0,
@@ -1209,7 +1209,7 @@ void test_core() {
                       makeInt32(module, 0),
                       false),
     BinaryenStringNew(module,
-                      BinaryenStringNewReplaceArray(),
+                      BinaryenStringNewLossyUTF8Array(),
                       BinaryenGlobalGet(module, "i8Array-global", i8Array),
                       0,
                       makeInt32(module, 0),
@@ -1261,6 +1261,12 @@ void test_core() {
       0),
     BinaryenStringEncode(
       module,
+      BinaryenStringEncodeLossyUTF8(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      makeInt32(module, 0),
+      0),
+    BinaryenStringEncode(
+      module,
       BinaryenStringEncodeWTF8(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       makeInt32(module, 0),
@@ -1274,6 +1280,12 @@ void test_core() {
     BinaryenStringEncode(
       module,
       BinaryenStringEncodeUTF8Array(),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
+      BinaryenGlobalGet(module, "i8Array-global", i8Array),
+      makeInt32(module, 0)),
+    BinaryenStringEncode(
+      module,
+      BinaryenStringEncodeLossyUTF8Array(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       BinaryenGlobalGet(module, "i8Array-global", i8Array),
       makeInt32(module, 0)),

@@ -7313,29 +7313,34 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
   Expression* start = nullptr;
   Expression* end = nullptr;
   bool try_ = false;
-  if (code == BinaryConsts::StringNewWTF8 ||
-      code == BinaryConsts::StringNewUTF8Try) {
-    if (code == BinaryConsts::StringNewUTF8Try) {
-      try_ = true;
-    }
+  if (code == BinaryConsts::StringNewUTF8) {
     // FIXME: the memory index should be an LEB like all other places
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringNewUTF8;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringNewWTF8;
-        break;
-      case BinaryConsts::StringPolicy::Replace:
-        op = StringNewReplace;
-        break;
-      default:
-        throwError("bad policy for string.new");
+    op = StringNewUTF8;
+    length = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewLossyUTF8) {
+    // FIXME: the memory index should be an LEB like all other places
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
     }
+    op = StringNewLossyUTF8;
+    length = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewWTF8) {
+    // FIXME: the memory index should be an LEB like all other places
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
+    op = StringNewWTF8;
+    length = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewUTF8Try) {
+    // FIXME: the memory index should be an LEB like all other places
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
+    op = StringNewUTF8;
+    try_ = true;
     length = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16) {
     if (getInt8() != 0) {
@@ -7343,25 +7348,21 @@ bool WasmBinaryBuilder::maybeVisitStringNew(Expression*& out, uint32_t code) {
     }
     op = StringNewWTF16;
     length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8Array ||
-             code == BinaryConsts::StringNewUTF8ArrayTry) {
-    if (code == BinaryConsts::StringNewUTF8ArrayTry) {
-      try_ = true;
-    }
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringNewUTF8Array;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringNewWTF8Array;
-        break;
-      case BinaryConsts::StringPolicy::Replace:
-        op = StringNewReplaceArray;
-        break;
-      default:
-        throwError("bad policy for string.new");
-    }
+  } else if (code == BinaryConsts::StringNewUTF8Array) {
+    op = StringNewUTF8Array;
+    end = popNonVoidExpression();
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewLossyUTF8Array) {
+    op = StringNewLossyUTF8Array;
+    end = popNonVoidExpression();
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewWTF8Array) {
+    op = StringNewWTF8Array;
+    end = popNonVoidExpression();
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringNewUTF8ArrayTry) {
+    op = StringNewUTF8Array;
+    try_ = true;
     end = popNonVoidExpression();
     start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16Array) {
@@ -7397,18 +7398,10 @@ bool WasmBinaryBuilder::maybeVisitStringConst(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitStringMeasure(Expression*& out,
                                                 uint32_t code) {
   StringMeasureOp op;
-  if (code == BinaryConsts::StringMeasureWTF8) {
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringMeasureUTF8;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringMeasureWTF8;
-        break;
-      default:
-        throwError("bad policy for string.measure");
-    }
+  if (code == BinaryConsts::StringMeasureUTF8) {
+    op = StringMeasureUTF8;
+  } else if (code == BinaryConsts::StringMeasureWTF8) {
+    op = StringMeasureWTF8;
   } else if (code == BinaryConsts::StringMeasureWTF16) {
     op = StringMeasureWTF16;
   } else if (code == BinaryConsts::StringIsUSV) {
@@ -7430,38 +7423,34 @@ bool WasmBinaryBuilder::maybeVisitStringEncode(Expression*& out,
   StringEncodeOp op;
   Expression* start = nullptr;
   // TODO: share this code with string.measure?
-  if (code == BinaryConsts::StringEncodeWTF8) {
+  if (code == BinaryConsts::StringEncodeUTF8) {
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringEncodeUTF8;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringEncodeWTF8;
-        break;
-      default:
-        throwError("bad policy for string.encode");
+    op = StringEncodeUTF8;
+  } else if (code == BinaryConsts::StringEncodeLossyUTF8) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
     }
+    op = StringEncodeLossyUTF8;
+  } else if (code == BinaryConsts::StringEncodeWTF8) {
+    if (getInt8() != 0) {
+      throwError("Unexpected nonzero memory index");
+    }
+    op = StringEncodeWTF8;
   } else if (code == BinaryConsts::StringEncodeWTF16) {
     if (getInt8() != 0) {
       throwError("Unexpected nonzero memory index");
     }
     op = StringEncodeWTF16;
+  } else if (code == BinaryConsts::StringEncodeUTF8Array) {
+    op = StringEncodeUTF8Array;
+    start = popNonVoidExpression();
+  } else if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
+    op = StringEncodeLossyUTF8Array;
+    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringEncodeWTF8Array) {
-    auto policy = getU32LEB();
-    switch (policy) {
-      case BinaryConsts::StringPolicy::UTF8:
-        op = StringEncodeUTF8Array;
-        break;
-      case BinaryConsts::StringPolicy::WTF8:
-        op = StringEncodeWTF8Array;
-        break;
-      default:
-        throwError("bad policy for string.encode");
-    }
+    op = StringEncodeWTF8Array;
     start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringEncodeWTF16Array) {
     op = StringEncodeWTF16Array;

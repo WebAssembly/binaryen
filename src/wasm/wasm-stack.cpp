@@ -2235,22 +2235,19 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   switch (curr->op) {
     case StringNewUTF8:
       if (!curr->try_) {
-        o << U32LEB(BinaryConsts::StringNewWTF8);
+        o << U32LEB(BinaryConsts::StringNewUTF8);
       } else {
         o << U32LEB(BinaryConsts::StringNewUTF8Try);
       }
       o << int8_t(0); // Memory index.
-      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8:
       o << U32LEB(BinaryConsts::StringNewWTF8);
       o << int8_t(0); // Memory index.
-      o << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
-    case StringNewReplace:
-      o << U32LEB(BinaryConsts::StringNewWTF8);
+    case StringNewLossyUTF8:
+      o << U32LEB(BinaryConsts::StringNewLossyUTF8);
       o << int8_t(0); // Memory index.
-      o << U32LEB(BinaryConsts::StringPolicy::Replace);
       break;
     case StringNewWTF16:
       o << U32LEB(BinaryConsts::StringNewWTF16);
@@ -2258,19 +2255,16 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
       break;
     case StringNewUTF8Array:
       if (!curr->try_) {
-        o << U32LEB(BinaryConsts::StringNewWTF8Array);
+        o << U32LEB(BinaryConsts::StringNewUTF8Array);
       } else {
         o << U32LEB(BinaryConsts::StringNewUTF8ArrayTry);
       }
-      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
       break;
     case StringNewWTF8Array:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array)
-        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      o << U32LEB(BinaryConsts::StringNewWTF8Array);
       break;
-    case StringNewReplaceArray:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array)
-        << U32LEB(BinaryConsts::StringPolicy::Replace);
+    case StringNewLossyUTF8Array:
+      o << U32LEB(BinaryConsts::StringNewLossyUTF8Array);
       break;
     case StringNewWTF16Array:
       o << U32LEB(BinaryConsts::StringNewWTF16Array);
@@ -2292,12 +2286,10 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringMeasureUTF8:
-      o << U32LEB(BinaryConsts::StringMeasureWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      o << U32LEB(BinaryConsts::StringMeasureUTF8);
       break;
     case StringMeasureWTF8:
-      o << U32LEB(BinaryConsts::StringMeasureWTF8)
-        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      o << U32LEB(BinaryConsts::StringMeasureWTF8);
       break;
     case StringMeasureWTF16:
       o << U32LEB(BinaryConsts::StringMeasureWTF16);
@@ -2320,26 +2312,29 @@ void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringEncodeUTF8:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8);
+      o << U32LEB(BinaryConsts::StringEncodeUTF8);
       o << int8_t(0); // Memory index.
-      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      break;
+    case StringEncodeLossyUTF8:
+      o << U32LEB(BinaryConsts::StringEncodeLossyUTF8);
+      o << int8_t(0); // Memory index.
       break;
     case StringEncodeWTF8:
       o << U32LEB(BinaryConsts::StringEncodeWTF8);
       o << int8_t(0); // Memory index.
-      o << U32LEB(BinaryConsts::StringPolicy::WTF8);
       break;
     case StringEncodeWTF16:
       o << U32LEB(BinaryConsts::StringEncodeWTF16);
       o << int8_t(0); // Memory index.
       break;
     case StringEncodeUTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8Array);
-      o << U32LEB(BinaryConsts::StringPolicy::UTF8);
+      o << U32LEB(BinaryConsts::StringEncodeUTF8Array);
+      break;
+    case StringEncodeLossyUTF8Array:
+      o << U32LEB(BinaryConsts::StringEncodeLossyUTF8Array);
       break;
     case StringEncodeWTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8Array)
-        << U32LEB(BinaryConsts::StringPolicy::WTF8);
+      o << U32LEB(BinaryConsts::StringEncodeWTF8Array);
       break;
     case StringEncodeWTF16Array:
       o << U32LEB(BinaryConsts::StringEncodeWTF16Array);

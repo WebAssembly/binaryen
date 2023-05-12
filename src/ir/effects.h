@@ -841,13 +841,13 @@ private:
       switch (curr->op) {
         case StringNewUTF8:
         case StringNewWTF8:
-        case StringNewReplace:
+        case StringNewLossyUTF8:
         case StringNewWTF16:
           parent.readsMemory = true;
           break;
         case StringNewUTF8Array:
         case StringNewWTF8Array:
-        case StringNewReplaceArray:
+        case StringNewLossyUTF8Array:
         case StringNewWTF16Array:
           parent.readsArray = true;
           break;
@@ -865,11 +865,13 @@ private:
       parent.implicitTrap = true;
       switch (curr->op) {
         case StringEncodeUTF8:
+        case StringEncodeLossyUTF8:
         case StringEncodeWTF8:
         case StringEncodeWTF16:
           parent.writesMemory = true;
           break;
         case StringEncodeUTF8Array:
+        case StringEncodeLossyUTF8Array:
         case StringEncodeWTF8Array:
         case StringEncodeWTF16Array:
           parent.writesArray = true;

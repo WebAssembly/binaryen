@@ -1141,16 +1141,21 @@ enum ASTNodes {
   ArrayFill = 0x0f,
   ArrayInitData = 0x54,
   ArrayInitElem = 0x55,
-  StringNewWTF8 = 0x80,
+  StringNewUTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,
+  StringMeasureUTF8 = 0x83,
   StringMeasureWTF8 = 0x84,
   StringMeasureWTF16 = 0x85,
-  StringEncodeWTF8 = 0x86,
+  StringEncodeUTF8 = 0x86,
   StringEncodeWTF16 = 0x87,
   StringConcat = 0x88,
   StringEq = 0x89,
   StringIsUSV = 0x8a,
+  StringNewLossyUTF8 = 0x8b,
+  StringNewWTF8 = 0x8c,
+  StringEncodeLossyUTF8 = 0x8d,
+  StringEncodeWTF8 = 0x8e,
   StringNewUTF8Try = 0x8f,
   StringAsWTF8 = 0x90,
   StringViewWTF8Advance = 0x91,
@@ -1167,10 +1172,14 @@ enum ASTNodes {
   StringCompare = 0xa8,
   StringFromCodePoint = 0xa9,
   StringHash = 0xaa,
-  StringNewWTF8Array = 0xb0,
+  StringNewUTF8Array = 0xb0,
   StringNewWTF16Array = 0xb1,
-  StringEncodeWTF8Array = 0xb2,
+  StringEncodeUTF8Array = 0xb2,
   StringEncodeWTF16Array = 0xb3,
+  StringNewLossyUTF8Array = 0xb4,
+  StringNewWTF8Array = 0xb5,
+  StringEncodeLossyUTF8Array = 0xb6,
+  StringEncodeWTF8Array = 0xb7,
   StringNewUTF8ArrayTry = 0xb8,
 };
 
@@ -1181,12 +1190,6 @@ enum MemoryAccess {
 };
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
-
-enum StringPolicy {
-  UTF8 = 0x00,
-  WTF8 = 0x01,
-  Replace = 0x02,
-};
 
 enum FeaturePrefix {
   FeatureUsed = '+',

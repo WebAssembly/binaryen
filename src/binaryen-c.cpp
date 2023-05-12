@@ -1038,11 +1038,13 @@ BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
 BinaryenOp BinaryenBrOnCastFail(void) { return BrOnCastFail; };
 BinaryenOp BinaryenStringNewUTF8(void) { return StringNewUTF8; }
 BinaryenOp BinaryenStringNewWTF8(void) { return StringNewWTF8; }
-BinaryenOp BinaryenStringNewReplace(void) { return StringNewReplace; }
+BinaryenOp BinaryenStringNewLossyUTF8(void) { return StringNewLossyUTF8; }
 BinaryenOp BinaryenStringNewWTF16(void) { return StringNewWTF16; }
 BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
 BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
-BinaryenOp BinaryenStringNewReplaceArray(void) { return StringNewReplaceArray; }
+BinaryenOp BinaryenStringNewLossyUTF8Array(void) {
+  return StringNewLossyUTF8Array;
+}
 BinaryenOp BinaryenStringNewWTF16Array(void) { return StringNewWTF16Array; }
 BinaryenOp BinaryenStringNewFromCodePoint(void) {
   return StringNewFromCodePoint;
@@ -1055,9 +1057,13 @@ BinaryenOp BinaryenStringMeasureWTF16View(void) {
   return StringMeasureWTF16View;
 }
 BinaryenOp BinaryenStringEncodeUTF8(void) { return StringEncodeUTF8; }
+BinaryenOp BinaryenStringEncodeLossyUTF8(void) { return StringEncodeLossyUTF8; }
 BinaryenOp BinaryenStringEncodeWTF8(void) { return StringEncodeWTF8; }
 BinaryenOp BinaryenStringEncodeWTF16(void) { return StringEncodeWTF16; }
 BinaryenOp BinaryenStringEncodeUTF8Array(void) { return StringEncodeUTF8Array; }
+BinaryenOp BinaryenStringEncodeLossyUTF8Array(void) {
+  return StringEncodeLossyUTF8Array;
+}
 BinaryenOp BinaryenStringEncodeWTF8Array(void) { return StringEncodeWTF8Array; }
 BinaryenOp BinaryenStringEncodeWTF16Array(void) {
   return StringEncodeWTF16Array;

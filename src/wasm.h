@@ -574,12 +574,12 @@ enum StringNewOp {
   // Linear memory
   StringNewUTF8,
   StringNewWTF8,
-  StringNewReplace,
+  StringNewLossyUTF8,
   StringNewWTF16,
   // GC
   StringNewUTF8Array,
   StringNewWTF8Array,
-  StringNewReplaceArray,
+  StringNewLossyUTF8Array,
   StringNewWTF16Array,
   // Other
   StringNewFromCodePoint,
@@ -596,9 +596,11 @@ enum StringMeasureOp {
 
 enum StringEncodeOp {
   StringEncodeUTF8,
+  StringEncodeLossyUTF8,
   StringEncodeWTF8,
   StringEncodeWTF16,
   StringEncodeUTF8Array,
+  StringEncodeLossyUTF8Array,
   StringEncodeWTF8Array,
   StringEncodeWTF16Array,
 };
