@@ -21,117 +21,122 @@
 
 namespace wasm::analysis {
 
-struct BasicBlock::Predecessors {
-  struct iterator;
-  iterator begin() const;
-  iterator end() const;
+namespace {
 
-  bool operator==(const Predecessors& other) const {
-    return cfg == other.cfg && index == other.index;
-  }
-  bool operator!=(const Predecessors& other) const { return !(*this == other); }
+// An iterator over a sequence of contiguous pointers (represented as a pointer
+// to a pointer in the sequence) that dereferences the pointed-to pointer.
+// TODO: Move this to its own public header if there is ever another use for it.
+template<typename T> struct _indirect_ptr_iterator {
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type = T;
+  using different_type = off_t;
+  using reference = const T&;
+  using pointer = const T*;
 
-private:
-  const CFG* cfg;
-  size_t index;
+  const T* const* ptr;
 
-  Predecessors(const CFG* cfg, size_t index) : cfg(cfg), index(index) {}
-  friend BasicBlock;
-};
+  const T& operator*() const { return **ptr; }
 
-struct BasicBlock::Successors {
-  struct iterator;
-  iterator begin() const;
-  iterator end() const;
+  const T& operator[](int n) const { return **(ptr + n); }
 
-  bool operator==(const Successors& other) const {
-    return cfg == other.cfg && index == other.index;
+  _indirect_ptr_iterator& operator+=(int n) {
+    ptr += n;
+    return *this;
   }
 
-private:
-  const CFG* cfg;
-  size_t index;
-  Successors(const CFG* cfg, size_t index) : cfg(cfg), index(index) {}
-  friend BasicBlock;
-};
+  _indirect_ptr_iterator& operator-=(int n) {
+    ptr -= n;
+    return *this;
+  }
 
-struct CFG::iterator : ParentIndexIterator<const CFG*, iterator> {
-  using value_type = BasicBlock;
-  using pointer = BasicBlock*;
-  using reference = BasicBlock&;
-  BasicBlock operator*() const { return BasicBlock(parent, index); }
-  iterator(const CFG* cfg, size_t index)
-    : ParentIndexIterator<const CFG*, iterator>{cfg, index} {}
-};
+  _indirect_ptr_iterator& operator++() { return *this += 1; }
 
-struct BasicBlock::Predecessors::iterator
-  : ParentIndexIterator<Predecessors, iterator> {
-  using value_type = BasicBlock;
-  using pointer = BasicBlock*;
-  using reference = BasicBlock&;
-  BasicBlock operator*() {
-    return BasicBlock(parent.cfg, parent.cfg->preds[parent.index][index]);
+  _indirect_ptr_iterator operator++(int) {
+    _indirect_ptr_iterator it = *this;
+    ++(*this);
+    return it;
+  }
+
+  _indirect_ptr_iterator& operator--() { return *this -= 1; }
+
+  _indirect_ptr_iterator operator--(int) {
+    _indirect_ptr_iterator it = *this;
+    --(*this);
+    return it;
+  }
+
+  _indirect_ptr_iterator operator+(int n) const {
+    _indirect_ptr_iterator it = *this;
+    it += n;
+    return it;
+  }
+
+  _indirect_ptr_iterator operator-(int n) const {
+    _indirect_ptr_iterator it = *this;
+    it -= n;
+    return it;
+  }
+
+  bool operator==(const _indirect_ptr_iterator& other) const {
+    return ptr == other.ptr;
+  }
+
+  bool operator!=(const _indirect_ptr_iterator& other) const {
+    return !(*this == other);
+  }
+
+  bool operator<(const _indirect_ptr_iterator& other) const {
+    return ptr < other.ptr;
+  }
+
+  bool operator>(const _indirect_ptr_iterator& other) const {
+    return ptr > other.ptr;
+  }
+
+  bool operator<=(const _indirect_ptr_iterator& other) const {
+    return ptr <= other.ptr;
+  }
+
+  bool operator>=(const _indirect_ptr_iterator& other) const {
+    return ptr >= other.ptr;
   }
 };
 
-struct BasicBlock::Successors::iterator
-  : ParentIndexIterator<Successors, iterator> {
-  using value_type = BasicBlock;
-  using pointer = BasicBlock*;
-  using reference = BasicBlock&;
-  BasicBlock operator*() {
-    return BasicBlock(parent.cfg, parent.cfg->succs[parent.index][index]);
-  }
+template<typename T>
+_indirect_ptr_iterator<T> operator+(int n,
+                                    const _indirect_ptr_iterator<T>& it) {
+  return it + n;
+}
+
+// Wraps a vector of pointers and provides dereferencing iterators for it.
+template<typename T> struct _indirect_ptr_vec {
+  using iterator = _indirect_ptr_iterator<T>;
+
+  const std::vector<T*>& vec;
+
+  _indirect_ptr_vec(const std::vector<T*>& vec) : vec(vec) {}
+
+  iterator begin() const { return {&vec.data()[0]}; }
+  iterator end() const { return {&vec.data()[vec.size()]}; }
 };
 
-inline CFG::iterator CFG::begin() const { return iterator(this, 0); }
+} // anonymous namespace
 
-inline CFG::iterator CFG::end() const { return iterator(this, blocks.size()); }
+struct BasicBlock::Predecessors : _indirect_ptr_vec<BasicBlock> {
+  Predecessors(const BasicBlock& block)
+    : _indirect_ptr_vec(block.predecessors) {}
+};
 
-inline size_t CFG::size() const { return blocks.size(); }
-
-inline BasicBlock::iterator BasicBlock::begin() const {
-  return cfg->blocks[index].cbegin();
-}
-
-inline BasicBlock::iterator BasicBlock::end() const {
-  return cfg->blocks[index].cend();
-}
-
-inline size_t BasicBlock::size() const { return cfg->blocks[index].size(); }
-
-inline BasicBlock::Predecessors::iterator
-BasicBlock::Predecessors::begin() const {
-  return iterator{*this, 0};
-}
-
-inline BasicBlock::Predecessors::iterator
-BasicBlock::Predecessors::end() const {
-  return iterator{*this, cfg->preds[index].size()};
-}
-
-inline BasicBlock::Successors::iterator BasicBlock::Successors::begin() const {
-  return iterator{*this, 0};
-}
-
-inline BasicBlock::Successors::iterator BasicBlock::Successors::end() const {
-  return iterator{*this, cfg->succs[index].size()};
-}
+struct BasicBlock::Successors : _indirect_ptr_vec<BasicBlock> {
+  Successors(const BasicBlock& block) : _indirect_ptr_vec(block.successors) {}
+};
 
 inline BasicBlock::Predecessors BasicBlock::preds() const {
-  return Predecessors{cfg, index};
+  return Predecessors(*this);
 }
 
 inline BasicBlock::Successors BasicBlock::succs() const {
-  return Successors{cfg, index};
-}
-
-inline bool BasicBlock::operator==(const BasicBlock& other) const {
-  return cfg == other.cfg && index == other.index;
-}
-
-inline bool BasicBlock::operator!=(const BasicBlock& other) const {
-  return !(*this == other);
+  return Successors(*this);
 }
 
 } // namespace wasm::analysis

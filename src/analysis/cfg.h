@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+// A generic CFG / basic block utility. Unlike the utilities in src/cfg/, this
+// is a generic representation of a CFG rather than a generic builder of
+// CFG-like objects. It lives here in src/analysis/ because it is primarily
+// meant for use in the static analysis framework. Other Binaryen code will find
+// it more idiomatic to use the utilities in src/cfg/.
+
 #ifndef wasm_analysis_cfg_h
 #define wasm_analysis_cfg_h
 
@@ -28,19 +34,17 @@ struct BasicBlock;
 
 struct CFG {
   // Iterate through basic blocks.
-  struct iterator;
-  iterator begin() const;
-  iterator end() const;
-  size_t size() const;
+  using iterator = std::vector<BasicBlock>::const_iterator;
+  iterator begin() const { return blocks.cbegin(); }
+  iterator end() const { return blocks.cend(); }
+  size_t size() const { return blocks.size(); }
 
   static CFG fromFunction(Function* func);
 
-  void print(std::ostream& os, Module* wasm = nullptr);
+  void print(std::ostream& os, Module* wasm = nullptr) const;
 
 private:
-  std::vector<std::vector<Expression*>> blocks;
-  std::vector<std::vector<size_t>> succs;
-  std::vector<std::vector<size_t>> preds;
+  std::vector<BasicBlock> blocks;
   friend BasicBlock;
 };
 
@@ -48,9 +52,9 @@ struct BasicBlock {
   using iterator = std::vector<Expression*>::const_iterator;
 
   // Iterate through instructions.
-  iterator begin() const;
-  iterator end() const;
-  size_t size() const;
+  iterator begin() const { return insts.cbegin(); }
+  iterator end() const { return insts.cend(); }
+  size_t size() const { return insts.size(); }
 
   // Iterables for predecessor and successor blocks.
   struct Predecessors;
@@ -58,16 +62,13 @@ struct BasicBlock {
   Predecessors preds() const;
   Successors succs() const;
 
-  bool operator==(const BasicBlock& other) const;
-  bool operator!=(const BasicBlock& other) const;
-
-  void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0);
+  void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
 private:
-  const CFG* cfg;
-  size_t index;
-
-  BasicBlock(const CFG* cfg, size_t index) : cfg(cfg), index(index) {}
+  Index index;
+  std::vector<Expression*> insts;
+  std::vector<BasicBlock*> predecessors;
+  std::vector<BasicBlock*> successors;
   friend CFG;
 };
 

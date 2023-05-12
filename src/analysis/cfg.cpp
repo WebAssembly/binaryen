@@ -36,35 +36,41 @@ CFG CFG::fromFunction(Function* func) {
   CFGBuilder builder;
   builder.walkFunction(func);
 
-  std::unordered_map<CFGBuilder::BasicBlock*, size_t> blockIndices;
-  for (size_t i = 0; i < builder.basicBlocks.size(); ++i) {
-    blockIndices[builder.basicBlocks[i].get()] = i;
-  }
+  size_t numBlocks = builder.basicBlocks.size();
 
   CFG cfg;
-  for (auto& block : builder.basicBlocks) {
-    cfg.blocks.emplace_back(std::move(block->contents));
+  cfg.blocks = std::vector<BasicBlock>(numBlocks);
 
-    std::vector<size_t> preds;
-    for (auto* pred : block->in) {
-      preds.push_back(blockIndices.at(pred));
-    }
-    cfg.preds.emplace_back(std::move(preds));
-
-    std::vector<size_t> succs;
-    for (auto* succ : block->out) {
-      succs.push_back(blockIndices.at(succ));
-    }
-    cfg.succs.emplace_back(std::move(succs));
+  // From here the addresses of the new basic blocks are stable.
+  std::unordered_map<CFGBuilder::BasicBlock*, BasicBlock*> oldToNewBlocks;
+  for (size_t i = 0; i < numBlocks; ++i) {
+    oldToNewBlocks[builder.basicBlocks[i].get()] = &cfg.blocks[i];
   }
 
-  return cfg;
+  for (size_t i = 0; i < numBlocks; ++i) {
+    auto& oldBlock = *builder.basicBlocks[i];
+    auto& newBlock = cfg.blocks[i];
+    newBlock.index = i;
+    newBlock.insts = std::move(oldBlock.contents);
+    newBlock.predecessors.reserve(oldBlock.in.size());
+    for (auto* oldPred : oldBlock.in) {
+      newBlock.predecessors.push_back(oldToNewBlocks.at(oldPred));
+    }
+    newBlock.successors.reserve(oldBlock.out.size());
+    for (auto* oldSucc : oldBlock.out) {
+      newBlock.successors.push_back(oldToNewBlocks.at(oldSucc));
+    }
+  }
+
+  // Move-construct a new CFG to get mandatory copy elision, preserving basic
+  // block addresses through the return.
+  return CFG(std::move(cfg));
 }
 
-void CFG::print(std::ostream& os, Module* wasm) {
+void CFG::print(std::ostream& os, Module* wasm) const {
   size_t start = 0;
-  for (auto block : *this) {
-    if (block != *begin()) {
+  for (auto& block : *this) {
+    if (&block != &*begin()) {
       os << '\n';
     }
     block.print(os, wasm, start);
@@ -72,18 +78,18 @@ void CFG::print(std::ostream& os, Module* wasm) {
   }
 }
 
-void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) {
+void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   os << ";; preds: [";
-  for (auto pred : preds()) {
-    if (pred != *preds().begin()) {
+  for (auto& pred : preds()) {
+    if (&pred != &*preds().begin()) {
       os << ", ";
     }
     os << pred.index;
   }
   os << "], succs: [";
 
-  for (auto succ : succs()) {
-    if (succ != *succs().begin()) {
+  for (auto& succ : succs()) {
+    if (&succ != &*succs().begin()) {
       os << ", ";
     }
     os << succ.index;
