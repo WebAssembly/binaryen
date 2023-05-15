@@ -1642,8 +1642,9 @@ public:
     }
     Literals data(num);
     if (curr->isWithDefault()) {
+      auto zero = Literal::makeZero(element.type);
       for (Index i = 0; i < num; i++) {
-        data[i] = Literal::makeZero(element.type);
+        data[i] = zero;
       }
     } else {
       auto field = curr->type.getHeapType().getArray().element;
