@@ -3,7 +3,7 @@
 ;; automatic updates cannot be in the same file.)
 
 ;; RUN: not wasm-merge %s first %s.second second 2>&1 | filecheck %s
-;; CHECK: Fatal: Export name conflict: func (consider --rename-export-conflicts or --keep-only-first-module-exports)
+;; CHECK: Fatal: Export name conflict: func (consider --rename-export-conflicts or --skip-export-conflicts)
 
 (module
   (func $func0 (export "func")

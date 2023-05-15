@@ -124,11 +124,12 @@ enum ExportMergeMode {
   // to "main", "main_1", "main_2" etc. - you'll decide when to call each of
   // those and do so at the right time.
   RenameExportConflicts,
-  // Keep the exports from the first module and remove all others. For example,
-  // this is useful when the first module is the main program and the others are
-  // libraries of code that it uses, but that do not have any exports intended
-  // to be used by anyone other than the main program.
-  KeepOnlyFirstModuleExports,
+  // Silently ignore export conflicts, that is, later exports that overlap with
+  // previous ones are simply skipped. This can be useful when the first module
+  // is the main program, which exports things to the outside, while other
+  // modules are libraries of code that only provide things to the main module
+  // but not to the outside.
+  SkipExportConflicts,
 } exportMergeMode = ErrorOnExportConflicts;
 
 // Merging two modules is mostly straightforward: copy the functions etc. of the
@@ -316,18 +317,22 @@ void copyModuleContents(Module& input, Name inputName) {
   for (auto& curr : input.exports) {
     auto copy = std::make_unique<Export>(*curr);
 
-    // An export may already exist with that name, so fix it up.
-    copy->name = Names::getValidExportName(merged, copy->name);
-    if (copy->name != curr->name && exportMergeMode == ErrorOnExportConflicts) {
-      Fatal() << "Export name conflict: " << curr->name << " (consider"
-              << " --rename-export-conflicts or"
-              << " --keep-only-first-module-exports)\n";
-    }
-
     // Note the module origin and original name of this export, for later fusing
     // of imports to exports.
     exportModuleMap[copy.get()] = ExportInfo{inputName, curr->name};
 
+    // An export may already exist with that name, so fix it up.
+    copy->name = Names::getValidExportName(merged, copy->name);
+    if (copy->name != curr->name) {
+      if (exportMergeMode == ErrorOnExportConflicts) {
+        Fatal() << "Export name conflict: " << curr->name << " (consider"
+                << " --rename-export-conflicts or"
+                << " --skip-export-conflicts)\n";
+      } else if (exportMergeMode == SkipExportConflicts) {
+        // Skip the addExport below us.
+        continue;
+      }
+    }
     // Add the export.
     merged.addExport(std::move(copy));
   }
@@ -469,13 +474,13 @@ Note that filenames and modules names are interleaved (which is hopefully less c
          [&](Options* o, const std::string& argument) {
            exportMergeMode = RenameExportConflicts;
          })
-    .add("--keep-only-first-module-exports",
-         "-kofme",
-         "Keep exports from the first module and ignore all others",
+    .add("--skip-export-conflicts",
+         "-sec",
+         "Skip exports that conflict with previous ones",
          WasmMergeOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) {
-           exportMergeMode = KeepOnlyFirstModuleExports;
+           exportMergeMode = SkipExportConflicts;
          })
     .add("--emit-text",
          "-S",
@@ -496,10 +501,6 @@ Note that filenames and modules names are interleaved (which is hopefully less c
                "In particular, the number of positional inputs must be even as "
                "each wasm binary must be followed by its name.";
   }
-
-  // We need to note the number of exports in the first module for
-  // KeepOnlyFirstModuleExports mode.
-  Index numExportsInFirstModule = -1;
 
   // Process the inputs.
   // TODO: If the inputs are a very large number of small modules then it might
@@ -549,7 +550,6 @@ Note that filenames and modules names are interleaved (which is hopefully less c
       for (auto& curr : merged.exports) {
         exportModuleMap[curr.get()] = ExportInfo{inputFileName, curr->name};
       }
-      numExportsInFirstModule = merged.exports.size();
     } else {
       // This is a later module: do a full merge.
       mergeInto(*currModule, inputFileName);
@@ -566,10 +566,6 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   // Fuse imports and exports now that everything is all together in the merged
   // module.
   fuseImportsAndExports();
-
-  if (exportMergeMode == KeepOnlyFirstModuleExports) {
-    merged.exports.resize(numExportsInFirstModule);
-  }
 
   // Remove unused things. This is obviously a useful optimization, but it also
   // makes using the output easier: if an import was resolved by an export
