@@ -2,7 +2,7 @@
 
 ;; If asked to, we rename the conflicts. The second "func" export will become
 ;; "func_1".
-;; RUN: wasm-merge %s first %s.second second --rename-export-conflicts        -S -o - | filecheck %s --check-prefix RENAME
+;; RUN: wasm-merge %s first %s.second second --rename-export-conflicts -S -o - | filecheck %s --check-prefix RENAME
 
 ;; If asked to, we can skip conflicting exports from later modules. The second
 ;; "func" export will not exist.
