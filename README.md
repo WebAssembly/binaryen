@@ -574,6 +574,11 @@ file the calls between the modules become just normal calls inside a module,
 which allows them to be inlined, dead code eliminated, and so forth, potentially
 improving speed and size.
 
+`wasm-merge` operates on normal wasm files. It differs from `wasm-ld` in that
+respect, as `wasm-ld` operates on wasm *object* files. `wasm-merge` can help
+in multi-toolchain situations where at least one of the toolchains does not use
+wasm object files.
+
 For example, imagine we have these two wasm files:
 
 ```wat
@@ -726,6 +731,15 @@ Another option is to use `--skip-export-conflicts` which will simply skip later
 exports that have conflicting names. For example, this can be useful in the
 case where the first module is the only one that interacts with the outside and
 the later modules just interact with the first module.
+
+#### Features
+
+`wasm-merge` uses the multi-memory and multi-table features. That is, if
+multiple input modules each have a memory then the output wasm will have several
+memories, and will depend on the multi-memory feature, which means that older
+wasm VMs might not be able to run the wasm. (As a workaround for such older VMs
+you can run `wasm-opt --multi-memory-lowering` to lower multiple memories into a
+single one.)
 
 ## Testing
 
