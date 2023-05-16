@@ -60,11 +60,14 @@ namespace wasm {
 
 namespace {
 
-// Given a type builder that has some new types set up in it, build the types in
-// a new rec group. This is almost the same as just calling
-// createRecGroup(0, num) and then build(), but there is a risk of a collision
-// with an existing rec group, which this utility handles.
-// TODO: move this outside if we find more uses.
+// Given some TypeBuilder items that we want to build new types with, this
+// function builds the types in a new rec group.
+//
+// This is almost the same as just calling build(), but there is a risk of a
+// collision with an existing rec group. This function handles that by finding a
+// way to ensure that the new types are in fact in a new rec group.
+//
+// TODO: Move this outside if we find more uses.
 struct BuilderItem {
   std::variant<Struct, Array> contents;
   HeapType super;
@@ -74,6 +77,12 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
                           Module& wasm) {
   auto num = builderItems.size();
 
+  // Find all the heap types present before we create the new ones. The new
+  // types must not appear in |existingSet|.
+  std::vector<HeapType> existing = ModuleUtils::collectHeapTypes(wasm);
+  std::unordered_set<HeapType> existingSet(existing.begin(), existing.end());
+
+  // Given a builder, set it up with the builder items we were given.
   auto fillBuilder = [&](TypeBuilder& builder) {
     for (Index i = 0; i < builderItems.size(); i++) {
       auto& item = builderItems[i];
@@ -100,9 +109,7 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
   // Check for a collision with an existing rec group. Note that it is enough to
   // check one of the types: either the entire rec group gets merged, so they
   // are all merged, or not.
-  std::vector<HeapType> typesVec = ModuleUtils::collectHeapTypes(wasm);
-  std::unordered_set<HeapType> typesSet(typesVec.begin(), typesVec.end());
-  if (typesSet.count(newTypes[0])) {
+  if (existingSet.count(newTypes[0])) {
     // Unfortunately there is a conflict. Handle it by adding a "hash" - a
     // "random" extra item in the rec group that is so outlandish it will
     // surely (?) never collide with anything. We must loop will doing so, until
@@ -130,8 +137,10 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
       newTypes = *result;
       assert(newTypes.size() == num + 1);
 
-      if (typesSet.count(newTypes[0])) {
-        // There is still a collision.
+      if (existingSet.count(newTypes[0])) {
+        // There is still a collision. Exponentially use larger hashes to
+        // quickly find one that works. Note that we also use different
+        // pseudorandom values while doing so in the for-loop above.
         hashSize *= 2;
       } else {
         // Success! Leave the loop.
@@ -143,7 +152,7 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
 #ifndef NDEBUG
   // Verify the lack of a collision, just to be safe.
   for (auto newType : newTypes) {
-    assert(!typesSet.count(newType));
+    assert(!existingSet.count(newType));
   }
 #endif
 
