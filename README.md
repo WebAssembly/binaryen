@@ -709,6 +709,24 @@ merged.exports.main();
 We still need to fetch and compile the merged wasm, and to provide it the JS
 import, but the work to connect two wasm modules is not needed any more.
 
+### Handling exports
+
+By default `wasm-merge` errors if there are overlapping export names. That is,
+`wasm-merge` will automatically handle overlapping function names and so forth,
+because those are not externally visible (the code still behaves the same), but
+if we renamed exports then the outside would need to be modified to expect the
+new export names, and so we error instead on such name conflicts.
+
+If you do want exports to be renamed, run `wasm-merge` with
+`--rename-export-conflicts`. Later exports will have a suffix appended to them
+to ensure they do not overlap with previous exports. The suffixes are
+deterministic, so once you see what they are you can call them from the outside.
+
+Another option is to use `--skip-export-conflicts` which will simply skip later
+exports that have conflicting names. For example, this can be useful in the
+case where the first module is the only one that interacts with the outside and
+the later modules just interact with the first module.
+
 ## Testing
 
 ```
