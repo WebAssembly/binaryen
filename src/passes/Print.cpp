@@ -2954,9 +2954,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (name.is()) {
       o << " $" << name;
       if (currModule && currModule->features.hasGC()) {
-        // This is not a declaration of a type (there is no name), so it is a
-        // nested mention of a type: in addition to the signature, emit the type's
-        // name.
         o << " (type ";
         printHeapType(o, curr, currModule) << ')';
       }
