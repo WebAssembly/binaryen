@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add a `wasm-merge` tool. This is a full rewrite of the previous `wasm-merge`
+  tool that was removed from the tree in the past. The new version is much
+  simpler after recent improvements to multi-memory and multi-table. The
+  rewrite was motivated by new use cases for merging modules in the context of
+  WasmGC.
 - Some C and JS API functions now refer to data and element segments by name
   instead of index.
 - The --nominal and --hybrid command line options and related API functions have

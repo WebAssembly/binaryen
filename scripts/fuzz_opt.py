@@ -82,6 +82,11 @@ def random_size():
     return random.randint(INPUT_SIZE_MIN, 2 * INPUT_SIZE_MEAN - INPUT_SIZE_MIN)
 
 
+def make_random_input(input_size, raw_input_data):
+    with open(raw_input_data, 'wb') as f:
+        f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+
+
 def run(cmd, stderr=None, silent=False):
     if not silent:
         print(' '.join(cmd))
@@ -1284,6 +1289,62 @@ class CtorEval(TestCaseHandler):
         compare_between_vms(fix_output(wasm_exec), fix_output(evalled_wasm_exec), 'CtorEval')
 
 
+# Tests wasm-merge
+class Merge(TestCaseHandler):
+    frequency = 0.15
+
+    def handle(self, wasm):
+        # generate a second wasm file to merge. note that we intentionally pick
+        # a smaller size than the main wasm file, so that reduction is
+        # effective (i.e., as we reduce the main wasm to small sizes, we also
+        # end up with small secondary wasms)
+        # TODO: add imports and exports that connect between the two
+        wasm_size = os.stat(wasm).st_size
+        second_size = min(wasm_size, random_size())
+        second_input = abspath('second_input.dat')
+        make_random_input(second_size, second_input)
+        second_wasm = abspath('second.wasm')
+        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + FUZZ_OPTS + FEATURE_OPTS)
+
+        # sometimes also optimize the second module
+        if random.random() < 0.5:
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), second_wasm, '-o', second_wasm, '-all'] + FEATURE_OPTS + opts)
+
+        # merge the wasm files. note that we must pass -all, as even if the two
+        # inputs are MVP, the output may have multiple tables and multiple
+        # memories (and we must also do that in the commands later down).
+        #
+        # Use --skip-export-conflicts as we only look at the first module's
+        # exports for now - we don't care about the second module's.
+        # TODO: compare the second module's exports as well, but we'd need
+        #       to handle renaming of conflicting exports.
+        merged = abspath('merged.wasm')
+        run([in_bin('wasm-merge'), wasm, 'first',
+            abspath('second.wasm'), 'second', '-o', merged,
+            '--skip-export-conflicts'] + FEATURE_OPTS + ['-all'])
+
+        # sometimes also optimize the merged module
+        if random.random() < 0.5:
+            opts = get_random_opts()
+            run([in_bin('wasm-opt'), merged, '-o', merged, '-all'] + FEATURE_OPTS + opts)
+
+        # verify that merging in the second module did not alter the output.
+        output = run_bynterp(wasm, ['--fuzz-exec-before', '-all'])
+        output = fix_output(output)
+        merged_output = run_bynterp(merged, ['--fuzz-exec-before', '-all'])
+        merged_output = fix_output(merged_output)
+
+        # a complication is that the second module's exports are appended, so we
+        # have extra output. to handle that, just prune the tail, so that we
+        # only compare the original exports from the first module.
+        # TODO: compare the second module's exports to themselves as well, but
+        #       they may have been renamed due to overlaps...
+        merged_output = merged_output[:len(output)]
+
+        compare_between_vms(output, merged_output, 'Merge')
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1306,6 +1367,7 @@ testcase_handlers = [
     Asyncify(),
     TrapsNeverHappen(),
     CtorEval(),
+    Merge(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
@@ -1329,7 +1391,7 @@ def test_one(random_input, given_wasm):
     randomize_fuzz_settings()
     pick_initial_contents()
 
-    opts = randomize_opt_flags()
+    opts = get_random_opts()
     print('randomized opts:', '\n  ' + '\n  '.join(opts))
     print()
 
@@ -1503,7 +1565,7 @@ requires_closed_world = {("--type-refining",),
                          ("--type-merging",)}
 
 
-def randomize_opt_flags():
+def get_random_opts():
     flag_groups = []
     has_flatten = False
 
@@ -1643,8 +1705,7 @@ if __name__ == '__main__':
               'iters/sec, ', total_wasm_size / elapsed,
               'wasm_bytes/sec, ', ignored_vm_runs,
               'ignored\n')
-        with open(raw_input_data, 'wb') as f:
-            f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
+        make_random_input(input_size, raw_input_data)
         assert os.path.getsize(raw_input_data) == input_size
         # remove the generated wasm file, so that we can tell if the fuzzer
         # fails to create one
