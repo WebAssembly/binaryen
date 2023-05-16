@@ -52,12 +52,101 @@
 #include "ir/names.h"
 #include "ir/possible-constant.h"
 #include "pass.h"
+#include "support/hash.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
+
+// Given a type builder that has some new types set up in it, build the types in
+// a new rec group. This is almost the same as just calling
+// createRecGroup(0, num) and then build(), but there is a risk of a collision
+// with an existing rec group, which this utility handles.
+// TODO: move this outside if we find more uses.
+struct BuilderItem {
+  std::variant<Struct, Array> contents;
+  HeapType super;
+};
+std::vector<HeapType> makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems, Module& wasm) {
+  auto num = builderItems.size();
+
+  auto fillBuilder = [&](TypeBuilder& builder) {
+    for (Index i = 0; i < builderItems.size(); i++) {
+      auto& item = builderItems[i];
+      if (auto* struct_ = std::get_if<Struct>(&item.contents)) {
+        builder[i] = *struct_;
+      } else if (auto* array_ = std::get_if<Array>(&item.contents)) {
+        builder[i] = *array_;
+      } else {
+        WASM_UNREACHABLE("bad variant");
+      }
+      builder[i].subTypeOf(item.super);
+    }
+  };
+
+  // Create a copy of the builder and see if just building happens to work.
+  TypeBuilder builder(num);
+  fillBuilder(builder);
+  builder.createRecGroup(0, num);
+  auto result = builder.build();
+  assert(!result.getError());
+  auto newTypes = *result;
+  assert(newTypes.size() == num);
+
+  // Check for a collision with an existing rec group. Note that it is enough to
+  // check one of the types: either the entire rec group gets merged, so they
+  // are all merged, or not.
+  std::vector<HeapType> typesVec = ModuleUtils::collectHeapTypes(wasm);
+  std::unordered_set<HeapType> typesSet(typesVec.begin(), typesVec.end());
+  if (typesSet.count(newTypes[0])) {
+    // Unfortunately there is a conflict. Handle it by adding a "hash" - a
+    // "random" extra item in the rec group that is so outlandish it will
+    // surely (?) never collide with anything. We must loop will doing so, until
+    // we find a hash that does not collide.
+    auto hashSize = num + 10;
+    size_t random = num;
+    while (1) {
+      // Make a builder and add a slot for the hash.
+      TypeBuilder builder(num + 1);
+      fillBuilder(builder);
+
+      // Implement the hash as a struct with "random" fields, and add it.
+      Struct hashStruct;
+      for (Index i = 0; i < hashSize; i++) {
+        auto type = (random & 1) ? Type::i32 : Type::f64;
+        rehash(random, hashSize + i);
+        hashStruct.fields.push_back(Field(type, Mutable));
+      }
+      builder[num] = hashStruct;
+
+      // Build and hope for the best.
+      builder.createRecGroup(0, num + 1);
+      auto result = builder.build();
+      assert(!result.getError());
+      newTypes = *result;
+      assert(newTypes.size() == num + 1);
+
+      if (typesSet.count(newTypes[0])) {
+        // There is still a collision.
+        hashSize *= 2;
+      } else {
+        // Success! Leave the loop.
+        break;
+      }
+    }
+  }
+
+#ifndef NDEBUG
+  // Verify the lack of a collision, just to be safe.
+  for (auto newType : newTypes) {
+    assert(!typesSet.count(newType));
+  }
+#endif
+
+  return newTypes;
+}
 
 // A vector of struct.new or one of the variations on array.new.
 using News = std::vector<Expression*>;
@@ -143,48 +232,23 @@ struct TypeSSA : public Pass {
     // instruction that we found. In the isorecursive type system there isn't an
     // explicit way to do so, but at least if the new rec group is very large
     // the risk of collision with another rec group in the program is small.
+    // (If a collision does happen, though, then that is very dangerous, as
+    // casts on the new types could succeed in ways the program doesn't expect.)
     // Note that the risk of collision with things outside of this module is
     // also a possibility, and so for that reason this pass is likely mostly
     // useful in the closed-world scenario.
 
-    TypeBuilder builder(num);
+    std::vector<BuilderItem> items;
     for (Index i = 0; i < num; i++) {
       auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
       if (oldType.isStruct()) {
-        builder[i] = oldType.getStruct();
+        items.push_back(BuilderItem{oldType.getStruct(), oldType});
       } else {
-        builder[i] = oldType.getArray();
+        items.push_back(BuilderItem{oldType.getArray(), oldType});
       }
-      builder[i].subTypeOf(oldType);
     }
-    builder.createRecGroup(0, num);
-    auto result = builder.build();
-    assert(!result.getError());
-    auto newTypes = *result;
-    assert(newTypes.size() == num);
-
-    // The new types must not overlap with any existing ones. If they do, then
-    // it would be unsafe to apply this optimization (if casts exist to the
-    // existing types, the new types merged with them would now succeed on those
-    // casts). We could try to create a "weird" rec group to avoid this (e.g. we
-    // could make a rec group larger than any existing one, or with an initial
-    // member that is "random"), but hopefully this is rare, so just error for
-    // now.
-    //
-    // Note that it is enough to check one of the types: either the entire rec
-    // group gets merged, so they are all merged, or not.
-    std::vector<HeapType> typesVec = ModuleUtils::collectHeapTypes(*module);
-    std::unordered_set<HeapType> typesSet(typesVec.begin(), typesVec.end());
-    if (typesSet.count(newTypes[0])) {
-      Fatal() << "Rec group collision in TypeSSA! Please file a bug";
-    }
-#ifndef NDEBUG
-    // Verify the above assumption, just to be safe.
-    for (auto newType : newTypes) {
-      assert(!typesSet.count(newType));
-    }
-#endif
+    auto newTypes = makeNewTypesInNewRecGroup(items, *module);
 
     // Success: we can apply the new types.
 
