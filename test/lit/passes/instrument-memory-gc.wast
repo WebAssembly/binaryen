@@ -26,61 +26,61 @@
 
   ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
-  ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "load_ptr" (func $load_ptr (type $i32_i32_i32_i32_=>_i32) (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "load_val_i32" (func $load_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "load_val_i32" (func $load_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "load_val_i64" (func $load_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "load_val_i64" (func $load_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "load_val_f32" (func $load_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "load_val_f32" (func $load_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "load_val_f64" (func $load_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "load_val_f64" (func $load_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "store_ptr" (func $store_ptr (param i32 i32 i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "store_ptr" (func $store_ptr (type $i32_i32_i32_i32_=>_i32) (param i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "store_val_i32" (func $store_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "store_val_i32" (func $store_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "store_val_i64" (func $store_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "store_val_i64" (func $store_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "store_val_f32" (func $store_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "store_val_f32" (func $store_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "store_val_f64" (func $store_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "store_val_f64" (func $store_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "struct_get_val_i32" (func $struct_get_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "struct_get_val_i32" (func $struct_get_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "struct_get_val_i64" (func $struct_get_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "struct_get_val_i64" (func $struct_get_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "struct_get_val_f32" (func $struct_get_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "struct_get_val_f32" (func $struct_get_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "struct_get_val_f64" (func $struct_get_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "struct_get_val_f64" (func $struct_get_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "struct_set_val_i32" (func $struct_set_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "struct_set_val_i32" (func $struct_set_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "struct_set_val_i64" (func $struct_set_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "struct_set_val_i64" (func $struct_set_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "struct_set_val_f32" (func $struct_set_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "struct_set_val_f32" (func $struct_set_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "struct_set_val_f64" (func $struct_set_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "struct_set_val_f64" (func $struct_set_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "array_get_val_i32" (func $array_get_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "array_get_val_i32" (func $array_get_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "array_get_val_i64" (func $array_get_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "array_get_val_i64" (func $array_get_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "array_get_val_f32" (func $array_get_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "array_get_val_f32" (func $array_get_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "array_get_val_f64" (func $array_get_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "array_get_val_f64" (func $array_get_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "array_set_val_i32" (func $array_set_val_i32 (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "array_set_val_i32" (func $array_set_val_i32 (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "array_set_val_i64" (func $array_set_val_i64 (param i32 i64) (result i64)))
+  ;; CHECK:      (import "env" "array_set_val_i64" (func $array_set_val_i64 (type $i32_i64_=>_i64) (param i32 i64) (result i64)))
 
-  ;; CHECK:      (import "env" "array_set_val_f32" (func $array_set_val_f32 (param i32 f32) (result f32)))
+  ;; CHECK:      (import "env" "array_set_val_f32" (func $array_set_val_f32 (type $i32_f32_=>_f32) (param i32 f32) (result f32)))
 
-  ;; CHECK:      (import "env" "array_set_val_f64" (func $array_set_val_f64 (param i32 f64) (result f64)))
+  ;; CHECK:      (import "env" "array_set_val_f64" (func $array_set_val_f64 (type $i32_f64_=>_f64) (param i32 f64) (result f64)))
 
-  ;; CHECK:      (import "env" "array_get_index" (func $array_get_index (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "array_get_index" (func $array_get_index (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
-  ;; CHECK:      (import "env" "array_set_index" (func $array_set_index (param i32 i32) (result i32)))
+  ;; CHECK:      (import "env" "array_set_index" (func $array_set_index (type $i32_i32_=>_i32) (param i32 i32) (result i32)))
 
   ;; CHECK:      (func $structs (type $ref|$struct|_=>_none) (param $x (ref $struct))
   ;; CHECK-NEXT:  (drop

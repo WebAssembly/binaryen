@@ -398,7 +398,7 @@
 
   ;; As above, but now an import also uses this signature, which prevents us
   ;; from changing anything.
-  ;; CHECK:      (import "out" "func" (func $import (param i32)))
+  ;; CHECK:      (import "out" "func" (func $import (type $sig) (param i32)))
   (import "out" "func" (func $import (type $sig) (param i32)))
 
   (memory 1 1)
@@ -847,7 +847,7 @@
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $i32_funcref_=>_i32) (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
 
   ;; CHECK:      (elem declare func $func)

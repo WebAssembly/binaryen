@@ -21,7 +21,7 @@
 
   ;; CHECK:      (type $none_=>_f64 (func (result f64)))
 
-  ;; CHECK:      (import "env" "int" (func $int (result i32)))
+  ;; CHECK:      (import "env" "int" (func $int (type $3) (result i32)))
 
   ;; CHECK:      (global $Int i32 (i32.const 0))
   (global $Int i32 (i32.const 0))

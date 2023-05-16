@@ -7,9 +7,9 @@
 
   ;; CHECK:      (type $externref_f64_=>_i32 (func (param externref f64) (result i32)))
 
-  ;; CHECK:      (import "js" "sleep_sync" (func $sleep_sync (param f64) (result i32)))
+  ;; CHECK:      (import "js" "sleep_sync" (func $sleep_sync (type $f64_=>_i32) (param f64) (result i32)))
   (import "js" "sleep_async" (func $sleep_async (param f64) (result i32)))
-  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (param externref f64) (result i32)))
+  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (type $externref_f64_=>_i32) (param externref f64) (result i32)))
   (import "js" "sleep_sync" (func $sleep_sync (param f64) (result i32)))
   ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 

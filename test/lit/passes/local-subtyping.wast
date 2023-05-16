@@ -14,9 +14,9 @@
 
   (type $array (array_subtype i8 data))
 
-  ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
+  ;; CHECK:      (import "out" "i32" (func $i32 (type $none_=>_i32) (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
-  ;; CHECK:      (import "out" "i64" (func $i64 (result i64)))
+  ;; CHECK:      (import "out" "i64" (func $i64 (type $none_=>_i64) (result i64)))
   (import "out" "i64" (func $i64 (result i64)))
 
   ;; Refinalization can find a more specific type, where the declared type was

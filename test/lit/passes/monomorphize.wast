@@ -20,12 +20,12 @@
 
   ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
 
-  ;; ALWAYS:      (import "a" "b" (func $import (param (ref $A))))
+  ;; ALWAYS:      (import "a" "b" (func $import (type $ref|$A|_=>_none) (param (ref $A))))
   ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
   ;; CAREFUL:      (type $none_=>_none (func))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (param (ref $A))))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $ref|$A|_=>_none) (param (ref $A))))
   (import "a" "b" (func $import (param (ref $A))))
 
   ;; ALWAYS:      (func $calls (type $none_=>_none)
@@ -341,7 +341,7 @@
 
   ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (import "a" "b" (func $import (param (ref $B))))
+  ;; ALWAYS:      (import "a" "b" (func $import (type $ref|$B|_=>_none) (param (ref $B))))
 
   ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
   ;; CAREFUL:      (type $ref|$B|_=>_none (func (param (ref $B))))
@@ -350,7 +350,7 @@
 
   ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (param (ref $B))))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $ref|$B|_=>_none) (param (ref $B))))
 
   ;; CAREFUL:      (global $global (mut i32) (i32.const 1))
   (global $global (mut i32) (i32.const 1))

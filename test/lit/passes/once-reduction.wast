@@ -199,7 +199,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
@@ -239,7 +239,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
@@ -280,7 +280,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
@@ -321,7 +321,7 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))

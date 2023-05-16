@@ -7,7 +7,7 @@
  (type $none_=>_f64 (func (result f64)))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_funcref (func (param i32) (result funcref)))
- (import "out" "log" (func $log (param i32)))
+ (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (elem declare func $br_on-to-br $i32_=>_none $none_=>_i32)
  (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
   (if (result (ref null $struct))

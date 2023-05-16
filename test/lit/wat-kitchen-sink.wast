@@ -168,7 +168,7 @@
 
  ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
 
- ;; CHECK:      (import "mod" "f5" (func $fimport$1))
+ ;; CHECK:      (import "mod" "f5" (func $fimport$1 (type $void)))
 
  ;; CHECK:      (global $2 (mut i32) (i32.const 0))
 

@@ -9,7 +9,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $eqref_=>_funcref (func (param eqref) (result funcref)))
  (import "env" "import_global" (global $gimport$0 eqref))
- (import "env" "import_func" (func $fimport$0 (param eqref) (result funcref)))
+ (import "env" "import_func" (func $fimport$0 (type $eqref_=>_funcref) (param eqref) (result funcref)))
  (global $global$0 (mut eqref) (ref.null none))
  (global $global$1 (mut funcref) (ref.null nofunc))
  (global $global$2 (mut funcref) (ref.func $3))

@@ -24,7 +24,7 @@
 
  (type $func-return-i32 (func (result i32)))
 
- ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $i32_=>_none) (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  ;; CHECK:      (func $test-fallthrough (type $func-return-i32) (result i32)

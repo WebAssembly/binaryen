@@ -21,8 +21,8 @@
 
   ;; NOP:      (type $none_=>_i32 (func (result i32)))
 
-  ;; NOP:      (import "a" "b" (func $import (result i32)))
-  ;; YES:      (import "a" "b" (func $import (result i32)))
+  ;; NOP:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; YES:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; NOP:      (export "main1" (func $main1))

@@ -16,7 +16,7 @@
 
   ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
 
-  ;; CHECK:      (import "out" "func" (func $import))
+  ;; CHECK:      (import "out" "func" (func $import (type $none_=>_none)))
   (import "out" "func" (func $import))
 
   ;; CHECK:      (global $glob i32 (i32.const 1))

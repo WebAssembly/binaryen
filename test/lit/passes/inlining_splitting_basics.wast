@@ -16,14 +16,14 @@
 
   ;; NORMAL_:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; NORMAL_:      (import "a" "b" (func $import))
+  ;; NORMAL_:      (import "a" "b" (func $import (type $none_=>_none)))
   ;; PARTIAL:      (type $none_=>_none (func))
 
   ;; PARTIAL:      (type $i32_=>_none (func (param i32)))
 
   ;; PARTIAL:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
-  ;; PARTIAL:      (import "a" "b" (func $import))
+  ;; PARTIAL:      (import "a" "b" (func $import (type $none_=>_none)))
   (import "a" "b" (func $import))
 
   ;; Pattern A: functions beginning with

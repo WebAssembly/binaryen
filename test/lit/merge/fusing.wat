@@ -22,7 +22,7 @@
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (import "third" "missing" (func $other.missing))
+  ;; CHECK:      (import "third" "missing" (func $other.missing (type $none_=>_none)))
   (import "third" "missing" (func $other.missing))
 
   ;; CHECK:      (memory $second.mem 2)

@@ -6,7 +6,7 @@
 
  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
- ;; CHECK:      (import "a" "b" (func $import))
+ ;; CHECK:      (import "a" "b" (func $import (type $none_=>_none)))
  (import "a" "b" (func $import))
 
  (func $multivalue-local (export "multivalue-local") (result i32)

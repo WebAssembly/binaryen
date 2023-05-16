@@ -11,7 +11,7 @@
 
  ;; CHECK:      (type $none_=>_none (func))
 
- ;; CHECK:      (import "env" "func" (func $import (result i64)))
+ ;; CHECK:      (import "env" "func" (func $import (type $none_=>_i64) (result i64)))
  (import "env" "func" (func $import (result i64)))
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 

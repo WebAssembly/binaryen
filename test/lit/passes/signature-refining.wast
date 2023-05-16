@@ -763,7 +763,7 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (param structref)))
+  ;; CHECK:      (import "a" "b" (func $import (type $structref_=>_none) (param structref)))
   (import "a" "b" (func $import (param (ref null struct))))
 
   ;; CHECK:      (func $test (type $none_=>_none)
