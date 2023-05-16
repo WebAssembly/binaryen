@@ -69,7 +69,9 @@ struct BuilderItem {
   std::variant<Struct, Array> contents;
   HeapType super;
 };
-std::vector<HeapType> makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems, Module& wasm) {
+std::vector<HeapType>
+makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
+                          Module& wasm) {
   auto num = builderItems.size();
 
   auto fillBuilder = [&](TypeBuilder& builder) {
