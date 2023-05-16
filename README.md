@@ -709,7 +709,7 @@ merged.exports.main();
 We still need to fetch and compile the merged wasm, and to provide it the JS
 import, but the work to connect two wasm modules is not needed any more.
 
-### Handling exports
+#### Handling exports
 
 By default `wasm-merge` errors if there are overlapping export names. That is,
 `wasm-merge` will automatically handle overlapping function names and so forth,
