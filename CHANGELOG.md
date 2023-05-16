@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v113
+----
+
 - Add a `wasm-merge` tool. This is a full rewrite of the previous `wasm-merge`
   tool that was removed from the tree in the past. The new version is much
   simpler after recent improvements to multi-memory and multi-table. The
@@ -22,9 +25,12 @@ Current Trunk
   WasmGC.
 - Some C and JS API functions now refer to data and element segments by name
   instead of index.
-- The --nominal and --hybrid command line options and related API functions have
-  been removed. The only supported type system is now the standard isorecursive
-  (i.e. hybrid) type system.
+- The `--nominal` and `--hybrid` command line options and related API functions
+  have been removed. The only supported type system is now the standard
+  isorecursive (i.e. hybrid) type system. (#5672)
+- Add a "mayNotReturn" effect (#5711).
+- Disable the memory64 feature in Memory64Lowering.cpp (#5679).
+- Disable sign extension in SignExtLowering.cpp (#5676).
 
 v112
 ----
