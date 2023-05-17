@@ -30,23 +30,7 @@
 
 namespace wasm::analysis {
 
-struct BasicBlock;
-
-struct CFG {
-  // Iterate through basic blocks.
-  using iterator = std::vector<BasicBlock>::const_iterator;
-  iterator begin() const { return blocks.cbegin(); }
-  iterator end() const { return blocks.cend(); }
-  size_t size() const { return blocks.size(); }
-
-  static CFG fromFunction(Function* func);
-
-  void print(std::ostream& os, Module* wasm = nullptr) const;
-
-private:
-  std::vector<BasicBlock> blocks;
-  friend BasicBlock;
-};
+struct CFG;
 
 struct BasicBlock {
   using iterator = std::vector<Expression*>::const_iterator;
@@ -70,6 +54,22 @@ private:
   std::vector<BasicBlock*> predecessors;
   std::vector<BasicBlock*> successors;
   friend CFG;
+};
+
+struct CFG {
+  // Iterate through basic blocks.
+  using iterator = std::vector<BasicBlock>::const_iterator;
+  iterator begin() const { return blocks.cbegin(); }
+  iterator end() const { return blocks.cend(); }
+  size_t size() const { return blocks.size(); }
+
+  static CFG fromFunction(Function* func);
+
+  void print(std::ostream& os, Module* wasm = nullptr) const;
+
+private:
+  std::vector<BasicBlock> blocks;
+  friend BasicBlock;
 };
 
 } // namespace wasm::analysis
