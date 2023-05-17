@@ -703,14 +703,23 @@ Function* TranslateToFuzzReader::addFunction() {
 
 void TranslateToFuzzReader::addHangLimitChecks(Function* func) {
   // loop limit
-  FindAll<Loop> loops(func->body);
-  for (auto* loop : loops.list) {
+  for (auto* loop : FindAll<Loop>(func->body).list) {
     loop->body =
       builder.makeSequence(makeHangLimitCheck(), loop->body, loop->type);
   }
   // recursion limit
   func->body =
     builder.makeSequence(makeHangLimitCheck(), func->body, func->getResults());
+  // ArrayNew can hang the fuzzer if the array size is massive. This doesn't
+  // cause an OOM (which the fuzzer knows how to ignore) but it just works for
+  // many seconds on building the array. To avoid that, limit the size with high
+  // probability.
+  for (auto* arrayNew : FindAll<ArrayNew>(func->body).list) {
+    if (!oneIn(100)) {
+      arrayNew->size = builder.makeBinary(
+        AndInt32, arrayNew->size, builder.makeConst(int32_t(1024 - 1)));
+    }
+  }
 }
 
 void TranslateToFuzzReader::recombine(Function* func) {
