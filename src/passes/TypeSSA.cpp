@@ -111,6 +111,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
       // Implement the hash as a struct with "random" fields, and add it.
       Struct hashStruct;
       for (Index i = 0; i < hashSize; i++) {
+        // TODO: a denser encoding?
         auto type = (random & 1) ? Type::i32 : Type::f64;
         rehash(random, hashSize + i);
         hashStruct.fields.push_back(Field(type, Mutable));
