@@ -1,7 +1,7 @@
 (module
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (import "import" "import" (func $import))
+ (import "import" "import" (func $import (type $none_=>_none)))
  (global $global1 (mut i32) (i32.const 11))
  (global $global2 (mut i32) (i32.const 12))
  (global $global3 (mut i32) (i32.const 13))

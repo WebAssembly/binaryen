@@ -3,7 +3,7 @@
  (type $anyref_=>_none (func (param anyref)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
- (import "import" "import" (func $import (param anyref)))
+ (import "import" "import" (func $import (type $anyref_=>_none) (param anyref)))
  (global $ctor-eval$global_5 (ref $struct) (struct.new $struct
   (i32.const 42)
  ))
