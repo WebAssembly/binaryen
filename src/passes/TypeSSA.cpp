@@ -101,6 +101,9 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
         if (type.isStruct()) {
           builder[i] = type.getStruct();
         } else {
+          // Atm this pass only needs struct and array types. If we refactor
+          // this function to be general purpose we'd need to extend that. TODO
+          assert(type.isArray());
           builder[i] = type.getArray();
         }
         if (auto super = type.getSuperType()) {
