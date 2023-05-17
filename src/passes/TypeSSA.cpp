@@ -89,7 +89,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
   if (existingSet.count(types[0])) {
     // Unfortunately there is a conflict. Handle it by adding a "hash" - a
     // "random" extra item in the rec group that is so outlandish it will
-    // surely (?) never collide with anything. We must loop will doing so, until
+    // surely (?) never collide with anything. We must loop while doing so, until
     // we find a hash that does not collide.
     auto hashSize = num + 10;
     size_t random = num;
