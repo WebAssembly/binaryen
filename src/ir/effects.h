@@ -53,14 +53,12 @@ public:
 
   // Walk an expression and all its children.
   void walk(Expression* ast) {
-    pre();
     InternalAnalyzer(*this).walk(ast);
     post();
   }
 
   // Visit an expression, without any children.
   void visit(Expression* ast) {
-    pre();
     InternalAnalyzer(*this).visit(ast);
     post();
   }
@@ -1024,11 +1022,6 @@ public:
   }
 
 private:
-  void pre() {
-    breakTargets.clear();
-    delegateTargets.clear();
-  }
-
   void post() {
     assert(tryDepth == 0);
 

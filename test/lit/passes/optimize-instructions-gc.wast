@@ -2499,4 +2499,45 @@
   (func $struct_i64_helper (type $struct_i64) (param $0 (ref null struct)) (result i64)
     (unreachable)
   )
+
+  ;; CHECK:      (func $array-copy-non-null (type $ref?|$array|_=>_none) (param $x (ref null $array))
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (array.copy $array $array
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (br $block)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-copy-non-null (param $x (ref null $array))
+    (block $block
+      (array.copy $array $array
+        ;; This cast cannot be removed: while the array.copy will trap anyhow
+        ;; if $x is null, we might branch out in the if, so removing a trap
+        ;; here could be noticeable.
+        (ref.as_non_null
+          (local.get $x)
+        )
+        (if (result i32)
+          (i32.const 1)
+          (br $block)
+          (i32.const 10)
+        )
+        ;; There are no tricky effects after this, so this cast can be removed.
+        (ref.as_non_null
+          (local.get $x)
+        )
+        (i32.const 42)
+        (i32.const 1337)
+      )
+    )
+  )
 )
