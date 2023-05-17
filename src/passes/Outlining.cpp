@@ -29,7 +29,7 @@
 namespace wasm {
 
 // Generate an abstract string representation of the program
-struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>> {
+struct StringifyWalker : public PostWalker<StringifyWalker, Visitor<StringifyWalker>> {
   private:
     uint64_t monotonic = 0;
     std::vector<uint64_t> string;
@@ -39,64 +39,34 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
 
   public:
   static void scan(StringifyWalker* self, Expression** currp) {
-    [[maybe_unused]] Expression *curr = *currp;
-    curr->dump();
+    Expression *curr = *currp;
     auto name = getExpressionName(curr);
-    printf(name);
+    std::cout << "StringifyWalker::scan() on: " << name << std::endl;
+    curr->dump();
     printf("\n\n");
 
-    switch (curr->_id) {
-      // Control Flow Section
-      // 1. hash control flow
-      // 2. pushTask to scan expressions in the control flow
+    /*switch (curr->_id) {
       case Expression::Id::BlockId: {
-        auto *block = curr->dynCast<Block>();
-        for (auto *&child : block->list) {
-          self->pushTask(StringifyWalker::scan, &child);
-        }
         self->pushTask(visitControlFlow, currp);
         break;
       }
       case Expression::Id::IfId: {
-        auto *iff = curr->dynCast<If>();
-        self->pushTask(StringifyWalker::scan, &iff->ifFalse);
-        self->pushTask(StringifyWalker::scan, &iff->ifTrue);
-        self->pushTask(StringifyWalker::scan, &iff->condition);
         self->pushTask(visitControlFlow, currp);
         break;
       }
-      case Expression::Id::LoopId:
+      case Expression::Id::LoopId:{
+        self->pushTask(visitControlFlow, currp);
+        break;
+      }
       case Expression::Id::TryId: {
         self->pushTask(visitControlFlow, currp);
         break;
       }
-      case Expression::Id::DropId: {
-        auto *drop = curr->dynCast<Drop>();
-        self->pushTask(StringifyWalker::scan, &drop->value);
-        break;
-      }
-
-      //
-      case Expression::Id::BinaryId: {
-        auto *binary = curr->dynCast<Binary>();
-        self->pushTask(visitBinary, currp);
-        self->pushTask(parent::scan, &binary->right);
-        self->pushTask(StringifyWalker::scan, &binary->left);
-        break;
-      }
-
-      // Values Section
-      // 1. shallowHash single expression
-      case Expression::Id::ConstId: {
-        self->pushTask(visitConst, currp);
-        break;
-      }
-
       default: {
-        std::cout << "In default\n";
-        curr->dump();
       }
     }
+
+    PostWalker<StringifyWalker, Visitor>::scan(self, currp);*/
   }
 
   // Take out all the non-control flow
@@ -112,7 +82,7 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
   // queue, so the task stack never actually becomes empty. Then the normal
   // walker logic will continue working. The first thing in the task stack
   // should re-insert itself and then dequeue the control flow structure, as
-  // long as there is another control flow dequeue. 
+  // long as there is another control flow dequeue.
 
   // Counter handling
   // accessor pattern, remove
@@ -125,6 +95,7 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
   }
 
   void insertGloballyUniqueChar() {
+    printf("inserting globally unique char\n");
     string.push_back(counter());
     advanceCounter();
     printString();
@@ -136,7 +107,8 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
     string.push_back(counter());
     auto it = exprToCounter.find(counter());
     if (it != exprToCounter.end()) {
-      std::cout << "Collision on Expression: ";
+      auto name = getExpressionName(curr);
+      std::cout << "Collision on Expression: " << name << std::endl;
       curr->dump();
     }
     exprToCounter[hash] = counter();
@@ -146,6 +118,7 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
 
   // Expression handling
   static void emitFunctionBegin(StringifyWalker *self) {
+    printf("emit function begin\n");
     self->insertGloballyUniqueChar();
   }
 
@@ -153,20 +126,6 @@ struct StringifyWalker : public Walker<StringifyWalker, Visitor<StringifyWalker>
     std::cout << "in visitControlFlow" << std::endl;
     Expression *curr = *currp;
     [[maybe_unused]] uint64_t hashValue = hash(curr);
-    self->insertHash(hashValue, curr);
-  }
-
-  static void visitBinary(StringifyWalker* self, Expression** currp) {
-    std::cout << "in visitBinary" << std::endl;
-    Expression *curr = *currp;
-    uint64_t hashValue = hash(curr);
-    self->insertHash(hashValue, curr);
-  }
-
-  static void visitConst(StringifyWalker* self, Expression** currp) {
-    std::cout << "in visitConst" << std::endl;
-    Expression *curr = *currp;
-    uint64_t hashValue = hash(curr);
     self->insertHash(hashValue, curr);
   }
 
@@ -187,9 +146,13 @@ struct Outlining : public Pass {
 
    StringifyWalker *stringify = new StringifyWalker();
 
+   int counter = 1;
    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-     stringify->emitFunctionBegin(stringify);
+     if (counter == 1) {
+      stringify->emitFunctionBegin(stringify);
      stringify->walk(func->body);
+     }
+     counter+=1;
    });
   }
 };
