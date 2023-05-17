@@ -10,7 +10,7 @@
 
 ;; CHECK:      (type $externref_=>_none (func (param externref)))
 
-;; CHECK:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (param externref)))
+;; CHECK:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (type $externref_=>_none) (param externref)))
 
 ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 

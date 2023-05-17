@@ -2953,6 +2953,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     if (name.is()) {
       o << " $" << name;
+      if (currModule && currModule->features.hasGC()) {
+        o << " (type ";
+        printHeapType(o, curr, currModule) << ')';
+      }
     }
     if (sig.params.size() > 0) {
       o << maybeSpace;

@@ -1,6 +1,6 @@
 (module
  (type $none_=>_none (func))
- (import "import" "import" (func $import))
+ (import "import" "import" (func $import (type $none_=>_none)))
  (memory $0 256 256)
  (data $0 (i32.const 10) "__s______________")
  (export "test1" (func $test1_2))

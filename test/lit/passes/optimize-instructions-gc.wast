@@ -41,7 +41,7 @@
   ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
 
-  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
+  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (type $none_=>_i32) (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded

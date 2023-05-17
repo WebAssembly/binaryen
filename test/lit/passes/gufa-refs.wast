@@ -14,7 +14,7 @@
 
   ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $no-non-null (type $none_=>_ref|any|) (result (ref any))
@@ -2466,7 +2466,7 @@
 
   ;; CHECK:      (type $none_=>_ref|eq| (func (result (ref eq))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (export "test-cones" (func $test-cones))
@@ -3520,7 +3520,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -3571,7 +3571,7 @@
 
   ;; CHECK:      (type $none_=>_ref|$B| (func (result (ref $B))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $foo (type $none_=>_ref|$B|) (result (ref $B))
@@ -4456,7 +4456,7 @@
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (global $func (ref func) (ref.func $reffed-in-global-code))
@@ -5225,7 +5225,7 @@
   ;; CHECK:      (import "a" "b" (global $A (ref $A)))
   (import "a" "b" (global $A (ref $A)))
 
-  ;; CHECK:      (import "a" "c" (func $A (result (ref $A))))
+  ;; CHECK:      (import "a" "c" (func $A (type $none_=>_ref|$A|) (result (ref $A))))
   (import "a" "c" (func $A (result (ref $A))))
 
   ;; CHECK:      (global $mut_A (ref $A) (struct.new $A

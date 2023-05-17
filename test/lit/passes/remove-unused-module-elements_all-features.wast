@@ -467,7 +467,7 @@
 
   ;; CHECK:      (import "env" "imported" (global $imported i32))
   (import "env" "imported" (global $imported i32))
-  ;; CHECK:      (import "env" "_puts" (func $_puts (param i32) (result i32)))
+  ;; CHECK:      (import "env" "_puts" (func $_puts (type $i32_=>_i32) (param i32) (result i32)))
   (import "env" "forgetme" (global $forgetme i32))
   (import "env" "_puts" (func $_puts (param i32) (result i32)))
   (import "env" "forget_puts" (func $forget_puts (param i32) (result i32)))
@@ -547,7 +547,7 @@
 (module ;; imported start cannot be removed
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "start" (func $start))
+  ;; CHECK:      (import "env" "start" (func $start (type $none_=>_none)))
   (import "env" "start" (func $start))
   ;; CHECK:      (start $start)
   (start $start)

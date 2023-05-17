@@ -4,9 +4,9 @@
 (module
   ;; CHECK:      (type ${} (struct ))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result anyref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $i32_i32_funcref_=>_anyref) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $i32_i32_funcref_=>_ref|any|) (param i32 i32 funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
 
   (type ${} (struct))

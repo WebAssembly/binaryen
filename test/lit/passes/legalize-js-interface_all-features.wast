@@ -16,15 +16,15 @@
 
   ;; CHECK:      (type $i32_i64_i64_=>_none (func (param i32 i64 i64)))
 
-  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $i32_=>_none) (param i32)))
   (import "env" "imported" (func $imported (result i64)))
-  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (result i32)))
+  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $none_=>_i32) (result i32)))
   (import "env" "other" (func $other (param i32) (param i64) (param i64)))
-  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (result i32)))
+  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (type $none_=>_i32) (result i32)))
   (import "env" "ref-func-arg" (func $ref-func-arg (result i64)))
-  ;; CHECK:      (import "env" "other" (func $legalimport$other (param i32 i32 i32 i32 i32)))
+  ;; CHECK:      (import "env" "other" (func $legalimport$other (type $i32_i32_i32_i32_i32_=>_none) (param i32 i32 i32 i32 i32)))
 
-  ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (result i32)))
+  ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (type $none_=>_i32) (result i32)))
 
   ;; CHECK:      (elem declare func $legalfunc$ref-func-arg)
 

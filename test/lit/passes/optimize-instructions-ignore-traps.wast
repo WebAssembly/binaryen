@@ -5,7 +5,7 @@
 (module
   ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
-  ;; CHECK:      (import "a" "b" (func $get-i32 (result i32)))
+  ;; CHECK:      (import "a" "b" (func $get-i32 (type $none_=>_i32) (result i32)))
 
   ;; CHECK:      (memory $0 0)
   (memory $0 0)

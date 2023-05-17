@@ -105,7 +105,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result f32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_f32) (result f32)))
   (import "a" "b" (func $import (result f32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -357,7 +357,7 @@
 
   ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
@@ -690,7 +690,7 @@
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -744,7 +744,7 @@
   ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -796,7 +796,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -853,7 +853,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -925,7 +925,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $test (type $none_=>_none)
@@ -1150,7 +1150,7 @@
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result anyref)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_anyref) (result anyref)))
   (import "a" "b" (func $import (result anyref)))
 
   ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
@@ -1384,7 +1384,7 @@
 
   ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
@@ -1689,7 +1689,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
@@ -1805,7 +1805,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))

@@ -16,7 +16,7 @@
 
  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
 
- ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (type $i32_i32_i32_=>_none) (param i32 i32 i32)))
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  ;; CHECK:      (table $0 2 2 funcref)
 
@@ -74,7 +74,7 @@
 
  ;; CHECK:      (import "env" "table" (table $timport$0 1 1 funcref))
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
- ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (type $i32_i32_i32_=>_none) (param i32 i32 i32)))
  (import "env" "table" (table 1 1 funcref))
  (elem (i32.const 0) $f)
  ;; CHECK:      (elem $0 (i32.const 0) $f)

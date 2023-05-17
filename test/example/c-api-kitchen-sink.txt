@@ -77,7 +77,7 @@ BinaryenFeatureAll: 126975
  (type $i32_=>_none (func (param i32)))
  (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
  (type $none_=>_none (func))
- (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
+ (import "module" "base" (func $an-imported (type $i32_f64_=>_f32) (param i32 f64) (result f32)))
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
  (global $i8Array-global (mut (ref null $[mut:i8])) (array.new_default $[mut:i8]

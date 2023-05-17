@@ -4,7 +4,7 @@
  (import "env" "table" (table $timport$0 10 10 funcref))
  (import "env" "g1" (global $from_segment i32))
  (import "env" "g2" (global $from_segment_2 i32))
- (import "env" "js_func" (func $a_js_func))
+ (import "env" "js_func" (func $a_js_func (type $none_=>_none)))
  (global $__THREW__ (mut i32) (i32.const 0))
  (data $0 (i32.const 1024) "abcd")
  (data $1 (global.get $from_segment) "abcd")

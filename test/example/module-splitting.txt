@@ -264,13 +264,13 @@ Secondary:
 Before:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
 )
 Keeping: foo
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
 )
 Secondary:
 (module
@@ -280,7 +280,7 @@ Secondary:
 Before:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (i32.const 42) $foo)
  (export "foo" (func $foo))
@@ -289,7 +289,7 @@ Keeping: foo
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (i32.const 42) $foo)
  (export "foo" (func $foo))
@@ -305,7 +305,7 @@ Before:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (global.get $base) $foo)
  (export "foo" (func $foo))
@@ -315,7 +315,7 @@ After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "env" "foo" (func $foo (param i32) (result i32)))
+ (import "env" "foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (global.get $base) $foo)
  (export "foo" (func $foo))
@@ -361,7 +361,7 @@ Keeping: <none>
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $i32_=>_i32) (param i32) (result i32)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "foo" (func $foo))
@@ -397,7 +397,7 @@ Keeping: <none>
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%table" (table $table))
@@ -426,8 +426,8 @@ Keeping: <none>
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
- (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $i32_=>_i32) (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 2 funcref)
  (elem $0 (i32.const 0) $placeholder_0 $placeholder_1)
  (export "%table" (table $table))
@@ -457,7 +457,7 @@ Keeping: <none>
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "placeholder" "42" (func $placeholder_42 (param i32) (result i32)))
+ (import "placeholder" "42" (func $placeholder_42 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (i32.const 42) $placeholder_42)
  (export "foo" (func $foo))
@@ -496,7 +496,7 @@ After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (global.get $base) $placeholder_0)
  (export "foo" (func $foo))
@@ -537,8 +537,8 @@ After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
- (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $i32_=>_i32) (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (global.get $base) $placeholder_0 $placeholder_1)
  (export "foo" (func $foo))
@@ -584,7 +584,7 @@ After:
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem $0 (global.get $base) $null $placeholder_1)
  (export "foo" (func $foo))
@@ -610,7 +610,7 @@ Secondary:
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 1000 funcref))
  (import "primary" "%global" (global $base i32))
- (import "primary" "%null" (func $null))
+ (import "primary" "%null" (func $null (type $none_=>_none)))
  (elem $0 (global.get $base) $null $foo)
  (func $foo (type $i32_=>_i32) (param $0 i32) (result i32)
   (local.get $0)
@@ -666,7 +666,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "%bar" (func $bar))
+ (import "primary" "%bar" (func $bar (type $none_=>_none)))
  (func $foo (type $none_=>_none)
   (call $bar)
  )
@@ -687,7 +687,7 @@ Keeping: foo
 After:
 (module
  (type $none_=>_none (func))
- (import "placeholder" "0" (func $placeholder_0))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%table" (table $0))
@@ -749,7 +749,7 @@ Keeping: foo
 After:
 (module
  (type $none_=>_none (func))
- (import "placeholder" "0" (func $placeholder_0))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "%foo" (func $bar))
@@ -768,7 +768,7 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $0 1 funcref))
- (import "primary" "%foo_1" (func $foo))
+ (import "primary" "%foo_1" (func $foo (type $none_=>_none)))
  (elem $0 (i32.const 0) $bar)
  (func $bar (type $none_=>_none)
   (call $foo)
@@ -798,8 +798,8 @@ Keeping: bar, quux
 After:
 (module
  (type $none_=>_none (func))
- (import "placeholder" "0" (func $placeholder_0))
- (import "placeholder" "2" (func $placeholder_2))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
+ (import "placeholder" "2" (func $placeholder_2 (type $none_=>_none)))
  (table $table 4 funcref)
  (elem $0 (i32.const 0) $placeholder_0 $bar $placeholder_2 $quux)
  (export "%table" (table $table))
@@ -849,8 +849,8 @@ After:
 (module
  (type $none_=>_none (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0))
- (import "placeholder" "2" (func $placeholder_2))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
+ (import "placeholder" "2" (func $placeholder_2 (type $none_=>_none)))
  (table $table 4 funcref)
  (elem $0 (global.get $base) $placeholder_0 $bar $placeholder_2 $quux)
  (export "%bar" (func $bar))
@@ -868,7 +868,7 @@ Secondary:
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
  (import "primary" "%global" (global $base i32))
- (import "primary" "%bar" (func $bar))
+ (import "primary" "%bar" (func $bar (type $none_=>_none)))
  (elem $0 (global.get $base) $foo $bar $baz)
  (func $baz (type $none_=>_none)
   (nop)
@@ -901,9 +901,9 @@ Keeping: baz
 After:
 (module
  (type $none_=>_none (func))
- (import "placeholder" "0" (func $placeholder_0))
- (import "placeholder" "1" (func $placeholder_1))
- (import "placeholder" "3" (func $placeholder_3))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
+ (import "placeholder" "1" (func $placeholder_1 (type $none_=>_none)))
+ (import "placeholder" "3" (func $placeholder_3 (type $none_=>_none)))
  (table $table 4 funcref)
  (elem $0 (i32.const 0) $placeholder_0 $placeholder_1 $baz $placeholder_3)
  (export "%table" (table $table))
@@ -953,9 +953,9 @@ After:
 (module
  (type $none_=>_none (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0))
- (import "placeholder" "1" (func $placeholder_1))
- (import "placeholder" "3" (func $placeholder_3))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
+ (import "placeholder" "1" (func $placeholder_1 (type $none_=>_none)))
+ (import "placeholder" "3" (func $placeholder_3 (type $none_=>_none)))
  (table $table 4 funcref)
  (elem $0 (global.get $base) $placeholder_0 $placeholder_1 $baz $placeholder_3)
  (export "%baz" (func $baz))
@@ -970,7 +970,7 @@ Secondary:
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
  (import "primary" "%global" (global $base i32))
- (import "primary" "%baz" (func $baz))
+ (import "primary" "%baz" (func $baz (type $none_=>_none)))
  (elem $0 (global.get $base) $foo $bar $baz $quux)
  (func $bar (type $none_=>_none)
   (nop)
@@ -1002,7 +1002,7 @@ After:
 (module
  (type $none_=>_none (func))
  (import "env" "base" (global $base i32))
- (import "placeholder" "1" (func $placeholder_1))
+ (import "placeholder" "1" (func $placeholder_1 (type $none_=>_none)))
  (table $table 2 funcref)
  (elem $0 (global.get $base) $foo $placeholder_1)
  (export "%foo" (func $foo))
@@ -1017,7 +1017,7 @@ Secondary:
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 2 funcref))
  (import "primary" "%global" (global $base i32))
- (import "primary" "%foo" (func $foo))
+ (import "primary" "%foo" (func $foo (type $none_=>_none)))
  (elem $0 (global.get $base) $foo $bar)
  (func $bar (type $none_=>_none)
   (call $foo)
@@ -1045,7 +1045,7 @@ Keeping: foo
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (type $i32_=>_i32) (param i32) (result i32)))
  (table $table 2 2 funcref)
  (elem $0 (i32.const 0) $foo $placeholder_1)
  (export "%foo" (func $foo))
@@ -1061,7 +1061,7 @@ Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 2 2 funcref))
- (import "primary" "%foo" (func $foo (param i32) (result i32)))
+ (import "primary" "%foo" (func $foo (type $i32_=>_i32) (param i32) (result i32)))
  (elem $0 (i32.const 1) $bar)
  (func $bar (type $i32_=>_i32) (param $0 i32) (result i32)
   (call $foo
@@ -1084,7 +1084,7 @@ Keeping: <none>
 After:
 (module
  (type $none_=>_none (func))
- (import "placeholder" "0" (func $placeholder_0))
+ (import "placeholder" "0" (func $placeholder_0 (type $none_=>_none)))
  (table $0 1 funcref)
  (elem $0 (i32.const 0) $placeholder_0)
  (export "foo1" (func $foo))
@@ -1155,16 +1155,16 @@ Minimized names primary:
 Minimized names secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "%a" (func $0))
- (import "primary" "%c" (func $1))
- (import "primary" "%d" (func $2))
- (import "primary" "already_exported" (func $3))
- (import "primary" "%e" (func $4))
- (import "primary" "%f" (func $5))
- (import "primary" "%g" (func $6))
- (import "primary" "%b" (func $7))
- (import "primary" "%h" (func $8))
- (import "primary" "%i" (func $9))
+ (import "primary" "%a" (func $0 (type $none_=>_none)))
+ (import "primary" "%c" (func $1 (type $none_=>_none)))
+ (import "primary" "%d" (func $2 (type $none_=>_none)))
+ (import "primary" "already_exported" (func $3 (type $none_=>_none)))
+ (import "primary" "%e" (func $4 (type $none_=>_none)))
+ (import "primary" "%f" (func $5 (type $none_=>_none)))
+ (import "primary" "%g" (func $6 (type $none_=>_none)))
+ (import "primary" "%b" (func $7 (type $none_=>_none)))
+ (import "primary" "%h" (func $8 (type $none_=>_none)))
+ (import "primary" "%i" (func $9 (type $none_=>_none)))
  (func $call (type $none_=>_none)
   (call $0)
   (call $1)

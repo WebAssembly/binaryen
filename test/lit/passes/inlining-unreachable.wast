@@ -70,7 +70,7 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (import "env" "imported" (func $imported (param i32) (result i32)))
+  ;; CHECK:      (import "env" "imported" (func $imported (type $i32_=>_i32) (param i32) (result i32)))
   (import "env" "imported" (func $imported (param i32) (result i32)))
 
   ;; CHECK:      (func $caller (type $none_=>_none)

@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $i32_funcref_=>_i32) (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
 
   ;; CHECK:      (func $if-nop (type $i32_=>_none) (param $p i32)

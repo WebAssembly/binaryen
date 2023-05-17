@@ -2,13 +2,13 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (param f32 funcref) (result i64)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (type $f32_funcref_=>_i64) (param f32 funcref) (result i64)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (param f32) (param funcref) (result i64)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (type $funcref_=>_ref|any|) (param funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
 
   ;; CHECK:      (func $used (type $none_=>_i32) (result i32)

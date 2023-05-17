@@ -18,11 +18,11 @@
 
   ;; CHECK:      (type $externref_i32_=>_none (func (param externref i32)))
 
-  ;; CHECK:      (import "js" "compute_delta" (func $import$compute_delta (param externref f64) (result i32)))
+  ;; CHECK:      (import "js" "compute_delta" (func $import$compute_delta (type $externref_f64_=>_i32) (param externref f64) (result i32)))
   (import "js" "compute_delta" (func $compute_delta (param f64) (result i32)))
-  ;; CHECK:      (import "js" "import_and_export" (func $import$import_and_export (param externref i32) (result i32)))
+  ;; CHECK:      (import "js" "import_and_export" (func $import$import_and_export (type $externref_i32_=>_i32) (param externref i32) (result i32)))
   (import "js" "import_and_export" (func $import_and_export (param i32) (result i32)))
-  ;; CHECK:      (import "js" "import_void_return" (func $import$import_void_return (param externref i32)))
+  ;; CHECK:      (import "js" "import_void_return" (func $import$import_void_return (type $externref_i32_=>_none) (param externref i32)))
   (import "js" "import_void_return" (func $import_void_return (param i32)))
   ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 

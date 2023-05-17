@@ -471,15 +471,15 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
   ;; OPEN_WORLD:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (param funcref)))
+  ;; CHECK:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
 
@@ -548,15 +548,15 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
   ;; OPEN_WORLD:      (type $funcref_=>_none (func (param funcref)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (param funcref)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (param funcref)))
+  ;; CHECK:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
 
@@ -1870,10 +1870,10 @@
 
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
   ;; OPEN_WORLD:      (type $none_=>_i32 (func (result i32)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
   ;; CHECK:      (elem declare func $getter)

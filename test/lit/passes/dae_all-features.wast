@@ -15,9 +15,9 @@
 
   ;; CHECK:      (type $f64_=>_none (func (param f64)))
 
-  ;; CHECK:      (import "a" "b" (func $get-i32 (result i32)))
+  ;; CHECK:      (import "a" "b" (func $get-i32 (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $get-i32 (result i32)))
-  ;; CHECK:      (import "a" "c" (func $get-f64 (result f64)))
+  ;; CHECK:      (import "a" "c" (func $get-f64 (type $none_=>_f64) (result f64)))
   (import "a" "c" (func $get-f64 (result f64)))
 
   ;; CHECK:      (table $0 2 2 funcref)

@@ -1254,7 +1254,7 @@
 
  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
- ;; CHECK:      (import "a" "b" (func $import (param anyref)))
+ ;; CHECK:      (import "a" "b" (func $import (type $anyref_=>_none) (param anyref)))
  (import "a" "b" (func $import (param anyref)))
 
  (func $test (export "test")

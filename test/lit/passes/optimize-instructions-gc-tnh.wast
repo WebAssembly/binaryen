@@ -11,8 +11,8 @@
   ;; NO_TNH:      (type $void (func))
   (type $void (func))
 
-  ;; TNH:      (import "a" "b" (func $import (result i32)))
-  ;; NO_TNH:      (import "a" "b" (func $import (result i32)))
+  ;; TNH:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; NO_TNH:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
