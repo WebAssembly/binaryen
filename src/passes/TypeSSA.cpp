@@ -113,7 +113,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
       for (Index i = 0; i < hashSize; i++) {
         // TODO: a denser encoding?
         auto type = (random & 1) ? Type::i32 : Type::f64;
-        rehash(random, hashSize + i);
+        hash_combine(random, hashSize + i);
         hashStruct.fields.push_back(Field(type, Mutable));
       }
       builder[num] = hashStruct;
