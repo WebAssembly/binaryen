@@ -68,48 +68,25 @@ namespace {
 // way to ensure that the new types are in fact in a new rec group.
 //
 // TODO: Move this outside if we find more uses.
-struct BuilderItem {
-  std::variant<Struct, Array> contents;
-  HeapType super;
-};
-std::vector<HeapType>
-makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
-                          Module& wasm) {
-  auto num = builderItems.size();
+std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
+                                                  Module& wasm) {
+  auto num = recGroup.size();
+
+  std::vector<HeapType> types;
+  types.reserve(num);
+  for (auto type : recGroup) {
+    types.push_back(type);
+  }
 
   // Find all the heap types present before we create the new ones. The new
   // types must not appear in |existingSet|.
   std::vector<HeapType> existing = ModuleUtils::collectHeapTypes(wasm);
   std::unordered_set<HeapType> existingSet(existing.begin(), existing.end());
 
-  // Given a builder, set it up with the builder items we were given.
-  auto fillBuilder = [&](TypeBuilder& builder) {
-    for (Index i = 0; i < builderItems.size(); i++) {
-      auto& item = builderItems[i];
-      if (auto* struct_ = std::get_if<Struct>(&item.contents)) {
-        builder[i] = *struct_;
-      } else if (auto* array_ = std::get_if<Array>(&item.contents)) {
-        builder[i] = *array_;
-      } else {
-        WASM_UNREACHABLE("bad variant");
-      }
-      builder[i].subTypeOf(item.super);
-    }
-  };
-
-  // Create a copy of the builder and see if just building happens to work.
-  TypeBuilder builder(num);
-  fillBuilder(builder);
-  builder.createRecGroup(0, num);
-  auto result = builder.build();
-  assert(!result.getError());
-  auto newTypes = *result;
-  assert(newTypes.size() == num);
-
   // Check for a collision with an existing rec group. Note that it is enough to
   // check one of the types: either the entire rec group gets merged, so they
   // are all merged, or not.
-  if (existingSet.count(newTypes[0])) {
+  if (existingSet.count(types[0])) {
     // Unfortunately there is a conflict. Handle it by adding a "hash" - a
     // "random" extra item in the rec group that is so outlandish it will
     // surely (?) never collide with anything. We must loop will doing so, until
@@ -119,7 +96,17 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
     while (1) {
       // Make a builder and add a slot for the hash.
       TypeBuilder builder(num + 1);
-      fillBuilder(builder);
+      for (Index i = 0; i < num; i++) {
+        auto type = types[i];
+        if (type.isStruct()) {
+          builder[i] = type.getStruct();
+        } else {
+          builder[i] = type.getArray();
+        }
+        if (auto super = type.getSuperType()) {
+          builder[i].subTypeOf(*super);
+        }
+      }
 
       // Implement the hash as a struct with "random" fields, and add it.
       Struct hashStruct;
@@ -134,10 +121,10 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
       builder.createRecGroup(0, num + 1);
       auto result = builder.build();
       assert(!result.getError());
-      newTypes = *result;
-      assert(newTypes.size() == num + 1);
+      types = *result;
+      assert(types.size() == num + 1);
 
-      if (existingSet.count(newTypes[0])) {
+      if (existingSet.count(types[0])) {
         // There is still a collision. Exponentially use larger hashes to
         // quickly find one that works. Note that we also use different
         // pseudorandom values while doing so in the for-loop above.
@@ -151,12 +138,12 @@ makeNewTypesInNewRecGroup(std::vector<BuilderItem>& builderItems,
 
 #ifndef NDEBUG
   // Verify the lack of a collision, just to be safe.
-  for (auto newType : newTypes) {
+  for (auto newType : types) {
     assert(!existingSet.count(newType));
   }
 #endif
 
-  return newTypes;
+  return types;
 }
 
 // A vector of struct.new or one of the variations on array.new.
@@ -249,17 +236,26 @@ struct TypeSSA : public Pass {
     // also a possibility, and so for that reason this pass is likely mostly
     // useful in the closed-world scenario.
 
-    std::vector<BuilderItem> items;
+    TypeBuilder builder(num);
     for (Index i = 0; i < num; i++) {
       auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
       if (oldType.isStruct()) {
-        items.push_back(BuilderItem{oldType.getStruct(), oldType});
+        builder[i] = oldType.getStruct();
       } else {
-        items.push_back(BuilderItem{oldType.getArray(), oldType});
+        builder[i] = oldType.getArray();
       }
+      builder[i].subTypeOf(oldType);
     }
-    auto newTypes = makeNewTypesInNewRecGroup(items, *module);
+    builder.createRecGroup(0, num);
+    auto result = builder.build();
+    assert(!result.getError());
+    auto newTypes = *result;
+    assert(newTypes.size() == num);
+
+    // Make sure this is actually a new rec group.
+    auto recGroup = newTypes[0].getRecGroup();
+    newTypes = ensureTypesAreInNewRecGroup(recGroup, *module);
 
     // Success: we can apply the new types.
 
