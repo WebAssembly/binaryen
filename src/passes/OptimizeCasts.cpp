@@ -75,10 +75,8 @@
 // TODO: Move casts earlier in a basic block as well, at least in traps-never-
 //       happen mode where we can assume they never fail.
 // TODO: Look past individual basic blocks?
-// TODO: Look at LocalSet as well and not just Get. That would add some overlap
-//       with the other passes mentioned above, but once we do things like
-//       moving casts earlier as in the other TODO, we'd be doing uniquely
-//       useful things with LocalSet here.
+// TODO: When looking at Local Sets, check fallthroughs/descendants for casts
+//       instead of just the immediate child
 //
 
 #include "ir/linear-execution.h"
@@ -104,8 +102,13 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   // This is tracked in each basic block, and cleared between them.
   std::unordered_map<Index, Expression*> mostCastedGets;
 
-  // For each most-downcasted local.get, a vector of other local.gets that could
-  // be replaced with gets of the downcasted value.
+  // Map local indices to the current downcasting of local.set to those indices.
+  //
+  // Also tracked in each basic block and cleared between them.
+  std::unordered_map<Index, Expression*> curCastedSets;
+
+  // For each most-downcasted local.get or local.set, a vector of other
+  // local.gets that could be replaced with gets of the downcasted value.
   //
   // This is tracked until the end of the entire function, and contains the
   // information we need to optimize later. That is, entries here are things we
@@ -114,21 +117,49 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
 
   static void doNoteNonLinear(BestCastFinder* self, Expression** currp) {
     self->mostCastedGets.clear();
+    self->curCastedSets.clear();
   }
 
   void visitLocalSet(LocalSet* curr) {
     // Clear any information about this local; it has a new value here.
     mostCastedGets.erase(curr->index);
+
+    // This only checks the immediate child for casts. This should be extended
+    // to look deeper for casts
+    if (curr->value->dynCast<RefAs>() || curr->value->dynCast<RefCast>()) {
+      curCastedSets[curr->index] = curr->value;
+    } else {
+      // If the local.set doesn't use a cast, get rid of any old cast information
+      curCastedSets.erase(curr->index);
+    }
   }
 
   void visitLocalGet(LocalGet* curr) {
-    auto iter = mostCastedGets.find(curr->index);
-    if (iter != mostCastedGets.end()) {
-      auto* bestCast = iter->second;
+    auto getIter = mostCastedGets.find(curr->index);
+    auto setIter = curCastedSets.find(curr->index);
+
+    if (getIter != mostCastedGets.end()) {
+      auto* bestCast = getIter->second;
+      if (setIter != curCastedSets.end()) {
+        // Always use a cast in local.set if it is equal or better than
+        // a local.get since we know it is always before any gets that
+        // retrieve the set value from the index
+        if (bestCast->type == setIter->second->type ||
+            Type::isSubType(setIter->second->type, bestCast->type)) {
+          bestCast = setIter->second;
+        }
+      }
+
       if (curr->type != bestCast->type &&
           Type::isSubType(bestCast->type, curr->type)) {
         // The best cast has a more refined type, note that we want to use it.
         lessCastedGets[bestCast].push_back(curr);
+      }
+    } else if (setIter != curCastedSets.end()) {
+      auto* setCast = setIter->second;
+      if (curr->type != setCast->type &&
+          Type::isSubType(setCast->type, curr->type)) {
+        lessCastedGets[setCast].push_back(curr);
       }
     }
   }

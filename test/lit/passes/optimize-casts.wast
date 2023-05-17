@@ -261,6 +261,16 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (call $get)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $fallthrough (param $x (ref struct))
     (drop
@@ -274,13 +284,42 @@
     (drop
       (local.get $x)
     )
+    (local.set $x
+      ;; Cannot look through for sets at the moment
+      (block (result (ref $A))
+        (ref.cast $A
+          (call $get)
+        )
+      )
+    )
+    (drop
+      (local.get $x)
+    )
   )
 
   ;; CHECK:      (func $past-basic-block (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
@@ -298,6 +337,22 @@
     )
     ;; The if means the later get is in another basic block. We do not handle
     ;; this atm.
+    (if
+      (i32.const 0)
+      (return)
+    )
+    (drop
+      (local.get $x)
+    )
+    (local.set $x
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+    ;; Same behaviour for sets.
     (if
       (i32.const 0)
       (return)
@@ -384,6 +439,165 @@
     )
     (drop
       (local.get $b)
+    )
+  )
+
+  ;; CHECK:      (func $check-set-basic (type $ref|$A|_ref?|$A|_=>_none) (param $x (ref $A)) (param $y (ref null $A))
+  ;; CHECK-NEXT:  (local $a (ref struct))
+  ;; CHECK-NEXT:  (local $b structref)
+  ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (local $5 (ref $B))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (local.tee $4
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $a
+  ;; CHECK-NEXT:    (local.tee $5
+  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $check-set-basic (param $x (ref $A)) (param $y (ref null $A))
+    (local $a (ref struct))
+    (local $b (ref null struct))
+    ;; Param is already non-nullable, so set won't do anything
+    (local.set $a
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+    (local.set $b
+      (ref.as_non_null
+        (local.get $y)
+      )
+    )
+    (drop
+      (local.get $b)
+    )
+    (drop
+      (local.tee $a
+        (ref.cast $B
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $check-set-uses-most-casted (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref struct))
+  ;; CHECK-NEXT:  (local $1 (ref $B))
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $3 (ref $B))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (call $get)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (call $get)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $3
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $check-set-uses-most-casted
+    (local $a (ref struct))
+    (local.set $a
+      (ref.cast $B
+        (call $get)
+      )
+    )
+    (drop
+      (local.get $a)
+    )
+    (drop
+      ;; This will use the value from the cast in the above local.set
+      ;; since both casts are equally specific
+      (ref.cast $B
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.cast $A
+        (local.get $a)
+      )
+    )
+    (local.set $a
+      (ref.cast $A
+        (call $get)
+      )
+    )
+    (drop
+      (local.get $a)
+    )
+    (drop
+      ;; This cast is more specific than the one in the set, so it will be used henceforth
+      (ref.cast $B
+        (local.get $a)
+      )
+    )
+    (drop
+      (ref.cast $A
+        (local.get $a)
+      )
     )
   )
 
