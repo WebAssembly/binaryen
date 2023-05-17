@@ -1,6 +1,6 @@
 (module
  (type $none_=>_none (func))
- (import "env" "js_func" (func $a_js_func))
+ (import "env" "js_func" (func $a_js_func (type $none_=>_none)))
  (memory $0 1 1)
  (data $0 "Hello, datacount section!")
  (export "wasm_func_a" (func $a_wasm_func))
