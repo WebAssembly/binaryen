@@ -616,6 +616,9 @@ def run_vm(cmd):
             # note that this text is a little too broad, but the problem is rare
             # enough that it's unlikely to hide an unrelated issue
             'found br_if of type',
+            # this text is emitted from V8 when it runs out of memory during a
+            # GC allocation.
+            'out of memory',
             # all host limitations are arbitrary and may differ between VMs and
             # also be affected by optimizations, so ignore them.
             # this is the prefix that the binaryen interpreter emits. For V8,
