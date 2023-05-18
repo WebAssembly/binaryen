@@ -178,7 +178,7 @@
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result (ref $B))
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (br_on_cast $block $B
+  ;; YESTNH-NEXT:     (br_on_cast $block anyref (ref $B)
   ;; YESTNH-NEXT:      (local.get $x)
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
@@ -190,7 +190,7 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result anyref)
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (br_on_cast $block $A
+  ;; NO_TNH-NEXT:     (br_on_cast $block anyref (ref $A)
   ;; NO_TNH-NEXT:      (local.get $x)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -202,7 +202,7 @@
     (drop
       (block $block (result anyref)
         (drop
-          (br_on_cast $block $A
+          (br_on_cast $block anyref (ref $A)
             (local.get $x)
           )
         )
@@ -750,7 +750,7 @@
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (block $block (result (ref none))
   ;; YESTNH-NEXT:    (drop
-  ;; YESTNH-NEXT:     (br_on_cast $block none
+  ;; YESTNH-NEXT:     (br_on_cast $block anyref (ref none)
   ;; YESTNH-NEXT:      (local.get $x)
   ;; YESTNH-NEXT:     )
   ;; YESTNH-NEXT:    )
@@ -770,7 +770,7 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block $block (result (ref none))
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (br_on_cast $block none
+  ;; NO_TNH-NEXT:     (br_on_cast $block anyref (ref none)
   ;; NO_TNH-NEXT:      (local.get $x)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -791,7 +791,7 @@
     (drop
       (block $block (result anyref)
         (drop
-          (br_on_cast $block $B
+          (br_on_cast $block anyref (ref $B)
             (local.get $x)
           )
         )

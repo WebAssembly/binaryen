@@ -313,7 +313,9 @@
     (drop
       (block $out-B (result (ref $struct.B))
         (local.set $temp.A
-          (br_on_cast $out-B $struct.B (ref.null $struct.A))
+          (br_on_cast $out-B (ref null $struct.A) (ref $struct.B)
+            (ref.null $struct.A)
+          )
         )
         (unreachable)
       )
@@ -321,7 +323,9 @@
     (drop
       (block $out-A (result (ref null $struct.A))
         (local.set $temp.B
-          (br_on_cast_fail $out-A $struct.B (ref.null $struct.A))
+          (br_on_cast_fail $out-A (ref null $struct.A) (ref $struct.B)
+            (ref.null $struct.A)
+          )
         )
         (unreachable)
       )

@@ -2172,10 +2172,9 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
-        if (curr->castType.isNullable()) {
-          printMedium(o, "null ");
-        }
-        printHeapType(o, curr->castType.getHeapType(), wasm);
+        printType(o, curr->ref->type, wasm);
+        o << ' ';
+        printType(o, curr->castType, wasm);
         return;
       case BrOnCastFail:
         // TODO: These instructions are deprecated, so stop emitting them.
@@ -2197,10 +2196,9 @@ struct PrintExpressionContents
         printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
-        if (curr->castType.isNullable()) {
-          printMedium(o, "null ");
-        }
-        printHeapType(o, curr->castType.getHeapType(), wasm);
+        printType(o, curr->ref->type, wasm);
+        o << ' ';
+        printType(o, curr->castType, wasm);
         return;
     }
     WASM_UNREACHABLE("Unexpected br_on* op");
