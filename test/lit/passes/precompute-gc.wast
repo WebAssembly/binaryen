@@ -860,7 +860,7 @@
  ;; CHECK:      (func $br_on_cast-on-creation (type $none_=>_ref|$empty|) (result (ref $empty))
  ;; CHECK-NEXT:  (block $label (result (ref $empty))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $label $empty
+ ;; CHECK-NEXT:    (br_on_cast $label (ref $empty) (ref $empty)
  ;; CHECK-NEXT:     (struct.new_default $empty)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -870,7 +870,7 @@
  (func $br_on_cast-on-creation (result (ref $empty))
   (block $label (result (ref $empty))
    (drop
-    (br_on_cast $label $empty
+    (br_on_cast $label anyref (ref $empty)
      (struct.new_default $empty)
     )
    )
