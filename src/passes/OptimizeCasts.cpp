@@ -87,7 +87,8 @@
 //          as we could optimize "backwards" as well (TODO 1) and past basic
 //          blocks (TODO 2, though RedundantSetElimination does that as well).
 //          However, we should consider whether improving those other passes
-//          might make more sense (as it would help more than casts).
+//          might make more sense (as it would help more than casts, if we could
+//          make them operate "backwards" and/or past basic blocks).
 //
 
 #include "ir/linear-execution.h"
