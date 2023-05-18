@@ -80,8 +80,12 @@
 //          then used in an if arm, for example, where simple dominance shows
 //          the cast can be reused.
 // TODO: 3. Look at LocalSet as well and not just Get. That would add some
-//          overlap with the other passes mentioned above, but once we do the
-//          first two TODOs above then we'd be adding some novel things here.
+//          overlap with the other passes mentioned above (SimplifyLocals and
+//          RedundantSetElimination also track sets and can switch a get to use
+//          a better set's index when that refines the type). But once we do the
+//          first two TODOs above then we'd be adding some novel things here,
+//          as we could optimize "backwards" as well (TODO 1) and past basic
+//          blocks (TODO 2, though RedundantSetElimination does that as well).
 //          However, we should consider whether improving those other passes
 //          might make more sense (as it would help more than casts).
 //
