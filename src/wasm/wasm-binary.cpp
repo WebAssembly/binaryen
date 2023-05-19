@@ -1395,7 +1395,7 @@ void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     // The only reference types allowed without GC are funcref and externref. We
     // internally use more refined versions of those types, but we cannot emit
-    // thoes more refined types.
+    // those more refined types.
     if (!wasm->features.hasGC()) {
       if (Type::isSubType(type, Type(HeapType::func, Nullable))) {
         o << S32LEB(BinaryConsts::EncodedType::funcref);
