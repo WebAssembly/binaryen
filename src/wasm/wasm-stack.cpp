@@ -2045,25 +2045,22 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       o << U32LEB(getBreakIndex(curr->name));
       return;
     case BrOnCast:
+    case BrOnCastFail: {
       o << int8_t(BinaryConsts::GCPrefix);
-      if (curr->castType.isNullable()) {
-        o << U32LEB(BinaryConsts::BrOnCastNull);
-      } else {
+      if (curr->op == BrOnCast) {
         o << U32LEB(BinaryConsts::BrOnCast);
-      }
-      o << U32LEB(getBreakIndex(curr->name));
-      parent.writeHeapType(curr->castType.getHeapType());
-      return;
-    case BrOnCastFail:
-      o << int8_t(BinaryConsts::GCPrefix);
-      if (curr->castType.isNullable()) {
-        o << U32LEB(BinaryConsts::BrOnCastFailNull);
       } else {
         o << U32LEB(BinaryConsts::BrOnCastFail);
       }
+      assert(curr->ref->type.isRef());
+      uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
+                      (curr->castType.isNullable() ? 2 : 0);
+      o << flags;
       o << U32LEB(getBreakIndex(curr->name));
+      parent.writeHeapType(curr->ref->type.getHeapType());
       parent.writeHeapType(curr->castType.getHeapType());
       return;
+    }
   }
   WASM_UNREACHABLE("invalid br_on_*");
 }

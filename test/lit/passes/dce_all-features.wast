@@ -1421,7 +1421,7 @@
   (func $br_on_cast_fail (result (ref any))
     (block $label$1 (result (ref none))
       ;; Similar to the above, but using br_on_cast_fail.
-      (br_on_cast_fail $label$1 null struct
+      (br_on_cast_fail $label$1 anyref structref
         (unreachable)
       )
       (unreachable)
