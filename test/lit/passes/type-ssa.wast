@@ -361,3 +361,36 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $array (array (mut f32)))
+  (type $array (array (mut f32)))
+
+  ;; CHECK:      (type $subarray (array_subtype (mut f32) $array))
+  (type $subarray (array_subtype (mut f32) $array))
+
+  ;; CHECK:      (type $ref|$subarray|_=>_none (func (param (ref $subarray))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $array$1 (array_subtype (mut f32) $array))
+
+  ;; CHECK:       (type ${mut:i32_mut:i32_mut:f64_mut:f64_mut:i32_mut:f64_mut:f64_mut:i32_mut:i32_mut:i32_mut:i32} (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (func $1 (type $ref|$subarray|_=>_none) (param $ref (ref $subarray))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_default $array$1
+  ;; CHECK-NEXT:    (i32.const 64)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $1 (param $ref (ref $subarray))
+    ;; TypeSSA will create another subtype of array, which will happen to
+    ;; conflict with $subarray. We will need to create a new "weird" rec group
+    ;; with a "hash" in it to avoid the conflict.
+    (drop
+      (array.new_default $array
+        (i32.const 64)
+      )
+    )
+  )
+)

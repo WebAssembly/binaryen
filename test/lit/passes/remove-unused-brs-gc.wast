@@ -136,7 +136,7 @@
    (drop
     ;; This static cast can be computed at compile time: it will definitely be
     ;; taken, so we can turn it into a normal br.
-    (br_on_cast $block $struct
+    (br_on_cast $block anyref (ref $struct)
      (struct.new $struct)
     )
    )
@@ -157,7 +157,7 @@
  ;; CHECK-NEXT:    (local.get $nullable-struct2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block null $struct
+ ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct2) (ref null $struct)
  ;; CHECK-NEXT:     (local.get $nullable-struct2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -170,26 +170,26 @@
    (drop
     ;; This cast can be computed at compile time: it will definitely fail, so we
     ;; can remove it.
-    (br_on_cast $block $struct
+    (br_on_cast $block anyref (ref $struct)
      (struct.new $struct2)
     )
    )
    (drop
     ;; We can still remove it even if the cast allows nulls.
-    (br_on_cast $block null $struct
+    (br_on_cast $block anyref (ref null $struct)
      (struct.new $struct2)
     )
    )
    (drop
     ;; Or if the cast does not allow nulls and the value is nullable.
-    (br_on_cast $block $struct
+    (br_on_cast $block anyref (ref $struct)
      (local.get $nullable-struct2)
     )
    )
    (drop
     ;; But if both are nullable, then we can't optimize because the cast would
     ;; succeed if the value is a null.
-    (br_on_cast $block null $struct
+    (br_on_cast $block anyref (ref null $struct)
      (local.get $nullable-struct2)
     )
    )
@@ -216,7 +216,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block null $struct
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct2) (ref null $struct)
  ;; CHECK-NEXT:     (local.get $nullable-struct2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -229,26 +229,26 @@
    (drop
     ;; This cast can be computed at compile time: it will definitely fail, so we
     ;; can replace it with an unconditional br.
-    (br_on_cast_fail $block $struct
+    (br_on_cast_fail $block anyref (ref $struct)
      (struct.new $struct2)
     )
    )
    (drop
     ;; We can still replace it even if the cast allows nulls.
-    (br_on_cast_fail $block null $struct
+    (br_on_cast_fail $block anyref (ref null $struct)
      (struct.new $struct2)
     )
    )
    (drop
     ;; Or if the cast does not allow nulls and the value is nullable.
-    (br_on_cast_fail $block $struct
+    (br_on_cast_fail $block anyref (ref $struct)
      (local.get $nullable-struct2)
     )
    )
    (drop
     ;; But if both are nullable, then we can't optimize because the cast would
     ;; succeed if the value is a null.
-    (br_on_cast_fail $block null $struct
+    (br_on_cast_fail $block anyref (ref null $struct)
      (local.get $nullable-struct2)
     )
    )
@@ -260,7 +260,7 @@
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block $struct
+ ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct) (ref $struct)
  ;; CHECK-NEXT:     (local.get $struct)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -271,7 +271,7 @@
   (local $struct (ref null $struct))
   (block $block (result (ref $struct))
    (drop
-    (br_on_cast $block $struct
+    (br_on_cast $block anyref (ref $struct)
      ;; As above, but now the type is nullable, so we cannot infer anything.
      (local.get $struct)
     )
@@ -293,7 +293,7 @@
  (func $br_on_cast_nullable (result (ref null $struct))
   (block $block (result (ref null $struct))
    (drop
-    (br_on_cast $block null $struct
+    (br_on_cast $block anyref (ref null $struct)
      ;; As above, but now the cast allows nulls, so we can optimize.
      (ref.null $struct)
     )
@@ -315,7 +315,7 @@
    (drop
     ;; As $br_on_cast, but this checks for a failing cast, so we know it will
     ;; *not* be taken.
-    (br_on_cast_fail $block $struct
+    (br_on_cast_fail $block anyref (ref $struct)
      (struct.new $struct)
     )
    )
@@ -348,7 +348,7 @@
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (block $something (result anyref)
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (br_on_cast $something $struct
+ ;; CHECK-NEXT:      (br_on_cast $something (ref null $struct) (ref $struct)
  ;; CHECK-NEXT:       (local.get $struct)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -403,7 +403,7 @@
     (block (result anyref)
      (block $something (result anyref)
       (drop
-       (br_on_cast $something $struct
+       (br_on_cast $something anyref (ref $struct)
         (local.get $struct)
        )
       )

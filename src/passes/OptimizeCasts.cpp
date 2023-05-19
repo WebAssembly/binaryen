@@ -72,13 +72,23 @@
 // sense in new pass anyhow, and things should be simpler overall to keep such
 // casts all in one pass, here.
 //
-// TODO: Move casts earlier in a basic block as well, at least in traps-never-
-//       happen mode where we can assume they never fail.
-// TODO: Look past individual basic blocks?
-// TODO: Look at LocalSet as well and not just Get. That would add some overlap
-//       with the other passes mentioned above, but once we do things like
-//       moving casts earlier as in the other TODO, we'd be doing uniquely
-//       useful things with LocalSet here.
+// TODO: 1. Move casts earlier in a basic block as well, at least in
+//          traps-never-happen mode where we can assume they never fail, and
+//          perhaps in other situations too.
+// TODO: 2. Look past individual basic blocks? This may be worth considering
+//          given the pattern of a cast appearing in an if condition that is
+//          then used in an if arm, for example, where simple dominance shows
+//          the cast can be reused.
+// TODO: 3. Look at LocalSet as well and not just Get. That would add some
+//          overlap with the other passes mentioned above (SimplifyLocals and
+//          RedundantSetElimination also track sets and can switch a get to use
+//          a better set's index when that refines the type). But once we do the
+//          first two TODOs above then we'd be adding some novel things here,
+//          as we could optimize "backwards" as well (TODO 1) and past basic
+//          blocks (TODO 2, though RedundantSetElimination does that as well).
+//          However, we should consider whether improving those other passes
+//          might make more sense (as it would help more than casts, if we could
+//          make them operate "backwards" and/or past basic blocks).
 //
 
 #include "ir/linear-execution.h"

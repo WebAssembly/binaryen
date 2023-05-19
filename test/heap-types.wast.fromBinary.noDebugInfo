@@ -331,7 +331,7 @@
   (drop
    (block $label$1 (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
     (local.set $0
-     (br_on_cast $label$1 ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+     (br_on_cast $label$1 nullref (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
       (ref.null none)
      )
     )
@@ -341,7 +341,7 @@
   (drop
    (block $label$2 (result (ref null ${i32_f32_f64}))
     (local.set $1
-     (br_on_cast_fail $label$2 ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}
+     (br_on_cast_fail $label$2 nullref (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
       (ref.null none)
      )
     )
