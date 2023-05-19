@@ -188,12 +188,12 @@ def randomize_fuzz_settings():
     else:
         LEGALIZE = False
 
-    # if GC is enabled then run --dce at the very end, to ensure that our
+    # if reftypes are enabled then run --dce at the very end, to ensure that our
     # binaries validate in other VMs, due to how non-nullable local validation
     # and unreachable code interact. see
     #   https://github.com/WebAssembly/binaryen/pull/5665
     #   https://github.com/WebAssembly/binaryen/issues/5599
-    if '--disable-gc' not in FEATURE_OPTS:
+    if '--disable-reference-types' not in FEATURE_OPTS:
         FUZZ_OPTS += ['--dce']
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
