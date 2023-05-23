@@ -1343,7 +1343,6 @@ public:
   void writeDylinkSection();
   void writeLegacyDylinkSection();
 
-  void initializeDebugInfo();
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
@@ -1404,7 +1403,6 @@ private:
   std::vector<std::pair<size_t, const Function::DebugLocation*>>
     sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;
-  Function::DebugLocation lastDebugLocation;
 
   std::unique_ptr<ImportInfo> importInfo;
 

@@ -24,6 +24,7 @@
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
+#include <cstdint>
 
 namespace wasm {
 
@@ -154,7 +155,10 @@ private:
 template<typename SubType>
 class BinaryenIRWriter : public Visitor<BinaryenIRWriter<SubType>> {
 public:
-  BinaryenIRWriter(Function* func) : func(func) {}
+  BinaryenIRWriter(Function* func)
+    : func(func), lastDebugLocation({static_cast<uint32_t>(-1),
+                                     static_cast<uint32_t>(-1),
+                                     static_cast<uint32_t>(-1)}) {}
 
   void write();
 
@@ -168,6 +172,10 @@ public:
 
 protected:
   Function* func = nullptr;
+  Function::DebugLocation lastDebugLocation; ///< last debug location
+  uint32_t lastDebugLocationDepth =
+    static_cast<uint32_t>(-1); ///< last debug location depth
+  uint32_t depth = 0U;         ///< depth of current write cursor
 
 private:
   void emit(Expression* curr) { static_cast<SubType*>(this)->emit(curr); }
@@ -239,6 +247,7 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   // unreachable block is a source of unreachability, which means we don't need
   // to emit an extra `unreachable` before the end of the block to prevent type
   // errors.
+  depth++;
   bool hasUnreachableChild = false;
   for (auto* child : ValueChildIterator(curr)) {
     visit(child);
@@ -251,7 +260,22 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
     // `curr` is not reachable, so don't emit it.
     return;
   }
-  emitDebugLocation(curr);
+
+  if (func != nullptr) {
+    const auto& debugLocationIterator = func->debugLocations.find(curr);
+    if (debugLocationIterator != func->debugLocations.cend()) {
+      if (lastDebugLocation != debugLocationIterator->second ||
+          depth < lastDebugLocationDepth) {
+        emitDebugLocation(curr);
+        lastDebugLocationDepth = depth;
+        lastDebugLocation = debugLocationIterator->second;
+      }
+    }
+  } else {
+    emitDebugLocation(
+      curr); // for global expression write, no func value, directly write it
+  }
+  depth--;
   // Control flow requires special handling, but most instructions can be
   // emitted directly after their children.
   if (Properties::isControlFlowStructure(curr)) {

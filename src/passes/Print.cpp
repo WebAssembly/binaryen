@@ -18,6 +18,7 @@
 // Print out text in s-expression format
 //
 
+#include <cstdint>
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
@@ -2532,7 +2533,7 @@ struct PrintExpressionContents
 // internal contents and the nested children.
 struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
-  unsigned indent = 0;
+  uint32_t indent = 0U;
 
   bool minify;
   const char* maybeSpace;
@@ -2547,6 +2548,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
   Function::DebugLocation lastPrintedLocation;
+  uint32_t lastPrintedIndent =
+    static_cast<uint32_t>(-1); ///< last print indent, child will not duplicate
+                               ///< the debug location, siblings will not miss
+                               ///< the debug location
   bool debugInfo;
 
   // Used to print delegate's depth argument when it throws to the caller
@@ -2560,10 +2565,17 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
 
   void printDebugLocation(const Function::DebugLocation& location) {
-    if (lastPrintedLocation == location) {
+    // ;; debug location
+    // (parent
+    //  (child) ;; no debug location
+    // )
+    // ;; debug location
+    // (siblings)
+    if (lastPrintedLocation == location && indent > lastPrintedIndent) {
       return;
     }
     lastPrintedLocation = location;
+    lastPrintedIndent = indent;
     auto fileName = currModule->debugInfoFileNames[location.fileIndex];
     o << ";;@ " << fileName << ":" << location.lineNumber << ":"
       << location.columnNumber << '\n';

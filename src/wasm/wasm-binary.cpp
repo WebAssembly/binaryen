@@ -43,7 +43,6 @@ void WasmBinaryWriter::write() {
 
   writeDylinkSection();
 
-  initializeDebugInfo();
   if (sourceMap) {
     writeSourceMapProlog();
   }
@@ -1120,10 +1119,6 @@ void WasmBinaryWriter::writeSymbolMap() {
   file.close();
 }
 
-void WasmBinaryWriter::initializeDebugInfo() {
-  lastDebugLocation = {0, /* lineNumber = */ 1, 0};
-}
-
 void WasmBinaryWriter::writeSourceMapProlog() {
   *sourceMap << "{\"version\":3,\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
@@ -1304,12 +1299,8 @@ void WasmBinaryWriter::writeDylinkSection() {
 }
 
 void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
-  if (loc == lastDebugLocation) {
-    return;
-  }
   auto offset = o.size();
   sourceMapLocations.emplace_back(offset, &loc);
-  lastDebugLocation = loc;
 }
 
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
