@@ -95,7 +95,7 @@
     (drop
       (block $l (result (ref struct))
         (drop
-          (br_on_cast $l anyref (ref struct) (struct.new $t0))
+          (br_on_cast $l struct (struct.new $t0))
         )
         (return (i32.const 0))
       )
@@ -107,7 +107,7 @@
     (drop
       (block $l (result (ref null struct))
         (drop
-          (br_on_cast $l anyref structref (ref.null none))
+          (br_on_cast $l null struct (ref.null none))
         )
         (return (i32.const 0))
       )
@@ -119,7 +119,7 @@
     (drop
       (block $l (result (ref struct))
         (drop
-          (br_on_cast_fail $l anyref (ref struct) (struct.new $t0))
+          (br_on_cast_fail $l struct (struct.new $t0))
         )
         (return (i32.const 0))
       )
@@ -131,7 +131,7 @@
     (drop
       (block $l (result (ref struct))
         (drop
-          (br_on_cast_fail $l anyref structref (ref.null none))
+          (br_on_cast_fail $l null struct (ref.null none))
         )
         (return (i32.const 0))
       )

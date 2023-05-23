@@ -2892,16 +2892,16 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s,
                                                  bool onFail) {
   int i = 1;
   auto name = getLabel(*s[i++]);
-  std::optional<Type> inputType;
   if (!castType) {
-    inputType = elementToType(*s[i++]);
-    castType = elementToType(*s[i++]);
+    auto nullability = NonNullable;
+    if (s[i]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
   auto* ref = parseExpression(*s[i]);
-  if (inputType && !Type::isSubType(ref->type, *inputType)) {
-    throw ParseException(
-      "br_on_cast* ref type does not match expected type", s.line, s.col);
-  }
   auto op = onFail ? BrOnCastFail : BrOnCast;
   return Builder(wasm).makeBrOn(op, name, ref, *castType);
 }

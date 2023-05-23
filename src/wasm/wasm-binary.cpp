@@ -7034,10 +7034,14 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnNonNull:
       op = BrOnNonNull;
       break;
+    case BinaryConsts::BrOnCastStatic:
     case BinaryConsts::BrOnCast:
+    case BinaryConsts::BrOnCastNull:
       op = BrOnCast;
       break;
+    case BinaryConsts::BrOnCastStaticFail:
     case BinaryConsts::BrOnCastFail:
+    case BinaryConsts::BrOnCastFailNull:
       op = BrOnCastFail;
       break;
     case BinaryConsts::BrOnFunc:
@@ -7059,24 +7063,18 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  uint8_t flags = 0;
-  if (op == BrOnCast || op == BrOnCastFail) {
-    flags = getInt8();
-  }
   auto name = getBreakTarget(getU32LEB()).name;
-  auto* ref = popNonVoidExpression();
-  if (op == BrOnCast || op == BrOnCastFail) {
-    auto inputNullability = (flags & 1) ? Nullable : NonNullable;
-    auto castNullability = (flags & 2) ? Nullable : NonNullable;
-    auto inputHeapType = getHeapType();
-    auto castHeapType = getHeapType();
-    auto inputType = Type(inputHeapType, inputNullability);
-    castType = Type(castHeapType, castNullability);
-    if (!Type::isSubType(ref->type, inputType)) {
-      throwError(std::string("Invalid reference type for ") +
-                 ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
-    }
+  if (castType == Type::none && (op == BrOnCast || op == BrOnCastFail)) {
+    auto nullability = (code == BinaryConsts::BrOnCastNull ||
+                        code == BinaryConsts::BrOnCastFailNull)
+                         ? Nullable
+                         : NonNullable;
+    bool legacy = code == BinaryConsts::BrOnCastStatic ||
+                  code == BinaryConsts::BrOnCastStaticFail;
+    auto type = legacy ? getIndexedHeapType() : getHeapType();
+    castType = Type(type, nullability);
   }
+  auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeBrOn(op, name, ref, castType);
   return true;
 }
