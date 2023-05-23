@@ -35,7 +35,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref (ref struct)
+  ;; CHECK-NEXT:     (br_on_cast $label$1 struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -47,7 +47,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref (ref struct)
+          (br_on_cast $l struct
             (ref.null none)
           )
         )
@@ -60,7 +60,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref structref
+  ;; CHECK-NEXT:     (br_on_cast $label$1 null struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -72,7 +72,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref structref
+          (br_on_cast $l null struct
             (ref.null none)
           )
         )
@@ -85,7 +85,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 nullref structref
+  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 null struct
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -97,7 +97,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast_fail $l nullref structref
+          (br_on_cast_fail $l null struct
             (ref.null none)
           )
         )

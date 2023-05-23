@@ -91,7 +91,6 @@ struct CodeScanner
       counts.note(cast->castType);
     } else if (auto* cast = curr->dynCast<BrOn>()) {
       if (cast->op == BrOnCast || cast->op == BrOnCastFail) {
-        counts.note(cast->ref->type);
         counts.note(cast->castType);
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {

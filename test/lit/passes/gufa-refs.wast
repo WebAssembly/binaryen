@@ -988,7 +988,7 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (block $parent (result (ref $parent))
   ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (br_on_cast $parent (ref $unrelated) (ref $parent)
+  ;; CHECK-NEXT:        (br_on_cast $parent $parent
   ;; CHECK-NEXT:         (struct.new_default $unrelated)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -1051,7 +1051,7 @@
       (struct.get $parent 0
         (block $parent (result (ref $parent))
           (drop
-            (br_on_cast $parent anyref (ref $parent)
+            (br_on_cast $parent $parent
               (struct.new $unrelated)
             )
           )
@@ -5344,7 +5344,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block $B (result (ref $B))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br_on_cast $B (ref $A) (ref $B)
+  ;; CHECK-NEXT:       (br_on_cast $B $B
   ;; CHECK-NEXT:        (struct.new $A
   ;; CHECK-NEXT:         (i32.const 100)
   ;; CHECK-NEXT:        )
@@ -5361,7 +5361,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block $A (result (ref $A))
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br_on_cast $A (ref $A) (ref $A)
+  ;; CHECK-NEXT:       (br_on_cast $A $A
   ;; CHECK-NEXT:        (struct.new $A
   ;; CHECK-NEXT:         (i32.const 200)
   ;; CHECK-NEXT:        )
@@ -5387,7 +5387,7 @@
     (drop
       (block $B (result (ref $B))
         (drop
-          (br_on_cast $B anyref (ref $B)
+          (br_on_cast $B $B
             (struct.new $A
               (i32.const 100)
             )
@@ -5402,7 +5402,7 @@
       (ref.test $A
         (block $A (result (ref $A))
           (drop
-            (br_on_cast $A anyref (ref $A)
+            (br_on_cast $A $A
               (struct.new $A
                 (i32.const 200)
               )

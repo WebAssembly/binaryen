@@ -947,7 +947,7 @@
   ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
   ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)
+  ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return $B
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -964,7 +964,7 @@
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result (ref $B))
     (drop
-      (br_on_cast 0 anyref (ref $B)
+      (br_on_cast 0 $B
         (local.get $a)
       )
     )

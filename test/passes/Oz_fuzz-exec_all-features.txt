@@ -156,7 +156,7 @@
      (i32.const 1)
     )
     (drop
-     (br_on_cast_fail $any (ref $struct) (ref $extendedstruct)
+     (br_on_cast_fail $any $extendedstruct
       (local.get $0)
      )
     )

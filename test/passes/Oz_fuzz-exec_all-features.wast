@@ -84,9 +84,9 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast $block anyref (ref $struct)
+       (br_on_cast $block $struct
         ;; first, try to cast our simple $struct to an extended, which will fail
-        (br_on_cast $extendedblock anyref (ref $extendedstruct)
+        (br_on_cast $extendedblock $extendedstruct
          (local.get $any)
         )
        )
@@ -113,7 +113,7 @@
     (drop
      ;; try to cast our simple $struct to an extended, which will fail, and
      ;; so we will branch, skipping the next logging.
-     (br_on_cast_fail $any anyref (ref $extendedstruct)
+     (br_on_cast_fail $any $extendedstruct
       (local.get $any)
      )
     )
@@ -134,7 +134,7 @@
     (drop
      ;; try to cast our simple $struct to an extended, which will succeed, and
      ;; so we will continue to the next logging.
-     (br_on_cast_fail $any anyref (ref $extendedstruct)
+     (br_on_cast_fail $any $extendedstruct
       (local.get $any)
      )
     )
@@ -353,9 +353,9 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast $block anyref (ref $struct)
+       (br_on_cast $block $struct
         ;; first, try to cast our simple $struct to an extended, which will fail
-        (br_on_cast $extendedblock anyref (ref $extendedstruct)
+        (br_on_cast $extendedblock $extendedstruct
          (local.get $any)
         )
        )
@@ -380,7 +380,7 @@
    (block $failblock (result anyref)
     (drop
       ;; try to cast our simple $struct to an extended, which will fail
-     (br_on_cast_fail $failblock anyref (ref $extendedstruct)
+     (br_on_cast_fail $failblock $extendedstruct
       (local.get $any)
      )
     )

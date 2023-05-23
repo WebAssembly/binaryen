@@ -5,10 +5,10 @@
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -26,6 +26,20 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l1 (result (ref null $struct))
+  ;; CHECK-NEXT:    (br_on_cast $l1 $struct
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $l2 (result (ref null $struct))
+  ;; CHECK-NEXT:    (br_on_cast_fail $l2 $struct
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     (drop
@@ -41,6 +55,20 @@
     (drop
       (ref.cast_nop_static $struct
         (ref.null none)
+      )
+    )
+    (drop
+      (block $l1 (result (ref null $struct))
+        (br_on_cast_static $l1 $struct
+          (ref.null none)
+        )
+      )
+    )
+    (drop
+      (block $l2 (result (ref null $struct))
+        (br_on_cast_static_fail $l2 $struct
+          (ref.null none)
+        )
       )
     )
   )
