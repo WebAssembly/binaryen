@@ -89,9 +89,9 @@
 //    (ref.cast .. (local.get $ref))
 //  )
 //
-// TODO: 1. Move casts earlier in a basic block as well, at least in
-//          traps-never-happen mode where we can assume they never fail, and
-//          perhaps in other situations too.
+// TODO: 1. Check if casts whose fallthroughs, but not immediate falthroughs 
+//          are local.gets can be moved earlier, and also see if we can move
+//          multiple casts to the same local.get.
 // TODO: 2. Look past individual basic blocks? This may be worth considering
 //          given the pattern of a cast appearing in an if condition that is
 //          then used in an if arm, for example, where simple dominance shows
