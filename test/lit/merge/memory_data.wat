@@ -8,6 +8,8 @@
 ;; such name changes.
 
 (module
+  ;; CHECK:      (import "import" "mem" (memory $imported 10000))
+
   ;; CHECK:      (memory $foo 1)
   (memory $foo 1)
 
@@ -19,8 +21,6 @@
   ;; CHECK:      (memory $other 100)
 
   ;; CHECK:      (memory $bar_3 1000)
-
-  ;; CHECK:      (memory $imported 10000)
 
   ;; CHECK:      (data $a (i32.const 0) "a")
   (data $a (memory $foo) (i32.const 0) "a")

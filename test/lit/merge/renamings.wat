@@ -21,6 +21,8 @@
 
   ;; CHECK:      (type $f32_=>_none (func (param f32)))
 
+  ;; CHECK:      (import "elsewhere" "some.tag" (tag $imported (param f64)))
+
   ;; CHECK:      (global $foo i32 (i32.const 1))
   (global $foo i32 (i32.const 1))
 
@@ -89,8 +91,6 @@
 
   ;; This export has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
-  ;; CHECK:      (tag $imported (param f64))
-
   ;; CHECK:      (tag $foo_2 (param f32))
 
   ;; CHECK:      (tag $other (param f64))

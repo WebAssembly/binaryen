@@ -32,11 +32,7 @@
 
   ;; CHECK:      (memory $second.mem 2)
 
-  ;; CHECK:      (memory $other.mem_2 1)
-
   ;; CHECK:      (tag $exn (param))
-
-  ;; CHECK:      (tag $exn_1 (param))
 
   ;; CHECK:      (export "foo" (func $first.foo))
 
@@ -119,11 +115,11 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $keepalive2 (type $none_=>_i32) (result i32)
-;; CHECK-NEXT:  (i32.load $other.mem_2
+;; CHECK-NEXT:  (i32.load $first.mem
 ;; CHECK-NEXT:   (i32.const 10)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $keepalive3 (type $none_=>_none)
-;; CHECK-NEXT:  (throw $exn_1)
+;; CHECK-NEXT:  (throw $exn)
 ;; CHECK-NEXT: )
