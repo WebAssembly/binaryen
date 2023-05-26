@@ -66,6 +66,8 @@ inline Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
   ret->sig = tag->sig;
+  ret->module = tag->module;
+  ret->base = tag->base;
   out.addTag(ret);
   return ret;
 }
@@ -113,6 +115,8 @@ inline Memory* copyMemory(const Memory* memory, Module& out) {
   ret->max = memory->max;
   ret->shared = memory->shared;
   ret->indexType = memory->indexType;
+  ret->module = memory->module;
+  ret->base = memory->base;
 
   return out.addMemory(std::move(ret));
 }
