@@ -7,6 +7,9 @@
 ;; We test functions and memories here, and not every possible entity in a
 ;; comprehensive way, since they all go through the same code path. (But we test
 ;; two to at least verify we differentiate them.)
+;;
+;; We also test importing memories and tags from another file than the
+;; first one, which was initially broken.
 
 (module
   ;; The first two imports here will be resolved to direct calls into the
@@ -25,7 +28,11 @@
   ;; CHECK:      (import "third" "missing" (func $other.missing (type $none_=>_none)))
   (import "third" "missing" (func $other.missing))
 
+  ;; CHECK:      (memory $first.mem 2)
+
   ;; CHECK:      (memory $second.mem 2)
+
+  ;; CHECK:      (tag $exn (param))
 
   ;; CHECK:      (export "foo" (func $first.foo))
 
@@ -33,11 +40,19 @@
 
   ;; CHECK:      (export "keepalive" (func $keepalive))
 
-  ;; CHECK:      (export "mem" (memory $second.mem))
+  ;; CHECK:      (export "mem" (memory $first.mem))
 
-  ;; CHECK:      (export "foo_4" (func $second.foo))
+  ;; CHECK:      (export "exn" (tag $exn))
 
-  ;; CHECK:      (export "bar_5" (func $bar_6))
+  ;; CHECK:      (export "mem_5" (memory $second.mem))
+
+  ;; CHECK:      (export "foo_6" (func $second.foo))
+
+  ;; CHECK:      (export "bar_7" (func $bar_6))
+
+  ;; CHECK:      (export "keepalive2" (func $keepalive2))
+
+  ;; CHECK:      (export "keepalive3" (func $keepalive3))
 
   ;; CHECK:      (func $first.foo (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
@@ -68,7 +83,7 @@
   )
 
   ;; CHECK:      (func $keepalive (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (i32.load
+  ;; CHECK-NEXT:  (i32.load $second.mem
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -78,6 +93,12 @@
       (i32.const 10)
     )
   )
+
+  (memory $first.mem 2)
+
+  (export "mem" (memory $first.mem))
+
+  (tag $exn (export "exn"))
 )
 ;; CHECK:      (func $second.foo (type $none_=>_none)
 ;; CHECK-NEXT:  (call $first.foo)
@@ -91,4 +112,14 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $keepalive2 (type $none_=>_i32) (result i32)
+;; CHECK-NEXT:  (i32.load $first.mem
+;; CHECK-NEXT:   (i32.const 10)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $keepalive3 (type $none_=>_none)
+;; CHECK-NEXT:  (throw $exn)
 ;; CHECK-NEXT: )

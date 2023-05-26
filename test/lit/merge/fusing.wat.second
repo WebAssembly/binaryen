@@ -25,4 +25,16 @@
       (i32.const 4)
     )
   )
+
+  (import "first" "mem" (memory $other.mem 1))
+
+  (func $keepalive2 (export "keepalive2") (result i32)
+    ;; Load from the memory imported from the second module.
+    (i32.load $other.mem
+      (i32.const 10)
+    )
+  )
+
+  (import "first" "exn" (tag $exn))
+  (func $keepalive3 (export "keepalive3") (throw $exn))
 )

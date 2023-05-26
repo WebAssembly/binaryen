@@ -5,6 +5,9 @@
 
   (tag $other (param f64))
 
+  ;; Test that the import remains
+  (import "elsewhere" "some.tag" (tag $imported (param f64)))
+
   (memory $foo 50 60)
 
   (memory $other 70 80)
@@ -30,6 +33,8 @@
   (export "other" (func $other))
 
   (export "keepalive" (func $uses.second))
+
+  (export "keepalive.tag" (tag $imported))
 
   ;; Also test having a different name for the export as for the internal
   ;; thing it refers to, to test we don't assume they are identical.

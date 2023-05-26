@@ -8,15 +8,19 @@
 ;; such name changes.
 
 (module
+  ;; CHECK:      (import "import" "mem" (memory $imported 10000))
+
   ;; CHECK:      (memory $foo 1)
   (memory $foo 1)
 
   ;; CHECK:      (memory $bar 10)
   (memory $bar 10)
 
+  (memory $shared 10)
+
   ;; CHECK:      (memory $other 100)
 
-  ;; CHECK:      (memory $bar_2 1000)
+  ;; CHECK:      (memory $bar_3 1000)
 
   ;; CHECK:      (data $a (i32.const 0) "a")
   (data $a (memory $foo) (i32.const 0) "a")
@@ -26,14 +30,17 @@
 
   ;; CHECK:      (data $a_2 (memory $other) (i32.const 0) "a2")
 
-  ;; CHECK:      (data $b_2 (memory $bar_2) (i32.const 0) "b2")
+  ;; CHECK:      (data $b_2 (memory $bar_3) (i32.const 0) "b2")
 
   ;; CHECK:      (export "keepalive" (memory $foo))
   (export "keepalive" (memory $foo))
 
   ;; CHECK:      (export "keepalive1" (memory $bar))
   (export "keepalive1" (memory $bar))
+
 )
 ;; CHECK:      (export "keepalive_2" (memory $other))
 
-;; CHECK:      (export "keepalive1_3" (memory $bar_2))
+;; CHECK:      (export "keepalive1_3" (memory $bar_3))
+
+;; CHECK:      (export "keepalive2" (memory $imported))
