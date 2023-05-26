@@ -11,6 +11,8 @@
   ;; will be renamed.
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $f64_=>_none (func (param f64)))
+
   ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
 
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
@@ -18,8 +20,6 @@
   ;; CHECK:      (type $i64_=>_none (func (param i64)))
 
   ;; CHECK:      (type $f32_=>_none (func (param f32)))
-
-  ;; CHECK:      (type $f64_=>_none (func (param f64)))
 
   ;; CHECK:      (global $foo i32 (i32.const 1))
   (global $foo i32 (i32.const 1))
@@ -89,6 +89,8 @@
 
   ;; This export has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
+  ;; CHECK:      (tag $imported (param f64))
+
   ;; CHECK:      (tag $foo_2 (param f32))
 
   ;; CHECK:      (tag $other (param f64))
@@ -107,6 +109,8 @@
   ;; CHECK:      (export "other" (func $other))
 
   ;; CHECK:      (export "keepalive_5" (func $uses.second))
+
+  ;; CHECK:      (export "keepalive.tag" (tag $imported))
 
   ;; CHECK:      (export "other-b" (func $other))
 
