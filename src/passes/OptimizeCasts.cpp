@@ -89,7 +89,7 @@
 //    (ref.cast .. (local.get $ref))
 //  )
 //
-// TODO: 1. Check if casts whose fallthroughs, but not immediate falthroughs 
+// TODO: 1. Check if casts whose fallthroughs, but not immediate fallthroughs
 //          are local.gets can be moved earlier, and also see if we can move
 //          multiple casts to the same local.get.
 // TODO: 2. Look past individual basic blocks? This may be worth considering
