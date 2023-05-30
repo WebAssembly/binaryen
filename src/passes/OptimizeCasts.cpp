@@ -89,14 +89,11 @@
 //    (ref.cast .. (local.get $ref))
 //  )
 //
-// TODO: 1. Check if casts whose fallthroughs, but not immediate fallthroughs
-//          are local.gets can be moved earlier, and also see if we can move
-//          multiple casts to the same local.get.
-// TODO: 2. Look past individual basic blocks? This may be worth considering
+// TODO: 1. Look past individual basic blocks? This may be worth considering
 //          given the pattern of a cast appearing in an if condition that is
 //          then used in an if arm, for example, where simple dominance shows
 //          the cast can be reused.
-// TODO: 3. Look at LocalSet as well and not just Get. That would add some
+// TODO: 2. Look at LocalSet as well and not just Get. That would add some
 //          overlap with the other passes mentioned above (SimplifyLocals and
 //          RedundantSetElimination also track sets and can switch a get to use
 //          a better set's index when that refines the type). But once we do the
@@ -134,12 +131,6 @@ struct RefCastInfo {
 
   RefCastInfo(Type type, RefCast::Safety safety, bool atTarget)
     : type(type), safety(safety), atTarget(atTarget) {}
-
-  void modify(Type newType, RefCast::Safety newSafety, bool newAtTarget) {
-    type = newType;
-    safety = newSafety;
-    atTarget = newAtTarget;
-  }
 };
 
 // Contains information about a RefAs we want to move to some target.
@@ -152,7 +143,7 @@ struct RefAsInfo {
   RefAsInfo(RefAsOp op, bool atTarget) : op(op), atTarget(atTarget) {}
 };
 
-// Find casts to move earlier to another local.gets. More refined subtypes are
+// Find casts to move earlier to another local.get. More refined subtypes are
 // chosen over less refined ones.
 struct EarlyCastFinder
   : public LinearExecutionWalker<EarlyCastFinder,
@@ -160,7 +151,7 @@ struct EarlyCastFinder
   PassOptions options;
   size_t numLocals;
 
-  // For each index, tracks a list of most refined casts that we can move to the
+  // For each local index, tracks a list of most refined casts that we can move to the
   // earliest reachable local.get.
   std::vector<SmallVector<RefCastInfo, 5>> movedRefCast;
   std::vector<SmallVector<RefAsInfo, 3>> movedRefAs;
@@ -193,7 +184,7 @@ struct EarlyCastFinder
 
     // Only RefAsNonNull produces implicit traps, so we use this when analyzing
     // RefAs. ExternInternalize and ExternExternalize ops can actually be moved
-    // further since they are infalible, but we don't have special cases for
+    // further since they are infallible, but we don't have special cases for
     // them currently.
     dummyRefAs.op = RefAsNonNull;
 
@@ -300,6 +291,39 @@ struct EarlyCastFinder
 
   void visitRefCast(RefCast* curr) {
     visitExpression(curr);
+
+    // Using fallthroughs here is fine due to the following cases.
+    // Suppose we have types $A->$B->$C (where $C is the most refined)
+    // and $D, which is an unrelated type.
+    // Case 1:
+    // (ref.cast $A (ref.cast $C (local.get $x)))
+    //
+    // ref.cast $C is initially chosen for $x. Then we consider ref.cast $A.
+    // Since $A is less refined than $C, we ignore it.
+    //
+    // Case 2:
+    // (ref.cast $C (ref.cast $A (local.get $x)))
+    //
+    // ref.cast $A is initially chosen for $x. Then we consider ref.cast $C,
+    // which is more refined than ref.cast $A, so we replace it with ref.cast $C.
+    //
+    // Case 3:
+    // (ref.cast $B (ref.cast $B (local.get $x)))
+    //
+    // We initially choose to move the inner ref.cast $B. When we consider the
+    // outer ref.cast $B, we can see that it has the same type as tge existing
+    // ref.cast $B, so we ignore it.
+    //
+    // Case 4:
+    // (ref.cast $D (ref.cast $C (local.get $x)))
+    //
+    // We first choose to move ref.cast $C. Since $D is neither a subtype nor
+    // a supertype of $C (if $B->$D, this also applies), then we add ref.cast $D
+    // as an additional cast to apply. ref.cast $C is nested in ref.cast $D.
+    //
+    // Note that if the best cast is already at the target location, we will
+    // keep it for comparison purposes but remove it once the traversal is done.
+
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
 
@@ -313,9 +337,7 @@ struct EarlyCastFinder
         if (curr->type != currInfo.type) {
           if (Type::isSubType(curr->type, currInfo.type)) {
             isNewType = false;
-            currInfo.modify(curr->type,
-                            curr->safety,
-                            get == earliestRefCastReachable[get->index]);
+            currInfo = RefCastInfo(curr->type, curr->safety, get == earliestRefCastReachable[get->index]);
             break;
           } else if (Type::isSubType(currInfo.type, curr->type)) {
             isNewType = false;
@@ -511,10 +533,7 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       EarlyCastApplier earlyCastApplier(earlyCastFinder);
       earlyCastApplier.walkFunctionInModule(func, getModule());
 
-      // LocalGet type changes must be propagated here as well. This
-      // is because moving casts earlier may produce nested casts
-      // which means that the actual type of the moved cast might
-      // not be accurate.
+      // Adding more casts causes types to be refined, that should be propagated. Especially those of nested casts.
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
