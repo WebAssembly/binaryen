@@ -158,7 +158,6 @@
     i32.const 2
     br $topmost
    end
-   nop
    block $switch-default$7
     block $switch-case$6
      block $switch-case$5
@@ -173,7 +172,6 @@
     i32.const 51
     br $topmost
    end
-   nop
    block $label$break$Lout
     block $switch-default$16
      block $switch-case$15
@@ -201,7 +199,6 @@
      end
      unreachable
     end
-    nop
    end
    i32.const 0
   end
@@ -297,10 +294,8 @@
   drop
  )
  (func $z
-  nop
  )
  (func $w
-  nop
  )
  (func $block_and_after (result i32)
   block $waka
@@ -381,7 +376,6 @@
  )
  (func $unreachable-loop (result i32)
   loop $loop-in
-   nop
    i32.const 1
    return
   end
@@ -396,7 +390,6 @@
  )
  (func $unreachable-loop-toplevel (result i32)
   loop $loop-in
-   nop
    i32.const 1
    return
   end
@@ -415,7 +408,6 @@
  (func $unreachable-if-arm
   i32.const 1
   if
-   nop
   else
    unreachable
   end
@@ -591,7 +583,6 @@
   call $local-to-stack-multi-4
   i32.const 0
   if
-   nop
   end
   drop
   i32.const 2

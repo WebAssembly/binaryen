@@ -23,10 +23,8 @@
   ;; CHECK-NEXT:   delegate $l00
   ;; CHECK-NEXT:   unreachable
   ;; CHECK-NEXT:  catch_all
-  ;; CHECK-NEXT:   nop
   ;; CHECK-NEXT:  end
   ;; CHECK-NEXT:  try $l01
-  ;; CHECK-NEXT:   nop
   ;; CHECK-NEXT:  delegate 0
   ;; CHECK-NEXT: )
   (func $eh

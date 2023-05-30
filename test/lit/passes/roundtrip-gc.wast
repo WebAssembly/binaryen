@@ -12,7 +12,7 @@
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (struct.new_default $\7bi32\7d)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (call $other)
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 1)
@@ -21,20 +21,24 @@
  (func $test
   (call $help
    (struct.new_default ${i32})
-   ;; Stack IR optimizations can remove this block, leaving a nop in an odd
+   ;; Stack IR optimizations can remove this block, leaving a call in an odd
    ;; "stacky" location. On load, we will use a local to work around that. It
    ;; is fine for the local to be non-nullable since the get is later in that
    ;; same block.
    (block $block (result i32)
-    (nop)
+    (call $other)
     (i32.const 1)
    )
   )
  )
  ;; CHECK:      (func $help (type $ref|$\7bi32\7d|_i32_=>_none) (param $3 (ref $\7bi32\7d)) (param $4 i32)
- ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $help (param $3 (ref ${i32})) (param $4 i32)
   (nop)
+ )
+
+ ;; CHECK:      (func $other (type $none_=>_none)
+ ;; CHECK-NEXT: )
+ (func $other
  )
 )

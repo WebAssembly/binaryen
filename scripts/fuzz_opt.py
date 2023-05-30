@@ -1527,6 +1527,8 @@ opt_choices = [
     ("--optimize-instructions",),
     ("--optimize-stack-ir",),
     ("--generate-stack-ir", "--optimize-stack-ir",),
+    # the full lifecycle of stack IR: generate, optimize, and write (and read)
+    ("--generate-stack-ir", "--optimize-stack-ir", "--roundtrip"),
     ("--pick-load-signs",),
     ("--precompute",),
     ("--precompute-propagate",),
