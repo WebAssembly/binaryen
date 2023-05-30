@@ -151,11 +151,6 @@ struct EarlyCastFinder
   PassOptions options;
   size_t numLocals;
 
-  // For each local index, tracks a list of most refined casts that we can move to the
-  // earliest reachable local.get.
-  std::vector<SmallVector<RefCastInfo, 5>> movedRefCast;
-  std::vector<SmallVector<RefAsInfo, 3>> movedRefAs;
-
   // Tracks the current earliest local.get that we can move a cast to without
   // side-effects.
   std::vector<LocalGet*> earliestRefCastReachable;
@@ -176,7 +171,6 @@ struct EarlyCastFinder
 
   EarlyCastFinder(PassOptions options, Module* module, Function* func)
     : options(options), numLocals(func->getNumLocals()),
-      movedRefCast(func->getNumLocals()), movedRefAs(func->getNumLocals()),
       earliestRefCastReachable(func->getNumLocals(), nullptr),
       earliestRefAsReachable(func->getNumLocals(), nullptr),
       dummyRefCast(module->allocator), dummyRefAs(module->allocator),
@@ -192,41 +186,10 @@ struct EarlyCastFinder
     testRefAs.visit(&dummyRefAs);
   }
 
-  // For some index, transfers the RefCasts that can currently be
-  // moved to the refCastToApply result index and resets the earliest
-  // reachable local.get to a nullptr. Done when we visit an expression
-  // where we cannot move casts past.
-  void updateRefCastMoves(size_t index) {
-    if (earliestRefCastReachable[index]) {
-      auto& applyVector = refCastToApply[earliestRefCastReachable[index]];
-      for (size_t i = 0; i < movedRefCast[index].size(); i++) {
-        if (!movedRefCast[index][i].atTarget) {
-          applyVector.push_back(movedRefCast[index][i]);
-        }
-      }
-      movedRefCast[index].clear();
-      earliestRefCastReachable[index] = nullptr;
-    }
-  }
-
-  // Same as above but for RefAs.
-  void updateRefAsMoves(size_t index) {
-    if (earliestRefAsReachable[index]) {
-      auto& applyVector = refAsToApply[earliestRefAsReachable[index]];
-      for (size_t i = 0; i < movedRefAs[index].size(); i++) {
-        if (!movedRefAs[index][i].atTarget) {
-          applyVector.push_back(movedRefAs[index][i]);
-        }
-      }
-      movedRefAs[index].clear();
-      earliestRefAsReachable[index] = nullptr;
-    }
-  }
-
   static void doNoteNonLinear(EarlyCastFinder* self, Expression**) {
     for (size_t i = 0; i < self->numLocals; i++) {
-      self->updateRefCastMoves(i);
-      self->updateRefAsMoves(i);
+      self->earliestRefCastReachable[i] = nullptr;
+      self->earliestRefAsReachable[i] = nullptr;
     }
   }
 
@@ -237,21 +200,21 @@ struct EarlyCastFinder
 
     if (testRefCast.invalidates(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
-        updateRefCastMoves(i);
+        earliestRefCastReachable[i] = nullptr;
       }
     }
 
     if (testRefAs.invalidates(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
-        updateRefAsMoves(i);
+        earliestRefAsReachable[i] = nullptr;
       }
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
     visitExpression(curr);
-    updateRefCastMoves(curr->index);
-    updateRefAsMoves(curr->index);
+    earliestRefCastReachable[curr->index] = nullptr;
+    earliestRefAsReachable[curr->index] = nullptr;
   }
 
   void visitLocalGet(LocalGet* curr) {
@@ -272,19 +235,18 @@ struct EarlyCastFinder
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
 
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      if (get != earliestRefAsReachable[get->index]) {
-        bool alreadyAdded = false;
-        for (size_t i = 0; i < movedRefAs[get->index].size(); i++) {
-          if (movedRefAs[get->index][i].op == curr->op) {
-            alreadyAdded = true;
-            break;
-          }
+      auto& castVector = refAsToApply[earliestRefAsReachable[get->index]];
+      bool alreadyAdded = false;
+      for (size_t i = 0; i < castVector.size(); i++) {
+        if (castVector[i].op == curr->op) {
+          alreadyAdded = true;
+          break;
         }
+      }
 
-        if (!alreadyAdded) {
-          movedRefAs[get->index].emplace_back(
-            curr->op, get == earliestRefAsReachable[get->index]);
-        }
+      if (!alreadyAdded) {
+        castVector.emplace_back(
+          curr->op, get == earliestRefAsReachable[get->index]);
       }
     }
   }
@@ -326,14 +288,15 @@ struct EarlyCastFinder
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
+      auto& castVector = refCastToApply[earliestRefCastReachable[get->index]];
 
       // If the cast's type is a completely new type (i.e. it is not a subtype
       // or a supertype of the existing type), we must move it, since it cannot
       // replace an existing cast.
       bool isNewType = true;
 
-      for (size_t i = 0; i < movedRefCast[get->index].size(); i++) {
-        RefCastInfo& currInfo = movedRefCast[get->index][i];
+      for (size_t i = 0; i < castVector.size(); i++) {
+        RefCastInfo& currInfo = castVector[i];
         if (curr->type != currInfo.type) {
           if (Type::isSubType(curr->type, currInfo.type)) {
             isNewType = false;
@@ -355,18 +318,11 @@ struct EarlyCastFinder
       }
 
       if (isNewType) {
-        movedRefCast[get->index].emplace_back(
+        castVector.emplace_back(
           curr->type,
           curr->safety,
           get == earliestRefCastReachable[get->index]);
       }
-    }
-  }
-
-  void collectCastMoves() {
-    for (size_t i = 0; i < numLocals; i++) {
-      updateRefCastMoves(i);
-      updateRefAsMoves(i);
     }
   }
 
@@ -393,17 +349,21 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
     auto refCastIter = finder.refCastToApply.find(curr);
     if (refCastIter != finder.refCastToApply.end()) {
       for (auto& currRefCast : refCastIter->second) {
-        currPtr = replaceCurrent(
-          Builder(*getModule())
-            .makeRefCast(currPtr, currRefCast.type, currRefCast.safety));
+        if (!currRefCast.atTarget) {
+          currPtr = replaceCurrent(
+            Builder(*getModule())
+              .makeRefCast(currPtr, currRefCast.type, currRefCast.safety));
+        }
       }
     }
 
     auto refAsIter = finder.refAsToApply.find(curr);
     if (refAsIter != finder.refAsToApply.end()) {
       for (auto& currRefAs : refAsIter->second) {
-        currPtr = replaceCurrent(
-          Builder(*getModule()).makeRefAs(currRefAs.op, currPtr));
+        if (!currRefAs.atTarget) {
+          currPtr = replaceCurrent(
+            Builder(*getModule()).makeRefAs(currRefAs.op, currPtr));
+        }
       }
     }
   }
@@ -525,7 +485,6 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
     // Look for casts which can be moved earlier
     EarlyCastFinder earlyCastFinder(getPassOptions(), getModule(), func);
     earlyCastFinder.walkFunctionInModule(func, getModule());
-    earlyCastFinder.collectCastMoves();
 
     bool castsToMove = earlyCastFinder.hasCastsToMove();
     if (castsToMove) {
