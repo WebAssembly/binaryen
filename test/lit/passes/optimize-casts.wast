@@ -450,9 +450,11 @@
   ;; CHECK-NEXT:   (call $get)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $2
+  ;; CHECK-NEXT:     (ref.cast $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -462,10 +464,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -503,18 +503,13 @@
       (local.get $x)
     )
     (drop
-      ;; This will not be moved, as the RefCast has precedence.
       (ref.as_non_null
         (local.get $x)
       )
     )
     (drop
-      (ref.as_non_null
-        ;; Only the RefCast will be moved since we only move
-        ;; immediate parents of local gets right now.
-        (ref.cast $A
-          (local.get $x)
-        )
+      (ref.cast null $A
+        (local.get $x)
       )
     )
   )
@@ -560,7 +555,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $B
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -596,7 +593,9 @@
     )
     (drop
       (ref.cast $B
-        (local.get $x)
+        (ref.as_non_null
+          (local.get $x)
+        )
       )
     )
   )
