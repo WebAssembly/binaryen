@@ -164,7 +164,7 @@ struct EarlyCastFinder
 
   // Maps local.gets to a list of RefCast to move to it. This is the final
   // result.
-  std::unordered_map<LocalGet*, SmallVector<RefCastInfo, 5>> refCastToApply;
+  std::unordered_map<LocalGet*, SmallVector<RefCastInfo, 3>> refCastToApply;
 
   // Maps local.gets to a list of RefAs to move to it. This is the final result.
   std::unordered_map<LocalGet*, SmallVector<RefAsInfo, 3>> refAsToApply;
@@ -245,8 +245,8 @@ struct EarlyCastFinder
       }
 
       if (!alreadyAdded) {
-        castVector.emplace_back(
-          curr->op, get == earliestRefAsReachable[get->index]);
+        castVector.emplace_back(curr->op,
+                                get == earliestRefAsReachable[get->index]);
       }
     }
   }
@@ -267,7 +267,8 @@ struct EarlyCastFinder
     // (ref.cast $C (ref.cast $A (local.get $x)))
     //
     // ref.cast $A is initially chosen for $x. Then we consider ref.cast $C,
-    // which is more refined than ref.cast $A, so we replace it with ref.cast $C.
+    // which is more refined than ref.cast $A, so we replace it with ref.cast
+    // $C.
     //
     // Case 3:
     // (ref.cast $B (ref.cast $B (local.get $x)))
@@ -300,7 +301,9 @@ struct EarlyCastFinder
         if (curr->type != currInfo.type) {
           if (Type::isSubType(curr->type, currInfo.type)) {
             isNewType = false;
-            currInfo = RefCastInfo(curr->type, curr->safety, get == earliestRefCastReachable[get->index]);
+            currInfo = RefCastInfo(curr->type,
+                                   curr->safety,
+                                   get == earliestRefCastReachable[get->index]);
             break;
           } else if (Type::isSubType(currInfo.type, curr->type)) {
             isNewType = false;
@@ -318,10 +321,9 @@ struct EarlyCastFinder
       }
 
       if (isNewType) {
-        castVector.emplace_back(
-          curr->type,
-          curr->safety,
-          get == earliestRefCastReachable[get->index]);
+        castVector.emplace_back(curr->type,
+                                curr->safety,
+                                get == earliestRefCastReachable[get->index]);
       }
     }
   }
@@ -492,7 +494,8 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       EarlyCastApplier earlyCastApplier(earlyCastFinder);
       earlyCastApplier.walkFunctionInModule(func, getModule());
 
-      // Adding more casts causes types to be refined, that should be propagated. Especially those of nested casts.
+      // Adding more casts causes types to be refined, that should be
+      // propagated. Especially those of nested casts.
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
