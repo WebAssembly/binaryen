@@ -6,7 +6,6 @@
  (export "f2" (func $1))
  (export "f4" (func $2))
  (func $0
-  (nop)
  )
  (func $1 (result i32)
   (i32.store
