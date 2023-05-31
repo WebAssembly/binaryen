@@ -73,6 +73,7 @@ public:
     }
     removeUnneededBlocks();
     dce();
+    vacuum();
   }
 
 private:
@@ -96,6 +97,22 @@ private:
         }
       } else if (inst->type == Type::unreachable) {
         inUnreachableCode = true;
+      }
+    }
+  }
+
+  // Remove obviously-unneeded code.
+  void vacuum() {
+    // In the wasm binary format a nop is never needed. (In Binaryen IR, in
+    // comparison, it is necessary e.g. in a function body or an if arm.)
+    //
+    // It is especially important to remove nops because we add nops when we
+    // read wasm into Binaryen IR. That is, this avoids a potential increase in
+    // code size.
+    for (Index i = 0; i < insts.size(); i++) {
+      auto*& inst = insts[i];
+      if (inst && inst->origin->is<Nop>()) {
+        inst = nullptr;
       }
     }
   }
