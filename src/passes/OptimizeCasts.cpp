@@ -90,7 +90,7 @@
 //  )
 //
 // Note that right now, we only consider RefAs with op RefAsNonNull as a cast.
-// RefAS with ExternInternalize and ExternExternalize are not considered casts
+// RefAs with ExternInternalize and ExternExternalize are not considered casts
 // when obtaining fallthroughs, and so are ignored.
 //
 // TODO: 1. Look past individual basic blocks? This may be worth considering
@@ -129,6 +129,10 @@ struct RefCastInfo {
   // Indicate whether the cast is already at the target. If it is, then
   // the information is just for determining if a potential cast is less
   // refined than the existing cast, and will be removed later.
+  //
+  // Note that we track a cast already on the get since we only want to move
+  // better casts to it: if the best cast is already on the get, there is no
+  // work to do.
   bool atTarget;
 
   RefCastInfo() {}
@@ -151,8 +155,6 @@ struct EarlyCastFinder
   std::vector<LocalGet*> earliestRefAsReachable;
 
   // Used to analyze expressions to see if casts can be moved past them.
-  RefCast dummyRefCast;
-  RefAs dummyRefAs;
   EffectAnalyzer testRefCast;
   EffectAnalyzer testRefAs;
 
@@ -165,7 +167,7 @@ struct EarlyCastFinder
   std::unordered_map<LocalGet*, RefCastInfo> refCastToApply;
 
   // Maps local.gets to a RefAs to move to it. This is the final result.
-  // As right now only RefAsNonNull is the only non Extern cast, we only
+  // As of right now only RefAsNonNull is the only non-extern cast, so we only
   // have one type of RefAs cast to move. The boolean indicates if the
   // ref.as_non_null is already at the local.get, or whether we actually
   // need to move it.
@@ -175,13 +177,11 @@ struct EarlyCastFinder
     : options(options), numLocals(func->getNumLocals()),
       earliestRefCastReachable(func->getNumLocals(), nullptr),
       earliestRefAsReachable(func->getNumLocals(), nullptr),
-      dummyRefCast(module->allocator), dummyRefAs(module->allocator),
       testRefCast(options, *module), testRefAs(options, *module) {
 
-    // Only RefAsNonNull produces implicit traps, so we use this when analyzing
-    // RefAs. ExternInternalize and ExternExternalize ops can actually be moved
-    // further since they are infallible, but we don't have special cases for
-    // them currently.
+    // TODO: generalize this when we handle more than RefAsNonNull
+    RefCast dummyRefCast(module->allocator);
+    RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
 
     testRefCast.visit(&dummyRefCast);
@@ -215,6 +215,7 @@ struct EarlyCastFinder
 
   void visitLocalSet(LocalSet* curr) {
     visitExpression(curr);
+
     earliestRefCastReachable[curr->index] = nullptr;
     earliestRefAsReachable[curr->index] = nullptr;
   }
@@ -469,12 +470,12 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
 
     bool castsToMove = earlyCastFinder.hasCastsToMove();
     if (castsToMove) {
-      // Duplicate casts to earlier locations if possible
+      // Duplicate casts to earlier locations if possible.
       EarlyCastApplier earlyCastApplier(earlyCastFinder);
       earlyCastApplier.walkFunctionInModule(func, getModule());
 
       // Adding more casts causes types to be refined, that should be
-      // propagated. Especially those of nested casts.
+      // propagated.
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
