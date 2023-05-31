@@ -89,6 +89,10 @@
 //    (ref.cast .. (local.get $ref))
 //  )
 //
+// Note that right now, we only consider RefAs with op RefAsNonNull as a cast.
+// RefAS with ExternInternalize and ExternExternalize are not considered casts
+// when obtaining fallthroughs, and so are ignored.
+//
 // TODO: 1. Look past individual basic blocks? This may be worth considering
 //          given the pattern of a cast appearing in an if condition that is
 //          then used in an if arm, for example, where simple dominance shows
@@ -133,17 +137,7 @@ struct RefCastInfo {
     : type(type), safety(safety), atTarget(atTarget) {}
 };
 
-// Contains information about a RefAs we want to move to some target.
-struct RefAsInfo {
-  RefAsOp op;
-  bool atTarget;
-
-  RefAsInfo() {}
-
-  RefAsInfo(RefAsOp op, bool atTarget) : op(op), atTarget(atTarget) {}
-};
-
-// Find casts to move earlier to another local.get. More refined subtypes are
+// Find a cast to move earlier to another local.get. More refined subtypes are
 // chosen over less refined ones.
 struct EarlyCastFinder
   : public LinearExecutionWalker<EarlyCastFinder,
@@ -162,12 +156,20 @@ struct EarlyCastFinder
   EffectAnalyzer testRefCast;
   EffectAnalyzer testRefAs;
 
-  // Maps local.gets to a list of RefCast to move to it. This is the final
-  // result.
-  std::unordered_map<LocalGet*, SmallVector<RefCastInfo, 3>> refCastToApply;
+  // Maps local.gets to a RefCast to move to it. This is the final result.
+  // We currently only support moving one RefCast to a local.get because
+  // if a local.get is cast to multiple types which are not in a direct
+  // subtype relationship (i.e. one is not a subtype of the other), then
+  // a trap is inevitable, and we assume this would already be optimized
+  // away beforehand.
+  std::unordered_map<LocalGet*, RefCastInfo> refCastToApply;
 
-  // Maps local.gets to a list of RefAs to move to it. This is the final result.
-  std::unordered_map<LocalGet*, SmallVector<RefAsInfo, 3>> refAsToApply;
+  // Maps local.gets to a RefAs to move to it. This is the final result.
+  // As right now only RefAsNonNull is the only non Extern cast, we only
+  // have one type of RefAs cast to move. The boolean indicates if the
+  // ref.as_non_null is already at the local.get, or whether we actually
+  // need to move it.
+  std::unordered_map<LocalGet*, bool> refAsToApply;
 
   EarlyCastFinder(PassOptions options, Module* module, Function* func)
     : options(options), numLocals(func->getNumLocals()),
@@ -232,21 +234,20 @@ struct EarlyCastFinder
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
 
+    // Right now, since all other ops are not casts, we only care about
+    // RefAsNonNull If more cast ops are added, the program must be changed to
+    // accomodate more than one type of op.
+    if (curr->op != RefAsNonNull) {
+      return;
+    }
+
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
 
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto& castVector = refAsToApply[earliestRefAsReachable[get->index]];
-      bool alreadyAdded = false;
-      for (size_t i = 0; i < castVector.size(); i++) {
-        if (castVector[i].op == curr->op) {
-          alreadyAdded = true;
-          break;
-        }
-      }
-
-      if (!alreadyAdded) {
-        castVector.emplace_back(curr->op,
-                                get == earliestRefAsReachable[get->index]);
+      auto castIter = refAsToApply.find(earliestRefAsReachable[get->index]);
+      if (castIter == refAsToApply.end()) {
+        refAsToApply.emplace(earliestRefAsReachable[get->index],
+                             get == earliestRefAsReachable[get->index]);
       }
     }
   }
@@ -280,50 +281,32 @@ struct EarlyCastFinder
     // Case 4:
     // (ref.cast $D (ref.cast $C (local.get $x)))
     //
-    // We first choose to move ref.cast $C. Since $D is neither a subtype nor
-    // a supertype of $C (if $B->$D, this also applies), then we add ref.cast $D
-    // as an additional cast to apply. ref.cast $C is nested in ref.cast $D.
+    // This would produce a trap and should already be optimized away
+    // beforehand.
     //
     // Note that if the best cast is already at the target location, we will
     // keep it for comparison purposes but remove it once the traversal is done.
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto& castVector = refCastToApply[earliestRefCastReachable[get->index]];
+      auto castIter = refCastToApply.find(earliestRefCastReachable[get->index]);
 
-      // If the cast's type is a completely new type (i.e. it is not a subtype
-      // or a supertype of the existing type), we must move it, since it cannot
-      // replace an existing cast.
-      bool isNewType = true;
-
-      for (size_t i = 0; i < castVector.size(); i++) {
-        RefCastInfo& currInfo = castVector[i];
-        if (curr->type != currInfo.type) {
-          if (Type::isSubType(curr->type, currInfo.type)) {
-            isNewType = false;
-            currInfo = RefCastInfo(curr->type,
-                                   curr->safety,
-                                   get == earliestRefCastReachable[get->index]);
-            break;
-          } else if (Type::isSubType(currInfo.type, curr->type)) {
-            isNewType = false;
-            break;
-          }
-        } else {
-          isNewType = false;
-          if (curr->safety == RefCast::Safety::Safe) {
-            currInfo.safety = RefCast::Safety::Safe;
-            currInfo.atTarget = get == earliestRefCastReachable[get->index];
-          }
-
-          break;
-        }
-      }
-
-      if (isNewType) {
-        castVector.emplace_back(curr->type,
-                                curr->safety,
-                                get == earliestRefCastReachable[get->index]);
+      if (castIter == refCastToApply.end()) {
+        RefCastInfo newCast(curr->type,
+                            curr->safety,
+                            get == earliestRefCastReachable[get->index]);
+        refCastToApply.emplace(earliestRefCastReachable[get->index], newCast);
+      } else if (curr->type != castIter->second.type &&
+                 Type::isSubType(curr->type, castIter->second.type)) {
+        castIter->second =
+          RefCastInfo(curr->type,
+                      curr->safety,
+                      get == earliestRefCastReachable[get->index]);
+      } else if (curr->type == castIter->second.type &&
+                 curr->safety == RefCast::Safety::Safe &&
+                 castIter->second.safety == RefCast::Safety::Unsafe) {
+        castIter->second.safety = curr->safety;
+        castIter->second.atTarget = get == earliestRefCastReachable[get->index];
       }
     }
   }
@@ -350,22 +333,18 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
 
     auto refCastIter = finder.refCastToApply.find(curr);
     if (refCastIter != finder.refCastToApply.end()) {
-      for (auto& currRefCast : refCastIter->second) {
-        if (!currRefCast.atTarget) {
-          currPtr = replaceCurrent(
-            Builder(*getModule())
-              .makeRefCast(currPtr, currRefCast.type, currRefCast.safety));
-        }
+      if (!refCastIter->second.atTarget) {
+        currPtr = replaceCurrent(Builder(*getModule())
+                                   .makeRefCast(currPtr,
+                                                refCastIter->second.type,
+                                                refCastIter->second.safety));
       }
     }
 
     auto refAsIter = finder.refAsToApply.find(curr);
     if (refAsIter != finder.refAsToApply.end()) {
-      for (auto& currRefAs : refAsIter->second) {
-        if (!currRefAs.atTarget) {
-          currPtr = replaceCurrent(
-            Builder(*getModule()).makeRefAs(currRefAs.op, currPtr));
-        }
+      if (!refAsIter->second) {
+        replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, currPtr));
       }
     }
   }
