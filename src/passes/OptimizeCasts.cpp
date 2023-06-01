@@ -121,24 +121,17 @@ namespace wasm {
 
 namespace {
 
-// Contains information about a RefCast we want to move to some target.
+// Contains information about a RefCast we want to move to a target LocalGet.
 struct RefCastInfo {
-  Type type;
-  RefCast::Safety safety;
+  LocalGet* target = nullptr;
+  RefCast* bestCast = nullptr;
+};
 
-  // Indicate whether the cast is already at the target. If it is, then
-  // the information is just for determining if a potential cast is less
-  // refined than the existing cast, and will be removed later.
-  //
-  // Note that we track a cast already on the get since we only want to move
-  // better casts to it: if the best cast is already on the get, there is no
-  // work to do.
-  bool atTarget;
-
-  RefCastInfo() {}
-
-  RefCastInfo(Type type, RefCast::Safety safety, bool atTarget)
-    : type(type), safety(safety), atTarget(atTarget) {}
+// Contains information about a RefAs we want to move to a target LocalGet.
+// Currently only RefAsNonNull will be moved.
+struct RefAsInfo {
+  LocalGet* target = nullptr;
+  RefAs* bestCast = nullptr;
 };
 
 // Find a cast to move earlier to another local.get. More refined subtypes are
@@ -150,34 +143,38 @@ struct EarlyCastFinder
   size_t numLocals;
 
   // Tracks the current earliest local.get that we can move a cast to without
-  // side-effects.
-  std::vector<LocalGet*> earliestRefCastReachable;
-  std::vector<LocalGet*> earliestRefAsReachable;
+  // side-effects, and the most refined cast that we can move to it (could be
+  // already at the earliest local.get).
+  //
+  // Note that we track a cast already on the get since we only want to move
+  // better casts to it: if the best cast is already on the get, there is no
+  // work to do.
+  std::vector<RefCastInfo> currRefCastMove;
+  std::vector<RefAsInfo> currRefAsMove;
 
   // Used to analyze expressions to see if casts can be moved past them.
   EffectAnalyzer testRefCast;
   EffectAnalyzer testRefAs;
 
-  // Maps local.gets to a RefCast to move to it. This is the final result.
-  // We currently only support moving one RefCast to a local.get because
-  // if a local.get is cast to multiple types which are not in a direct
-  // subtype relationship (i.e. one is not a subtype of the other), then
-  // a trap is inevitable, and we assume this would already be optimized
-  // away beforehand.
-  std::unordered_map<LocalGet*, RefCastInfo> refCastToApply;
+  // Maps LocalGets to the most refined RefCast to move to it, to be used by the
+  // EarlyCastApplier. If the most refined RefCast is already at the desired
+  // LocalGet, it does not appear here. In the normal case, only one RefCast
+  // needs to be moved to a LocalGet. If a LocalGet is cast to multiple types
+  // which are not subtypes of each other the a trap is inevitable, and we
+  // assume this would already be optimized away beforehand, so we don't care
+  // about this special case.
+  std::unordered_map<LocalGet*, RefCast*> refCastToApply;
 
-  // Maps local.gets to a RefAs to move to it. This is the final result.
-  // As of right now only RefAsNonNull is the only non-extern cast, so we only
-  // have one type of RefAs cast to move. The boolean indicates if the
-  // ref.as_non_null is already at the local.get, or whether we actually
-  // need to move it.
-  std::unordered_map<LocalGet*, bool> refAsToApply;
+  // Maps LocalGets to a RefAs to move to it, to be used by the
+  // EarlyCastApplier. As of right now RefAsNonNull is the only non-extern cast,
+  // so we only have one type of RefAs cast to move.
+  std::unordered_map<LocalGet*, RefAs*> refAsToApply;
 
   EarlyCastFinder(PassOptions options, Module* module, Function* func)
     : options(options), numLocals(func->getNumLocals()),
-      earliestRefCastReachable(func->getNumLocals(), nullptr),
-      earliestRefAsReachable(func->getNumLocals(), nullptr),
-      testRefCast(options, *module), testRefAs(options, *module) {
+      currRefCastMove(func->getNumLocals()),
+      currRefAsMove(func->getNumLocals()), testRefCast(options, *module),
+      testRefAs(options, *module) {
 
     // TODO: generalize this when we handle more than RefAsNonNull
     RefCast dummyRefCast(module->allocator);
@@ -188,10 +185,52 @@ struct EarlyCastFinder
     testRefAs.visit(&dummyRefAs);
   }
 
+  void flushRefCastResult(size_t index, Module& module) {
+    if (currRefCastMove[index].target) {
+      if (currRefCastMove[index].bestCast) {
+        // If the fallthrough is equal to the target, this means the cast is
+        // already at the target local.get and doesn't need to be duplicated
+        // again.
+        auto* fallthrough = Properties::getFallthrough(
+          currRefCastMove[index].bestCast, options, module);
+        if (fallthrough != currRefCastMove[index].target) {
+          refCastToApply[currRefCastMove[index].target] =
+            currRefCastMove[index].bestCast;
+        }
+        currRefCastMove[index].bestCast = nullptr;
+      }
+      currRefCastMove[index].target = nullptr;
+    }
+  }
+
+  void flushRefAsResult(size_t index, Module& module) {
+    if (currRefAsMove[index].target) {
+      if (currRefAsMove[index].bestCast) {
+        // As in flushRefCastResult, we need to check if the cast is already at
+        // the target and thus does not need to be moved.
+        auto* fallthrough = Properties::getFallthrough(
+          currRefAsMove[index].bestCast, options, *getModule());
+        if (fallthrough != currRefAsMove[index].target) {
+          refAsToApply[currRefAsMove[index].target] =
+            currRefAsMove[index].bestCast;
+        }
+        currRefAsMove[index].bestCast = nullptr;
+      }
+      currRefAsMove[index].target = nullptr;
+    }
+  }
+
   static void doNoteNonLinear(EarlyCastFinder* self, Expression**) {
     for (size_t i = 0; i < self->numLocals; i++) {
-      self->earliestRefCastReachable[i] = nullptr;
-      self->earliestRefAsReachable[i] = nullptr;
+      self->flushRefCastResult(i, *self->getModule());
+      self->flushRefAsResult(i, *self->getModule());
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    for (size_t i = 0; i < numLocals; i++) {
+      flushRefCastResult(i, *getModule());
+      flushRefAsResult(i, *getModule());
     }
   }
 
@@ -202,13 +241,13 @@ struct EarlyCastFinder
 
     if (testRefCast.invalidates(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
-        earliestRefCastReachable[i] = nullptr;
+        flushRefCastResult(i, *getModule());
       }
     }
 
     if (testRefAs.invalidates(currAnalyzer)) {
       for (size_t i = 0; i < numLocals; i++) {
-        earliestRefAsReachable[i] = nullptr;
+        flushRefAsResult(i, *getModule());
       }
     }
   }
@@ -216,39 +255,35 @@ struct EarlyCastFinder
   void visitLocalSet(LocalSet* curr) {
     visitExpression(curr);
 
-    earliestRefCastReachable[curr->index] = nullptr;
-    earliestRefAsReachable[curr->index] = nullptr;
+    flushRefCastResult(curr->index, *getModule());
+    flushRefAsResult(curr->index, *getModule());
   }
 
   void visitLocalGet(LocalGet* curr) {
     visitExpression(curr);
 
-    if (!earliestRefCastReachable[curr->index]) {
-      earliestRefCastReachable[curr->index] = curr;
+    if (!currRefCastMove[curr->index].target) {
+      currRefCastMove[curr->index].target = curr;
     }
 
-    if (!earliestRefAsReachable[curr->index]) {
-      earliestRefAsReachable[curr->index] = curr;
+    if (!currRefAsMove[curr->index].target) {
+      currRefAsMove[curr->index].target = curr;
     }
   }
 
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
 
-    // Right now, since all other ops are not casts, we only care about
-    // RefAsNonNull If more cast ops are added, the program must be changed to
-    // accomodate more than one type of op.
+    // TODO: support more than RefAsNonNull
     if (curr->op != RefAsNonNull) {
       return;
     }
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
-
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto castIter = refAsToApply.find(earliestRefAsReachable[get->index]);
-      if (castIter == refAsToApply.end()) {
-        refAsToApply.emplace(earliestRefAsReachable[get->index],
-                             get == earliestRefAsReachable[get->index]);
+      RefAsInfo& bestMove = currRefAsMove[get->index];
+      if (bestMove.target && !bestMove.bestCast) {
+        bestMove.bestCast = curr;
       }
     }
   }
@@ -285,29 +320,28 @@ struct EarlyCastFinder
     // This would produce a trap and should already be optimized away
     // beforehand.
     //
-    // Note that if the best cast is already at the target location, we will
-    // keep it for comparison purposes but remove it once the traversal is done.
+    // If the best cast is already at the target location, we will still track
+    // it in currRefCastMove to see if we can obtain a better cast. However, we
+    // won't flush it.
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto castIter = refCastToApply.find(earliestRefCastReachable[get->index]);
-
-      if (castIter == refCastToApply.end()) {
-        RefCastInfo newCast(curr->type,
-                            curr->safety,
-                            get == earliestRefCastReachable[get->index]);
-        refCastToApply.emplace(earliestRefCastReachable[get->index], newCast);
-      } else if (curr->type != castIter->second.type &&
-                 Type::isSubType(curr->type, castIter->second.type)) {
-        castIter->second =
-          RefCastInfo(curr->type,
-                      curr->safety,
-                      get == earliestRefCastReachable[get->index]);
-      } else if (curr->type == castIter->second.type &&
-                 curr->safety == RefCast::Safety::Safe &&
-                 castIter->second.safety == RefCast::Safety::Unsafe) {
-        castIter->second.safety = curr->safety;
-        castIter->second.atTarget = get == earliestRefCastReachable[get->index];
+      RefCastInfo& bestMove = currRefCastMove[get->index];
+      if (bestMove.target) {
+        if (!bestMove.bestCast) {
+          // If there isn't any other cast to move, the current cast is the best
+          bestMove.bestCast = curr;
+        } else if (bestMove.bestCast->type != curr->type &&
+                   Type::isSubType(curr->type, bestMove.bestCast->type)) {
+          // If the current cast is more refined than the best cast to move,
+          // change the best cast to move
+          bestMove.bestCast = curr;
+        }
+        // We don't care about the safety of the cast at present. If there are
+        // two casts with the same type one being safe and one being unsafe, the
+        // first cast that we visit will be chosen to be moved. Perhaps in the
+        // future we can consider prioritizing unsafe casts over safe ones since
+        // users may be more interested in that.
       }
     }
   }
@@ -328,25 +362,23 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
   EarlyCastApplier(EarlyCastFinder& finder) : finder(finder) {}
 
   // RefCast casts are applied before RefAs casts. If there are multiple
-  // casts to apply to a location, they are nested within one another.
+  // casts to apply to a location, they are nested within one another. Only
+  // at most one RefCast and at most one RefAs can be applied.
   void visitLocalGet(LocalGet* curr) {
     Expression* currPtr = curr;
 
     auto refCastIter = finder.refCastToApply.find(curr);
     if (refCastIter != finder.refCastToApply.end()) {
-      if (!refCastIter->second.atTarget) {
-        currPtr = replaceCurrent(Builder(*getModule())
-                                   .makeRefCast(currPtr,
-                                                refCastIter->second.type,
-                                                refCastIter->second.safety));
-      }
+      currPtr = replaceCurrent(Builder(*getModule())
+                                 .makeRefCast(currPtr,
+                                              refCastIter->second->type,
+                                              refCastIter->second->safety));
     }
 
     auto refAsIter = finder.refAsToApply.find(curr);
     if (refAsIter != finder.refAsToApply.end()) {
-      if (!refAsIter->second) {
-        replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, currPtr));
-      }
+      replaceCurrent(
+        Builder(*getModule()).makeRefAs(refAsIter->second->op, currPtr));
     }
   }
 };
@@ -464,12 +496,11 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
       return;
     }
 
-    // Look for casts which can be moved earlier
+    // Look for casts which can be moved earlier.
     EarlyCastFinder earlyCastFinder(getPassOptions(), getModule(), func);
     earlyCastFinder.walkFunctionInModule(func, getModule());
 
-    bool castsToMove = earlyCastFinder.hasCastsToMove();
-    if (castsToMove) {
+    if (earlyCastFinder.hasCastsToMove()) {
       // Duplicate casts to earlier locations if possible.
       EarlyCastApplier earlyCastApplier(earlyCastFinder);
       earlyCastApplier.walkFunctionInModule(func, getModule());
@@ -484,8 +515,7 @@ struct OptimizeCasts : public WalkerPass<PostWalker<OptimizeCasts>> {
     finder.options = getPassOptions();
     finder.walkFunctionInModule(func, getModule());
 
-    bool castsToOptimize = !finder.lessCastedGets.empty();
-    if (castsToOptimize) {
+    if (!finder.lessCastedGets.empty()) {
       // Apply the requests: use the best casts.
       FindingApplier applier(finder);
       applier.walkFunctionInModule(func, getModule());
