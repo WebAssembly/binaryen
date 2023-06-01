@@ -228,6 +228,8 @@ This repository contains code that builds the following tools in `bin/`:
    for wasm.
  * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
+All of the Binaryen tools are deterministic, that is, given the same inputs you should always get the same outputs. (If you see a case that behaves otherwise, please file an issue.)
+
 Usage instructions for each are below.
 
 ## Binaryen Optimizations
