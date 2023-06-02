@@ -663,6 +663,31 @@
     )
   )
 
+  ;; CHECK:      (func $move-over-tee (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $move-over-tee (param $x (ref null struct)) (param $y (ref null struct))
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (ref.cast $A
+        (local.tee $x
+          (local.get $x)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $get (type $none_=>_ref|struct|) (result (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
