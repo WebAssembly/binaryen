@@ -412,9 +412,8 @@
     )
   )
 
-  ;; CHECK:      (func $testMoveCast (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
-  ;; CHECK-NEXT:  (local $2 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $B
   ;; CHECK-NEXT:    (local.tee $1
@@ -432,39 +431,8 @@
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (call $get)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (call $get)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $testMoveCast (param $x (ref struct))
+  (func $move-cast (param $x (ref struct))
     (drop
       (ref.cast $A
         (local.get $x)
@@ -478,32 +446,30 @@
         (local.get $x)
       )
     )
-    ;; Casts cannot be moved past local sets.
-    (local.set $x
-      (call $get)
-    )
+  )
+
+  ;; CHECK:      (func $move-as (type $structref_=>_none) (param $x structref)
+  ;; CHECK-NEXT:  (local $1 (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $move-as (param $x (ref null struct))
     (drop
       (local.get $x)
     )
     (drop
       ;; This will be moved above as the first RefAs.
       (ref.as_non_null
-        (local.get $x)
-      )
-    )
-    (local.set $x
-      (call $get)
-    )
-    (drop
-      (local.get $x)
-    )
-    (drop
-      (ref.as_non_null
-        (local.get $x)
-      )
-    )
-    (drop
-      (ref.cast null $A
         (local.get $x)
       )
     )
@@ -516,7 +482,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $2
@@ -546,7 +512,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $B
@@ -562,7 +528,7 @@
     )
     ;; Cannot move past global set due to trap possibility.
     (global.set $a
-      (i32.const 30)
+      (i32.const 10)
     )
     (drop
       (local.get $x)
@@ -575,6 +541,7 @@
         (local.get $x)
       )
     )
+    ;; Casts to $x cannot be moved past local.set.
     (local.set $x
       (local.get $y)
     )
@@ -584,7 +551,7 @@
       )
     )
     (global.set $a
-      (i32.const 30)
+      (i32.const 20)
     )
     (drop
       (ref.cast $B
@@ -595,10 +562,11 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref.as-and-ref.cast (type $structref_=>_none) (param $x structref)
-  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK:      (func $move-ref.as-and-ref.cast (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $3 (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:   (local.tee $2
   ;; CHECK-NEXT:    (ref.as_non_null
   ;; CHECK-NEXT:     (ref.cast null $A
   ;; CHECK-NEXT:      (local.get $x)
@@ -609,32 +577,51 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $3
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $move-ref.as-and-ref.cast (param $x (ref null struct))
+  (func $move-ref.as-and-ref.cast (param $x (ref null struct)) (param $y (ref null struct))
     (drop
       (local.get $x)
     )
@@ -646,7 +633,7 @@
       )
     )
     (global.set $a
-      (i32.const 30)
+      (i32.const 10)
     )
     (drop
       (local.get $x)
@@ -659,6 +646,19 @@
     (drop
       (ref.as_non_null
         (local.get $x)
+      )
+    )
+    (drop
+      (local.get $y)
+    )
+    (drop
+      (ref.as_non_null
+        (local.get $y)
+      )
+    )
+    (drop
+      (ref.cast null $A
+        (local.get $y)
       )
     )
   )
