@@ -176,7 +176,7 @@ struct EarlyCastFinder
       currRefAsMove(func->getNumLocals()), testRefCast(options, *module),
       testRefAs(options, *module) {
 
-    // TODO: generalize this when we handle more than RefAsNonNull
+    // TODO: generalize this when we handle more than RefAsNonNull.
     RefCast dummyRefCast(module->allocator);
     RefAs dummyRefAs(module->allocator);
     dummyRefAs.op = RefAsNonNull;
@@ -273,8 +273,8 @@ struct EarlyCastFinder
     }
 
     // As we only move RefAsNonNull RefAs casts right now, we should
-    // ignore a LocalGet if the type is already non-nullable, and
-    // adding an extra ref.as_non_null has no effect
+    // ignore a LocalGet if the type is already non-nullable, as
+    // adding an extra ref.as_non_null has no effect.
     if (!currRefAsMove[curr->index].target && curr->type.isNullable()) {
       currRefAsMove[curr->index].target = curr;
     }
@@ -283,7 +283,7 @@ struct EarlyCastFinder
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
 
-    // TODO: support more than RefAsNonNull
+    // TODO: support more than RefAsNonNull.
     if (curr->op != RefAsNonNull) {
       return;
     }
