@@ -142,9 +142,9 @@ struct EarlyCastFinder
   PassOptions options;
   size_t numLocals;
 
-  // Tracks the current earliest local.get that we can move a cast to without
-  // side-effects, and the most refined cast that we can move to it (could be
-  // already at the earliest local.get).
+  // For each local index, tracks the current earliest local.get that we can
+  // move a cast to without side-effects, and the most refined cast that we can
+  // move to it (could be already at the earliest local.get).
   //
   // Note that we track a cast already on the get since we only want to move
   // better casts to it: if the best cast is already on the get, there is no
@@ -159,8 +159,8 @@ struct EarlyCastFinder
   // Maps LocalGets to the most refined RefCast to move to it, to be used by the
   // EarlyCastApplier. If the most refined RefCast is already at the desired
   // LocalGet, it does not appear here. In the normal case, only one RefCast
-  // needs to be moved to a LocalGet. If a LocalGet is cast to multiple types
-  // which are not subtypes of each other the a trap is inevitable, and we
+  // needs to be moved to a LocalGet; if a LocalGet is cast to multiple types
+  // which are not subtypes of each other then a trap is inevitable, and we
   // assume this would already be optimized away beforehand, so we don't care
   // about this special case.
   std::unordered_map<LocalGet*, RefCast*> refCastToApply;
@@ -185,54 +185,60 @@ struct EarlyCastFinder
     testRefAs.visit(&dummyRefAs);
   }
 
+  // We track information as we go, looking for the best cast to move backwards,
+  // and when we hit a barrier - a position we can't optimize past - then we
+  // flush/finalize the work we've done so far, since nothing better can appear
+  // later. We ignore the best cast if it is already at the desired location.
   void flushRefCastResult(size_t index, Module& module) {
-    if (currRefCastMove[index].target) {
-      if (currRefCastMove[index].bestCast) {
+    auto& target = currRefCastMove[index].target;
+    if (target) {
+      auto& bestCast = currRefCastMove[index].bestCast;
+      if (bestCast) {
         // If the fallthrough is equal to the target, this means the cast is
         // already at the target local.get and doesn't need to be duplicated
         // again.
-        auto* fallthrough = Properties::getFallthrough(
-          currRefCastMove[index].bestCast, options, module);
-        if (fallthrough != currRefCastMove[index].target) {
-          refCastToApply[currRefCastMove[index].target] =
-            currRefCastMove[index].bestCast;
+        auto* fallthrough =
+          Properties::getFallthrough(bestCast, options, module);
+        if (fallthrough != target) {
+          refCastToApply[target] = bestCast;
         }
-        currRefCastMove[index].bestCast = nullptr;
+        bestCast = nullptr;
       }
-      currRefCastMove[index].target = nullptr;
+      target = nullptr;
     }
   }
 
+  // Does the same as above function, but for RefAs instead of RefCast.
   void flushRefAsResult(size_t index, Module& module) {
-    if (currRefAsMove[index].target) {
-      if (currRefAsMove[index].bestCast) {
+    auto& target = currRefAsMove[index].target;
+    if (target) {
+      auto& bestCast = currRefAsMove[index].bestCast;
+      if (bestCast) {
         // As in flushRefCastResult, we need to check if the cast is already at
         // the target and thus does not need to be moved.
-        auto* fallthrough = Properties::getFallthrough(
-          currRefAsMove[index].bestCast, options, *getModule());
-        if (fallthrough != currRefAsMove[index].target) {
-          refAsToApply[currRefAsMove[index].target] =
-            currRefAsMove[index].bestCast;
+        auto* fallthrough =
+          Properties::getFallthrough(bestCast, options, module);
+        if (fallthrough != target) {
+          refAsToApply[target] = bestCast;
         }
-        currRefAsMove[index].bestCast = nullptr;
+        bestCast = nullptr;
       }
-      currRefAsMove[index].target = nullptr;
+      target = nullptr;
     }
   }
 
-  static void doNoteNonLinear(EarlyCastFinder* self, Expression**) {
-    for (size_t i = 0; i < self->numLocals; i++) {
-      self->flushRefCastResult(i, *self->getModule());
-      self->flushRefAsResult(i, *self->getModule());
-    }
-  }
-
-  void visitFunction(Function* curr) {
+  inline void flushAll() {
     for (size_t i = 0; i < numLocals; i++) {
       flushRefCastResult(i, *getModule());
       flushRefAsResult(i, *getModule());
     }
   }
+
+  static void doNoteNonLinear(EarlyCastFinder* self, Expression** currp) {
+    self->flushAll();
+  }
+
+  void visitFunction(Function* curr) { flushAll(); }
 
   void visitExpression(Expression* curr) {
     // A new one is instantiated for each expression to determine
@@ -281,7 +287,7 @@ struct EarlyCastFinder
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      RefAsInfo& bestMove = currRefAsMove[get->index];
+      auto& bestMove = currRefAsMove[get->index];
       if (bestMove.target && !bestMove.bestCast) {
         bestMove.bestCast = curr;
       }
@@ -326,15 +332,16 @@ struct EarlyCastFinder
 
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      RefCastInfo& bestMove = currRefCastMove[get->index];
+      auto& bestMove = currRefCastMove[get->index];
       if (bestMove.target) {
         if (!bestMove.bestCast) {
-          // If there isn't any other cast to move, the current cast is the best
+          // If there isn't any other cast to move, the current cast is the
+          // best.
           bestMove.bestCast = curr;
         } else if (bestMove.bestCast->type != curr->type &&
                    Type::isSubType(curr->type, bestMove.bestCast->type)) {
           // If the current cast is more refined than the best cast to move,
-          // change the best cast to move
+          // change the best cast to move.
           bestMove.bestCast = curr;
         }
         // We don't care about the safety of the cast at present. If there are
