@@ -8,8 +8,8 @@
   ;; CHECK:      (type $B (struct_subtype  $A))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:      (global $a (mut i32) (i32.const 10))
-  (global $a (mut i32) (i32.const 10))
+  ;; CHECK:      (global $a (mut i32) (i32.const 0))
+  (global $a (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $ref.as (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
@@ -35,9 +35,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.as (param $x (ref null $A))
-    ;; Formerly, after the first ref.as, we can use the cast value in later gets,
-    ;;  which is more refined. However, the ref.as is moved up to the first
-    ;; local.get.
+    ;; We duplicate the ref.as to the first local.get, since it is more refined
+    ;; than the local.get alone. We then use the refined index throughout.
     (drop
       (local.get $x)
     )
@@ -177,13 +176,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $2
@@ -205,15 +204,17 @@
         (local.get $x)
       )
     )
+    ;; global.sets prevent casts from being moved before them
+    ;; but uses can be added after them.
     (global.set $a
-      (i32.const 30)
+      (i32.const 10)
     )
     ;; Here we should use $A.
     (drop
       (local.get $x)
     )
     (global.set $a
-      (i32.const 30)
+      (i32.const 20)
     )
     (drop
       (ref.cast $B
@@ -508,7 +509,7 @@
     )
   )
 
-  ;; CHECK:      (func $testMoveCastSideEffects (type $ref|struct|_ref|struct|_=>_none) (param $x (ref struct)) (param $y (ref struct))
+  ;; CHECK:      (func $move-cast-side-effects (type $ref|struct|_ref|struct|_=>_none) (param $x (ref struct)) (param $y (ref struct))
   ;; CHECK-NEXT:  (local $2 (ref $A))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (drop
@@ -555,7 +556,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $testMoveCastSideEffects (param $x (ref struct)) (param $y (ref struct))
+  (func $move-cast-side-effects (param $x (ref struct)) (param $y (ref struct))
     (drop
       (local.get $x)
     )
@@ -594,7 +595,7 @@
     )
   )
 
-  ;; CHECK:      (func $testRefAsAndRefCast (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-ref.as-and-ref.cast (type $structref_=>_none) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -633,7 +634,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $testRefAsAndRefCast (param $x (ref null struct))
+  (func $move-ref.as-and-ref.cast (param $x (ref null struct))
     (drop
       (local.get $x)
     )
