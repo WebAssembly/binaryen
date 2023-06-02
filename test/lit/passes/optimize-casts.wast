@@ -60,9 +60,7 @@
 
   ;; CHECK:      (func $ref.as-no (type $ref|$A|_=>_none) (param $x (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -79,8 +77,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref.as-no (param $x (ref $A))
-    ;; As above, but the param is now non-nullable anyhow, so we should not
-    ;; tee a new local variable.
+    ;; As above, but the param is now non-nullable anyhow, so we should do
+    ;; nothing.
     (drop
       (local.get $x)
     )
@@ -437,9 +435,7 @@
   ;; CHECK-NEXT:   (call $get)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -450,11 +446,9 @@
   ;; CHECK-NEXT:   (call $get)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.tee $2
-  ;; CHECK-NEXT:     (ref.cast $A
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
