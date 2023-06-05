@@ -204,6 +204,7 @@ def init_important_initial_contents():
         # Perenially-important passes
         os.path.join('lit', 'passes', 'optimize-instructions-mvp.wast'),
         os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+        # TODO: add handwritten multivalue tag testcases here
     ]
     MANUAL_RECENT_INITIAL_CONTENTS = [
         # Recently-added or modified passes. These can be added to and pruned
