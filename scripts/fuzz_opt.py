@@ -405,7 +405,10 @@ def pick_initial_contents():
         #   )
         #  )
         # )
-        '--disable-multivalue',
+        # TODO '--disable-multivalue',
+        #      Comment this out for now to try to fuzz multivalue on initial
+        #      content (so that we get fuzz coverage on top of hand-written
+        #      testcases with multivalue tags).
     ]
 
     # the given wasm may not work with the chosen feature opts. for example, if

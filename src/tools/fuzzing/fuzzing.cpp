@@ -402,6 +402,8 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
+  // Code here looks ok as getControlFlowType() below can create tuples up to
+  // size 6 already.
   Index num = upTo(3);
   for (size_t i = 0; i < num; i++) {
     auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
@@ -1124,6 +1126,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCall,
            &Self::makeCallIndirect)
       .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    // TODO: add makeTry here
   }
   if (type.isSingle()) {
     options
@@ -1233,6 +1236,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+  // TODO: add makeThrow here
   return (this->*pick(options))(Type::unreachable);
 }
 
