@@ -1393,6 +1393,18 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
+    // The only reference types allowed without GC are funcref and externref. We
+    // internally use more refined versions of those types, but we cannot emit
+    // those more refined types.
+    if (!wasm->features.hasGC()) {
+      if (Type::isSubType(type, Type(HeapType::func, Nullable))) {
+        o << S32LEB(BinaryConsts::EncodedType::funcref);
+        return;
+      }
+      assert(Type::isSubType(type, Type(HeapType::ext, Nullable)));
+      o << S32LEB(BinaryConsts::EncodedType::externref);
+      return;
+    }
     auto heapType = type.getHeapType();
     if (heapType.isBasic() && type.isNullable()) {
       switch (heapType.getBasic()) {
@@ -1433,20 +1445,10 @@ void WasmBinaryWriter::writeType(Type type) {
           o << S32LEB(BinaryConsts::EncodedType::nullref);
           return;
         case HeapType::noext:
-          // See comment on writeHeapType.
-          if (!wasm->features.hasGC()) {
-            o << S32LEB(BinaryConsts::EncodedType::externref);
-          } else {
-            o << S32LEB(BinaryConsts::EncodedType::nullexternref);
-          }
+          o << S32LEB(BinaryConsts::EncodedType::nullexternref);
           return;
         case HeapType::nofunc:
-          // See comment on writeHeapType.
-          if (!wasm->features.hasGC()) {
-            o << S32LEB(BinaryConsts::EncodedType::funcref);
-          } else {
-            o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
-          }
+          o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
           return;
       }
     }
@@ -1491,9 +1493,10 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   // only actually valid with GC enabled. When GC is not enabled, emit the
   // corresponding valid top types instead.
   if (!wasm->features.hasGC()) {
-    if (type == HeapType::nofunc || type.isSignature()) {
+    if (HeapType::isSubType(type, HeapType::func)) {
       type = HeapType::func;
-    } else if (type == HeapType::noext) {
+    } else {
+      assert(HeapType::isSubType(type, HeapType::ext));
       type = HeapType::ext;
     }
   }
