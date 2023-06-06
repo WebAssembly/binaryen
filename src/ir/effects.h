@@ -264,11 +264,6 @@ public:
         return true;
       }
     }
-    // We are ok to reorder implicit traps, but not conditionalize them.
-    if ((trap && other.transfersControlFlow()) ||
-        (other.trap && transfersControlFlow())) {
-      return true;
-    }
     // Note that the above includes disallowing the reordering of a trap with an
     // exception (as an exception can transfer control flow inside the current
     // function, so transfersControlFlow would be true) - while we allow the
