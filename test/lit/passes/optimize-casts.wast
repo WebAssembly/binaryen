@@ -597,7 +597,8 @@
   ;; CHECK-NEXT: )
   (func $move-cast-5 (param $x (ref struct))
     (drop
-      ;; This is already the most refined cast, so nothing will be moved.
+      ;; The first location is already the most refined cast, so nothing will be moved up.
+      ;; (But we will save the cast to a local and re-use it below.)
       (ref.cast $B
         (local.get $x)
       )
@@ -649,7 +650,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-already-refined-local (type $ref|$B|_=>_none) (param $x (ref $B))
+  ;; CHECK:      (func $no-move-already-refined-local (type $ref|$B|_=>_none) (param $x (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -659,7 +660,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $move-already-refined-local (param $x (ref $B))
+  (func $no-move-already-refined-local (param $x (ref $B))
     (drop
       (local.get $x)
     )
@@ -672,48 +673,55 @@
     )
   )
 
-  ;; CHECK:      (func $avoid-erroneous-cast-move (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $a (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref $A))
-  ;; CHECK-NEXT:  (local $2 (ref $A))
-  ;; CHECK-NEXT:  (local.set $b
-  ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $a)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK:      (func $no-move-ref.as-to-non-nullable-local (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $D
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $2)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $avoid-erroneous-cast-move
-    ;; This tests whether we are able to avoid moving a cast earlier if
-    ;; we know doing so will violate typing rules.
-    (local $a (ref null $A))
-    (local $b (ref $A))
-    (local.set $b
+  (func $no-move-ref.as-to-non-nullable-local (param $x (ref struct))
+    (drop
+      (local.get $x)
+    )
+    (drop
+      ;; Since $x is non-nullable, this cast is useless. Hence, this
+      ;; will not be duplicated to the first local.get, since doing
+      ;; so would also be useless.
       (ref.as_non_null
-        ;; We could move the ref.cast $D here. However, as $a is already known
-        ;; to have type ref null $A, not type $D, it would fail. Moving the cast
-        ;; will also cause the local.set $b to fail, since $b is of type
-        ;; ref null $A, not $D.
-
-        ;; By checking the type of $a, we can avoid moving the ref.cast $D here.
-        ;; If the type of $a is wrong to begin with, the error will be caught
-        ;; before the OptimizeCast pass is run.
-        (local.get $a)
+        (local.get $x)
       )
+    )
+  )
+
+  ;; CHECK:      (func $avoid-erroneous-cast-move (type $ref|$A|_=>_none) (param $x (ref $A))
+  ;; CHECK-NEXT:  (local $a (ref $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $D
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $avoid-erroneous-cast-move (param $x (ref $A))
+    ;; This test shows that we avoid moving a cast earlier if doing so would
+    ;; violate typing rules.
+    (local $a (ref $A))
+    (local.set $a
+      ;; We could move the ref.cast $D here. However, as $a is already known
+      ;; to have type ref null $A, not type $D, it would fail, since those
+      ;; types are incompatible. Moving the cast will also cause the
+      ;; local.set $b to fail, since $b is of type ref null $A, not $D.
+      (local.get $x)
     )
     (drop
       (ref.cast $D
-        (ref.as_non_null
-          (local.get $a)
-        )
+        (local.get $x)
       )
     )
   )
@@ -761,7 +769,8 @@
   ;; CHECK-NEXT: )
   (func $move-as-2 (param $x (ref null struct))
     (drop
-      ;; This is already the most refined cast, so nothing is done.
+      ;; This is already the most refined cast, so the cast is not copied
+      ;; (but we do save it to a local and use it below).
       (ref.as_non_null
         (local.get $x)
       )
@@ -854,7 +863,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref-as-for-separate-index (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK:      (func $move-ref.as-for-separate-index (type $structref_structref_=>_none) (param $x structref) (param $y structref)
   ;; CHECK-NEXT:  (local $2 (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -880,7 +889,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $move-ref-as-for-separate-index (param $x (ref null struct)) (param $y (ref null struct))
+  (func $move-ref.as-for-separate-index (param $x (ref null struct)) (param $y (ref null struct))
     ;; This test shows that local index $x and local index $y are tracked separately.
     (drop
       ;; The later local.set $x will prevent casts from being moved here.
@@ -924,59 +933,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast $A
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $a
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $move-ref.as-and-ref.cast (param $x (ref null struct))
-    ;; This test shows how a ref.as_non_null and a ref.cast can be
+    ;; This test shows how a nested ref.as_non_null and ref.cast can be
     ;; moved to the same local.get.
     (drop
       (local.get $x)
@@ -984,21 +943,47 @@
     (drop
       ;; Here these two nested casts will be moved up to the earlier local.get.
       (ref.as_non_null
+        ;; This will be converted to a non-nullable cast because the local we
+        ;; save to in the optimization ($1) is now non-nullable.
         (ref.cast null $A
           (local.get $x)
         )
       )
     )
-    (global.set $a
-      (i32.const 10)
-    )
+  )
+
+  ;; CHECK:      (func $move-ref.as-and-ref.cast-2 (type $structref_=>_none) (param $x structref)
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $move-ref.as-and-ref.cast-2 (param $x (ref null struct))
+    ;; This test shows how a ref.cast followed by a ref.as_non_null
+    ;; can both be moved to an earlier local.get.
     (drop
       ;; The separate ref.as_non_null and the ref.cast below will both be moved here.
-      ;; Note because of what was done before the global.set, optimizations will
-      ;; cause future ref.cast null $A to be converted to ref.cast $A.
       (local.get $x)
     )
     (drop
+      ;; This is converted to ref.cast $A, because we will save $x to
+      ;; a non-nullable $A local as part of the optimization.
       (ref.cast null $A
         (local.get $x)
       )
@@ -1008,13 +993,36 @@
         (local.get $x)
       )
     )
-    (global.set $a
-      (i32.const 20)
-    )
+  )
+
+  ;; CHECK:      (func $move-ref.as-and-ref.cast-3 (type $structref_=>_none) (param $x structref)
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $move-ref.as-and-ref.cast-3 (param $x (ref null struct))
+    ;; This test shows how a ref.as_non_null followed by a ref.cast can be
+    ;; both moved to an earlier local.get.
     (drop
-      ;; The ref.as_non_null and the ref.cast below will be moved here. Note
-      ;; that even though the ref.as_non_null appears first, it will still
-      ;; be the outer cast.
+      ;; Even though the ref.as_non_null appears first, it will still
+      ;; be the outer cast when both casts are moved here.
       (local.get $x)
     )
     (drop
@@ -1023,15 +1031,26 @@
       )
     )
     (drop
+      ;; This is converted to ref.cast $A, because we will save $x to
+      ;; a non-nullable $A local as part of the optimization.
       (ref.cast null $A
         (local.get $x)
       )
     )
-    (global.set $a
-      (i32.const 10)
-    )
-    ;; Since these casts cannot be moved further, nothing should happen. The ref.cast $B
-    ;; should not be re-inserted to this local.get for instance.
+  )
+
+  ;; CHECK:      (func $unoptimizable-nested-casts (type $structref_=>_none) (param $x structref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unoptimizable-nested-casts (param $x (ref null struct))
+    ;; No optimizations should be made here for this nested cast.
+    ;; This test is here to ensure this.
     (drop
       (ref.cast $B
         (ref.as_non_null
@@ -1123,18 +1142,19 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $move-identical-repeated-casts (param $x (ref struct))
+    ;; This tests the case where there are two casts with equal type which can
+    ;; be moved to an earlier local.get. Only one of the casts will be duplicated
+    ;; to the earlier local.get; which one is not visible in this test, but should
+    ;; be the earlier.
     (drop
       (local.get $x)
     )
     (drop
-      ;; This is the first ref.cast $A which appears, so it will be moved
-      ;; up to the first local.get $x.
       (ref.cast $A
         (local.get $x)
       )
     )
     (drop
-      ;; Since a ref.cast $A has already been moved, this will not move.
       (ref.cast $A
         (local.get $x)
       )

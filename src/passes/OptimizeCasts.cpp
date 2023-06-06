@@ -336,7 +336,7 @@ struct EarlyCastFinder
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
       auto& bestMove = currRefCastMove[get->index];
-      // Do not move a cast if it's type is not related to the target
+      // Do not move a cast if its type is not related to the target
       // local.get's type (i.e. not in a subtyping relationship). Otherwise
       // a type error will occur. Also, if the target local.get's type is
       // already more refined than this current cast, there is no point in
