@@ -1144,8 +1144,7 @@
   (func $move-identical-repeated-casts (param $x (ref struct))
     ;; This tests the case where there are two casts with equal type which can
     ;; be moved to an earlier local.get. Only one of the casts will be duplicated
-    ;; to the earlier local.get; which one is not visible in this test, but should
-    ;; be the earlier.
+    ;; to the earliest local.get (which one is not visible to the test).
     (drop
       (local.get $x)
     )
