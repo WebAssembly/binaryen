@@ -1170,10 +1170,30 @@
 
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field (mut nullref))))
     (type $A (struct (field (mut anyref))))
+    ;; CHECK:       (type $B (struct (field (mut nullref))))
     (type $B (struct (field (mut (ref null $A)))))
   )
 
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (func $0 (type $none_=>_none)
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.get $B 0
+  ;; CHECK-NEXT:       (struct.new_default $B)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $0
     (struct.set $A 0
       (struct.new $A
