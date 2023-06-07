@@ -44,10 +44,30 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
           while (blockIterator != block->list.begin()) {
             blockIterator--;
             auto& child = block->list[blockIterator.index];
-            auto name = getExpressionName(child);
-            std::cout << "Pushing a task to call StringifyWalker::scan with child: " << name  << " " << child << std::endl;
+            [[maybe_unused]] auto name = getExpressionName(child);
+            //std::cout << "Pushing a task to call StringifyWalker::scan with child: " << name  << " " << child << std::endl;
             stringify->pushTask(StringifyWalker::scan, &child);
           }
+          break;
+        }
+        case Expression::Id::IfId: {
+          auto *iff = curr->dynCast<If>();
+          stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
+          //std::cout << "Pushing an task to call StingifyWalker::scan on ifFalse " << std::endl;
+          stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
+          //std::cout << "Pushing an task to call StingifyWalker::scan on ifTrue " << std::endl;
+          stringify->pushTask(StringifyWalker::scan, &iff->condition);
+          //std::cout << "Pushing an task to call StingifyWalker::scan on ifCondition " << std::endl;
+          break;
+        }
+        case Expression::Id::TryId: {
+          auto *try = curr->dynCast<Try>();
+          stringify->pushTask(StringifyWalker::scan, &try->body);
+          break;
+        }
+        case Expression::Id::LoopId: {
+          auto *loop = curr->dynCast<Loop>();
+          stringify->pushTask(StringifyWalker::scan, &loop->body);
           break;
         }
         default: {
@@ -58,17 +78,17 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
     }
 
     static void handler(StringifyWalker *stringify, Expression**) {
-      printf("In QueueManager::handler\n");
+      //printf("In QueueManager::handler\n");
       auto& queue = stringify->queueManager->queue;
       if (!queue.empty()) {
         stringify->pushTask(StringifyWalker::QueueManager::handler, nullptr);
         Expression **currp = queue.front();
         queue.pop();
-        auto name = getExpressionName(*currp);
-        std::cout << "QueueManager has an item, " << name << std::endl;
+        [[maybe_unused]] auto name = getExpressionName(*currp);
+        //std::cout << "QueueManager has an item, " << name << std::endl;
         QueueManager::scanChildren(stringify, currp);
       } else {
-        std::cout << "QueueManager's queue is empty" << std::endl;
+        //std::cout << "QueueManager's queue is empty" << std::endl;
       }
     }
   };
@@ -88,10 +108,9 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
 
   static void scan(StringifyWalker* self, Expression** currp) {
     Expression *curr = *currp;
-    auto name = getExpressionName(curr);
-    std::cout << "StringifyWalker::scan() on: " << name << std::endl;
-    curr->dump();
-    printf("\n\n");
+    [[maybe_unused]] auto name = getExpressionName(curr);
+    //std::cout << "StringifyWalker::scan() on: " << name << std::endl;
+    //curr->dump();
 
    switch (curr->_id) {
      case Expression::Id::BlockId:
@@ -99,19 +118,19 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
      case Expression::Id::LoopId:
      case Expression::Id::TryId: {
         self->visitControlFlow(self, currp);
-        std::cout << "Adding " << name << " to queueManager's queue" << std::endl;
+        //std::cout << "Adding " << name << " to queueManager's queue" << std::endl;
         self->queueManager->queue.push(currp);
         break;
       }
       default: {
-        std::cout << "Calling PostWalker::scan" << std::endl;
+        //std::cout << "Calling PostWalker::scan" << std::endl;
         PostWalker::scan(self, currp);
       }
     }
   }
 
   void insertGloballyUniqueChar() {
-    printf("inserting globally unique char\n");
+    //printf("inserting globally unique char\n");
     string.push_back(monotonic);
     monotonic++;
     printString();
@@ -123,12 +142,12 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
     string.push_back(monotonic);
     auto it = exprToCounter.find(monotonic);
     if (it != exprToCounter.end()) {
-      auto name = getExpressionName(curr);
-      std::cout << "Collision on Expression: " << name << std::endl;
+      [[maybe_unused]] auto name = getExpressionName(curr);
+      //std::cout << "Collision on Expression: " << name << std::endl;
       curr->dump();
     }
       //auto name = getExpressionName(curr);
-      std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
+      //std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
     exprToCounter[hash] = monotonic;
     monotonic++;
     printString();
@@ -144,6 +163,7 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
     auto name = getExpressionName(*currp);
     std::cout << "in visitControlFlow with " << name << std::endl;
     [[maybe_unused]] Expression *curr = *currp;
+    curr->dump();
     //uint64_t hashValue = hash(curr);
     //self->insertHash(hashValue, curr);
   }
@@ -159,7 +179,7 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
       //std::cout << "hash: " << (unsigned)hash << std::endl;
       //this->insertHash(hash, curr);
     } else {
-      std::cout << "\n";
+      //std::cout << "\n";
     }
   }
 

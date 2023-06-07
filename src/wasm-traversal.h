@@ -293,20 +293,20 @@ struct Walker : public VisitorType {
     //assert(*currp);
     if (currp) {
       Expression *curr = *currp;
-      auto name = getExpressionName(curr);
-      std::cout << "StringifyWalker::pushTask on " << name << " " << currp << std::endl;
+      [[maybe_unused]] auto name = getExpressionName(curr);
+      //std::cout << "StringifyWalker::pushTask on " << name << " " << currp << std::endl;
       //curr->dump();
     }
     else {
-      std::cout << "pushTask with null currp, must be QueueManager::handler" << std::endl;
+      //std::cout << "pushTask with null currp, must be QueueManager::handler" << std::endl;
     }
     stack.emplace_back(func, currp);
   }
   void maybePushTask(TaskFunc func, Expression** currp) {
     if (*currp) {
     Expression *curr = *currp;
-    auto name = getExpressionName(curr);
-    std::cout << "StringifyWalker::maybePushTask on " << name << " " << currp << std::endl;
+    [[maybe_unused]] auto name = getExpressionName(curr);
+    //std::cout << "StringifyWalker::maybePushTask on " << name << " " << currp << std::endl;
     //curr->dump();
       stack.emplace_back(func, currp);
     }
@@ -315,12 +315,12 @@ struct Walker : public VisitorType {
     auto ret = stack.back();
     if (ret.currp) {
       Expression *curr = *ret.currp;
-      auto name = getExpressionName(curr);
-      std::cout << "StringifyWalker::popTask on " << name <<  " " << ret.currp << std::endl;
+      [[maybe_unused]] auto name = getExpressionName(curr);
+      //std::cout << "StringifyWalker::popTask on " << name <<  " " << ret.currp << std::endl;
       //curr->dump();
     }
     else {
-      std::cout << "popTask on null currp, must be QueueManager::handler" << std::endl;
+      //std::cout << "popTask on null currp, must be QueueManager::handler" << std::endl;
     }
     stack.pop_back();
     return ret;
@@ -370,9 +370,9 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
-    auto name = getExpressionName(curr);
-    std::cout << "PostWalker::scan() on: " << name << std::endl;
-    curr->dump();
+    [[maybe_unused]] auto name = getExpressionName(curr);
+    //std::cout << "PostWalker::scan() on: " << name << std::endl;
+    //curr->dump();
 
 #define DELEGATE_ID curr->_id
 
