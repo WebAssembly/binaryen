@@ -250,23 +250,39 @@ struct TypeRefining : public Pass {
       }
 
       void doWalkFunction(Function* curr) {
+        // Rather than do a normal walk over the StructGets, find them and then
+        // traverse over them twice. We must do that because changing one can
+        // affect the other, in this situation:
+        //
+        //   (struct.get $A
+        //     (struct.get $B
+        //       ..
+        //
+        // Imagine that the inner one gets refined to output nullptr. Then in
+        // Binaryen IR we no longer know the type of the inner struct.get, since
+        // the IR reads that from the child. Without knowing that type we would
+        // not know how to update the outer get, which can cause an error. To
+        // avoid that, first gather the types of refs, then use those in the
+        // second pass.
         auto gets = FindAllPointers<StructGet>(curr->body).list;
-        std::vector<Type> oldInputTypes;
-        oldInputTypes.reserve(gets.size());
+        if (gets.empty()) {
+          return;
+        }
+        std::vector<Type> oldRefTypes;
+        oldRefTypes.reserve(gets.size());
         for (auto** getp : gets) {
           auto* get = (*getp)->cast<StructGet>();
-          oldInputTypes.push_back(get->ref->type);
+          oldRefTypes.push_back(get->ref->type);
         }
         for (Index i = 0; i < gets.size(); i++) {
           auto** getp = gets[i];
           auto* get = (*getp)->cast<StructGet>();
-          auto oldInputType = oldInputTypes[i];
-          if (oldInputType == Type::unreachable || oldInputType.isNull()) {
+          auto oldRefType = oldRefTypes[i];
+          if (oldRefType == Type::unreachable || oldRefType.isNull()) {
             continue;
           }
 
-          auto oldType = oldInputType.getHeapType();
-          auto newFieldType = parent.finalInfos[oldType][get->index].getLUB();
+          auto newFieldType = parent.finalInfos[oldRefType.getHeapType()][get->index].getLUB();
           if (Type::isSubType(newFieldType, get->type)) {
             // This is the normal situation, where the new type is a refinement
             // of the old type. Apply that type so that the type of the
