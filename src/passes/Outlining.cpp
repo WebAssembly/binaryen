@@ -28,16 +28,64 @@
 
 namespace wasm {
 
+
 // Generate an abstract string representation of the program
-struct StringifyWalker : public PostWalker<StringifyWalker, Visitor<StringifyWalker>> {
+struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVisitor<StringifyWalker>> {
+
+  struct QueueManager {
+    std::queue<Expression **> queue;
+
+    static void scanChildren(StringifyWalker *stringify, Expression **currp) {
+      Expression *curr = *currp;
+      switch (curr->_id) {
+        case Expression::Id::BlockId: {
+          auto *block = curr->dynCast<Block>();
+          auto blockIterator = block->list.end();
+          while (blockIterator != block->list.begin()) {
+            blockIterator--;
+            auto& child = block->list[blockIterator.index];
+            auto name = getExpressionName(child);
+            std::cout << "Pushing a task to call StringifyWalker::scan with child: " << name  << " " << child << std::endl;
+            stringify->pushTask(StringifyWalker::scan, &child);
+          }
+          break;
+        }
+        default: {
+          auto name = getExpressionName(*currp);
+          std::cout << "QueueManager reached an unimplemented expression: " << name << std::endl;
+        }
+      }
+    }
+
+    static void handler(StringifyWalker *stringify, Expression**) {
+      printf("In QueueManager::handler\n");
+      auto& queue = stringify->queueManager->queue;
+      if (!queue.empty()) {
+        stringify->pushTask(StringifyWalker::QueueManager::handler, nullptr);
+        Expression **currp = queue.front();
+        queue.pop();
+        auto name = getExpressionName(*currp);
+        std::cout << "QueueManager has an item, " << name << std::endl;
+        QueueManager::scanChildren(stringify, currp);
+      } else {
+        std::cout << "QueueManager's queue is empty" << std::endl;
+      }
+    }
+  };
+
   private:
     uint64_t monotonic = 0;
     std::vector<uint64_t> string;
     // Change key to Expression
     // [[maybe_unused]] std::unordered_map<Expression *, uint64_t> exprToCounter;
     [[maybe_unused]] std::unordered_map<uint64_t, uint64_t> exprToCounter;
+    QueueManager *queueManager;
 
   public:
+  StringifyWalker() {
+    queueManager = new QueueManager;
+  }
+
   static void scan(StringifyWalker* self, Expression** currp) {
     Expression *curr = *currp;
     auto name = getExpressionName(curr);
@@ -45,88 +93,74 @@ struct StringifyWalker : public PostWalker<StringifyWalker, Visitor<StringifyWal
     curr->dump();
     printf("\n\n");
 
-    /*switch (curr->_id) {
-      case Expression::Id::BlockId: {
-        self->pushTask(visitControlFlow, currp);
-        break;
-      }
-      case Expression::Id::IfId: {
-        self->pushTask(visitControlFlow, currp);
-        break;
-      }
-      case Expression::Id::LoopId:{
-        self->pushTask(visitControlFlow, currp);
-        break;
-      }
-      case Expression::Id::TryId: {
-        self->pushTask(visitControlFlow, currp);
+   switch (curr->_id) {
+     case Expression::Id::BlockId:
+     case Expression::Id::IfId:
+     case Expression::Id::LoopId:
+     case Expression::Id::TryId: {
+        self->visitControlFlow(self, currp);
+        std::cout << "Adding " << name << " to queueManager's queue" << std::endl;
+        self->queueManager->queue.push(currp);
         break;
       }
       default: {
+        std::cout << "Calling PostWalker::scan" << std::endl;
+        PostWalker::scan(self, currp);
       }
     }
-
-    PostWalker<StringifyWalker, Visitor>::scan(self, currp);*/
-  }
-
-  // Take out all the non-control flow
-  // Call parent::scan
-  // need to maintain a queue of control flow nodes whose body you haven't
-  // scanned yet and when the task stack is empty, then you would pop something
-  // off and scan some more. And when you're done, scanning it, take something
-  // from the queue.
-  // normal walkers would stop if the stack is empty. you need to not stop if
-  // you're stack & queue is empty
-  // when the task stack is empty, at the very beginning, it might be a good
-  // idea to push a task onto it, where the task dequeues from the control flow
-  // queue, so the task stack never actually becomes empty. Then the normal
-  // walker logic will continue working. The first thing in the task stack
-  // should re-insert itself and then dequeue the control flow structure, as
-  // long as there is another control flow dequeue.
-
-  // Counter handling
-  // accessor pattern, remove
-  uint64_t counter() {
-    return monotonic;
-  }
-
-  void advanceCounter() {
-    monotonic++;
   }
 
   void insertGloballyUniqueChar() {
     printf("inserting globally unique char\n");
-    string.push_back(counter());
-    advanceCounter();
+    string.push_back(monotonic);
+    monotonic++;
     printString();
   }
 
   // Will be replaced by insertExpression
   // void insertExpression(Expression *curr) {
   void insertHash(uint64_t hash, Expression *curr) {
-    string.push_back(counter());
-    auto it = exprToCounter.find(counter());
+    string.push_back(monotonic);
+    auto it = exprToCounter.find(monotonic);
     if (it != exprToCounter.end()) {
       auto name = getExpressionName(curr);
       std::cout << "Collision on Expression: " << name << std::endl;
       curr->dump();
     }
-    exprToCounter[hash] = counter();
-    advanceCounter();
+      //auto name = getExpressionName(curr);
+      std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
+    exprToCounter[hash] = monotonic;
+    monotonic++;
     printString();
   }
 
   // Expression handling
   static void emitFunctionBegin(StringifyWalker *self) {
     printf("emit function begin\n");
-    self->insertGloballyUniqueChar();
+    //self->insertGloballyUniqueChar();
   }
 
   static void visitControlFlow(StringifyWalker* self, Expression** currp) {
-    std::cout << "in visitControlFlow" << std::endl;
-    Expression *curr = *currp;
-    [[maybe_unused]] uint64_t hashValue = hash(curr);
-    self->insertHash(hashValue, curr);
+    auto name = getExpressionName(*currp);
+    std::cout << "in visitControlFlow with " << name << std::endl;
+    [[maybe_unused]] Expression *curr = *currp;
+    //uint64_t hashValue = hash(curr);
+    //self->insertHash(hashValue, curr);
+  }
+
+  // UnifiedExpressionVisitor
+  void visitExpression(Expression *curr) {
+    std::cout << "in visitExpression";
+    auto name = getExpressionName(curr);
+    std::cout << " for " << name << std::endl;
+    curr->dump();
+    if (!Properties::isControlFlowStructure(curr)) {
+      //uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
+      //std::cout << "hash: " << (unsigned)hash << std::endl;
+      //this->insertHash(hash, curr);
+    } else {
+      std::cout << "\n";
+    }
   }
 
   // Debug
@@ -141,18 +175,17 @@ struct StringifyWalker : public PostWalker<StringifyWalker, Visitor<StringifyWal
 
 
 struct Outlining : public Pass {
+
   void run(Module* module) override {
    printf("Hello from outlining!\n");
 
    StringifyWalker *stringify = new StringifyWalker();
+   // pushTask asserts the second parameter is not nil usually, so I commented
+   stringify->pushTask(StringifyWalker::QueueManager::handler, nullptr);
 
-   int counter = 1;
    ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-     if (counter == 1) {
       stringify->emitFunctionBegin(stringify);
-     stringify->walk(func->body);
-     }
-     counter+=1;
+      stringify->walk(func->body);
    });
   }
 };

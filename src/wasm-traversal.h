@@ -290,29 +290,52 @@ struct Walker : public VisitorType {
   };
 
   void pushTask(TaskFunc func, Expression** currp) {
-    assert(*currp);
+    //assert(*currp);
+    if (currp) {
+      Expression *curr = *currp;
+      auto name = getExpressionName(curr);
+      std::cout << "StringifyWalker::pushTask on " << name << " " << currp << std::endl;
+      //curr->dump();
+    }
+    else {
+      std::cout << "pushTask with null currp, must be QueueManager::handler" << std::endl;
+    }
     stack.emplace_back(func, currp);
   }
   void maybePushTask(TaskFunc func, Expression** currp) {
     if (*currp) {
+    Expression *curr = *currp;
+    auto name = getExpressionName(curr);
+    std::cout << "StringifyWalker::maybePushTask on " << name << " " << currp << std::endl;
+    //curr->dump();
       stack.emplace_back(func, currp);
     }
   }
   Task popTask() {
     auto ret = stack.back();
+    if (ret.currp) {
+      Expression *curr = *ret.currp;
+      auto name = getExpressionName(curr);
+      std::cout << "StringifyWalker::popTask on " << name <<  " " << ret.currp << std::endl;
+      //curr->dump();
+    }
+    else {
+      std::cout << "popTask on null currp, must be QueueManager::handler" << std::endl;
+    }
     stack.pop_back();
     return ret;
   }
 
   void walk(Expression*& root) {
-    assert(stack.size() == 0);
+    //assert(stack.size() == 0);
     pushTask(SubType::scan, &root);
     while (stack.size() > 0) {
       auto task = popTask();
       replacep = task.currp;
-      assert(*task.currp);
+      //assert(*task.currp);
       task.func(static_cast<SubType*>(this), task.currp);
     }
+    printf("The walk has ended\n");
   }
 
   // subclasses implement this to define the proper order of execution
@@ -347,6 +370,9 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
+    auto name = getExpressionName(curr);
+    std::cout << "PostWalker::scan() on: " << name << std::endl;
+    curr->dump();
 
 #define DELEGATE_ID curr->_id
 
