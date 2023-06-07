@@ -282,7 +282,8 @@ struct TypeRefining : public Pass {
             continue;
           }
 
-          auto newFieldType = parent.finalInfos[oldRefType.getHeapType()][get->index].getLUB();
+          auto newFieldType =
+            parent.finalInfos[oldRefType.getHeapType()][get->index].getLUB();
           if (Type::isSubType(newFieldType, get->type)) {
             // This is the normal situation, where the new type is a refinement
             // of the old type. Apply that type so that the type of the
