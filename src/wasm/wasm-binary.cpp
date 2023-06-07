@@ -1401,9 +1401,15 @@ void WasmBinaryWriter::writeType(Type type) {
         o << S32LEB(BinaryConsts::EncodedType::funcref);
         return;
       }
-      assert(Type::isSubType(type, Type(HeapType::ext, Nullable)));
-      o << S32LEB(BinaryConsts::EncodedType::externref);
-      return;
+      if (Type::isSubType(type, Type(HeapType::ext, Nullable))) {
+        o << S32LEB(BinaryConsts::EncodedType::externref);
+        return;
+      }
+      if (Type::isSubType(type, Type(HeapType::string, Nullable))) {
+        o << S32LEB(BinaryConsts::EncodedType::stringref);
+        return;
+      }
+      WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
     if (heapType.isBasic() && type.isNullable()) {
