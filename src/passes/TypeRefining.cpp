@@ -277,6 +277,9 @@ struct TypeRefining : public Pass {
         for (Index i = 0; i < gets.size(); i++) {
           auto** getp = gets[i];
           auto* get = (*getp)->cast<StructGet>();
+          // Use the old ref type from where we stored those, since reading it
+          // from get->ref->type might return something that was just modified
+          // (see comment above).
           auto oldRefType = oldRefTypes[i];
           if (oldRefType == Type::unreachable || oldRefType.isNull()) {
             continue;
