@@ -1167,3 +1167,30 @@
     )
   )
 )
+
+(module
+  (rec
+    (type $A (struct (field (mut anyref))))
+    (type $B (struct (field (mut (ref null $A)))))
+  )
+
+  (func $0
+    (struct.set $A 0
+      (struct.new $A
+        ;; These two struct.gets will both be refined. That of $B will be
+        ;; refined to a get of a null, at which point the get of $A could get
+        ;; confused and not know what type it is reading from (since in the IR,
+        ;; we depend on the ref for that). The pass should not error here while
+        ;; it refines both the struct type's fields to nullref, after which the
+        ;; code here will be unreachable (since we do a struct.get from a
+        ;; nullref).
+        (struct.get $A 0
+          (struct.get $B 0
+            (struct.new_default $B)
+          )
+        )
+      )
+      (ref.null none)
+    )
+  )
+)
