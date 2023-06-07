@@ -33,6 +33,13 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $label$4 (result stringref)
+  ;; CHECK-NEXT:    (br $label$4
+  ;; CHECK-NEXT:     (string.const "hello world")
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $f)
     (drop
@@ -54,6 +61,13 @@
       (block $l3 (result nullexternref)
         (br $l3
           (ref.null noextern)
+        )
+      )
+    )
+    (drop
+      (block $l4 (result (ref string))
+        (br $l4
+          (string.const "hello world")
         )
       )
     )
