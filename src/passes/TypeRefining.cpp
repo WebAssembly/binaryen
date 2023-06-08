@@ -250,7 +250,29 @@ struct TypeRefining : public Pass {
       }
 
       void visitStructGet(StructGet* curr) {
-        if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
+        if (curr->ref->type == Type::unreachable) {
+          return;
+        }
+
+        if (curr->ref->type.isNull()) {
+          // This get will trap. In theory we could leave this for later
+          // optimizations to do, but we must actually handle it here, because
+          // of the situation where this get's type is refined, and the input
+          // type is the result of a refining:
+          //
+          //   (struct.get $A    ;; should be refined to something
+          //     (struct.get $B  ;; just refined to nullref
+          //
+          // If the input has become a nullref then we can't just return out of
+          // this function, as we'd be leaving a struct.get of $A with the
+          // wrong type. But we can't find the right type since in Binaryen IR
+          // we use the ref's type to see what is being read, and that just
+          // turned into nullref. To avoid that corner case, just turn this code
+          // into unreachable code now, and the later refinalize will turn all
+          // the parents unreachable, avoiding any type-checking problems.
+          Builder builder(*getModule());
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
           return;
         }
 
