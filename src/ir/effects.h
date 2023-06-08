@@ -296,8 +296,8 @@ public:
     // not occur in practice, which lets us ignore this, at least in the case if
     // the trap will definitely happen, since we can remove traps but not move
     // them around, so we must check if control flow can transfer. Note that we
-    // use the property of the things being compared being consecutive (which
-    // implies nothing can transfer control flow between them).
+    // use the property of the things being compared both executing, see the
+    // comment on this function.
     if (!trapsNeverHappen || transfersControlFlow() ||
         other.transfersControlFlow()) {
       if ((trap && other.writesGlobalState()) ||
