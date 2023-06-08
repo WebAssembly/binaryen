@@ -249,85 +249,53 @@ struct TypeRefining : public Pass {
         return std::make_unique<ReadUpdater>(parent);
       }
 
-      void doWalkFunction(Function* curr) {
-        // Rather than do a normal walk over the StructGets, find them and then
-        // traverse over them twice. We must do that because changing one can
-        // affect the other, in this situation:
-        //
-        //   (struct.get $A
-        //     (struct.get $B
-        //       ..
-        //
-        // Imagine that the inner one gets refined to output nullptr. Then in
-        // Binaryen IR we no longer know the type of the inner struct.get, since
-        // the IR reads that from the child. Without knowing that type we would
-        // not know how to update the outer get, which can cause an error. To
-        // avoid that, first gather the types of refs, then use those in the
-        // second pass.
-        auto gets = FindAllPointers<StructGet>(curr->body).list;
-        if (gets.empty()) {
+      void visitStructGet(StructGet* curr) {
+        if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
           return;
         }
-        std::vector<Type> oldRefTypes;
-        oldRefTypes.reserve(gets.size());
-        for (auto** getp : gets) {
-          auto* get = (*getp)->cast<StructGet>();
-          oldRefTypes.push_back(get->ref->type);
-        }
-        for (Index i = 0; i < gets.size(); i++) {
-          auto** getp = gets[i];
-          auto* get = (*getp)->cast<StructGet>();
-          // Use the old ref type from where we stored those, since reading it
-          // from get->ref->type might return something that was just modified
-          // (see comment above).
-          auto oldRefType = oldRefTypes[i];
-          if (oldRefType == Type::unreachable || oldRefType.isNull()) {
-            continue;
-          }
 
-          auto newFieldType =
-            parent.finalInfos[oldRefType.getHeapType()][get->index].getLUB();
-          if (Type::isSubType(newFieldType, get->type)) {
-            // This is the normal situation, where the new type is a refinement
-            // of the old type. Apply that type so that the type of the
-            // struct.get matches what is in the refined field. ReFinalize will
-            // later propagate this to parents.
-            //
-            // Note that ReFinalize will also apply the type of the field itself
-            // to a struct.get, so our doing it here in this pass is usually
-            // redundant. But ReFinalize also updates other types while doing
-            // so, which can cause a problem:
-            //
-            //  (struct.get $A
-            //    (block (result (ref null $A))
-            //      (ref.null any)
-            //    )
-            //  )
-            //
-            // Here ReFinalize will turn the block's result into a bottom type,
-            // which means it won't know a type for the struct.get at that
-            // point. Doing it in this pass avoids that issue, as we have all
-            // the necessary information. (ReFinalize will still get into the
-            // situation where it doesn't know how to update the type of the
-            // struct.get, but it will just leave the existing type - it assumes
-            // no update is needed - which will be correct, since we've updated
-            // it ourselves here, before.)
-            get->type = newFieldType;
-          } else {
-            // This instruction is invalid, so it must be the result of the
-            // situation described above: we ignored the read during our
-            // inference, and optimized accordingly, and so now we must remove
-            // it to keep the module validating. It doesn't matter what we emit
-            // here, since there are no struct.new or struct.sets for this type,
-            // so this code is logically unreachable.
-            //
-            // Note that we emit an unreachable here, which changes the type,
-            // and so we should refinalize. However, we will be refinalizing
-            // later anyhow in updateTypes, so there is no need.
-            Builder builder(*getModule());
-            *getp = builder.makeSequence(builder.makeDrop(get->ref),
-                                         builder.makeUnreachable());
-          }
+        auto oldType = curr->ref->type.getHeapType();
+        auto newFieldType = parent.finalInfos[oldType][curr->index].getLUB();
+        if (Type::isSubType(newFieldType, curr->type)) {
+          // This is the normal situation, where the new type is a refinement of
+          // the old type. Apply that type so that the type of the struct.get
+          // matches what is in the refined field. ReFinalize will later
+          // propagate this to parents.
+          //
+          // Note that ReFinalize will also apply the type of the field itself
+          // to a struct.get, so our doing it here in this pass is usually
+          // redundant. But ReFinalize also updates other types while doing so,
+          // which can cause a problem:
+          //
+          //  (struct.get $A
+          //    (block (result (ref null $A))
+          //      (ref.null any)
+          //    )
+          //  )
+          //
+          // Here ReFinalize will turn the block's result into a bottom type,
+          // which means it won't know a type for the struct.get at that point.
+          // Doing it in this pass avoids that issue, as we have all the
+          // necessary information. (ReFinalize will still get into the
+          // situation where it doesn't know how to update the type of the
+          // struct.get, but it will just leave the existing type - it assumes
+          // no update is needed - which will be correct, since we've updated it
+          // ourselves here, before.)
+          curr->type = newFieldType;
+        } else {
+          // This instruction is invalid, so it must be the result of the
+          // situation described above: we ignored the read during our
+          // inference, and optimized accordingly, and so now we must remove it
+          // to keep the module validating. It doesn't matter what we emit here,
+          // since there are no struct.new or struct.sets for this type, so this
+          // code is logically unreachable.
+          //
+          // Note that we emit an unreachable here, which changes the type, and
+          // so we should refinalize. However, we will be refinalizing later
+          // anyhow in updateTypes, so there is no need.
+          Builder builder(*getModule());
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeUnreachable()));
         }
       }
     };
