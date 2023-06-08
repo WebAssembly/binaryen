@@ -6,8 +6,32 @@
 (module
   (memory 1 1)
 
+  ;; TNH:      (global $glob (mut i32) (i32.const 0))
+  ;; NO_TNH:      (global $glob (mut i32) (i32.const 0))
   (global $glob (mut i32) (i32.const 0))
 
+  ;; TNH:      (func $func (type $none_=>_i32) (result i32)
+  ;; TNH-NEXT:  (local $temp i32)
+  ;; TNH-NEXT:  (nop)
+  ;; TNH-NEXT:  (global.set $glob
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (i32.load
+  ;; TNH-NEXT:   (i32.const 0)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $func (type $none_=>_i32) (result i32)
+  ;; NO_TNH-NEXT:  (local $temp i32)
+  ;; NO_TNH-NEXT:  (local.set $temp
+  ;; NO_TNH-NEXT:   (i32.load
+  ;; NO_TNH-NEXT:    (i32.const 0)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (global.set $glob
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (local.get $temp)
+  ;; NO_TNH-NEXT: )
   (func $func (result i32)
     (local $temp i32)
     ;; This load might trap, and so normally we can't move it past a global.set,
