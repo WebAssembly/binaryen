@@ -1180,18 +1180,26 @@
   ;; CHECK:       (type $none_=>_none (func))
 
   ;; CHECK:      (func $0 (type $none_=>_none)
-  ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (struct.get $B 0
-  ;; CHECK-NEXT:       (struct.new_default $B)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (struct.get $B 0
+  ;; CHECK-NEXT:         (struct.new_default $B)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0
