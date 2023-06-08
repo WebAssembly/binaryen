@@ -3691,8 +3691,8 @@ static void validateTags(Module& module, ValidationInfo& info) {
                         "Values in a tag should have concrete types");
     }
     info.shouldBeTrue(features <= module.features,
-                 curr->name,
-                 "all param types in tags should be allowed");
+                      curr->name,
+                      "all param types in tags should be allowed");
   }
 }
 
