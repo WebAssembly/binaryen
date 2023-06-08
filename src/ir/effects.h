@@ -217,8 +217,29 @@ public:
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
-  // checks if these effects would invalidate another set (e.g., if we write, we
-  // invalidate someone that reads, they can't be moved past us)
+  // Checks if these effects would invalidate another set of effects (e.g., if
+  // we write, we invalidate someone that reads).
+  //
+  // This assumes the things whose effects we are comparing will both execute,
+  // i.e., that there is no control flow between them. For example, here it is
+  // ok to compare the effects of A and B:
+  //
+  //   A
+  //   (local.set 0 (i32.const 0))
+  //   B
+  //
+  // But here it is not:
+  //
+  //   A
+  //   (br_if 0 (local.get 0))
+  //   B
+  //
+  // That the things being compared both execute only matters in the case of
+  // traps-never-happen: in that mode we can move traps but only if doing so
+  // would not make them start to appear when they did not. In the second
+  // example we can't reorder A and B if B traps, but in the first example we
+  // can reorder them even if B traps (even if A has a global effect like a
+  // global.set, since we assume B does not trap in traps-never-happen).
   bool invalidates(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
@@ -929,6 +950,8 @@ private:
 public:
   // Helpers
 
+  // See comment on invalidate() for the assumption here that the inputs will
+  // both execute.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
