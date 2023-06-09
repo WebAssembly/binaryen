@@ -46,6 +46,10 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
+using BoolStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
+using BoolFunctionStructValuesMap =
+  StructUtils::FunctionStructValuesMap<bool>;
+
 // Optimize struct gets based on what we've learned about writes.
 //
 // TODO Aside from writes, we could use information like whether any struct of
@@ -140,15 +144,19 @@ private:
 struct PCVScanner
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos);
+    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos),
+      functionCopyInfos(functionCopyInfos);
   }
 
-  PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
+  PCVScanner(PCVFunctionStructValuesMap&
                functionNewInfos,
-             StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
-               functionSetInfos)
+             PCVFunctionStructValuesMap&
+               functionSetInfos,
+             BoolFunctionStructValuesMap&
+               functionCopyInfos
+                              )
     : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
-        functionNewInfos, functionSetInfos) {}
+        functionNewInfos, functionSetInfos), functionCopyInfos(functionCopyInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
@@ -165,6 +173,7 @@ struct PCVScanner
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
+    functionCopyInfos[type][index] = true;
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
     //
@@ -188,6 +197,8 @@ struct PCVScanner
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
     // Reads do not interest us.
   }
+
+  FunctionStructValuesMap<bool>& functionCopyInfos;
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -202,7 +213,8 @@ struct ConstantFieldPropagation : public Pass {
     // Find and analyze all writes inside each function.
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
-    PCVScanner scanner(functionNewInfos, functionSetInfos);
+    BoolFunctionStructValuesMap functionCopyInfos(*module);
+    PCVScanner scanner(functionNewInfos, functionSetInfos, functionCopyInfos);
     auto* runner = getPassRunner();
     scanner.run(runner, module);
     scanner.runOnModuleCode(runner, module);
@@ -211,6 +223,25 @@ struct ConstantFieldPropagation : public Pass {
     PCVStructValuesMap combinedNewInfos, combinedSetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
+    BoolStructValuesMap combinedCopyInfos;
+    functionCopyInfos.combineInto(combinedCopyInfos);
+
+std::cout << "new " << combinedNewInfos.size() << '\n';
+for (auto& [k, v] : combinedNewInfos) {
+  std::cout << "  " << k << ": ";
+  for (auto x : v) x.dump(std::cout);
+  std::cout << '\n';
+}
+
+std::cout << "set " << combinedSetInfos.size() << '\n';
+for (auto& [k, v] : combinedSetInfos) {
+  std::cout << "  " << k << ": ";
+  for (auto x : v) x.dump(std::cout);
+  std::cout << '\n';
+}
+
+// copied fields need to be treated like sets and not like news in the prop - prop bot hwayz
+// PCV scanner can return copied fields. a copied field can just copy the new into into the sets before the sets are propagated.
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
@@ -243,6 +274,28 @@ struct ConstantFieldPropagation : public Pass {
     // and so given a get of $A and a new of $B, the new is relevant for the get
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
+    //
+    // An exception to the above are copies: If a field is copied then even
+    // struct.new has imprecise data:
+    //
+    //   // A :> B :> C
+    //   ..
+    //   new B(20);
+    //   ..
+    //   A1->f0 = A2->f0;
+    //   ..
+    //   foo(C->f0);      // This can contain 20, if the copy operated on a C.
+    //
+    // To handle that, copied fields are treated like struct.set, by copying all
+    // struct.new values there (after which propogation of struct.set will get
+    // those values to where they need to go).
+    for (auto& [type, copied] : combinedCopyInfos) {
+      for (Index i = 0; i < copied.size(); i++) {
+        if (copied[i]) {
+          combinedSetInfos[type][i].combine(combinedNewInfos[type][i]);
+        }
+      }
+    }
 
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
       *module);
