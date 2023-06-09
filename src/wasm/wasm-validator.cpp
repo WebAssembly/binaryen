@@ -3683,11 +3683,16 @@ static void validateTags(Module& module, ValidationInfo& info) {
         curr->name,
         "Multivalue tag type requires multivalue [--enable-multivalue]");
     }
+    FeatureSet features;
     for (const auto& param : curr->sig.params) {
+      features |= param.getFeatures();
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,
                         "Values in a tag should have concrete types");
     }
+    info.shouldBeTrue(features <= module.features,
+                      curr->name,
+                      "all param types in tags should be allowed");
   }
 }
 
