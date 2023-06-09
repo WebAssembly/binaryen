@@ -228,23 +228,6 @@ struct ConstantFieldPropagation : public Pass {
     BoolStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
 
-std::cout << "new " << combinedNewInfos.size() << '\n';
-for (auto& [k, v] : combinedNewInfos) {
-  std::cout << "  " << k << ": ";
-  for (auto x : v) x.dump(std::cout);
-  std::cout << '\n';
-}
-
-std::cout << "set " << combinedSetInfos.size() << '\n';
-for (auto& [k, v] : combinedSetInfos) {
-  std::cout << "  " << k << ": ";
-  for (auto x : v) x.dump(std::cout);
-  std::cout << '\n';
-}
-
-// copied fields need to be treated like sets and not like news in the prop - prop bot hwayz
-// PCV scanner can return copied fields. a copied field can just copy the new into into the sets before the sets are propagated.
-
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
     // that instruction. That is, if we do a struct.set to type T, the value was
