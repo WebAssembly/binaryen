@@ -46,6 +46,8 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
+// A wrapper for a boolean value that provides a combine() method as is used in
+// the StructUtils propagation logic.
 struct Bool {
   bool value = false;
 
@@ -260,20 +262,19 @@ struct ConstantFieldPropagation : public Pass {
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
     //
-    // An exception to the above are copies: If a field is copied then even
-    // struct.new has imprecise data:
+    // An exception to the above are copies. If a field is copied then even
+    // struct.new information cannot be assumed to be precise:
     //
     //   // A :> B :> C
     //   ..
     //   new B(20);
     //   ..
-    //   A1->f0 = A2->f0;
+    //   A1->f0 = A2->f0; // Either of these might refer to an A, B, or C.
     //   ..
-    //   foo(C->f0);      // This can contain 20, if the copy operated on a C.
+    //   foo(C->f0);      // This can contain 20, if the copy involved a C.
     //
-    // To handle that, copied fields are treated like struct.set, by copying all
-    // struct.new values there (after which propogation of struct.set will get
-    // those values to where they need to go).
+    // To handle that, copied fields are treated like struct.set ones (by
+    // copying the struct.new data to struct.set).
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
         if (copied[i]) {

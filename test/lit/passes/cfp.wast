@@ -2260,7 +2260,7 @@
   (func $test (param $0 i32) (result i32)
     (local $A (ref $A))
     (local $B (ref $B))
-    ;; This set is part of a copy, as th value is a struct.get. The copy is on
+    ;; This set is part of a copy, as the value is a struct.get. The copy is on
     ;; $A, but the reference we operate on is an instance of $B, actually. So
     ;; the value read at the end is in fact 10. That is, this test verifies
     ;; that we track the copied value even though the copy is on $A but it
@@ -2283,8 +2283,10 @@
         )
       )
     )
-    ;; This should not turn into 20 (or 10), since just based on values flowing
-    ;; to fields we cannot infer that.
+    ;; This should not turn into 20, since just based on values flowing to
+    ;; fields we cannot infer that (the value will be 10, but CFP cannot infer
+    ;; that either - that would require tracking references through locals
+    // etc.).
     (struct.get $B 0
       (local.get $B)
     )
