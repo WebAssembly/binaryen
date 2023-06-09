@@ -2270,7 +2270,7 @@
       ;; and not $B, so it looks like a perfect copy of $A->$A.
       (select (result (ref null $A))
         (ref.null $A)
-          (local.tee $B
+        (local.tee $B
           (struct.new $B
             (i32.const 20)
           )
@@ -2286,7 +2286,7 @@
     ;; This should not turn into 20, since just based on values flowing to
     ;; fields we cannot infer that (the value will be 10, but CFP cannot infer
     ;; that either - that would require tracking references through locals
-    // etc.).
+    ;; etc.).
     (struct.get $B 0
       (local.get $B)
     )
