@@ -46,9 +46,24 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
-using BoolStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
+struct Bool {
+  bool value = false;
+
+  Bool() {}
+  Bool(bool value) : value(value) {}
+
+  operator bool() const {
+    return value;
+  }
+
+  void combine(bool other) {
+    value = value || other;
+  }
+};
+
+using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
 using BoolFunctionStructValuesMap =
-  StructUtils::FunctionStructValuesMap<bool>;
+  StructUtils::FunctionStructValuesMap<Bool>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -144,8 +159,7 @@ private:
 struct PCVScanner
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos),
-      functionCopyInfos(functionCopyInfos);
+    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos, functionCopyInfos);
   }
 
   PCVScanner(PCVFunctionStructValuesMap&
@@ -173,24 +187,12 @@ struct PCVScanner
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
-    functionCopyInfos[type][index] = true;
-    // Ignore copies: when we set a value to a field from that same field, no
-    // new values are actually introduced.
-    //
-    // Note that this is only sound by virtue of the overall analysis in this
-    // pass: the object read from may be of a subclass, and so subclass values
-    // may be actually written here. But as our analysis considers subclass
-    // values too (as it must) then that is safe. That is, if a subclass of $A
-    // adds a value X that can be loaded from (struct.get $A $b), then consider
-    // a copy
-    //
-    //   (struct.set $A $b (struct.get $A $b))
-    //
-    // Our analysis will figure out that X can appear in that copy's get, and so
-    // the copy itself does not add any information about values.
-    //
-    // TODO: This may be extensible to a copy from a subtype by the above
-    //       analysis (but this is already entering the realm of diminishing
+    // Note copies, as they must be considered later. See the comment on the
+    // propagation of values below.
+    functionCopyInfos[getFunction()][type][index] = true;
+
+    // TODO: This may be extensible to a copy from a subtype, and not just the
+    //       exact type (but this is already entering the realm of diminishing
     //       returns).
   }
 
@@ -198,7 +200,7 @@ struct PCVScanner
     // Reads do not interest us.
   }
 
-  FunctionStructValuesMap<bool>& functionCopyInfos;
+  BoolFunctionStructValuesMap& functionCopyInfos;
 };
 
 struct ConstantFieldPropagation : public Pass {
