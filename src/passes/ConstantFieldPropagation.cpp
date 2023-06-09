@@ -54,18 +54,13 @@ struct Bool {
   Bool() {}
   Bool(bool value) : value(value) {}
 
-  operator bool() const {
-    return value;
-  }
+  operator bool() const { return value; }
 
-  void combine(bool other) {
-    value = value || other;
-  }
+  void combine(bool other) { value = value || other; }
 };
 
 using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
-using BoolFunctionStructValuesMap =
-  StructUtils::FunctionStructValuesMap<Bool>;
+using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<Bool>;
 
 // Optimize struct gets based on what we've learned about writes.
 //
@@ -161,18 +156,16 @@ private:
 struct PCVScanner
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos, functionCopyInfos);
+    return std::make_unique<PCVScanner>(
+      functionNewInfos, functionSetGetInfos, functionCopyInfos);
   }
 
-  PCVScanner(PCVFunctionStructValuesMap&
-               functionNewInfos,
-             PCVFunctionStructValuesMap&
-               functionSetInfos,
-             BoolFunctionStructValuesMap&
-               functionCopyInfos
-                              )
+  PCVScanner(PCVFunctionStructValuesMap& functionNewInfos,
+             PCVFunctionStructValuesMap& functionSetInfos,
+             BoolFunctionStructValuesMap& functionCopyInfos)
     : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
-        functionNewInfos, functionSetInfos), functionCopyInfos(functionCopyInfos) {}
+        functionNewInfos, functionSetInfos),
+      functionCopyInfos(functionCopyInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
