@@ -7044,9 +7044,13 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
       op = BrOnNonNull;
       break;
     case BinaryConsts::BrOnCast:
+    case BinaryConsts::BrOnCastLegacy:
+    case BinaryConsts::BrOnCastNullLegacy:
       op = BrOnCast;
       break;
     case BinaryConsts::BrOnCastFail:
+    case BinaryConsts::BrOnCastFailLegacy:
+    case BinaryConsts::BrOnCastFailNullLegacy:
       op = BrOnCastFail;
       break;
     case BinaryConsts::BrOnFunc:
@@ -7068,22 +7072,35 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     default:
       return false;
   }
+  bool hasInputAnnotation =
+    code == BinaryConsts::BrOnCast || code == BinaryConsts::BrOnCastFail;
   uint8_t flags = 0;
-  if (op == BrOnCast || op == BrOnCastFail) {
+  if (hasInputAnnotation) {
     flags = getInt8();
   }
   auto name = getBreakTarget(getU32LEB()).name;
   auto* ref = popNonVoidExpression();
   if (op == BrOnCast || op == BrOnCastFail) {
-    auto inputNullability = (flags & 1) ? Nullable : NonNullable;
-    auto castNullability = (flags & 2) ? Nullable : NonNullable;
-    auto inputHeapType = getHeapType();
-    auto castHeapType = getHeapType();
-    auto inputType = Type(inputHeapType, inputNullability);
+    Nullability inputNullability, castNullability;
+    HeapType inputHeapType, castHeapType;
+    if (hasInputAnnotation) {
+      inputNullability = (flags & 1) ? Nullable : NonNullable;
+      castNullability = (flags & 2) ? Nullable : NonNullable;
+      inputHeapType = getHeapType();
+    } else {
+      castNullability = (code == BinaryConsts::BrOnCastNullLegacy ||
+                         code == BinaryConsts::BrOnCastFailNullLegacy)
+                          ? Nullable
+                          : NonNullable;
+    }
+    castHeapType = getHeapType();
     castType = Type(castHeapType, castNullability);
-    if (!Type::isSubType(ref->type, inputType)) {
-      throwError(std::string("Invalid reference type for ") +
-                 ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
+    if (hasInputAnnotation) {
+      auto inputType = Type(inputHeapType, inputNullability);
+      if (!Type::isSubType(ref->type, inputType)) {
+        throwError(std::string("Invalid reference type for ") +
+                   ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
+      }
     }
   }
   out = Builder(wasm).makeBrOn(op, name, ref, castType);
