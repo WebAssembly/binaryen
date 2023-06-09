@@ -24,21 +24,6 @@ static Type getValueType(Expression* value) {
   return value ? value->type : Type::none;
 }
 
-namespace {
-
-// Handles a branch fixup for visitBlock: if the branch goes to the
-// target name, give it a value which is unreachable.
-template<typename T>
-void handleBranchForVisitBlock(T* curr, Name name, Module* module) {
-  if (BranchUtils::getUniqueTargets(curr).count(name)) {
-    assert(!curr->value);
-    Builder builder(*module);
-    curr->value = builder.makeUnreachable();
-  }
-}
-
-} // anonymous namespace
-
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
     curr->type = Type::none;
