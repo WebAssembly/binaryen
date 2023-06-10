@@ -1538,6 +1538,14 @@ public:
   Signature getSignatureByTypeIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
+  // Cache a mapping of signatures to heap types. This lets us get the heap
+  // type of a function very efficiently, as computing the heap type from the
+  // signature (stored in functionSignatures) is not cheap.
+  // TODO: optimize that conversion and remove this
+  std::unordered_map<Signature, HeapType> signatureTypes;
+
+  HeapType getTypeByFunctionIndex(Index index);
+
   size_t nextLabel;
 
   Name getNextLabel();

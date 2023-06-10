@@ -2517,6 +2517,15 @@ Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
   return heapType.getSignature();
 }
 
+HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
+  auto sig = getSignatureByFunctionIndex(index);
+  auto iter = signatureTypes.find(sig);
+  if (iter != signatureTypes.end()) {
+    return iter->second;
+  }
+  return signatureTypes[sig] = HeapType(sig);
+}
+
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   auto numImports = wasm.functions.size();
