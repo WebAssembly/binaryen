@@ -386,11 +386,6 @@ public:
   size_t operator()(const wasm::TypeInfo& info) const;
 };
 
-template<> class hash<wasm::HeapTypeInfo> {
-public:
-  size_t operator()(const wasm::HeapTypeInfo& info) const;
-};
-
 template<typename T> class hash<reference_wrapper<const T>> {
 public:
   size_t operator()(const reference_wrapper<const T>& ref) const {
@@ -2795,11 +2790,6 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
       return digest;
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-size_t
-hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
-  return wasm::hash(uintptr_t(&info));
 }
 
 } // namespace std
