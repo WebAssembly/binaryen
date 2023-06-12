@@ -82,10 +82,15 @@ LUBFinder getResultsLUB(Function* func, Module& wasm) {
   for (auto* call : FindAll<CallRef>(func->body).list) {
     if (call->isReturn) {
       auto targetType = call->target->type;
+      // We can skip unreachable code and calls to bottom types, as both trap.
       if (targetType == Type::unreachable) {
         continue;
       }
-      if (!processReturnType(targetType.getHeapType().getSignature().results)) {
+      auto targetHeapType = targetType.getHeapType();
+      if (targetHeapType.isBottom()) {
+        continue;
+      }
+      if (!processReturnType(targetHeapType.getSignature().results)) {
         return lub;
       }
     }
