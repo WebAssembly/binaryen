@@ -221,8 +221,11 @@ public:
   // we write, we invalidate someone that reads).
   //
   // This assumes the things whose effects we are comparing will both execute,
-  // i.e., that there is no control flow between them. For example, here it is
-  // ok to compare the effects of A and B:
+  // at least if neither of them transfers control flow away. That is, we assume
+  // that there is no transfer of control flow *between* them: we are comparing
+  // things appear after each other, perhaps with some other code in the middle,
+  // but that code does not transfer control flow. For example, here it is ok to
+  // compare the effects of A and B, no matter what A and B are:
   //
   //   A
   //   (local.set 0 (i32.const 0))
@@ -231,7 +234,7 @@ public:
   // But here it is not:
   //
   //   A
-  //   (br_if 0 (local.get 0))
+  //   (br_if 0 (local.get 0)) ;; this may transfer control flow away
   //   B
   //
   // That the things being compared both execute only matters in the case of
@@ -293,11 +296,10 @@ public:
     assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified. However, in trapsNeverHappen mode we assume traps do
-    // not occur in practice, which lets us ignore this, at least in the case if
-    // the trap will definitely happen, since we can remove traps but not move
-    // them around, so we must check if control flow can transfer. Note that we
-    // use the property of the things being compared both executing, see the
-    // comment on this function.
+    // not occur in practice, which lets us ignore this, at least in the case
+    // that the code executes. As mentioned above, we assume that there is no
+    // transfer of control flow between the things we are comparing, so all we
+    // need to do is check for such transfers in them.
     if (!trapsNeverHappen || transfersControlFlow() ||
         other.transfersControlFlow()) {
       if ((trap && other.writesGlobalState()) ||
