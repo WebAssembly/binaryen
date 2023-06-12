@@ -952,8 +952,7 @@ private:
 public:
   // Helpers
 
-  // See comment on invalidate() for the assumption here that the inputs will
-  // both execute.
+  // See comment on invalidate() for the assumptions on the inputs here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
