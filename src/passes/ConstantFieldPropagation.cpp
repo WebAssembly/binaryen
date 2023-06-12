@@ -46,6 +46,22 @@ using PCVStructValuesMap = StructUtils::StructValuesMap<PossibleConstantValues>;
 using PCVFunctionStructValuesMap =
   StructUtils::FunctionStructValuesMap<PossibleConstantValues>;
 
+// A wrapper for a boolean value that provides a combine() method as is used in
+// the StructUtils propagation logic.
+struct Bool {
+  bool value = false;
+
+  Bool() {}
+  Bool(bool value) : value(value) {}
+
+  operator bool() const { return value; }
+
+  void combine(bool other) { value = value || other; }
+};
+
+using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
+using BoolFunctionStructValuesMap = StructUtils::FunctionStructValuesMap<Bool>;
+
 // Optimize struct gets based on what we've learned about writes.
 //
 // TODO Aside from writes, we could use information like whether any struct of
@@ -140,15 +156,16 @@ private:
 struct PCVScanner
   : public StructUtils::StructScanner<PossibleConstantValues, PCVScanner> {
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<PCVScanner>(functionNewInfos, functionSetGetInfos);
+    return std::make_unique<PCVScanner>(
+      functionNewInfos, functionSetGetInfos, functionCopyInfos);
   }
 
-  PCVScanner(StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
-               functionNewInfos,
-             StructUtils::FunctionStructValuesMap<PossibleConstantValues>&
-               functionSetInfos)
+  PCVScanner(PCVFunctionStructValuesMap& functionNewInfos,
+             PCVFunctionStructValuesMap& functionSetInfos,
+             BoolFunctionStructValuesMap& functionCopyInfos)
     : StructUtils::StructScanner<PossibleConstantValues, PCVScanner>(
-        functionNewInfos, functionSetInfos) {}
+        functionNewInfos, functionSetInfos),
+      functionCopyInfos(functionCopyInfos) {}
 
   void noteExpression(Expression* expr,
                       HeapType type,
@@ -165,29 +182,20 @@ struct PCVScanner
   }
 
   void noteCopy(HeapType type, Index index, PossibleConstantValues& info) {
-    // Ignore copies: when we set a value to a field from that same field, no
-    // new values are actually introduced.
-    //
-    // Note that this is only sound by virtue of the overall analysis in this
-    // pass: the object read from may be of a subclass, and so subclass values
-    // may be actually written here. But as our analysis considers subclass
-    // values too (as it must) then that is safe. That is, if a subclass of $A
-    // adds a value X that can be loaded from (struct.get $A $b), then consider
-    // a copy
-    //
-    //   (struct.set $A $b (struct.get $A $b))
-    //
-    // Our analysis will figure out that X can appear in that copy's get, and so
-    // the copy itself does not add any information about values.
-    //
-    // TODO: This may be extensible to a copy from a subtype by the above
-    //       analysis (but this is already entering the realm of diminishing
+    // Note copies, as they must be considered later. See the comment on the
+    // propagation of values below.
+    functionCopyInfos[getFunction()][type][index] = true;
+
+    // TODO: This may be extensible to a copy from a subtype, and not just the
+    //       exact type (but this is already entering the realm of diminishing
     //       returns).
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
     // Reads do not interest us.
   }
+
+  BoolFunctionStructValuesMap& functionCopyInfos;
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -202,7 +210,8 @@ struct ConstantFieldPropagation : public Pass {
     // Find and analyze all writes inside each function.
     PCVFunctionStructValuesMap functionNewInfos(*module),
       functionSetInfos(*module);
-    PCVScanner scanner(functionNewInfos, functionSetInfos);
+    BoolFunctionStructValuesMap functionCopyInfos(*module);
+    PCVScanner scanner(functionNewInfos, functionSetInfos, functionCopyInfos);
     auto* runner = getPassRunner();
     scanner.run(runner, module);
     scanner.runOnModuleCode(runner, module);
@@ -211,6 +220,8 @@ struct ConstantFieldPropagation : public Pass {
     PCVStructValuesMap combinedNewInfos, combinedSetInfos;
     functionNewInfos.combineInto(combinedNewInfos);
     functionSetInfos.combineInto(combinedSetInfos);
+    BoolStructValuesMap combinedCopyInfos;
+    functionCopyInfos.combineInto(combinedCopyInfos);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
@@ -243,6 +254,27 @@ struct ConstantFieldPropagation : public Pass {
     // and so given a get of $A and a new of $B, the new is relevant for the get
     // iff $A is a subtype of $B, so we only need to propagate in one direction
     // there, to supertypes.
+    //
+    // An exception to the above are copies. If a field is copied then even
+    // struct.new information cannot be assumed to be precise:
+    //
+    //   // A :> B :> C
+    //   ..
+    //   new B(20);
+    //   ..
+    //   A1->f0 = A2->f0; // Either of these might refer to an A, B, or C.
+    //   ..
+    //   foo(C->f0);      // This can contain 20, if the copy involved a C.
+    //
+    // To handle that, copied fields are treated like struct.set ones (by
+    // copying the struct.new data to struct.set).
+    for (auto& [type, copied] : combinedCopyInfos) {
+      for (Index i = 0; i < copied.size(); i++) {
+        if (copied[i]) {
+          combinedSetInfos[type][i].combine(combinedNewInfos[type][i]);
+        }
+      }
+    }
 
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
       *module);
