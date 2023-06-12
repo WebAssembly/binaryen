@@ -119,9 +119,6 @@ struct HeapTypeInfo {
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
-
-  bool operator==(const HeapTypeInfo& other) const;
-  bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
 };
 
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
@@ -588,10 +585,6 @@ HeapTypeInfo::~HeapTypeInfo() {
       return;
   }
   WASM_UNREACHABLE("unexpected kind");
-}
-
-bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  return this == &other;
 }
 
 struct TypeStore {
