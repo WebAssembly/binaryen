@@ -599,24 +599,22 @@ bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
   return this == &other;
 }
 
-template<typename Info> struct Store {
+struct TypeStore {
   std::recursive_mutex mutex;
 
   // Track unique_ptrs for constructed types to avoid leaks.
-  std::vector<std::unique_ptr<Info>> constructedTypes;
+  std::vector<std::unique_ptr<TypeInfo>> constructedTypes;
 
   // Maps from constructed types to their canonical Type IDs.
-  std::unordered_map<std::reference_wrapper<const Info>, uintptr_t> typeIDs;
+  std::unordered_map<std::reference_wrapper<const TypeInfo>, uintptr_t> typeIDs;
 
 #ifndef NDEBUG
   bool isGlobalStore();
 #endif
 
-  typename Info::type_t insert(const Info& info) { return doInsert(info); }
-  typename Info::type_t insert(std::unique_ptr<Info>&& info) {
-    return doInsert(info);
-  }
-  bool hasCanonical(const Info& info, typename Info::type_t& canonical);
+  Type insert(const TypeInfo& info) { return doInsert(info); }
+  Type insert(std::unique_ptr<TypeInfo>&& info) { return doInsert(info); }
+  bool hasCanonical(const TypeInfo& info, Type& canonical);
 
   void clear() {
     typeIDs.clear();
@@ -624,20 +622,20 @@ template<typename Info> struct Store {
   }
 
 private:
-  template<typename Ref> typename Info::type_t doInsert(Ref& infoRef) {
-    const Info& info = [&]() {
-      if constexpr (std::is_same_v<Ref, const Info>) {
+  template<typename Ref> Type doInsert(Ref& infoRef) {
+    const TypeInfo& info = [&]() {
+      if constexpr (std::is_same_v<Ref, const TypeInfo>) {
         return infoRef;
-      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Info>>) {
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<TypeInfo>>) {
         infoRef->isTemp = false;
         return *infoRef;
       }
     }();
 
-    auto getPtr = [&]() -> std::unique_ptr<Info> {
-      if constexpr (std::is_same_v<Ref, const Info>) {
-        return std::make_unique<Info>(infoRef);
-      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<Info>>) {
+    auto getPtr = [&]() -> std::unique_ptr<TypeInfo> {
+      if constexpr (std::is_same_v<Ref, const TypeInfo>) {
+        return std::make_unique<TypeInfo>(infoRef);
+      } else if constexpr (std::is_same_v<Ref, std::unique_ptr<TypeInfo>>) {
         return std::move(infoRef);
       }
     };
@@ -646,56 +644,35 @@ private:
       assert((!isGlobalStore() || !info.isTemp) && "Leaking temporary type!");
       auto ptr = getPtr();
       TypeID id = uintptr_t(ptr.get());
-      assert(id > Info::type_t::_last_basic_type);
+      assert(id > Type::_last_basic_type);
       typeIDs.insert({*ptr, id});
       constructedTypes.emplace_back(std::move(ptr));
-      return typename Info::type_t(id);
+      return Type(id);
     };
 
     // Turn e.g. singleton tuple into non-tuple.
-    if constexpr (std::is_same_v<Info, TypeInfo>) {
-      if (auto canonical = info.getCanonical()) {
-        return *canonical;
-      }
+    if (auto canonical = info.getCanonical()) {
+      return *canonical;
     }
+
     std::lock_guard<std::recursive_mutex> lock(mutex);
     // Check whether we already have a type for this structural Info.
     auto indexIt = typeIDs.find(std::cref(info));
     if (indexIt != typeIDs.end()) {
-      return typename Info::type_t(indexIt->second);
+      return Type(indexIt->second);
     }
     // We do not have a type for this Info already. Create one.
     return insertNew();
   }
 };
 
-using TypeStore = Store<TypeInfo>;
-using HeapTypeStore = Store<HeapTypeInfo>;
-
 static TypeStore globalTypeStore;
-static HeapTypeStore globalHeapTypeStore;
 
-// Specialized to simplify programming generically over Types and HeapTypes.
-template<typename T> struct MetaTypeInfo {};
-
-template<> struct MetaTypeInfo<Type> {
-#ifndef NDEBUG
-  constexpr static TypeStore& globalStore = globalTypeStore;
-#endif
-  static TypeInfo* getInfo(Type type) { return getTypeInfo(type); }
-};
-
-template<> struct MetaTypeInfo<HeapType> {
-#ifndef NDEBUG
-  constexpr static HeapTypeStore& globalStore = globalHeapTypeStore;
-#endif
-  static HeapTypeInfo* getInfo(HeapType ht) { return getHeapTypeInfo(ht); }
-};
+static std::vector<std::unique_ptr<HeapTypeInfo>> globalHeapTypeStore;
+static std::recursive_mutex globalHeapTypeStoreMutex;
 
 #ifndef NDEBUG
-template<typename Info> bool Store<Info>::isGlobalStore() {
-  return this == &MetaTypeInfo<typename Info::type_t>::globalStore;
-}
+bool TypeStore::isGlobalStore() { return this == &globalTypeStore; }
 #endif
 
 // Keep track of the constructed recursion groups.
@@ -734,7 +711,7 @@ struct RecGroupStore {
     auto group = asHeapType(info).getRecGroup();
     auto canonical = insert(group);
     if (group == canonical) {
-      globalHeapTypeStore.insert(std::move(info));
+      globalHeapTypeStore.emplace_back(std::move(info));
     }
     return canonical[0];
   }
@@ -2356,6 +2333,8 @@ struct CanonicalizationState {
   // canonicalized.
   std::vector<std::unique_ptr<HeapTypeInfo>> newInfos;
 
+  std::unordered_map<RecGroup, RecGroup> canonGroups;
+
   // Either the fully canonical HeapType or a new temporary HeapTypeInfo that a
   // previous HeapTypeInfo will be replaced with.
   struct Replacement : std::variant<HeapType, std::unique_ptr<HeapTypeInfo>> {
@@ -2475,16 +2454,10 @@ void globallyCanonicalize(CanonicalizationState& state) {
   // have to be replaced with canonical Types and HeapTypes.
   struct Locations : TypeGraphWalker<Locations> {
     std::unordered_map<Type, std::unordered_set<Type*>> types;
-    std::unordered_map<HeapType, std::unordered_set<HeapType*>> heapTypes;
 
     void preVisitType(Type* type) {
       if (!type->isBasic()) {
         types[*type].insert(type);
-      }
-    }
-    void preVisitHeapType(HeapType* ht) {
-      if (!ht->isBasic()) {
-        heapTypes[*ht].insert(ht);
       }
     }
   };
@@ -2501,11 +2474,9 @@ void globallyCanonicalize(CanonicalizationState& state) {
   state.dump();
 #endif
 
-  // Canonicalize HeapTypes at all their use sites. HeapTypes for which there
-  // was not already a globally canonical version are moved to the global store
-  // to become the canonical version. These new canonical HeapTypes still
-  // contain references to temporary Types owned by the TypeBuilder, so we must
-  // subsequently replace those references with references to canonical Types.
+  // Canonicalize HeapTypes at all their use sites. HeapTypes whose rec groups
+  // are newly canonical are moved to the globalHeapTypeStore so that their
+  // lifetimes are extended beyond the life of the TypeBuilder.
   //
   // Keep a lock on the global HeapType store as long as it can reach temporary
   // types to ensure that no other threads observe the temporary types, for
@@ -2513,18 +2484,15 @@ void globallyCanonicalize(CanonicalizationState& state) {
   // same shape as one being canonicalized here. This cannot happen with Types
   // because they are hashed in the global store by pointer identity, which has
   // not yet escaped the builder, rather than shape.
-  std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStore.mutex);
-  std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
+  std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStoreMutex);
+  // std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : state.newInfos) {
-    HeapType original = asHeapType(info);
-    HeapType canonical = globalHeapTypeStore.insert(std::move(info));
-    if (original != canonical) {
-      canonicalHeapTypes[original] = canonical;
-    }
-  }
-  for (auto& [original, canonical] : canonicalHeapTypes) {
-    for (HeapType* use : locations.heapTypes.at(original)) {
-      *use = canonical;
+    auto original = asHeapType(info);
+    auto canonical =
+      state.canonGroups.at(original.getRecGroup())[info->recGroupIndex];
+    if (original == canonical) {
+      info->isTemp = false;
+      globalHeapTypeStore.emplace_back(std::move(info));
     }
   }
 
@@ -2690,6 +2658,7 @@ std::optional<TypeBuilder::Error> canonicalizeIsorecursive(
           replacements.insert({group[i], canonical[i]});
         }
       }
+      state.canonGroups.insert({group, canonical});
     }
   }
   state.updateShallow(replacements);
