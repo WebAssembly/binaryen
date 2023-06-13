@@ -411,10 +411,6 @@ public:
     : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
       writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
 
-  void visit(Expression* curr) {
-    BinaryenIRWriter<BinaryenIRToBinaryWriter>::visit(curr);
-  }
-
   void emit(Expression* curr) { writer.visit(curr); }
   void emitHeader() {
     if (func->prologLocation.size()) {
