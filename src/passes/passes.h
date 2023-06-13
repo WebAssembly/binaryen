@@ -110,6 +110,7 @@ Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
 Pass* createPrintStackIRPass();
+Pass* createRemoveCatchesPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryPass();

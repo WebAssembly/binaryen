@@ -352,6 +352,8 @@ void PassRegistry::registerPasses() {
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
+  registerPass(
+    "remove-catches", "removes catch blocks", createRemoveCatchesPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
