@@ -217,8 +217,39 @@ public:
   // check if we break to anything external from ourselves
   bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
-  // checks if these effects would invalidate another set (e.g., if we write, we
-  // invalidate someone that reads, they can't be moved past us)
+  // Checks if these effects would invalidate another set of effects (e.g., if
+  // we write, we invalidate someone that reads).
+  //
+  // This assumes the things whose effects we are comparing will both execute,
+  // at least if neither of them transfers control flow away. That is, we assume
+  // that there is no transfer of control flow *between* them: we are comparing
+  // things appear after each other, perhaps with some other code in the middle,
+  // but that code does not transfer control flow. It is not valid to call this
+  // method in other situations, like this:
+  //
+  //   A
+  //   (br_if 0 (local.get 0)) ;; this may transfer control flow away
+  //   B
+  //
+  // Calling this method in that situation is invalid because only A may
+  // execute and not B. The following are examples of situations where it is
+  // valid to call this method:
+  //
+  //   A
+  //   ;; nothing in between them at all
+  //   B
+  //
+  //   A
+  //   (local.set 0 (i32.const 0)) ;; something in between without a possible
+  //                               ;; control flow transfer
+  //   B
+  //
+  // That the things being compared both execute only matters in the case of
+  // traps-never-happen: in that mode we can move traps but only if doing so
+  // would not make them start to appear when they did not. In the second
+  // example we can't reorder A and B if B traps, but in the first example we
+  // can reorder them even if B traps (even if A has a global effect like a
+  // global.set, since we assume B does not trap in traps-never-happen).
   bool invalidates(const EffectAnalyzer& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
@@ -271,10 +302,17 @@ public:
     // anything.
     assert(!((trap && other.throws()) || (throws() && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
-    // state is modified.
-    if ((trap && other.writesGlobalState()) ||
-        (other.trap && writesGlobalState())) {
-      return true;
+    // state is modified. However, in trapsNeverHappen mode we assume traps do
+    // not occur in practice, which lets us ignore this, at least in the case
+    // that the code executes. As mentioned above, we assume that there is no
+    // transfer of control flow between the things we are comparing, so all we
+    // need to do is check for such transfers in them.
+    if (!trapsNeverHappen || transfersControlFlow() ||
+        other.transfersControlFlow()) {
+      if ((trap && other.writesGlobalState()) ||
+          (other.trap && writesGlobalState())) {
+        return true;
+      }
     }
     return false;
   }
@@ -921,6 +959,7 @@ private:
 public:
   // Helpers
 
+  // See comment on invalidate() for the assumptions on the inputs here.
   static bool canReorder(const PassOptions& passOptions,
                          Module& module,
                          Expression* a,
