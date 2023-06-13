@@ -224,17 +224,24 @@ public:
   // at least if neither of them transfers control flow away. That is, we assume
   // that there is no transfer of control flow *between* them: we are comparing
   // things appear after each other, perhaps with some other code in the middle,
-  // but that code does not transfer control flow. For example, here it is ok to
-  // compare the effects of A and B, no matter what A and B are:
-  //
-  //   A
-  //   (local.set 0 (i32.const 0))
-  //   B
-  //
-  // But here it is not:
+  // but that code does not transfer control flow. It is not valid to call this
+  // method in other situations, like this:
   //
   //   A
   //   (br_if 0 (local.get 0)) ;; this may transfer control flow away
+  //   B
+  //
+  // Calling this method in that situation is invalid because only A may
+  // execute and not B. The following are examples of situations where it is
+  // valid to call this method:
+  //
+  //   A
+  //   ;; nothing in between them at all
+  //   B
+  //
+  //   A
+  //   (local.set 0 (i32.const 0)) ;; something in between without a possible
+  //                               ;; control flow transfer
   //   B
   //
   // That the things being compared both execute only matters in the case of
