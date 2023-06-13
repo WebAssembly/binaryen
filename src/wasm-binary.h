@@ -1431,7 +1431,7 @@ private:
   void prepare();
 };
 
-class WasmBinaryBuilder {
+class WasmBinaryReader {
   Module& wasm;
   MixedArena& allocator;
   const std::vector<char>& input;
@@ -1457,9 +1457,9 @@ class WasmBinaryBuilder {
   std::vector<HeapType> types;
 
 public:
-  WasmBinaryBuilder(Module& wasm,
-                    FeatureSet features,
-                    const std::vector<char>& input);
+  WasmBinaryReader(Module& wasm,
+                   FeatureSet features,
+                   const std::vector<char>& input);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }

@@ -444,7 +444,7 @@ public:
     // The lists contain human-readable strings. Turn them into the
     // internal escaped names for later comparisons
     for (auto& name : list) {
-      auto escaped = WasmBinaryBuilder::escape(name);
+      auto escaped = WasmBinaryReader::escape(name);
       unescaped[escaped.toString()] = name;
       if (name.find('*') != std::string::npos) {
         patterns.insert(escaped.toString());
