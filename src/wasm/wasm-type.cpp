@@ -112,7 +112,6 @@ struct HeapTypeInfo {
   HeapTypeInfo(Struct&& struct_)
     : kind(StructKind), struct_(std::move(struct_)) {}
   HeapTypeInfo(Array array) : kind(ArrayKind), array(array) {}
-  HeapTypeInfo(const HeapTypeInfo& other);
   ~HeapTypeInfo();
 
   constexpr bool isSignature() const { return kind == SignatureKind; }
@@ -552,26 +551,6 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
-  isTemp = other.isTemp;
-  supertype = other.supertype;
-  recGroup = other.recGroup;
-  recGroupIndex = other.recGroupIndex;
-  kind = other.kind;
-  switch (kind) {
-    case SignatureKind:
-      new (&signature) auto(other.signature);
-      return;
-    case StructKind:
-      new (&struct_) auto(other.struct_);
-      return;
-    case ArrayKind:
-      new (&array) auto(other.array);
-      return;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
     case SignatureKind:
@@ -699,6 +678,7 @@ struct RecGroupStore {
     auto group = asHeapType(info).getRecGroup();
     auto canonical = insert(group);
     if (group == canonical) {
+      std::lock_guard<std::recursive_mutex> storeLock(globalHeapTypeStoreMutex);
       globalHeapTypeStore.emplace_back(std::move(info));
     }
     return canonical[0];
@@ -2473,7 +2453,6 @@ void globallyCanonicalize(CanonicalizationState& state) {
   // because they are hashed in the global store by pointer identity, which has
   // not yet escaped the builder, rather than shape.
   std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStoreMutex);
-  // std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : state.newInfos) {
     auto original = asHeapType(info);
     auto canonical =
