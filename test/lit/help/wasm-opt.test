@@ -349,6 +349,8 @@
 ;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
 ;; CHECK-NEXT:                                                 internal debugging)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --remove-catches                              removes catch blocks
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --remove-imports                              removes imports and replaces
 ;; CHECK-NEXT:                                                 them with nops
 ;; CHECK-NEXT:
