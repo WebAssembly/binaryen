@@ -1,13 +1,13 @@
-#ifndef LOCAL_GOOGLE_HOME_NASHLEY_BINARYEN_SRC_PASSES_STRINGIFY_WALKER_H_
-#define LOCAL_GOOGLE_HOME_NASHLEY_BINARYEN_SRC_PASSES_STRINGIFY_WALKER_H_
+#ifndef passes_stringify_walker_module_h
+#define passes_stringify_walker_module_h
 
 namespace wasm {
 
 struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVisitor<StringifyWalker>> {
 
+  void walkModule(Module *module);
   static void scan(StringifyWalker* self, Expression** currp);
   void visitExpression(Expression *curr);
-  void walkModule(Module *module);
 
  private:
   std::queue<Expression **> queue;
@@ -30,4 +30,4 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
 }
 
 
-#endif  // LOCAL_GOOGLE_HOME_NASHLEY_BINARYEN_SRC_PASSES_STRINGIFY_WALKER_H_
+#endif  // passes_stringify_walker_module_h
