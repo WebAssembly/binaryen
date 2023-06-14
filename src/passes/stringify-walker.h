@@ -1,6 +1,8 @@
 #ifndef passes_stringify_walker_module_h
 #define passes_stringify_walker_module_h
 
+#include <queue>
+
 namespace wasm {
 
 struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVisitor<StringifyWalker>> {

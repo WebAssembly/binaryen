@@ -1,5 +1,7 @@
+#include "wasm-s-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
+#include "passes/stringify-walker.h"
 
 using namespace wasm;
 
@@ -27,3 +29,8 @@ Module wasm;
 SExpressionParser parser(moduleText);
 SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
 
+StringifyWalker stringify = StringifyWalker();
+stringify.walkModule(&wasm);
+
+
+}
