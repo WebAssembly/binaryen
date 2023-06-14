@@ -335,7 +335,7 @@ struct Walker : public VisitorType {
       //assert(*task.currp);
       task.func(static_cast<SubType*>(this), task.currp);
     }
-    printf("The walk has ended\n");
+    //printf("The walk has ended\n");
   }
 
   // subclasses implement this to define the proper order of execution

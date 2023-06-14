@@ -30,14 +30,14 @@
 namespace wasm {
 
 void StringifyWalker::walkModule(Module *module) {
- this->pushTask(StringifyWalker::QueueManager::handler, nullptr);
+ this->pushTask(StringifyWalker::handler, nullptr);
  ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-    this->emitFunctionBegin(this);
+   this->emitFunctionBegin(this);
     this->walk(func->body);
  });
 }
 
-void StringifyWalker::QueueManager::scanChildren(StringifyWalker *stringify, Expression **currp) {
+void StringifyWalker::scanChildren(StringifyWalker *stringify, Expression **currp) {
   Expression *curr = *currp;
   switch (curr->_id) {
     case Expression::Id::BlockId: {
@@ -82,23 +82,23 @@ void StringifyWalker::QueueManager::scanChildren(StringifyWalker *stringify, Exp
     }
     default: {
       auto name = getExpressionName(*currp);
-      std::cout << "QueueManager reached an unimplemented expression: " << name << std::endl;
+      std::cout << "scanChildren reached an unimplemented expression: " << name << std::endl;
     }
   }
 }
 
-void StringifyWalker::QueueManager::handler(StringifyWalker *stringify, Expression**) {
-  //printf("In QueueManager::handler\n");
-  auto& queue = stringify->queueManager.queue;
+void StringifyWalker::handler(StringifyWalker *stringify, Expression**) {
+  //printf("In StringifyWalker::handler\n");
+  auto& queue = stringify->queue;
   if (!queue.empty()) {
-    stringify->pushTask(StringifyWalker::QueueManager::handler, nullptr);
+    stringify->pushTask(StringifyWalker::handler, nullptr);
     Expression **currp = queue.front();
     queue.pop();
     [[maybe_unused]] auto name = getExpressionName(*currp);
-    //std::cout << "QueueManager has an item, " << name << std::endl;
-    QueueManager::scanChildren(stringify, currp);
+    //std::cout << "queue has an item, " << name << std::endl;
+    StringifyWalker::scanChildren(stringify, currp);
   } else {
-    //std::cout << "QueueManager's queue is empty" << std::endl;
+    //std::cout << "queue is empty" << std::endl;
   }
 }
 
@@ -114,8 +114,8 @@ void StringifyWalker::scan(StringifyWalker* self, Expression** currp) {
    case Expression::Id::LoopId:
    case Expression::Id::TryId: {
       self->visitControlFlow(self, currp);
-      //std::cout << "Adding " << name << " to queueManager's queue" << std::endl;
-      self->queueManager.queue.push(currp);
+      //std::cout << "Adding " << name << " to queue" << std::endl;
+      self->queue.push(currp);
       break;
     }
     default: {

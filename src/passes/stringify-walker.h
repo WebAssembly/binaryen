@@ -10,20 +10,15 @@ struct StringifyWalker : public PostWalker<StringifyWalker, UnifiedExpressionVis
   void walkModule(Module *module);
 
  private:
-  struct QueueManager {
-   public:
-    std::queue<Expression **> queue;
-    static void handler(StringifyWalker *stringify, Expression**);
-   private:
-    static void scanChildren(StringifyWalker *stringify, Expression **currp);
-  };
+  std::queue<Expression **> queue;
+  static void handler(StringifyWalker *stringify, Expression**);
+  static void scanChildren(StringifyWalker *stringify, Expression **currp);
 
   uint64_t monotonic = 0;
   std::vector<uint64_t> string;
   // Change key to Expression
   // [[maybe_unused]] std::unordered_map<Expression *, uint64_t> exprToCounter;
   [[maybe_unused]] std::unordered_map<uint64_t, uint64_t> exprToCounter;
-  QueueManager queueManager;
 
   void insertGloballyUniqueChar();
   void insertHash(uint64_t hash, Expression *curr);
