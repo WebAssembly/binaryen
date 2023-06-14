@@ -15,7 +15,7 @@
  */
 
 //
-// Remove catch blocks. Any exception thrown will call 'abort'.
+// Remove catch blocks. Any exception thrown will crash the program.
 //
 
 #include <pass.h>
