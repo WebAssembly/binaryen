@@ -6,9 +6,10 @@
 
 namespace wasm {
 
+template<typename SubType>
 struct StringifyWalker
-  : public PostWalker<StringifyWalker,
-                      UnifiedExpressionVisitor<StringifyWalker>> {
+  : public PostWalker<SubType,
+                      UnifiedExpressionVisitor<SubType>> {
 
   void walkModule(Module* module);
   static void scan(StringifyWalker* self, Expression** currp);
@@ -31,6 +32,11 @@ private:
   static void emitFunctionBegin(StringifyWalker* self);
   static void visitControlFlow(StringifyWalker* self, Expression** currp);
   void printString();
+};
+
+struct DebugStringifyWalker
+: public StringifyWalker<DebugStringifyWalker> {
+
 };
 
 } // namespace wasm
