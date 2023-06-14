@@ -24,11 +24,12 @@
 #include "stringify-walker.h"
 #include "wasm-builder.h"
 #include "wasm-stack.h"
-#include <wasm.h>
+#include "wasm.h"
 
 namespace wasm {
 
 void StringifyWalker::walkModule(Module* module) {
+  this->wasm = module;
   this->pushTask(StringifyWalker::handler, nullptr);
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     this->emitFunctionBegin(this);
@@ -163,20 +164,17 @@ void StringifyWalker::emitFunctionBegin(StringifyWalker* self) {
 
 void StringifyWalker::visitControlFlow(StringifyWalker* self,
                                        Expression** currp) {
-  auto name = getExpressionName(*currp);
-  std::cout << "in visitControlFlow with " << name << std::endl;
+  std::cout << "in visitControlFlow with ";
   [[maybe_unused]] Expression* curr = *currp;
-  curr->dump();
+  std::cout << ShallowExpression{curr, self->wasm} << std::endl;
   // uint64_t hashValue = hash(curr);
   // self->insertHash(hashValue, curr);
 }
 
 // UnifiedExpressionVisitor
 void StringifyWalker::visitExpression(Expression* curr) {
-  std::cout << "in visitExpression";
-  auto name = getExpressionName(curr);
-  std::cout << " for " << name << std::endl;
-  curr->dump();
+  std::cout << "in visitExpression for ";
+  std::cout << ShallowExpression{curr, this->wasm} << std::endl;
   if (!Properties::isControlFlowStructure(curr)) {
     // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
     // std::cout << "hash: " << (unsigned)hash << std::endl;

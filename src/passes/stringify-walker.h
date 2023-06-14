@@ -2,6 +2,7 @@
 #define passes_stringify_walker_module_h
 
 #include <queue>
+#include "wasm-traversal.h"
 
 namespace wasm {
 
@@ -14,6 +15,7 @@ struct StringifyWalker
   void visitExpression(Expression* curr);
 
 private:
+  Module *wasm;
   std::queue<Expression**> queue;
   static void handler(StringifyWalker* stringify, Expression**);
   static void scanChildren(StringifyWalker* stringify, Expression** currp);
