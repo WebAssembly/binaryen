@@ -28,6 +28,8 @@
 
 namespace wasm {
 
+namespace {
+
 struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
   bool refinalize = false;
 
@@ -72,6 +74,8 @@ struct StripEH : public Pass {
     wasm->features.disable(FeatureSet::ExceptionHandling);
   }
 };
+
+} // anonymous namespace
 
 Pass* createStripEHPass() { return new StripEH(); }
 
