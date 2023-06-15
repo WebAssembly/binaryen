@@ -15,8 +15,9 @@
  */
 
 //
-// Remove catch blocks and convert 'throw's into 'unreachable's. Any exception
-// thrown will crash the program as they are now traps.
+// Removes all EH instructions and tags. Removes catch blocks and converts
+// 'throw's into 'unreachable's. Any exception thrown will crash the program as
+// they are now traps.
 //
 
 #include <ir/drop.h>
@@ -26,11 +27,11 @@
 
 namespace wasm {
 
-struct StripEH : public WalkerPass<ExpressionStackWalker<StripEH>> {
+struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<StripEH>();
+    return std::make_unique<StripEHImpl>();
   }
 
   void visitThrow(Throw* curr) {
@@ -44,6 +45,19 @@ struct StripEH : public WalkerPass<ExpressionStackWalker<StripEH>> {
   }
 
   void visitTry(Try* curr) { replaceCurrent(curr->body); }
+};
+
+struct StripEH : public Pass {
+  void run(Module* wasm) override {
+    PassRunner runner(wasm);
+    // We run this as an inner pass to make it parallel. This StripEH pass
+    // itself cannot be parallel because we need to disable the EH feature.
+    runner.add(std::make_unique<StripEHImpl>());
+    runner.setIsNested(true);
+    runner.run();
+    wasm->removeTags([](Tag*) { return true; });
+    wasm->features.disable(FeatureSet::ExceptionHandling);
+  }
 };
 
 Pass* createStripEHPass() { return new StripEH(); }
