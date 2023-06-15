@@ -28,9 +28,9 @@ namespace wasm {
 namespace {
 
 struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
-  bool refinalize = false;
-
   bool isFunctionParallel() override { return true; }
+
+  bool refinalize = false;
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<StripEHImpl>();
@@ -53,7 +53,6 @@ struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
 
   void visitFunction(Function* curr) {
     if (refinalize) {
-      std::cout << curr->name << std::endl;
       ReFinalize().walkFunctionInModule(curr, getModule());
     }
   }
