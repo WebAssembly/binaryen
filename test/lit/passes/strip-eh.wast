@@ -92,4 +92,26 @@
       )
     )
   )
+
+  ;; CHECK:      (func $try-unreachable-body (type $none_=>_i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-unreachable-body (result i32)
+    (i32.add
+      ;; This becomes unreachable while the parent expects i32, so this requires
+      ;; refinalization.
+      (try (result i32)
+        (do
+          (throw $e-i32 (i32.const 0))
+        )
+        (catch $e-i32
+          (pop i32)
+        )
+      )
+      (i32.const 0)
+    )
+  )
 )

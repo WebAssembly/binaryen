@@ -21,6 +21,7 @@
 //
 
 #include <ir/drop.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -28,6 +29,8 @@
 namespace wasm {
 
 struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
+  bool refinalize = false;
+
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -44,7 +47,17 @@ struct StripEHImpl : public WalkerPass<PostWalker<StripEHImpl>> {
                                                DropMode::IgnoreParentEffects));
   }
 
-  void visitTry(Try* curr) { replaceCurrent(curr->body); }
+  void visitTry(Try* curr) {
+    replaceCurrent(curr->body);
+    refinalize = true;
+  }
+
+  void visitFunction(Function* curr) {
+    if (refinalize) {
+      std::cout << curr->name << std::endl;
+      ReFinalize().walkFunctionInModule(curr, getModule());
+    }
+  }
 };
 
 struct StripEH : public Pass {
