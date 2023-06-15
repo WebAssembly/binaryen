@@ -89,7 +89,6 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RemoveCatches.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -111,6 +110,7 @@ set(passes_SOURCES
   Souperify.cpp
   SpillPointers.cpp
   StackCheck.cpp
+  StripEH.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp

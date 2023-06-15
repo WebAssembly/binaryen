@@ -15,24 +15,37 @@
  */
 
 //
-// Remove catch blocks. Any exception thrown will crash the program.
+// Remove catch blocks and convert 'throw's into 'unreachable's. Any exception
+// thrown will crash the program as they are now traps.
 //
 
+#include <ir/drop.h>
 #include <pass.h>
 #include <wasm.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
-struct RemoveCatches : public WalkerPass<ExpressionStackWalker<RemoveCatches>> {
+struct StripEH : public WalkerPass<ExpressionStackWalker<StripEH>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<RemoveCatches>();
+    return std::make_unique<StripEH>();
+  }
+
+  void visitThrow(Throw* curr) {
+    auto& wasm = *getModule();
+    Builder builder(wasm);
+    replaceCurrent(getDroppedChildrenAndAppend(curr,
+                                               wasm,
+                                               getPassOptions(),
+                                               builder.makeUnreachable(),
+                                               DropMode::IgnoreParentEffects));
   }
 
   void visitTry(Try* curr) { replaceCurrent(curr->body); }
 };
 
-Pass* createRemoveCatchesPass() { return new RemoveCatches(); }
+Pass* createStripEHPass() { return new StripEH(); }
 
 } // namespace wasm

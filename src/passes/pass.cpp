@@ -352,8 +352,6 @@ void PassRegistry::registerPasses() {
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
-  registerPass(
-    "remove-catches", "removes catch blocks", createRemoveCatchesPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
@@ -466,6 +464,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
+  registerPass("strip-eh", "strip EH instructions", createStripEHPass);
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);

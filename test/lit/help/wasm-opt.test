@@ -349,8 +349,6 @@
 ;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
 ;; CHECK-NEXT:                                                 internal debugging)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --remove-catches                              removes catch blocks
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --remove-imports                              removes imports and replaces
 ;; CHECK-NEXT:                                                 them with nops
 ;; CHECK-NEXT:
@@ -453,6 +451,8 @@
 ;; CHECK-NEXT:                                                 names section)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-dwarf                                 strip dwarf debug info
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-eh                                    strip EH instructions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-producers                             strip the wasm producers section
 ;; CHECK-NEXT:
