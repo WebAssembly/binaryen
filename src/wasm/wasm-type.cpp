@@ -687,6 +687,14 @@ struct RecGroupStore {
 
 static RecGroupStore globalRecGroupStore;
 
+void validateTuple(const Tuple& tuple) {
+#ifndef NDEBUG
+  for (auto type : tuple) {
+    assert(type.isSingle());
+  }
+#endif
+}
+
 } // anonymous namespace
 
 void destroyAllTypesForTestingPurposesOnly() {
@@ -698,6 +706,7 @@ void destroyAllTypesForTestingPurposesOnly() {
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
 Type::Type(const Tuple& tuple) {
+  validateTuple(tuple);
 #ifndef NDEBUG
   for (auto type : tuple) {
     assert(!isTemp(type) && "Leaking temporary type!");
