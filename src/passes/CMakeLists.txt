@@ -110,6 +110,7 @@ set(passes_SOURCES
   Souperify.cpp
   SpillPointers.cpp
   StackCheck.cpp
+  StripEH.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp

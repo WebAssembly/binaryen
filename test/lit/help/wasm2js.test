@@ -411,6 +411,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-dwarf                                 strip dwarf debug info
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --strip-eh                                    strip EH instructions
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-producers                             strip the wasm producers section
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-target-features                       strip the wasm target features

@@ -464,6 +464,7 @@ void PassRegistry::registerPasses() {
   registerPass("strip-producers",
                "strip the wasm producers section",
                createStripProducersPass);
+  registerPass("strip-eh", "strip EH instructions", createStripEHPass);
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);

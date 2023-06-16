@@ -145,6 +145,7 @@ Pass* createStripTargetFeaturesPass();
 Pass* createSouperifyPass();
 Pass* createSouperifySingleUsePass();
 Pass* createSpillPointersPass();
+Pass* createStripEHPass();
 Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
