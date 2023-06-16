@@ -3357,7 +3357,7 @@ static void validateImports(Module& module, ValidationInfo& info) {
     if (Intrinsics(module).isCallWithoutEffects(curr)) {
       auto lastParam = curr->getParams();
       if (lastParam.isTuple()) {
-        lastParam = lastParam.getTuple().types.back();
+        lastParam = lastParam.getTuple().back();
       }
       info.shouldBeTrue(lastParam.isFunction(),
                         curr->name,
