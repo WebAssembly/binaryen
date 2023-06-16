@@ -1127,8 +1127,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            WeightedOption{&Self::makeBreak, Important},
            &Self::makeCall,
            &Self::makeCallIndirect)
-      .add(FeatureSet::Exceptions, &Self::makeTry)
-      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
+      .add(FeatureSet::ExceptionHandling, &Self::makeTry)
+      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   }
   if (type.isSingle()) {
     options
@@ -1237,7 +1237,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeSwitch,
          &Self::makeDrop,
          &Self::makeReturn)
-    .add(FeatureSet::Exceptions, &Self::makeThrow)
+    .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
@@ -1370,7 +1370,6 @@ Expression* TranslateToFuzzReader::makeIf(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTry(Type type) {
-  auto* condition = makeCondition();
   auto* body = make(type);
   std::vector<Name> catchTags;
   std::vector<Expression*> catchBodies;
@@ -1380,7 +1379,7 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
     if (wasm.tags.empty()) {
       addTag();
     }
-    auto* tag = pick(wasm.tags);
+    auto* tag = pick(wasm.tags).get();
     if (usedTags.count(tag)) {
       continue;
     }
@@ -3557,9 +3556,9 @@ Expression* TranslateToFuzzReader::makeThrow(Type type) {
   if (wasm.tags.empty()) {
     addTag();
   }
-  auto* tag = pick(wasm.tags);
+  auto* tag = pick(wasm.tags).get();
   auto tagType = tag->sig.results;
-  ExpressionList operands;
+  std::vector<Expression*> operands;
   for (auto t : tagType) {
     operands.push_back(make(t));
   }
