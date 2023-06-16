@@ -11,32 +11,47 @@ struct StringifyWalker
   : public PostWalker<SubType,
                       UnifiedExpressionVisitor<SubType>> {
 
-  void walkModule(Module* module);
-  static void scan(StringifyWalker* self, Expression** currp);
-  void visitExpression(Expression* curr);
-
-private:
   Module *wasm;
   std::queue<Expression**> queue;
-  static void handler(StringifyWalker* stringify, Expression**);
-  static void scanChildren(StringifyWalker* stringify, Expression** currp);
 
-  uint64_t monotonic = 0;
+  static void walkModule(SubType* self, Module* module);
+  static void scan(SubType* self, Expression** currp);
+  static void visitControlFlow(SubType* self, Expression** currp);
+  void visitExpression(Expression* curr);
+  // casts itself to subType and then calls visitExpression on that.
+
+private:
+  static void handler(SubType* self, Expression**);
+  static void scanChildren(SubType* self, Expression** currp);
+};
+
+struct HashStringifyWalker
+: public StringifyWalker<HashStringifyWalker> {
+
+  void walkModule(Module *module);
+  static void functionDidBegin(HashStringifyWalker* self);
+  void visitExpression(Expression* curr);
+  static void visitControlFlow(HashStringifyWalker* self, Expression** currp);
+
+ private:
   std::vector<uint64_t> string;
+  uint64_t monotonic = 0;
   // Change key to Expression
   // [[maybe_unused]] std::unordered_map<Expression *, uint64_t> exprToCounter;
   [[maybe_unused]] std::unordered_map<uint64_t, uint64_t> exprToCounter;
 
-  void insertGloballyUniqueChar();
-  void insertHash(uint64_t hash, Expression* curr);
-  static void emitFunctionBegin(StringifyWalker* self);
-  static void visitControlFlow(StringifyWalker* self, Expression** currp);
-  void printString();
+  void appendGloballyUniqueChar();
+  void appendExpressionHash(Expression* curr, uint64_t hash);
 };
 
-struct DebugStringifyWalker
-: public StringifyWalker<DebugStringifyWalker> {
+struct TestStringifyWalker
+: public StringifyWalker<TestStringifyWalker> {
 
+  void walkModule(Module *module);
+  static void functionDidBegin(TestStringifyWalker* self);
+  void visitExpression(Expression* curr);
+  static void visitControlFlow(TestStringifyWalker* self, Expression** currp);
+  void print(std::ostream& os);
 };
 
 } // namespace wasm

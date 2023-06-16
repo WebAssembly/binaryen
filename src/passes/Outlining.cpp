@@ -28,16 +28,18 @@
 
 namespace wasm {
 
-void StringifyWalker::walkModule(Module* module) {
-  this->wasm = module;
-  this->pushTask(StringifyWalker::handler, nullptr);
+template <typename SubType>
+void StringifyWalker<SubType>::walkModule(SubType *self, Module* module) {
+  self->wasm = module;
+  self->pushTask(StringifyWalker::handler, nullptr);
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-    this->emitFunctionBegin(this);
-    this->walk(func->body);
+    self->functionDidBegin(self);
+    self->walk(func->body);
   });
 }
 
-void StringifyWalker::scanChildren(StringifyWalker* stringify,
+template <typename SubType>
+void StringifyWalker<SubType>::scanChildren(SubType* stringify,
                                    Expression** currp) {
   Expression* curr = *currp;
   switch (curr->_id) {
@@ -94,22 +96,24 @@ void StringifyWalker::scanChildren(StringifyWalker* stringify,
   }
 }
 
-void StringifyWalker::handler(StringifyWalker* stringify, Expression**) {
+template <typename SubType>
+void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
   // printf("In StringifyWalker::handler\n");
-  auto& queue = stringify->queue;
+  auto& queue = self->queue;
   if (!queue.empty()) {
-    stringify->pushTask(StringifyWalker::handler, nullptr);
+    self->pushTask(StringifyWalker::handler, nullptr);
     Expression** currp = queue.front();
     queue.pop();
     [[maybe_unused]] auto name = getExpressionName(*currp);
     // std::cout << "queue has an item, " << name << std::endl;
-    StringifyWalker::scanChildren(stringify, currp);
+    StringifyWalker<SubType>::scanChildren(self, currp);
   } else {
     // std::cout << "queue is empty" << std::endl;
   }
 }
 
-void StringifyWalker::scan(StringifyWalker* self, Expression** currp) {
+template <typename SubType>
+void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   [[maybe_unused]] auto name = getExpressionName(curr);
   // std::cout << "StringifyWalker::scan() on: " << name << std::endl;
@@ -127,21 +131,48 @@ void StringifyWalker::scan(StringifyWalker* self, Expression** currp) {
     }
     default: {
       // std::cout << "Calling PostWalker::scan" << std::endl;
-      PostWalker::scan(self, currp);
+      PostWalker<SubType>::scan(self, currp);
     }
   }
 }
 
-void StringifyWalker::insertGloballyUniqueChar() {
+
+template <typename SubType>
+void StringifyWalker<SubType>::visitControlFlow(SubType* self,
+                                       Expression** currp) {
+  self->visitControlFlow(self, currp);
+}
+
+template <typename SubType>
+void StringifyWalker<SubType>::visitExpression(Expression* curr) {
+  if (!Properties::isControlFlowStructure(curr)) {
+    static_cast<SubType*>(this)->visitExpression(curr);
+  }
+}
+
+void HashStringifyWalker::walkModule(Module* module) {
+  StringifyWalker::walkModule(this, module);
+}
+
+void HashStringifyWalker::functionDidBegin(HashStringifyWalker* self){
+  // self->appendGloballyUniqueChar();
+}
+
+void HashStringifyWalker::visitExpression(Expression* curr) {
+  // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
+  // std::cout << "hash: " << (unsigned)hash << std::endl;
+  // this->insertHash(hash, curr);
+}
+
+void HashStringifyWalker::appendGloballyUniqueChar() {
   // printf("inserting globally unique char\n");
   string.push_back(monotonic);
   monotonic++;
-  printString();
 }
 
 // Will be replaced by insertExpression
 // void insertExpression(Expression *curr)
-void StringifyWalker::insertHash(uint64_t hash, Expression* curr) {
+void HashStringifyWalker::appendExpressionHash(Expression* curr, uint64_t hash) {
   string.push_back(monotonic);
   auto it = exprToCounter.find(monotonic);
   if (it != exprToCounter.end()) {
@@ -153,44 +184,31 @@ void StringifyWalker::insertHash(uint64_t hash, Expression* curr) {
   // std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
   exprToCounter[hash] = monotonic;
   monotonic++;
-  printString();
 }
 
-// Expression handling
-void StringifyWalker::emitFunctionBegin(StringifyWalker* self) {
-  printf("emit function begin\n");
-  // self->insertGloballyUniqueChar();
-}
-
-void StringifyWalker::visitControlFlow(StringifyWalker* self,
+void HashStringifyWalker::visitControlFlow(HashStringifyWalker* self,
                                        Expression** currp) {
-  std::cout << "in visitControlFlow with ";
   [[maybe_unused]] Expression* curr = *currp;
-  std::cout << ShallowExpression{curr, self->wasm} << std::endl;
   // uint64_t hashValue = hash(curr);
   // self->insertHash(hashValue, curr);
 }
 
-// UnifiedExpressionVisitor
-void StringifyWalker::visitExpression(Expression* curr) {
-  std::cout << "in visitExpression for ";
-  std::cout << ShallowExpression{curr, this->wasm} << std::endl;
-  if (!Properties::isControlFlowStructure(curr)) {
-    // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
-    // std::cout << "hash: " << (unsigned)hash << std::endl;
-    // this->insertHash(hash, curr);
-  } else {
-    // std::cout << "\n";
-  }
+void TestStringifyWalker::walkModule(Module* module) {
+  StringifyWalker::walkModule(this, module);
 }
 
-// Debug
-void StringifyWalker::printString() {
-  std::cout << "----printing string----" << std::endl;
-  for (auto symbol : string) {
-    std::cout << symbol << ", ";
-  }
-  std::cout << "\n\n";
+void TestStringifyWalker::functionDidBegin(TestStringifyWalker* self) {
+  printf("append function begin\n");
+}
+
+void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
+                                       Expression** currp) {
+  [[maybe_unused]] Expression* curr = *currp;
+  std::cout << "in visitControlFlow with " << ShallowExpression{curr, self->wasm} << std::endl;
+}
+
+void TestStringifyWalker::visitExpression(Expression* curr) {
+  std::cout << "in visitExpression for " << ShallowExpression{curr, this->wasm} << std::endl;
 }
 
 struct Outlining : public Pass {
@@ -198,7 +216,7 @@ struct Outlining : public Pass {
   void run(Module* module) override {
     printf("Hello from outlining!\n");
 
-    StringifyWalker stringify = StringifyWalker();
+    TestStringifyWalker stringify = TestStringifyWalker();
     stringify.walkModule(module);
     printf("Outlining is done\n");
   }

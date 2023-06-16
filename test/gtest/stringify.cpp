@@ -33,13 +33,13 @@ TEST(StringifyTest, Print) {
   SExpressionParser parser(moduleText);
   SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
 
-  StringifyWalker stringify = StringifyWalker();
+  TestStringifyWalker stringify = TestStringifyWalker();
   stringify.walkModule(&wasm);
 
   bool colors = Colors::isEnabled();
   Colors::setEnabled(false);
   std::stringstream ss;
-  stringify.print(ss);
+  //stringify.print(ss);
   Colors::setEnabled(colors);
 
   EXPECT_EQ(ss.str(), stringifyText);
