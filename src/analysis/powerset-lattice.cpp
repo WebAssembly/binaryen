@@ -38,6 +38,12 @@ class PowersetLattice {
 */
 
 template<size_t N>
+BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getBottom() {
+    BitsetPowersetLattice<N> result{0};
+    return result;
+}
+
+template<size_t N>
 bool BitsetPowersetLattice<N>::isTop(const BitsetPowersetLattice<N> & element) {
     return element.value.all();
 }
@@ -72,6 +78,11 @@ BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getLeastUpperBound(const Bits
     BitsetPowersetLattice<N> result;
     result.value = left.value | right.value;
     return result;
+}
+
+template<size_t N>
+void BitsetPowersetLattice<N>::print(std::ostream& os) {
+    os << value << std::endl;
 }
 
 }; // namespace wasm::analysis
