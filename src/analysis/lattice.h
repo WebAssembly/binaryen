@@ -25,6 +25,6 @@ struct BitsetPowersetLattice {
     void print(std::ostream& os);
 };
 
-}
+} // namespace wasm::analysis
 
 #endif // wasm_analysis_lattice_h

@@ -1,5 +1,5 @@
 #ifndef wasm_analysis_monotone_analyzer_h
-#define wasm_analysis_monotone_analyer_h
+#define wasm_analysis_monotone_analyzer_h
 
 #include <iostream>
 #include <vector>

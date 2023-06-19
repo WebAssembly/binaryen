@@ -1,5 +1,9 @@
+#include <iostream>
+
 #include "analysis/cfg.h"
 #include "print-test.h"
+#include "analysis/lattice.h"
+#include "analysis/monotone-analyzer.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
@@ -78,4 +82,58 @@ TEST_F(CFGTest, Print) {
   cfg.print(ss);
 
   EXPECT_EQ(ss.str(), cfgText);
+}
+
+TEST_F(CFGTest, LivenessTest) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar
+        (local $a (i32))
+        (local $b (i32))
+        (local $c)
+        (local.set $a
+          (i32.const 1)
+        )
+        (drop
+          local.get $a
+        )
+        (local.set $b
+          (local.get $a)
+        )
+        (local.set $c
+          (i32.const 1)
+        )
+        (drop
+          (local.get $c)
+        )
+      )
+    )
+  )wasm";
+
+ 
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
+
+  cfg.print(std::cout);
+
+  const size_t sz = 3;
+  BitsetPowersetLattice<3> abc;
+  if (BitsetPowersetLattice<3>::isBottom(abc)) {
+    std::cout << "HELLO" << std::endl;
+  }
+  MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
+
+  analyzer.evaluate();
+
+  analyzer.print(std::cout);
+
+  // bool colors = Colors::isEnabled();
+  // Colors::setEnabled(false);
+  // std::stringstream ss;
+  // cfg.print(ss);
+  // Colors::setEnabled(colors);
+
+  // EXPECT_EQ(ss.str(), cfgText);
 }
