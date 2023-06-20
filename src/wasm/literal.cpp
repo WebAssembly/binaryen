@@ -626,6 +626,10 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
   return o;
 }
 
+// Printing literals is mainly for debugging purposes, and they can be of
+// massive size, so abbreviate past some point.
+static size_t LITERALS_PRINT_LIMIT = 20;
+
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
   if (literals.size() == 1) {
     return o << literals[0];
@@ -636,6 +640,10 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
     }
     for (size_t i = 1; i < literals.size(); ++i) {
       o << ", " << literals[i];
+      if (i == LITERALS_PRINT_LIMIT) {
+        o << "[..]";
+        break;
+      }
     }
     return o << ')';
   }
