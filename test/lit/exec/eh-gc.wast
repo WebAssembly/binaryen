@@ -5,6 +5,7 @@
 (module
  (tag $tag (param externref))
 
+ ;; CHECK:      [fuzz-exec] calling catch-null
  (func "catch-null"
   (try $label$3
    (do
@@ -23,3 +24,5 @@
   )
  )
 )
+;; CHECK:      [fuzz-exec] calling catch-null
+;; CHECK-NEXT: [fuzz-exec] comparing catch-null
