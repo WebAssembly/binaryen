@@ -587,11 +587,11 @@ size_t shapeHash(Type a) {
 }
 
 bool shapeEq(const Tuple& a, const Tuple& b) {
-  if (a.types.size() != b.types.size()) {
+  if (a.size() != b.size()) {
     return false;
   }
-  for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!shapeEq(a.types[i], b.types[i])) {
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (!shapeEq(a[i], b[i])) {
       return false;
     }
   }
@@ -599,8 +599,8 @@ bool shapeEq(const Tuple& a, const Tuple& b) {
 }
 
 size_t shapeHash(const Tuple& a) {
-  auto digest = hash(a.types.size());
-  for (auto type : a.types) {
+  auto digest = hash(a.size());
+  for (auto type : a) {
     hash_combine(digest, shapeHash(type));
   }
   return digest;

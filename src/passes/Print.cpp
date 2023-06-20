@@ -254,7 +254,7 @@ void TypeNamePrinter::print(HeapType type) {
 
 void TypeNamePrinter::print(const Tuple& tuple) {
   auto sep = "";
-  for (auto type : tuple.types) {
+  for (auto type : tuple) {
     os << sep;
     sep = "_";
     print(type);

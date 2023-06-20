@@ -522,11 +522,11 @@ TypeInfo::~TypeInfo() {
 
 std::optional<Type> TypeInfo::getCanonical() const {
   if (isTuple()) {
-    if (tuple.types.size() == 0) {
+    if (tuple.size() == 0) {
       return Type::none;
     }
-    if (tuple.types.size() == 1) {
-      return tuple.types[0];
+    if (tuple.size() == 1) {
+      return tuple[0];
     }
   }
   return {};
@@ -687,6 +687,14 @@ struct RecGroupStore {
 
 static RecGroupStore globalRecGroupStore;
 
+void validateTuple(const Tuple& tuple) {
+#ifndef NDEBUG
+  for (auto type : tuple) {
+    assert(type.isSingle());
+  }
+#endif
+}
+
 } // anonymous namespace
 
 void destroyAllTypesForTestingPurposesOnly() {
@@ -698,8 +706,9 @@ void destroyAllTypesForTestingPurposesOnly() {
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
 Type::Type(const Tuple& tuple) {
+  validateTuple(tuple);
 #ifndef NDEBUG
-  for (auto type : tuple.types) {
+  for (auto type : tuple) {
     assert(!isTemp(type) && "Leaking temporary type!");
   }
 #endif
@@ -708,7 +717,7 @@ Type::Type(const Tuple& tuple) {
 
 Type::Type(Tuple&& tuple) {
 #ifndef NDEBUG
-  for (auto type : tuple.types) {
+  for (auto type : tuple) {
     assert(!isTemp(type) && "Leaking temporary type!");
   }
 #endif
@@ -1030,7 +1039,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
 
 size_t Type::size() const {
   if (isTuple()) {
-    return getTypeInfo(*this)->tuple.types.size();
+    return getTypeInfo(*this)->tuple.size();
   } else {
     // TODO: unreachable is special and expands to {unreachable} currently.
     // see also: https://github.com/WebAssembly/binaryen/issues/3062
@@ -1040,7 +1049,7 @@ size_t Type::size() const {
 
 const Type& Type::Iterator::operator*() const {
   if (parent->isTuple()) {
-    return getTypeInfo(*parent)->tuple.types[index];
+    return getTypeInfo(*parent)->tuple[index];
   } else {
     // TODO: see comment in Type::size()
     assert(index == 0 && parent->id != Type::none && "Index out of bounds");
@@ -1427,7 +1436,6 @@ template<typename T> static std::string genericToString(const T& t) {
 }
 std::string Type::toString() const { return genericToString(*this); }
 std::string HeapType::toString() const { return genericToString(*this); }
-std::string Tuple::toString() const { return genericToString(*this); }
 std::string Signature::toString() const { return genericToString(*this); }
 std::string Struct::toString() const { return genericToString(*this); }
 std::string Array::toString() const { return genericToString(*this); }
@@ -1560,11 +1568,11 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
 }
 
 bool SubTyper::isSubType(const Tuple& a, const Tuple& b) {
-  if (a.types.size() != b.types.size()) {
+  if (a.size() != b.size()) {
     return false;
   }
-  for (size_t i = 0; i < a.types.size(); ++i) {
-    if (!isSubType(a.types[i], b.types[i])) {
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (!isSubType(a[i], b[i])) {
       return false;
     }
   }
@@ -1745,7 +1753,7 @@ std::ostream& TypePrinter::print(HeapType type) {
 std::ostream& TypePrinter::print(const Tuple& tuple) {
   os << '(';
   auto sep = "";
-  for (Type type : tuple.types) {
+  for (Type type : tuple) {
     os << sep;
     sep = " ";
     print(type);
@@ -1924,8 +1932,8 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
 }
 
 size_t RecGroupHasher::hash(const Tuple& tuple) const {
-  size_t digest = wasm::hash(tuple.types.size());
-  for (auto type : tuple.types) {
+  size_t digest = wasm::hash(tuple.size());
+  for (auto type : tuple) {
     hash_combine(digest, hash(type));
   }
   return digest;
@@ -2045,11 +2053,10 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
 }
 
 bool RecGroupEquator::eq(const Tuple& a, const Tuple& b) const {
-  return std::equal(a.types.begin(),
-                    a.types.end(),
-                    b.types.begin(),
-                    b.types.end(),
-                    [&](const Type& x, const Type& y) { return eq(x, y); });
+  return std::equal(
+    a.begin(), a.end(), b.begin(), b.end(), [&](const Type& x, const Type& y) {
+      return eq(x, y);
+    });
 }
 
 bool RecGroupEquator::eq(const Field& a, const Field& b) const {
@@ -2123,7 +2130,7 @@ template<typename Self> void TypeGraphWalkerBase<Self>::scanType(Type* type) {
   auto* info = getTypeInfo(*type);
   switch (info->kind) {
     case TypeInfo::TupleKind: {
-      auto& types = info->tuple.types;
+      auto& types = info->tuple;
       for (auto it = types.rbegin(); it != types.rend(); ++it) {
         taskList.push_back(Task::scan(&*it));
       }
@@ -2247,7 +2254,7 @@ HeapType TypeBuilder::getTempHeapType(size_t i) {
 
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   Type ret = impl->typeStore.insert(tuple);
-  if (tuple.types.size() > 1) {
+  if (tuple.size() > 1) {
     return markTemp(ret);
   } else {
     // No new tuple was created, so the result might not be temporary.
@@ -2508,7 +2515,7 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
 namespace std {
 
-template<> class hash<wasm::TypeList> {
+template<> class hash<wasm::Tuple> {
 public:
   size_t operator()(const wasm::TypeList& types) const {
     auto digest = wasm::hash(types.size());
@@ -2532,10 +2539,6 @@ public:
 
 size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
   return wasm::hash(type.getID());
-}
-
-size_t hash<wasm::Tuple>::operator()(const wasm::Tuple& tuple) const {
-  return wasm::hash(tuple.types);
 }
 
 size_t hash<wasm::Signature>::operator()(const wasm::Signature& sig) const {
