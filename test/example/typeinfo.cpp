@@ -79,7 +79,7 @@ void test_compound() {
            Type(otherArray, NonNullable).getID());
   }
   {
-    Tuple singleTuple({Type::i32});
+    Tuple singleTuple = {Type::i32};
     assert(Type(singleTuple).getID() == Type::i32);
 
     Tuple tuple({Type::i32, Type::f64});

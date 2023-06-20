@@ -51,11 +51,13 @@ void destroyAllTypesForTestingPurposesOnly();
 class Type;
 class HeapType;
 class RecGroup;
-struct Tuple;
 struct Signature;
 struct Field;
 struct Struct;
 struct Array;
+
+using TypeList = std::vector<Type>;
+using Tuple = TypeList;
 
 enum Nullability { NonNullable, Nullable };
 enum Mutability { Immutable, Mutable };
@@ -453,31 +455,6 @@ public:
   HeapType operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
-using TypeList = std::vector<Type>;
-
-// Passed by reference rather than by value because it can own an unbounded
-// amount of data.
-struct Tuple {
-  TypeList types;
-  Tuple() : types() {}
-  Tuple(std::initializer_list<Type> types) : types(types) { validate(); }
-  Tuple(const TypeList& types) : types(types) { validate(); }
-  Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
-
-  bool operator==(const Tuple& other) const { return types == other.types; }
-  bool operator!=(const Tuple& other) const { return !(*this == other); }
-  std::string toString() const;
-
-private:
-  void validate() {
-#ifndef NDEBUG
-    for (auto type : types) {
-      assert(type.isSingle());
-    }
-#endif
-  }
-};
-
 struct Signature {
   Type params;
   Type results;
@@ -691,10 +668,6 @@ namespace std {
 template<> class hash<wasm::Type> {
 public:
   size_t operator()(const wasm::Type&) const;
-};
-template<> class hash<wasm::Tuple> {
-public:
-  size_t operator()(const wasm::Tuple&) const;
 };
 template<> class hash<wasm::Signature> {
 public:

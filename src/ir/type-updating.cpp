@@ -162,7 +162,7 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
       }
       if (type.isTuple()) {
         auto tuple = type.getTuple();
-        for (auto& t : tuple.types) {
+        for (auto& t : tuple) {
           t = getNew(t);
         }
         return Type(tuple);
@@ -284,7 +284,7 @@ Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isTuple()) {
     auto& tuple = type.getTuple();
     auto newTuple = tuple;
-    for (auto& t : newTuple.types) {
+    for (auto& t : newTuple) {
       t = getTempType(t);
     }
     return typeBuilder.getTempTupleType(newTuple);
