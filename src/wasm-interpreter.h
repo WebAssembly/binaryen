@@ -3815,7 +3815,7 @@ public:
     NOTE_ENTER("Pop");
     assert(!multiValues.empty());
     auto ret = multiValues.back();
-    assert(curr->type == ret.getType());
+    assert(Type::isSubType(ret.getType(), curr->type));
     multiValues.pop_back();
     return ret;
   }
