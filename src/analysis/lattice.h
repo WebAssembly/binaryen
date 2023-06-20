@@ -27,4 +27,6 @@ struct BitsetPowersetLattice {
 
 } // namespace wasm::analysis
 
+#include "powerset-lattice-impl.h"
+
 #endif // wasm_analysis_lattice_h

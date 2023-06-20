@@ -1,3 +1,6 @@
+#ifndef wasm_analysis_lattice_impl_h
+#define wasm_analysis_lattice_impl_h
+
 #include "lattice.h"
 
 namespace wasm::analysis {
@@ -55,15 +58,15 @@ bool BitsetPowersetLattice<N>::isBottom(const BitsetPowersetLattice<N> & element
 
 template<size_t N>
 LatticeComparison BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N> & left, const BitsetPowersetLattice<N> & right) {
-    size_t leftCount = left.count();
-    size_t rightCount = right.count();
+    size_t leftCount = left.value.count();
+    size_t rightCount = right.value.count();
 
     if (leftCount > rightCount) {
-        if (left.value | right.value == left.value) {
+        if ((left.value | right.value) == left.value) {
             return GREATER;
         }
     } else if (leftCount < rightCount) {
-        if (left.value | right.value == right.value) {
+        if ((left.value | right.value) == right.value) {
             return LESS;
         }
     } else if (left.value == right.value) {
@@ -86,3 +89,5 @@ void BitsetPowersetLattice<N>::print(std::ostream& os) {
 }
 
 }; // namespace wasm::analysis
+
+#endif // wasm_analysis_lattice_impl_h

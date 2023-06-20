@@ -52,6 +52,8 @@ struct BasicBlock {
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
+  Index getIndex() const { return index; }
+
 private:
   Index index;
   std::vector<Expression*> insts;

@@ -90,12 +90,12 @@ TEST_F(CFGTest, LivenessTest) {
       (func $bar
         (local $a (i32))
         (local $b (i32))
-        (local $c)
+        (local $c (i32))
         (local.set $a
           (i32.const 1)
         )
         (drop
-          local.get $a
+          (local.get $a)
         )
         (local.set $b
           (local.get $a)
@@ -110,7 +110,6 @@ TEST_F(CFGTest, LivenessTest) {
     )
   )wasm";
 
- 
   Module wasm;
   parseWast(wasm, moduleText);
 
@@ -119,21 +118,9 @@ TEST_F(CFGTest, LivenessTest) {
   cfg.print(std::cout);
 
   const size_t sz = 3;
-  BitsetPowersetLattice<3> abc;
-  if (BitsetPowersetLattice<3>::isBottom(abc)) {
-    std::cout << "HELLO" << std::endl;
-  }
   MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
 
   analyzer.evaluate();
 
   analyzer.print(std::cout);
-
-  // bool colors = Colors::isEnabled();
-  // Colors::setEnabled(false);
-  // std::stringstream ss;
-  // cfg.print(ss);
-  // Colors::setEnabled(colors);
-
-  // EXPECT_EQ(ss.str(), cfgText);
 }

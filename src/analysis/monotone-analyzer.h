@@ -16,7 +16,7 @@ struct MonotoneCFGAnalyzer;
 
 template<size_t N>
 struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
-    BlockState(BasicBlock* underlyingBlock);
+    BlockState(const BasicBlock* underlyingBlock);
 
     void addPredecessor(BlockState* pred);
     void addSuccessor(BlockState* succ);
@@ -33,7 +33,7 @@ struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
 
     private:
     Index index;
-    BasicBlock* cfgBlock;
+    const BasicBlock* cfgBlock;
     BitsetPowersetLattice<N> beginState;
     std::vector<BitsetPowersetLattice<N>> states;
     std::vector<BlockState*> predecessors;
@@ -56,5 +56,7 @@ struct MonotoneCFGAnalyzer {
 };
 
 } // namespace wasm::analysis
+
+#include "monotone-analyzer-impl.h"
 
 #endif // wasm_analysis_monotone_analyzer_h
