@@ -193,31 +193,33 @@ void HashStringifyWalker::visitControlFlow(HashStringifyWalker* self,
   // self->insertHash(hashValue, curr);
 }
 
+TestStringifyWalker::TestStringifyWalker(std::ostream& os) : os(os) {};
+
 void TestStringifyWalker::walkModule(Module* module) {
   StringifyWalker::walkModule(this, module);
 }
 
 void TestStringifyWalker::functionDidBegin(TestStringifyWalker* self) {
-  printf("append function begin\n");
+  self->os << "append function begin\n";
 }
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
                                        Expression** currp) {
   [[maybe_unused]] Expression* curr = *currp;
-  std::cout << "in visitControlFlow with " << ShallowExpression{curr, self->wasm} << std::endl;
+  self->os << "in visitControlFlow with " << ShallowExpression{curr, self->wasm} << std::endl;
 }
 
 void TestStringifyWalker::visitExpression(Expression* curr) {
-  std::cout << "in visitExpression for " << ShallowExpression{curr, this->wasm} << std::endl;
+  this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm} << std::endl;
 }
 
 struct Outlining : public Pass {
 
   void run(Module* module) override {
-    printf("Hello from outlining!\n");
-
-    TestStringifyWalker stringify = TestStringifyWalker();
+    std::stringstream ss;
+    TestStringifyWalker stringify = TestStringifyWalker(ss);
     stringify.walkModule(module);
+    std::cout << ss.str();
     printf("Outlining is done\n");
   }
 };

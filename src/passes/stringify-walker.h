@@ -47,6 +47,10 @@ struct HashStringifyWalker
 struct TestStringifyWalker
 : public StringifyWalker<TestStringifyWalker> {
 
+  std::ostream& os;
+
+  TestStringifyWalker(std::ostream& os);
+
   void walkModule(Module *module);
   static void functionDidBegin(TestStringifyWalker* self);
   void visitExpression(Expression* curr);
