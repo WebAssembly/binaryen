@@ -29,6 +29,8 @@ template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
   return states.back();
 }
 
+// In our current limited implementation, we just update a new live variable
+// when it it is used in a get or set.
 template<size_t N> void BlockState<N>::visitLocalSet(LocalSet* curr) {
   states[currIndex].value[curr->index] = true;
 }
@@ -38,20 +40,24 @@ template<size_t N> void BlockState<N>::visitLocalGet(LocalGet* curr) {
 }
 
 template<size_t N> void BlockState<N>::transfer(std::queue<Index>& worklist) {
+  // compute transfer function for all expressions in the CFG block
   if (states.size() > 1) {
     auto cfgIter = cfgBlock->rbegin();
     currIndex = states.size() - 2;
 
     for (currIndex = states.size() - 2; cfgIter != cfgBlock->rend();
          --currIndex) {
-
+      // propagate state from previous state (i. e. join).
       states[currIndex] = BitsetPowersetLattice<N>::getLeastUpperBound(
         states[currIndex + 1], states[currIndex]);
+
+      // run transfer function.
       BlockState<N>::visit(*cfgIter);
       ++cfgIter;
     }
   }
 
+  // Propagate state to all predecessors (since this is a backward analysis).
   for (size_t i = 0; i < predecessors.size(); ++i) {
     BitsetPowersetLattice<N>& predLast = predecessors[i]->getLastState();
     BitsetPowersetLattice<N> joinResult =
@@ -76,6 +82,8 @@ template<size_t N> void BlockState<N>::print(std::ostream& os) {
 template<size_t N>
 MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
   MonotoneCFGAnalyzer<N> result;
+
+  // Map BasicBlocks to each BlockState's index
   std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
   size_t index = 0;
   for (auto it = cfg->begin(); it != cfg->end(); it++) {
@@ -83,6 +91,8 @@ MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
     basicBlockToState[&(*it)] = index++;
   }
 
+  // Update predecessors and successors of each BlockState object
+  // according to the BasicBlock's predecessors and successors.
   for (index = 0; index < result.stateBlocks.size(); ++index) {
     BlockState<N>& currBlock = result.stateBlocks.at(index);
     BasicBlock::Predecessors preds = currBlock.cfgBlock->preds();

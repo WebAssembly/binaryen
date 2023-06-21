@@ -29,10 +29,12 @@ BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N>& left,
   size_t leftCount = left.value.count();
   size_t rightCount = right.value.count();
 
+  // if left has more elements, left might be a superset of right
   if (leftCount > rightCount) {
     if ((left.value | right.value) == left.value) {
       return GREATER;
     }
+    // if right has more elements, right might be a superset of left
   } else if (leftCount < rightCount) {
     if ((left.value | right.value) == right.value) {
       return LESS;
@@ -44,6 +46,7 @@ BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N>& left,
   return NO_RELATION;
 }
 
+// Implement LUB as an OR of the two sets.
 template<size_t N>
 BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getLeastUpperBound(
   const BitsetPowersetLattice<N>& left, const BitsetPowersetLattice<N>& right) {

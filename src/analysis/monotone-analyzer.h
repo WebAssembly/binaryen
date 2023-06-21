@@ -13,6 +13,7 @@ namespace wasm::analysis {
 
 template<size_t N> struct MonotoneCFGAnalyzer;
 
+// A node which contains all the lattice states for a given CFG node.
 template<size_t N>
 struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
   BlockState(const BasicBlock* underlyingBlock);
@@ -23,26 +24,41 @@ struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
   BitsetPowersetLattice<N>& getFirstState();
   BitsetPowersetLattice<N>& getLastState();
 
+  // Transfer function implementation. Modifies the state for a particular
+  // expression type.
   void visitLocalSet(LocalSet* curr);
   void visitLocalGet(LocalGet* curr);
 
+  // Executes the transfer function on all the expressions of the corresponding
+  // CFG and then propagates the state to all predecessors (which depend on the
+  // current node).
   void transfer(std::queue<Index>& worklist);
 
+  // prints out all states.
   void print(std::ostream& os);
 
 private:
+  // The index of the block is same as the CFG index.
   Index index;
   const BasicBlock* cfgBlock;
   std::vector<BitsetPowersetLattice<N>> states;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;
+
+  // This is used to pass the current expression to be analyzed to the
+  // expression visitors. Then we don't need to define a new
+  // UnifiedExpressionVisitor-like visitor. with a different signature.
   size_t currIndex;
+
   friend MonotoneCFGAnalyzer<N>;
 };
 
 template<size_t N> struct MonotoneCFGAnalyzer {
+  // Constructs a graph of BlockState objects which parallels
+  // the CFG graph. Each CFG node corresponds to a BlockState node.
   static MonotoneCFGAnalyzer<N> fromCFG(CFG* cfg);
 
+  // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
 
   void print(std::ostream& os);
