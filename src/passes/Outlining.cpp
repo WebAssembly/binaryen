@@ -98,15 +98,14 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
 
 template <typename SubType>
 void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
-  if (self->queue.empty()) {
+  auto& queue = self->queue;
+  if (queue.empty()) {
     return;
   }
 
-  auto& queue = self->queue;
   self->pushTask(StringifyWalker::handler, nullptr);
   Expression** currp = queue.front();
   queue.pop();
-  [[maybe_unused]] auto name = getExpressionName(*currp);
   StringifyWalker<SubType>::deferredScan(self, currp);
 }
 
