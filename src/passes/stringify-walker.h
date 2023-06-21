@@ -22,7 +22,7 @@ struct StringifyWalker
 
 private:
   static void handler(SubType* self, Expression**);
-  static void scanChildren(SubType* self, Expression** currp);
+  static void deferredScan(SubType* self, Expression** currp);
 };
 
 struct HashStringifyWalker

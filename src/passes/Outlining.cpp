@@ -39,7 +39,7 @@ void StringifyWalker<SubType>::walkModule(SubType *self, Module* module) {
 }
 
 template <typename SubType>
-void StringifyWalker<SubType>::scanChildren(SubType* stringify,
+void StringifyWalker<SubType>::deferredScan(SubType* stringify,
                                    Expression** currp) {
   Expression* curr = *currp;
   switch (curr->_id) {
@@ -98,18 +98,16 @@ void StringifyWalker<SubType>::scanChildren(SubType* stringify,
 
 template <typename SubType>
 void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
-  // printf("In StringifyWalker::handler\n");
-  auto& queue = self->queue;
-  if (!queue.empty()) {
-    self->pushTask(StringifyWalker::handler, nullptr);
-    Expression** currp = queue.front();
-    queue.pop();
-    [[maybe_unused]] auto name = getExpressionName(*currp);
-    // std::cout << "queue has an item, " << name << std::endl;
-    StringifyWalker<SubType>::scanChildren(self, currp);
-  } else {
-    // std::cout << "queue is empty" << std::endl;
+  if (self->queue.empty()) {
+    return;
   }
+
+  auto& queue = self->queue;
+  self->pushTask(StringifyWalker::handler, nullptr);
+  Expression** currp = queue.front();
+  queue.pop();
+  [[maybe_unused]] auto name = getExpressionName(*currp);
+  StringifyWalker<SubType>::deferredScan(self, currp);
 }
 
 template <typename SubType>
@@ -134,6 +132,8 @@ void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
       PostWalker<SubType>::scan(self, currp);
     }
   }
+
+
 }
 
 
