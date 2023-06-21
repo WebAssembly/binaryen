@@ -47,20 +47,23 @@ public:
 };
 
 template<typename T>
+inline constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
+                                                        decltype(T::compare),
+                                                        const T&,
+                                                        const T&>::value;
+template<typename T>
+inline constexpr bool has_getLeastUpperBound = std::
+  is_invocable_r<T, decltype(T::getLeastUpperBound), const T&, const T&>::value;
+template<typename T>
+inline constexpr bool has_isTop =
+  std::is_invocable_r<bool, decltype(T::isTop), const T&>::value;
+template<typename T>
+inline constexpr bool has_isBottom =
+  std::is_invocable_r<bool, decltype(T::isBottom), const T&>::value;
+
+template<typename T>
 inline constexpr bool is_lattice =
-  std::is_invocable_r<LatticeComparison,
-                      decltype(SignLattice::compare),
-                      const SignLattice&,
-                      const SignLattice&>::value &&
-  std::is_invocable_r<SignLattice,
-                      decltype(SignLattice::getLeastUpperBound),
-                      const SignLattice&,
-                      const SignLattice&>::value &&
-  std::is_invocable_r<bool, decltype(SignLattice::isTop), const SignLattice&>::
-    value &&
-  std::is_invocable_r<bool,
-                      decltype(SignLattice::isBottom),
-                      const SignLattice&>::value;
+  has_compare<T>&& has_getLeastUpperBound<T>&& has_isTop<T>&& has_isBottom<T>;
 
 static_assert(is_lattice<SignLattice>);
 
