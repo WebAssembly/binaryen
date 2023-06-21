@@ -39,34 +39,24 @@ template<size_t N> void BlockState<N>::visitLocalGet(LocalGet* curr) {
   states[currIndex].value[curr->index] = true;
 }
 
-template<size_t N> void BlockState<N>::transfer(std::queue<Index>& worklist) {
-  // compute transfer function for all expressions in the CFG block
+template<size_t N> void BlockState<N>::transfer() {
   if (states.size() > 1) {
-    auto cfgIter = cfgBlock->rbegin();
-    currIndex = states.size() - 2;
-
-    for (currIndex = states.size() - 2; cfgIter != cfgBlock->rend();
-         --currIndex) {
-      // propagate state from previous state (i. e. join).
-      states[currIndex] = BitsetPowersetLattice<N>::getLeastUpperBound(
-        states[currIndex + 1], states[currIndex]);
-
-      // run transfer function.
-      BlockState<N>::visit(*cfgIter);
-      ++cfgIter;
-    }
+    return;
   }
 
-  // Propagate state to all predecessors (since this is a backward analysis).
-  for (size_t i = 0; i < predecessors.size(); ++i) {
-    BitsetPowersetLattice<N>& predLast = predecessors[i]->getLastState();
-    BitsetPowersetLattice<N> joinResult =
-      BitsetPowersetLattice<N>::getLeastUpperBound(states[0], predLast);
-    if (BitsetPowersetLattice<N>::compare(joinResult, predLast) !=
-        LatticeComparison::EQUAL) {
-      predLast = joinResult;
-      worklist.push(predecessors[i]->index);
-    }
+  // compute transfer function for all expressions in the CFG block
+  auto cfgIter = cfgBlock->rbegin();
+  currIndex = states.size() - 2;
+
+  for (currIndex = states.size() - 2; cfgIter != cfgBlock->rend();
+       --currIndex) {
+    // propagate state from previous state (i. e. join).
+    states[currIndex] = BitsetPowersetLattice<N>::getLeastUpperBound(
+      states[currIndex + 1], states[currIndex]);
+
+    // run transfer function.
+    BlockState<N>::visit(*cfgIter);
+    ++cfgIter;
   }
 }
 
@@ -97,12 +87,12 @@ MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
     BlockState<N>& currBlock = result.stateBlocks.at(index);
     BasicBlock::Predecessors preds = currBlock.cfgBlock->preds();
     BasicBlock::Successors succs = currBlock.cfgBlock->succs();
-    for (auto it = preds.begin(); it != preds.end(); ++it) {
-      currBlock.addPredecessor(&result.stateBlocks[basicBlockToState[*it.ptr]]);
+    for (auto pred : preds) {
+      currBlock.addPredecessor(&result.stateBlocks[basicBlockToState[&pred]]);
     }
 
-    for (auto it = succs.begin(); it != succs.end(); ++it) {
-      currBlock.addSuccessor(&result.stateBlocks[basicBlockToState[*it.ptr]]);
+    for (auto succ : succs) {
+      currBlock.addSuccessor(&result.stateBlocks[basicBlockToState[&succ]]);
     }
   }
 
@@ -113,13 +103,27 @@ template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
   std::queue<Index> worklist;
 
   for (size_t i = 0; i < stateBlocks.size(); ++i) {
-    stateBlocks[i].transfer(worklist);
+    worklist.push(stateBlocks[i].index);
   }
 
   while (!worklist.empty()) {
-    Index current = worklist.front();
+    BlockState<N>& currBlockState = stateBlocks[worklist.front()];
     worklist.pop();
-    stateBlocks[current].transfer(worklist);
+    currBlockState.transfer();
+
+    // Propagate state to dependents
+    for (size_t j = 0; j < currBlockState.predecessors.size(); ++j) {
+      BitsetPowersetLattice<N>& predLast =
+        currBlockState.predecessors[j]->getLastState();
+      BitsetPowersetLattice<N> joinResult =
+        BitsetPowersetLattice<N>::getLeastUpperBound(
+          currBlockState.getFirstState(), predLast);
+      if (BitsetPowersetLattice<N>::compare(joinResult, predLast) !=
+          LatticeComparison::EQUAL) {
+        predLast = joinResult;
+        worklist.push(currBlockState.predecessors[j]->index);
+      }
+    }
   }
 }
 

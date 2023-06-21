@@ -32,7 +32,7 @@ struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
   // Executes the transfer function on all the expressions of the corresponding
   // CFG and then propagates the state to all predecessors (which depend on the
   // current node).
-  void transfer(std::queue<Index>& worklist);
+  void transfer();
 
   // prints out all states.
   void print(std::ostream& os);
