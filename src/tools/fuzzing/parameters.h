@@ -67,6 +67,10 @@ constexpr int HANG_LIMIT = 100;
 // the maximum amount of new GC types (structs, etc.) to create
 constexpr int MAX_NEW_GC_TYPES = 25;
 
+// the maximum amount of catches in each try (not including a catch-all, if
+// present).
+constexpr int MAX_TRY_CATCHES = 4;
+
 //
 constexpr size_t VeryImportant = 4;
 constexpr size_t Important = 2;

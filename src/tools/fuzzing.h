@@ -207,6 +207,7 @@ private:
   void setupTables();
   void setupGlobals();
   void setupTags();
+  void addTag();
   void finalizeMemory();
   void finalizeTable();
   void prepareHangLimitSupport();
@@ -283,6 +284,7 @@ private:
   Expression* makeMaybeBlock(Type type);
   Expression* buildIf(const struct ThreeArgs& args, Type type);
   Expression* makeIf(Type type);
+  Expression* makeTry(Type type);
   Expression* makeBreak(Type type);
   Expression* makeCall(Type type);
   Expression* makeCallIndirect(Type type);
@@ -358,6 +360,8 @@ private:
   // get/set).
   Expression* makeArrayBulkMemoryOp(Type type);
   Expression* makeI31Get(Type type);
+  Expression* makeThrow(Type type);
+
   Expression* makeMemoryInit();
   Expression* makeDataDrop();
   Expression* makeMemoryCopy();
