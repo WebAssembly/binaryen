@@ -33,7 +33,6 @@ struct BlockState : public UnifiedExpressionVisitor<BlockState<N>> {
 private:
   Index index;
   const BasicBlock* cfgBlock;
-  BitsetPowersetLattice<N> beginState;
   std::vector<BitsetPowersetLattice<N>> states;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;

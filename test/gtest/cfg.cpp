@@ -124,3 +124,44 @@ TEST_F(CFGTest, LivenessTest) {
 
   analyzer.print(std::cout);
 }
+
+TEST(CFGTest, Nonlinearliveness) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar
+        (local $a (i32))
+        (local $b (i32))
+        (local.set $a
+          (i32.const 1)
+        )
+        (if
+          (i32.eq
+            (local.get $a)
+            (i32.const 2)
+          )
+          (local.set $b
+            (i32.const 4)
+          )
+          (drop
+            (local.get $a)
+          )
+        )
+      )
+    )
+  )wasm";
+
+  Module wasm;
+  SExpressionParser parser(moduleText);
+  SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
+
+  cfg.print(std::cout);
+
+  const size_t sz = 2;
+  MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
+
+  analyzer.evaluate();
+
+  analyzer.print(std::cout);
+}

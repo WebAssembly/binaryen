@@ -1,15 +1,16 @@
 #ifndef wasm_analysis_monotone_analyzer_impl_h
 #define wasm_analysis_monotone_analyzer_impl_h
 
-#include "monotone-analyzer.h"
+#include <iostream>
 #include <unordered_map>
+
+#include "monotone-analyzer.h"
 
 namespace wasm::analysis {
 template<size_t N>
 BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    beginState(BitsetPowersetLattice<N>::getBottom()),
-    states(underlyingBlock->size(), BitsetPowersetLattice<N>::getBottom()),
+    states(underlyingBlock->size() + 1, BitsetPowersetLattice<N>::getBottom()),
     currIndex(0) {}
 
 template<size_t N> void BlockState<N>::addPredecessor(BlockState* pred) {
@@ -21,13 +22,10 @@ template<size_t N> void BlockState<N>::addSuccessor(BlockState* succ) {
 }
 
 template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
-  return beginState;
+  return states.front();
 }
 
 template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
-  if (states.empty()) {
-    return beginState;
-  }
   return states.back();
 }
 
@@ -40,29 +38,24 @@ template<size_t N> void BlockState<N>::visitLocalGet(LocalGet* curr) {
 }
 
 template<size_t N> void BlockState<N>::transfer(std::queue<Index>& worklist) {
-  if (!states.empty()) {
+  if (states.size() > 1) {
     auto cfgIter = cfgBlock->rbegin();
+    currIndex = states.size() - 2;
 
-    for (currIndex = states.size() - 1;
-         cfgIter != cfgBlock->rend() && currIndex > 0;
+    for (currIndex = states.size() - 2; cfgIter != cfgBlock->rend();
          --currIndex) {
-      BlockState<N>::visit(*cfgIter);
-      states[currIndex - 1] = BitsetPowersetLattice<N>::getLeastUpperBound(
-        states[currIndex - 1], states[currIndex]);
-      ++cfgIter;
-    }
 
-    if (cfgIter != cfgBlock->rend()) {
+      states[currIndex] = BitsetPowersetLattice<N>::getLeastUpperBound(
+        states[currIndex + 1], states[currIndex]);
       BlockState<N>::visit(*cfgIter);
-      beginState = BitsetPowersetLattice<N>::getLeastUpperBound(
-        beginState, states[currIndex]);
+      ++cfgIter;
     }
   }
 
   for (size_t i = 0; i < predecessors.size(); ++i) {
     BitsetPowersetLattice<N>& predLast = predecessors[i]->getLastState();
     BitsetPowersetLattice<N> joinResult =
-      BitsetPowersetLattice<N>::getLeastUpperBound(beginState, predLast);
+      BitsetPowersetLattice<N>::getLeastUpperBound(states[0], predLast);
     if (BitsetPowersetLattice<N>::compare(joinResult, predLast) !=
         LatticeComparison::EQUAL) {
       predLast = joinResult;
@@ -74,7 +67,6 @@ template<size_t N> void BlockState<N>::transfer(std::queue<Index>& worklist) {
 template<size_t N> void BlockState<N>::print(std::ostream& os) {
   os << "State Block: " << index << std::endl;
   os << "State at beginning: ";
-  beginState.print(os);
   for (auto state : states) {
     state.print(os);
   }
@@ -92,7 +84,7 @@ MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
   }
 
   for (index = 0; index < result.stateBlocks.size(); ++index) {
-    auto currBlock = result.stateBlocks[index];
+    BlockState<N>& currBlock = result.stateBlocks.at(index);
     BasicBlock::Predecessors preds = currBlock.cfgBlock->preds();
     BasicBlock::Successors succs = currBlock.cfgBlock->succs();
     for (auto it = preds.begin(); it != preds.end(); ++it) {
@@ -114,7 +106,7 @@ template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
     stateBlocks[i].transfer(worklist);
   }
 
-  while (stateBlocks.empty()) {
+  while (!worklist.empty()) {
     Index current = worklist.front();
     worklist.pop();
     stateBlocks[current].transfer(worklist);
