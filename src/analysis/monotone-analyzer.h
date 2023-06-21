@@ -41,14 +41,14 @@ private:
   // The index of the block is same as the CFG index.
   Index index;
   const BasicBlock* cfgBlock;
-  std::vector<BitsetPowersetLattice<N>> states;
+  // State at beginning of CFG node.
+  BitsetPowersetLattice<N> beginningState;
+  // State at the end of the CFG node.
+  BitsetPowersetLattice<N> endState;
+  // Holds intermediate state values.
+  BitsetPowersetLattice<N> currState;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;
-
-  // This is used to pass the current expression to be analyzed to the
-  // expression visitors. Then we don't need to define a new
-  // UnifiedExpressionVisitor-like visitor. with a different signature.
-  size_t currIndex;
 
   friend MonotoneCFGAnalyzer<N>;
 };

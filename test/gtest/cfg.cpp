@@ -84,7 +84,7 @@ TEST_F(CFGTest, Print) {
   EXPECT_EQ(ss.str(), cfgText);
 }
 
-TEST_F(CFGTest, LivenessTest) {
+TEST_F(CFGTest, LinearLiveness) {
   auto moduleText = R"wasm(
     (module
       (func $bar
@@ -110,22 +110,41 @@ TEST_F(CFGTest, LivenessTest) {
     )
   )wasm";
 
+  auto analyzerText = R"analyzer(CFG Analyzer
+State Block: 0
+State at beginning: 111
+State at end: 000
+Intermediate States (reverse order): 
+000
+000
+000
+100
+100
+100
+110
+111
+111
+111
+111
+111
+End
+)analyzer";
+
   Module wasm;
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-
-  cfg.print(std::cout);
-
   const size_t sz = 3;
   MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
-
   analyzer.evaluate();
 
-  analyzer.print(std::cout);
+  std::stringstream ss;
+  analyzer.print(ss);
+
+  EXPECT_EQ(ss.str(), analyzerText);
 }
 
-TEST(CFGTest, Nonlinearliveness) {
+TEST_F(CFGTest, NonlinearLiveness) {
   auto moduleText = R"wasm(
     (module
       (func $bar
@@ -150,18 +169,50 @@ TEST(CFGTest, Nonlinearliveness) {
     )
   )wasm";
 
+  auto analyzerText = R"analyzer(CFG Analyzer
+State Block: 0
+State at beginning: 11
+State at end: 11
+Intermediate States (reverse order): 
+11
+11
+11
+11
+11
+11
+State Block: 1
+State at beginning: 10
+State at end: 00
+Intermediate States (reverse order): 
+00
+10
+10
+State Block: 2
+State at beginning: 01
+State at end: 00
+Intermediate States (reverse order): 
+00
+00
+01
+State Block: 3
+State at beginning: 00
+State at end: 00
+Intermediate States (reverse order): 
+00
+00
+End
+)analyzer";
+
   Module wasm;
-  SExpressionParser parser(moduleText);
-  SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
+  parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-
-  cfg.print(std::cout);
-
   const size_t sz = 2;
   MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
-
   analyzer.evaluate();
 
-  analyzer.print(std::cout);
+  std::stringstream ss;
+  analyzer.print(ss);
+
+  EXPECT_EQ(ss.str(), analyzerText);
 }

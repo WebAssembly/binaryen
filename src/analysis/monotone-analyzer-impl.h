@@ -10,8 +10,9 @@ namespace wasm::analysis {
 template<size_t N>
 BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    states(underlyingBlock->size() + 1, BitsetPowersetLattice<N>::getBottom()),
-    currIndex(0) {}
+    beginningState(BitsetPowersetLattice<N>::getBottom()),
+    endState(BitsetPowersetLattice<N>::getBottom()),
+    currState(BitsetPowersetLattice<N>::getBottom()) {}
 
 template<size_t N> void BlockState<N>::addPredecessor(BlockState* pred) {
   predecessors.push_back(pred);
@@ -22,51 +23,59 @@ template<size_t N> void BlockState<N>::addSuccessor(BlockState* succ) {
 }
 
 template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
-  return states.front();
+  return beginningState;
 }
 
 template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
-  return states.back();
+  return endState;
 }
 
 // In our current limited implementation, we just update a new live variable
 // when it it is used in a get or set.
 template<size_t N> void BlockState<N>::visitLocalSet(LocalSet* curr) {
-  states[currIndex].value[curr->index] = true;
+  currState.value[curr->index] = true;
 }
 
 template<size_t N> void BlockState<N>::visitLocalGet(LocalGet* curr) {
-  states[currIndex].value[curr->index] = true;
+  currState.value[curr->index] = true;
 }
 
 template<size_t N> void BlockState<N>::transfer() {
-  if (states.size() > 1) {
+  if (cfgBlock->size() == 0) {
+    beginningState.getLeastUpperBound(endState);
     return;
   }
 
   // compute transfer function for all expressions in the CFG block
   auto cfgIter = cfgBlock->rbegin();
-  currIndex = states.size() - 2;
+  currState.copy(endState);
 
-  for (currIndex = states.size() - 2; cfgIter != cfgBlock->rend();
-       --currIndex) {
-    // propagate state from previous state (i. e. join).
-    states[currIndex] = BitsetPowersetLattice<N>::getLeastUpperBound(
-      states[currIndex + 1], states[currIndex]);
-
+  while (cfgIter != cfgBlock->rend()) {
     // run transfer function.
     BlockState<N>::visit(*cfgIter);
     ++cfgIter;
   }
+  beginningState.copy(currState);
 }
 
 template<size_t N> void BlockState<N>::print(std::ostream& os) {
   os << "State Block: " << index << std::endl;
   os << "State at beginning: ";
-  for (auto state : states) {
-    state.print(os);
+  beginningState.print(os);
+  os << "State at end: ";
+  endState.print(os);
+  os << "Intermediate States (reverse order): " << std::endl;
+
+  currState.copy(endState);
+  currState.print(os);
+  auto cfgIter = cfgBlock->rbegin();
+
+  while (cfgIter != cfgBlock->rend()) {
+    // run transfer function.
+    BlockState<N>::visit(*cfgIter);
+    currState.print(os);
+    ++cfgIter;
   }
-  os << std::endl;
 }
 
 template<size_t N>
@@ -102,8 +111,8 @@ MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
 template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
   std::queue<Index> worklist;
 
-  for (size_t i = 0; i < stateBlocks.size(); ++i) {
-    worklist.push(stateBlocks[i].index);
+  for (auto it = stateBlocks.rbegin(); it != stateBlocks.rend(); ++it) {
+    worklist.push(it->index);
   }
 
   while (!worklist.empty()) {
@@ -115,12 +124,13 @@ template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
     for (size_t j = 0; j < currBlockState.predecessors.size(); ++j) {
       BitsetPowersetLattice<N>& predLast =
         currBlockState.predecessors[j]->getLastState();
-      BitsetPowersetLattice<N> joinResult =
-        BitsetPowersetLattice<N>::getLeastUpperBound(
-          currBlockState.getFirstState(), predLast);
-      if (BitsetPowersetLattice<N>::compare(joinResult, predLast) !=
-          LatticeComparison::EQUAL) {
-        predLast = joinResult;
+
+      LatticeComparison cmp = BitsetPowersetLattice<N>::compare(
+        predLast, currBlockState.getFirstState());
+
+      if (cmp == LatticeComparison::NO_RELATION ||
+          cmp == LatticeComparison::LESS) {
+        predLast.getLeastUpperBound(currBlockState.getFirstState());
         worklist.push(currBlockState.predecessors[j]->index);
       }
     }
