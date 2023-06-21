@@ -46,19 +46,22 @@ public:
   }
 };
 
-static_assert(std::is_invocable_r<LatticeComparison,
-                                  decltype(SignLattice::compare),
-                                  const SignLattice&,
-                                  const SignLattice&>::value);
-static_assert(std::is_invocable_r<SignLattice,
-                                  decltype(SignLattice::getLeastUpperBound),
-                                  const SignLattice&,
-                                  const SignLattice&>::value);
-static_assert(std::is_invocable_r<bool,
-                                  decltype(SignLattice::isTop),
-                                  const SignLattice&>::value);
-static_assert(std::is_invocable_r<bool,
-                                  decltype(SignLattice::isBottom),
-                                  const SignLattice&>::value);
+template<typename T>
+inline constexpr bool is_lattice =
+  std::is_invocable_r<LatticeComparison,
+                      decltype(SignLattice::compare),
+                      const SignLattice&,
+                      const SignLattice&>::value &&
+  std::is_invocable_r<SignLattice,
+                      decltype(SignLattice::getLeastUpperBound),
+                      const SignLattice&,
+                      const SignLattice&>::value &&
+  std::is_invocable_r<bool, decltype(SignLattice::isTop), const SignLattice&>::
+    value &&
+  std::is_invocable_r<bool,
+                      decltype(SignLattice::isBottom),
+                      const SignLattice&>::value;
+
+static_assert(is_lattice<SignLattice>);
 
 } // namespace wasm::analysis
