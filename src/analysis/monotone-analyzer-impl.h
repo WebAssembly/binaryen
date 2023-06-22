@@ -7,8 +7,8 @@
 #include "monotone-analyzer.h"
 
 namespace wasm::analysis {
-template<size_t N> inline
-BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
+template<size_t N>
+inline BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
     beginningState(BitsetPowersetLattice<N>::getBottom()),
     endState(BitsetPowersetLattice<N>::getBottom()),
@@ -22,11 +22,13 @@ template<size_t N> inline void BlockState<N>::addSuccessor(BlockState* succ) {
   successors.push_back(succ);
 }
 
-template<size_t N> inline BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
+template<size_t N>
+inline BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
   return beginningState;
 }
 
-template<size_t N> inline BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
+template<size_t N>
+inline BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
   return endState;
 }
 

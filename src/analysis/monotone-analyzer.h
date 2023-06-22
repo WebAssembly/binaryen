@@ -14,8 +14,7 @@ namespace wasm::analysis {
 template<size_t N> struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
-template<size_t N>
-struct BlockState : public Visitor<BlockState<N>> {
+template<size_t N> struct BlockState : public Visitor<BlockState<N>> {
   BlockState(const BasicBlock* underlyingBlock);
 
   void addPredecessor(BlockState* pred);
