@@ -20,7 +20,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
-#include "src/ir/utils.h"
+#include "ir/utils.h"
 #include "stringify-walker.h"
 #include "wasm-builder.h"
 #include "wasm-stack.h"
