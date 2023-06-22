@@ -1,22 +1,21 @@
 #ifndef passes_stringify_walker_module_h
 #define passes_stringify_walker_module_h
 
-#include <queue>
 #include "wasm-traversal.h"
+#include <queue>
 
 namespace wasm {
 
 template<typename SubType>
 struct StringifyWalker
-  : public PostWalker<SubType,
-                      UnifiedExpressionVisitor<SubType>> {
+  : public PostWalker<SubType, UnifiedExpressionVisitor<SubType>> {
 
-  Module *wasm;
+  Module* wasm;
   std::queue<Expression**> queue;
 
   static void walkModule(SubType* self, Module* module);
   static void scan(SubType* self, Expression** currp);
-  static void addUniqueSymbol(SubType *self, Expression**);
+  static void addUniqueSymbol(SubType* self, Expression**);
   static void visitControlFlow(SubType* self, Expression** currp);
   void visitExpression(Expression* curr);
 
@@ -25,15 +24,14 @@ private:
   static void deferredScan(SubType* self, Expression** currp);
 };
 
-struct HashStringifyWalker
-: public StringifyWalker<HashStringifyWalker> {
+struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 
-  void walkModule(Module *module);
-  static void addUniqueSymbol(HashStringifyWalker *self, Expression**);
+  void walkModule(Module* module);
+  static void addUniqueSymbol(HashStringifyWalker* self, Expression**);
   static void visitControlFlow(HashStringifyWalker* self, Expression** currp);
   void visitExpression(Expression* curr);
 
- private:
+private:
   std::vector<uint64_t> string;
   uint64_t monotonic = 0;
   // Change key to Expression
@@ -43,15 +41,14 @@ struct HashStringifyWalker
   void addExpressionHash(Expression* curr, uint64_t hash);
 };
 
-struct TestStringifyWalker
-: public StringifyWalker<TestStringifyWalker> {
+struct TestStringifyWalker : public StringifyWalker<TestStringifyWalker> {
 
   std::ostream& os;
 
   TestStringifyWalker(std::ostream& os);
 
-  void walkModule(Module *module);
-  static void addUniqueSymbol(TestStringifyWalker *self, Expression**);
+  void walkModule(Module* module);
+  static void addUniqueSymbol(TestStringifyWalker* self, Expression**);
   static void visitControlFlow(TestStringifyWalker* self, Expression** currp);
   void visitExpression(Expression* curr);
   void print(std::ostream& os);
