@@ -7,8 +7,7 @@ namespace wasm::analysis {
 
 template<size_t N>
 inline void BitsetPowersetLattice<N>::copy(BitsetPowersetLattice<N>& src) {
-  value.reset();
-  value |= src.value;
+  value = src.value;
 }
 
 template<size_t N>
@@ -73,7 +72,7 @@ inline void BitsetPowersetLattice<N>::getLeastUpperBound(
 
 template<size_t N>
 inline void BitsetPowersetLattice<N>::print(std::ostream& os) {
-  os << value << std::endl;
+  os << value;
 }
 
 }; // namespace wasm::analysis

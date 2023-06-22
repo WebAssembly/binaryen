@@ -7,40 +7,40 @@
 #include "monotone-analyzer.h"
 
 namespace wasm::analysis {
-template<size_t N>
+template<size_t N> inline
 BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
     beginningState(BitsetPowersetLattice<N>::getBottom()),
     endState(BitsetPowersetLattice<N>::getBottom()),
     currState(BitsetPowersetLattice<N>::getBottom()) {}
 
-template<size_t N> void BlockState<N>::addPredecessor(BlockState* pred) {
+template<size_t N> inline void BlockState<N>::addPredecessor(BlockState* pred) {
   predecessors.push_back(pred);
 }
 
-template<size_t N> void BlockState<N>::addSuccessor(BlockState* succ) {
+template<size_t N> inline void BlockState<N>::addSuccessor(BlockState* succ) {
   successors.push_back(succ);
 }
 
-template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
+template<size_t N> inline BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
   return beginningState;
 }
 
-template<size_t N> BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
+template<size_t N> inline BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
   return endState;
 }
 
 // In our current limited implementation, we just update a new live variable
 // when it it is used in a get or set.
-template<size_t N> void BlockState<N>::visitLocalSet(LocalSet* curr) {
+template<size_t N> inline void BlockState<N>::visitLocalSet(LocalSet* curr) {
+  currState.value[curr->index] = false;
+}
+
+template<size_t N> inline void BlockState<N>::visitLocalGet(LocalGet* curr) {
   currState.value[curr->index] = true;
 }
 
-template<size_t N> void BlockState<N>::visitLocalGet(LocalGet* curr) {
-  currState.value[curr->index] = true;
-}
-
-template<size_t N> void BlockState<N>::transfer() {
+template<size_t N> inline void BlockState<N>::transfer() {
   if (cfgBlock->size() == 0) {
     beginningState.getLeastUpperBound(endState);
     return;
@@ -58,28 +58,31 @@ template<size_t N> void BlockState<N>::transfer() {
   beginningState.copy(currState);
 }
 
-template<size_t N> void BlockState<N>::print(std::ostream& os) {
+template<size_t N> inline void BlockState<N>::print(std::ostream& os) {
   os << "State Block: " << index << std::endl;
   os << "State at beginning: ";
   beginningState.print(os);
-  os << "State at end: ";
+  os << std::endl << "State at end: ";
   endState.print(os);
-  os << "Intermediate States (reverse order): " << std::endl;
+  os << std::endl << "Intermediate States (reverse order): " << std::endl;
 
   currState.copy(endState);
   currState.print(os);
+  os << std::endl;
   auto cfgIter = cfgBlock->rbegin();
 
   while (cfgIter != cfgBlock->rend()) {
     // run transfer function.
+    os << ShallowExpression{*cfgIter} << std::endl;
     BlockState<N>::visit(*cfgIter);
     currState.print(os);
+    os << std::endl;
     ++cfgIter;
   }
 }
 
 template<size_t N>
-MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
+MonotoneCFGAnalyzer<N> inline MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
   MonotoneCFGAnalyzer<N> result;
 
   // Map BasicBlocks to each BlockState's index
@@ -108,7 +111,7 @@ MonotoneCFGAnalyzer<N> MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
   return result;
 }
 
-template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
+template<size_t N> inline void MonotoneCFGAnalyzer<N>::evaluate() {
   std::queue<Index> worklist;
 
   for (auto it = stateBlocks.rbegin(); it != stateBlocks.rend(); ++it) {
@@ -137,7 +140,7 @@ template<size_t N> void MonotoneCFGAnalyzer<N>::evaluate() {
   }
 }
 
-template<size_t N> void MonotoneCFGAnalyzer<N>::print(std::ostream& os) {
+template<size_t N> inline void MonotoneCFGAnalyzer<N>::print(std::ostream& os) {
   os << "CFG Analyzer" << std::endl;
   for (auto state : stateBlocks) {
     state.print(os);

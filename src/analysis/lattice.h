@@ -9,41 +9,54 @@ namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
 
+template<typename T>
+constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
+                                                 decltype(T::compare),
+                                                 const T&,
+                                                 const T&>::value;
+template<typename T>
+constexpr bool has_getLeastUpperBound = std::
+  is_invocable_r<T, decltype(T::getLeastUpperBound), const T&, const T&>::value;
+template<typename T>
+constexpr bool has_isTop =
+  std::is_invocable_r<bool, decltype(T::isTop), const T&>::value;
+template<typename T>
+constexpr bool has_isBottom =
+  std::is_invocable_r<bool, decltype(T::isBottom), const T&>::value;
+
+template<typename T>
+constexpr bool is_lattice =
+  has_compare<T>&& has_getLeastUpperBound<T>&& has_isTop<T>&& has_isBottom<T>;
+
 // Represents a powerset lattice element (i.e. a set) as a bitvector. A true
 // means that an element is present in the set.
 template<size_t N> struct BitsetPowersetLattice {
   std::bitset<N> value;
 
-  // Copies sets the bitvector to be identical to that of a source lattice
+  // Sets the bitvector to be identical to that of a source lattice
   // element.
-  inline void copy(BitsetPowersetLattice<N>& src);
+  void copy(BitsetPowersetLattice<N>& src);
 
-  // Returns a bottom lattice element to use.
-  static inline BitsetPowersetLattice<N> getBottom();
-
-  // Indicates whether a lattice element is the top element.
-  static inline bool isTop(const BitsetPowersetLattice<N>& element);
-
-  // Indicates whether a lattice element is the bottom element.
-  static inline bool isBottom(const BitsetPowersetLattice<N>& element);
+  static BitsetPowersetLattice<N> getBottom();
+  static bool isTop(const BitsetPowersetLattice<N>& element);
+  static bool isBottom(const BitsetPowersetLattice<N>& element);
 
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
-  static inline LatticeComparison
-  compare(const BitsetPowersetLattice<N>& left,
-          const BitsetPowersetLattice<N>& right);
+  static LatticeComparison compare(const BitsetPowersetLattice<N>& left,
+                                   const BitsetPowersetLattice<N>& right);
 
   // Returns a lattice element which is the least upper bound of the left and
   // right elements.
-  static inline BitsetPowersetLattice<N>
+  static BitsetPowersetLattice<N>
   getLeastUpperBound(const BitsetPowersetLattice<N>& left,
                      const BitsetPowersetLattice<N>& right);
 
   // Same as above function, but does this in place.
-  inline void getLeastUpperBound(const BitsetPowersetLattice<N>& right);
+  void getLeastUpperBound(const BitsetPowersetLattice<N>& right);
 
   // Prints out the bits in the bitvector for a lattice element.
-  inline void print(std::ostream& os);
+  void print(std::ostream& os);
 };
 
 } // namespace wasm::analysis

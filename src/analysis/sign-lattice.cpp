@@ -46,25 +46,6 @@ public:
   }
 };
 
-template<typename T>
-inline constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
-                                                        decltype(T::compare),
-                                                        const T&,
-                                                        const T&>::value;
-template<typename T>
-inline constexpr bool has_getLeastUpperBound = std::
-  is_invocable_r<T, decltype(T::getLeastUpperBound), const T&, const T&>::value;
-template<typename T>
-inline constexpr bool has_isTop =
-  std::is_invocable_r<bool, decltype(T::isTop), const T&>::value;
-template<typename T>
-inline constexpr bool has_isBottom =
-  std::is_invocable_r<bool, decltype(T::isBottom), const T&>::value;
-
-template<typename T>
-inline constexpr bool is_lattice =
-  has_compare<T>&& has_getLeastUpperBound<T>&& has_isTop<T>&& has_isBottom<T>;
-
 static_assert(is_lattice<SignLattice>);
 
 } // namespace wasm::analysis
