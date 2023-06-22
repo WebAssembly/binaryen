@@ -1263,7 +1263,7 @@ class CtorEval(TestCaseHandler):
 
         # get the list of exports, so we can tell ctor-eval what to eval.
         wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
-        p = re.compile(r'^ [(]export "([\d\w$+-_:.]+)" [(]func')
+        p = re.compile(r'^ [(]export "(.*[^\\]?)" [(]func')
         exports = []
         for line in wat.splitlines():
             m = p.match(line)
