@@ -54,7 +54,8 @@ namespace wasm {
  *   - The add binaryOp's left and right children are visited first as they need
  *     to be on the stack before the add operation is executed
  *   - The if-condition (i32.const 0) is visited before the if expression, so
- *     when children of the if expression is visited, we skip visiting the if-condition
+ *     when children of the if expression is visited, we skip visiting the
+ * if-condition
  *
  */
 template<typename SubType>
@@ -172,7 +173,8 @@ void StringifyWalker<SubType>::visitControlFlow(SubType* self,
 }
 
 template<typename SubType>
-void StringifyWalker<SubType>::addUniqueSymbol(SubType* self, Expression** currp) {
+void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
+                                               Expression** currp) {
   self->addUniqueSymbol(self, currp);
 }
 
@@ -225,7 +227,7 @@ void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
                                           Expression** currp) {
   Expression* curr = *currp;
   self->os << "adding unique symbol\n";
-           self->os << *curr << std::endl;
+  self->os << *curr << std::endl;
 }
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
