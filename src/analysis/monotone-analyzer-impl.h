@@ -50,14 +50,14 @@ template<size_t N> inline void BlockState<N>::transfer() {
 
   // compute transfer function for all expressions in the CFG block
   auto cfgIter = cfgBlock->rbegin();
-  currState.copy(endState);
+  currState = endState;
 
   while (cfgIter != cfgBlock->rend()) {
     // run transfer function.
     BlockState<N>::visit(*cfgIter);
     ++cfgIter;
   }
-  beginningState.copy(currState);
+  beginningState = currState;
 }
 
 template<size_t N> inline void BlockState<N>::print(std::ostream& os) {
@@ -68,7 +68,7 @@ template<size_t N> inline void BlockState<N>::print(std::ostream& os) {
   endState.print(os);
   os << std::endl << "Intermediate States (reverse order): " << std::endl;
 
-  currState.copy(endState);
+  currState = endState;
   currState.print(os);
   os << std::endl;
   auto cfgIter = cfgBlock->rbegin();

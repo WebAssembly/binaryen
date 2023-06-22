@@ -6,11 +6,6 @@
 namespace wasm::analysis {
 
 template<size_t N>
-inline void BitsetPowersetLattice<N>::copy(BitsetPowersetLattice<N>& src) {
-  value = src.value;
-}
-
-template<size_t N>
 inline BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getBottom() {
   // Return the empty set as the bottom lattice element.
   BitsetPowersetLattice<N> result{0};

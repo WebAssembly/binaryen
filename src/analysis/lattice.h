@@ -33,10 +33,6 @@ constexpr bool is_lattice =
 template<size_t N> struct BitsetPowersetLattice {
   std::bitset<N> value;
 
-  // Sets the bitvector to be identical to that of a source lattice
-  // element.
-  void copy(BitsetPowersetLattice<N>& src);
-
   static BitsetPowersetLattice<N> getBottom();
   static bool isTop(const BitsetPowersetLattice<N>& element);
   static bool isBottom(const BitsetPowersetLattice<N>& element);
