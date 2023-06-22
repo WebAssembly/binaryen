@@ -28,14 +28,41 @@
 
 namespace wasm {
 
+/*
+ * This walker visits an expression and it's siblings in a shallow manner,
+ * before then visiting the children of each expression. As a result, this walker un-nests nested control flow structures, so the expression visit
+ * order does not correspond to a normal postorder traversal of the function.
+ *
+ */
 template <typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType *self, Module* module) {
   self->wasm = module;
   self->pushTask(StringifyWalker::handler, nullptr);
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-    self->functionDidBegin(self);
     self->walk(func->body);
+    self->addUniqueSymbol(self, nullptr);
   });
+}
+
+/*
+ * This handler is responsibe for ensuring the children expressions of control
+ * flow expressions are visited after the control flow expression has already been
+ * visited. In order to perform this responsibility, the handler function needs to always be the very last task in
+ * the Walker stack, as the last task will be executed last. This why if the queue is not empty, the first statement
+ * pushes a new task to visit the handler again.
+ *
+ */
+template <typename SubType>
+void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
+  auto& queue = self->queue;
+  if (queue.empty()) {
+    return;
+  }
+
+  self->pushTask(StringifyWalker::handler, nullptr);
+  Expression** currp = queue.front();
+  queue.pop();
+  StringifyWalker<SubType>::deferredScan(self, currp);
 }
 
 template <typename SubType>
@@ -44,6 +71,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
   Expression* curr = *currp;
   switch (curr->_id) {
     case Expression::Id::BlockId: {
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, nullptr);
       auto* block = curr->dynCast<Block>();
       auto blockIterator = block->list.end();
       while (blockIterator != block->list.begin()) {
@@ -59,14 +87,8 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     case Expression::Id::IfId: {
       auto* iff = curr->dynCast<If>();
       stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
-      // std::cout << "Pushing an task to call StingifyWalker::scan on ifFalse "
-      // << std::endl;
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, nullptr);
       stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
-      // std::cout << "Pushing an task to call StingifyWalker::scan on ifTrue "
-      // << std::endl;
-      stringify->pushTask(StringifyWalker::scan, &iff->condition);
-      // std::cout << "Pushing an task to call StingifyWalker::scan on
-      // ifCondition " << std::endl;
       break;
     }
     case Expression::Id::TryId: {
@@ -89,52 +111,36 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       break;
     }
     default: {
+      assert(Properties::isControlFlowStructure(curr));
       auto name = getExpressionName(*currp);
-      std::cout << "scanChildren reached an unimplemented expression: " << name
+      std::cout << "scanChildren reached an unimplemented control flow expression: " << name
                 << std::endl;
     }
   }
 }
 
-template <typename SubType>
-void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
-  auto& queue = self->queue;
-  if (queue.empty()) {
-    return;
-  }
-
-  self->pushTask(StringifyWalker::handler, nullptr);
-  Expression** currp = queue.front();
-  queue.pop();
-  StringifyWalker<SubType>::deferredScan(self, currp);
-}
 
 template <typename SubType>
 void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
-  [[maybe_unused]] auto name = getExpressionName(curr);
-  // std::cout << "StringifyWalker::scan() on: " << name << std::endl;
-  // curr->dump();
-
-  switch (curr->_id) {
-    case Expression::Id::BlockId:
-    case Expression::Id::IfId:
-    case Expression::Id::LoopId:
-    case Expression::Id::TryId: {
-      self->visitControlFlow(self, currp);
-      // std::cout << "Adding " << name << " to queue" << std::endl;
+  if (curr->_id == Expression::Id::BlockId
+      || curr->_id == Expression::LoopId
+      || curr->_id == Expression::TryId
+      || curr->_id == Expression::IfId) {
+      self->pushTask(StringifyWalker::visitControlFlow, currp);
       self->queue.push(currp);
-      break;
-    }
-    default: {
-      // std::cout << "Calling PostWalker::scan" << std::endl;
-      PostWalker<SubType>::scan(self, currp);
-    }
   }
 
+  if (curr->_id == Expression::IfId) {
+      auto* iff = curr->dynCast<If>();
+      PostWalker<SubType>::scan(self, &iff->condition);
+      return;
+  }
 
+  if (!Properties::isControlFlowStructure(curr)) {
+      PostWalker<SubType>::scan(self, currp);
+  }
 }
-
 
 template <typename SubType>
 void StringifyWalker<SubType>::visitControlFlow(SubType* self,
@@ -143,18 +149,12 @@ void StringifyWalker<SubType>::visitControlFlow(SubType* self,
 }
 
 template <typename SubType>
-void StringifyWalker<SubType>::visitExpression(Expression* curr) {
-  if (!Properties::isControlFlowStructure(curr)) {
-    static_cast<SubType*>(this)->visitExpression(curr);
-  }
+void StringifyWalker<SubType>::addUniqueSymbol(SubType *self, Expression**) {
+    self->addUniqueSymbol(self, nullptr);
 }
 
 void HashStringifyWalker::walkModule(Module* module) {
   StringifyWalker::walkModule(this, module);
-}
-
-void HashStringifyWalker::functionDidBegin(HashStringifyWalker* self){
-  // self->appendGloballyUniqueChar();
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
@@ -163,15 +163,14 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
   // this->insertHash(hash, curr);
 }
 
-void HashStringifyWalker::appendGloballyUniqueChar() {
-  // printf("inserting globally unique char\n");
-  string.push_back(monotonic);
-  monotonic++;
+void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker *self, Expression**) {
+  //string.push_back(monotonic);
+  //monotonic++;
 }
 
 // Will be replaced by insertExpression
 // void insertExpression(Expression *curr)
-void HashStringifyWalker::appendExpressionHash(Expression* curr, uint64_t hash) {
+void HashStringifyWalker::addExpressionHash(Expression* curr, uint64_t hash) {
   string.push_back(monotonic);
   auto it = exprToCounter.find(monotonic);
   if (it != exprToCounter.end()) {
@@ -198,8 +197,8 @@ void TestStringifyWalker::walkModule(Module* module) {
   StringifyWalker::walkModule(this, module);
 }
 
-void TestStringifyWalker::functionDidBegin(TestStringifyWalker* self) {
-  self->os << "append function begin\n";
+void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker *self, Expression**) {
+  self->os << "adding unique symbol\n";
 }
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
@@ -209,7 +208,9 @@ void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
 }
 
 void TestStringifyWalker::visitExpression(Expression* curr) {
-  this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm} << std::endl;
+  if (!Properties::isControlFlowStructure(curr)) {
+    this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm} << std::endl;
+  }
 }
 
 struct Outlining : public Pass {

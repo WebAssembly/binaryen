@@ -16,9 +16,9 @@ struct StringifyWalker
 
   static void walkModule(SubType* self, Module* module);
   static void scan(SubType* self, Expression** currp);
+  static void addUniqueSymbol(SubType *self, Expression**);
   static void visitControlFlow(SubType* self, Expression** currp);
   void visitExpression(Expression* curr);
-  // casts itself to subType and then calls visitExpression on that.
 
 private:
   static void handler(SubType* self, Expression**);
@@ -29,9 +29,9 @@ struct HashStringifyWalker
 : public StringifyWalker<HashStringifyWalker> {
 
   void walkModule(Module *module);
-  static void functionDidBegin(HashStringifyWalker* self);
-  void visitExpression(Expression* curr);
+  static void addUniqueSymbol(HashStringifyWalker *self, Expression**);
   static void visitControlFlow(HashStringifyWalker* self, Expression** currp);
+  void visitExpression(Expression* curr);
 
  private:
   std::vector<uint64_t> string;
@@ -40,8 +40,7 @@ struct HashStringifyWalker
   // [[maybe_unused]] std::unordered_map<Expression *, uint64_t> exprToCounter;
   [[maybe_unused]] std::unordered_map<uint64_t, uint64_t> exprToCounter;
 
-  void appendGloballyUniqueChar();
-  void appendExpressionHash(Expression* curr, uint64_t hash);
+  void addExpressionHash(Expression* curr, uint64_t hash);
 };
 
 struct TestStringifyWalker
@@ -52,9 +51,9 @@ struct TestStringifyWalker
   TestStringifyWalker(std::ostream& os);
 
   void walkModule(Module *module);
-  static void functionDidBegin(TestStringifyWalker* self);
-  void visitExpression(Expression* curr);
+  static void addUniqueSymbol(TestStringifyWalker *self, Expression**);
   static void visitControlFlow(TestStringifyWalker* self, Expression** currp);
+  void visitExpression(Expression* curr);
   void print(std::ostream& os);
 };
 
