@@ -29,8 +29,9 @@
 namespace wasm {
 
 /*
- * This walker performs a shallow visit of control-flow (try, if, block, loop) expressions and their simple expression siblings
- * before then visiting the children of each control-flow expression in postorder. As a result, this
+ * This walker performs a shallow visit of control-flow (try, if, block, loop)
+ * expressions and their simple expression siblings before then visiting the
+ * children of each control-flow expression in postorder. As a result, this
  * walker un-nests nested control flow structures, so the expression visit order
  * does not correspond to a normal postorder traversal of the function.
  *
