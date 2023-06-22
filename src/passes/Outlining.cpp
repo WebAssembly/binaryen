@@ -29,11 +29,25 @@
 namespace wasm {
 
 /*
- * This walker visits an expression and it's siblings in a shallow manner,
- * before then visiting the children of each expression. As a result, this
+ * This walker performs a shallow visit of control-flow (try, if, block, loop) expressions and their simple expression siblings
+ * before then visiting the children of each control-flow expression in postorder. As a result, this
  * walker un-nests nested control flow structures, so the expression visit order
  * does not correspond to a normal postorder traversal of the function.
  *
+ * For example, the below (contrived) wat:
+ * 1: (block
+ * 2:   (i32.add
+ * 3:     (i32.const 20)
+ * 4:     (i32.const 10))
+ * 5:   (if
+ * 6:     (i32.const 0)
+ * 7      (then (return (i32.const 1)))
+ * 8:     (else (return (i32.const 0)))
+ * 9:   )
+ *
+ * Would have it's expressions visited in the following order (based on line
+ * number):
+ * 1, 3, 4, 2, 6, 5, 7, 8
  */
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {

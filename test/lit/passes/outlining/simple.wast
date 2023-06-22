@@ -3,7 +3,7 @@
   (func $d
 		;; Block, Const 20, Drop, Const 10, Drop
     (block $block_a
-      	(drop (i32.const 20))
+      	(i32.add (i32.const 20) (i32.const 4))
       	(drop (i32.const 10))
 	)
 	(block $block_b
