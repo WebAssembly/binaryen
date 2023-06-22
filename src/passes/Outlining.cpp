@@ -42,13 +42,20 @@ namespace wasm {
  * 4:     (i32.const 10))
  * 5:   (if
  * 6:     (i32.const 0)
- * 7      (then (return (i32.const 1)))
+ * 7:     (then (return (i32.const 1)))
  * 8:     (else (return (i32.const 0)))
  * 9:   )
  *
  * Would have it's expressions visited in the following order (based on line
  * number):
  * 1, 3, 4, 2, 6, 5, 7, 8
+ *
+ * Of note:
+ *   - The add binaryOp's left and right children are visited first as they need
+ *     to be on the stack before the add operation is executed
+ *   - The if-condition (i32.const 0) is visited before the if expression, so
+ *     when children of the if expression is visited, we skip visiting the if-condition
+ *
  */
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
@@ -56,7 +63,7 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
   self->pushTask(StringifyWalker::handler, nullptr);
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     self->walk(func->body);
-    self->addUniqueSymbol(self, nullptr);
+    self->addUniqueSymbol(self, &func->body);
   });
 }
 
@@ -88,15 +95,14 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
   Expression* curr = *currp;
   switch (curr->_id) {
     case Expression::Id::BlockId: {
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, nullptr);
       auto* block = curr->dynCast<Block>();
+      if (block->list.size() > 0) {
+        stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
+      }
       auto blockIterator = block->list.end();
       while (blockIterator != block->list.begin()) {
         blockIterator--;
         auto& child = block->list[blockIterator.index];
-        [[maybe_unused]] auto name = getExpressionName(child);
-        // std::cout << "Pushing a task to call StringifyWalker::scan with block
-        // list item: " << name  << " " << child << std::endl;
         stringify->pushTask(StringifyWalker::scan, &child);
       }
       break;
@@ -104,26 +110,28 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     case Expression::Id::IfId: {
       auto* iff = curr->dynCast<If>();
       stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, nullptr);
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
       stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
       break;
     }
     case Expression::Id::TryId: {
       auto* tryy = curr->dynCast<Try>();
+      if (tryy->catchBodies.size() > 0) {
+        stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
+      }
       auto blockIterator = tryy->catchBodies.end();
       while (blockIterator != tryy->catchBodies.begin()) {
         blockIterator--;
         auto& child = tryy->catchBodies[blockIterator.index];
-        [[maybe_unused]] auto name = getExpressionName(child);
-        // std::cout << "Pushing a task to call StringifyWalker::scan with try
-        // catchBody: " << name  << " " << child << std::endl;
         stringify->pushTask(StringifyWalker::scan, &child);
       }
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, &tryy->body);
       stringify->pushTask(StringifyWalker::scan, &tryy->body);
       break;
     }
     case Expression::Id::LoopId: {
       auto* loop = curr->dynCast<Loop>();
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       stringify->pushTask(StringifyWalker::scan, &loop->body);
       break;
     }
@@ -164,8 +172,8 @@ void StringifyWalker<SubType>::visitControlFlow(SubType* self,
 }
 
 template<typename SubType>
-void StringifyWalker<SubType>::addUniqueSymbol(SubType* self, Expression**) {
-  self->addUniqueSymbol(self, nullptr);
+void StringifyWalker<SubType>::addUniqueSymbol(SubType* self, Expression** currp) {
+  self->addUniqueSymbol(self, currp);
 }
 
 void HashStringifyWalker::walkModule(Module* module) {
@@ -179,7 +187,7 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
 }
 
 void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker* self,
-                                          Expression**) {
+                                          Expression** currp) {
   // string.push_back(monotonic);
   // monotonic++;
 }
@@ -214,8 +222,10 @@ void TestStringifyWalker::walkModule(Module* module) {
 }
 
 void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
-                                          Expression**) {
+                                          Expression** currp) {
+  Expression* curr = *currp;
   self->os << "adding unique symbol\n";
+           self->os << *curr << std::endl;
 }
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
