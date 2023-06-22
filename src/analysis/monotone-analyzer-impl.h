@@ -43,10 +43,8 @@ template<size_t N> inline void BlockState<N>::visitLocalGet(LocalGet* curr) {
 }
 
 template<size_t N> inline void BlockState<N>::transfer() {
-  if (cfgBlock->size() == 0) {
-    beginningState.getLeastUpperBound(endState);
-    return;
-  }
+  // If the block is empty, we propagate the state by endState = currState, then
+  // currState = beginningState
 
   // compute transfer function for all expressions in the CFG block
   auto cfgIter = cfgBlock->rbegin();
