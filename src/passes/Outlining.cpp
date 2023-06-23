@@ -19,8 +19,8 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "pass.h"
 #include "ir/utils.h"
+#include "pass.h"
 #include "stringify-walker.h"
 #include "wasm-builder.h"
 #include "wasm-stack.h"
@@ -63,17 +63,17 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
   self->wasm = module;
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     /*
-     * The ordering of the below lines of code are important. On each function iteration, we:
+     * The ordering of the below lines of code are important. On each function
+     * iteration, we:
      * 1. push a task for calling the handler function, to ensure that each
-     * function has an opportunity to dequeue from StringifyWalker's internally
-     * managed queue
+     *    function has an opportunity to dequeue from StringifyWalker's internally
+     *    managed queue
      * 2. push a task for adding a unique symbol, so that after the function
-     * body is visited as a single expression, the string has a separator
+     *    body is visited as a single expression, the string has a separator
      * 3. then we call walk, which will visit the function body as a single unit
      * 4. finally we call addUniqueSymbol directly to ensure the string encoding
-     * for each function is terminated with a unique symbol, separating each
-     * function
-     *
+     *    for each function is terminated with a unique symbol, separating each
+     *    function
      */
     self->pushTask(StringifyWalker::handler, nullptr);
     self->pushTask(StringifyWalker::addUniqueSymbol, &func->body);
