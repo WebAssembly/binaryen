@@ -110,6 +110,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     }
     case Expression::Id::IfId: {
       auto* iff = curr->dynCast<If>();
+      stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifFalse);
       stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
       stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
       stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
