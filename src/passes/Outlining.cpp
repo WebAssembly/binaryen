@@ -240,9 +240,7 @@ void TestStringifyWalker::walkModule(Module* module) {
 
 void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
                                           Expression** currp) {
-  Expression* curr = *currp;
   self->os << "adding unique symbol\n";
-  self->os << *curr << std::endl;
 }
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
