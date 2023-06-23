@@ -66,8 +66,8 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      * The ordering of the below lines of code are important. On each function
      * iteration, we:
      * 1. push a task for calling the handler function, to ensure that each
-     *    function has an opportunity to dequeue from StringifyWalker's internally
-     *    managed queue
+     *    function has an opportunity to dequeue from StringifyWalker's
+     *    internally managed queue
      * 2. push a task for adding a unique symbol, so that after the function
      *    body is visited as a single expression, the string has a separator
      * 3. then we call walk, which will visit the function body as a single unit
