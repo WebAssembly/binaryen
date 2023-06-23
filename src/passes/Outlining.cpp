@@ -212,22 +212,22 @@ void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker* self,
 // Will be replaced by insertExpression
 // void insertExpression(Expression *curr)
 void HashStringifyWalker::addExpressionHash(Expression* curr, uint64_t hash) {
-  string.push_back(monotonic);
+  /*string.push_back(monotonic);
   auto it = exprToCounter.find(monotonic);
   if (it != exprToCounter.end()) {
-    [[maybe_unused]] auto name = getExpressionName(curr);
+    auto name = getExpressionName(curr);
     // std::cout << "Collision on Expression: " << name << std::endl;
     curr->dump();
   }
-  // auto name = getExpressionName(curr);
-  // std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
+  auto name = getExpressionName(curr);
+  std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
   exprToCounter[hash] = monotonic;
-  monotonic++;
+  monotonic++;*/
 }
 
 void HashStringifyWalker::visitControlFlow(HashStringifyWalker* self,
                                            Expression** currp) {
-  [[maybe_unused]] Expression* curr = *currp;
+  // Expression* curr = *currp;
   // uint64_t hashValue = hash(curr);
   // self->insertHash(hashValue, curr);
 }
@@ -245,7 +245,7 @@ void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
 
 void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
                                            Expression** currp) {
-  [[maybe_unused]] Expression* curr = *currp;
+  Expression* curr = *currp;
   self->os << "in visitControlFlow with " << ShallowExpression{curr, self->wasm}
            << std::endl;
 }

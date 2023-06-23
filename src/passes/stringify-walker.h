@@ -35,8 +35,8 @@ private:
   std::vector<uint64_t> string;
   uint64_t monotonic = 0;
   // Change key to Expression
-  // [[maybe_unused]] std::unordered_map<Expression *, uint64_t> exprToCounter;
-  [[maybe_unused]] std::unordered_map<uint64_t, uint64_t> exprToCounter;
+  // std::unordered_map<Expression *, uint64_t> exprToCounter;
+  // std::unordered_map<uint64_t, uint64_t> exprToCounter;
 
   void addExpressionHash(Expression* curr, uint64_t hash);
 };
