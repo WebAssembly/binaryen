@@ -1,13 +1,14 @@
 #include "analysis/cfg.h"
-#include "support/colors.h"
-#include "wasm-s-parser.h"
+#include "print-test.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
 using namespace wasm::analysis;
 
-TEST(CFGTest, Print) {
+using CFGTest = PrintTest;
+
+TEST_F(CFGTest, Print) {
   auto moduleText = R"wasm(
     (module
       (func $foo
@@ -69,16 +70,12 @@ TEST(CFGTest, Print) {
 )cfg";
 
   Module wasm;
-  SExpressionParser parser(moduleText);
-  SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
+  parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("foo"));
 
-  bool colors = Colors::isEnabled();
-  Colors::setEnabled(false);
   std::stringstream ss;
   cfg.print(ss);
-  Colors::setEnabled(colors);
 
   EXPECT_EQ(ss.str(), cfgText);
 }
