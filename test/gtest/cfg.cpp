@@ -1,9 +1,9 @@
 #include <iostream>
 
 #include "analysis/cfg.h"
-#include "print-test.h"
 #include "analysis/lattice.h"
 #include "analysis/monotone-analyzer.h"
+#include "print-test.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
