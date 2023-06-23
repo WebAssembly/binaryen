@@ -32,8 +32,8 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   void visitExpression(Expression* curr);
 
 private:
-  std::vector<uint64_t> string;
-  uint64_t monotonic = 0;
+  //std::vector<uint64_t> string;
+  //uint64_t monotonic = 0;
   // Change key to Expression
   // std::unordered_map<Expression *, uint64_t> exprToCounter;
   // std::unordered_map<uint64_t, uint64_t> exprToCounter;
