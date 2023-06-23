@@ -16,7 +16,7 @@ constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
                                                  const T&>::value;
 template<typename T>
 constexpr bool has_getLeastUpperBound = std::
-  is_invocable_r<T, decltype(T::getLeastUpperBound), const T&, const T&>::value;
+  is_invocable_r<bool, decltype(&T::getLeastUpperBound), T, const T&>::value;
 template<typename T>
 constexpr bool has_isTop =
   std::is_invocable_r<bool, decltype(T::isTop), const T&>::value;

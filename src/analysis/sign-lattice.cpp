@@ -30,19 +30,19 @@ public:
     }
   }
 
-  static SignLattice getLeastUpperBound(const SignLattice& left,
-                                        const SignLattice& right) {
-    SignLattice lub;
-    LatticeComparison cmp = compare(left, right);
-    if (cmp == EQUAL || cmp == GREATER) {
-      lub.value = left.value;
-    } else if (cmp == LESS) {
-      lub.value = right.value;
+  // Modifies the left lattice element to the least upper bound between
+  // it and the right hand lattice element in-place. Returns true
+  // if the left lattice element has been changed.
+  bool getLeastUpperBound(const SignLattice& right) {
+    if (value == right.value || value == TOP || right.value == BOTTOM) {
+      return false;
+    } else if (value == BOTTOM || right.value == TOP) {
+      value = right.value;
+      return true;
     } else {
-      lub.value = TOP;
+      value = TOP;
+      return true;
     }
-
-    return lub;
   }
 };
 
