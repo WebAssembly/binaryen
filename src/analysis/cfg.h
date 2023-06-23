@@ -40,6 +40,10 @@ struct BasicBlock {
   iterator end() const { return insts.cend(); }
   size_t size() const { return insts.size(); }
 
+  using reverse_iterator = std::vector<Expression*>::const_reverse_iterator;
+  reverse_iterator rbegin() const { return insts.rbegin(); }
+  reverse_iterator rend() const { return insts.rend(); }
+
   // Iterables for predecessor and successor blocks.
   struct Predecessors;
   struct Successors;
@@ -47,6 +51,8 @@ struct BasicBlock {
   Successors succs() const;
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
+
+  Index getIndex() const { return index; }
 
 private:
   Index index;
