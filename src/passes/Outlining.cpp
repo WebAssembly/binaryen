@@ -61,8 +61,22 @@ namespace wasm {
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
   self->wasm = module;
-  self->pushTask(StringifyWalker::handler, nullptr);
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
+    /*
+     * The ordering of the below lines of code are important. On each function iteration, we:
+     * 1. push a task for calling the handler function, to ensure that each
+     * function has an opportunity to dequeue from StringifyWalker's internally
+     * managed queue
+     * 2. push a task for adding a unique symbol, so that after the function
+     * body is visited as a single expression, the string has a separator
+     * 3. then we call walk, which will visit the function body as a single unit
+     * 4. finally we call addUniqueSymbol directly to ensure the string encoding
+     * for each function is terminated with a unique symbol, separating each
+     * function
+     *
+     */
+    self->pushTask(StringifyWalker::handler, nullptr);
+    self->pushTask(StringifyWalker::addUniqueSymbol, &func->body);
     self->walk(func->body);
     self->addUniqueSymbol(self, &func->body);
   });
@@ -252,7 +266,6 @@ struct Outlining : public Pass {
     TestStringifyWalker stringify = TestStringifyWalker(ss);
     stringify.walkModule(module);
     std::cout << ss.str();
-    printf("Outlining is done\n");
   }
 };
 
