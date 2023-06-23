@@ -308,7 +308,7 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
-  registerPass("outlining", "outlining_placeholder", createOutliningPass);
+  registerPass("outlining", "outline repeat instructions", createOutliningPass);
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
