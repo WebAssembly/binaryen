@@ -1,7 +1,6 @@
 (module
   (tag $catch_a (param i32))
   (func $d
-		;; Block, Const 20, Drop, Const 10, Drop
     (block $block_a
       	(drop (i32.const 20))
       	(drop (i32.const 10))
