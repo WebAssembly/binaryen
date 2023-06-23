@@ -55,7 +55,7 @@ namespace wasm {
  *     to be on the stack before the add operation is executed
  *   - The if-condition (i32.const 0) is visited before the if expression, so
  *     when children of the if expression is visited, we skip visiting the
- * if-condition
+ *     if-condition
  *
  */
 template<typename SubType>
