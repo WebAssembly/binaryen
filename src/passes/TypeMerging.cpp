@@ -467,6 +467,9 @@ bool shapeEq(HeapType a, HeapType b) {
   // Check whether `a` and `b` have the same top-level structure, including the
   // position and identity of any children that are not included as transitions
   // in the DFA, i.e. any children that are not nontrivial references.
+  if (a.isFinal() != b.isFinal()) {
+    return false;
+  }
   if (a.isStruct() && b.isStruct()) {
     return shapeEq(a.getStruct(), b.getStruct());
   }
@@ -480,15 +483,15 @@ bool shapeEq(HeapType a, HeapType b) {
 }
 
 size_t shapeHash(HeapType a) {
-  size_t digest;
+  size_t digest = hash(a.isFinal());
   if (a.isStruct()) {
-    digest = hash(0);
+    rehash(digest, 0);
     hash_combine(digest, shapeHash(a.getStruct()));
   } else if (a.isArray()) {
-    digest = hash(1);
+    rehash(digest, 1);
     hash_combine(digest, shapeHash(a.getArray()));
   } else if (a.isSignature()) {
-    digest = hash(2);
+    rehash(digest, 2);
     hash_combine(digest, shapeHash(a.getSignature()));
   } else {
     WASM_UNREACHABLE("unexpected kind");

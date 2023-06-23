@@ -70,6 +70,7 @@ void GlobalTypeRewriter::update() {
   // Create the temporary heap types.
   i = 0;
   for (auto [type, _] : typeIndices) {
+    typeBuilder[i].setFinal(type.isFinal());
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;

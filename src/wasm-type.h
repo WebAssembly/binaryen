@@ -359,6 +359,7 @@ public:
   bool isArray() const;
   bool isString() const;
   bool isBottom() const;
+  bool isFinal() const;
 
   Signature getSignature() const;
   const Struct& getStruct() const;
@@ -584,6 +585,8 @@ struct TypeBuilder {
   // not overlap or go out of bounds.
   void createRecGroup(size_t i, size_t length);
 
+  void setFinal(size_t i, bool final = true);
+
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
     SelfSupertype,
@@ -643,6 +646,10 @@ struct TypeBuilder {
     }
     Entry& subTypeOf(HeapType other) {
       builder.setSubType(index, other);
+      return *this;
+    }
+    Entry& setFinal(bool final = true) {
+      builder.setFinal(index, final);
       return *this;
     }
   };

@@ -74,6 +74,65 @@
   )
 )
 
+;; The same module as before, except that now the type is final, so we cannot
+;; create any subtypes.
+(module
+  ;; CHECK:      (type $struct (sub final (struct (field i32))))
+  (type $struct (sub final (struct (field i32))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $g (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $g (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (global $h (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $h (ref $struct) (struct.new $struct
+    (i32.const 42)
+  ))
+
+  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (drop
+      (struct.new_default $struct)
+    )
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $another-func (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $another-func
+    (drop
+      (struct.new $struct
+        (i32.const 100)
+      )
+    )
+  )
+)
+
 ;; Some of these are uninteresting and should not get a new type.
 (module
 

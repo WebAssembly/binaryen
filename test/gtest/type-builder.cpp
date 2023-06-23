@@ -434,6 +434,22 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[4], built[5]);
 }
 
+TEST_F(TypeTest, CanonicalizeFinal) {
+  // Types are different if their finality flag is different.
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setFinal();
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_NE(built[0], built[1]);
+  EXPECT_TRUE(built[0].isFinal());
+  EXPECT_FALSE(built[1].isFinal());
+}
+
 TEST_F(TypeTest, HeapTypeConstructors) {
   HeapType sig(Signature(Type::i32, Type::i32));
   HeapType struct_(Struct({Field(Type(sig, Nullable), Mutable)}));

@@ -252,10 +252,21 @@ void WasmBinaryWriter::writeTypes() {
     lastGroup = currGroup;
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
-    if (auto super = type.getSuperType()) {
-      // Subtype constructor and vector of 1 supertype.
-      o << S32LEB(BinaryConsts::EncodedType::Sub) << U32LEB(1);
-      writeHeapType(*super);
+    auto super = type.getSuperType();
+    // TODO: Use the binary shorthand for final types once we parse MVP
+    // signatures as final.
+    if (type.isFinal() || super) {
+      if (type.isFinal()) {
+        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::Sub);
+      }
+      if (super) {
+        o << U32LEB(1);
+        writeHeapType(*super);
+      } else {
+        o << U32LEB(0);
+      }
     }
     if (type.isSignature()) {
       o << S32LEB(BinaryConsts::EncodedType::Func);
@@ -2211,7 +2222,12 @@ void WasmBinaryReader::readTypes() {
       form = getS32LEB();
     }
     std::optional<uint32_t> superIndex;
-    if (form == BinaryConsts::EncodedType::Sub) {
+    if (form == BinaryConsts::EncodedType::Sub ||
+        form == BinaryConsts::EncodedType::SubFinal) {
+      if (form == BinaryConsts::EncodedType::SubFinal) {
+        // TODO: Interpret type definitions without any `sub` as final as well.
+        builder[i].setFinal();
+      }
       uint32_t supers = getU32LEB();
       if (supers > 0) {
         if (supers != 1) {
