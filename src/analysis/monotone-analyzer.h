@@ -15,6 +15,7 @@ template<size_t N> struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
 template<size_t N> struct BlockState : public Visitor<BlockState<N>> {
+  static_assert(is_lattice<BitsetPowersetLattice<N>>);
   BlockState(const BasicBlock* underlyingBlock);
 
   void addPredecessor(BlockState* pred);
@@ -53,6 +54,8 @@ private:
 };
 
 template<size_t N> struct MonotoneCFGAnalyzer {
+  static_assert(is_lattice<BitsetPowersetLattice<N>>);
+
   // Constructs a graph of BlockState objects which parallels
   // the CFG graph. Each CFG node corresponds to a BlockState node.
   static MonotoneCFGAnalyzer<N> fromCFG(CFG* cfg);

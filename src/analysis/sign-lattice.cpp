@@ -33,15 +33,13 @@ public:
   // Modifies the left lattice element to the least upper bound between
   // it and the right hand lattice element in-place. Returns true
   // if the left lattice element has been changed.
-  bool getLeastUpperBound(const SignLattice& right) {
+  void getLeastUpperBound(const SignLattice& right) {
     if (value == right.value || value == TOP || right.value == BOTTOM) {
-      return false;
+      return;
     } else if (value == BOTTOM || right.value == TOP) {
       value = right.value;
-      return true;
     } else {
       value = TOP;
-      return true;
     }
   }
 };

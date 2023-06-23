@@ -52,14 +52,6 @@ BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N>& left,
 
 // Implement LUB as an OR of the two bitsets.
 template<size_t N>
-inline BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getLeastUpperBound(
-  const BitsetPowersetLattice<N>& left, const BitsetPowersetLattice<N>& right) {
-  BitsetPowersetLattice<N> result;
-  result.value = left.value | right.value;
-  return result;
-}
-
-template<size_t N>
 inline void BitsetPowersetLattice<N>::getLeastUpperBound(
   const BitsetPowersetLattice<N>& right) {
   value |= right.value;

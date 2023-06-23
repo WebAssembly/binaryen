@@ -16,7 +16,7 @@ constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
                                                  const T&>::value;
 template<typename T>
 constexpr bool has_getLeastUpperBound = std::
-  is_invocable_r<bool, decltype(&T::getLeastUpperBound), T, const T&>::value;
+  is_invocable_r<void, decltype(&T::getLeastUpperBound), T, const T&>::value;
 template<typename T>
 constexpr bool has_isTop =
   std::is_invocable_r<bool, decltype(T::isTop), const T&>::value;
@@ -42,13 +42,8 @@ template<size_t N> struct BitsetPowersetLattice {
   static LatticeComparison compare(const BitsetPowersetLattice<N>& left,
                                    const BitsetPowersetLattice<N>& right);
 
-  // Returns a lattice element which is the least upper bound of the left and
-  // right elements.
-  static BitsetPowersetLattice<N>
-  getLeastUpperBound(const BitsetPowersetLattice<N>& left,
-                     const BitsetPowersetLattice<N>& right);
-
-  // Same as above function, but does this in place.
+  // Calculates the LUB of this current (left) lattice element with some right
+  // element. It then updates this current lattice element to the LUB in place.
   void getLeastUpperBound(const BitsetPowersetLattice<N>& right);
 
   // Prints out the bits in the bitvector for a lattice element.
