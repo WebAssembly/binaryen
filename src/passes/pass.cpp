@@ -847,6 +847,15 @@ void PassRunner::runOnFunction(Function* func) {
   }
 }
 
+void PassRunner::runOnModuleCode(Module* module) {
+  if (options.debug) {
+    std::cerr << "[PassRunner] running passes on module code\n";
+  }
+  for (auto& pass : passes) {
+    runPassOnModuleCode(pass.get(), module);
+  }
+}
+
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
   if (pass->invalidatesDWARF() && shouldPreserveDWARF()) {
     std::cerr << "warning: running pass '" << pass->name
@@ -1027,6 +1036,13 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
               << *func->body << '\n';
     }
   }
+}
+
+void PassRunner::runPassOnModuleCode(Pass* pass, Module* module) {
+  assert(pass->isFunctionParallel());
+
+  pass->setPassRunner(this);
+  pass->runOnModuleCode(module);
 }
 
 void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
