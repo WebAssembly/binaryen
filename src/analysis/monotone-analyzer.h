@@ -15,7 +15,7 @@ struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
 struct BlockState : public Visitor<BlockState> {
-  // static_assert(is_lattice<FinitePowersetLattice>);
+  static_assert(is_lattice<FinitePowersetLattice>);
   BlockState(const BasicBlock* underlyingBlock, size_t size);
 
   void addPredecessor(BlockState* pred);

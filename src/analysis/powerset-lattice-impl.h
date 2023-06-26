@@ -18,18 +18,18 @@ inline FinitePowersetLattice FinitePowersetLattice::getBottom(size_t size) {
   return result;
 }
 
-inline bool FinitePowersetLattice::isTop(const FinitePowersetLattice& element) {
+inline bool FinitePowersetLattice::isTop() {
   // Top lattice element is the set containing all possible elements.
-  return element.trues == element.bitvector.size();
+  return trues == bitvector.size();
 }
 
-inline bool
-FinitePowersetLattice::isBottom(const FinitePowersetLattice& element) {
+inline bool FinitePowersetLattice::isBottom() {
   // Bottom lattice element is the empty set.
-  return element.trues == 0;
+  return trues == 0;
 }
 
 inline void FinitePowersetLattice::set(size_t index, bool value) {
+  // The set function updates the count of true bits in the bitvector.
   if (value != bitvector.at(index)) {
     if (value) {
       trues += 1;
@@ -47,6 +47,7 @@ inline bool FinitePowersetLattice::get(size_t index) {
 inline LatticeComparison
 FinitePowersetLattice::compare(const FinitePowersetLattice& left,
                                const FinitePowersetLattice& right) {
+  // Both must be from the powerset lattice of the same set.
   assert(left.bitvector.size() == right.bitvector.size());
 
   // True in left, false in right.
@@ -56,8 +57,10 @@ FinitePowersetLattice::compare(const FinitePowersetLattice& left,
   bool rightNotLeft = false;
 
   if (left.trues > right.trues) {
+    // If there are more elements in the left, some must not be in the right.
     leftNotRight = true;
   } else if (right.trues > left.trues) {
+    // If there are more elements in the right, some must not be in the left.
     rightNotLeft = true;
   }
 
@@ -70,6 +73,7 @@ FinitePowersetLattice::compare(const FinitePowersetLattice& left,
       rightNotLeft = true;
     }
 
+    // We can end early if we know neither is a subset of the other.
     if (leftNotRight && rightNotLeft) {
       return NO_RELATION;
     }
@@ -87,8 +91,11 @@ FinitePowersetLattice::compare(const FinitePowersetLattice& left,
   return NO_RELATION;
 }
 
+// Least upper bound is implemented as a logical OR between the bitvectors on
+// both sides.
 inline bool
 FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
+  // Both must be from powerset lattice of the same set.
   assert(right.bitvector.size() == bitvector.size());
 
   bool modified = false;
