@@ -48,9 +48,10 @@ namespace wasm {
  * 1, 3, 4, 2, 6, 5, 7, 8
  *
  * Of note:
- *   - The add (line 2) binary operator's left and right children are visited first
- *     as they need to be on the stack before the add operation is executed
- *   - The if-condition (i32.const 0) on line 6 is visited before the if expression
+ *   - The add (line 2) binary operator's left and right children are visited
+ * first as they need to be on the stack before the add operation is executed
+ *   - The if-condition (i32.const 0) on line 6 is visited before the if
+ * expression
  */
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
