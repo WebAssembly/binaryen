@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// This pass is a placeholder, encapsulating a suffix tree data structure that
-// will eventually be moved to src/support
-
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
