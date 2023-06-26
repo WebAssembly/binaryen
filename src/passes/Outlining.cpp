@@ -48,12 +48,9 @@ namespace wasm {
  * 1, 3, 4, 2, 6, 5, 7, 8
  *
  * Of note:
- *   - The add binaryOp's left and right children are visited first as they need
- *     to be on the stack before the add operation is executed
- *   - The if-condition (i32.const 0) is visited before the if expression, so
- *     when children of the if expression is visited, we skip visiting the
- *     if-condition
- *
+ *   - The add (line 2) binary operator's left and right children are visited first
+ *     as they need to be on the stack before the add operation is executed
+ *   - The if-condition (i32.const 0) on line 6 is visited before the if expression
  */
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
@@ -64,9 +61,12 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      * iteration, we:
      * 1. push a task for calling the handler function, to ensure that each
      *    function has an opportunity to dequeue from StringifyWalker's
-     *    internally managed queue
+     *    internally managed queue. This queue exists to provide a way for
+     *    control flow to defer scanning their children.
      * 2. push a task for adding a unique symbol, so that after the function
-     *    body is visited as a single expression, the string has a separator
+     *    body is visited as a single expression, there is a a separator between
+     *    the symbol for the entire function and the symbol for the function's
+     *    children
      * 3. then we call walk, which will visit the function body as a single unit
      * 4. finally we call addUniqueSymbol directly to ensure the string encoding
      *    for each function is terminated with a unique symbol, acting as a
@@ -152,7 +152,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       assert(Properties::isControlFlowStructure(curr));
       auto name = getExpressionName(*currp);
       std::cout
-        << "scanChildren reached an unimplemented control flow expression: "
+        << "deferredScan reached an unimplemented control flow expression: "
         << name << std::endl;
     }
   }
