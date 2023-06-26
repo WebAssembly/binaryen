@@ -72,8 +72,8 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      *    body is visited as a single expression, the string has a separator
      * 3. then we call walk, which will visit the function body as a single unit
      * 4. finally we call addUniqueSymbol directly to ensure the string encoding
-     *    for each function is terminated with a unique symbol, separating each
-     *    function
+     *    for each function is terminated with a unique symbol, acting as a
+     *    separator between each function in the program string
      */
     self->pushTask(StringifyWalker::handler, nullptr);
     self->pushTask(StringifyWalker::addUniqueSymbol, &func->body);
@@ -166,7 +166,7 @@ void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (curr->_id == Expression::Id::BlockId || curr->_id == Expression::LoopId ||
       curr->_id == Expression::TryId || curr->_id == Expression::IfId) {
-    self->pushTask(StringifyWalker::visitControlFlow, currp);
+    self->pushTask(StringifyWalker::doVisitExpression, currp);
     self->queue.push(currp);
   }
 
@@ -182,9 +182,10 @@ void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 }
 
 template<typename SubType>
-void StringifyWalker<SubType>::visitControlFlow(SubType* self,
+void StringifyWalker<SubType>::doVisitExpression(SubType* self,
                                                 Expression** currp) {
-  self->visitControlFlow(self, currp);
+  Expression* curr = *currp;
+  self->visitExpression(curr);
 }
 
 template<typename SubType>
@@ -195,12 +196,6 @@ void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
 
 void HashStringifyWalker::walkModule(Module* module) {
   StringifyWalker::walkModule(this, module);
-}
-
-void HashStringifyWalker::visitExpression(Expression* curr) {
-  // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
-  // std::cout << "hash: " << (unsigned)hash << std::endl;
-  // this->insertHash(hash, curr);
 }
 
 void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker* self,
@@ -225,11 +220,16 @@ void HashStringifyWalker::addExpressionHash(Expression* curr, uint64_t hash) {
   monotonic++;*/
 }
 
-void HashStringifyWalker::visitControlFlow(HashStringifyWalker* self,
-                                           Expression** currp) {
-  // Expression* curr = *currp;
-  // uint64_t hashValue = hash(curr);
-  // self->insertHash(hashValue, curr);
+void HashStringifyWalker::visitExpression(Expression* curr) {
+  if (Properties::isControlFlowStructure(curr)) {
+    // Expression* curr = *currp;
+    // uint64_t hashValue = hash(curr);
+    // self->insertHash(hashValue, curr);
+  } else {
+    // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
+    // std::cout << "hash: " << (unsigned)hash << std::endl;
+    // this->insertHash(hash, curr);
+  }
 }
 
 TestStringifyWalker::TestStringifyWalker(std::ostream& os) : os(os){};
@@ -243,15 +243,11 @@ void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
   self->os << "adding unique symbol\n";
 }
 
-void TestStringifyWalker::visitControlFlow(TestStringifyWalker* self,
-                                           Expression** currp) {
-  Expression* curr = *currp;
-  self->os << "in visitControlFlow with " << ShallowExpression{curr, self->wasm}
-           << std::endl;
-}
-
 void TestStringifyWalker::visitExpression(Expression* curr) {
-  if (!Properties::isControlFlowStructure(curr)) {
+  if (Properties::isControlFlowStructure(curr)) {
+    this->os << "in visitControlFlow with " << ShallowExpression{curr, this->wasm}
+             << std::endl;
+  } else {
     this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}
              << std::endl;
   }

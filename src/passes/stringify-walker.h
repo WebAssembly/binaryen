@@ -16,7 +16,7 @@ struct StringifyWalker
   static void walkModule(SubType* self, Module* module);
   static void scan(SubType* self, Expression** currp);
   static void addUniqueSymbol(SubType* self, Expression** currp);
-  static void visitControlFlow(SubType* self, Expression** currp);
+  static void doVisitExpression(SubType *self, Expression** currp);
   void visitExpression(Expression* curr);
 
 private:
@@ -28,7 +28,6 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 
   void walkModule(Module* module);
   static void addUniqueSymbol(HashStringifyWalker* self, Expression** currp);
-  static void visitControlFlow(HashStringifyWalker* self, Expression** currp);
   void visitExpression(Expression* curr);
 
 private:
@@ -49,7 +48,6 @@ struct TestStringifyWalker : public StringifyWalker<TestStringifyWalker> {
 
   void walkModule(Module* module);
   static void addUniqueSymbol(TestStringifyWalker* self, Expression** currp);
-  static void visitControlFlow(TestStringifyWalker* self, Expression** currp);
   void visitExpression(Expression* curr);
   void print(std::ostream& os);
 };
