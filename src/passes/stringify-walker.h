@@ -16,7 +16,7 @@ struct StringifyWalker
   static void walkModule(SubType* self, Module* module);
   static void scan(SubType* self, Expression** currp);
   static void addUniqueSymbol(SubType* self, Expression** currp);
-  static void doVisitExpression(SubType *self, Expression** currp);
+  static void doVisitExpression(SubType* self, Expression** currp);
   void visitExpression(Expression* curr);
 
 private:

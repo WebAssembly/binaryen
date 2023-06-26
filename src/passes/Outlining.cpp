@@ -183,7 +183,7 @@ void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 
 template<typename SubType>
 void StringifyWalker<SubType>::doVisitExpression(SubType* self,
-                                                Expression** currp) {
+                                                 Expression** currp) {
   Expression* curr = *currp;
   self->visitExpression(curr);
 }
@@ -245,8 +245,8 @@ void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
 
 void TestStringifyWalker::visitExpression(Expression* curr) {
   if (Properties::isControlFlowStructure(curr)) {
-    this->os << "in visitExpression with CF " << ShallowExpression{curr, this->wasm}
-             << std::endl;
+    this->os << "in visitExpression with CF "
+             << ShallowExpression{curr, this->wasm} << std::endl;
   } else {
     this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}
              << std::endl;
