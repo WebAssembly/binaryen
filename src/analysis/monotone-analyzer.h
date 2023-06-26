@@ -11,18 +11,18 @@
 
 namespace wasm::analysis {
 
-template<size_t N> struct MonotoneCFGAnalyzer;
+struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
-template<size_t N> struct BlockState : public Visitor<BlockState<N>> {
-  static_assert(is_lattice<BitsetPowersetLattice<N>>);
-  BlockState(const BasicBlock* underlyingBlock);
+struct BlockState : public Visitor<BlockState> {
+  // static_assert(is_lattice<FinitePowersetLattice>);
+  BlockState(const BasicBlock* underlyingBlock, size_t size);
 
   void addPredecessor(BlockState* pred);
   void addSuccessor(BlockState* succ);
 
-  BitsetPowersetLattice<N>& getFirstState();
-  BitsetPowersetLattice<N>& getLastState();
+  FinitePowersetLattice& getFirstState();
+  FinitePowersetLattice& getLastState();
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type.
@@ -42,23 +42,21 @@ private:
   Index index;
   const BasicBlock* cfgBlock;
   // State at beginning of CFG node.
-  BitsetPowersetLattice<N> beginningState;
+  FinitePowersetLattice beginningState;
   // State at the end of the CFG node.
-  BitsetPowersetLattice<N> endState;
+  FinitePowersetLattice endState;
   // Holds intermediate state values.
-  BitsetPowersetLattice<N> currState;
+  FinitePowersetLattice currState;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;
 
-  friend MonotoneCFGAnalyzer<N>;
+  friend MonotoneCFGAnalyzer;
 };
 
-template<size_t N> struct MonotoneCFGAnalyzer {
-  static_assert(is_lattice<BitsetPowersetLattice<N>>);
-
+struct MonotoneCFGAnalyzer {
   // Constructs a graph of BlockState objects which parallels
   // the CFG graph. Each CFG node corresponds to a BlockState node.
-  static MonotoneCFGAnalyzer<N> fromCFG(CFG* cfg);
+  static MonotoneCFGAnalyzer fromCFG(CFG* cfg, size_t size);
 
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
@@ -66,8 +64,7 @@ template<size_t N> struct MonotoneCFGAnalyzer {
   void print(std::ostream& os);
 
 private:
-  std::vector<BlockState<N>> stateBlocks;
-  friend BlockState<N>;
+  std::vector<BlockState> stateBlocks;
 };
 
 } // namespace wasm::analysis

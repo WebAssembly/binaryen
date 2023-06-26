@@ -5,61 +5,108 @@
 
 namespace wasm::analysis {
 
-template<size_t N>
-inline BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getBottom() {
+inline FinitePowersetLattice::FinitePowersetLattice(size_t size) : trues(0) {
+  bitvector.reserve(size);
+  for (size_t i = 0; i < size; ++i) {
+    bitvector.push_back(false);
+  }
+}
+
+inline FinitePowersetLattice FinitePowersetLattice::getBottom(size_t size) {
   // Return the empty set as the bottom lattice element.
-  BitsetPowersetLattice<N> result{0};
+  FinitePowersetLattice result(size);
   return result;
 }
 
-template<size_t N>
-inline bool
-BitsetPowersetLattice<N>::isTop(const BitsetPowersetLattice<N>& element) {
+inline bool FinitePowersetLattice::isTop(const FinitePowersetLattice& element) {
   // Top lattice element is the set containing all possible elements.
-  return element.value.all();
+  return element.trues == element.bitvector.size();
 }
 
-template<size_t N>
 inline bool
-BitsetPowersetLattice<N>::isBottom(const BitsetPowersetLattice<N>& element) {
+FinitePowersetLattice::isBottom(const FinitePowersetLattice& element) {
   // Bottom lattice element is the empty set.
-  return element.value.none();
+  return element.trues == 0;
 }
 
-template<size_t N>
-inline LatticeComparison
-BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N>& left,
-                                  const BitsetPowersetLattice<N>& right) {
-  size_t leftCount = left.value.count();
-  size_t rightCount = right.value.count();
+inline void FinitePowersetLattice::set(size_t index, bool value) {
+  if (value != bitvector.at(index)) {
+    if (value) {
+      trues += 1;
+    } else {
+      trues -= 1;
+    }
+  }
+  bitvector.at(index) = value;
+}
 
-  // If left has more elements, left might be a superset of right.
-  if (leftCount > rightCount) {
-    if ((left.value | right.value) == left.value) {
-      return GREATER;
+inline bool FinitePowersetLattice::get(size_t index) {
+  return bitvector.at(index);
+}
+
+inline LatticeComparison
+FinitePowersetLattice::compare(const FinitePowersetLattice& left,
+                               const FinitePowersetLattice& right) {
+  assert(left.bitvector.size() == right.bitvector.size());
+
+  // True in left, false in right.
+  bool leftNotRight = false;
+
+  // True in right, false in left.
+  bool rightNotLeft = false;
+
+  if (left.trues > right.trues) {
+    leftNotRight = true;
+  } else if (right.trues > left.trues) {
+    rightNotLeft = true;
+  }
+
+  size_t size = left.bitvector.size();
+
+  for (size_t i = 0; i < size; ++i) {
+    if (left.bitvector[i] && !right.bitvector[i]) {
+      leftNotRight = true;
+    } else if (right.bitvector[i] && !left.bitvector[i]) {
+      rightNotLeft = true;
     }
-    // If right has more elements, right might be a superset of left.
-  } else if (leftCount < rightCount) {
-    if ((left.value | right.value) == right.value) {
-      return LESS;
+
+    if (leftNotRight && rightNotLeft) {
+      return NO_RELATION;
     }
-  } else if (left.value == right.value) {
-    return EQUAL;
+  }
+
+  if (!leftNotRight) {
+    if (!rightNotLeft) {
+      return EQUAL;
+    }
+    return LESS;
+  } else if (!rightNotLeft) {
+    return GREATER;
   }
 
   return NO_RELATION;
 }
 
-// Implement LUB as an OR of the two bitsets.
-template<size_t N>
-inline void BitsetPowersetLattice<N>::getLeastUpperBound(
-  const BitsetPowersetLattice<N>& right) {
-  value |= right.value;
+inline bool
+FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
+  assert(right.bitvector.size() == bitvector.size());
+
+  bool modified = false;
+  for (size_t i = 0; i < bitvector.size(); ++i) {
+    if (!bitvector.at(i) && right.bitvector.at(i)) {
+      bitvector.at(i) = true;
+      trues++;
+      modified = true;
+    }
+  }
+
+  return modified;
 }
 
-template<size_t N>
-inline void BitsetPowersetLattice<N>::print(std::ostream& os) {
-  os << value;
+inline void FinitePowersetLattice::print(std::ostream& os) {
+  for (auto it = bitvector.rbegin(); it != bitvector.rend(); ++it) {
+    os << *it;
+  }
 }
 
 }; // namespace wasm::analysis

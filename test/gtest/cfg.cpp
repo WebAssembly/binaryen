@@ -145,8 +145,8 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  const size_t sz = 3;
-  MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
+  MonotoneCFGAnalyzer analyzer =
+    MonotoneCFGAnalyzer::fromCFG(&cfg, wasm.getFunction("bar")->getNumLocals());
   analyzer.evaluate();
 
   std::stringstream ss;
@@ -228,8 +228,8 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  const size_t sz = 2;
-  MonotoneCFGAnalyzer<sz> analyzer = MonotoneCFGAnalyzer<sz>::fromCFG(&cfg);
+  MonotoneCFGAnalyzer analyzer =
+    MonotoneCFGAnalyzer::fromCFG(&cfg, wasm.getFunction("bar")->getNumLocals());
   analyzer.evaluate();
 
   std::stringstream ss;
