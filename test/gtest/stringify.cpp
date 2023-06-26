@@ -1,11 +1,13 @@
 #include "passes/stringify-walker.h"
-#include "wasm-s-parser.h"
+#include "print-test.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
 
-TEST(StringifyTest, Print) {
+using StringifyTest = PrintTest;
+
+TEST_F(StringifyTest, Print) {
   auto moduleText = R"wasm(
     (module
     (tag $catch_a (param i32))
@@ -70,15 +72,11 @@ adding unique symbol
 )stringify";
 
   Module wasm;
-  SExpressionParser parser(moduleText);
-  SExpressionWasmBuilder builder(wasm, *(*parser.root)[0], IRProfile::Normal);
+  parseWast(wasm, moduleText);
 
-  bool colors = Colors::isEnabled();
-  Colors::setEnabled(false);
   std::stringstream ss;
   TestStringifyWalker stringify = TestStringifyWalker(ss);
   stringify.walkModule(&wasm);
-  Colors::setEnabled(colors);
 
   EXPECT_EQ(ss.str(), stringifyText);
 }
