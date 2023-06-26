@@ -245,7 +245,7 @@ void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
 
 void TestStringifyWalker::visitExpression(Expression* curr) {
   if (Properties::isControlFlowStructure(curr)) {
-    this->os << "in visitControlFlow with " << ShallowExpression{curr, this->wasm}
+    this->os << "in visitExpression with CF " << ShallowExpression{curr, this->wasm}
              << std::endl;
   } else {
     this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}

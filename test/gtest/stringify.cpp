@@ -36,11 +36,11 @@ TEST(StringifyTest, Print) {
    )
   )wasm";
 
-  auto stringifyText = R"stringify(in visitControlFlow with block
+  auto stringifyText = R"stringify(in visitExpression with CF block
 adding unique symbol
-in visitControlFlow with block $block_a
-in visitControlFlow with block $block_b
-in visitControlFlow with block $block_c
+in visitExpression with CF block $block_a
+in visitExpression with CF block $block_b
+in visitExpression with CF block $block_c
 adding unique symbol
 in visitExpression for i32.const 20
 in visitExpression for drop
@@ -48,14 +48,14 @@ in visitExpression for i32.const 10
 in visitExpression for drop
 adding unique symbol
 in visitExpression for i32.const 0
-in visitControlFlow with if
+in visitExpression with CF if
 in visitExpression for drop
 adding unique symbol
-in visitControlFlow with try $try_a
+in visitExpression with CF try $try_a
 adding unique symbol
-in visitControlFlow with block (result i32)
+in visitExpression with CF block (result i32)
 adding unique symbol
-in visitControlFlow with block (result i32)
+in visitExpression with CF block (result i32)
 adding unique symbol
 in visitExpression for nop
 adding unique symbol
