@@ -48,8 +48,8 @@ namespace wasm {
  * 1, 4, 5, 3, 2, 7, 6, 8, 9
  *
  * Of note:
- *   - The add (line 3) binary operator's left and right children (lines 4 and
- *   5) are visited first as they need to be on the stack before the add operation is executed
+ *   - The add (line 3) binary operator's left and right children (lines 4 - 5) are visited first as they need to be on the stack before the add
+ * operation is executed
  *   - The if-condition (i32.const 0) on line 7 is visited before the if
  * expression
  */
