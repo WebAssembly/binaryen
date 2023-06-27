@@ -388,9 +388,6 @@ private:
   // Whether this pass runner has run. A pass runner should only be run once.
   bool ran = false;
 
-  // Passes in |options.passesToSkip| that we have seen and skipped.
-  std::unordered_set<std::string> skippedPasses;
-
   void runPass(Pass* pass);
   void runPassOnFunction(Pass* pass, Function* func);
 
