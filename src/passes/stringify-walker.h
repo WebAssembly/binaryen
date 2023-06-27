@@ -11,7 +11,7 @@ struct StringifyWalker
   : public PostWalker<SubType, UnifiedExpressionVisitor<SubType>> {
 
   Module* wasm;
-  std::queue<Expression**> queue;
+  std::queue<Expression**> controlFlowQueue;
 
   static void walkModule(SubType* self, Module* module);
   static void scan(SubType* self, Expression** currp);
@@ -20,7 +20,7 @@ struct StringifyWalker
   void visitExpression(Expression* curr);
 
 private:
-  static void handler(SubType* self, Expression**);
+  static void dequeueControlFlow(SubType* self, Expression**);
   static void deferredScan(SubType* self, Expression** currp);
 };
 

@@ -61,9 +61,9 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
     /*
      * The ordering of the below lines of code are important. On each function
      * iteration, we:
-     * 1. push a task for calling the handler function, to ensure that each
+     * 1. push a task for calling the dequeueControlFlow  function, to ensure that each
      *    function has an opportunity to dequeue from StringifyWalker's
-     *    internally managed queue. This queue exists to provide a way for
+     *    internally managed controlFlowQueue. This queue exists to provide a way for
      *    control flow to defer scanning their children.
      * 2. push a task for adding a unique symbol, so that after the function
      *    body is visited as a single expression, there is a a separator between
@@ -74,7 +74,7 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      *    for each function is terminated with a unique symbol, acting as a
      *    separator between each function in the program string
      */
-    self->pushTask(StringifyWalker::handler, nullptr);
+    self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
     self->pushTask(StringifyWalker::addUniqueSymbol, &func->body);
     self->walk(func->body);
     self->addUniqueSymbol(self, &func->body);
@@ -82,22 +82,22 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
 }
 
 /*
- * This handler is responsible for ensuring the children expressions of control
+ * This dequeueControlFlow is responsible for ensuring the children expressions of control
  * flow expressions are visited after the control flow expression has already
- * been visited. In order to perform this responsibility, the handler function
+ * been visited. In order to perform this responsibility, the dequeueControlFlow function
  * needs to always be the very last task in the Walker stack, as the last task
- * will be executed last. This why if the queue is not empty, the first
- * statement pushes a new task to visit the handler again.
+ * will be executed last. This way if the queue is not empty, the first
+ * statement pushes a new task to call dequeueControlFlow again.
  *
  */
 template<typename SubType>
-void StringifyWalker<SubType>::handler(SubType* self, Expression**) {
-  auto& queue = self->queue;
+void StringifyWalker<SubType>::dequeueControlFlow(SubType* self, Expression**) {
+  auto& queue = self->controlFlowQueue;
   if (queue.empty()) {
     return;
   }
 
-  self->pushTask(StringifyWalker::handler, nullptr);
+  self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
   Expression** currp = queue.front();
   queue.pop();
   StringifyWalker<SubType>::deferredScan(self, currp);
@@ -166,7 +166,7 @@ void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
     self->pushTask(StringifyWalker::doVisitExpression, currp);
-    self->queue.push(currp);
+    self->controlFlowQueue.push(currp);
     if (auto *iff = curr->dynCast<If>()) {
       PostWalker<SubType>::scan(self, &iff->condition);
     }
