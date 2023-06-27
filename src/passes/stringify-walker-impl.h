@@ -34,6 +34,22 @@ inline void StringifyWalker<SubType>::walkModule(Module* module) {
     self->addUniqueSymbol(self, &func->body);
   });
 }
+
+template<typename SubType>
+inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
+  Expression* curr = *currp;
+  if (Properties::isControlFlowStructure(curr)) {
+    self->pushTask(StringifyWalker::doVisitExpression, currp);
+    self->controlFlowQueue.push(currp);
+    if (auto* iff = curr->dynCast<If>()) {
+      PostWalker<SubType>::scan(self, &iff->condition);
+    }
+  } else {
+    PostWalker<SubType>::scan(self, currp);
+    return;
+  }
+}
+
 /*
  * This dequeueControlFlow is responsible for ensuring the children expressions
  * of control flow expressions are visited after the control flow expression has
@@ -55,27 +71,6 @@ void StringifyWalker<SubType>::dequeueControlFlow(SubType* self, Expression**) {
   Expression** currp = queue.front();
   queue.pop();
   StringifyWalker<SubType>::deferredScan(self, currp);
-}
-
-template<typename SubType>
-inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
-  Expression* curr = *currp;
-  if (Properties::isControlFlowStructure(curr)) {
-    self->pushTask(StringifyWalker::doVisitExpression, currp);
-    self->controlFlowQueue.push(currp);
-    if (auto* iff = curr->dynCast<If>()) {
-      PostWalker<SubType>::scan(self, &iff->condition);
-    }
-  } else {
-    PostWalker<SubType>::scan(self, currp);
-    return;
-  }
-}
-
-template<typename SubType>
-inline void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
-                                                      Expression** currp) {
-  self->addUniqueSymbol(self, currp);
 }
 
 template<typename SubType>
@@ -134,6 +129,12 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
                                                  Expression** currp) {
   Expression* curr = *currp;
   self->visitExpression(curr);
+}
+
+template<typename SubType>
+inline void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
+                                                      Expression** currp) {
+  self->addUniqueSymbol(self, currp);
 }
 
 } // namespace wasm
