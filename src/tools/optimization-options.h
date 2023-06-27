@@ -335,7 +335,6 @@ struct OptimizationOptions : public ToolOptions {
     auto flushAndReset = [&]() {
       if (passRunner) {
         passRunner->run();
-        passRunner.reset();
       }
       passRunner = std::make_unique<PassRunner>(&wasm, passOptions);
       if (debug) {
