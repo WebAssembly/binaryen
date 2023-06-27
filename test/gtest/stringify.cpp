@@ -1,3 +1,4 @@
+#include "ir/utils.h"
 #include "passes/stringify-walker.h"
 #include "print-test.h"
 #include "wasm.h"
@@ -70,6 +71,31 @@ in visitExpression for i32.const 5
 adding unique symbol
 adding unique symbol
 )stringify";
+
+  struct TestStringifyWalker : public StringifyWalker<TestStringifyWalker> {
+    std::ostream& os;
+
+    TestStringifyWalker(std::ostream& os) : os(os){};
+
+    void walkModule(Module* module) {
+      StringifyWalker::walkModule(this, module);
+    }
+
+    void addUniqueSymbol(TestStringifyWalker* self,
+                                            Expression** currp) {
+      self->os << "adding unique symbol\n";
+    }
+
+    void visitExpression(Expression* curr) {
+      if (Properties::isControlFlowStructure(curr)) {
+        this->os << "in visitExpression with CF "
+                 << ShallowExpression{curr, this->wasm} << std::endl;
+      } else {
+        this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}
+                 << std::endl;
+      }
+    }
+  };
 
   Module wasm;
   parseWast(wasm, moduleText);

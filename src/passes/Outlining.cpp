@@ -55,8 +55,7 @@ namespace wasm {
  *     expression
  */
 template<typename SubType>
-void StringifyWalker<SubType>::walkModule(Module* module) {
-  auto self = static_cast<SubType*>(this);
+void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
   self->wasm = module;
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     /*
@@ -114,6 +113,8 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       if (block->list.size() > 0) {
         stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       }
+      // TODO: The below code could be simplified if ArenaVector supported reverse
+      // iterators
       auto blockIterator = block->list.end();
       while (blockIterator != block->list.begin()) {
         blockIterator--;
@@ -124,8 +125,10 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     }
     case Expression::Id::IfId: {
       auto* iff = curr->cast<If>();
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifFalse);
-      stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
+      if (iff->ifFalse) {
+        stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifFalse);
+        stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
+      }
       stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
       stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
       break;
@@ -186,76 +189,5 @@ void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
                                                Expression** currp) {
   self->addUniqueSymbol(self, currp);
 }
-
-void HashStringifyWalker::walkModule(Module* module) {
-  StringifyWalker::walkModule(module);
-}
-
-void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker* self,
-                                          Expression** currp) {
-  // string.push_back(monotonic);
-  // monotonic++;
-}
-
-// Will be replaced by insertExpression
-// void insertExpression(Expression *curr)
-void HashStringifyWalker::addExpressionHash(Expression* curr, uint64_t hash) {
-  /*string.push_back(monotonic);
-  auto it = exprToCounter.find(monotonic);
-  if (it != exprToCounter.end()) {
-    auto name = getExpressionName(curr);
-    // std::cout << "Collision on Expression: " << name << std::endl;
-    curr->dump();
-  }
-  auto name = getExpressionName(curr);
-  std::cout << "monotonic: " << (unsigned)monotonic << std::endl;
-  exprToCounter[hash] = monotonic;
-  monotonic++;*/
-}
-
-void HashStringifyWalker::visitExpression(Expression* curr) {
-  if (Properties::isControlFlowStructure(curr)) {
-    // Expression* curr = *currp;
-    // uint64_t hashValue = hash(curr);
-    // self->insertHash(hashValue, curr);
-  } else {
-    // uint64_t hash = ExpressionAnalyzer::shallowHash(curr);
-    // std::cout << "hash: " << (unsigned)hash << std::endl;
-    // this->insertHash(hash, curr);
-  }
-}
-
-TestStringifyWalker::TestStringifyWalker(std::ostream& os) : os(os){};
-
-void TestStringifyWalker::walkModule(Module* module) {
-  StringifyWalker::walkModule(module);
-}
-
-void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
-                                          Expression** currp) {
-  self->os << "adding unique symbol\n";
-}
-
-void TestStringifyWalker::visitExpression(Expression* curr) {
-  if (Properties::isControlFlowStructure(curr)) {
-    this->os << "in visitExpression with CF "
-             << ShallowExpression{curr, this->wasm} << std::endl;
-  } else {
-    this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}
-             << std::endl;
-  }
-}
-
-struct Outlining : public Pass {
-
-  void run(Module* module) override {
-    std::stringstream ss;
-    TestStringifyWalker stringify = TestStringifyWalker(ss);
-    stringify.walkModule(module);
-    std::cout << ss.str();
-  }
-};
-
-Pass* createOutliningPass() { return new Outlining(); }
 
 } // namespace wasm
