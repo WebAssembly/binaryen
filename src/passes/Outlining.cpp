@@ -110,12 +110,10 @@ template<typename SubType>
 void StringifyWalker<SubType>::deferredScan(SubType* stringify,
                                             Expression** currp) {
   Expression* curr = *currp;
+  stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
   switch (curr->_id) {
     case Expression::Id::BlockId: {
       auto* block = curr->cast<Block>();
-      if (block->list.size() > 0) {
-        stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
-      }
       // TODO: The below code could be simplified if ArenaVector supported
       // reverse iterators
       auto blockIterator = block->list.end();
@@ -129,7 +127,6 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     case Expression::Id::IfId: {
       auto* iff = curr->cast<If>();
       if (iff->ifFalse) {
-        stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifFalse);
         stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
       }
       stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
@@ -138,9 +135,6 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     }
     case Expression::Id::TryId: {
       auto* tryy = curr->cast<Try>();
-      if (tryy->catchBodies.size() > 0) {
-        stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
-      }
       auto blockIterator = tryy->catchBodies.end();
       while (blockIterator != tryy->catchBodies.begin()) {
         blockIterator--;
@@ -153,7 +147,6 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
     }
     case Expression::Id::LoopId: {
       auto* loop = curr->cast<Loop>();
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       stringify->pushTask(StringifyWalker::scan, &loop->body);
       break;
     }
