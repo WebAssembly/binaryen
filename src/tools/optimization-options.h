@@ -328,32 +328,52 @@ struct OptimizationOptions : public ToolOptions {
   bool runningPasses() { return passes.size() > 0; }
 
   void runPasses(Module& wasm) {
-    PassRunner passRunner(&wasm, passOptions);
-    if (debug) {
-      passRunner.setDebug(true);
-    }
+    std::unique_ptr<PassRunner> passRunner;
+
+    // Flush anything in the current pass runner, and then reset it to a fresh
+    // state so it is ready for new things.
+    auto flushAndReset = [&]() {
+      if (passRunner) {
+        passRunner->run();
+      }
+      passRunner = std::make_unique<PassRunner>(&wasm, passOptions);
+      if (debug) {
+        passRunner->setDebug(true);
+      }
+    };
+
+    flushAndReset();
+
     for (auto& pass : passes) {
-      // We apply the pass's intended opt and shrink levels, if any.
-      auto oldOptimizeLevel = passRunner.options.optimizeLevel;
-      auto oldShrinkLevel = passRunner.options.shrinkLevel;
-      if (pass.optimizeLevel) {
-        passRunner.options.optimizeLevel = *pass.optimizeLevel;
-      }
-      if (pass.shrinkLevel) {
-        passRunner.options.shrinkLevel = *pass.shrinkLevel;
-      }
-
       if (pass.name == DEFAULT_OPT_PASSES) {
-        passRunner.addDefaultOptimizationPasses();
-      } else {
-        passRunner.add(pass.name);
-      }
+        // This is something like -O3 or -Oz. We must run this now, in order to
+        // set the proper opt and shrink levels. To do that, first reset the
+        // runner so that anything already queued is run (since we can only run
+        // after those things).
+        flushAndReset();
 
-      // Revert back to the default levels, if we changed them.
-      passRunner.options.optimizeLevel = oldOptimizeLevel;
-      passRunner.options.shrinkLevel = oldShrinkLevel;
+        // -O3/-Oz etc. always set their own optimize/shrinkLevels.
+        assert(pass.optimizeLevel);
+        assert(pass.shrinkLevel);
+        passRunner->options.optimizeLevel = *pass.optimizeLevel;
+        passRunner->options.shrinkLevel = *pass.shrinkLevel;
+
+        // Run our optimizations now, and reset the runner so that the default
+        // pass options are used later (and not the temporary optimize/
+        // shrinkLevels we just set).
+        passRunner->addDefaultOptimizationPasses();
+        flushAndReset();
+      } else {
+        // This is a normal pass. Add it to the queue for execution.
+        passRunner->add(pass.name);
+
+        // Normal passes do not set their own optimize/shrinkLevels.
+        assert(!pass.optimizeLevel);
+        assert(!pass.shrinkLevel);
+      }
     }
-    passRunner.run();
+
+    flushAndReset();
   }
 };
 

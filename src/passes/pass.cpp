@@ -698,9 +698,6 @@ void PassRunner::run() {
   assert(!ran);
   ran = true;
 
-  // As we run passes, we'll notice which we skip.
-  skippedPasses.clear();
-
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -820,20 +817,6 @@ void PassRunner::run() {
       }
     }
     flush();
-  }
-
-  if (!isNested) {
-    // All the passes the user requested to skip should have been seen, and
-    // skipped. If not, the user may have had a typo in the name of a pass to
-    // skip, and we will warn. (We don't do this in a nested runner because
-    // those are used for various internal tasks inside passes, which would lead
-    // to many spurious warnings.)
-    for (auto pass : options.passesToSkip) {
-      if (!skippedPasses.count(pass)) {
-        std::cerr << "warning: --" << pass << " was requested to be skipped, "
-                  << "but it was not found in the passes that were run.\n";
-      }
-    }
   }
 }
 
@@ -956,7 +939,6 @@ void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
 
   if (options.passesToSkip.count(pass->name)) {
-    skippedPasses.insert(pass->name);
     return;
   }
 
@@ -980,7 +962,6 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
   assert(pass->isFunctionParallel());
 
   if (options.passesToSkip.count(pass->name)) {
-    skippedPasses.insert(pass->name);
     return;
   }
 
