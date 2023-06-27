@@ -63,8 +63,9 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      * iteration, we:
      * 1. push a task for calling the dequeueControlFlow  function, to ensure
      *    that each function has an opportunity to dequeue from
-     *    StringifyWalker's internally managed controlFlowQueue. This queue exists
-     *    to provide a way for control flow to defer scanning their children.
+     *    StringifyWalker's internally managed controlFlowQueue. This queue
+     *    exists to provide a way for control flow to defer scanning their
+     *    children.
      * 2. push a task for adding a unique symbol, so that after the function
      *    body is visited as a single expression, there is a a separator between
      *    the symbol for the function and subsequent symbols as each child of
