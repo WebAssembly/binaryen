@@ -32,44 +32,49 @@ constexpr bool is_lattice =
 // Represents a powerset lattice element (i.e. a set) as a bitvector. A true
 // means that an element is present in the set.
 class FinitePowersetLattice {
-  std::vector<bool> bitvector;
-
-  // Counts the number of elements in the set (i. e. number of trues in the
-  // bitvector).
-  size_t trues;
-
-  // Size of the top lattice element must be specified, as it determines the set
-  // of the bitvector.
-  FinitePowersetLattice(size_t size);
+  // The size of the set that the powerset lattice was created from. This is
+  // equivalent to the size of the Top lattice element.
+  size_t setSize;
 
 public:
-  void set(size_t index, bool value);
-  bool get(size_t index);
-  size_t size() { return bitvector.size(); }
-  size_t countElements() { return trues; }
+  FinitePowersetLattice(size_t setSize) : setSize(setSize) {}
 
-  using iterator = std::vector<bool>::const_iterator;
-  iterator begin() { return bitvector.cbegin(); }
-  iterator end() { return bitvector.cend(); }
+  class Element {
+  private:
+    std::vector<bool> bitvector;
+    size_t elementSize;
 
-  // Returns an instance of the bottom lattice element. The size of the the top
-  // lattice element must be specified.
-  static FinitePowersetLattice getBottom(size_t size);
-  bool isTop();
-  bool isBottom();
+    Element(size_t latticeSetSize)
+      : bitvector(latticeSetSize), elementSize(0) {}
+
+  public:
+    using iterator = std::vector<bool>::const_iterator;
+    iterator begin() { return bitvector.cbegin(); }
+    iterator end() { return bitvector.cend(); }
+    bool get(size_t index) { return bitvector[index]; }
+    void set(size_t index, bool value);
+    size_t size() { return elementSize; }
+    bool isTop() { return elementSize == bitvector.size(); }
+    bool isBottom() { return elementSize == 0; }
+
+    // Calculates the LUB of this element with some right element and sets
+    // this element to the LUB in place. Returns true if this element before
+    // this method call was different than the LUB.
+    bool getLeastUpperBound(const Element& right);
+
+    // Prints out the bits in the bitvector for a lattice element.
+    void print(std::ostream& os);
+
+    friend FinitePowersetLattice;
+  };
 
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
-  static LatticeComparison compare(const FinitePowersetLattice& left,
-                                   const FinitePowersetLattice& right);
+  static LatticeComparison compare(const Element& left, const Element& right);
 
-  // Calculates the LUB of this current (left) lattice element with some right
-  // element. It then updates this current lattice element to the LUB in place.
-  // Returns true if the current lattice element was changed, false otherwise.
-  bool getLeastUpperBound(const FinitePowersetLattice& right);
-
-  // Prints out the bits in the bitvector for a lattice element.
-  void print(std::ostream& os);
+  // Returns an instance of the bottom lattice element. The size of the the top
+  // lattice element must be specified.
+  Element getBottom();
 };
 
 } // namespace wasm::analysis

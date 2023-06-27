@@ -5,48 +5,9 @@
 
 namespace wasm::analysis {
 
-inline FinitePowersetLattice::FinitePowersetLattice(size_t size) : trues(0) {
-  bitvector.reserve(size);
-  for (size_t i = 0; i < size; ++i) {
-    bitvector.push_back(false);
-  }
-}
-
-inline FinitePowersetLattice FinitePowersetLattice::getBottom(size_t size) {
-  // Return the empty set as the bottom lattice element.
-  FinitePowersetLattice result(size);
-  return result;
-}
-
-inline bool FinitePowersetLattice::isTop() {
-  // Top lattice element is the set containing all possible elements.
-  return trues == bitvector.size();
-}
-
-inline bool FinitePowersetLattice::isBottom() {
-  // Bottom lattice element is the empty set.
-  return trues == 0;
-}
-
-inline void FinitePowersetLattice::set(size_t index, bool value) {
-  // The set function updates the count of true bits in the bitvector.
-  if (value != bitvector.at(index)) {
-    if (value) {
-      trues += 1;
-    } else {
-      trues -= 1;
-    }
-  }
-  bitvector.at(index) = value;
-}
-
-inline bool FinitePowersetLattice::get(size_t index) {
-  return bitvector.at(index);
-}
-
 inline LatticeComparison
-FinitePowersetLattice::compare(const FinitePowersetLattice& left,
-                               const FinitePowersetLattice& right) {
+FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
+                               const FinitePowersetLattice::Element& right) {
   // Both must be from the powerset lattice of the same set.
   assert(left.bitvector.size() == right.bitvector.size());
 
@@ -56,10 +17,10 @@ FinitePowersetLattice::compare(const FinitePowersetLattice& left,
   // True in right, false in left.
   bool rightNotLeft = false;
 
-  if (left.trues > right.trues) {
+  if (left.elementSize > right.elementSize) {
     // If there are more elements in the left, some must not be in the right.
     leftNotRight = true;
-  } else if (right.trues > left.trues) {
+  } else if (right.elementSize > left.elementSize) {
     // If there are more elements in the right, some must not be in the left.
     rightNotLeft = true;
   }
@@ -91,10 +52,27 @@ FinitePowersetLattice::compare(const FinitePowersetLattice& left,
   return NO_RELATION;
 }
 
+inline FinitePowersetLattice::Element FinitePowersetLattice::getBottom() {
+  FinitePowersetLattice::Element result(setSize);
+  return result;
+}
+
+inline void FinitePowersetLattice::Element::set(size_t index, bool value) {
+  // The set function updates the count of true bits in the bitvector.
+  if (value != bitvector.at(index)) {
+    if (value) {
+      elementSize += 1;
+    } else {
+      elementSize -= 1;
+    }
+  }
+  bitvector.at(index) = value;
+}
+
 // Least upper bound is implemented as a logical OR between the bitvectors on
 // both sides.
-inline bool
-FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
+inline bool FinitePowersetLattice::Element::getLeastUpperBound(
+  const FinitePowersetLattice::Element& right) {
   // Both must be from powerset lattice of the same set.
   assert(right.bitvector.size() == bitvector.size());
 
@@ -102,7 +80,7 @@ FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
   for (size_t i = 0; i < bitvector.size(); ++i) {
     if (!bitvector.at(i) && right.bitvector.at(i)) {
       bitvector.at(i) = true;
-      trues++;
+      elementSize++;
       modified = true;
     }
   }
@@ -110,7 +88,7 @@ FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
   return modified;
 }
 
-inline void FinitePowersetLattice::print(std::ostream& os) {
+inline void FinitePowersetLattice::Element::print(std::ostream& os) {
   for (auto it : bitvector) {
     os << it;
   }

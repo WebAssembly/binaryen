@@ -15,14 +15,15 @@ struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
 struct BlockState : public Visitor<BlockState> {
-  static_assert(is_lattice<FinitePowersetLattice>);
-  BlockState(const BasicBlock* underlyingBlock, size_t size);
+  BlockState(const BasicBlock* underlyingBlock,
+             FinitePowersetLattice::Element begin,
+             FinitePowersetLattice::Element end);
 
   void addPredecessor(BlockState* pred);
   void addSuccessor(BlockState* succ);
 
-  FinitePowersetLattice& getFirstState();
-  FinitePowersetLattice& getLastState();
+  FinitePowersetLattice::Element& getFirstState();
+  FinitePowersetLattice::Element& getLastState();
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type.
@@ -42,11 +43,11 @@ private:
   Index index;
   const BasicBlock* cfgBlock;
   // State at beginning of CFG node.
-  FinitePowersetLattice beginningState;
+  FinitePowersetLattice::Element beginningState;
   // State at the end of the CFG node.
-  FinitePowersetLattice endState;
+  FinitePowersetLattice::Element endState;
   // Holds intermediate state values.
-  FinitePowersetLattice currState;
+  FinitePowersetLattice::Element currState;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;
 
@@ -64,6 +65,8 @@ struct MonotoneCFGAnalyzer {
   void print(std::ostream& os);
 
 private:
+  MonotoneCFGAnalyzer(size_t size);
+  FinitePowersetLattice lattice;
   std::vector<BlockState> stateBlocks;
 };
 

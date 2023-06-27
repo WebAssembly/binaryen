@@ -7,11 +7,11 @@
 #include "monotone-analyzer.h"
 
 namespace wasm::analysis {
-inline BlockState::BlockState(const BasicBlock* underlyingBlock, size_t size)
+inline BlockState::BlockState(const BasicBlock* underlyingBlock,
+                              FinitePowersetLattice::Element begin,
+                              FinitePowersetLattice::Element end)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    beginningState(FinitePowersetLattice::getBottom(size)),
-    endState(FinitePowersetLattice::getBottom(size)),
-    currState(FinitePowersetLattice::getBottom(size)) {}
+    beginningState(begin), endState(end), currState(end) {}
 
 inline void BlockState::addPredecessor(BlockState* pred) {
   predecessors.push_back(pred);
@@ -21,11 +21,13 @@ inline void BlockState::addSuccessor(BlockState* succ) {
   successors.push_back(succ);
 }
 
-inline FinitePowersetLattice& BlockState::getFirstState() {
+inline FinitePowersetLattice::Element& BlockState::getFirstState() {
   return beginningState;
 }
 
-inline FinitePowersetLattice& BlockState::getLastState() { return endState; }
+inline FinitePowersetLattice::Element& BlockState::getLastState() {
+  return endState;
+}
 
 // In our current limited implementation, we just update a new live variable
 // when it it is used in a get or set.
@@ -76,14 +78,17 @@ inline void BlockState::print(std::ostream& os) {
   }
 }
 
+inline MonotoneCFGAnalyzer::MonotoneCFGAnalyzer(size_t size) : lattice(size) {}
+
 MonotoneCFGAnalyzer inline MonotoneCFGAnalyzer::fromCFG(CFG* cfg, size_t size) {
-  MonotoneCFGAnalyzer result;
+  MonotoneCFGAnalyzer result(size);
 
   // Map BasicBlocks to each BlockState's index
   std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
   size_t index = 0;
   for (auto it = cfg->begin(); it != cfg->end(); it++) {
-    result.stateBlocks.emplace_back(&(*it), size);
+    result.stateBlocks.emplace_back(
+      &(*it), result.lattice.getBottom(), result.lattice.getBottom());
     basicBlockToState[&(*it)] = index++;
   }
 
