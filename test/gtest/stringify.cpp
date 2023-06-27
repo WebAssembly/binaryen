@@ -81,8 +81,7 @@ adding unique symbol
       StringifyWalker::walkModule(this, module);
     }
 
-    void addUniqueSymbol(TestStringifyWalker* self,
-                                            Expression** currp) {
+    void addUniqueSymbol(TestStringifyWalker* self, Expression** currp) {
       self->os << "adding unique symbol\n";
     }
 
@@ -91,8 +90,8 @@ adding unique symbol
         this->os << "in visitExpression with CF "
                  << ShallowExpression{curr, this->wasm} << std::endl;
       } else {
-        this->os << "in visitExpression for " << ShallowExpression{curr, this->wasm}
-                 << std::endl;
+        this->os << "in visitExpression for "
+                 << ShallowExpression{curr, this->wasm} << std::endl;
       }
     }
   };
