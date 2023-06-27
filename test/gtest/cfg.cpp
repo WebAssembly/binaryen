@@ -145,8 +145,9 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  MonotoneCFGAnalyzer analyzer =
-    MonotoneCFGAnalyzer::fromCFG(&cfg, wasm.getFunction("bar")->getNumLocals());
+  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
+  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
+  analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
@@ -228,8 +229,9 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  MonotoneCFGAnalyzer analyzer =
-    MonotoneCFGAnalyzer::fromCFG(&cfg, wasm.getFunction("bar")->getNumLocals());
+  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
+  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
+  analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
   std::stringstream ss;

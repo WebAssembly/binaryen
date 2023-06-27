@@ -11,19 +11,15 @@
 
 namespace wasm::analysis {
 
-struct MonotoneCFGAnalyzer;
+template<typename Lattice> struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
-struct BlockState : public Visitor<BlockState> {
-  BlockState(const BasicBlock* underlyingBlock,
-             FinitePowersetLattice::Element begin,
-             FinitePowersetLattice::Element end);
+template<typename Lattice>
+struct BlockState : public Visitor<BlockState<Lattice>> {
+  BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 
-  void addPredecessor(BlockState* pred);
-  void addSuccessor(BlockState* succ);
-
-  FinitePowersetLattice::Element& getFirstState();
-  FinitePowersetLattice::Element& getLastState();
+  typename Lattice::Element& getFirstState() { return beginningState; }
+  typename Lattice::Element& getLastState() { return endState; }
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type.
@@ -43,21 +39,24 @@ private:
   Index index;
   const BasicBlock* cfgBlock;
   // State at beginning of CFG node.
-  FinitePowersetLattice::Element beginningState;
+  typename Lattice::Element beginningState;
   // State at the end of the CFG node.
-  FinitePowersetLattice::Element endState;
+  typename Lattice::Element endState;
   // Holds intermediate state values.
-  FinitePowersetLattice::Element currState;
+  typename Lattice::Element currState;
   std::vector<BlockState*> predecessors;
   std::vector<BlockState*> successors;
 
-  friend MonotoneCFGAnalyzer;
+  friend MonotoneCFGAnalyzer<Lattice>;
 };
 
+template<typename Lattice>
 struct MonotoneCFGAnalyzer {
+  MonotoneCFGAnalyzer(Lattice lattice) : lattice(lattice) {}
+
   // Constructs a graph of BlockState objects which parallels
   // the CFG graph. Each CFG node corresponds to a BlockState node.
-  static MonotoneCFGAnalyzer fromCFG(CFG* cfg, size_t size);
+  void fromCFG(CFG* cfg);
 
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
@@ -65,9 +64,8 @@ struct MonotoneCFGAnalyzer {
   void print(std::ostream& os);
 
 private:
-  MonotoneCFGAnalyzer(size_t size);
-  FinitePowersetLattice lattice;
-  std::vector<BlockState> stateBlocks;
+  Lattice lattice;
+  std::vector<BlockState<Lattice>> stateBlocks;
 };
 
 } // namespace wasm::analysis

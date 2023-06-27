@@ -39,23 +39,19 @@ class FinitePowersetLattice {
 public:
   FinitePowersetLattice(size_t setSize) : setSize(setSize) {}
 
-  class Element {
-  private:
+  struct Element {
     std::vector<bool> bitvector;
-    size_t elementSize;
 
-    Element(size_t latticeSetSize)
-      : bitvector(latticeSetSize), elementSize(0) {}
+    size_t count();
 
-  public:
     using iterator = std::vector<bool>::const_iterator;
     iterator begin() { return bitvector.cbegin(); }
     iterator end() { return bitvector.cend(); }
     bool get(size_t index) { return bitvector[index]; }
-    void set(size_t index, bool value);
-    size_t size() { return elementSize; }
-    bool isTop() { return elementSize == bitvector.size(); }
-    bool isBottom() { return elementSize == 0; }
+    void set(size_t index, bool value) { bitvector[index] = value; }
+
+    bool isTop() { return count() == bitvector.size(); }
+    bool isBottom() { return count() == 0; }
 
     // Calculates the LUB of this element with some right element and sets
     // this element to the LUB in place. Returns true if this element before
@@ -64,6 +60,9 @@ public:
 
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
+
+  private:
+    Element(size_t latticeSetSize) : bitvector(latticeSetSize) {}
 
     friend FinitePowersetLattice;
   };

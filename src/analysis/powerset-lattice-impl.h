@@ -17,14 +17,6 @@ FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
   // True in right, false in left.
   bool rightNotLeft = false;
 
-  if (left.elementSize > right.elementSize) {
-    // If there are more elements in the left, some must not be in the right.
-    leftNotRight = true;
-  } else if (right.elementSize > left.elementSize) {
-    // If there are more elements in the right, some must not be in the left.
-    rightNotLeft = true;
-  }
-
   size_t size = left.bitvector.size();
 
   for (size_t i = 0; i < size; ++i) {
@@ -57,16 +49,12 @@ inline FinitePowersetLattice::Element FinitePowersetLattice::getBottom() {
   return result;
 }
 
-inline void FinitePowersetLattice::Element::set(size_t index, bool value) {
-  // The set function updates the count of true bits in the bitvector.
-  if (value != bitvector.at(index)) {
-    if (value) {
-      elementSize += 1;
-    } else {
-      elementSize -= 1;
-    }
+inline size_t FinitePowersetLattice::Element::count() {
+  size_t count = 0;
+  for (auto it : bitvector) {
+    count += it;
   }
-  bitvector.at(index) = value;
+  return count;
 }
 
 // Least upper bound is implemented as a logical OR between the bitvectors on
@@ -78,9 +66,8 @@ inline bool FinitePowersetLattice::Element::getLeastUpperBound(
 
   bool modified = false;
   for (size_t i = 0; i < bitvector.size(); ++i) {
-    if (!bitvector.at(i) && right.bitvector.at(i)) {
-      bitvector.at(i) = true;
-      elementSize++;
+    if (!bitvector[i] && right.bitvector[i]) {
+      bitvector[i] = true;
       modified = true;
     }
   }
