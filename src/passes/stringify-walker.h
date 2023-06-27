@@ -13,7 +13,7 @@ struct StringifyWalker
   Module* wasm;
   std::queue<Expression**> queue;
 
-  static void walkModule(SubType* self, Module* module);
+  void walkModule(Module* module);
   static void scan(SubType* self, Expression** currp);
   static void addUniqueSymbol(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);

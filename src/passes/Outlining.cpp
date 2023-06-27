@@ -56,7 +56,8 @@ namespace wasm {
  */
 template<typename SubType>
 void StringifyWalker<SubType>::walkModule(Module* module) {
-  static_cast<SubType*>(this)->->wasm = module;
+  auto self = static_cast<SubType*>(this);
+  self->wasm = module;
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     /*
      * The ordering of the below lines of code are important. On each function
@@ -187,7 +188,7 @@ void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
 }
 
 void HashStringifyWalker::walkModule(Module* module) {
-  StringifyWalker::walkModule(this, module);
+  StringifyWalker::walkModule(module);
 }
 
 void HashStringifyWalker::addUniqueSymbol(HashStringifyWalker* self,
@@ -227,7 +228,7 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
 TestStringifyWalker::TestStringifyWalker(std::ostream& os) : os(os){};
 
 void TestStringifyWalker::walkModule(Module* module) {
-  StringifyWalker::walkModule(this, module);
+  StringifyWalker::walkModule(module);
 }
 
 void TestStringifyWalker::addUniqueSymbol(TestStringifyWalker* self,
