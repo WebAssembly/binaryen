@@ -15,13 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-- Fix a bug where -O3 -Oz would run the -O3 with the opt levels of -Oz, which
+- Fix a bug where e.g. -O3 -Oz ran the -O3 with the opt levels of -Oz, which
   could inhibit inlining, for example. While this is a bugfix, it affects how
   commandline options are interpreted, so if you depended on the old behavior
   this may be a breaking change. That is, the old behavior made -O3 -Oz run the
   first -O3 with -Oz's opt levels, and the new behavior is to run -O3 with the
   proper (-O3) opt levels. This is a followup to #5333 from a previous release.
-  (#)
+  (#5787)
 
 v113
 ----
