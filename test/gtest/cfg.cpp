@@ -121,7 +121,7 @@ block
 drop
 000
 local.get $2
-100
+001
 local.set $2
 000
 i32.const 1
@@ -129,11 +129,11 @@ i32.const 1
 local.set $1
 000
 local.get $0
-001
+100
 drop
-001
+100
 local.get $0
-001
+100
 local.set $0
 000
 i32.const 1
@@ -183,15 +183,15 @@ TEST_F(CFGTest, NonlinearLiveness) {
   auto analyzerText = R"analyzer(CFG Analyzer
 State Block: 0
 State at beginning: 00
-State at end: 01
+State at end: 10
 Intermediate States (reverse order): 
-01
+10
 i32.eq
-01
+10
 i32.const 2
-01
+10
 local.get $0
-01
+10
 local.set $0
 00
 i32.const 1
@@ -206,14 +206,14 @@ local.set $1
 i32.const 4
 00
 State Block: 2
-State at beginning: 01
+State at beginning: 10
 State at end: 00
 Intermediate States (reverse order): 
 00
 drop
 00
 local.get $0
-01
+10
 State Block: 3
 State at beginning: 00
 State at end: 00

@@ -111,8 +111,8 @@ FinitePowersetLattice::getLeastUpperBound(const FinitePowersetLattice& right) {
 }
 
 inline void FinitePowersetLattice::print(std::ostream& os) {
-  for (auto it = bitvector.rbegin(); it != bitvector.rend(); ++it) {
-    os << *it;
+  for (auto it : bitvector) {
+    os << it;
   }
 }
 
