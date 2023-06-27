@@ -28,3 +28,18 @@
     )
   )
 )
+;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+;; CHECK:      (export "export" (func $1))
+
+;; CHECK:      (func $1 (; has Stack IR ;) (param $0 i32) (result i32)
+;; CHECK-NEXT:  (i32.add
+;; CHECK-NEXT:   (local.tee $0
+;; CHECK-NEXT:    (i32.add
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:     (i32.const 2)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
