@@ -1,4 +1,4 @@
-#include "wasm-traversal.h"
+#include "stringify-walker.h"
 
 #ifndef wasm_passes_stringify_walker_impl_h
 #define wasm_passes_stringify_walker_impl_h
