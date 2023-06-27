@@ -72,7 +72,7 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
-                                               Expression** currp) {
+                                                      Expression** currp) {
   self->addUniqueSymbol(self, currp);
 }
 
@@ -136,5 +136,4 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
 
 } // namespace wasm
 
-
-#endif  // wasm_passes_stringify_walker_impl_h
+#endif // wasm_passes_stringify_walker_impl_h
