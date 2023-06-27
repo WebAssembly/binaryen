@@ -55,8 +55,8 @@ namespace wasm {
  *     expression
  */
 template<typename SubType>
-void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
-  self->wasm = module;
+void StringifyWalker<SubType>::walkModule(Module* module) {
+  static_cast<SubType*>(this)->->wasm = module;
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     /*
      * The ordering of the below lines of code are important. On each function
@@ -67,8 +67,8 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
      *    control flow to defer scanning their children.
      * 2. push a task for adding a unique symbol, so that after the function
      *    body is visited as a single expression, there is a a separator between
-     *    the symbol for the entire function and the symbol for the function's
-     *    children
+     *    the symbol for the function and subsequent symbols as each child of
+     *    the function body is visited. This assumes the function body is a block.
      * 3. then we call walk, which will visit the function body as a single unit
      * 4. finally we call addUniqueSymbol directly to ensure the string encoding
      *    for each function is terminated with a unique symbol, acting as a
@@ -82,7 +82,7 @@ void StringifyWalker<SubType>::walkModule(SubType* self, Module* module) {
 }
 
 /*
- * This handler is responsibe for ensuring the children expressions of control
+ * This handler is responsible for ensuring the children expressions of control
  * flow expressions are visited after the control flow expression has already
  * been visited. In order to perform this responsibility, the handler function
  * needs to always be the very last task in the Walker stack, as the last task
@@ -109,7 +109,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
   Expression* curr = *currp;
   switch (curr->_id) {
     case Expression::Id::BlockId: {
-      auto* block = curr->dynCast<Block>();
+      auto* block = curr->cast<Block>();
       if (block->list.size() > 0) {
         stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       }
@@ -122,7 +122,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       break;
     }
     case Expression::Id::IfId: {
-      auto* iff = curr->dynCast<If>();
+      auto* iff = curr->cast<If>();
       stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifFalse);
       stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
       stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
@@ -130,7 +130,7 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       break;
     }
     case Expression::Id::TryId: {
-      auto* tryy = curr->dynCast<Try>();
+      auto* tryy = curr->cast<Try>();
       if (tryy->catchBodies.size() > 0) {
         stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       }
@@ -145,17 +145,14 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
       break;
     }
     case Expression::Id::LoopId: {
-      auto* loop = curr->dynCast<Loop>();
+      auto* loop = curr->cast<Loop>();
       stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
       stringify->pushTask(StringifyWalker::scan, &loop->body);
       break;
     }
     default: {
       assert(Properties::isControlFlowStructure(curr));
-      auto name = getExpressionName(*currp);
-      std::cout
-        << "deferredScan reached an unimplemented control flow expression: "
-        << name << std::endl;
+      WASM_UNREACHABLE("unexpected expression");
     }
   }
 }
@@ -163,21 +160,17 @@ void StringifyWalker<SubType>::deferredScan(SubType* stringify,
 template<typename SubType>
 void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
-  if (curr->_id == Expression::Id::BlockId || curr->_id == Expression::LoopId ||
-      curr->_id == Expression::TryId || curr->_id == Expression::IfId) {
+  if (Properties::isControlFlowStructure(curr)) {
     self->pushTask(StringifyWalker::doVisitExpression, currp);
     self->queue.push(currp);
-  }
-
-  if (curr->_id == Expression::IfId) {
-    auto* iff = curr->dynCast<If>();
-    PostWalker<SubType>::scan(self, &iff->condition);
+    if (auto *iff = curr->dynCast<If>()) {
+      PostWalker<SubType>::scan(self, &iff->condition);
+    }
+  } else {
+    PostWalker<SubType>::scan(self, currp);
     return;
   }
 
-  if (!Properties::isControlFlowStructure(curr)) {
-    PostWalker<SubType>::scan(self, currp);
-  }
 }
 
 template<typename SubType>
