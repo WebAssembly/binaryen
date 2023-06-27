@@ -78,7 +78,7 @@ adding unique symbol
     TestStringifyWalker(std::ostream& os) : os(os){};
 
     void walkModule(Module* module) {
-      StringifyWalker::walkModule(this, module);
+      StringifyWalker::walkModule(module);
     }
 
     void addUniqueSymbol(TestStringifyWalker* self, Expression** currp) {
