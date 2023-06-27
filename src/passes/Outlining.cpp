@@ -34,23 +34,23 @@ namespace wasm {
  *
  * For example, the below (contrived) wat:
  * 1: (block
- * 2:   (i32.add
- * 3:     (i32.const 20)
- * 4:     (i32.const 10))
- * 5:   (if
- * 6:     (i32.const 0)
- * 7:     (then (return (i32.const 1)))
- * 8:     (else (return (i32.const 0)))
- * 9:   )
+ * 2:   (drop
+ * 3:     (i32.add
+ * 4:       (i32.const 20)
+ * 5:       (i32.const 10)))
+ * 6:   (if
+ * 7:     (i32.const 0)
+ * 8:     (then (return (i32.const 1)))
+ * 9:     (else (return (i32.const 0)))))
  *
- * Would have it's expressions visited in the following order (based on line
+ * Would have its expressions visited in the following order (based on line
  * number):
- * 1, 3, 4, 2, 6, 5, 7, 8
+ * 1, 4, 5, 3, 2, 7, 6, 8, 9
  *
  * Of note:
- *   - The add (line 2) binary operator's left and right children are visited
- * first as they need to be on the stack before the add operation is executed
- *   - The if-condition (i32.const 0) on line 6 is visited before the if
+ *   - The add (line 3) binary operator's left and right children (lines 4 and
+ *   5) are visited first as they need to be on the stack before the add operation is executed
+ *   - The if-condition (i32.const 0) on line 7 is visited before the if
  * expression
  */
 template<typename SubType>
