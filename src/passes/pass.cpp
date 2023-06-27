@@ -821,20 +821,6 @@ void PassRunner::run() {
     }
     flush();
   }
-
-  if (!isNested) {
-    // All the passes the user requested to skip should have been seen, and
-    // skipped. If not, the user may have had a typo in the name of a pass to
-    // skip, and we will warn. (We don't do this in a nested runner because
-    // those are used for various internal tasks inside passes, which would lead
-    // to many spurious warnings.)
-    for (auto pass : options.passesToSkip) {
-      if (!skippedPasses.count(pass)) {
-        std::cerr << "warning: --" << pass << " was requested to be skipped, "
-                  << "but it was not found in the passes that were run.\n";
-      }
-    }
-  }
 }
 
 void PassRunner::runOnFunction(Function* func) {
