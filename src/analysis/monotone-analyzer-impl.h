@@ -14,9 +14,8 @@ template<typename Lattice>
 inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
                                        Lattice& lattice)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    beginningState(std::move(lattice.getBottom())),
-    endState(std::move(lattice.getBottom())),
-    currState(std::move(lattice.getBottom())) {}
+    beginningState(lattice.getBottom()), endState(lattice.getBottom()),
+    currState(lattice.getBottom()) {}
 
 // In our current limited implementation, we just update state on gets
 // and sets of local indices.
@@ -111,12 +110,15 @@ inline void MonotoneCFGAnalyzer<Lattice>::evaluate() {
     BlockState<Lattice>& currBlockState = stateBlocks[worklist.front()];
     worklist.pop();
 
-    // Run transfer function on the block.
+    // For each expression, applies the transfer function, using the expression,
+    // on the state of the expression it depends upon (here the next expression)
+    // to arrive at the expression's state. THe beginning and end states of the
+    // CFG block will be updated.
     currBlockState.transfer();
 
     // Propagate state to dependents
     for (size_t j = 0; j < currBlockState.predecessors.size(); ++j) {
-      if (currBlockState.predecessors[j]->getLastState().getLeastUpperBound(
+      if (currBlockState.predecessors[j]->getLastState().makeLeastUpperBound(
             currBlockState.getFirstState())) {
         worklist.push(currBlockState.predecessors[j]->index);
       }

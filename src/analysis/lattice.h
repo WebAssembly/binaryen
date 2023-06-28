@@ -10,19 +10,21 @@ namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
 
-template<typename T>
+template<typename Lattice>
 constexpr bool has_getBottom =
-  std::is_invocable_r<typename T::Element, decltype(&T::getBottom), T>::value;
-template<typename T>
+  std::is_invocable_r<typename Lattice::Element,
+                      decltype(&Lattice::getBottom),
+                      Lattice>::value;
+template<typename Lattice>
 constexpr bool has_compare =
   std::is_invocable_r<LatticeComparison,
-                      decltype(T::compare),
-                      const typename T::Element&,
-                      const typename T::Element&>::value;
+                      decltype(Lattice::compare),
+                      const typename Lattice::Element&,
+                      const typename Lattice::Element&>::value;
 template<typename Element>
-constexpr bool has_getLeastUpperBound =
+constexpr bool has_makeLeastUpperBound =
   std::is_invocable_r<void,
-                      decltype(&Element::getLeastUpperBound),
+                      decltype(&Element::makeLeastUpperBound),
                       Element,
                       const Element&>::value;
 template<typename Element>
@@ -32,10 +34,10 @@ template<typename Element>
 constexpr bool has_isBottom =
   std::is_invocable_r<bool, decltype(&Element::isBottom), Element>::value;
 
-template<typename T>
-constexpr bool is_lattice = has_getBottom<T>&& has_compare<T>&&
-  has_getLeastUpperBound<typename T::Element>&& has_isTop<typename T::Element>&&
-    has_isBottom<typename T::Element>;
+template<typename Lattice>
+constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
+  has_makeLeastUpperBound<typename Lattice::Element>&& has_isTop<
+    typename Lattice::Element>&& has_isBottom<typename Lattice::Element>;
 
 // Represents a powerset lattice which is constructed from a finite set which
 // can be represented by a bitvector. Set elements are represented by
@@ -53,19 +55,27 @@ public:
   // This represents an element of a powerset lattice. The element is itself a
   // set which has set members. The bitvector tracks which possible members of
   // the element are actually present.
-  struct Element {
+  class Element {
     // If bitvector[i] is true, then member i is present in the lattice element,
     // otherwise it isn't.
     std::vector<bool> bitvector;
+
+    // This constructs a bottom element, given the lattice set size. Used by the
+    // lattice's getBottom function.
+    Element(size_t latticeSetSize) : bitvector(latticeSetSize) {}
+
+  public:
+    Element(Element&& source) = default;
+    Element(Element& source) = default;
+
+    Element& operator=(Element&& source) = default;
+    Element& operator=(const Element& source) = default;
 
     // Counts the number of members present the element itself. For instance, if
     // we had {true, false, true}, the count would be 2. O(N) operation which
     // iterates through the bitvector.
     size_t count();
 
-    using iterator = std::vector<bool>::const_iterator;
-    iterator begin() { return bitvector.cbegin(); }
-    iterator end() { return bitvector.cend(); }
     bool get(size_t index) { return bitvector[index]; }
     void set(size_t index, bool value) { bitvector[index] = value; }
 
@@ -75,21 +85,10 @@ public:
     // Calculates the LUB of this element with some right element and sets
     // this element to the LUB in place. Returns true if this element before
     // this method call was different than the LUB.
-    bool getLeastUpperBound(const Element& right);
+    bool makeLeastUpperBound(const Element& right);
 
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
-
-    Element(Element&& source) = default;
-    Element(Element& source) = default;
-
-    Element& operator=(Element&& source) = default;
-    Element& operator=(const Element& source) = default;
-
-  private:
-    // This constructs a bottom element, given the lattice set size. Used by the
-    // lattice's getBottom function.
-    Element(size_t latticeSetSize) : bitvector(latticeSetSize) {}
 
     friend FinitePowersetLattice;
   };

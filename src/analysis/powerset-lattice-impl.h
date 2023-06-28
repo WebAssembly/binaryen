@@ -59,7 +59,7 @@ inline size_t FinitePowersetLattice::Element::count() {
 // Least upper bound is implemented as a logical OR between the bitvectors on
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
-inline bool FinitePowersetLattice::Element::getLeastUpperBound(
+inline bool FinitePowersetLattice::Element::makeLeastUpperBound(
   const FinitePowersetLattice::Element& right) {
   // Both must be from powerset lattice of the same set.
   assert(right.bitvector.size() == bitvector.size());
