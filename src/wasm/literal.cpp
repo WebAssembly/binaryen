@@ -627,26 +627,60 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
 }
 
 // Printing literals is mainly for debugging purposes, and they can be of
-// massive size, so abbreviate past some point.
-static size_t LITERALS_PRINT_LIMIT = 20;
+// massive size or even infinitely recursive, so abbreviate past some point.
+// We do so by tracking how much we've printed so far, and whether we are the
+// "toplevel" call (the entry point from somewhere else), and we reset the
+// count when we leave the toplevel call.
+namespace {
+struct PrintLimiter {
+  static const size_t PRINT_LIMIT = 100;
+  static thread_local size_t printed;
+
+  bool isTopLevel;
+
+  PrintLimiter() : isTopLevel(printed == 0) {
+    printed++;
+  }
+
+  ~PrintLimiter() {
+    if (isTopLevel) {
+      printed = 0;
+    }
+  }
+
+  bool stop() {
+    return printed >= PRINT_LIMIT;
+  }
+};
+
+thread_local size_t PrintLimiter::printed = 0;
+
+} // namespace
 
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
+  PrintLimiter limiter;
+
+  if (limiter.stop()) {
+    return o << "[..]";
+  }
+
   if (literals.size() == 1) {
     return o << literals[0];
-  } else {
-    o << '(';
-    if (literals.size() > 0) {
-      o << literals[0];
-    }
-    for (size_t i = 1; i < literals.size(); ++i) {
-      o << ", " << literals[i];
-      if (i == LITERALS_PRINT_LIMIT) {
-        o << "[..]";
-        break;
-      }
-    }
-    return o << ')';
   }
+
+  if (literals.size() == 0) {
+    return o << "()";
+  }
+
+  o << '(';
+  for (auto& literal : literals) {
+    if (limiter.stop()) {
+      o << "[..]";
+      break;
+    }
+    o << ", " << literal;
+  }
+  return o << ')';
 }
 
 Literal Literal::countLeadingZeroes() const {
