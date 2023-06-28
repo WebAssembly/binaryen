@@ -540,7 +540,36 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
   o << std::dec;
 }
 
+// Printing literals is mainly for debugging purposes, and they can be of
+// massive size or even infinitely recursive, so abbreviate past some point.
+// We do so by tracking how much we've printed so far, and whether we are the
+// "toplevel" call (the entry point from somewhere else), and we reset the
+// count when we leave the toplevel call.
+namespace {
+struct PrintLimiter {
+  static const size_t PRINT_LIMIT = 100;
+  static thread_local size_t printed;
+
+  bool isTopLevel;
+
+  PrintLimiter() : isTopLevel(printed == 0) { printed++; }
+
+  ~PrintLimiter() {
+    if (isTopLevel) {
+      printed = 0;
+    }
+  }
+
+  bool stop() { return printed >= PRINT_LIMIT; }
+};
+
+thread_local size_t PrintLimiter::printed = 0;
+
+} // namespace
+
 std::ostream& operator<<(std::ostream& o, Literal literal) {
+  PrintLimiter limiter;
+
   prepareMinorColor(o);
   assert(literal.type.isSingle());
   if (literal.type.isBasic()) {
@@ -618,7 +647,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       assert(literal.isData());
       auto data = literal.getGCData();
       assert(data);
-      // TODO: infinite recursion is possible here, if the data is cyclic
       o << "[ref " << data->type << ' ' << data->values << ']';
     }
   }
@@ -626,27 +654,32 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
   return o;
 }
 
-// Printing literals is mainly for debugging purposes, and they can be of
-// massive size, so abbreviate past some point.
-static size_t LITERALS_PRINT_LIMIT = 20;
-
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
+  PrintLimiter limiter;
+
+  if (limiter.stop()) {
+    return o << "[..]";
+  }
+
   if (literals.size() == 1) {
     return o << literals[0];
-  } else {
-    o << '(';
-    if (literals.size() > 0) {
-      o << literals[0];
-    }
-    for (size_t i = 1; i < literals.size(); ++i) {
-      o << ", " << literals[i];
-      if (i == LITERALS_PRINT_LIMIT) {
-        o << "[..]";
-        break;
-      }
-    }
-    return o << ')';
   }
+
+  o << '(';
+  bool first = true;
+  for (auto& literal : literals) {
+    if (limiter.stop()) {
+      o << "[..]";
+      break;
+    }
+    if (first) {
+      first = false;
+    } else {
+      o << ", ";
+    }
+    o << literal;
+  }
+  return o << ')';
 }
 
 Literal Literal::countLeadingZeroes() const {
