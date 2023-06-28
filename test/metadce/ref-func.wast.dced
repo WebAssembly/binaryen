@@ -1,0 +1,13 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_funcref (func (result funcref)))
+ (import "env" "f2" (func $f2 (type $none_=>_none)))
+ (import "env" "f1" (func $f1 (type $none_=>_none)))
+ (global $g funcref (ref.func $f1))
+ (elem declare func $f2)
+ (export "g" (global $g))
+ (export "f" (func $f))
+ (func $f (type $none_=>_funcref) (result funcref)
+  (ref.func $f2)
+ )
+)
