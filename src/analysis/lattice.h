@@ -72,6 +72,19 @@ public:
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
 
+    Element(Element&& source) : bitvector(std::move(source.bitvector)) {}
+    Element(Element& source) : bitvector(source.bitvector) {}
+
+    Element& operator=(Element&& source) {
+      bitvector = std::move(source.bitvector);
+      return *this;
+    }
+
+    Element& operator=(const Element& source) {
+      bitvector = source.bitvector;
+      return *this;
+    }
+
   private:
     // This constructs a bottom element, given the lattice set size. Used by the
     // lattice's getBottom function.

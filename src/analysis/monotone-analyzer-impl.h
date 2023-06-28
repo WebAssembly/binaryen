@@ -14,8 +14,9 @@ template<typename Lattice>
 inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
                                        Lattice& lattice)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    beginningState(lattice.getBottom()), endState(lattice.getBottom()),
-    currState(lattice.getBottom()) {}
+    beginningState(std::move(lattice.getBottom())),
+    endState(std::move(lattice.getBottom())),
+    currState(std::move(lattice.getBottom())) {}
 
 // In our current limited implementation, we just update state on gets
 // and sets of local indices.
@@ -42,7 +43,7 @@ template<typename Lattice> inline void BlockState<Lattice>::transfer() {
     BlockState::visit(*cfgIter);
     ++cfgIter;
   }
-  beginningState = currState;
+  beginningState = std::move(currState);
 }
 
 template<typename Lattice>
