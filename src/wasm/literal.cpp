@@ -638,9 +638,7 @@ struct PrintLimiter {
 
   bool isTopLevel;
 
-  PrintLimiter() : isTopLevel(printed == 0) {
-    printed++;
-  }
+  PrintLimiter() : isTopLevel(printed == 0) { printed++; }
 
   ~PrintLimiter() {
     if (isTopLevel) {
@@ -648,9 +646,7 @@ struct PrintLimiter {
     }
   }
 
-  bool stop() {
-    return printed >= PRINT_LIMIT;
-  }
+  bool stop() { return printed >= PRINT_LIMIT; }
 };
 
 thread_local size_t PrintLimiter::printed = 0;
