@@ -20,11 +20,8 @@ FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
   size_t size = left.bitvector.size();
 
   for (size_t i = 0; i < size; ++i) {
-    if (left.bitvector[i] && !right.bitvector[i]) {
-      leftNotRight = true;
-    } else if (right.bitvector[i] && !left.bitvector[i]) {
-      rightNotLeft = true;
-    }
+    leftNotRight |= (left.bitvector[i] && !right.bitvector[i]);
+    rightNotLeft |= (right.bitvector[i] && !left.bitvector[i]);
 
     // We can end early if we know neither is a subset of the other.
     if (leftNotRight && rightNotLeft) {
@@ -49,6 +46,8 @@ inline FinitePowersetLattice::Element FinitePowersetLattice::getBottom() {
   return result;
 }
 
+// We count the number of element members present in the element by counting the
+// trues in the bitvector.
 inline size_t FinitePowersetLattice::Element::count() {
   size_t count = 0;
   for (auto it : bitvector) {
@@ -58,7 +57,8 @@ inline size_t FinitePowersetLattice::Element::count() {
 }
 
 // Least upper bound is implemented as a logical OR between the bitvectors on
-// both sides.
+// both sides. We return true if a bit is flipped in-place on the left so the
+// worklist algorithm will know if when to enqueue more work.
 inline bool FinitePowersetLattice::Element::getLeastUpperBound(
   const FinitePowersetLattice::Element& right) {
   // Both must be from powerset lattice of the same set.
@@ -66,16 +66,17 @@ inline bool FinitePowersetLattice::Element::getLeastUpperBound(
 
   bool modified = false;
   for (size_t i = 0; i < bitvector.size(); ++i) {
-    if (!bitvector[i] && right.bitvector[i]) {
-      bitvector[i] = true;
-      modified = true;
-    }
+    // Bit is flipped on left only if left is false and right is true when left
+    // and right are OR'ed together.
+    modified |= (!bitvector[i] && right.bitvector[i]);
+    bitvector[i] = bitvector[i] || right.bitvector[i];
   }
 
   return modified;
 }
 
 inline void FinitePowersetLattice::Element::print(std::ostream& os) {
+  // Element member 0 is on the left, element member N is on the right.
   for (auto it : bitvector) {
     os << it;
   }

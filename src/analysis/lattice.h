@@ -29,9 +29,12 @@ template<typename T>
 constexpr bool is_lattice =
   has_compare<T>&& has_getLeastUpperBound<T>&& has_isTop<T>&& has_isBottom<T>;
 
-// Represents a powerset lattice element (i.e. a set) as a bitvector. A true
-// means that an element is present in the set.
+// Represents a powerset lattice which is constructed from a finite set which
+// can be represented by a bitvector. Set elements are represented by
+// FinitePowersetLattice::Element, which represents members present in each
+// element by bits in the bitvector.
 class FinitePowersetLattice {
+
   // The size of the set that the powerset lattice was created from. This is
   // equivalent to the size of the Top lattice element.
   size_t setSize;
@@ -39,9 +42,17 @@ class FinitePowersetLattice {
 public:
   FinitePowersetLattice(size_t setSize) : setSize(setSize) {}
 
+  // This represents an element of a powerset lattice. The element is itself a
+  // set which has set members. The bitvector tracks which possible members of
+  // the element are actually present.
   struct Element {
+    // If bitvector[i] is true, then member i is present in the lattice element,
+    // otherwise it isn't.
     std::vector<bool> bitvector;
 
+    // Counts the number of members present the element itself. For instance, if
+    // we had {true, false, true}, the count would be 2. O(N) operation which
+    // iterates through the bitvector.
     size_t count();
 
     using iterator = std::vector<bool>::const_iterator;
@@ -62,6 +73,8 @@ public:
     void print(std::ostream& os);
 
   private:
+    // This constructs a bottom element, given the lattice set size. Used by the
+    // lattice's getBottom function.
     Element(size_t latticeSetSize) : bitvector(latticeSetSize) {}
 
     friend FinitePowersetLattice;
@@ -71,10 +84,11 @@ public:
   // left element's relation to the right element.
   static LatticeComparison compare(const Element& left, const Element& right);
 
-  // Returns an instance of the bottom lattice element. The size of the the top
-  // lattice element must be specified.
+  // Returns an instance of the bottom lattice element.
   Element getBottom();
 };
+
+static_assert(has_getLeastUpperBound<FinitePowersetLattice::Element>);
 
 } // namespace wasm::analysis
 

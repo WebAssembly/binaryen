@@ -8,6 +8,8 @@
 
 namespace wasm::analysis {
 
+// All states are set to the bottom lattice element using the lattice in this
+// constructor.
 template<typename Lattice>
 inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
                                        Lattice& lattice)
@@ -15,8 +17,8 @@ inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
     beginningState(lattice.getBottom()), endState(lattice.getBottom()),
     currState(lattice.getBottom()) {}
 
-// In our current limited implementation, we just update a new live variable
-// when it it is used in a get or set.
+// In our current limited implementation, we just update state on gets
+// and sets of local indices.
 template<typename Lattice>
 inline void BlockState<Lattice>::visitLocalSet(LocalSet* curr) {
   currState.set(curr->index, false);
@@ -29,14 +31,14 @@ inline void BlockState<Lattice>::visitLocalGet(LocalGet* curr) {
 
 template<typename Lattice> inline void BlockState<Lattice>::transfer() {
   // If the block is empty, we propagate the state by endState = currState, then
-  // currState = beginningState
+  // currState = beginningState.
 
-  // compute transfer function for all expressions in the CFG block
+  // Compute transfer function for all expressions in the CFG block.
   auto cfgIter = cfgBlock->rbegin();
   currState = endState;
 
   while (cfgIter != cfgBlock->rend()) {
-    // run transfer function.
+    // Run transfer function.
     BlockState::visit(*cfgIter);
     ++cfgIter;
   }
@@ -57,8 +59,10 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
   os << std::endl;
   auto cfgIter = cfgBlock->rbegin();
 
+  // Since we don't store the intermediate states in the BlockState, we need to
+  // re-run the transfer function on all the CFG node expressions to reconstruct
+  // the intermediate states here.
   while (cfgIter != cfgBlock->rend()) {
-    // run transfer function.
     os << ShallowExpression{*cfgIter} << std::endl;
     BlockState::visit(*cfgIter);
     currState.print(os);
@@ -69,7 +73,8 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
 
 template<typename Lattice>
 inline void MonotoneCFGAnalyzer<Lattice>::fromCFG(CFG* cfg) {
-  // Map BasicBlocks to each BlockState's index
+  // Construct BlockStates for each BasicBlock and map each BasicBlock to each
+  // BlockState's index in stateBlocks.
   std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
   size_t index = 0;
   for (auto it = cfg->begin(); it != cfg->end(); it++) {
@@ -104,6 +109,8 @@ inline void MonotoneCFGAnalyzer<Lattice>::evaluate() {
   while (!worklist.empty()) {
     BlockState<Lattice>& currBlockState = stateBlocks[worklist.front()];
     worklist.pop();
+
+    // Run transfer function on the block.
     currBlockState.transfer();
 
     // Propagate state to dependents

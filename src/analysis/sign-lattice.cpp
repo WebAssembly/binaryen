@@ -42,6 +42,4 @@ public:
   }
 };
 
-static_assert(is_lattice<SignLattice>);
-
 } // namespace wasm::analysis

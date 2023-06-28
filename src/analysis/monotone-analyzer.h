@@ -16,6 +16,7 @@ template<typename Lattice> struct MonotoneCFGAnalyzer;
 // A node which contains all the lattice states for a given CFG node.
 template<typename Lattice>
 struct BlockState : public Visitor<BlockState<Lattice>> {
+  // All states are set to the bottom lattice element in this constructor.
   BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 
   typename Lattice::Element& getFirstState() { return beginningState; }
@@ -27,11 +28,10 @@ struct BlockState : public Visitor<BlockState<Lattice>> {
   void visitLocalGet(LocalGet* curr);
 
   // Executes the transfer function on all the expressions of the corresponding
-  // CFG and then propagates the state to all predecessors (which depend on the
-  // current node).
+  // CFG node.
   void transfer();
 
-  // prints out all states.
+  // Prints out all intermediate states in the block.
   void print(std::ostream& os);
 
 private:
@@ -44,14 +44,13 @@ private:
   typename Lattice::Element endState;
   // Holds intermediate state values.
   typename Lattice::Element currState;
-  std::vector<BlockState*> predecessors;
-  std::vector<BlockState*> successors;
+  std::vector<BlockState<Lattice>*> predecessors;
+  std::vector<BlockState<Lattice>*> successors;
 
   friend MonotoneCFGAnalyzer<Lattice>;
 };
 
-template<typename Lattice>
-struct MonotoneCFGAnalyzer {
+template<typename Lattice> struct MonotoneCFGAnalyzer {
   MonotoneCFGAnalyzer(Lattice lattice) : lattice(lattice) {}
 
   // Constructs a graph of BlockState objects which parallels
@@ -61,6 +60,7 @@ struct MonotoneCFGAnalyzer {
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
 
+  // Prints out all BlockStates in this analyzer.
   void print(std::ostream& os);
 
 private:
