@@ -16,6 +16,7 @@ template<typename Lattice> struct MonotoneCFGAnalyzer;
 // A node which contains all the lattice states for a given CFG node.
 template<typename Lattice>
 struct BlockState : public Visitor<BlockState<Lattice>> {
+  static_assert(is_lattice<Lattice>);
   // All states are set to the bottom lattice element in this constructor.
   BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 

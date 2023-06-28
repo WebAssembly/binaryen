@@ -11,23 +11,31 @@ namespace wasm::analysis {
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
 
 template<typename T>
-constexpr bool has_compare = std::is_invocable_r<LatticeComparison,
-                                                 decltype(T::compare),
-                                                 const T&,
-                                                 const T&>::value;
+constexpr bool has_getBottom =
+  std::is_invocable_r<typename T::Element, decltype(&T::getBottom), T>::value;
 template<typename T>
-constexpr bool has_getLeastUpperBound = std::
-  is_invocable_r<void, decltype(&T::getLeastUpperBound), T, const T&>::value;
-template<typename T>
+constexpr bool has_compare =
+  std::is_invocable_r<LatticeComparison,
+                      decltype(T::compare),
+                      const typename T::Element&,
+                      const typename T::Element&>::value;
+template<typename Element>
+constexpr bool has_getLeastUpperBound =
+  std::is_invocable_r<void,
+                      decltype(&Element::getLeastUpperBound),
+                      Element,
+                      const Element&>::value;
+template<typename Element>
 constexpr bool has_isTop =
-  std::is_invocable_r<bool, decltype(&T::isTop), T>::value;
-template<typename T>
+  std::is_invocable_r<bool, decltype(&Element::isTop), Element>::value;
+template<typename Element>
 constexpr bool has_isBottom =
-  std::is_invocable_r<bool, decltype(&T::isBottom), T>::value;
+  std::is_invocable_r<bool, decltype(&Element::isBottom), Element>::value;
 
 template<typename T>
-constexpr bool is_lattice =
-  has_compare<T>&& has_getLeastUpperBound<T>&& has_isTop<T>&& has_isBottom<T>;
+constexpr bool is_lattice = has_getBottom<T>&& has_compare<T>&&
+  has_getLeastUpperBound<typename T::Element>&& has_isTop<typename T::Element>&&
+    has_isBottom<typename T::Element>;
 
 // Represents a powerset lattice which is constructed from a finite set which
 // can be represented by a bitvector. Set elements are represented by
@@ -72,18 +80,11 @@ public:
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
 
-    Element(Element&& source) : bitvector(std::move(source.bitvector)) {}
-    Element(Element& source) : bitvector(source.bitvector) {}
+    Element(Element&& source) = default;
+    Element(Element& source) = default;
 
-    Element& operator=(Element&& source) {
-      bitvector = std::move(source.bitvector);
-      return *this;
-    }
-
-    Element& operator=(const Element& source) {
-      bitvector = source.bitvector;
-      return *this;
-    }
+    Element& operator=(Element&& source) = default;
+    Element& operator=(const Element& source) = default;
 
   private:
     // This constructs a bottom element, given the lattice set size. Used by the
@@ -101,7 +102,7 @@ public:
   Element getBottom();
 };
 
-static_assert(has_getLeastUpperBound<FinitePowersetLattice::Element>);
+static_assert(is_lattice<FinitePowersetLattice>);
 
 } // namespace wasm::analysis
 
