@@ -2,6 +2,7 @@
 
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
+#include "analysis/liveness-transfer-function.h"
 #include "analysis/monotone-analyzer.h"
 #include "print-test.h"
 #include "wasm.h"

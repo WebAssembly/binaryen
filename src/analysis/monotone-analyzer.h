@@ -49,46 +49,6 @@ public:
   void print(std::ostream& os);
 };
 
-class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FinitePowersetLattice::Element currState;
-
-public:
-  LivenessTransferFunction(FinitePowersetLattice& lattice);
-
-  // Transfer function implementation. Modifies the state for a particular
-  // expression type.
-  void visitLocalSet(LocalSet* curr);
-  void visitLocalGet(LocalGet* curr);
-
-  // Executes the transfer function on all the expressions of the corresponding
-  // CFG node.
-  void transfer(BlockState<FinitePowersetLattice>& currBlock);
-
-  void enqueueWorklist(
-    const std::vector<BlockState<FinitePowersetLattice>>& stateBlocks,
-    std::queue<Index>& worklist);
-
-  using iterator =
-    std::vector<BlockState<FinitePowersetLattice>*>::const_iterator;
-  iterator depsBegin(BlockState<FinitePowersetLattice>& currBlock) {
-    return currBlock.predecessorsBegin();
-  }
-  iterator depsEnd(BlockState<FinitePowersetLattice>& currBlock) {
-    return currBlock.predecessorsEnd();
-  }
-
-  FinitePowersetLattice::Element&
-  getInputState(BlockState<FinitePowersetLattice>* currBlock) {
-    return currBlock->getLastState();
-  }
-  FinitePowersetLattice::Element&
-  getOutputState(BlockState<FinitePowersetLattice>* currBlock) {
-    return currBlock->getFirstState();
-  }
-
-  void print(std::ostream& os, BlockState<FinitePowersetLattice>& currBlock);
-};
-
 template<typename Lattice, typename TransferFunction>
 struct MonotoneCFGAnalyzer {
   static_assert(is_lattice<Lattice>);

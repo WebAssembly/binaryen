@@ -35,67 +35,6 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
   os << std::endl;
 }
 
-LivenessTransferFunction::LivenessTransferFunction(
-  FinitePowersetLattice& lattice)
-  : currState(lattice.getBottom()) {}
-
-// In our current limited implementation, we just update state on gets
-// and sets of local indices.
-inline void LivenessTransferFunction::visitLocalSet(LocalSet* curr) {
-  currState.set(curr->index, false);
-}
-
-inline void LivenessTransferFunction::visitLocalGet(LocalGet* curr) {
-  currState.set(curr->index, true);
-}
-
-inline void LivenessTransferFunction::transfer(
-  BlockState<FinitePowersetLattice>& currBlock) {
-  // If the block is empty, we propagate the state by endState = currState, then
-  // currState = beginningState.
-
-  // Compute transfer function for all expressions in the CFG block.
-  auto cfgIter = currBlock.getCFGBlock()->rbegin();
-  currState = currBlock.getLastState();
-
-  while (cfgIter != currBlock.getCFGBlock()->rend()) {
-    // Run transfer function.
-    LivenessTransferFunction::visit(*cfgIter);
-    ++cfgIter;
-  }
-
-  currBlock.getFirstState() = std::move(currState);
-}
-
-inline void LivenessTransferFunction::enqueueWorklist(
-  const std::vector<BlockState<FinitePowersetLattice>>& stateBlocks,
-  std::queue<Index>& worklist) {
-  for (auto it = stateBlocks.rbegin(); it != stateBlocks.rend(); ++it) {
-    worklist.push((*it).getCFGBlock()->getIndex());
-  }
-}
-
-inline void
-LivenessTransferFunction::print(std::ostream& os,
-                                BlockState<FinitePowersetLattice>& currBlock) {
-  os << "Intermediate States (reverse order): " << std::endl;
-  currState = currBlock.getLastState();
-  currState.print(os);
-  os << std::endl;
-  auto cfgIter = currBlock.getCFGBlock()->rbegin();
-
-  // Since we don't store the intermediate states in the BlockState, we need to
-  // re-run the transfer function on all the CFG node expressions to reconstruct
-  // the intermediate states here.
-  while (cfgIter != currBlock.getCFGBlock()->rend()) {
-    os << ShallowExpression{*cfgIter} << std::endl;
-    LivenessTransferFunction::visit(*cfgIter);
-    currState.print(os);
-    os << std::endl;
-    ++cfgIter;
-  }
-}
-
 template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::fromCFG(CFG* cfg) {
   // Construct BlockStates for each BasicBlock and map each BasicBlock to each
