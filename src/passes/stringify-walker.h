@@ -43,10 +43,13 @@ struct StringifyWalker
 
   using Super = PostWalker<SubType, UnifiedExpressionVisitor<SubType>>;
 
-  Module* wasm;
   std::queue<Expression**> controlFlowQueue;
 
-  // Subclasses are meant to implement visitExpression and addUniqueSymbol
+  /*
+   * To initiate the walk, subclasses should call StringifySubclasses are meant to implement visitExpression and addUniqueSymbol
+   * visitExpression is called whenever 
+   *
+   */
   void visitExpression(Expression* curr);
   void addUniqueSymbol();
 
