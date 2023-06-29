@@ -25,20 +25,20 @@ inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
      *    for each function is terminated with a unique symbol, acting as a
      *    separator between each function in the program string
      */
-       this->walkFunction(func);
+    this->walkFunction(func);
   });
 }
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
-// call our walk and emit the unique symbol for the function body
+  // call our walk and emit the unique symbol for the function body
   this->walk(func->body);
   this->addUniqueSymbol();
 }
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::walk(Expression* curr) {
-    Super::walk(curr);
+  Super::walk(curr);
   do {
     this->addUniqueSymbol();
     this->dequeueControlFlow();
@@ -70,14 +70,12 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
  * dequeueControlFlow again.
  *
  */
-template<typename SubType>
-void StringifyWalker<SubType>::dequeueControlFlow() {
+template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   auto& queue = this->controlFlowQueue;
   if (queue.empty()) {
     return;
   }
 
-  //self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
   Expression** currp = queue.front();
   queue.pop();
   this->deferredScan(currp);

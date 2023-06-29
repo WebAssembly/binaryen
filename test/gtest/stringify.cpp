@@ -72,9 +72,7 @@ adding unique symbol
 
     void walkModule(Module* module) { StringifyWalker::walkModule(module); }
 
-    void addUniqueSymbol() {
-      this->os << "adding unique symbol\n";
-    }
+    void addUniqueSymbol() { this->os << "adding unique symbol\n"; }
 
     void visitExpression(Expression* curr) {
       if (Properties::isControlFlowStructure(curr)) {
