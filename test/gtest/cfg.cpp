@@ -111,7 +111,7 @@ TEST_F(CFGTest, LinearLiveness) {
   )wasm";
 
   auto analyzerText = R"analyzer(CFG Analyzer
-State Block: 0
+CFG Block: 0
 Beginning State: 000
 End State: 000
 Predecessors:
@@ -148,7 +148,9 @@ End
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
+  LivenessTransferFunction<FinitePowersetLattice> transferFunction(lattice);
+  
+  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(lattice, transferFunction);
   analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
@@ -184,7 +186,7 @@ TEST_F(CFGTest, NonlinearLiveness) {
   )wasm";
 
   auto analyzerText = R"analyzer(CFG Analyzer
-State Block: 0
+CFG Block: 0
 Beginning State: 00
 End State: 10
 Predecessors:
@@ -201,7 +203,7 @@ local.set $0
 00
 i32.const 1
 00
-State Block: 1
+CFG Block: 1
 Beginning State: 00
 End State: 00
 Predecessors: 0
@@ -212,7 +214,7 @@ local.set $1
 00
 i32.const 4
 00
-State Block: 2
+CFG Block: 2
 Beginning State: 10
 End State: 00
 Predecessors: 0
@@ -223,7 +225,7 @@ drop
 00
 local.get $0
 10
-State Block: 3
+CFG Block: 3
 Beginning State: 00
 End State: 00
 Predecessors: 2 1
@@ -240,7 +242,9 @@ End
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
+  LivenessTransferFunction<FinitePowersetLattice> transferFunction(lattice);
+  
+  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(lattice, transferFunction);
   analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
