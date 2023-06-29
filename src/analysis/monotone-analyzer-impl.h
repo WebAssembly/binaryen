@@ -88,11 +88,11 @@ inline void MonotoneCFGAnalyzer<Lattice>::fromCFG(CFG* cfg) {
     BlockState<Lattice>& currBlock = stateBlocks.at(index);
     BasicBlock::Predecessors preds = currBlock.cfgBlock->preds();
     BasicBlock::Successors succs = currBlock.cfgBlock->succs();
-    for (auto pred : preds) {
+    for (auto& pred : preds) {
       currBlock.predecessors.push_back(&stateBlocks[basicBlockToState[&pred]]);
     }
 
-    for (auto succ : succs) {
+    for (auto& succ : succs) {
       currBlock.successors.push_back(&stateBlocks[basicBlockToState[&succ]]);
     }
   }
