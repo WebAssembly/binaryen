@@ -110,7 +110,7 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::addUniqueSymbol() {
-  static_assert(&StringifyWalker<SubType>::addUniqueSymbol != &SubType::addUniqueSymbol);
+  // TODO: Add the following static_assert when the compilers running our GitHub actions are updated enough to know that this is a constant condition: static_assert(&StringifyWalker<SubType>::addUniqueSymbol != &SubType::addUniqueSymbol);
   auto self = static_cast<SubType*>(this);
   self->addUniqueSymbol();
 }
