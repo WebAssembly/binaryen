@@ -49,9 +49,61 @@ public:
   void print(std::ostream& os);
 };
 
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_transfer =
+  std::is_invocable_r<void,
+                      decltype(&TransferFunction::transfer),
+                      TransferFunction,
+                      BlockState<Lattice>&>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_enqueueWorklist =
+  std::is_invocable_r<void,
+                      decltype(&TransferFunction::enqueueWorklist),
+                      TransferFunction,
+                      const std::vector<BlockState<Lattice>>&,
+                      std::queue<Index>&>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_depsBegin = std::is_invocable_r<
+  typename std::vector<BlockState<Lattice>*>::const_iterator,
+  decltype(&TransferFunction::depsBegin),
+  TransferFunction,
+  BlockState<Lattice>&>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_depsEnd = std::is_invocable_r<
+  typename std::vector<BlockState<Lattice>*>::const_iterator,
+  decltype(&TransferFunction::depsEnd),
+  TransferFunction,
+  BlockState<Lattice>&>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_getInputState =
+  std::is_invocable_r<typename Lattice::Element&,
+                      decltype(&TransferFunction::getInputState),
+                      TransferFunction,
+                      BlockState<Lattice>*>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_getOutputState =
+  std::is_invocable_r<typename Lattice::Element&,
+                      decltype(&TransferFunction::getOutputState),
+                      TransferFunction,
+                      BlockState<Lattice>*>::value;
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
+  has_enqueueWorklist<TransferFunction, Lattice>&&
+    has_depsBegin<TransferFunction, Lattice>&&
+      has_depsEnd<TransferFunction, Lattice>&&
+        has_getInputState<TransferFunction, Lattice>&&
+          has_getOutputState<TransferFunction, Lattice>;
+
 template<typename Lattice, typename TransferFunction>
 struct MonotoneCFGAnalyzer {
   static_assert(is_lattice<Lattice>);
+  static_assert(is_TransferFunction<TransferFunction, Lattice>);
 
   MonotoneCFGAnalyzer(Lattice lattice, TransferFunction transferFunction)
     : lattice(lattice), transferFunction(transferFunction) {}
