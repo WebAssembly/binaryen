@@ -19,8 +19,8 @@ TEST_F(StringifyTest, Print) {
       )
       (block $block_b
         (drop (if (i32.const 0)
-            (i32.const 40)
-            (i32.const 5)
+          (i32.const 40)
+          (i32.const 5)
         ))
       )
       (block $block_c
@@ -37,11 +37,11 @@ TEST_F(StringifyTest, Print) {
    )
   )wasm";
 
-  auto stringifyText = R"stringify(in visitExpression with CF block
+  auto stringifyText = R"stringify(in visitExpression for block
 adding unique symbol
-in visitExpression with CF block $block_a
-in visitExpression with CF block $block_b
-in visitExpression with CF block $block_c
+in visitExpression for block $block_a
+in visitExpression for block $block_b
+in visitExpression for block $block_c
 adding unique symbol
 in visitExpression for i32.const 20
 in visitExpression for drop
@@ -49,10 +49,10 @@ in visitExpression for i32.const 10
 in visitExpression for drop
 adding unique symbol
 in visitExpression for i32.const 0
-in visitExpression with CF if
+in visitExpression for if
 in visitExpression for drop
 adding unique symbol
-in visitExpression with CF try $try_a
+in visitExpression for try $try_a
 adding unique symbol
 in visitExpression for i32.const 40
 adding unique symbol
@@ -70,18 +70,11 @@ adding unique symbol
 
     TestStringifyWalker(std::ostream& os) : os(os){};
 
-    void walkModule(Module* module) { StringifyWalker::walkModule(module); }
-
     void addUniqueSymbol() { this->os << "adding unique symbol\n"; }
 
     void visitExpression(Expression* curr) {
-      if (Properties::isControlFlowStructure(curr)) {
-        this->os << "in visitExpression with CF "
-                 << ShallowExpression{curr, getModule()} << std::endl;
-      } else {
-        this->os << "in visitExpression for "
-                 << ShallowExpression{curr, getModule()} << std::endl;
-      }
+      this->os << "in visitExpression for "
+               << ShallowExpression{curr, getModule()} << std::endl;
     }
   };
 

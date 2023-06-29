@@ -60,13 +60,9 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
 
   Expression** currp = queue.front();
   queue.pop();
-  deferredScan(currp);
-}
-
-template<typename SubType>
-void StringifyWalker<SubType>::deferredScan(Expression** currp) {
   auto self = static_cast<SubType*>(this);
   Expression* curr = *currp;
+
   switch (curr->_id) {
     case Expression::Id::BlockId: {
       auto* block = curr->cast<Block>();
@@ -78,8 +74,8 @@ void StringifyWalker<SubType>::deferredScan(Expression** currp) {
     case Expression::Id::IfId: {
       auto* iff = curr->cast<If>();
       Super::walk(iff->ifTrue);
-      self->addUniqueSymbol();
       if (iff->ifFalse) {
+        self->addUniqueSymbol();
         Super::walk(iff->ifFalse);
       }
       break;
@@ -87,8 +83,8 @@ void StringifyWalker<SubType>::deferredScan(Expression** currp) {
     case Expression::Id::TryId: {
       auto* tryy = curr->cast<Try>();
       Super::walk(tryy->body);
-      this->addUniqueSymbol();
       for (auto& child : tryy->catchBodies) {
+        this->addUniqueSymbol();
         Super::walk(child);
       }
       break;
@@ -114,6 +110,7 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::addUniqueSymbol() {
+  static_assert(&StringifyWalker<SubType>::addUniqueSymbol != &SubType::addUniqueSymbol);
   auto self = static_cast<SubType*>(this);
   self->addUniqueSymbol();
 }

@@ -61,7 +61,6 @@ struct StringifyWalker
 
 private:
   void dequeueControlFlow();
-  void deferredScan(Expression** currp);
 };
 
 } // namespace wasm
