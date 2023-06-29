@@ -48,10 +48,18 @@ template<typename Lattice> inline void BlockState<Lattice>::transfer() {
 template<typename Lattice>
 inline void BlockState<Lattice>::print(std::ostream& os) {
   os << "State Block: " << index << std::endl;
-  os << "State at beginning: ";
+  os << "Beginning State: ";
   beginningState.print(os);
-  os << std::endl << "State at end: ";
+  os << std::endl << "End State: ";
   endState.print(os);
+  os << std::endl << "Predecessors:";
+  for (auto pred : predecessors) {
+    os << " " << pred->cfgBlock->getIndex();
+  }
+  os << std::endl << "Successors:";
+  for (auto succ : successors) {
+    os << " " << succ->cfgBlock->getIndex();
+  }
   os << std::endl << "Intermediate States (reverse order): " << std::endl;
 
   currState = endState;
@@ -112,7 +120,7 @@ inline void MonotoneCFGAnalyzer<Lattice>::evaluate() {
 
     // For each expression, applies the transfer function, using the expression,
     // on the state of the expression it depends upon (here the next expression)
-    // to arrive at the expression's state. THe beginning and end states of the
+    // to arrive at the expression's state. The beginning and end states of the
     // CFG block will be updated.
     currBlockState.transfer();
 

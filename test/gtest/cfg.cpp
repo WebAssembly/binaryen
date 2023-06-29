@@ -112,8 +112,10 @@ TEST_F(CFGTest, LinearLiveness) {
 
   auto analyzerText = R"analyzer(CFG Analyzer
 State Block: 0
-State at beginning: 000
-State at end: 000
+Beginning State: 000
+End State: 000
+Predecessors:
+Successors:
 Intermediate States (reverse order): 
 000
 block
@@ -183,8 +185,10 @@ TEST_F(CFGTest, NonlinearLiveness) {
 
   auto analyzerText = R"analyzer(CFG Analyzer
 State Block: 0
-State at beginning: 00
-State at end: 10
+Beginning State: 00
+End State: 10
+Predecessors:
+Successors: 1 2
 Intermediate States (reverse order): 
 10
 i32.eq
@@ -198,8 +202,10 @@ local.set $0
 i32.const 1
 00
 State Block: 1
-State at beginning: 00
-State at end: 00
+Beginning State: 00
+End State: 00
+Predecessors: 0
+Successors: 3
 Intermediate States (reverse order): 
 00
 local.set $1
@@ -207,8 +213,10 @@ local.set $1
 i32.const 4
 00
 State Block: 2
-State at beginning: 10
-State at end: 00
+Beginning State: 10
+End State: 00
+Predecessors: 0
+Successors: 3
 Intermediate States (reverse order): 
 00
 drop
@@ -216,8 +224,10 @@ drop
 local.get $0
 10
 State Block: 3
-State at beginning: 00
-State at end: 00
+Beginning State: 00
+End State: 00
+Predecessors: 2 1
+Successors:
 Intermediate States (reverse order): 
 00
 block

@@ -82,10 +82,10 @@ public:
     bool isTop() { return count() == bitvector.size(); }
     bool isBottom() { return count() == 0; }
 
-    // Calculates the LUB of this element with some right element and sets
+    // Calculates the LUB of this element with some other element and sets
     // this element to the LUB in place. Returns true if this element before
     // this method call was different than the LUB.
-    bool makeLeastUpperBound(const Element& right);
+    bool makeLeastUpperBound(const Element& other);
 
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
