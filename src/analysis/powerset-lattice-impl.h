@@ -5,61 +5,81 @@
 
 namespace wasm::analysis {
 
-template<size_t N>
-inline BitsetPowersetLattice<N> BitsetPowersetLattice<N>::getBottom() {
-  // Return the empty set as the bottom lattice element.
-  BitsetPowersetLattice<N> result{0};
-  return result;
-}
-
-template<size_t N>
-inline bool
-BitsetPowersetLattice<N>::isTop(const BitsetPowersetLattice<N>& element) {
-  // Top lattice element is the set containing all possible elements.
-  return element.value.all();
-}
-
-template<size_t N>
-inline bool
-BitsetPowersetLattice<N>::isBottom(const BitsetPowersetLattice<N>& element) {
-  // Bottom lattice element is the empty set.
-  return element.value.none();
-}
-
-template<size_t N>
 inline LatticeComparison
-BitsetPowersetLattice<N>::compare(const BitsetPowersetLattice<N>& left,
-                                  const BitsetPowersetLattice<N>& right) {
-  size_t leftCount = left.value.count();
-  size_t rightCount = right.value.count();
+FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
+                               const FinitePowersetLattice::Element& right) {
+  // Both must be from the powerset lattice of the same set.
+  assert(left.bitvector.size() == right.bitvector.size());
 
-  // If left has more elements, left might be a superset of right.
-  if (leftCount > rightCount) {
-    if ((left.value | right.value) == left.value) {
-      return GREATER;
+  // True in left, false in right.
+  bool leftNotRight = false;
+
+  // True in right, false in left.
+  bool rightNotLeft = false;
+
+  size_t size = left.bitvector.size();
+
+  for (size_t i = 0; i < size; ++i) {
+    leftNotRight |= (left.bitvector[i] && !right.bitvector[i]);
+    rightNotLeft |= (right.bitvector[i] && !left.bitvector[i]);
+
+    // We can end early if we know neither is a subset of the other.
+    if (leftNotRight && rightNotLeft) {
+      return NO_RELATION;
     }
-    // If right has more elements, right might be a superset of left.
-  } else if (leftCount < rightCount) {
-    if ((left.value | right.value) == right.value) {
-      return LESS;
+  }
+
+  if (!leftNotRight) {
+    if (!rightNotLeft) {
+      return EQUAL;
     }
-  } else if (left.value == right.value) {
-    return EQUAL;
+    return LESS;
+  } else if (!rightNotLeft) {
+    return GREATER;
   }
 
   return NO_RELATION;
 }
 
-// Implement LUB as an OR of the two bitsets.
-template<size_t N>
-inline void BitsetPowersetLattice<N>::getLeastUpperBound(
-  const BitsetPowersetLattice<N>& right) {
-  value |= right.value;
+inline FinitePowersetLattice::Element FinitePowersetLattice::getBottom() {
+  FinitePowersetLattice::Element result(setSize);
+  return result;
 }
 
-template<size_t N>
-inline void BitsetPowersetLattice<N>::print(std::ostream& os) {
-  os << value;
+// We count the number of element members present in the element by counting the
+// trues in the bitvector.
+inline size_t FinitePowersetLattice::Element::count() {
+  size_t count = 0;
+  for (auto it : bitvector) {
+    count += it;
+  }
+  return count;
+}
+
+// Least upper bound is implemented as a logical OR between the bitvectors on
+// both sides. We return true if a bit is flipped in-place on the left so the
+// worklist algorithm will know if when to enqueue more work.
+inline bool FinitePowersetLattice::Element::makeLeastUpperBound(
+  const FinitePowersetLattice::Element& other) {
+  // Both must be from powerset lattice of the same set.
+  assert(other.bitvector.size() == bitvector.size());
+
+  bool modified = false;
+  for (size_t i = 0; i < bitvector.size(); ++i) {
+    // Bit is flipped on self only if self is false and other is true when self
+    // and other are OR'ed together.
+    modified |= (!bitvector[i] && other.bitvector[i]);
+    bitvector[i] = bitvector[i] || other.bitvector[i];
+  }
+
+  return modified;
+}
+
+inline void FinitePowersetLattice::Element::print(std::ostream& os) {
+  // Element member 0 is on the left, element member N is on the right.
+  for (auto it : bitvector) {
+    os << it;
+  }
 }
 
 }; // namespace wasm::analysis

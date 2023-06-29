@@ -7,63 +7,59 @@
 #include "monotone-analyzer.h"
 
 namespace wasm::analysis {
-template<size_t N>
-inline BlockState<N>::BlockState(const BasicBlock* underlyingBlock)
+
+// All states are set to the bottom lattice element using the lattice in this
+// constructor.
+template<typename Lattice>
+inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
+                                       Lattice& lattice)
   : index(underlyingBlock->getIndex()), cfgBlock(underlyingBlock),
-    beginningState(BitsetPowersetLattice<N>::getBottom()),
-    endState(BitsetPowersetLattice<N>::getBottom()),
-    currState(BitsetPowersetLattice<N>::getBottom()) {}
+    beginningState(lattice.getBottom()), endState(lattice.getBottom()),
+    currState(lattice.getBottom()) {}
 
-template<size_t N> inline void BlockState<N>::addPredecessor(BlockState* pred) {
-  predecessors.push_back(pred);
+// In our current limited implementation, we just update state on gets
+// and sets of local indices.
+template<typename Lattice>
+inline void BlockState<Lattice>::visitLocalSet(LocalSet* curr) {
+  currState.set(curr->index, false);
 }
 
-template<size_t N> inline void BlockState<N>::addSuccessor(BlockState* succ) {
-  successors.push_back(succ);
+template<typename Lattice>
+inline void BlockState<Lattice>::visitLocalGet(LocalGet* curr) {
+  currState.set(curr->index, true);
 }
 
-template<size_t N>
-inline BitsetPowersetLattice<N>& BlockState<N>::getFirstState() {
-  return beginningState;
-}
-
-template<size_t N>
-inline BitsetPowersetLattice<N>& BlockState<N>::getLastState() {
-  return endState;
-}
-
-// In our current limited implementation, we just update a new live variable
-// when it it is used in a get or set.
-template<size_t N> inline void BlockState<N>::visitLocalSet(LocalSet* curr) {
-  currState.value[curr->index] = false;
-}
-
-template<size_t N> inline void BlockState<N>::visitLocalGet(LocalGet* curr) {
-  currState.value[curr->index] = true;
-}
-
-template<size_t N> inline void BlockState<N>::transfer() {
+template<typename Lattice> inline void BlockState<Lattice>::transfer() {
   // If the block is empty, we propagate the state by endState = currState, then
-  // currState = beginningState
+  // currState = beginningState.
 
-  // compute transfer function for all expressions in the CFG block
+  // Compute transfer function for all expressions in the CFG block.
   auto cfgIter = cfgBlock->rbegin();
   currState = endState;
 
   while (cfgIter != cfgBlock->rend()) {
-    // run transfer function.
-    BlockState<N>::visit(*cfgIter);
+    // Run transfer function.
+    BlockState::visit(*cfgIter);
     ++cfgIter;
   }
-  beginningState = currState;
+  beginningState = std::move(currState);
 }
 
-template<size_t N> inline void BlockState<N>::print(std::ostream& os) {
+template<typename Lattice>
+inline void BlockState<Lattice>::print(std::ostream& os) {
   os << "State Block: " << index << std::endl;
-  os << "State at beginning: ";
+  os << "Beginning State: ";
   beginningState.print(os);
-  os << std::endl << "State at end: ";
+  os << std::endl << "End State: ";
   endState.print(os);
+  os << std::endl << "Predecessors:";
+  for (auto pred : predecessors) {
+    os << " " << pred->cfgBlock->getIndex();
+  }
+  os << std::endl << "Successors:";
+  for (auto succ : successors) {
+    os << " " << succ->cfgBlock->getIndex();
+  }
   os << std::endl << "Intermediate States (reverse order): " << std::endl;
 
   currState = endState;
@@ -71,47 +67,47 @@ template<size_t N> inline void BlockState<N>::print(std::ostream& os) {
   os << std::endl;
   auto cfgIter = cfgBlock->rbegin();
 
+  // Since we don't store the intermediate states in the BlockState, we need to
+  // re-run the transfer function on all the CFG node expressions to reconstruct
+  // the intermediate states here.
   while (cfgIter != cfgBlock->rend()) {
-    // run transfer function.
     os << ShallowExpression{*cfgIter} << std::endl;
-    BlockState<N>::visit(*cfgIter);
+    BlockState::visit(*cfgIter);
     currState.print(os);
     os << std::endl;
     ++cfgIter;
   }
 }
 
-template<size_t N>
-MonotoneCFGAnalyzer<N> inline MonotoneCFGAnalyzer<N>::fromCFG(CFG* cfg) {
-  MonotoneCFGAnalyzer<N> result;
-
-  // Map BasicBlocks to each BlockState's index
+template<typename Lattice>
+inline void MonotoneCFGAnalyzer<Lattice>::fromCFG(CFG* cfg) {
+  // Construct BlockStates for each BasicBlock and map each BasicBlock to each
+  // BlockState's index in stateBlocks.
   std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
   size_t index = 0;
   for (auto it = cfg->begin(); it != cfg->end(); it++) {
-    result.stateBlocks.emplace_back(&(*it));
+    stateBlocks.emplace_back(&(*it), lattice);
     basicBlockToState[&(*it)] = index++;
   }
 
   // Update predecessors and successors of each BlockState object
   // according to the BasicBlock's predecessors and successors.
-  for (index = 0; index < result.stateBlocks.size(); ++index) {
-    BlockState<N>& currBlock = result.stateBlocks.at(index);
+  for (index = 0; index < stateBlocks.size(); ++index) {
+    BlockState<Lattice>& currBlock = stateBlocks.at(index);
     BasicBlock::Predecessors preds = currBlock.cfgBlock->preds();
     BasicBlock::Successors succs = currBlock.cfgBlock->succs();
-    for (auto pred : preds) {
-      currBlock.addPredecessor(&result.stateBlocks[basicBlockToState[&pred]]);
+    for (auto& pred : preds) {
+      currBlock.predecessors.push_back(&stateBlocks[basicBlockToState[&pred]]);
     }
 
-    for (auto succ : succs) {
-      currBlock.addSuccessor(&result.stateBlocks[basicBlockToState[&succ]]);
+    for (auto& succ : succs) {
+      currBlock.successors.push_back(&stateBlocks[basicBlockToState[&succ]]);
     }
   }
-
-  return result;
 }
 
-template<size_t N> inline void MonotoneCFGAnalyzer<N>::evaluate() {
+template<typename Lattice>
+inline void MonotoneCFGAnalyzer<Lattice>::evaluate() {
   std::queue<Index> worklist;
 
   for (auto it = stateBlocks.rbegin(); it != stateBlocks.rend(); ++it) {
@@ -119,28 +115,27 @@ template<size_t N> inline void MonotoneCFGAnalyzer<N>::evaluate() {
   }
 
   while (!worklist.empty()) {
-    BlockState<N>& currBlockState = stateBlocks[worklist.front()];
+    BlockState<Lattice>& currBlockState = stateBlocks[worklist.front()];
     worklist.pop();
+
+    // For each expression, applies the transfer function, using the expression,
+    // on the state of the expression it depends upon (here the next expression)
+    // to arrive at the expression's state. The beginning and end states of the
+    // CFG block will be updated.
     currBlockState.transfer();
 
     // Propagate state to dependents
     for (size_t j = 0; j < currBlockState.predecessors.size(); ++j) {
-      BitsetPowersetLattice<N>& predLast =
-        currBlockState.predecessors[j]->getLastState();
-
-      LatticeComparison cmp = BitsetPowersetLattice<N>::compare(
-        predLast, currBlockState.getFirstState());
-
-      if (cmp == LatticeComparison::NO_RELATION ||
-          cmp == LatticeComparison::LESS) {
-        predLast.getLeastUpperBound(currBlockState.getFirstState());
+      if (currBlockState.predecessors[j]->getLastState().makeLeastUpperBound(
+            currBlockState.getFirstState())) {
         worklist.push(currBlockState.predecessors[j]->index);
       }
     }
   }
 }
 
-template<size_t N> inline void MonotoneCFGAnalyzer<N>::print(std::ostream& os) {
+template<typename Lattice>
+inline void MonotoneCFGAnalyzer<Lattice>::print(std::ostream& os) {
   os << "CFG Analyzer" << std::endl;
   for (auto state : stateBlocks) {
     state.print(os);

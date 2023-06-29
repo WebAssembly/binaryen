@@ -11,11 +11,9 @@ private:
   Sign value;
 
 public:
-  static bool isTop(const SignLattice& element) { return element.value == TOP; }
+  bool isTop() { return value == TOP; }
 
-  static bool isBottom(const SignLattice& element) {
-    return element.value == BOTTOM;
-  }
+  bool isBottom() { return value == BOTTOM; }
 
   static LatticeComparison compare(const SignLattice& left,
                                    const SignLattice& right) {
@@ -43,7 +41,5 @@ public:
     }
   }
 };
-
-static_assert(is_lattice<SignLattice>);
 
 } // namespace wasm::analysis

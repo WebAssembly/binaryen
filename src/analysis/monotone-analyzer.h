@@ -11,18 +11,17 @@
 
 namespace wasm::analysis {
 
-template<size_t N> struct MonotoneCFGAnalyzer;
+template<typename Lattice> struct MonotoneCFGAnalyzer;
 
 // A node which contains all the lattice states for a given CFG node.
-template<size_t N> struct BlockState : public Visitor<BlockState<N>> {
-  static_assert(is_lattice<BitsetPowersetLattice<N>>);
-  BlockState(const BasicBlock* underlyingBlock);
+template<typename Lattice>
+struct BlockState : public Visitor<BlockState<Lattice>> {
+  static_assert(is_lattice<Lattice>);
+  // All states are set to the bottom lattice element in this constructor.
+  BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 
-  void addPredecessor(BlockState* pred);
-  void addSuccessor(BlockState* succ);
-
-  BitsetPowersetLattice<N>& getFirstState();
-  BitsetPowersetLattice<N>& getLastState();
+  typename Lattice::Element& getFirstState() { return beginningState; }
+  typename Lattice::Element& getLastState() { return endState; }
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type.
@@ -30,11 +29,10 @@ template<size_t N> struct BlockState : public Visitor<BlockState<N>> {
   void visitLocalGet(LocalGet* curr);
 
   // Executes the transfer function on all the expressions of the corresponding
-  // CFG and then propagates the state to all predecessors (which depend on the
-  // current node).
+  // CFG node.
   void transfer();
 
-  // prints out all states.
+  // Prints out all intermediate states in the block.
   void print(std::ostream& os);
 
 private:
@@ -42,32 +40,33 @@ private:
   Index index;
   const BasicBlock* cfgBlock;
   // State at beginning of CFG node.
-  BitsetPowersetLattice<N> beginningState;
+  typename Lattice::Element beginningState;
   // State at the end of the CFG node.
-  BitsetPowersetLattice<N> endState;
+  typename Lattice::Element endState;
   // Holds intermediate state values.
-  BitsetPowersetLattice<N> currState;
-  std::vector<BlockState*> predecessors;
-  std::vector<BlockState*> successors;
+  typename Lattice::Element currState;
+  std::vector<BlockState<Lattice>*> predecessors;
+  std::vector<BlockState<Lattice>*> successors;
 
-  friend MonotoneCFGAnalyzer<N>;
+  friend MonotoneCFGAnalyzer<Lattice>;
 };
 
-template<size_t N> struct MonotoneCFGAnalyzer {
-  static_assert(is_lattice<BitsetPowersetLattice<N>>);
+template<typename Lattice> struct MonotoneCFGAnalyzer {
+  MonotoneCFGAnalyzer(Lattice lattice) : lattice(lattice) {}
 
   // Constructs a graph of BlockState objects which parallels
   // the CFG graph. Each CFG node corresponds to a BlockState node.
-  static MonotoneCFGAnalyzer<N> fromCFG(CFG* cfg);
+  void fromCFG(CFG* cfg);
 
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
 
+  // Prints out all BlockStates in this analyzer.
   void print(std::ostream& os);
 
 private:
-  std::vector<BlockState<N>> stateBlocks;
-  friend BlockState<N>;
+  Lattice lattice;
+  std::vector<BlockState<Lattice>> stateBlocks;
 };
 
 } // namespace wasm::analysis
