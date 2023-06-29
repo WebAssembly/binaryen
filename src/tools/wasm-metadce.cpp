@@ -209,7 +209,9 @@ struct MetaDCEGraph {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
         }
-        if (!parentDceName.isNull()) {
+        if (parentDceName.isNull()) {
+          parent->roots.insert(dceName);
+        } else {
           parent->nodes[parentDceName].reaches.push_back(dceName);
         }
       }
