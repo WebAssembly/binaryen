@@ -77,10 +77,10 @@ adding unique symbol
     void visitExpression(Expression* curr) {
       if (Properties::isControlFlowStructure(curr)) {
         this->os << "in visitExpression with CF "
-                 << ShallowExpression{curr, this->wasm} << std::endl;
+                 << ShallowExpression{curr, getModule()} << std::endl;
       } else {
         this->os << "in visitExpression for "
-                 << ShallowExpression{curr, this->wasm} << std::endl;
+                 << ShallowExpression{curr, getModule()} << std::endl;
       }
     }
   };
