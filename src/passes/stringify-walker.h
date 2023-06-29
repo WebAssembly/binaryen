@@ -46,8 +46,9 @@ struct StringifyWalker
   std::queue<Expression**> controlFlowQueue;
 
   /*
-   * To initiate the walk, subclasses should call StringifySubclasses are meant to implement visitExpression and addUniqueSymbol
-   * visitExpression is called whenever 
+   * To initiate the walk, subclasses should call StringifySubclasses are meant
+   * to implement visitExpression and addUniqueSymbol visitExpression is called
+   * whenever
    *
    */
   void visitExpression(Expression* curr);
