@@ -290,7 +290,7 @@ struct Walker : public VisitorType {
   };
 
   void pushTask(TaskFunc func, Expression** currp) {
-    // assert(*currp);
+    assert(*currp);
     stack.emplace_back(func, currp);
   }
   void maybePushTask(TaskFunc func, Expression** currp) {
@@ -305,12 +305,12 @@ struct Walker : public VisitorType {
   }
 
   void walk(Expression*& root) {
-    // assert(stack.size() == 0);
+    assert(stack.size() == 0);
     pushTask(SubType::scan, &root);
     while (stack.size() > 0) {
       auto task = popTask();
       replacep = task.currp;
-      // assert(*task.currp);
+      assert(*task.currp);
       task.func(static_cast<SubType*>(this), task.currp);
     }
   }

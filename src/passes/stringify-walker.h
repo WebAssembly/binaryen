@@ -41,20 +41,24 @@ template<typename SubType>
 struct StringifyWalker
   : public PostWalker<SubType, UnifiedExpressionVisitor<SubType>> {
 
+  using Super = PostWalker<SubType, UnifiedExpressionVisitor<SubType>>;
+
   Module* wasm;
   std::queue<Expression**> controlFlowQueue;
 
   // Subclasses are meant to implement visitExpression and addUniqueSymbol
   void visitExpression(Expression* curr);
-  static void addUniqueSymbol(SubType* self, Expression** currp);
+  void addUniqueSymbol();
 
-  void walkModule(Module* module);
+  void doWalkModule(Module* module);
+  void doWalkFunction(Function* func);
+  void walk(Expression* curr);
   static void scan(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);
 
 private:
-  static void dequeueControlFlow(SubType* self, Expression**);
-  static void deferredScan(SubType* self, Expression** currp);
+  void dequeueControlFlow();
+  void deferredScan(Expression** currp);
 };
 
 } // namespace wasm

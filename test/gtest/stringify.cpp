@@ -19,10 +19,8 @@ TEST_F(StringifyTest, Print) {
       )
       (block $block_b
         (drop (if (i32.const 0)
-          (then
-            (i32.const 40))
-          (else
-            (i32.const 5))
+            (i32.const 40)
+            (i32.const 5)
         ))
       )
       (block $block_c
@@ -56,19 +54,14 @@ in visitExpression for drop
 adding unique symbol
 in visitExpression with CF try $try_a
 adding unique symbol
-in visitExpression with CF block (result i32)
+in visitExpression for i32.const 40
 adding unique symbol
-in visitExpression with CF block (result i32)
+in visitExpression for i32.const 5
 adding unique symbol
 in visitExpression for nop
 adding unique symbol
 in visitExpression for i32.const 8
 in visitExpression for drop
-adding unique symbol
-in visitExpression for i32.const 40
-adding unique symbol
-in visitExpression for i32.const 5
-adding unique symbol
 adding unique symbol
 )stringify";
 
@@ -79,8 +72,8 @@ adding unique symbol
 
     void walkModule(Module* module) { StringifyWalker::walkModule(module); }
 
-    void addUniqueSymbol(TestStringifyWalker* self, Expression** currp) {
-      self->os << "adding unique symbol\n";
+    void addUniqueSymbol() {
+      this->os << "adding unique symbol\n";
     }
 
     void visitExpression(Expression* curr) {

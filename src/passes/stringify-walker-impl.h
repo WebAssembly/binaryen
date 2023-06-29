@@ -6,9 +6,7 @@
 namespace wasm {
 
 template<typename SubType>
-inline void StringifyWalker<SubType>::walkModule(Module* module) {
-  auto self = static_cast<SubType*>(this);
-  self->wasm = module;
+inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
   ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
     /*
      * The ordering of the below lines of code are important. On each function
@@ -20,32 +18,44 @@ inline void StringifyWalker<SubType>::walkModule(Module* module) {
      *    children.
      * 2. push a task for adding a unique symbol, so that after the function
      *    body is visited as a single expression, there is a a separator between
-     *    the symbol for the function and subsequent symbols as each child of
-     *    the function body is visited. This assumes the function body is a
-     *    block.
+     *    the string for the top-level function body and subsequent strings for
+     *    each control flow structure in the function.
      * 3. then we call walk, which will visit the function body as a single unit
      * 4. finally we call addUniqueSymbol directly to ensure the string encoding
      *    for each function is terminated with a unique symbol, acting as a
      *    separator between each function in the program string
      */
-    self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
-    self->pushTask(StringifyWalker::addUniqueSymbol, &func->body);
-    self->walk(func->body);
-    self->addUniqueSymbol(self, &func->body);
+       this->walkFunction(func);
   });
+}
+
+template<typename SubType>
+inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
+// call our walk and emit the unique symbol for the function body
+  this->walk(func->body);
+  this->addUniqueSymbol();
+}
+
+template<typename SubType>
+inline void StringifyWalker<SubType>::walk(Expression* curr) {
+    Super::walk(curr);
+  do {
+    this->addUniqueSymbol();
+    this->dequeueControlFlow();
+  } while (controlFlowQueue.size() > 0);
 }
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
-    self->pushTask(StringifyWalker::doVisitExpression, currp);
     self->controlFlowQueue.push(currp);
+    self->pushTask(doVisitExpression, currp);
     if (auto* iff = curr->dynCast<If>()) {
-      PostWalker<SubType>::scan(self, &iff->condition);
+      Super::scan(self, &iff->condition);
     }
   } else {
-    PostWalker<SubType>::scan(self, currp);
+    Super::scan(self, currp);
     return;
   }
 }
@@ -61,60 +71,53 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
  *
  */
 template<typename SubType>
-void StringifyWalker<SubType>::dequeueControlFlow(SubType* self, Expression**) {
-  auto& queue = self->controlFlowQueue;
+void StringifyWalker<SubType>::dequeueControlFlow() {
+  auto& queue = this->controlFlowQueue;
   if (queue.empty()) {
     return;
   }
 
-  self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
+  //self->pushTask(StringifyWalker::dequeueControlFlow, nullptr);
   Expression** currp = queue.front();
   queue.pop();
-  StringifyWalker<SubType>::deferredScan(self, currp);
+  this->deferredScan(currp);
 }
 
 template<typename SubType>
-void StringifyWalker<SubType>::deferredScan(SubType* stringify,
-                                            Expression** currp) {
+void StringifyWalker<SubType>::deferredScan(Expression** currp) {
+  auto self = static_cast<SubType*>(this);
   Expression* curr = *currp;
-  stringify->pushTask(StringifyWalker::addUniqueSymbol, currp);
   switch (curr->_id) {
     case Expression::Id::BlockId: {
       auto* block = curr->cast<Block>();
       // TODO: The below code could be simplified if ArenaVector supported
       // reverse iterators
-      auto blockIterator = block->list.end();
-      while (blockIterator != block->list.begin()) {
-        blockIterator--;
-        auto& child = block->list[blockIterator.index];
-        stringify->pushTask(StringifyWalker::scan, &child);
+      for (auto& child : block->list) {
+        Super::walk(child);
       }
       break;
     }
     case Expression::Id::IfId: {
       auto* iff = curr->cast<If>();
+      Super::walk(iff->ifTrue);
+      self->addUniqueSymbol();
       if (iff->ifFalse) {
-        stringify->pushTask(StringifyWalker::scan, &iff->ifFalse);
+        Super::walk(iff->ifFalse);
       }
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, &iff->ifTrue);
-      stringify->pushTask(StringifyWalker::scan, &iff->ifTrue);
       break;
     }
     case Expression::Id::TryId: {
       auto* tryy = curr->cast<Try>();
-      auto blockIterator = tryy->catchBodies.end();
-      while (blockIterator != tryy->catchBodies.begin()) {
-        blockIterator--;
-        auto& child = tryy->catchBodies[blockIterator.index];
-        stringify->pushTask(StringifyWalker::scan, &child);
+      Super::walk(tryy->body);
+      this->addUniqueSymbol();
+      for (auto& child : tryy->catchBodies) {
+        Super::walk(child);
       }
-      stringify->pushTask(StringifyWalker::addUniqueSymbol, &tryy->body);
-      stringify->pushTask(StringifyWalker::scan, &tryy->body);
       break;
     }
     case Expression::Id::LoopId: {
       auto* loop = curr->cast<Loop>();
-      stringify->pushTask(StringifyWalker::scan, &loop->body);
+      Super::walk(loop->body);
       break;
     }
     default: {
@@ -132,9 +135,9 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
 }
 
 template<typename SubType>
-inline void StringifyWalker<SubType>::addUniqueSymbol(SubType* self,
-                                                      Expression** currp) {
-  self->addUniqueSymbol(self, currp);
+inline void StringifyWalker<SubType>::addUniqueSymbol() {
+  auto self = static_cast<SubType*>(this);
+  self->addUniqueSymbol();
 }
 
 } // namespace wasm
