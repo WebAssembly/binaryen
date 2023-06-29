@@ -12,8 +12,7 @@
 namespace wasm::analysis {
 
 // A node which contains all the lattice states for a given CFG node.
-template<typename Lattice>
-class BlockState {
+template<typename Lattice> class BlockState {
   static_assert(is_lattice<Lattice>);
 
   // CFG node corresponding to this state block
@@ -26,7 +25,7 @@ class BlockState {
   std::vector<BlockState<Lattice>*> predecessors;
   std::vector<BlockState<Lattice>*> successors;
 
-  public:
+public:
   // All states are set to the bottom lattice element in this constructor.
   BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 
@@ -41,20 +40,21 @@ class BlockState {
   iterator successorsBegin() { return successors.cbegin(); }
   iterator predecessorsEnd() { return predecessors.cend(); }
   iterator successorsEnd() { return successors.cend(); }
-  void addPredecessor(BlockState<Lattice>* pred) { predecessors.push_back(pred); }
+  void addPredecessor(BlockState<Lattice>* pred) {
+    predecessors.push_back(pred);
+  }
   void addSuccessor(BlockState<Lattice>* succ) { successors.push_back(succ); }
 
   // Prints out the beginning and end states.
   void print(std::ostream& os);
 };
 
-template<typename Lattice>
-class LivenessTransferFunction : public Visitor<LivenessTransferFunction<Lattice>> {
-  typename Lattice::Element currState;  
+class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
+  FinitePowersetLattice::Element currState;
 
-  public:
-  LivenessTransferFunction(Lattice& lattice); 
-  
+public:
+  LivenessTransferFunction(FinitePowersetLattice& lattice);
+
   // Transfer function implementation. Modifies the state for a particular
   // expression type.
   void visitLocalSet(LocalSet* curr);
@@ -62,25 +62,39 @@ class LivenessTransferFunction : public Visitor<LivenessTransferFunction<Lattice
 
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node.
-  void transfer(BlockState<Lattice>& currBlock);
-  
-  void enqueueWorklist(const std::vector<BlockState<Lattice>>& stateBlocks, std::queue<Index>& worklist);
+  void transfer(BlockState<FinitePowersetLattice>& currBlock);
 
-  using iterator = typename std::vector<BlockState<Lattice>*>::const_iterator;
-  iterator depsBegin(BlockState<Lattice>& currBlock) { return currBlock.predecessorsBegin(); }
-  iterator depsEnd(BlockState<Lattice>& currBlock) { return currBlock.predecessorsEnd(); }
+  void enqueueWorklist(
+    const std::vector<BlockState<FinitePowersetLattice>>& stateBlocks,
+    std::queue<Index>& worklist);
 
-  typename Lattice::Element& getInputState(BlockState<Lattice>* currBlock) { return currBlock->getLastState(); }
-  typename Lattice::Element& getOutputState(BlockState<Lattice>* currBlock) { return currBlock->getFirstState(); }
+  using iterator =
+    std::vector<BlockState<FinitePowersetLattice>*>::const_iterator;
+  iterator depsBegin(BlockState<FinitePowersetLattice>& currBlock) {
+    return currBlock.predecessorsBegin();
+  }
+  iterator depsEnd(BlockState<FinitePowersetLattice>& currBlock) {
+    return currBlock.predecessorsEnd();
+  }
 
-  void print(std::ostream& os, BlockState<Lattice>& currBlock);
+  FinitePowersetLattice::Element&
+  getInputState(BlockState<FinitePowersetLattice>* currBlock) {
+    return currBlock->getLastState();
+  }
+  FinitePowersetLattice::Element&
+  getOutputState(BlockState<FinitePowersetLattice>* currBlock) {
+    return currBlock->getFirstState();
+  }
+
+  void print(std::ostream& os, BlockState<FinitePowersetLattice>& currBlock);
 };
 
-template<typename Lattice, template<typename> typename TransferFunction>
+template<typename Lattice, typename TransferFunction>
 struct MonotoneCFGAnalyzer {
   static_assert(is_lattice<Lattice>);
-  
-  MonotoneCFGAnalyzer(Lattice lattice, TransferFunction<Lattice> transferFunction) : lattice(lattice), transferFunction(transferFunction) {}
+
+  MonotoneCFGAnalyzer(Lattice lattice, TransferFunction transferFunction)
+    : lattice(lattice), transferFunction(transferFunction) {}
 
   // Constructs a graph of BlockState objects which parallels
   // the CFG graph. Each CFG node corresponds to a BlockState node.
@@ -94,7 +108,7 @@ struct MonotoneCFGAnalyzer {
 
 private:
   Lattice lattice;
-  TransferFunction<Lattice> transferFunction;
+  TransferFunction transferFunction;
   std::vector<BlockState<Lattice>> stateBlocks;
 };
 

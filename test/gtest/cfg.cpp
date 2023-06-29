@@ -148,9 +148,10 @@ End
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  LivenessTransferFunction<FinitePowersetLattice> transferFunction(lattice);
-  
-  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(lattice, transferFunction);
+  LivenessTransferFunction transferFunction(lattice);
+
+  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
+    lattice, transferFunction);
   analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
@@ -242,9 +243,10 @@ End
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  LivenessTransferFunction<FinitePowersetLattice> transferFunction(lattice);
-  
-  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(lattice, transferFunction);
+  LivenessTransferFunction transferFunction(lattice);
+
+  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
+    lattice, transferFunction);
   analyzer.fromCFG(&cfg);
   analyzer.evaluate();
 
