@@ -20,8 +20,8 @@ FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
   size_t size = left.bitvector.size();
 
   for (size_t i = 0; i < size; ++i) {
-    leftNotRight |= (left.bitvector[i] & !right.bitvector[i]);
-    rightNotLeft |= (right.bitvector[i] & !left.bitvector[i]);
+    leftNotRight |= (left.bitvector[i] && !right.bitvector[i]);
+    rightNotLeft |= (right.bitvector[i] && !left.bitvector[i]);
 
     // We can end early if we know neither is a subset of the other.
     if (leftNotRight && rightNotLeft) {
@@ -68,8 +68,8 @@ inline bool FinitePowersetLattice::Element::makeLeastUpperBound(
   for (size_t i = 0; i < bitvector.size(); ++i) {
     // Bit is flipped on self only if self is false and other is true when self
     // and other are OR'ed together.
-    modified |= (!bitvector[i] & other.bitvector[i]);
-    bitvector[i] = bitvector[i] | other.bitvector[i];
+    modified |= (!bitvector[i] && other.bitvector[i]);
+    bitvector[i] = bitvector[i] || other.bitvector[i];
   }
 
   return modified;
