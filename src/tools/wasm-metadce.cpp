@@ -192,7 +192,8 @@ struct MetaDCEGraph {
       void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
       void visitRefFunc(RefFunc* curr) {
         assert(!parentDceName.isNull());
-        parent->nodes[parentDceName].reaches.push_back(parent->getFunctionDCEName(curr->func));
+        parent->nodes[parentDceName].reaches.push_back(
+          parent->getFunctionDCEName(curr->func));
       }
 
     private:
@@ -227,9 +228,8 @@ struct MetaDCEGraph {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
       ElementUtils::iterElementSegmentFunctionNames(
-        segment, [&](Name name, Index) {
-          roots.insert(getFunctionDCEName(name));
-        });
+        segment,
+        [&](Name name, Index) { roots.insert(getFunctionDCEName(name)); });
       rooter.walk(segment->offset);
     });
     ModuleUtils::iterActiveDataSegments(
