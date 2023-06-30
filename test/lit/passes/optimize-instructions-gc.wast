@@ -2426,6 +2426,61 @@
     )
   )
 
+  ;; CHECK:      (func $ref.test-fallthrough (type $void)
+  ;; CHECK-NEXT:  (local $A (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:    (local.tee $A
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $A
+  ;; CHECK-NEXT:      (struct.new $B
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:       (i32.const 30)
+  ;; CHECK-NEXT:       (f32.const 40.5)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.test-fallthrough
+    (local $A (ref $A))
+    ;; The test will fail, but this pass does not have exact type info, so it
+    ;; thinks it can succeed and nothing happens here (GUFA can optimize this,
+    ;; however).
+    (drop
+      (ref.test $B
+        (local.tee $A
+          (struct.new $A
+            (i32.const 10)
+          )
+        )
+      )
+    )
+    ;; This test will succeed, even though we tee to the parent type in the
+    ;; middle.
+    (drop
+      (ref.test $B
+        (local.tee $A
+          (struct.new $B
+            (i32.const 20)
+            (i32.const 30)
+            (f32.const 40.50)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref.test-then-optimizeAddedConstants (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (block
