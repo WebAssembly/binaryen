@@ -1,6 +1,7 @@
 #ifndef wasm_passes_stringify_walker_h
 #define wasm_passes_stringify_walker_h
 
+#include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "wasm-traversal.h"
 #include <queue>
