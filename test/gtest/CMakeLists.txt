@@ -5,6 +5,7 @@ set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
   possible-contents.cpp
+  stringify.cpp
   type-builder.cpp
   wat-lexer.cpp
 )
