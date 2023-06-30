@@ -108,11 +108,11 @@ adding unique symbol
 
     TestStringifyWalker(std::ostream& os) : os(os){};
 
-    void addUniqueSymbol() { this->os << "adding unique symbol\n"; }
+    void addUniqueSymbol() { os << "adding unique symbol\n"; }
 
     void visitExpression(Expression* curr) {
-      this->os << "in visitExpression for "
-               << ShallowExpression{curr, getModule()} << std::endl;
+      os << "in visitExpression for "
+         << ShallowExpression{curr, getModule()} << std::endl;
     }
   };
 

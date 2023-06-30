@@ -54,14 +54,13 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 // This dequeueControlFlow is responsible for visiting the children expressions
 // of control flow.
 template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
-  auto& queue = this->controlFlowQueue;
+  auto& queue = controlFlowQueue;
   if (queue.empty()) {
     return;
   }
 
   Expression** currp = queue.front();
   queue.pop();
-  auto self = static_cast<SubType*>(this);
   Expression* curr = *currp;
 
   switch (curr->_id) {
@@ -76,7 +75,7 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
       auto* iff = curr->cast<If>();
       Super::walk(iff->ifTrue);
       if (iff->ifFalse) {
-        self->addUniqueSymbol();
+        addUniqueSymbol();
         Super::walk(iff->ifFalse);
       }
       break;
@@ -85,7 +84,7 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
       auto* tryy = curr->cast<Try>();
       Super::walk(tryy->body);
       for (auto& child : tryy->catchBodies) {
-        this->addUniqueSymbol();
+        addUniqueSymbol();
         Super::walk(child);
       }
       break;
