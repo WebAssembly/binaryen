@@ -48,8 +48,8 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
     // The if-condition is a value child consumed by the if control flow, which
     // makes the if-condition a true sibling rather than part of its contents in
     // the binary format
-    if (auto* iff = curr->dynCast<If>()) {
-      Super::scan(self, &iff->condition);
+    for (auto*& child : ValueChildIterator(curr)) {
+      Super::scan(self, &child);
     }
   } else {
     Super::scan(self, currp);
