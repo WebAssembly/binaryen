@@ -38,6 +38,12 @@ public:
     currBlock.getFirstState() = std::move(currState);
   }
 
+  // Enqueues the worklist before the worklist algorithm is run. For
+  // liveness analysis, we are doing a backward analysis, so we want
+  // to enqueue the worklist backward so that later CFG blocks are
+  // run before earlier CFG blocks. This improves performance by
+  // reducing the number of state propagations needed, since we are
+  // naturally following the backward flow at the beginning.
   void enqueueWorklist(
     const std::vector<BlockState<FinitePowersetLattice>>& stateBlocks,
     std::queue<Index>& worklist) {
@@ -46,6 +52,7 @@ public:
     }
   }
 
+  // Predecessors depend on use for information.
   using iterator =
     std::vector<BlockState<FinitePowersetLattice>*>::const_iterator;
   iterator depsBegin(BlockState<FinitePowersetLattice>& currBlock) {
@@ -55,6 +62,8 @@ public:
     return currBlock.predecessorsEnd();
   }
 
+  // We start at the last state and end at the first state in a
+  // backward analysis.
   FinitePowersetLattice::Element&
   getInputState(BlockState<FinitePowersetLattice>* currBlock) {
     return currBlock->getLastState();
@@ -64,6 +73,9 @@ public:
     return currBlock->getFirstState();
   }
 
+  // Prints the intermediate states of each BlockState currBlock by applying
+  // the transfer function on each expression of the CFG block. This data is
+  // not stored in the BlockState itself.
   void print(std::ostream& os, BlockState<FinitePowersetLattice>& currBlock) {
     os << "Intermediate States (reverse order): " << std::endl;
     currState = currBlock.getLastState();

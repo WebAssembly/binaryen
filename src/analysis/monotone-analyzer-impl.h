@@ -65,6 +65,8 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::fromCFG(CFG* cfg) {
 template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
   std::queue<Index> worklist;
+
+  // Transfer function enqueues the work in some order which is efficient.
   transferFunction.enqueueWorklist(stateBlocks, worklist);
 
   while (!worklist.empty()) {
@@ -77,10 +79,13 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
     // CFG block will be updated.
     transferFunction.transfer(currBlockState);
 
-    // Propagate state to dependents.
+    // Propagate state to dependents of currBlockState.
     for (auto dep = transferFunction.depsBegin(currBlockState);
          dep != transferFunction.depsEnd(currBlockState);
          ++dep) {
+
+      // If we need to change the input state of a dependent, we need
+      // to enqueue the dependent to recalculate it.
       if (transferFunction.getInputState(*dep).makeLeastUpperBound(
             transferFunction.getOutputState(&currBlockState))) {
         worklist.push((*dep)->getCFGBlock()->getIndex());
@@ -89,6 +94,8 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
   }
 }
 
+// Currently prints both the basic information and intermediate states of each
+// BlockState.
 template<typename Lattice, typename TransferFunction>
 inline void
 MonotoneCFGAnalyzer<Lattice, TransferFunction>::print(std::ostream& os) {
