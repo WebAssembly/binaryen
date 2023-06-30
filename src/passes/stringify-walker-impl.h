@@ -53,7 +53,6 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
     }
   } else {
     Super::scan(self, currp);
-    return;
   }
 }
 
