@@ -8,33 +8,32 @@
 namespace wasm {
 
 /*
- * This walker performs a shallow visit of control-flow (try, if, block, loop)
- * expressions and their simple expression siblings before then visiting the
- * children of each control-flow expression in postorder. As a result, this
- * walker un-nests nested control flow structures, so the expression visit order
- * does not correspond to a normal postorder traversal of the function.
- *
+ * This walker does a normal postorder traversal except that it defers
+ * traversing the contents of control flow structures it encounters.
+ * *
  * For example, the below (contrived) wat:
  * 1: (block
- * 2:   (drop
- * 3:     (i32.add
- * 4:       (i32.const 20)
- * 5:       (i32.const 10)))
- * 6:   (if
- * 7:     (i32.const 0)
- * 8:     (then (return (i32.const 1)))
- * 9:     (else (return (i32.const 0)))))
+ * 2:   (if
+ * 3:     (i32.const 0)
+ * 4:     (then (return (i32.const 1)))
+ * 5:     (else (return (i32.const 0)))))
+ * 6:   (drop
+ * 7:     (i32.add
+ * 8:       (i32.const 20)
+ * 9:       (i32.const 10)))
  *
  * Would have its expressions visited in the following order (based on line
  * number):
- * 1, 4, 5, 3, 2, 7, 6, 8, 9
+ * 1, 3, 2, 8, 9, 7, 6, 4, 5
  *
  * Of note:
- *   - The add (line 3) binary operator's left and right children (lines 4 - 5)
- *     are visited first as they need to be on the stack before the add
- *     operation is executed
+ *   - The visits to if-True on line 4 and if-False on line 5 are deferred until
+ *     after the rest of the siblings of the if expression are visited
  *   - The if-condition (i32.const 0) on line 7 is visited before the if
  *     expression
+ *   - The add (line 7) binary operator's left and right children (lines 8 - 9)
+ *     are visited first as they need to be on the stack before the add
+ *     operation is executed
  */
 
 template<typename SubType>
@@ -46,10 +45,12 @@ struct StringifyWalker
   std::queue<Expression**> controlFlowQueue;
 
   /*
-   * To initiate the walk, subclasses should call StringifySubclasses are meant
-   * to implement visitExpression and addUniqueSymbol visitExpression is called
-   * whenever
+   * To initiate the walk, subclasses should call walkModule with a pointer to
+   * the wasm module.
    *
+   * Member functions addUniqueSymbol and visitExpression are provided as
+   * extension points for subclasses. These functions will be called at
+   * appropriate points during the walk and should be implemented by subclasses.
    */
   void visitExpression(Expression* curr);
   void addUniqueSymbol();

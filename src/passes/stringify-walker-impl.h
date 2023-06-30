@@ -5,6 +5,8 @@
 
 namespace wasm {
 
+// This walker supplies its own doWalkModule because it does not make sense to
+// walk anything besides defined functions.
 template<typename SubType>
 inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
   ModuleUtils::iterDefinedFunctions(
@@ -14,6 +16,14 @@ inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
 template<typename SubType>
 inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
   walk(func->body);
+  /*
+   * We add a unique symbol after walking the function body to separate the
+   * string generated from visiting the function body as a single unit from the
+   * subsequent strings that will be generated from visiting the sub-expressions
+   * of the function body. If we did not add this unique symbol and a program
+   * had two functions with the same instructions, we would incorrectly create a
+   * new function with the instructions repeated twice.
+   */
   addUniqueSymbol();
 }
 
@@ -41,16 +51,8 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   }
 }
 
-/*
- * This dequeueControlFlow is responsible for ensuring the children expressions
- * of control flow expressions are visited after the control flow expression has
- * already been visited. In order to perform this responsibility, the
- * dequeueControlFlow function needs to always be the very last task in the
- * Walker stack, as the last task will be executed last. This way if the queue
- * is not empty, the first statement pushes a new task to call
- * dequeueControlFlow again.
- *
- */
+// This dequeueControlFlow is responsible for visiting the children expressions
+// of control flow.
 template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   auto& queue = this->controlFlowQueue;
   if (queue.empty()) {
