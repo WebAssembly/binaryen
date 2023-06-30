@@ -2,6 +2,7 @@
 #define wasm_analysis_lattice_h
 
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 
 #include "wasm.h"
@@ -42,15 +43,31 @@ constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
 // Represents a powerset lattice which is constructed from a finite set which
 // can be represented by a bitvector. Set elements are represented by
 // FinitePowersetLattice::Element, which represents members present in each
-// element by bits in the bitvector.
-class FinitePowersetLattice {
+// element by bits in the bitvector. Type is the type of a member in a lattice
+// element.
+template<typename Type> class FinitePowersetLattice {
 
   // The size of the set that the powerset lattice was created from. This is
   // equivalent to the size of the Top lattice element.
   size_t setSize;
 
+  // Maps a bitvector index to some element member of Type.
+  // Used to produce initial ordering of element members.
+  std::vector<Type> memberOrdering;
+
+  // Maps an element member of Type to a bitvector index.
+  std::unordered_map<Type, size_t> memberMapping;
+
 public:
-  FinitePowersetLattice(size_t setSize) : setSize(setSize) {}
+  // Takes in an ordered list of all elements belonging to the set to create
+  // the powerset lattice from (i.e. the powerset lattice top element). This
+  // is used for mapping these to bitvector indices.
+  FinitePowersetLattice(std::vector<Type> setMembers)
+    : setSize(setMembers.size()), memberOrdering(setMembers) {
+    for (size_t i = 0; i < setSize; ++i) {
+      memberMapping[memberOrdering[i]] = i;
+    }
+  }
 
   // This represents an element of a powerset lattice. The element is itself a
   // set which has set members. The bitvector tracks which possible members of
@@ -93,6 +110,25 @@ public:
     friend FinitePowersetLattice;
   };
 
+  Type indexToMember(size_t index) { return memberOrdering[index]; }
+
+  Type memberToIndex(Type member) { return memberMapping[member]; }
+
+  // Adds member to element.
+  void add(Element* element, Type member) {
+    element->set(memberMapping[member], true);
+  }
+
+  // Removes member from element.
+  void remove(Element* element, Type member) {
+    element->set(memberMapping[member], false);
+  }
+
+  // Checks if member is included in the element set.
+  bool exists(Element* element, Type member) {
+    return element->get(memberMapping[member]);
+  }
+
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
   static LatticeComparison compare(const Element& left, const Element& right);
@@ -100,8 +136,6 @@ public:
   // Returns an instance of the bottom lattice element.
   Element getBottom();
 };
-
-static_assert(is_lattice<FinitePowersetLattice>);
 
 } // namespace wasm::analysis
 
