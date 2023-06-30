@@ -23,6 +23,9 @@ inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
    * of the function body. If we did not add this unique symbol and a program
    * had two functions with the same instructions, we would incorrectly create a
    * new function with the instructions repeated twice.
+   *
+   * It might be helpful to think of the function body as a block that needs to
+   * be separated from subsequent instructions.
    */
   addUniqueSymbol();
 }

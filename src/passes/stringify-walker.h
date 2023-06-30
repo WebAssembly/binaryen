@@ -12,25 +12,29 @@ namespace wasm {
  * traversing the contents of control flow structures it encounters.
  * *
  * For example, the below (contrived) wat:
- * 1: (block
- * 2:   (if
- * 3:     (i32.const 0)
- * 4:     (then (return (i32.const 1)))
- * 5:     (else (return (i32.const 0)))))
- * 6:   (drop
- * 7:     (i32.add
- * 8:       (i32.const 20)
- * 9:       (i32.const 10)))
- *
+ * 1 : (block
+ * 2 :   (if
+ * 3 :     (i32.const 0)
+ * 4 :     (then (return (i32.const 1)))
+ * 5 :     (else (return (i32.const 0)))))
+ * 6 :   (drop
+ * 7 :     (i32.add
+ * 8 :       (i32.const 20)
+ * 9 :       (i32.const 10)))
+ * 10:   (if
+ * 11:     (i32.const 1)
+ * 12:     (then (return (i32.const 2)))
+ * 14: )
  * Would have its expressions visited in the following order (based on line
  * number):
- * 1, 3, 2, 8, 9, 7, 6, 4, 5
+ * 1, 3, 2, 8, 9, 7, 6, 11, 10, 4, 5, 12
  *
  * Of note:
  *   - The visits to if-True on line 4 and if-False on line 5 are deferred until
- *     after the rest of the siblings of the if expression are visited
- *   - The if-condition (i32.const 0) on line 7 is visited before the if
- *     expression
+ *     after the rest of the siblings of the if expression on line 2 are visited
+ *   - The if-condition (i32.const 0) on line 3 is visited before the if
+ *     expression on line 2. Similarly, the if-condition (i32.const 1) on line
+ *     11 is visisted before the if expression on line 10.
  *   - The add (line 7) binary operator's left and right children (lines 8 - 9)
  *     are visited first as they need to be on the stack before the add
  *     operation is executed
