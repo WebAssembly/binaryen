@@ -69,6 +69,7 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   queue.pop();
   Expression* curr = *currp;
 
+  // TODO: Issue #5796, Make a ControlChildIterator
   switch (curr->_id) {
     case Expression::Id::BlockId: {
       auto* block = curr->cast<Block>();

@@ -9,8 +9,9 @@ namespace wasm {
 
 /*
  * This walker does a normal postorder traversal except that it defers
- * traversing the contents of control flow structures it encounters.
- * *
+ * traversing the contents of control flow structures it encounters. This
+ * effectively un-nests control flow.
+ *
  * For example, the below (contrived) wat:
  * 1 : (block
  * 2 :   (if
