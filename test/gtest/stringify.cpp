@@ -111,8 +111,8 @@ adding unique symbol
     void addUniqueSymbol() { os << "adding unique symbol\n"; }
 
     void visitExpression(Expression* curr) {
-      os << "in visitExpression for "
-         << ShallowExpression{curr, getModule()} << std::endl;
+      os << "in visitExpression for " << ShallowExpression{curr, getModule()}
+         << std::endl;
     }
   };
 
