@@ -2195,7 +2195,8 @@ struct OptimizeInstructions
           // (which is only properly propagated at the end of this pass when we
           // refinalize).
           replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()}, Type::i32));
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            Type::i32));
           return;
         case GCTypeUtils::Failure:
           replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
@@ -2205,16 +2206,17 @@ struct OptimizeInstructions
           replaceCurrent(builder.makeRefIsNull(curr->ref));
           return;
         case GCTypeUtils::SuccessOnlyIfNonNull:
-          // This adds an EqZ, but code size does not regress since ref.test also
-          // encodes a type, and ref.is_null does not. The EqZ may also add some
-          // work, but a cast is likely more expensive than a null check + a fast
-          // int operation.
+          // This adds an EqZ, but code size does not regress since ref.test
+          // also encodes a type, and ref.is_null does not. The EqZ may also add
+          // some work, but a cast is likely more expensive than a null check +
+          // a fast int operation.
           replaceCurrent(
             builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
           return;
       }
 
-      auto* fallthrough = Properties::getImmediateFallthrough(ref, getPassOptions(), *getModule());
+      auto* fallthrough = Properties::getImmediateFallthrough(
+        ref, getPassOptions(), *getModule());
       if (fallthrough == ref) {
         return;
       }
