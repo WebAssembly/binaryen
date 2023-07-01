@@ -10,8 +10,7 @@ class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
   FinitePowersetLattice::Element* currState;
 
 public:
-  LivenessTransferFunction(FinitePowersetLattice& lattice)
-    : currState(nullptr) {}
+  LivenessTransferFunction() : currState(nullptr) {}
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type. In our current limited implementation, we just update
@@ -34,7 +33,7 @@ public:
   transfer(const BasicBlock* cfgBlock,
            FinitePowersetLattice::Element& inputState) {
     // If the block is empty, we propagate the state by inputState =
-    // outputSTate.
+    // outputState.
 
     FinitePowersetLattice::Element outputState = inputState;
     currState = &outputState;
