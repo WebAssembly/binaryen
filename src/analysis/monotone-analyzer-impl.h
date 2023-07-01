@@ -13,17 +13,14 @@ namespace wasm::analysis {
 template<typename Lattice>
 inline BlockState<Lattice>::BlockState(const BasicBlock* underlyingBlock,
                                        Lattice& lattice)
-  : cfgBlock(underlyingBlock), beginningState(lattice.getBottom()),
-    endState(lattice.getBottom()) {}
+  : cfgBlock(underlyingBlock), inputState(lattice.getBottom()) {}
 
 // Prints out inforamtion about a CFG node's state, but not intermediate states.
 template<typename Lattice>
 inline void BlockState<Lattice>::print(std::ostream& os) {
   os << "CFG Block: " << cfgBlock->getIndex() << std::endl;
-  os << "Beginning State: ";
-  beginningState.print(os);
-  os << std::endl << "End State: ";
-  endState.print(os);
+  os << "Input State: ";
+  inputState.print(os);
   os << std::endl << "Predecessors:";
   for (auto pred : predecessors) {
     os << " " << pred->cfgBlock->getIndex();
@@ -77,7 +74,8 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
     // on the state of the expression it depends upon (here the next expression)
     // to arrive at the expression's state. The beginning and end states of the
     // CFG block will be updated.
-    transferFunction.transfer(currBlockState);
+    typename Lattice::Element outputState = transferFunction.transfer(
+      currBlockState.getCFGBlock(), currBlockState.getInputState());
 
     // Propagate state to dependents of currBlockState.
     for (auto dep = transferFunction.depsBegin(currBlockState);
@@ -86,8 +84,7 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
 
       // If we need to change the input state of a dependent, we need
       // to enqueue the dependent to recalculate it.
-      if (transferFunction.getInputState(*dep).makeLeastUpperBound(
-            transferFunction.getOutputState(&currBlockState))) {
+      if ((*dep)->getInputState().makeLeastUpperBound(outputState)) {
         worklist.push((*dep)->getCFGBlock()->getIndex());
       }
     }

@@ -17,10 +17,9 @@ template<typename Lattice> class BlockState {
 
   // CFG node corresponding to this state block.
   const BasicBlock* cfgBlock;
-  // State at beginning of CFG node.
-  typename Lattice::Element beginningState;
-  // State at the end of the CFG node.
-  typename Lattice::Element endState;
+  // State at which the analysis flow starts for a CFG. For instance, the ending
+  // state for backward analysis, or the beginning state for forward analysis.
+  typename Lattice::Element inputState;
 
   std::vector<BlockState<Lattice>*> predecessors;
   std::vector<BlockState<Lattice>*> successors;
@@ -30,8 +29,7 @@ public:
   BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
 
   // Accessors.
-  typename Lattice::Element& getFirstState() { return beginningState; }
-  typename Lattice::Element& getLastState() { return endState; }
+  typename Lattice::Element& getInputState() { return inputState; }
   const BasicBlock* getCFGBlock() const { return cfgBlock; }
 
   // Methods to manipulate predecessors and successors.
@@ -51,10 +49,11 @@ public:
 
 template<typename TransferFunction, typename Lattice>
 constexpr bool has_transfer =
-  std::is_invocable_r<void,
+  std::is_invocable_r<typename Lattice::Element,
                       decltype(&TransferFunction::transfer),
                       TransferFunction,
-                      BlockState<Lattice>&>::value;
+                      const BasicBlock*,
+                      typename Lattice::Element&>::value;
 
 template<typename TransferFunction, typename Lattice>
 constexpr bool has_enqueueWorklist =
@@ -79,37 +78,25 @@ constexpr bool has_depsEnd = std::is_invocable_r<
   BlockState<Lattice>&>::value;
 
 template<typename TransferFunction, typename Lattice>
-constexpr bool has_getInputState =
-  std::is_invocable_r<typename Lattice::Element&,
-                      decltype(&TransferFunction::getInputState),
-                      TransferFunction,
-                      BlockState<Lattice>*>::value;
-
-template<typename TransferFunction, typename Lattice>
-constexpr bool has_getOutputState =
-  std::is_invocable_r<typename Lattice::Element&,
-                      decltype(&TransferFunction::getOutputState),
-                      TransferFunction,
-                      BlockState<Lattice>*>::value;
-
-template<typename TransferFunction, typename Lattice>
 constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
   has_enqueueWorklist<TransferFunction, Lattice>&&
     has_depsBegin<TransferFunction, Lattice>&&
-      has_depsEnd<TransferFunction, Lattice>&&
-        has_getInputState<TransferFunction, Lattice>&&
-          has_getOutputState<TransferFunction, Lattice>;
+      has_depsEnd<TransferFunction, Lattice>;
 
 // A transfer function using a lattice <Lattice> is required to have the
 // following methods:
 
-// void transfer(BlockState<Lattice>& currBlock);
+// Lattice::Element transfer(BasicBlock* cfgBlock, Lattice::Element&
+// inputState);
 
-// This function updates the output state of currBlock in-place. To do this, it
-// starts at the input state of currBlock and applies the analysis transfer
-// function to each expression in the CFG block associated with currBlock to
-// derive the intermediate states associated with each expression until we
-// produce the output state.
+// This function takes in a pointer to a CFG BasicBlock and the input state
+// associated with it and generates the output state for the basic block by
+// applying the analysis transfer function to each expression in the CFG
+// BasicBlock. Starting with the input state, the transfer function is used to
+// derive new intermediate states based on each expression until we reach the
+// output state, which is returned. This outuput state will be propagated to
+// dependents of the CFG BasicBlock by the worklist algorithm in
+// MonotoneCFGAnalyzer.
 
 // void enqueueWorklist(const std::vector<BlockState<Lattice>>& stateBlocks,
 // std::queue<index>& value);
@@ -124,27 +111,15 @@ constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
 // depsBegin(BlockState<Lattice>& currBlock);
 
 // Returns a begin iterator to the blocks which depend on currBlock for
-// information (e.g. predecessors in a backward analysis). Used for propagating
-// states.
+// information (e.g. predecessors in a backward analysis). Used to select
+// which blocks to propagate to after applying the transfer function to
+// a block.
 
 // std::vector<BlockState<Lattice>*>::const_iterator
 // depsEnd(BlockState<Lattice>& currBlock);
 
 // Returns an end iterator to the blocks which depend on currBlock for
-// information. Used for propagating states.
-
-// Lattice::Element& getInputState(BlockState<Lattice>* currBlock);
-
-// Returns a reference to the state at which the static analysis flow for
-// currBlock starts. For instance for backward analysis, we start at the end
-// state of currBlock. States from other blocks are propagated to currBlock via
-// this input state.
-
-// Lattice::Element& getOutputState(BlockState<Lattice>* currBlock);
-
-// Returns a reference to the state at which the static analysis flow for
-// currBlock (e.g. the start state in a backward analysis). This state may be
-// propagated to other blocks.
+// information. Used for propagating states, like depsBegin.
 
 template<typename Lattice, typename TransferFunction>
 struct MonotoneCFGAnalyzer {

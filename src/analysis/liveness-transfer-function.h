@@ -7,35 +7,46 @@
 namespace wasm::analysis {
 
 class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FinitePowersetLattice::Element currState;
+  FinitePowersetLattice::Element* currState;
 
 public:
   LivenessTransferFunction(FinitePowersetLattice& lattice)
-    : currState(lattice.getBottom()) {}
+    : currState(nullptr) {}
 
   // Transfer function implementation. Modifies the state for a particular
   // expression type. In our current limited implementation, we just update
   // state on gets and sets of local indices.
-  void visitLocalSet(LocalSet* curr) { currState.set(curr->index, false); }
-  void visitLocalGet(LocalGet* curr) { currState.set(curr->index, true); }
+  void visitLocalSet(LocalSet* curr) {
+    if (currState) {
+      currState->set(curr->index, false);
+    }
+  }
+  void visitLocalGet(LocalGet* curr) {
+    if (currState) {
+      currState->set(curr->index, true);
+    }
+  }
 
   // Executes the transfer function on all the expressions of the corresponding
-  // CFG node.
-  void transfer(BlockState<FinitePowersetLattice>& currBlock) {
-    // If the block is empty, we propagate the state by endState = currState,
-    // then currState = beginningState.
+  // CFG node, starting with the node's input state. Returns the final output
+  // state of the node.
+  FinitePowersetLattice::Element
+  transfer(const BasicBlock* cfgBlock,
+           FinitePowersetLattice::Element& inputState) {
+    // If the block is empty, we propagate the state by inputState =
+    // outputSTate.
+
+    FinitePowersetLattice::Element outputState = inputState;
+    currState = &outputState;
 
     // Compute transfer function for all expressions in the CFG block.
-    auto cfgIter = currBlock.getCFGBlock()->rbegin();
-    currState = currBlock.getLastState();
-
-    while (cfgIter != currBlock.getCFGBlock()->rend()) {
+    for (auto cfgIter = cfgBlock->rbegin(); cfgIter != cfgBlock->rend();
+         ++cfgIter) {
       // Run transfer function.
       LivenessTransferFunction::visit(*cfgIter);
-      ++cfgIter;
     }
-
-    currBlock.getFirstState() = std::move(currState);
+    currState = nullptr;
+    return outputState;
   }
 
   // Enqueues the worklist before the worklist algorithm is run. For
@@ -62,24 +73,13 @@ public:
     return currBlock.predecessorsEnd();
   }
 
-  // We start at the last state and end at the first state in a
-  // backward analysis.
-  FinitePowersetLattice::Element&
-  getInputState(BlockState<FinitePowersetLattice>* currBlock) {
-    return currBlock->getLastState();
-  }
-  FinitePowersetLattice::Element&
-  getOutputState(BlockState<FinitePowersetLattice>* currBlock) {
-    return currBlock->getFirstState();
-  }
-
   // Prints the intermediate states of each BlockState currBlock by applying
   // the transfer function on each expression of the CFG block. This data is
   // not stored in the BlockState itself.
   void print(std::ostream& os, BlockState<FinitePowersetLattice>& currBlock) {
     os << "Intermediate States (reverse order): " << std::endl;
-    currState = currBlock.getLastState();
-    currState.print(os);
+    currState = &currBlock.getInputState();
+    currState->print(os);
     os << std::endl;
     auto cfgIter = currBlock.getCFGBlock()->rbegin();
 
@@ -89,10 +89,11 @@ public:
     while (cfgIter != currBlock.getCFGBlock()->rend()) {
       os << ShallowExpression{*cfgIter} << std::endl;
       LivenessTransferFunction::visit(*cfgIter);
-      currState.print(os);
+      currState->print(os);
       os << std::endl;
       ++cfgIter;
     }
+    currState = nullptr;
   }
 };
 
