@@ -1808,4 +1808,91 @@
    (unreachable)
    (local.get $0)
   )
+
+  ;; CHECK:      (func $to-param (type $ref?|$struct.A|_=>_none) (param $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct.A 0
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $to-param (param $ref (ref null $struct.A))
+    ;; Get a value from a param that was passed in. This must remain as it is.
+    (drop
+      (struct.get $struct.A 0
+        (local.get $ref)
+      )
+    )
+    ;; This new allocation can be moved to locals, and we can read from one of
+    ;; those locals in the later struct.get (but not the one before us!).
+    (local.set $ref
+      (struct.new_default $struct.A)
+    )
+    (drop
+      (struct.get $struct.A 0
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $to-param-loop (type $ref?|$struct.A|_=>_none) (param $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.get $struct.A 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new_default $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.get $struct.A 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $to-param-loop (param $ref (ref null $struct.A))
+    ;; As above, but the body is in a loop. Here we cannot optimize at all, as
+    ;; the first struct.get might read from the value sent from the caller or
+    ;; from the allocation in this function.
+    (loop $loop
+      (drop
+        (struct.get $struct.A 0
+          (local.get $ref)
+        )
+      )
+      (local.set $ref
+        (struct.new_default $struct.A)
+      )
+      (drop
+        (struct.get $struct.A 0
+          (local.get $ref)
+        )
+      )
+      (br $loop)
+    )
+  )
 )
