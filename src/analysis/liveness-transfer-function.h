@@ -7,45 +7,38 @@
 namespace wasm::analysis {
 
 class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FinitePowersetLattice::Element* currState;
+  FinitePowersetLattice::Element* currState = nullptr;
 
 public:
-  LivenessTransferFunction() : currState(nullptr) {}
-
-  // Transfer function implementation. Modifies the state for a particular
-  // expression type. In our current limited implementation, we just update
-  // state on gets and sets of local indices.
+  // Transfer function implementation. A local becomes live before a get
+  // and becomes dead before a set.
   void visitLocalSet(LocalSet* curr) {
-    if (currState) {
-      currState->set(curr->index, false);
-    }
+    assert(currState);
+    currState->set(curr->index, false);
   }
   void visitLocalGet(LocalGet* curr) {
-    if (currState) {
-      currState->set(curr->index, true);
-    }
+    assert(currState);
+    currState->set(curr->index, true);
   }
 
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node, starting with the node's input state. Returns the final output
   // state of the node.
-  FinitePowersetLattice::Element
-  transfer(const BasicBlock* cfgBlock,
-           FinitePowersetLattice::Element& inputState) {
+  void transfer(const BasicBlock* cfgBlock,
+                FinitePowersetLattice::Element& inputState) {
     // If the block is empty, we propagate the state by inputState =
     // outputState.
 
-    FinitePowersetLattice::Element outputState = inputState;
-    currState = &outputState;
+    currState = &inputState;
 
-    // Compute transfer function for all expressions in the CFG block.
+    // This is a backward analysis, so we start from the end of the CFG
+    // and evaluate every expression until the beginning.
     for (auto cfgIter = cfgBlock->rbegin(); cfgIter != cfgBlock->rend();
          ++cfgIter) {
       // Run transfer function.
       LivenessTransferFunction::visit(*cfgIter);
     }
     currState = nullptr;
-    return outputState;
   }
 
   // Enqueues the worklist before the worklist algorithm is run. For

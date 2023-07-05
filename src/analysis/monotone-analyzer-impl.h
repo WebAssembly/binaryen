@@ -74,8 +74,8 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
     // on the state of the expression it depends upon (here the next expression)
     // to arrive at the expression's state. The beginning and end states of the
     // CFG block will be updated.
-    typename Lattice::Element outputState = transferFunction.transfer(
-      currBlockState.getCFGBlock(), currBlockState.getInputState());
+    typename Lattice::Element outputState = currBlockState.getInputState();
+    transferFunction.transfer(currBlockState.getCFGBlock(), outputState);
 
     // Propagate state to dependents of currBlockState.
     for (auto dep = transferFunction.depsBegin(currBlockState);

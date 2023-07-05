@@ -49,7 +49,7 @@ public:
 
 template<typename TransferFunction, typename Lattice>
 constexpr bool has_transfer =
-  std::is_invocable_r<typename Lattice::Element,
+  std::is_invocable_r<void,
                       decltype(&TransferFunction::transfer),
                       TransferFunction,
                       const BasicBlock*,
@@ -90,12 +90,12 @@ constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
 // inputState);
 
 // This function takes in a pointer to a CFG BasicBlock and the input state
-// associated with it and generates the output state for the basic block by
-// applying the analysis transfer function to each expression in the CFG
-// BasicBlock. Starting with the input state, the transfer function is used to
-// derive new intermediate states based on each expression until we reach the
-// output state, which is returned. This outuput state will be propagated to
-// dependents of the CFG BasicBlock by the worklist algorithm in
+// associated with it and modifies the input state in-place into the ouptut
+// state for the basic block by applying the analysis transfer function to each
+// expression in the CFG BasicBlock. Starting with the input state, the transfer
+// function is used to change the state to new intermediate states based on each
+// expression until we reach the output state. The outuput state will be
+// propagated to dependents of the CFG BasicBlock by the worklist algorithm in
 // MonotoneCFGAnalyzer.
 
 // void enqueueWorklist(const std::vector<BlockState<Lattice>>& stateBlocks,
