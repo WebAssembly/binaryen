@@ -2178,37 +2178,49 @@ struct OptimizeInstructions
 
     Builder builder(*getModule());
 
-    // Parallel to the code in visitRefCast
-    switch (GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType)) {
-      case GCTypeUtils::Unknown:
-        break;
-      case GCTypeUtils::Success:
-        replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
-        break;
-      case GCTypeUtils::Unreachable:
-        // Make sure to emit a block with the same type as us, to avoid other
-        // code in this pass needing to handle unexpected unreachable code
-        // (which is only properly propagated at the end of this pass when we
-        // refinalize).
-        replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeUnreachable()}, Type::i32));
-        break;
-      case GCTypeUtils::Failure:
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                            builder.makeConst(int32_t(0))));
-        break;
-      case GCTypeUtils::SuccessOnlyIfNull:
-        replaceCurrent(builder.makeRefIsNull(curr->ref));
-        break;
-      case GCTypeUtils::SuccessOnlyIfNonNull:
-        // This adds an EqZ, but code size does not regress since ref.test also
-        // encodes a type, and ref.is_null does not. The EqZ may also add some
-        // work, but a cast is likely more expensive than a null check + a fast
-        // int operation.
-        replaceCurrent(
-          builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
-        break;
+    // Parallel to the code in visitRefCast: we look not just at the final type
+    // we are given, but at fallthrough values as well.
+    auto* ref = curr->ref;
+    while (1) {
+      switch (GCTypeUtils::evaluateCastCheck(ref->type, curr->castType)) {
+        case GCTypeUtils::Unknown:
+          break;
+        case GCTypeUtils::Success:
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
+          return;
+        case GCTypeUtils::Unreachable:
+          // Make sure to emit a block with the same type as us, to avoid other
+          // code in this pass needing to handle unexpected unreachable code
+          // (which is only properly propagated at the end of this pass when we
+          // refinalize).
+          replaceCurrent(builder.makeBlock(
+            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            Type::i32));
+          return;
+        case GCTypeUtils::Failure:
+          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                              builder.makeConst(int32_t(0))));
+          return;
+        case GCTypeUtils::SuccessOnlyIfNull:
+          replaceCurrent(builder.makeRefIsNull(curr->ref));
+          return;
+        case GCTypeUtils::SuccessOnlyIfNonNull:
+          // This adds an EqZ, but code size does not regress since ref.test
+          // also encodes a type, and ref.is_null does not. The EqZ may also add
+          // some work, but a cast is likely more expensive than a null check +
+          // a fast int operation.
+          replaceCurrent(
+            builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
+          return;
+      }
+
+      auto* fallthrough = Properties::getImmediateFallthrough(
+        ref, getPassOptions(), *getModule());
+      if (fallthrough == ref) {
+        return;
+      }
+      ref = fallthrough;
     }
   }
 
