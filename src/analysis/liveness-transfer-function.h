@@ -36,7 +36,7 @@ public:
     for (auto cfgIter = cfgBlock->rbegin(); cfgIter != cfgBlock->rend();
          ++cfgIter) {
       // Run transfer function.
-      LivenessTransferFunction::visit(*cfgIter);
+      visit(*cfgIter);
     }
     currState = nullptr;
   }
@@ -47,38 +47,35 @@ public:
   // run before earlier CFG blocks. This improves performance by
   // reducing the number of state propagations needed, since we are
   // naturally following the backward flow at the beginning.
-  void enqueueWorklist(
-    const std::vector<BlockState<FinitePowersetLattice>>& stateBlocks,
-    std::queue<Index>& worklist) {
-    for (auto it = stateBlocks.rbegin(); it != stateBlocks.rend(); ++it) {
-      worklist.push((*it).getCFGBlock()->getIndex());
+  void enqueueWorklist(CFG* cfg, std::queue<Index>& worklist) {
+    for (auto it = cfg->rbegin(); it != cfg->rend(); ++it) {
+      worklist.push((*it).getIndex());
     }
   }
 
-  // Predecessors depend on use for information.
-  using iterator =
-    std::vector<BlockState<FinitePowersetLattice>*>::const_iterator;
-  iterator depsBegin(BlockState<FinitePowersetLattice>& currBlock) {
-    return currBlock.predecessorsBegin();
-  }
-  iterator depsEnd(BlockState<FinitePowersetLattice>& currBlock) {
-    return currBlock.predecessorsEnd();
+  // Predecessors depend on current basic block for information.
+  _indirect_ptr_vec<BasicBlock> getDependents(const BasicBlock* currBlock) {
+    return currBlock->preds();
   }
 
   // Prints the intermediate states of each BlockState currBlock by applying
   // the transfer function on each expression of the CFG block. This data is
-  // not stored in the BlockState itself.
-  void print(std::ostream& os, BlockState<FinitePowersetLattice>& currBlock) {
+  // not stored in the BlockState itself. Requires the cfgBlock, and a temp
+  // copy of the input state to be passed in, where the temp copy is modified
+  // in place to produce the intermediate states.
+  void print(std::ostream& os,
+             const BasicBlock* cfgBlock,
+             FinitePowersetLattice::Element& inputState) {
     os << "Intermediate States (reverse order): " << std::endl;
-    currState = &currBlock.getInputState();
+    currState = &inputState;
     currState->print(os);
     os << std::endl;
-    auto cfgIter = currBlock.getCFGBlock()->rbegin();
+    auto cfgIter = cfgBlock->rbegin();
 
     // Since we don't store the intermediate states in the BlockState, we need
     // to re-run the transfer function on all the CFG node expressions to
     // reconstruct the intermediate states here.
-    while (cfgIter != currBlock.getCFGBlock()->rend()) {
+    while (cfgIter != cfgBlock->rend()) {
       os << ShallowExpression{*cfgIter} << std::endl;
       LivenessTransferFunction::visit(*cfgIter);
       currState->print(os);

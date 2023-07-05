@@ -22,18 +22,20 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
   os << "Input State: ";
   inputState.print(os);
   os << std::endl << "Predecessors:";
-  for (auto pred : predecessors) {
-    os << " " << pred->cfgBlock->getIndex();
+  for (auto pred : cfgBlock->preds()) {
+    os << " " << pred.getIndex();
   }
   os << std::endl << "Successors:";
-  for (auto succ : successors) {
-    os << " " << succ->cfgBlock->getIndex();
+  for (auto succ : cfgBlock->succs()) {
+    os << " " << succ.getIndex();
   }
   os << std::endl;
 }
 
 template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::fromCFG(CFG* cfg) {
+  this->cfg = cfg;
+
   // Construct BlockStates for each BasicBlock and map each BasicBlock to each
   // BlockState's index in stateBlocks.
   std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
@@ -42,29 +44,16 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::fromCFG(CFG* cfg) {
     stateBlocks.emplace_back(&(*it), lattice);
     basicBlockToState[&(*it)] = index++;
   }
-
-  // Update predecessors and successors of each BlockState object
-  // according to the BasicBlock's predecessors and successors.
-  for (index = 0; index < stateBlocks.size(); ++index) {
-    BlockState<Lattice>& currBlock = stateBlocks.at(index);
-    BasicBlock::Predecessors preds = currBlock.getCFGBlock()->preds();
-    BasicBlock::Successors succs = currBlock.getCFGBlock()->succs();
-    for (auto& pred : preds) {
-      currBlock.addPredecessor(&stateBlocks[basicBlockToState[&pred]]);
-    }
-
-    for (auto& succ : succs) {
-      currBlock.addSuccessor(&stateBlocks[basicBlockToState[&succ]]);
-    }
-  }
 }
 
 template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
+  assert(cfg);
+
   std::queue<Index> worklist;
 
   // Transfer function enqueues the work in some order which is efficient.
-  transferFunction.enqueueWorklist(stateBlocks, worklist);
+  transferFunction.enqueueWorklist(cfg, worklist);
 
   while (!worklist.empty()) {
     BlockState<Lattice>& currBlockState = stateBlocks[worklist.front()];
@@ -74,18 +63,17 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
     // on the state of the expression it depends upon (here the next expression)
     // to arrive at the expression's state. The beginning and end states of the
     // CFG block will be updated.
-    typename Lattice::Element outputState = currBlockState.getInputState();
-    transferFunction.transfer(currBlockState.getCFGBlock(), outputState);
+    typename Lattice::Element outputState = currBlockState.inputState;
+    transferFunction.transfer(currBlockState.cfgBlock, outputState);
 
     // Propagate state to dependents of currBlockState.
-    for (auto dep = transferFunction.depsBegin(currBlockState);
-         dep != transferFunction.depsEnd(currBlockState);
-         ++dep) {
+    for (auto& dep : transferFunction.getDependents(currBlockState.cfgBlock)) {
+      Index depIndex = dep.getIndex();
 
       // If we need to change the input state of a dependent, we need
       // to enqueue the dependent to recalculate it.
-      if ((*dep)->getInputState().makeLeastUpperBound(outputState)) {
-        worklist.push((*dep)->getCFGBlock()->getIndex());
+      if (stateBlocks[depIndex].inputState.makeLeastUpperBound(outputState)) {
+        worklist.push(depIndex);
       }
     }
   }
@@ -99,7 +87,8 @@ MonotoneCFGAnalyzer<Lattice, TransferFunction>::print(std::ostream& os) {
   os << "CFG Analyzer" << std::endl;
   for (auto state : stateBlocks) {
     state.print(os);
-    transferFunction.print(os, state);
+    typename Lattice::Element temp = state.inputState;
+    transferFunction.print(os, state.cfgBlock, temp);
   }
   os << "End" << std::endl;
 }
