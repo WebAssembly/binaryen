@@ -22,8 +22,8 @@ public:
   }
 
   // Executes the transfer function on all the expressions of the corresponding
-  // CFG node, starting with the node's input state. Returns the final output
-  // state of the node.
+  // CFG node, starting with the node's input state, and changes the input state
+  // to the final output state of the node in place.
   void transfer(const BasicBlock* cfgBlock,
                 FinitePowersetLattice::Element& inputState) {
     // If the block is empty, we propagate the state by inputState =
