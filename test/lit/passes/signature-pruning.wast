@@ -886,16 +886,16 @@
   (type $struct.A (struct (field i32)))
   ;; CHECK:      (type $array.A (array (ref $struct.A)))
 
-  ;; CHECK:      (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
+  ;; CHECK:      (type $struct.B (sub $struct.A (struct (field i32) (field i64))))
   (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
 
   (type $array.A (array (ref $struct.A)))
-  ;; CHECK:      (type $array.B (array_subtype (ref $struct.B) $array.A))
+  ;; CHECK:      (type $array.B (sub $array.A (array (ref $struct.B))))
   (type $array.B (array_subtype (ref $struct.B) $array.A))
 
   ;; CHECK:      (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
   (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
-  ;; CHECK:      (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
+  ;; CHECK:      (type $func.B (sub $func.A (func (param (ref $array.A)) (result (ref $array.B)))))
   (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
 
   ;; CHECK:      (func $func.A (type $func.A) (param $0 (ref $array.B)) (result (ref $array.A))

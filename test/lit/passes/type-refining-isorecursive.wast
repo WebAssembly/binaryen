@@ -66,9 +66,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $0 (struct (field (ref null $all)) (field (ref $0))))
 
- ;; CHECK:       (type $1 (struct_subtype (field (ref null $all)) (field (ref $0)) $0))
+ ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $all)) (field (ref $0)))))
 
- ;; CHECK:       (type $2 (struct_subtype (field (ref null $all)) (field (ref $0)) $1))
+ ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $all (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2))))
  (type $all (struct_subtype i32 anyref anyref anyref data))

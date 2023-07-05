@@ -10,8 +10,8 @@
   ;; ALWAYS:      (type $A (struct ))
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
-  ;; ALWAYS:      (type $B (struct_subtype  $A))
-  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  ;; ALWAYS:      (type $B (sub $A (struct )))
+  ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
@@ -129,8 +129,8 @@
 
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
-  ;; ALWAYS:      (type $B (struct_subtype  $A))
-  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  ;; ALWAYS:      (type $B (sub $A (struct )))
+  ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
 
@@ -209,16 +209,16 @@
 
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
-  ;; ALWAYS:      (type $B (struct_subtype  $A))
-  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  ;; ALWAYS:      (type $B (sub $A (struct )))
+  ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; ALWAYS:      (type $none_=>_none (func))
 
-  ;; ALWAYS:      (type $C (struct_subtype  $B))
+  ;; ALWAYS:      (type $C (sub $B (struct )))
   ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $C (struct_subtype  $B))
+  ;; CAREFUL:      (type $C (sub $B (struct )))
   (type $C (struct_subtype $B))
 
   ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
@@ -331,8 +331,8 @@
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
 
-  ;; ALWAYS:      (type $B (struct_subtype  $A))
-  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  ;; ALWAYS:      (type $B (sub $A (struct )))
+  ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
@@ -563,10 +563,10 @@
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $B (struct_subtype  $A))
+  ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $B (struct_subtype  $A))
+  ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
 

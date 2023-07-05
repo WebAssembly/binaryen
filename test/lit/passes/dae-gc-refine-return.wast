@@ -8,13 +8,13 @@
  ;; CHECK:      (type $return_{} (func (result (ref ${}))))
  (type $return_{} (func (result (ref ${}))))
 
- ;; CHECK:      (type ${i32} (struct_subtype (field i32) ${}))
+ ;; CHECK:      (type ${i32} (sub ${} (struct (field i32))))
  (type ${i32} (struct_subtype (field i32) ${}))
 
- ;; CHECK:      (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+ ;; CHECK:      (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
  (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
 
- ;; CHECK:      (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+ ;; CHECK:      (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
  (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
 
  (table 1 1 funcref)

@@ -27,7 +27,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $A (struct ))
   (type $A (struct))
-  ;; CHECK:       (type $B (struct_subtype  $A))
+  ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
@@ -49,7 +49,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $A (struct ))
   (type $A (struct))
-  ;; CHECK:       (type $B (struct_subtype  $A))
+  ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; CHECK:       (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
