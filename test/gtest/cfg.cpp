@@ -149,16 +149,10 @@ End
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   size_t numLocals = wasm.getFunction("bar")->getNumLocals();
 
-  std::vector<Index> localIndices(numLocals);
+  FiniteIntPowersetLattice lattice(numLocals);
+  LivenessTransferFunction transferFunction;
 
-  for (Index i = 0; i < numLocals; ++i) {
-    localIndices[i] = i;
-  }
-
-  FinitePowersetLattice<Index> lattice(std::move(localIndices));
-  LivenessTransferFunction transferFunction(lattice);
-
-  MonotoneCFGAnalyzer<FinitePowersetLattice<Index>, LivenessTransferFunction>
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
     analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
@@ -247,16 +241,10 @@ End
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   size_t numLocals = wasm.getFunction("bar")->getNumLocals();
 
-  std::vector<Index> localIndices(numLocals);
+  FiniteIntPowersetLattice lattice(numLocals);
+  LivenessTransferFunction transferFunction;
 
-  for (Index i = 0; i < numLocals; ++i) {
-    localIndices[i] = i;
-  }
-
-  FinitePowersetLattice<Index> lattice(std::move(localIndices));
-  LivenessTransferFunction transferFunction(lattice);
-
-  MonotoneCFGAnalyzer<FinitePowersetLattice<Index>, LivenessTransferFunction>
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
     analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
