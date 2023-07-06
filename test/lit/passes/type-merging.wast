@@ -7,6 +7,8 @@
     ;; CHECK-NEXT:  (type $A (struct (field anyref)))
     (type $A (struct_subtype (field anyref) data))
     (type $B (struct_subtype (field anyref) $A))
+    ;; CHECK:       (type $G (sub final $A (struct (field anyref))))
+
     ;; CHECK:       (type $F (sub $A (struct (field anyref))))
 
     ;; CHECK:       (type $E (sub $A (struct (field eqref))))
@@ -18,6 +20,7 @@
     (type $D (struct_subtype (field (ref any)) $A))
     (type $E (struct_subtype (field eqref) $A))
     (type $F (struct_subtype (field anyref) $A))
+    (type $G (sub final $A (struct (field anyref))))
   )
 
   ;; CHECK:       (type $none_=>_none (func))
@@ -29,6 +32,7 @@
   ;; CHECK-NEXT:  (local $d (ref null $D))
   ;; CHECK-NEXT:  (local $e (ref null $E))
   ;; CHECK-NEXT:  (local $f (ref null $F))
+  ;; CHECK-NEXT:  (local $g (ref null $G))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null $A
   ;; CHECK-NEXT:    (local.get $a)
@@ -53,6 +57,8 @@
     (local $e (ref null $E))
     ;; $F cannot because it has a cast.
     (local $f (ref null $F))
+    ;; $G cannot because it changes finality.
+    (local $g (ref null $G))
 
     ;; A cast of $A has no effect.
     (drop

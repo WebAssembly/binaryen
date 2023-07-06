@@ -256,6 +256,22 @@ TEST_F(TypeTest, InvalidSupertype) {
   EXPECT_EQ(error->index, 1u);
 }
 
+TEST_F(TypeTest, InvalidFinalSupertype) {
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setFinal();
+  builder[1].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->index, 1u);
+}
+
 TEST_F(TypeTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
@@ -432,6 +448,22 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[3], built[4]);
   EXPECT_NE(built[3], built[5]);
   EXPECT_NE(built[4], built[5]);
+}
+
+TEST_F(TypeTest, CanonicalizeFinal) {
+  // Types are different if their finality flag is different.
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setFinal();
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_NE(built[0], built[1]);
+  EXPECT_TRUE(built[0].isFinal());
+  EXPECT_FALSE(built[1].isFinal());
 }
 
 TEST_F(TypeTest, HeapTypeConstructors) {

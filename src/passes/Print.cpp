@@ -3017,13 +3017,20 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << ')';
   }
   void handleHeapType(HeapType type) {
-    bool hasSuper = false;
-    // TODO: Consider finality once we support that.
-    if (auto super = type.getSuperType()) {
-      hasSuper = true;
+    auto super = type.getSuperType();
+    bool useSub = false;
+    // TODO: Once we parse MVP signature types as final, use the MVP shorthand
+    // for final types without supertypes.
+    if (super || type.isFinal()) {
+      useSub = true;
       o << "(sub ";
-      TypeNamePrinter(o, currModule).print(*super);
-      o << ' ';
+      if (type.isFinal()) {
+        o << "final ";
+      }
+      if (super) {
+        TypeNamePrinter(o, currModule).print(*super);
+        o << ' ';
+      }
     }
     if (type.isSignature()) {
       handleSignature(type);
@@ -3034,7 +3041,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     } else {
       o << type;
     }
-    if (hasSuper) {
+    if (useSub) {
       o << ')';
     }
   }

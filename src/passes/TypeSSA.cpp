@@ -109,6 +109,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
         if (auto super = type.getSuperType()) {
           builder[i].subTypeOf(*super);
         }
+        builder[i].setFinal(type.isFinal());
       }
 
       // Implement the hash as a struct with "random" fields, and add it.
@@ -303,6 +304,11 @@ struct TypeSSA : public Pass {
   bool isInteresting(Expression* curr) {
     if (curr->type == Type::unreachable) {
       // This is dead code anyhow.
+      return false;
+    }
+
+    if (curr->type.getHeapType().isFinal()) {
+      // We can't create new subtypes of a final type anyway.
       return false;
     }
 

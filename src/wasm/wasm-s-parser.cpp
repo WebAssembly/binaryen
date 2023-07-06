@@ -52,7 +52,8 @@ namespace wasm {
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
   FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
   ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
-  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"), SUB("sub");
+  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"), SUB("sub"),
+  FINAL("final");
 
 static Address getAddress(const Element* s) {
   return std::stoll(s->toString());
@@ -926,11 +927,19 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element& kind = *def[0];
     Element* super = nullptr;
     if (kind == SUB) {
-      if (def.size() != 3) {
+      Index i = 1;
+      if (*def[i] == FINAL) {
+        builder[index].setFinal();
+        ++i;
+      }
+      if (def[i]->dollared()) {
+        super = def[i];
+        ++i;
+      }
+      Element& subtype = *def[i++];
+      if (i != def.size()) {
         throw ParseException("invalid 'sub' form", kind.line, kind.col);
       }
-      super = def[1];
-      Element& subtype = *def[2];
       if (!subtype.isList() || subtype.size() < 1) {
         throw ParseException(
           "invalid subtype definition", subtype.line, subtype.col);
