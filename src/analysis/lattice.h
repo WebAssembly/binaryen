@@ -42,8 +42,8 @@ constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
 
 // Represents a powerset lattice constructed from a finite set of consecutive
 // integers from 0 to n which can be represented by a bitvector. Set elements
-// are represented by FinitePowersetLattice::Element, which represents members
-// present in each element by bits in the bitvector.
+// are represented by FiniteIntPowersetLattice::Element, which represents
+// members present in each element by bits in the bitvector.
 class FiniteIntPowersetLattice {
   // The size of the set that the powerset lattice was created from. This is
   // equivalent to the size of the Top lattice element.
