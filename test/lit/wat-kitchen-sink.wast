@@ -140,13 +140,13 @@
    (type $void (func))
  )
 
- ;; CHECK:      (type $subvoid (func_subtype $void))
+ ;; CHECK:      (type $subvoid (sub $void (func)))
  (type $subvoid (sub $void (func)))
 
  (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
                    (result anyref (ref func))))
 
- ;; CHECK:      (type $submany (func_subtype (param i32 i64 f32 f64) (result anyref (ref func)) $many))
+ ;; CHECK:      (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
  (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
  ;; globals

@@ -638,7 +638,7 @@
   ;; CHECK-NEXT:  (type $parent (struct (field i32) (field i64)))
   (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
 
-  ;; CHECK:       (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
   (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
 
   ;; CHECK:       (type $ref|$parent|_ref|$child|_=>_none (func (param (ref $parent) (ref $child))))
@@ -688,7 +688,7 @@
   ;; CHECK-NEXT:  (type $parent (struct (field i32) (field i64) (field (mut f32))))
   (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
 
-  ;; CHECK:       (type $child (struct_subtype (field i32) (field i64) (field (mut f32)) (field f64) (field anyref) $parent))
+  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field (mut f32)) (field f64) (field anyref))))
   (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
 
   ;; CHECK:       (type $ref|$parent|_ref|$child|_=>_none (func (param (ref $parent) (ref $child))))
@@ -745,9 +745,9 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $parent (struct (field i32)))
     (type $parent (struct_subtype (field i32) data))
-    ;; CHECK:       (type $child1 (struct_subtype (field i32) $parent))
+    ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
     (type $child1 (struct_subtype (field i32) $parent))
-    ;; CHECK:       (type $child2 (struct_subtype (field i32) $parent))
+    ;; CHECK:       (type $child2 (sub $parent (struct (field i32))))
     (type $child2 (struct_subtype (field i32) $parent))
   )
 
@@ -773,9 +773,9 @@
     ;; CHECK-NEXT:  (type $parent (struct ))
     (type $parent (struct_subtype (field i32) data))
 
-    ;; CHECK:       (type $child2 (struct_subtype  $parent))
+    ;; CHECK:       (type $child2 (sub $parent (struct )))
 
-    ;; CHECK:       (type $child1 (struct_subtype (field i32) $parent))
+    ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
     (type $child1 (struct_subtype (field i32) $parent))
     (type $child2 (struct_subtype (field i32) $parent))
   )

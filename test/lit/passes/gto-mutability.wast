@@ -433,7 +433,7 @@
 
   ;; CHECK:       (type $super (struct (field i32)))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:       (type $sub (struct_subtype (field i32) $super))
+  ;; CHECK:       (type $sub (sub $super (struct (field i32))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:       (type $none_=>_none (func))
@@ -487,7 +487,7 @@
 
   ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
+  ;; CHECK:      (type $sub (sub $super (struct (field (mut i32)))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $ref|$super|_=>_none (func (param (ref $super))))
@@ -552,7 +552,7 @@
 
   ;; CHECK:      (type $super (struct (field (mut i32))))
   (type $super (struct (field (mut i32))))
-  ;; CHECK:      (type $sub (struct_subtype (field (mut i32)) $super))
+  ;; CHECK:      (type $sub (sub $super (struct (field (mut i32)))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
   ;; CHECK:      (type $ref|$sub|_=>_none (func (param (ref $sub))))

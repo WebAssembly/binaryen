@@ -15,7 +15,7 @@
 
  (type $A (struct_subtype (field (ref null struct)) data))
 
- ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
+ ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
  (type $B (struct_subtype (field (ref struct)) $A))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))

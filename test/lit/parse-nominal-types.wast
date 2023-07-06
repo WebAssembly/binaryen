@@ -10,7 +10,7 @@
   ;; CHECK:      (type $super (func))
   (type $super (func_subtype func))
 
-  ;; CHECK:      (type $sub (func_subtype $super))
+  ;; CHECK:      (type $sub (sub $super (func)))
   (type $sub (func_subtype $super))
 
   ;; CHECK:      (global $g (ref null $sub) (ref.null nofunc))
@@ -22,7 +22,7 @@
   ;; CHECK:      (type $super (func (param i32) (result i32)))
   (type $super (func_subtype (param i32) (result i32) func))
 
-  ;; CHECK:      (type $sub (func_subtype (param i32) (result i32) $super))
+  ;; CHECK:      (type $sub (sub $super (func (param i32) (result i32))))
   (type $sub (func_subtype (param i32) (result i32) $super))
 
   ;; CHECK:      (global $g (ref null $sub) (ref.null nofunc))
@@ -34,7 +34,7 @@
   ;; CHECK:      (type $super (struct ))
   (type $super (struct_subtype data))
 
-  ;; CHECK:      (type $sub (struct_subtype  $super))
+  ;; CHECK:      (type $sub (sub $super (struct )))
   (type $sub (struct_subtype $super))
 
   ;; CHECK:      (global $g (ref null $sub) (ref.null none))
@@ -46,7 +46,7 @@
   ;; CHECK:      (type $super (struct (field i32) (field i64)))
   (type $super (struct_subtype (field i32) i64 data))
 
-  ;; CHECK:      (type $sub (struct_subtype (field i32) (field i64) $super))
+  ;; CHECK:      (type $sub (sub $super (struct (field i32) (field i64))))
   (type $sub (struct_subtype i32 (field i64) $super))
 
   ;; CHECK:      (global $g (ref null $sub) (ref.null none))
@@ -58,7 +58,7 @@
   ;; CHECK:      (type $super (array i8))
   (type $super (array_subtype i8 data))
 
-  ;; CHECK:      (type $sub (array_subtype i8 $super))
+  ;; CHECK:      (type $sub (sub $super (array i8)))
   (type $sub (array_subtype i8 $super))
 
   ;; CHECK:      (global $g (ref null $sub) (ref.null none))

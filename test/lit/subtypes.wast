@@ -8,7 +8,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super-struct (struct (field i32)))
     (type $super-struct (struct i32))
-    ;; CHECK:       (type $sub-struct (struct_subtype (field i32) (field i64) $super-struct))
+    ;; CHECK:       (type $sub-struct (sub $super-struct (struct (field i32) (field i64))))
     (type $sub-struct (struct_subtype i32 i64 $super-struct))
   )
 
@@ -16,7 +16,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super-array (array (ref $super-struct)))
     (type $super-array (array (ref $super-struct)))
-    ;; CHECK:       (type $sub-array (array_subtype (ref $sub-struct) $super-array))
+    ;; CHECK:       (type $sub-array (sub $super-array (array (ref $sub-struct))))
     (type $sub-array (array_subtype (ref $sub-struct) $super-array))
   )
 
@@ -24,7 +24,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $super-func (func (param (ref $sub-array)) (result (ref $super-array))))
     (type $super-func (func (param (ref $sub-array)) (result (ref $super-array))))
-    ;; CHECK:       (type $sub-func (func_subtype (param (ref $super-array)) (result (ref $sub-array)) $super-func))
+    ;; CHECK:       (type $sub-func (sub $super-func (func (param (ref $super-array)) (result (ref $sub-array)))))
     (type $sub-func (func_subtype (param (ref $super-array)) (result (ref $sub-array)) $super-func))
   )
 

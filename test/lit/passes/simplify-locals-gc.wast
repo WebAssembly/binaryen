@@ -6,7 +6,7 @@
 (module
   ;; CHECK:      (type $A (struct (field structref)))
 
-  ;; CHECK:      (type $B (struct_subtype (field (ref struct)) $A))
+  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
 
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))

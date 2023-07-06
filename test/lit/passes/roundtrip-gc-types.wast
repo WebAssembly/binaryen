@@ -18,7 +18,7 @@
   ;; CHECK:       (type $C (struct (field (mut (ref $B)))))
   (type $C (struct (field (mut (ref $B)))))
 
-  ;; CHECK:       (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+  ;; CHECK:       (type $D (sub $A (struct (field (ref $C)) (field (ref $A)))))
   (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
  )
 

@@ -60,7 +60,7 @@
  (type $void_func (func))
  (type $struct (struct (field (mut i32))))
  (type $i32_=>_none (func (param i32)))
- (type $extendedstruct (struct_subtype (field (mut i32)) (field f64) $struct))
+ (type $extendedstruct (sub $struct (struct (field (mut i32)) (field f64))))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (type $i32_=>_none) (param i32)))
  (export "structs" (func $0))
