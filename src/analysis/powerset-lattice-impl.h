@@ -5,9 +5,9 @@
 
 namespace wasm::analysis {
 
-inline LatticeComparison
-FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
-                               const FinitePowersetLattice::Element& right) {
+inline LatticeComparison FiniteIntPowersetLattice::compare(
+  const FiniteIntPowersetLattice::Element& left,
+  const FiniteIntPowersetLattice::Element& right) {
   // Both must be from the powerset lattice of the same set.
   assert(left.bitvector.size() == right.bitvector.size());
 
@@ -41,14 +41,14 @@ FinitePowersetLattice::compare(const FinitePowersetLattice::Element& left,
   return NO_RELATION;
 }
 
-inline FinitePowersetLattice::Element FinitePowersetLattice::getBottom() {
-  FinitePowersetLattice::Element result(setSize);
+inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
+  FiniteIntPowersetLattice::Element result(setSize);
   return result;
 }
 
 // We count the number of element members present in the element by counting the
 // trues in the bitvector.
-inline size_t FinitePowersetLattice::Element::count() {
+inline size_t FiniteIntPowersetLattice::Element::count() {
   size_t count = 0;
   for (auto it : bitvector) {
     count += it;
@@ -59,8 +59,8 @@ inline size_t FinitePowersetLattice::Element::count() {
 // Least upper bound is implemented as a logical OR between the bitvectors on
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
-inline bool FinitePowersetLattice::Element::makeLeastUpperBound(
-  const FinitePowersetLattice::Element& other) {
+inline bool FiniteIntPowersetLattice::Element::makeLeastUpperBound(
+  const FiniteIntPowersetLattice::Element& other) {
   // Both must be from powerset lattice of the same set.
   assert(other.bitvector.size() == bitvector.size());
 
@@ -75,7 +75,7 @@ inline bool FinitePowersetLattice::Element::makeLeastUpperBound(
   return modified;
 }
 
-inline void FinitePowersetLattice::Element::print(std::ostream& os) {
+inline void FiniteIntPowersetLattice::Element::print(std::ostream& os) {
   // Element member 0 is on the left, element member N is on the right.
   for (auto it : bitvector) {
     os << it;

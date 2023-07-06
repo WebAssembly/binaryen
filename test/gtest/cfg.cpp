@@ -147,11 +147,13 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
+  size_t numLocals = wasm.getFunction("bar")->getNumLocals();
+
+  FiniteIntPowersetLattice lattice(numLocals);
   LivenessTransferFunction transferFunction;
 
-  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
-    lattice, transferFunction, cfg);
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
@@ -237,15 +239,54 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
+  size_t numLocals = wasm.getFunction("bar")->getNumLocals();
+
+  FiniteIntPowersetLattice lattice(numLocals);
   LivenessTransferFunction transferFunction;
 
-  MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
-    lattice, transferFunction, cfg);
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
   analyzer.print(ss);
 
   EXPECT_EQ(ss.str(), analyzerText);
+}
+
+TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
+
+  std::vector<std::string> initialSet = {"a", "b", "c", "d", "e", "f"};
+  FinitePowersetLattice<std::string> lattice(std::move(initialSet));
+
+  auto element1 = lattice.getBottom();
+
+  EXPECT_TRUE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
+
+  lattice.add(&element1, "c");
+  lattice.add(&element1, "d");
+  lattice.add(&element1, "a");
+
+  EXPECT_FALSE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
+
+  auto element2 = element1;
+  lattice.remove(&element2, "c");
+  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
+            LatticeComparison::GREATER);
+  lattice.add(&element2, "f");
+  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
+            LatticeComparison::NO_RELATION);
+
+  std::stringstream ss;
+  element1.print(ss);
+  EXPECT_EQ(ss.str(), "101100");
+  ss.str(std::string());
+  element2.print(ss);
+  EXPECT_EQ(ss.str(), "100101");
+  ss.str(std::string());
+  element2.makeLeastUpperBound(element1);
+  element2.print(ss);
+  EXPECT_EQ(ss.str(), "101101");
 }

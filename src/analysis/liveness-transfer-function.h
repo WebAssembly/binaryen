@@ -7,7 +7,7 @@
 namespace wasm::analysis {
 
 class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FinitePowersetLattice::Element* currState = nullptr;
+  FiniteIntPowersetLattice::Element* currState = nullptr;
 
 public:
   // Transfer function implementation. A local becomes live before a get
@@ -25,7 +25,7 @@ public:
   // CFG node, starting with the node's input state, and changes the input state
   // to the final output state of the node in place.
   void transfer(const BasicBlock* cfgBlock,
-                FinitePowersetLattice::Element& inputState) {
+                FiniteIntPowersetLattice::Element& inputState) {
     // If the block is empty, we propagate the state by inputState =
     // outputState.
 
@@ -65,7 +65,7 @@ public:
   // in place to produce the intermediate states.
   void print(std::ostream& os,
              const BasicBlock* cfgBlock,
-             FinitePowersetLattice::Element& inputState) {
+             FiniteIntPowersetLattice::Element& inputState) {
     os << "Intermediate States (reverse order): " << std::endl;
     currState = &inputState;
     currState->print(os);

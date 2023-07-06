@@ -2,6 +2,7 @@
 #define wasm_analysis_lattice_h
 
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 
 #include "wasm.h"
@@ -39,18 +40,17 @@ constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
   has_makeLeastUpperBound<typename Lattice::Element>&& has_isTop<
     typename Lattice::Element>&& has_isBottom<typename Lattice::Element>;
 
-// Represents a powerset lattice which is constructed from a finite set which
-// can be represented by a bitvector. Set elements are represented by
-// FinitePowersetLattice::Element, which represents members present in each
-// element by bits in the bitvector.
-class FinitePowersetLattice {
-
+// Represents a powerset lattice constructed from a finite set of consecutive
+// integers from 0 to n which can be represented by a bitvector. Set elements
+// are represented by FiniteIntPowersetLattice::Element, which represents
+// members present in each element by bits in the bitvector.
+class FiniteIntPowersetLattice {
   // The size of the set that the powerset lattice was created from. This is
   // equivalent to the size of the Top lattice element.
   size_t setSize;
 
 public:
-  FinitePowersetLattice(size_t setSize) : setSize(setSize) {}
+  FiniteIntPowersetLattice(size_t setSize) : setSize(setSize) {}
 
   // This represents an element of a powerset lattice. The element is itself a
   // set which has set members. The bitvector tracks which possible members of
@@ -90,7 +90,7 @@ public:
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
 
-    friend FinitePowersetLattice;
+    friend FiniteIntPowersetLattice;
   };
 
   // Compares two lattice elements and returns a result indicating the
@@ -101,7 +101,58 @@ public:
   Element getBottom();
 };
 
-static_assert(is_lattice<FinitePowersetLattice>);
+// A layer of abstraction over FiniteIntPowersetLattice which maps
+// set members of some type T to indices in the bitvector. Allows
+// the finite powerset lattice to be generalized to arbitrary types.
+template<typename T> class FinitePowersetLattice {
+  FiniteIntPowersetLattice intLattice;
+
+  // Maps a bitvector index to some element member of type T.
+  // Used to produce initial ordering of element members.
+  std::vector<T> members;
+
+  // Maps an element member of type T to a bitvector index.
+  std::unordered_map<T, size_t> memberIndices;
+
+public:
+  using Element = FiniteIntPowersetLattice::Element;
+
+  // Takes in an ordered list of all elements of the set to create
+  // the powerset lattice from (i.e. the powerset lattice top element). This
+  // is used for mapping the elements to bitvector indices.
+  FinitePowersetLattice(std::vector<T>&& setMembers)
+    : intLattice(setMembers.size()), members(std::move(setMembers)) {
+    for (size_t i = 0; i < members.size(); ++i) {
+      memberIndices[members[i]] = i;
+    }
+  }
+
+  T indexToMember(size_t index) { return members[index]; }
+
+  size_t memberToIndex(T member) { return memberIndices[member]; }
+
+  // Adds member to a powerset lattice element.
+  void add(Element* element, T member) {
+    element->set(memberIndices[member], true);
+  }
+
+  // Removes member from a powerset lattice element.
+  void remove(Element* element, T member) {
+    element->set(memberIndices[member], false);
+  }
+
+  // Checks if member is included in the element set.
+  bool exists(Element* element, T member) {
+    return element->get(memberIndices[member]);
+  }
+
+  // We use implementations from FiniteIntPowersetLattice here.
+  static LatticeComparison compare(const Element& left, const Element& right) {
+    return FiniteIntPowersetLattice::compare(left, right);
+  }
+
+  Element getBottom() { return intLattice.getBottom(); }
+};
 
 } // namespace wasm::analysis
 
