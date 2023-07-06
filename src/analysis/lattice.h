@@ -150,6 +150,7 @@ public:
   static LatticeComparison compare(const Element& left, const Element& right) {
     return FiniteIntPowersetLattice::compare(left, right);
   }
+
   Element getBottom() { return intLattice.getBottom(); }
 };
 
