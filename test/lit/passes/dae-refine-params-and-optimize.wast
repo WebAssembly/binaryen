@@ -2,7 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --dae-optimizing -S -o - | filecheck %s
 
-;; The br_on_cast_fail is optimized away thanks to the refined type. The output still has some unoptimized code (an additional --dce pass would get rid of the drop-return pattern here), but this is not directly relevant to this test."
+;; The br_on_cast_fail is optimized away thanks to the refined type. The output still has some unoptimized code (an additional --dce pass would get rid of the drop-return pattern here), but that is not directly relevant to this test.
 (module
  ;; CHECK:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
 
