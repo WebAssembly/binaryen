@@ -350,7 +350,7 @@ struct Analyzer {
 
     // Call all the functions of that signature, and subtypes. We can then
     // forget about them, as those signatures will be marked as called.
-    for (auto subType : subTypes->getAllSubTypes(type)) {
+    for (auto subType : subTypes->getSubTypes(type)) {
       auto iter = uncalledRefFuncMap.find(subType);
       if (iter != uncalledRefFuncMap.end()) {
         // We must not have a type in both calledSignatures and

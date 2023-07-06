@@ -145,7 +145,7 @@ struct SignatureRefining : public Pass {
     // TypeRefining, and perhaps we can unify this pass with that. TODO
     SubTypes subTypes(*module);
     for (auto& [type, info] : allInfo) {
-      if (!subTypes.getStrictSubTypes(type).empty()) {
+      if (!subTypes.getImmediateSubTypes(type).empty()) {
         info.canModify = false;
       } else if (type.getSuperType()) {
         // Also avoid modifying types with supertypes, as we do not handle

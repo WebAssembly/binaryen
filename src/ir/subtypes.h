@@ -36,7 +36,7 @@ struct SubTypes {
 
   SubTypes(Module& wasm) : SubTypes(ModuleUtils::collectHeapTypes(wasm)) {}
 
-  const std::vector<HeapType>& getStrictSubTypes(HeapType type) const {
+  const std::vector<HeapType>& getImmediateSubTypes(HeapType type) const {
     // When we return an empty result, use a canonical constant empty vec to
     // avoid allocation.
     static const std::vector<HeapType> empty;
@@ -55,14 +55,15 @@ struct SubTypes {
     return empty;
   }
 
-  // Get all subtypes of a type, and their subtypes and so forth, recursively.
-  std::vector<HeapType> getAllStrictSubTypes(HeapType type) {
+  // Get all subtypes of a type, and their subtypes and so forth, recursively,
+  // excluding the type itself.
+  std::vector<HeapType> getStrictSubTypes(HeapType type) {
     std::vector<HeapType> ret, work;
     work.push_back(type);
     while (!work.empty()) {
       auto curr = work.back();
       work.pop_back();
-      for (auto sub : getStrictSubTypes(curr)) {
+      for (auto sub : getImmediateSubTypes(curr)) {
         ret.push_back(sub);
         work.push_back(sub);
       }
@@ -70,9 +71,9 @@ struct SubTypes {
     return ret;
   }
 
-  // Like getAllStrictSubTypes, but also includes the type itself.
-  std::vector<HeapType> getAllSubTypes(HeapType type) {
-    auto ret = getAllStrictSubTypes(type);
+  // Like getStrictSubTypes, but also includes the type itself.
+  std::vector<HeapType> getSubTypes(HeapType type) {
+    auto ret = getStrictSubTypes(type);
     ret.push_back(type);
     return ret;
   }
@@ -94,7 +95,7 @@ struct SubTypes {
       void pushPredecessors(HeapType type) {
         // Things we need to process before each type are its subtypes. Once we
         // know their depth, we can easily compute our own.
-        for (auto pred : parent.getStrictSubTypes(type)) {
+        for (auto pred : parent.getImmediateSubTypes(type)) {
           push(pred);
         }
       }
@@ -114,7 +115,7 @@ struct SubTypes {
     for (auto type : getSubTypesFirstSort()) {
       // Begin with depth 0, then take into account the subtype depths.
       Index depth = 0;
-      for (auto subType : getStrictSubTypes(type)) {
+      for (auto subType : getImmediateSubTypes(type)) {
         depth = std::max(depth, depths[subType] + 1);
       }
       depths[type] = depth;
@@ -154,9 +155,9 @@ struct SubTypes {
       return;
     }
 
-    // getStrictSubTypes() returns vectors of subtypes, so for efficiency store
-    // pointers to those in our work queue to avoid allocations. See the note
-    // below on typeSubTypes for why this is safe.
+    // getImmediateSubTypes() returns vectors of subtypes, so for efficiency
+    // store pointers to those in our work queue to avoid allocations. See the
+    // note below on typeSubTypes for why this is safe.
     struct Item {
       const std::vector<HeapType>* vec;
       Index depth;
@@ -167,7 +168,7 @@ struct SubTypes {
     SmallVector<Item, 10> work;
 
     // Start with the subtypes of the base type. Those have depth 1.
-    work.push_back({&getStrictSubTypes(type), 1});
+    work.push_back({&getImmediateSubTypes(type), 1});
 
     while (!work.empty()) {
       auto& item = work.back();
@@ -177,7 +178,7 @@ struct SubTypes {
       assert(currDepth <= depth);
       for (auto type : currVec) {
         func(type, currDepth);
-        auto* subVec = &getStrictSubTypes(type);
+        auto* subVec = &getImmediateSubTypes(type);
         if (currDepth + 1 <= depth && !subVec->empty()) {
           work.push_back({subVec, currDepth + 1});
         }
