@@ -34,7 +34,7 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
 
 template<typename Lattice, typename TransferFunction>
 inline MonotoneCFGAnalyzer<Lattice, TransferFunction>::MonotoneCFGAnalyzer(
-  Lattice lattice, TransferFunction transferFunction, CFG& cfg)
+  Lattice& lattice, TransferFunction& transferFunction, CFG& cfg)
   : lattice(lattice), transferFunction(transferFunction), cfg(cfg) {
 
   // Construct BlockStates for each BasicBlock.

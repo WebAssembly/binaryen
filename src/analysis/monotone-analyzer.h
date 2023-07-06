@@ -34,14 +34,6 @@ template<typename Lattice> struct BlockState {
 // Lattice::Element transfer(const BasicBlock* cfgBlock, Lattice::Element&
 // inputState);
 
-template<typename TransferFunction, typename Lattice>
-constexpr bool has_transfer =
-  std::is_invocable_r<void,
-                      decltype(&TransferFunction::transfer),
-                      TransferFunction,
-                      const BasicBlock*,
-                      typename Lattice::Element&>::value;
-
 // This function takes in a pointer to a CFG BasicBlock and the input state
 // associated with it and modifies the input state in-place into the ouptut
 // state for the basic block by applying the analysis transfer function to each
@@ -51,7 +43,21 @@ constexpr bool has_transfer =
 // propagated to dependents of the CFG BasicBlock by the worklist algorithm in
 // MonotoneCFGAnalyzer.
 
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_transfer =
+  std::is_invocable_r<void,
+                      decltype(&TransferFunction::transfer),
+                      TransferFunction,
+                      const BasicBlock*,
+                      typename Lattice::Element&>::value;
+
 // void enqueueWorklist(CFG&, std::queue<const BasicBlock*>& value);
+
+// Loads CFG BasicBlocks in some order into the worklist. Custom specifying the
+// order for each analysis brings performance savings. For example, when doing a
+// backward analysis, loading the BasicBlocks in reverse order will lead to less
+// state propagations, and therefore better performance. The opposite is true
+// for a forward analysis.
 
 template<typename TransferFunction, typename Lattice>
 constexpr bool has_enqueueWorklist =
@@ -61,13 +67,13 @@ constexpr bool has_enqueueWorklist =
                       CFG&,
                       std::queue<const BasicBlock*>&>::value;
 
-// Loads CFG BasicBlocks in some order into the worklist. Custom specifying the
-// order for each analysis brings performance savings. For example, when doing a
-// backward analysis, loading the BasicBlocks in reverse order will lead to less
-// state propagations, and therefore better performance. The opposite is true
-// for a forward analysis.
-
 // <iterable> getDependents(const BasicBlock* currBlock);
+
+// Returns an iterable to the CFG BasicBlocks which depend on currBlock for
+// information (e.g. predecessors in a backward analysis). Used to select which
+// blocks to propagate to after applying the transfer function to a block. At
+// present, we allow this function to return any iterable, so we only assert
+// that the method exists with the following parameters.
 
 template<typename TransferFunction>
 constexpr bool has_getDependents =
@@ -75,13 +81,7 @@ constexpr bool has_getDependents =
                     TransferFunction,
                     const BasicBlock*>::value;
 
-// Returns an iterable to the CFG BasicBlocks which depend on currBlock for
-// information (e.g. predecessors in a backward analysis). Used to select which
-// blocks to propagate to after applying the transfer function to a block. At
-// present, we do not know how to use static assertions to check that the return
-// type is any iterable, not just a specific iterable class, so we only assert
-// that the method exists with the following parameters.
-
+// Combined TransferFunction assertions.
 template<typename TransferFunction, typename Lattice>
 constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
   has_enqueueWorklist<TransferFunction, Lattice>&&
@@ -92,16 +92,16 @@ class MonotoneCFGAnalyzer {
   static_assert(is_lattice<Lattice>);
   static_assert(is_TransferFunction<TransferFunction, Lattice>);
 
-  Lattice lattice;
-  TransferFunction transferFunction;
-  std::vector<BlockState<Lattice>> stateBlocks;
+  Lattice& lattice;
+  TransferFunction& transferFunction;
   CFG& cfg;
+  std::vector<BlockState<Lattice>> stateBlocks;
 
 public:
   // Will constuct BlockState objects corresponding to BasicBlocks from the
   // given CFG.
-  MonotoneCFGAnalyzer(Lattice lattice,
-                      TransferFunction transferFunction,
+  MonotoneCFGAnalyzer(Lattice& lattice,
+                      TransferFunction& transferFunction,
                       CFG& cfg);
 
   // Runs the worklist algorithm to compute the states for the BlockList graph.
