@@ -237,6 +237,19 @@ void WasmBinaryWriter::writeTypes() {
       lastGroup = currGroup;
     }
   }
+
+  // As a temporary measure, detect which types have subtypes and always use
+  // `sub` or `sub final` for these types. The standard says that types without
+  // `sub` or `sub final` are final, but we currently treat them as non-final.
+  // To avoid unsafe ambiguity, only use the short form for types that it would
+  // be safe to treat as final, i.e. types without subtypes.
+  std::vector<bool> hasSubtypes(indexedTypes.types.size());
+  for (auto type : indexedTypes.types) {
+    if (auto super = type.getSuperType()) {
+      hasSubtypes[indexedTypes.indices[*super]] = true;
+    }
+  }
+
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(numGroups);
@@ -255,7 +268,7 @@ void WasmBinaryWriter::writeTypes() {
     auto super = type.getSuperType();
     // TODO: Use the binary shorthand for final types once we parse MVP
     // signatures as final.
-    if (type.isFinal() || super) {
+    if (type.isFinal() || super || hasSubtypes[i]) {
       if (type.isFinal()) {
         o << S32LEB(BinaryConsts::EncodedType::SubFinal);
       } else {
