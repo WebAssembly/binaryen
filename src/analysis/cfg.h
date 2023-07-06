@@ -69,6 +69,10 @@ struct CFG {
   iterator end() const { return blocks.cend(); }
   size_t size() const { return blocks.size(); }
 
+  using reverse_iterator = std::vector<BasicBlock>::const_reverse_iterator;
+  reverse_iterator rbegin() const { return blocks.rbegin(); }
+  reverse_iterator rend() const { return blocks.rend(); }
+
   static CFG fromFunction(Function* func);
 
   void print(std::ostream& os, Module* wasm = nullptr) const;
