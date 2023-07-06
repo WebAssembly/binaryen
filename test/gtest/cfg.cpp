@@ -259,18 +259,19 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
   std::vector<std::string> initialSet = {"a", "b", "c", "d", "e", "f"};
   FinitePowersetLattice<std::string> lattice(std::move(initialSet));
 
-  FinitePowersetLattice<std::string>::Element element1 = lattice.getBottom();
+  auto element1 = lattice.getBottom();
 
-  EXPECT_EQ(element1.isBottom(), true);
+  EXPECT_TRUE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
 
   lattice.add(&element1, "c");
   lattice.add(&element1, "d");
   lattice.add(&element1, "a");
 
-  EXPECT_EQ(element1.isBottom(), false);
-  EXPECT_EQ(element1.isTop(), false);
+  EXPECT_FALSE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
 
-  FinitePowersetLattice<std::string>::Element element2 = element1;
+  auto element2 = element1;
   lattice.remove(&element2, "c");
   EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
             LatticeComparison::GREATER);
@@ -280,15 +281,12 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
 
   std::stringstream ss;
   element1.print(ss);
-  ss << std::endl;
+  EXPECT_EQ(ss.str(), "101100");
+  ss.str(std::string());
   element2.print(ss);
-  ss << std::endl;
+  EXPECT_EQ(ss.str(), "100101");
+  ss.str(std::string());
   element2.makeLeastUpperBound(element1);
   element2.print(ss);
-
-  auto resultText = R"result(101100
-100101
-101101)result";
-
-  EXPECT_EQ(ss.str(), resultText);
+  EXPECT_EQ(ss.str(), "101101");
 }
