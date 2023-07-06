@@ -2303,6 +2303,9 @@ void TypeBuilder::setFinal(size_t i, bool final) {
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
+  if (super.isFinal) {
+    return false;
+  }
   if (sub.kind != super.kind) {
     return false;
   }
