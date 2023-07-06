@@ -28,6 +28,12 @@ template<typename Lattice> struct BlockState {
   void print(std::ostream& os);
 };
 
+// A transfer function using a lattice <Lattice> is required to have the
+// following methods:
+
+// Lattice::Element transfer(const BasicBlock* cfgBlock, Lattice::Element&
+// inputState);
+
 template<typename TransferFunction, typename Lattice>
 constexpr bool has_transfer =
   std::is_invocable_r<void,
@@ -35,32 +41,6 @@ constexpr bool has_transfer =
                       TransferFunction,
                       const BasicBlock*,
                       typename Lattice::Element&>::value;
-
-template<typename TransferFunction, typename Lattice>
-constexpr bool has_enqueueWorklist =
-  std::is_invocable_r<void,
-                      decltype(&TransferFunction::enqueueWorklist),
-                      TransferFunction,
-                      CFG*,
-                      std::queue<Index>&>::value;
-
-template<typename TransferFunction>
-constexpr bool has_getDependents =
-  std::is_invocable_r<_indirect_ptr_vec<BasicBlock>,
-                      decltype(&TransferFunction::getDependents),
-                      TransferFunction,
-                      const BasicBlock*>::value;
-
-template<typename TransferFunction, typename Lattice>
-constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
-  has_enqueueWorklist<TransferFunction, Lattice>&&
-    has_getDependents<TransferFunction>;
-
-// A transfer function using a lattice <Lattice> is required to have the
-// following methods:
-
-// Lattice::Element transfer(BasicBlock* cfgBlock, Lattice::Element&
-// inputState);
 
 // This function takes in a pointer to a CFG BasicBlock and the input state
 // associated with it and modifies the input state in-place into the ouptut
@@ -71,47 +51,64 @@ constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
 // propagated to dependents of the CFG BasicBlock by the worklist algorithm in
 // MonotoneCFGAnalyzer.
 
-// void enqueueWorklist(const std::vector<BlockState<Lattice>>& stateBlocks,
-// std::queue<index>& value);
+// void enqueueWorklist(CFG&, std::queue<const BasicBlock*>& value);
 
-// Loads the indices of CFG BasicBlocks in some order into the worklist. Custom
-// specifying the order in which worklist nodes are loaded for each analysis
-// brings performance savings. For example, when doing a backward analysis,
-// loading the CFG BasicBlocks in reverse order will lead to less state
-// propagations, and therefore better performance. The opposite is true for a
-// forward analysis.
+template<typename TransferFunction, typename Lattice>
+constexpr bool has_enqueueWorklist =
+  std::is_invocable_r<void,
+                      decltype(&TransferFunction::enqueueWorklist),
+                      TransferFunction,
+                      CFG&,
+                      std::queue<const BasicBlock*>&>::value;
 
-// std::vector<BlockState<Lattice>*>::const_iterator
-// depsBegin(BlockState<Lattice>& currBlock);
+// Loads CFG BasicBlocks in some order into the worklist. Custom specifying the
+// order for each analysis brings performance savings. For example, when doing a
+// backward analysis, loading the BasicBlocks in reverse order will lead to less
+// state propagations, and therefore better performance. The opposite is true
+// for a forward analysis.
+
+// <iterable> getDependents(const BasicBlock* currBlock);
+
+template<typename TransferFunction>
+constexpr bool has_getDependents =
+  std::is_invocable<decltype(&TransferFunction::getDependents),
+                    TransferFunction,
+                    const BasicBlock*>::value;
 
 // Returns an iterable to the CFG BasicBlocks which depend on currBlock for
-// information (e.g. predecessors in a backward analysis). Used to select
-// which blocks to propagate to after applying the transfer function to
-// a block.
+// information (e.g. predecessors in a backward analysis). Used to select which
+// blocks to propagate to after applying the transfer function to a block. At
+// present, we do not know how to use static assertions to check that the return
+// type is any iterable, not just a specific iterable class, so we only assert
+// that the method exists with the following parameters.
+
+template<typename TransferFunction, typename Lattice>
+constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
+  has_enqueueWorklist<TransferFunction, Lattice>&&
+    has_getDependents<TransferFunction>;
 
 template<typename Lattice, typename TransferFunction>
-struct MonotoneCFGAnalyzer {
+class MonotoneCFGAnalyzer {
   static_assert(is_lattice<Lattice>);
   static_assert(is_TransferFunction<TransferFunction, Lattice>);
 
-  MonotoneCFGAnalyzer(Lattice lattice, TransferFunction transferFunction)
-    : lattice(lattice), transferFunction(transferFunction) {}
+  Lattice lattice;
+  TransferFunction transferFunction;
+  std::vector<BlockState<Lattice>> stateBlocks;
+  CFG& cfg;
 
-  // Constructs a graph of BlockState objects which parallels
-  // the CFG graph. Each CFG node corresponds to a BlockState node.
-  void fromCFG(CFG* cfg);
+public:
+  // Will constuct BlockState objects corresponding to BasicBlocks from the
+  // given CFG.
+  MonotoneCFGAnalyzer(Lattice lattice,
+                      TransferFunction transferFunction,
+                      CFG& cfg);
 
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
 
   // Prints out all BlockStates in this analyzer.
   void print(std::ostream& os);
-
-private:
-  Lattice lattice;
-  TransferFunction transferFunction;
-  std::vector<BlockState<Lattice>> stateBlocks;
-  CFG* cfg = nullptr;
 };
 
 } // namespace wasm::analysis

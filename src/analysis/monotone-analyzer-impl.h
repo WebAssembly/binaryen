@@ -33,30 +33,26 @@ inline void BlockState<Lattice>::print(std::ostream& os) {
 }
 
 template<typename Lattice, typename TransferFunction>
-inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::fromCFG(CFG* cfg) {
-  this->cfg = cfg;
+inline MonotoneCFGAnalyzer<Lattice, TransferFunction>::MonotoneCFGAnalyzer(
+  Lattice lattice, TransferFunction transferFunction, CFG& cfg)
+  : lattice(lattice), transferFunction(transferFunction), cfg(cfg) {
 
-  // Construct BlockStates for each BasicBlock and map each BasicBlock to each
-  // BlockState's index in stateBlocks.
-  std::unordered_map<const BasicBlock*, size_t> basicBlockToState;
-  size_t index = 0;
-  for (auto it = cfg->begin(); it != cfg->end(); it++) {
+  // Construct BlockStates for each BasicBlock.
+  for (auto it = cfg.begin(); it != cfg.end(); it++) {
     stateBlocks.emplace_back(&(*it), lattice);
-    basicBlockToState[&(*it)] = index++;
   }
 }
 
 template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
-  assert(cfg);
-
-  std::queue<Index> worklist;
+  std::queue<const BasicBlock*> worklist;
 
   // Transfer function enqueues the work in some order which is efficient.
   transferFunction.enqueueWorklist(cfg, worklist);
 
   while (!worklist.empty()) {
-    BlockState<Lattice>& currBlockState = stateBlocks[worklist.front()];
+    BlockState<Lattice>& currBlockState =
+      stateBlocks[worklist.front()->getIndex()];
     worklist.pop();
 
     // For each expression, applies the transfer function, using the expression,
@@ -68,12 +64,11 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
 
     // Propagate state to dependents of currBlockState.
     for (auto& dep : transferFunction.getDependents(currBlockState.cfgBlock)) {
-      Index depIndex = dep.getIndex();
-
       // If we need to change the input state of a dependent, we need
       // to enqueue the dependent to recalculate it.
-      if (stateBlocks[depIndex].inputState.makeLeastUpperBound(outputState)) {
-        worklist.push(depIndex);
+      if (stateBlocks[dep.getIndex()].inputState.makeLeastUpperBound(
+            outputState)) {
+        worklist.push(&dep);
       }
     }
   }

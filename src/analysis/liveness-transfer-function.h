@@ -47,14 +47,14 @@ public:
   // run before earlier CFG blocks. This improves performance by
   // reducing the number of state propagations needed, since we are
   // naturally following the backward flow at the beginning.
-  void enqueueWorklist(CFG* cfg, std::queue<Index>& worklist) {
-    for (auto it = cfg->rbegin(); it != cfg->rend(); ++it) {
-      worklist.push((*it).getIndex());
+  void enqueueWorklist(CFG& cfg, std::queue<const BasicBlock*>& worklist) {
+    for (auto it = cfg.rbegin(); it != cfg.rend(); ++it) {
+      worklist.push(&(*it));
     }
   }
 
   // Predecessors depend on current basic block for information.
-  _indirect_ptr_vec<BasicBlock> getDependents(const BasicBlock* currBlock) {
+  BasicBlock::Predecessors getDependents(const BasicBlock* currBlock) {
     return currBlock->preds();
   }
 

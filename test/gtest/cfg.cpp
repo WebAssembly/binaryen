@@ -151,8 +151,7 @@ End
   LivenessTransferFunction transferFunction;
 
   MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
-    lattice, transferFunction);
-  analyzer.fromCFG(&cfg);
+    lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
@@ -242,8 +241,7 @@ End
   LivenessTransferFunction transferFunction;
 
   MonotoneCFGAnalyzer<FinitePowersetLattice, LivenessTransferFunction> analyzer(
-    lattice, transferFunction);
-  analyzer.fromCFG(&cfg);
+    lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
