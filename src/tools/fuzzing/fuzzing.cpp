@@ -279,7 +279,7 @@ void TranslateToFuzzReader::setupHeapTypes() {
   // now, rather than lazily later.
   SubTypes subTypes(interestingHeapTypes);
   for (auto type : interestingHeapTypes) {
-    for (auto subType : subTypes.getStrictSubTypes(type)) {
+    for (auto subType : subTypes.getImmediateSubTypes(type)) {
       interestingHeapSubTypes[type].push_back(subType);
     }
     // Basic types must be handled directly, since subTypes doesn't look at

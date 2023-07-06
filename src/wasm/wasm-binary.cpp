@@ -226,8 +226,7 @@ void WasmBinaryWriter::writeTypes() {
     return;
   }
   // Count the number of recursion groups, which is the number of elements in
-  // the type section. With nominal typing there is always one group and with
-  // equirecursive typing there is one group per type.
+  // the type section.
   size_t numGroups = 0;
   {
     std::optional<RecGroup> lastGroup;
