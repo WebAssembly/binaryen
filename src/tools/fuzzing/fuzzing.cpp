@@ -1383,8 +1383,8 @@ Expression* TranslateToFuzzReader::makeIf(Type type) {
         falseType = Type::unreachable;
         break;
     }
-    ret =
-        buildIf({condition, makeMaybeBlock(trueType), makeMaybeBlock(falseType)}, type);
+    ret = buildIf(
+      {condition, makeMaybeBlock(trueType), makeMaybeBlock(falseType)}, type);
   }
 
   funcContext->hangStack.pop_back();
