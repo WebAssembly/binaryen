@@ -876,7 +876,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $substruct 0
-  ;; CHECK-NEXT:    (ref.cast null $substruct
+  ;; CHECK-NEXT:    (ref.cast $substruct
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -904,6 +904,8 @@
     )
     (drop
       (struct.get $substruct 0
+        ;; This cast will be refined to be non-nullable, as the LocalGraph
+        ;; analysis will show that it must be so.
         (ref.cast null $substruct
           (local.get $ref)
         )
@@ -949,10 +951,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.get $substruct 0
-  ;; CHECK-NEXT:      (ref.cast null $substruct
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (ref.cast $substruct
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -981,6 +981,10 @@
     )
     (drop
       (struct.get $substruct 0
+        ;; This cast will be refined to be non-nullable, as the LocalGraph
+        ;; analysis will show that it must be so. After that, the dropped
+        ;; struct.get can be removed as it has no side effects (the only
+        ;; possible effect was a trap on null).
         (ref.cast null $substruct
           (local.get $ref)
         )

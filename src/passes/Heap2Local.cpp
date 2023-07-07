@@ -191,7 +191,9 @@ struct Heap2LocalOptimizer {
     localGraph.computeSetInfluences();
 
     // All the allocations in the function.
-    // TODO: Arrays (of constant size) as well.
+    // TODO: Arrays (of constant size) as well, if all element accesses use
+    //       constant indexes. One option might be to first convert such
+    //       nonescaping arrays into structs.
     FindAll<StructNew> allocations(func->body);
 
     for (auto* allocation : allocations.list) {
