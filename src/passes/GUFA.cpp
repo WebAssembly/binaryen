@@ -255,6 +255,26 @@ struct GUFAOptimizer
     }
   }
 
+  void visitRefCast(RefCast* curr) {
+    auto currType = curr->type;
+    auto inferredType = getContents(curr).getType();
+    if (0 && inferredType != currType && Type::isSubType(inferredType, currType)) {
+      // We have inferred that this will only contain something of a more
+      // refined type, so we might as well cast to that more refined type.
+      //
+      // Note that we could in principle apply this in all expressions by adding
+      // a cast. However, to be careful with code size, we only refine existing
+      // casts for now.
+      //
+      // TODO: RefAs as well.
+      curr->type = inferredType;
+    }
+
+    // Apply the usual optimizations as well, such as potentially replacing this
+    // with a constant.
+    visitExpression(curr);
+  }
+
   // TODO: If an instruction would trap on null, like struct.get, we could
   //       remove it here if it has no possible contents and if we are in
   //       traps-never-happen mode (that is, we'd have proven it can only trap,

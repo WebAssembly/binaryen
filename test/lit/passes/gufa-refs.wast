@@ -5642,3 +5642,38 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; CHECK:      (type $none_=>_ref|$A| (func (result (ref $A))))
+
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (type $B (sub $A (struct )))
+  (type $B (sub $A (struct)))
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $none_=>_ref|$A|) (result (ref $A))
+  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK-NEXT:   (call $get-B-def-any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func") (result (ref $A))
+    ;; Call a function that actually returns a B, though it is defined as
+    ;; returning an anyref. Then cast it to A. We can infer that it will be a B,
+    ;; so we can cast to B here instead.
+    (ref.cast $A
+      (call $get-B-def-any)
+    )
+  )
+
+  ;; CHECK:      (func $get-B-def-any (type $none_=>_anyref) (result anyref)
+  ;; CHECK-NEXT:  (struct.new_default $B)
+  ;; CHECK-NEXT: )
+  (func $get-B-def-any (result anyref)
+    (struct.new $B)
+  )
+)
