@@ -2554,7 +2554,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null $struct
+  ;; CHECK-NEXT:     (ref.cast null none
   ;; CHECK-NEXT:      (select (result i31ref)
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (i31.new
@@ -2593,7 +2593,9 @@
     )
     ;; A null or an i31 will reach the cast; only the null can actually pass
     ;; through (an i31 would fail the cast). Given that, we can infer a null for
-    ;; the value of the cast.
+    ;; the value of the cast. (The cast itself will also be turned into a cast
+    ;; to null, but it is dropped right before we return a null, so that has no
+    ;; benefit in this case.)
     (drop
       (ref.cast null $struct
         (select
@@ -5647,17 +5649,17 @@
   ;; CHECK:      (type $A (struct ))
   (type $A (struct))
 
+  ;; CHECK:      (type $B (sub $A (struct )))
+  (type $B (sub $A (struct)))
+
   ;; CHECK:      (type $none_=>_ref|$A| (func (result (ref $A))))
 
   ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
 
-  ;; CHECK:      (type $B (sub $A (struct )))
-  (type $B (sub $A (struct)))
-
   ;; CHECK:      (export "func" (func $func))
 
   ;; CHECK:      (func $func (type $none_=>_ref|$A|) (result (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK-NEXT:  (ref.cast $B
   ;; CHECK-NEXT:   (call $get-B-def-any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

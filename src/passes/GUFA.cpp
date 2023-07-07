@@ -258,7 +258,8 @@ struct GUFAOptimizer
   void visitRefCast(RefCast* curr) {
     auto currType = curr->type;
     auto inferredType = getContents(curr).getType();
-    if (0 && inferredType != currType && Type::isSubType(inferredType, currType)) {
+    if (inferredType.isRef() && inferredType != currType &&
+        Type::isSubType(inferredType, currType)) {
       // We have inferred that this will only contain something of a more
       // refined type, so we might as well cast to that more refined type.
       //
