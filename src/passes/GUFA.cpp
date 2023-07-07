@@ -266,8 +266,6 @@ struct GUFAOptimizer
       // Note that we could in principle apply this in all expressions by adding
       // a cast. However, to be careful with code size, we only refine existing
       // casts for now.
-      //
-      // TODO: RefAs as well.
       curr->type = inferredType;
     }
 
