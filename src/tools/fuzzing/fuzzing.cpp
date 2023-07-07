@@ -1382,7 +1382,6 @@ Expression* TranslateToFuzzReader::makeIf(Type type) {
       case 1:
         falseType = Type::unreachable;
         break;
-      default:
     }
     ret =
         buildIf({condition, makeMaybeBlock(trueType), makeMaybeBlock(falseType)}, type);
