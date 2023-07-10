@@ -117,195 +117,25 @@ struct OptimizeCallCasts : public Pass {
         scanner.walk(func);
       });
 
-    // A map of types to all the information combined over all the functions
-    // with that type.
-    std::unordered_map<HeapType, Info> allInfo;
+    // Find all the calls going to each function.
+    std::unordered_map<Name, std::vector<Call*>> funcCalls;
 
-    // Combine all the information we gathered into that map.
     for (auto& [func, info] : analysis.map) {
-      // For direct calls, add each call to the type of the function being
-      // called.
       for (auto* call : info.calls) {
-        allInfo[module->getFunction(call->target)->type].calls.push_back(call);
-      }
-
-      // For indirect calls, add each call_ref to the type the call_ref uses.
-      for (auto* callRef : info.callRefs) {
-        auto calledType = callRef->target->type;
-        if (calledType != Type::unreachable) {
-          allInfo[calledType.getHeapType()].callRefs.push_back(callRef);
-        }
-      }
-
-      // Add the function's return LUB to the one for the heap type of that
-      // function.
-      allInfo[func->type].resultsLUB.combine(info.resultsLUB);
-
-      // If one function cannot be modified, that entire type cannot be.
-      if (!info.canModify) {
-        allInfo[func->type].canModify = false;
+        funcCalls[call->target].push_back(call);
       }
     }
 
-    // We cannot alter the signature of an exported function, as the outside may
-    // notice us doing so. For example, if we turn a parameter from nullable
-    // into non-nullable then callers sending a null will break. Put another
-    // way, we need to see all callers to refine types, and for exports we
-    // cannot do so.
-    // TODO If a function type is passed we should also mark the types used
-    //      there, etc., recursively. For now this code just handles the top-
-    //      level type, which is enough to keep the fuzzer from erroring. More
-    //      generally, we need to decide about adding a "closed-world" flag of
-    //      some kind.
-    for (auto* exportedFunc : ExportUtils::getExportedFunctions(*module)) {
-      allInfo[exportedFunc->type].canModify = false;
-    }
-
-    // For now, do not optimize types that have subtypes. When we modify such a
-    // type we need to modify subtypes as well, similar to the analysis in
-    // TypeRefining, and perhaps we can unify this pass with that. TODO
-    SubTypes subTypes(*module);
-    for (auto& [type, info] : allInfo) {
-      if (!subTypes.getImmediateSubTypes(type).empty()) {
-        info.canModify = false;
-      } else if (type.getSuperType()) {
-        // Also avoid modifying types with supertypes, as we do not handle
-        // contravariance here. That is, when we refine parameters we look for
-        // a more refined type, but the type must be *less* refined than the
-        // param type for the parent (or equal) TODO
-        info.canModify = false;
+    // Optimize casts using all that we've found.
+    for (auto& [func, info] : analysis.map) {
+      
+      for (auto& [index, type] : info.castParams) {
       }
     }
 
-    // Compute optimal LUBs.
-    std::unordered_set<HeapType> seen;
-    for (auto& func : module->functions) {
-      auto type = func->type;
-      if (!seen.insert(type).second) {
-        continue;
-      }
-
-      auto& info = allInfo[type];
-      if (!info.canModify) {
-        continue;
-      }
-
-      auto sig = type.getSignature();
-
-      auto numParams = sig.params.size();
-      std::vector<LUBFinder> paramLUBs(numParams);
-
-      auto updateLUBs = [&](const ExpressionList& operands) {
-        for (Index i = 0; i < numParams; i++) {
-          paramLUBs[i].note(operands[i]->type);
-        }
-      };
-
-      for (auto* call : info.calls) {
-        updateLUBs(call->operands);
-      }
-      for (auto* callRef : info.callRefs) {
-        updateLUBs(callRef->operands);
-      }
-
-      // Find the final LUBs, and see if we found an improvement.
-      std::vector<Type> newParamsTypes;
-      for (auto& lub : paramLUBs) {
-        if (!lub.noted()) {
-          break;
-        }
-        newParamsTypes.push_back(lub.getLUB());
-      }
-      Type newParams;
-      if (newParamsTypes.size() < numParams) {
-        // We did not have type information to calculate a LUB (no calls, or
-        // some param is always unreachable), so there is nothing we can improve
-        // here. Other passes might remove the type entirely.
-        newParams = func->getParams();
-      } else {
-        newParams = Type(newParamsTypes);
-      }
-
-      auto& resultsLUB = info.resultsLUB;
-      Type newResults;
-      if (!resultsLUB.noted()) {
-        // We did not have type information to calculate a LUB (no returned
-        // value, or it can return a value but traps instead etc.).
-        newResults = func->getResults();
-      } else {
-        newResults = resultsLUB.getLUB();
-      }
-
-      if (newParams == func->getParams() && newResults == func->getResults()) {
-        continue;
-      }
-
-      // We found an improvement!
-      newSignatures[type] = Signature(newParams, newResults);
-
-      if (newResults != func->getResults()) {
-        // Update the types of calls using the signature.
-        for (auto* call : info.calls) {
-          if (call->type != Type::unreachable) {
-            call->type = newResults;
-          }
-        }
-        for (auto* callRef : info.callRefs) {
-          if (callRef->type != Type::unreachable) {
-            callRef->type = newResults;
-          }
-        }
-      }
-    }
-
-    if (newSignatures.empty()) {
-      // We found nothing to optimize.
-      return;
-    }
-
-    // Update function contents for their new parameter types.
-    struct CodeUpdater : public WalkerPass<PostWalker<CodeUpdater>> {
-      bool isFunctionParallel() override { return true; }
-
-      // Updating parameter types cannot affect validation (only updating var
-      // types types might).
-      bool requiresNonNullableLocalFixups() override { return false; }
-
-      OptimizeCallCasts& parent;
-      Module& wasm;
-
-      CodeUpdater(OptimizeCallCasts& parent, Module& wasm)
-        : parent(parent), wasm(wasm) {}
-
-      std::unique_ptr<Pass> create() override {
-        return std::make_unique<CodeUpdater>(parent, wasm);
-      }
-
-      void doWalkFunction(Function* func) {
-        auto iter = parent.newSignatures.find(func->type);
-        if (iter != parent.newSignatures.end()) {
-          std::vector<Type> newParamsTypes;
-          for (auto param : iter->second.params) {
-            newParamsTypes.push_back(param);
-          }
-          // Do not update local.get/local.tee here, as we will do so in
-          // GlobalTypeRewriter::updateSignatures, below. (Doing an update here
-          // would leave the IR in an inconsistent state of a partial update;
-          // instead, do the full update at the end.)
-          TypeUpdating::updateParamTypes(
-            func,
-            newParamsTypes,
-            wasm,
-            TypeUpdating::LocalUpdatingMode::DoNotUpdate);
-        }
-      }
-    };
-    CodeUpdater(*this, *module).run(getPassRunner(), module);
-
-    // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
     // TODO: we could do this only in relevant functions perhaps
+    // XXX?
     ReFinalize().run(getPassRunner(), module);
   }
 };
