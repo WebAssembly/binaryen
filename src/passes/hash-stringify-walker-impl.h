@@ -24,7 +24,7 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
   }
 
   os << counterUsed << " - " << ShallowExpression{curr, getModule()}
-         << std::endl;
+     << std::endl;
 }
 
 } // namespace wasm

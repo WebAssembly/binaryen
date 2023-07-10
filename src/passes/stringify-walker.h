@@ -111,7 +111,8 @@ struct StringifyHasher {
 
 struct StringifyEquator {
   bool operator()(Expression* lhs, Expression* rhs) const {
-    if (Properties::isControlFlowStructure(lhs) && Properties::isControlFlowStructure(rhs)) {
+    if (Properties::isControlFlowStructure(lhs) &&
+        Properties::isControlFlowStructure(rhs)) {
       auto* iffl = lhs->dynCast<If>();
       auto* iffr = rhs->dynCast<If>();
 
@@ -126,7 +127,8 @@ struct StringifyEquator {
   }
 
   bool nameMePlease(If* iffl, If* iffr) const {
-    return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) && ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
+    return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) &&
+           ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
   }
 };
 
@@ -136,7 +138,8 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // Designed to contain a mapping of expresion pointer to the monotonic value
   // added to the hashString. This is for if we have a hash collision on an
   // expression, so we give the same monotonic value
-  std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator> exprToCounter;
+  std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator>
+    exprToCounter;
   std::ostream& os;
 
   HashStringifyWalker(std::ostream& os) : os(os){};

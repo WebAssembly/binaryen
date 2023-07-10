@@ -127,7 +127,7 @@ adding unique symbol
 using HashStringifyTest = PrintTest;
 
 TEST_F(HashStringifyTest, Print) {
-auto moduleText = R"wasm(
+  auto moduleText = R"wasm(
     (module
     (func $a
       (block $block_a
