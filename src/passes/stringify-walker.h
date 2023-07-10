@@ -117,7 +117,7 @@ struct StringifyEquator {
       auto* iffr = rhs->dynCast<If>();
 
       if (iffl && iffr) {
-        return nameMePlease(iffl, iffr);
+        return equalIfNoCondition(iffl, iffr);
       }
 
       return ExpressionAnalyzer::equal(lhs, rhs);
@@ -126,7 +126,7 @@ struct StringifyEquator {
     return ExpressionAnalyzer::shallowEqual(lhs, rhs);
   }
 
-  bool nameMePlease(If* iffl, If* iffr) const {
+  bool equalIfNoCondition(If* iffl, If* iffr) const {
     return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) &&
            ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
   }
