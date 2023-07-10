@@ -1363,8 +1363,30 @@ Expression* TranslateToFuzzReader::buildIf(const struct ThreeArgs& args,
 Expression* TranslateToFuzzReader::makeIf(Type type) {
   auto* condition = makeCondition();
   funcContext->hangStack.push_back(nullptr);
-  auto* ret =
-    buildIf({condition, makeMaybeBlock(type), makeMaybeBlock(type)}, type);
+
+  Expression* ret;
+  if (type == Type::none && oneIn(2)) {
+    // Just an ifTrue arm.
+    ret = buildIf({condition, makeMaybeBlock(type), nullptr}, type);
+  } else {
+    // Also an ifFalse arm.
+
+    // Some of the time make one arm unreachable (but not both, as then the if
+    // as a whole would be unreachable).
+    auto trueType = type;
+    auto falseType = type;
+    switch (upTo(20)) {
+      case 0:
+        trueType = Type::unreachable;
+        break;
+      case 1:
+        falseType = Type::unreachable;
+        break;
+    }
+    ret = buildIf(
+      {condition, makeMaybeBlock(trueType), makeMaybeBlock(falseType)}, type);
+  }
+
   funcContext->hangStack.pop_back();
   return ret;
 }
