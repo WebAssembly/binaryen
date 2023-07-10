@@ -73,7 +73,7 @@ struct OptimizeCallCasts : public Pass {
       std::unordered_map<Index, Type> castParams;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;
@@ -102,12 +102,14 @@ struct OptimizeCallCasts : public Pass {
               return;
             }
             if (auto* get = curr->value->dynCast<LocalGet>()) {
+              // Note that if we see more than one cast we keep the first one.
+              // This is not important in optimized code, as the most refined
+              // cast would be the only one to exist there.
               if (curr->type != get->type &&
-                  Type::isSubType(curr->type, get->type)) {
+                  Type::isSubType(curr->type, get->type) &&
+                  info.castParams.count(get->index) == 0) {
                 info.castParams[get->index] = curr->type;
-                // Note that if we see more than one cast we keep the last one. This
-                // is not important in optimized code, as the most refined cast
-                // would be the only one to exist there.
+                /// XXX remove the cast here too. We already have all the info, and can avoid another pass later
               }
             }
           }
@@ -128,11 +130,79 @@ struct OptimizeCallCasts : public Pass {
 
     // Optimize casts using all that we've found.
     for (auto& [func, info] : analysis.map) {
-      
+      if (info.castParams.empty()) {
+        continue;
+      }
+
+      // Great, we can optimize! Create a copy of the function to modify, which
+      // allows other uses of the function (exports, ref.funcs) to not be
+      // affected by what we do, which is to refine the parameter and remove
+      // the cast in the function. That is, we go from
+      //
+      //   foo(x1);
+      //   foo(x2);
+      //   call_ref(x3, foo);
+      //   function foo(x : X) {
+      //     cast<Y>(x);
+      //     [..]
+      //
+      // to
+      //
+      //   foo_refined(x1);               ;; These changes to use foo_refined.
+      //   foo_refined(x2);
+      //   call_ref(x3, foo);             ;; This is unchanged.
+      //   function foo(x : X) {          ;; This function is unchanged.
+      //     cast<Y>(x);
+      //     [..]
+      //   function foo_refined(y : Y) {  ;; This is the refined copy.
+      //     [..]
+      Name copyName = Names::getValidFunctionName(*module, func->name);
+      auto* copy = ModuleUtils::copyFunction(func, *module, copyName);
+
+      // Generate the refined param types.
+      auto params = func->getParams();
+      std::vector<Type> newParams;
+      for (Index i = 0; i < params.size(); i++) {
+        auto iter = info.castParams.find(i);
+        if (iter != info.castParams.end()) {
+          newParams.push_back(iter->second);
+        } else {
+          newParams.push_back(params[i]);
+        }
+      }
+      // XXX how do we make this unique?
+      func->type = Signature(newParams, func->getResults());
+
+      // Remove the casts
       for (auto& [index, type] : info.castParams) {
       }
     }
 
+/*
+  bool propagateCastsToCallers(Function* func,
+                               const std::vector<Call*>& calls,
+                               Module* module) {
+    if (!module->features.hasGC()) {
+      return false;
+    }
+    auto& options = getPassOptions();
+    if (options.shrinkLevel || options.optimizeLevel < 3) {
+      // We are not optimizing aggressively for speed, so give up.
+      return false;
+    }
+
+
+    EntryScanner scanner;
+    scanner.walk(func);
+
+    if (scanner.castParams.empty()) {
+      return false;
+    }
+
+    // We found parameters that are refined. Duplicate the function and refine
+    //
+  }
+*/
 
     // TODO: we could do this only in relevant functions perhaps
     // XXX?
