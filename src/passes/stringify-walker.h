@@ -3,6 +3,7 @@
 
 #include "ir/iteration.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "wasm-traversal.h"
 #include <queue>
 
@@ -74,5 +75,78 @@ private:
 } // namespace wasm
 
 #include "stringify-walker-impl.h"
+
+namespace wasm {
+
+struct StringifyHasher {
+  size_t operator()(Expression* curr) const {
+    if (Properties::isControlFlowStructure(curr)) {
+      if (auto* iff = curr->dynCast<If>()) {
+        return hashIfNoCondition(iff);
+      }
+
+      return ExpressionAnalyzer::hash(curr);
+    }
+
+    return ExpressionAnalyzer::shallowHash(curr);
+  }
+
+  static uint64_t hashIfNoCondition(If* iff) {
+    size_t digest = wasm::hash(0);
+    rehash(digest, iff->_id);
+    rehash(digest, iff->type.getID());
+    rehash(digest, ExpressionAnalyzer::hash(iff->ifTrue));
+    rehash(digest, iff->ifTrue->_id);
+    rehash(digest, iff->ifTrue->type.getID());
+
+    if (iff->ifFalse) {
+      rehash(digest, ExpressionAnalyzer::hash(iff->ifFalse));
+      rehash(digest, iff->ifFalse->_id);
+      rehash(digest, iff->ifFalse->type.getID());
+    }
+
+    return digest;
+  }
+};
+
+struct StringifyEquator {
+  bool operator()(Expression* lhs, Expression* rhs) const {
+    if (Properties::isControlFlowStructure(lhs) && Properties::isControlFlowStructure(rhs)) {
+      auto* iffl = lhs->dynCast<If>();
+      auto* iffr = rhs->dynCast<If>();
+
+      if (iffl && iffr) {
+        return nameMePlease(iffl, iffr);
+      }
+
+      return ExpressionAnalyzer::equal(lhs, rhs);
+    }
+
+    return ExpressionAnalyzer::shallowEqual(lhs, rhs);
+  }
+
+  bool nameMePlease(If* iffl, If* iffr) const {
+    return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) && ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
+  }
+};
+
+struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
+  std::vector<uint64_t> hashString;
+  uint64_t monotonic = 0;
+  // Designed to contain a mapping of expresion pointer to the monotonic value
+  // added to the hashString. This is for if we have a hash collision on an
+  // expression, so we give the same monotonic value
+  std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator> exprToCounter;
+  std::ostream& os;
+
+  HashStringifyWalker(std::ostream& os) : os(os){};
+
+  void addUniqueSymbol();
+  void visitExpression(Expression* curr);
+};
+
+} // namespace wasm
+
+#include "hash-stringify-walker-impl.h"
 
 #endif // wasm_passes_stringify_walker_h

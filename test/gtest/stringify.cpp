@@ -1,8 +1,6 @@
 #include "ir/utils.h"
 #include "passes/stringify-walker.h"
 #include "print-test.h"
-#include "wasm.h"
-#include "gtest/gtest.h"
 
 using namespace wasm;
 
@@ -121,6 +119,102 @@ adding unique symbol
 
   std::stringstream ss;
   TestStringifyWalker stringify = TestStringifyWalker(ss);
+  stringify.walkModule(&wasm);
+
+  EXPECT_EQ(ss.str(), stringifyText);
+}
+
+using HashStringifyTest = PrintTest;
+
+TEST_F(HashStringifyTest, Print) {
+auto moduleText = R"wasm(
+    (module
+    (func $a
+      (block $block_a
+        (drop (i32.const 20))
+        (drop (i32.const 10))
+      )
+      (block $block_b
+        (drop (if (i32.const 0)
+          (i32.const 40)
+          (i32.const 5)
+        ))
+      )
+      (block $block_c
+        (drop (if (i32.const 1)
+          (i32.const 30)
+        ))
+      )
+      (block $block_d
+        (drop (i32.const 20))
+        (drop (i32.const 10))
+      )
+      (block $block_e
+        (drop (if (i32.const 1)
+          (i32.const 30)
+        ))
+      )
+      (block $block_f
+        (drop (if (i32.const 0)
+          (i32.const 30)
+        ))
+      )
+    )
+   )
+  )wasm";
+
+  auto stringifyText = R"stringify(0 - block
+1 - unique
+2 - block $block_a
+3 - block $block_b
+4 - block $block_c
+2 - block $block_d
+4 - block $block_e
+5 - block $block_f
+6 - unique
+7 - i32.const 20
+8 - drop
+9 - i32.const 10
+8 - drop
+10 - unique
+11 - i32.const 0
+12 - if
+8 - drop
+13 - unique
+14 - i32.const 1
+15 - if
+8 - drop
+16 - unique
+7 - i32.const 20
+8 - drop
+9 - i32.const 10
+8 - drop
+17 - unique
+14 - i32.const 1
+15 - if
+8 - drop
+18 - unique
+11 - i32.const 0
+15 - if
+8 - drop
+19 - unique
+20 - i32.const 40
+21 - unique
+22 - i32.const 5
+23 - unique
+24 - i32.const 30
+25 - unique
+24 - i32.const 30
+26 - unique
+24 - i32.const 30
+27 - unique
+)stringify";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  std::stringstream ss;
+  HashStringifyWalker stringify = HashStringifyWalker(ss);
   stringify.walkModule(&wasm);
 
   EXPECT_EQ(ss.str(), stringifyText);
