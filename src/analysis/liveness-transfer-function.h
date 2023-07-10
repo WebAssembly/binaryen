@@ -1,16 +1,14 @@
 #ifndef wasm_analysis_liveness_transfer_function_h
 #define wasm_analysis_liveness_transfer_function_h
 
-#include "lattice.h"
-#include "monotone-analyzer.h"
-#include "wasm-traversal.h"
+#include "visitor-transfer-function.h"
 
 namespace wasm::analysis {
 
-class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FiniteIntPowersetLattice::Element* currState = nullptr;
-
-public:
+struct LivenessTransferFunction
+  : public VisitorTransferFunc<LivenessTransferFunction,
+                               FiniteIntPowersetLattice,
+                               AnalysisDirection::Backward> {
   // Transfer function implementation. A local becomes live before a get
   // and becomes dead before a set.
   void visitLocalSet(LocalSet* curr) {
@@ -20,43 +18,6 @@ public:
   void visitLocalGet(LocalGet* curr) {
     assert(currState);
     currState->set(curr->index, true);
-  }
-
-  // Executes the transfer function on all the expressions of the corresponding
-  // CFG node, starting with the node's input state, and changes the input state
-  // to the final output state of the node in place.
-  void transfer(const BasicBlock* cfgBlock,
-                FiniteIntPowersetLattice::Element& inputState) {
-    // If the block is empty, we propagate the state by inputState =
-    // outputState.
-
-    currState = &inputState;
-
-    // This is a backward analysis, so we start from the end of the CFG
-    // and evaluate every expression until the beginning.
-    for (auto cfgIter = cfgBlock->rbegin(); cfgIter != cfgBlock->rend();
-         ++cfgIter) {
-      // Run transfer function.
-      visit(*cfgIter);
-    }
-    currState = nullptr;
-  }
-
-  // Enqueues the worklist before the worklist algorithm is run. For
-  // liveness analysis, we are doing a backward analysis, so we want
-  // to enqueue the worklist backward so that later CFG blocks are
-  // run before earlier CFG blocks. This improves performance by
-  // reducing the number of state propagations needed, since we are
-  // naturally following the backward flow at the beginning.
-  void enqueueWorklist(CFG& cfg, std::queue<const BasicBlock*>& worklist) {
-    for (auto it = cfg.rbegin(); it != cfg.rend(); ++it) {
-      worklist.push(&(*it));
-    }
-  }
-
-  // Predecessors depend on current basic block for information.
-  BasicBlock::Predecessors getDependents(const BasicBlock* currBlock) {
-    return currBlock->preds();
   }
 
   // Prints the intermediate states of each basic block cfgBlock by applying
