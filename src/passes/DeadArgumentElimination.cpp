@@ -40,6 +40,7 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
+#include "ir/linear-execution.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
@@ -224,14 +225,21 @@ struct DAE : public Pass {
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& [name, calls] : allCalls) {
-      // We can only optimize if we see all the calls and can modify them.
+      auto* func = module->getFunction(name);
+      // First, propagate casts to callers. This can allow more argument
+      // refining right after us, and we can do this even if we have unseen
+      // calls.
+      if (propagateCastsToCallers(func, calls, module)) {
+        changed.insert(func);
+      }
+
+      // We can only do the further optimizations if we see all the calls and
+      // can modify them.
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
-      auto* func = module->getFunction(name);
-      // Refine argument types before doing anything else. This does not
-      // affect whether an argument is used or not, it just refines the type
-      // where possible.
+      // Try to refine argument types. This does not affect whether an argument
+      // is used or not, it just refines the type where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         changed.insert(func);
       }
@@ -353,6 +361,7 @@ private:
       func->body = Builder(*module).makeDrop(func->body);
     }
   }
+
 
   // Given a function and all the calls to it, see if we can refine the type of
   // its arguments. If we only pass in a subtype, we may as well refine the type
