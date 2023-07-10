@@ -52,6 +52,8 @@ class FiniteIntPowersetLattice {
 public:
   FiniteIntPowersetLattice(size_t setSize) : setSize(setSize) {}
 
+  size_t getSetSize() { return setSize; }
+
   // This represents an element of a powerset lattice. The element is itself a
   // set which has set members. The bitvector tracks which possible members of
   // the element are actually present.
@@ -126,6 +128,12 @@ public:
       memberIndices[members[i]] = i;
     }
   }
+
+  using membersIterator = typename std::vector<T>::const_iterator;
+
+  membersIterator membersBegin() { return members.cbegin(); }
+  membersIterator membersEnd() { return members.cend(); }
+  size_t getSetSize() { return intLattice.getSetSize(); }
 
   T indexToMember(size_t index) { return members[index]; }
 

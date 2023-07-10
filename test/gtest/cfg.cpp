@@ -4,6 +4,8 @@
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/monotone-analyzer.h"
+#include "analysis/reaching-definitions-transfer-function.h"
+#include "ir/find_all.h"
 #include "print-test.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
@@ -289,4 +291,49 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
   element2.makeLeastUpperBound(element1);
   element2.print(ss);
   EXPECT_EQ(ss.str(), "101101");
+}
+
+TEST_F(CFGTest, LinearReachingDefinitions) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar
+        (local $a (i32))
+        (local $b (i32))
+        (local $c (i32))
+        (local.set $a
+          (i32.const 1)
+        )
+        (drop
+          (local.get $a)
+        )
+        (local.set $b
+          (local.get $a)
+        )
+        (local.set $c
+          (i32.const 1)
+        )
+        (drop
+          (local.get $c)
+        )
+        (local.set $a
+          (i32.const 2)
+        )
+      )
+    )
+  )wasm";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
+  FindAll<LocalSet> setFinder(wasm.getFunction("bar")->body);
+  FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+  ReachingDefinitionsTransferFunction transferFunction(lattice);
+
+  MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
+                      ReachingDefinitionsTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
+  analyzer.evaluate();
+
+  analyzer.print(std::cout);
 }
