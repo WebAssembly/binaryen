@@ -434,10 +434,9 @@ void MemoryPacking::optimizeSegmentOps(Module* module) {
         needsRefinalizing = true;
       } else if (!segment->isPassive) {
         // trap if (dest > memory.size | offset | size) != 0
-        auto mem = getModule()->getMemory(curr->memory);
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
-            mem->is64() ? OrInt64 : OrInt32,
+            OrInt32,
             makeGtShiftedMemorySize(builder, *getModule(), curr),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
@@ -711,6 +710,7 @@ void MemoryPacking::createReplacements(Module* module,
 
     size_t bytesWritten = 0;
 
+    auto is64 = module->getMemory(init->memory)->is64();
     for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
          ++i) {
       auto& range = ranges[i];
@@ -722,12 +722,12 @@ void MemoryPacking::createReplacements(Module* module,
         dest =
           builder.makeConstPtr(c->value.getInteger() + bytesWritten, ptrType);
       } else {
-        auto* get = builder.makeLocalGet(-1, Type::i32);
+        auto* get = builder.makeLocalGet(-1, ptrType);
         getVars.push_back(&get->index);
         dest = get;
         if (bytesWritten > 0) {
-          Const* addend = builder.makeConst(int32_t(bytesWritten));
-          dest = builder.makeBinary(AddInt32, dest, addend);
+          Const* addend = builder.makeConst(is64 ? int64_t(bytesWritten) : int32_t(bytesWritten));
+          dest = builder.makeBinary(is64 ? AddInt64 : AddInt32, dest,addend);
         }
       }
 
@@ -752,9 +752,10 @@ void MemoryPacking::createReplacements(Module* module,
 
     // Non-zero length memory.inits must have intersected some range
     assert(result);
-    replacements[init] = [module, setVar, getVars, result](Function* function) {
+    replacements[init] = [module, init, setVar, getVars, result](Function* function) {
       if (setVar != nullptr) {
-        Index destVar = Builder(*module).addVar(function, Type::i32);
+        auto indexType = module->getMemory(init->memory)->indexType;
+        Index destVar = Builder(*module).addVar(function, indexType);
         *setVar = destVar;
         for (auto* getVar : getVars) {
           *getVar = destVar;
