@@ -77,6 +77,11 @@
   )
 
   ;; CHECK:      (func $caller (type $funcref_ref|func|_=>_none) (param $x funcref) (param $y (ref func))
+  ;; CHECK-NEXT:  (local $2 funcref)
+  ;; CHECK-NEXT:  (local $3 funcref)
+  ;; CHECK-NEXT:  (local $4 funcref)
+  ;; CHECK-NEXT:  (local $5 funcref)
+  ;; CHECK-NEXT:  (local $6 funcref)
   ;; CHECK-NEXT:  (call $called_2
   ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (local.get $x)
@@ -99,7 +104,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block (result (ref func))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 20)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
@@ -108,6 +113,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called_2
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $5)
+  ;; CHECK-NEXT:   (local.get $6)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (param $x (ref null func)) (param $y (ref func))
@@ -132,7 +150,30 @@
       )
       (block (result (ref func))
         (drop
-          (i32.const 10)
+          (i32.const 20)
+        )
+        (local.get $y)
+      )
+      (local.get $x)
+      (local.get $x)
+      (local.get $x)
+    )
+
+    ;; Another call, as the above, but now there is a possible transfer of
+    ;; control flow in some of the nested stuff. This makes us use locals to
+    ;; avoid the risk of casting if the call is not actually taken - we can only
+    ;; cast right before the call is definitely happening.
+    (call $called
+      (block (result (ref null func))
+        (drop
+          (i32.const 30)
+        )
+        (local.get $x)
+      )
+      (block (result (ref func))
+        (if
+          (i32.const 0)
+          (return)
         )
         (local.get $y)
       )
