@@ -15,25 +15,29 @@
  */
 
 //
-// Given a function and all the calls to it, see if there are arguments that
-// are always immediately cast to a subtype. If so, then we can move the cast
-// to the callers, like this:
+// Look for functions that always cast one of their parameters, like this:
 //
 //   foo(x1);
 //   foo(x2);
 //   function foo(x : X) {
-//     cast<Y>(x); // immediately cast the input X to a subtype Y
+//     cast<Y>(x); // Immediately cast the input X to a subtype Y.
+//
+// We can move the cast into the callers:
+//
+//   foo(cast<Y>(x1)); // Casts appear here
+//   foo(cast<Y>(x2)); // and here.
+//   function foo(x : X) {
+//     x; // No cast here.
 //
 // This pattern is common in object-oriented code from Java and Kotlin etc.,
 // where an itable method implementation will cast the input type to the
-// proper type for the class.
+// proper type for the class. It can be beneficial to move the cast to the
+// caller side, as then other optimizations may make more inferences from that
+// refined type.
 //
-// This may increase code size (but it does not add more work at runtime) so
-// whether we do this depends on the opt/shrink levels.
+// This may increase code size, but it does not add more work at runtime.
 //
-// Returns whether we optimized.
-//
-// TODO: Add similar code in OptimizeCallCasts as well, for entire type sets.
+// TODO: We can also optimize groups of functions with the same type.
 //
 
 #include "ir/linear-execution.h"
