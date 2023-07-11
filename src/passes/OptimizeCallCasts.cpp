@@ -243,6 +243,8 @@ struct OptimizeCallCasts : public Pass {
               operand = builder.makeLocalGet(local, operand->type);
             }
           }
+          items.push_back(curr);
+          replaceCurrent(builder.makeBlock(items));
         }
 
         for (Index i = 0; i < curr->operands.size(); i++) {

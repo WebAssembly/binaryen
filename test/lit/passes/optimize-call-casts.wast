@@ -2,9 +2,9 @@
 ;; RUN: foreach %s %t wasm-opt -all --optimize-call-casts -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $funcref_ref|func|_funcref_funcref_funcref_=>_none (func (param funcref (ref func) funcref funcref funcref)))
-
   ;; CHECK:      (type $funcref_ref|func|_=>_none (func (param funcref (ref func))))
+
+  ;; CHECK:      (type $funcref_ref|func|_funcref_funcref_funcref_=>_none (func (param funcref (ref func) funcref funcref funcref)))
 
   ;; CHECK:      (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none (func (param (ref func) (ref func) (ref func) funcref funcref)))
 
@@ -77,12 +77,7 @@
   )
 
   ;; CHECK:      (func $caller (type $funcref_ref|func|_=>_none) (param $x funcref) (param $y (ref func))
-  ;; CHECK-NEXT:  (local $2 funcref)
-  ;; CHECK-NEXT:  (local $3 funcref)
-  ;; CHECK-NEXT:  (local $4 funcref)
-  ;; CHECK-NEXT:  (local $5 funcref)
-  ;; CHECK-NEXT:  (local $6 funcref)
-  ;; CHECK-NEXT:  (call $called_2
+  ;; CHECK-NEXT:  (call $called_4
   ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -93,7 +88,21 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called_2
+  ;; CHECK-NEXT: )
+  (func $caller (param $x (ref null func)) (param $y (ref func))
+    ;; This will turn into a call of a new, refined function, and have casts on
+    ;; the first and middle parameter.
+    (call $called
+      (local.get $x)
+      (local.get $y)
+      (local.get $x)
+      (local.get $x)
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $caller-2 (type $funcref_ref|func|_=>_none) (param $x funcref) (param $y (ref func))
+  ;; CHECK-NEXT:  (call $called_4
   ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (block (result funcref)
   ;; CHECK-NEXT:     (drop
@@ -114,31 +123,8 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called_2
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $5)
-  ;; CHECK-NEXT:   (local.get $6)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (param $x (ref null func)) (param $y (ref func))
-    ;; This will turn into a call of a new, refined function, and have casts on
-    ;; the first and middle parameter.
-    (call $called
-      (local.get $x)
-      (local.get $y)
-      (local.get $x)
-      (local.get $x)
-      (local.get $x)
-    )
-
+  (func $caller-2 (param $x (ref null func)) (param $y (ref func))
     ;; Another call, which will be treated the same even though it has some
     ;; nested stuff on some parameters.
     (call $called
@@ -158,7 +144,53 @@
       (local.get $x)
       (local.get $x)
     )
+  )
 
+  ;; CHECK:      (func $caller-3 (type $funcref_ref|func|_=>_none) (param $x funcref) (param $y (ref func))
+  ;; CHECK-NEXT:  (local $2 funcref)
+  ;; CHECK-NEXT:  (local $3 (ref func))
+  ;; CHECK-NEXT:  (local $4 funcref)
+  ;; CHECK-NEXT:  (local $5 funcref)
+  ;; CHECK-NEXT:  (local $6 funcref)
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (block (result funcref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $3
+  ;; CHECK-NEXT:   (block (result (ref func))
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $5
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $6
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called_4
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $5)
+  ;; CHECK-NEXT:   (local.get $6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-3 (param $x (ref null func)) (param $y (ref func))
     ;; Another call, as the above, but now there is a possible transfer of
     ;; control flow in some of the nested stuff. This makes us use locals to
     ;; avoid the risk of casting if the call is not actually taken - we can only
@@ -186,7 +218,7 @@
 
 ;; =============================================================================
 
-;; CHECK:      (func $called_2 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $opt (ref func)) (param $already (ref func)) (param $also (ref func)) (param $no-cast funcref) (param $late-cast funcref)
+;; CHECK:      (func $called_4 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $opt (ref func)) (param $already (ref func)) (param $also (ref func)) (param $no-cast funcref) (param $late-cast funcref)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
 ;; CHECK-NEXT:    (local.get $opt)
