@@ -163,7 +163,8 @@ struct OptimizeCallCasts : public Pass {
       // Move the existing body to the refined function, and make the original
       // function just call the refined function.
       Builder builder(*module);
-      auto* refinedFunc = module->addFunction(builder.makeFunction(refinedName, func->type, {}, func->body));
+      auto* refinedFunc = module->addFunction(
+        builder.makeFunction(refinedName, func->type, {}, func->body));
       std::vector<Expression*> paramGets;
       for (Index i = 0; i < func->getNumParams(); i++) {
         paramGets.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
