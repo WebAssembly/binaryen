@@ -88,6 +88,27 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called_2
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (block (result funcref)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result (ref func))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (param $x (ref null func)) (param $y (ref func))
     ;; This will turn into a call of a new, refined function, and have casts on
@@ -95,6 +116,26 @@
     (call $called
       (local.get $x)
       (local.get $y)
+      (local.get $x)
+      (local.get $x)
+      (local.get $x)
+    )
+
+    ;; Another call, which will be treated the same even though it has some
+    ;; nested stuff on some parameters.
+    (call $called
+      (block (result (ref null func))
+        (drop
+          (i32.const 10)
+        )
+        (local.get $x)
+      )
+      (block (result (ref func))
+        (drop
+          (i32.const 10)
+        )
+        (local.get $y)
+      )
       (local.get $x)
       (local.get $x)
       (local.get $x)
@@ -188,7 +229,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller-caller (param $x anyref)
-    ;; Calls a function where we have no params to optimize whatsoever.
+    ;; Calls a function where we have no params to optimize whatsoever. Nothing
+    ;; should change here.
     (call $caller
       (local.get $x)
     )
