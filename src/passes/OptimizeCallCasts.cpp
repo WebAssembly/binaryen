@@ -262,9 +262,9 @@ struct OptimizeCallCasts : public Pass {
     };
 
     PassRunner nestedRunner(getPassRunner());
-    runner.add(std::make_unique<OptimizeCalls>());
-    runner.setIsNested(true);
-    runner.run();
+    nestedRunner.add(std::make_unique<OptimizeCalls>(analysis.map));
+    nestedRunner.setIsNested(true);
+    nestedRunner.run();
   }
 };
 
