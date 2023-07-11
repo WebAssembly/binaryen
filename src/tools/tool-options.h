@@ -84,7 +84,7 @@ struct ToolOptions : public Options {
         "be removed in the near future.",
         ToolOptionsCategory,
         Arguments::Zero,
-        [this](Options*, const std::string&) { useStandardFinalTypes = true; });
+        [](Options*, const std::string&) { useStandardFinalTypes = true; });
 
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
