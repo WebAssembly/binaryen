@@ -9,43 +9,28 @@
   ;; CHECK:      (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none (func (param (ref func) (ref func) (ref func) funcref funcref)))
 
   ;; CHECK:      (func $called (type $funcref_ref|func|_funcref_funcref_funcref_=>_none) (param $opt funcref) (param $already (ref func)) (param $also funcref) (param $no-cast funcref) (param $late-cast funcref)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (call $called_4
   ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (local.get $opt)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $already)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $already)
   ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (local.get $also)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $no-cast)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $late-cast)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $late-cast)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called
-    (param $opt funcref)  ;; optimizable
-    (param $already (ref func))   ;; already refined
-    (param $also funcref) ;; also optimizable
-    (param $no-cast funcref) ;; no cast at all
-    (param $late-cast funcref) ;; cast is not in entry
+    (param $opt funcref)        ;; optimizable
+    (param $already (ref func)) ;; already refined
+    (param $also funcref)       ;; also optimizable
+    (param $no-cast funcref)    ;; no cast at all
+    (param $late-cast funcref)  ;; cast is not in entry
 
     ;; The first and middle parameter will be optimized. This function will
-    ;; remain the same, but the call will refer to a new, refined function.
+    ;; turn into a call of a new, refined function, and add casts on the
+    ;; optimized params while doing so.
 
     (drop
       (ref.cast func
@@ -216,24 +201,24 @@
   )
 )
 
-;; CHECK:      (func $called_4 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $opt (ref func)) (param $already (ref func)) (param $also (ref func)) (param $no-cast funcref) (param $late-cast funcref)
+;; CHECK:      (func $called_4 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $0 (ref func)) (param $1 (ref func)) (param $2 (ref func)) (param $3 funcref) (param $4 funcref)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
-;; CHECK-NEXT:    (local.get $opt)
+;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
-;; CHECK-NEXT:    (local.get $already)
+;; CHECK-NEXT:    (local.get $1)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
-;; CHECK-NEXT:    (local.get $also)
+;; CHECK-NEXT:    (local.get $2)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (local.get $no-cast)
+;; CHECK-NEXT:   (local.get $3)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.const 0)
@@ -241,7 +226,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
-;; CHECK-NEXT:    (local.get $late-cast)
+;; CHECK-NEXT:    (local.get $4)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -254,13 +239,8 @@
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (func $two-casts (type $anyref_=>_none) (param $x anyref)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (call $two-casts_3
   ;; CHECK-NEXT:   (ref.cast null $A
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -308,15 +288,15 @@
   )
 )
 
-;; CHECK:      (func $two-casts_3 (type $ref?|$A|_=>_none) (param $x (ref null $A))
+;; CHECK:      (func $two-casts_3 (type $ref?|$A|_=>_none) (param $0 (ref null $A))
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.cast null $A
-;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.cast $A
-;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
@@ -326,16 +306,9 @@
   ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
 
   ;; CHECK:      (func $recursion (type $funcref_=>_none) (param $x funcref)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $recursion_1
   ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (block (result funcref)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -356,16 +329,16 @@
     )
   )
 )
-;; CHECK:      (func $recursion_1 (type $ref|func|_=>_none) (param $x (ref func))
+;; CHECK:      (func $recursion_1 (type $ref|func|_=>_none) (param $0 (ref func))
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
-;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $recursion_1
 ;; CHECK-NEXT:   (ref.as_func
 ;; CHECK-NEXT:    (block (result (ref func))
-;; CHECK-NEXT:     (local.get $x)
+;; CHECK-NEXT:     (local.get $0)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )

@@ -137,7 +137,10 @@ struct OptimizeCallCasts : public Pass {
       // Great, we can optimize! Create a copy of the function to modify, which
       // allows other uses of the function (exports, ref.funcs) to not be
       // affected by what we do, which is to refine the parameter and remove
-      // the cast in the function. That is, we go from
+      // the cast in the function. The original function is turned into an
+      // immediate call to the refined function, and that call will be optimized
+      // like all others, so the original function becomes just some casts + a
+      // call. That is, we go from
       //
       //   foo(x1);
       //   foo(x2);
@@ -151,14 +154,24 @@ struct OptimizeCallCasts : public Pass {
       //   foo_refined(x1);               ;; These changes to use foo_refined.
       //   foo_refined(x2);
       //   call_ref(x3, foo);             ;; This is unchanged.
-      //   function foo(x : X) {          ;; This function is unchanged.
-      //     cast<Y>(x);
-      //     [..]
+      //   function foo(x : X) {          ;; This original function just casts.
+      //     foo_refined(cast<Y>(x));     ;; calls.
       //   function foo_refined(y : Y) {  ;; This is the refined copy.
       //     [..]
       Name refinedName = Names::getValidFunctionName(*module, func->name);
-      auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
       info.refinedName = refinedName;
+      // Move the existing body to the refined function, and make the original
+      // function just call the refined function.
+      Builder builder(*module);
+      auto* refinedFunc = module->addFunction(builder.makeFunction(refinedName, func->type, {}, func->body));
+      std::vector<Expression*> paramGets;
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        paramGets.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+      }
+      // Note that we use the old name here, as the later code will optimize all
+      // calls to go from that name to the refined name. Doing that earlier here
+      // for this particular call would add complexity.
+      func->body = builder.makeCall(func->name, paramGets, func->getResults());
 
       // Generate the refined param types and apply them.
       auto params = func->getParams();
