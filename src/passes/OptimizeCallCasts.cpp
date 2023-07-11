@@ -36,7 +36,10 @@
 // TODO: Add similar code in OptimizeCallCasts as well, for entire type sets.
 //
 
+#include "ir/linear-execution.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -98,16 +101,16 @@ struct OptimizeCallCasts : public Pass {
           // etc.
           bool inEntry = true;
 
-          static void doNoteNonLinear(SubType* self, Expression** currp) {
+          static void doNoteNonLinear(Scanner* self, Expression** currp) {
             // This is the end of the first basic block.
-            inEntry = false;
+            self->inEntry = false;
           }
 
           void visitRefCast(RefCast* curr) {
             if (!inEntry) {
               return;
             }
-            if (auto* get = curr->value->dynCast<LocalGet>()) {
+            if (auto* get = curr->ref->dynCast<LocalGet>()) {
               if (curr->type != get->type &&
                   Type::isSubType(curr->type, get->type) &&
                   info.castParams.count(get->index) == 0) {
@@ -121,7 +124,7 @@ struct OptimizeCallCasts : public Pass {
         };
 
         Scanner scanner(info);
-        scanner.walk(func);
+        scanner.walkFunction(func);
       });
 
     // Optimize casts using all that we've found. First, create the refined
@@ -155,7 +158,7 @@ struct OptimizeCallCasts : public Pass {
       //   function foo_refined(y : Y) {  ;; This is the refined copy.
       //     [..]
       Name refinedName = Names::getValidFunctionName(*module, func->name);
-      auto* copy = ModuleUtils::copyFunction(func, *module, refinedName);
+      ModuleUtils::copyFunction(func, *module, refinedName);
       info.refinedName = refinedName;
 
       // Generate the refined param types and apply them.
@@ -197,7 +200,7 @@ struct OptimizeCallCasts : public Pass {
       }
 
       void visitCall(Call* curr) {
-        const auto& info = map[curr->target];
+        const auto& info = map.at(getModule()->getFunction(curr->target));
 
         if (info.refinedName.isNull()) {
           return;

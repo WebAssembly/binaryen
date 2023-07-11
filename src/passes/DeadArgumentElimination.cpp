@@ -226,13 +226,6 @@ struct DAE : public Pass {
     // for optimization opportunities.
     for (auto& [name, calls] : allCalls) {
       auto* func = module->getFunction(name);
-      // First, propagate casts to callers. This can allow more argument
-      // refining right after us, and we can do this even if we have unseen
-      // calls.
-      if (propagateCastsToCallers(func, calls, module)) {
-        changed.insert(func);
-      }
-
       // We can only do the further optimizations if we see all the calls and
       // can modify them.
       if (infoMap[name].hasUnseenCalls) {

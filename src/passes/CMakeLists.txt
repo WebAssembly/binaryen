@@ -69,6 +69,7 @@ set(passes_SOURCES
   NameTypes.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
+  OptimizeCallCasts.cpp
   OptimizeCasts.cpp
   OptimizeInstructions.cpp
   OptimizeForJS.cpp
