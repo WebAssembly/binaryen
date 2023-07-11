@@ -434,9 +434,10 @@ void MemoryPacking::optimizeSegmentOps(Module* module) {
         needsRefinalizing = true;
       } else if (!segment->isPassive) {
         // trap if (dest > memory.size | offset | size) != 0
+        auto mem = getModule()->getMemory(curr->memory);
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
-            OrInt32,
+            mem->is64() ? OrInt64 : OrInt32,
             makeGtShiftedMemorySize(builder, *getModule(), curr),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
