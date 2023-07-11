@@ -323,15 +323,19 @@
 (module
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
+  ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
+
   ;; CHECK:      (func $recursion (type $funcref_=>_none) (param $x funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:   (ref.as_func
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $recursion
-  ;; CHECK-NEXT:   (block (result funcref)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:  (call $recursion_1
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (block (result funcref)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -342,7 +346,9 @@
         (local.get $x)
       )
     )
-    ;; Call the function from within itself, to test
+    ;; Call the function from within itself, to test recursion. This call will
+    ;; be optimized into a call to a refined version of the function. That
+    ;; function's call should be optimized as well, to call itself.
     (call $recursion
       (block (result (ref null func))
         (local.get $x)
@@ -350,3 +356,17 @@
     )
   )
 )
+;; CHECK:      (func $recursion_1 (type $ref|func|_=>_none) (param $x (ref func))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.as_func
+;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $recursion_1
+;; CHECK-NEXT:   (ref.as_func
+;; CHECK-NEXT:    (block (result (ref func))
+;; CHECK-NEXT:     (local.get $x)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
