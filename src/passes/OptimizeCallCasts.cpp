@@ -219,7 +219,39 @@ struct OptimizeCallCasts : public Pass {
         // If the br_if is taken then we never reach B or the call itself, in
         // which case it could be invalid to perform a cast (perhaps the br_if
         // is branching away because the call would trap on the cast). To handle
-        // this,
+        // this, if there is a dangerous transfer of control flow then capture
+        // all parameters into locals, and use local.gets on the call itself;
+        // then adding a cost on one of those local.gets is always safe as the
+        // potential control flow transfer happened before.
+        bool transfers = false;
+        for (auto* operand : curr->operands) {
+          if (EffectAnalyzer(getPassOptions(), *getModule(), operand).transfersControlFlow()) {
+            transfers = true;
+          }
+        }
+        Builder builder(*getModule());
+        if (transfers) {
+          std::vector<Expression*> items;
+          for (auto*& operand : curr->operands) {
+            if (operand->type == Type::unreachable) {
+              // We can't assign this value to a local, but it does not matter.
+              items.push_back(operand);
+              operand = builder.makeUnreachable();
+            } else {
+              auto local = builder.addVar(getFunction(), operand->type);
+              items.push_back(builder.makeLocalSet(local, operand));
+              operand = builder.makeLocalGet(local, operand->type);
+            }
+          }
+        }
+
+        for (Index i = 0; i < curr->operands.size(); i++) {
+          auto iter = info.castParams.find(i);
+          if (iter != info.castParams.end()) {
+            auto castType = iter->second;
+            curr->operands[i] = builder.makeRefCast(curr->operands[i], castType);
+          }
+        }
       }
       // Test a recursive call XXX
     };
