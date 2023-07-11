@@ -362,7 +362,6 @@ private:
     }
   }
 
-
   // Given a function and all the calls to it, see if we can refine the type of
   // its arguments. If we only pass in a subtype, we may as well refine the type
   // to that.

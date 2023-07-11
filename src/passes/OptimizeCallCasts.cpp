@@ -225,7 +225,8 @@ struct OptimizeCallCasts : public Pass {
         // potential control flow transfer happened before.
         bool transfers = false;
         for (auto* operand : curr->operands) {
-          if (EffectAnalyzer(getPassOptions(), *getModule(), operand).transfersControlFlow()) {
+          if (EffectAnalyzer(getPassOptions(), *getModule(), operand)
+                .transfersControlFlow()) {
             transfers = true;
           }
         }
@@ -249,7 +250,8 @@ struct OptimizeCallCasts : public Pass {
           auto iter = info.castParams.find(i);
           if (iter != info.castParams.end()) {
             auto castType = iter->second;
-            curr->operands[i] = builder.makeRefCast(curr->operands[i], castType);
+            curr->operands[i] =
+              builder.makeRefCast(curr->operands[i], castType);
           }
         }
       }
