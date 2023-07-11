@@ -53,8 +53,8 @@ namespace wasm {
 namespace {
 
 struct OptimizeCallCasts : public Pass {
-  // Only changes heap types and parameter types (but not locals).
-  // XXX
+  // We add locals here, but we read from them immediately after writing to
+  // them (see below), which never requires a fixup.
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // Maps each heap type to the possible refinement of the types in their
@@ -260,7 +260,6 @@ struct OptimizeCallCasts : public Pass {
           }
         }
       }
-      // Test a recursive call XXX
     };
 
     PassRunner nestedRunner(getPassRunner());
