@@ -101,6 +101,9 @@
     )
   )
 )
+
+;; =============================================================================
+
 ;; CHECK:      (func $called_2 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $opt (ref func)) (param $already (ref func)) (param $also (ref func)) (param $no-cast funcref) (param $late-cast funcref)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
@@ -127,6 +130,67 @@
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
 ;; CHECK-NEXT:    (local.get $late-cast)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (func $two-casts (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-casts (param $x (ref null any))
+    ;; Two casts appear here. We will simply apply the first of the two (even
+    ;; though it is less refined; in an optimized build, other passes would have
+    ;; left only the more refined one anyhow, so we don't try hard).
+    (drop
+      (ref.cast null $A
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (call $two-casts_2
+  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x anyref)
+    (call $two-casts
+      (local.get $x)
+    )
+  )
+)
+;; CHECK:      (func $two-casts_2 (type $ref?|$A|_=>_none) (param $x (ref null $A))
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast null $A
+;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (ref.cast $A
+;; CHECK-NEXT:    (local.get $x)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
