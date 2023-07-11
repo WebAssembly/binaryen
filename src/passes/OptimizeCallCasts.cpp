@@ -61,6 +61,12 @@ struct OptimizeCallCasts : public Pass {
       return;
     }
 
+    auto& options = getPassOptions();
+    if (options.shrinkLevel || options.optimizeLevel < 3) {
+      // We are not optimizing aggressively for speed, leave.
+      return;
+    }
+
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
@@ -73,7 +79,7 @@ struct OptimizeCallCasts : public Pass {
       std::unordered_map<Index, Type> castParams;
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<Info, Mutable> analysis(
+    ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
         if (func->imported()) {
           return;
@@ -102,14 +108,13 @@ struct OptimizeCallCasts : public Pass {
               return;
             }
             if (auto* get = curr->value->dynCast<LocalGet>()) {
-              // Note that if we see more than one cast we keep the first one.
-              // This is not important in optimized code, as the most refined
-              // cast would be the only one to exist there.
               if (curr->type != get->type &&
                   Type::isSubType(curr->type, get->type) &&
                   info.castParams.count(get->index) == 0) {
                 info.castParams[get->index] = curr->type;
-                /// XXX remove the cast here too. We already have all the info, and can avoid another pass later
+                // Note that if we see more than one cast we keep the first one.
+                // This is not important in optimized code, as the most refined
+                // cast would be the only one to exist there.
               }
             }
           }
@@ -159,7 +164,7 @@ struct OptimizeCallCasts : public Pass {
       Name copyName = Names::getValidFunctionName(*module, func->name);
       auto* copy = ModuleUtils::copyFunction(func, *module, copyName);
 
-      // Generate the refined param types.
+      // Generate the refined param types and apply them.
       auto params = func->getParams();
       std::vector<Type> newParams;
       for (Index i = 0; i < params.size(); i++) {
@@ -170,10 +175,14 @@ struct OptimizeCallCasts : public Pass {
           newParams.push_back(params[i]);
         }
       }
-      // XXX how do we make this unique?
-      func->type = Signature(newParams, func->getResults());
+      TypeUpdating::updateParamTypes(func, newParams, *module);
 
-      // Remove the casts
+      // Note that we don't remove the cast in the function. Now that we have
+      // refined the parameter, other optimizations can trivially remove them
+      // later (since those casts are from the same type to the same type, now).
+
+      // Finally, modify the calls to this.
+      // if a param transfers control flow...
       for (auto& [index, type] : info.castParams) {
       }
     }
@@ -183,11 +192,6 @@ struct OptimizeCallCasts : public Pass {
                                const std::vector<Call*>& calls,
                                Module* module) {
     if (!module->features.hasGC()) {
-      return false;
-    }
-    auto& options = getPassOptions();
-    if (options.shrinkLevel || options.optimizeLevel < 3) {
-      // We are not optimizing aggressively for speed, so give up.
       return false;
     }
 
