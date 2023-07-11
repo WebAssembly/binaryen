@@ -64,12 +64,6 @@ struct OptimizeCallCasts : public Pass {
       return;
     }
 
-    auto& options = getPassOptions();
-    if (options.shrinkLevel || options.optimizeLevel < 3) {
-      // We are not optimizing aggressively for speed, leave.
-      return;
-    }
-
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
