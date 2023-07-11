@@ -71,13 +71,17 @@ struct OptimizeCallCasts : public Pass {
     // function in parallel.
 
     struct Info {
-      // The calls.
-      std::vector<Call*> calls;
-
       // A map of param indexes to the types they are definitely cast to if the
       // function is entered.
       std::unordered_map<Index, Type> castParams;
+
+      // If we end up optimizing a function, we'll create a refined copy of it
+      // (see below), and place the name for it here. If this is null, then we
+      // did not optimize.
+      Name refinedName;
     };
+
+    using InfoMap = ModuleUtils::ParallelFunctionAnalysis<Info>::Map;
 
     ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
       *module, [&](Function* func, Info& info) {
@@ -97,10 +101,6 @@ struct OptimizeCallCasts : public Pass {
           static void doNoteNonLinear(SubType* self, Expression** currp) {
             // This is the end of the first basic block.
             inEntry = false;
-          }
-
-          void visitCall(Call* curr) {
-            info.calls.push_back(curr);
           }
 
           void visitRefCast(RefCast* curr) {
@@ -124,16 +124,9 @@ struct OptimizeCallCasts : public Pass {
         scanner.walk(func);
       });
 
-    // Find all the calls going to each function.
-    std::unordered_map<Name, std::vector<Call*>> funcCalls;
-
-    for (auto& [func, info] : analysis.map) {
-      for (auto* call : info.calls) {
-        funcCalls[call->target].push_back(call);
-      }
-    }
-
-    // Optimize casts using all that we've found.
+    // Optimize casts using all that we've found. First, create the refined
+    // versions of functions where we found we could optimize.
+    bool optimized = false;
     for (auto& [func, info] : analysis.map) {
       if (info.castParams.empty()) {
         continue;
@@ -161,8 +154,9 @@ struct OptimizeCallCasts : public Pass {
       //     [..]
       //   function foo_refined(y : Y) {  ;; This is the refined copy.
       //     [..]
-      Name copyName = Names::getValidFunctionName(*module, func->name);
-      auto* copy = ModuleUtils::copyFunction(func, *module, copyName);
+      Name refinedName = Names::getValidFunctionName(*module, func->name);
+      auto* copy = ModuleUtils::copyFunction(func, *module, refinedName);
+      info.refinedName = refinedName;
 
       // Generate the refined param types and apply them.
       auto params = func->getParams();
@@ -177,40 +171,63 @@ struct OptimizeCallCasts : public Pass {
       }
       TypeUpdating::updateParamTypes(func, newParams, *module);
 
-      // Note that we don't remove the cast in the function. Now that we have
-      // refined the parameter, other optimizations can trivially remove them
-      // later (since those casts are from the same type to the same type, now).
-
-      // Finally, modify the calls to this.
-      // if a param transfers control flow...
-      for (auto& [index, type] : info.castParams) {
-      }
+      optimized = true;
     }
 
-/*
-  bool propagateCastsToCallers(Function* func,
-                               const std::vector<Call*>& calls,
-                               Module* module) {
-    if (!module->features.hasGC()) {
-      return false;
+    if (!optimized) {
+      return;
     }
 
-
-    EntryScanner scanner;
-    scanner.walk(func);
-
-    if (scanner.castParams.empty()) {
-      return false;
-    }
-
-    // We found parameters that are refined. Duplicate the function and refine
+    // We've created refined versions of the functions we found cast params in.
+    // The last step is to optimize calls to the original functions to point to
+    // the refined versions, and to add casts.
     //
-  }
-*/
+    // Note that we don't remove the cast in each refined function. Since we
+    // refined the parameter, other optimizations can trivially remove them
+    // later (since those casts are from the same type to the same type, now).
+    struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
+      bool isFunctionParallel() override { return true; }
 
-    // TODO: we could do this only in relevant functions perhaps
-    // XXX?
-    ReFinalize().run(getPassRunner(), module);
+      const InfoMap& map;
+
+      OptimizeCalls(const InfoMap& map) : map(map) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<OptimizeCalls>(map);
+      }
+
+      void visitCall(Call* curr) {
+        const auto& info = map[curr->target];
+
+        if (info.refinedName.isNull()) {
+          return;
+        }
+
+        // This is a call we want to optimize. First, switch it to the refined
+        // target.
+        curr->target = info.refinedName;
+
+        // Next, add casts of the refined parameters. One thing we need to be
+        // careful with is transfers of control flow, like this:
+        //
+        //  (call $foo
+        //    (A)
+        //    (br_if ..)
+        //    (B)
+        //  )
+        //
+        // If the br_if is taken then we never reach B or the call itself, in
+        // which case it could be invalid to perform a cast (perhaps the br_if
+        // is branching away because the call would trap on the cast). To handle
+        // this,
+      }
+      // Test a recursive call XXX
+    };
+
+    PassRunner nestedRunner(getPassRunner());
+    runner.add(std::make_unique<OptimizeCalls>());
+    runner.setIsNested(true);
+    runner.run();
   }
 };
 
