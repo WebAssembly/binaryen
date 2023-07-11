@@ -216,8 +216,6 @@
   )
 )
 
-;; =============================================================================
-
 ;; CHECK:      (func $called_4 (type $ref|func|_ref|func|_ref|func|_funcref_funcref_=>_none) (param $opt (ref func)) (param $already (ref func)) (param $also (ref func)) (param $no-cast funcref) (param $late-cast funcref)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.as_func
@@ -309,6 +307,7 @@
     )
   )
 )
+
 ;; CHECK:      (func $two-casts_3 (type $ref?|$A|_=>_none) (param $x (ref null $A))
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.cast null $A
@@ -321,3 +320,33 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (func $recursion (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $recursion
+  ;; CHECK-NEXT:   (block (result funcref)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $recursion (param $x (ref null func))
+    ;; Cast the parameter, allowing us to optimize.
+    (drop
+      (ref.cast func
+        (local.get $x)
+      )
+    )
+    ;; Call the function from within itself, to test
+    (call $recursion
+      (block (result (ref null func))
+        (local.get $x)
+      )
+    )
+  )
+)
