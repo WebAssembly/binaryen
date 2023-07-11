@@ -161,10 +161,14 @@ struct OptimizeCallCasts : public Pass {
       Name refinedName = Names::getValidFunctionName(*module, func->name);
       info.refinedName = refinedName;
       // Move the existing body to the refined function, and make the original
-      // function just call the refined function.
+      // function just call the refined function. To keep debug info etc., we
+      // copy the original function, but we manually transfer the actual body
+      // to avoid copying the expressions.
       Builder builder(*module);
-      auto* refinedFunc = module->addFunction(
-        builder.makeFunction(refinedName, func->type, {}, func->body));
+      auto* trueBody = func->body;
+      func->body = nullptr;
+      auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
+      refinedFunc->body = trueBody;
       std::vector<Expression*> paramGets;
       for (Index i = 0; i < func->getNumParams(); i++) {
         paramGets.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
@@ -173,8 +177,6 @@ struct OptimizeCallCasts : public Pass {
       // calls to go from that name to the refined name. Doing that earlier here
       // for this particular call would add complexity.
       func->body = builder.makeCall(func->name, paramGets, func->getResults());
-      // TODO: Copy debug info, like local names, from the old function to the
-      //       new.
 
       // Generate the refined param types and apply them.
       auto params = func->getParams();
