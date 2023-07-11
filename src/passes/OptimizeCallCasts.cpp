@@ -152,7 +152,7 @@ struct OptimizeCallCasts : public Pass {
       //   function foo_refined(y : Y) {  ;; This is the refined copy.
       //     [..]
       Name refinedName = Names::getValidFunctionName(*module, func->name);
-      ModuleUtils::copyFunction(func, *module, refinedName);
+      auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedName);
       info.refinedName = refinedName;
 
       // Generate the refined param types and apply them.
@@ -166,7 +166,8 @@ struct OptimizeCallCasts : public Pass {
           newParams.push_back(params[i]);
         }
       }
-      TypeUpdating::updateParamTypes(func, newParams, *module);
+      TypeUpdating::updateParamTypes(refinedFunc, newParams, *module);
+      refinedFunc->setParams(newParams);
 
       optimized = true;
     }
