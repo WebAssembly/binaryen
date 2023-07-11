@@ -78,6 +78,12 @@
 ;; CHECK-NEXT:   --experimental-poppy                 Parse wast files as Poppy IR for testing
 ;; CHECK-NEXT:                                        purposes.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --standard-final-types               Parse type definitions that do not use
+;; CHECK-NEXT:                                        'sub' as final, as the spec requires.
+;; CHECK-NEXT:                                        This behavior will become the default and
+;; CHECK-NEXT:                                        this option will be removed in the near
+;; CHECK-NEXT:                                        future.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-sign-ext                    Enable sign extension operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-sign-ext                   Disable sign extension operations

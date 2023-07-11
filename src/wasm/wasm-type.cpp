@@ -39,6 +39,9 @@
 
 namespace wasm {
 
+// TODO: remove this.
+bool useStandardFinalTypes = false;
+
 namespace {
 
 struct TypeInfo {

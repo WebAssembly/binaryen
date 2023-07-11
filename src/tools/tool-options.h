@@ -27,6 +27,8 @@
 
 namespace wasm {
 
+extern bool useStandardFinalTypes;
+
 struct ToolOptions : public Options {
   PassOptions passOptions;
 
@@ -68,13 +70,22 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Arguments::Zero,
            [this](Options*, const std::string&) { quiet = true; })
+      .add("--experimental-poppy",
+           "",
+           "Parse wast files as Poppy IR for testing purposes.",
+           ToolOptionsCategory,
+           Arguments::Zero,
+           [this](Options*, const std::string&) { profile = IRProfile::Poppy; })
       .add(
-        "--experimental-poppy",
+        "--standard-final-types",
         "",
-        "Parse wast files as Poppy IR for testing purposes.",
+        "Parse type definitions that do not use 'sub' as final, as the spec "
+        "requires. This behavior will become the default and this option will "
+        "be removed in the near future.",
         ToolOptionsCategory,
         Arguments::Zero,
-        [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
+        [this](Options*, const std::string&) { useStandardFinalTypes = true; });
+
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")

@@ -45,6 +45,10 @@ namespace wasm {
 // for tests.
 void destroyAllTypesForTestingPurposesOnly();
 
+// Parse types without `sub` as final to match the spec. TODO: make this
+// behavior the default and remove this global variable.
+extern bool useStandardFinalTypes;
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.

@@ -926,11 +926,14 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
     Element* super = nullptr;
+    bool isFinal = useStandardFinalTypes;
     if (kind == SUB) {
       Index i = 1;
       if (*def[i] == FINAL) {
-        builder[index].setFinal();
+        isFinal = true;
         ++i;
+      } else {
+        isFinal = false;
       }
       if (def[i]->dollared()) {
         super = def[i];
@@ -1002,6 +1005,9 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
         throw ParseException("unknown supertype", super->line, super->col);
       }
       builder[index].subTypeOf(builder[it->second]);
+    }
+    if (isFinal) {
+      builder[index].setFinal();
     }
     ++index;
   });
