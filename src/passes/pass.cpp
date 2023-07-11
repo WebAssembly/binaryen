@@ -640,7 +640,7 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
       // Optimize call casts at the end, and only if optimizing heavily for
       // speed, as this can increase code size, and other opts may achieve
       // similar results with less cost.
-      //addIfNoDWARFIssues("optimize-call-casts");
+      addIfNoDWARFIssues("optimize-call-casts");
     }
   }
   // TODO: generate-global-effects here, right before function passes, then
