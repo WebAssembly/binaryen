@@ -672,7 +672,7 @@
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
-  ;; CHECK:      (type $sub-struct (struct_subtype (field i32) $struct))
+  ;; CHECK:      (type $sub-struct (sub $struct (struct (field i32))))
   (type $sub-struct (struct_subtype i32 $struct))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
@@ -721,7 +721,7 @@
   ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) $super-struct))
+  ;; CHECK:      (type $struct (sub $super-struct (struct (field i32))))
   (type $struct (struct_subtype i32 $super-struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -779,7 +779,7 @@
   ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $struct (struct_subtype (field i32) $super-struct))
+  ;; CHECK:      (type $struct (sub $super-struct (struct (field i32))))
   (type $struct (struct_subtype i32 $super-struct))
 
   ;; CHECK:      (type $ref?|$struct|_ref?|$super-struct|_=>_none (func (param (ref null $struct) (ref null $super-struct))))
@@ -890,10 +890,10 @@
   ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
+  ;; CHECK:      (type $struct1 (sub $super-struct (struct (field i32) (field f32))))
   (type $struct1 (struct_subtype i32 f32 $super-struct))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $super-struct))
+  ;; CHECK:      (type $struct2 (sub $super-struct (struct (field i32) (field f64))))
   (type $struct2 (struct_subtype i32 f64 $super-struct))
 
 
@@ -983,10 +983,10 @@
   ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct_subtype i32 data))
 
-  ;; CHECK:      (type $struct1 (struct_subtype (field i32) (field f32) $super-struct))
+  ;; CHECK:      (type $struct1 (sub $super-struct (struct (field i32) (field f32))))
   (type $struct1 (struct_subtype i32 f32 $super-struct))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $super-struct))
+  ;; CHECK:      (type $struct2 (sub $super-struct (struct (field i32) (field f64))))
   (type $struct2 (struct_subtype i32 f64 $super-struct))
 
 
@@ -1231,10 +1231,10 @@
     ;; CHECK-NEXT:  (type $struct (struct (field i32)))
     (type $struct (struct_subtype i32 data))
 
-    ;; CHECK:       (type $sub-struct1 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
     (type $sub-struct1 (struct_subtype i32 $struct))
 
-    ;; CHECK:       (type $sub-struct2 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
     (type $sub-struct2 (struct_subtype i32 $struct))
   )
 
@@ -1285,10 +1285,10 @@
     ;; CHECK-NEXT:  (type $struct (struct (field i32)))
     (type $struct (struct_subtype i32 data))
 
-    ;; CHECK:       (type $sub-struct1 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
     (type $sub-struct1 (struct_subtype i32 $struct))
 
-    ;; CHECK:       (type $sub-struct2 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
     (type $sub-struct2 (struct_subtype i32 $struct))
   )
 
@@ -1342,10 +1342,10 @@
     ;; CHECK-NEXT:  (type $struct (struct (field i32)))
     (type $struct (struct_subtype i32 data))
 
-    ;; CHECK:       (type $sub-struct1 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
     (type $sub-struct1 (struct_subtype i32 $struct))
 
-    ;; CHECK:       (type $sub-struct2 (struct_subtype (field i32) $struct))
+    ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
     (type $sub-struct2 (struct_subtype i32 $struct))
   )
 

@@ -256,6 +256,22 @@ TEST_F(TypeTest, InvalidSupertype) {
   EXPECT_EQ(error->index, 1u);
 }
 
+TEST_F(TypeTest, InvalidFinalSupertype) {
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setFinal();
+  builder[1].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->index, 1u);
+}
+
 TEST_F(TypeTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
@@ -432,6 +448,22 @@ TEST_F(TypeTest, CanonicalizeSupertypes) {
   EXPECT_NE(built[3], built[4]);
   EXPECT_NE(built[3], built[5]);
   EXPECT_NE(built[4], built[5]);
+}
+
+TEST_F(TypeTest, CanonicalizeFinal) {
+  // Types are different if their finality flag is different.
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setFinal();
+
+  auto result = builder.build();
+  ASSERT_TRUE(result);
+  auto built = *result;
+
+  EXPECT_NE(built[0], built[1]);
+  EXPECT_TRUE(built[0].isFinal());
+  EXPECT_FALSE(built[1].isFinal());
 }
 
 TEST_F(TypeTest, HeapTypeConstructors) {
@@ -853,13 +885,13 @@ TEST_F(TypeTest, TestSubTypes) {
     {Type(built[0], Nullable), Type(built[1], Nullable)},
     wasmBuilder.makeNop()));
   SubTypes subTypes(wasm);
-  auto subTypes0 = subTypes.getStrictSubTypes(built[0]);
+  auto subTypes0 = subTypes.getImmediateSubTypes(built[0]);
   EXPECT_TRUE(subTypes0.size() == 1 && subTypes0[0] == built[1]);
-  auto subTypes0Inclusive = subTypes.getAllSubTypes(built[0]);
+  auto subTypes0Inclusive = subTypes.getSubTypes(built[0]);
   EXPECT_TRUE(subTypes0Inclusive.size() == 2 &&
               subTypes0Inclusive[0] == built[1] &&
               subTypes0Inclusive[1] == built[0]);
-  auto subTypes1 = subTypes.getStrictSubTypes(built[1]);
+  auto subTypes1 = subTypes.getImmediateSubTypes(built[1]);
   EXPECT_EQ(subTypes1.size(), 0u);
 }
 

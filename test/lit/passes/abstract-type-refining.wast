@@ -21,18 +21,18 @@
   ;; YESTNH-NEXT:  (type $none_=>_none (func))
 
   ;; YESTNH:       (type $B (struct ))
-  ;; NO_TNH:       (type $B (struct_subtype  $A))
+  ;; NO_TNH:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; YESTNH:       (type $C (struct_subtype  $B))
-  ;; NO_TNH:       (type $C (struct_subtype  $B))
+  ;; YESTNH:       (type $C (sub $B (struct )))
+  ;; NO_TNH:       (type $C (sub $B (struct )))
   (type $C (struct_subtype $B))
 
-  ;; NO_TNH:       (type $D (struct_subtype  $C))
+  ;; NO_TNH:       (type $D (sub $C (struct )))
   (type $D (struct_subtype $C))
 
-  ;; YESTNH:       (type $E (struct_subtype  $C))
-  ;; NO_TNH:       (type $E (struct_subtype  $D))
+  ;; YESTNH:       (type $E (sub $C (struct )))
+  ;; NO_TNH:       (type $E (sub $D (struct )))
   (type $E (struct_subtype $D))
 
   ;; YESTNH:       (type $anyref_=>_none (func (param anyref)))
@@ -284,16 +284,16 @@
     ;; NO_TNH-NEXT:  (type $A (struct ))
     (type $A (struct))
 
-    ;; YESTNH:       (type $B1 (struct_subtype  $A))
+    ;; YESTNH:       (type $B1 (sub $A (struct )))
 
     ;; YESTNH:       (type $anyref_=>_none (func (param anyref)))
 
-    ;; YESTNH:       (type $B (struct_subtype  $A))
-    ;; NO_TNH:       (type $B1 (struct_subtype  $A))
+    ;; YESTNH:       (type $B (sub $A (struct )))
+    ;; NO_TNH:       (type $B1 (sub $A (struct )))
 
     ;; NO_TNH:       (type $anyref_=>_none (func (param anyref)))
 
-    ;; NO_TNH:       (type $B (struct_subtype  $A))
+    ;; NO_TNH:       (type $B (sub $A (struct )))
     (type $B (struct_subtype $A))
 
     (type $B1 (struct_subtype $A)) ;; this is a new type
@@ -384,7 +384,7 @@
 
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $B1 (struct ))
-    ;; NO_TNH:       (type $B1 (struct_subtype  $A))
+    ;; NO_TNH:       (type $B1 (sub $A (struct )))
     (type $B1 (struct_subtype $A)) ;; this is a new type
   )
 
@@ -467,12 +467,12 @@
   ;; NO_TNH-NEXT:  (type $A (struct ))
   (type $A (struct))
 
-  ;; NO_TNH:       (type $B (struct_subtype  $A))
+  ;; NO_TNH:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $C (struct ))
-  ;; NO_TNH:       (type $C (struct_subtype  $B))
+  ;; NO_TNH:       (type $C (sub $B (struct )))
   (type $C (struct_subtype $B))
 
   ;; YESTNH:       (type $anyref_=>_none (func (param anyref)))
@@ -842,14 +842,14 @@
     ;; NO_TNH:       (type $A (struct ))
     (type $A (struct))
 
-    ;; NO_TNH:       (type $B (struct_subtype  $A))
+    ;; NO_TNH:       (type $B (sub $A (struct )))
     (type $B (struct_subtype $A))
 
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $anyref_=>_none (func (param anyref)))
 
     ;; YESTNH:       (type $C1 (struct ))
-    ;; NO_TNH:       (type $C1 (struct_subtype  $B))
+    ;; NO_TNH:       (type $C1 (sub $B (struct )))
     (type $C1 (struct_subtype $B))
 
     (type $C2 (struct_subtype $B))
@@ -1006,12 +1006,12 @@
   ;; NO_TNH-NEXT:  (type $A (func))
   (type $A (func))
 
-  ;; YESTNH:       (type $B (func_subtype $A))
-  ;; NO_TNH:       (type $B (func_subtype $A))
+  ;; YESTNH:       (type $B (sub $A (func)))
+  ;; NO_TNH:       (type $B (sub $A (func)))
   (type $B (func_subtype $A))
 
-  ;; YESTNH:       (type $C (func_subtype $B))
-  ;; NO_TNH:       (type $C (func_subtype $B))
+  ;; YESTNH:       (type $C (sub $B (func)))
+  ;; NO_TNH:       (type $C (sub $B (func)))
   (type $C (func_subtype $B))
 
   ;; YESTNH:       (type $funcref_=>_none (func (param funcref)))
@@ -1101,15 +1101,15 @@
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $funcref_=>_none (func (param funcref)))
 
-  ;; YESTNH:       (type $B (func_subtype $A))
+  ;; YESTNH:       (type $B (sub $A (func)))
   ;; NO_TNH:      (rec
   ;; NO_TNH-NEXT:  (type $funcref_=>_none (func (param funcref)))
 
-  ;; NO_TNH:       (type $B (func_subtype $A))
+  ;; NO_TNH:       (type $B (sub $A (func)))
   (type $B (func_subtype $A))
 
-  ;; YESTNH:       (type $C (func_subtype $B))
-  ;; NO_TNH:       (type $C (func_subtype $B))
+  ;; YESTNH:       (type $C (sub $B (func)))
+  ;; NO_TNH:       (type $C (sub $B (func)))
   (type $C (func_subtype $B))
 
   ;; YESTNH:      (elem declare func $A $C)
@@ -1220,12 +1220,12 @@
   ;; NO_TNH:       (type $A (array (mut i32)))
   (type $A (array (mut i32)))
 
-  ;; YESTNH:       (type $B (array_subtype (mut i32) $A))
-  ;; NO_TNH:       (type $B (array_subtype (mut i32) $A))
+  ;; YESTNH:       (type $B (sub $A (array (mut i32))))
+  ;; NO_TNH:       (type $B (sub $A (array (mut i32))))
   (type $B (array_subtype (mut i32) $A))
 
-  ;; YESTNH:       (type $C (array_subtype (mut i32) $B))
-  ;; NO_TNH:       (type $C (array_subtype (mut i32) $B))
+  ;; YESTNH:       (type $C (sub $B (array (mut i32))))
+  ;; NO_TNH:       (type $C (sub $B (array (mut i32))))
   (type $C (array_subtype (mut i32) $B))
 
   ;; YESTNH:      (global $A (ref $A) (array.new $A

@@ -14,12 +14,12 @@
     ;; OPEN_WORLD-NEXT:  (type $A-super (func))
     (type $A-super (func))
 
-    ;; CHECK:       (type $A (func_subtype $A-super))
-    ;; OPEN_WORLD:       (type $A (func_subtype $A-super))
+    ;; CHECK:       (type $A (sub $A-super (func)))
+    ;; OPEN_WORLD:       (type $A (sub $A-super (func)))
     (type $A (func_subtype $A-super))
 
-    ;; CHECK:       (type $A-sub (func_subtype $A))
-    ;; OPEN_WORLD:       (type $A-sub (func_subtype $A))
+    ;; CHECK:       (type $A-sub (sub $A (func)))
+    ;; OPEN_WORLD:       (type $A-sub (sub $A (func)))
     (type $A-sub (func_subtype $A))
 
     ;; CHECK:       (type $B (func))
@@ -1372,12 +1372,12 @@
   ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
   (type $struct (struct (field funcref)))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field funcref) $struct))
-  ;; OPEN_WORLD:      (type $substruct (struct_subtype (field funcref) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field funcref))))
+  ;; OPEN_WORLD:      (type $substruct (sub $struct (struct (field funcref))))
   (type $substruct (struct_subtype (field funcref) $struct))
 
-  ;; CHECK:      (type $subsubstruct (struct_subtype (field funcref) $substruct))
-  ;; OPEN_WORLD:      (type $subsubstruct (struct_subtype (field funcref) $substruct))
+  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field funcref))))
+  ;; OPEN_WORLD:      (type $subsubstruct (sub $substruct (struct (field funcref))))
   (type $subsubstruct (struct_subtype (field funcref) $substruct))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct

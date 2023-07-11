@@ -123,9 +123,9 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (struct ))
 
-    ;; CHECK:       (type $struct-sub2 (struct_subtype  $struct))
+    ;; CHECK:       (type $struct-sub2 (sub $struct (struct )))
 
-    ;; CHECK:       (type $struct-sub1 (struct_subtype  $struct))
+    ;; CHECK:       (type $struct-sub1 (sub $struct (struct )))
 
     ;; CHECK:       (type $none_=>_none (func))
 
@@ -692,7 +692,7 @@
 (module
   ;; CHECK:      (type $A (func (param i32)))
   (type $A (func_subtype (param i32) func))
-  ;; CHECK:      (type $B (func_subtype (param i32) $A))
+  ;; CHECK:      (type $B (sub $A (func (param i32))))
   (type $B (func_subtype (param i32) $A))
 
   ;; CHECK:      (func $bar (type $B) (param $x i32)
@@ -785,7 +785,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (func (param (ref null $B)) (result (ref null $A))))
     (type $A (func         (param (ref null $B)) (result (ref null $A))))
-    ;; CHECK:       (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+    ;; CHECK:       (type $B (sub $A (func (param (ref null $A)) (result (ref null $B)))))
     (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
   )
 
@@ -807,7 +807,7 @@
 (module
   ;; CHECK:      (type $parent (func (param anyref)))
   (type $parent (func (param anyref)))
-  ;; CHECK:      (type $child (func_subtype (param anyref) $parent))
+  ;; CHECK:      (type $child (sub $parent (func (param anyref))))
   (type $child (func_subtype (param anyref) $parent))
 
   ;; CHECK:      (type $none_=>_none (func))

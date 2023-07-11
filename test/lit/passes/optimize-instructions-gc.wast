@@ -15,7 +15,7 @@
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32) (field f32))))
 
   ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
@@ -24,14 +24,14 @@
 
   ;; CHECK:      (type $void (func))
 
-  ;; CHECK:      (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  ;; CHECK:      (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
   (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
 
   (type $empty (struct))
 
-  ;; CHECK:      (type $void2 (func_subtype $void))
+  ;; CHECK:      (type $void2 (sub $void (func)))
 
-  ;; CHECK:      (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  ;; CHECK:      (type $C (sub $A (struct (field i32) (field i32) (field f64))))
   (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
 
   (type $void (func))

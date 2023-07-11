@@ -2943,12 +2943,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void handleSignature(HeapType curr, Name name = Name()) {
     Signature sig = curr.getSignature();
-    bool hasSupertype = !name.is() && !!curr.getSuperType();
-    if (hasSupertype) {
-      o << "(func_subtype";
-    } else {
-      o << "(func";
-    }
+    o << "(func";
     if (name.is()) {
       o << " $" << name;
       if (currModule && currModule->features.hasGC()) {
@@ -2978,10 +2973,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')';
     }
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "func");
-    }
     o << ")";
   }
   void handleFieldBody(const Field& field) {
@@ -3004,27 +2995,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void handleArray(HeapType curr) {
-    bool hasSupertype = !!curr.getSuperType();
-    if (hasSupertype) {
-      o << "(array_subtype ";
-    } else {
-      o << "(array ";
-    }
+    o << "(array ";
     handleFieldBody(curr.getArray().element);
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "data");
-    }
     o << ')';
   }
   void handleStruct(HeapType curr) {
-    bool hasSupertype = !!curr.getSuperType();
     const auto& fields = curr.getStruct().fields;
-    if (hasSupertype) {
-      o << "(struct_subtype ";
-    } else {
-      o << "(struct ";
-    }
+    o << "(struct ";
     auto sep = "";
     for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
@@ -3037,13 +3014,24 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
       sep = " ";
     }
-    if (hasSupertype) {
-      o << ' ';
-      printSupertypeOr(curr, "data");
-    }
     o << ')';
   }
   void handleHeapType(HeapType type) {
+    auto super = type.getSuperType();
+    bool useSub = false;
+    // TODO: Once we parse MVP signature types as final, use the MVP shorthand
+    // for final types without supertypes.
+    if (super || type.isFinal()) {
+      useSub = true;
+      o << "(sub ";
+      if (type.isFinal()) {
+        o << "final ";
+      }
+      if (super) {
+        TypeNamePrinter(o, currModule).print(*super);
+        o << ' ';
+      }
+    }
     if (type.isSignature()) {
       handleSignature(type);
     } else if (type.isArray()) {
@@ -3052,6 +3040,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleStruct(type);
     } else {
       o << type;
+    }
+    if (useSub) {
+      o << ')';
     }
   }
   void visitExport(Export* curr) {

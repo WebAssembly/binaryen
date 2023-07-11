@@ -551,7 +551,7 @@
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32))))
   (type $substruct (struct_subtype i32 $struct))
 
   ;; CHECK:      (type $ref?|$substruct|_=>_none (func (param (ref null $substruct))))
@@ -598,7 +598,7 @@
   (type $struct (struct (mut i32)))
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)))))
   (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (type $ref?|$substruct|_=>_none (func (param (ref null $substruct))))
@@ -655,7 +655,7 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -704,7 +704,7 @@
   (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -764,7 +764,7 @@
   (type $struct (struct i32))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -820,7 +820,7 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field i32) (field f64) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -879,7 +879,7 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $substruct (struct_subtype (field (mut i32)) (field f64) $struct))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
   ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
@@ -942,10 +942,10 @@
   ;; CHECK:      (type $struct1 (struct (field i32)))
   (type $struct1 (struct i32))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field f64) $struct1))
+  ;; CHECK:      (type $struct2 (sub $struct1 (struct (field i32) (field f64))))
   (type $struct2 (struct_subtype i32 f64 $struct1))
 
-  ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field f64) (field anyref) $struct2))
+  ;; CHECK:      (type $struct3 (sub $struct2 (struct (field i32) (field f64) (field anyref))))
   (type $struct3 (struct_subtype i32 f64 anyref $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -1077,10 +1077,10 @@
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
   (type $struct1 (struct i32 i32))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field i32) (field i32) (field f64) (field f64) $struct1))
+  ;; CHECK:      (type $struct2 (sub $struct1 (struct (field i32) (field i32) (field f64) (field f64))))
   (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
 
-  ;; CHECK:      (type $struct3 (struct_subtype (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref) $struct2))
+  ;; CHECK:      (type $struct3 (sub $struct2 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref))))
   (type $struct3 (struct_subtype i32 i32 f64 f64 anyref anyref $struct2))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
@@ -1306,9 +1306,9 @@
 (module
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
-  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
+  ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
-  ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
+  ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -1404,10 +1404,10 @@
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
 
-  ;; CHECK:      (type $struct2 (struct_subtype (field (mut i32)) (field f64) $struct1))
+  ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
 
-  ;; CHECK:      (type $struct3 (struct_subtype (field (mut i32)) (field f64) (field anyref) $struct2))
+  ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
   ;; CHECK:      (type $ref?|$struct2|_=>_none (func (param (ref null $struct2))))
@@ -1630,10 +1630,10 @@
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (mut i32)))
 
-  ;; CHECK:      (type $B (struct_subtype (field (mut i32)) $A))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (struct_subtype (mut i32) $A))
 
-  ;; CHECK:      (type $C (struct_subtype (field (mut i32)) $B))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
   (type $C (struct_subtype (mut i32) $B))
 
   ;; CHECK:      (type $none_=>_none (func))
@@ -2228,7 +2228,7 @@
    ;; CHECK:      (rec
    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
    (type $A (struct (field (mut i32))))
-   ;; CHECK:       (type $B (struct_subtype (field (mut i32)) $A))
+   ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
    (type $B (struct_subtype (field (mut i32)) $A))
   )
 

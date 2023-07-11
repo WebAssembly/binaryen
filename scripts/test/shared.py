@@ -258,13 +258,12 @@ def has_shell_timeout():
 # See https://github.com/v8/v8/blob/master/src/wasm/wasm-feature-flags.h
 V8_OPTS = [
     '--wasm-staging',
-    '--experimental-wasm-eh',
     '--experimental-wasm-compilation-hints',
     '--experimental-wasm-gc',
     '--experimental-wasm-typed-funcref',
     '--experimental-wasm-memory64',
     '--experimental-wasm-extended-const',
-    '--experimental-wasm-nn-locals',
+    '--wasm-final-types',
 ]
 
 # external tools

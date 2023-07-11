@@ -3170,7 +3170,7 @@ module with recursive GC types:
  (type $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct)))))
  (type $SomeSignature (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature))))
  (type $none_=>_none (func))
- (type $SomeSubStruct (struct_subtype (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8) $SomeStruct))
+ (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
  (func $test (type $none_=>_none)
   (local $0 (ref null $SomeArray))
   (local $1 (ref null $SomeStruct))

@@ -5,7 +5,7 @@
   ;; CHECK:      (type $A (struct ))
   (type $A (struct_subtype data))
 
-  ;; CHECK:      (type $B (struct_subtype  $A))
+  ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; CHECK:      (type $D (array (mut i32)))

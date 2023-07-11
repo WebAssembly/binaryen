@@ -262,6 +262,11 @@ void Fuzzer::checkCanonicalization() {
         }
       }
 
+      // Set finality
+      for (size_t i = 0; i < types.size(); ++i) {
+        builder[i].setFinal(types[i].isFinal());
+      }
+
       // Set up recursion groups and record group ends to ensure we only select
       // valid children.
       recGroupEnds.reserve(builder.size());

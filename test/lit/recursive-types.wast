@@ -16,7 +16,7 @@
     (type (func_subtype (param (ref null 3)) (result (ref null 4)) $f3))
   )
 
-  ;; CHECK:       (type $type$2 (func_subtype (param (ref null $f3)) (result (ref null $type$2)) $f3))
+  ;; CHECK:       (type $type$2 (sub $f3 (func (param (ref null $f3)) (result (ref null $type$2)))))
 
   ;; CHECK:      (type $type$1 (func (param (ref null $type$0)) (result (ref null $type$0))))
 

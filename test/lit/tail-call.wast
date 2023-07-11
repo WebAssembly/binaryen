@@ -36,7 +36,7 @@
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct i32))
 
-  ;; CHECK:      (type $B (struct_subtype (field i32) (field i32) $A))
+  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32))))
   (type $B (struct_subtype i32 i32 $A))
 
   ;; CHECK:      (type $return-B (func (result (ref $B))))

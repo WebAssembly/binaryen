@@ -85,6 +85,7 @@ struct HeapTypeInfo {
   // Used in assertions to ensure that temporary types don't leak into the
   // global store.
   bool isTemp = false;
+  bool isFinal = false;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -153,12 +154,9 @@ struct TypePrinter {
   std::ostream& print(HeapType type);
   std::ostream& print(const Tuple& tuple);
   std::ostream& print(const Field& field);
-  std::ostream& print(const Signature& sig,
-                      std::optional<HeapType> super = std::nullopt);
-  std::ostream& print(const Struct& struct_,
-                      std::optional<HeapType> super = std::nullopt);
-  std::ostream& print(const Array& array,
-                      std::optional<HeapType> super = std::nullopt);
+  std::ostream& print(const Signature& sig);
+  std::ostream& print(const Struct& struct_);
+  std::ostream& print(const Array& array);
 };
 
 struct RecGroupHasher {
@@ -1156,6 +1154,14 @@ bool HeapType::isBottom() const {
   return false;
 }
 
+bool HeapType::isFinal() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getHeapTypeInfo(*this)->isFinal;
+  }
+}
+
 Signature HeapType::getSignature() const {
   assert(isSignature());
   return getHeapTypeInfo(*this)->signature;
@@ -1735,19 +1741,38 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (isTemp(type)) {
     os << "(; temp ;) ";
   }
+
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";)";
 #endif
+
+  // TODO: Use shorthand for final types once we parse MVP signatures as final.
+  bool useSub = false;
+  auto super = type.getSuperType();
+  if (super || type.isFinal()) {
+    useSub = true;
+    os << "(sub ";
+    if (type.isFinal()) {
+      os << "final ";
+    }
+    if (super) {
+      printHeapTypeName(*super);
+      os << ' ';
+    }
+  }
   if (type.isSignature()) {
-    print(type.getSignature(), type.getSuperType());
+    print(type.getSignature());
   } else if (type.isStruct()) {
-    print(type.getStruct(), type.getSuperType());
+    print(type.getStruct());
   } else if (type.isArray()) {
-    print(type.getArray(), type.getSuperType());
+    print(type.getArray());
   } else {
     WASM_UNREACHABLE("unexpected type");
   }
-  return os << ")";
+  if (useSub) {
+    os << ')';
+  }
+  return os << ')';
 }
 
 std::ostream& TypePrinter::print(const Tuple& tuple) {
@@ -1783,8 +1808,7 @@ std::ostream& TypePrinter::print(const Field& field) {
   return os;
 }
 
-std::ostream& TypePrinter::print(const Signature& sig,
-                                 std::optional<HeapType> super) {
+std::ostream& TypePrinter::print(const Signature& sig) {
   auto printPrefixed = [&](const char* prefix, Type type) {
     os << '(' << prefix;
     for (Type t : type) {
@@ -1795,9 +1819,6 @@ std::ostream& TypePrinter::print(const Signature& sig,
   };
 
   os << "(func";
-  if (super) {
-    os << "_subtype";
-  }
   if (sig.params.getID() != Type::none) {
     os << ' ';
     printPrefixed("param", sig.params);
@@ -1806,19 +1827,11 @@ std::ostream& TypePrinter::print(const Signature& sig,
     os << ' ';
     printPrefixed("result", sig.results);
   }
-  if (super) {
-    os << ' ';
-    printHeapTypeName(*super);
-  }
   return os << ')';
 }
 
-std::ostream& TypePrinter::print(const Struct& struct_,
-                                 std::optional<HeapType> super) {
+std::ostream& TypePrinter::print(const Struct& struct_) {
   os << "(struct";
-  if (super) {
-    os << "_subtype";
-  }
   if (struct_.fields.size()) {
     os << " (field";
   }
@@ -1829,25 +1842,12 @@ std::ostream& TypePrinter::print(const Struct& struct_,
   if (struct_.fields.size()) {
     os << ')';
   }
-  if (super) {
-    os << ' ';
-    printHeapTypeName(*super);
-  }
   return os << ')';
 }
 
-std::ostream& TypePrinter::print(const Array& array,
-                                 std::optional<HeapType> super) {
-  os << "(array";
-  if (super) {
-    os << "_subtype";
-  }
-  os << ' ';
+std::ostream& TypePrinter::print(const Array& array) {
+  os << "(array ";
   print(array.element);
-  if (super) {
-    os << ' ';
-    printHeapTypeName(*super);
-  }
   return os << ')';
 }
 
@@ -1916,6 +1916,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   if (info.supertype) {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
+  wasm::rehash(digest, info.isFinal);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2037,6 +2038,9 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     if (!eq(superA, superB)) {
       return false;
     }
+  }
+  if (a.isFinal != b.isFinal) {
+    return false;
   }
   if (a.kind != b.kind) {
     return false;
@@ -2291,9 +2295,17 @@ void TypeBuilder::createRecGroup(size_t index, size_t length) {
     {RecGroup(uintptr_t(groupInfo.get())), std::move(groupInfo)});
 }
 
+void TypeBuilder::setFinal(size_t i, bool final) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].info->isFinal = final;
+}
+
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
+  if (super.isFinal) {
+    return false;
+  }
   if (sub.kind != super.kind) {
     return false;
   }

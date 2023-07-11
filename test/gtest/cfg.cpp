@@ -2,6 +2,7 @@
 
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
+#include "analysis/liveness-transfer-function.h"
 #include "analysis/monotone-analyzer.h"
 #include "print-test.h"
 #include "wasm.h"
@@ -111,9 +112,8 @@ TEST_F(CFGTest, LinearLiveness) {
   )wasm";
 
   auto analyzerText = R"analyzer(CFG Analyzer
-State Block: 0
-Beginning State: 000
-End State: 000
+CFG Block: 0
+Input State: 000
 Predecessors:
 Successors:
 Intermediate States (reverse order): 
@@ -147,9 +147,13 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
-  analyzer.fromCFG(&cfg);
+  size_t numLocals = wasm.getFunction("bar")->getNumLocals();
+
+  FiniteIntPowersetLattice lattice(numLocals);
+  LivenessTransferFunction transferFunction;
+
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
@@ -184,9 +188,8 @@ TEST_F(CFGTest, NonlinearLiveness) {
   )wasm";
 
   auto analyzerText = R"analyzer(CFG Analyzer
-State Block: 0
-Beginning State: 00
-End State: 10
+CFG Block: 0
+Input State: 10
 Predecessors:
 Successors: 1 2
 Intermediate States (reverse order): 
@@ -201,9 +204,8 @@ local.set $0
 00
 i32.const 1
 00
-State Block: 1
-Beginning State: 00
-End State: 00
+CFG Block: 1
+Input State: 00
 Predecessors: 0
 Successors: 3
 Intermediate States (reverse order): 
@@ -212,9 +214,8 @@ local.set $1
 00
 i32.const 4
 00
-State Block: 2
-Beginning State: 10
-End State: 00
+CFG Block: 2
+Input State: 00
 Predecessors: 0
 Successors: 3
 Intermediate States (reverse order): 
@@ -223,9 +224,8 @@ drop
 00
 local.get $0
 10
-State Block: 3
-Beginning State: 00
-End State: 00
+CFG Block: 3
+Input State: 00
 Predecessors: 2 1
 Successors:
 Intermediate States (reverse order): 
@@ -239,13 +239,54 @@ End
   parseWast(wasm, moduleText);
 
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  FinitePowersetLattice lattice(wasm.getFunction("bar")->getNumLocals());
-  MonotoneCFGAnalyzer<FinitePowersetLattice> analyzer(lattice);
-  analyzer.fromCFG(&cfg);
+  size_t numLocals = wasm.getFunction("bar")->getNumLocals();
+
+  FiniteIntPowersetLattice lattice(numLocals);
+  LivenessTransferFunction transferFunction;
+
+  MonotoneCFGAnalyzer<FiniteIntPowersetLattice, LivenessTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
   analyzer.evaluate();
 
   std::stringstream ss;
   analyzer.print(ss);
 
   EXPECT_EQ(ss.str(), analyzerText);
+}
+
+TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
+
+  std::vector<std::string> initialSet = {"a", "b", "c", "d", "e", "f"};
+  FinitePowersetLattice<std::string> lattice(std::move(initialSet));
+
+  auto element1 = lattice.getBottom();
+
+  EXPECT_TRUE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
+
+  lattice.add(&element1, "c");
+  lattice.add(&element1, "d");
+  lattice.add(&element1, "a");
+
+  EXPECT_FALSE(element1.isBottom());
+  EXPECT_FALSE(element1.isTop());
+
+  auto element2 = element1;
+  lattice.remove(&element2, "c");
+  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
+            LatticeComparison::GREATER);
+  lattice.add(&element2, "f");
+  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
+            LatticeComparison::NO_RELATION);
+
+  std::stringstream ss;
+  element1.print(ss);
+  EXPECT_EQ(ss.str(), "101100");
+  ss.str(std::string());
+  element2.print(ss);
+  EXPECT_EQ(ss.str(), "100101");
+  ss.str(std::string());
+  element2.makeLeastUpperBound(element1);
+  element2.print(ss);
+  EXPECT_EQ(ss.str(), "101101");
 }

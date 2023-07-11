@@ -226,8 +226,7 @@ void WasmBinaryWriter::writeTypes() {
     return;
   }
   // Count the number of recursion groups, which is the number of elements in
-  // the type section. With nominal typing there is always one group and with
-  // equirecursive typing there is one group per type.
+  // the type section.
   size_t numGroups = 0;
   {
     std::optional<RecGroup> lastGroup;
@@ -237,6 +236,19 @@ void WasmBinaryWriter::writeTypes() {
       lastGroup = currGroup;
     }
   }
+
+  // As a temporary measure, detect which types have subtypes and always use
+  // `sub` or `sub final` for these types. The standard says that types without
+  // `sub` or `sub final` are final, but we currently treat them as non-final.
+  // To avoid unsafe ambiguity, only use the short form for types that it would
+  // be safe to treat as final, i.e. types without subtypes.
+  std::vector<bool> hasSubtypes(indexedTypes.types.size());
+  for (auto type : indexedTypes.types) {
+    if (auto super = type.getSuperType()) {
+      hasSubtypes[indexedTypes.indices[*super]] = true;
+    }
+  }
+
   BYN_TRACE("== writeTypes\n");
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(numGroups);
@@ -252,10 +264,21 @@ void WasmBinaryWriter::writeTypes() {
     lastGroup = currGroup;
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
-    if (auto super = type.getSuperType()) {
-      // Subtype constructor and vector of 1 supertype.
-      o << S32LEB(BinaryConsts::EncodedType::Sub) << U32LEB(1);
-      writeHeapType(*super);
+    auto super = type.getSuperType();
+    // TODO: Use the binary shorthand for final types once we parse MVP
+    // signatures as final.
+    if (type.isFinal() || super || hasSubtypes[i]) {
+      if (type.isFinal()) {
+        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::Sub);
+      }
+      if (super) {
+        o << U32LEB(1);
+        writeHeapType(*super);
+      } else {
+        o << U32LEB(0);
+      }
     }
     if (type.isSignature()) {
       o << S32LEB(BinaryConsts::EncodedType::Func);
@@ -2211,7 +2234,12 @@ void WasmBinaryReader::readTypes() {
       form = getS32LEB();
     }
     std::optional<uint32_t> superIndex;
-    if (form == BinaryConsts::EncodedType::Sub) {
+    if (form == BinaryConsts::EncodedType::Sub ||
+        form == BinaryConsts::EncodedType::SubFinal) {
+      if (form == BinaryConsts::EncodedType::SubFinal) {
+        // TODO: Interpret type definitions without any `sub` as final as well.
+        builder[i].setFinal();
+      }
       uint32_t supers = getU32LEB();
       if (supers > 0) {
         if (supers != 1) {

@@ -55,7 +55,7 @@
 
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $shrub (struct_subtype  $leaf))
+  ;; CHECK-NEXT:  (type $shrub (sub $leaf (struct )))
 
   ;; CHECK:       (type $used-a-ton (struct ))
 
@@ -75,7 +75,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $root (struct ))
   (type $root (struct_subtype data))
-  ;; CHECK:       (type $used-a-lot (struct_subtype  $twig))
+  ;; CHECK:       (type $used-a-lot (sub $twig (struct )))
   (type $used-a-lot (struct_subtype $twig))
  )
 

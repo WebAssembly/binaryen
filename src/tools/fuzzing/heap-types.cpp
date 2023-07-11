@@ -85,6 +85,13 @@ struct HeapTypeGeneratorImpl {
       }
     }
 
+    // Types without nontrivial subtypes may be marked final.
+    for (Index i = 0; i < builder.size(); ++i) {
+      if (subtypeIndices[i].size() == 1 && rand.oneIn(2)) {
+        builder[i].setFinal();
+      }
+    }
+
     // Initialize the recursion groups.
     recGroupEnds.reserve(builder.size());
     // Create isorecursive recursion groups. Choose an expected group size
@@ -878,7 +885,7 @@ std::vector<HeapType> Inhabitator::build() {
     start += size;
   }
 
-  // Establish supertypes.
+  // Establish supertypes and finality.
   for (size_t i = 0; i < types.size(); ++i) {
     if (auto super = types[i].getSuperType()) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
@@ -887,6 +894,7 @@ std::vector<HeapType> Inhabitator::build() {
         builder[i].subTypeOf(*super);
       }
     }
+    builder[i].setFinal(types[i].isFinal());
   }
 
   auto built = builder.build();

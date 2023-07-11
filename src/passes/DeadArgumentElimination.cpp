@@ -216,6 +216,8 @@ struct DAE : public Pass {
         allDroppedCalls[name] = calls;
       }
     }
+    // Track which functions we changed, and optimize them later if necessary.
+    std::unordered_set<Function*> changed;
     // If we refine return types then we will need to do more type updating
     // at the end.
     bool refinedReturnTypes = false;
@@ -230,7 +232,9 @@ struct DAE : public Pass {
       // Refine argument types before doing anything else. This does not
       // affect whether an argument is used or not, it just refines the type
       // where possible.
-      refineArgumentTypes(func, calls, module, infoMap[name]);
+      if (refineArgumentTypes(func, calls, module, infoMap[name])) {
+        changed.insert(func);
+      }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
@@ -249,8 +253,6 @@ struct DAE : public Pass {
       // TODO: We could track in which functions we actually make changes.
       ReFinalize().run(getPassRunner(), module);
     }
-    // Track which functions we changed, and optimize them later if necessary.
-    std::unordered_set<Function*> changed;
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& [name, calls] : allCalls) {
       if (infoMap[name].hasUnseenCalls) {
@@ -358,12 +360,12 @@ private:
   //
   // This assumes that the function has no calls aside from |calls|, that is, it
   // is not exported or called from the table or by reference.
-  void refineArgumentTypes(Function* func,
+  bool refineArgumentTypes(Function* func,
                            const std::vector<Call*>& calls,
                            Module* module,
                            const DAEFunctionInfo& info) {
     if (!module->features.hasGC()) {
-      return;
+      return false;
     }
     auto numParams = func->getNumParams();
     std::vector<Type> newParamTypes;
@@ -393,7 +395,7 @@ private:
 
       // Nothing is sent here at all; leave such optimizations to DCE.
       if (!lub.noted()) {
-        return;
+        return false;
       }
       newParamTypes.push_back(lub.getLUB());
     }
@@ -402,7 +404,7 @@ private:
     // function body.
     auto newParams = Type(newParamTypes);
     if (newParams == func->getParams()) {
-      return;
+      return false;
     }
 
     // We can do this!
@@ -410,6 +412,8 @@ private:
 
     // Update the function's type.
     func->setParams(newParams);
+
+    return true;
   }
 
   // See if the types returned from a function allow us to define a more refined
