@@ -170,7 +170,7 @@
   )
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
-  ;; CHECK-NEXT:  (call $two-casts_2
+  ;; CHECK-NEXT:  (call $two-casts_3
   ;; CHECK-NEXT:   (ref.cast null $A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -181,8 +181,20 @@
       (local.get $x)
     )
   )
+
+  ;; CHECK:      (func $caller-caller (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (call $caller
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-caller (param $x anyref)
+    ;; Calls a function where we have no params to optimize whatsoever.
+    (call $caller
+      (local.get $x)
+    )
+  )
 )
-;; CHECK:      (func $two-casts_2 (type $ref?|$A|_=>_none) (param $x (ref null $A))
+;; CHECK:      (func $two-casts_3 (type $ref?|$A|_=>_none) (param $x (ref null $A))
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (ref.cast null $A
 ;; CHECK-NEXT:    (local.get $x)

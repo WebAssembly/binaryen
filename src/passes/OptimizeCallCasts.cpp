@@ -111,7 +111,8 @@ struct OptimizeCallCasts : public Pass {
                 info.castParams[get->index] = curr->type;
                 // Note that if we see more than one cast we keep the first one.
                 // This is not important in optimized code, as the most refined
-                // cast would be the only one to exist there.
+                // cast would be the only one to exist there; we keep things
+                // simple here.
               }
             }
           }
