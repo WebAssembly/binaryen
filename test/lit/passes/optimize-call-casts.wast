@@ -38,11 +38,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called
-    (param $opt (ref null func))  ;; optimizable
+    (param $opt funcref)  ;; optimizable
     (param $already (ref func))   ;; already refined
-    (param $also (ref null func)) ;; also optimizable
-    (param $no-cast (ref null func)) ;; no cast at all
-    (param $late-cast (ref null func)) ;; cast is not in entry
+    (param $also funcref) ;; also optimizable
+    (param $no-cast funcref) ;; no cast at all
+    (param $late-cast funcref) ;; cast is not in entry
 
     ;; The first and middle parameter will be optimized. This function will
     ;; remain the same, but the call will refer to a new, refined function.
@@ -89,7 +89,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (param $x (ref null func)) (param $y (ref func))
+  (func $caller (param $x funcref) (param $y (ref func))
     ;; This will turn into a call of a new, refined function, and have casts on
     ;; the first and middle parameter.
     (call $called
@@ -124,11 +124,11 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller-2 (param $x (ref null func)) (param $y (ref func))
+  (func $caller-2 (param $x funcref) (param $y (ref func))
     ;; Another call, which will be treated the same even though it has some
     ;; nested stuff on some parameters.
     (call $called
-      (block (result (ref null func))
+      (block (result funcref)
         (drop
           (i32.const 10)
         )
@@ -190,13 +190,13 @@
   ;; CHECK-NEXT:   (local.get $6)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller-3 (param $x (ref null func)) (param $y (ref func))
+  (func $caller-3 (param $x funcref) (param $y (ref func))
     ;; Another call, as the above, but now there is a possible transfer of
     ;; control flow in some of the nested stuff. This makes us use locals to
     ;; avoid the risk of casting if the call is not actually taken - we can only
     ;; cast right before the call is definitely happening.
     (call $called
-      (block (result (ref null func))
+      (block (result funcref)
         (drop
           (i32.const 30)
         )
@@ -339,7 +339,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $recursion (param $x (ref null func))
+  (func $recursion (param $x funcref)
     ;; Cast the parameter, allowing us to optimize.
     (drop
       (ref.cast func
@@ -350,7 +350,7 @@
     ;; be optimized into a call to a refined version of the function. That
     ;; function's call should be optimized as well, to call itself.
     (call $recursion
-      (block (result (ref null func))
+      (block (result funcref)
         (local.get $x)
       )
     )
