@@ -173,6 +173,8 @@ struct OptimizeCallCasts : public Pass {
       // calls to go from that name to the refined name. Doing that earlier here
       // for this particular call would add complexity.
       func->body = builder.makeCall(func->name, paramGets, func->getResults());
+      // TODO: Copy debug info, like local names, from the old function to the
+      //       new.
 
       // Generate the refined param types and apply them.
       auto params = func->getParams();
