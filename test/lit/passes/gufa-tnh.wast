@@ -45,7 +45,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
-    ;; x, y, and z are cast to a more refined type.
+    ;; All but the second parameter are cast here, which allows some
+    ;; optimization in the caller.
     (drop
       (ref.cast func
         (local.get $x)
@@ -65,18 +66,36 @@
 
   ;; CHECK:      (func $caller (type $funcref_ref|func|_=>_none) (param $f funcref) (param $F (ref func))
   ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:    (call $get-funcref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:    (call $get-funcref)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $get-funcref)
-  ;; CHECK-NEXT:   (call $get-funcref)
-  ;; CHECK-NEXT:   (call $get-nn-func)
-  ;; CHECK-NEXT:   (call $get-funcref)
+  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:    (call $get-funcref)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (param $f funcref) (param $F (ref func))
+    ;; All but the third parameter are cast here. The cast has no effect by
+    ;; itself as the type is funcref, but GUFA will refine casts when it can
+    ;; (but not add a new cast, which might not be worth it).
+    ;;
+    ;; Specifically here, the first and last cast can be refined, since those
+    ;; are cast both here and in the called function.
     (call $called
+      (ref.cast null func
+        (call $get-funcref)
+      )
+      (ref.cast null func
+        (call $get-funcref)
+      )
       (call $get-funcref)
-      (call $get-funcref)
-      (call $get-nn-func)
-      (call $get-funcref)
+      (ref.cast null func
+        (call $get-funcref)
+      )
     )
   )
 
