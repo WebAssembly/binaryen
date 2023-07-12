@@ -1365,11 +1365,20 @@ struct Flower {
   // equal to it, or more refined. We may also have other sources of static
   // information that can guide us.
   Type getMinStaticType(Expression* curr) {
-    // TODO: fancy static analysis
+    // If we noted a type, use that. Otherwise, use the expression's type.
+    auto iter = minStaticTypeMap.find(curr);
+    if (iter != minStaticTypeMap.end()) {
+      return iter->second;
+    }
     return curr->type;
   }
 
 private:
+  // Maps expressions to the minimum static type we inferred for them. If an
+  // expression is not here then expression->type (the type in Binaryen IR) is
+  // all we have.
+  std::unordered_map<Expression*, Type> minStaticTypeMap;
+
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].targets;
@@ -1567,6 +1576,16 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   auto& globalInfo = analysis.map[nullptr];
   InfoCollector finder(globalInfo);
   finder.walkModuleCode(&wasm);
+
+#ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "static phase\n";
+#endif
+
+  // 
+
+#ifdef POSSIBLE_CONTENTS_DEBUG
+  std::cout << "global init phase\n";
+#endif
 
   // Connect global init values (which we've just processed, as part of the
   // module code) to the globals they initialize.
