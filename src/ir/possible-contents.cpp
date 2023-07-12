@@ -1540,7 +1540,7 @@ private:
 
   // Perform a "backwards" analysis of static type info. This is the inverse, in
   // a sense, of the main flow analysis of values that is forward.
-  void inferMinStaticTypes();
+  template<typename T> void inferMinStaticTypes(const T& globalInfo);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
@@ -2266,7 +2266,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     });
 }
 
-void Flower::inferMinStaticTypes() {
+template<typename T>
+void Flower::inferMinStaticTypes(const T& globalInfo) {
   
 }
 
