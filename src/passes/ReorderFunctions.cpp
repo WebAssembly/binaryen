@@ -97,4 +97,22 @@ struct ReorderFunctions : public Pass {
 
 Pass* createReorderFunctionsPass() { return new ReorderFunctions(); }
 
+struct ReorderFunctionsByName : public Pass {
+  // Only reorders functions, does not change their contents.
+  bool requiresNonNullableLocalFixups() override { return false; }
+
+  void run(Module* module) override {
+    std::sort(module->functions.begin(),
+              module->functions.end(),
+              [](const std::unique_ptr<Function>& a,
+                 const std::unique_ptr<Function>& b) -> bool {
+                return a->name < b->name;
+              });
+  }
+};
+
+Pass* createReorderFunctionsByNamePass() {
+  return new ReorderFunctionsByName();
+}
+
 } // namespace wasm

@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- Add a pass to reorder functions by name, which can be useful for debugging
+  (e.g. comparisons after optimizations), `--reorder-functions-by-name`.
+
 v114
 ----
 
