@@ -1556,7 +1556,7 @@ private:
 #endif
 };
 
-Flower::Flower(Module& wasm) : wasm(wasm), options(options) {
+Flower::Flower(Module& wasm, const PassOptions& options) : wasm(wasm), options(options) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
