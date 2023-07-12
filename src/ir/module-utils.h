@@ -41,8 +41,12 @@ copyFunction(Function* func, Module& out, Name newName = Name()) {
   ret->body = ExpressionManipulator::copy(func->body, out);
   ret->module = func->module;
   ret->base = func->base;
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
+  // TODO: Copy Stack IR. In general, however, most situations that copy a
+  //       function will then manipulate it, so Stack IR would be invalidated
+  //       anyhow. Also, copying Stack IR requires us to build a map of old to
+  //       new instructions in the main IR (so Stack IR instructions point to
+  //       the new ones), and as just mentioned that overhead would be wasted in
+  //       most or all cases. So for now, just leave Stack IR empty in the copy.
   return out.addFunction(std::move(ret));
 }
 
@@ -222,6 +226,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
 
   Updater updater(map);
   updater.maybeUpdate(wasm.start);
+  // XXX exports!
   PassRunner runner(&wasm);
   updater.run(&runner, &wasm);
   updater.runOnModuleCode(&runner, &wasm);
