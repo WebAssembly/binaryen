@@ -74,6 +74,14 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
   }
 }
 
+template<typename Lattice, typename TransferFunction>
+inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::collectResults() {
+  for (BlockState currBlockState : stateBlocks) {
+    typename Lattice::Element inputStateCopy = currBlockState.inputState;
+    transferFunction.collectResults(currBlockState.cfgBlock, inputStateCopy);
+  }
+}
+
 // Currently prints both the basic information and intermediate states of each
 // BlockState.
 template<typename Lattice, typename TransferFunction>

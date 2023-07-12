@@ -328,7 +328,8 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
   FindAll<LocalSet> setFinder(wasm.getFunction("bar")->body);
   FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
-  ReachingDefinitionsTransferFunction transferFunction(lattice);
+  ReachingDefinitionsTransferFunction transferFunction(
+    lattice, wasm.getFunction("bar")->getNumLocals());
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>

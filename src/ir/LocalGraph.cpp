@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
+#define USE_ABSTRACT_INTERPRETATION
+#define LOCAL_GRAPH_DEBUG
+
 #include <iterator>
 
 #include <cfg/cfg-traversal.h>
 #include <ir/find_all.h>
 #include <ir/local-graph.h>
 #include <wasm-builder.h>
+
+#ifdef USE_ABSTRACT_INTERPRETATION
+#include "analysis/monotone-analyzer.h"
+#include "analysis/reaching-definitions-transfer-function.h"
+#include "ir/find_all.h"
+#endif
 
 namespace wasm {
 
@@ -228,13 +237,37 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func) : func(func) {
+#ifdef USE_ABSTRACT_INTERPRETATION
+  analysis::CFG cfg = wasm::analysis::CFG::fromFunction(func);
+  FindAll<LocalSet> setFinder(func->body);
+  for (size_t i = 0; i < func->getNumLocals(); ++i) {
+    setFinder.list.push_back(nullptr);
+  }
+  analysis::FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+  analysis::ReachingDefinitionsTransferFunction transferFunction(
+    lattice, func->getNumLocals());
+  analysis::MonotoneCFGAnalyzer<analysis::FinitePowersetLattice<LocalSet*>,
+                                analysis::ReachingDefinitionsTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
+
+  analyzer.evaluate();
+  transferFunction.beginResultCollection(&getSetses, &locations);
+  analyzer.collectResults();
+  transferFunction.endResultCollection();
+
+#else
   LocalGraphInternal::Flower flower(getSetses, locations, func);
+#endif
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
   for (auto& [get, sets] : getSetses) {
-    std::cout << "GET\n" << get << " is influenced by\n";
+    std::cout << "GET\n" << ShallowExpression{get} << " is influenced by\n";
     for (auto* set : sets) {
+      if (set) {
+        std::cout << ShallowExpression{set} << '\n';
+        continue;
+      }
       std::cout << set << '\n';
     }
   }
