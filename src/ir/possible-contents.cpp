@@ -19,6 +19,7 @@
 
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
+#include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/linear-execution.h"
@@ -1329,8 +1330,9 @@ struct InfoCollector
 // analysis.
 struct Flower {
   Module& wasm;
+  const PassOptions& options;
 
-  Flower(Module& wasm);
+  Flower(Module& wasm, const PassOptions& options);
 
   // Each LocationIndex will have one LocationInfo that contains the relevant
   // information we need for each location.
@@ -1554,7 +1556,7 @@ private:
 #endif
 };
 
-Flower::Flower(Module& wasm) : wasm(wasm) {
+Flower::Flower(Module& wasm) : wasm(wasm), options(options) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
@@ -2286,9 +2288,41 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
 
   // Each time we see a param that is definitely cast to some type, we can infer
   // that the values sent are of that type (or else we trap and it doesn't
-  // matter since we never reach the call). TNH only..? FIXME!
+  // matter since we never reach the call). TNH only..? FIXME! traps etc. risk
 
+  for (auto& [func, info] : collectedFuncInfo) {
+    auto& castParams = info.castParams;
+    if (castParams.empty()) {
+      continue;
+    }
 
+    // There are cast params. Go through all the calls and note the useful
+    // static information we gain.
+    for (auto* call : funcCalls[func->name]) {
+      // We must be careful of control flow transfers: only if the call is
+      // actually executed can we make any inference here. Therefore we go
+      // backwards in the operands and stop at any transfer.
+      auto& operands = call->operands;
+      assert(operands.size() > 0);
+      for (int i = int(operands.size() - 1); i >= 0; i--) {
+        auto* operand = operands[i];
+        if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
+          break;
+        }
+
+        auto iter = castParams.find(i);
+        if (iter != castParams.end()) {
+          // If the call executes then this parameter is definitely evalled, and
+          // this particular param is then cast to a more refined type.
+          auto castType = iter->second;
+          minStaticTypeMap[operands[i]] = castType;
+          // TODO: fallthroughs as well!
+          // TODO: go back through dominating blocks to uses/defs of this cast
+          //       param etc.
+        }
+      }
+    }
+  }
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
@@ -2331,7 +2365,7 @@ void Flower::dump(Location location) {
 } // anonymous namespace
 
 void ContentOracle::analyze() {
-  Flower flower(wasm);
+  Flower flower(wasm, options);
   for (LocationIndex i = 0; i < flower.locations.size(); i++) {
     locationContents[flower.getLocation(i)] = flower.getContents(i);
   }
