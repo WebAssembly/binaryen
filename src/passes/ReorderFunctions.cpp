@@ -87,10 +87,10 @@ struct ReorderFunctions : public Pass {
               module->functions.end(),
               [&counts](const std::unique_ptr<Function>& a,
                         const std::unique_ptr<Function>& b) -> bool {
-                //if (counts[a->name] == counts[b->name]) {
+                if (counts[a->name] == counts[b->name]) {
                   return a->name > b->name;
-                //}
-                //return counts[a->name] > counts[b->name];
+                }
+                return counts[a->name] > counts[b->name];
               });
   }
 };
