@@ -37,7 +37,7 @@ namespace wasm {
  *     after the rest of the siblings of the if expression on line 2 are visited
  *   - The if-condition (i32.const 0) on line 3 is visited before the if
  *     expression on line 2. Similarly, the if-condition (i32.const 1) on line
- *     11 is visisted before the if expression on line 10.
+ *     11 is visited before the if expression on line 10.
  *   - The add (line 7) binary operator's left and right children (lines 8 - 9)
  *     are visited first as they need to be on the stack before the add
  *     operation is executed
@@ -140,9 +140,6 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // expression, so we give the same monotonic value
   std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator>
     exprToCounter;
-  std::ostream& os;
-
-  HashStringifyWalker(std::ostream& os) : os(os){};
 
   void addUniqueSymbol();
   void visitExpression(Expression* curr);

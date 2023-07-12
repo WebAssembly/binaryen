@@ -6,25 +6,19 @@
 namespace wasm {
 
 void HashStringifyWalker::addUniqueSymbol() {
-  hashString.push_back(monotonic);
-  os << monotonic << " - unique" << std::endl;
+  hashString.push_back((uint64_t)-monotonic);
   monotonic++;
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
   auto it = exprToCounter.find(curr);
-  uint64_t counterUsed;
   if (it != exprToCounter.end()) {
     hashString.push_back(it->second);
-    counterUsed = it->second;
   } else {
+    hashString.push_back(monotonic);
     exprToCounter[curr] = monotonic;
-    counterUsed = monotonic;
     monotonic++;
   }
-
-  os << counterUsed << " - " << ShallowExpression{curr, getModule()}
-     << std::endl;
 }
 
 } // namespace wasm

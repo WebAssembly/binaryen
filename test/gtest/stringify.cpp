@@ -163,59 +163,60 @@ TEST_F(HashStringifyTest, Print) {
    )
   )wasm";
 
-  auto stringifyText = R"stringify(0 - block
-1 - unique
-2 - block $block_a
-3 - block $block_b
-4 - block $block_c
-2 - block $block_d
-4 - block $block_e
-5 - block $block_f
-6 - unique
-7 - i32.const 20
-8 - drop
-9 - i32.const 10
-8 - drop
-10 - unique
-11 - i32.const 0
-12 - if
-8 - drop
-13 - unique
-14 - i32.const 1
-15 - if
-8 - drop
-16 - unique
-7 - i32.const 20
-8 - drop
-9 - i32.const 10
-8 - drop
-17 - unique
-14 - i32.const 1
-15 - if
-8 - drop
-18 - unique
-11 - i32.const 0
-15 - if
-8 - drop
-19 - unique
-20 - i32.const 40
-21 - unique
-22 - i32.const 5
-23 - unique
-24 - i32.const 30
-25 - unique
-24 - i32.const 30
-26 - unique
-24 - i32.const 30
-27 - unique
-)stringify";
-
   Module wasm;
   parseWast(wasm, moduleText);
 
   std::stringstream ss;
-  HashStringifyWalker stringify = HashStringifyWalker(ss);
+  HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
 
-  EXPECT_EQ(ss.str(), stringifyText);
+  EXPECT_EQ(stringify.hashString.size(), 45u);
+
+  EXPECT_EQ(stringify.hashString, (std::vector<uint64_t>{
+    0,   // function block evaluated as a whole
+    (uint64_t)-1,  // separate function block from function contents
+    2,   // block_a evaluated as a whole
+    3,   // block_b evaluated as a whole
+    4,   // block_c evaluated as a whole
+    2,   // block_d has the same contents as block_a, thus same symbol
+    4,   // block_e has the same contents as block_c, thus same symbol
+    5,   // block_f evaluated as a whole
+    (uint64_t)-6,  // separate blocks from block contents
+    7,   // i32.const 20
+    8,   // drop, all drops will be the same symbol
+    9,   // i32.const 10
+    8,   // drop
+    (uint64_t)-10, // separate block_a contents
+    11,  // i32.const 0, if condition
+    12,  // block_b's if evaluated as a whole
+    8,   // drop
+    (uint64_t)-13, // separate block_b contents
+    14,  // i32.const 1, if condition
+    15,  // block_c's if evaluated as a whole
+    8,   // drop
+    (uint64_t)-16, // separate block_c contents
+    7,   // i32.const 20
+    8,   // drop
+    9,   // i32.const 10
+    8,   // drop
+    (uint64_t)-17, // separate block_d contents
+    14,  // i32.const 1, if condition
+    15,  // block_e if evaluated as a whole
+    8,   // drop
+    (uint64_t)-18, // separate block_e contents
+    11,  // i32.const 0, if condition
+    15,  // block_f's if evaluated as a whole
+    8,   // drop
+    (uint64_t)-19, // separate block_f contents
+    20,  // i32.const 40
+    (uint64_t)-21, // separate block_b if-true
+    22,  // i32.const 5
+    (uint64_t)-23, // separate block_b if-false
+    24,  // i32.const 30
+    (uint64_t)-25, // separate block_c if-true
+    24,  // i32.const 30
+    (uint64_t)-26, // separate block_e if-true
+    24,  // i32.const 30
+    (uint64_t)-27})); // separate block_f if-true
+
 }
