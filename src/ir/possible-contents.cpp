@@ -2284,6 +2284,8 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
 
 std::cout << "iMST1\n";
 
+  // TODO: If no GC, or no cast params anywhere, leave early.
+
   for (auto& [_, info] : collectedFuncInfo) {
     for (auto* call : info.calls) {
 std::cout << "  call\n";
