@@ -105,7 +105,7 @@ struct ReorderFunctionsByName : public Pass {
     std::sort(module->functions.begin(),
               module->functions.end(),
               [](const std::unique_ptr<Function>& a,
-                        const std::unique_ptr<Function>& b) -> bool {
+                 const std::unique_ptr<Function>& b) -> bool {
                 return a->name > b->name;
               });
   }
