@@ -11,13 +11,12 @@ void HashStringifyWalker::addUniqueSymbol() {
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
-  auto it = exprToCounter.find(curr);
-  if (it != exprToCounter.end()) {
-    hashString.push_back(it->second);
-  } else {
+  auto [it, inserted] = exprToCounter.insert({curr, monotonic});
+  if (inserted) {
     hashString.push_back(monotonic);
-    exprToCounter[curr] = monotonic;
     monotonic++;
+  } else {
+    hashString.push_back(it->second);
   }
 }
 
