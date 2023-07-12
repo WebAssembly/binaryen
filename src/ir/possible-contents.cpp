@@ -483,6 +483,10 @@ struct CollectedFuncInfo {
   // A map of param indexes to the types they are definitely cast to if the
   // function is entered.
   std::unordered_map<Index, Type> castParams;
+
+  // We gather all calls in order to process them later during
+  // inferMinStaticTypes().
+  std::vector<Call*> calls;
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
@@ -803,6 +807,8 @@ struct InfoCollector
   }
 
   void visitCall(Call* curr) {
+    info.calls.push_back(curr);
+
     Name targetName;
     if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // This is just a normal call.
@@ -1540,7 +1546,7 @@ private:
 
   // Perform a "backwards" analysis of static type info. This is the inverse, in
   // a sense, of the main flow analysis of values that is forward.
-  template<typename T> void inferMinStaticTypes(const T& globalInfo);
+  template<typename T> void inferMinStaticTypes(const T& collectedFuncInfo);
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
@@ -1586,7 +1592,7 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
 #endif
 
   // Perform static inference. This will help the flow later.
-  inferMinStaticTypes(globalInfo);
+  inferMinStaticTypes(analysis.map);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "global init phase\n";
@@ -2267,8 +2273,22 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 }
 
 template<typename T>
-void Flower::inferMinStaticTypes(const T& globalInfo) {
-  
+void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
+  // First, organize all calls. We've gathered call instructions inside each
+  // function, and we need a map of all calls to each function.
+  std::unordered_map<Name, std::vector<Call*>> funcCalls;
+
+  for (auto& [_, info] : collectedFuncInfo) {
+    for (auto* call : info.calls) {
+      funcCalls[call->target].push_back(call);
+    }
+  }
+
+  // Each time we see a param that is definitely cast to some type, we can infer
+  // that the values sent are of that type (or else we trap and it doesn't
+  // matter since we never reach the call). TNH only..? FIXME!
+
+
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
