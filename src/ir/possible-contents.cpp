@@ -1538,6 +1538,10 @@ private:
     }
   }
 
+  // Perform a "backwards" analysis of static type info. This is the inverse, in
+  // a sense, of the main flow analysis of values that is forward.
+  void inferMinStaticTypes();
+
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
   void dump(Location location);
@@ -1581,7 +1585,8 @@ Flower::Flower(Module& wasm) : wasm(wasm) {
   std::cout << "static phase\n";
 #endif
 
-  // 
+  // Perform static inference. This will help the flow later.
+  inferMinStaticTypes(globalInfo);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "global init phase\n";
@@ -2259,6 +2264,10 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
     });
+}
+
+void Flower::inferMinStaticTypes() {
+  
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
