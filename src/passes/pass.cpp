@@ -375,6 +375,9 @@ void PassRegistry::registerPasses() {
   registerPass("remove-unused-types",
                "remove unused private GC types",
                createRemoveUnusedTypesPass);
+  registerPass("reorder-functions-by-name",
+               "sorts functions by name (useful for debugging)",
+               createReorderFunctionsByNamePass);
   registerPass("reorder-functions",
                "sorts functions by access frequency",
                createReorderFunctionsPass);
