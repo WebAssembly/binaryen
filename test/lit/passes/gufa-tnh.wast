@@ -2,7 +2,49 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -tnh -S -o - | filecheck %s
 
 (module
-  (func $called (param $x funcref) (param $ignore funcref) (param $y funcref) (param $z funcref)
+
+
+  ;; CHECK:      (type $funcref_funcref_funcref_funcref_=>_none (func (param funcref funcref funcref funcref)))
+
+  ;; CHECK:      (type $funcref_ref|func|_=>_none (func (param funcref (ref func))))
+
+  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+
+  ;; CHECK:      (type $none_=>_ref|func| (func (result (ref func))))
+
+  ;; CHECK:      (import "a" "b" (global $unknown-i32 i32))
+  (import "a" "b" (global $unknown-i32 i32))
+
+  ;; CHECK:      (import "a" "b" (global $unknown-funcref1 funcref))
+  (import "a" "b" (global $unknown-funcref1 funcref))
+
+  ;; CHECK:      (import "a" "b" (global $unknown-funcref2 funcref))
+  (import "a" "b" (global $unknown-funcref2 funcref))
+
+  ;; CHECK:      (import "a" "b" (global $unknown-nn-func1 (ref func)))
+  (import "a" "b" (global $unknown-nn-func1 (ref func)))
+
+  ;; CHECK:      (import "a" "b" (global $unknown-nn-func2 (ref func)))
+  (import "a" "b" (global $unknown-nn-func2 (ref func)))
+
+  ;; CHECK:      (func $called (type $funcref_funcref_funcref_funcref_=>_none) (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
     ;; x, y, and z are cast to a more refined type.
     (drop
       (ref.cast func
@@ -21,12 +63,50 @@
     )
   )
 
+  ;; CHECK:      (func $caller (type $funcref_ref|func|_=>_none) (param $f funcref) (param $F (ref func))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (call $get-funcref)
+  ;; CHECK-NEXT:   (call $get-funcref)
+  ;; CHECK-NEXT:   (call $get-nn-func)
+  ;; CHECK-NEXT:   (call $get-funcref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller (param $f funcref) (param $F (ref func))
     (call $called
-      (local.get $f)
-      (local.get $f)
-      (local.get $F)
-      (local.get $f)
+      (call $get-funcref)
+      (call $get-funcref)
+      (call $get-nn-func)
+      (call $get-funcref)
+    )
+  )
+
+  ;; CHECK:      (func $get-funcref (type $none_=>_funcref) (result funcref)
+  ;; CHECK-NEXT:  (select (result funcref)
+  ;; CHECK-NEXT:   (global.get $unknown-funcref1)
+  ;; CHECK-NEXT:   (global.get $unknown-funcref2)
+  ;; CHECK-NEXT:   (global.get $unknown-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-funcref (result funcref)
+    (select
+      (global.get $unknown-funcref1)
+      (global.get $unknown-funcref2)
+      (global.get $unknown-i32)
+    )
+  )
+
+  ;; CHECK:      (func $get-nn-func (type $none_=>_ref|func|) (result (ref func))
+  ;; CHECK-NEXT:  (select (result (ref func))
+  ;; CHECK-NEXT:   (global.get $unknown-nn-func1)
+  ;; CHECK-NEXT:   (global.get $unknown-nn-func2)
+  ;; CHECK-NEXT:   (global.get $unknown-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-nn-func (result (ref func))
+    (select
+      (global.get $unknown-nn-func1)
+      (global.get $unknown-nn-func2)
+      (global.get $unknown-i32)
     )
   )
 )
