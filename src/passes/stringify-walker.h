@@ -133,11 +133,12 @@ struct StringifyEquator {
 };
 
 struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
+  // After calling walkModule, this vector contains the result of encoding a
+  // wasm module as a string
   std::vector<uint64_t> hashString;
   uint64_t monotonic = 0;
-  // Designed to contain a mapping of expresion pointer to the monotonic value
-  // added to the hashString. This is for if we have a hash collision on an
-  // expression, so we give the same monotonic value
+  // Contains a mapping of expression pointer to monotonic value to ensure we
+  // use the same monotonic value for matching expressions.
   std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
