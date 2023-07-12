@@ -1,3 +1,5 @@
+//#define POSSIBLE_CONTENTS_DEBUG 1
+
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -2280,8 +2282,11 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
   // function, and we need a map of all calls to each function.
   std::unordered_map<Name, std::vector<Call*>> funcCalls;
 
+std::cout << "iMST1\n";
+
   for (auto& [_, info] : collectedFuncInfo) {
     for (auto* call : info.calls) {
+std::cout << "  call\n";
       funcCalls[call->target].push_back(call);
     }
   }
@@ -2296,9 +2301,11 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
       continue;
     }
 
+std::cout << "iMST2 cast params!\n";
     // There are cast params. Go through all the calls and note the useful
     // static information we gain.
     for (auto* call : funcCalls[func->name]) {
+std::cout << "  call\n";
       // We must be careful of control flow transfers: only if the call is
       // actually executed can we make any inference here. Therefore we go
       // backwards in the operands and stop at any transfer.
@@ -2306,9 +2313,11 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
+std::cout << "   param\n" << *operand << '\n';
         if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
           break;
         }
+std::cout << "    add\n";
 
         auto iter = castParams.find(i);
         if (iter != castParams.end()) {
