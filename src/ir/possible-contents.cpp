@@ -21,6 +21,7 @@
 #include "ir/branch-utils.h"
 #include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
+#include "ir/linear-execution.h"
 #include "ir/local-graph.h"
 #include "ir/module-utils.h"
 #include "ir/possible-contents.h"
@@ -478,6 +479,10 @@ struct CollectedFuncInfo {
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
+
+  // A map of param indexes to the types they are definitely cast to if the
+  // function is entered.
+  std::unordered_map<Index, Type> castParams;
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
@@ -1204,6 +1209,41 @@ struct InfoCollector
         }
       }
     }
+
+    // Gather parameters that are definitely cast in the function entry.
+    // TODO: this could be done during the main walk...
+    struct Scanner : public LinearExecutionWalker<Scanner> {
+      CollectedFuncInfo& info;
+
+      Scanner(CollectedFuncInfo& info) : info(info) {}
+
+      // We start in the entry block. TODO: Scan further, noting dominance
+      // etc.
+      bool inEntry = true;
+
+      static void doNoteNonLinear(Scanner* self, Expression** currp) {
+        // This is the end of the first basic block.
+        self->inEntry = false;
+      }
+
+      void visitRefCast(RefCast* curr) {
+        if (!inEntry) {
+          return;
+        }
+        if (auto* get = curr->ref->dynCast<LocalGet>()) {
+          if (curr->type != get->type &&
+              Type::isSubType(curr->type, get->type) &&
+              info.castParams.count(get->index) == 0) {
+            info.castParams[get->index] = curr->type;
+            // Note that if we see more than one cast we keep the first one.
+            // This is not important in optimized code, as the most refined
+            // cast would be the only one to exist there; we keep things
+            // simple here.
+          }
+        }
+      }
+    } scanner(info);
+    scanner.walkFunction(func);
   }
 
   // Helpers
@@ -1317,6 +1357,16 @@ struct Flower {
   PossibleContents& getContents(LocationIndex index) {
     assert(index < locations.size());
     return locations[index].contents;
+  }
+
+  // Check what we know about the type of an expression, using static
+  // information. For example, if the expression has type T then we can return
+  // T here, as that is the minimum type: the actual values are runtime must be
+  // equal to it, or more refined. We may also have other sources of static
+  // information that can guide us.
+  Type getMinStaticType(Expression* curr) {
+    // TODO: fancy static analysis
+    return curr->type;
   }
 
 private:
@@ -1918,7 +1968,10 @@ void Flower::connectDuringFlow(Location from, Location to) {
 void Flower::filterExpressionContents(PossibleContents& contents,
                                       const ExpressionLocation& exprLoc,
                                       bool& worthSendingMore) {
-  auto type = exprLoc.expr->type;
+  // The type we will filter to is our best information about what can be
+  // contained here statically. Typically that is the type of the expression in
+  // the IR, but it can be even more refined.
+  auto type = getMinStaticType(exprLoc.expr);
   if (!type.isRef()) {
     return;
   }
