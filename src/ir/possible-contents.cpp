@@ -480,14 +480,6 @@ struct CollectedFuncInfo {
   // when we update the child we can find the parent and handle any special
   // behavior we need there.
   std::unordered_map<Expression*, Expression*> childParents;
-
-  // A map of param indexes to the types they are definitely cast to if the
-  // function is entered. This then used in inferMinStaticTypes().
-  std::unordered_map<Index, Type> castParams;
-
-  // We gather all calls in order to process them later during
-  // inferMinStaticTypes().
-  std::vector<Call*> calls;
 };
 
 // Walk the wasm and find all the links we need to care about, and the locations
@@ -808,8 +800,6 @@ struct InfoCollector
   }
 
   void visitCall(Call* curr) {
-    info.calls.push_back(curr);
-
     Name targetName;
     if (!Intrinsics(*getModule()).isCallWithoutEffects(curr)) {
       // This is just a normal call.
@@ -1216,37 +1206,6 @@ struct InfoCollector
         }
       }
     }
-
-    // Gather parameters that are definitely cast in the function entry.
-    // TODO: this could be skipped if we do not have GC enabled
-    struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
-      CollectedFuncInfo& info;
-
-      EntryScanner(CollectedFuncInfo& info) : info(info) {}
-
-      static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
-        // This is the end of the first basic block, so we can stop.
-        self->cancelWalk();
-      }
-
-      void visitRefCast(RefCast* curr) {
-        if (auto* get = curr->ref->dynCast<LocalGet>()) {
-          // TODO: Can we optimize not only if we are a subtype? E.g if we are
-          //       a non-nullable child and the other is a nullable parent.
-          // TODO: fallthrough
-          if (curr->type != get->type &&
-              Type::isSubType(curr->type, get->type) &&
-              info.castParams.count(get->index) == 0) {
-            info.castParams[get->index] = curr->type;
-            // Note that if we see more than one cast we keep the first one.
-            // This is not important in optimized code, as the most refined
-            // cast would be the only one to exist there; we keep things
-            // simple here.
-          }
-        }
-      }
-    } scanner(info);
-    scanner.walkFunction(func);
   }
 
   // Helpers
@@ -2275,7 +2234,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 }
 
 template<typename T>
-void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
+void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
   // The current analysis here only helps with GC (it refines types) and it also
   // depends on TrapsNeverHappen mode, as we use the assumption that casts
   // never trap. Specifically, if we see a cast that executes then we can assume
@@ -2287,11 +2246,73 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
     return;
   }
 
-  // First, organize all calls. We've gathered call instructions inside each
+  // Gather information from each function.
+
+  struct Info {
+    // A map of param indexes to the types they are definitely cast to if the
+    // function is entered. This then used in inferMinStaticTypes().
+    std::unordered_map<Index, Type> castParams;
+
+    // We gather all calls in order to process them later during
+    // inferMinStaticTypes().
+    std::vector<Call*> calls;
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    wasm, [&](Function* func, Info& info) {
+      if (func->imported()) {
+        return;
+      }
+
+      // Gather parameters that are definitely cast in the function entry.
+      // TODO: this could be skipped if we do not have GC enabled
+      struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
+        Module& wasm;
+        const PassOptions& options;
+        Info& info;
+
+        EntryScanner(Module& wasm, const PassOptions& options, Info& info) : wasm(wasm), options(options), info(info) {}
+
+        // Note while we are still in the entry (first) block.
+        bool inEntryBlock = true;
+
+        static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
+          // This is the end of the first basic block.
+          inEntryBlock = false;
+        }
+
+        void visitCall(Call* curr) {
+          info.calls.push_back(curr);
+        }
+
+        void visitRefCast(RefCast* curr) {
+          if (!inEntryBlock) {
+            return;
+          }
+
+          auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
+          if (auto* get = fallthrough->dynCast<LocalGet>()) {
+            // TODO: Can we optimize not only if we are a subtype? E.g if we are
+            //       a non-nullable child and the other is a nullable parent.
+            if (curr->type != get->type &&
+                Type::isSubType(curr->type, get->type) &&
+                info.castParams.count(get->index) == 0) {
+              info.castParams[get->index] = curr->type;
+              // Note that if we see more than one cast we keep the first one.
+              // This is not important in optimized code, as the most refined
+              // cast would be the only one to exist there; we keep things
+              // simple here.
+            }
+          }
+        }
+      } scanner(wasm, options, info);
+      scanner.walkFunction(func);
+    });
+
+  // Next, organize all calls. We've gathered call instructions inside each
   // function, and we need a map of all calls to each function.
   std::unordered_map<Name, std::vector<Call*>> funcCalls;
-
-  for (auto& [_, info] : collectedFuncInfo) {
+  for (auto& [_, info] : Info) {
     for (auto* call : info.calls) {
       funcCalls[call->target].push_back(call);
     }
@@ -2301,7 +2322,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
   // that the values sent are of that type (or else we trap and it doesn't
   // matter since we never reach the call).
   // TODO: call_ref as well, etc.
-  for (auto& [func, info] : collectedFuncInfo) {
+  for (auto& [func, info] : Info) {
     auto& castParams = info.castParams;
     if (castParams.empty()) {
       continue;
