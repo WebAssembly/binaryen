@@ -322,19 +322,293 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
     )
   )wasm";
 
+  auto analyzerText = R"analyzer(CFG Analyzer
+CFG Block: 0
+Input State: 0000111
+Predecessors:
+Successors:
+Intermediate States: 
+0000111
+i32.const 1
+0000111
+local.set $0
+1000011
+local.get $0
+1000011
+drop
+1000011
+local.get $0
+1000011
+local.set $1
+1100001
+i32.const 1
+1100001
+local.set $2
+1110000
+local.get $2
+1110000
+drop
+1110000
+i32.const 2
+1110000
+local.set $0
+0111000
+block
+0111000
+End
+)analyzer";
+
   Module wasm;
   parseWast(wasm, moduleText);
 
-  CFG cfg = CFG::fromFunction(wasm.getFunction("bar"));
-  FindAll<LocalSet> setFinder(wasm.getFunction("bar")->body);
+  Function* func = wasm.getFunction("bar");
+  CFG cfg = CFG::fromFunction(func);
+  FindAll<LocalSet> setFinder(func->body);
+
+  for (size_t i = 0; i < func->getNumLocals(); ++i) {
+    setFinder.list.push_back(nullptr);
+  }
   FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
-  ReachingDefinitionsTransferFunction transferFunction(
-    lattice, wasm.getFunction("bar")->getNumLocals());
+  ReachingDefinitionsTransferFunction transferFunction(lattice,
+                                                       func->getNumLocals());
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
     analyzer(lattice, transferFunction, cfg);
+  analyzer.evaluateFunctionEntry(func);
   analyzer.evaluate();
 
-  analyzer.print(std::cout);
+  std::stringstream ss;
+  analyzer.print(ss);
+  EXPECT_EQ(ss.str(), analyzerText);
+}
+
+TEST_F(CFGTest, ReachingDefinitionsIf) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar
+        (local $a (i32))
+        (local $b (i32))
+        (local.set $a
+          (i32.const 1)
+        )
+        (if
+          (i32.eq
+            (local.get $a)
+            (i32.const 2)
+          )
+          (local.set $b
+            (i32.const 3)
+          )
+          (local.set $a
+            (i32.const 4)
+          )
+        )
+        (drop
+          (local.get $b)
+        )
+        (drop
+          (local.get $a)
+        )
+      )
+    )
+  )wasm";
+
+  auto analyzerText = R"analyzer(CFG Analyzer
+CFG Block: 0
+Input State: 00011
+Predecessors:
+Successors: 1 2
+Intermediate States: 
+00011
+i32.const 1
+00011
+local.set $0
+10001
+local.get $0
+10001
+i32.const 2
+10001
+i32.eq
+10001
+CFG Block: 1
+Input State: 10001
+Predecessors: 0
+Successors: 3
+Intermediate States: 
+10001
+i32.const 3
+10001
+local.set $1
+11000
+CFG Block: 2
+Input State: 10001
+Predecessors: 0
+Successors: 3
+Intermediate States: 
+10001
+i32.const 4
+10001
+local.set $0
+00101
+CFG Block: 3
+Input State: 11101
+Predecessors: 2 1
+Successors:
+Intermediate States: 
+11101
+local.get $1
+11101
+drop
+11101
+local.get $0
+11101
+drop
+11101
+block
+11101
+End
+)analyzer";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  Function* func = wasm.getFunction("bar");
+  CFG cfg = CFG::fromFunction(func);
+  FindAll<LocalSet> setFinder(func->body);
+
+  for (size_t i = 0; i < func->getNumLocals(); ++i) {
+    setFinder.list.push_back(nullptr);
+  }
+  FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+  ReachingDefinitionsTransferFunction transferFunction(lattice,
+                                                       func->getNumLocals());
+
+  MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
+                      ReachingDefinitionsTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
+  analyzer.evaluateFunctionEntry(func);
+  analyzer.evaluate();
+
+  std::stringstream ss;
+  analyzer.print(ss);
+  EXPECT_EQ(ss.str(), analyzerText);
+}
+
+TEST_F(CFGTest, ReachingDefinitionsLoop) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar (param $a (i32)) (param $b (i32))
+        (loop $loop
+          (drop
+            (local.get $a)
+          )
+          (local.set $a
+             (i32.add
+               (i32.const 1)
+               (local.get $a)
+             )
+          )
+          (br_if $loop
+            (i32.le_u
+              (local.get $a)
+              (i32.const 7)
+            )
+          )
+        )
+        (local.set $b
+          (i32.sub
+            (local.get $b)
+            (local.get $a)
+          )
+        )
+      )
+    )
+  )wasm";
+
+  auto analyzerText = R"analyzer(CFG Analyzer
+CFG Block: 0
+Input State: 0011
+Predecessors:
+Successors: 1
+Intermediate States: 
+0011
+CFG Block: 1
+Input State: 1011
+Predecessors: 0 1
+Successors: 2 1
+Intermediate States: 
+1011
+local.get $0
+1011
+drop
+1011
+i32.const 1
+1011
+local.get $0
+1011
+i32.add
+1011
+local.set $0
+1001
+local.get $0
+1001
+i32.const 7
+1001
+i32.le_u
+1001
+br_if $loop
+1001
+CFG Block: 2
+Input State: 1001
+Predecessors: 1
+Successors: 3
+Intermediate States: 
+1001
+block
+1001
+loop $loop
+1001
+CFG Block: 3
+Input State: 1001
+Predecessors: 2
+Successors:
+Intermediate States: 
+1001
+local.get $1
+1001
+local.get $0
+1001
+i32.sub
+1001
+local.set $1
+1100
+block
+1100
+End
+)analyzer";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  Function* func = wasm.getFunction("bar");
+  CFG cfg = CFG::fromFunction(func);
+  FindAll<LocalSet> setFinder(func->body);
+
+  for (size_t i = 0; i < func->getNumLocals(); ++i) {
+    setFinder.list.push_back(nullptr);
+  }
+  FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+  ReachingDefinitionsTransferFunction transferFunction(lattice,
+                                                       func->getNumLocals());
+
+  MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
+                      ReachingDefinitionsTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
+  analyzer.evaluateFunctionEntry(func);
+  analyzer.evaluate();
+
+  std::stringstream ss;
+  analyzer.print(ss);
+  EXPECT_EQ(ss.str(), analyzerText);
 }
