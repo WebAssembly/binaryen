@@ -1296,6 +1296,9 @@ int main(int argc, const char* argv[]) {
   if (debugInfo) {
     extraFlags += " -g ";
   }
+  if (useStandardFinalTypes) {
+    extraFlags += " --standard-final-types ";
+  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";

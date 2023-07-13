@@ -1087,8 +1087,9 @@ const Type& Type::Iterator::operator*() const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  new (this)
-    HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(sig)));
+  auto info = std::make_unique<HeapTypeInfo>(sig);
+  info->isFinal = useStandardFinalTypes;
+  new (this) HeapType(globalRecGroupStore.insert(std::move(info)));
 }
 
 HeapType::HeapType(const Struct& struct_) {
@@ -1097,8 +1098,9 @@ HeapType::HeapType(const Struct& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(
-    globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(struct_)));
+  auto info = std::make_unique<HeapTypeInfo>(struct_);
+  info->isFinal = useStandardFinalTypes;
+  new (this) HeapType(globalRecGroupStore.insert(std::move(info)));
 }
 
 HeapType::HeapType(Struct&& struct_) {
@@ -1107,14 +1109,16 @@ HeapType::HeapType(Struct&& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalRecGroupStore.insert(
-    std::make_unique<HeapTypeInfo>(std::move(struct_))));
+  auto info = std::make_unique<HeapTypeInfo>(std::move(struct_));
+  info->isFinal = useStandardFinalTypes;
+  new (this) HeapType(globalRecGroupStore.insert(std::move(info)));
 }
 
 HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
-  new (this)
-    HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
+  auto info = std::make_unique<HeapTypeInfo>(array);
+  info->isFinal = useStandardFinalTypes;
+  new (this) HeapType(globalRecGroupStore.insert(std::move(info)));
 }
 
 bool HeapType::isFunction() const {

@@ -13,17 +13,17 @@
   ;; CHECK:      (type $short (struct ))
   (type $short (struct))
   ;; CHECK:      (type $long (sub final (struct )))
-  ;; FINAL:      (type $long (struct ))
+  ;; FINAL:      (type $long (sub final (struct )))
   (type $long (sub final (struct)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $long
   ;; CHECK-NEXT:    (struct.new_default $short)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; FINAL:      (func $test (type $none_=>_none)
+  ;; FINAL:      (func $test (type $1)
   ;; FINAL-NEXT:  (drop
   ;; FINAL-NEXT:   (ref.cast $long
   ;; FINAL-NEXT:    (struct.new_default $long)

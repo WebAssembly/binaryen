@@ -265,15 +265,13 @@ void WasmBinaryWriter::writeTypes() {
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
     auto super = type.getSuperType();
-    if (super ||
-        (!useStandardFinalTypes && (type.isFinal() || hasSubtypes[i]))) {
+    if (super || (type.isFinal() != useStandardFinalTypes) ||
+        (!useStandardFinalTypes && hasSubtypes[i])) {
       if (type.isFinal()) {
         o << S32LEB(BinaryConsts::EncodedType::SubFinal);
       } else {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
       }
-      // TODO: Remove this redundant check once we remove
-      // `useStandardFinalTypes`.
       if (super) {
         o << U32LEB(1);
         writeHeapType(*super);
