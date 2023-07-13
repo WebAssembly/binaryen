@@ -19,10 +19,6 @@
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
 
-namespace wasm {
-std::unordered_set<HeapType> getIgnorablePublicTypes();
-}
-
 namespace wasm::ModuleUtils {
 
 namespace {

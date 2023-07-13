@@ -605,16 +605,39 @@
 ;; moved into a new big rec group, together with the struct type (that is also
 ;; refined to be immutable).
 (module
+  ;; CHECK:      (type $array8 (array (mut i8)))
   (type $array8 (array (mut i8)))
+  ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array (mut i16)))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct (field funcref)))
+
+  ;; CHECK:       (type $array32 (array (mut i32)))
   (type $array32 (array (mut i32)))
 
   (type $struct (struct (field (mut funcref))))
 
+  ;; CHECK:       (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (import "a" "b" (global $i8 (ref $array8)))
   (import "a" "b" (global $i8 (ref $array8)))
 
+  ;; CHECK:      (import "a" "c" (global $i16 (ref $array16)))
   (import "a" "c" (global $i16 (ref $array16)))
 
+  ;; CHECK:      (func $use (type $funcref_=>_none) (param $funcref funcref)
+  ;; CHECK-NEXT:  (local $array8 (ref $array8))
+  ;; CHECK-NEXT:  (local $array16 (ref $array16))
+  ;; CHECK-NEXT:  (local $array32 (ref $array32))
+  ;; CHECK-NEXT:  (local $struct (ref $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $funcref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $use (param $funcref funcref)
     (local $array8 (ref $array8))
     (local $array16 (ref $array16))
