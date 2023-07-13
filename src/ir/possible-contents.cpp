@@ -2278,7 +2278,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
 
         static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
           // This is the end of the first basic block.
-          inEntryBlock = false;
+          self->inEntryBlock = false;
         }
 
         void visitCall(Call* curr) {
@@ -2312,7 +2312,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
   // Next, organize all calls. We've gathered call instructions inside each
   // function, and we need a map of all calls to each function.
   std::unordered_map<Name, std::vector<Call*>> funcCalls;
-  for (auto& [_, info] : Info) {
+  for (auto& [_, info] : analysis.map) {
     for (auto* call : info.calls) {
       funcCalls[call->target].push_back(call);
     }
@@ -2322,7 +2322,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
   // that the values sent are of that type (or else we trap and it doesn't
   // matter since we never reach the call).
   // TODO: call_ref as well, etc.
-  for (auto& [func, info] : Info) {
+  for (auto& [func, info] : analysis.map) {
     auto& castParams = info.castParams;
     if (castParams.empty()) {
       continue;
