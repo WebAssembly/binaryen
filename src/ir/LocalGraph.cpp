@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <iterator>
 
 #include <cfg/cfg-traversal.h>
