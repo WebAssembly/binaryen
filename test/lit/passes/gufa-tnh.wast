@@ -269,6 +269,92 @@
   )
 )
 
+;; A local.tee by itself, without a cast.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $maker (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $maker
+    ;; A always contains 10, and B always contains 20.
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B
+        (i32.const 20)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    ;; Cast the input to a $B, which will help the caller.
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $ref?|$A|_=>_none) (param $a (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $a (ref null $A))
+    (local $x (ref null $A))
+    ;; The change compared to before is that we only have a local.tee here, and
+    ;; no ref.cast. We can still infer the type of the tee's value, and
+    ;; therefore the type of $x when it is read below, and optimize there.
+    (call $called
+      (local.tee $x
+        (local.get $a)
+      )
+    )
+    ;; This can be inferred to be 20.
+    (drop
+      (struct.get $A 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; As above, but add a local.tee in the called function.
 (module
   ;; CHECK:      (type $A (struct (field (mut i32))))
