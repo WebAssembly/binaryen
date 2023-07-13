@@ -714,3 +714,88 @@
     )
   )
 )
+
+;; As above, but with a different control flow transfer in the caller.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none (func (param (ref null $A) (ref null $A) (ref null $A))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (import "a" "b" (func $get-any (type $none_=>_anyref) (result anyref)))
+  (import "a" "b" (func $get-any (result anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none) (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
+    ;; All parameters are cast.
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $y)
+      )
+    )
+    (drop
+      (ref.cast $B
+        (local.get $z)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (call $get-any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $any anyref)
+    (call $called
+      (ref.cast $A
+        (local.get $any)
+      )
+      (ref.cast $A
+        ;; This call might transfer control flow (if it throws), so we
+        ;; can't optimize before it, but the last two casts will become $B.
+        (call $get-any)
+      )
+      (ref.cast $A
+        (local.get $any)
+      )
+    )
+  )
+)

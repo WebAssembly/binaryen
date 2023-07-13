@@ -2368,15 +2368,14 @@ void Flower::inferMinStaticTypes() {
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
           // Regardless of the existence of a fallthrough value, check for
           // effects on curr's children. If there is a fallthrough then we still
-          // can't look at it if there is a transfer here (the transfer might
+          // can't look at it if a child transfers here (as the transfer might
           // happen first), and if there isn't we still need to look for effects
           // before continuing to the next param.
           for (auto* child : ChildIterator(curr)) {
             // Ignore next, which is either curr (if there is no fallthrough),
             // in which case it will never be a child, or it is one of the
             // children, and we want to skip that child as we'll be looking into
-            // it (and if the child transfers itself, that's fine - we can still
-            // infer about that child before we stop due to the transfer).
+            // it in detail.
             if (child != next &&
                 EffectAnalyzer(options, wasm, child).transfersControlFlow()) {
               transferred = true;
