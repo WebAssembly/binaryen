@@ -37,7 +37,7 @@ bool StringifyEquator::operator()(Expression* lhs, Expression* rhs) const {
 }
 
 void HashStringifyWalker::addUniqueSymbol() {
-  // Using a negative value to distinguish symbols for separators from symbols
+  // Use a negative value to distinguish symbols for separators from symbols
   // for Expressions
   hashString.push_back((uint64_t)-nextVal);
   nextVal++;
@@ -45,11 +45,9 @@ void HashStringifyWalker::addUniqueSymbol() {
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
   auto [it, inserted] = exprToCounter.insert({curr, nextVal});
+  hashString.push_back(it->second);
   if (inserted) {
-    hashString.push_back(nextVal);
     nextVal++;
-  } else {
-    hashString.push_back(it->second);
   }
 }
 
