@@ -15,7 +15,7 @@
  */
 
 #define USE_ABSTRACT_INTERPRETATION
-#define LOCAL_GRAPH_DEBUG
+// #define LOCAL_GRAPH_DEBUG
 
 #include <iterator>
 
@@ -232,6 +232,39 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 };
 
+#ifdef USE_ABSTRACT_INTERPRETATION
+struct LocationCollector
+  : public CFGWalker<LocationCollector, Visitor<LocationCollector>, Info> {
+  LocalGraph::Locations& locations;
+
+  LocationCollector(LocalGraph::Locations& locations, Function* func)
+    : locations(locations) {
+    setFunction(func);
+    // create the CFG by walking the IR
+    CFGWalker<LocationCollector, Visitor<LocationCollector>, Info>::
+      doWalkFunction(func);
+  }
+
+  static void doVisitLocalGet(LocationCollector* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalGet>();
+    // if in unreachable code, skip
+    if (!self->currBasicBlock) {
+      return;
+    }
+    self->locations[curr] = currp;
+  }
+
+  static void doVisitLocalSet(LocationCollector* self, Expression** currp) {
+    auto* curr = (*currp)->cast<LocalSet>();
+    // if in unreachable code, skip
+    if (!self->currBasicBlock) {
+      return;
+    }
+    self->locations[curr] = currp;
+  }
+};
+#endif
+
 } // namespace LocalGraphInternal
 
 // LocalGraph implementation
@@ -250,10 +283,12 @@ LocalGraph::LocalGraph(Function* func) : func(func) {
                                 analysis::ReachingDefinitionsTransferFunction>
     analyzer(lattice, transferFunction, cfg);
 
+  analyzer.evaluateFunctionEntry(func);
   analyzer.evaluate();
   transferFunction.beginResultCollection(&getSetses, &locations);
   analyzer.collectResults();
   transferFunction.endResultCollection();
+  LocalGraphInternal::LocationCollector collector(locations, func);
 
 #else
   LocalGraphInternal::Flower flower(getSetses, locations, func);

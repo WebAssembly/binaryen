@@ -106,6 +106,8 @@ public:
   // Runs the worklist algorithm to compute the states for the BlockList graph.
   void evaluate();
 
+  void evaluateFunctionEntry(Function* func);
+
   void collectResults();
 
   // Prints out all BlockStates in this analyzer.

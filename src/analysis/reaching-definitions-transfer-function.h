@@ -48,12 +48,6 @@ public:
     }
     currState->set(lattice.getSetSize() - numLocals + curr->index, false);
     lattice.add(currState, curr);
-
-    if (collectingResults) {
-      Expression* currExpr = curr;
-      Expression** currp = &currExpr;
-      (*locations)[currExpr] = currp;
-    }
   }
 
   void visitLocalGet(LocalGet* curr) {
@@ -69,22 +63,20 @@ public:
       if (currState->get(lattice.getSetSize() - numLocals + curr->index)) {
         (*getSetses)[curr].insert(nullptr);
       }
+    }
+  }
 
-      Expression* currExpr = curr;
-      Expression** currp = &currExpr;
-      (*locations)[currExpr] = currp;
+  void
+  evaluateFunctionEntry(Function* func,
+                        FinitePowersetLattice<LocalSet*>::Element& inputState) {
+    for (size_t i = 0; i < numLocals; ++i) {
+      inputState.set(lattice.getSetSize() - numLocals + i, true);
     }
   }
 
   void transfer(const BasicBlock* cfgBlock,
                 FinitePowersetLattice<LocalSet*>::Element& inputState) {
     currState = &inputState;
-    auto preds = cfgBlock->preds();
-    if (preds.begin() == preds.end()) {
-      for (size_t i = 0; i < numLocals; ++i) {
-        currState->set(lattice.getSetSize() - i - 1, true);
-      }
-    }
 
     for (auto cfgIter = cfgBlock->begin(); cfgIter != cfgBlock->end();
          ++cfgIter) {
@@ -106,12 +98,7 @@ public:
   void collectResults(const BasicBlock* cfgBlock,
                       FinitePowersetLattice<LocalSet*>::Element& inputState) {
     currState = &inputState;
-    auto preds = cfgBlock->preds();
-    if (preds.begin() == preds.end()) {
-      for (size_t i = 0; i < numLocals; ++i) {
-        currState->set(lattice.getSetSize() - i - 1, true);
-      }
-    }
+
     for (auto cfgIter = cfgBlock->begin(); cfgIter != cfgBlock->end();
          ++cfgIter) {
       visit(*cfgIter);

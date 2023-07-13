@@ -44,6 +44,13 @@ inline MonotoneCFGAnalyzer<Lattice, TransferFunction>::MonotoneCFGAnalyzer(
 }
 
 template<typename Lattice, typename TransferFunction>
+inline void
+MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluateFunctionEntry(
+  Function* func) {
+  transferFunction.evaluateFunctionEntry(func, stateBlocks[0].inputState);
+}
+
+template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
   std::queue<const BasicBlock*> worklist;
 
