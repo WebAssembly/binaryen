@@ -43,6 +43,7 @@ set(passes_SOURCES
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
   GUFA.cpp
+  hash-stringify-walker.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
