@@ -103,11 +103,18 @@ public:
                       TransferFunction& transferFunction,
                       CFG& cfg);
 
-  // Runs the worklist algorithm to compute the states for the BlockList graph.
+  // Runs the worklist algorithm to compute the states for the BlockState graph.
   void evaluate();
 
+  // This modifies the state of the CFG's entry block, with function
+  // information. This cannot be done otherwise in a forward analysis, as the
+  // entry block depends on no other blocks, and hence cannot be changed by
+  // them.
   void evaluateFunctionEntry(Function* func);
 
+  // Iterates over all of the BlockStates after evaluate() is completed for the
+  // transfer function to collect results (including intermediate states) from
+  // it.
   void collectResults();
 
   // Prints out all BlockStates in this analyzer.

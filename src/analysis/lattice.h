@@ -52,6 +52,7 @@ class FiniteIntPowersetLattice {
 public:
   FiniteIntPowersetLattice(size_t setSize) : setSize(setSize) {}
 
+  // Returns the size of the set that the powerset lattices was created from.
   size_t getSetSize() { return setSize; }
 
   // This represents an element of a powerset lattice. The element is itself a
@@ -129,8 +130,8 @@ public:
     }
   }
 
+  // Iterator to access the list of element members.
   using membersIterator = typename std::vector<T>::const_iterator;
-
   membersIterator membersBegin() { return members.cbegin(); }
   membersIterator membersEnd() { return members.cend(); }
   size_t getSetSize() { return intLattice.getSetSize(); }

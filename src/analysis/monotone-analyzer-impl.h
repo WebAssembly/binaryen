@@ -85,6 +85,8 @@ template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::collectResults() {
   for (BlockState currBlockState : stateBlocks) {
     typename Lattice::Element inputStateCopy = currBlockState.inputState;
+
+    // Calls collectResults from transfer function.
     transferFunction.collectResults(currBlockState.cfgBlock, inputStateCopy);
   }
 }
