@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#define USE_ABSTRACT_INTERPRETATION
-// #define LOCAL_GRAPH_DEBUG
-
 #include <iterator>
 
 #include <cfg/cfg-traversal.h>
@@ -24,11 +21,9 @@
 #include <ir/local-graph.h>
 #include <wasm-builder.h>
 
-#ifdef USE_ABSTRACT_INTERPRETATION
 #include "analysis/monotone-analyzer.h"
 #include "analysis/reaching-definitions-transfer-function.h"
 #include "ir/find_all.h"
-#endif
 
 namespace wasm {
 
@@ -232,7 +227,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 };
 
-#ifdef USE_ABSTRACT_INTERPRETATION
 struct LocationCollector
   : public CFGWalker<LocationCollector, Visitor<LocationCollector>, Info> {
   LocalGraph::Locations& locations;
@@ -263,36 +257,36 @@ struct LocationCollector
     self->locations[curr] = currp;
   }
 };
-#endif
 
 } // namespace LocalGraphInternal
 
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func) : func(func) {
-#ifdef USE_ABSTRACT_INTERPRETATION
-  analysis::CFG cfg = wasm::analysis::CFG::fromFunction(func);
-  FindAll<LocalSet> setFinder(func->body);
-  for (size_t i = 0; i < func->getNumLocals(); ++i) {
-    setFinder.list.push_back(nullptr);
-  }
-  analysis::FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
-  analysis::ReachingDefinitionsTransferFunction transferFunction(
+  auto* envVar = getenv("LOCALGRAPH_ABSTRACT_INTERPRETATION");
+
+  if (envVar) {
+    analysis::CFG cfg = wasm::analysis::CFG::fromFunction(func);
+    FindAll<LocalSet> setFinder(func->body);
+    for (size_t i = 0; i < func->getNumLocals(); ++i) {
+      setFinder.list.push_back(nullptr);
+    }
+    analysis::FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+    analysis::ReachingDefinitionsTransferFunction transferFunction(
     lattice, func->getNumLocals());
-  analysis::MonotoneCFGAnalyzer<analysis::FinitePowersetLattice<LocalSet*>,
-                                analysis::ReachingDefinitionsTransferFunction>
-    analyzer(lattice, transferFunction, cfg);
+    analysis::MonotoneCFGAnalyzer<analysis::FinitePowersetLattice<LocalSet*>,
+                                  analysis::ReachingDefinitionsTransferFunction>
+      analyzer(lattice, transferFunction, cfg);
 
-  analyzer.evaluateFunctionEntry(func);
-  analyzer.evaluate();
-  transferFunction.beginResultCollection(&getSetses, &locations);
-  analyzer.collectResults();
-  transferFunction.endResultCollection();
-  LocalGraphInternal::LocationCollector collector(locations, func);
-
-#else
-  LocalGraphInternal::Flower flower(getSetses, locations, func);
-#endif
+    analyzer.evaluateFunctionEntry(func);
+    analyzer.evaluate();
+    transferFunction.beginResultCollection(&getSetses, &locations);
+    analyzer.collectResults();
+    transferFunction.endResultCollection();
+    LocalGraphInternal::LocationCollector collector(locations, func);
+  } else {
+    LocalGraphInternal::Flower flower(getSetses, locations, func);
+  }
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";

@@ -923,11 +923,13 @@ class CompareVMs(TestCaseHandler):
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
-    frequency = 0.2
+    frequency = 1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
+        os.environ['LOCALGRAPH_ABSTRACT_INTERPRETATION'] = '1'
         run([in_bin('wasm-opt'), before_wasm, '-o', abspath('b1.wasm')] + opts)
+        os.environ['LOCALGRAPH_ABSTRACT_INTERPRETATION'] = '0'
         run([in_bin('wasm-opt'), before_wasm, '-o', abspath('b2.wasm')] + opts)
         b1 = open('b1.wasm', 'rb').read()
         b2 = open('b2.wasm', 'rb').read()
@@ -1363,14 +1365,14 @@ class RoundtripText(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
+#    FuzzExec(),
+#    CompareVMs(),
     CheckDeterminism(),
-    Wasm2JS(),
-    Asyncify(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
+#    Wasm2JS(),
+#    Asyncify(),
+#    TrapsNeverHappen(),
+#    CtorEval(),
+#    Merge(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
