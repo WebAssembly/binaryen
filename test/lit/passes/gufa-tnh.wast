@@ -4,11 +4,7 @@
 (module
   ;; CHECK:      (type $funcref_funcref_funcref_funcref_=>_none (func (param funcref funcref funcref funcref)))
 
-  ;; CHECK:      (type $funcref_ref|func|_=>_none (func (param funcref (ref func))))
-
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
-
-  ;; CHECK:      (type $none_=>_ref|func| (func (result (ref func))))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (import "a" "b" (global $unknown-i32 i32))
   (import "a" "b" (global $unknown-i32 i32))
@@ -44,7 +40,7 @@
   ;; CHECK-NEXT: )
   (func $called (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
     ;; All but the second parameter are cast here, which allows some
-    ;; optimization in the caller.
+    ;; optimization in the caller. Nothing significant changes here.
     (drop
       (ref.cast func
         (local.get $x)
@@ -62,25 +58,25 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_ref|func|_=>_none) (param $f funcref) (param $F (ref func))
-  ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $f funcref)
+  ;; CHECK-NEXT:  (local.set $f
+  ;; CHECK-NEXT:   (select (result funcref)
   ;; CHECK-NEXT:    (global.get $unknown-funcref1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.get $unknown-funcref1)
-  ;; CHECK-NEXT:   (global.get $unknown-funcref1)
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (global.get $unknown-funcref1)
+  ;; CHECK-NEXT:    (global.get $unknown-funcref2)
+  ;; CHECK-NEXT:    (global.get $unknown-i32)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (global.get $unknown-funcref2)
+  ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.get $unknown-funcref2)
-  ;; CHECK-NEXT:   (global.get $unknown-funcref2)
+  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $f)
   ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (global.get $unknown-funcref2)
+  ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
