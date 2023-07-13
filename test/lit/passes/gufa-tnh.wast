@@ -79,6 +79,18 @@
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $f)
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     (local $f funcref)
@@ -109,6 +121,20 @@
       )
       (local.get $f)
       (ref.cast null func
+        (local.get $f)
+      )
+    )
+
+    ;; Another call, but with different casts.
+    (call $called
+      (ref.cast func ;; this is now non-nullable, and will not change
+        (local.get $f)
+      )
+      (local.get $f) ;; this is not cast, and will not change.
+      (ref.cast null func
+        (local.get $f) ;; this is now cast, and will be optimized.
+      )
+      (ref.cast null func ;; this is the same as before, and will be optimized.
         (local.get $f)
       )
     )
