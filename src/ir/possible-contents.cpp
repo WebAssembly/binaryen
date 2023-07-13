@@ -2316,20 +2316,60 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
-        if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
-          break;
-        }
 
         auto iter = castParams.find(i);
-        if (iter != castParams.end()) {
-          // If the call executes then this parameter is definitely evalled, and
-          // this particular param is then cast to a more refined type.
-          auto castType = iter->second;
-          minStaticTypeMap[operands[i]] = castType;
-          // TODO: fallthroughs as well!
-          // TODO: go back through dominating blocks to uses/defs of this cast
-          //       param etc.
+        if (iter == castParams.end()) {
+          // Continue onwards, but check for a transfer of control flow first.
+          if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
+            break;
+          }
         }
+
+        // If the call executes then this parameter is definitely evalled, and
+        // this particular param is then cast to a more refined type.
+        auto castType = iter->second;
+
+        // Apply what we found to the operand and also to its fallthrough
+        // values.
+        auto* curr = operand;
+        bool transferred = false;
+        while (1) {
+          minStaticTypeMap[curr] = castType;
+          if (ShallowEffectAnalyzer(options, wasm, curr).transfersControlFlow()) {
+            transferred = true;
+            break;
+          }
+          auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
+          // Regardless of the existence of a fallthrough value, check for
+          // effects on curr's children. If there is a fallthrough then we still
+          // can't look at it if there is a transfer here (the transfer might
+          // happen first), and if there isn't we still need to look for effects
+          // before continuing to the next param.
+          for (auto* child : ChildIterator(curr)) {
+            // Ignore next, which is either curr (if there is no fallthrough),
+            // in which case it will never be a child, or it is one of the
+            // children, and we want to skip that child as we'll be looking into
+            // it (and if the child transfers itself, that's fine - we can still
+            // infer about that child before we stop due to the transfer).
+            if (child != next &&
+                EffectAnalyzer(options, wasm, child).transfersControlFlow()) {
+              transferred = true;
+              break;
+            }
+          }
+          if (next == curr) {
+            // No fallthrough, we're done.
+            break;
+          } else {
+            // Continue to the fallthrough
+            curr = next;
+          }
+        }
+        if (transferred) {
+          break;
+        }
+        // TODO: go back through dominating blocks to uses/defs of this cast
+        //       param etc.
       }
     }
   }
