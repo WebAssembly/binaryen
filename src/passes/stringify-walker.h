@@ -78,14 +78,12 @@ private:
 
 namespace wasm {
 
-/*
- * This custom hasher conforms to std::hash<Key>. Its purpose is to provide
- * a custom hash for if expressions, so the if-condition of the if expression is
- * not included in the hash for the if expression. This is needed because in the
- * binary format, the if-condition comes before and is consumed by the if. To
- * match the binary format, we hash the if condition
- * before and separately from the rest of the if expression.
- */
+// This custom hasher conforms to std::hash<Key>. Its purpose is to provide
+// a custom hash for if expressions, so the if-condition of the if expression is
+// not included in the hash for the if expression. This is needed because in the
+// binary format, the if-condition comes before and is consumed by the if. To
+// match the binary format, we hash the if condition before and separately from
+// the rest of the if expression.
 struct StringifyHasher {
   size_t operator()(Expression* curr) const {
     if (Properties::isControlFlowStructure(curr)) {
@@ -117,11 +115,9 @@ struct StringifyHasher {
   }
 };
 
-/*
- * This custom equator conforms to std::equal_to<Key>. Similar to
- * StringifyHasher, it's purpose is to not include the if-condition when
- * evaluating the equality of two if expressions.
- */
+// This custom equator conforms to std::equal_to<Key>. Similar to
+// StringifyHasher, it's purpose is to not include the if-condition when
+// evaluating the equality of two if expressions.
 struct StringifyEquator {
   bool operator()(Expression* lhs, Expression* rhs) const {
     if (Properties::isControlFlowStructure(lhs) &&
@@ -146,19 +142,15 @@ struct StringifyEquator {
 };
 
 struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
-  /*
-   * After calling walkModule, this vector contains the result of encoding a
-   * wasm module as a string. Each value represents either an Expression or a
-   * separator to mark the end of control flow.
-   */
+  // After calling walkModule, this vector contains the result of encoding a
+  // wasm module as a string of uint64_t values. Each value represents either an
+  // Expression or a separator to mark the end of control flow.
   std::vector<uint64_t> hashString;
   uint64_t monotonic = 0;
-  /*
-   * Contains a mapping of expression pointer to value to ensure we
-   * use the same value for matching expressions. A custom hasher and
-   * equator is provided in order to separate out evaluation of the if-condition
-   * when evaluating if expressions.
-   */
+  // Contains a mapping of expression pointer to value to ensure we
+  // use the same value for matching expressions. A custom hasher and
+  // equator is provided in order to separate out evaluation of the if-condition
+  // when evaluating if expressions.
   std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
