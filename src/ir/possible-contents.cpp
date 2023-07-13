@@ -1218,7 +1218,7 @@ struct InfoCollector
     }
 
     // Gather parameters that are definitely cast in the function entry.
-    // TODO: this could be done during the main walk...
+    // TODO: this could be skipped if we do not have GC enabled
     struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
       CollectedFuncInfo& info;
 
@@ -1369,7 +1369,11 @@ struct Flower {
     // If we noted a type, use that. Otherwise, use the expression's type.
     auto iter = minStaticTypeMap.find(curr);
     if (iter != minStaticTypeMap.end()) {
-      return iter->second;
+      auto refinedType = iter->second;
+      // We only store useful and correct types.
+      assert(refinedType != curr->type &&
+             Type::isSubType(refinedType, curr->type));
+      return refinedType;
     }
     return curr->type;
   }
@@ -2269,36 +2273,40 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 
 template<typename T>
 void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
+  // The current analysis here only helps with GC (it refines types) and it also
+  // depends on TrapsNeverHappen mode, as we use the assumption that casts
+  // never trap. Specifically, if we see a cast that executes then we can assume
+  // something about its value, which can then provide useful static information
+  // to more locations behind it. (Locations in front of it are already handled
+  // by the main forward analysis, as the location will only contain things of
+  // the cast type, and then only those things can flow forward.)
+  if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
+    return;
+  }
+
   // First, organize all calls. We've gathered call instructions inside each
   // function, and we need a map of all calls to each function.
   std::unordered_map<Name, std::vector<Call*>> funcCalls;
 
-std::cout << "iMST1\n";
-
-  // TODO: If no GC, or no cast params anywhere, leave early.
-
   for (auto& [_, info] : collectedFuncInfo) {
     for (auto* call : info.calls) {
-std::cout << "  call\n";
       funcCalls[call->target].push_back(call);
     }
   }
 
   // Each time we see a param that is definitely cast to some type, we can infer
   // that the values sent are of that type (or else we trap and it doesn't
-  // matter since we never reach the call). TNH only..? FIXME! traps etc. risk
-
+  // matter since we never reach the call).
+  // TODO: call_ref as well, etc.
   for (auto& [func, info] : collectedFuncInfo) {
     auto& castParams = info.castParams;
     if (castParams.empty()) {
       continue;
     }
 
-std::cout << "iMST2 cast params!\n";
     // There are cast params. Go through all the calls and note the useful
     // static information we gain.
     for (auto* call : funcCalls[func->name]) {
-std::cout << "  call\n";
       // We must be careful of control flow transfers: only if the call is
       // actually executed can we make any inference here. Therefore we go
       // backwards in the operands and stop at any transfer.
@@ -2306,11 +2314,9 @@ std::cout << "  call\n";
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
-std::cout << "   param\n" << *operand << '\n';
         if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
           break;
         }
-std::cout << "    add\n";
 
         auto iter = castParams.find(i);
         if (iter != castParams.end()) {
