@@ -2290,6 +2290,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
             return;
           }
 
+          // XXX transfers of control flow should stop us
           auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
           if (auto* get = fallthrough->dynCast<LocalGet>()) {
             // TODO: Can we optimize not only if we are a subtype? E.g if we are
