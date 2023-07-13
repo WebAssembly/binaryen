@@ -7,7 +7,6 @@
 
 #include "cfg.h"
 #include "lattice.h"
-#include "wasm-traversal.h"
 
 namespace wasm::analysis {
 

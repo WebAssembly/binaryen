@@ -3,6 +3,7 @@
 
 #include "lattice.h"
 #include "monotone-analyzer.h"
+#include "wasm-traversal.h"
 
 namespace wasm::analysis {
 
@@ -58,11 +59,11 @@ public:
     return currBlock->preds();
   }
 
-  // Prints the intermediate states of each BlockState currBlock by applying
+  // Prints the intermediate states of each basic block cfgBlock by applying
   // the transfer function on each expression of the CFG block. This data is
-  // not stored in the BlockState itself. Requires the cfgBlock, and a temp
-  // copy of the input state to be passed in, where the temp copy is modified
-  // in place to produce the intermediate states.
+  // not stored. Requires the cfgBlock, and a temp copy of the input state
+  // to be passed in, where the temp copy is modified in place to produce the
+  // intermediate states.
   void print(std::ostream& os,
              const BasicBlock* cfgBlock,
              FiniteIntPowersetLattice::Element& inputState) {
@@ -72,12 +73,12 @@ public:
     os << std::endl;
     auto cfgIter = cfgBlock->rbegin();
 
-    // Since we don't store the intermediate states in the BlockState, we need
-    // to re-run the transfer function on all the CFG node expressions to
-    // reconstruct the intermediate states here.
+    // Since we don't store the intermediate states, we need to re-run the
+    // transfer function on all the CFG node expressions to reconstruct
+    // the intermediate states here.
     while (cfgIter != cfgBlock->rend()) {
       os << ShallowExpression{*cfgIter} << std::endl;
-      LivenessTransferFunction::visit(*cfgIter);
+      visit(*cfgIter);
       currState->print(os);
       os << std::endl;
       ++cfgIter;
