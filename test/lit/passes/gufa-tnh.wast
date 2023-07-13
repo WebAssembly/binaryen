@@ -397,3 +397,53 @@
     )
   )
 )
+
+;; As above, but make the cast uninteresting so we do not optimize.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    (drop
+      (ref.cast $A ;; This cast adds no information ($A to $A).
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $any anyref)
+    (local $x (ref null $A))
+    (call $called
+      (local.tee $x
+        (ref.cast $A ;; this cast will *not* be refined
+          (local.get $any)
+        )
+      )
+    )
+  )
+)
