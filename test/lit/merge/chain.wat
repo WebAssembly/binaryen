@@ -9,8 +9,6 @@
 )
 ;; CHECK:      (type $none_=>_none (func))
 
-;; CHECK:      (import "first" "f" (func $f (type $none_=>_none)))
-
 ;; CHECK:      (export "f" (func $0))
 
 ;; CHECK:      (export "g" (func $0))
@@ -22,5 +20,5 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $0_2 (type $none_=>_none)
-;; CHECK-NEXT:  (call $f)
+;; CHECK-NEXT:  (call $0)
 ;; CHECK-NEXT: )

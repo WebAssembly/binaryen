@@ -235,6 +235,21 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
     }
 
   private:
+    Name resolveName(NameUpdates& updates, const Name newName) {
+      // Iteratively lookup the updated name
+      // We detect loops to ensure termination
+      std::set<Name> visited;
+      Name name = newName;
+      while (1) {
+        auto iter = updates.find(name);
+        if (iter == updates.end() || visited.find(name) != visited.end()) {
+          return name;
+        }
+        visited.insert(name);
+        name = iter->second;
+      }
+    }
+
     void mapName(ModuleItemKind kind, Name& name) {
       auto iter = kindNameUpdates.find(kind);
       if (iter == kindNameUpdates.end()) {
@@ -243,7 +258,7 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
       auto& nameUpdates = iter->second;
       auto iter2 = nameUpdates.find(name);
       if (iter2 != nameUpdates.end()) {
-        name = iter2->second;
+        name = resolveName(nameUpdates, iter2->second);
       }
     }
   } nameMapper(kindNameUpdates);
