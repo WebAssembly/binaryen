@@ -2385,10 +2385,41 @@ void Flower::inferMinStaticTypes() {
           if (next == curr) {
             // No fallthrough, we're done.
             break;
-          } else {
-            // Continue to the fallthrough
-            curr = next;
           }
+          if (transferred) {
+            // One of the children transferred control flow. We can still
+            // continue in simple cases like this:
+            //
+            //  (block
+            //     maybe return
+            //     fallthrough
+            //  )
+            //
+            // Here the fallthrough happens last, so we are ok. But in a case
+            // like an if, things might go either way:
+            //
+            //  (if
+            //     condition
+            //     maybe return
+            //     fallthrough
+            //  )
+            //
+            // In this case we might not even reach the fallthrough.
+            //
+            // For now, just handle the common case of a block. TODO: full
+            // CFG analysis
+            if ([[maybe_unused]] auto* block = curr->dynCast<Block>()) {
+              // The fallthrough must be at the end. (If, in the future, we
+              // start to look at block fallthroughs via breaks, then this
+              // assertion will be hit and we'd need to do more here.)
+              assert(next == block->list.back());
+            } else {
+              // Something other than a block; give up.
+              break;
+            }
+          }
+          // Continue to the fallthrough.
+          curr = next;
         }
         if (transferred) {
           break;
