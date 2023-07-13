@@ -46,6 +46,8 @@ bool StringifyEquator::operator()(Expression* lhs, Expression* rhs) const {
 }
 
 void HashStringifyWalker::addUniqueSymbol() {
+  // Using a negative value to distinguish symbols for separators from symbols
+  // for Expressions
   hashString.push_back((uint64_t)-monotonic);
   monotonic++;
 }
