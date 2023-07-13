@@ -640,7 +640,10 @@ class ContentOracle {
   void analyze();
 
 public:
-  ContentOracle(Module& wasm, const PassOptions& options) : wasm(wasm), options(options) { analyze(); }
+  ContentOracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    analyze();
+  }
 
   // Get the contents possible at a location.
   PossibleContents getContents(Location location) {

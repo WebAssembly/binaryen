@@ -1515,7 +1515,8 @@ private:
 #endif
 };
 
-Flower::Flower(Module& wasm, const PassOptions& options) : wasm(wasm), options(options) {
+Flower::Flower(Module& wasm, const PassOptions& options)
+  : wasm(wasm), options(options) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
@@ -2269,7 +2270,8 @@ void Flower::inferMinStaticTypes() {
         const PassOptions& options;
         Info& info;
 
-        EntryScanner(Module& wasm, const PassOptions& options, Info& info) : wasm(wasm), options(options), info(info) {}
+        EntryScanner(Module& wasm, const PassOptions& options, Info& info)
+          : wasm(wasm), options(options), info(info) {}
 
         // Note while we are still in the entry (first) block.
         bool inEntryBlock = true;
@@ -2279,9 +2281,7 @@ void Flower::inferMinStaticTypes() {
           self->inEntryBlock = false;
         }
 
-        void visitCall(Call* curr) {
-          info.calls.push_back(curr);
-        }
+        void visitCall(Call* curr) { info.calls.push_back(curr); }
 
         void visitRefCast(RefCast* curr) {
           if (!inEntryBlock) {
@@ -2356,13 +2356,13 @@ void Flower::inferMinStaticTypes() {
         bool transferred = false;
         while (1) {
           // If we transfer control flow here, stop.
-          if (ShallowEffectAnalyzer(options, wasm, curr).transfersControlFlow()) {
+          if (ShallowEffectAnalyzer(options, wasm, curr)
+                .transfersControlFlow()) {
             transferred = true;
             break;
           }
           // Note the type if it is useful.
-          if (castType != curr->type &&
-              Type::isSubType(castType, curr->type)) {
+          if (castType != curr->type && Type::isSubType(castType, curr->type)) {
             minStaticTypeMap[curr] = castType;
           }
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
