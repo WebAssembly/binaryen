@@ -9,7 +9,7 @@
 ;; RUN: wasm-merge %s first %s.second second --skip-export-conflicts -S -o - | filecheck %s --check-prefix SKIP_C
 
 (module
-  ;; RENAME:      (type $none_=>_none (func))
+  ;; RENAME:      (type $0 (func))
 
   ;; RENAME:      (export "func" (func $func0))
 
@@ -22,7 +22,7 @@
   ;; RENAME-NEXT:   (i32.const 0)
   ;; RENAME-NEXT:  )
   ;; RENAME-NEXT: )
-  ;; SKIP_C:      (type $none_=>_none (func))
+  ;; SKIP_C:      (type $0 (func))
 
   ;; SKIP_C:      (export "func" (func $func0))
 

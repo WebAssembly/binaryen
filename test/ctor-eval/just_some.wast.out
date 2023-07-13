@@ -1,13 +1,13 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (memory $0 256 256)
  (data $0 (i32.const 10) "wasa waka waka waka waka")
  (export "test2" (func $test2))
  (export "test3" (func $test3))
- (func $test2 (type $none_=>_none)
+ (func $test2 (type $0)
   (unreachable)
  )
- (func $test3 (type $none_=>_none)
+ (func $test3 (type $0)
   (i32.store8
    (i32.const 13)
    (i32.const 113)

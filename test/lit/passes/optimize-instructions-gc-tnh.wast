@@ -11,17 +11,17 @@
   ;; NO_TNH:      (type $void (func))
   (type $void (func))
 
-  ;; TNH:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
-  ;; NO_TNH:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; TNH:      (import "a" "b" (func $import (type $2) (result i32)))
+  ;; NO_TNH:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
+  ;; TNH:      (func $ref.eq (type $7) (param $a eqref) (param $b eqref) (result i32)
   ;; TNH-NEXT:  (ref.eq
   ;; TNH-NEXT:   (local.get $a)
   ;; TNH-NEXT:   (local.get $b)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
+  ;; NO_TNH:      (func $ref.eq (type $7) (param $a eqref) (param $b eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.eq
   ;; NO_TNH-NEXT:   (ref.cast (ref $struct)
   ;; NO_TNH-NEXT:    (local.get $a)
@@ -56,12 +56,12 @@
     )
   )
 
-  ;; TNH:      (func $ref.eq-no (type $eqref_eqref_anyref_=>_none) (param $a eqref) (param $b eqref) (param $any anyref)
+  ;; TNH:      (func $ref.eq-no (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_anyref_=>_none) (param $a eqref) (param $b eqref) (param $any anyref)
+  ;; NO_TNH:      (func $ref.eq-no (type $8) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.eq
   ;; NO_TNH-NEXT:    (ref.cast (ref null $struct)
@@ -91,7 +91,7 @@
     )
   )
 
-  ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH:      (func $ref.is (type $3) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.cast (ref $struct)
   ;; TNH-NEXT:    (local.get $a)
@@ -99,7 +99,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (i32.const 0)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH:      (func $ref.is (type $3) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.cast (ref $struct)
   ;; NO_TNH-NEXT:    (local.get $a)
@@ -121,7 +121,7 @@
     )
   )
 
-  ;; TNH:      (func $ref.is_b (type $eqref_funcref_=>_i32) (param $a eqref) (param $f funcref) (result i32)
+  ;; TNH:      (func $ref.is_b (type $9) (param $a eqref) (param $f funcref) (result i32)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (ref.is_null
   ;; TNH-NEXT:    (local.get $a)
@@ -131,7 +131,7 @@
   ;; TNH-NEXT:   (local.get $f)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_b (type $eqref_funcref_=>_i32) (param $a eqref) (param $f funcref) (result i32)
+  ;; NO_TNH:      (func $ref.is_b (type $9) (param $a eqref) (param $f funcref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.is_null
   ;; NO_TNH-NEXT:    (ref.cast (ref null $struct)
@@ -164,7 +164,7 @@
     )
   )
 
-  ;; TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH:      (func $ref.test (type $3) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block (result i32)
   ;; TNH-NEXT:    (drop
@@ -184,7 +184,7 @@
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH:      (func $ref.test (type $3) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block (result i32)
   ;; NO_TNH-NEXT:    (drop
@@ -219,7 +219,7 @@
     )
   )
 
-  ;; TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; TNH:      (func $if.arm.null (type $4) (param $x i32) (param $ref (ref $struct))
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (block (result (ref $struct))
   ;; TNH-NEXT:    (drop
@@ -239,7 +239,7 @@
   ;; TNH-NEXT:   (i32.const 2)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; NO_TNH:      (func $if.arm.null (type $4) (param $x i32) (param $ref (ref $struct))
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (if (result (ref null $struct))
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -278,7 +278,7 @@
     )
   )
 
-  ;; TNH:      (func $select.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; TNH:      (func $select.arm.null (type $4) (param $x i32) (param $ref (ref $struct))
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (block (result (ref $struct))
   ;; TNH-NEXT:    (block
@@ -308,7 +308,7 @@
   ;; TNH-NEXT:   (i32.const 2)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
+  ;; NO_TNH:      (func $select.arm.null (type $4) (param $x i32) (param $ref (ref $struct))
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (select (result (ref null $struct))
   ;; NO_TNH-NEXT:    (local.get $ref)
@@ -556,7 +556,7 @@
     )
   )
 
-  ;; TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
+  ;; TNH:      (func $set-get-cast (type $10) (param $ref structref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (struct.get $struct 0
   ;; TNH-NEXT:    (ref.cast (ref $struct)
@@ -580,7 +580,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
+  ;; NO_TNH:      (func $set-get-cast (type $10) (param $ref structref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
   ;; NO_TNH-NEXT:    (ref.cast (ref $struct)
@@ -640,7 +640,7 @@
     )
   )
 
-  ;; TNH:      (func $cast-if-null (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
+  ;; TNH:      (func $cast-if-null (type $5) (param $x (ref none)) (result (ref $struct))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block
   ;; TNH-NEXT:    (drop
@@ -651,7 +651,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $cast-if-null (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
+  ;; NO_TNH:      (func $cast-if-null (type $5) (param $x (ref none)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
@@ -674,7 +674,7 @@
     )
   )
 
-  ;; TNH:      (func $cast-if-null-flip (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
+  ;; TNH:      (func $cast-if-null-flip (type $5) (param $x (ref none)) (result (ref $struct))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block
   ;; TNH-NEXT:    (drop
@@ -685,7 +685,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $cast-if-null-flip (type $ref|none|_=>_ref|$struct|) (param $x (ref none)) (result (ref $struct))
+  ;; NO_TNH:      (func $cast-if-null-flip (type $5) (param $x (ref none)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
@@ -706,7 +706,7 @@
     )
   )
 
-  ;; TNH:      (func $cast-to-bottom (type $ref|any|_anyref_=>_none) (param $ref (ref any)) (param $nullable-ref anyref)
+  ;; TNH:      (func $cast-to-bottom (type $11) (param $ref (ref any)) (param $nullable-ref anyref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block (result (ref none))
   ;; TNH-NEXT:    (drop
@@ -740,7 +740,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $cast-to-bottom (type $ref|any|_anyref_=>_none) (param $ref (ref any)) (param $nullable-ref anyref)
+  ;; NO_TNH:      (func $cast-to-bottom (type $11) (param $ref (ref any)) (param $nullable-ref anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block (result (ref none))
   ;; NO_TNH-NEXT:    (drop
@@ -802,7 +802,7 @@
     )
   )
 
-  ;; TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; TNH:      (func $null.cast-other.effects (type $12) (param $x (ref null $struct))
   ;; TNH-NEXT:  (local $i i32)
   ;; TNH-NEXT:  (struct.set $struct 0
   ;; TNH-NEXT:   (local.get $x)
@@ -819,7 +819,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $null.cast-other.effects (type $ref?|$struct|_=>_none) (param $x (ref null $struct))
+  ;; NO_TNH:      (func $null.cast-other.effects (type $12) (param $x (ref null $struct))
   ;; NO_TNH-NEXT:  (local $i i32)
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (ref.as_non_null
@@ -871,7 +871,7 @@
     )
   )
 
-  ;; TNH:      (func $select.unreachable.child (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; TNH:      (func $select.unreachable.child (type $6) (param $x (ref $struct)) (result (ref $struct))
   ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (unreachable)
@@ -879,7 +879,7 @@
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.unreachable.child (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; NO_TNH:      (func $select.unreachable.child (type $6) (param $x (ref $struct)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (unreachable)
@@ -903,14 +903,14 @@
     )
   )
 
-  ;; TNH:      (func $select.unreachable.child.flip (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; TNH:      (func $select.unreachable.child.flip (type $6) (param $x (ref $struct)) (result (ref $struct))
   ;; TNH-NEXT:  (select
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:   (unreachable)
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $select.unreachable.child.flip (type $ref|$struct|_=>_ref|$struct|) (param $x (ref $struct)) (result (ref $struct))
+  ;; NO_TNH:      (func $select.unreachable.child.flip (type $6) (param $x (ref $struct)) (result (ref $struct))
   ;; NO_TNH-NEXT:  (select
   ;; NO_TNH-NEXT:   (local.get $x)
   ;; NO_TNH-NEXT:   (unreachable)
@@ -979,28 +979,28 @@
 
   ;; Helper functions.
 
-  ;; TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
+  ;; TNH:      (func $get-i32 (type $2) (result i32)
   ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $get-i32 (type $none_=>_i32) (result i32)
+  ;; NO_TNH:      (func $get-i32 (type $2) (result i32)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-i32 (result i32)
     (unreachable)
   )
-  ;; TNH:      (func $get-ref (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; TNH:      (func $get-ref (type $13) (result (ref $struct))
   ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $get-ref (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; NO_TNH:      (func $get-ref (type $13) (result (ref $struct))
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-ref (result (ref $struct))
     (unreachable)
   )
-  ;; TNH:      (func $get-null (type $none_=>_nullref) (result nullref)
+  ;; TNH:      (func $get-null (type $14) (result nullref)
   ;; TNH-NEXT:  (unreachable)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $get-null (type $none_=>_nullref) (result nullref)
+  ;; NO_TNH:      (func $get-null (type $14) (result nullref)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $get-null (result (ref null none))

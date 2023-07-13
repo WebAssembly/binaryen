@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (func $extern.externalize (type $anyref_externref_=>_none) (param $x anyref) (param $y externref)
+  ;; CHECK:      (func $extern.externalize (type $0) (param $x anyref) (param $y externref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (extern.externalize
   ;; CHECK-NEXT:    (local.get $x)

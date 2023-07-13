@@ -1,10 +1,10 @@
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (import "env" "imported" (global $imported i32))
  (memory $0 256 256)
  (export "test1" (func $0))
  (export "keepalive" (func $1))
- (func $0 (type $none_=>_i32) (result i32)
+ (func $0 (type $0) (result i32)
   (local $temp i32)
   (local.set $temp
    (global.get $imported)
@@ -15,7 +15,7 @@
   )
   (local.get $temp)
  )
- (func $1 (type $none_=>_i32) (result i32)
+ (func $1 (type $0) (result i32)
   (drop
    (i32.load
     (i32.const 13)

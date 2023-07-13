@@ -1,12 +1,12 @@
 (module
- (type $i32_=>_none (func (param i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32_i64 (func (result i32 i64)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $none_=>_v128 (func (result v128)))
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32) (result i32)))
+ (type $2 (func (param i32 i32) (result i32)))
+ (type $3 (func (result i32 i64)))
+ (type $4 (func (param i32 i32 i32) (result i32)))
+ (type $5 (func (result v128)))
  (memory $0 10 10)
- (func $basic (type $i32_=>_none) (param $p i32)
+ (func $basic (type $0) (param $p i32)
   (local $x i32)
   (local.set $x
    (i32.const 10)
@@ -15,7 +15,7 @@
    (i32.const 20)
   )
  )
- (func $split (type $i32_=>_none) (param $p i32)
+ (func $split (type $0) (param $p i32)
   (local $x i32)
   (if
    (i32.const 1)
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $split-but-join (type $i32_=>_none) (param $p i32)
+ (func $split-but-join (type $0) (param $p i32)
   (local $x i32)
   (if
    (i32.const 1)
@@ -45,7 +45,7 @@
    (i32.const 20)
   )
  )
- (func $split-but-join-different (type $i32_=>_none) (param $p i32)
+ (func $split-but-join-different (type $0) (param $p i32)
   (local $x i32)
   (if
    (i32.const 1)
@@ -63,7 +63,7 @@
    )
   )
  )
- (func $split-but-join-different-b (type $i32_=>_none) (param $p i32)
+ (func $split-but-join-different-b (type $0) (param $p i32)
   (local $x i32)
   (if
    (i32.const 1)
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $split-but-join-init0 (type $i32_=>_none) (param $p i32)
+ (func $split-but-join-init0 (type $0) (param $p i32)
   (local $x i32)
   (if
    (i32.const 1)
@@ -93,7 +93,7 @@
    (i32.const 0)
   )
  )
- (func $later (type $i32_=>_none) (param $p i32)
+ (func $later (type $0) (param $p i32)
   (local $x i32)
   (local.set $x
    (i32.const 10)
@@ -111,7 +111,7 @@
    (i32.const 39)
   )
  )
- (func $later2 (type $i32_=>_i32) (param $p i32) (result i32)
+ (func $later2 (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local.set $x
    (i32.const 10)
@@ -121,7 +121,7 @@
   )
   (i32.const 20)
  )
- (func $two-ways-but-identical (type $i32_=>_i32) (param $p i32) (result i32)
+ (func $two-ways-but-identical (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -141,7 +141,7 @@
   )
   (i32.const 21)
  )
- (func $two-ways-but-almost-identical (type $i32_=>_i32) (param $p i32) (result i32)
+ (func $two-ways-but-almost-identical (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -164,7 +164,7 @@
   )
   (local.get $y)
  )
- (func $deadloop (type $i32_=>_i32) (param $p i32) (result i32)
+ (func $deadloop (type $1) (param $p i32) (result i32)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -177,26 +177,7 @@
    (br $loop)
   )
  )
- (func $deadloop2 (type $i32_=>_none) (param $p i32)
-  (local $x i32)
-  (local $y i32)
-  (loop $loop
-   (local.set $x
-    (i32.const 0)
-   )
-   (local.set $y
-    (i32.const 0)
-   )
-   (call $deadloop2
-    (i32.const 0)
-   )
-   (call $deadloop2
-    (i32.const 0)
-   )
-   (br $loop)
-  )
- )
- (func $deadloop3 (type $i32_=>_none) (param $p i32)
+ (func $deadloop2 (type $0) (param $p i32)
   (local $x i32)
   (local $y i32)
   (loop $loop
@@ -215,7 +196,26 @@
    (br $loop)
   )
  )
- (func $through-tee (type $i32_i32_=>_i32) (param $x i32) (param $y i32) (result i32)
+ (func $deadloop3 (type $0) (param $p i32)
+  (local $x i32)
+  (local $y i32)
+  (loop $loop
+   (local.set $x
+    (i32.const 0)
+   )
+   (local.set $y
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (call $deadloop2
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+ (func $through-tee (type $2) (param $x i32) (param $y i32) (result i32)
   (local.set $x
    (local.tee $y
     (i32.const 7)
@@ -225,7 +225,7 @@
    (i32.const 14)
   )
  )
- (func $through-tee-more (type $i32_i32_=>_i32) (param $x i32) (param $y i32) (result i32)
+ (func $through-tee-more (type $2) (param $x i32) (param $y i32) (result i32)
   (local.set $x
    (i32.eqz
     (local.tee $y
@@ -237,7 +237,7 @@
    (i32.const 7)
   )
  )
- (func $multipass (type $i32_i32_i32_=>_i32) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+ (func $multipass (type $4) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (local $3 i32)
   (nop)
   (if
@@ -248,7 +248,7 @@
   )
   (local.get $2)
  )
- (func $through-fallthrough (type $i32_i32_=>_i32) (param $x i32) (param $y i32) (result i32)
+ (func $through-fallthrough (type $2) (param $x i32) (param $y i32) (result i32)
   (local.set $x
    (block (result i32)
     (nop)
@@ -261,7 +261,7 @@
    (i32.const 14)
   )
  )
- (func $simd-load (type $none_=>_v128) (result v128)
+ (func $simd-load (type $5) (result v128)
   (local $x v128)
   (local.set $x
    (v128.load8_splat
@@ -270,7 +270,7 @@
   )
   (local.get $x)
  )
- (func $tuple-local (type $none_=>_i32_i64) (result i32 i64)
+ (func $tuple-local (type $3) (result i32 i64)
   (local $i32s (i32 i32))
   (local $i64s (i64 i64))
   (local.set $i32s

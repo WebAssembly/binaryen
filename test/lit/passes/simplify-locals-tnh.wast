@@ -10,7 +10,7 @@
   ;; NO_TNH:      (global $glob (mut i32) (i32.const 0))
   (global $glob (mut i32) (i32.const 0))
 
-  ;; TNH:      (func $optimize-past-global.set (type $none_=>_i32) (result i32)
+  ;; TNH:      (func $optimize-past-global.set (type $0) (result i32)
   ;; TNH-NEXT:  (local $temp i32)
   ;; TNH-NEXT:  (nop)
   ;; TNH-NEXT:  (global.set $glob
@@ -20,7 +20,7 @@
   ;; TNH-NEXT:   (i32.const 0)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $optimize-past-global.set (type $none_=>_i32) (result i32)
+  ;; NO_TNH:      (func $optimize-past-global.set (type $0) (result i32)
   ;; NO_TNH-NEXT:  (local $temp i32)
   ;; NO_TNH-NEXT:  (local.set $temp
   ;; NO_TNH-NEXT:   (i32.load
@@ -48,7 +48,7 @@
     (local.get $temp)
   )
 
-  ;; TNH:      (func $no-optimize-past-return (type $none_=>_i32) (result i32)
+  ;; TNH:      (func $no-optimize-past-return (type $0) (result i32)
   ;; TNH-NEXT:  (local $temp i32)
   ;; TNH-NEXT:  (local.set $temp
   ;; TNH-NEXT:   (i32.load
@@ -63,7 +63,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (local.get $temp)
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $no-optimize-past-return (type $none_=>_i32) (result i32)
+  ;; NO_TNH:      (func $no-optimize-past-return (type $0) (result i32)
   ;; NO_TNH-NEXT:  (local $temp i32)
   ;; NO_TNH-NEXT:  (local.set $temp
   ;; NO_TNH-NEXT:   (i32.load

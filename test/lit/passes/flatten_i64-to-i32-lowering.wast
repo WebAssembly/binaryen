@@ -5,19 +5,19 @@
 
 (module
  (memory 1 1)
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $0 (func (result i32)))
 
- ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+ ;; CHECK:      (type $1 (func (result i64)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $2 (func))
 
- ;; CHECK:      (import "env" "func" (func $import (type $none_=>_i64) (result i64)))
+ ;; CHECK:      (import "env" "func" (func $import (type $1) (result i64)))
  (import "env" "func" (func $import (result i64)))
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
  ;; CHECK:      (memory $0 1 1)
 
- ;; CHECK:      (func $defined (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $defined (type $0) (result i32)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $0$hi i32)
  ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
@@ -96,7 +96,7 @@
  (func $defined (result i64)
   (i64.add (i64.const 1) (i64.const 2))
  )
- ;; CHECK:      (func $unreachable-select-i64 (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $unreachable-select-i64 (type $0) (result i32)
  ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (block
@@ -122,7 +122,7 @@
    (i32.const 2)
   )
  )
- ;; CHECK:      (func $unreachable-select-i64-b (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $unreachable-select-i64-b (type $0) (result i32)
  ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (block
@@ -148,7 +148,7 @@
    (i32.const 4)
   )
  )
- ;; CHECK:      (func $unreachable-select-i64-c (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $unreachable-select-i64-c (type $0) (result i32)
  ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
  ;; CHECK-NEXT:  (local $i64toi32_i32$1 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -180,7 +180,7 @@
    (unreachable)
   )
  )
- ;; CHECK:      (func $mem (type $none_=>_none)
+ ;; CHECK:      (func $mem (type $2)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $0$hi i32)
  ;; CHECK-NEXT:  (local $1 i32)
@@ -454,9 +454,9 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $1 (func (param i32 i32)))
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
@@ -476,7 +476,7 @@
 
  ;; CHECK:      (export "unreach" (func $2))
 
- ;; CHECK:      (func $call (type $i32_i32_=>_none) (param $0 i32) (param $0$hi i32)
+ ;; CHECK:      (func $call (type $1) (param $0 i32) (param $0$hi i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
@@ -492,7 +492,7 @@
   )
  )
 )
-;; CHECK:      (func $1 (type $none_=>_none)
+;; CHECK:      (func $1 (type $0)
 ;; CHECK-NEXT:  (local $0 i32)
 ;; CHECK-NEXT:  (local $0$hi i32)
 ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
@@ -533,7 +533,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $2 (type $none_=>_none)
+;; CHECK:      (func $2 (type $0)
 ;; CHECK-NEXT:  (local $0 i32)
 ;; CHECK-NEXT:  (local $0$hi i32)
 ;; CHECK-NEXT:  (local $1 i32)
@@ -571,9 +571,9 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $0 (func (param i32 i32)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $1 (func))
 
  ;; CHECK:      (global $f (mut i32) (i32.const -1412567121))
  (global $f (mut i64) (i64.const 0x12345678ABCDEFAF))
@@ -583,7 +583,7 @@
 
  ;; CHECK:      (export "exp" (func $1))
 
- ;; CHECK:      (func $call (type $i32_i32_=>_none) (param $0 i32) (param $0$hi i32)
+ ;; CHECK:      (func $call (type $0) (param $0 i32) (param $0$hi i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
@@ -592,7 +592,7 @@
   (global.set $f (i64.const 0x1122334455667788))
  )
 )
-;; CHECK:      (func $1 (type $none_=>_none)
+;; CHECK:      (func $1 (type $1)
 ;; CHECK-NEXT:  (local $0 i32)
 ;; CHECK-NEXT:  (local $0$hi i32)
 ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
@@ -634,13 +634,13 @@
 ;; CHECK-NEXT: )
 (module
  (type $i64_f64_i32_=>_none (func (param i64 f64 i32)))
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
  ;; CHECK:      (table $0 37 funcref)
  (table $0 37 funcref)
- ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (unreachable)

@@ -12,7 +12,7 @@
  (type $type$2 (func_subtype func))
  (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
- ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
+ ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
  ;; CHECK:      (elem declare func $2 $3)
 
@@ -86,7 +86,7 @@
  )
 )
 
-;; CHECK:      (func $byn$mgfn-shared$0 (type $ref|$type$0|_=>_none) (param $0 (ref $type$0))
+;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -116,7 +116,7 @@
  (type $type$3 (func_subtype (param f32) (result f32) func))
  (type $type$4 (func_subtype (param f64) (result f64) func))
 
- ;; CHECK:      (type $ref|$type$0|_=>_none (func (param (ref $type$0))))
+ ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
@@ -194,7 +194,7 @@
   )
  )
 )
-;; CHECK:      (func $byn$mgfn-shared$0 (type $ref|$type$0|_=>_none) (param $0 (ref $type$0))
+;; CHECK:      (func $byn$mgfn-shared$0 (type $1) (param $0 (ref $type$0))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)

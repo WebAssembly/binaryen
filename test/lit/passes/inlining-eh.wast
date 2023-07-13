@@ -3,7 +3,7 @@
 
 (module
   ;; ---------------------------------------------------------------------------
-  ;; CHECK:      (import "a" "b" (func $foo (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $foo (type $2) (result i32)))
   (import "a" "b" (func $foo (result i32)))
   ;; CHECK:      (tag $tag$0 (param i32))
   (tag $tag$0 (param i32))
@@ -20,7 +20,7 @@
 
   ;; Properly ensure unique try labels after an inlining
 
-  ;; CHECK:      (func $caller-with-label (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $caller-with-label (type $1) (param $x i32)
   ;; CHECK-NEXT:  (loop $label
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block $__inlined_func$callee-with-label
@@ -51,7 +51,7 @@
   )
 
   ;; ---------------------------------------------------------------------------
-  ;; CHECK:      (func $callee-with-try-delegate (type $none_=>_none)
+  ;; CHECK:      (func $callee-with-try-delegate (type $0)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -68,7 +68,7 @@
 
   ;; For now, do not inline a try-delegate
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $callee-with-try-delegate)
   ;; CHECK-NEXT: )
   (func $caller
@@ -82,7 +82,7 @@
 
   ;; Properly support inlining into a function with a try-delegate
 
-  ;; CHECK:      (func $caller-with-try-delegate (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $caller-with-try-delegate (type $2) (result i32)
   ;; CHECK-NEXT:  (try $label$3
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -107,7 +107,7 @@
   ;; ---------------------------------------------------------------------------
   (func $callee-b (param i32))
 
-  ;; CHECK:      (func $caller-with-pop (type $none_=>_none)
+  ;; CHECK:      (func $caller-with-pop (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try $try

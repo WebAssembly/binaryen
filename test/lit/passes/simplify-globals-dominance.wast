@@ -3,12 +3,12 @@
 ;; RUN: foreach %s %t wasm-opt --simplify-globals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (global.set $global
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )

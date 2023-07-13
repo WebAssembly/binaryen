@@ -3,20 +3,20 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 --partial-inlining-ifs=4 --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
+  ;; CHECK:      (type $2 (func (param anyref) (result anyref)))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+  ;; CHECK:      (type $3 (func (param anyref)))
 
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
+  ;; CHECK:      (type $5 (func (param i64 i32 f64)))
 
-  ;; CHECK:      (import "out" "func" (func $import (type $none_=>_none)))
+  ;; CHECK:      (import "out" "func" (func $import (type $0)))
   (import "out" "func" (func $import))
 
   ;; CHECK:      (global $glob i32 (i32.const 1))
@@ -46,7 +46,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-maybe-work-hard (type $none_=>_none)
+  ;; CHECK:      (func $call-maybe-work-hard (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -122,7 +122,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-just-if (type $none_=>_none)
+  ;; CHECK:      (func $call-just-if (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -157,7 +157,7 @@
     (call $just-if (i32.const 2))
   )
 
-  ;; CHECK:      (func $br-to-toplevel (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $br-to-toplevel (type $1) (param $x i32)
   ;; CHECK-NEXT:  (block $toplevel
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
@@ -186,7 +186,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-br-to-toplevel (type $none_=>_none)
+  ;; CHECK:      (func $call-br-to-toplevel (type $0)
   ;; CHECK-NEXT:  (call $br-to-toplevel
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -211,7 +211,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-nondefaultable-param (type $none_=>_none)
+  ;; CHECK:      (func $call-nondefaultable-param (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 (ref $struct))
   ;; CHECK-NEXT:  (block $__inlined_func$nondefaultable-param$5
@@ -251,7 +251,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-many-params (type $none_=>_none)
+  ;; CHECK:      (func $call-many-params (type $0)
   ;; CHECK-NEXT:  (local $0 i64)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -329,7 +329,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-condition-eqz (type $none_=>_none)
+  ;; CHECK:      (func $call-condition-eqz (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -384,7 +384,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-condition-global (type $none_=>_none)
+  ;; CHECK:      (func $call-condition-global (type $0)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$condition-global$10
   ;; CHECK-NEXT:    (if
@@ -425,7 +425,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-condition-ref.is (type $none_=>_none)
+  ;; CHECK:      (func $call-condition-ref.is (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (block
@@ -468,7 +468,7 @@
     (call $condition-ref.is (ref.null any))
   )
 
-  ;; CHECK:      (func $condition-disallow-binary (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $condition-disallow-binary (type $1) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $x)
@@ -496,7 +496,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-condition-disallow-binary (type $none_=>_none)
+  ;; CHECK:      (func $call-condition-disallow-binary (type $0)
   ;; CHECK-NEXT:  (call $condition-disallow-binary
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -509,7 +509,7 @@
     (call $condition-disallow-binary (i32.const 1))
   )
 
-  ;; CHECK:      (func $condition-disallow-unreachable (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $condition-disallow-unreachable (type $1) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (unreachable)
@@ -535,7 +535,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-condition-disallow-unreachable (type $none_=>_none)
+  ;; CHECK:      (func $call-condition-disallow-unreachable (type $0)
   ;; CHECK-NEXT:  (call $condition-disallow-unreachable
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -548,7 +548,7 @@
     (call $condition-disallow-unreachable (i32.const 1))
   )
 
-  ;; CHECK:      (func $start-used-globally (type $none_=>_none)
+  ;; CHECK:      (func $start-used-globally (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $glob)
   ;; CHECK-NEXT:   (return)
@@ -573,7 +573,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-start-used-globally (type $none_=>_none)
+  ;; CHECK:      (func $call-start-used-globally (type $0)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$byn-split-inlineable-A$start-used-globally$14
   ;; CHECK-NEXT:    (if
@@ -610,7 +610,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-inlineable (type $none_=>_none)
+  ;; CHECK:      (func $call-inlineable (type $0)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$inlineable$16
   ;; CHECK-NEXT:    (if
@@ -633,7 +633,7 @@
     (call $inlineable)
   )
 
-  ;; CHECK:      (func $if-not-first (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $if-not-first (type $1) (param $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -658,7 +658,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-if-not-first (type $none_=>_none)
+  ;; CHECK:      (func $call-if-not-first (type $0)
   ;; CHECK-NEXT:  (call $if-not-first
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -671,7 +671,7 @@
     (call $if-not-first (i32.const 1))
   )
 
-  ;; CHECK:      (func $if-else (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $if-else (type $1) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (return)
@@ -695,7 +695,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-if-else (type $none_=>_none)
+  ;; CHECK:      (func $call-if-else (type $0)
   ;; CHECK-NEXT:  (call $if-else
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -708,7 +708,7 @@
     (call $if-else (i32.const 1))
   )
 
-  ;; CHECK:      (func $if-non-return (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $if-non-return (type $1) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (unreachable)
@@ -730,7 +730,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-if-non-return (type $none_=>_none)
+  ;; CHECK:      (func $call-if-non-return (type $0)
   ;; CHECK-NEXT:  (call $if-non-return
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -756,7 +756,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-colliding-name (type $none_=>_none)
+  ;; CHECK:      (func $call-colliding-name (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -795,7 +795,7 @@
     (call $colliding-name (i32.const 1))
   )
 
-  ;; CHECK:      (func $byn-split-outlined-A$colliding-name (type $none_=>_none)
+  ;; CHECK:      (func $byn-split-outlined-A$colliding-name (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $byn-split-outlined-A$colliding-name
@@ -825,7 +825,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-error-if-null (type $none_=>_none)
+  ;; CHECK:      (func $call-error-if-null (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
@@ -878,7 +878,7 @@
     (drop (call $error-if-null (ref.null any)))
   )
 
-  ;; CHECK:      (func $too-many (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $too-many (type $2) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -905,7 +905,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-too-many (type $none_=>_none)
+  ;; CHECK:      (func $call-too-many (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many
   ;; CHECK-NEXT:    (ref.null none)
@@ -922,7 +922,7 @@
     (drop (call $too-many (ref.null any)))
   )
 
-  ;; CHECK:      (func $tail-not-simple (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $tail-not-simple (type $2) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -947,7 +947,7 @@
     (unreachable) ;; This prevents us from optimizing
   )
 
-  ;; CHECK:      (func $call-tail-not-simple (type $none_=>_none)
+  ;; CHECK:      (func $call-tail-not-simple (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $tail-not-simple
   ;; CHECK-NEXT:    (ref.null none)
@@ -983,7 +983,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-reachable-if-body (type $none_=>_none)
+  ;; CHECK:      (func $call-reachable-if-body (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
@@ -1043,7 +1043,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-reachable-if-body-noloop (type $none_=>_none)
+  ;; CHECK:      (func $call-reachable-if-body-noloop (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (drop
@@ -1091,7 +1091,7 @@
     (drop (call $reachable-if-body-noloop (ref.null any)))
   )
 
-  ;; CHECK:      (func $reachable-if-body-return (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $reachable-if-body-return (type $2) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -1123,7 +1123,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-reachable-if-body-return (type $none_=>_none)
+  ;; CHECK:      (func $call-reachable-if-body-return (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $reachable-if-body-return
   ;; CHECK-NEXT:    (ref.null none)
@@ -1154,7 +1154,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-unreachable-if-body-no-result (type $none_=>_none)
+  ;; CHECK:      (func $call-unreachable-if-body-no-result (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (block
@@ -1215,7 +1215,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-multi-if (type $none_=>_none)
+  ;; CHECK:      (func $call-multi-if (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 anyref)
@@ -1288,7 +1288,7 @@
     (drop (call $multi-if (ref.null none)))
   )
 
-  ;; CHECK:      (func $too-many-ifs (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+  ;; CHECK:      (func $too-many-ifs (type $2) (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
@@ -1356,7 +1356,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-too-many-ifs (type $none_=>_none)
+  ;; CHECK:      (func $call-too-many-ifs (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $too-many-ifs
   ;; CHECK-NEXT:    (ref.null none)
@@ -1374,14 +1374,14 @@
   )
 )
 
-;; CHECK:      (func $byn-split-outlined-A$maybe-work-hard (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$maybe-work-hard (type $1) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$just-if (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-B$just-if (type $1) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br_if $l
@@ -1390,65 +1390,65 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$many-params (type $i64_i32_f64_=>_none) (param $x i64) (param $y i32) (param $z f64)
+;; CHECK:      (func $byn-split-outlined-A$many-params (type $5) (param $x i64) (param $y i32) (param $z f64)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$condition-eqz (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$condition-eqz (type $1) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$condition-global (type $none_=>_none)
+;; CHECK:      (func $byn-split-outlined-A$condition-global (type $0)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$condition-ref.is (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-A$condition-ref.is (type $3) (param $x anyref)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$start-used-globally (type $none_=>_none)
+;; CHECK:      (func $byn-split-outlined-A$start-used-globally (type $0)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-A$colliding-name_67 (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$colliding-name_67 (type $1) (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$error-if-null (type $anyref_=>_anyref) (param $x anyref) (result anyref)
+;; CHECK:      (func $byn-split-outlined-B$error-if-null (type $2) (param $x anyref) (result anyref)
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$reachable-if-body (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$reachable-if-body (type $3) (param $x anyref)
 ;; CHECK-NEXT:  (loop $loop
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$unreachable-if-body-no-result (type $3) (param $x anyref)
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$multi-if_76 (type $anyref_=>_none) (param $x anyref)
+;; CHECK:      (func $byn-split-outlined-B$multi-if_76 (type $3) (param $x anyref)
 ;; CHECK-NEXT:  (loop $x
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br_if $x
@@ -1762,13 +1762,13 @@
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
   )
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $2 (func (param i32) (result i32)))
 
-  ;; CHECK:      (func $call-$middle-size-A (type $none_=>_none)
+  ;; CHECK:      (func $call-$middle-size-A (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -1878,7 +1878,7 @@
     (drop (i32.const 0)) (drop (i32.const 0)) (drop (i32.const 0))
   )
 
-  ;; CHECK:      (func $call-$big-size-A (type $none_=>_none)
+  ;; CHECK:      (func $call-$big-size-A (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block
@@ -1936,7 +1936,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-$middle-size-B (type $none_=>_none)
+  ;; CHECK:      (func $call-$middle-size-B (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -2060,7 +2060,7 @@
     (local.get $x)
   )
 
-  ;; CHECK:      (func $call-$big-size-B (type $none_=>_none)
+  ;; CHECK:      (func $call-$big-size-B (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -2118,7 +2118,7 @@
     )
   )
 )
-;; CHECK:      (func $byn-split-outlined-A$big-size-A (type $i32_=>_none) (param $x i32)
+;; CHECK:      (func $byn-split-outlined-A$big-size-A (type $1) (param $x i32)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )
@@ -2157,7 +2157,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn-split-outlined-B$big-size-B (type $i32_=>_i32) (param $x i32) (result i32)
+;; CHECK:      (func $byn-split-outlined-B$big-size-B (type $2) (param $x i32) (result i32)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )

@@ -421,8 +421,8 @@ file_names[  1]:
 0x0000018d: "sidef"
 0x00000193: "int"
 (module
- (type $none_=>_none (func))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 0))
  (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
  (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
@@ -434,13 +434,13 @@ file_names[  1]:
  (export "sideg" (func $sideg))
  (export "sidef" (func $sidef))
  (export "__dso_handle" (global $global$0))
- (func $__wasm_call_ctors (type $none_=>_none)
+ (func $__wasm_call_ctors (type $0)
   ;; code offset: 0x3
   (call $__wasm_apply_relocs)
  )
- (func $__wasm_apply_relocs (type $none_=>_none)
+ (func $__wasm_apply_relocs (type $0)
  )
- (func $sideg (type $none_=>_i32) (result i32)
+ (func $sideg (type $1) (result i32)
   (local $0 i32)
   ;; code offset: 0xf
   (local.set $0
@@ -453,7 +453,7 @@ file_names[  1]:
    (local.get $0)
   )
  )
- (func $sidef (type $none_=>_i32) (result i32)
+ (func $sidef (type $1) (result i32)
   (local $0 i32)
   ;; code offset: 0x1b
   (local.set $0

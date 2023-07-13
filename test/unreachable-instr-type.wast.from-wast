@@ -1,7 +1,7 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (memory $0 (shared 1 1))
- (func $test (type $none_=>_none)
+ (func $test (type $0)
   (i32.load
    (unreachable)
   )

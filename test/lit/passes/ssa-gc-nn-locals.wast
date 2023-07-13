@@ -4,7 +4,7 @@
 ;; RUN: wasm-opt %s -all --ssa --enable-gc-nn-locals -g --roundtrip -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $nn-locals (type $none_=>_none)
+ ;; CHECK:      (func $nn-locals (type $0)
  ;; CHECK-NEXT:  (local $x (ref func))
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (ref.func $nn-locals)

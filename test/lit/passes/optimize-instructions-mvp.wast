@@ -3,8 +3,10 @@
 
 (module
   (memory 0)
-  ;; CHECK:      (type $0 (func (param i32 i64)))
+  ;; CHECK:      (type $0 (func (result i32)))
   (type $0 (func (param i32 i64)))
+
+  ;; CHECK:      (type $0 (func (param i32 i64)))
 
   ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
   (import "a" "b" (func $get-f64 (result f64)))

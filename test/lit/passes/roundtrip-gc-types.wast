@@ -22,7 +22,7 @@
   (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
  )
 
- ;; CHECK:      (func $use-types (type $ref|$A|_ref|$D|_=>_none) (param $0 (ref $A)) (param $1 (ref $D))
+ ;; CHECK:      (func $use-types (type $4) (param $0 (ref $A)) (param $1 (ref $D))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types (param (ref $A) (ref $D))

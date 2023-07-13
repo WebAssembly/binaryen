@@ -1,17 +1,17 @@
 ;; RUN: wasm-fuzz-lattices -v --seed=0 | filecheck %s
 
 ;; CHECK:      Running with seed 0
-;; CHECK-NEXT: Generated test module: 
+;; CHECK-NEXT: Generated test module:
 ;; CHECK-NEXT: (module
-;; CHECK-NEXT:  (type $none_=>_none (func))
-;; CHECK-NEXT:  (type $none_=>_i32 (func (result i32)))
-;; CHECK-NEXT:  (type $none_=>_i64 (func (result i64)))
-;; CHECK-NEXT:  (type $i32_=>_none (func (param i32)))
-;; CHECK-NEXT:  (type $i64_=>_none (func (param i64)))
-;; CHECK-NEXT:  (type $f32_=>_none (func (param f32)))
-;; CHECK-NEXT:  (type $f64_=>_none (func (param f64)))
-;; CHECK-NEXT:  (type $i32_=>_f32 (func (param i32) (result f32)))
-;; CHECK-NEXT:  (type $i32_f32_f64_f32_=>_i32 (func (param i32 f32 f64 f32) (result i32)))
+;; CHECK-NEXT:  (type $0 (func))
+;; CHECK-NEXT:  (type $1 (func (result i32)))
+;; CHECK-NEXT:  (type $2 (func (result i64)))
+;; CHECK-NEXT:  (type $3 (func (param i32)))
+;; CHECK-NEXT:  (type $4 (func (param i64)))
+;; CHECK-NEXT:  (type $5 (func (param f32)))
+;; CHECK-NEXT:  (type $6 (func (param f64)))
+;; CHECK-NEXT:  (type $7 (func (param i32) (result f32)))
+;; CHECK-NEXT:  (type $8 (func (param i32 f32 f64 f32) (result i32)))
 ;; CHECK-NEXT:  (import "fuzzing-support" "log-i32" (func $log-i32 (param i32)))
 ;; CHECK-NEXT:  (import "fuzzing-support" "log-i64" (func $log-i64 (param i64)))
 ;; CHECK-NEXT:  (import "fuzzing-support" "log-f32" (func $log-f32 (param f32)))
@@ -1225,35 +1225,35 @@
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 4234964801256893051
 ;; CHECK-NEXT: Generated FiniteIntPowersetLattice elements:
 ;; CHECK-NEXT: 1,
 ;; CHECK-NEXT: 1,
 ;; CHECK-NEXT: 0
 ;; CHECK-NEXT: for func to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 4577570485573586799
 ;; CHECK-NEXT: Generated FinitePowersetLattice<LocalSet*> elements:
 ;; CHECK-NEXT: ,
 ;; CHECK-NEXT: ,
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_invoker to test ReachingDefinitionsTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 8191301589003135276
 ;; CHECK-NEXT: Generated FinitePowersetLattice<LocalSet*> elements:
 ;; CHECK-NEXT: 0,
 ;; CHECK-NEXT: 0,
 ;; CHECK-NEXT: 1
 ;; CHECK-NEXT: for func_6 to test ReachingDefinitionsTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 8068299453651594774
 ;; CHECK-NEXT: Generated FinitePowersetLattice<LocalSet*> elements:
 ;; CHECK-NEXT: ,
 ;; CHECK-NEXT: ,
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_6_invoker to test ReachingDefinitionsTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 5852178751023674337
 ;; CHECK-NEXT: Generated StackLattice<FiniteIntPowersetLattice> elements:
 ;; CHECK-NEXT: 010010
@@ -1280,30 +1280,30 @@
 ;; CHECK-NEXT: 101001
 ;; CHECK-NEXT: 010100
 ;; CHECK-NEXT: 111111
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_8 to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 13832862600605363478
 ;; CHECK-NEXT: Generated StackLattice<FiniteIntPowersetLattice> elements:
 ;; CHECK-NEXT: ,
 ;; CHECK-NEXT: ,
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_8_invoker to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 7970088265179676333
 ;; CHECK-NEXT: Generated FiniteIntPowersetLattice elements:
 ;; CHECK-NEXT: 110,
 ;; CHECK-NEXT: 001,
 ;; CHECK-NEXT: 000
 ;; CHECK-NEXT: for func_10 to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 14582942952639200251
 ;; CHECK-NEXT: Generated FiniteIntPowersetLattice elements:
 ;; CHECK-NEXT: ,
 ;; CHECK-NEXT: ,
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_10_invoker to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 16331556144677973625
 ;; CHECK-NEXT: Generated StackLattice<FiniteIntPowersetLattice> elements:
 ;; CHECK-NEXT: 111011111001
@@ -1342,9 +1342,9 @@
 ;; CHECK-NEXT: 100111000001
 ;; CHECK-NEXT: 001011010100
 ;; CHECK-NEXT: 101001010010
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_12 to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 6783688792201211800
 ;; CHECK-NEXT: Generated StackLattice<FiniteIntPowersetLattice> elements:
 ;; CHECK-NEXT: 00100
@@ -1376,13 +1376,13 @@
 ;; CHECK-NEXT: 01001
 ;; CHECK-NEXT: 11011
 ;; CHECK-NEXT: 00101
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: for func_13 to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:
 ;; CHECK-NEXT: Using lattice element seed 15457352654905208821
 ;; CHECK-NEXT: Generated FiniteIntPowersetLattice elements:
 ;; CHECK-NEXT: 1,
 ;; CHECK-NEXT: 0,
 ;; CHECK-NEXT: 1
 ;; CHECK-NEXT: for hashMemory to test LivenessTransferFunction.
-;; CHECK-NEXT: 
+;; CHECK-NEXT:

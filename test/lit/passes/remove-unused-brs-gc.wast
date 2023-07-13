@@ -13,7 +13,7 @@
   (type $substruct (sub $struct (struct)))
  )
 
- ;; CHECK:      (func $br_on-if (type $ref|struct|_=>_none) (param $0 (ref struct))
+ ;; CHECK:      (func $br_on-if (type $7) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -44,7 +44,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $4) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -95,7 +95,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $4) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -158,7 +158,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $none_=>_i31ref) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $8) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -186,7 +186,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $5) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -240,7 +240,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $5) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -303,7 +303,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $none_=>_anyref) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail (type $3) (result anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
@@ -350,7 +350,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $none_=>_anyref) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $3) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -406,7 +406,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated (type $none_=>_anyref) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated (type $3) (result anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
  ;; CHECK-NEXT:   (drop
@@ -468,7 +468,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $none_=>_anyref) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $3) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -539,7 +539,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-unreachable (type $i31ref_=>_anyref) (param $i31ref i31ref) (result anyref)
+ ;; CHECK:      (func $br_on_cast-unreachable (type $6) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -595,7 +595,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-unreachable (type $i31ref_=>_anyref) (param $0 i31ref) (result anyref)
+ ;; CHECK:      (func $fallthrough-unreachable (type $6) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
@@ -634,7 +634,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $i32_=>_none) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $9) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)

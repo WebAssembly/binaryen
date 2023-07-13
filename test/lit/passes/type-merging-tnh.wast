@@ -8,9 +8,9 @@
   (type $A (struct))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $ref|$A|_=>_ref|$A| (func (param (ref $A)) (result (ref $A))))
+  ;; CHECK:       (type $1 (func (param (ref $A)) (result (ref $A))))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$A|) (param $a (ref $A)) (result (ref $A))
+  ;; CHECK:      (func $test (type $1) (param $a (ref $A)) (result (ref $A))
   ;; CHECK-NEXT:  (ref.cast (ref $A)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
@@ -30,9 +30,9 @@
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
@@ -52,9 +52,9 @@
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
   ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)

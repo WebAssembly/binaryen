@@ -4,11 +4,11 @@
 (module
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
-  ;; CHECK:      (func $foo (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
+  ;; CHECK:      (func $foo (type $2) (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo (param i32 i32))
-  ;; CHECK:      (func $pop-cannot-be-sinked (type $none_=>_none)
+  ;; CHECK:      (func $pop-cannot-be-sinked (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -40,7 +40,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-catch-can-be-sinked (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-catch-can-be-sinked (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -83,11 +83,11 @@
     )
   )
 
-  ;; CHECK:      (func $bar (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $bar (type $3) (result i32)
   ;; CHECK-NEXT:  (i32.const 3)
   ;; CHECK-NEXT: )
   (func $bar (result i32) (i32.const 3))
-  ;; CHECK:      (func $call-cannot-be-sinked-into-try (type $none_=>_none)
+  ;; CHECK:      (func $call-cannot-be-sinked-into-try (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (call $bar)
@@ -121,7 +121,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-call-can-be-sinked-into-try (type $none_=>_none)
+  ;; CHECK:      (func $non-call-can-be-sinked-into-try (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (try $try
@@ -152,7 +152,7 @@
     )
   )
 
-  ;; CHECK:      (func $equivalent-set-removal-call (type $i32_=>_none) (param $0 i32)
+  ;; CHECK:      (func $equivalent-set-removal-call (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -185,7 +185,7 @@
     (drop (local.get $1))
   )
 
-  ;; CHECK:      (func $equivalent-set-removal-if (type $i32_i32_=>_none) (param $p i32) (param $0 i32)
+  ;; CHECK:      (func $equivalent-set-removal-if (type $2) (param $p i32) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop

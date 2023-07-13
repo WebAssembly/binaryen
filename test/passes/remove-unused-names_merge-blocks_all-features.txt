@@ -1,10 +1,10 @@
 (module
  (type $3 (func))
  (type $i (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $2 (func (result i32)))
  (type $ii (func (param i32 i32)))
  (type $iii (func (param i32 i32 i32)))
- (type $none_=>_f64 (func (result f64)))
+ (type $5 (func (result f64)))
  (memory $0 (shared 256 256))
  (table $0 1 1 funcref)
  (elem $0 (i32.const 0) $call-i)
@@ -804,7 +804,7 @@
    )
   )
  )
- (func $return-different-type (type $none_=>_i32) (result i32)
+ (func $return-different-type (type $2) (result i32)
   (drop
    (f64.abs
     (block
@@ -819,7 +819,7 @@
   )
   (unreachable)
  )
- (func $drop-unreachable (type $none_=>_i32) (result i32)
+ (func $drop-unreachable (type $2) (result i32)
   (local $0 i32)
   (drop
    (block (result i32)
@@ -828,7 +828,7 @@
   )
   (unreachable)
  )
- (func $concrete_finale_in_unreachable (type $none_=>_f64) (result f64)
+ (func $concrete_finale_in_unreachable (type $5) (result f64)
   (drop
    (block (result f64)
     (unreachable)
@@ -887,7 +887,7 @@
    )
   )
  )
- (func $merging-with-unreachable-in-middle (type $none_=>_i32) (result i32)
+ (func $merging-with-unreachable-in-middle (type $2) (result i32)
   (block (result i32)
    (return
     (i32.const 21536)
@@ -1236,7 +1236,7 @@
    (i32.const 2)
   )
  )
- (func $block-tail-value (type $none_=>_i32) (result i32)
+ (func $block-tail-value (type $2) (result i32)
   (block $l1 (result i32)
    (drop
     (i32.const -1)
@@ -1266,7 +1266,7 @@
    (br $l1)
   )
  )
- (func $block-tail-unreachable (type $none_=>_i32) (result i32)
+ (func $block-tail-unreachable (type $2) (result i32)
   (block $l1 (result i32)
    (drop
     (i32.const -1)
@@ -1283,7 +1283,7 @@
    (unreachable)
   )
  )
- (func $loop-tail-unreachable (type $none_=>_i32) (result i32)
+ (func $loop-tail-unreachable (type $2) (result i32)
   (loop $l1
    (drop
     (i32.const -1)
@@ -1299,9 +1299,9 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $f64_i32_=>_i32 (func (param f64 i32) (result i32)))
- (func $unreachable-in-sub-block (type $f64_i32_=>_i32) (param $0 f64) (param $1 i32) (result i32)
+ (type $0 (func (result i32)))
+ (type $1 (func (param f64 i32) (result i32)))
+ (func $unreachable-in-sub-block (type $1) (param $0 f64) (param $1 i32) (result i32)
   (local $2 i32)
   (local $9 i32)
   (loop $label$1
@@ -1330,13 +1330,13 @@
   (nop)
   (local.get $9)
  )
- (func $trivial (type $none_=>_i32) (result i32)
+ (func $trivial (type $0) (result i32)
   (block
    (unreachable)
    (nop)
   )
  )
- (func $trivial-more (type $none_=>_i32) (result i32)
+ (func $trivial-more (type $0) (result i32)
   (block
    (nop)
    (unreachable)
@@ -1352,8 +1352,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (func $merge-some-block (type $none_=>_none)
+ (type $0 (func))
+ (func $merge-some-block (type $0)
   (drop
    (i32.const 1)
   )
@@ -1430,7 +1430,7 @@
    )
   )
  )
- (func $merge-some-loop (type $none_=>_none)
+ (func $merge-some-loop (type $0)
   (drop
    (i32.const 1)
   )
@@ -1498,7 +1498,7 @@
    )
   )
  )
- (func $merge-some-loop-taken (type $none_=>_none)
+ (func $merge-some-loop-taken (type $0)
   (loop $l1
    (block $b1
     (drop
@@ -1674,13 +1674,13 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
  (tag $e (param i32))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (nop)
  )
- (func $throw (type $none_=>_none)
+ (func $throw (type $0)
   (nop)
   (throw $e
    (i32.const 3)

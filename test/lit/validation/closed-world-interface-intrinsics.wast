@@ -10,18 +10,18 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $ref|$struct|_funcref_=>_none (func (param (ref $struct) funcref)))
+  ;; CHECK:      (type $1 (func (param (ref $struct) funcref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $ref|$struct|_=>_none (func (param (ref $struct))))
+  ;; CHECK:      (type $3 (func (param (ref $struct))))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $ref|$struct|_funcref_=>_none) (param (ref $struct) funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $1) (param (ref $struct) funcref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param (ref $struct)) (param funcref)))
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (call $cwe
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 100)
@@ -38,7 +38,7 @@
     )
   )
 
-  ;; CHECK:      (func $func (type $ref|$struct|_=>_none) (param $ref (ref $struct))
+  ;; CHECK:      (func $func (type $3) (param $ref (ref $struct))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $ref (ref $struct))

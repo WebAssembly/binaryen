@@ -34,9 +34,9 @@
 
 (module
   (type $struct (struct i32))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $impossible-get (type $none_=>_none)
+  ;; CHECK:      (func $impossible-get (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -54,9 +54,9 @@
 
 (module
   (type $struct (struct i64))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.const 0)
   ;; CHECK-NEXT:  )
@@ -76,9 +76,9 @@
 
 (module
   (type $struct (struct f32))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
@@ -101,14 +101,14 @@
   ;; CHECK:      (type $struct (struct (field f32)))
   (type $struct (struct f32))
 
-  ;; CHECK:      (type $none_=>_f32 (func (result f32)))
+  ;; CHECK:      (type $1 (func (result f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_f32) (result f32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result f32)))
   (import "a" "b" (func $import (result f32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (struct.new $struct
@@ -134,11 +134,11 @@
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -148,7 +148,7 @@
       (i32.const 10)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -176,11 +176,11 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -198,7 +198,7 @@
     )
   )
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -215,9 +215,9 @@
 (module
   ;; CHECK:      (type $struct (struct (field f32)))
   (type $struct (struct f32))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (f32.const 42)
@@ -253,11 +253,11 @@
 (module
   ;; CHECK:      (type $struct (struct (field (mut f32))))
   (type $struct (struct (mut f32)))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
@@ -267,7 +267,7 @@
       (f32.const 42)
     )
   )
-  ;; CHECK:      (func $set (type $none_=>_none)
+  ;; CHECK:      (func $set (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (f32.const 1337)
@@ -279,7 +279,7 @@
       (f32.const 1337)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (call $create)
@@ -301,11 +301,11 @@
 (module
   ;; CHECK:      (type $struct (struct (field (mut f32))))
   (type $struct (struct (mut f32)))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
@@ -315,7 +315,7 @@
       (f32.const 42)
     )
   )
-  ;; CHECK:      (func $set (type $none_=>_none)
+  ;; CHECK:      (func $set (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (f32.const 42)
@@ -327,7 +327,7 @@
       (f32.const 42) ;; The last testcase had 1337 here.
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
@@ -351,16 +351,16 @@
   ;; CHECK:      (type $struct (struct (field (mut f32))))
   (type $struct (struct (mut f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $3 (func (result (ref $struct))))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $3) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (f32.const 42)
   ;; CHECK-NEXT:  )
@@ -374,7 +374,7 @@
       )
     )
   )
-  ;; CHECK:      (func $set (type $none_=>_none)
+  ;; CHECK:      (func $set (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result f32)
@@ -400,7 +400,7 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
@@ -424,11 +424,11 @@
 ;; Test a function reference instead of a number.
 (module
   (type $struct (struct funcref))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (elem declare func $test)
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
@@ -447,9 +447,9 @@
 ;; Test for unreachable creations, sets, and gets.
 (module
   (type $struct (struct (mut i32)))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -500,11 +500,11 @@
   (type $struct (struct i32))
   (type $substruct (struct_subtype i32 $struct))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -514,7 +514,7 @@
       (i32.const 10)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block
@@ -547,11 +547,11 @@
   (type $struct (struct (mut i32)))
   (type $substruct (struct_subtype (mut i32) $struct))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -562,7 +562,7 @@
     )
   )
 
-  ;; CHECK:      (func $set (type $none_=>_none)
+  ;; CHECK:      (func $set (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (i32.const 10)
@@ -574,7 +574,7 @@
       (i32.const 10)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block
@@ -606,9 +606,9 @@
   (type $struct (struct (mut i32)))
   (type $substruct (struct_subtype (mut i32) $struct))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -659,9 +659,9 @@
 
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -683,17 +683,17 @@
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -737,17 +737,17 @@
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (select (result (ref $struct))
@@ -792,14 +792,14 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -849,14 +849,14 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (select (result (ref $struct))
@@ -923,14 +923,14 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $2) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $3)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (select (result (ref $struct))
@@ -1005,11 +1005,11 @@
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field i32) (field f64) (field anyref))))
   (type $struct3 (struct_subtype i32 f64 anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
+  ;; CHECK:      (type $3 (func (result (ref $struct3))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK:      (func $create (type $3) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:   (f64.const 3.14159)
@@ -1023,7 +1023,7 @@
       (ref.null any)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $4)
   ;; CHECK-NEXT:  (local $ref (ref null $struct3))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (call $create)
@@ -1146,18 +1146,18 @@
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref))))
   (type $struct3 (struct_subtype i32 i32 f64 f64 anyref anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+  ;; CHECK:      (type $4 (func (result anyref)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct1| (func (result (ref $struct1))))
+  ;; CHECK:      (type $5 (func (result (ref $struct1))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
+  ;; CHECK:      (type $6 (func (result (ref $struct3))))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_anyref) (result anyref)))
+  ;; CHECK:      (import "a" "b" (func $import (type $4) (result anyref)))
   (import "a" "b" (func $import (result anyref)))
 
-  ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
+  ;; CHECK:      (func $create1 (type $5) (result (ref $struct1))
   ;; CHECK-NEXT:  (struct.new $struct1
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (i32.const 20)
@@ -1170,7 +1170,7 @@
     )
   )
 
-  ;; CHECK:      (func $create3 (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK:      (func $create3 (type $6) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (i32.const 999)
@@ -1192,7 +1192,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-1 (type $none_=>_none)
+  ;; CHECK:      (func $get-1 (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1227,7 +1227,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-2 (type $none_=>_none)
+  ;; CHECK:      (func $get-2 (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1287,7 +1287,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-3 (type $none_=>_none)
+  ;; CHECK:      (func $get-3 (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1375,23 +1375,23 @@
   (type $struct1 (struct (mut i32)))
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $4 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct1| (func (result (ref $struct1))))
+  ;; CHECK:      (type $5 (func (result (ref $struct1))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct2| (func (result (ref $struct2))))
+  ;; CHECK:      (type $6 (func (result (ref $struct2))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
+  ;; CHECK:      (type $7 (func (result (ref $struct3))))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $4) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
+  ;; CHECK:      (func $create1 (type $5) (result (ref $struct1))
   ;; CHECK-NEXT:  (struct.new $struct1
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -1402,7 +1402,7 @@
     )
   )
 
-  ;; CHECK:      (func $create2 (type $none_=>_ref|$struct2|) (result (ref $struct2))
+  ;; CHECK:      (func $create2 (type $6) (result (ref $struct2))
   ;; CHECK-NEXT:  (struct.new $struct2
   ;; CHECK-NEXT:   (i32.const 9999)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1415,7 +1415,7 @@
     )
   )
 
-  ;; CHECK:      (func $create3 (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK:      (func $create3 (type $7) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1430,7 +1430,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-precise (type $none_=>_none)
+  ;; CHECK:      (func $get-precise (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1476,7 +1476,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-imprecise-1 (type $none_=>_none)
+  ;; CHECK:      (func $get-imprecise-1 (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1547,7 +1547,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-imprecise-2 (type $none_=>_none)
+  ;; CHECK:      (func $get-imprecise-2 (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct1 0
   ;; CHECK-NEXT:    (select (result (ref $struct1))
@@ -1609,7 +1609,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-imprecise-3 (type $none_=>_none)
+  ;; CHECK:      (func $get-imprecise-3 (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct1 0
   ;; CHECK-NEXT:    (select (result (ref $struct1))
@@ -1683,20 +1683,20 @@
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct1| (func (result (ref $struct1))))
+  ;; CHECK:      (type $4 (func (result (ref $struct1))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct2| (func (result (ref $struct2))))
+  ;; CHECK:      (type $5 (func (result (ref $struct2))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
+  ;; CHECK:      (type $6 (func (result (ref $struct3))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $7 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
+  ;; CHECK:      (func $create1 (type $4) (result (ref $struct1))
   ;; CHECK-NEXT:  (struct.new $struct1
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -1707,7 +1707,7 @@
     )
   )
 
-  ;; CHECK:      (func $create2 (type $none_=>_ref|$struct2|) (result (ref $struct2))
+  ;; CHECK:      (func $create2 (type $5) (result (ref $struct2))
   ;; CHECK-NEXT:  (struct.new $struct2
   ;; CHECK-NEXT:   (i32.const 9999)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1720,7 +1720,7 @@
     )
   )
 
-  ;; CHECK:      (func $create3 (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK:      (func $create3 (type $6) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1735,7 +1735,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-precise (type $none_=>_none)
+  ;; CHECK:      (func $get-precise (type $7)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1799,20 +1799,20 @@
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
   (type $struct3 (struct_subtype (mut i32) f64 anyref $struct2))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct1| (func (result (ref $struct1))))
+  ;; CHECK:      (type $4 (func (result (ref $struct1))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct2| (func (result (ref $struct2))))
+  ;; CHECK:      (type $5 (func (result (ref $struct2))))
 
-  ;; CHECK:      (type $none_=>_ref|$struct3| (func (result (ref $struct3))))
+  ;; CHECK:      (type $6 (func (result (ref $struct3))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $7 (func))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (func $create1 (type $none_=>_ref|$struct1|) (result (ref $struct1))
+  ;; CHECK:      (func $create1 (type $4) (result (ref $struct1))
   ;; CHECK-NEXT:  (struct.new $struct1
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -1823,7 +1823,7 @@
     )
   )
 
-  ;; CHECK:      (func $create2 (type $none_=>_ref|$struct2|) (result (ref $struct2))
+  ;; CHECK:      (func $create2 (type $5) (result (ref $struct2))
   ;; CHECK-NEXT:  (struct.new $struct2
   ;; CHECK-NEXT:   (i32.const 9999)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1836,7 +1836,7 @@
     )
   )
 
-  ;; CHECK:      (func $create3 (type $none_=>_ref|$struct3|) (result (ref $struct3))
+  ;; CHECK:      (func $create3 (type $6) (result (ref $struct3))
   ;; CHECK-NEXT:  (struct.new $struct3
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (f64.const 0)
@@ -1851,7 +1851,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-precise (type $none_=>_none)
+  ;; CHECK:      (func $get-precise (type $7)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1910,11 +1910,11 @@
   ;; CHECK:      (type $struct (struct (field i32) (field f64) (field i32) (field f64) (field i32)))
   (type $struct (struct i32 f64 i32 f64 i32))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1936,7 +1936,7 @@
       (i32.const 30)
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (call $create)
@@ -2028,11 +2028,11 @@
   ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
   (type $C (struct_subtype (mut i32) $B))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $none_=>_ref|$C| (func (result (ref $C))))
+  ;; CHECK:      (type $4 (func (result (ref $C))))
 
-  ;; CHECK:      (func $create-C (type $none_=>_ref|$C|) (result (ref $C))
+  ;; CHECK:      (func $create-C (type $4) (result (ref $C))
   ;; CHECK-NEXT:  (struct.new $C
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
@@ -2042,7 +2042,7 @@
       (i32.const 10)
     )
   )
-  ;; CHECK:      (func $set (type $none_=>_none)
+  ;; CHECK:      (func $set (type $3)
   ;; CHECK-NEXT:  (struct.set $C 0
   ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (call $create-C)
@@ -2063,7 +2063,7 @@
       (i32.const 20) ;; different value than in $create
     )
   )
-  ;; CHECK:      (func $get (type $none_=>_none)
+  ;; CHECK:      (func $get (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $C 0
   ;; CHECK-NEXT:    (call $create-C)
@@ -2085,18 +2085,18 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
   ;; CHECK-NEXT: )
   (func $create (result (ref $struct))
     (struct.new_default $struct)
   )
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result i32)
@@ -2142,13 +2142,13 @@
   ;; CHECK:      (type $other (struct (field (mut f64)) (field (mut i32))))
   (type $other (struct (mut f64) (mut i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_ref|$other| (func (result (ref $other))))
+  ;; CHECK:      (type $3 (func (result (ref $other))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (func $create-struct (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create-struct (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:   (i32.const 42)
@@ -2161,7 +2161,7 @@
     )
   )
 
-  ;; CHECK:      (func $create-other (type $none_=>_ref|$other|) (result (ref $other))
+  ;; CHECK:      (func $create-other (type $3) (result (ref $other))
   ;; CHECK-NEXT:  (struct.new $other
   ;; CHECK-NEXT:   (f64.const 0)
   ;; CHECK-NEXT:   (i32.const 42)
@@ -2174,7 +2174,7 @@
     )
   )
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $4)
   ;; CHECK-NEXT:  (struct.set $struct 1
   ;; CHECK-NEXT:   (call $create-struct)
   ;; CHECK-NEXT:   (block (result i32)
@@ -2218,13 +2218,13 @@
   ;; CHECK:      (type $other (struct (field (mut f64)) (field (mut i32))))
   (type $other (struct (mut f64) (mut i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $2 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_ref|$other| (func (result (ref $other))))
+  ;; CHECK:      (type $3 (func (result (ref $other))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (func $create-struct (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create-struct (type $2) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:   (i32.const 42)
@@ -2237,7 +2237,7 @@
     )
   )
 
-  ;; CHECK:      (func $create-other (type $none_=>_ref|$other|) (result (ref $other))
+  ;; CHECK:      (func $create-other (type $3) (result (ref $other))
   ;; CHECK-NEXT:  (struct.new $other
   ;; CHECK-NEXT:   (f64.const 0)
   ;; CHECK-NEXT:   (i32.const 1337)
@@ -2250,7 +2250,7 @@
     )
   )
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $4)
   ;; CHECK-NEXT:  (struct.set $struct 1
   ;; CHECK-NEXT:   (call $create-struct)
   ;; CHECK-NEXT:   (block (result i32)
@@ -2288,11 +2288,11 @@
   ;; CHECK:      (type $struct (struct (field (mut i32)) (field (mut i32))))
   (type $struct (struct (mut i32) (mut i32)))
 
-  ;; CHECK:      (type $none_=>_ref|$struct| (func (result (ref $struct))))
+  ;; CHECK:      (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $create (type $none_=>_ref|$struct|) (result (ref $struct))
+  ;; CHECK:      (func $create (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new $struct
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:   (i32.const 1337)
@@ -2305,7 +2305,7 @@
     )
   )
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (call $create)
   ;; CHECK-NEXT:   (block (result i32)
@@ -2344,12 +2344,12 @@
   (type $A (struct))
   (type $B (struct (ref $A)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global (ref $A) (struct.new_default $A))
   (global $global (ref $A) (struct.new $A))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
@@ -2372,12 +2372,12 @@
 (module
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "a" "b" (global $global i32))
   (import "a" "b" (global $global i32))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
@@ -2396,12 +2396,12 @@
 (module
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $global i32 (i32.const 42))
   (global $global i32 (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -2423,12 +2423,12 @@
 (module
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 42))
   (global $global (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -2450,12 +2450,12 @@
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global (mut i32) (i32.const 42))
   (global $global (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (global.set $global
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
@@ -2487,12 +2487,12 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global i32 (i32.const 42))
   (global $global i32 (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 42)
@@ -2527,14 +2527,14 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global i32 (i32.const 42))
   (global $global i32 (i32.const 42))
   ;; CHECK:      (global $global-2 i32 (i32.const 1337))
   (global $global-2 i32 (i32.const 1337))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 42)
@@ -2572,12 +2572,12 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (mut i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $global i32 (i32.const 42))
   (global $global i32 (i32.const 42))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 42)
@@ -2623,7 +2623,7 @@
 
   (type $object (struct (field $itable (ref $itable))))
 
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+  ;; CHECK:      (type $2 (func (result funcref)))
 
   ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable 2
   ;; CHECK-NEXT:  (struct.new $vtable
@@ -2642,7 +2642,7 @@
     )
   ))
 
-  ;; CHECK:      (func $test (type $none_=>_funcref) (result funcref)
+  ;; CHECK:      (func $test (type $2) (result funcref)
   ;; CHECK-NEXT:  (struct.get $vtable 0
   ;; CHECK-NEXT:   (array.get $itable
   ;; CHECK-NEXT:    (global.get $global)
@@ -2674,7 +2674,7 @@
 ;; Test we handle packed fields properly.
 (module
   (rec
-    ;; CHECK:      (type $none_=>_none (func))
+    ;; CHECK:      (type $0 (func))
 
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A_8 (struct (field i8)))
@@ -2688,7 +2688,7 @@
   ;; CHECK:      (import "a" "b" (global $g i32))
   (import "a" "b" (global $g i32))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 120)
   ;; CHECK-NEXT:  )

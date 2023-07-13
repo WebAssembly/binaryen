@@ -21,7 +21,7 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (func $test-dead-get-non-nullable (type $ref|struct|_=>_none) (param $0 (ref struct))
+ ;; CHECK:      (func $test-dead-get-non-nullable (type $5) (param $0 (ref struct))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref struct))
@@ -39,7 +39,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (type $ref?|$array|_=>_ref?|$array|) (param $0 (ref null $array)) (result (ref null $array))
+ ;; CHECK:      (func $br_on_null (type $6) (param $0 (ref null $array)) (result (ref null $array))
  ;; CHECK-NEXT:  (block $label$1 (result (ref null $array))
  ;; CHECK-NEXT:   (block $label$2
  ;; CHECK-NEXT:    (br $label$1
@@ -75,7 +75,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead (type $none_=>_none)
+ ;; CHECK:      (func $nn-dead (type $2)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -114,7 +114,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead-nameless (type $none_=>_none)
+ ;; CHECK:      (func $nn-dead-nameless (type $2)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -145,7 +145,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-null (type $none_=>_none)
+ ;; CHECK:      (func $unreachable-get-null (type $2)
  ;; CHECK-NEXT:  (local $0 anyref)
  ;; CHECK-NEXT:  (local $1 i31ref)
  ;; CHECK-NEXT:  (unreachable)
@@ -176,7 +176,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
+ ;; CHECK:      (func $remove-tee-refinalize (type $4) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)
@@ -197,7 +197,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-tee-refinalize-2 (type $ref?|$A|_ref?|$B|_=>_structref) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
+ ;; CHECK:      (func $remove-tee-refinalize-2 (type $4) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
  ;; CHECK-NEXT:  (struct.get $A 0
  ;; CHECK-NEXT:   (block (result (ref null $A))
  ;; CHECK-NEXT:    (local.get $1)
@@ -219,7 +219,7 @@
   )
  )
 
- ;; CHECK:      (func $replace-i31-local (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $replace-i31-local (type $7) (result i32)
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
@@ -251,7 +251,7 @@
   )
  )
 
- ;; CHECK:      (func $replace-struct-param (type $f64_ref?|$A|_=>_f32) (param $0 f64) (param $1 (ref null $A)) (result f32)
+ ;; CHECK:      (func $replace-struct-param (type $8) (param $0 f64) (param $1 (ref null $A)) (result f32)
  ;; CHECK-NEXT:  (call $replace-struct-param
  ;; CHECK-NEXT:   (block (result f64)
  ;; CHECK-NEXT:    (unreachable)

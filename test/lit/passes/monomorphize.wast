@@ -14,21 +14,21 @@
   ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (type $2 (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $none_=>_none (func))
+  ;; ALWAYS:      (type $3 (func))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; ALWAYS:      (type $4 (func (param (ref $B))))
 
-  ;; ALWAYS:      (import "a" "b" (func $import (type $ref|$A|_=>_none) (param (ref $A))))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (import "a" "b" (func $import (type $2) (param (ref $A))))
+  ;; CAREFUL:      (type $2 (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $none_=>_none (func))
+  ;; CAREFUL:      (type $3 (func))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (type $ref|$A|_=>_none) (param (ref $A))))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $2) (param (ref $A))))
   (import "a" "b" (func $import (param (ref $A))))
 
-  ;; ALWAYS:      (func $calls (type $none_=>_none)
+  ;; ALWAYS:      (func $calls (type $3)
   ;; ALWAYS-NEXT:  (call $refinable
   ;; ALWAYS-NEXT:   (struct.new_default $A)
   ;; ALWAYS-NEXT:  )
@@ -42,7 +42,7 @@
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $none_=>_none)
+  ;; CAREFUL:      (func $calls (type $3)
   ;; CAREFUL-NEXT:  (call $refinable
   ;; CAREFUL-NEXT:   (struct.new_default $A)
   ;; CAREFUL-NEXT:  )
@@ -76,12 +76,12 @@
     )
   )
 
-  ;; ALWAYS:      (func $call-import (type $none_=>_none)
+  ;; ALWAYS:      (func $call-import (type $3)
   ;; ALWAYS-NEXT:  (call $import
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-import (type $none_=>_none)
+  ;; CAREFUL:      (func $call-import (type $3)
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (struct.new_default $B)
   ;; CAREFUL-NEXT:  )
@@ -93,12 +93,12 @@
     )
   )
 
-  ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $refinable (type $2) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $ref)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $refinable (type $2) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $refinable (param $ref (ref $A))
@@ -115,7 +115,7 @@
 )
 
 
-;; ALWAYS:      (func $refinable_4 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_4 (type $4) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
@@ -125,7 +125,7 @@
   ;; requires a fixup.
 
   ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $none_=>_none (func))
+  ;; CAREFUL:      (type $0 (func))
 
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
@@ -135,20 +135,20 @@
 
 
 
-  ;; ALWAYS:      (type $none_=>_none (func))
+  ;; ALWAYS:      (type $2 (func))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (type $3 (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; ALWAYS:      (type $4 (func (param (ref $B))))
 
-  ;; ALWAYS:      (func $calls (type $none_=>_none)
+  ;; ALWAYS:      (func $calls (type $2)
   ;; ALWAYS-NEXT:  (call $refinable_2
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CAREFUL:      (type $3 (func (param (ref $A))))
 
-  ;; CAREFUL:      (func $calls (type $none_=>_none)
+  ;; CAREFUL:      (func $calls (type $0)
   ;; CAREFUL-NEXT:  (call $refinable
   ;; CAREFUL-NEXT:   (struct.new_default $B)
   ;; CAREFUL-NEXT:  )
@@ -159,7 +159,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $refinable (type $3) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (local $unref (ref $A))
   ;; ALWAYS-NEXT:  (local.set $unref
   ;; ALWAYS-NEXT:   (local.get $ref)
@@ -168,7 +168,7 @@
   ;; ALWAYS-NEXT:   (local.get $unref)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $refinable (type $3) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $refinable (param $ref (ref $A))
@@ -186,7 +186,7 @@
 )
 
 
-;; ALWAYS:      (func $refinable_2 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_2 (type $4) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (local $unref (ref $A))
 ;; ALWAYS-NEXT:  (local $2 (ref $A))
 ;; ALWAYS-NEXT:  (local.set $2
@@ -205,7 +205,7 @@
   ;; Multiple refinings of the same function, and of different functions.
 
   ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $none_=>_none (func))
+  ;; CAREFUL:      (type $0 (func))
 
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
@@ -213,21 +213,21 @@
   ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $none_=>_none (func))
+  ;; ALWAYS:      (type $2 (func))
 
   ;; ALWAYS:      (type $C (sub $B (struct )))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CAREFUL:      (type $3 (func (param (ref $A))))
 
   ;; CAREFUL:      (type $C (sub $B (struct )))
   (type $C (struct_subtype $B))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (type $4 (func (param (ref $A))))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; ALWAYS:      (type $5 (func (param (ref $B))))
 
-  ;; ALWAYS:      (type $ref|$C|_=>_none (func (param (ref $C))))
+  ;; ALWAYS:      (type $6 (func (param (ref $C))))
 
-  ;; ALWAYS:      (func $calls1 (type $none_=>_none)
+  ;; ALWAYS:      (func $calls1 (type $2)
   ;; ALWAYS-NEXT:  (call $refinable1
   ;; ALWAYS-NEXT:   (struct.new_default $A)
   ;; ALWAYS-NEXT:  )
@@ -235,7 +235,7 @@
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls1 (type $none_=>_none)
+  ;; CAREFUL:      (func $calls1 (type $0)
   ;; CAREFUL-NEXT:  (call $refinable1
   ;; CAREFUL-NEXT:   (struct.new_default $A)
   ;; CAREFUL-NEXT:  )
@@ -252,7 +252,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $calls2 (type $none_=>_none)
+  ;; ALWAYS:      (func $calls2 (type $2)
   ;; ALWAYS-NEXT:  (call $refinable1_5
   ;; ALWAYS-NEXT:   (struct.new_default $C)
   ;; ALWAYS-NEXT:  )
@@ -260,7 +260,7 @@
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls2 (type $none_=>_none)
+  ;; CAREFUL:      (func $calls2 (type $0)
   ;; CAREFUL-NEXT:  (call $refinable1
   ;; CAREFUL-NEXT:   (struct.new_default $C)
   ;; CAREFUL-NEXT:  )
@@ -277,12 +277,12 @@
     )
   )
 
-  ;; ALWAYS:      (func $refinable1 (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $refinable1 (type $4) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $ref)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $refinable1 (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $refinable1 (type $3) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $refinable1 (param $ref (ref $A))
@@ -291,12 +291,12 @@
     )
   )
 
-  ;; ALWAYS:      (func $refinable2 (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $refinable2 (type $4) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $ref)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $refinable2 (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $refinable2 (type $3) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $refinable2 (param $ref (ref $A))
@@ -306,19 +306,19 @@
   )
 )
 
-;; ALWAYS:      (func $refinable1_4 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable1_4 (type $5) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $refinable1_5 (type $ref|$C|_=>_none) (param $ref (ref $C))
+;; ALWAYS:      (func $refinable1_5 (type $6) (param $ref (ref $C))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $refinable2_6 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable2_6 (type $5) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
@@ -335,29 +335,29 @@
   ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; ALWAYS:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; ALWAYS:      (type $2 (func (param (ref $B))))
 
-  ;; ALWAYS:      (type $none_=>_none (func))
+  ;; ALWAYS:      (type $3 (func))
 
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (type $4 (func (param (ref $A))))
 
-  ;; ALWAYS:      (import "a" "b" (func $import (type $ref|$B|_=>_none) (param (ref $B))))
+  ;; ALWAYS:      (import "a" "b" (func $import (type $2) (param (ref $B))))
 
   ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
-  ;; CAREFUL:      (type $ref|$B|_=>_none (func (param (ref $B))))
+  ;; CAREFUL:      (type $2 (func (param (ref $B))))
 
-  ;; CAREFUL:      (type $none_=>_none (func))
+  ;; CAREFUL:      (type $3 (func))
 
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CAREFUL:      (type $4 (func (param (ref $A))))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (type $ref|$B|_=>_none) (param (ref $B))))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $2) (param (ref $B))))
 
   ;; CAREFUL:      (global $global (mut i32) (i32.const 1))
   (global $global (mut i32) (i32.const 1))
 
   (import "a" "b" (func $import (param (ref $B))))
 
-  ;; ALWAYS:      (func $calls (type $none_=>_none)
+  ;; ALWAYS:      (func $calls (type $3)
   ;; ALWAYS-NEXT:  (call $refinable
   ;; ALWAYS-NEXT:   (struct.new_default $A)
   ;; ALWAYS-NEXT:  )
@@ -371,7 +371,7 @@
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $none_=>_none)
+  ;; CAREFUL:      (func $calls (type $3)
   ;; CAREFUL-NEXT:  (call $refinable
   ;; CAREFUL-NEXT:   (struct.new_default $A)
   ;; CAREFUL-NEXT:  )
@@ -402,7 +402,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $refinable (type $4) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (local $x (ref $A))
   ;; ALWAYS-NEXT:  (call $import
   ;; ALWAYS-NEXT:   (ref.cast (ref $B)
@@ -432,7 +432,7 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
+  ;; CAREFUL:      (func $refinable (type $4) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (local $1 (ref $A))
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (ref.cast (ref $B)
@@ -503,7 +503,7 @@
   )
 )
 
-;; ALWAYS:      (func $refinable_3 (type $ref|$B|_=>_none) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_3 (type $2) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (local $x (ref $A))
 ;; ALWAYS-NEXT:  (call $import
 ;; ALWAYS-NEXT:   (ref.cast (ref $B)
@@ -534,7 +534,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $refinable_3 (type $ref|$B|_=>_none) (param $0 (ref $B))
+;; CAREFUL:      (func $refinable_3 (type $2) (param $0 (ref $B))
 ;; CAREFUL-NEXT:  (local $1 (ref $B))
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
@@ -561,21 +561,21 @@
   ;; ALWAYS:      (type $A (struct ))
   ;; CAREFUL:      (type $A (struct ))
   (type $A (struct_subtype data))
-  ;; ALWAYS:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; ALWAYS:      (type $1 (func (param (ref $A))))
 
   ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CAREFUL:      (type $1 (func (param (ref $A))))
 
   ;; CAREFUL:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
 
-  ;; ALWAYS:      (func $calls (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; ALWAYS:      (func $calls (type $1) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (call $calls
   ;; ALWAYS-NEXT:   (struct.new_default $B)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $ref|$A|_=>_none) (param $ref (ref $A))
+  ;; CAREFUL:      (func $calls (type $1) (param $ref (ref $A))
   ;; CAREFUL-NEXT:  (call $calls
   ;; CAREFUL-NEXT:   (struct.new_default $B)
   ;; CAREFUL-NEXT:  )

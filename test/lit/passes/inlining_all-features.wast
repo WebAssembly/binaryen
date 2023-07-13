@@ -3,9 +3,9 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+  ;; CHECK:      (type $1 (func (result funcref)))
 
   ;; CHECK:      (elem declare func $foo)
 
@@ -14,12 +14,12 @@
 
   ;; $foo should not be removed after being inlined, because there is 'ref.func'
   ;; instruction that refers to it
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $ref_func_test (type $none_=>_funcref) (result funcref)
+  ;; CHECK:      (func $ref_func_test (type $1) (result funcref)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (block $__inlined_func$foo
   ;; CHECK-NEXT:    (nop)
@@ -37,19 +37,19 @@
  ;; a function reference in a global's init should be noticed, and prevent us
  ;; from removing an inlined function
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $0 (func (result i32)))
 
  ;; CHECK:      (global $global$0 (mut funcref) (ref.func $0))
  (global $global$0 (mut funcref) (ref.func $0))
 
- ;; CHECK:      (func $0 (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $0 (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: )
  (func $0 (result i32)
   (i32.const 1337)
  )
 
- ;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $1 (type $0) (result i32)
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result i32)
  ;; CHECK-NEXT:   (i32.const 1337)
  ;; CHECK-NEXT:  )
@@ -63,19 +63,19 @@
  ;; a function reference in the start should be noticed, and prevent us
  ;; from removing an inlined function
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (start $0)
  (start $0)
 
- ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0
   (nop)
  )
 
- ;; CHECK:      (func $1 (type $none_=>_none)
+ ;; CHECK:      (func $1 (type $0)
  ;; CHECK-NEXT:  (block $__inlined_func$0
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
@@ -115,11 +115,11 @@
   (local.get $non-null)
  )
 
- ;; CHECK:      (type $none_=>_ref|func| (func (result (ref func))))
+ ;; CHECK:      (type $0 (func (result (ref func))))
 
  ;; CHECK:      (elem declare func $1)
 
- ;; CHECK:      (func $1 (type $none_=>_ref|func|) (result (ref func))
+ ;; CHECK:      (func $1 (type $0) (result (ref func))
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (block $__inlined_func$0 (result (ref func))
  ;; CHECK-NEXT:   (local.set $0

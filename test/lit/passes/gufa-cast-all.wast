@@ -12,9 +12,9 @@
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (elem declare func $func $funcs)

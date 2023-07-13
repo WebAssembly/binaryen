@@ -2,7 +2,7 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test1,test2 --kept-exports=test1,test2 --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (memory $0 1616)
  (memory $0 1616) ;; 101 MB
@@ -30,13 +30,13 @@
 
 ;; CHECK:      (export "test2" (func $1))
 
-;; CHECK:      (func $1 (type $none_=>_none)
+;; CHECK:      (func $1 (type $0)
 ;; CHECK-NEXT:  (i32.store8
 ;; CHECK-NEXT:   (i32.const 104857600)
 ;; CHECK-NEXT:   (i32.const 43)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_2 (type $none_=>_none)
+;; CHECK:      (func $0_2 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
