@@ -141,4 +141,73 @@
   )
 )
 
+(module
+  (type $A (struct (field (mut i32))))
 
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  (func $maker
+    ;; A always contains 10, and B always contains 20.
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B
+        (i32.const 20)
+      )
+    )
+  )
+
+  (func $called (param $x (ref null $A))
+    ;; Cast the input to a $B, which will help the caller.
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $caller (export "out") (param $any anyref)
+    (local $x (ref null $A))
+    ;; The called function casts to $B. This lets us infer the value of the
+    ;; fallthrough ref.cast, which will turn into $B. Furthermore, that then
+    ;; tells us what is written into the local $x, and the forward flow
+    ;; analysis will use that fact in the local.get $x below.
+    (call $called
+      (local.tee $x
+        (ref.cast $A
+          (local.get $any)
+        )
+      )
+    )
+    ;; We can't infer anything here at the moment, but a more sophisticated
+    ;; analysis could. (Other passes can help here, however, by using $x where
+    ;; $any appears.)
+    (drop
+      (struct.get $A 0
+        (ref.cast $A
+          (local.get $any)
+        )
+      )
+    )
+    (drop
+      (ref.test $B
+        (local.get $any)
+      )
+    )
+    ;; We know that $x must contain $B, so this can be inferred to be 20, and
+    ;; the ref.is to 1.
+    (drop
+      (struct.get $A 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.test $B
+        (local.get $x)
+      )
+    )
+  )
+)
