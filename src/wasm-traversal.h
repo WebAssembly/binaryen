@@ -315,6 +315,10 @@ struct Walker : public VisitorType {
     }
   }
 
+  void cancelWalk() {
+    stack.clear();
+  }
+
   // subclasses implement this to define the proper order of execution
   static void scan(SubType* self, Expression** currp) { abort(); }
 

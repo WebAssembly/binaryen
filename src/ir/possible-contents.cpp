@@ -1,5 +1,3 @@
-//#define POSSIBLE_CONTENTS_DEBUG 1
-
 /*
  * Copyright 2022 WebAssembly Community Group participants
  *
@@ -484,7 +482,7 @@ struct CollectedFuncInfo {
   std::unordered_map<Expression*, Expression*> childParents;
 
   // A map of param indexes to the types they are definitely cast to if the
-  // function is entered.
+  // function is entered. This then used in inferMinStaticTypes().
   std::unordered_map<Index, Type> castParams;
 
   // We gather all calls in order to process them later during
@@ -1221,24 +1219,17 @@ struct InfoCollector
 
     // Gather parameters that are definitely cast in the function entry.
     // TODO: this could be done during the main walk...
-    struct Scanner : public LinearExecutionWalker<Scanner> {
+    struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
       CollectedFuncInfo& info;
 
-      Scanner(CollectedFuncInfo& info) : info(info) {}
+      EntryScanner(CollectedFuncInfo& info) : info(info) {}
 
-      // We start in the entry block. TODO: Scan further, noting dominance
-      // etc.
-      bool inEntry = true;
-
-      static void doNoteNonLinear(Scanner* self, Expression** currp) {
-        // This is the end of the first basic block.
-        self->inEntry = false;
+      static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
+        // This is the end of the first basic block, so we can stop.
+        self->cancelWalk();
       }
 
       void visitRefCast(RefCast* curr) {
-        if (!inEntry) {
-          return;
-        }
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
           if (curr->type != get->type &&
               Type::isSubType(curr->type, get->type) &&
