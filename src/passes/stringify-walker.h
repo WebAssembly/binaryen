@@ -98,19 +98,11 @@ struct StringifyHasher {
   }
 
   static uint64_t hashIfNoCondition(If* iff) {
-    size_t digest = wasm::hash(0);
-    rehash(digest, iff->_id);
-    rehash(digest, iff->type.getID());
+    size_t digest = wasm::hash(iff->_id);
     rehash(digest, ExpressionAnalyzer::hash(iff->ifTrue));
-    rehash(digest, iff->ifTrue->_id);
-    rehash(digest, iff->ifTrue->type.getID());
-
     if (iff->ifFalse) {
       rehash(digest, ExpressionAnalyzer::hash(iff->ifFalse));
-      rehash(digest, iff->ifFalse->_id);
-      rehash(digest, iff->ifFalse->type.getID());
     }
-
     return digest;
   }
 };
