@@ -726,8 +726,8 @@ void MemoryPacking::createReplacements(Module* module,
         getVars.push_back(&get->index);
         dest = get;
         if (bytesWritten > 0) {
-          Const* addend = builder.makeConst(is64 ? int64_t(bytesWritten) : int32_t(bytesWritten));
-          dest = builder.makeBinary(is64 ? AddInt64 : AddInt32, dest,addend);
+          Const* addend = builder.makeConstPtr(bytesWritten, ptrType);
+          dest = builder.makeBinary(is64 ? AddInt64 : AddInt32, dest, addend);
         }
       }
 
