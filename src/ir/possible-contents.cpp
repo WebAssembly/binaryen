@@ -2355,14 +2355,15 @@ void Flower::inferMinStaticTypes() {
         auto* curr = operand;
         bool transferred = false;
         while (1) {
+          // If we transfer control flow here, stop.
+          if (ShallowEffectAnalyzer(options, wasm, curr).transfersControlFlow()) {
+            transferred = true;
+            break;
+          }
           // Note the type if it is useful.
           if (castType != curr->type &&
               Type::isSubType(castType, curr->type)) {
             minStaticTypeMap[curr] = castType;
-          }
-          if (ShallowEffectAnalyzer(options, wasm, curr).transfersControlFlow()) {
-            transferred = true;
-            break;
           }
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
           // Regardless of the existence of a fallthrough value, check for
