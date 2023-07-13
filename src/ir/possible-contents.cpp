@@ -1507,7 +1507,7 @@ private:
 
   // Perform a "backwards" analysis of static type info. This is the inverse, in
   // a sense, of the main flow analysis of values that is forward.
-  template<typename T> void inferMinStaticTypes(const T& collectedFuncInfo);
+  void inferMinStaticTypes();
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
@@ -1553,7 +1553,7 @@ Flower::Flower(Module& wasm, const PassOptions& options) : wasm(wasm), options(o
 #endif
 
   // Perform static inference. This will help the flow later.
-  inferMinStaticTypes(analysis.map);
+  inferMinStaticTypes();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "global init phase\n";
@@ -2233,8 +2233,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
     });
 }
 
-template<typename T>
-void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
+void Flower::inferMinStaticTypes() {
   // The current analysis here only helps with GC (it refines types) and it also
   // depends on TrapsNeverHappen mode, as we use the assumption that casts
   // never trap. Specifically, if we see a cast that executes then we can assume
@@ -2250,11 +2249,10 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) { // XXX remove
 
   struct Info {
     // A map of param indexes to the types they are definitely cast to if the
-    // function is entered. This then used in inferMinStaticTypes().
+    // function is entered.
     std::unordered_map<Index, Type> castParams;
 
-    // We gather all calls in order to process them later during
-    // inferMinStaticTypes().
+    // We gather all calls in order to process them later.
     std::vector<Call*> calls;
   };
 
