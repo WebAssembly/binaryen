@@ -931,7 +931,8 @@
     (local $x (ref null $A))
     (call $called
       ;; The called function will cast to $B, but this is an $A, so the cast
-      ;; will fail. We can infer that the code here is unreachable.
+      ;; will fail. We can infer that the code here is unreachable. Note that no
+      ;; ref.cast appears here - we infer this even without seeing a cast.
       (struct.new $A
         (i32.const 10)
       )
