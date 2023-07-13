@@ -91,7 +91,9 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // wasm module as a string of uint64_t values. Each value represents either an
   // Expression or a separator to mark the end of control flow.
   std::vector<uint64_t> hashString;
-  uint64_t monotonic = 0;
+  // An increasing monotonic used to ensure that unique expressions in the
+  // module are assigned a unique value in the hashString
+  uint64_t nextVal = 0;
   // Contains a mapping of expression pointer to value to ensure we
   // use the same value for matching expressions. A custom hasher and
   // equator is provided in order to separate out evaluation of the if-condition
