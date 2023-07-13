@@ -88,22 +88,18 @@ struct StringifyHasher {
   size_t operator()(Expression* curr) const {
     if (Properties::isControlFlowStructure(curr)) {
       if (auto* iff = curr->dynCast<If>()) {
-        return hashIfNoCondition(iff);
+        size_t digest = wasm::hash(iff->_id);
+        rehash(digest, ExpressionAnalyzer::hash(iff->ifTrue));
+        if (iff->ifFalse) {
+          rehash(digest, ExpressionAnalyzer::hash(iff->ifFalse));
+        }
+        return digest;
       }
 
       return ExpressionAnalyzer::hash(curr);
     }
 
     return ExpressionAnalyzer::shallowHash(curr);
-  }
-
-  static uint64_t hashIfNoCondition(If* iff) {
-    size_t digest = wasm::hash(iff->_id);
-    rehash(digest, ExpressionAnalyzer::hash(iff->ifTrue));
-    if (iff->ifFalse) {
-      rehash(digest, ExpressionAnalyzer::hash(iff->ifFalse));
-    }
-    return digest;
   }
 };
 
@@ -118,18 +114,14 @@ struct StringifyEquator {
       auto* iffr = rhs->dynCast<If>();
 
       if (iffl && iffr) {
-        return equalIfNoCondition(iffl, iffr);
+        return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) &&
+               ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
       }
 
       return ExpressionAnalyzer::equal(lhs, rhs);
     }
 
     return ExpressionAnalyzer::shallowEqual(lhs, rhs);
-  }
-
-  bool equalIfNoCondition(If* iffl, If* iffr) const {
-    return ExpressionAnalyzer::equal(iffl->ifTrue, iffr->ifTrue) &&
-           ExpressionAnalyzer::equal(iffl->ifFalse, iffr->ifFalse);
   }
 };
 
