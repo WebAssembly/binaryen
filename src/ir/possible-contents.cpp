@@ -1231,6 +1231,8 @@ struct InfoCollector
 
       void visitRefCast(RefCast* curr) {
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
+          // TODO: Can we optimize not only if we are a subtype? E.g if we are
+          //       a non-nullable child and the other is a nullable parent.
           if (curr->type != get->type &&
               Type::isSubType(curr->type, get->type) &&
               info.castParams.count(get->index) == 0) {
