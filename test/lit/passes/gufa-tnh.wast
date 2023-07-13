@@ -447,3 +447,70 @@
     )
   )
 )
+
+;; As above, but two casts in the called function.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    ;; Two casts. We keep the first, which is simple to do, and good enough in
+    ;; the general case as other optimizations will leave the most-refined one.
+    ;; (But in this test, it is less optimal actually.)
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (drop
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $any anyref)
+    (local $x (ref null $A))
+    (call $called
+      (local.tee $x
+        (ref.cast $A ;; this cast will be refined to $B.
+          (local.get $any)
+        )
+      )
+    )
+  )
+)
