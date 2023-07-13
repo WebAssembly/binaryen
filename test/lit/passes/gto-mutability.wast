@@ -589,3 +589,43 @@
     (drop (struct.get $sub 0 (local.get $sub)))
   )
 )
+
+;; This pass does not refine array types yet. Verify that we do not. This is
+;; particularly important for array of i8 and i6, which we special-case as they
+;; are used for string interop even in closed world. For now, however, we do not
+;; optimize even arrays of i32.
+;;
+;; Nothing should change in these array types. They have no writes, but they'll
+;; stay mutable. Also, this test verifies that we can even validate this module
+;; in closed world, even though it contains imports of i8 and i16 arrays.
+;;
+;; The test also verifies that while we refine the mutability of a struct type,
+;; which causes us to rewrite types, that we keep the i8 and i16 arrays in
+;; their own size-1 rec groups by themselves, unmodified. The i32 array will be
+;; moved into a new big rec group, together with the struct type (that is also
+;; refined to be immutable).
+(module
+  (type $array8 (array (mut i8)))
+  (type $array16 (array (mut i16)))
+  (type $array32 (array (mut i32)))
+
+  (type $struct (struct (field (mut funcref))))
+
+  (import "a" "b" (global $i8 (ref $array8)))
+
+  (import "a" "c" (global $i16 (ref $array16)))
+
+  (func $use (param $funcref funcref)
+    (local $array8 (ref $array8))
+    (local $array16 (ref $array16))
+    (local $array32 (ref $array32))
+    (local $struct (ref $struct))
+    (drop
+      (struct.get $struct 0
+        (struct.new $struct
+          (local.get $funcref)
+        )
+      )
+    )
+  )
+)

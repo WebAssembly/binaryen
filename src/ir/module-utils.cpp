@@ -19,6 +19,10 @@
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
 
+namespace wasm {
+std::unordered_set<HeapType> getIgnorablePublicTypes();
+}
+
 namespace wasm::ModuleUtils {
 
 namespace {
@@ -298,6 +302,11 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
         break;
     }
     WASM_UNREACHABLE("unexpected export kind");
+  }
+
+  // Ignorable public types are public.
+  for (auto type : getIgnorablePublicTypes()) {
+    notePublic(type);
   }
 
   // Find all the other public types reachable from directly publicized types.
