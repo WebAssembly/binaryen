@@ -1233,6 +1233,7 @@ struct InfoCollector
         if (auto* get = curr->ref->dynCast<LocalGet>()) {
           // TODO: Can we optimize not only if we are a subtype? E.g if we are
           //       a non-nullable child and the other is a nullable parent.
+          // TODO: fallthrough
           if (curr->type != get->type &&
               Type::isSubType(curr->type, get->type) &&
               info.castParams.count(get->index) == 0) {
@@ -2323,6 +2324,7 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
           if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
             break;
           }
+          continue;
         }
 
         // If the call executes then this parameter is definitely evalled, and
@@ -2334,7 +2336,11 @@ void Flower::inferMinStaticTypes(const T& collectedFuncInfo) {
         auto* curr = operand;
         bool transferred = false;
         while (1) {
-          minStaticTypeMap[curr] = castType;
+          // Note the type if it is useful.
+          if (castType != curr->type &&
+              Type::isSubType(castType, curr->type)) {
+            minStaticTypeMap[curr] = castType;
+          }
           if (ShallowEffectAnalyzer(options, wasm, curr).transfersControlFlow()) {
             transferred = true;
             break;
