@@ -46,6 +46,15 @@ inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
   return result;
 }
 
+inline FiniteIntPowersetLattice::Element
+FiniteIntPowersetLattice::getRandom(Random& rand) {
+  FiniteIntPowersetLattice::Element result(setSize);
+  for (size_t i = 0; i < setSize; ++i) {
+    result.set(i, rand.oneIn(2));
+  }
+  return result;
+}
+
 // We count the number of element members present in the element by counting the
 // trues in the bitvector.
 inline size_t FiniteIntPowersetLattice::Element::count() {

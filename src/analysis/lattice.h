@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "tools/fuzzing/random.h"
 #include "wasm.h"
 
 namespace wasm::analysis {
@@ -102,6 +103,8 @@ public:
 
   // Returns an instance of the bottom lattice element.
   Element getBottom();
+
+  Element getRandom(Random& rand);
 };
 
 // A layer of abstraction over FiniteIntPowersetLattice which maps
