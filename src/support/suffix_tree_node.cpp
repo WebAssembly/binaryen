@@ -29,10 +29,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/SuffixTreeNode.h"
+#include "support/suffix_tree_node.h"
+#include <cassert>
 
-using namespace llvm;
+namespace wasm {
 
 unsigned SuffixTreeNode::getStartIdx() const { return StartIdx; }
 void SuffixTreeNode::incrementStartIdx(unsigned Inc) { StartIdx += Inc; }
@@ -56,3 +56,5 @@ unsigned SuffixTreeLeafNode::getEndIdx() const {
 
 unsigned SuffixTreeLeafNode::getSuffixIdx() const { return SuffixIdx; }
 void SuffixTreeLeafNode::setSuffixIdx(unsigned Idx) { SuffixIdx = Idx; }
+
+} // namespace wasm

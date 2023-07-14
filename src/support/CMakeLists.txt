@@ -10,6 +10,8 @@ set(support_SOURCES
   istring.cpp
   path.cpp
   safe_integer.cpp
+  suffix_tree.cpp
+  suffix_tree_node.cpp
   threads.cpp
   utilities.cpp
   ${support_HEADERS}

@@ -44,6 +44,8 @@
 #ifndef wasm_support_suffix_tree_node_h
 #define wasm_support_suffix_tree_node_h
 
+#include <unordered_map>
+
 namespace wasm {
 
 /// A node in a suffix tree which represents a substring or suffix.
@@ -141,7 +143,7 @@ public:
   /// A child existing on an unsigned integer implies that from the mapping
   /// represented by the current node, there is a way to reach another
   /// mapping by tacking that character on the end of the current string.
-  DenseMap<unsigned, SuffixTreeNode*> Children;
+  std::unordered_map<unsigned, SuffixTreeNode*> Children;
 
   SuffixTreeInternalNode(unsigned StartIdx,
                          unsigned EndIdx,
