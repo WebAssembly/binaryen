@@ -395,62 +395,6 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
     )
   )wasm";
 
-  auto analyzerText = R"analyzer(CFG Analyzer
-CFG Block: 0
-Input State: 00011
-Predecessors:
-Successors: 1 2
-Intermediate States: 
-00011
-i32.const 1
-00011
-local.set $0
-10001
-local.get $0
-10001
-i32.const 2
-10001
-i32.eq
-10001
-CFG Block: 1
-Input State: 10001
-Predecessors: 0
-Successors: 3
-Intermediate States: 
-10001
-i32.const 3
-10001
-local.set $1
-11000
-CFG Block: 2
-Input State: 10001
-Predecessors: 0
-Successors: 3
-Intermediate States: 
-10001
-i32.const 4
-10001
-local.set $0
-00101
-CFG Block: 3
-Input State: 11101
-Predecessors: 2 1
-Successors:
-Intermediate States: 
-11101
-local.get $1
-11101
-drop
-11101
-local.get $0
-11101
-drop
-11101
-block
-11101
-End
-)analyzer";
-
   Module wasm;
   parseWast(wasm, moduleText);
 
@@ -470,10 +414,6 @@ End
     analyzer(lattice, transferFunction, cfg);
   analyzer.evaluateFunctionEntry(func);
   analyzer.evaluate();
-
-  std::stringstream ss;
-  analyzer.print(ss);
-  EXPECT_EQ(ss.str(), analyzerText);
 
   FindAll<LocalSet> foundSets(func->body);
   FindAll<LocalGet> foundGets(func->body);
@@ -530,68 +470,6 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
     )
   )wasm";
 
-  auto analyzerText = R"analyzer(CFG Analyzer
-CFG Block: 0
-Input State: 0011
-Predecessors:
-Successors: 1
-Intermediate States: 
-0011
-CFG Block: 1
-Input State: 1011
-Predecessors: 0 1
-Successors: 2 1
-Intermediate States: 
-1011
-local.get $0
-1011
-drop
-1011
-i32.const 1
-1011
-local.get $0
-1011
-i32.add
-1011
-local.set $0
-1001
-local.get $0
-1001
-i32.const 7
-1001
-i32.le_u
-1001
-br_if $loop
-1001
-CFG Block: 2
-Input State: 1001
-Predecessors: 1
-Successors: 3
-Intermediate States: 
-1001
-block
-1001
-loop $loop
-1001
-CFG Block: 3
-Input State: 1001
-Predecessors: 2
-Successors:
-Intermediate States: 
-1001
-local.get $1
-1001
-local.get $0
-1001
-i32.sub
-1001
-local.set $1
-1100
-block
-1100
-End
-)analyzer";
-
   Module wasm;
   parseWast(wasm, moduleText);
 
@@ -612,7 +490,33 @@ End
   analyzer.evaluateFunctionEntry(func);
   analyzer.evaluate();
 
-  std::stringstream ss;
-  analyzer.print(ss);
-  EXPECT_EQ(ss.str(), analyzerText);
+  FindAll<LocalSet> foundSets(func->body);
+  FindAll<LocalGet> foundGets(func->body);
+  LocalGraph::GetSetses getSetses;
+  transferFunction.beginResultCollection(&getSetses, nullptr);
+  analyzer.collectResults();
+  transferFunction.endResultCollection();
+
+  EXPECT_EQ(getSetses.size(), foundGets.list.size());
+  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
+  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 2);
+  EXPECT_TRUE(getSetses[foundGets.list[0]].count(nullptr));
+  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
+  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 2);
+  EXPECT_TRUE(getSetses[foundGets.list[1]].count(nullptr));
+  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
+  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[3]));
+  EXPECT_TRUE(getSetses[foundGets.list[3]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[3]].count(nullptr));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[4]));
+  EXPECT_TRUE(getSetses[foundGets.list[4]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[4]].count(foundSets.list[0]));
 }
