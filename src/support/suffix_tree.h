@@ -60,6 +60,7 @@ namespace wasm {
 class SuffixTree {
 public:
   /// Each element is an integer representing an instruction in the module.
+  // TODO: This was an ArrayRef originally
   std::vector<unsigned> Str;
 
   /// A repeated substring in the tree.
