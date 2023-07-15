@@ -32,7 +32,7 @@ class ReachingDefinitionsTransferFunction
 
   // We actually don't update locations right now since the CFG we are working
   // with doesn't contain the correct Expression**s, but this is left in for
-  // future improvements.
+  // future improvements. TODO.
   LocalGraph::Locations* locations = nullptr;
 
   // Signals to the visit functions whether we are solving the analysis, or

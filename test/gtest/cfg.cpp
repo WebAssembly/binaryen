@@ -309,11 +309,11 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
         (local.set $b
           (local.get $a)
         )
-        (local.set $c
-          (i32.const 1)
-        )
         (drop
           (local.get $c)
+        )
+        (local.set $c
+          (i32.const 1)
         )
         (local.set $a
           (i32.const 2)
@@ -321,42 +321,6 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
       )
     )
   )wasm";
-
-  auto analyzerText = R"analyzer(CFG Analyzer
-CFG Block: 0
-Input State: 0000111
-Predecessors:
-Successors:
-Intermediate States: 
-0000111
-i32.const 1
-0000111
-local.set $0
-1000011
-local.get $0
-1000011
-drop
-1000011
-local.get $0
-1000011
-local.set $1
-1100001
-i32.const 1
-1100001
-local.set $2
-1110000
-local.get $2
-1110000
-drop
-1110000
-i32.const 2
-1110000
-local.set $0
-0111000
-block
-0111000
-End
-)analyzer";
 
   Module wasm;
   parseWast(wasm, moduleText);
@@ -378,9 +342,26 @@ End
   analyzer.evaluateFunctionEntry(func);
   analyzer.evaluate();
 
-  std::stringstream ss;
-  analyzer.print(ss);
-  EXPECT_EQ(ss.str(), analyzerText);
+  FindAll<LocalSet> foundSets(func->body);
+  FindAll<LocalGet> foundGets(func->body);
+  LocalGraph::GetSetses getSetses;
+  transferFunction.beginResultCollection(&getSetses, nullptr);
+  analyzer.collectResults();
+  transferFunction.endResultCollection();
+
+  EXPECT_EQ(getSetses.size(), foundGets.list.size());
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
+  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
+  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
+  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[2]].count(nullptr));
 }
 
 TEST_F(CFGTest, ReachingDefinitionsIf) {
@@ -493,6 +474,29 @@ End
   std::stringstream ss;
   analyzer.print(ss);
   EXPECT_EQ(ss.str(), analyzerText);
+
+  FindAll<LocalSet> foundSets(func->body);
+  FindAll<LocalGet> foundGets(func->body);
+  LocalGraph::GetSetses getSetses;
+  transferFunction.beginResultCollection(&getSetses, nullptr);
+  analyzer.collectResults();
+  transferFunction.endResultCollection();
+
+  EXPECT_EQ(getSetses.size(), foundGets.list.size());
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
+  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 1);
+  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
+  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 2);
+  EXPECT_TRUE(getSetses[foundGets.list[1]].count(nullptr));
+  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[1]));
+
+  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
+  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 2);
+  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[0]));
+  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[2]));
 }
 
 TEST_F(CFGTest, ReachingDefinitionsLoop) {

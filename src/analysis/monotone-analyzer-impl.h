@@ -86,7 +86,11 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::collectResults() {
   for (BlockState currBlockState : stateBlocks) {
     typename Lattice::Element inputStateCopy = currBlockState.inputState;
 
-    // Calls collectResults from transfer function.
+    // Calls collectResults from transfer function. In this method, the transfer
+    // function generates the final set of states and uses it to produce useful
+    // information. For example, in reaching definitions analysis, these final
+    // states are used to populate a mapping of local.get's to a set of
+    // local.set's which affect its value.
     transferFunction.collectResults(currBlockState.cfgBlock, inputStateCopy);
   }
 }

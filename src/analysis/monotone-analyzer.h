@@ -113,8 +113,10 @@ public:
   void evaluateFunctionEntry(Function* func);
 
   // Iterates over all of the BlockStates after evaluate() is completed for the
-  // transfer function to collect results (including intermediate states) from
-  // it.
+  // transfer function to collect the finalized intermediate states from each
+  // block. For instance, the reaching definitions analysis transfer functions
+  // will take the final states and use it to populate a map of local.get's to
+  // sets of local.set's which affect it.
   void collectResults();
 
   // Prints out all BlockStates in this analyzer.
