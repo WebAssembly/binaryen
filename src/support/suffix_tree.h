@@ -50,11 +50,14 @@
 #ifndef wasm_support_suffix_tree_h
 #define wasm_support_suffix_tree_h
 
+#include "third_party/llvm-project/include/llvm/Support/Allocator.h"
 #include <cassert>
 #include <cstddef>
 #include <vector>
 
 #include "support/suffix_tree_node.h"
+
+using namespace llvm;
 
 namespace wasm {
 class SuffixTree {
@@ -74,9 +77,9 @@ public:
 
 private:
   /// Maintains internal nodes in the tree.
-  // SpecificBumpPtrAllocator<SuffixTreeInternalNode> InternalNodeAllocator;
+  SpecificBumpPtrAllocator<SuffixTreeInternalNode> InternalNodeAllocator;
   /// Maintains leaf nodes in the tree.
-  // SpecificBumpPtrAllocator<SuffixTreeLeafNode> LeafNodeAllocator;
+  SpecificBumpPtrAllocator<SuffixTreeLeafNode> LeafNodeAllocator;
 
   /// The root of the suffix tree.
   ///

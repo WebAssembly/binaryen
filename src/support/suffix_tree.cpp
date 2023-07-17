@@ -71,7 +71,8 @@ SuffixTreeNode* SuffixTree::insertLeaf(SuffixTreeInternalNode& Parent,
                                        unsigned StartIdx,
                                        unsigned Edge) {
   assert(StartIdx <= LeafEndIdx && "String can't start after it ends!");
-  auto* N = new SuffixTreeLeafNode(StartIdx, &LeafEndIdx);
+  auto* N = new (LeafNodeAllocator.Allocate())
+    SuffixTreeLeafNode(StartIdx, &LeafEndIdx);
   Parent.Children[Edge] = N;
   return N;
 }
@@ -84,7 +85,8 @@ SuffixTree::insertInternalNode(SuffixTreeInternalNode* Parent,
   assert(StartIdx <= EndIdx && "String can't start after it ends!");
   assert(!(!Parent && StartIdx != SuffixTreeNode::EmptyIdx) &&
          "Non-root internal nodes must have parents!");
-  auto* N = new SuffixTreeInternalNode(StartIdx, EndIdx, Root);
+  auto* N = new (InternalNodeAllocator.Allocate())
+    SuffixTreeInternalNode(StartIdx, EndIdx, Root);
   if (Parent)
     Parent->Children[Edge] = N;
   return N;
