@@ -235,6 +235,25 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
     }
 
   private:
+    Name resolveName(NameUpdates& updates, Name newName, Name oldName) {
+      // Iteratively lookup the updated name.
+      std::set<Name> visited;
+      auto name = newName;
+      while (1) {
+        auto iter = updates.find(name);
+        if (iter == updates.end()) {
+          return name;
+        }
+        if (visited.count(name)) {
+          // This is a loop of imports, which means we cannot resolve a useful
+          // name. Report an error.
+          Fatal() << "wasm-merge: infinite loop of imports on " << oldName;
+        }
+        visited.insert(name);
+        name = iter->second;
+      }
+    }
+
     void mapName(ModuleItemKind kind, Name& name) {
       auto iter = kindNameUpdates.find(kind);
       if (iter == kindNameUpdates.end()) {
@@ -243,7 +262,7 @@ void updateNames(Module& wasm, KindNameUpdates& kindNameUpdates) {
       auto& nameUpdates = iter->second;
       auto iter2 = nameUpdates.find(name);
       if (iter2 != nameUpdates.end()) {
-        name = iter2->second;
+        name = resolveName(nameUpdates, iter2->second, name);
       }
     }
   } nameMapper(kindNameUpdates);

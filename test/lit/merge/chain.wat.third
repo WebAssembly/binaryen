@@ -1,0 +1,4 @@
+(module
+  (import "second" "g" (func $g))
+  (func (export "h") (call $g))
+)
