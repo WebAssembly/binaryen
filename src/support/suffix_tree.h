@@ -32,8 +32,6 @@
 // https://www.cs.helsinki.fi/u/ukkonen/SuffixT1withFigs.pdf
 //===----------------------------------------------------------------------===//
 
-// clang-format off
-
 #ifndef wasm_support_suffix_tree_h
 #define wasm_support_suffix_tree_h
 
@@ -193,8 +191,9 @@ public:
 
     RepeatedSubstringIterator(SuffixTreeInternalNode* N) : N(N) {
       // Do we have a non-null node?
-      if (!N)
+      if (!N) {
         return;
+      }
       // Yes. At the first step, we need to visit all of N's children.
       // Note: This means that we visit N last.
       InternalNodesToVisit.push_back(N);

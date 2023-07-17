@@ -13,8 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// clang-format off
-
 #include "support/suffix_tree.h"
 #include "support/suffix_tree_node.h"
 #include "llvm/Support/Casting.h"
@@ -26,9 +24,11 @@ namespace wasm {
 /// \returns the number of elements in the substring associated with \p N.
 static size_t numElementsInSubstring(const SuffixTreeNode* N) {
   assert(N && "Got a null node?");
-  if (auto* Internal = dyn_cast<SuffixTreeInternalNode>(N))
-    if (Internal->isRoot())
+  if (auto* Internal = dyn_cast<SuffixTreeInternalNode>(N)) {
+    if (Internal->isRoot()) {
       return 0;
+    }
+  }
   return N->getEndIdx() - N->getStartIdx() + 1;
 }
 
@@ -74,8 +74,9 @@ SuffixTree::insertInternalNode(SuffixTreeInternalNode* Parent,
          "Non-root internal nodes must have parents!");
   auto* N = new (InternalNodeAllocator.Allocate())
     SuffixTreeInternalNode(StartIdx, EndIdx, Root);
-  if (Parent)
+  if (Parent) {
     Parent->Children[Edge] = N;
+  }
   return N;
 }
 
@@ -102,16 +103,18 @@ void SuffixTree::setSuffixIndices() {
     ToVisit.pop_back();
     // Length of the current node from the root down to here.
     CurrNode->setConcatLen(CurrNodeLen);
-    if (auto* InternalNode = dyn_cast<SuffixTreeInternalNode>(CurrNode))
+    if (auto* InternalNode = dyn_cast<SuffixTreeInternalNode>(CurrNode)) {
       for (auto& ChildPair : InternalNode->Children) {
         assert(ChildPair.second && "Node had a null child!");
         ToVisit.push_back(
           {ChildPair.second,
            CurrNodeLen + numElementsInSubstring(ChildPair.second)});
       }
+    }
     // No children, so we are at the end of the string.
-    if (auto* LeafNode = dyn_cast<SuffixTreeLeafNode>(CurrNode))
+    if (auto* LeafNode = dyn_cast<SuffixTreeLeafNode>(CurrNode)) {
       LeafNode->setSuffixIdx(Str.size() - CurrNodeLen);
+    }
   }
 }
 
@@ -211,8 +214,9 @@ unsigned SuffixTree::extend(unsigned EndIdx, unsigned SuffixesToAdd) {
       SplitNode->Children[Str[NextNode->getStartIdx()]] = NextNode;
 
       // SplitNode is an internal node, update the suffix link.
-      if (NeedsLink)
+      if (NeedsLink) {
         NeedsLink->setLink(SplitNode);
+      }
 
       NeedsLink = SplitNode;
     }
@@ -265,8 +269,9 @@ void SuffixTree::RepeatedSubstringIterator::advance() {
         continue;
       }
 
-      if (Length < MinLength)
+      if (Length < MinLength) {
         continue;
+      }
 
       // Have an occurrence of a potentially repeated string. Save it.
       auto* Leaf = cast<SuffixTreeLeafNode>(ChildPair.second);
@@ -275,12 +280,14 @@ void SuffixTree::RepeatedSubstringIterator::advance() {
 
     // The root never represents a repeated substring. If we're looking at
     // that, then skip it.
-    if (Curr->isRoot())
+    if (Curr->isRoot()) {
       continue;
+    }
 
     // Do we have any repeated substrings?
-    if (RepeatedSubstringStarts.size() < 2)
+    if (RepeatedSubstringStarts.size() < 2) {
       continue;
+    }
 
     // Yes. Update the state to reflect this, and then bail out.
     N = Curr;
