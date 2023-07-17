@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// clang-format off
+
 #include "support/suffix_tree.h"
 #include "support/suffix_tree_node.h"
 #include "third_party/llvm-project/include/llvm/Support/Casting.h"

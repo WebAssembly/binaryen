@@ -26,6 +26,8 @@
 // suffix in \p SuffixIdx.
 //===----------------------------------------------------------------------===//
 
+// clang-format off
+
 #ifndef wasm_support_suffix_tree_node_h
 #define wasm_support_suffix_tree_node_h
 

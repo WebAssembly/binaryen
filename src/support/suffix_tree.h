@@ -32,6 +32,8 @@
 // https://www.cs.helsinki.fi/u/ukkonen/SuffixT1withFigs.pdf
 //===----------------------------------------------------------------------===//
 
+// clang-format off
+
 #ifndef wasm_support_suffix_tree_h
 #define wasm_support_suffix_tree_h
 
