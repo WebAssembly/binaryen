@@ -119,6 +119,11 @@ public:
   // sets of local.set's which affect it.
   void collectResults();
 
+  void evaluateAndCollectResults() {
+    evaluate();
+    collectResults();
+  }
+
   // Prints out all BlockStates in this analyzer.
   void print(std::ostream& os);
 };

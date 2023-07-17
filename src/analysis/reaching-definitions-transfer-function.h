@@ -2,14 +2,12 @@
 #define wasm_analysis_reaching_definitions_transfer_function_h
 
 #include "ir/local-graph.h"
-#include "lattice.h"
-#include "monotone-analyzer.h"
-#include "wasm-traversal.h"
+#include "visitor-transfer-function.h"
 
 namespace wasm::analysis {
 
 class ReachingDefinitionsTransferFunction
-  : public Visitor<ReachingDefinitionsTransferFunction> {
+  : public VisitorTransferFunc<ReachingDefinitionsTransferFunction, FinitePowersetLattice<LocalSet*>, false> {
   // In addition to LocalSet expressions modifying a local index's value, we
   // must also account for the fact that the local index's default value at
   // initialization is used, or that it already has a value at the beginning.
@@ -18,7 +16,7 @@ class ReachingDefinitionsTransferFunction
   // each local index, at the end of the list of all LocalSetses. These nullptrs
   // represent the use of a default/param value.
 
-  FinitePowersetLattice<LocalSet*>::Element* currState = nullptr;
+  // FinitePowersetLattice<LocalSet*>::Element* currState = nullptr;
   FinitePowersetLattice<LocalSet*>& lattice;
 
   // Number of locals in a function.
@@ -28,12 +26,12 @@ class ReachingDefinitionsTransferFunction
   std::unordered_map<Index, SmallVector<LocalSet*, 2>> indexSetses;
 
   // LocalGraph members we need to update.
-  LocalGraph::GetSetses* getSetses = nullptr;
+  LocalGraph::GetSetses& getSetses;
 
   // We actually don't update locations right now since the CFG we are working
   // with doesn't contain the correct Expression**s, but this is left in for
   // future improvements. TODO.
-  LocalGraph::Locations* locations = nullptr;
+  LocalGraph::Locations& locations;
 
   // Signals to the visit functions whether we are solving the analysis, or
   // collecting results from the solved analysis.
@@ -41,8 +39,8 @@ class ReachingDefinitionsTransferFunction
 
 public:
   ReachingDefinitionsTransferFunction(FinitePowersetLattice<LocalSet*>& lattice,
-                                      size_t numLocals)
-    : lattice(lattice), numLocals(numLocals) {
+                                      size_t numLocals, LocalGraph::GetSetses& getSetses, LocalGraph::Locations& locations)
+    : lattice(lattice), numLocals(numLocals), getSetses(getSetses), locations(locations) {
 
     // Populate indexSetses.
     for (auto it = lattice.membersBegin();
@@ -54,10 +52,7 @@ public:
 
   // Sets the LocalGraph members we want to update, and signals that result
   // collection is about to begin.
-  void beginResultCollection(LocalGraph::GetSetses* getSetses,
-                             LocalGraph::Locations* locations) {
-    this->getSetses = getSetses;
-    this->locations = locations;
+  void beginResultCollection() {
     collectingResults = true;
   }
 
@@ -91,14 +86,14 @@ public:
 
       for (auto setInstance : matchingSetses) {
         if (lattice.exists(currState, setInstance)) {
-          (*getSetses)[curr].insert(setInstance);
+          getSetses[curr].insert(setInstance);
         }
       }
 
       // LocalGraph uses a nullptr to signify that the value obtained by Curr
       // could be a default initial value or a parameter value.
       if (currState->get(lattice.getSetSize() - numLocals + curr->index)) {
-        (*getSetses)[curr].insert(nullptr);
+        getSetses[curr].insert(nullptr);
       }
     }
   }
@@ -116,7 +111,7 @@ public:
       inputState.set(lattice.getSetSize() - numLocals + i, true);
     }
   }
-
+/*
   void transfer(const BasicBlock* cfgBlock,
                 FinitePowersetLattice<LocalSet*>::Element& inputState) {
     currState = &inputState;
@@ -147,7 +142,7 @@ public:
     // difference is in the visit functions.
     transfer(cfgBlock, inputState);
   }
-
+*/
   void print(std::ostream& os,
              const BasicBlock* cfgBlock,
              FinitePowersetLattice<LocalSet*>::Element& inputState) {

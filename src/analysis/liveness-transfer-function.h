@@ -1,16 +1,11 @@
 #ifndef wasm_analysis_liveness_transfer_function_h
 #define wasm_analysis_liveness_transfer_function_h
 
-#include "lattice.h"
-#include "monotone-analyzer.h"
-#include "wasm-traversal.h"
+#include "visitor-transfer-function.h"
 
 namespace wasm::analysis {
 
-class LivenessTransferFunction : public Visitor<LivenessTransferFunction> {
-  FiniteIntPowersetLattice::Element* currState = nullptr;
-
-public:
+struct LivenessTransferFunction : public VisitorTransferFunc<LivenessTransferFunction, FiniteIntPowersetLattice, true> {
   // Transfer function implementation. A local becomes live before a get
   // and becomes dead before a set.
   void visitLocalSet(LocalSet* curr) {
@@ -22,6 +17,7 @@ public:
     currState->set(curr->index, true);
   }
 
+  /*
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node, starting with the node's input state, and changes the input state
   // to the final output state of the node in place.
@@ -53,11 +49,12 @@ public:
       worklist.push(&(*it));
     }
   }
+  
 
   // Predecessors depend on current basic block for information.
   BasicBlock::Predecessors getDependents(const BasicBlock* currBlock) {
     return currBlock->preds();
-  }
+  }*/
 
   // Prints the intermediate states of each basic block cfgBlock by applying
   // the transfer function on each expression of the CFG block. This data is

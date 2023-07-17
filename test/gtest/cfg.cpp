@@ -332,9 +332,13 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   for (size_t i = 0; i < func->getNumLocals(); ++i) {
     setFinder.list.push_back(nullptr);
   }
+
+  LocalGraph::GetSetses getSetses;
+  LocalGraph::Locations locations;
+
   FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
   ReachingDefinitionsTransferFunction transferFunction(lattice,
-                                                       func->getNumLocals());
+                                                       func->getNumLocals(), getSetses, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -344,24 +348,16 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
 
   FindAll<LocalSet> foundSets(func->body);
   FindAll<LocalGet> foundGets(func->body);
-  LocalGraph::GetSetses getSetses;
-  transferFunction.beginResultCollection(&getSetses, nullptr);
+  transferFunction.beginResultCollection();
   analyzer.collectResults();
   transferFunction.endResultCollection();
 
-  EXPECT_EQ(getSetses.size(), foundGets.list.size());
+  LocalGraph::GetSetses expectedResult;
+  expectedResult[foundGets.list[0]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[1]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[2]].insert(nullptr);
 
-  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
-  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
-  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[0]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
-  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[2]].count(nullptr));
+  EXPECT_EQ(expectedResult, getSetses);
 }
 
 TEST_F(CFGTest, ReachingDefinitionsIf) {
@@ -405,9 +401,12 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
   for (size_t i = 0; i < func->getNumLocals(); ++i) {
     setFinder.list.push_back(nullptr);
   }
+
+  LocalGraph::GetSetses getSetses;
+  LocalGraph::Locations locations;
   FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
   ReachingDefinitionsTransferFunction transferFunction(lattice,
-                                                       func->getNumLocals());
+                                                       func->getNumLocals(), getSetses, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -417,26 +416,18 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
 
   FindAll<LocalSet> foundSets(func->body);
   FindAll<LocalGet> foundGets(func->body);
-  LocalGraph::GetSetses getSetses;
-  transferFunction.beginResultCollection(&getSetses, nullptr);
+  transferFunction.beginResultCollection();
   analyzer.collectResults();
   transferFunction.endResultCollection();
 
-  EXPECT_EQ(getSetses.size(), foundGets.list.size());
+  LocalGraph::GetSetses expectedResult;
+  expectedResult[foundGets.list[0]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[1]].insert(nullptr);
+  expectedResult[foundGets.list[1]].insert(foundSets.list[1]);
+  expectedResult[foundGets.list[2]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[2]].insert(foundSets.list[2]);
 
-  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
-  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
-  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 2);
-  EXPECT_TRUE(getSetses[foundGets.list[1]].count(nullptr));
-  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[1]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
-  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 2);
-  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[0]));
-  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[2]));
+  EXPECT_EQ(expectedResult, getSetses);
 }
 
 TEST_F(CFGTest, ReachingDefinitionsLoop) {
@@ -480,9 +471,12 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   for (size_t i = 0; i < func->getNumLocals(); ++i) {
     setFinder.list.push_back(nullptr);
   }
+
+  LocalGraph::GetSetses getSetses;
+  LocalGraph::Locations locations;
   FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
   ReachingDefinitionsTransferFunction transferFunction(lattice,
-                                                       func->getNumLocals());
+                                                       func->getNumLocals(), getSetses, locations);
 
   MonotoneCFGAnalyzer<FinitePowersetLattice<LocalSet*>,
                       ReachingDefinitionsTransferFunction>
@@ -492,31 +486,18 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
 
   FindAll<LocalSet> foundSets(func->body);
   FindAll<LocalGet> foundGets(func->body);
-  LocalGraph::GetSetses getSetses;
-  transferFunction.beginResultCollection(&getSetses, nullptr);
+  transferFunction.beginResultCollection();
   analyzer.collectResults();
   transferFunction.endResultCollection();
 
-  EXPECT_EQ(getSetses.size(), foundGets.list.size());
-  EXPECT_TRUE(getSetses.count(foundGets.list[0]));
-  EXPECT_TRUE(getSetses[foundGets.list[0]].size() == 2);
-  EXPECT_TRUE(getSetses[foundGets.list[0]].count(nullptr));
-  EXPECT_TRUE(getSetses[foundGets.list[0]].count(foundSets.list[0]));
+  LocalGraph::GetSetses expectedResult;
+  expectedResult[foundGets.list[0]].insert(nullptr);
+  expectedResult[foundGets.list[0]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[1]].insert(nullptr);
+  expectedResult[foundGets.list[1]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[2]].insert(foundSets.list[0]);
+  expectedResult[foundGets.list[3]].insert(nullptr);
+  expectedResult[foundGets.list[4]].insert(foundSets.list[0]);
 
-  EXPECT_TRUE(getSetses.count(foundGets.list[1]));
-  EXPECT_TRUE(getSetses[foundGets.list[1]].size() == 2);
-  EXPECT_TRUE(getSetses[foundGets.list[1]].count(nullptr));
-  EXPECT_TRUE(getSetses[foundGets.list[1]].count(foundSets.list[0]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[2]));
-  EXPECT_TRUE(getSetses[foundGets.list[2]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[2]].count(foundSets.list[0]));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[3]));
-  EXPECT_TRUE(getSetses[foundGets.list[3]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[3]].count(nullptr));
-
-  EXPECT_TRUE(getSetses.count(foundGets.list[4]));
-  EXPECT_TRUE(getSetses[foundGets.list[4]].size() == 1);
-  EXPECT_TRUE(getSetses[foundGets.list[4]].count(foundSets.list[0]));
+  EXPECT_EQ(expectedResult, getSetses);
 }
