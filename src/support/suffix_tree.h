@@ -37,7 +37,7 @@
 #ifndef wasm_support_suffix_tree_h
 #define wasm_support_suffix_tree_h
 
-#include "third_party/llvm-project/include/llvm/Support/Allocator.h"
+#include "llvm/Support/Allocator.h"
 #include <cassert>
 #include <cstddef>
 #include <vector>
