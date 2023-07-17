@@ -292,8 +292,9 @@ void SuffixTree::RepeatedSubstringIterator::advance() {
     // Yes. Update the state to reflect this, and then bail out.
     N = Curr;
     RS.Length = Length;
-    for (unsigned StartIdx : RepeatedSubstringStarts)
+    for (unsigned StartIdx : RepeatedSubstringStarts) {
       RS.StartIndices.push_back(StartIdx);
+    }
     break;
   }
   // At this point, either NewRS is an empty RepeatedSubstring, or it was
