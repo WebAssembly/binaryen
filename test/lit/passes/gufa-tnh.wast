@@ -1075,10 +1075,10 @@
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-
   ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
   (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
@@ -1143,31 +1143,72 @@
   )
 
   ;; CHECK:      (func $caller-C (type $anyref_=>_none) (param $any anyref)
-  ;; CHECK-NEXT:  (local $temp (ref $A))
+  ;; CHECK-NEXT:  (local $temp-C (ref $C))
+  ;; CHECK-NEXT:  (local $temp-any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:   (local.tee $temp-C
   ;; CHECK-NEXT:    (ref.cast $C
-  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:     (local.tee $temp-any
+  ;; CHECK-NEXT:      (local.get $any)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 30)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (local.get $temp-any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller-C (export "caller-C") (param $any anyref)
-    (local $temp (ref $A))
+    (local $temp-C (ref $C))
+    (local $temp-any anyref)
     (call $called
-      (local.tee $temp
+      (local.tee $temp-C
         (ref.cast $C ;; This cast is already more refined than even the called
                      ;; function casts to. It should stay as it is.
-          (local.get $any)
+          (local.tee $temp-any
+            (local.get $any)
+          )
         )
       )
     )
     (drop
       (struct.get $A 0 ;; the reference contains a C, so this value is 30.
-        (local.get $temp)
+        (ref.cast $A
+          (local.get $temp-C)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0 ;; We infer that $temp-any is $B from the cast in the
+                       ;; call, so the cast here can be improved, but not the
+                       ;; value (which can be 20 or 30).
+                       ;; TODO: We can infer from the ref.cast $C in this
+                       ;;       function backwards into the tee and its value.
+        (ref.cast $A
+          (local.get $temp-any)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0 ;; We have not inferred anything about the param, so this
+                       ;; is not optimized yet, but it could be. TODO
+        (ref.cast $A
+          (local.get $any)
+        )
       )
     )
   )
