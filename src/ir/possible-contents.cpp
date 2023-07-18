@@ -1289,9 +1289,11 @@ struct InfoCollector
 //  (ref.cast $B (local.get $a))
 //
 // The cast happens right after the first local.get, and we assume it does not
-// fail, so the local must contain a B.
+// fail, so the local must contain a B, even though the IR only has A.
 //
 // This analysis complements ContentOracle, which uses this analysis internally.
+// TODO: We could cycle between them for repeated improvements. The outcome of
+//       each is to refine the contents at each location, so this must converge.
 class TNHOracle {
   Module& wasm;
   const PassOptions& options;
@@ -1299,18 +1301,8 @@ class TNHOracle {
 public:
   TNHOracle(Module& wasm, const PassOptions& options)
     : wasm(wasm), options(options) {
-    // The current analysis here only helps with GC (it refines types) and it
-    // also depends on TrapsNeverHappen mode, as we use the assumption that
-    // casts never trap. Specifically, if we see a cast that executes then we
-    // can assume something about its value, which can then provide useful
-    // static information to more locations behind it. (Locations in front of it
-    // are already handled by the main forward analysis, as the location will
-    // only contain things of the cast type, and then only those things can flow
-    // forward.)
-
-    // TODO: We can do a related analysis for call_ref, inferring the call_ref's
-    //       |ref| if only one possible target does not trap.
-    // TODO: We can also infer backwards past basic blocks from casts.
+    // The current analysis here only helps with GC (it refines types), and as
+    // mentioned above we assume TNH here.
     if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
       return;
     }
@@ -1320,11 +1312,13 @@ public:
 
   // Get the type we inferred was possible at a location.
   Type getType(Expression* curr) {
-    // If we inferred a type, use that. Otherwise, use the expression's type.
+    // If we inferred a type, use that. Otherwise, use the expression's type
+    // from the IR.
     auto iter = inferences.find(curr);
     if (iter != inferences.end()) {
       auto refinedType = iter->second;
       // We only store useful and correct types.
+      // TODO: unreachable
       assert(refinedType != curr->type &&
              Type::isSubType(refinedType, curr->type));
       return refinedType;
@@ -1333,9 +1327,8 @@ public:
   }
 
 private:
-  // Maps expressions to the minimum static type we inferred for them. If an
-  // expression is not here then expression->type (the type in Binaryen IR) is
-  // all we have.
+  // Maps expressions to the type we inferred for them. If an expression is not
+  // here then expression->type (the type in Binaryen IR) is all we have.
   std::unordered_map<Expression*, Type> inferences;
 
   void analyze();
@@ -1379,6 +1372,10 @@ void TNHOracle::analyze() {
 
         void visitCall(Call* curr) { info.calls.push_back(curr); }
 
+        // TODO: We can do a related analysis for call_ref, inferring the
+        //       function reference's value if only one possible target does not
+        //       trap.
+
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
             noteCast(curr);
@@ -1410,6 +1407,10 @@ void TNHOracle::analyze() {
       } scanner(wasm, options, info);
       scanner.walkFunction(func);
     });
+
+  // TODO: We can also infer backwards past basic blocks from casts, even
+  //       without calls.
+  // TODO: We can do a whole-program flow of this information.
 
   // Each time we see a param that is definitely cast to some type, we can infer
   // that the values sent are of that type (or else we trap and it doesn't
