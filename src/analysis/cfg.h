@@ -26,6 +26,7 @@
 #include <iostream>
 #include <vector>
 
+#include "ir/properties.h"
 #include "wasm.h"
 
 namespace wasm::analysis {
@@ -82,11 +83,21 @@ struct CFG {
   void computeExpressionBlockIndexes();
 
   // Gets the index of the basic block in which the instruction resides.
+  // getBlockIndex() must be called first to populate the map.
   Index getBlockIndex(Expression* expr) {
-    // getBlockIndex() must be called first to populate the map.
-    assert(expressionBlockIndexMap.count(expr));
-    return expressionBlockIndexMap[expr];
+    auto iter = expressionBlockIndexMap.find(expr);
+    if (iter == expressionBlockIndexMap.end()) {
+      // There is no entry for this, which can be the case for control flow
+      // structures.
+      assert(Properties::isControlFlowStructure(expr));
+      return InvalidBlock;
+    }
+    return iter->second;
   }
+
+  enum {
+    InvalidBlock = Index(-1)
+  };
 
 private:
   std::vector<BasicBlock> blocks;
