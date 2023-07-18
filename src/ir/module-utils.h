@@ -420,6 +420,16 @@ struct ParallelFunctionAnalysis {
       map[func.get()];
     }
 
+    doAnalysis(work);
+  }
+
+  // Perform an analysis by operating on each function, in parallel. This is
+  // called after the map is filled in, and the work function receives the
+  // proper item from the map for each function that we process.
+  //
+  // This is called from the constructor, and can also be called later as well
+  // if the user has additional operations to perform.
+  void doAnalysis(Func work) {
     // Run on the imports first. TODO: parallelize this too
     for (auto& func : wasm.functions) {
       if (func->imported()) {
