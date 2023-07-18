@@ -2304,9 +2304,7 @@ void Flower::inferMinStaticTypes() {
           }
         }
 
-        void visitRefCast(RefCast* curr) {
-          noteCast(curr);
-        }
+        void visitRefCast(RefCast* curr) { noteCast(curr); }
 
         void noteCast(Expression* curr) {
           if (!inEntryBlock) {

@@ -95,9 +95,7 @@ struct CFG {
     return iter->second;
   }
 
-  enum {
-    InvalidBlock = Index(-1)
-  };
+  enum { InvalidBlock = Index(-1) };
 
 private:
   std::vector<BasicBlock> blocks;
