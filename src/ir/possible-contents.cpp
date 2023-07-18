@@ -2331,33 +2331,24 @@ void Flower::inferMinStaticTypes() {
       scanner.walkFunction(func);
     });
 
-  // Next, organize all calls. We've gathered call instructions inside each
-  // function, and we need a map of all calls targets to their callsites.
-  std::unordered_map<Name, std::vector<CallSite>> targetCallSites;
-  for (auto& [_, info] : analysis.map) {
-    for (auto& callSite : info.callSites) {
-      targetCallSites[callSite.call->target].push_back(callSite);
-    }
-  }
-
   // Each time we see a param that is definitely cast to some type, we can infer
   // that the values sent are of that type (or else we trap and it doesn't
   // matter since we never reach the call).
-  // TODO: call_ref as well, etc.
-  for (auto& [func, info] : analysis.map) {
-    auto& castParams = info.castParams;
-    if (castParams.empty()) {
-      continue;
-    }
+  analysis.doAnalysis([&](Function* func, Info& info) {
+    for (auto& callSite : info.callSites) {
+      auto* call = callSite.call;
+      auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
 
-    // There are cast params. Go through all the calls and note the useful
-    // static information we gain.
-    for (auto& callSite : targetCallSites[func->name]) {
+      auto& castParams = targetInfo.castParams;
+      if (castParams.empty()) {
+        continue;
+      }
+
       // We must be careful of control flow transfers: only if the call is
       // actually executed can we make any inference here. Therefore we go
       // backwards in the operands and stop at any transfer.
       // XXX use a cfg here..?
-      auto& operands = callSite.call->operands;
+      auto& operands = call->operands;
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
@@ -2453,7 +2444,7 @@ void Flower::inferMinStaticTypes() {
         //       param etc.
       }
     }
-  }
+  });
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
