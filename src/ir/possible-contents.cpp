@@ -17,6 +17,7 @@
 #include <optional>
 #include <variant>
 
+#include "analysis/cfg.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
@@ -2335,6 +2336,10 @@ void Flower::inferMinStaticTypes() {
   // that the values sent are of that type (or else we trap and it doesn't
   // matter since we never reach the call).
   analysis.doAnalysis([&](Function* func, Info& info) {
+    // Constructing a CFG is expensive, so only do so if we find optimization
+    // opportunities.
+    std::optional<analysis::CFG> cfg;
+
     for (auto& callSite : info.callSites) {
       auto* call = callSite.call;
       auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
@@ -2344,21 +2349,34 @@ void Flower::inferMinStaticTypes() {
         continue;
       }
 
-      // We must be careful of control flow transfers: only if the call is
-      // actually executed can we make any inference here. Therefore we go
-      // backwards in the operands and stop at any transfer.
-      // XXX use a cfg here..?
+      // This looks promising, create the CFG if we haven't already.
+      if (!cfg) {
+        cfg = analysis::CFG::fromFunction(func);
+        cfg.computeExpressionBlockIndexes();
+      }
+
+      // Optimize in the same basic block as the call. Anything in another
+      // basic block might transfer control away.
+      // TODO: Some control flow is ok, so long as we must reach the call.
+      auto callBlockIndex = cfg->getBlockIndex(call);
+
+      // Go backwards through the call's operands and fallthrough values, and
+      // optimize while we are still in the same basic block.
+
       auto& operands = call->operands;
+      // Operands must exist since there is a cast param, so a param exists.
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
 
+        if (cfg->getBlockIndex(operand) != callBlockIndex) {
+          // Control flow might transfer; stop.
+          break;
+        }
+
         auto iter = castParams.find(i);
         if (iter == castParams.end()) {
-          // Continue onwards, but check for a transfer of control flow first.
-          if (EffectAnalyzer(options, wasm, operand).transfersControlFlow()) {
-            break;
-          }
+          // This param is not cast, so skip it.
           continue;
         }
 
@@ -2368,78 +2386,38 @@ void Flower::inferMinStaticTypes() {
 
         // Apply what we found to the operand and also to its fallthrough
         // values.
+        //
+        // At the loop entry |curr| has been checked for a possible control flow
+        // transfer (and that problem ruled out).
         auto* curr = operand;
         bool transferred = false;
         while (1) {
-          // If we transfer control flow here, stop.
-          if (ShallowEffectAnalyzer(options, wasm, curr)
-                .transfersControlFlow()) {
-            transferred = true;
-            break;
-          }
           // Note the type if it is useful.
           if (castType != curr->type && Type::isSubType(castType, curr->type)) {
             minStaticTypeMap[curr] = castType;
           }
+
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
-          // Regardless of the existence of a fallthrough value, check for
-          // effects on curr's children. If there is a fallthrough then we still
-          // can't look at it if a child transfers here (as the transfer might
-          // happen first), and if there isn't we still need to look for effects
-          // before continuing to the next param.
-          for (auto* child : ChildIterator(curr)) {
-            // Ignore next, which is either curr (if there is no fallthrough),
-            // in which case it will never be a child, or it is one of the
-            // children, and we want to skip that child as we'll be looking into
-            // it in detail.
-            if (child != next &&
-                EffectAnalyzer(options, wasm, child).transfersControlFlow()) {
-              transferred = true;
-              break;
-            }
-          }
           if (next == curr) {
-            // No fallthrough, we're done.
+            // No fallthrough, we're done with this param.
             break;
           }
-          if (transferred) {
-            // One of the children transferred control flow. We can still
-            // continue in simple cases like this:
-            //
-            //  (block
-            //     maybe return
-            //     fallthrough
-            //  )
-            //
-            // Here the fallthrough happens last, so we are ok. But in a case
-            // like an if, things might go either way:
-            //
-            //  (if
-            //     condition
-            //     maybe return
-            //     fallthrough
-            //  )
-            //
-            // In this case we might not even reach the fallthrough.
-            //
-            // For now, just handle the common case of a block. TODO: full
-            // CFG analysis
-            if ([[maybe_unused]] auto* block = curr->dynCast<Block>()) {
-              // The fallthrough must be at the end. (If, in the future, we
-              // start to look at block fallthroughs via breaks, then this
-              // assertion will be hit and we'd need to do more here.)
-              assert(next == block->list.back());
-            } else {
-              // Something other than a block; give up.
-              break;
-            }
+
+          // There is a fallthrough. Check for a control flow transfer.
+          if (cfg->getBlockIndex(next) != callBlockIndex) {
+            // Control flow might transfer; stop.
+            transferred = true;
+            break;
           }
+
           // Continue to the fallthrough.
           curr = next;
         }
+
         if (transferred) {
           break;
         }
+
         // TODO: go back through dominating blocks to uses/defs of this cast
         //       param etc.
       }

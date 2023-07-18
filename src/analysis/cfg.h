@@ -59,6 +59,7 @@ private:
   std::vector<Expression*> insts;
   std::vector<BasicBlock*> predecessors;
   std::vector<BasicBlock*> successors;
+
   friend CFG;
 };
 
@@ -77,8 +78,21 @@ struct CFG {
 
   void print(std::ostream& os, Module* wasm = nullptr) const;
 
+  // This must be done before getBlockIndex is called on an expression.
+  void computeExpressionBlockIndexes();
+
+  // Gets the index of the basic block in which the instruction resides.
+  Index getBlockIndex(Expression* expr) {
+    // getBlockIndex() must be called first to populate the map.
+    assert(!expressionBlockIndexMap.count(expr));
+    return expressionBlockIndexMap[expr];
+  }
+
 private:
   std::vector<BasicBlock> blocks;
+
+  std::unordered_map<Expression*, Index> expressionBlockIndexMap;
+
   friend BasicBlock;
 };
 
