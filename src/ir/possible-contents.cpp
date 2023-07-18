@@ -1299,13 +1299,14 @@ class TNHOracle {
 public:
   TNHOracle(Module& wasm, const PassOptions& options)
     : wasm(wasm), options(options) {
-    // The current analysis here only helps with GC (it refines types) and it also
-    // depends on TrapsNeverHappen mode, as we use the assumption that casts
-    // never trap. Specifically, if we see a cast that executes then we can assume
-    // something about its value, which can then provide useful static information
-    // to more locations behind it. (Locations in front of it are already handled
-    // by the main forward analysis, as the location will only contain things of
-    // the cast type, and then only those things can flow forward.)
+    // The current analysis here only helps with GC (it refines types) and it
+    // also depends on TrapsNeverHappen mode, as we use the assumption that
+    // casts never trap. Specifically, if we see a cast that executes then we
+    // can assume something about its value, which can then provide useful
+    // static information to more locations behind it. (Locations in front of it
+    // are already handled by the main forward analysis, as the location will
+    // only contain things of the cast type, and then only those things can flow
+    // forward.)
 
     // TODO: We can do a related analysis for call_ref, inferring the call_ref's
     //       |ref| if only one possible target does not trap.
@@ -1560,9 +1561,7 @@ struct Flower {
   // T here, as that is the minimum type: the actual values are runtime must be
   // equal to it, or more refined. We may also have other sources of static
   // information that can guide us.
-  Type getMinStaticType(Expression* curr) {
-    return tnhOracle.getType(curr);
-  }
+  Type getMinStaticType(Expression* curr) { return tnhOracle.getType(curr); }
 
 private:
   TNHOracle tnhOracle;
