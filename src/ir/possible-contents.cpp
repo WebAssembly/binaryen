@@ -1282,6 +1282,238 @@ struct InfoCollector
   }
 };
 
+// TrapsNeverHappen Oracle. This makes inferences *backwards* from traps that we
+// know will not happen due to the TNH assumption. For example,
+//
+//  (local.get $a)
+//  (ref.cast $B (local.get $a))
+//
+// The cast happens right after the first local.get, and we assume it does not
+// fail, so the local must contain a B.
+//
+// This analysis complements ContentOracle, which uses this analysis internally.
+class TNHOracle {
+  Module& wasm;
+  const PassOptions& options;
+
+public:
+  TNHOracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    // The current analysis here only helps with GC (it refines types) and it also
+    // depends on TrapsNeverHappen mode, as we use the assumption that casts
+    // never trap. Specifically, if we see a cast that executes then we can assume
+    // something about its value, which can then provide useful static information
+    // to more locations behind it. (Locations in front of it are already handled
+    // by the main forward analysis, as the location will only contain things of
+    // the cast type, and then only those things can flow forward.)
+
+    // TODO: We can do a related analysis for call_ref, inferring the call_ref's
+    //       |ref| if only one possible target does not trap.
+    // TODO: We can also infer backwards past basic blocks from casts.
+    if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
+      return;
+    }
+
+    analyze();
+  }
+
+  // Get the type we inferred was possible at a location.
+  Type getType(Expression* curr) {
+    // If we inferred a type, use that. Otherwise, use the expression's type.
+    auto iter = inferences.find(curr);
+    if (iter != inferences.end()) {
+      auto refinedType = iter->second;
+      // We only store useful and correct types.
+      assert(refinedType != curr->type &&
+             Type::isSubType(refinedType, curr->type));
+      return refinedType;
+    }
+    return curr->type;
+  }
+
+private:
+  // Maps expressions to the minimum static type we inferred for them. If an
+  // expression is not here then expression->type (the type in Binaryen IR) is
+  // all we have.
+  std::unordered_map<Expression*, Type> inferences;
+
+  void analyze();
+};
+
+void TNHOracle::analyze() {
+  // Gather information from each function.
+
+  struct CallSite { // XXX remove
+    // A call instruction.
+    Call* call;
+
+    // The function in which this call instruction is a child.
+    Function* parent;
+  };
+
+  struct Info {
+    // A map of param indexes to the types they are definitely cast to if the
+    // function is entered.
+    std::unordered_map<Index, Type> castParams;
+
+    // We gather all calls in order to process them later.
+    std::vector<CallSite> callSites;
+  };
+
+  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
+    wasm, [&](Function* func, Info& info) {
+      if (func->imported()) {
+        return;
+      }
+
+      // Gather parameters that are definitely cast in the function entry.
+      // TODO: this could be skipped if we do not have GC enabled
+      struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
+        Module& wasm;
+        const PassOptions& options;
+        Info& info;
+
+        EntryScanner(Module& wasm, const PassOptions& options, Info& info)
+          : wasm(wasm), options(options), info(info) {}
+
+        // Note while we are still in the entry (first) block.
+        bool inEntryBlock = true;
+
+        static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
+          // This is the end of the first basic block.
+          self->inEntryBlock = false;
+        }
+
+        void visitCall(Call* curr) {
+          info.callSites.push_back(CallSite{curr, getFunction()});
+        }
+
+        void visitRefAs(RefAs* curr) {
+          if (curr->op == RefAsNonNull) {
+            noteCast(curr);
+          }
+        }
+
+        void visitRefCast(RefCast* curr) { noteCast(curr); }
+
+        void noteCast(Expression* curr) {
+          if (!inEntryBlock) {
+            return;
+          }
+
+          auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
+          if (auto* get = fallthrough->dynCast<LocalGet>()) {
+            // TODO: Can we optimize not only if we are a subtype? E.g if we are
+            //       a non-nullable child and the other is a nullable parent.
+            if (curr->type != get->type &&
+                Type::isSubType(curr->type, get->type) &&
+                info.castParams.count(get->index) == 0) {
+              info.castParams[get->index] = curr->type;
+              // Note that if we see more than one cast we keep the first one.
+              // This is not important in optimized code, as the most refined
+              // cast would be the only one to exist there; we keep things
+              // simple here.
+            }
+          }
+        }
+      } scanner(wasm, options, info);
+      scanner.walkFunction(func);
+    });
+
+  // Each time we see a param that is definitely cast to some type, we can infer
+  // that the values sent are of that type (or else we trap and it doesn't
+  // matter since we never reach the call).
+  analysis.doAnalysis([&](Function* func, Info& info) {
+    // Constructing a CFG is expensive, so only do so if we find optimization
+    // opportunities.
+    std::optional<analysis::CFG> cfg;
+
+    for (auto& callSite : info.callSites) {
+      auto* call = callSite.call;
+      auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
+
+      auto& castParams = targetInfo.castParams;
+      if (castParams.empty()) {
+        continue;
+      }
+
+      // This looks promising, create the CFG if we haven't already.
+      if (!cfg) {
+        cfg = analysis::CFG::fromFunction(func);
+        cfg->computeExpressionBlockIndexes();
+      }
+
+      // Optimize in the same basic block as the call. Anything in another
+      // basic block might transfer control away.
+      // TODO: Some control flow is ok, so long as we must reach the call.
+      auto callBlockIndex = cfg->getBlockIndex(call);
+      assert(callBlockIndex != analysis::CFG::InvalidBlock);
+
+      // Go backwards through the call's operands and fallthrough values, and
+      // optimize while we are still in the same basic block.
+
+      auto& operands = call->operands;
+      // Operands must exist since there is a cast param, so a param exists.
+      assert(operands.size() > 0);
+      for (int i = int(operands.size() - 1); i >= 0; i--) {
+        auto* operand = operands[i];
+
+        if (cfg->getBlockIndex(operand) != callBlockIndex) {
+          // Control flow might transfer; stop.
+          break;
+        }
+
+        auto iter = castParams.find(i);
+        if (iter == castParams.end()) {
+          // This param is not cast, so skip it.
+          continue;
+        }
+
+        // If the call executes then this parameter is definitely evalled, and
+        // this particular param is then cast to a more refined type.
+        auto castType = iter->second;
+
+        // Apply what we found to the operand and also to its fallthrough
+        // values.
+        //
+        // At the loop entry |curr| has been checked for a possible control flow
+        // transfer (and that problem ruled out).
+        auto* curr = operand;
+        bool transferred = false;
+        while (1) {
+          // Note the type if it is useful.
+          if (castType != curr->type && Type::isSubType(castType, curr->type)) {
+            inferences[curr] = castType;
+          }
+
+          auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
+          if (next == curr) {
+            // No fallthrough, we're done with this param.
+            break;
+          }
+
+          // There is a fallthrough. Check for a control flow transfer.
+          if (cfg->getBlockIndex(next) != callBlockIndex) {
+            // Control flow might transfer; stop.
+            transferred = true;
+            break;
+          }
+
+          // Continue to the fallthrough.
+          curr = next;
+        }
+
+        if (transferred) {
+          break;
+        }
+
+        // TODO: go back through dominating blocks to uses/defs of this cast
+        //       param etc.
+      }
+    }
+  });
+}
+
 // Main logic for building data for the flow analysis and then performing that
 // analysis.
 struct Flower {
@@ -1329,23 +1561,11 @@ struct Flower {
   // equal to it, or more refined. We may also have other sources of static
   // information that can guide us.
   Type getMinStaticType(Expression* curr) {
-    // If we noted a type, use that. Otherwise, use the expression's type.
-    auto iter = minStaticTypeMap.find(curr);
-    if (iter != minStaticTypeMap.end()) {
-      auto refinedType = iter->second;
-      // We only store useful and correct types.
-      assert(refinedType != curr->type &&
-             Type::isSubType(refinedType, curr->type));
-      return refinedType;
-    }
-    return curr->type;
+    return tnhOracle.getType(curr);
   }
 
 private:
-  // Maps expressions to the minimum static type we inferred for them. If an
-  // expression is not here then expression->type (the type in Binaryen IR) is
-  // all we have.
-  std::unordered_map<Expression*, Type> minStaticTypeMap;
+  TNHOracle tnhOracle;
 
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
     assert(index < locations.size());
@@ -1506,10 +1726,6 @@ private:
     }
   }
 
-  // Perform a "backwards" analysis of static type info. This is the inverse, in
-  // a sense, of the main flow analysis of values that is forward.
-  void inferMinStaticTypes();
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   // Dump out a location for debug purposes.
   void dump(Location location);
@@ -1517,7 +1733,7 @@ private:
 };
 
 Flower::Flower(Module& wasm, const PassOptions& options)
-  : wasm(wasm), options(options) {
+  : wasm(wasm), options(options), tnhOracle(wasm, options) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
@@ -1553,9 +1769,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "static phase\n";
 #endif
-
-  // Perform static inference. This will help the flow later.
-  inferMinStaticTypes();
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "global init phase\n";
@@ -2233,195 +2446,6 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
       auto heapLoc = DataLocation{type, fieldIndex};
       updateContents(heapLoc, valueContents);
     });
-}
-
-void Flower::inferMinStaticTypes() {
-  // The current analysis here only helps with GC (it refines types) and it also
-  // depends on TrapsNeverHappen mode, as we use the assumption that casts
-  // never trap. Specifically, if we see a cast that executes then we can assume
-  // something about its value, which can then provide useful static information
-  // to more locations behind it. (Locations in front of it are already handled
-  // by the main forward analysis, as the location will only contain things of
-  // the cast type, and then only those things can flow forward.)
-
-  // TODO: We can do a related analysis for call_ref, inferring the call_ref's
-  //       |ref| if only one possible target does not trap.
-  // TODO: We can also infer backwards past basic blocks from casts.
-  if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
-    return;
-  }
-
-  // Gather information from each function.
-
-  struct CallSite {
-    // A call instruction.
-    Call* call;
-
-    // The function in which this call instruction is a child.
-    Function* parent;
-  };
-
-  struct Info {
-    // A map of param indexes to the types they are definitely cast to if the
-    // function is entered.
-    std::unordered_map<Index, Type> castParams;
-
-    // We gather all calls in order to process them later.
-    std::vector<CallSite> callSites;
-  };
-
-  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
-    wasm, [&](Function* func, Info& info) {
-      if (func->imported()) {
-        return;
-      }
-
-      // Gather parameters that are definitely cast in the function entry.
-      // TODO: this could be skipped if we do not have GC enabled
-      struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
-        Module& wasm;
-        const PassOptions& options;
-        Info& info;
-
-        EntryScanner(Module& wasm, const PassOptions& options, Info& info)
-          : wasm(wasm), options(options), info(info) {}
-
-        // Note while we are still in the entry (first) block.
-        bool inEntryBlock = true;
-
-        static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
-          // This is the end of the first basic block.
-          self->inEntryBlock = false;
-        }
-
-        void visitCall(Call* curr) {
-          info.callSites.push_back(CallSite{curr, getFunction()});
-        }
-
-        void visitRefAs(RefAs* curr) {
-          if (curr->op == RefAsNonNull) {
-            noteCast(curr);
-          }
-        }
-
-        void visitRefCast(RefCast* curr) { noteCast(curr); }
-
-        void noteCast(Expression* curr) {
-          if (!inEntryBlock) {
-            return;
-          }
-
-          auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
-          if (auto* get = fallthrough->dynCast<LocalGet>()) {
-            // TODO: Can we optimize not only if we are a subtype? E.g if we are
-            //       a non-nullable child and the other is a nullable parent.
-            if (curr->type != get->type &&
-                Type::isSubType(curr->type, get->type) &&
-                info.castParams.count(get->index) == 0) {
-              info.castParams[get->index] = curr->type;
-              // Note that if we see more than one cast we keep the first one.
-              // This is not important in optimized code, as the most refined
-              // cast would be the only one to exist there; we keep things
-              // simple here.
-            }
-          }
-        }
-      } scanner(wasm, options, info);
-      scanner.walkFunction(func);
-    });
-
-  // Each time we see a param that is definitely cast to some type, we can infer
-  // that the values sent are of that type (or else we trap and it doesn't
-  // matter since we never reach the call).
-  analysis.doAnalysis([&](Function* func, Info& info) {
-    // Constructing a CFG is expensive, so only do so if we find optimization
-    // opportunities.
-    std::optional<analysis::CFG> cfg;
-
-    for (auto& callSite : info.callSites) {
-      auto* call = callSite.call;
-      auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
-
-      auto& castParams = targetInfo.castParams;
-      if (castParams.empty()) {
-        continue;
-      }
-
-      // This looks promising, create the CFG if we haven't already.
-      if (!cfg) {
-        cfg = analysis::CFG::fromFunction(func);
-        cfg->computeExpressionBlockIndexes();
-      }
-
-      // Optimize in the same basic block as the call. Anything in another
-      // basic block might transfer control away.
-      // TODO: Some control flow is ok, so long as we must reach the call.
-      auto callBlockIndex = cfg->getBlockIndex(call);
-      assert(callBlockIndex != analysis::CFG::InvalidBlock);
-
-      // Go backwards through the call's operands and fallthrough values, and
-      // optimize while we are still in the same basic block.
-
-      auto& operands = call->operands;
-      // Operands must exist since there is a cast param, so a param exists.
-      assert(operands.size() > 0);
-      for (int i = int(operands.size() - 1); i >= 0; i--) {
-        auto* operand = operands[i];
-
-        if (cfg->getBlockIndex(operand) != callBlockIndex) {
-          // Control flow might transfer; stop.
-          break;
-        }
-
-        auto iter = castParams.find(i);
-        if (iter == castParams.end()) {
-          // This param is not cast, so skip it.
-          continue;
-        }
-
-        // If the call executes then this parameter is definitely evalled, and
-        // this particular param is then cast to a more refined type.
-        auto castType = iter->second;
-
-        // Apply what we found to the operand and also to its fallthrough
-        // values.
-        //
-        // At the loop entry |curr| has been checked for a possible control flow
-        // transfer (and that problem ruled out).
-        auto* curr = operand;
-        bool transferred = false;
-        while (1) {
-          // Note the type if it is useful.
-          if (castType != curr->type && Type::isSubType(castType, curr->type)) {
-            minStaticTypeMap[curr] = castType;
-          }
-
-          auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
-          if (next == curr) {
-            // No fallthrough, we're done with this param.
-            break;
-          }
-
-          // There is a fallthrough. Check for a control flow transfer.
-          if (cfg->getBlockIndex(next) != callBlockIndex) {
-            // Control flow might transfer; stop.
-            transferred = true;
-            break;
-          }
-
-          // Continue to the fallthrough.
-          curr = next;
-        }
-
-        if (transferred) {
-          break;
-        }
-
-        // TODO: go back through dominating blocks to uses/defs of this cast
-        //       param etc.
-      }
-    }
-  });
 }
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
