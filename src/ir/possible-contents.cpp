@@ -1377,9 +1377,7 @@ void TNHOracle::analyze() {
           self->inEntryBlock = false;
         }
 
-        void visitCall(Call* curr) {
-          info.calls.push_back(curr);
-        }
+        void visitCall(Call* curr) { info.calls.push_back(curr); }
 
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
