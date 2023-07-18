@@ -330,4 +330,3 @@ TEST_F(CFGTest, BlockIndexes) {
   EXPECT_EQ(cfg.getBlockIndex(block->list[0]), Index(1));
   EXPECT_EQ(cfg.getBlockIndex(block->list[1]), Index(1));
 }
-
