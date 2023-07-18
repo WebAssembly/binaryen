@@ -10,6 +10,7 @@
  (import "env" "memory" (memory $0 i64 1 1))
  (data (i64.const 1024) "x")
  (data (i64.const 1023) "\00")
+ (data $.tdata "\00\00\00\00\00\00\00\00")
  ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
  ;; CHECK:      (data $0 (i64.const 1024) "x")
@@ -34,5 +35,4 @@
        (local.get 0)
        (i32.const 0)
        (i32.const 8)))
- (data $.tdata "\00\00\00\00\00\00\00\00")
 )
