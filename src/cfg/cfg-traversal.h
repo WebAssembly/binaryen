@@ -297,10 +297,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
     // Create a new basic block and link to it. We do this even if there are no
-    // other edges leaving this call (no catch bodies we can reach if we throw),
-    // because we want to preserve the property that a basic block ends with an
-    // instruction that might branch, and the call might branch out of the
-    // entire function if it throws.
+    // other edges leaving this call (no catch bodies in this function that we
+    // can reach if we throw), because we want to preserve the property that a
+    // basic block ends with an instruction that might branch, and the call
+    // might branch out of the entire function if it throws.
     auto* last = self->currBasicBlock;
     self->link(last, self->startBasicBlock());
   }
