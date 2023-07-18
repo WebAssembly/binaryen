@@ -1344,21 +1344,13 @@ private:
 void TNHOracle::analyze() {
   // Gather information from each function.
 
-  struct CallSite { // XXX remove
-    // A call instruction.
-    Call* call;
-
-    // The function in which this call instruction is a child.
-    Function* parent;
-  };
-
   struct Info {
     // A map of param indexes to the types they are definitely cast to if the
     // function is entered.
     std::unordered_map<Index, Type> castParams;
 
     // We gather all calls in order to process them later.
-    std::vector<CallSite> callSites;
+    std::vector<Call*> calls;
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -1386,7 +1378,7 @@ void TNHOracle::analyze() {
         }
 
         void visitCall(Call* curr) {
-          info.callSites.push_back(CallSite{curr, getFunction()});
+          info.calls.push_back(curr);
         }
 
         void visitRefAs(RefAs* curr) {
@@ -1429,8 +1421,7 @@ void TNHOracle::analyze() {
     // opportunities.
     std::optional<analysis::CFG> cfg;
 
-    for (auto& callSite : info.callSites) {
-      auto* call = callSite.call;
+    for (auto* call : info.calls) {
       auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
 
       auto& castParams = targetInfo.castParams;
