@@ -84,7 +84,7 @@ struct CFG {
   // Gets the index of the basic block in which the instruction resides.
   Index getBlockIndex(Expression* expr) {
     // getBlockIndex() must be called first to populate the map.
-    assert(!expressionBlockIndexMap.count(expr));
+    assert(expressionBlockIndexMap.count(expr));
     return expressionBlockIndexMap[expr];
   }
 
