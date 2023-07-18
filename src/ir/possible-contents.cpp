@@ -2252,13 +2252,21 @@ void Flower::inferMinStaticTypes() {
 
   // Gather information from each function.
 
+  struct CallSite {
+    // A call instruction.
+    Call* call;
+
+    // The function in which this call instruction is a child.
+    Function* parent;
+  };
+
   struct Info {
     // A map of param indexes to the types they are definitely cast to if the
     // function is entered.
     std::unordered_map<Index, Type> castParams;
 
     // We gather all calls in order to process them later.
-    std::vector<Call*> calls;
+    std::vector<CallSite> callSites;
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -2285,7 +2293,9 @@ void Flower::inferMinStaticTypes() {
           self->inEntryBlock = false;
         }
 
-        void visitCall(Call* curr) { info.calls.push_back(curr); }
+        void visitCall(Call* curr) {
+          info.callSites.push_back(CallSite{curr, getFunction()});
+        }
 
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
@@ -2322,11 +2332,11 @@ void Flower::inferMinStaticTypes() {
     });
 
   // Next, organize all calls. We've gathered call instructions inside each
-  // function, and we need a map of all calls to each function.
-  std::unordered_map<Name, std::vector<Call*>> funcCalls;
+  // function, and we need a map of all calls targets to their callsites.
+  std::unordered_map<Name, std::vector<CallSite>> targetCallSites;
   for (auto& [_, info] : analysis.map) {
-    for (auto* call : info.calls) {
-      funcCalls[call->target].push_back(call);
+    for (auto& callSite : info.callSites) {
+      targetCallSites[callSite.call->target].push_back(callSite);
     }
   }
 
@@ -2342,11 +2352,12 @@ void Flower::inferMinStaticTypes() {
 
     // There are cast params. Go through all the calls and note the useful
     // static information we gain.
-    for (auto* call : funcCalls[func->name]) {
+    for (auto& callSite : targetCallSites[func->name]) {
       // We must be careful of control flow transfers: only if the call is
       // actually executed can we make any inference here. Therefore we go
       // backwards in the operands and stop at any transfer.
-      auto& operands = call->operands;
+      // XXX use a cfg here..?
+      auto& operands = callSite.call->operands;
       assert(operands.size() > 0);
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
