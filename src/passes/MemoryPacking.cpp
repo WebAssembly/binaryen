@@ -752,17 +752,18 @@ void MemoryPacking::createReplacements(Module* module,
 
     // Non-zero length memory.inits must have intersected some range
     assert(result);
-    replacements[init] = [module, init, setVar, getVars, result](Function* function) {
-      if (setVar != nullptr) {
-        auto indexType = module->getMemory(init->memory)->indexType;
-        Index destVar = Builder(*module).addVar(function, indexType);
-        *setVar = destVar;
-        for (auto* getVar : getVars) {
-          *getVar = destVar;
+    replacements[init] =
+      [module, init, setVar, getVars, result](Function* function) {
+        if (setVar != nullptr) {
+          auto indexType = module->getMemory(init->memory)->indexType;
+          Index destVar = Builder(*module).addVar(function, indexType);
+          *setVar = destVar;
+          for (auto* getVar : getVars) {
+            *getVar = destVar;
+          }
         }
-      }
-      return result;
-    };
+        return result;
+      };
   }
 
   // Create replacements for data.drop instructions now that we know whether we
