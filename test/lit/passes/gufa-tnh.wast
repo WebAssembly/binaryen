@@ -990,7 +990,7 @@
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -1007,14 +1007,12 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
-  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK:      (func $caller (type $none_=>_none)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (export "out") (param $any anyref)
-    (local $x (ref null $A))
+  (func $caller (export "out")
     (call $called
       ;; The called function will cast to $B, but this is an $A, so the cast
       ;; will fail. We can infer that the code here is unreachable. Note that no
@@ -1026,4 +1024,48 @@
   )
 )
 
-;; Tests look good, but why no benefit on kotlin..?
+;; Test that we refine using ref.as_non_null and not just ref.cast.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    (drop
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $any anyref)
+    (call $called
+      ;; This cast can become non-nullable.
+      (ref.cast null $A
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; No Unrefine
+

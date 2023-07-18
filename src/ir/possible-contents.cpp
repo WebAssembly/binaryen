@@ -2287,7 +2287,17 @@ void Flower::inferMinStaticTypes() {
 
         void visitCall(Call* curr) { info.calls.push_back(curr); }
 
+        void visitRefAs(RefAs* curr) {
+          if (curr->op == RefAsNonNull) {
+            noteCast(curr);
+          }
+        }
+
         void visitRefCast(RefCast* curr) {
+          noteCast(curr);
+        }
+
+        void noteCast(Expression* curr) {
           if (!inEntryBlock) {
             return;
           }
