@@ -296,11 +296,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty()) {
-      // exception not thrown. link to the continuation BB
-      auto* last = self->currBasicBlock;
-      self->link(last, self->startBasicBlock());
-    }
+    // Create a new basic block and link to it, which is the path we take if no
+    // exception is thrown at runtime. Note that we always need to add this, as
+    // if there are no try-catches in the function we can throw to the outside
+    // of the function; and if there are, we might not throw, and can continue
+    // forward
+    auto* last = self->currBasicBlock;
+    self->link(last, self->startBasicBlock());
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
