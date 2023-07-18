@@ -1561,7 +1561,9 @@ struct Flower {
   // T here, as that is the minimum type: the actual values are runtime must be
   // equal to it, or more refined. We may also have other sources of static
   // information that can guide us.
-  Type getMinStaticType(Expression* curr) { return tnhOracle.getType(curr); }
+  //
+  // Atm this uses a TNHOracle, so it only helps in TrapsNeverHappen mode.
+  Type getStaticType(Expression* curr) { return tnhOracle.getType(curr); }
 
 private:
   TNHOracle tnhOracle;
@@ -2176,7 +2178,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // The type we will filter to is our best information about what can be
   // contained here statically. Typically that is the type of the expression in
   // the IR, but it can be even more refined.
-  auto type = getMinStaticType(exprLoc.expr);
+  auto type = getStaticType(exprLoc.expr);
   if (!type.isRef()) {
     return;
   }
