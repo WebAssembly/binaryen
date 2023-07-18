@@ -78,6 +78,14 @@ void CFG::print(std::ostream& os, Module* wasm) const {
   }
 }
 
+void CFG::computeExpressionBlockIndexes() {
+  for (auto& block : *this) {
+    for (auto* expr : block) {
+      expressionBlockIndexMap[expr] = block.getIndex();
+    }
+  }
+}
+
 void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   os << ";; preds: [";
   for (auto& pred : preds()) {
