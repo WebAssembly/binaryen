@@ -1275,3 +1275,51 @@
     )
   )
 )
+
+;; Refine a type to unreachable. B1 and B2 are sibling subtypes of A, and the
+;; caller passes in a B1 that is cast in the function to B2.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B1 (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $B2 (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (export "caller-C" (func $caller-C))
+
+  ;; CHECK:      (export "caller-B" (func $caller-B))
+
+  ;; CHECK:      (export "caller-A" (func $caller-A))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    (drop
+      (ref.cast $B1
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $caller (export "caller") (param $any anyref)
+    (call $called
+      (ref.cast $B2
+        (local.get $any)
+      )
+    )
+  )
+)

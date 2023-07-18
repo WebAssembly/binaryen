@@ -1318,9 +1318,9 @@ public:
     if (iter != inferences.end()) {
       auto refinedType = iter->second;
       // We only store useful and correct types.
-      // TODO: unreachable
       assert(refinedType != curr->type &&
-             Type::isSubType(refinedType, curr->type));
+             (Type::isSubType(refinedType, curr->type) ||
+              refinedType == Type::unreachable));
       return refinedType;
     }
     return curr->type;
