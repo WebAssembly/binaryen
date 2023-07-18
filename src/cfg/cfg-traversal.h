@@ -296,11 +296,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    // Create a new basic block and link to it, which is the path we take if no
-    // exception is thrown at runtime. Note that we always need to add this, as
-    // if there are no try-catches in the function we can throw to the outside
-    // of the function; and if there are, we might not throw, and can continue
-    // forward
+    // Create a new basic block and link to it. We do this even if there are no
+    // other edges leaving this call (if a throw would go entirely outside of
+    // the function), because we want to preserve the property that a basic
+    // block ends with an instruction that might branch.
     auto* last = self->currBasicBlock;
     self->link(last, self->startBasicBlock());
   }
