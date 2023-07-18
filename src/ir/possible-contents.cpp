@@ -2352,7 +2352,7 @@ void Flower::inferMinStaticTypes() {
       // This looks promising, create the CFG if we haven't already.
       if (!cfg) {
         cfg = analysis::CFG::fromFunction(func);
-        cfg.computeExpressionBlockIndexes();
+        cfg->computeExpressionBlockIndexes();
       }
 
       // Optimize in the same basic block as the call. Anything in another
