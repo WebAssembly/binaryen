@@ -1075,14 +1075,20 @@
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
-
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
   (type $C (sub $B (struct (field (mut i32)))))
 
-  ;; CHECK:      (export "out" (func $caller))
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (export "caller-C" (func $caller-C))
+
+  ;; CHECK:      (export "caller-B" (func $caller-B))
+
+  ;; CHECK:      (export "caller-A" (func $caller-A))
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
@@ -1100,38 +1106,130 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
-  ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $C
-  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK:      (func $maker (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
-  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
-  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $caller (export "out") (param $any anyref)
-    (call $called
-      (ref.cast $C ;; This cast is already more refined than even the called
-                   ;; function casts to. It should stay as it is.
-        (local.get $any)
+  (func $maker
+    ;; A always contains 10, and B 20, and C 30.
+    (drop
+      (struct.new $A
+        (i32.const 10)
       )
     )
-    (call $called
-      (ref.cast $B ;; This cast is equal to the called cast. It should remain.
-        (local.get $any)
+    (drop
+      (struct.new $B
+        (i32.const 20)
       )
     )
+    (drop
+      (struct.new $C
+        (i32.const 30)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller-C (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (local $temp (ref $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (ref.cast $C
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-C (export "caller-C") (param $any anyref)
+    (local $temp (ref $A))
     (call $called
-      (ref.cast $A ;; This cast is less refined, and can be improved to B.
-        (local.get $any)
+      (local.tee $temp
+        (ref.cast $C ;; This cast is already more refined than even the called
+                     ;; function casts to. It should stay as it is.
+          (local.get $any)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0 ;; the reference contains a C, so this value is 30.
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller-B (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (local $temp (ref $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-B (export "caller-B") (param $any anyref)
+    (local $temp (ref $A))
+    (call $called
+      (local.tee $temp
+        (ref.cast $B ;; This cast is equal to the called cast. It should remain.
+          (local.get $any)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0 ;; Nothing can be inferred here.
+        (local.get $temp)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller-A (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (local $temp (ref $A))
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-A (export "caller-A") (param $any anyref)
+    (local $temp (ref $A))
+    (call $called
+      (local.tee $temp
+        (ref.cast $A ;; This cast is less refined, and can be improved to B.
+          (local.get $any)
+        )
+      )
+    )
+    (drop
+      (struct.get $A 0 ;; Nothing can be inferred here.
+        (local.get $temp)
       )
     )
   )
