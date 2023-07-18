@@ -2242,6 +2242,10 @@ void Flower::inferMinStaticTypes() {
   // to more locations behind it. (Locations in front of it are already handled
   // by the main forward analysis, as the location will only contain things of
   // the cast type, and then only those things can flow forward.)
+
+  // TODO: We can do a related analysis for call_ref, inferring the call_ref's
+  //       |ref| if only one possible target does not trap.
+  // TODO: We can also infer backwards past basic blocks from casts.
   if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
     return;
   }
