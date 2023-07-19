@@ -1496,11 +1496,20 @@ void TNHOracle::analyze() {
         while (1) {
           // Note the type if it is useful.
           if (castType != curr->type) {
-            if (Type::isSubType(castType, curr->type)) {
-              // We inferred a more refined type.
-              info.inferences[curr] = castType;
-            } else if (!Type::isSubType(curr->type, castType)) {
-              // The two types are not compatible, so this must be unreachable.
+            // There are two constraints on this location: any value there must
+            // be of the declared type (curr->type) and also the cast type, so
+            // we know only their intersection can appear here.
+            auto declared = PossibleContents::fullConeType(curr->type);
+            auto intersection = PossibleContents::fullConeType(castType);
+            intersection.intersectWithFullCone(declared);
+            if (intersection.isConeType()) {
+              auto intersectionType = intersection.getType();
+              if (intersectionType != curr->type) {
+                // We inferred a more refined type.
+                info.inferences[curr] = intersectionType;
+              }
+            } else if (intersection.isNone()) {
+              // Nothing is possible here, so this must be unreachable code.
               info.inferences[curr] = Type::unreachable;
             }
           }

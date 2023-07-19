@@ -1445,7 +1445,9 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (ref.cast null $B
@@ -1474,13 +1476,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x anyref)
-    ;; A non-nullable A passed into a cast of B or null will trap. XXX
+    ;; A non-nullable A passed into a cast of B means this value must be a non-
+    ;; nullable B.
     (call $called
       (ref.cast $A
         (local.get $x)
       )
     )
-    ;; This will be refined to B.
+    ;; This will be refined to (nullable) B.
     (call $called
       (ref.cast null $A
         (local.get $x)
@@ -1519,12 +1522,12 @@
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)))))
+
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-
-  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
-  (type $C (sub $B (struct (field (mut i32)))))
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -1570,7 +1573,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x anyref)
@@ -1586,7 +1591,7 @@
         (local.get $x)
       )
     )
-    ;; Casts of B remain the same.
+    ;; Casts of B turn or stay as non-nullable B.
     (call $called
       (ref.cast $B
         (local.get $x)
@@ -1603,7 +1608,8 @@
         (local.get $x)
       )
     )
-    ;; But sending C or null into a non-null B will trap. XXX
+    ;; A nullable C passed into a cast of non-null B means this value must be a
+    ;; non-nullable C.
     (call $called
       (ref.cast null $C
         (local.get $x)
