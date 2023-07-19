@@ -26,7 +26,6 @@
 #include <iostream>
 #include <vector>
 
-#include "ir/properties.h"
 #include "wasm.h"
 
 namespace wasm::analysis {
@@ -88,8 +87,7 @@ struct CFG {
     auto iter = expressionBlockIndexMap.find(expr);
     if (iter == expressionBlockIndexMap.end()) {
       // There is no entry for this, which can be the case for control flow
-      // structures.
-      assert(Properties::isControlFlowStructure(expr));
+      // structures, or for unreachable code.
       return InvalidBlock;
     }
     return iter->second;
