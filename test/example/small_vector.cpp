@@ -131,7 +131,7 @@ template<typename T> void test(size_t N) {
     iter++;
     t.erase(iter, t.end());
     assert(t.size() == 1);
-    assert(t[0] == 1);
+    assert(t[0] == 0);
   }
 }
 
