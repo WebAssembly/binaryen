@@ -1401,7 +1401,6 @@ void TNHOracle::analyze() {
             // would be the only one to exist there; we keep things simple here.
             if (getFunction()->isParam(get->index) &&
                 curr->type != get->type &&
-                Type::isSubType(curr->type, get->type) && // XXX remove
                 info.castParams.count(get->index) == 0) {
               info.castParams[get->index] = curr->type;
             }
