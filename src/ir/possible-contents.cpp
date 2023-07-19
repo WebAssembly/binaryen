@@ -1411,10 +1411,6 @@ void TNHOracle::analyze() {
       scanner.walkFunction(func);
     });
 
-  // TODO: We can also infer backwards past basic blocks from casts, even
-  //       without calls.
-  // TODO: We can do a whole-program flow of this information.
-
   // Phase 2: Inside each function, optimize calls based on the cast params of
   // the called function (which we noted during phase 1).
   //
@@ -1436,6 +1432,14 @@ void TNHOracle::analyze() {
   // about A (perhaps, for example, we branch away exactly when A would fail the
   // cast). Therefore in the optimization below we only optimize code that, if
   // reached, will definitely reach the call, like B.
+  //
+  // TODO: Some control flow transfers are ok, so long as we must reach the
+  //       call, like if we replace the br_if with an if with two arms (and no
+  //       branches in either).
+  // TODO: We can also infer backwards past basic blocks from casts, even
+  //       without calls. Any cast tells us something about the uses of that
+  //       value that must reach the cast.
+  // TODO: We can do a whole-program flow of this information.
   analysis.doAnalysis([&](Function* func, Info& info) {
     // Constructing a CFG is expensive, so only do so if we find optimization
     // opportunities.
@@ -1522,9 +1526,6 @@ void TNHOracle::analyze() {
         if (transferred) {
           break;
         }
-
-        // TODO: go back through dominating blocks to uses/defs of this cast
-        //       param etc.
       }
     }
   });
