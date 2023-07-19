@@ -1410,3 +1410,67 @@
     (call $called)
   )
 )
+
+;; Check we refine nullable casts.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    (drop
+      (ref.cast null $B
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $called)
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x anyref)
+    (call $called
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    (call $called
+      (ref.cast null $A
+        (local.get $x)
+      )
+    )
+    (call $called
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+    (call $called
+      (ref.cast null $B
+        (local.get $x)
+      )
+    )
+    (call $called
+      (ref.cast $C
+        (local.get $x)
+      )
+    )
+    (call $called
+      (ref.cast null $C
+        (local.get $x)
+      )
+    )
+  )
+)
