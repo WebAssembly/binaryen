@@ -1394,16 +1394,16 @@ void TNHOracle::analyze() {
 
           auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
           if (auto* get = fallthrough->dynCast<LocalGet>()) {
-            // TODO: Can we optimize not only if we are a subtype? E.g if we are
-            //       a non-nullable child and the other is a nullable parent.
-            if (curr->type != get->type &&
-                Type::isSubType(curr->type, get->type) &&
+            // To optimize, this needs to be a param, and of a useful type.
+            //
+            // Note that if we see more than one cast we keep the first one.
+            // This is not important in optimized code, as the most refined cast
+            // would be the only one to exist there; we keep things simple here.
+            if (getFunction()->isParam(get->index) &&
+                curr->type != get->type &&
+                Type::isSubType(curr->type, get->type) && // XXX remove
                 info.castParams.count(get->index) == 0) {
               info.castParams[get->index] = curr->type;
-              // Note that if we see more than one cast we keep the first one.
-              // This is not important in optimized code, as the most refined
-              // cast would be the only one to exist there; we keep things
-              // simple here.
             }
           }
         }
