@@ -1473,9 +1473,14 @@ void TNHOracle::analyze() {
         bool transferred = false;
         while (1) {
           // Note the type if it is useful.
-          if (castType != curr->type && Type::isSubType(castType, curr->type)) {
-            inferences[curr] = castType;
-// XXX how does the new testcase work???
+          if (castType != curr->type) {
+            if (Type::isSubType(castType, curr->type)) {
+              // We inferred a more refined type.
+              inferences[curr] = castType;
+            } else if (!Type::isSubType(curr->type, castType)) {
+              // The two types are not compatible, so this must be unreachable.
+              inferences[curr] = Type::unreachable;
+            }
           }
 
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
