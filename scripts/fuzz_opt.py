@@ -1510,11 +1510,6 @@ opt_choices = [
     ("--gsi",),
     ("--gto",),
     ("--gufa",),
-    ("--gufa",),
-    ("--gufa",),
-    ("--gufa",),
-    ("--gufa",),
-    ("--gufa",),
     ("--gufa-optimizing",),
     ("--local-cse",),
     ("--heap2local",),
@@ -1641,6 +1636,8 @@ def get_random_opts():
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
+    if 'gufa' not in str(ret):
+        ret += ['--gufa']
     assert ret.count('--flatten') <= 1
     return ret
 
