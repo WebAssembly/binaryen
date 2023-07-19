@@ -2176,6 +2176,10 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // the IR, but it can be even more refined.
   auto type = getStaticType(exprLoc.expr);
   if (!type.isRef()) {
+    if (type == Type::unreachable) {
+      // We know that nothing can be here, so filter everything out.
+      contents = PossibleContents::none();
+    }
     return;
   }
 

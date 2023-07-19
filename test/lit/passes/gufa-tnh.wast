@@ -1283,6 +1283,8 @@
   (type $A (struct (field (mut i32))))
 
   (rec
+    ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $B1 (sub $A (struct (field (mut i32)))))
     (type $B1 (sub $A (struct (field (mut i32)))))
@@ -1290,8 +1292,6 @@
     ;; CHECK:       (type $B2 (sub $A (struct (field (mut i32)))))
     (type $B2 (sub $A (struct (field (mut i32)))))
   )
-
-  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
@@ -1322,9 +1322,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (struct.new $B2
-  ;; CHECK-NEXT:    (i32.const 30)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "caller") (param $any anyref)
