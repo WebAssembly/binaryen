@@ -1291,6 +1291,9 @@
 
     ;; CHECK:       (type $B2 (sub $A (struct (field (mut i32)))))
     (type $B2 (sub $A (struct (field (mut i32)))))
+
+    ;; CHECK:       (type $C1 (sub $B1 (struct (field (mut i32)))))
+    (type $C1 (sub $B1 (struct (field (mut i32)))))
   )
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
@@ -1322,6 +1325,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new $C1
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1332,16 +1340,22 @@
         (i32.const 10)
       )
     )
-    ;; This cast will succeed, so nothing changes.
+    ;; This cast of B1 to itself will succeed, so nothing changes.
     (call $called
       (struct.new $B1
         (i32.const 20)
       )
     )
-    ;; Casting B2 to B1 will fail.
+    ;; The cast of this C1 to its supertype B1 will succeed.
+    (call $called
+      (struct.new $C1
+        (i32.const 30)
+      )
+    )
+    ;; Casting B2 to B1 will fail as they are sibling types.
     (call $called
       (struct.new $B2
-        (i32.const 30)
+        (i32.const 40)
       )
     )
   )
