@@ -414,7 +414,7 @@ struct ParallelFunctionAnalysis {
   using Func = std::function<void(Function*, T&)>;
 
   ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
-    // Fill in map, as we operate on it in parallel (each function to its own
+    // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
       map[func.get()];
@@ -423,12 +423,11 @@ struct ParallelFunctionAnalysis {
     doAnalysis(work);
   }
 
-  // Perform an analysis by operating on each function, in parallel. This is
-  // called after the map is filled in, and the work function receives the
-  // proper item from the map for each function that we process.
+  // Perform an analysis by operating on each function, in parallel.
   //
-  // This is called from the constructor, and can also be called later as well
-  // if the user has additional operations to perform.
+  // This is called from the constructor (with the work function given there),
+  // and can also be called later as well if the user has additional operations
+  // to perform.
   void doAnalysis(Func work) {
     // Run on the imports first. TODO: parallelize this too
     for (auto& func : wasm.functions) {
