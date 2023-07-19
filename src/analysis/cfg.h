@@ -45,10 +45,9 @@ struct BasicBlock {
   reverse_iterator rend() const { return insts.rend(); }
 
   // Iterables for predecessor and successor blocks.
-  struct Predecessors;
-  struct Successors;
-  Predecessors preds() const;
-  Successors succs() const;
+  struct BasicBlockIterable;
+  BasicBlockIterable preds() const;
+  BasicBlockIterable succs() const;
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
