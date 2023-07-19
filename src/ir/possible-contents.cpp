@@ -1475,6 +1475,7 @@ void TNHOracle::analyze() {
           // Note the type if it is useful.
           if (castType != curr->type && Type::isSubType(castType, curr->type)) {
             inferences[curr] = castType;
+// XXX how does the new testcase work???
           }
 
           auto* next = Properties::getImmediateFallthrough(curr, options, wasm);

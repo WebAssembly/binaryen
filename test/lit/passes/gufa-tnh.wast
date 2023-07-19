@@ -1282,27 +1282,24 @@
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (field (mut i32))))
 
-  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
-  (type $B1 (sub $A (struct (field (mut i32)))))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $B1 (sub $A (struct (field (mut i32)))))
+    (type $B1 (sub $A (struct (field (mut i32)))))
 
-  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
-  (type $B2 (sub $A (struct (field (mut i32)))))
-
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+    ;; CHECK:       (type $B2 (sub $A (struct (field (mut i32)))))
+    (type $B2 (sub $A (struct (field (mut i32)))))
+  )
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
-  ;; CHECK:      (export "caller-C" (func $caller-C))
-
-  ;; CHECK:      (export "caller-B" (func $caller-B))
-
-  ;; CHECK:      (export "caller-A" (func $caller-A))
+  ;; CHECK:      (export "caller" (func $caller))
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast $B1
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1315,7 +1312,35 @@
     )
   )
 
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $B1
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $B1
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller (export "caller") (param $any anyref)
+    ;; This cast can be refined.
+    (call $called
+      (ref.cast $A
+        (local.get $any)
+      )
+    )
+    ;; This cast remains the same.
+    (call $called
+      (ref.cast $B1
+        (local.get $any)
+      )
+    )
+    ;; This cast cannot succeed, and so this code is unreachable.
     (call $called
       (ref.cast $B2
         (local.get $any)
