@@ -1316,7 +1316,8 @@ public:
     auto iter = inferences.find(curr);
     if (iter != inferences.end()) {
       auto refinedType = iter->second;
-      // We only store useful and correct types.
+      // We only store useful types: refinements, or unreachable if we proved
+      // nothing can appear there.
       assert(refinedType != curr->type &&
              (Type::isSubType(refinedType, curr->type) ||
               refinedType == Type::unreachable));
@@ -1334,8 +1335,6 @@ private:
 };
 
 void TNHOracle::analyze() {
-  // Gather information from each function.
-
   struct Info {
     // A map of param indexes to the types they are definitely cast to if the
     // function is entered.
@@ -1347,6 +1346,8 @@ void TNHOracle::analyze() {
     // We gather inferences in parallel and combine them at the end.
     std::unordered_map<Expression*, Type> inferences;
   };
+
+  // Phase 1: Scan to find cast parameters and calls.
 
   ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
     wasm, [&](Function* func, Info& info) {
@@ -1376,7 +1377,7 @@ void TNHOracle::analyze() {
 
         // TODO: We can do a related analysis for call_ref, inferring the
         //       function reference's value if only one possible target does not
-        //       trap.
+        //       trap. That will require closed world, however.
 
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
@@ -1414,9 +1415,27 @@ void TNHOracle::analyze() {
   //       without calls.
   // TODO: We can do a whole-program flow of this information.
 
-  // Each time we see a param that is definitely cast to some type, we can infer
-  // that the values sent are of that type (or else we trap and it doesn't
-  // matter since we never reach the call).
+  // Phase 2: Inside each function, optimize calls based on the cast params of
+  // the called function (which we noted during phase 1).
+  //
+  // Specifically, each time we call a target that will cast a param, we can
+  // infer that the param must have that type (or else we'd trap, but we are
+  // assuming traps never happen).
+  //
+  // While doing so we must be careful of control flow transfers right before
+  // the call:
+  //
+  //  (call $target
+  //    (A)
+  //    (br_if ..)
+  //    (B)
+  //  )
+  //
+  // If we branch in the br_if then we might execute A and then something else
+  // entirely, and not reach B or the call. In that case we can't infer anything
+  // about A (perhaps, for example, we branch away exactly when A would fail the
+  // cast). Therefore in the optimization below we only optimize code that, if
+  // reached, will definitely reach the call, like B.
   analysis.doAnalysis([&](Function* func, Info& info) {
     // Constructing a CFG is expensive, so only do so if we find optimization
     // opportunities.
@@ -1436,9 +1455,8 @@ void TNHOracle::analyze() {
         cfg->computeExpressionBlockIndexes();
       }
 
-      // Optimize in the same basic block as the call. Anything in another
-      // basic block might transfer control away.
-      // TODO: Some control flow is ok, so long as we must reach the call.
+      // Optimize in the same basic block as the call: all instructions still in
+      // that block will definitely execute if the call is reached.
       auto callBlockIndex = cfg->getBlockIndex(call);
 
       // Go backwards through the call's operands and fallthrough values, and
