@@ -1314,36 +1314,36 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B1
-  ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B1
-  ;; CHECK-NEXT:    (local.get $any)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new $B1
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new $B2
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "caller") (param $any anyref)
-    ;; This cast can be refined.
+    ;; The cast of this A to B1 will fail, so it is unreachable.
     (call $called
-      (ref.cast $A
-        (local.get $any)
+      (struct.new $A
+        (i32.const 10)
       )
     )
-    ;; This cast remains the same.
+    ;; This cast will succeed, so nothing changes.
     (call $called
-      (ref.cast $B1
-        (local.get $any)
+      (struct.new $B1
+        (i32.const 20)
       )
     )
-    ;; This cast cannot succeed, and so this code is unreachable.
+    ;; Casting B2 to B1 will fail.
     (call $called
-      (ref.cast $B2
-        (local.get $any)
+      (struct.new $B2
+        (i32.const 30)
       )
     )
   )
