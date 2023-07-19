@@ -82,7 +82,7 @@ struct CFG {
   void computeExpressionBlockIndexes();
 
   // Gets the index of the basic block in which the instruction resides.
-  // getBlockIndex() must be called first to populate the map.
+  // computeExpressionBlockIndexes() must be called first to populate the map.
   Index getBlockIndex(Expression* expr) {
     auto iter = expressionBlockIndexMap.find(expr);
     if (iter == expressionBlockIndexMap.end()) {
