@@ -175,9 +175,7 @@ public:
       return Iterator(*this) += off;
     }
 
-    off_t operator-(const Iterator& other) const {
-      return index - other.index;
-    }
+    off_t operator-(const Iterator& other) const { return index - other.index; }
 
     bool operator==(const Iterator& other) const {
       return parent == other.parent && index == other.index;
@@ -190,7 +188,8 @@ public:
     value_type& operator*() { return (*this->parent)[this->index]; }
   };
 
-  struct ConstIterator : public IteratorBase<const SmallVector<T, N>, ConstIterator> {
+  struct ConstIterator
+    : public IteratorBase<const SmallVector<T, N>, ConstIterator> {
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
     const value_type& operator*() const { return (*this->parent)[this->index]; }
