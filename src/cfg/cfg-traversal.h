@@ -297,6 +297,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndCall(SubType* self, Expression** currp) {
     auto* module = self->getModule();
     if (module && !module->features.hasExceptionHandling()) {
+      // EH is disabled, so there cannot be a branch here due to a throw.
       return;
     }
 
