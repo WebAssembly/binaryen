@@ -1342,8 +1342,11 @@ void TNHOracle::analyze() {
     // function is entered.
     std::unordered_map<Index, Type> castParams;
 
-    // We gather all calls in order to process them later.
+    // We gather calls in parallel in order to process them later.
     std::vector<Call*> calls;
+
+    // We gather inferences in parallel and combine them at the end.
+    std::unordered_map<Expression*, Type> inferences;
   };
 
   ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
@@ -1475,10 +1478,10 @@ void TNHOracle::analyze() {
           if (castType != curr->type) {
             if (Type::isSubType(castType, curr->type)) {
               // We inferred a more refined type.
-              inferences[curr] = castType;
+              info.inferences[curr] = castType;
             } else if (!Type::isSubType(curr->type, castType)) {
               // The two types are not compatible, so this must be unreachable.
-              inferences[curr] = Type::unreachable;
+              info.inferences[curr] = Type::unreachable;
             }
           }
 
@@ -1508,6 +1511,13 @@ void TNHOracle::analyze() {
       }
     }
   });
+
+  // Combine all of our inferences.
+  for (auto& [_, info] : analysis.map) {
+    for (auto& [expr, type] : info.inferences) {
+      inferences[expr] = type;
+    }
+  }
 }
 
 // Main logic for building data for the flow analysis and then performing that
