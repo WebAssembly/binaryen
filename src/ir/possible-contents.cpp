@@ -20,7 +20,6 @@
 #include "analysis/cfg.h"
 #include "ir/bits.h"
 #include "ir/branch-utils.h"
-#include "ir/effects.h"
 #include "ir/eh-utils.h"
 #include "ir/gc-type-utils.h"
 #include "ir/linear-execution.h"
