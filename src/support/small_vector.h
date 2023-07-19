@@ -150,7 +150,7 @@ public:
   template<typename Parent, typename Iterator> struct IteratorBase {
     using iterator_category = std::random_access_iterator_tag;
     using value_type = T;
-    using difference_type = off_t;
+    using difference_type = long;
     using reference = T&;
     using pointer = T*;
 
@@ -182,14 +182,14 @@ public:
     }
   };
 
-  struct Iterator : public IteratorBase<SmallVector<T, N>, Iterator> {
+  struct Iterator : IteratorBase<SmallVector<T, N>, Iterator> {
     Iterator(SmallVector<T, N>* parent, size_t index)
       : IteratorBase<SmallVector<T, N>, Iterator>(parent, index) {}
     value_type& operator*() { return (*this->parent)[this->index]; }
   };
 
   struct ConstIterator
-    : public IteratorBase<const SmallVector<T, N>, ConstIterator> {
+    : IteratorBase<const SmallVector<T, N>, ConstIterator> {
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
     const value_type& operator*() const { return (*this->parent)[this->index]; }
