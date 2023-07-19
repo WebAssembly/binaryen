@@ -1438,7 +1438,6 @@ void TNHOracle::analyze() {
       // basic block might transfer control away.
       // TODO: Some control flow is ok, so long as we must reach the call.
       auto callBlockIndex = cfg->getBlockIndex(call);
-      assert(callBlockIndex != analysis::CFG::InvalidBlock);
 
       // Go backwards through the call's operands and fallthrough values, and
       // optimize while we are still in the same basic block.

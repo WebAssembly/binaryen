@@ -91,6 +91,12 @@
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     (local $f funcref)
@@ -137,6 +143,14 @@
       (ref.cast null func ;; this is the same as before, and will be optimized.
         (local.get $f)
       )
+    )
+
+    ;; Test that we do not error in unreachable code.
+    (call $called
+      (unreachable)
+      (unreachable)
+      (unreachable)
+      (unreachable)
     )
   )
 )
