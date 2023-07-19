@@ -188,8 +188,7 @@ public:
     value_type& operator*() { return (*this->parent)[this->index]; }
   };
 
-  struct ConstIterator
-    : IteratorBase<const SmallVector<T, N>, ConstIterator> {
+  struct ConstIterator : IteratorBase<const SmallVector<T, N>, ConstIterator> {
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
     const value_type& operator*() const { return (*this->parent)[this->index]; }
