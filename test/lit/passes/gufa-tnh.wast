@@ -1411,23 +1411,28 @@
   )
 )
 
-;; Check we refine nullable casts.
+;; Check all combinations of types passed to a nullable cast.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (field (mut i32))))
 
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
   (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (export "out" (func $caller))
 
-  ;; CHECK:      (func $called (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
@@ -1438,20 +1443,50 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
-  ;; CHECK-NEXT:  (call $called)
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast null $C
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x anyref)
+    ;; A non-nullable A passed into a cast of B or null will trap.
     (call $called
       (ref.cast $A
         (local.get $x)
       )
     )
+    ;; This will be refined to B.
     (call $called
       (ref.cast null $A
         (local.get $x)
       )
     )
+    ;; Casts of B remain the same.
     (call $called
       (ref.cast $B
         (local.get $x)
@@ -1462,6 +1497,7 @@
         (local.get $x)
       )
     )
+    ;; Casts of C remain the same.
     (call $called
       (ref.cast $C
         (local.get $x)
