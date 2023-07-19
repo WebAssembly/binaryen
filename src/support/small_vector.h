@@ -148,9 +148,11 @@ public:
   // iteration
 
   template<typename Parent, typename Iterator> struct IteratorBase {
+    using iterator_category = std::random_access_iterator_tag;
     using value_type = T;
-    using difference_type = long;
+    using difference_type = off_t;
     using reference = T&;
+    using pointer = T*;
 
     Parent* parent;
     size_t index;
@@ -162,6 +164,7 @@ public:
     }
 
     void operator++() { index++; }
+    void operator++(int) { index++; }
 
     Iterator& operator+=(difference_type off) {
       index += off;
@@ -171,15 +174,23 @@ public:
     const Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
     }
+
+    off_t operator-(const Iterator& other) const {
+      return index - other.index;
+    }
+
+    bool operator==(const Iterator& other) const {
+      return parent == other.parent && index == other.index;
+    }
   };
 
-  struct Iterator : IteratorBase<SmallVector<T, N>, Iterator> {
+  struct Iterator : public IteratorBase<SmallVector<T, N>, Iterator> {
     Iterator(SmallVector<T, N>* parent, size_t index)
       : IteratorBase<SmallVector<T, N>, Iterator>(parent, index) {}
     value_type& operator*() { return (*this->parent)[this->index]; }
   };
 
-  struct ConstIterator : IteratorBase<const SmallVector<T, N>, ConstIterator> {
+  struct ConstIterator : public IteratorBase<const SmallVector<T, N>, ConstIterator> {
     ConstIterator(const SmallVector<T, N>* parent, size_t index)
       : IteratorBase<const SmallVector<T, N>, ConstIterator>(parent, index) {}
     const value_type& operator*() const { return (*this->parent)[this->index]; }
@@ -189,6 +200,12 @@ public:
   Iterator end() { return Iterator(this, size()); }
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
+
+  void erase(Iterator a, Iterator b) {
+    // Atm we only support erasing at the end, which is very efficient.
+    assert(b == end());
+    resize(a.index);
+  }
 };
 
 // A SmallVector for which some values may be read before they are written, and
