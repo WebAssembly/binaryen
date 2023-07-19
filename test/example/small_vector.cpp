@@ -102,7 +102,7 @@ template<typename T> void test(size_t N) {
   }
   {
     // Test iteration.
-    T t = { 0, 1, 2 };
+    T t = {0, 1, 2};
 
     // Pre-and-postfix ++.
     auto iter = t.begin();
