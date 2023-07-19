@@ -295,6 +295,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndCall(SubType* self, Expression** currp) {
+    auto* module = self->getModule();
+    if (module && !module->features.hasExceptionHandling()) {
+      return;
+    }
+
     doEndThrowingInst(self, currp);
     // Create a new basic block and link to it. We do this even if there are no
     // other edges leaving this call (no catch bodies in this function that we
