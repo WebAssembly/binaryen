@@ -616,9 +616,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -873,17 +871,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $substruct 0
   ;; CHECK-NEXT:    (ref.cast $substruct
-  ;; CHECK-NEXT:     (ref.cast $struct
-  ;; CHECK-NEXT:      (local.get $ref)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -951,18 +945,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (ref.cast $struct
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast $substruct
-  ;; CHECK-NEXT:      (ref.cast $struct
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1042,9 +1032,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (ref.cast $struct3
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1054,9 +1042,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (ref.cast $struct3
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1066,9 +1052,7 @@
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 1
-  ;; CHECK-NEXT:      (ref.cast $struct3
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -1078,9 +1062,7 @@
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 0
-  ;; CHECK-NEXT:      (ref.cast $struct3
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1090,9 +1072,7 @@
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct3 1
-  ;; CHECK-NEXT:      (ref.cast $struct3
-  ;; CHECK-NEXT:       (local.get $ref)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -1101,12 +1081,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null none
-  ;; CHECK-NEXT:      (struct.get $struct3 2
-  ;; CHECK-NEXT:       (ref.cast $struct3
-  ;; CHECK-NEXT:        (local.get $ref)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (struct.get $struct3 2
+  ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
@@ -2667,12 +2643,10 @@
   ))
 
   ;; CHECK:      (func $test (type $none_=>_funcref) (result funcref)
-  ;; CHECK-NEXT:  (ref.cast null $none_=>_funcref
-  ;; CHECK-NEXT:   (struct.get $vtable 0
-  ;; CHECK-NEXT:    (array.get $itable
-  ;; CHECK-NEXT:     (global.get $global)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (struct.get $vtable 0
+  ;; CHECK-NEXT:   (array.get $itable
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

@@ -31,9 +31,7 @@
   ;; OPT_2-NEXT:   (struct.new_default $B)
   ;; OPT_2-NEXT:  )
   ;; OPT_2-NEXT:  (drop
-  ;; OPT_2-NEXT:   (ref.cast $B
-  ;; OPT_2-NEXT:    (local.get $a)
-  ;; OPT_2-NEXT:   )
+  ;; OPT_2-NEXT:   (local.get $a)
   ;; OPT_2-NEXT:  )
   ;; OPT_2-NEXT: )
   ;; OPT_3:      (export "export1" (func $ref))
