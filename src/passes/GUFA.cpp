@@ -292,6 +292,17 @@ struct GUFAOptimizer
     // propagate.
     ReFinalize().walkFunctionInModule(func, getModule());
 
+    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinklevel) {
+      // When optimizing heavily for size we add more casts that were not
+      // present before. This can increase code size, but it sometimes ends up
+      // helping overall after other optimizations (since the new casts allow
+      // more refining in various ways).
+      //
+      // We do this after refinalizing so that we see the final propagated
+      // types, and add as few new casts as possible.
+      addNewCasts(func);
+    }
+
     // We may add blocks around pops, which we must fix up.
     EHUtils::handleBlockNestedPops(func, *getModule());
 
@@ -332,6 +343,27 @@ struct GUFAOptimizer
     //  )
     runner.add("vacuum");
     runner.runOnFunction(func);
+  }
+
+  // Add a new cast whenever we know a value contains a more refined type than
+  // in the IR.
+  void addNewCasts(Function* func) {
+    struct Adder : public PostWalker<Adder, UnifiedExpressionVisitor<Adder>> {
+      ContentOracle& oracle;
+
+      Adder(ContentOracle& oracle) : oracle(oracle) {}
+
+      void visitExpression(Expression* curr) {
+        auto oracleType = oracle.getContents(curr);
+        if (oracleType != curr->type &&
+            Type::isSubType(oracleType, curr->type)) {
+          replaceCurrent(builder.makeRefCast(curr, contents.getType()));
+        }
+      }
+    };
+    
+    Adder adder(oracle);
+    adder.walkFunctionInModule(func, getModule());
   }
 };
 
