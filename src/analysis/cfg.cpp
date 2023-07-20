@@ -78,14 +78,6 @@ void CFG::print(std::ostream& os, Module* wasm) const {
   }
 }
 
-void CFG::computeExpressionBlockIndexes() {
-  for (auto& block : *this) {
-    for (auto* expr : block) {
-      expressionBlockIndexMap[expr] = block.getIndex();
-    }
-  }
-}
-
 void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   os << ";; preds: [";
   for (auto& pred : preds()) {
@@ -108,6 +100,14 @@ void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   size_t instIndex = start;
   for (auto* inst : *this) {
     os << "  " << instIndex++ << ": " << ShallowExpression{inst, wasm} << '\n';
+  }
+}
+
+CFGBlockIndexes::CFGBlockIndexes(const CFG& cfg) {
+  for (auto& block : cfg) {
+    for (auto* expr : block) {
+      expressionBlockIndexMap[expr] = block.getIndex();
+    }
   }
 }
 
