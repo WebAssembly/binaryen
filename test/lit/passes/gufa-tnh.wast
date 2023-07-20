@@ -1618,6 +1618,47 @@
   )
 )
 
+;; A cast of an array.
+(module
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (type $A (array (mut i32)))
+  (type $A (array (mut i32)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x anyref)
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x anyref)
+    (call $called
+      ;; This will be refined to a non-nullable cast.
+      (ref.cast null $A
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; Test array and struct operations.
 (module
   ;; CHECK:      (type $B (array (mut i32)))
