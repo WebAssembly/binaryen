@@ -2330,6 +2330,7 @@ template<> struct hash<wasm::Address> {
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
