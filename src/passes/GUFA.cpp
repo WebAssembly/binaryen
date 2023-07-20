@@ -265,7 +265,7 @@ struct GUFAOptimizer
       //
       // Note that we could in principle apply this in all expressions by adding
       // a cast. However, to be careful with code size, we only refine existing
-      // casts for now.
+      // here. See addNewCasts() for where we add entirely new casts.
       curr->type = inferredType;
     }
 
@@ -290,19 +290,11 @@ struct GUFAOptimizer
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
-    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
-      // When optimizing heavily for size we add more casts that were not
-      // present before. This can increase code size, but it sometimes ends up
-      // helping overall after other optimizations (since the new casts allow
-      // more refining in various ways).
-      //
-      // We do this after refinalizing so that we see the final propagated
-      // types, and add as few new casts as possible.
-      if (addNewCasts(func)) {
-        // If we didn't optimize anything before, we have now, and can proceed
-        // below.
-        optimized = true;
-      }
+    // Potentially add new casts after we do our first pass of optimizations +
+    // refinalize (doing it after refinalizing lets us add as few new casts as
+    // possible).
+    if (addNewCasts(func)) {
+      optimized = true;
     }
 
     if (!optimized) {
@@ -352,12 +344,21 @@ struct GUFAOptimizer
   }
 
   // Add a new cast whenever we know a value contains a more refined type than
-  // in the IR.
+  // in the IR. This can increase code size, but it sometimes ends up helping
+  // overall after other optimizations, since the new casts allow more refining
+  // in various ways. In practice, despite the risk of increasing code size this
+  // appears to end up helping on Kotlin
   //
   // Returns whether we optimized anything.
   bool addNewCasts(Function* func) {
     // Subtyping and casts only make sense if GC is enabled.
     if (!getModule()->features.hasGC()) {
+      return false;
+    }
+
+    // As mentioned above, this may increase code size, so to be careful, only
+    // do this when optimizing heavily for size.
+    if (getPassOptions().optimizeLevel < 3 || getPassOptions().shrinkLevel) {
       return false;
     }
 
