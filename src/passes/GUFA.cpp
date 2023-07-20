@@ -292,7 +292,7 @@ struct GUFAOptimizer
     // propagate.
     ReFinalize().walkFunctionInModule(func, getModule());
 
-    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinklevel) {
+    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
       // When optimizing heavily for size we add more casts that were not
       // present before. This can increase code size, but it sometimes ends up
       // helping overall after other optimizations (since the new casts allow
@@ -348,21 +348,26 @@ struct GUFAOptimizer
   // Add a new cast whenever we know a value contains a more refined type than
   // in the IR.
   void addNewCasts(Function* func) {
-    struct Adder : public PostWalker<Adder, UnifiedExpressionVisitor<Adder>> {
-      ContentOracle& oracle;
+    // Subtyping and casts only make sense if GC is enabled.
+    if (!getModule()->features.hasGC()) {
+      return;
+    }
 
-      Adder(ContentOracle& oracle) : oracle(oracle) {}
+    struct Adder : public PostWalker<Adder, UnifiedExpressionVisitor<Adder>> {
+      GUFAOptimizer& parent;
+
+      Adder(GUFAOptimizer& parent) : parent(parent) {}
 
       void visitExpression(Expression* curr) {
-        auto oracleType = oracle.getContents(curr);
+        auto oracleType = parent.getContents(curr).getType();
         if (oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
-          replaceCurrent(builder.makeRefCast(curr, contents.getType()));
+          replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
         }
       }
     };
 
-    Adder adder(oracle);
+    Adder adder(*this);
     adder.walkFunctionInModule(func, getModule());
   }
 };
