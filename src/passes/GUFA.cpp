@@ -375,8 +375,7 @@ struct GUFAOptimizer
         }
 
         auto oracleType = parent.getContents(curr).getType();
-        if (oracleType.isRef() &&
-            oracleType != curr->type &&
+        if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
           optimized = true;
