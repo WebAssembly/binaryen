@@ -347,7 +347,8 @@ struct GUFAOptimizer
   // in the IR. This can increase code size, but it sometimes ends up helping
   // overall after other optimizations, since the new casts allow more refining
   // in various ways. In practice, despite the risk of increasing code size this
-  // appears to end up helping on Kotlin.
+  // appears to end up reducing the size of Java and Kotlin. It is unclear
+  // whether there are more or less casts at runtime, however.
   //
   // Returns whether we optimized anything.
   bool addNewCasts(Function* func) {
