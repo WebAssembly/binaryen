@@ -37,7 +37,7 @@
 namespace wasm {
 
 template<typename SubType, typename VisitorType, typename Contents>
-struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
+struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   // public interface
 
@@ -87,7 +87,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // analysis on the CFG once it is constructed).
   BasicBlock* currBasicBlock;
   // a block or loop => its branches
-  std::map<Expression*, std::vector<BasicBlock*>> branches;
+  std::map<Name, std::vector<BasicBlock*>> branches;
   // stack of the last blocks of if conditions + the last blocks of if true
   // bodies
   std::vector<BasicBlock*> ifStack;
@@ -142,7 +142,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (!curr->name.is()) {
       return;
     }
-    auto iter = self->branches.find(curr);
+    auto iter = self->branches.find(curr->name);
     if (iter == self->branches.end()) {
       return;
     }
@@ -158,7 +158,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     for (auto* origin : origins) {
       self->link(origin, self->currBasicBlock);
     }
-    self->branches.erase(curr);
+    self->branches.erase(curr->name);
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
@@ -206,11 +206,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // branches to the top of the loop
     if (curr->name.is()) {
       auto* loopStart = self->loopStack.back();
-      auto& origins = self->branches[curr];
+      auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
-      self->branches.erase(curr);
+      self->branches.erase(curr->name);
     }
     self->loopStack.pop_back();
   }
@@ -220,8 +220,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto branchTargets = BranchUtils::getUniqueTargets(curr);
     // Add branches to the targets.
     for (auto target : branchTargets) {
-      self->branches[self->findBreakTarget(target)].push_back(
-        self->currBasicBlock);
+      self->branches[target].push_back(self->currBasicBlock);
     }
     if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
@@ -424,7 +423,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       }
     }
 
-    ControlFlowWalker<SubType, VisitorType>::scan(self, currp);
+    PostWalker<SubType, VisitorType>::scan(self, currp);
 
     switch (curr->_id) {
       case Expression::Id::LoopId: {
@@ -441,7 +440,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
     startBasicBlock();
     entry = currBasicBlock;
-    ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
+    PostWalker<SubType, VisitorType>::doWalkFunction(func);
     exit = currBasicBlock;
 
     assert(branches.size() == 0);
