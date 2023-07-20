@@ -361,7 +361,7 @@ struct GUFAOptimizer
         }
       }
     };
-    
+
     Adder adder(oracle);
     adder.walkFunctionInModule(func, getModule());
   }
