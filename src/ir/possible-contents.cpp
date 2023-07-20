@@ -1387,6 +1387,8 @@ void TNHOracle::analyze() {
 
         void visitRefCast(RefCast* curr) { noteCast(curr); }
 
+        // TODO: we can also see struct.get/set as cast to non-null
+
         void noteCast(Expression* curr) {
           if (!inEntryBlock) {
             return;
