@@ -130,6 +130,12 @@ struct GUFAOptimizer
     // This is reachable. Check if we can emit something optimized for it.
     // TODO: can we handle more general things here too?
     if (!contents.canMakeExpression()) {
+      if (getenv("CAST_ALL")) {
+        if (contents.getType() != curr->type) {
+          assert(Type::isSubType(contents.getType(), curr->type));
+          replaceCurrent(builder.makeRefCast(curr, contents.getType()));
+        }
+      }
       return;
     }
 
