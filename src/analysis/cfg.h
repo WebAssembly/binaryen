@@ -80,7 +80,7 @@ struct CFG {
 private:
   std::vector<BasicBlock> blocks;
 
-    friend BasicBlock;
+  friend BasicBlock;
 };
 
 // A helper class that computes block indexes for a CFG and allows querying of

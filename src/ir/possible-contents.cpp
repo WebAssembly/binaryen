@@ -1399,8 +1399,7 @@ void TNHOracle::analyze() {
             // Note that if we see more than one cast we keep the first one.
             // This is not important in optimized code, as the most refined cast
             // would be the only one to exist there; we keep things simple here.
-            if (getFunction()->isParam(get->index) &&
-                curr->type != get->type &&
+            if (getFunction()->isParam(get->index) && curr->type != get->type &&
                 info.castParams.count(get->index) == 0) {
               info.castParams[get->index] = curr->type;
             }
