@@ -1381,31 +1381,66 @@ void TNHOracle::analyze() {
 
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
-            noteCast(curr);
+            noteCast(curr->value, curr->type);
           }
         }
+        void visitRefCast(RefCast* curr) { noteCast(curr->ref, curr->type); }
 
-        void visitRefCast(RefCast* curr) { noteCast(curr); }
-
-        // TODO: we can also see struct.get/set as cast to non-null
-
-        void noteCast(Expression* curr) {
+        // Note a cast of an expression to a particular type.
+        void noteCast(Expression* expr, Type type) {
           if (!inEntryBlock) {
             return;
           }
 
-          auto* fallthrough = Properties::getFallthrough(curr, options, wasm);
+          auto* fallthrough = Properties::getFallthrough(expr, options, wasm);
           if (auto* get = fallthrough->dynCast<LocalGet>()) {
             // To optimize, this needs to be a param, and of a useful type.
             //
             // Note that if we see more than one cast we keep the first one.
             // This is not important in optimized code, as the most refined cast
             // would be the only one to exist there; we keep things simple here.
-            if (getFunction()->isParam(get->index) && curr->type != get->type &&
+            if (getFunction()->isParam(get->index) && type != get->type &&
                 info.castParams.count(get->index) == 0) {
-              info.castParams[get->index] = curr->type;
+              info.castParams[get->index] = type;
             }
           }
+        }
+
+        // Operations that trap on null are equivalent to casts to non-null. We
+        // only look at them if the input is actually null, however, as if they
+        // are non-nullable then we can add no information. (This is equivalent
+        // to the handling of RefAsNonNull above, in the sense that in optimized
+        // code the RefAs will not appear if the input is already non-nullable).
+        // This function is called with the reference that will be trapped on,
+        // if it is null.
+        void notePossibleTrap(Expression* expr) {
+          if (!expr->type.isRef() || expr->type.isNonNullable()) {
+            return;
+          }
+          noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
+        }
+
+        void visitStructGet(StructGet* curr) {
+          notePossibleTrap(curr->ref);
+        }
+        void visitStructSet(StructSet* curr) {
+          notePossibleTrap(curr->ref);
+        }
+        void visitArrayGet(ArrayGet* curr) {
+          notePossibleTrap(curr->ref);
+        }
+        void visitArraySet(ArraySet* curr) {
+          notePossibleTrap(curr->ref);
+        }
+        void visitArrayLen(ArrayLen* curr) {
+          notePossibleTrap(curr->ref);
+        }
+        void visitArrayCopy(ArrayCopy* curr) {
+          notePossibleTrap(curr->srcRef);
+          notePossibleTrap(curr->destRef);
+        }
+        void visitArrayFill(ArrayFill* curr) {
+          notePossibleTrap(curr->ref);
         }
       } scanner(wasm, options, info);
       scanner.walkFunction(func);

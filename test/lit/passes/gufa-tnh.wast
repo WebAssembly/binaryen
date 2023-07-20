@@ -1617,3 +1617,106 @@
     )
   )
 )
+
+;; Test array and struct operations.
+(module
+  (type $A (struct (field (mut i32))))
+
+  (type $B (array (mut i32)))
+
+  (func $called
+    (param $struct.get (ref null $A))
+    (param $struct.set (ref null $A))
+    (param $array.get (ref null $B))
+    (param $array.set (ref null $B))
+    (param $array.len (ref null $B))
+    (param $array.copy.src (ref null $B))
+    (param $array.copy.dest (ref null $B))
+    (param $array.fill (ref null $B))
+    (param $ref.test (ref null $A))
+
+    ;; All these parameters are cast, and all the operations trap on null, aside
+    ;; from ref.test.
+    (drop
+      (struct.get $A
+        (local.get $struct.get)
+      )
+    )
+    (drop
+      (struct.set $A
+        (local.get $struct.set)
+      )
+    )
+    (drop
+      (array.get $B
+        (local.get $array.get)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (array.set $B
+        (local.get $array.set)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.len $B
+        (local.get $array.len)
+      )
+    )
+    (drop
+      (array.copy $B
+        (local.get $array.copy.src)
+        (i32.const 2)
+        (local.get $array.copy.dest)
+        (i32.const 3)
+        (i32.const 4)
+      )
+    )
+    (drop
+      (array.fill $B
+        (local.get $array.fill)
+        (i32.const 5)
+        (i32.const 6)
+      )
+    )
+    (drop
+      (ref.test $A
+        (local.get $ref.test)
+      )
+    )
+  )
+
+  (func $caller (export "out") (param $any anyref)
+    ;; All these casts will be refined aside from the last param, which is but a
+    ;; ref.test.
+    (call $called
+      (ref.cast null $A
+        (local.get $any)
+      )
+      (ref.cast null $A
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $A
+        (local.get $any)
+      )
+    )
+  )
+)
+
+;; earlier, a simple array test
