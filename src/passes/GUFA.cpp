@@ -284,13 +284,11 @@ struct GUFAOptimizer
   //       information about parents.
 
   void visitFunction(Function* func) {
-    if (!optimized) {
-      return;
+    if (optimized) {
+      // Optimization may introduce more unreachables, which we need to
+      // propagate.
+      ReFinalize().walkFunctionInModule(func, getModule());
     }
-
-    // Optimization may introduce more unreachables, which we need to
-    // propagate.
-    ReFinalize().walkFunctionInModule(func, getModule());
 
     if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
       // When optimizing heavily for size we add more casts that were not
@@ -300,7 +298,15 @@ struct GUFAOptimizer
       //
       // We do this after refinalizing so that we see the final propagated
       // types, and add as few new casts as possible.
-      addNewCasts(func);
+      if (addNewCasts(func)) {
+        // If we didn't optimize anything before, we have now, and can proceed
+        // below.
+        optimized = true;
+      }
+    }
+
+    if (!optimized) {
+      return;
     }
 
     // We may add blocks around pops, which we must fix up.
@@ -347,10 +353,12 @@ struct GUFAOptimizer
 
   // Add a new cast whenever we know a value contains a more refined type than
   // in the IR.
-  void addNewCasts(Function* func) {
+  //
+  // Returns whether we optimized anything.
+  bool addNewCasts(Function* func) {
     // Subtyping and casts only make sense if GC is enabled.
     if (!getModule()->features.hasGC()) {
-      return;
+      return false;
     }
 
     struct Adder : public PostWalker<Adder, UnifiedExpressionVisitor<Adder>> {
@@ -358,17 +366,30 @@ struct GUFAOptimizer
 
       Adder(GUFAOptimizer& parent) : parent(parent) {}
 
+      bool optimized = false;
+
       void visitExpression(Expression* curr) {
+        if (!curr->type.isConcrete()) {
+          // Ignore anything we cannot infer a type for.
+          return;
+        }
+
         auto oracleType = parent.getContents(curr).getType();
         if (oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
+          optimized = true;
         }
       }
     };
 
     Adder adder(*this);
     adder.walkFunctionInModule(func, getModule());
+    if (adder.optimized) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
   }
 };
 
@@ -379,7 +400,12 @@ struct GUFAPass : public Pass {
 
   void run(Module* module) override {
     ContentOracle oracle(*module);
-    GUFAOptimizer(oracle, optimizing).run(getPassRunner(), module);
+
+    // Explicitly build a nested pass runner, to ensure that the optimization
+    // level is passed through (by default, just doing pass.run() caps it at 1).
+    PassRunner nested(getPassRunner());
+    nested.add(std::make_unique<GUFAOptimizer>(oracle, optimizing));
+    nested.run();
   }
 };
 
