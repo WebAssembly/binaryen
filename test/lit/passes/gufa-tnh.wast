@@ -1620,10 +1620,62 @@
 
 ;; Test array and struct operations.
 (module
+  ;; CHECK:      (type $B (array (mut i32)))
+
+  ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (field (mut i32))))
 
   (type $B (array (mut i32)))
 
+  ;; CHECK:      (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$A|_=>_none (func (param (ref null $A) (ref null $A) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $A))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$A|_=>_none) (param $struct.get (ref null $A)) (param $struct.set (ref null $A)) (param $array.get (ref null $B)) (param $array.set (ref null $B)) (param $array.len (ref null $B)) (param $array.copy.src (ref null $B)) (param $array.copy.dest (ref null $B)) (param $array.fill (ref null $B)) (param $ref.test (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $struct.set)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $B
+  ;; CHECK-NEXT:    (local.get $array.get)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array.set)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.len
+  ;; CHECK-NEXT:    (local.get $array.len)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.copy $B $B
+  ;; CHECK-NEXT:   (local.get $array.copy.src)
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:   (local.get $array.copy.dest)
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:   (i32.const 6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.fill $B
+  ;; CHECK-NEXT:   (local.get $array.fill)
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (i32.const 9)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test $A
+  ;; CHECK-NEXT:    (local.get $ref.test)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $called
     (param $struct.get (ref null $A))
     (param $struct.set (ref null $A))
@@ -1682,6 +1734,37 @@
     )
   )
 
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $caller (export "out") (param $any anyref)
     ;; All these casts will be refined aside from the last param, which is but a
     ;; ref.test.
@@ -1716,6 +1799,3 @@
     )
   )
 )
-
-;; earlier, a simple array test
-;; earlier, a simple array test
