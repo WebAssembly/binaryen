@@ -1638,47 +1638,42 @@
     ;; All these parameters are cast, and all the operations trap on null, aside
     ;; from ref.test.
     (drop
-      (struct.get $A
+      (struct.get $A 0
         (local.get $struct.get)
       )
     )
-    (drop
-      (struct.set $A
-        (local.get $struct.set)
-      )
+    (struct.set $A 0
+      (local.get $struct.set)
+      (i32.const 0)
     )
     (drop
       (array.get $B
         (local.get $array.get)
-        (i32.const 0)
-      )
-    )
-    (drop
-      (array.set $B
-        (local.get $array.set)
         (i32.const 1)
       )
+    )
+    (array.set $B
+      (local.get $array.set)
+      (i32.const 2)
+      (i32.const 3)
     )
     (drop
       (array.len $B
         (local.get $array.len)
       )
     )
-    (drop
-      (array.copy $B
-        (local.get $array.copy.src)
-        (i32.const 2)
-        (local.get $array.copy.dest)
-        (i32.const 3)
-        (i32.const 4)
-      )
+    (array.copy $B $B
+      (local.get $array.copy.src)
+      (i32.const 4)
+      (local.get $array.copy.dest)
+      (i32.const 5)
+      (i32.const 6)
     )
-    (drop
-      (array.fill $B
-        (local.get $array.fill)
-        (i32.const 5)
-        (i32.const 6)
-      )
+    (array.fill $B
+      (local.get $array.fill)
+      (i32.const 7)
+      (i32.const 8)
+      (i32.const 9)
     )
     (drop
       (ref.test $A
@@ -1712,6 +1707,9 @@
       (ref.cast null $B
         (local.get $any)
       )
+      (ref.cast null $B
+        (local.get $any)
+      )
       (ref.cast null $A
         (local.get $any)
       )
@@ -1719,4 +1717,5 @@
   )
 )
 
+;; earlier, a simple array test
 ;; earlier, a simple array test
