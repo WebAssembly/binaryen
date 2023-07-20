@@ -10,8 +10,6 @@
   ;; OPT_2:      (type $none_=>_none (func))
 
   ;; OPT_2:      (type $A (struct ))
-  ;; OPT_3:      (type $none_=>_none (func))
-
   ;; OPT_3:      (type $A (struct ))
   (type $A (struct))
 
@@ -30,6 +28,8 @@
   ;; OPT_2-NEXT:   (local.get $a)
   ;; OPT_2-NEXT:  )
   ;; OPT_2-NEXT: )
+  ;; OPT_3:      (type $none_=>_none (func))
+
   ;; OPT_3:      (export "export" (func $func))
 
   ;; OPT_3:      (func $func (type $none_=>_none)
@@ -38,7 +38,9 @@
   ;; OPT_3-NEXT:   (struct.new_default $B)
   ;; OPT_3-NEXT:  )
   ;; OPT_3-NEXT:  (drop
-  ;; OPT_3-NEXT:   (local.get $a)
+  ;; OPT_3-NEXT:   (ref.cast $B
+  ;; OPT_3-NEXT:    (local.get $a)
+  ;; OPT_3-NEXT:   )
   ;; OPT_3-NEXT:  )
   ;; OPT_3-NEXT: )
   (func $func (export "export")
