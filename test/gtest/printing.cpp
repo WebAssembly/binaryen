@@ -20,7 +20,7 @@ TEST_F(PrintingTest, Print) {
     )
   )wasm";
 
-  auto stringifyText = R"stringify(
+  auto printText = R"print(
 (func $a (result i32)
  (i32.const 10)
 )
@@ -32,7 +32,7 @@ And the other function:
   (i32.const 20)
  )
 )
-)stringify";
+)print";
 
   Module wasm;
   parseWast(wasm, moduleText);
@@ -43,5 +43,5 @@ And the other function:
   ss << "And the other function:\n\n";
   ss << *wasm.getFunction("b");
 
-  EXPECT_EQ(ss.str(), stringifyText);
+  EXPECT_EQ(ss.str(), printText);
 }
