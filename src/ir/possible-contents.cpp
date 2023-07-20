@@ -1443,6 +1443,7 @@ void TNHOracle::analyze() {
     // Constructing a CFG is expensive, so only do so if we find optimization
     // opportunities.
     std::optional<analysis::CFG> cfg;
+    std::optional<analysis::CFGBlockIndexes> blockIndexes;
 
     for (auto* call : info.calls) {
       auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
@@ -1455,12 +1456,12 @@ void TNHOracle::analyze() {
       // This looks promising, create the CFG if we haven't already.
       if (!cfg) {
         cfg = analysis::CFG::fromFunction(func);
-        cfg->computeExpressionBlockIndexes();
+        blockIndexes = analysis::CFGBlockIndexes(*cfg);
       }
 
       // Optimize in the same basic block as the call: all instructions still in
       // that block will definitely execute if the call is reached.
-      auto callBlockIndex = cfg->getBlockIndex(call);
+      auto callBlockIndex = blockIndexes->get(call);
 
       // Go backwards through the call's operands and fallthrough values, and
       // optimize while we are still in the same basic block.
@@ -1471,7 +1472,7 @@ void TNHOracle::analyze() {
       for (int i = int(operands.size() - 1); i >= 0; i--) {
         auto* operand = operands[i];
 
-        if (cfg->getBlockIndex(operand) != callBlockIndex) {
+        if (blockIndexes->get(operand) != callBlockIndex) {
           // Control flow might transfer; stop.
           break;
         }
@@ -1521,7 +1522,7 @@ void TNHOracle::analyze() {
           }
 
           // There is a fallthrough. Check for a control flow transfer.
-          if (cfg->getBlockIndex(next) != callBlockIndex) {
+          if (blockIndexes->get(next) != callBlockIndex) {
             // Control flow might transfer; stop.
             transferred = true;
             break;

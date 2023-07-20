@@ -77,27 +77,10 @@ struct CFG {
 
   void print(std::ostream& os, Module* wasm = nullptr) const;
 
-  // This must be done before getBlockIndex is called on an expression.
-  void computeExpressionBlockIndexes();
-
-  // Gets the index of the basic block in which the instruction resides.
-  // computeExpressionBlockIndexes() must be called first to populate the map.
-  Index getBlockIndex(Expression* expr) {
-    auto iter = expressionBlockIndexMap.find(expr);
-    if (iter == expressionBlockIndexMap.end()) {
-      // There is no entry for this, which can be the case for control flow
-      // structures, or for unreachable code.
-      return InvalidBlock;
-    }
-    return iter->second;
-  }
-
-  enum { InvalidBlock = Index(-1) };
-
 private:
   std::vector<BasicBlock> blocks;
 
-  friend BasicBlock;
+    friend BasicBlock;
 };
 
 // A helper class that computes block indexes for a CFG and allows querying of
