@@ -89,7 +89,7 @@ struct CFGBlockIndexes {
   CFGBlockIndexes(const CFG& cfg);
 
   // Gets the index of the basic block in which the instruction resides.
-  Index get(Expression* expr) {
+  Index get(Expression* expr) const {
     auto iter = map.find(expr);
     if (iter == map.end()) {
       // There is no entry for this, which can be the case for control flow
