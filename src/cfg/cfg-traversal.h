@@ -295,12 +295,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndCall(SubType* self, Expression** currp) {
-    auto* module = self->getModule();
-    if (module && !module->features.hasExceptionHandling()) {
-      // EH is disabled, so there cannot be a branch here due to a throw.
-      return;
-    }
-
     doEndThrowingInst(self, currp);
     // Create a new basic block and link to it. We do this even if there are no
     // other edges leaving this call (no catch bodies in this function that we
@@ -402,7 +396,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        self->pushTask(SubType::doEndCall, currp);
+        auto* module = self->getModule();
+        if (module && module->features.hasExceptionHandling()) {
+          // This call might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       case Expression::Id::TryId: {
