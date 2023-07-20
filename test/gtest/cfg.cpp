@@ -293,6 +293,46 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
   EXPECT_EQ(ss.str(), "101101");
 }
 
+TEST_F(CFGTest, BlockIndexes) {
+  auto moduleText = R"wasm(
+    (module
+      (func $foo
+        (if
+          (i32.const 1)
+          (block
+            (drop
+              (i32.const 2)
+            )
+            (drop
+              (i32.const 3)
+            )
+          )
+        )
+      )
+    )
+  )wasm";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  auto* func = wasm.getFunction("foo");
+  CFG cfg = CFG::fromFunction(func);
+  CFGBlockIndexes indexes(cfg);
+
+  // The body of the function is an if. An if is a control flow structure and so
+  // it has no basic block (it can contain multiple ones).
+  auto* iff = func->body->cast<If>();
+  EXPECT_EQ(indexes.get(iff), indexes.InvalidBlock);
+
+  // The constant 1 is in the entry block.
+  EXPECT_EQ(indexes.get(iff->condition), Index(0));
+
+  // The dropped constants 2 and three are in another block, together.
+  auto* block = iff->ifTrue->cast<Block>();
+  EXPECT_EQ(indexes.get(block->list[0]), Index(1));
+  EXPECT_EQ(indexes.get(block->list[1]), Index(1));
+}
+
 TEST_F(CFGTest, LinearReachingDefinitions) {
   auto moduleText = R"wasm(
     (module
