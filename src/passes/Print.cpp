@@ -3763,6 +3763,12 @@ std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   return o;
 }
 
+std::ostream& operator<<(std::ostream& o, wasm::Function& func) {
+  wasm::PrintSExpression print(o);
+  print.visitFunction(&func);
+  return o;
+}
+
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
   return wasm::printExpression(&expression, o);
 }
