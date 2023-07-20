@@ -220,8 +220,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     auto branchTargets = BranchUtils::getUniqueTargets(curr);
     // Add branches to the targets.
     for (auto target : branchTargets) {
-      self->branches[target].push_back(
-        self->currBasicBlock);
+      self->branches[target].push_back(self->currBasicBlock);
     }
     if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
