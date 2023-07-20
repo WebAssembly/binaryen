@@ -170,8 +170,9 @@ public:
       return *this;
     }
     Iterator operator++(int) {
+      Iterator self = *static_cast<Iterator*>(this);
       index++;
-      return *this;
+      return self;
     }
 
     Iterator& operator+=(difference_type off) {
