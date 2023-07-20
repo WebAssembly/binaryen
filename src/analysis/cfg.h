@@ -89,9 +89,9 @@ struct CFGBlockIndexes {
   CFGBlockIndexes(const CFG& cfg);
 
   // Gets the index of the basic block in which the instruction resides.
-  Index getBlockIndex(Expression* expr) {
-    auto iter = expressionBlockIndexMap.find(expr);
-    if (iter == expressionBlockIndexMap.end()) {
+  Index get(Expression* expr) {
+    auto iter = map.find(expr);
+    if (iter == map.end()) {
       // There is no entry for this, which can be the case for control flow
       // structures, or for unreachable code.
       return InvalidBlock;
@@ -102,7 +102,7 @@ struct CFGBlockIndexes {
   enum { InvalidBlock = Index(-1) };
 
 private:
-  std::unordered_map<Expression*, Index> expressionBlockIndexMap;
+  std::unordered_map<Expression*, Index> map;
 };
 
 } // namespace wasm::analysis

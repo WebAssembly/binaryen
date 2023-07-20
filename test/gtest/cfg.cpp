@@ -317,20 +317,20 @@ TEST_F(CFGTest, BlockIndexes) {
 
   auto* func = wasm.getFunction("foo");
   CFG cfg = CFG::fromFunction(func);
-  cfg.computeExpressionBlockIndexes();
+  CFGBlockIndexes indexes(cfg);
 
   // The body of the function is an if. An if is a control flow structure and so
   // it has no basic block (it can contain multiple ones).
   auto* iff = func->body->cast<If>();
-  EXPECT_EQ(cfg.getBlockIndex(iff), CFG::InvalidBlock);
+  EXPECT_EQ(indexes.get(iff), indexes.InvalidBlock);
 
   // The constant 1 is in the entry block.
-  EXPECT_EQ(cfg.getBlockIndex(iff->condition), Index(0));
+  EXPECT_EQ(indexes.get(iff->condition), Index(0));
 
   // The dropped constants 2 and three are in another block, together.
   auto* block = iff->ifTrue->cast<Block>();
-  EXPECT_EQ(cfg.getBlockIndex(block->list[0]), Index(1));
-  EXPECT_EQ(cfg.getBlockIndex(block->list[1]), Index(1));
+  EXPECT_EQ(indexes.get(block->list[0]), Index(1));
+  EXPECT_EQ(indexes.get(block->list[1]), Index(1));
 }
 
 TEST_F(CFGTest, LinearReachingDefinitions) {

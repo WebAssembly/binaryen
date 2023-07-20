@@ -106,7 +106,7 @@ void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
 CFGBlockIndexes::CFGBlockIndexes(const CFG& cfg) {
   for (auto& block : cfg) {
     for (auto* expr : block) {
-      expressionBlockIndexMap[expr] = block.getIndex();
+      map[expr] = block.getIndex();
     }
   }
 }
