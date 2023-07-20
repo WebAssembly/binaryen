@@ -290,7 +290,7 @@ struct GUFAOptimizer
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
-    if (1) { //getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
+    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
       // When optimizing heavily for size we add more casts that were not
       // present before. This can increase code size, but it sometimes ends up
       // helping overall after other optimizations (since the new casts allow
