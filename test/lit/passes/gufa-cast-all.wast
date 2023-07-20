@@ -10,6 +10,8 @@
   ;; OPT_2:      (type $none_=>_none (func))
 
   ;; OPT_2:      (type $A (struct ))
+  ;; OPT_3:      (type $none_=>_none (func))
+
   ;; OPT_3:      (type $A (struct ))
   (type $A (struct))
 
@@ -17,22 +19,26 @@
   ;; OPT_3:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))
 
-  ;; OPT_2:      (export "export" (func $func))
+  ;; OPT_2:      (export "export1" (func $ref))
 
-  ;; OPT_2:      (func $func (type $none_=>_none)
+  ;; OPT_2:      (export "export2" (func $int))
+
+  ;; OPT_2:      (func $ref (type $none_=>_none)
   ;; OPT_2-NEXT:  (local $a (ref $A))
   ;; OPT_2-NEXT:  (local.set $a
   ;; OPT_2-NEXT:   (struct.new_default $B)
   ;; OPT_2-NEXT:  )
   ;; OPT_2-NEXT:  (drop
-  ;; OPT_2-NEXT:   (local.get $a)
+  ;; OPT_2-NEXT:   (ref.cast $B
+  ;; OPT_2-NEXT:    (local.get $a)
+  ;; OPT_2-NEXT:   )
   ;; OPT_2-NEXT:  )
   ;; OPT_2-NEXT: )
-  ;; OPT_3:      (type $none_=>_none (func))
+  ;; OPT_3:      (export "export1" (func $ref))
 
-  ;; OPT_3:      (export "export" (func $func))
+  ;; OPT_3:      (export "export2" (func $int))
 
-  ;; OPT_3:      (func $func (type $none_=>_none)
+  ;; OPT_3:      (func $ref (type $none_=>_none)
   ;; OPT_3-NEXT:  (local $a (ref $A))
   ;; OPT_3-NEXT:  (local.set $a
   ;; OPT_3-NEXT:   (struct.new_default $B)
@@ -43,7 +49,7 @@
   ;; OPT_3-NEXT:   )
   ;; OPT_3-NEXT:  )
   ;; OPT_3-NEXT: )
-  (func $func (export "export")
+  (func $ref (export "export1")
     (local $a (ref $A))
     (local.set $a
       (struct.new $B)
@@ -51,6 +57,36 @@
     (drop
       ;; We can infer that this contains B, and add a cast to that type, when
       ;; the optimization level is 3.
+      (local.get $a)
+    )
+  )
+
+  ;; OPT_2:      (func $int (type $none_=>_none)
+  ;; OPT_2-NEXT:  (local $a i32)
+  ;; OPT_2-NEXT:  (local.set $a
+  ;; OPT_2-NEXT:   (i32.const 1)
+  ;; OPT_2-NEXT:  )
+  ;; OPT_2-NEXT:  (drop
+  ;; OPT_2-NEXT:   (i32.const 1)
+  ;; OPT_2-NEXT:  )
+  ;; OPT_2-NEXT: )
+  ;; OPT_3:      (func $int (type $none_=>_none)
+  ;; OPT_3-NEXT:  (local $a i32)
+  ;; OPT_3-NEXT:  (local.set $a
+  ;; OPT_3-NEXT:   (i32.const 1)
+  ;; OPT_3-NEXT:  )
+  ;; OPT_3-NEXT:  (drop
+  ;; OPT_3-NEXT:   (i32.const 1)
+  ;; OPT_3-NEXT:  )
+  ;; OPT_3-NEXT: )
+  (func $int (export "export2")
+    (local $a i32)
+    (local.set $a
+      (i32.const 1)
+    )
+    (drop
+      ;; We can infer that this contains 1, but there is nothing to do regarding
+      ;; the type, which is not a reference.
       (local.get $a)
     )
   )

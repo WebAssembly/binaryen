@@ -290,7 +290,7 @@ struct GUFAOptimizer
       ReFinalize().walkFunctionInModule(func, getModule());
     }
 
-    if (getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
+    if (1) { //getPassOptions().optimizeLevel >= 3 && !getPassOptions().shrinkLevel) {
       // When optimizing heavily for size we add more casts that were not
       // present before. This can increase code size, but it sometimes ends up
       // helping overall after other optimizations (since the new casts allow
@@ -369,7 +369,7 @@ struct GUFAOptimizer
       bool optimized = false;
 
       void visitExpression(Expression* curr) {
-        if (!curr->type.isConcrete()) {
+        if (!curr->type.isRef()) {
           // Ignore anything we cannot infer a type for.
           return;
         }
