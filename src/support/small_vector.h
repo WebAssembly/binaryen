@@ -148,6 +148,8 @@ public:
   // iteration
 
   template<typename Parent, typename Iterator> struct IteratorBase {
+    // TODO: Add remaining things from
+    //       https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator
     using iterator_category = std::random_access_iterator_tag;
     using value_type = T;
     using difference_type = long;
@@ -163,8 +165,14 @@ public:
       return index != other.index || parent != other.parent;
     }
 
-    void operator++() { index++; }
-    void operator++(int) { index++; }
+    Iterator& operator++() {
+      index++;
+      return *this;
+    }
+    Iterator operator++(int) {
+      index++;
+      return *this;
+    }
 
     Iterator& operator+=(difference_type off) {
       index += off;
