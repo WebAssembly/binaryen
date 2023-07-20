@@ -1340,6 +1340,9 @@ void TNHOracle::analyze() {
     // function is entered.
     std::unordered_map<Index, Type> castParams;
 
+    // TODO: Returns as well: when we see (ref.cast (call $foo)) in all callers
+    //       then we can refine inside $foo (in closed world).
+
     // We gather calls in parallel in order to process them later.
     std::vector<Call*> calls;
 
