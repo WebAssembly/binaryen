@@ -1636,6 +1636,10 @@ def get_random_opts():
     # test both closed and open world
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
+    if 'gufa' not in str(ret) and random.random() < 0.5:
+        ret += ['--gufa']
+    if random.random() < 0.5:
+        ret += ['--optimize-level=3']
     assert ret.count('--flatten') <= 1
     return ret
 

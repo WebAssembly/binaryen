@@ -120,7 +120,8 @@
     )
     (drop
       ;; We can infer that the type here is unreachable, but there is nothing
-      ;; special to do for that in optimize level 3 vs 2.
+      ;; special to do for that in optimize level 3 vs 2 - we emit an
+      ;; unreachable either way.
       (local.get $a)
     )
   )
