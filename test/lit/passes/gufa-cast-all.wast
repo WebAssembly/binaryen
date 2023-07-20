@@ -23,6 +23,8 @@
 
   ;; OPT_2:      (export "export2" (func $int))
 
+  ;; OPT_2:      (export "export3" (func $unreachable))
+
   ;; OPT_2:      (func $ref (type $none_=>_none)
   ;; OPT_2-NEXT:  (local $a (ref $A))
   ;; OPT_2-NEXT:  (local.set $a
@@ -37,6 +39,8 @@
   ;; OPT_3:      (export "export1" (func $ref))
 
   ;; OPT_3:      (export "export2" (func $int))
+
+  ;; OPT_3:      (export "export3" (func $unreachable))
 
   ;; OPT_3:      (func $ref (type $none_=>_none)
   ;; OPT_3-NEXT:  (local $a (ref $A))
@@ -87,6 +91,36 @@
     (drop
       ;; We can infer that this contains 1, but there is nothing to do regarding
       ;; the type, which is not a reference.
+      (local.get $a)
+    )
+  )
+
+  ;; OPT_2:      (func $unreachable (type $none_=>_none)
+  ;; OPT_2-NEXT:  (local $a (ref $A))
+  ;; OPT_2-NEXT:  (local.tee $a
+  ;; OPT_2-NEXT:   (unreachable)
+  ;; OPT_2-NEXT:  )
+  ;; OPT_2-NEXT:  (drop
+  ;; OPT_2-NEXT:   (unreachable)
+  ;; OPT_2-NEXT:  )
+  ;; OPT_2-NEXT: )
+  ;; OPT_3:      (func $unreachable (type $none_=>_none)
+  ;; OPT_3-NEXT:  (local $a (ref $A))
+  ;; OPT_3-NEXT:  (local.tee $a
+  ;; OPT_3-NEXT:   (unreachable)
+  ;; OPT_3-NEXT:  )
+  ;; OPT_3-NEXT:  (drop
+  ;; OPT_3-NEXT:   (unreachable)
+  ;; OPT_3-NEXT:  )
+  ;; OPT_3-NEXT: )
+  (func $unreachable (export "export3")
+    (local $a (ref $A))
+    (local.set $a
+      (unreachable)
+    )
+    (drop
+      ;; We can infer that the type here is unreachable, but there is nothing
+      ;; special to do for that in optimize level 3 vs 2.
       (local.get $a)
     )
   )
