@@ -1025,6 +1025,7 @@ struct SimplifyLocals
             if (removeEquivalentSets) {
               if (curr->isTee()) {
                 this->replaceCurrent(curr->value);
+                refinalize = true;
               } else {
                 this->replaceCurrent(Builder(*module).makeDrop(curr->value));
               }
