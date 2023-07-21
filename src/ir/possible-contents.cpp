@@ -1346,6 +1346,9 @@ void TNHOracle::analyze() {
     // We gather calls in parallel in order to process them later.
     std::vector<Expression*> calls;
 
+    // Note if a function body definitely traps.
+    bool traps = false;
+
     // We gather inferences in parallel and combine them at the end.
     std::unordered_map<Expression*, Type> inferences;
   };
@@ -1449,6 +1452,15 @@ void TNHOracle::analyze() {
         void visitArrayFill(ArrayFill* curr) {
           notePossibleTrap(curr->ref);
         }
+
+        void visitFunction(Function* curr) {
+          // In optimized TNH code, a function that always traps will be turned
+          // into a singleton unreachable instruction, so it is enough to check
+          // for that.
+          if (func->body->is<Unreachable>()) {
+            info.traps = true;
+          }
+        }
       } scanner(wasm, options, info);
       scanner.walkFunction(func);
     });
@@ -1496,6 +1508,9 @@ void TNHOracle::analyze() {
       if (auto call_ = call->dynCast<Call>()) {
         target = call_->target;
         operands = &call_->operands;
+        // Note that we don't need to do anything for targetInfo.traps for a
+        // direct call: the inliner will inline the singleton unreachable in the
+        // target function anyhow.
       } else if ([[maybe_unused]]auto* callRef = call->dynCast<CallRef>()) {
         continue; // TODO
       }
