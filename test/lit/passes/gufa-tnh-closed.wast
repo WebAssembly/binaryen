@@ -112,6 +112,8 @@
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
+  ;; CHECK:      (elem declare func $possible)
+
   ;; CHECK:      (export "out" (func $caller))
 
   ;; CHECK:      (func $possible (type $A)
@@ -127,9 +129,7 @@
 
   ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $possible)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x funcref)

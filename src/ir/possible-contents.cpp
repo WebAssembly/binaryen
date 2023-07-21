@@ -1357,12 +1357,11 @@ public:
     auto iter = inferences.find(curr);
     if (iter != inferences.end()) {
       auto& contents = iter->second;
-      // We only store useful types: refinements, or unreachable if we proved
-      // nothing can appear there.
-      [[maybe_unused]] auto contentType = contents.getType();
-      assert(contentType != curr->type &&
-             (Type::isSubType(contentType, curr->type) ||
-              contentType == Type::unreachable));
+      // We only store useful contents that improve on the naive estimate that
+      // uses the type in the IR.
+      [[maybe_unused]] auto naiveContents =
+          PossibleContents::fullConeType(curr->type);
+      assert(contents != naiveContents);
       return contents;
     }
 
