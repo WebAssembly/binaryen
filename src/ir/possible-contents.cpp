@@ -1310,26 +1310,28 @@ public:
   }
 
   // Get the type we inferred was possible at a location.
-  Type getType(Expression* curr) {
-    // If we inferred a type, use that. Otherwise, use the expression's type
-    // from the IR.
+  PossibleContents getContents(Expression* curr) {
+    // If we inferred a type, use that.
     auto iter = inferences.find(curr);
     if (iter != inferences.end()) {
-      auto refinedType = iter->second;
+      auto& contents = iter->second;
       // We only store useful types: refinements, or unreachable if we proved
       // nothing can appear there.
-      assert(refinedType != curr->type &&
-             (Type::isSubType(refinedType, curr->type) ||
-              refinedType == Type::unreachable));
-      return refinedType;
+      [[maybe_unused]]auto contentType = contents.getType();
+      assert(contentType != curr->type &&
+             (Type::isSubType(contentType, curr->type) ||
+              contentType == Type::unreachable));
+      return contents;
     }
-    return curr->type;
+
+    // Otherwise, all we have is the expression's type from the IR.
+    return PossibleContents::fullConeType(curr->type);
   }
 
 private:
-  // Maps expressions to the type we inferred for them. If an expression is not
+  // Maps expressions to the content we inferred there. If an expression is not
   // here then expression->type (the type in Binaryen IR) is all we have.
-  std::unordered_map<Expression*, Type> inferences;
+  std::unordered_map<Expression*, PossibleContents> inferences;
 
   void analyze();
 };
@@ -1350,7 +1352,7 @@ void TNHOracle::analyze() {
     bool traps = false;
 
     // We gather inferences in parallel and combine them at the end.
-    std::unordered_map<Expression*, Type> inferences;
+    std::unordered_map<Expression*, PossibleContents> inferences;
   };
 
   // Phase 1: Scan to find cast parameters and calls.
@@ -1541,8 +1543,8 @@ void TNHOracle::analyze() {
         auto iter = typeFunctions.find(targetType.getHeapType());
         if (iter == typeFunctions.end()) {
           // No function exists of this type, so the call_ref will trap. We can
-          // mark the target as unreachable, which has the identical effect.
-          info.inferences[callRef->target] = Type::unreachable;
+          // mark the target as empty, which has the identical effect.
+          info.inferences[callRef->target] = PossibleContents::none();
           continue;
         }
 
@@ -1562,7 +1564,7 @@ void TNHOracle::analyze() {
 
         if (possibleTargets.empty()) {
           // No target is possible.
-          info.inferences[callRef->target] = Type::unreachable;
+          info.inferences[callRef->target] = PossibleContents::none();
           continue;
         }
 
@@ -1641,11 +1643,11 @@ void TNHOracle::analyze() {
               auto intersectionType = intersection.getType();
               if (intersectionType != curr->type) {
                 // We inferred a more refined type.
-                info.inferences[curr] = intersectionType;
+                info.inferences[curr] = PossibleContents::fullConeType(intersectionType);
               }
             } else if (intersection.isNone()) {
               // Nothing is possible here, so this must be unreachable code.
-              info.inferences[curr] = Type::unreachable;
+              info.inferences[curr] = PossibleContents::none();
             }
           }
 
@@ -1675,8 +1677,8 @@ void TNHOracle::analyze() {
 
   // Combine all of our inferences.
   for (auto& [_, info] : analysis.map) {
-    for (auto& [expr, type] : info.inferences) {
-      inferences[expr] = type;
+    for (auto& [expr, contents] : info.inferences) {
+      inferences[expr] = contents;
     }
   }
 }
@@ -1723,13 +1725,10 @@ struct Flower {
   }
 
   // Check what we know about the type of an expression, using static
-  // information. For example, if the expression has type T then we can return
-  // T here, as that is the minimum type: the actual values are runtime must be
-  // equal to it, or more refined. We may also have other sources of static
-  // information that can guide us.
-  //
-  // Atm this uses a TNHOracle, so it only helps in TrapsNeverHappen mode.
-  Type getStaticType(Expression* curr) { return tnhOracle.getType(curr); }
+  // information from a TrapsNeverHappen oracle (see TNHOracle).
+  PossibleContents getTNHContents(Expression* curr) {
+    return tnhOracle.getContents(curr);
+  }
 
 private:
   TNHOracle tnhOracle;
@@ -2341,27 +2340,17 @@ void Flower::connectDuringFlow(Location from, Location to) {
 void Flower::filterExpressionContents(PossibleContents& contents,
                                       const ExpressionLocation& exprLoc,
                                       bool& worthSendingMore) {
-  // The type we will filter to is our best information about what can be
-  // contained here statically. Typically that is the type of the expression in
-  // the IR, but it can be even more refined.
-  auto type = getStaticType(exprLoc.expr);
-  if (!type.isRef()) {
-    if (type == Type::unreachable) {
-      // We know that nothing can be here, so filter everything out.
-      contents = PossibleContents::none();
-    }
-    return;
-  }
-
   // The caller cannot know of a situation where it might not be worth sending
   // more to a reference - all that logic is in here. That is, the rest of this
   // function is the only place we can mark |worthSendingMore| as false for a
   // reference.
   assert(worthSendingMore);
 
-  // The maximal contents here are the declared type and all subtypes. Nothing
-  // else can pass through, so filter such things out.
-  auto maximalContents = PossibleContents::fullConeType(type);
+  // The maximal contents here are the declared type and all subtypes, unless
+  // we know better from the TNH oracle. Nothing else can pass through, so
+  // filter such things out.
+  auto maximalContents = getTNHContents(exprLoc.expr);
+  // XXX not a full cone any more!
   contents.intersectWithFullCone(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
