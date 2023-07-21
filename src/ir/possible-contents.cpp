@@ -1587,7 +1587,21 @@ void TNHOracle::analyze() {
           if (targetInfo.traps) {
             continue;
           }
-          // TODO: if our operands will fail a cast, same as a trap.
+
+          // If our operands will fail a cast, then we will trap.
+          // TODO: Use inferred data here, but then we need to be careful of
+          //       nondeterminism.
+          bool traps = false;
+          for (auto& [castIndex, castType] : targetInfo.castParams) {
+            if (!Type::isSubType(callRef->operands[castIndex]->type, castType)) {
+              traps = true;
+              break;
+            }
+          }
+          if (traps) {
+            continue;
+          }
+
           possibleTargets.push_back(target);
         }
 
