@@ -1344,7 +1344,7 @@ void TNHOracle::analyze() {
     //       then we can refine inside $foo (in closed world).
 
     // We gather calls in parallel in order to process them later.
-    std::vector<Call*> calls;
+    std::vector<Expression*> calls;
 
     // We gather inferences in parallel and combine them at the end.
     std::unordered_map<Expression*, Type> inferences;
@@ -1378,9 +1378,13 @@ void TNHOracle::analyze() {
 
         void visitCall(Call* curr) { info.calls.push_back(curr); }
 
-        // TODO: We can do a related analysis for call_ref, inferring the
-        //       function reference's value if only one possible target does not
-        //       trap. That will require closed world, however.
+        void visitCallRef(CallRef* curr) {
+          // We can only optimize call_ref in closed world, as otherwise the
+          // call can go somewhere we can't see.
+          if (options.closedWorld) {
+            info.calls.push_back(curr);
+          }
+        }
 
         void visitRefAs(RefAs* curr) {
           if (curr->op == RefAsNonNull) {
@@ -1485,7 +1489,18 @@ void TNHOracle::analyze() {
     std::optional<analysis::CFGBlockIndexes> blockIndexes;
 
     for (auto* call : info.calls) {
-      auto& targetInfo = analysis.map[wasm.getFunction(call->target)];
+      // For both a call or a call_ref, look for a single call target. For a
+      // call that is always the case, while for a call_ref we might get lucky.
+      Name target;
+      ExpressionList* operands = nullptr;
+      if (auto call_ = call->dynCast<Call>()) {
+        target = call_->target;
+        operands = &call_->operands;
+      } else if (call->is<CallRef>()) {
+        continue; // TODO
+      }
+
+      auto& targetInfo = analysis.map[wasm.getFunction(target)];
 
       auto& castParams = targetInfo.castParams;
       if (castParams.empty()) {
@@ -1505,11 +1520,10 @@ void TNHOracle::analyze() {
       // Go backwards through the call's operands and fallthrough values, and
       // optimize while we are still in the same basic block.
 
-      auto& operands = call->operands;
       // Operands must exist since there is a cast param, so a param exists.
-      assert(operands.size() > 0);
-      for (int i = int(operands.size() - 1); i >= 0; i--) {
-        auto* operand = operands[i];
+      assert(operands->size() > 0);
+      for (int i = int(operands->size() - 1); i >= 0; i--) {
+        auto* operand = (*operands)[i];
 
         if (blockIndexes->get(operand) != callBlockIndex) {
           // Control flow might transfer; stop.
