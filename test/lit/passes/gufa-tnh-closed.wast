@@ -5,15 +5,30 @@
 ;; happen, in a closed world, which is what this file tests.
 (module
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (func))
     (type $A (func))
+    ;; CHECK:       (type $B (func))
     (type $B (func))
   )
 
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $impossible (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $impossible (type $A)
     ;; This cannot be called if traps never happen.
     (unreachable)
   )
 
+  ;; CHECK:      (func $irrelevant (type $B)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $irrelevant (type $B)
     ;; This has a similar but different type, so it is irrelevant to this
     ;; optimization.
@@ -22,10 +37,20 @@
     )
   )
 
-  (func $caller (export "out") (param $x (ref null $A))
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
     ;; This call must trap: the only function of the right type will trap.
     (call_ref $A
-      (local.get $x)
+      (ref.cast $A
+        (local.get $x)
+      )
     )
   )
 )
