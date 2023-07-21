@@ -5,6 +5,8 @@
 
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
+#include "analysis/reaching-definitions-transfer-function.h"
+
 #include "support/command-line.h"
 #include "tools/fuzzing.h"
 #include "tools/fuzzing/random.h"
@@ -64,6 +66,7 @@ struct Fuzzer {
     }
   }
 
+private:
   template<typename Lattice>
   void transitivityErrorPrinter(std::ostream& os,
                                 typename Lattice::Element& x,
@@ -82,6 +85,7 @@ struct Fuzzer {
        << ", but " << failedRelation << " is not true.\n";
   }
 
+public:
   template<typename Lattice>
   void checkTransitivity(Lattice& lattice,
                          typename Lattice::Element& x,
@@ -211,6 +215,63 @@ struct Fuzzer {
     Fatal() << ss.str();
   }
 
+  template<typename Lattice, typename TransferFunction>
+  void check(analysis::CFG& cfg,
+             Lattice& lattice,
+             TransferFunction& transferFunction,
+             std::string transferFuncName) {
+    for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
+      typename Lattice::Element x = lattice.getRandom(rand);
+      typename Lattice::Element y = lattice.getRandom(rand);
+      typename Lattice::Element z = lattice.getRandom(rand);
+
+      checkReflexivity<Lattice>(lattice, x);
+      checkReflexivity<Lattice>(lattice, y);
+      checkReflexivity<Lattice>(lattice, z);
+      checkAntiSymmetry<Lattice>(lattice, x, y);
+      checkAntiSymmetry<Lattice>(lattice, x, z);
+      checkAntiSymmetry<Lattice>(lattice, y, z);
+      checkTransitivity<Lattice>(lattice, x, y, z);
+
+      typename Lattice::Element xResult = x;
+      transferFunction.transfer(&(*cfgIter), xResult);
+      typename Lattice::Element yResult = y;
+      transferFunction.transfer(&(*cfgIter), yResult);
+      typename Lattice::Element zResult = z;
+      transferFunction.transfer(&(*cfgIter), zResult);
+
+      checkMonotonicity<Lattice>(
+        lattice, transferFuncName, &(*cfgIter), x, y, xResult, yResult);
+      checkMonotonicity<Lattice>(
+        lattice, transferFuncName, &(*cfgIter), x, z, xResult, zResult);
+      checkMonotonicity<Lattice>(
+        lattice, transferFuncName, &(*cfgIter), y, z, yResult, zResult);
+    }
+  }
+
+  void checkLivenessTransferFunction(analysis::CFG& cfg, Function* func) {
+    analysis::FiniteIntPowersetLattice lattice(func->getNumLocals());
+    analysis::LivenessTransferFunction transferFunction;
+
+    check<analysis::FiniteIntPowersetLattice,
+          analysis::LivenessTransferFunction>(
+      cfg, lattice, transferFunction, "LivenessTransferFunction");
+  }
+
+  void checkReachingDefinitionsTransferFunction(analysis::CFG& cfg,
+                                                Function* func) {
+    LocalGraph::GetSetses getSetses;
+    LocalGraph::Locations locations;
+    analysis::ReachingDefinitionsTransferFunction transferFunction(
+      func, getSetses, locations);
+    check<analysis::FinitePowersetLattice<LocalSet*>,
+          analysis::ReachingDefinitionsTransferFunction>(
+      cfg,
+      transferFunction.lattice,
+      transferFunction,
+      "ReachingDefinitionsTransferFunction");
+  }
+
   // Generate types and run checkers on them.
   void run(uint64_t seed) {
     // TODO: Reset the global type state to avoid monotonically increasing
@@ -238,54 +299,8 @@ struct Fuzzer {
       }
       analysis::CFG cfg = analysis::CFG::fromFunction(currFunc);
 
-      analysis::FiniteIntPowersetLattice lattice(currFunc->getNumLocals());
-      analysis::LivenessTransferFunction transferFunction;
-
-      for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
-        analysis::FiniteIntPowersetLattice::Element x = lattice.getRandom(rand);
-        analysis::FiniteIntPowersetLattice::Element y = lattice.getRandom(rand);
-        analysis::FiniteIntPowersetLattice::Element z = lattice.getRandom(rand);
-
-        checkReflexivity<analysis::FiniteIntPowersetLattice>(lattice, x);
-        checkReflexivity<analysis::FiniteIntPowersetLattice>(lattice, y);
-        checkReflexivity<analysis::FiniteIntPowersetLattice>(lattice, z);
-        checkAntiSymmetry<analysis::FiniteIntPowersetLattice>(lattice, x, y);
-        checkAntiSymmetry<analysis::FiniteIntPowersetLattice>(lattice, x, z);
-        checkAntiSymmetry<analysis::FiniteIntPowersetLattice>(lattice, y, z);
-        checkTransitivity<analysis::FiniteIntPowersetLattice>(lattice, x, y, z);
-
-        analysis::FiniteIntPowersetLattice::Element xResult = x;
-        transferFunction.transfer(&(*cfgIter), xResult);
-        analysis::FiniteIntPowersetLattice::Element yResult = y;
-        transferFunction.transfer(&(*cfgIter), yResult);
-        analysis::FiniteIntPowersetLattice::Element zResult = z;
-        transferFunction.transfer(&(*cfgIter), zResult);
-
-        checkMonotonicity<analysis::FiniteIntPowersetLattice>(
-          lattice,
-          "LivenessTransferFunction",
-          &(*cfgIter),
-          x,
-          y,
-          xResult,
-          yResult);
-        checkMonotonicity<analysis::FiniteIntPowersetLattice>(
-          lattice,
-          "LivenessTransferFunction",
-          &(*cfgIter),
-          x,
-          z,
-          xResult,
-          zResult);
-        checkMonotonicity<analysis::FiniteIntPowersetLattice>(
-          lattice,
-          "LivenessTransferFunction",
-          &(*cfgIter),
-          y,
-          z,
-          yResult,
-          zResult);
-      }
+      checkLivenessTransferFunction(cfg, currFunc);
+      checkReachingDefinitionsTransferFunction(cfg, currFunc);
     }
   }
 };

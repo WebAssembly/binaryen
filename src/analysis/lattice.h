@@ -164,6 +164,8 @@ public:
   }
 
   Element getBottom() { return intLattice.getBottom(); }
+
+  Element getRandom(Random& rand) { return intLattice.getRandom(rand); }
 };
 
 } // namespace wasm::analysis
