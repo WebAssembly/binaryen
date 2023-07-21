@@ -4910,11 +4910,11 @@ void BinaryenStringSliceIterSetNum(BinaryenExpressionRef expr,
 // Functions
 
 static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
-                                         const char* name,
-                                         HeapType type,
-                                         BinaryenType* varTypes,
-                                         BinaryenIndex numVarTypes,
-                                         BinaryenExpressionRef body) {
+                                               const char* name,
+                                               HeapType type,
+                                               BinaryenType* varTypes,
+                                               BinaryenIndex numVarTypes,
+                                               BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
   ret->type = type;
@@ -4949,7 +4949,8 @@ BinaryenFunctionRef BinaryenAddFunction2(BinaryenModuleRef module,
                                          BinaryenType* varTypes,
                                          BinaryenIndex numVarTypes,
                                          BinaryenExpressionRef body) {
-  return addFunctionInternal(module, name, HeapType(type), varTypes, numVarTypes, body);
+  return addFunctionInternal(
+    module, name, HeapType(type), varTypes, numVarTypes, body);
 }
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
