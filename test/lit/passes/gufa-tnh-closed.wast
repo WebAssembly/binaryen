@@ -99,3 +99,45 @@
     )
   )
 )
+
+;; As above, but now there is a function that can be called.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (func))
+    (type $A (func))
+    ;; CHECK:       (type $B (func))
+    (type $B (func))
+  )
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $possible (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible (type $A)
+    (drop
+      (i32.const 10)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
+    ;; This must call $possible.
+    (call_ref $A
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+)
