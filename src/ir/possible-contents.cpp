@@ -1457,7 +1457,7 @@ void TNHOracle::analyze() {
           // In optimized TNH code, a function that always traps will be turned
           // into a singleton unreachable instruction, so it is enough to check
           // for that.
-          if (func->body->is<Unreachable>()) {
+          if (curr->body->is<Unreachable>()) {
             info.traps = true;
           }
         }
@@ -1494,6 +1494,26 @@ void TNHOracle::analyze() {
   //       without calls. Any cast tells us something about the uses of that
   //       value that must reach the cast.
   // TODO: We can do a whole-program flow of this information.
+
+  // For call_ref, we need to know which functions belong to each type. Gather
+  // that first. This map will map each heap type to each function that is of
+  // that type or a subtype, i.e., might be called when that type is seen in a
+  // call_ref target.
+  std::unordered_map<HeapType, std::vector<Function*>> typeFunctions;
+  if (options.closedWorld) {
+    for (auto& func : wasm.functions) {
+      auto type = func->type;
+      while (1) {
+        typeFunctions[type].push_back(func.get());
+        if (auto super = type.getSuperType()) {
+          type = *super;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
   analysis.doAnalysis([&](Function* func, Info& info) {
     // Constructing a CFG is expensive, so only do so if we find optimization
     // opportunities.
