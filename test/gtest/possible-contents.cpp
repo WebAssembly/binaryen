@@ -287,6 +287,7 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
 
 // Asserts a and b have an intersection (or do not), and checks both orderings.
 void assertHaveIntersection(PossibleContents a, PossibleContents b) {
+std::cout << "havvve " << a << " : " << b << '\n';
   EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
   EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
 #if BINARYEN_TEST_DEBUG
@@ -526,7 +527,7 @@ void assertIntersection(PossibleContents a,
   auto intersection = a;
   intersection.intersect(b);
   EXPECT_EQ(intersection, result);
-
+std::cout << "AI " << a << " ^ " << b << " => " << result << '\n';
   EXPECT_EQ(PossibleContents::haveIntersection(a, b), !result.isNone());
 }
 
@@ -815,9 +816,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // Computing intersections is also supported with a Literal.
   assertIntersection(i32Zero, i32Zero, i32Zero);
   assertIntersection(i32One, i32Zero, none);
-  assertIntersection(i32Global1, i32Zero, none);
+  assertIntersection(i32Global1, i32Zero, i32Zero);
   assertIntersection(funcGlobal, i32Zero, none);
-  assertIntersection(PossibleContents::fullConeType(Type::i32), i32Zero, none);
+  assertIntersection(PossibleContents::fullConeType(Type::i32), i32Zero, i32Zero);
+  assertIntersection(PossibleContents::fullConeType(Type::f64), i32Zero, none);
 
   // Computing intersections is also supported with empty contents.
   assertIntersection(none, none, none);
