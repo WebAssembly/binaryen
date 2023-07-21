@@ -17,6 +17,9 @@ Current Trunk
 
 - Add a pass to reorder functions by name, which can be useful for debugging
   (e.g. comparisons after optimizations), `--reorder-functions-by-name`.
+- C API: Add BinaryenAddFunction2() which is like BinaryenAddFunction but takes
+  a heap type. The old function is kept for backwards compatibilty and as a
+  convenience.
 
 v114
 ----
