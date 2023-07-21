@@ -145,7 +145,6 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
 void PossibleContents::intersect(const PossibleContents& other) {
   // This does not yet handle all possible content.
   assert(other.isFullConeType() || other.isLiteral() || other.isNone());
-std::cout << "inter " << *this << " : " << other << '\n';
 
   if (*this == other) {
     // Nothing changes.
