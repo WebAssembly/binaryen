@@ -1840,3 +1840,33 @@
     )
   )
 )
+
+;; A CallRef with no non-trapping targets must be unreachable if traps never
+;; happen. However, this requires closed world, so we do nothing here. (This
+;; test is mirrored in gufa-tnh-closed, where closed world *is* enabled.)
+(module
+  (rec
+    (type $A (func))
+    (type $B (func))
+  )
+
+  (func $impossible (type $A)
+    ;; This cannot be called if traps never happen.
+    (unreachable)
+  )
+
+  (func $irrelevant (type $B)
+    ;; This has a similar but different type, so it is irrelevant to this
+    ;; optimization.
+    (drop
+      (i32.const 20)
+    )
+  )
+
+  (func $caller (export "out") (param $x (ref null $A))
+    ;; This call must trap: the only function of the right type will trap.
+    (call_ref $A
+      (local.get $x)
+    )
+  )
+)
