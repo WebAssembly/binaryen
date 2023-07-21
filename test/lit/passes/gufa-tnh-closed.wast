@@ -102,6 +102,7 @@
 
 ;; As above, but now there is a function that can be called.
 (module
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
@@ -138,6 +139,7 @@
 
 ;; As above, with another function of that type that traps.
 (module
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
@@ -157,6 +159,9 @@
     )
   )
 
+  ;; CHECK:      (func $impossible (type $A)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
   (func $impossible (type $A)
     (unreachable)
   )
@@ -178,11 +183,10 @@
 
 ;; As above, but now we have two possible functions. We cannot optimize here.
 (module
+  ;; CHECK:      (type $A (func))
   (type $A (func))
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
-
-  ;; CHECK:      (elem declare func $possible)
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -197,6 +201,11 @@
     )
   )
 
+  ;; CHECK:      (func $possible-2 (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $possible-2 (type $A)
     (drop
       (i32.const 20)
@@ -205,7 +214,9 @@
 
   ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.func $possible)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x funcref)
