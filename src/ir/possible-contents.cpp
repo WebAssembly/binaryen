@@ -1549,7 +1549,7 @@ void TNHOracle::analyze() {
         // We know the targets. As traps never happen, we can rule out any that
         // will trap: we won't call those. That will leave us with the actually
         // possible targets.
-        auto& targets = iter->second;
+        const auto& targets = iter->second;
         std::vector<Function*> possibleTargets;
         for (Function* target : targets) {
           auto& targetInfo = analysis.map[target];

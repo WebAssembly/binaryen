@@ -54,3 +54,48 @@
     )
   )
 )
+
+;; As above, but now there are no functions of type $A at all.
+(module
+  (rec
+    ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (func))
+    (type $A (func))
+    ;; CHECK:       (type $B (func))
+    (type $B (func))
+  )
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $irrelevant (type $B)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $irrelevant (type $B)
+    ;; This has a similar but different type, so it is irrelevant to this
+    ;; optimization.
+    (drop
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
+    ;; No function exists of type $A, so this will trap.
+    (call_ref $A
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+)
