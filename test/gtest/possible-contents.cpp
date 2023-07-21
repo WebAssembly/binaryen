@@ -287,7 +287,6 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
 
 // Asserts a and b have an intersection (or do not), and checks both orderings.
 void assertHaveIntersection(PossibleContents a, PossibleContents b) {
-std::cout << "havvve " << a << " : " << b << '\n';
   EXPECT_TRUE(PossibleContents::haveIntersection(a, b));
   EXPECT_TRUE(PossibleContents::haveIntersection(b, a));
 #if BINARYEN_TEST_DEBUG
@@ -328,7 +327,7 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(exactI32, exactI32);
   assertHaveIntersection(i32Zero, i32Zero);
   assertHaveIntersection(exactFuncSignatureType, exactFuncSignatureType);
-  assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
+  assertLackIntersection(i32Zero, i32One);
 
   // Exact types only differing by nullability can intersect (not on the null,
   // but on something else).
