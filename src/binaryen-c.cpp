@@ -4943,12 +4943,13 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
   HeapType type = Signature(Type(params), Type(results));
   return addFunctionInternal(module, name, type, varTypes, numVarTypes, body);
 }
-BinaryenFunctionRef BinaryenAddFunction2(BinaryenModuleRef module,
-                                         const char* name,
-                                         BinaryenHeapType type,
-                                         BinaryenType* varTypes,
-                                         BinaryenIndex numVarTypes,
-                                         BinaryenExpressionRef body) {
+BinaryenFunctionRef
+BinaryenAddFunctionWithHeapType(BinaryenModuleRef module,
+                                const char* name,
+                                BinaryenHeapType type,
+                                BinaryenType* varTypes,
+                                BinaryenIndex numVarTypes,
+                                BinaryenExpressionRef body) {
   return addFunctionInternal(
     module, name, HeapType(type), varTypes, numVarTypes, body);
 }

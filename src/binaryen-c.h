@@ -2726,12 +2726,12 @@ BinaryenAddFunction(BinaryenModuleRef module,
 // As BinaryenAddFunction, but takes a HeapType rather than params and results.
 // This lets you set the specific type of the function.
 BINARYEN_API BinaryenFunctionRef
-BinaryenAddFunction2(BinaryenModuleRef module,
-                     const char* name,
-                     BinaryenHeapType type,
-                     BinaryenType* varTypes,
-                     BinaryenIndex numVarTypes,
-                     BinaryenExpressionRef body);
+BinaryenAddFunctionWithHeapType(BinaryenModuleRef module,
+                                const char* name,
+                                BinaryenHeapType type,
+                                BinaryenType* varTypes,
+                                BinaryenIndex numVarTypes,
+                                BinaryenExpressionRef body);
 // Gets a function reference by name. Returns NULL if the function does not
 // exist.
 BINARYEN_API BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
