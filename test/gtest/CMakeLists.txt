@@ -5,6 +5,7 @@ set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
   possible-contents.cpp
+  printing.cpp
   stringify.cpp
   suffix_tree.cpp
   type-builder.cpp

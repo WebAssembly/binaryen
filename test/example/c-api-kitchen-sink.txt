@@ -3167,8 +3167,8 @@ TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
  (type $SomeArray (array (mut (ref null $SomeArray))))
- (type $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct)))))
  (type $SomeSignature (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature))))
+ (type $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct)))))
  (type $none_=>_none (func))
  (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
  (func $test (type $none_=>_none)
@@ -3177,5 +3177,8 @@ module with recursive GC types:
   (local $2 (ref null $SomeSignature))
   (local $3 (ref null $SomeSubStruct))
   (nop)
+ )
+ (func $test2 (type $SomeSignature) (param $0 (ref null $SomeSignature)) (param $1 (ref null $SomeArray)) (result (ref null $SomeSignature))
+  (unreachable)
  )
 )
