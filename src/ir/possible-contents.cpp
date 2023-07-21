@@ -1566,9 +1566,6 @@ void TNHOracle::analyze() {
           continue;
         }
 
-        // TODO: If one is possible, infer a Literal for callRef->target. We
-        //       don't actually need to continue down below... the callRef will
-        //       become a call anyhow.
         if (possibleTargets.size() > 1) {
           // TODO: If more than one exists, the intersection of their constraints
           //       constrains us (e.g., if they all cast to B or even further, we
@@ -1577,6 +1574,9 @@ void TNHOracle::analyze() {
         }
 
         // There is one possible call target. Continue to optimize for it below.
+        // TODO: If one is possible, infer a Literal for callRef->target. We
+        //       don't actually need to continue down below... the callRef will
+        //       become a call anyhow.
         target = possibleTargets[0]->name;
         operands = &callRef->operands;
       }
