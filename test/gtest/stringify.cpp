@@ -168,51 +168,51 @@ TEST_F(StringifyTest, Stringify) {
   stringify.walkModule(&wasm);
 
   EXPECT_EQ(stringify.hashString,
-            (std::vector<unsigned>{
+            (std::vector<uint32_t>{
               0,             // function block evaluated as a whole
-              (unsigned)-1,  // separate function block from function contents
+              (uint32_t)-1,  // separate function block from function contents
               1,             // block_a evaluated as a whole
               2,             // block_b evaluated as a whole
               3,             // block_c evaluated as a whole
               1,             // block_d has the same contents as block_a
               3,             // block_e has the same contents as block_c
               4,             // block_f evaluated as a whole
-              (unsigned)-2,  // separate blocks from block contents
+              (uint32_t)-2,  // separate blocks from block contents
               5,             // i32.const 20
               6,             // drop, all drops will be the same symbol
               7,             // i32.const 10
               6,             // drop
-              (unsigned)-3,  // separate block_a contents
+              (uint32_t)-3,  // separate block_a contents
               8,             // i32.const 0, if condition
               9,             // block_b's if evaluated as a whole
               6,             // drop
-              (unsigned)-4,  // separate block_b contents
+              (uint32_t)-4,  // separate block_b contents
               10,            // i32.const 1, if condition
               11,            // block_c's if evaluated as a whole
               6,             // drop
-              (unsigned)-5,  // separate block_c contents
+              (uint32_t)-5,  // separate block_c contents
               5,             // i32.const 20
               6,             // drop
               7,             // i32.const 10
               6,             // drop
-              (unsigned)-6,  // separate block_d contents
+              (uint32_t)-6,  // separate block_d contents
               10,            // i32.const 1, if condition
               11,            // block_e if evaluated as a whole
               6,             // drop
-              (unsigned)-7,  // separate block_e contents
+              (uint32_t)-7,  // separate block_e contents
               8,             // i32.const 0, if condition
               11,            // block_f's if evaluated as a whole
               6,             // drop
-              (unsigned)-8,  // separate block_f contents
+              (uint32_t)-8,  // separate block_f contents
               12,            // i32.const 40
-              (unsigned)-9,  // separate block_b if-true
+              (uint32_t)-9,  // separate block_b if-true
               13,            // i32.const 5
-              (unsigned)-10, // separate block_b if-false
+              (uint32_t)-10, // separate block_b if-false
               14,            // i32.const 30
-              (unsigned)-11, // separate block_c if-true
+              (uint32_t)-11, // separate block_c if-true
               14,            // i32.const 30
-              (unsigned)-12, // separate block_e if-true
+              (uint32_t)-12, // separate block_e if-true
               14,            // i32.const 30
-              (unsigned)-13  // separate block_f if-true
+              (uint32_t)-13  // separate block_f if-true
             }));
 }
