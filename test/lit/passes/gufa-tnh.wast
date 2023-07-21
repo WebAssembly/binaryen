@@ -1886,7 +1886,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x funcref)
-    ;; This call must trap: the only function of the right type will trap.
+    ;; In closed world this call must trap, as the only function of the right
+    ;; type will trap. But we are in open world so we do not optimize here.
     (call_ref $A
       (ref.cast $A
         (local.get $x)
