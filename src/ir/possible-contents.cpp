@@ -2156,7 +2156,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
   auto oldContents = contents;
 
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "updateContents\n";
+  std::cout << "\nupdateContents\n";
   dump(getLocation(locationIndex));
   contents.dump(std::cout, &wasm);
   std::cout << "\n with new contents \n";
@@ -2383,11 +2383,19 @@ void Flower::connectDuringFlow(Location from, Location to) {
 void Flower::filterExpressionContents(PossibleContents& contents,
                                       const ExpressionLocation& exprLoc,
                                       bool& worthSendingMore) {
+  auto type = exprLoc.expr->type;
+
+  if (type.isTuple()) {
+    // TODO: Optimize tuples here as well. We could need to take into account
+    //       exprLoc.tupleIndex for that in all the below.
+    return;
+  }
+
   // The caller cannot know of a situation where it might not be worth sending
   // more to a reference - all that logic is in here. That is, the rest of this
   // function is the only place we can mark |worthSendingMore| as false for a
   // reference.
-  bool isRef = exprLoc.expr->type.isRef();
+  bool isRef = type.isRef();
   if (isRef) {
     assert(worthSendingMore);
   }
@@ -2396,7 +2404,9 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // we know better from the TNH oracle. Nothing else can pass through, so
   // filter such things out.
   auto maximalContents = getTNHContents(exprLoc.expr);
-  // XXX not a full cone any more!
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+  std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains " << maximalContents << "\n";
+#endif
   contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
@@ -2664,7 +2674,7 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << '\n';
+    std::cout << "  exprloc \n" << *loc->expr << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<DataLocation>(&location)) {
     std::cout << "  dataloc ";
     if (wasm.typeNames.count(loc->type)) {
@@ -2674,7 +2684,7 @@ void Flower::dump(Location location) {
     }
     std::cout << " : " << loc->index << '\n';
   } else if (auto* loc = std::get_if<TagLocation>(&location)) {
-    std::cout << "  tagloc " << loc->tag << '\n';
+    std::cout << "  tagloc " << loc->tag << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
     std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << '\n';
