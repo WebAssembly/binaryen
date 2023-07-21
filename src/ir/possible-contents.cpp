@@ -1532,7 +1532,46 @@ void TNHOracle::analyze() {
         // direct call: the inliner will inline the singleton unreachable in the
         // target function anyhow.
       } else if ([[maybe_unused]]auto* callRef = call->dynCast<CallRef>()) {
-        continue; // TODO
+        auto targetType = callRef->target->type;
+        if (!targetType.isRef()) {
+          // This is unreachable or null, and other passes will optimize that.
+          continue;
+        }
+
+        auto iter = typeFunctions.find(targetType.getHeapType());
+        if (iter == typeFunctions.end()) {
+          // No function exists of this type, so the call_ref will trap. We can
+          // mark the target as unreachable, which has the identical effect.
+          info.inferences[callRef->target] = Type::unreachable;
+          continue;
+        }
+
+        // We know the targets. As traps never happen, we can rule out any that
+        // will trap: we won't call those. That will leave us with the actually
+        // possible targets.
+        auto& targets = iter->second;
+        std::vector<Function*> possibleTargets;
+        for (Function* target : targets) {
+          auto& targetInfo = analysis.map[target];
+          if (targetInfo.traps) {
+            continue;
+          }
+          // TODO: if our operands will fail a cast, same as a trap.
+          possibleTargets.push_back(target);
+        }
+
+        if (possibleTargets.empty()) {
+          // No target is possible.
+          info.inferences[callRef->target] = Type::unreachable;
+          continue;
+        }
+
+        // TODO: If one is possible, infer a Literal for callRef->target. We
+        //       don't actually need to continue down below... the callRef will
+        //       become a call anyhow.
+        // TODO: If more than one exists, the intersection of their constraints
+        //       constrains us (e.g., if they all cast to B or even further, we
+        //       must be sending a B), and we can continue down below.
       }
 
       auto& targetInfo = analysis.map[wasm.getFunction(target)];
