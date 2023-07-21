@@ -1607,11 +1607,11 @@ void TNHOracle::analyze() {
         }
 
         // There is one possible call target. Continue to optimize for it below.
-        // TODO: If one is possible, infer a Literal for callRef->target. We
-        //       don't actually need to continue down below... the callRef will
-        //       become a call anyhow.
-        target = possibleTargets[0]->name;
-        operands = &callRef->operands;
+        auto target = possibleTargets[0]->name;
+        info.inferences[callRef->target] = PossibleContents::literal(
+          Literal(target, wasm.getFunction(target)->type)
+        );
+        continue;
       }
 
       auto& targetInfo = analysis.map[wasm.getFunction(target)];
