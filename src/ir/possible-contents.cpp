@@ -396,8 +396,7 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   if (a.isLiteral()) {
     // Note we already checked for |a == b| above. We need b to be a set that
     // contains the literal a.
-    return !b.isLiteral() &&
-           Type::isSubType(a.getType(), b.getType());
+    return !b.isLiteral() && Type::isSubType(a.getType(), b.getType());
   }
 
   if (b.isLiteral()) {
@@ -1360,7 +1359,7 @@ public:
       auto& contents = iter->second;
       // We only store useful types: refinements, or unreachable if we proved
       // nothing can appear there.
-      [[maybe_unused]]auto contentType = contents.getType();
+      [[maybe_unused]] auto contentType = contents.getType();
       assert(contentType != curr->type &&
              (Type::isSubType(contentType, curr->type) ||
               contentType == Type::unreachable));
@@ -1475,28 +1474,16 @@ void TNHOracle::analyze() {
           noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
         }
 
-        void visitStructGet(StructGet* curr) {
-          notePossibleTrap(curr->ref);
-        }
-        void visitStructSet(StructSet* curr) {
-          notePossibleTrap(curr->ref);
-        }
-        void visitArrayGet(ArrayGet* curr) {
-          notePossibleTrap(curr->ref);
-        }
-        void visitArraySet(ArraySet* curr) {
-          notePossibleTrap(curr->ref);
-        }
-        void visitArrayLen(ArrayLen* curr) {
-          notePossibleTrap(curr->ref);
-        }
+        void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
+        void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+        void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
+        void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+        void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
         void visitArrayCopy(ArrayCopy* curr) {
           notePossibleTrap(curr->srcRef);
           notePossibleTrap(curr->destRef);
         }
-        void visitArrayFill(ArrayFill* curr) {
-          notePossibleTrap(curr->ref);
-        }
+        void visitArrayFill(ArrayFill* curr) { notePossibleTrap(curr->ref); }
 
         void visitFunction(Function* curr) {
           // In optimized TNH code, a function that always traps will be turned
@@ -1576,7 +1563,7 @@ void TNHOracle::analyze() {
         // Note that we don't need to do anything for targetInfo.traps for a
         // direct call: the inliner will inline the singleton unreachable in the
         // target function anyhow.
-      } else if ([[maybe_unused]]auto* callRef = call->dynCast<CallRef>()) {
+      } else if ([[maybe_unused]] auto* callRef = call->dynCast<CallRef>()) {
         auto targetType = callRef->target->type;
         if (!targetType.isRef()) {
           // This is unreachable or null, and other passes will optimize that.
@@ -1612,9 +1599,10 @@ void TNHOracle::analyze() {
         }
 
         if (possibleTargets.size() > 1) {
-          // TODO: If more than one exists, the intersection of their constraints
-          //       constrains us (e.g., if they all cast to B or even further, we
-          //       must be sending a B), and we can continue down below.
+          // TODO: If more than one exists, the intersection of their
+          // constraints
+          //       constrains us (e.g., if they all cast to B or even further,
+          //       we must be sending a B), and we can continue down below.
           continue;
         }
 
@@ -1686,7 +1674,8 @@ void TNHOracle::analyze() {
               auto intersectionType = intersection.getType();
               if (intersectionType != curr->type) {
                 // We inferred a more refined type.
-                info.inferences[curr] = PossibleContents::fullConeType(intersectionType);
+                info.inferences[curr] =
+                  PossibleContents::fullConeType(intersectionType);
               }
             } else if (intersection.isNone()) {
               // Nothing is possible here, so this must be unreachable code.
@@ -2405,7 +2394,8 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // filter such things out.
   auto maximalContents = getTNHContents(exprLoc.expr);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-  std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains " << maximalContents << "\n";
+  std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains "
+            << maximalContents << "\n";
 #endif
   contents.intersect(maximalContents);
   if (contents.isNone()) {
@@ -2674,7 +2664,8 @@ void Flower::writeToData(Expression* ref, Expression* value, Index fieldIndex) {
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
 void Flower::dump(Location location) {
   if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-    std::cout << "  exprloc \n" << *loc->expr << " : " << loc->tupleIndex << '\n';
+    std::cout << "  exprloc \n"
+              << *loc->expr << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<DataLocation>(&location)) {
     std::cout << "  dataloc ";
     if (wasm.typeNames.count(loc->type)) {

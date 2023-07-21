@@ -526,7 +526,6 @@ void assertIntersection(PossibleContents a,
   auto intersection = a;
   intersection.intersect(b);
   EXPECT_EQ(intersection, result);
-std::cout << "AI " << a << " ^ " << b << " => " << result << '\n';
   EXPECT_EQ(PossibleContents::haveIntersection(a, b), !result.isNone());
 }
 
@@ -817,7 +816,8 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   assertIntersection(i32One, i32Zero, none);
   assertIntersection(i32Global1, i32Zero, i32Zero);
   assertIntersection(funcGlobal, i32Zero, none);
-  assertIntersection(PossibleContents::fullConeType(Type::i32), i32Zero, i32Zero);
+  assertIntersection(
+    PossibleContents::fullConeType(Type::i32), i32Zero, i32Zero);
   assertIntersection(PossibleContents::fullConeType(Type::f64), i32Zero, none);
 
   // Computing intersections is also supported with empty contents.
