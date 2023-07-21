@@ -126,7 +126,7 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // use the same value for matching expressions. A custom hasher and
   // equator is provided in order to separate out evaluation of the if-condition
   // when evaluating if expressions.
-  std::unordered_map<Expression*, unsigned, StringifyHasher, StringifyEquator>
+  std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
   void addUniqueSymbol();
