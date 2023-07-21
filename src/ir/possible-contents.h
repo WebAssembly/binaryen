@@ -176,9 +176,8 @@ public:
   }
 
   // Removes anything not in |other| from this object, so that it ends up with
-  // only their intersection. Currently this only handles an intersection with a
-  // full cone.
-  void intersectWithFullCone(const PossibleContents& other);
+  // only their intersection.
+  void intersect(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }

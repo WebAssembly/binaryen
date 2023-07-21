@@ -142,8 +142,14 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
   return ConeType{lub, newDepth};
 }
 
-void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
-  assert(other.isFullConeType());
+void PossibleContents::intersect(const PossibleContents& other) {
+  // This does not yet handle all possible content.
+  assert(other.isFullConeType() || other.isLiteral() || other.isNone());
+
+  if (*this == other) {
+    // Nothing changes.
+    return;
+  }
 
   if (isSubContents(other, *this)) {
     // The intersection is just |other|.
@@ -154,7 +160,23 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
 
   if (!haveIntersection(*this, other)) {
     // There is no intersection at all.
-    // Note that this code path handles |this| being None.
+    // Note that this code path handles |this| or |other| being None.
+    value = None();
+    return;
+  }
+
+  if (other.isLiteral()) {
+    // Note we already checked for |*this == other| above.
+    if (!isLiteral() && getType() == other.getType()) {
+      // |other| is a literal and |this| has the same type, and is not another
+      // literal, so it is a global or a cone. That means the intersection is
+      // the literal.
+      assert(isGlobal() || isConeType());
+      value = other.value;
+      return;
+    }
+
+    // In all other cases, there is no intersection.
     value = None();
     return;
   }
@@ -1638,7 +1660,7 @@ void TNHOracle::analyze() {
             // we know only their intersection can appear here.
             auto declared = PossibleContents::fullConeType(curr->type);
             auto intersection = PossibleContents::fullConeType(castType);
-            intersection.intersectWithFullCone(declared);
+            intersection.intersect(declared);
             if (intersection.isConeType()) {
               auto intersectionType = intersection.getType();
               if (intersectionType != curr->type) {
@@ -2351,7 +2373,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // filter such things out.
   auto maximalContents = getTNHContents(exprLoc.expr);
   // XXX not a full cone any more!
-  contents.intersectWithFullCone(maximalContents);
+  contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
     return;
@@ -2387,7 +2409,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // There is a chance that the intersection is equal to the maximal contents,
   // which would mean nothing more can arrive here. (Note that we can't
   // normalize |maximalContents| before the intersection as
-  // intersectWithFullCone assumes a full/infinite cone.)
+  // intersect assumes a full/infinite cone.)
   normalizeConeType(maximalContents);
 
   if (contents == maximalContents) {
