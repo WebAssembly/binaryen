@@ -102,13 +102,7 @@
 
 ;; As above, but now there is a function that can be called.
 (module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (func))
-    (type $A (func))
-    ;; CHECK:       (type $B (func))
-    (type $B (func))
-  )
+  (type $A (func))
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
@@ -141,5 +135,87 @@
     )
   )
 )
+
+;; As above, with another function of that type that traps.
+(module
+  (type $A (func))
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (elem declare func $possible)
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $possible (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible (type $A)
+    (drop
+      (i32.const 10)
+    )
+  )
+
+  (func $impossible (type $A)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.func $possible)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
+    ;; This must call $possible, as the trapping function won't be called.
+    (call_ref $A
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; As above, but now we have two possible functions. We cannot optimize here.
+(module
+  (type $A (func))
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (elem declare func $possible)
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $possible (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible (type $A)
+    (drop
+      (i32.const 10)
+    )
+  )
+
+  (func $possible-2 (type $A)
+    (drop
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.func $possible)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
+    (call_ref $A
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+)
+
 
 ;; TODO: one target has a param that will trap
