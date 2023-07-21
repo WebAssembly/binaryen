@@ -27,6 +27,7 @@ struct Fuzzer {
 
   Fuzzer(bool verbose) : verbose(verbose), rand({}) {}
 
+  // Checks reflexivity of a lattice element, i.e. x = x.
   template<typename Lattice>
   void checkReflexivity(Lattice& lattice, typename Lattice::Element& element) {
     analysis::LatticeComparison result = lattice.compare(element, element);
@@ -39,6 +40,9 @@ struct Fuzzer {
     }
   }
 
+  // Checks that given two lattice elements x and y, if x < y, then y > x. We
+  // don't actually check anti-symmetry since the lattice comparison has an
+  // explicit equality comparison.
   template<typename Lattice>
   void checkAntiSymmetry(Lattice& lattice,
                          typename Lattice::Element& x,
@@ -67,6 +71,8 @@ struct Fuzzer {
   }
 
 private:
+  // Helper to print out error messages for the numerous cases of transitivity
+  // checking.
   template<typename Lattice>
   void transitivityErrorPrinter(std::ostream& os,
                                 typename Lattice::Element& x,
@@ -86,6 +92,8 @@ private:
   }
 
 public:
+  // Given three lattice elements, checks if transitivity applies (i.e. x > y
+  // and y > z implies x > z).
   template<typename Lattice>
   void checkTransitivity(Lattice& lattice,
                          typename Lattice::Element& x,
@@ -94,6 +102,11 @@ public:
     analysis::LatticeComparison xy = lattice.compare(x, y);
     analysis::LatticeComparison yz = lattice.compare(y, z);
     analysis::LatticeComparison xz = lattice.compare(x, z);
+
+    // We must enumerate every possible ordering between the three lattice
+    // elements in which transitivity could be violated. We check by using a
+    // case consisting of two orderings, and then checking if the third ordering
+    // obeys transitivity.
 
     if (xy == analysis::LatticeComparison::EQUAL &&
         yz == analysis::LatticeComparison::EQUAL) {
@@ -170,6 +183,10 @@ public:
     }
   }
 
+  // Given two input - output lattice pairs of a transfer function, checks if
+  // the transfer function is monotonic. If this is violated, then we print out
+  // the CFG block input which caused the transfer function to exhibit
+  // non-monotonic behavior.
   template<typename Lattice>
   void checkMonotonicity(Lattice& lattice,
                          std::string transferFunctionName,
@@ -182,18 +199,23 @@ public:
     analysis::LatticeComparison afterCmp =
       lattice.compare(firstResult, secondResult);
 
+    // Cases in which monotonicity is preserved.
     if (beforeCmp == analysis::LatticeComparison::NO_RELATION) {
+      // If there is no relation in the first place, we can't expect anything.
       return;
     } else if (beforeCmp == analysis::LatticeComparison::LESS &&
                (afterCmp == analysis::LatticeComparison::LESS ||
                 afterCmp == analysis::LatticeComparison::EQUAL)) {
+      // x < y and f(x) <= f(y)
       return;
     } else if (beforeCmp == analysis::LatticeComparison::GREATER &&
                (afterCmp == analysis::LatticeComparison::GREATER ||
                 afterCmp == analysis::LatticeComparison::EQUAL)) {
+      // x > y and f(x) >= f(y)
       return;
     } else if (beforeCmp == analysis::LatticeComparison::EQUAL &&
                afterCmp == analysis::LatticeComparison::EQUAL) {
+      // x = y and f(x) = f(y)
       return;
     }
 
@@ -215,6 +237,10 @@ public:
     Fatal() << ss.str();
   }
 
+  // Helper function for checking the properties of lattices and transfer
+  // functiosn on a CFG of a randomly generated function. It does this by
+  // radomly generating three lattice elements, and then using them as input
+  // states for a CFG block on which the transfer function is applied.
   template<typename Lattice, typename TransferFunction>
   void check(analysis::CFG& cfg,
              Lattice& lattice,
@@ -225,6 +251,7 @@ public:
       typename Lattice::Element y = lattice.getRandom(rand);
       typename Lattice::Element z = lattice.getRandom(rand);
 
+      // Check lattice properties
       checkReflexivity<Lattice>(lattice, x);
       checkReflexivity<Lattice>(lattice, y);
       checkReflexivity<Lattice>(lattice, z);
@@ -233,6 +260,7 @@ public:
       checkAntiSymmetry<Lattice>(lattice, y, z);
       checkTransitivity<Lattice>(lattice, x, y, z);
 
+      // Apply transfer function on each lattice element.
       typename Lattice::Element xResult = x;
       transferFunction.transfer(&(*cfgIter), xResult);
       typename Lattice::Element yResult = y;
@@ -240,6 +268,7 @@ public:
       typename Lattice::Element zResult = z;
       transferFunction.transfer(&(*cfgIter), zResult);
 
+      // Check monotonicity for every pair of transfer function outputs.
       checkMonotonicity<Lattice>(
         lattice, transferFuncName, &(*cfgIter), x, y, xResult, yResult);
       checkMonotonicity<Lattice>(
@@ -249,6 +278,8 @@ public:
     }
   }
 
+  // Checks properties of the LivenessTransferFunction on a randomly generated
+  // module function.
   void checkLivenessTransferFunction(analysis::CFG& cfg, Function* func) {
     analysis::FiniteIntPowersetLattice lattice(func->getNumLocals());
     analysis::LivenessTransferFunction transferFunction;
@@ -258,6 +289,8 @@ public:
       cfg, lattice, transferFunction, "LivenessTransferFunction");
   }
 
+  // Checks properties of the ReachingDefinitionsTransferFunction on a randomly
+  // generated module function.
   void checkReachingDefinitionsTransferFunction(analysis::CFG& cfg,
                                                 Function* func) {
     LocalGraph::GetSetses getSetses;
@@ -272,7 +305,9 @@ public:
       "ReachingDefinitionsTransferFunction");
   }
 
-  // Generate types and run checkers on them.
+  // Generates a module. The module is used as an input to fuzz transfer
+  // functions as well as randomly generated lattice element states. Lattice
+  // properties are also fuzzed from the randomly generated states.
   void run(uint64_t seed) {
     // TODO: Reset the global type state to avoid monotonically increasing
     // memory use.
@@ -294,6 +329,7 @@ public:
 
     for (auto& func : testModule.functions) {
       Function* currFunc = func.get();
+      // Imported functions can't be fuzzed here as they don't have a body.
       if (currFunc->imported()) {
         continue;
       }

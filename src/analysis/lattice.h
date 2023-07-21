@@ -104,6 +104,7 @@ public:
   // Returns an instance of the bottom lattice element.
   Element getBottom();
 
+  // Returns a random lattice element. Used for fuzzing.
   Element getRandom(Random& rand);
 };
 
@@ -165,6 +166,7 @@ public:
 
   Element getBottom() { return intLattice.getBottom(); }
 
+  // Returns a random lattice element. Used for fuzzing.
   Element getRandom(Random& rand) { return intLattice.getRandom(rand); }
 };
 
