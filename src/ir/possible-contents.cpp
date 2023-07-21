@@ -1496,7 +1496,7 @@ void TNHOracle::analyze() {
       if (auto call_ = call->dynCast<Call>()) {
         target = call_->target;
         operands = &call_->operands;
-      } else if (call->is<CallRef>()) {
+      } else if ([[maybe_unused]]auto* callRef = call->dynCast<CallRef>()) {
         continue; // TODO
       }
 
