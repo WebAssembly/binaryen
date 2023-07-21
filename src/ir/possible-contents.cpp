@@ -2387,7 +2387,10 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // more to a reference - all that logic is in here. That is, the rest of this
   // function is the only place we can mark |worthSendingMore| as false for a
   // reference.
-  assert(worthSendingMore);
+  bool isRef = exprLoc.expr->type.isRef();
+  if (isRef) {
+    assert(worthSendingMore);
+  }
 
   // The maximal contents here are the declared type and all subtypes, unless
   // we know better from the TNH oracle. Nothing else can pass through, so
@@ -2397,6 +2400,13 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
+    return;
+  }
+
+  // For references we need to normalize the intersection, see below. For non-
+  // references, we are done (we did all the relevant work in the intersect()
+  // call).
+  if (!isRef) {
     return;
   }
 
