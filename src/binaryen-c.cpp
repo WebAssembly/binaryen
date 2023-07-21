@@ -4909,17 +4909,15 @@ void BinaryenStringSliceIterSetNum(BinaryenExpressionRef expr,
 
 // Functions
 
-BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
-                                        const char* name,
-                                        BinaryenType params,
-                                        BinaryenType results,
-                                        BinaryenType* varTypes,
-                                        BinaryenIndex numVarTypes,
-                                        BinaryenExpressionRef body) {
+static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
+                                               const char* name,
+                                               HeapType type,
+                                               BinaryenType* varTypes,
+                                               BinaryenIndex numVarTypes,
+                                               BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  // TODO: Take a HeapType rather than params and results.
-  ret->type = Signature(Type(params), Type(results));
+  ret->type = type;
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -4933,6 +4931,27 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
   }
 
   return ret;
+}
+
+BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
+                                        const char* name,
+                                        BinaryenType params,
+                                        BinaryenType results,
+                                        BinaryenType* varTypes,
+                                        BinaryenIndex numVarTypes,
+                                        BinaryenExpressionRef body) {
+  HeapType type = Signature(Type(params), Type(results));
+  return addFunctionInternal(module, name, type, varTypes, numVarTypes, body);
+}
+BinaryenFunctionRef
+BinaryenAddFunctionWithHeapType(BinaryenModuleRef module,
+                                const char* name,
+                                BinaryenHeapType type,
+                                BinaryenType* varTypes,
+                                BinaryenIndex numVarTypes,
+                                BinaryenExpressionRef body) {
+  return addFunctionInternal(
+    module, name, HeapType(type), varTypes, numVarTypes, body);
 }
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
