@@ -113,7 +113,7 @@ struct StringifyEquator {
 
 struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // After calling walkModule, this vector contains the result of encoding a
-  // wasm module as a string of uint64_t values. Each value represents either an
+  // wasm module as a string of uint32_t values. Each value represents either an
   // Expression or a separator to mark the end of control flow.
   std::vector<uint32_t> hashString;
   // A monotonic counter used to ensure that unique expressions in the
