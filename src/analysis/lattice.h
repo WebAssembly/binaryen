@@ -12,6 +12,22 @@ namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
 
+std::string LatticeComparisonNames[4] = {
+  "No Relation", "Equal", "Less", "Greater"};
+std::string LatticeComparisonSymbols[4] = {"?", "=", "<", ">"};
+
+// If parameter "comparison" compares x and y, the function returns the opposite
+// direction comparison between y and x.
+inline LatticeComparison reverseComparison(LatticeComparison comparison) {
+  if (comparison == LatticeComparison::LESS) {
+    return LatticeComparison::GREATER;
+  } else if (comparison == LatticeComparison::GREATER) {
+    return LatticeComparison::LESS;
+  } else {
+    return comparison;
+  }
+}
+
 template<typename Lattice>
 constexpr bool has_getBottom =
   std::is_invocable_r<typename Lattice::Element,

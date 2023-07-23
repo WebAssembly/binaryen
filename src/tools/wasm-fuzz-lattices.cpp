@@ -13,6 +13,7 @@
 
 namespace wasm {
 using RandEngine = std::mt19937_64;
+using namespace analysis;
 
 uint64_t getSeed() {
   // Return a (truly) random 64-bit value.
@@ -29,157 +30,99 @@ struct Fuzzer {
 
   // Checks reflexivity of a lattice element, i.e. x = x.
   template<typename Lattice>
-  void checkReflexivity(Lattice& lattice, typename Lattice::Element& element) {
-    analysis::LatticeComparison result = lattice.compare(element, element);
-    if (result != analysis::LatticeComparison::EQUAL) {
+  void checkReflexivity(Lattice& lattice,
+                        std::string latticeName,
+                        typename Lattice::Element& element) {
+    LatticeComparison result = lattice.compare(element, element);
+    if (result != LatticeComparison::EQUAL) {
       std::stringstream ss;
-      ss << "Lattice ";
+      ss << latticeName << " element ";
       element.print(ss);
       ss << " is not reflexive.\n";
       Fatal() << ss.str();
     }
   }
 
-  // Checks that given two lattice elements x and y, if x < y, then y > x. We
-  // don't actually check anti-symmetry since the lattice comparison has an
-  // explicit equality comparison.
+  // Anti-Symmetry is defined as x <= y and y <= x imply x = y. Due to the
+  // fact that the compare(x, y) function of the lattice explicitly tells
+  // us if two lattice elements are <, =, or = instead of providing a
+  // <= comparison, it is not useful to check for anti-symmetry as it is defined
+  // in the fuzzer.
+
+  // Instead, we check for a related concept that x < y implies y > x, and
+  // vice versa in this checkAntiSymmetry function.
   template<typename Lattice>
   void checkAntiSymmetry(Lattice& lattice,
+                         std::string latticeName,
                          typename Lattice::Element& x,
                          typename Lattice::Element& y) {
-    analysis::LatticeComparison result = lattice.compare(x, y);
-    analysis::LatticeComparison reverseResult = lattice.compare(y, x);
-    if (result == analysis::LatticeComparison::GREATER &&
-        reverseResult != analysis::LatticeComparison::LESS) {
+    LatticeComparison result = lattice.compare(x, y);
+    LatticeComparison reverseResult = lattice.compare(y, x);
+
+    if (reverseComparison(result) != reverseResult) {
       std::stringstream ss;
-      ss << "Lattices x = ";
+      ss << latticeName << " has ";
       x.print(ss);
-      ss << " and y = ";
+      ss << " " << LatticeComparisonNames[result] << " ";
       y.print(ss);
-      ss << " are not anti-symmetric. x > y, but y < x is not true.\n";
-      Fatal() << ss.str();
-    } else if (result == analysis::LatticeComparison::LESS &&
-               reverseResult != analysis::LatticeComparison::GREATER) {
-      std::stringstream ss;
-      ss << "Lattices x = ";
-      x.print(ss);
-      ss << " and y = ";
-      y.print(ss);
-      ss << " are not anti-symmetric. x < y, but y > x is not true.\n";
+      ss << " but reverse direction comparison is "
+         << LatticeComparisonNames[reverseResult] << ".\n";
       Fatal() << ss.str();
     }
   }
 
-private:
-  // Helper to print out error messages for the numerous cases of transitivity
-  // checking.
-  template<typename Lattice>
-  void transitivityErrorPrinter(std::ostream& os,
-                                typename Lattice::Element& x,
-                                typename Lattice::Element& y,
-                                typename Lattice::Element& z,
-                                std::string relation1,
-                                std::string relation2,
-                                std::string failedRelation) {
-    os << "Lattices x = ";
-    x.print(os);
-    os << ", y = ";
-    y.print(os);
-    os << ", and z = ";
-    z.print(os);
-    os << " are not transitive. " << relation1 << " and " << relation2
-       << ", but " << failedRelation << " is not true.\n";
-  }
-
-public:
-  // Given three lattice elements, checks if transitivity applies (i.e. x > y
-  // and y > z implies x > z).
+  // Given three lattice elements x, y, and z, checks if transitivity holds
+  // between them.
   template<typename Lattice>
   void checkTransitivity(Lattice& lattice,
+                         std::string latticeName,
                          typename Lattice::Element& x,
                          typename Lattice::Element& y,
                          typename Lattice::Element& z) {
-    analysis::LatticeComparison xy = lattice.compare(x, y);
-    analysis::LatticeComparison yz = lattice.compare(y, z);
-    analysis::LatticeComparison xz = lattice.compare(x, z);
+    LatticeComparison xy = lattice.compare(x, y);
+    LatticeComparison yz = lattice.compare(y, z);
+    LatticeComparison xz = lattice.compare(x, z);
 
-    // We must enumerate every possible ordering between the three lattice
-    // elements in which transitivity could be violated. We check by using a
-    // case consisting of two orderings, and then checking if the third ordering
-    // obeys transitivity.
+    LatticeComparison yx = reverseComparison(xy);
+    LatticeComparison zy = reverseComparison(yz);
 
-    if (xy == analysis::LatticeComparison::EQUAL &&
-        yz == analysis::LatticeComparison::EQUAL) {
-      if (xz != analysis::LatticeComparison::EQUAL) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x = y", "y = z", "x = z");
-        Fatal() << ss.str();
-      }
-    } else if (xy == analysis::LatticeComparison::LESS &&
-               yz == analysis::LatticeComparison::LESS) {
-      if (xz != analysis::LatticeComparison::LESS) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x < y", "y < z", "x < z");
-        Fatal() << ss.str();
-      }
-    } else if (xy == analysis::LatticeComparison::GREATER &&
-               yz == analysis::LatticeComparison::GREATER) {
-      if (xz != analysis::LatticeComparison::GREATER) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x > y", "y > z", "x > z");
-        Fatal() << ss.str();
-      }
-    } else if (xz == analysis::LatticeComparison::EQUAL &&
-               yz == analysis::LatticeComparison::EQUAL) {
-      if (xy != analysis::LatticeComparison::EQUAL) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x = z", "z = y", "x = y");
-        Fatal() << ss.str();
-      }
-    } else if (xz == analysis::LatticeComparison::LESS &&
-               yz == analysis::LatticeComparison::GREATER) {
-      if (xy != analysis::LatticeComparison::LESS) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x < z", "z < y", "x < y");
-        Fatal() << ss.str();
-      }
-    } else if (xz == analysis::LatticeComparison::GREATER &&
-               yz == analysis::LatticeComparison::LESS) {
-      if (xy != analysis::LatticeComparison::GREATER) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "x > z", "z > y", "x > y");
-        Fatal() << ss.str();
-      }
-    } else if (xy == analysis::LatticeComparison::EQUAL &&
-               xz == analysis::LatticeComparison::EQUAL) {
-      if (yz != analysis::LatticeComparison::EQUAL) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "y = x", "x = z", "y = z");
-        Fatal() << ss.str();
-      }
-    } else if (xy == analysis::LatticeComparison::LESS &&
-               xz == analysis::LatticeComparison::GREATER) {
-      if (yz != analysis::LatticeComparison::GREATER) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "y > x", "x > z", "y > z");
-        Fatal() << ss.str();
-      }
-    } else if (xy == analysis::LatticeComparison::GREATER &&
-               xz == analysis::LatticeComparison::LESS) {
-      if (yz != analysis::LatticeComparison::LESS) {
-        std::stringstream ss;
-        transitivityErrorPrinter<Lattice>(
-          ss, x, y, z, "y < x", "x < z", "y < z");
-        Fatal() << ss.str();
-      }
+    // Cover all permutations of x, y, and z.
+    if (xy != LatticeComparison::NO_RELATION && xy == yz && yz != xz) {
+      std::stringstream ss;
+      ss << latticeName << " elements a = ";
+      x.print(ss);
+      ss << ", b = ";
+      y.print(ss);
+      ss << ", and c = ";
+      z.print(ss);
+      ss << " are not transitive. a" << LatticeComparisonSymbols[xy]
+         << "b and b" << LatticeComparisonSymbols[yz] << "c, but a"
+         << LatticeComparisonSymbols[xz] << ".\n";
+      Fatal() << ss.str();
+    } else if (yx != LatticeComparison::NO_RELATION && yx == xz && xz != yz) {
+      std::stringstream ss;
+      ss << latticeName << " elements a = ";
+      y.print(ss);
+      ss << ", b = ";
+      x.print(ss);
+      ss << ", and c = ";
+      z.print(ss);
+      ss << " are not transitive. a" << LatticeComparisonSymbols[yx]
+         << "b and b" << LatticeComparisonSymbols[xz] << "c, but a"
+         << LatticeComparisonSymbols[yz] << ".\n";
+      Fatal() << ss.str();
+    } else if (xz != LatticeComparison::NO_RELATION && xz == zy && zy != xy) {
+      std::stringstream ss;
+      ss << latticeName << " elements a = ";
+      x.print(ss);
+      ss << ", b = ";
+      z.print(ss);
+      ss << ", and c = ";
+      y.print(ss);
+      ss << " are not transitive. a" << LatticeComparisonSymbols[xz]
+         << "b and b" << LatticeComparisonSymbols[zy] << "c, but a"
+         << LatticeComparisonSymbols[xy] << ".\n";
+      Fatal() << ss.str();
     }
   }
 
@@ -189,39 +132,39 @@ public:
   // non-monotonic behavior.
   template<typename Lattice>
   void checkMonotonicity(Lattice& lattice,
+                         std::string latticeName,
                          std::string transferFunctionName,
-                         const analysis::BasicBlock* cfgBlock,
+                         const BasicBlock* cfgBlock,
                          typename Lattice::Element& first,
                          typename Lattice::Element& second,
                          typename Lattice::Element& firstResult,
                          typename Lattice::Element& secondResult) {
-    analysis::LatticeComparison beforeCmp = lattice.compare(first, second);
-    analysis::LatticeComparison afterCmp =
-      lattice.compare(firstResult, secondResult);
+    LatticeComparison beforeCmp = lattice.compare(first, second);
+    LatticeComparison afterCmp = lattice.compare(firstResult, secondResult);
 
     // Cases in which monotonicity is preserved.
-    if (beforeCmp == analysis::LatticeComparison::NO_RELATION) {
+    if (beforeCmp == LatticeComparison::NO_RELATION) {
       // If there is no relation in the first place, we can't expect anything.
       return;
-    } else if (beforeCmp == analysis::LatticeComparison::LESS &&
-               (afterCmp == analysis::LatticeComparison::LESS ||
-                afterCmp == analysis::LatticeComparison::EQUAL)) {
+    } else if (beforeCmp == LatticeComparison::LESS &&
+               (afterCmp == LatticeComparison::LESS ||
+                afterCmp == LatticeComparison::EQUAL)) {
       // x < y and f(x) <= f(y)
       return;
-    } else if (beforeCmp == analysis::LatticeComparison::GREATER &&
-               (afterCmp == analysis::LatticeComparison::GREATER ||
-                afterCmp == analysis::LatticeComparison::EQUAL)) {
+    } else if (beforeCmp == LatticeComparison::GREATER &&
+               (afterCmp == LatticeComparison::GREATER ||
+                afterCmp == LatticeComparison::EQUAL)) {
       // x > y and f(x) >= f(y)
       return;
-    } else if (beforeCmp == analysis::LatticeComparison::EQUAL &&
-               afterCmp == analysis::LatticeComparison::EQUAL) {
+    } else if (beforeCmp == LatticeComparison::EQUAL &&
+               afterCmp == LatticeComparison::EQUAL) {
       // x = y and f(x) = f(y)
       return;
     }
 
     std::stringstream ss;
 
-    ss << "The lattice elements ";
+    ss << "The " << latticeName << " elements ";
     first.print(ss);
     ss << " -> ";
     firstResult.print(ss);
@@ -242,8 +185,9 @@ public:
   // radomly generating three lattice elements, and then using them as input
   // states for a CFG block on which the transfer function is applied.
   template<typename Lattice, typename TransferFunction>
-  void check(analysis::CFG& cfg,
+  void check(CFG& cfg,
              Lattice& lattice,
+             std::string latticeName,
              TransferFunction& transferFunction,
              std::string transferFuncName) {
     for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
@@ -252,13 +196,13 @@ public:
       typename Lattice::Element z = lattice.getRandom(rand);
 
       // Check lattice properties
-      checkReflexivity<Lattice>(lattice, x);
-      checkReflexivity<Lattice>(lattice, y);
-      checkReflexivity<Lattice>(lattice, z);
-      checkAntiSymmetry<Lattice>(lattice, x, y);
-      checkAntiSymmetry<Lattice>(lattice, x, z);
-      checkAntiSymmetry<Lattice>(lattice, y, z);
-      checkTransitivity<Lattice>(lattice, x, y, z);
+      checkReflexivity<Lattice>(lattice, latticeName, x);
+      checkReflexivity<Lattice>(lattice, latticeName, y);
+      checkReflexivity<Lattice>(lattice, latticeName, z);
+      checkAntiSymmetry<Lattice>(lattice, latticeName, x, y);
+      checkAntiSymmetry<Lattice>(lattice, latticeName, x, z);
+      checkAntiSymmetry<Lattice>(lattice, latticeName, y, z);
+      checkTransitivity<Lattice>(lattice, latticeName, x, y, z);
 
       // Apply transfer function on each lattice element.
       typename Lattice::Element xResult = x;
@@ -269,38 +213,59 @@ public:
       transferFunction.transfer(&(*cfgIter), zResult);
 
       // Check monotonicity for every pair of transfer function outputs.
-      checkMonotonicity<Lattice>(
-        lattice, transferFuncName, &(*cfgIter), x, y, xResult, yResult);
-      checkMonotonicity<Lattice>(
-        lattice, transferFuncName, &(*cfgIter), x, z, xResult, zResult);
-      checkMonotonicity<Lattice>(
-        lattice, transferFuncName, &(*cfgIter), y, z, yResult, zResult);
+      checkMonotonicity<Lattice>(lattice,
+                                 latticeName,
+                                 transferFuncName,
+                                 &(*cfgIter),
+                                 x,
+                                 y,
+                                 xResult,
+                                 yResult);
+      checkMonotonicity<Lattice>(lattice,
+                                 latticeName,
+                                 transferFuncName,
+                                 &(*cfgIter),
+                                 x,
+                                 z,
+                                 xResult,
+                                 zResult);
+      checkMonotonicity<Lattice>(lattice,
+                                 latticeName,
+                                 transferFuncName,
+                                 &(*cfgIter),
+                                 y,
+                                 z,
+                                 yResult,
+                                 zResult);
     }
   }
 
   // Checks properties of the LivenessTransferFunction on a randomly generated
   // module function.
-  void checkLivenessTransferFunction(analysis::CFG& cfg, Function* func) {
-    analysis::FiniteIntPowersetLattice lattice(func->getNumLocals());
-    analysis::LivenessTransferFunction transferFunction;
+  void checkLivenessTransferFunction(CFG& cfg, Function* func) {
+    FiniteIntPowersetLattice lattice(func->getNumLocals());
+    LivenessTransferFunction transferFunction;
 
-    check<analysis::FiniteIntPowersetLattice,
-          analysis::LivenessTransferFunction>(
-      cfg, lattice, transferFunction, "LivenessTransferFunction");
+    check<FiniteIntPowersetLattice, LivenessTransferFunction>(
+      cfg,
+      lattice,
+      "FiniteIntPowersetLattice",
+      transferFunction,
+      "LivenessTransferFunction");
   }
 
   // Checks properties of the ReachingDefinitionsTransferFunction on a randomly
   // generated module function.
-  void checkReachingDefinitionsTransferFunction(analysis::CFG& cfg,
-                                                Function* func) {
+  void checkReachingDefinitionsTransferFunction(CFG& cfg, Function* func) {
     LocalGraph::GetSetses getSetses;
     LocalGraph::Locations locations;
-    analysis::ReachingDefinitionsTransferFunction transferFunction(
+    ReachingDefinitionsTransferFunction transferFunction(
       func, getSetses, locations);
-    check<analysis::FinitePowersetLattice<LocalSet*>,
-          analysis::ReachingDefinitionsTransferFunction>(
+    check<FinitePowersetLattice<LocalSet*>,
+          ReachingDefinitionsTransferFunction>(
       cfg,
       transferFunction.lattice,
+      "FinitePowersetLattice<LocalSet*>",
       transferFunction,
       "ReachingDefinitionsTransferFunction");
   }
@@ -327,17 +292,17 @@ public:
     reader.build();
     rand = Random(std::move(bytes2));
 
-    for (auto& func : testModule.functions) {
-      Function* currFunc = func.get();
-      // Imported functions can't be fuzzed here as they don't have a body.
-      if (currFunc->imported()) {
-        continue;
-      }
-      analysis::CFG cfg = analysis::CFG::fromFunction(currFunc);
+    ModuleUtils::iterDefinedFunctions(testModule, [&](Function* func) {
+      CFG cfg = CFG::fromFunction(func);
 
-      checkLivenessTransferFunction(cfg, currFunc);
-      checkReachingDefinitionsTransferFunction(cfg, currFunc);
-    }
+      uint32_t analysisChoice = rand.pick(2);
+
+      if (analysisChoice == 0) {
+        checkLivenessTransferFunction(cfg, func);
+      } else if (analysisChoice == 1) {
+        checkReachingDefinitionsTransferFunction(cfg, func);
+      }
+    });
   }
 };
 
