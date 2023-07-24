@@ -1651,7 +1651,7 @@ void TNHOracle::infer() {
         blockIndexes = analysis::CFGBlockIndexes(*cfg);
       }
 
-      optimizeCall(call, call->cast<Call>->operands, targetCastParams, *blockIndexes, info);
+      optimizeCall(call, *operands, targetCastParams, *blockIndexes, info);
     }
   });
 
@@ -1672,17 +1672,17 @@ void TNHOracle::optimizeCall(Expression* call, const ExpressionList& operands, c
   // optimize while we are still in the same basic block.
 
   // Operands must exist since there is a cast param, so a param exists.
-  assert(operands->size() > 0);
-  for (int i = int(operands->size() - 1); i >= 0; i--) {
-    auto* operand = (*operands)[i];
+  assert(operands.size() > 0);
+  for (int i = int(operands.size() - 1); i >= 0; i--) {
+    auto* operand = operands[i];
 
     if (blockIndexes.get(operand) != callBlockIndex) {
       // Control flow might transfer; stop.
       break;
     }
 
-    auto iter = castParams.find(i);
-    if (iter == castParams.end()) {
+    auto iter = targetCastParams.find(i);
+    if (iter == targetCastParams.end()) {
       // This param is not cast, so skip it.
       continue;
     }
