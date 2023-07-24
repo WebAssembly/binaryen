@@ -415,3 +415,244 @@
     )
   )
 )
+
+;; As above, but now the target functions have two parameters, to check for
+;; both of their casts being noticed. The second function still casts to Y2, but
+;; it casts the second parameter to that.
+(module
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct ))
+    (type $X (struct))
+
+    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    (type $Y1 (sub $X (struct)))
+
+    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    (type $Y2 (sub $X (struct)))
+
+    ;; CHECK:       (type $A (func (param anyref anyref)))
+    (type $A (func (param anyref) (param anyref)))
+  )
+
+  ;; CHECK:      (type $funcref_funcref_funcref_funcref_=>_none (func (param funcref funcref funcref funcref)))
+
+  ;; CHECK:      (type $funcref_funcref_funcref_funcref_structref_=>_none (func (param funcref funcref funcref funcref structref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
+
+  ;; CHECK:      (export "out" (func $caller1))
+
+  ;; CHECK:      (export "out2" (func $caller2))
+
+  ;; CHECK:      (export "out3" (func $reffer))
+
+  ;; CHECK:      (func $possible-Y1 (type $A) (param $ref anyref) (param $ref2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-Y1 (type $A) (param $ref anyref) (param $ref2 anyref)
+    (drop
+      (ref.cast $Y1
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $possible-Y2 (type $A) (param $ref anyref) (param $ref2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y2
+  ;; CHECK-NEXT:    (local.get $ref2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-Y2 (type $A) (param $ref anyref) (param $ref2 anyref)
+    (drop
+      (ref.cast $Y2
+        (local.get $ref2) ;; this changed from ref to ref2.
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller1 (type $funcref_funcref_funcref_funcref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
+  ;; CHECK-NEXT:   (ref.func $possible-Y2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.new_default $Y2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.new_default $Y1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller1 (export "out")
+    (param $func1 funcref)
+    (param $func2 funcref)
+    (param $func3 funcref)
+    (param $func4 funcref)
+
+    ;; Both params are Y1. The cast to Y2 would fail, so this must call
+    ;; possible-Y1.
+    (call_ref $A
+      (struct.new $Y1)
+      (struct.new $Y1)
+      (ref.cast $A
+        (local.get $func1)
+      )
+    )
+    ;; Both params are Y2. The cast to Y1 would fail, so this must call
+    ;; possible-Y2.
+    (call_ref $A
+      (struct.new $Y2)
+      (struct.new $Y2)
+      (ref.cast $A
+        (local.get $func2)
+      )
+    )
+    ;; Cast the first to Y1 and the second to Y2. Both functions match here, so
+    ;; we cannot optimize.
+    (call_ref $A
+      (struct.new $Y1)
+      (struct.new $Y2)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+    ;; The inverse, which matches no functions at all, and we trap.
+    (call_ref $A
+      (struct.new $Y2)
+      (struct.new $Y1)
+      (ref.cast $A
+        (local.get $func4)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller2 (type $funcref_funcref_funcref_funcref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref) (param $struct structref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.func $possible-Y2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller2 (export "out2")
+    (param $func1 funcref)
+    (param $func2 funcref)
+    (param $func3 funcref)
+    (param $func4 funcref)
+    (param $struct structref)
+
+    ;; Both are structref, so both functions are possible, and we cannot
+    ;; optimize.
+    (call_ref $A
+      (local.get $struct)
+      (local.get $struct)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+    ;; Y1 in the first param works in both functions; no optimization.
+    (call_ref $A
+      (struct.new $Y1)
+      (local.get $struct)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+    ;; Y1 in the first param fails in the first, so we optimize to the second.
+    (call_ref $A
+      (struct.new $Y2)
+      (local.get $struct)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+    ;; Y1 in the first param fails in the second, so we optimize to the first.
+    (call_ref $A
+      (local.get $struct)
+      (struct.new $Y1)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+    ;; Y2 in the first param works in both functions; no optimization.
+    (call_ref $A
+      (local.get $struct)
+      (struct.new $Y2)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-Y2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffer (export "out3")
+    ;; Take references to the possible functions so that GUFA does not optimize
+    ;; calls to them away.
+    (drop
+      (ref.func $possible-Y1)
+    )
+    (drop
+      (ref.func $possible-Y2)
+    )
+  )
+)
