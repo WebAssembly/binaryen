@@ -21,9 +21,8 @@
 #include <ir/local-graph.h>
 #include <wasm-builder.h>
 
-#include "analysis/monotone-analyzer.h"
-#include "analysis/reaching-definitions-transfer-function.h"
-#include "ir/find_all.h"
+#include <analysis/monotone-analyzer.h>
+#include <analysis/reaching-definitions-transfer-function.h>
 
 namespace wasm {
 
@@ -267,22 +266,15 @@ LocalGraph::LocalGraph(Function* func) : func(func) {
 
   if (envVar) {
     analysis::CFG cfg = wasm::analysis::CFG::fromFunction(func);
-    FindAll<LocalSet> setFinder(func->body);
-    for (size_t i = 0; i < func->getNumLocals(); ++i) {
-      setFinder.list.push_back(nullptr);
-    }
-    analysis::FinitePowersetLattice<LocalSet*> lattice(std::move(setFinder.list));
+
     analysis::ReachingDefinitionsTransferFunction transferFunction(
-    lattice, func->getNumLocals());
+      func, getSetses, locations);
     analysis::MonotoneCFGAnalyzer<analysis::FinitePowersetLattice<LocalSet*>,
                                   analysis::ReachingDefinitionsTransferFunction>
-      analyzer(lattice, transferFunction, cfg);
+      analyzer(transferFunction.lattice, transferFunction, cfg);
 
     analyzer.evaluateFunctionEntry(func);
-    analyzer.evaluate();
-    transferFunction.beginResultCollection(&getSetses, &locations);
-    analyzer.collectResults();
-    transferFunction.endResultCollection();
+    analyzer.evaluateAndCollectResults();
     LocalGraphInternal::LocationCollector collector(locations, func);
   } else {
     LocalGraphInternal::Flower flower(getSetses, locations, func);
@@ -291,12 +283,8 @@ LocalGraph::LocalGraph(Function* func) : func(func) {
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
   for (auto& [get, sets] : getSetses) {
-    std::cout << "GET\n" << ShallowExpression{get} << " is influenced by\n";
+    std::cout << "GET\n" << get << " is influenced by\n";
     for (auto* set : sets) {
-      if (set) {
-        std::cout << ShallowExpression{set} << '\n';
-        continue;
-      }
       std::cout << set << '\n';
     }
   }
