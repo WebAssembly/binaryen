@@ -1347,7 +1347,8 @@ struct TNHInfo {
   //       then we can refine inside $foo (in closed world).
 
   // We gather calls in parallel in order to process them later.
-  std::vector<Expression*> calls;
+  std::vector<Call*> calls;
+  std::vector<CallRef*> callRefs;
 
   // Note if a function body definitely traps.
   bool traps = false;
@@ -1437,7 +1438,7 @@ void TNHOracle::scan(Function* func,
       // We can only optimize call_ref in closed world, as otherwise the
       // call can go somewhere we can't see.
       if (options.closedWorld) {
-        info.calls.push_back(curr);
+        info.callRefs.push_back(curr);
       }
     }
 
@@ -1562,83 +1563,10 @@ void TNHOracle::infer() {
     std::optional<analysis::CFGBlockIndexes> blockIndexes;
 
     for (auto* call : info.calls) {
-      // For both a call or a call_ref, look for a single call target. For a
-      // call that is always the case, while for a call_ref we might get lucky.
-      Name target;
-      ExpressionList* operands = nullptr;
-      if (auto call_ = call->dynCast<Call>()) {
-        target = call_->target;
-        operands = &call_->operands;
-        // Note that we don't need to do anything for targetInfo.traps for a
-        // direct call: the inliner will inline the singleton unreachable in the
-        // target function anyhow.
-      } else if ([[maybe_unused]] auto* callRef = call->dynCast<CallRef>()) {
-        auto targetType = callRef->target->type;
-        if (!targetType.isRef()) {
-          // This is unreachable or null, and other passes will optimize that.
-          continue;
-        }
-
-        auto iter = typeFunctions.find(targetType.getHeapType());
-        if (iter == typeFunctions.end()) {
-          // No function exists of this type, so the call_ref will trap. We can
-          // mark the target as empty, which has the identical effect.
-          info.inferences[callRef->target] = PossibleContents::none();
-          continue;
-        }
-
-        // We know the targets. As traps never happen, we can rule out any that
-        // will trap: we won't call those. That will leave us with the actually
-        // possible targets.
-        const auto& targets = iter->second;
-        std::vector<Function*> possibleTargets;
-        for (Function* target : targets) {
-          auto& targetInfo = map[target];
-          if (targetInfo.traps) {
-            continue;
-          }
-
-          // If our operands will fail a cast, then we will trap.
-          // TODO: Use inferred data here, but then we need to be careful of
-          //       nondeterminism.
-          bool traps = false;
-          for (auto& [castIndex, castType] : targetInfo.castParams) {
-            if (!Type::isSubType(callRef->operands[castIndex]->type,
-                                 castType)) {
-              traps = true;
-              break;
-            }
-          }
-          if (traps) {
-            continue;
-          }
-
-          possibleTargets.push_back(target);
-        }
-
-        if (possibleTargets.empty()) {
-          // No target is possible.
-          info.inferences[callRef->target] = PossibleContents::none();
-          continue;
-        }
-
-        if (possibleTargets.size() > 1) {
-          // TODO: If more than one exists, the intersection of their
-          // constraints
-          //       constrains us (e.g., if they all cast to B or even further,
-          //       we must be sending a B), and we can continue down below.
-          continue;
-        }
-
-        // There is one possible call target, which means we can actually infer
-        // the CallRef's reference's value.
-        auto target = possibleTargets[0]->name;
-        info.inferences[callRef->target] = PossibleContents::literal(
-          Literal(target, wasm.getFunction(target)->type));
-        continue;
-      }
-
-      auto& targetInfo = map[wasm.getFunction(target)];
+      // Note that we don't need to do anything for targetInfo.traps for a
+      // direct call: the inliner will inline the singleton unreachable in the
+      // target function anyhow.
+      auto& targetInfo = map[wasm.getFunction(call->target)];
 
       auto& targetCastParams = targetInfo.castParams;
       if (targetCastParams.empty()) {
@@ -1651,7 +1579,73 @@ void TNHOracle::infer() {
         blockIndexes = analysis::CFGBlockIndexes(*cfg);
       }
 
-      optimizeCall(call, *operands, targetCastParams, *blockIndexes, info);
+      optimizeCall(call, call->operands, targetCastParams, *blockIndexes, info);
+    }
+
+    for (auto* call : info.callRefs) {
+      auto targetType = call->target->type;
+      if (!targetType.isRef()) {
+        // This is unreachable or null, and other passes will optimize that.
+        continue;
+      }
+
+      auto iter = typeFunctions.find(targetType.getHeapType());
+      if (iter == typeFunctions.end()) {
+        // No function exists of this type, so the call_ref will trap. We can
+        // mark the target as empty, which has the identical effect.
+        info.inferences[call->target] = PossibleContents::none();
+        continue;
+      }
+
+      // We know the targets. As traps never happen, we can rule out any that
+      // will trap: we won't call those. That will leave us with the actually
+      // possible targets.
+      const auto& targets = iter->second;
+      std::vector<Function*> possibleTargets;
+      for (Function* target : targets) {
+        auto& targetInfo = map[target];
+        if (targetInfo.traps) {
+          continue;
+        }
+
+        // If our operands will fail a cast, then we will trap.
+        // TODO: Use inferred data here, but then we need to be careful of
+        //       nondeterminism.
+        bool traps = false;
+        for (auto& [castIndex, castType] : targetInfo.castParams) {
+          if (!Type::isSubType(call->operands[castIndex]->type,
+                               castType)) {
+            traps = true;
+            break;
+          }
+        }
+        if (traps) {
+          continue;
+        }
+
+        possibleTargets.push_back(target);
+      }
+
+      if (possibleTargets.empty()) {
+        // No target is possible.
+        info.inferences[call->target] = PossibleContents::none();
+        continue;
+      }
+
+      if (possibleTargets.size() > 1) {
+        // TODO: If more than one exists, the intersection of their
+        // constraints
+        //       constrains us (e.g., if they all cast to B or even further,
+        //       we must be sending a B), and we can continue down below.
+        continue;
+      }
+
+      // There is one possible call target, which means we can actually infer
+      // the CallRef's reference's value.
+      auto target = possibleTargets[0]->name;
+      info.inferences[call->target] = PossibleContents::literal(
+        Literal(target, wasm.getFunction(target)->type));
+      continue;
     }
   });
 
