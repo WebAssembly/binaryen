@@ -1360,7 +1360,10 @@ class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
   TNHOracle(Module& wasm, const PassOptions& options)
-    : Parent(wasm, [this, &options](Function* func, TNHInfo& info) { scan(func, info, options); }),
+    : Parent(wasm,
+             [this, &options](Function* func, TNHInfo& info) {
+               scan(func, info, options);
+             }),
       options(options) {
     // After the scanning phase, continue to the second phase of analysis.
     infer();
@@ -1375,7 +1378,7 @@ public:
       // We only store useful contents that improve on the naive estimate that
       // uses the type in the IR.
       [[maybe_unused]] auto naiveContents =
-          PossibleContents::fullConeType(curr->type);
+        PossibleContents::fullConeType(curr->type);
       assert(contents != naiveContents);
       return contents;
     }
@@ -1397,7 +1400,9 @@ private:
   void infer();
 };
 
-void TNHOracle::scan(Function* func, TNHInfo& info, const PassOptions& options) {
+void TNHOracle::scan(Function* func,
+                     TNHInfo& info,
+                     const PassOptions& options) {
   if (func->imported()) {
     return;
   }
@@ -1591,7 +1596,8 @@ void TNHOracle::infer() {
           //       nondeterminism.
           bool traps = false;
           for (auto& [castIndex, castType] : targetInfo.castParams) {
-            if (!Type::isSubType(callRef->operands[castIndex]->type, castType)) {
+            if (!Type::isSubType(callRef->operands[castIndex]->type,
+                                 castType)) {
               traps = true;
               break;
             }
@@ -1620,8 +1626,7 @@ void TNHOracle::infer() {
         // There is one possible call target. Continue to optimize for it below.
         auto target = possibleTargets[0]->name;
         info.inferences[callRef->target] = PossibleContents::literal(
-          Literal(target, wasm.getFunction(target)->type)
-        );
+          Literal(target, wasm.getFunction(target)->type));
         continue;
       }
 
