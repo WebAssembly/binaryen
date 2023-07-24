@@ -310,15 +310,21 @@
     (type $A (func (param anyref)))
   )
 
-  ;; CHECK:      (type $funcref_funcref_funcref_structref_structref_structref_=>_none (func (param funcref funcref funcref structref structref structref)))
+  ;; CHECK:      (type $funcref_funcref_funcref_structref_=>_none (func (param funcref funcref funcref structref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
 
   ;; CHECK:      (export "out" (func $caller))
 
+  ;; CHECK:      (export "out2" (func $reffer))
+
   ;; CHECK:      (func $possible-Y1 (type $A) (param $ref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable) YIKES
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $possible-Y1 (type $A) (param $ref anyref)
@@ -331,7 +337,9 @@
 
   ;; CHECK:      (func $possible-Y2 (type $A) (param $ref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable) YIKES
+  ;; CHECK-NEXT:   (ref.cast $Y2
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $possible-Y2 (type $A) (param $ref anyref)
@@ -342,27 +350,20 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_funcref_funcref_structref_structref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $ref1 structref) (param $ref2 structref) (param $ref3 structref)
+  ;; CHECK:      (func $caller (type $funcref_funcref_funcref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $struct structref)
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.cast $Y1
-  ;; CHECK-NEXT:    (local.get $ref1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $Y1)
   ;; CHECK-NEXT:   (ref.func $possible-Y1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.cast $Y2
-  ;; CHECK-NEXT:    (local.get $ref2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.new_default $Y2)
   ;; CHECK-NEXT:   (ref.func $possible-Y2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref3)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func3)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable) YIKES
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable) YIKES
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out")
@@ -392,6 +393,25 @@
       (ref.cast $A
         (local.get $func3)
       )
+    )
+  )
+
+  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-Y2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffer (export "out2")
+    ;; Take references to the possible functions so that GUFA does not optimize
+    ;; calls to them away.
+    (drop
+      (ref.func $possible-Y1)
+    )
+    (drop
+      (ref.func $possible-Y2)
     )
   )
 )
