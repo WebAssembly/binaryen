@@ -292,4 +292,112 @@
   )
 )
 
-;; TODO: one target has a param that will trap
+;; Two possible functions, but one has a parameter that will trap.
+(module
+
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct ))
+    (type $X (struct))
+
+    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    (type $Y1 (sub $X (struct)))
+
+    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    (type $Y2 (sub $X (struct)))
+
+    ;; CHECK:       (type $A (func (param anyref)))
+    (type $A (func (param anyref)))
+  )
+
+  ;; CHECK:      (type $funcref_funcref_funcref_structref_structref_structref_=>_none (func (param funcref funcref funcref structref structref structref)))
+
+  ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $possible-Y1 (type $A) (param $ref anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable) YIKES
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-Y1 (type $A) (param $ref anyref)
+    (drop
+      (ref.cast $Y1
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $possible-Y2 (type $A) (param $ref anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable) YIKES
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-Y2 (type $A) (param $ref anyref)
+    (drop
+      (ref.cast $Y2
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_funcref_funcref_structref_structref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $ref1 structref) (param $ref2 structref) (param $ref3 structref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.cast $Y2
+  ;; CHECK-NEXT:    (local.get $ref2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $possible-Y2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable) YIKES
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable) YIKES
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out")
+    (param $func1 funcref)
+    (param $func2 funcref)
+    (param $func3 funcref)
+    (param $ref1 structref)
+    (param $ref2 structref)
+    (param $ref3 structref)
+
+    ;; This would trap if we called the function that casts to Y2, so we must be
+    ;; calling possible-Y1.
+    (call_ref $A
+      (ref.cast $Y1
+        (local.get $ref1)
+      )
+      (ref.cast $A
+        (local.get $func1)
+      )
+    )
+    ;; Inverse of the above: we must call possible-Y2.
+    (call_ref $A
+      (ref.cast $Y2
+        (local.get $ref2)
+      )
+      (ref.cast $A
+        (local.get $func2)
+      )
+    )
+    ;; This can call either one, and cannot be optimized.
+    (call_ref $A
+      (local.get $ref3)
+      (ref.cast $A
+        (local.get $func3)
+      )
+    )
+  )
+)

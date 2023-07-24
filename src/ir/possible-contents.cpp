@@ -1614,8 +1614,7 @@ void TNHOracle::infer() {
         }
 
         // If our operands will fail a cast, then we will trap.
-        // TODO: Use inferred data here, but then we need to be careful of
-        //       nondeterminism.
+        // TODO: Use inferred data here from previous iterations of inference.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
           if (!Type::isSubType(call->operands[castIndex]->type,
@@ -1624,11 +1623,9 @@ void TNHOracle::infer() {
             break;
           }
         }
-        if (traps) {
-          continue;
+        if (!traps) {
+          possibleTargets.push_back(target);
         }
-
-        possibleTargets.push_back(target);
       }
 
       if (possibleTargets.empty()) {
