@@ -1360,7 +1360,7 @@ class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
   TNHOracle(Module& wasm, const PassOptions& options)
-    : Parent(wasm, [this](Function* func, TNHInfo& info) { scan(func, info); }),
+    : Parent(wasm, [this, &options](Function* func, TNHInfo& info) { scan(func, info, options); }),
       options(options) {
     // After the scanning phase, continue to the second phase of analysis.
     infer();
@@ -1391,13 +1391,13 @@ private:
 
   // Phase 1: Scan to find cast parameters and calls. This operates on a single
   // function, and is called in parallel.
-  void scan(Function* func, TNHInfo& info);
+  void scan(Function* func, TNHInfo& info, const PassOptions& options);
 
   // Phase 2: Infer contents based on what we scanned.
   void infer();
 };
 
-void TNHOracle::scan(Function* func, TNHInfo& info) {
+void TNHOracle::scan(Function* func, TNHInfo& info, const PassOptions& options) {
   if (func->imported()) {
     return;
   }
