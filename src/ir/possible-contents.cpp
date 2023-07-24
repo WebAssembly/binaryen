@@ -1614,7 +1614,8 @@ void TNHOracle::infer() {
         }
 
         // If our operands will fail a cast, then we will trap.
-        // TODO: Use inferred data here from previous iterations of inference.
+        // TODO: Use inferred data here about the operand from previous
+        //       iterations of inference.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
           auto operandType = call->operands[castIndex]->type;
