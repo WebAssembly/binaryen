@@ -656,3 +656,5 @@
     )
   )
 )
+
+;; TODO test last commit, with merged/unified casts for optimizeCall
