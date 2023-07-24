@@ -228,5 +228,68 @@
   )
 )
 
+;; As above, but now the second possible function is of a subtype. We still
+;; cannot optimize a call to the parent, but we can for the child.
+(module
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
+
+  ;; CHECK:      (type $B (sub $A (func)))
+  (type $B (sub $A (func)))
+
+  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
+  ;; CHECK:      (elem declare func $possible-2)
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $possible (type $A)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible (type $A)
+    (drop
+      (i32.const 10)
+    )
+  )
+
+  ;; CHECK:      (func $possible-2 (type $B)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-2 (type $B)
+    (drop
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $B
+  ;; CHECK-NEXT:   (ref.func $possible-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $x funcref)
+    ;; A has one function, but it has a subtype with another, so we cannot
+    ;; optimize
+    (call_ref $A
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    ;; The second call can be optimized, as B has just one function.
+    (call_ref $B
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+  )
+)
 
 ;; TODO: one target has a param that will trap
