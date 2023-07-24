@@ -1650,11 +1650,45 @@ void TNHOracle::infer() {
         continue;
       }
 
-      // TODO: If more than one exists, the intersection of their
-      // constraints
-      //       constrains us (e.g., if they all cast to B or even further,
-      //       we must be sending a B), and we can continue down below.
+      // More than one target exists: apply the intersection of their
+      // constraints. That is, if they all cast the k-th parameter to type T (or
+      // more) than we can apply that here.
+      auto numParams = call->operands.size();
+      std::vector<Type> sharedCastParamsVec(numParams);
+      for (auto* target : possibleTargets) {
+        auto& targetInfo = map[target];
+        auto& targetCastParams = targetInfo.castParams;
+        for (Index i = 0; i < numParams; i++) {
+          auto iter = targetCastParams.find(i);
+          if (iter == targetCastParams.end()) {
+            // If the target does not cast, we cannot do anything with this
+            // parameter; mark it as unoptimizable with an impossible type.
+            sharedCastParamsVec[i] = Type::none;
+            continue;
+          }
+          // This function casts this param. Combine this with existing info.
+          auto castType = iter->second;
+          if (target == possibleTargets[0]) {
+            // This is the first target, so just apply the value.
+            continue;
+          }
 
+          sharedCastParamsVec[i] = Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
+        }
+      }
+
+      // Build a map of the interesting cast params, if there are any.
+      CastParams sharedCastParams;
+      for (Index i = 0; i < numParams; i++) {
+        auto type = sharedCastParamsVec[i];
+        if (type != Type::none) {
+          sharedCastParams[i] = type;
+        }
+      }
+      if (!sharedCastParams.empty()) {
+        ensureCFG();
+        optimizeCall(call, call->operands, sharedCastParams, *blockIndexes, info);
+      }
     }
   });
 
