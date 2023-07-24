@@ -1335,20 +1335,35 @@ struct InfoCollector
 // This analysis complements ContentOracle, which uses this analysis internally.
 // TODO: We could cycle between them for repeated improvements. The outcome of
 //       each is to refine the contents at each location, so this must converge.
-class TNHOracle {
-  Module& wasm;
+
+struct TNHInfo {
+  // A map of param indexes to the types they are definitely cast to if the
+  // function is entered.
+  std::unordered_map<Index, Type> castParams;
+
+  // TODO: Returns as well: when we see (ref.cast (call $foo)) in all callers
+  //       then we can refine inside $foo (in closed world).
+
+  // We gather calls in parallel in order to process them later.
+  std::vector<Expression*> calls;
+
+  // Note if a function body definitely traps.
+  bool traps = false;
+
+  // We gather inferences in parallel and combine them at the end.
+  std::unordered_map<Expression*, PossibleContents> inferences;
+};
+
+class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
   const PassOptions& options;
 
 public:
+  using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
   TNHOracle(Module& wasm, const PassOptions& options)
-    : wasm(wasm), options(options) {
-    // The current analysis here only helps with GC (it refines types), and as
-    // mentioned above we assume TNH here.
-    if (!wasm.features.hasGC() || !options.trapsNeverHappen) {
-      return;
-    }
-
-    analyze();
+    : Parent(wasm, [this](Function* func, TNHInfo& info) { scan(func, info); }),
+      options(options) {
+    // After the scanning phase, continue to the second phase of analysis.
+    infer();
   }
 
   // Get the type we inferred was possible at a location.
@@ -1374,128 +1389,111 @@ private:
   // here then expression->type (the type in Binaryen IR) is all we have.
   std::unordered_map<Expression*, PossibleContents> inferences;
 
-  void analyze();
+  // Phase 1: Scan to find cast parameters and calls. This operates on a single
+  // function, and is called in parallel.
+  void scan(Function* func, TNHInfo& info);
+
+  // Phase 2: Infer contents based on what we scanned.
+  void infer();
 };
 
-void TNHOracle::analyze() {
-  struct Info {
-    // A map of param indexes to the types they are definitely cast to if the
-    // function is entered.
-    std::unordered_map<Index, Type> castParams;
+void TNHOracle::scan(Function* func, TNHInfo& info) {
+  if (func->imported()) {
+    return;
+  }
 
-    // TODO: Returns as well: when we see (ref.cast (call $foo)) in all callers
-    //       then we can refine inside $foo (in closed world).
+  // Gather parameters that are definitely cast in the function entry.
+  struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
+    Module& wasm;
+    const PassOptions& options;
+    TNHInfo& info;
 
-    // We gather calls in parallel in order to process them later.
-    std::vector<Expression*> calls;
+    EntryScanner(Module& wasm, const PassOptions& options, TNHInfo& info)
+      : wasm(wasm), options(options), info(info) {}
 
-    // Note if a function body definitely traps.
-    bool traps = false;
+    // Note while we are still in the entry (first) block.
+    bool inEntryBlock = true;
 
-    // We gather inferences in parallel and combine them at the end.
-    std::unordered_map<Expression*, PossibleContents> inferences;
-  };
+    static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
+      // This is the end of the first basic block.
+      self->inEntryBlock = false;
+    }
 
-  // Phase 1: Scan to find cast parameters and calls.
+    void visitCall(Call* curr) { info.calls.push_back(curr); }
 
-  ModuleUtils::ParallelFunctionAnalysis<Info> analysis(
-    wasm, [&](Function* func, Info& info) {
-      if (func->imported()) {
+    void visitCallRef(CallRef* curr) {
+      // We can only optimize call_ref in closed world, as otherwise the
+      // call can go somewhere we can't see.
+      if (options.closedWorld) {
+        info.calls.push_back(curr);
+      }
+    }
+
+    void visitRefAs(RefAs* curr) {
+      if (curr->op == RefAsNonNull) {
+        noteCast(curr->value, curr->type);
+      }
+    }
+    void visitRefCast(RefCast* curr) { noteCast(curr->ref, curr->type); }
+
+    // Note a cast of an expression to a particular type.
+    void noteCast(Expression* expr, Type type) {
+      if (!inEntryBlock) {
         return;
       }
 
-      // Gather parameters that are definitely cast in the function entry.
-      // TODO: this could be skipped if we do not have GC enabled
-      struct EntryScanner : public LinearExecutionWalker<EntryScanner> {
-        Module& wasm;
-        const PassOptions& options;
-        Info& info;
-
-        EntryScanner(Module& wasm, const PassOptions& options, Info& info)
-          : wasm(wasm), options(options), info(info) {}
-
-        // Note while we are still in the entry (first) block.
-        bool inEntryBlock = true;
-
-        static void doNoteNonLinear(EntryScanner* self, Expression** currp) {
-          // This is the end of the first basic block.
-          self->inEntryBlock = false;
+      auto* fallthrough = Properties::getFallthrough(expr, options, wasm);
+      if (auto* get = fallthrough->dynCast<LocalGet>()) {
+        // To optimize, this needs to be a param, and of a useful type.
+        //
+        // Note that if we see more than one cast we keep the first one.
+        // This is not important in optimized code, as the most refined cast
+        // would be the only one to exist there; we keep things simple here.
+        if (getFunction()->isParam(get->index) && type != get->type &&
+            info.castParams.count(get->index) == 0) {
+          info.castParams[get->index] = type;
         }
+      }
+    }
 
-        void visitCall(Call* curr) { info.calls.push_back(curr); }
+    // Operations that trap on null are equivalent to casts to non-null. We
+    // only look at them if the input is actually null, however, as if they
+    // are non-nullable then we can add no information. (This is equivalent
+    // to the handling of RefAsNonNull above, in the sense that in optimized
+    // code the RefAs will not appear if the input is already non-nullable).
+    // This function is called with the reference that will be trapped on,
+    // if it is null.
+    void notePossibleTrap(Expression* expr) {
+      if (!expr->type.isRef() || expr->type.isNonNullable()) {
+        return;
+      }
+      noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
+    }
 
-        void visitCallRef(CallRef* curr) {
-          // We can only optimize call_ref in closed world, as otherwise the
-          // call can go somewhere we can't see.
-          if (options.closedWorld) {
-            info.calls.push_back(curr);
-          }
-        }
+    void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
+    void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
+    void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayCopy(ArrayCopy* curr) {
+      notePossibleTrap(curr->srcRef);
+      notePossibleTrap(curr->destRef);
+    }
+    void visitArrayFill(ArrayFill* curr) { notePossibleTrap(curr->ref); }
 
-        void visitRefAs(RefAs* curr) {
-          if (curr->op == RefAsNonNull) {
-            noteCast(curr->value, curr->type);
-          }
-        }
-        void visitRefCast(RefCast* curr) { noteCast(curr->ref, curr->type); }
+    void visitFunction(Function* curr) {
+      // In optimized TNH code, a function that always traps will be turned
+      // into a singleton unreachable instruction, so it is enough to check
+      // for that.
+      if (curr->body->is<Unreachable>()) {
+        info.traps = true;
+      }
+    }
+  } scanner(wasm, options, info);
+  scanner.walkFunction(func);
+}
 
-        // Note a cast of an expression to a particular type.
-        void noteCast(Expression* expr, Type type) {
-          if (!inEntryBlock) {
-            return;
-          }
-
-          auto* fallthrough = Properties::getFallthrough(expr, options, wasm);
-          if (auto* get = fallthrough->dynCast<LocalGet>()) {
-            // To optimize, this needs to be a param, and of a useful type.
-            //
-            // Note that if we see more than one cast we keep the first one.
-            // This is not important in optimized code, as the most refined cast
-            // would be the only one to exist there; we keep things simple here.
-            if (getFunction()->isParam(get->index) && type != get->type &&
-                info.castParams.count(get->index) == 0) {
-              info.castParams[get->index] = type;
-            }
-          }
-        }
-
-        // Operations that trap on null are equivalent to casts to non-null. We
-        // only look at them if the input is actually null, however, as if they
-        // are non-nullable then we can add no information. (This is equivalent
-        // to the handling of RefAsNonNull above, in the sense that in optimized
-        // code the RefAs will not appear if the input is already non-nullable).
-        // This function is called with the reference that will be trapped on,
-        // if it is null.
-        void notePossibleTrap(Expression* expr) {
-          if (!expr->type.isRef() || expr->type.isNonNullable()) {
-            return;
-          }
-          noteCast(expr, Type(expr->type.getHeapType(), NonNullable));
-        }
-
-        void visitStructGet(StructGet* curr) { notePossibleTrap(curr->ref); }
-        void visitStructSet(StructSet* curr) { notePossibleTrap(curr->ref); }
-        void visitArrayGet(ArrayGet* curr) { notePossibleTrap(curr->ref); }
-        void visitArraySet(ArraySet* curr) { notePossibleTrap(curr->ref); }
-        void visitArrayLen(ArrayLen* curr) { notePossibleTrap(curr->ref); }
-        void visitArrayCopy(ArrayCopy* curr) {
-          notePossibleTrap(curr->srcRef);
-          notePossibleTrap(curr->destRef);
-        }
-        void visitArrayFill(ArrayFill* curr) { notePossibleTrap(curr->ref); }
-
-        void visitFunction(Function* curr) {
-          // In optimized TNH code, a function that always traps will be turned
-          // into a singleton unreachable instruction, so it is enough to check
-          // for that.
-          if (curr->body->is<Unreachable>()) {
-            info.traps = true;
-          }
-        }
-      } scanner(wasm, options, info);
-      scanner.walkFunction(func);
-    });
-
+void TNHOracle::infer() {
   // Phase 2: Inside each function, optimize calls based on the cast params of
   // the called function (which we noted during phase 1).
   //
@@ -1545,7 +1543,7 @@ void TNHOracle::analyze() {
     }
   }
 
-  analysis.doAnalysis([&](Function* func, Info& info) {
+  doAnalysis([&](Function* func, TNHInfo& info) {
     // Constructing a CFG is expensive, so only do so if we find optimization
     // opportunities.
     std::optional<analysis::CFG> cfg;
@@ -1583,7 +1581,7 @@ void TNHOracle::analyze() {
         const auto& targets = iter->second;
         std::vector<Function*> possibleTargets;
         for (Function* target : targets) {
-          auto& targetInfo = analysis.map[target];
+          auto& targetInfo = map[target];
           if (targetInfo.traps) {
             continue;
           }
@@ -1627,7 +1625,7 @@ void TNHOracle::analyze() {
         continue;
       }
 
-      auto& targetInfo = analysis.map[wasm.getFunction(target)];
+      auto& targetInfo = map[wasm.getFunction(target)];
 
       auto& castParams = targetInfo.castParams;
       if (castParams.empty()) {
@@ -1721,7 +1719,7 @@ void TNHOracle::analyze() {
   });
 
   // Combine all of our inferences.
-  for (auto& [_, info] : analysis.map) {
+  for (auto& [_, info] : map) {
     for (auto& [expr, contents] : info.inferences) {
       inferences[expr] = contents;
     }
@@ -1770,13 +1768,17 @@ struct Flower {
   }
 
   // Check what we know about the type of an expression, using static
-  // information from a TrapsNeverHappen oracle (see TNHOracle).
+  // information from a TrapsNeverHappen oracle (see TNHOracle), if we have one.
   PossibleContents getTNHContents(Expression* curr) {
-    return tnhOracle.getContents(curr);
+    if (!tnhOracle) {
+      // No oracle; just use the type in the IR.
+      return PossibleContents::fullConeType(curr->type);
+    }
+    return tnhOracle->getContents(curr);
   }
 
 private:
-  TNHOracle tnhOracle;
+  std::unique_ptr<TNHOracle> tnhOracle;
 
   std::vector<LocationIndex>& getTargets(LocationIndex index) {
     assert(index < locations.size());
@@ -1944,7 +1946,18 @@ private:
 };
 
 Flower::Flower(Module& wasm, const PassOptions& options)
-  : wasm(wasm), options(options), tnhOracle(wasm, options) {
+  : wasm(wasm), options(options) {
+
+  // If traps never happen, create a TNH oracle.
+  //
+  // Atm this oracle only helps on GC content, so disable it without GC.
+  if (options.trapsNeverHappen && wasm.features.hasGC()) {
+#ifdef POSSIBLE_CONTENTS_DEBUG
+    std::cout << "parallel phase\n";
+#endif
+    tnhOracle = std::make_unique<TNHOracle>(wasm, options);
+  }
+
 #ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "parallel phase\n";
 #endif
