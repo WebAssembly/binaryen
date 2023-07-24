@@ -381,6 +381,9 @@
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
+  ;; CHECK:      (global $global (mut i32) (i32.const 0))
+  (global $global (mut i32) (i32.const 0))
+
   ;; CHECK:      (export "out" (func $caller))
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
@@ -388,6 +391,9 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $global
+  ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $B
@@ -399,10 +405,14 @@
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (local $local (ref null $A))
-    ;; Some nops and such do not bother us.
+    ;; Some nops and such do not bother us. Even a side effect like setting a
+    ;; global does not.
     (nop)
     (drop
       (i32.const 42)
+    )
+    (global.set $global
+      (i32.const 1337)
     )
     (drop
       (ref.cast $B
