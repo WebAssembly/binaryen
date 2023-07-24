@@ -1562,10 +1562,14 @@ void TNHOracle::infer() {
     std::optional<analysis::CFG> cfg;
     std::optional<analysis::CFGBlockIndexes> blockIndexes;
 
+    auto ensureCFG = [&]() {
+      if (!cfg) {
+        cfg = analysis::CFG::fromFunction(func);
+        blockIndexes = analysis::CFGBlockIndexes(*cfg);
+      }
+    };
+
     for (auto* call : info.calls) {
-      // Note that we don't need to do anything for targetInfo.traps for a
-      // direct call: the inliner will inline the singleton unreachable in the
-      // target function anyhow.
       auto& targetInfo = map[wasm.getFunction(call->target)];
 
       auto& targetCastParams = targetInfo.castParams;
@@ -1573,13 +1577,14 @@ void TNHOracle::infer() {
         continue;
       }
 
-      // This looks promising, create the CFG if we haven't already.
-      if (!cfg) {
-        cfg = analysis::CFG::fromFunction(func);
-        blockIndexes = analysis::CFGBlockIndexes(*cfg);
-      }
-
+      // This looks promising, create the CFG if we haven't already, and
+      // optimize.
+      ensureCFG();
       optimizeCall(call, call->operands, targetCastParams, *blockIndexes, info);
+
+      // Note that we don't need to do anything for targetInfo.traps for a
+      // direct call: the inliner will inline the singleton unreachable in the
+      // target function anyhow.
     }
 
     for (auto* call : info.callRefs) {
