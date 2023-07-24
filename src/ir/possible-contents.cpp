@@ -1636,20 +1636,25 @@ void TNHOracle::infer() {
         continue;
       }
 
-      if (possibleTargets.size() > 1) {
-        // TODO: If more than one exists, the intersection of their
-        // constraints
-        //       constrains us (e.g., if they all cast to B or even further,
-        //       we must be sending a B), and we can continue down below.
+      if (possibleTargets.size() == 1) {
+        // There is exactly one possible call target, which means we can
+        // actually infer what the call_ref is calling. Add that as an
+        // inference.
+        // TODO: We could also call optimizeCall() here, but it is low priority
+        //       as other opts will make this call direct later, after which a
+        //       lot of other optimizations become possible anyhow.
+        // and optimize.
+        auto target = possibleTargets[0]->name;
+        info.inferences[call->target] = PossibleContents::literal(
+          Literal(target, wasm.getFunction(target)->type));
         continue;
       }
 
-      // There is one possible call target, which means we can actually infer
-      // the CallRef's reference's value.
-      auto target = possibleTargets[0]->name;
-      info.inferences[call->target] = PossibleContents::literal(
-        Literal(target, wasm.getFunction(target)->type));
-      continue;
+      // TODO: If more than one exists, the intersection of their
+      // constraints
+      //       constrains us (e.g., if they all cast to B or even further,
+      //       we must be sending a B), and we can continue down below.
+
     }
   });
 
