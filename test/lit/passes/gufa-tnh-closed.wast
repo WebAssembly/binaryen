@@ -369,32 +369,26 @@
     (param $func1 funcref)
     (param $func2 funcref)
     (param $func3 funcref)
-    (param $ref1 structref)
-    (param $ref2 structref)
-    (param $ref3 structref)
+    (param $struct structref)
 
     ;; This would trap if we called the function that casts to Y2, so we must be
     ;; calling possible-Y1.
     (call_ref $A
-      (ref.cast $Y1
-        (local.get $ref1)
-      )
+      (struct.new $Y1)
       (ref.cast $A
         (local.get $func1)
       )
     )
     ;; Inverse of the above: we must call possible-Y2.
     (call_ref $A
-      (ref.cast $Y2
-        (local.get $ref2)
-      )
+      (struct.new $Y2)
       (ref.cast $A
         (local.get $func2)
       )
     )
     ;; This can call either one, and cannot be optimized.
     (call_ref $A
-      (local.get $ref3)
+      (local.get $struct)
       (ref.cast $A
         (local.get $func3)
       )

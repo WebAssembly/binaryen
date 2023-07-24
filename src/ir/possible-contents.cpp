@@ -1617,8 +1617,9 @@ void TNHOracle::infer() {
         // TODO: Use inferred data here from previous iterations of inference.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
-          if (!Type::isSubType(call->operands[castIndex]->type,
-                               castType)) {
+          auto operandType = call->operands[castIndex]->type;
+          if (!Type::isSubType(operandType, castType) &&
+              !Type::isSubType(castType, operandType)) {
             traps = true;
             break;
           }
