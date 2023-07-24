@@ -1336,10 +1336,12 @@ struct InfoCollector
 // TODO: We could cycle between them for repeated improvements. The outcome of
 //       each is to refine the contents at each location, so this must converge.
 
+// We track cast parameters by mapping an index to the type it is definitely
+// cast to if the function is entered.
+using CastParams = std::unordered_map<Index, Type>;
+
 struct TNHInfo {
-  // A map of param indexes to the types they are definitely cast to if the
-  // function is entered.
-  std::unordered_map<Index, Type> castParams;
+  CastParams castParams;
 
   // TODO: Returns as well: when we see (ref.cast (call $foo)) in all callers
   //       then we can refine inside $foo (in closed world).
@@ -1365,7 +1367,9 @@ public:
                scan(func, info, options);
              }),
       options(options) {
-    // After the scanning phase, continue to the second phase of analysis.
+
+    // After the scanning phase that we run in the constructor, continue to the
+    // second phase of analysis: inference.
     infer();
   }
 
@@ -1398,6 +1402,9 @@ private:
 
   // Phase 2: Infer contents based on what we scanned.
   void infer();
+
+  // Optimize one specific call (or call_ref).
+  void optimizeCall(Expression* call, const ExpressionList& operands, const CastParams& targetCastParams, const analysis::CFGBlockIndexes& blockIndexes, TNHInfo& info);
 };
 
 void TNHOracle::scan(Function* func,
@@ -1623,7 +1630,8 @@ void TNHOracle::infer() {
           continue;
         }
 
-        // There is one possible call target. Continue to optimize for it below.
+        // There is one possible call target, which means we can actually infer
+        // the CallRef's reference's value.
         auto target = possibleTargets[0]->name;
         info.inferences[callRef->target] = PossibleContents::literal(
           Literal(target, wasm.getFunction(target)->type));
@@ -1632,8 +1640,8 @@ void TNHOracle::infer() {
 
       auto& targetInfo = map[wasm.getFunction(target)];
 
-      auto& castParams = targetInfo.castParams;
-      if (castParams.empty()) {
+      auto& targetCastParams = targetInfo.castParams;
+      if (targetCastParams.empty()) {
         continue;
       }
 
@@ -1643,83 +1651,7 @@ void TNHOracle::infer() {
         blockIndexes = analysis::CFGBlockIndexes(*cfg);
       }
 
-      // Optimize in the same basic block as the call: all instructions still in
-      // that block will definitely execute if the call is reached.
-      auto callBlockIndex = blockIndexes->get(call);
-
-      // Go backwards through the call's operands and fallthrough values, and
-      // optimize while we are still in the same basic block.
-
-      // Operands must exist since there is a cast param, so a param exists.
-      assert(operands->size() > 0);
-      for (int i = int(operands->size() - 1); i >= 0; i--) {
-        auto* operand = (*operands)[i];
-
-        if (blockIndexes->get(operand) != callBlockIndex) {
-          // Control flow might transfer; stop.
-          break;
-        }
-
-        auto iter = castParams.find(i);
-        if (iter == castParams.end()) {
-          // This param is not cast, so skip it.
-          continue;
-        }
-
-        // If the call executes then this parameter is definitely evalled, and
-        // this particular param is then cast to a more refined type.
-        auto castType = iter->second;
-
-        // Apply what we found to the operand and also to its fallthrough
-        // values.
-        //
-        // At the loop entry |curr| has been checked for a possible control flow
-        // transfer (and that problem ruled out).
-        auto* curr = operand;
-        bool transferred = false;
-        while (1) {
-          // Note the type if it is useful.
-          if (castType != curr->type) {
-            // There are two constraints on this location: any value there must
-            // be of the declared type (curr->type) and also the cast type, so
-            // we know only their intersection can appear here.
-            auto declared = PossibleContents::fullConeType(curr->type);
-            auto intersection = PossibleContents::fullConeType(castType);
-            intersection.intersect(declared);
-            if (intersection.isConeType()) {
-              auto intersectionType = intersection.getType();
-              if (intersectionType != curr->type) {
-                // We inferred a more refined type.
-                info.inferences[curr] =
-                  PossibleContents::fullConeType(intersectionType);
-              }
-            } else if (intersection.isNone()) {
-              // Nothing is possible here, so this must be unreachable code.
-              info.inferences[curr] = PossibleContents::none();
-            }
-          }
-
-          auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
-          if (next == curr) {
-            // No fallthrough, we're done with this param.
-            break;
-          }
-
-          // There is a fallthrough. Check for a control flow transfer.
-          if (blockIndexes->get(next) != callBlockIndex) {
-            // Control flow might transfer; stop.
-            transferred = true;
-            break;
-          }
-
-          // Continue to the fallthrough.
-          curr = next;
-        }
-
-        if (transferred) {
-          break;
-        }
-      }
+      optimizeCall(call, call->cast<Call>->operands, targetCastParams, *blockIndexes, info);
     }
   });
 
@@ -1727,6 +1659,86 @@ void TNHOracle::infer() {
   for (auto& [_, info] : map) {
     for (auto& [expr, contents] : info.inferences) {
       inferences[expr] = contents;
+    }
+  }
+}
+
+void TNHOracle::optimizeCall(Expression* call, const ExpressionList& operands, const CastParams& targetCastParams, const analysis::CFGBlockIndexes& blockIndexes, TNHInfo& info) {
+  // Optimize in the same basic block as the call: all instructions still in
+  // that block will definitely execute if the call is reached.
+  auto callBlockIndex = blockIndexes.get(call);
+
+  // Go backwards through the call's operands and fallthrough values, and
+  // optimize while we are still in the same basic block.
+
+  // Operands must exist since there is a cast param, so a param exists.
+  assert(operands->size() > 0);
+  for (int i = int(operands->size() - 1); i >= 0; i--) {
+    auto* operand = (*operands)[i];
+
+    if (blockIndexes.get(operand) != callBlockIndex) {
+      // Control flow might transfer; stop.
+      break;
+    }
+
+    auto iter = castParams.find(i);
+    if (iter == castParams.end()) {
+      // This param is not cast, so skip it.
+      continue;
+    }
+
+    // If the call executes then this parameter is definitely evalled, and
+    // this particular param is then cast to a more refined type.
+    auto castType = iter->second;
+
+    // Apply what we found to the operand and also to its fallthrough
+    // values.
+    //
+    // At the loop entry |curr| has been checked for a possible control flow
+    // transfer (and that problem ruled out).
+    auto* curr = operand;
+    bool transferred = false;
+    while (1) {
+      // Note the type if it is useful.
+      if (castType != curr->type) {
+        // There are two constraints on this location: any value there must
+        // be of the declared type (curr->type) and also the cast type, so
+        // we know only their intersection can appear here.
+        auto declared = PossibleContents::fullConeType(curr->type);
+        auto intersection = PossibleContents::fullConeType(castType);
+        intersection.intersect(declared);
+        if (intersection.isConeType()) {
+          auto intersectionType = intersection.getType();
+          if (intersectionType != curr->type) {
+            // We inferred a more refined type.
+            info.inferences[curr] =
+              PossibleContents::fullConeType(intersectionType);
+          }
+        } else if (intersection.isNone()) {
+          // Nothing is possible here, so this must be unreachable code.
+          info.inferences[curr] = PossibleContents::none();
+        }
+      }
+
+      auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
+      if (next == curr) {
+        // No fallthrough, we're done with this param.
+        break;
+      }
+
+      // There is a fallthrough. Check for a control flow transfer.
+      if (blockIndexes.get(next) != callBlockIndex) {
+        // Control flow might transfer; stop.
+        transferred = true;
+        break;
+      }
+
+      // Continue to the fallthrough.
+      curr = next;
+    }
+
+    if (transferred) {
+      break;
     }
   }
 }
