@@ -365,15 +365,17 @@ void copyModuleContents(Module& input, Name inputName) {
       // Merge them, keeping the order. We copy both functions to avoid issues
       // with other references to them, and just call the second one, leaving
       // inlining to the optimizer if that makes sense to do.
-      auto copiedOldName = Names::getValidFunctionName(merged, "merged.start.old");
-      auto copiedNewName = Names::getValidFunctionName(merged, "merged.start.new");
-      auto* copiedOld = ModuleUtils::copyFunction(merged.getFunction(merged.start), merged, copiedOldName);
-      ModuleUtils::copyFunction(merged.getFunction(input.start), merged, copiedNewName);
+      auto copiedOldName =
+        Names::getValidFunctionName(merged, "merged.start.old");
+      auto copiedNewName =
+        Names::getValidFunctionName(merged, "merged.start.new");
+      auto* copiedOld = ModuleUtils::copyFunction(
+        merged.getFunction(merged.start), merged, copiedOldName);
+      ModuleUtils::copyFunction(
+        merged.getFunction(input.start), merged, copiedNewName);
       Builder builder(merged);
       copiedOld->body = builder.makeSequence(
-        copiedOld->body,
-        builder.makeCall(copiedNewName, {}, Type::none)
-      );
+        copiedOld->body, builder.makeCall(copiedNewName, {}, Type::none));
       merged.start = copiedOldName;
     }
   }
