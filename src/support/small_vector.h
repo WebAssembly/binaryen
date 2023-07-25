@@ -166,8 +166,9 @@ public:
     }
 
     Iterator& operator++() {
+      Iterator& self = *static_cast<Iterator*>(this);
       index++;
-      return *this;
+      return self;
     }
     Iterator operator++(int) {
       Iterator self = *static_cast<Iterator*>(this);
