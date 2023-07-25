@@ -2309,6 +2309,9 @@ void test_typebuilder() {
                         varTypes,
                         4,
                         BinaryenNop(module));
+    // Also test adding a function using the HeapType-using API.
+    BinaryenAddFunctionWithHeapType(
+      module, "test2", signatureHeapType, NULL, 0, BinaryenUnreachable(module));
   }
   bool didValidate = BinaryenModuleValidate(module);
   assert(didValidate);

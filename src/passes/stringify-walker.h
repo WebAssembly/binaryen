@@ -113,17 +113,20 @@ struct StringifyEquator {
 
 struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // After calling walkModule, this vector contains the result of encoding a
-  // wasm module as a string of uint64_t values. Each value represents either an
+  // wasm module as a string of uint32_t values. Each value represents either an
   // Expression or a separator to mark the end of control flow.
-  std::vector<uint64_t> hashString;
+  std::vector<uint32_t> hashString;
   // A monotonic counter used to ensure that unique expressions in the
   // module are assigned a unique value in the hashString
-  uint64_t nextVal = 0;
+  uint32_t nextVal = 0;
+  // A monotonic counter used to ensure that each separator in the
+  // module is assigned a unique value in the hashString
+  int32_t nextSeparatorVal = -1;
   // Contains a mapping of expression pointer to value to ensure we
   // use the same value for matching expressions. A custom hasher and
   // equator is provided in order to separate out evaluation of the if-condition
   // when evaluating if expressions.
-  std::unordered_map<Expression*, uint64_t, StringifyHasher, StringifyEquator>
+  std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
   void addUniqueSymbol();

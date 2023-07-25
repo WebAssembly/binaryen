@@ -44,6 +44,13 @@ inline MonotoneCFGAnalyzer<Lattice, TransferFunction>::MonotoneCFGAnalyzer(
 }
 
 template<typename Lattice, typename TransferFunction>
+inline void
+MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluateFunctionEntry(
+  Function* func) {
+  transferFunction.evaluateFunctionEntry(func, stateBlocks[0].inputState);
+}
+
+template<typename Lattice, typename TransferFunction>
 inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
   std::queue<const BasicBlock*> worklist;
 
@@ -71,6 +78,19 @@ inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::evaluate() {
         worklist.push(&dep);
       }
     }
+  }
+}
+
+template<typename Lattice, typename TransferFunction>
+inline void MonotoneCFGAnalyzer<Lattice, TransferFunction>::collectResults() {
+  for (BlockState currBlockState : stateBlocks) {
+    typename Lattice::Element inputStateCopy = currBlockState.inputState;
+
+    // The transfer function generates the final set of states and uses it to
+    // produce useful information. For example, in reaching definitions
+    // analysis, these final states are used to populate a mapping of
+    // local.get's to a set of local.set's that affect its value.
+    transferFunction.collectResults(currBlockState.cfgBlock, inputStateCopy);
   }
 }
 
