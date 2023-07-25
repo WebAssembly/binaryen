@@ -420,7 +420,6 @@
 ;; both of their casts being noticed. The second function still casts to Y2, but
 ;; it casts the second parameter to that.
 (module
-
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $X (struct ))
@@ -657,4 +656,227 @@
   )
 )
 
-;; TODO test last commit, with merged/unified casts for optimizeCall
+;; Casts in multiple call_ref possible targets.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct ))
+    (type $X (struct))
+
+    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    (type $Y1 (sub $X (struct)))
+
+    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    (type $Y2 (sub $X (struct)))
+
+    ;; CHECK:       (type $A (func (param anyref anyref anyref anyref anyref anyref)))
+    (type $A (func (param anyref) (param anyref) (param anyref) (param anyref) (param anyref) (param anyref)))
+  )
+
+  ;; CHECK:      (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none (func (param anyref anyref anyref anyref anyref anyref funcref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem declare func $possible-1 $possible-2)
+
+  ;; CHECK:      (export "out" (func $caller1))
+
+  ;; CHECK:      (export "out2" (func $reffer))
+
+  ;; CHECK:      (func $possible-1 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-1 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
+    (drop
+      (ref.cast $X
+        (local.get $ref)
+      )
+    )
+    (drop
+      (ref.cast $X
+        (local.get $ref2)
+      )
+    )
+    (drop
+      (ref.cast $X
+        (local.get $ref4)
+      )
+    )
+    (drop
+      (ref.cast $Y1
+        (local.get $ref5)
+      )
+    )
+    (drop
+      (ref.cast $Y1
+        (local.get $ref6)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $possible-2 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (local.get $ref4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $Y2
+  ;; CHECK-NEXT:    (local.get $ref6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-2 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
+    (drop
+      (ref.cast $X
+        (local.get $ref)
+      )
+    )
+    (drop
+      (ref.cast $X
+        (local.get $ref3)
+      )
+    )
+    (drop
+      (ref.cast $Y1
+        (local.get $ref4)
+      )
+    )
+    (drop
+      (ref.cast $X
+        (local.get $ref5)
+      )
+    )
+    (drop
+      (ref.cast $Y2
+        (local.get $ref6)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller1 (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none) (param $ref1 anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref) (param $func funcref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast null any
+  ;; CHECK-NEXT:    (local.get $ref2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast null any
+  ;; CHECK-NEXT:    (local.get $ref3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $X
+  ;; CHECK-NEXT:    (local.get $ref6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller1 (export "out")
+    (param $ref1 anyref)
+    (param $ref2 anyref)
+    (param $ref3 anyref)
+    (param $ref4 anyref)
+    (param $ref5 anyref)
+    (param $ref6 anyref)
+
+    (param $func funcref)
+
+    ;; All the params have a cast, so we can potentially refine them depending
+    ;; on the call targets.
+    (call_ref $A
+      ;; The first param is cast to $X in both targets, so we can apply that.
+      (ref.cast null any
+        (local.get $ref1)
+      )
+      ;; The second and third are cast to $X just in one of them, so we do
+      ;; nothing.
+      (ref.cast null any
+        (local.get $ref2)
+      )
+      (ref.cast null any
+        (local.get $ref3)
+      )
+      ;; The fourth and fifth are cast to $X and $Y1, so we can apply the LUB,
+      ;; which is $X.
+      (ref.cast null any
+        (local.get $ref4)
+      )
+      (ref.cast null any
+        (local.get $ref5)
+      )
+      ;; The last is cast to $Y1 and $Y2, and the LUB is $X.
+      (ref.cast null any
+        (local.get $ref6)
+      )
+      (ref.cast $A
+        (local.get $func)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffer (export "out2")
+    ;; Take references to the possible functions so that GUFA does not optimize
+    ;; calls to them away.
+    (drop
+      (ref.func $possible-1)
+    )
+    (drop
+      (ref.func $possible-2)
+    )
+  )
+)

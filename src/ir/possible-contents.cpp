@@ -1670,14 +1670,15 @@ void TNHOracle::infer() {
           auto castType = iter->second;
           if (target == possibleTargets[0]) {
             // This is the first target, so just apply the value.
-            continue;
+            sharedCastParamsVec[i] = castType;
+          } else {
+            // This is a later param, so combine the constraints.
+            sharedCastParamsVec[i] = Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
           }
-
-          sharedCastParamsVec[i] = Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
         }
       }
 
-      // Build a map of the interesting cast params, if there are any.
+      // Build a map of the interesting cast params we found.
       CastParams sharedCastParams;
       for (Index i = 0; i < numParams; i++) {
         auto type = sharedCastParamsVec[i];
