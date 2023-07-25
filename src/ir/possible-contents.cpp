@@ -1405,7 +1405,11 @@ private:
   void infer();
 
   // Optimize one specific call (or call_ref).
-  void optimizeCallCasts(Expression* call, const ExpressionList& operands, const CastParams& targetCastParams, const analysis::CFGBlockIndexes& blockIndexes, TNHInfo& info);
+  void optimizeCallCasts(Expression* call,
+                         const ExpressionList& operands,
+                         const CastParams& targetCastParams,
+                         const analysis::CFGBlockIndexes& blockIndexes,
+                         TNHInfo& info);
 };
 
 void TNHOracle::scan(Function* func,
@@ -1580,7 +1584,8 @@ void TNHOracle::infer() {
       // This looks promising, create the CFG if we haven't already, and
       // optimize.
       ensureCFG();
-      optimizeCallCasts(call, call->operands, targetCastParams, *blockIndexes, info);
+      optimizeCallCasts(
+        call, call->operands, targetCastParams, *blockIndexes, info);
 
       // Note that we don't need to do anything for targetInfo.traps for a
       // direct call: the inliner will inline the singleton unreachable in the
@@ -1673,7 +1678,8 @@ void TNHOracle::infer() {
             sharedCastParamsVec[i] = castType;
           } else {
             // This is a later param, so combine the constraints.
-            sharedCastParamsVec[i] = Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
+            sharedCastParamsVec[i] =
+              Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
           }
         }
       }
@@ -1688,7 +1694,8 @@ void TNHOracle::infer() {
       }
       if (!sharedCastParams.empty()) {
         ensureCFG();
-        optimizeCallCasts(call, call->operands, sharedCastParams, *blockIndexes, info);
+        optimizeCallCasts(
+          call, call->operands, sharedCastParams, *blockIndexes, info);
       }
     }
   });
@@ -1701,7 +1708,11 @@ void TNHOracle::infer() {
   }
 }
 
-void TNHOracle::optimizeCallCasts(Expression* call, const ExpressionList& operands, const CastParams& targetCastParams, const analysis::CFGBlockIndexes& blockIndexes, TNHInfo& info) {
+void TNHOracle::optimizeCallCasts(Expression* call,
+                                  const ExpressionList& operands,
+                                  const CastParams& targetCastParams,
+                                  const analysis::CFGBlockIndexes& blockIndexes,
+                                  TNHInfo& info) {
   // Optimize in the same basic block as the call: all instructions still in
   // that block will definitely execute if the call is reached.
   auto callBlockIndex = blockIndexes.get(call);
