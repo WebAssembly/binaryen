@@ -5,16 +5,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "tools/fuzzing/random.h"
 #include "wasm.h"
 
 namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
-
-std::string LatticeComparisonNames[4] = {
-  "No Relation", "Equal", "Less", "Greater"};
-std::string LatticeComparisonSymbols[4] = {"?", "=", "<", ">"};
 
 // If parameter "comparison" compares x and y, the function returns the opposite
 // direction comparison between y and x.
@@ -119,9 +114,6 @@ public:
 
   // Returns an instance of the bottom lattice element.
   Element getBottom();
-
-  // Returns a random lattice element. Used for fuzzing.
-  Element getRandom(Random& rand);
 };
 
 // A layer of abstraction over FiniteIntPowersetLattice which maps
@@ -181,9 +173,6 @@ public:
   }
 
   Element getBottom() { return intLattice.getBottom(); }
-
-  // Returns a random lattice element. Used for fuzzing.
-  Element getRandom(Random& rand) { return intLattice.getRandom(rand); }
 };
 
 } // namespace wasm::analysis

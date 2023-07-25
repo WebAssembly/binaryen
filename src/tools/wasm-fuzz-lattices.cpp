@@ -15,28 +15,50 @@ namespace wasm {
 using RandEngine = std::mt19937_64;
 using namespace analysis;
 
+// Helps printing error messages.
+std::string LatticeComparisonNames[4] = {
+  "No Relation", "Equal", "Less", "Greater"};
+std::string LatticeComparisonSymbols[4] = {"?", "=", "<", ">"};
+
 uint64_t getSeed() {
   // Return a (truly) random 64-bit value.
   std::random_device rand;
   return std::uniform_int_distribution<uint64_t>{}(rand);
 }
 
-struct Fuzzer {
-  bool verbose;
+// Utility class which provides methods to check properties of the transfer
+// function and lattice of an analysis.
+template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
+  Lattice& lattice;
+  TransferFunction& transferFunction;
+  std::string latticeName;
+  std::string transferFunctionName;
+  uint64_t latticeElementSeed;
+  Name funcName;
 
-  Random rand;
+  AnalysisChecker(Lattice& lattice,
+                  TransferFunction& transferFunction,
+                  std::string latticeName,
+                  std::string transferFunctionName,
+                  uint64_t latticeElementSeed,
+                  Name funcName)
+    : lattice(lattice), transferFunction(transferFunction),
+      latticeName(latticeName), transferFunctionName(transferFunctionName),
+      latticeElementSeed(latticeElementSeed), funcName(funcName) {}
 
-  Fuzzer(bool verbose) : verbose(verbose), rand({}) {}
+  void printFailureInfo(std::ostream& os) {
+    os << "Error for " << transferFunctionName << " and " << latticeName
+       << " at lattice element seed " << latticeElementSeed << " and function "
+       << funcName << ".\n";
+  }
 
   // Checks reflexivity of a lattice element, i.e. x = x.
-  template<typename Lattice>
-  void checkReflexivity(Lattice& lattice,
-                        std::string latticeName,
-                        typename Lattice::Element& element) {
+  void checkReflexivity(typename Lattice::Element& element) {
     LatticeComparison result = lattice.compare(element, element);
     if (result != LatticeComparison::EQUAL) {
       std::stringstream ss;
-      ss << latticeName << " element ";
+      printFailureInfo(ss);
+      ss << "Element ";
       element.print(ss);
       ss << " is not reflexive.\n";
       Fatal() << ss.str();
@@ -51,17 +73,14 @@ struct Fuzzer {
 
   // Instead, we check for a related concept that x < y implies y > x, and
   // vice versa in this checkAntiSymmetry function.
-  template<typename Lattice>
-  void checkAntiSymmetry(Lattice& lattice,
-                         std::string latticeName,
-                         typename Lattice::Element& x,
+  void checkAntiSymmetry(typename Lattice::Element& x,
                          typename Lattice::Element& y) {
     LatticeComparison result = lattice.compare(x, y);
     LatticeComparison reverseResult = lattice.compare(y, x);
 
     if (reverseComparison(result) != reverseResult) {
       std::stringstream ss;
-      ss << latticeName << " has ";
+      printFailureInfo(ss);
       x.print(ss);
       ss << " " << LatticeComparisonNames[result] << " ";
       y.print(ss);
@@ -73,10 +92,7 @@ struct Fuzzer {
 
   // Given three lattice elements x, y, and z, checks if transitivity holds
   // between them.
-  template<typename Lattice>
-  void checkTransitivity(Lattice& lattice,
-                         std::string latticeName,
-                         typename Lattice::Element& x,
+  void checkTransitivity(typename Lattice::Element& x,
                          typename Lattice::Element& y,
                          typename Lattice::Element& z) {
     LatticeComparison xy = lattice.compare(x, y);
@@ -89,7 +105,8 @@ struct Fuzzer {
     // Cover all permutations of x, y, and z.
     if (xy != LatticeComparison::NO_RELATION && xy == yz && yz != xz) {
       std::stringstream ss;
-      ss << latticeName << " elements a = ";
+      printFailureInfo(ss);
+      ss << "Elements a = ";
       x.print(ss);
       ss << ", b = ";
       y.print(ss);
@@ -101,7 +118,8 @@ struct Fuzzer {
       Fatal() << ss.str();
     } else if (yx != LatticeComparison::NO_RELATION && yx == xz && xz != yz) {
       std::stringstream ss;
-      ss << latticeName << " elements a = ";
+      printFailureInfo(ss);
+      ss << "Elements a = ";
       y.print(ss);
       ss << ", b = ";
       x.print(ss);
@@ -113,7 +131,8 @@ struct Fuzzer {
       Fatal() << ss.str();
     } else if (xz != LatticeComparison::NO_RELATION && xz == zy && zy != xy) {
       std::stringstream ss;
-      ss << latticeName << " elements a = ";
+      printFailureInfo(ss);
+      ss << "Elements a = ";
       x.print(ss);
       ss << ", b = ";
       z.print(ss);
@@ -130,11 +149,7 @@ struct Fuzzer {
   // the transfer function is monotonic. If this is violated, then we print out
   // the CFG block input which caused the transfer function to exhibit
   // non-monotonic behavior.
-  template<typename Lattice>
-  void checkMonotonicity(Lattice& lattice,
-                         std::string latticeName,
-                         std::string transferFunctionName,
-                         const BasicBlock* cfgBlock,
+  void checkMonotonicity(const BasicBlock* cfgBlock,
                          typename Lattice::Element& first,
                          typename Lattice::Element& second,
                          typename Lattice::Element& firstResult,
@@ -163,8 +178,9 @@ struct Fuzzer {
     }
 
     std::stringstream ss;
+    printFailureInfo(ss);
 
-    ss << "The " << latticeName << " elements ";
+    ss << "Elements ";
     first.print(ss);
     ss << " -> ";
     firstResult.print(ss);
@@ -172,38 +188,36 @@ struct Fuzzer {
     second.print(ss);
     ss << " -> ";
     secondResult.print(ss);
-    ss << " show that " << transferFunctionName
-       << " is not monotone when given the input:\n";
+    ss << "\n show that the transfer function is not monotone when given the "
+          "input:\n";
     cfgBlock->print(ss);
     ss << "\n";
 
     Fatal() << ss.str();
   }
 
-  // Helper function for checking the properties of lattices and transfer
-  // functiosn on a CFG of a randomly generated function. It does this by
-  // radomly generating three lattice elements, and then using them as input
-  // states for a CFG block on which the transfer function is applied.
-  template<typename Lattice, typename TransferFunction>
-  void check(CFG& cfg,
-             Lattice& lattice,
-             std::string latticeName,
-             TransferFunction& transferFunction,
-             std::string transferFuncName) {
+  // Checks lattice-only properties for a triple of lattices.
+  void checkLatticeElements(typename Lattice::Element x,
+                            typename Lattice::Element y,
+                            typename Lattice::Element z) {
+    checkReflexivity(x);
+    checkReflexivity(y);
+    checkReflexivity(z);
+    checkAntiSymmetry(x, y);
+    checkAntiSymmetry(x, z);
+    checkAntiSymmetry(y, z);
+    checkTransitivity(x, y, z);
+  }
+
+  // Checks transfer function relevant properties given a CFG and three input
+  // states. It does this by applying the transfer function on each CFG block
+  // using the same three input states each time and then checking properties on
+  // the inputs and outputs.
+  void checkTransferFunction(CFG& cfg,
+                             typename Lattice::Element x,
+                             typename Lattice::Element y,
+                             typename Lattice::Element z) {
     for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
-      typename Lattice::Element x = lattice.getRandom(rand);
-      typename Lattice::Element y = lattice.getRandom(rand);
-      typename Lattice::Element z = lattice.getRandom(rand);
-
-      // Check lattice properties
-      checkReflexivity<Lattice>(lattice, latticeName, x);
-      checkReflexivity<Lattice>(lattice, latticeName, y);
-      checkReflexivity<Lattice>(lattice, latticeName, z);
-      checkAntiSymmetry<Lattice>(lattice, latticeName, x, y);
-      checkAntiSymmetry<Lattice>(lattice, latticeName, x, z);
-      checkAntiSymmetry<Lattice>(lattice, latticeName, y, z);
-      checkTransitivity<Lattice>(lattice, latticeName, x, y, z);
-
       // Apply transfer function on each lattice element.
       typename Lattice::Element xResult = x;
       transferFunction.transfer(&(*cfgIter), xResult);
@@ -213,69 +227,153 @@ struct Fuzzer {
       transferFunction.transfer(&(*cfgIter), zResult);
 
       // Check monotonicity for every pair of transfer function outputs.
-      checkMonotonicity<Lattice>(lattice,
-                                 latticeName,
-                                 transferFuncName,
-                                 &(*cfgIter),
-                                 x,
-                                 y,
-                                 xResult,
-                                 yResult);
-      checkMonotonicity<Lattice>(lattice,
-                                 latticeName,
-                                 transferFuncName,
-                                 &(*cfgIter),
-                                 x,
-                                 z,
-                                 xResult,
-                                 zResult);
-      checkMonotonicity<Lattice>(lattice,
-                                 latticeName,
-                                 transferFuncName,
-                                 &(*cfgIter),
-                                 y,
-                                 z,
-                                 yResult,
-                                 zResult);
+      checkMonotonicity(&(*cfgIter), x, y, xResult, yResult);
+      checkMonotonicity(&(*cfgIter), x, z, xResult, zResult);
+      checkMonotonicity(&(*cfgIter), y, z, yResult, zResult);
     }
   }
+};
 
-  // Checks properties of the LivenessTransferFunction on a randomly generated
-  // module function.
-  void checkLivenessTransferFunction(CFG& cfg, Function* func) {
-    FiniteIntPowersetLattice lattice(func->getNumLocals());
-    LivenessTransferFunction transferFunction;
+// Struct to set up and check liveness analysis lattice and transfer function.
+struct LivenessChecker {
+  LivenessTransferFunction transferFunction;
+  FiniteIntPowersetLattice lattice;
+  AnalysisChecker<FiniteIntPowersetLattice, LivenessTransferFunction> checker;
+  LivenessChecker(Function* func, uint64_t latticeElementSeed, Name funcName)
+    : lattice(func->getNumLocals()), checker(lattice,
+                                             transferFunction,
+                                             "FiniteIntPowersetLattice",
+                                             "LivenessTransferFunction",
+                                             latticeElementSeed,
+                                             funcName) {}
 
-    check<FiniteIntPowersetLattice, LivenessTransferFunction>(
-      cfg,
-      lattice,
-      "FiniteIntPowersetLattice",
-      transferFunction,
-      "LivenessTransferFunction");
+  FiniteIntPowersetLattice::Element getRandomElement(Random& rand) {
+    FiniteIntPowersetLattice::Element result = lattice.getBottom();
+
+    // Uses rand to randomly select which members are to be included (i. e. flip
+    // bits in the bitvector).
+    for (size_t i = 0; i < lattice.getSetSize(); ++i) {
+      result.set(i, rand.oneIn(2));
+    }
+    return result;
   }
+};
 
-  // Checks properties of the ReachingDefinitionsTransferFunction on a randomly
-  // generated module function.
-  void checkReachingDefinitionsTransferFunction(CFG& cfg, Function* func) {
-    LocalGraph::GetSetses getSetses;
-    LocalGraph::Locations locations;
-    ReachingDefinitionsTransferFunction transferFunction(
-      func, getSetses, locations);
-    check<FinitePowersetLattice<LocalSet*>,
-          ReachingDefinitionsTransferFunction>(
-      cfg,
-      transferFunction.lattice,
-      "FinitePowersetLattice<LocalSet*>",
-      transferFunction,
-      "ReachingDefinitionsTransferFunction");
+// Struct to set up and check reaching definitions analysis lattice and transfer
+// function.
+struct ReachingDefinitionsChecker {
+  LocalGraph::GetSetses getSetses;
+  LocalGraph::Locations locations;
+  ReachingDefinitionsTransferFunction transferFunction;
+  AnalysisChecker<FinitePowersetLattice<LocalSet*>,
+                  ReachingDefinitionsTransferFunction>
+    checker;
+  ReachingDefinitionsChecker(Function* func,
+                             uint64_t latticeElementSeed,
+                             Name funcName)
+    : transferFunction(func, getSetses, locations),
+      checker(transferFunction.lattice,
+              transferFunction,
+              "FinitePowersetLattice<LocalSet*>",
+              "ReachingDefinitionsTransferFunction",
+              latticeElementSeed,
+              funcName) {}
+
+  FinitePowersetLattice<LocalSet*>::Element getRandomElement(Random& rand) {
+    FinitePowersetLattice<LocalSet*>::Element result =
+      transferFunction.lattice.getBottom();
+
+    // Uses rand to randomly select which members are to be included (i. e. flip
+    // bits in the bitvector).
+    for (size_t i = 0; i < transferFunction.lattice.getSetSize(); ++i) {
+      result.set(i, rand.oneIn(2));
+    }
+    return result;
+  }
+};
+
+struct Fuzzer {
+  bool verbose;
+
+  Fuzzer(bool verbose) : verbose(verbose) {}
+
+  // Helper function to run per-function tests. latticeElementSeed is used to
+  // generate three lattice elements randomly. It is also used to select which
+  // analysis is to be tested for the function.
+  void runOnFunction(Function* func, uint64_t latticeElementSeed) {
+    RandEngine getFuncRand(latticeElementSeed);
+
+    // less bytes are needed to generate three random lattices.
+    std::vector<char> funcBytes(128);
+    for (size_t i = 0; i < funcBytes.size(); i += sizeof(uint64_t)) {
+      *(uint64_t*)(funcBytes.data() + i) = getFuncRand();
+    }
+
+    Random rand(std::move(funcBytes));
+
+    CFG cfg = CFG::fromFunction(func);
+
+    switch (rand.upTo(2)) {
+      case 0: {
+        LivenessChecker livenessChecker(func, latticeElementSeed, func->name);
+        FiniteIntPowersetLattice::Element x =
+          livenessChecker.getRandomElement(rand);
+        FiniteIntPowersetLattice::Element y =
+          livenessChecker.getRandomElement(rand);
+        FiniteIntPowersetLattice::Element z =
+          livenessChecker.getRandomElement(rand);
+
+        if (verbose) {
+          std::cout << "Using lattice element seed " << latticeElementSeed
+                    << "\nGenerated FiniteIntPowersetLattice elements:\n";
+          x.print(std::cout);
+          std::cout << ",\n";
+          y.print(std::cout);
+          std::cout << ",\n";
+          z.print(std::cout);
+          std::cout << "\nfor " << func->name
+                    << " to test LivenessTransferFunction.\n\n";
+        }
+
+        livenessChecker.checker.checkLatticeElements(x, y, z);
+        livenessChecker.checker.checkTransferFunction(cfg, x, y, z);
+        break;
+      }
+      default: {
+        ReachingDefinitionsChecker reachingDefinitionsChecker(
+          func, latticeElementSeed, func->name);
+        FinitePowersetLattice<LocalSet*>::Element x =
+          reachingDefinitionsChecker.getRandomElement(rand);
+        FinitePowersetLattice<LocalSet*>::Element y =
+          reachingDefinitionsChecker.getRandomElement(rand);
+        FinitePowersetLattice<LocalSet*>::Element z =
+          reachingDefinitionsChecker.getRandomElement(rand);
+
+        if (verbose) {
+          std::cout
+            << "Using lattice element seed " << latticeElementSeed
+            << "\nGenerated FinitePowersetLattice<LocalSet*> elements:\n";
+          x.print(std::cout);
+          std::cout << ",\n";
+          y.print(std::cout);
+          std::cout << ",\n";
+          z.print(std::cout);
+          std::cout << "\nfor " << func->name
+                    << " to test ReachingDefinitionsTransferFunction.\n\n";
+        }
+
+        reachingDefinitionsChecker.checker.checkLatticeElements(x, y, z);
+        reachingDefinitionsChecker.checker.checkTransferFunction(cfg, x, y, z);
+      }
+    }
   }
 
   // Generates a module. The module is used as an input to fuzz transfer
   // functions as well as randomly generated lattice element states. Lattice
   // properties are also fuzzed from the randomly generated states.
-  void run(uint64_t seed) {
-    // TODO: Reset the global type state to avoid monotonically increasing
-    // memory use.
+  void run(uint64_t seed,
+           uint64_t* latticeElementSeed = nullptr,
+           std::string* funcName = nullptr) {
     RandEngine getRand(seed);
     std::cout << "Running with seed " << seed << "\n";
 
@@ -285,23 +383,26 @@ struct Fuzzer {
       *(uint64_t*)(bytes.data() + i) = getRand();
     }
 
-    std::vector<char> bytes2 = bytes;
-
     Module testModule;
     TranslateToFuzzReader reader(testModule, std::move(bytes));
     reader.build();
-    rand = Random(std::move(bytes2));
+
+    if (verbose) {
+      std::cout << "Generated test module: \n";
+      std::cout << testModule;
+      std::cout << "\n";
+    }
+
+    // If a specific function and lattice element seed is specified, only run
+    // that.
+    if (latticeElementSeed && funcName) {
+      runOnFunction(testModule.getFunction(*funcName), *latticeElementSeed);
+      return;
+    }
 
     ModuleUtils::iterDefinedFunctions(testModule, [&](Function* func) {
-      CFG cfg = CFG::fromFunction(func);
-
-      uint32_t analysisChoice = rand.pick(2);
-
-      if (analysisChoice == 0) {
-        checkLivenessTransferFunction(cfg, func);
-      } else if (analysisChoice == 1) {
-        checkReachingDefinitionsTransferFunction(cfg, func);
-      }
+      uint64_t funcSeed = getRand();
+      runOnFunction(func, funcSeed);
     });
   }
 };
@@ -327,6 +428,25 @@ int main(int argc, const char* argv[]) {
                 seed = uint64_t(std::stoull(arg));
               });
 
+  std::optional<uint64_t> latticeElementSeed;
+  options.add("--lattice-element-seed",
+              "",
+              "Seed which generated the lattice elements to be checked.",
+              WasmFuzzTypesOption,
+              Options::Arguments::One,
+              [&](Options*, const std::string& arg) {
+                latticeElementSeed = uint64_t(std::stoull(arg));
+              });
+
+  std::optional<std::string> functionName;
+  options.add(
+    "--function-name",
+    "",
+    "Name of the function in the module generated by --seed to be checked.",
+    WasmFuzzTypesOption,
+    Options::Arguments::One,
+    [&](Options*, const std::string& arg) { functionName = arg; });
+
   bool verbose = false;
   options.add("--verbose",
               "-v",
@@ -339,8 +459,13 @@ int main(int argc, const char* argv[]) {
 
   Fuzzer fuzzer{verbose};
   if (seed) {
-    // Run just a single workload with the given seed.
-    fuzzer.run(*seed);
+    if (latticeElementSeed && functionName) {
+      // Run test a single function and lattice element seed.
+      fuzzer.run(*seed, &(*latticeElementSeed), &(*functionName));
+    } else {
+      // Run just a single workload with the given seed.
+      fuzzer.run(*seed);
+    }
   } else {
     // Continuously run workloads with new randomly generated seeds.
     size_t i = 0;

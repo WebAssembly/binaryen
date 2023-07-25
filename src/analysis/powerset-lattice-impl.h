@@ -46,19 +46,6 @@ inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
   return result;
 }
 
-// Returns a random lattice element. Used for fuzzing.
-inline FiniteIntPowersetLattice::Element
-FiniteIntPowersetLattice::getRandom(Random& rand) {
-  FiniteIntPowersetLattice::Element result(setSize);
-
-  // Uses rand to randomly select which members are to be included (i. e. flip
-  // bits in the bitvector).
-  for (size_t i = 0; i < setSize; ++i) {
-    result.set(i, rand.oneIn(2));
-  }
-  return result;
-}
-
 // We count the number of element members present in the element by counting the
 // trues in the bitvector.
 inline size_t FiniteIntPowersetLattice::Element::count() {
