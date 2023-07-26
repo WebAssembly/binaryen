@@ -44,36 +44,36 @@ class ReachingDefinitionsTransferFunction
 
   // Fictitious LocalSet objects to reprsent a local index obtaining its value
   // from its default initial value or parameter value.
-  std::vector<LocalSet> fakeInitialValueSetses;
+  std::vector<LocalSet> fakeInitialValueSets;
 
   // Pointers to the fictitious LocalSet objects.
   std::unordered_set<LocalSet*> fakeSetPtrs;
 
-  // Helper function which creates fictitious LocalSetses for a function,
-  // inserts them into fakeInitialValueSetses and fakeSetPtrs. It returns a
-  // vector of actual LocalSetses in the function and fictitious LocalSetses for
+  // Helper function which creates fictitious LocalSets for a function,
+  // inserts them into fakeInitialValueSets and fakeSetPtrs. It returns a
+  // vector of actual LocalSets in the function and fictitious LocalSets for
   // use when instatitating the lattice.
   static std::vector<LocalSet*>
-  listLocalSetses(Function* func,
-                  std::vector<LocalSet>& fakeInitialValueSetses,
-                  std::unordered_set<LocalSet*>& fakeSetPtrs) {
+  listLocalSets(Function* func,
+                std::vector<LocalSet>& fakeInitialValueSets,
+                std::unordered_set<LocalSet*>& fakeSetPtrs) {
     // Create a fictitious LocalSet for each local index.
     for (Index i = 0; i < func->getNumLocals(); ++i) {
       LocalSet currSet;
       currSet.index = i;
-      fakeInitialValueSetses.push_back(currSet);
+      fakeInitialValueSets.push_back(currSet);
     }
 
-    // Find all actual LocalSetses.
+    // Find all actual LocalSets.
     FindAll<LocalSet> setFinder(func->body);
-    std::vector<LocalSet*> setsesList = std::move(setFinder.list);
+    std::vector<LocalSet*> setsList = std::move(setFinder.list);
 
     // Take a pointer for each fictitious LocalSet.
-    for (size_t i = 0; i < fakeInitialValueSetses.size(); ++i) {
-      setsesList.push_back(&fakeInitialValueSetses[i]);
-      fakeSetPtrs.insert(&fakeInitialValueSetses[i]);
+    for (size_t i = 0; i < fakeInitialValueSets.size(); ++i) {
+      setsList.push_back(&fakeInitialValueSets[i]);
+      fakeSetPtrs.insert(&fakeInitialValueSets[i]);
     }
-    return setsesList;
+    return setsList;
   }
 
 public:
@@ -87,7 +87,7 @@ public:
                                       LocalGraph::GetSetses& getSetses,
                                       LocalGraph::Locations& locations)
     : numLocals(func->getNumLocals()), getSetses(getSetses),
-      lattice(listLocalSetses(func, fakeInitialValueSetses, fakeSetPtrs)) {
+      lattice(listLocalSets(func, fakeInitialValueSets, fakeSetPtrs)) {
 
     // Map every local index to a set of all the local sets which affect it.
     for (auto it = lattice.membersBegin(); it != lattice.membersEnd(); ++it) {
@@ -101,10 +101,10 @@ public:
     // This is only needed to derive states when solving the analysis, and
     // not for collecting results from the final states.
 
-    // For a LocalSet, we remove all previous setses modifying its index and
+    // For a LocalSet, we remove all previous sets modifying its index and
     // adds itself.
-    auto& currSetses = indexSetses[curr->index];
-    for (auto setInstance : currSetses) {
+    auto& currSets = indexSetses[curr->index];
+    for (auto setInstance : currSets) {
       lattice.remove(currState, setInstance);
     }
 
@@ -121,9 +121,9 @@ public:
     // final (i.e. solved) states. Thus, only done when collectingResults is
     // true.
     if (collectingResults) {
-      auto& matchingSetses = indexSetses[curr->index];
+      auto& matchingSets = indexSetses[curr->index];
 
-      for (auto setInstance : matchingSetses) {
+      for (auto setInstance : matchingSets) {
         if (lattice.exists(currState, setInstance)) {
           // If a pointer to a real LocalSet, add it, otherwise add a nullptr.
           if (fakeSetPtrs.find(setInstance) == fakeSetPtrs.end()) {
