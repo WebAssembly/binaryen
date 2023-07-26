@@ -2536,9 +2536,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   normalizeConeType(contents);
 
   // There is a chance that the intersection is equal to the maximal contents,
-  // which would mean nothing more can arrive here. (Note that we can't
-  // normalize |maximalContents| before the intersection as
-  // intersect assumes a full/infinite cone.)
+  // which would mean nothing more can arrive here.
   normalizeConeType(maximalContents);
 
   if (contents == maximalContents) {
