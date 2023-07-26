@@ -89,7 +89,7 @@ struct SSAify : public Pass {
   void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
-    LocalGraph graph(func);
+    LocalGraph graph(func, module);
     graph.computeSetInfluences();
     graph.computeSSAIndexes();
     // create new local indexes, one for each set
