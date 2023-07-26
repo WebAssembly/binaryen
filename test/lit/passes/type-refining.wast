@@ -1225,7 +1225,11 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $ref|$A|_externref_=>_none (func (param (ref $A) externref)))
+  ;; CHECK-NEXT:  (type $ref|noextern|_=>_none (func (param (ref noextern))))
+
+  ;; CHECK:       (type $ref|none|_ref|noextern|_=>_none (func (param (ref none) (ref noextern))))
+
+  ;; CHECK:       (type $ref|$A|_externref_=>_none (func (param (ref $A) externref)))
 
   ;; CHECK:       (type $A (struct (field (mut (ref noextern)))))
   (type $A (struct (field (mut externref))))
@@ -1328,6 +1332,44 @@
           (local.get $extern)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $bottom.type (type $ref|none|_ref|noextern|_=>_none) (param $ref (ref none)) (param $value (ref noextern))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $value)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bottom.type (param $ref (ref none)) (param $value (ref noextern))
+    ;; The reference here is a bottom type, which we should not crash on.
+    (struct.set $A 0
+      (local.get $ref)
+      (local.get $value)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $ref|noextern|_=>_none) (param $value (ref noextern))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $value)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable (param $value (ref noextern))
+    ;; The reference here is unreachable, which we should not crash on.
+    (struct.set $A 0
+      (unreachable)
+      (local.get $value)
     )
   )
 )
