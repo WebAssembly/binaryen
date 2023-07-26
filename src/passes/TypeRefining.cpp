@@ -378,12 +378,24 @@ struct TypeRefining : public Pass {
       // Only affects struct.gets.
       bool requiresNonNullableLocalFixups() override { return false; }
 
-      TypeRefining& parent;
-
-      WriteUpdater(TypeRefining& parent) : parent(parent) {}
-
       std::unique_ptr<Pass> create() override {
-        return std::make_unique<WriteUpdater>(parent);
+        return std::make_unique<WriteUpdater>();
+      }
+
+      void visitStructNew(StructSet* curr) {
+        if (curr->type == Type::unreachable || curr->isWithDefault()) {
+          return;
+        }
+
+        auto& fields = curr->type.getHeapType().getStruct().fields;
+
+        for (Index i = 0; i < fields.size(); i++) {
+          auto*& operand = curr->operands[i];
+          auto fieldType = fields[i].type;
+          if (!Type::isSubType(operand->type, fieldType)) {
+            operand = Builder(*getModule()).makeRefCast(curr->value, fieldType);
+          }
+        }
       }
 
       void visitStructSet(StructSet* curr) {
@@ -401,7 +413,7 @@ struct TypeRefining : public Pass {
       }
     };
 
-    WriteUpdater updater(*this);
+    WriteUpdater updater;
     updater.run(getPassRunner(), &wasm);
     updater.runOnModuleCode(getPassRunner(), &wasm);
   }
