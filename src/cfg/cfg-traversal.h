@@ -301,12 +301,9 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // class can override this behavior to not create a basic block here, if they
   // don't need to preserve the property that a basic block ends with an
   // instruction that might branch (that is, if we don't create a new basic
-  // block here then we might transfer contorl out of the entire function from
+  // block here then we might transfer control out of the entire function from
   // the middle of the block).
   void continueToNewBasicBlock() {
-    // Create a new basic block and link to it. We do this even if there are no
-    // other edges leaving this call (no catch bodies in this function that we
-    // can reach if we throw), because we want to preserve the property that a
     auto* last = currBasicBlock;
     link(last, startBasicBlock());
   }
