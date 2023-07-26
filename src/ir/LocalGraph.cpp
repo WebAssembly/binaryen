@@ -54,6 +54,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
 
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
+
   // cfg traversal work
 
   static void doVisitLocalGet(Flower* self, Expression** currp) {

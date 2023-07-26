@@ -293,15 +293,34 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
+  // We can optionally ignore branches to outside of the function. Such a branch
+  // does not link two basic blocks (since the target is outside of the
+  // function), but it can cause us to end the current basic block and link to a
+  // new one, just in order to preserve the property that blocks do not have
+  // instructions in the middle that can transfer control flow somewhere. That
+  // property is useful to have in general, but if a user of this code just does
+  // not care about what happens when we leave the current function (say, if it
+  // only reads locals, which are gone anyhow if we leave) then it can flip this
+  // option to avoid creating new blocks just for such branches.
+  //
+  // The main situation where this matters is calls, which can throw if EH is
+  // enabled. With this set to ignore, we don't create new basic blocks just
+  // because of that, which can save a significant amount of overhead (~10%).
+  bool ignoreBranchesOutsideOfFunc = false;
+
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    // Create a new basic block and link to it. We do this even if there are no
-    // other edges leaving this call (no catch bodies in this function that we
-    // can reach if we throw), because we want to preserve the property that a
-    // basic block ends with an instruction that might branch, and the call
-    // might branch out of the entire function if it throws.
-    auto* last = self->currBasicBlock;
-    self->link(last, self->startBasicBlock());
+    if (!self->throwingInstsStack.empty() ||
+        !self->ignoreBranchesOutsideOfFunc) {
+      // |doEndThrowingInst| added a link from the current block to a catch, so
+      // we must end the current block and start another. Or, we are not
+      // ignoring branches to outside of the function, so even without a branch
+      // to a catch we want to start a new basic block here, to preserve the
+      // property that control flow transfers (both within the function or to
+      // the outside) can only happen at the end of basic blocks.
+      auto* last = self->currBasicBlock;
+      self->link(last, self->startBasicBlock());
+    }
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
