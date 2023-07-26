@@ -58,6 +58,11 @@ public:
 
     /// The start indices of each occurrence.
     std::vector<unsigned> StartIndices;
+
+    bool operator==(const RepeatedSubstring& other) const {
+      return this->Length == other.Length &&
+             this->StartIndices == other.StartIndices;
+    }
   };
 
 private:
