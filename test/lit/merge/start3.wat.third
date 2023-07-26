@@ -2,6 +2,10 @@
   (start $start)
 
   (func $start
+    (local $x f64)
+    (drop
+      (local.get $x)
+    )
     (drop
       (i32.const 2)
     )
