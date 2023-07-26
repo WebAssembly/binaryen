@@ -303,14 +303,15 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // only reads locals, which are gone anyhow if we leave) then it can flip this
   // option to avoid creating new blocks just for such branches.
   //
-  // The main situation where this matters is calls, which can throw of EH is
-  // enabled. With this set to true, we don't create new basic blocks just
+  // The main situation where this matters is calls, which can throw if EH is
+  // enabled. With this set to ignore, we don't create new basic blocks just
   // because of that, which can save a significant amount of overhead (~10%).
   bool ignoreBranchesOutsideOfFunc = false;
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty() || !ignoreBranchesOutsideOfFunc) {
+    if (!self->throwingInstsStack.empty() ||
+        !self->ignoreBranchesOutsideOfFunc) {
       // |doEndThrowingInst| added a link from the current block to a catch, so
       // we must end the current block and start another. Or, we are not
       // ignoring branches to outside of the function, so even without a branch
