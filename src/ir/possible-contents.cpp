@@ -1974,7 +1974,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // The maximal contents here are the declared type and all subtypes. Nothing
   // else can pass through, so filter such things out.
   auto maximalContents = PossibleContents::fullConeType(type);
-  contents.intersectWithFullCone(maximalContents);
+  contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
     return;
@@ -2008,9 +2008,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   normalizeConeType(contents);
 
   // There is a chance that the intersection is equal to the maximal contents,
-  // which would mean nothing more can arrive here. (Note that we can't
-  // normalize |maximalContents| before the intersection as
-  // intersectWithFullCone assumes a full/infinite cone.)
+  // which would mean nothing more can arrive here.
   normalizeConeType(maximalContents);
 
   if (contents == maximalContents) {
