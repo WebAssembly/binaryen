@@ -1333,6 +1333,12 @@ struct InfoCollector
 // fail, so the local must contain a B, even though the IR only has A.
 //
 // This analysis complements ContentOracle, which uses this analysis internally.
+//
+// This analysis mainly focuses on information across calls, as simple backwards
+// inference is done in OptimizeCasts. Note that it is not needed if a call is
+// inlined, obviously, and so it mostly helps cases like functions too large to
+// inline, or when optimizing for size, or with indirect calls.
+//
 // TODO: We could cycle between them for repeated improvements. The outcome of
 //       each is to refine the contents at each location, so this must converge.
 
