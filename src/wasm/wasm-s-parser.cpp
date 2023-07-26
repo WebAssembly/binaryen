@@ -2889,22 +2889,30 @@ Expression* SExpressionWasmBuilder::makeRefCastNop(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeBrOnNull(Element& s, bool onFail) {
-  int i = 1;
+  Index i = 1;
   auto name = getLabel(*s[i++]);
+  Expression* value = nullptr;
+  if (i + 1 < s.size()) {
+    value = parseExpression(s[i++]);
+  }
   auto* ref = parseExpression(*s[i]);
   auto op = onFail ? BrOnNonNull : BrOnNull;
-  return Builder(wasm).makeBrOn(op, name, ref);
+  return Builder(wasm).makeBrOn(op, name, value, ref);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s,
                                                  std::optional<Type> castType,
                                                  bool onFail) {
-  int i = 1;
+  Index i = 1;
   auto name = getLabel(*s[i++]);
   std::optional<Type> inputType;
   if (!castType) {
     inputType = elementToType(*s[i++]);
     castType = elementToType(*s[i++]);
+  }
+  Expression* value = nullptr;
+  if (i + 1 < s.size()) {
+    value = parseExpression(s[i++]);
   }
   auto* ref = parseExpression(*s[i]);
   if (inputType && !Type::isSubType(ref->type, *inputType)) {
@@ -2912,7 +2920,7 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s,
       "br_on_cast* ref type does not match expected type", s.line, s.col);
   }
   auto op = onFail ? BrOnCastFail : BrOnCast;
-  return Builder(wasm).makeBrOn(op, name, ref, *castType);
+  return Builder(wasm).makeBrOn(op, name, value, ref, *castType);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {

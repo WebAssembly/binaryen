@@ -849,6 +849,12 @@ public:
     ret->finalize();
     return ret;
   }
+  TupleMake* makeTupleMake(std::initializer_list<Expression*> operands) {
+    auto* ret = wasm.allocator.alloc<TupleMake>();
+    ret->operands.set(operands);
+    ret->finalize();
+    return ret;
+  }
   TupleExtract* makeTupleExtract(Expression* tuple, Index index) {
     auto* ret = wasm.allocator.alloc<TupleExtract>();
     ret->tuple = tuple;
@@ -886,11 +892,15 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOn*
-  makeBrOn(BrOnOp op, Name name, Expression* ref, Type castType = Type::none) {
+  BrOn* makeBrOn(BrOnOp op,
+                 Name name,
+                 Expression* value,
+                 Expression* ref,
+                 Type castType = Type::none) {
     auto* ret = wasm.allocator.alloc<BrOn>();
     ret->op = op;
     ret->name = name;
+    ret->value = value;
     ret->ref = ref;
     ret->castType = castType;
     ret->finalize();

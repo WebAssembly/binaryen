@@ -144,6 +144,98 @@
   )
  )
 
+;; CHECK:      (func $br_on_cast-value (type $none_=>_i32_ref|$struct|) (result i32 (ref $struct))
+;; CHECK-NEXT:  (block $block (result i32 (ref $struct))
+;; CHECK-NEXT:   (drop
+;; CHECK-NEXT:    (br $block
+;; CHECK-NEXT:     (tuple.make
+;; CHECK-NEXT:      (i32.const 0)
+;; CHECK-NEXT:      (struct.new_default $struct)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(func $br_on_cast-value (result i32 (ref $struct))
+  (block $block (result i32 (ref $struct))
+   (drop
+    ;; Same as above, but now the branch carries an additional value.
+    (br_on_cast $block anyref (ref $struct)
+     (i32.const 0)
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-multivalue (type $none_=>_i32_i32_ref|$struct|) (result i32 i32 (ref $struct))
+ ;; CHECK-NEXT:  (local $0 (i32 i32))
+ ;; CHECK-NEXT:  (block $block (result i32 i32 (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (block (result i32 i32 (ref $struct))
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (block (result i32 i32)
+ ;; CHECK-NEXT:        (tuple.make
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:         (i32.const 1)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (tuple.extract 0
+ ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (struct.new_default $struct)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-multivalue (result i32 i32 (ref $struct))
+  (block $block (result i32 i32 (ref $struct))
+   (drop
+    ;; Same as above, but now the branch carries an additional value.
+    (br_on_cast $block anyref (ref $struct)
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (struct.new $struct)
+    )
+   )
+   (drop
+    ;; Same as above, but now the tuple needs to be reconstructed.
+    (br_on_cast $block anyref (ref $struct)
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
  ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref?|$struct|) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
@@ -191,6 +283,29 @@
     ;; succeed if the value is a null.
     (br_on_cast $block anyref (ref null $struct)
      (local.get $nullable-struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_unrelated-value (type $none_=>_i32_ref?|$struct|) (result i32 (ref null $struct))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_unrelated-value (result i32 (ref null $struct))
+  (block $block (result i32 (ref null $struct))
+   (drop
+    (br_on_cast $block anyref (ref $struct)
+     (i32.const 0)
+     (struct.new $struct2)
     )
    )
    (unreachable)
@@ -250,6 +365,100 @@
     ;; succeed if the value is a null.
     (br_on_cast_fail $block anyref (ref null $struct)
      (local.get $nullable-struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-value (type $none_=>_i32_anyref) (result i32 anyref)
+ ;; CHECK-NEXT:  (block $block (result i32 (ref $struct2))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_unrelated-value (result i32 anyref)
+  (block $block (result i32 anyref)
+   (drop
+    ;; This cast can be computed at compile time: it will definitely fail, so we
+    ;; can replace it with an unconditional br.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (i32.const 0)
+     (struct.new $struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-multivalue (type $none_=>_i32_i32_anyref) (result i32 i32 anyref)
+ ;; CHECK-NEXT:  (local $0 (i32 i32))
+ ;; CHECK-NEXT:  (block $block (result i32 i32 (ref $struct2))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (block (result i32 i32 (ref $struct2))
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (block (result i32 i32)
+ ;; CHECK-NEXT:        (tuple.make
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:         (i32.const 1)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (tuple.extract 0
+ ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:        (local.get $0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (struct.new_default $struct2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail_unrelated-multivalue (result i32 i32 anyref)
+  (block $block (result i32 i32 anyref)
+   (drop
+    ;; This will definitely fail, so we can replace it with an unconditional br
+    ;; that carries all the values.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (struct.new $struct2)
+    )
+   )
+   (drop
+    ;; Same, but now we need to reconstruct the tuple.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (struct.new $struct2)
     )
    )
    (unreachable)
@@ -316,6 +525,90 @@
     ;; As $br_on_cast, but this checks for a failing cast, so we know it will
     ;; *not* be taken.
     (br_on_cast_fail $block anyref (ref $struct)
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail-value (type $none_=>_i32_ref|$struct|) (result i32 (ref $struct))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail-value (result i32 (ref $struct))
+  (block $block (result i32 (ref $struct))
+   (drop
+    (br_on_cast_fail $block anyref (ref $struct)
+     (i32.const 0)
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail-multivalue (type $none_=>_i32_i32_ref|$struct|) (result i32 i32 (ref $struct))
+ ;; CHECK-NEXT:  (local $0 (i32 i32))
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result i32 i32 (ref $struct))
+ ;; CHECK-NEXT:     (local.set $0
+ ;; CHECK-NEXT:      (block (result i32 i32)
+ ;; CHECK-NEXT:       (tuple.make
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:        (i32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (tuple.extract 0
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.extract 1
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail-multivalue (result i32 i32 (ref $struct))
+  (block $block (result i32 i32 (ref $struct))
+   (drop
+    (br_on_cast_fail $block anyref (ref $struct)
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (struct.new $struct)
+    )
+   )
+   (drop
+    (br_on_cast_fail $block anyref (ref $struct)
+     ;; Same, but now the tuple needs to be reconstructed.
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
      (struct.new $struct)
     )
    )

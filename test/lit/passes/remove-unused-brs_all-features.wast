@@ -4,21 +4,39 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-brs --all-features -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_i32_i32 (func (result i32 i32)))
+
  ;; CHECK:      (type $vector (array (mut i32)))
  (type $vector (array (mut i32)))
  ;; CHECK:      (type $struct (struct (field (ref null $vector))))
  (type $struct (struct (field (ref null $vector))))
  ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
 
+ ;; CHECK:      (type $none_=>_i32_i32_ref|any| (func (result i32 i32 (ref any))))
+
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+ ;; CHECK:      (type $none_=>_i32_ref|none| (func (result i32 (ref none))))
+
+ ;; CHECK:      (type $none_=>_i32_i32_ref|none| (func (result i32 i32 (ref none))))
 
  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-
  ;; CHECK:      (type $i32_=>_funcref (func (param i32) (result funcref)))
+
+ ;; CHECK:      (type $ref|any|_=>_i32 (func (param (ref any)) (result i32)))
+
+ ;; CHECK:      (type $ref|any|_=>_i32_i32 (func (param (ref any)) (result i32 i32)))
+
+ ;; CHECK:      (type $ref|any|_=>_i32_ref|any| (func (param (ref any)) (result i32 (ref any))))
+
+ ;; CHECK:      (type $none_=>_i32_ref|any| (func (result i32 (ref any))))
+
+ ;; CHECK:      (type $ref|any|_=>_i32_i32_ref|any| (func (param (ref any)) (result i32 i32 (ref any))))
 
  ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (import "out" "log" (func $log (param i32)))
@@ -220,6 +238,330 @@
     (call $log (i32.const 7))
     (ref.func $br_on-to-br)
    )
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-success-value (type $none_=>_i32) (result i32)
+ ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $l
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-success-value (result i32)
+  (block $l (result i32)
+   (drop
+    ;; TODO: Optimize this case.
+    (br_on_null $l
+     (i32.const 0)
+     (ref.null none)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-success-multivalue (type $none_=>_i32_i32) (result i32 i32)
+ ;; CHECK-NEXT:  (block $l (result i32 i32)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $l
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $l
+ ;; CHECK-NEXT:     (block (result i32 i32)
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-success-multivalue (result i32 i32)
+  (block $l (result i32 i32)
+   (drop
+    ;; TODO: Optimzie this case.
+    (br_on_null $l
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (ref.null none)
+    )
+   )
+   (drop
+    (br_on_null $l
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (ref.null none)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-fail-value (type $ref|any|_=>_i32) (param $nonnull (ref any)) (result i32)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (local.get $nonnull)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-fail-value (param $nonnull (ref any)) (result i32)
+  (block $l (result i32)
+   (drop
+    (br_on_null $l
+     (i32.const 0)
+     (local.get $nonnull)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null-fail-multivalue (type $ref|any|_=>_i32_i32) (param $nonnull (ref any)) (result i32 i32)
+ ;; CHECK-NEXT:  (local $1 (i32 i32))
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:     (local.get $nonnull)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result i32 i32 (ref any))
+ ;; CHECK-NEXT:     (local.set $1
+ ;; CHECK-NEXT:      (block (result i32 i32)
+ ;; CHECK-NEXT:       (tuple.make
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:        (i32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (tuple.extract 0
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.extract 1
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $nonnull)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-fail-multivalue (param $nonnull (ref any)) (result i32 i32)
+  (block $l (result i32 i32)
+   (drop
+    (br_on_null $l
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (local.get $nonnull)
+    )
+   )
+   (drop
+    (br_on_null $l
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (local.get $nonnull)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null-success-value (type $ref|any|_=>_i32_ref|any|) (param $nonnull (ref any)) (result i32 (ref any))
+ ;; CHECK-NEXT:  (block $l (result i32 (ref any))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (local.get $nonnull)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-success-value (param $nonnull (ref any)) (result i32 (ref any))
+  (block $l (result i32 (ref any))
+   (drop
+    (br_on_non_null $l
+     (i32.const 0)
+     (local.get $nonnull)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null-success-multivalue (type $ref|any|_=>_i32_i32_ref|any|) (param $nonnull (ref any)) (result i32 i32 (ref any))
+ ;; CHECK-NEXT:  (local $1 (i32 i32))
+ ;; CHECK-NEXT:  (block $l (result i32 i32 (ref any))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:      (local.get $nonnull)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (block (result i32 i32 (ref any))
+ ;; CHECK-NEXT:      (local.set $1
+ ;; CHECK-NEXT:       (block (result i32 i32)
+ ;; CHECK-NEXT:        (tuple.make
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:         (i32.const 1)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (tuple.extract 0
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $nonnull)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-success-multivalue (param $nonnull (ref any)) (result i32 i32 (ref any))
+  (block $l (result i32 i32 (ref any))
+   (drop
+    (br_on_non_null $l
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (local.get $nonnull)
+    )
+   )
+   (drop
+    (br_on_non_null $l
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (local.get $nonnull)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null-fail-value (type $none_=>_i32_ref|none|) (result i32 (ref none))
+ ;; CHECK-NEXT:  (block $l (result i32 (ref none))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_non_null $l
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-fail-value (result i32 (ref none))
+  (block $l (result i32 (ref none))
+   (drop
+    ;; TODO: Optimize this case.
+    (br_on_non_null $l
+     (i32.const 0)
+     (ref.null none)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null-fail-multivalue (type $none_=>_i32_i32_ref|none|) (result i32 i32 (ref none))
+ ;; CHECK-NEXT:  (block $l (result i32 i32 (ref none))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_non_null $l
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_non_null $l
+ ;; CHECK-NEXT:     (block (result i32 i32)
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-fail-multivalue (result i32 i32 (ref none))
+  (block $l (result i32 i32 (ref none))
+   (drop
+    ;; TODO: Optimize this case.
+    (br_on_non_null $l
+     (tuple.make
+      (i32.const 0)
+      (i32.const 1)
+     )
+     (ref.null none)
+    )
+   )
+   (drop
+    (br_on_non_null $l
+     (block (result i32 i32)
+      (tuple.make
+       (i32.const 0)
+       (i32.const 1)
+      )
+     )
+     (ref.null none)
+    )
+   )
+   (unreachable)
   )
  )
 )

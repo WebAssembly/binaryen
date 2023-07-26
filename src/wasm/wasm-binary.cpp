@@ -7102,8 +7102,16 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
   if (hasInputAnnotation) {
     flags = getInt8();
   }
-  auto name = getBreakTarget(getU32LEB()).name;
+  auto target = getBreakTarget(getU32LEB());
+  auto name = target.name;
+  auto valType = target.type;
+  if (op != BrOnNull) {
+    // All operations except for BrOnNull send `ref` as well as `value`, so
+    // remove `ref` to get the expected value type.
+    valType = Type(std::vector<Type>(valType.begin(), --valType.end()));
+  }
   auto* ref = popNonVoidExpression();
+  auto* value = valType.isConcrete() ? popTypedExpression(valType) : nullptr;
   if (op == BrOnCast || op == BrOnCastFail) {
     Nullability inputNullability, castNullability;
     HeapType inputHeapType, castHeapType;
@@ -7127,7 +7135,7 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
       }
     }
   }
-  out = Builder(wasm).makeBrOn(op, name, ref, castType);
+  out = Builder(wasm).makeBrOn(op, name, value, ref, castType);
   return true;
 }
 

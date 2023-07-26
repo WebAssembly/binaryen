@@ -1776,9 +1776,10 @@ BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                    const char* name,
                                    BinaryenExpressionRef ref,
                                    BinaryenType castType) {
+  // TODO: Support sending additional values.
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeBrOn(BrOnOp(op), name, (Expression*)ref, Type(castType)));
+      .makeBrOn(BrOnOp(op), name, nullptr, (Expression*)ref, Type(castType)));
 }
 BinaryenExpressionRef BinaryenStructNew(BinaryenModuleRef module,
                                         BinaryenExpressionRef* operands,

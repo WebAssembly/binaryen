@@ -1541,6 +1541,7 @@ public:
 
   BrOnOp op;
   Name name;
+  Expression* value;
   Expression* ref;
   Type castType;
 

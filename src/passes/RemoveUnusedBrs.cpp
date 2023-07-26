@@ -725,19 +725,53 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
 
+        Builder builder(*getModule());
+
+        // Append a value to a another producing a tuple. The first value may be
+        // a tuple, in which case the returned value will be a larger tuple. May
+        // change val1 in-place.
+        // TODO: Move this to a shared location if it becomes widely useful.
+        auto appendValue = [&](Expression* val1,
+                               Expression* val2) -> Expression* {
+          if (val1->type.isSingle()) {
+            return builder.makeTupleMake({val1, val2});
+          }
+          if (auto* make = val1->dynCast<TupleMake>()) {
+            make->operands.push_back(val2);
+            make->finalize();
+            return make;
+          }
+          // We have a tuple value that we need to destruct and rebuild with the
+          // ref appended. This requires a scratch variable.
+          // TODO: Allow concatenating tuples instead?
+          Index scratch = builder.addVar(getFunction(), val1->type);
+          auto* setScratch = builder.makeLocalSet(scratch, val1);
+          std::vector<Expression*> elems;
+          for (Index i = 0; i < val1->type.size(); ++i) {
+            elems.push_back(builder.makeTupleExtract(
+              builder.makeLocalGet(scratch, val1->type), i));
+          }
+          elems.push_back(val2);
+          auto* makeResult = builder.makeTupleMake(elems);
+          return builder.makeSequence(setScratch, makeResult);
+        };
+
         if (curr->op == BrOnNull) {
           assert(refType.isNonNullable());
           // This cannot be null, so the br is never taken, and the non-null
           // value flows through.
-          replaceCurrent(curr->ref);
+          auto* value =
+            curr->value ? appendValue(curr->value, curr->ref) : curr->ref;
+          replaceCurrent(value);
           worked = true;
           return;
         }
         if (curr->op == BrOnNonNull) {
           assert(refType.isNonNullable());
           // This cannot be null, so the br is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          auto* value =
+            curr->value ? appendValue(curr->value, curr->ref) : curr->ref;
+          replaceCurrent(builder.makeBreak(curr->name, value));
           worked = true;
           return;
         }
@@ -751,15 +785,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (result == GCTypeUtils::Success) {
           // The cast succeeds, so we can switch from BrOn to a simple br that
           // is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          auto* value =
+            curr->value ? appendValue(curr->value, curr->ref) : curr->ref;
+          replaceCurrent(builder.makeBreak(curr->name, value));
           worked = true;
         } else if (result == GCTypeUtils::Failure ||
                    result == GCTypeUtils::Unreachable) {
           // The cast fails, so the branch is never taken, and the value just
           // flows through. Or, the cast cannot even be reached, so it does not
           // matter what we do, and we can handle it as a failure.
-          replaceCurrent(curr->ref);
+          auto* value =
+            curr->value ? appendValue(curr->value, curr->ref) : curr->ref;
+          replaceCurrent(value);
           worked = true;
         }
         // TODO: Handle SuccessOnlyIfNull and SuccessOnlyIfNonNull.
@@ -767,7 +804,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } optimizer;
 
     optimizer.setModule(getModule());
-    optimizer.doWalkFunction(func);
+    optimizer.walkFunction(func);
 
     // If we removed any BrOn instructions, that might affect the reachability
     // of the things they used to break to, so update types.

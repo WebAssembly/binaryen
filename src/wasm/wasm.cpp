@@ -968,50 +968,62 @@ void RefCast::finalize() {
 }
 
 void BrOn::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (value && value->type == Type::unreachable)) {
     type = Type::unreachable;
     return;
   }
+  std::vector<Type> retTypes;
+  if (value) {
+    retTypes = std::vector<Type>(value->type.begin(), value->type.end());
+  }
+
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.
-      type = Type(ref->type.getHeapType(), NonNullable);
+      retTypes.push_back(Type(ref->type.getHeapType(), NonNullable));
       break;
     case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
       // us flow out the null, but it does not).
-      type = Type::none;
       break;
     case BrOnCast:
       if (castType.isNullable()) {
         // Nulls take the branch, so the result is non-nullable.
-        type = Type(ref->type.getHeapType(), NonNullable);
+        retTypes.push_back(Type(ref->type.getHeapType(), NonNullable));
       } else {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
-        type = ref->type;
+        retTypes.push_back(ref->type);
       }
       break;
     case BrOnCastFail:
       if (castType.isNullable()) {
         // Nulls do not take the branch, so the result is non-nullable only if
         // the input is.
-        type = Type(castType.getHeapType(), ref->type.getNullability());
+        retTypes.push_back(
+          Type(castType.getHeapType(), ref->type.getNullability()));
       } else {
         // Nulls take the branch, so the result is non-nullable.
-        type = castType;
+        retTypes.push_back(castType);
       }
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
+  type = Type(retTypes);
 }
 
 Type BrOn::getSentType() {
+  std::vector<Type> sentTypes;
+  if (value) {
+    sentTypes = std::vector<Type>(value->type.begin(), value->type.end());
+  }
+
   switch (op) {
     case BrOnNull:
       // BrOnNull does not send a value on the branch.
-      return Type::none;
+      break;
     case BrOnNonNull:
       // If the input is unreachable, the branch is not taken, and there is no
       // valid type we can report as being sent. Report it as unreachable.
@@ -1019,27 +1031,32 @@ Type BrOn::getSentType() {
         return Type::unreachable;
       }
       // BrOnNonNull sends the non-nullable type on the branch.
-      return Type(ref->type.getHeapType(), NonNullable);
+      sentTypes.push_back(Type(ref->type.getHeapType(), NonNullable));
+      break;
     case BrOnCast:
       // The same as the result type of br_on_cast_fail.
       if (castType.isNullable()) {
-        return Type(castType.getHeapType(), ref->type.getNullability());
+        sentTypes.push_back(
+          Type(castType.getHeapType(), ref->type.getNullability()));
       } else {
-        return castType;
+        sentTypes.push_back(castType);
       }
+      break;
     case BrOnCastFail:
       // The same as the result type of br_on_cast (if reachable).
       if (ref->type == Type::unreachable) {
         return Type::unreachable;
       }
       if (castType.isNullable()) {
-        return Type(ref->type.getHeapType(), NonNullable);
+        sentTypes.push_back(Type(ref->type.getHeapType(), NonNullable));
       } else {
-        return ref->type;
+        sentTypes.push_back(ref->type);
       }
+      break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
+  return Type(sentTypes);
 }
 
 void StructNew::finalize() {
