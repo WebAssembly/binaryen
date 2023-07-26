@@ -390,10 +390,12 @@ struct TypeRefining : public Pass {
           return;
         }
 
-        auto fieldType = curr->ref->type.getHeapType().getStruct().fields[curr->index].type;
+        auto fieldType =
+          curr->ref->type.getHeapType().getStruct().fields[curr->index].type;
 
         if (!Type::isSubType(curr->value->type, fieldType)) {
-          curr->value = Builder(*getModule()).makeRefCast(curr->value, fieldType);
+          curr->value =
+            Builder(*getModule()).makeRefCast(curr->value, fieldType);
         }
       }
     };
