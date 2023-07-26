@@ -226,9 +226,21 @@ TEST_F(StringifyTest, Substrings) {
   stringify.walkModule(&wasm);
 
   SuffixTree st(stringify.hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings;
-  for (auto it = st.begin(); it != st.end(); it++) {
-    substrings.push_back(*it);
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      return (a.Length * a.StartIndices.size()) >
+             (b.Length * b.StartIndices.size());
+    });
+
+  for (size_t i = 0; i < substrings.size(); i++) {
+    SuffixTree::RepeatedSubstring rs = substrings[i];
+    std::cout << rs.Length << " ";
+    for (size_t j = 0; j < rs.StartIndices.size(); j++) {
+      std::cout << rs.StartIndices[j] << ", ";
+    }
   }
 
   EXPECT_EQ(

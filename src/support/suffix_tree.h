@@ -60,8 +60,7 @@ public:
     std::vector<unsigned> StartIndices;
 
     bool operator==(const RepeatedSubstring& other) const {
-      return this->Length == other.Length &&
-             this->StartIndices == other.StartIndices;
+      return Length == other.Length && StartIndices == other.StartIndices;
     }
   };
 
