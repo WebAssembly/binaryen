@@ -295,11 +295,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty()) {
-      // exception not thrown. link to the continuation BB
-      auto* last = self->currBasicBlock;
-      self->link(last, self->startBasicBlock());
-    }
+    // Create a new basic block and link to it. We do this even if there are no
+    // other edges leaving this call (no catch bodies in this function that we
+    // can reach if we throw), because we want to preserve the property that a
+    // basic block ends with an instruction that might branch, and the call
+    // might branch out of the entire function if it throws.
+    auto* last = self->currBasicBlock;
+    self->link(last, self->startBasicBlock());
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
@@ -393,7 +395,11 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        self->pushTask(SubType::doEndCall, currp);
+        auto* module = self->getModule();
+        if (!module || module->features.hasExceptionHandling()) {
+          // This call might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       case Expression::Id::TryId: {

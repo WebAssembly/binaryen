@@ -1177,7 +1177,7 @@ struct InfoCollector
     assert(handledPops == totalPops);
 
     // Handle local.get/sets: each set must write to the proper gets.
-    LocalGraph localGraph(func);
+    LocalGraph localGraph(func, getModule());
 
     for (auto& [get, setsForGet] : localGraph.getSetses) {
       auto index = get->index;
