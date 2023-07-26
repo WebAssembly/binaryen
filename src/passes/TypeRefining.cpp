@@ -353,6 +353,54 @@ struct TypeRefining : public Pass {
     TypeRewriter(wasm, *this).update();
 
     ReFinalize().run(getPassRunner(), &wasm);
+
+    // After refinalizing, we may still have situations that do not validate.
+    // In some cases we can infer something more precise than can be represented
+    // in wasm, like here:
+    //
+    //  (try (result A)
+    //    (const B)
+    //  (catch
+    //    (const A)
+    //  )
+    //
+    // Both parts of the try are constant, so we cannot throw, and the catch is
+    // never reached. We can therefore infer that the fallthrough has the
+    // subtype B. But in wasm the type of the try must remain the supertype A.
+    // If that try is written into a StructSet that we refined, that could be a
+    // problem. To fix it, we add a cast here, and expect that other passes will
+    // remove the cast after other optimizations simplify things (in this
+    // example, the catch can be removed).
+    struct WriteUpdater : public WalkerPass<PostWalker<WriteUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      // Only affects struct.gets.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
+      TypeRefining& parent;
+
+      WriteUpdater(TypeRefining& parent) : parent(parent) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<WriteUpdater>(parent);
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+
+        auto fieldType = curr->ref->type.getHeapType().getStruct().fields[curr->index].type;
+
+        if (!Type::isSubType(curr->value->type, fieldType)) {
+          curr->value = Builder(*getModule()).makeRefCast(curr->value, fieldType);
+        }
+      }
+    };
+
+    WriteUpdater updater(*this);
+    updater.run(getPassRunner(), &wasm);
+    updater.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 

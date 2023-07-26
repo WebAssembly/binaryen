@@ -1222,3 +1222,40 @@
     )
   )
 )
+
+(module
+ ( type $A (struct (field (mut externref))))
+
+  (tag $tag)
+
+  (func $func (param $extern externref) (result anyref)
+   ;; A noextern is written into the struct field and then read. Note that the
+   ;; try's catch is never reached, since the body cannot throw, so the
+   ;; fallthrough of the try is the struct.get, which leads into a struct.new, so
+   ;; we have a copy of that field. For that reason TypeRefining thinks it can
+   ;; refine the type of the field from externref to noextern. However, the
+   ;; validation rule for try-catch prevents the try from being refined so,
+   ;; since the catch has to be taken into account, and it has a less refined
+   ;; type than the body.
+   ;;
+   ;; In such situations we rely on other optimizations to improve things, like
+   ;; getting rid of the catch in this case. In this pass we add a cast to get
+   ;; things to validate, which should be removable by other passes later on.
+   (struct.new $A
+     (try (result externref)
+       (do
+         (struct.get $A 0
+           (struct.new $A
+             (ref.as_non_null
+               (ref.null noextern)
+             )
+           )
+          )
+        )
+        (catch $tag
+          (local.get $extern)
+        )
+      )
+    )
+  )
+)
