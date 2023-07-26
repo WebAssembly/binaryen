@@ -382,7 +382,7 @@ struct TypeRefining : public Pass {
         return std::make_unique<WriteUpdater>();
       }
 
-      void visitStructNew(StructSet* curr) {
+      void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable || curr->isWithDefault()) {
           return;
         }
@@ -393,7 +393,7 @@ struct TypeRefining : public Pass {
           auto*& operand = curr->operands[i];
           auto fieldType = fields[i].type;
           if (!Type::isSubType(operand->type, fieldType)) {
-            operand = Builder(*getModule()).makeRefCast(curr->value, fieldType);
+            operand = Builder(*getModule()).makeRefCast(operand, fieldType);
           }
         }
       }
