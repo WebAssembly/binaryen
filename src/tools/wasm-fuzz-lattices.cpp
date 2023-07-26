@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 WebAssembly Community Group participants
+ * Copyright 2023 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,13 +125,13 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
 private:
   // Prints the error message when a triple of lattice elements violates
   // transitivity.
-  inline void printTransitivityError(std::ostream& os,
-                                     typename Lattice::Element& a,
-                                     typename Lattice::Element& b,
-                                     typename Lattice::Element& c,
-                                     LatticeComparison ab,
-                                     LatticeComparison bc,
-                                     LatticeComparison ac) {
+  void printTransitivityError(std::ostream& os,
+                              typename Lattice::Element& a,
+                              typename Lattice::Element& b,
+                              typename Lattice::Element& c,
+                              LatticeComparison ab,
+                              LatticeComparison bc,
+                              LatticeComparison ac) {
     printFailureInfo(os);
     os << "Elements a = ";
     a.print(os);
@@ -146,9 +146,9 @@ private:
 
   // Returns true if given a-b and b-c comparisons, the a-c comparison violates
   // transitivity.
-  inline bool violatesTransitivity(LatticeComparison ab,
-                                   LatticeComparison bc,
-                                   LatticeComparison ac) {
+  bool violatesTransitivity(LatticeComparison ab,
+                            LatticeComparison bc,
+                            LatticeComparison ac) {
     if (ab != LatticeComparison::NO_RELATION &&
         (bc == LatticeComparison::EQUAL || bc == ab) && ab != ac) {
       return true;
