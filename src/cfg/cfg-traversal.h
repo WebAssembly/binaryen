@@ -293,35 +293,32 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
-  // Create a new basic block and link the current one to continue directly to
-  // it, with no other basic blocks relevant. That is, this is called when we
-  // are in block A and need to create a new block B with A -> B and A has no
-  // other branches from it, and B has no other branches to it, aside from A
-  // possibly exiting the entire function (e.g. via a throw). Some users of this
-  // class can override this behavior to not create a basic block here, if they
-  // don't need to preserve the property that a basic block ends with an
-  // instruction that might branch (that is, if we don't create a new basic
-  // block here then we might transfer control out of the entire function from
-  // the middle of the block).
-  void continueToNewBasicBlock() {
-    auto* last = currBasicBlock;
-    link(last, startBasicBlock());
-  }
+  // We can optionally ignore branches to outside of the function. Such a branch
+  // does not link two basic blocks (since the target is outside of the
+  // function), but it can cause us to end the current basic block and link to a
+  // new one, just in order to preserve the property that blocks do not have
+  // instructions in the middle that can transfer control flow somewhere. That
+  // property is useful to have in general, but if a user of this code just does
+  // not care about what happens when we leave the current function (say, if it
+  // only reads locals, which are gone anyhow if we leave) then it can flip this
+  // option to avoid creating new blocks just for such branches.
+  //
+  // The main situation where this matters is calls, which can throw of EH is
+  // enabled. With this set to true, we don't create new basic blocks just
+  // because of that, which can save a significant amount of overhead (~10%).
+  bool ignoreBranchesOutsideOfFunc = false;
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty()) {
+    if (!self->throwingInstsStack.empty() || !ignoreBranchesOutsideOfFunc) {
       // |doEndThrowingInst| added a link from the current block to a catch, so
-      // we must definitely end the current block and start another.
+      // we must end the current block and start another. Or, we are not
+      // ignoring branches to outside of the function, so even without a branch
+      // to a catch we want to start a new basic block here, to preserve the
+      // property that control flow transfers (both within the function or to
+      // the outside) can only happen at the end of basic blocks.
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
-    } else {
-      // There are no links from the current basic block inside this function,
-      // so control flow continues directly onward (or possibly throws to
-      // outside of this function). Some users may override this if they do not
-      // care about a transfer of control flow out of the function from the
-      // middle of a block, see continueToNewBasicBlock().
-      self->continueToNewBasicBlock();
     }
   }
 

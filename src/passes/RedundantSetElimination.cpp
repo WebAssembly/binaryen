@@ -68,12 +68,9 @@ struct RedundantSetElimination
     return std::make_unique<RedundantSetElimination>();
   }
 
-  void continueToNewBasicBlock() {
-    // Do nothing when continuing from one basic block directly to another. This
-    // happens if a call can throw, so not creating a basic block here means we
-    // can have a transfer of control flow out of the function from the middle
-    // of a block. But that is ok in our case since we only care about locals.
-  }
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
 
   Index numLocals;
 
