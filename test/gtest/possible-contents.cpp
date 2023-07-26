@@ -325,7 +325,7 @@ TEST_F(PossibleContentsTest, TestIntersection) {
   assertHaveIntersection(exactI32, exactI32);
   assertHaveIntersection(i32Zero, i32Zero);
   assertHaveIntersection(exactFuncSignatureType, exactFuncSignatureType);
-  assertHaveIntersection(i32Zero, i32One); // TODO: this could be inferred false
+  assertLackIntersection(i32Zero, i32One);
 
   // Exact types only differing by nullability can intersect (not on the null,
   // but on something else).
@@ -426,12 +426,12 @@ TEST_F(PossibleContentsTest, TestIntersectWithCombinations) {
           assertHaveIntersection(normalizedCone, item);
         }
 
-        // Test intersectWithFullCone() method, which is supported with a full
-        // cone type. In that case we can test that the intersection of A with
-        // A + B is simply A.
+        // Test intersect() method, which is supported with a full cone type.
+        // In that case we can test that the intersection of A with A + B is
+        // simply A.
         if (combination.isFullConeType()) {
           auto intersection = item;
-          intersection.intersectWithFullCone(combination);
+          intersection.intersect(combination);
           EXPECT_EQ(intersection, item);
 #if BINARYEN_TEST_DEBUG
           if (intersection != item) {
@@ -522,9 +522,8 @@ void assertIntersection(PossibleContents a,
                         PossibleContents b,
                         PossibleContents result) {
   auto intersection = a;
-  intersection.intersectWithFullCone(b);
+  intersection.intersect(b);
   EXPECT_EQ(intersection, result);
-
   EXPECT_EQ(PossibleContents::haveIntersection(a, b), !result.isNone());
 }
 
@@ -809,6 +808,21 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   // Incompatible hierarchies have no intersection.
   assertIntersection(
     literalNullA, PossibleContents::fullConeType(funcref), none);
+
+  // Computing intersections is also supported with a Literal.
+  assertIntersection(i32Zero, i32Zero, i32Zero);
+  assertIntersection(i32One, i32Zero, none);
+  assertIntersection(i32Global1, i32Zero, i32Zero);
+  assertIntersection(funcGlobal, i32Zero, none);
+  assertIntersection(
+    PossibleContents::fullConeType(Type::i32), i32Zero, i32Zero);
+  assertIntersection(PossibleContents::fullConeType(Type::f64), i32Zero, none);
+
+  // Computing intersections is also supported with empty contents.
+  assertIntersection(none, none, none);
+  assertIntersection(literalNullA, none, none);
+  assertIntersection(funcGlobal, none, none);
+  assertIntersection(PossibleContents::fullConeType(signature), none, none);
 
   // Subcontents. This API only supports the case where one of the inputs is a
   // full cone type.
