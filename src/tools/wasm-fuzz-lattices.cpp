@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <optional>
 #include <random>
@@ -52,6 +67,23 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
        << funcName << ".\n";
   }
 
+  // Prints information about a particular test case consisting of a randomly
+  // generated function and triple of randomly generate lattice elements.
+  void printVerboseFunctionCase(std::ostream& os,
+                                typename Lattice::Element& x,
+                                typename Lattice::Element& y,
+                                typename Lattice::Element& z) {
+    os << "Using lattice element seed " << latticeElementSeed << "\nGenerated "
+       << latticeName << " elements:\n";
+    x.print(os);
+    os << ",\n";
+    y.print(os);
+    os << ",\n";
+    z.print(os);
+    os << "\nfor " << funcName << " to test " << transferFunctionName
+       << ".\n\n";
+  }
+
   // Checks reflexivity of a lattice element, i.e. x = x.
   void checkReflexivity(typename Lattice::Element& element) {
     LatticeComparison result = lattice.compare(element, element);
@@ -70,7 +102,7 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
   // us if two lattice elements are <, =, or = instead of providing a
   // <= comparison, it is not useful to check for anti-symmetry as it is defined
   // in the fuzzer.
-
+  //
   // Instead, we check for a related concept that x < y implies y > x, and
   // vice versa in this checkAntiSymmetry function.
   void checkAntiSymmetry(typename Lattice::Element& x,
@@ -90,6 +122,44 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
     }
   }
 
+private:
+  // Prints the error message when a triple of lattice elements violates
+  // transitivity.
+  inline void printTransitivityError(std::ostream& os,
+                                     typename Lattice::Element& a,
+                                     typename Lattice::Element& b,
+                                     typename Lattice::Element& c,
+                                     LatticeComparison ab,
+                                     LatticeComparison bc,
+                                     LatticeComparison ac) {
+    printFailureInfo(os);
+    os << "Elements a = ";
+    a.print(os);
+    os << ", b = ";
+    b.print(os);
+    os << ", and c = ";
+    c.print(os);
+    os << " are not transitive. a" << LatticeComparisonSymbols[ab] << "b and b"
+       << LatticeComparisonSymbols[bc] << "c, but a"
+       << LatticeComparisonSymbols[ac] << "c.\n";
+  }
+
+  // Returns true if given a-b and b-c comparisons, the a-c comparison violates
+  // transitivity.
+  inline bool violatesTransitivity(LatticeComparison ab,
+                                   LatticeComparison bc,
+                                   LatticeComparison ac) {
+    if (ab != LatticeComparison::NO_RELATION &&
+        (bc == LatticeComparison::EQUAL || bc == ab) && ab != ac) {
+      return true;
+    } else if (bc != LatticeComparison::NO_RELATION &&
+               (ab == LatticeComparison::EQUAL || ab == bc) && bc != ac) {
+      return true;
+    }
+    return false;
+  }
+
+public:
   // Given three lattice elements x, y, and z, checks if transitivity holds
   // between them.
   void checkTransitivity(typename Lattice::Element& x,
@@ -103,44 +173,17 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
     LatticeComparison zy = reverseComparison(yz);
 
     // Cover all permutations of x, y, and z.
-    if (xy != LatticeComparison::NO_RELATION && xy == yz && yz != xz) {
+    if (violatesTransitivity(xy, yz, xz)) {
       std::stringstream ss;
-      printFailureInfo(ss);
-      ss << "Elements a = ";
-      x.print(ss);
-      ss << ", b = ";
-      y.print(ss);
-      ss << ", and c = ";
-      z.print(ss);
-      ss << " are not transitive. a" << LatticeComparisonSymbols[xy]
-         << "b and b" << LatticeComparisonSymbols[yz] << "c, but a"
-         << LatticeComparisonSymbols[xz] << ".\n";
+      printTransitivityError(ss, x, y, z, xy, yz, xz);
       Fatal() << ss.str();
-    } else if (yx != LatticeComparison::NO_RELATION && yx == xz && xz != yz) {
+    } else if (violatesTransitivity(yx, xz, yz)) {
       std::stringstream ss;
-      printFailureInfo(ss);
-      ss << "Elements a = ";
-      y.print(ss);
-      ss << ", b = ";
-      x.print(ss);
-      ss << ", and c = ";
-      z.print(ss);
-      ss << " are not transitive. a" << LatticeComparisonSymbols[yx]
-         << "b and b" << LatticeComparisonSymbols[xz] << "c, but a"
-         << LatticeComparisonSymbols[yz] << ".\n";
+      printTransitivityError(ss, y, x, z, yx, xz, yz);
       Fatal() << ss.str();
-    } else if (xz != LatticeComparison::NO_RELATION && xz == zy && zy != xy) {
+    } else if (violatesTransitivity(xz, zy, xy)) {
       std::stringstream ss;
-      printFailureInfo(ss);
-      ss << "Elements a = ";
-      x.print(ss);
-      ss << ", b = ";
-      z.print(ss);
-      ss << ", and c = ";
-      y.print(ss);
-      ss << " are not transitive. a" << LatticeComparisonSymbols[xz]
-         << "b and b" << LatticeComparisonSymbols[zy] << "c, but a"
-         << LatticeComparisonSymbols[xy] << ".\n";
+      printTransitivityError(ss, x, z, y, xz, zy, xy);
       Fatal() << ss.str();
     }
   }
@@ -257,6 +300,20 @@ struct LivenessChecker {
     }
     return result;
   }
+
+  // Runs all checks for liveness analysis.
+  void runChecks(CFG& cfg, Random& rand, bool verbose) {
+    FiniteIntPowersetLattice::Element x = getRandomElement(rand);
+    FiniteIntPowersetLattice::Element y = getRandomElement(rand);
+    FiniteIntPowersetLattice::Element z = getRandomElement(rand);
+
+    if (verbose) {
+      checker.printVerboseFunctionCase(std::cout, x, y, z);
+    }
+
+    checker.checkLatticeElements(x, y, z);
+    checker.checkTransferFunction(cfg, x, y, z);
+  }
 };
 
 // Struct to set up and check reaching definitions analysis lattice and transfer
@@ -290,6 +347,20 @@ struct ReachingDefinitionsChecker {
     }
     return result;
   }
+
+  // Runs all checks for reaching definitions analysis.
+  void runChecks(CFG& cfg, Random& rand, bool verbose) {
+    FinitePowersetLattice<LocalSet*>::Element x = getRandomElement(rand);
+    FinitePowersetLattice<LocalSet*>::Element y = getRandomElement(rand);
+    FinitePowersetLattice<LocalSet*>::Element z = getRandomElement(rand);
+
+    if (verbose) {
+      checker.printVerboseFunctionCase(std::cout, x, y, z);
+    }
+
+    checker.checkLatticeElements(x, y, z);
+    checker.checkTransferFunction(cfg, x, y, z);
+  }
 };
 
 struct Fuzzer {
@@ -303,7 +374,7 @@ struct Fuzzer {
   void runOnFunction(Function* func, uint64_t latticeElementSeed) {
     RandEngine getFuncRand(latticeElementSeed);
 
-    // less bytes are needed to generate three random lattices.
+    // Fewer bytes are needed to generate three random lattices.
     std::vector<char> funcBytes(128);
     for (size_t i = 0; i < funcBytes.size(); i += sizeof(uint64_t)) {
       *(uint64_t*)(funcBytes.data() + i) = getFuncRand();
@@ -316,54 +387,13 @@ struct Fuzzer {
     switch (rand.upTo(2)) {
       case 0: {
         LivenessChecker livenessChecker(func, latticeElementSeed, func->name);
-        FiniteIntPowersetLattice::Element x =
-          livenessChecker.getRandomElement(rand);
-        FiniteIntPowersetLattice::Element y =
-          livenessChecker.getRandomElement(rand);
-        FiniteIntPowersetLattice::Element z =
-          livenessChecker.getRandomElement(rand);
-
-        if (verbose) {
-          std::cout << "Using lattice element seed " << latticeElementSeed
-                    << "\nGenerated FiniteIntPowersetLattice elements:\n";
-          x.print(std::cout);
-          std::cout << ",\n";
-          y.print(std::cout);
-          std::cout << ",\n";
-          z.print(std::cout);
-          std::cout << "\nfor " << func->name
-                    << " to test LivenessTransferFunction.\n\n";
-        }
-
-        livenessChecker.checker.checkLatticeElements(x, y, z);
-        livenessChecker.checker.checkTransferFunction(cfg, x, y, z);
+        livenessChecker.runChecks(cfg, rand, verbose);
         break;
       }
       default: {
         ReachingDefinitionsChecker reachingDefinitionsChecker(
           func, latticeElementSeed, func->name);
-        FinitePowersetLattice<LocalSet*>::Element x =
-          reachingDefinitionsChecker.getRandomElement(rand);
-        FinitePowersetLattice<LocalSet*>::Element y =
-          reachingDefinitionsChecker.getRandomElement(rand);
-        FinitePowersetLattice<LocalSet*>::Element z =
-          reachingDefinitionsChecker.getRandomElement(rand);
-
-        if (verbose) {
-          std::cout
-            << "Using lattice element seed " << latticeElementSeed
-            << "\nGenerated FinitePowersetLattice<LocalSet*> elements:\n";
-          x.print(std::cout);
-          std::cout << ",\n";
-          y.print(std::cout);
-          std::cout << ",\n";
-          z.print(std::cout);
-          std::cout << "\nfor " << func->name
-                    << " to test ReachingDefinitionsTransferFunction.\n\n";
-        }
-
-        reachingDefinitionsChecker.checker.checkLatticeElements(x, y, z);
-        reachingDefinitionsChecker.checker.checkTransferFunction(cfg, x, y, z);
+        reachingDefinitionsChecker.runChecks(cfg, rand, verbose);
       }
     }
   }
