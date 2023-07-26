@@ -60,7 +60,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     //
     // TODO: Optimize this, as LocalGraph computes more than we need, and on
     //       more locals than we need.
-    LocalGraph localGraph(func);
+    LocalGraph localGraph(func, getModule());
 
     // For each local index, compute all the the sets and gets.
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);

@@ -318,7 +318,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     } else {
       // There are no links from the current basic block inside this function,
       // so control flow continues directly onward (or possibly throws to
-      // outside of this function).
+      // outside of this function). Some users may override this.
       self->continueToNewBasicBlock();
     }
   }
@@ -414,7 +414,11 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        self->pushTask(SubType::doEndCall, currp);
+        auto* module = self->getModule();
+        if (!module || module->features.hasExceptionHandling()) {
+          // This call might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       case Expression::Id::TryId: {
