@@ -375,7 +375,7 @@ struct TypeRefining : public Pass {
     struct WriteUpdater : public WalkerPass<PostWalker<WriteUpdater>> {
       bool isFunctionParallel() override { return true; }
 
-      // Only affects struct.gets.
+      // Only affects struct.new/sets.
       bool requiresNonNullableLocalFixups() override { return false; }
 
       std::unique_ptr<Pass> create() override {
