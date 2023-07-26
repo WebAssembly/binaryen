@@ -52,6 +52,13 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
 
+  void continueToNewBasicBlock() {
+    // Do nothing when continuing from one basic block directly to another. This
+    // happens if a call can throw, so not creating a basic block here means we
+    // can have a transfer of control flow out of the function from the middle
+    // of a block. But that is ok in our case since we only care about locals.
+  }
+
   // cfg traversal work
 
   static void doVisitLocalGet(Flower* self, Expression** currp) {

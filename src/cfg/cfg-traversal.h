@@ -293,12 +293,29 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
   }
 
+  // Create a new basic block and link the current one to continue directly to
+  // it, with no other basic blocks relevant. That is, this is called when we
+  // are in block A and need to create a new block B with A -> B and A has no
+  // other branches from it, and B has no other branches to it, aside from A
+  // possibly exiting the entire function (e.g. via a throw). Some users of this
+  // class can override this behavior to not create a basic block here, if they
+  // don't need to preserve the property that a basic block ends with an
+  // instruction that might branch (that is, if we don't create a new basic
+  // block here then we might transfer contorl out of the entire function from
+  // the middle of the block).
+  void continueToNewBasicBlock() {
+    // Create a new basic block and link to it. We do this even if there are no
+    // other edges leaving this call (no catch bodies in this function that we
+    // can reach if we throw), because we want to preserve the property that a
+    auto* last = currBasicBlock;
+    link(last, startBasicBlock());
+  }
+
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
     if (!self->throwingInstsStack.empty()) {
       // exception not thrown. link to the continuation BB
-      auto* last = self->currBasicBlock;
-      self->link(last, self->startBasicBlock());
+      self->continueToNewBasicBlock();
     }
   }
 
