@@ -1224,10 +1224,41 @@
 )
 
 (module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $ref|$A|_externref_=>_none (func (param (ref $A) externref)))
+
+  ;; CHECK:       (type $A (struct (field (mut (ref noextern)))))
   (type $A (struct (field (mut externref))))
 
+  ;; CHECK:       (type $externref_=>_anyref (func (param externref) (result anyref)))
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (tag $tag (param))
   (tag $tag)
 
+  ;; CHECK:      (func $struct.new (type $externref_=>_anyref) (param $extern externref) (result anyref)
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (struct.new $A
+  ;; CHECK-NEXT:        (ref.as_non_null
+  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag
+  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $struct.new (param $extern externref) (result anyref)
     ;; A noextern is written into the struct field and then read. Note that the
     ;; try's catch is never reached, since the body cannot throw, so the
@@ -1259,6 +1290,27 @@
     )
   )
 
+  ;; CHECK:      (func $struct.set (type $ref|$A|_externref_=>_none) (param $ref (ref $A)) (param $extern externref)
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (struct.new $A
+  ;; CHECK-NEXT:        (ref.as_non_null
+  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag
+  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $struct.set (param $ref (ref $A)) (param $extern externref)
     (struct.set $A 0
       (local.get $ref)
