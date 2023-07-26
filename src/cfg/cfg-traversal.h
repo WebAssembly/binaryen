@@ -311,7 +311,14 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
     if (!self->throwingInstsStack.empty()) {
-      // exception not thrown. link to the continuation BB
+      // |doEndThrowingInst| added a link from the current block to a catch, so
+      // we must definitely end the current block and start another.
+      auto* last = self->currBasicBlock;
+      self->link(last, self->startBasicBlock());
+    } else {
+      // There are no links from the current basic block inside this function,
+      // so control flow continues directly onward (or possibly throws to
+      // outside of this function).
       self->continueToNewBasicBlock();
     }
   }
