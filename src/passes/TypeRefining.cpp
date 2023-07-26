@@ -359,18 +359,19 @@ struct TypeRefining : public Pass {
     // in wasm, like here:
     //
     //  (try (result A)
-    //    (const B)
+    //    (struct.get ..) ;; returns B.
     //  (catch
     //    (const A)
     //  )
     //
-    // Both parts of the try are constant, so we cannot throw, and the catch is
-    // never reached. We can therefore infer that the fallthrough has the
-    // subtype B. But in wasm the type of the try must remain the supertype A.
-    // If that try is written into a StructSet that we refined, that could be a
-    // problem. To fix it, we add a cast here, and expect that other passes will
-    // remove the cast after other optimizations simplify things (in this
-    // example, the catch can be removed).
+    // The try body cannot throw, so the catch is never reached, and we can
+    // infer the fallthrough has the subtype B. But in wasm the type of the try
+    // must remain the supertype A. If that try is written into a StructSet that
+    // we refined, that will error.
+    //
+    // To fix this, we add a cast here, and expect that other passes will remove
+    // the cast after other optimizations simplify things (in this example, the
+    // catch can be removed).
     struct WriteUpdater : public WalkerPass<PostWalker<WriteUpdater>> {
       bool isFunctionParallel() override { return true; }
 
