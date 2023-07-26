@@ -318,7 +318,9 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     } else {
       // There are no links from the current basic block inside this function,
       // so control flow continues directly onward (or possibly throws to
-      // outside of this function). Some users may override this.
+      // outside of this function). Some users may override this if they do not
+      // care about a transfer of control flow out of the function from the
+      // middle of a block, see continueToNewBasicBlock().
       self->continueToNewBasicBlock();
     }
   }
