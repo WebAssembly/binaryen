@@ -362,19 +362,21 @@ void copyModuleContents(Module& input, Name inputName) {
       // No previous start; just refer to the new one.
       merged.start = input.start;
     } else {
-      // Merge them, keeping the order. Note that we need to create a new
-      // function as there may be other references.
+      // Merge them, keeping the order. We copy both functions to avoid issues
+      // with other references to them, and just call the second one, leaving
+      // inlining to the optimizer if that makes sense to do.
+      auto copiedOldName =
+        Names::getValidFunctionName(merged, "merged.start.old");
+      auto copiedNewName =
+        Names::getValidFunctionName(merged, "merged.start.new");
+      auto* copiedOld = ModuleUtils::copyFunction(
+        merged.getFunction(merged.start), merged, copiedOldName);
+      ModuleUtils::copyFunction(
+        merged.getFunction(input.start), merged, copiedNewName);
       Builder builder(merged);
-      auto mergedName = Names::getValidFunctionName(merged, "merged.start");
-      auto* oldStart = merged.getFunction(merged.start);
-      auto* oldStartBody = ExpressionManipulator::copy(oldStart->body, merged);
-      auto* newStart = merged.getFunction(input.start);
-      auto* newStartBody = ExpressionManipulator::copy(newStart->body, merged);
-      auto* mergedBody = builder.makeSequence(oldStartBody, newStartBody);
-      auto mergedFunc = builder.makeFunction(
-        mergedName, Signature{Type::none, Type::none}, {}, mergedBody);
-      merged.addFunction(std::move(mergedFunc));
-      merged.start = mergedName;
+      copiedOld->body = builder.makeSequence(
+        copiedOld->body, builder.makeCall(copiedNewName, {}, Type::none));
+      merged.start = copiedOldName;
     }
   }
 
