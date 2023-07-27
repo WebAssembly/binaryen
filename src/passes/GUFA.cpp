@@ -58,10 +58,18 @@ struct GUFAOptimizer
   bool isFunctionParallel() override { return true; }
 
   ContentOracle& oracle;
+
+  // Whether to run further optimizations in functions we modify.
   bool optimizing;
 
-  GUFAOptimizer(ContentOracle& oracle, bool optimizing)
-    : oracle(oracle), optimizing(optimizing) {}
+  // Whether to add casts to all things that we have inferred a more refined
+  // type for. This increases code size immediately, but later optimizations
+  // generally benefit enough from these casts that overall code size actually
+  // decreases.
+  bool castAll;
+
+  GUFAOptimizer(ContentOracle& oracle, bool optimizing, bool castAll)
+    : oracle(oracle), optimizing(optimizing), castAll(castAll) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<GUFAOptimizer>(oracle, optimizing);
@@ -344,22 +352,10 @@ struct GUFAOptimizer
   }
 
   // Add a new cast whenever we know a value contains a more refined type than
-  // in the IR. This can increase code size, but it sometimes ends up helping
-  // overall after other optimizations, since the new casts allow more refining
-  // in various ways. In practice, despite the risk of increasing code size this
-  // appears to end up reducing the size of Java and Kotlin. It is unclear
-  // whether there are more or less casts at runtime, however.
-  //
-  // Returns whether we optimized anything.
+  // in the IR. Returns whether we optimized anything.
   bool addNewCasts(Function* func) {
     // Subtyping and casts only make sense if GC is enabled.
     if (!getModule()->features.hasGC()) {
-      return false;
-    }
-
-    // As mentioned above, this may increase code size, so to be careful, only
-    // do this when optimizing heavily for size.
-    if (getPassOptions().optimizeLevel < 3 || getPassOptions().shrinkLevel) {
       return false;
     }
 
@@ -397,8 +393,9 @@ struct GUFAOptimizer
 
 struct GUFAPass : public Pass {
   bool optimizing;
+  bool castAll;
 
-  GUFAPass(bool optimizing) : optimizing(optimizing) {}
+  GUFAPass(bool optimizing, bool castAll) : optimizing(optimizing), castAll(castAll) {}
 
   void run(Module* module) override {
     ContentOracle oracle(*module);
@@ -406,14 +403,15 @@ struct GUFAPass : public Pass {
     // Explicitly build a nested pass runner, to ensure that the optimization
     // level is passed through (by default, just doing pass.run() caps it at 1).
     PassRunner nested(getPassRunner());
-    nested.add(std::make_unique<GUFAOptimizer>(oracle, optimizing));
+    nested.add(std::make_unique<GUFAOptimizer>(oracle, optimizing, castAll));
     nested.run();
   }
 };
 
 } // anonymous namespace
 
-Pass* createGUFAPass() { return new GUFAPass(false); }
-Pass* createGUFAOptimizingPass() { return new GUFAPass(true); }
+Pass* createGUFAPass() { return new GUFAPass(false, false); }
+Pass* createGUFAOptimizingPass() { return new GUFAPass(true, false); }
+Pass* createGUFACastAllPass() { return new GUFAPass(false, true); }
 
 } // namespace wasm
