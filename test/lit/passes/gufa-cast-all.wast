@@ -2,26 +2,56 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --gufa-cast-all -S -o - | filecheck %s
 
-;; Compare the behavior at optimization level 2 and 3. At 3 we will add all the
-;; casts we possibly can infer.
-
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A (struct ))
   (type $A (struct))
 
+  ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))
 
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "export1" (func $ref))
+
+  ;; CHECK:      (export "export2" (func $int))
+
+  ;; CHECK:      (export "export3" (func $func))
+
+  ;; CHECK:      (export "export4" (func $unreachable))
+
+  ;; CHECK:      (func $ref (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $ref (export "export1")
     (local $a (ref $A))
     (local.set $a
       (struct.new $B)
     )
     (drop
-      ;; We can infer that this contains B, and add a cast to that type, when
-      ;; the optimization level is 3.
+      ;; We can infer that this contains B, and add a cast to that type.
       (local.get $a)
     )
   )
 
+  ;; CHECK:      (func $int (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a i32)
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $int (export "export2")
     (local $a i32)
     (local.set $a
@@ -34,15 +64,45 @@
     )
   )
 
-  (func $unreachable (export "export3")
+  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a funcref)
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "export3")
+    (local $a funcref)
+    (local.set $a
+      (ref.func $func)
+    )
+    (drop
+      ;; We can infer that this contains a ref to $func, which we can apply
+      ;; here. We don't need to add a cast in addition to that, as the ref.func
+      ;; we add has the refined type already.
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref $A))
+  ;; CHECK-NEXT:  (local.tee $a
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable (export "export4")
     (local $a (ref $A))
     (local.set $a
       (unreachable)
     )
     (drop
-      ;; We can infer that the type here is unreachable, but there is nothing
-      ;; special to do for that in optimize level 3 vs 2 - we emit an
-      ;; unreachable either way.
+      ;; We can infer that the type here is unreachable, and emit that in the
+      ;; IR. This checks we don't error on the inferred type not being a ref.
       (local.get $a)
     )
   )
