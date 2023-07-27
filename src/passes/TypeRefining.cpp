@@ -353,6 +353,74 @@ struct TypeRefining : public Pass {
     TypeRewriter(wasm, *this).update();
 
     ReFinalize().run(getPassRunner(), &wasm);
+
+    // After refinalizing, we may still have situations that do not validate.
+    // In some cases we can infer something more precise than can be represented
+    // in wasm, like here:
+    //
+    //  (try (result A)
+    //    (struct.get ..) ;; returns B.
+    //  (catch
+    //    (const A)
+    //  )
+    //
+    // The try body cannot throw, so the catch is never reached, and we can
+    // infer the fallthrough has the subtype B. But in wasm the type of the try
+    // must remain the supertype A. If that try is written into a StructSet that
+    // we refined, that will error.
+    //
+    // To fix this, we add a cast here, and expect that other passes will remove
+    // the cast after other optimizations simplify things (in this example, the
+    // catch can be removed).
+    struct WriteUpdater : public WalkerPass<PostWalker<WriteUpdater>> {
+      bool isFunctionParallel() override { return true; }
+
+      // Only affects struct.new/sets.
+      bool requiresNonNullableLocalFixups() override { return false; }
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<WriteUpdater>();
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable || curr->isWithDefault()) {
+          return;
+        }
+
+        auto& fields = curr->type.getHeapType().getStruct().fields;
+
+        for (Index i = 0; i < fields.size(); i++) {
+          auto*& operand = curr->operands[i];
+          auto fieldType = fields[i].type;
+          if (!Type::isSubType(operand->type, fieldType)) {
+            operand = Builder(*getModule()).makeRefCast(operand, fieldType);
+          }
+        }
+      }
+
+      void visitStructSet(StructSet* curr) {
+        if (curr->type == Type::unreachable) {
+          // Ignore unreachable code.
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          // Ignore a bottom type.
+          return;
+        }
+
+        auto fieldType = type.getStruct().fields[curr->index].type;
+
+        if (!Type::isSubType(curr->value->type, fieldType)) {
+          curr->value =
+            Builder(*getModule()).makeRefCast(curr->value, fieldType);
+        }
+      }
+    };
+
+    WriteUpdater updater;
+    updater.run(getPassRunner(), &wasm);
+    updater.runOnModuleCode(getPassRunner(), &wasm);
   }
 };
 

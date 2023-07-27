@@ -1222,3 +1222,154 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $ref|noextern|_=>_none (func (param (ref noextern))))
+
+  ;; CHECK:       (type $ref|none|_ref|noextern|_=>_none (func (param (ref none) (ref noextern))))
+
+  ;; CHECK:       (type $ref|$A|_externref_=>_none (func (param (ref $A) externref)))
+
+  ;; CHECK:       (type $A (struct (field (mut (ref noextern)))))
+  (type $A (struct (field (mut externref))))
+
+  ;; CHECK:       (type $externref_=>_anyref (func (param externref) (result anyref)))
+
+  ;; CHECK:       (type $none_=>_none (func))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (tag $tag (param))
+  (tag $tag)
+
+  ;; CHECK:      (func $struct.new (type $externref_=>_anyref) (param $extern externref) (result anyref)
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (struct.new $A
+  ;; CHECK-NEXT:        (ref.as_non_null
+  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag
+  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct.new (param $extern externref) (result anyref)
+    ;; A noextern is written into the struct field and then read. Note that the
+    ;; try's catch is never reached, since the body cannot throw, so the
+    ;; fallthrough of the try is the struct.get, which leads into a struct.new, so
+    ;; we have a copy of that field. For that reason TypeRefining thinks it can
+    ;; refine the type of the field from externref to noextern. However, the
+    ;; validation rule for try-catch prevents the try from being refined so,
+    ;; since the catch has to be taken into account, and it has a less refined
+    ;; type than the body.
+    ;;
+    ;; In such situations we rely on other optimizations to improve things, like
+    ;; getting rid of the catch in this case. In this pass we add a cast to get
+    ;; things to validate, which should be removable by other passes later on.
+    (struct.new $A
+      (try (result externref)
+        (do
+          (struct.get $A 0
+            (struct.new $A
+              (ref.as_non_null
+                (ref.null noextern)
+              )
+            )
+          )
+        )
+        (catch $tag
+          (local.get $extern)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $struct.set (type $ref|$A|_externref_=>_none) (param $ref (ref $A)) (param $extern externref)
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (struct.new $A
+  ;; CHECK-NEXT:        (ref.as_non_null
+  ;; CHECK-NEXT:         (ref.null noextern)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag
+  ;; CHECK-NEXT:      (local.get $extern)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct.set (param $ref (ref $A)) (param $extern externref)
+    (struct.set $A 0
+      (local.get $ref)
+      (try (result externref)
+        (do
+          (struct.get $A 0
+            (struct.new $A
+              (ref.as_non_null
+                (ref.null noextern)
+              )
+            )
+          )
+        )
+        (catch $tag
+          (local.get $extern)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $bottom.type (type $ref|none|_ref|noextern|_=>_none) (param $ref (ref none)) (param $value (ref noextern))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $value)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $bottom.type (param $ref (ref none)) (param $value (ref noextern))
+    ;; The reference here is a bottom type, which we should not crash on.
+    (struct.set $A 0
+      (local.get $ref)
+      (local.get $value)
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $ref|noextern|_=>_none) (param $value (ref noextern))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $value)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable (param $value (ref noextern))
+    ;; The reference here is unreachable, which we should not crash on.
+    (struct.set $A 0
+      (unreachable)
+      (local.get $value)
+    )
+  )
+)
