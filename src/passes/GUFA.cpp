@@ -33,6 +33,9 @@
 // such followup opts automatically in functions where we make changes, and so
 // it is useful if GUFA is run near the end of the optimization pipeline.
 //
+// A variation of this pass will add casts anywhere we can infer a more specific
+// type, see |castAll| below.
+//
 // TODO: GUFA + polymorphic devirtualization + traps-never-happen. If we see
 //       that the possible call targets are {A, B, C}, and GUFA info lets us
 //       prove that A, C will trap if called - say, if they cast the first
