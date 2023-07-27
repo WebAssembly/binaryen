@@ -187,6 +187,9 @@ void PassRegistry::registerPasses() {
                "information about what content can actually appear in each "
                "location",
                createGUFAPass);
+  registerPass("gufa-cast-all",
+               "GUFA plus add casts for all inferences",
+               createGUFACastAllPass);
   registerPass("gufa-optimizing",
                "GUFA plus local optimizations in functions we modified",
                createGUFAOptimizingPass);

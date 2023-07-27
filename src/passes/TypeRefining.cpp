@@ -400,11 +400,16 @@ struct TypeRefining : public Pass {
 
       void visitStructSet(StructSet* curr) {
         if (curr->type == Type::unreachable) {
+          // Ignore unreachable code.
+          return;
+        }
+        auto type = curr->ref->type.getHeapType();
+        if (type.isBottom()) {
+          // Ignore a bottom type.
           return;
         }
 
-        auto fieldType =
-          curr->ref->type.getHeapType().getStruct().fields[curr->index].type;
+        auto fieldType = type.getStruct().fields[curr->index].type;
 
         if (!Type::isSubType(curr->value->type, fieldType)) {
           curr->value =
