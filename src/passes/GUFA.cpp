@@ -65,7 +65,13 @@ struct GUFAOptimizer
   // Whether to add casts to all things that we have inferred a more refined
   // type for. This increases code size immediately, but later optimizations
   // generally benefit enough from these casts that overall code size actually
-  // decreases.
+  // decreases, even if some of these casts remain. However, aside from code
+  // size there may be an increase in the number of casts performed at runtime,
+  // so benchmark carefully.
+  // TODO: Add a pass to remove casts not needed for validation, which users
+  //       could run at the very end. However, even with such a pass we may end
+  //       up with casts that are needed for validation that were not present
+  //       before.
   bool castAll;
 
   GUFAOptimizer(ContentOracle& oracle, bool optimizing, bool castAll)
