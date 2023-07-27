@@ -404,7 +404,7 @@ struct TypeRefining : public Pass {
           return;
         }
         auto type = curr->ref->type.getHeapType();
-        if (!type.isStruct()) {
+        if (type.isBottom()) {
           // Ignore a bottom type.
           return;
         }
