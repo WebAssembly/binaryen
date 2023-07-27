@@ -395,7 +395,8 @@ struct GUFAPass : public Pass {
   bool optimizing;
   bool castAll;
 
-  GUFAPass(bool optimizing, bool castAll) : optimizing(optimizing), castAll(castAll) {}
+  GUFAPass(bool optimizing, bool castAll)
+    : optimizing(optimizing), castAll(castAll) {}
 
   void run(Module* module) override {
     ContentOracle oracle(*module);
