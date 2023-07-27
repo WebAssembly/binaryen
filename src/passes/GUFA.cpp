@@ -407,11 +407,7 @@ struct GUFAPass : public Pass {
   void run(Module* module) override {
     ContentOracle oracle(*module);
 
-    // Explicitly build a nested pass runner, to ensure that the optimization
-    // level is passed through (by default, just doing pass.run() caps it at 1).
-    PassRunner nested(getPassRunner());
-    nested.add(std::make_unique<GUFAOptimizer>(oracle, optimizing, castAll));
-    nested.run();
+    GUFAOptimizer(oracle, optimizing).run(getPassRunner(), module);
   }
 };
 
