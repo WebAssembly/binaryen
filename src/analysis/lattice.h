@@ -31,7 +31,8 @@ constexpr bool has_getBottom =
 template<typename Lattice>
 constexpr bool has_compare =
   std::is_invocable_r<LatticeComparison,
-                      decltype(Lattice::compare),
+                      decltype(&Lattice::compare),
+                      Lattice,
                       const typename Lattice::Element&,
                       const typename Lattice::Element&>::value;
 template<typename Element>
@@ -110,7 +111,7 @@ public:
 
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
-  static LatticeComparison compare(const Element& left, const Element& right);
+  LatticeComparison compare(const Element& left, const Element& right);
 
   // Returns an instance of the bottom lattice element.
   Element getBottom();
@@ -168,8 +169,8 @@ public:
   }
 
   // We use implementations from FiniteIntPowersetLattice here.
-  static LatticeComparison compare(const Element& left, const Element& right) {
-    return FiniteIntPowersetLattice::compare(left, right);
+  LatticeComparison compare(const Element& left, const Element& right) {
+    return intLattice.compare(left, right);
   }
 
   Element getBottom() { return intLattice.getBottom(); }
