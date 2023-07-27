@@ -72,7 +72,7 @@ struct GUFAOptimizer
     : oracle(oracle), optimizing(optimizing), castAll(castAll) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<GUFAOptimizer>(oracle, optimizing);
+    return std::make_unique<GUFAOptimizer>(oracle, optimizing, castAll);
   }
 
   bool optimized = false;
@@ -301,7 +301,7 @@ struct GUFAOptimizer
     // Potentially add new casts after we do our first pass of optimizations +
     // refinalize (doing it after refinalizing lets us add as few new casts as
     // possible).
-    if (addNewCasts(func)) {
+    if (castAll && addNewCasts(func)) {
       optimized = true;
     }
 
