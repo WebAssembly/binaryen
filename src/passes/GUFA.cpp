@@ -406,7 +406,6 @@ struct GUFAPass : public Pass {
 
   void run(Module* module) override {
     ContentOracle oracle(*module);
-
     GUFAOptimizer(oracle, optimizing).run(getPassRunner(), module);
   }
 };
