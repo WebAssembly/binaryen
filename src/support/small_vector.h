@@ -148,9 +148,13 @@ public:
   // iteration
 
   template<typename Parent, typename Iterator> struct IteratorBase {
+    // TODO: Add remaining things from
+    //       https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator
+    using iterator_category = std::random_access_iterator_tag;
     using value_type = T;
     using difference_type = long;
     using reference = T&;
+    using pointer = T*;
 
     Parent* parent;
     size_t index;
@@ -161,7 +165,16 @@ public:
       return index != other.index || parent != other.parent;
     }
 
-    void operator++() { index++; }
+    Iterator& operator++() {
+      Iterator& self = *static_cast<Iterator*>(this);
+      index++;
+      return self;
+    }
+    Iterator operator++(int) {
+      Iterator self = *static_cast<Iterator*>(this);
+      index++;
+      return self;
+    }
 
     Iterator& operator+=(difference_type off) {
       index += off;
@@ -170,6 +183,12 @@ public:
 
     const Iterator operator+(difference_type off) const {
       return Iterator(*this) += off;
+    }
+
+    off_t operator-(const Iterator& other) const { return index - other.index; }
+
+    bool operator==(const Iterator& other) const {
+      return parent == other.parent && index == other.index;
     }
   };
 
@@ -189,6 +208,12 @@ public:
   Iterator end() { return Iterator(this, size()); }
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
+
+  void erase(Iterator a, Iterator b) {
+    // Atm we only support erasing at the end, which is very efficient.
+    assert(b == end());
+    resize(a.index);
+  }
 };
 
 // A SmallVector for which some values may be read before they are written, and

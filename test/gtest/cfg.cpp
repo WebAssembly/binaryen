@@ -87,6 +87,51 @@ TEST_F(CFGTest, Print) {
   EXPECT_EQ(ss.str(), cfgText);
 }
 
+TEST_F(CFGTest, CallBlock) {
+  // Verify that a call instruction ends the current basic block. Even if the
+  // call has no control flow edges inside the function (no catches it can
+  // reach), we still end a basic block with the call, so that we preserve the
+  // property of basic blocks ending in possibly-control-flow-transferring
+  // instructions.
+  auto moduleText = R"wasm(
+    (module
+      (func $foo
+        (drop
+          (i32.const 0)
+        )
+        (call $bar)
+        (drop
+          (i32.const 1)
+        )
+      )
+      (func $bar)
+    )
+  )wasm";
+
+  auto cfgText = R"cfg(;; preds: [], succs: [1]
+0:
+  0: i32.const 0
+  1: drop
+  2: call $bar
+
+;; preds: [0], succs: []
+1:
+  3: i32.const 1
+  4: drop
+  5: block
+)cfg";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"));
+
+  std::stringstream ss;
+  cfg.print(ss);
+
+  EXPECT_EQ(ss.str(), cfgText);
+}
+
 TEST_F(CFGTest, LinearLiveness) {
   auto moduleText = R"wasm(
     (module

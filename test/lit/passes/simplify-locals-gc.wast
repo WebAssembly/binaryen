@@ -517,4 +517,28 @@
       )
     )
   )
+
+  ;; CHECK:      (func $redundant-tee-finalize (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast any
+  ;; CHECK-NEXT:    (ref.cast any
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-tee-finalize (param $x anyref)
+    ;; The tee in the middle will be removed, as it copies a local to itself.
+    ;; After doing so, the outer cast should become non-nullable as we
+    ;; refinalize.
+    (drop
+      (ref.cast null any
+        (local.tee $x
+          (ref.cast any
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
 )
