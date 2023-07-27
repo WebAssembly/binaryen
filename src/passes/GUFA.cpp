@@ -416,7 +416,7 @@ struct GUFAPass : public Pass {
     : optimizing(optimizing), castAll(castAll) {}
 
   void run(Module* module) override {
-    ContentOracle oracle(*module);
+    ContentOracle oracle(*module, getPassOptions());
     GUFAOptimizer(oracle, optimizing, castAll).run(getPassRunner(), module);
   }
 };
