@@ -33,6 +33,9 @@
 // such followup opts automatically in functions where we make changes, and so
 // it is useful if GUFA is run near the end of the optimization pipeline.
 //
+// A variation of this pass will add casts anywhere we can infer a more specific
+// type, see |castAll| below.
+//
 // TODO: GUFA + polymorphic devirtualization + traps-never-happen. If we see
 //       that the possible call targets are {A, B, C}, and GUFA info lets us
 //       prove that A, C will trap if called - say, if they cast the first
@@ -58,13 +61,27 @@ struct GUFAOptimizer
   bool isFunctionParallel() override { return true; }
 
   ContentOracle& oracle;
+
+  // Whether to run further optimizations in functions we modify.
   bool optimizing;
 
-  GUFAOptimizer(ContentOracle& oracle, bool optimizing)
-    : oracle(oracle), optimizing(optimizing) {}
+  // Whether to add casts to all things that we have inferred a more refined
+  // type for. This increases code size immediately, but later optimizations
+  // generally benefit enough from these casts that overall code size actually
+  // decreases, even if some of these casts remain. However, aside from code
+  // size there may be an increase in the number of casts performed at runtime,
+  // so benchmark carefully.
+  // TODO: Add a pass to remove casts not needed for validation, which users
+  //       could run at the very end. However, even with such a pass we may end
+  //       up with casts that are needed for validation that were not present
+  //       before.
+  bool castAll;
+
+  GUFAOptimizer(ContentOracle& oracle, bool optimizing, bool castAll)
+    : oracle(oracle), optimizing(optimizing), castAll(castAll) {}
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<GUFAOptimizer>(oracle, optimizing);
+    return std::make_unique<GUFAOptimizer>(oracle, optimizing, castAll);
   }
 
   bool optimized = false;
@@ -265,7 +282,7 @@ struct GUFAOptimizer
       //
       // Note that we could in principle apply this in all expressions by adding
       // a cast. However, to be careful with code size, we only refine existing
-      // casts for now.
+      // here. See addNewCasts() for where we add entirely new casts.
       curr->type = inferredType;
     }
 
@@ -284,13 +301,22 @@ struct GUFAOptimizer
   //       information about parents.
 
   void visitFunction(Function* func) {
+    if (optimized) {
+      // Optimization may introduce more unreachables, which we need to
+      // propagate.
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
+
+    // Potentially add new casts after we do our first pass of optimizations +
+    // refinalize (doing it after refinalizing lets us add as few new casts as
+    // possible).
+    if (castAll && addNewCasts(func)) {
+      optimized = true;
+    }
+
     if (!optimized) {
       return;
     }
-
-    // Optimization may introduce more unreachables, which we need to
-    // propagate.
-    ReFinalize().walkFunctionInModule(func, getModule());
 
     // We may add blocks around pops, which we must fix up.
     EHUtils::handleBlockNestedPops(func, *getModule());
@@ -333,22 +359,64 @@ struct GUFAOptimizer
     runner.add("vacuum");
     runner.runOnFunction(func);
   }
+
+  // Add a new cast whenever we know a value contains a more refined type than
+  // in the IR. Returns whether we optimized anything.
+  bool addNewCasts(Function* func) {
+    // Subtyping and casts only make sense if GC is enabled.
+    if (!getModule()->features.hasGC()) {
+      return false;
+    }
+
+    struct Adder : public PostWalker<Adder, UnifiedExpressionVisitor<Adder>> {
+      GUFAOptimizer& parent;
+
+      Adder(GUFAOptimizer& parent) : parent(parent) {}
+
+      bool optimized = false;
+
+      void visitExpression(Expression* curr) {
+        if (!curr->type.isRef()) {
+          // Ignore anything we cannot infer a type for.
+          return;
+        }
+
+        auto oracleType = parent.getContents(curr).getType();
+        if (oracleType.isRef() && oracleType != curr->type &&
+            Type::isSubType(oracleType, curr->type)) {
+          replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
+          optimized = true;
+        }
+      }
+    };
+
+    Adder adder(*this);
+    adder.walkFunctionInModule(func, getModule());
+    if (adder.optimized) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
+  }
 };
 
 struct GUFAPass : public Pass {
   bool optimizing;
+  bool castAll;
 
-  GUFAPass(bool optimizing) : optimizing(optimizing) {}
+  GUFAPass(bool optimizing, bool castAll)
+    : optimizing(optimizing), castAll(castAll) {}
 
   void run(Module* module) override {
     ContentOracle oracle(*module);
-    GUFAOptimizer(oracle, optimizing).run(getPassRunner(), module);
+    GUFAOptimizer(oracle, optimizing, castAll).run(getPassRunner(), module);
   }
 };
 
 } // anonymous namespace
 
-Pass* createGUFAPass() { return new GUFAPass(false); }
-Pass* createGUFAOptimizingPass() { return new GUFAPass(true); }
+Pass* createGUFAPass() { return new GUFAPass(false, false); }
+Pass* createGUFAOptimizingPass() { return new GUFAPass(true, false); }
+Pass* createGUFACastAllPass() { return new GUFAPass(false, true); }
 
 } // namespace wasm

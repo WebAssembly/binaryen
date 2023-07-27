@@ -146,6 +146,9 @@
 ;; CHECK-NEXT:                                                 content can actually appear in
 ;; CHECK-NEXT:                                                 each location
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa-cast-all                               GUFA plus add casts for all
+;; CHECK-NEXT:                                                 inferences
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gufa-optimizing                             GUFA plus local optimizations in
 ;; CHECK-NEXT:                                                 functions we modified
 ;; CHECK-NEXT:

@@ -58,6 +58,7 @@ Pass* createGlobalRefiningPass();
 Pass* createGlobalStructInferencePass();
 Pass* createGlobalTypeOptimizationPass();
 Pass* createGUFAPass();
+Pass* createGUFACastAllPass();
 Pass* createGUFAOptimizingPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();

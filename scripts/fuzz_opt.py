@@ -1510,6 +1510,7 @@ opt_choices = [
     ("--gsi",),
     ("--gto",),
     ("--gufa",),
+    ("--gufa-cast-all",),
     ("--gufa-optimizing",),
     ("--local-cse",),
     ("--heap2local",),
