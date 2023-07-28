@@ -320,10 +320,9 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
 
   auto element2 = element1;
   lattice.remove(&element2, "c");
-  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
-            LatticeComparison::GREATER);
+  EXPECT_EQ(lattice.compare(element1, element2), LatticeComparison::GREATER);
   lattice.add(&element2, "f");
-  EXPECT_EQ(FinitePowersetLattice<std::string>::compare(element1, element2),
+  EXPECT_EQ(lattice.compare(element1, element2),
             LatticeComparison::NO_RELATION);
 
   std::stringstream ss;
