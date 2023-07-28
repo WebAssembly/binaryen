@@ -235,20 +235,12 @@ TEST_F(StringifyTest, Substrings) {
              (b.Length * b.StartIndices.size());
     });
 
-  for (size_t i = 0; i < substrings.size(); i++) {
-    SuffixTree::RepeatedSubstring rs = substrings[i];
-    std::cout << rs.Length << " ";
-    for (size_t j = 0; j < rs.StartIndices.size(); j++) {
-      std::cout << rs.StartIndices[j] << ", ";
-    }
-  }
-
   EXPECT_EQ(
     substrings,
     (std::vector<SuffixTree::RepeatedSubstring>{
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{10, 23})},
       SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
-      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})},
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{10, 23})},
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})},
-      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{32, 19, 28})}}));
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{32, 19, 28})},
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})}}));
 }

@@ -172,8 +172,15 @@ public:
     void advance();
 
   public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = RepeatedSubstring;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const RepeatedSubstring*;
+    using reference = const RepeatedSubstring&;
+
     /// Return the current repeated substring.
     RepeatedSubstring& operator*() { return RS; }
+    RepeatedSubstring* operator->() { return &RS; }
 
     RepeatedSubstringIterator& operator++() {
       advance();
