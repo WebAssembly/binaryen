@@ -238,9 +238,14 @@ TEST_F(StringifyTest, Substrings) {
   EXPECT_EQ(
     substrings,
     (std::vector<SuffixTree::RepeatedSubstring>{
+      // 5, 6, 7, 6 appears at idx 9 and again at 22
       SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
+      // 6, 7, 6 appears at idx 10 and again at 23
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{10, 23})},
+      // 10, 11, 6 appears at idx 18 and again at 27
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})},
+      // 11, 6 appears at idx 32, 19 and again at 28
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{32, 19, 28})},
+      // 7, 6 appears at idx 11 and again at 24
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})}}));
 }
