@@ -610,7 +610,7 @@
         (local.get $func3)
       )
     )
-    ;; Y1 in the first param fails in the first, so we optimize to the second.
+    ;; Y2 in the first param fails in the first, so we optimize to the second.
     (call_ref $A
       (struct.new $Y2)
       (local.get $struct)
@@ -998,16 +998,16 @@
     ;; All the params have a cast, so we can potentially refine them depending
     ;; on the call targets.
     (call_ref $A
-      ;; The first is cast to $Y in only one target, so we can do nothing.
+      ;; The first is cast to $Y1 in only one target, so we can do nothing.
       (ref.cast null $X
         (local.get $ref1)
       )
-      ;; The second is cast to $X in one $Y in the other, so we can refine the
+      ;; The second is cast to $X in one $Y1 in the other, so we can refine the
       ;; nullability at least.
       (ref.cast null $X
         (local.get $ref2)
       )
-      ;; The third parameter is cast to $Y in both, so we can optimize to that.
+      ;; The third parameter is cast to $Y1 in both, so we can optimize to that.
       (ref.cast null $X
         (local.get $ref3)
       )
