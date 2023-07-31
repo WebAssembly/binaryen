@@ -2485,7 +2485,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   auto type = exprLoc.expr->type;
 
   if (type.isTuple()) {
-    // TODO: Optimize tuples here as well. We could need to take into account
+    // TODO: Optimize tuples here as well. We would need to take into account
     //       exprLoc.tupleIndex for that in all the below.
     return;
   }
