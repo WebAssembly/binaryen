@@ -1871,13 +1871,8 @@
 ;; happen. However, this requires closed world, so we do nothing here. (This
 ;; test is mirrored in gufa-tnh-closed, where closed world *is* enabled.)
 (module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (func))
-    (type $A (func))
-    ;; CHECK:       (type $B (func))
-    (type $B (func))
-  )
+  ;; CHECK:      (type $A (func))
+  (type $A (func))
 
   ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
 
@@ -1889,19 +1884,6 @@
   (func $impossible (type $A)
     ;; This cannot be called if traps never happen.
     (unreachable)
-  )
-
-  ;; CHECK:      (func $irrelevant (type $B)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $irrelevant (type $B)
-    ;; This has a similar but different type, so it is irrelevant to this
-    ;; optimization.
-    (drop
-      (i32.const 20)
-    )
   )
 
   ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
