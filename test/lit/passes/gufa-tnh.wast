@@ -531,7 +531,7 @@
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast $A ;; This cast adds no information ($A to $A).
+      (ref.cast $A ;; This cast only removes nullability.
         (local.get $x)
       )
     )
@@ -551,7 +551,9 @@
     (local $x (ref null $A))
     (call $called
       (local.tee $x
-        (ref.cast $A ;; this cast will *not* be refined
+        (ref.cast $A ;; This cast will *not* be refined, as it is already non-
+                     ;; nullable here, and the other cast did not improve the
+                     ;; heap type.
           (local.get $any)
         )
       )
