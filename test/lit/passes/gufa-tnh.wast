@@ -40,7 +40,8 @@
   ;; CHECK-NEXT: )
   (func $called (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
     ;; All but the second parameter are cast here, which allows some
-    ;; optimization in the caller. Nothing significant changes here.
+    ;; optimization in the caller. Nothing significant changes here in this
+    ;; function.
     (drop
       (ref.cast func
         (local.get $x)
