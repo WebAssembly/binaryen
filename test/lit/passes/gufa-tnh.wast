@@ -990,7 +990,7 @@
       (ref.cast $A
         (local.get $any)
       )
-      ;; This if arm transfers control flow, so while we have a fallthrough
+      ;; One if arm transfers control flow, so while we have a fallthrough
       ;; value we cannot optimize it (in fact, it might never be reached, at
       ;; least if the constant were not 0). As a result we'll optimize only the
       ;; very last cast.
@@ -1013,6 +1013,7 @@
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (field (mut i32))))
 
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
@@ -1023,7 +1024,9 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
@@ -1038,6 +1041,11 @@
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out")
     (call $called
@@ -1046,6 +1054,12 @@
       ;; ref.cast appears here - we infer this even without seeing a cast.
       (struct.new $A
         (i32.const 10)
+      )
+    )
+    ;; Another call that will not be modified.
+    (call $called
+      (struct.new $B
+        (i32.const 20)
       )
     )
   )
