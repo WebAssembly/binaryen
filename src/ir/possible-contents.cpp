@@ -1686,6 +1686,7 @@ void TNHOracle::infer() {
             sharedCastParamsVec[i] = Type::none;
             continue;
           }
+
           // This function casts this param. Combine this with existing info.
           auto castType = iter->second;
           if (target == possibleTargets[0]) {
@@ -1699,7 +1700,8 @@ void TNHOracle::infer() {
         }
       }
 
-      // Build a map of the interesting cast params we found.
+      // Build a map of the interesting cast params we found, and if there are
+      // any, optimize using them.
       CastParams sharedCastParams;
       for (Index i = 0; i < numParams; i++) {
         auto type = sharedCastParamsVec[i];
