@@ -1784,7 +1784,7 @@ void TNHOracle::optimizeCallCasts(Expression* call,
         } else {
           // The intersection of two full cones must be another cone, which we
           // handled above, or must be empty, which we handle here.
-          assert(intersection.isNone()) {
+          assert(intersection.isNone());
 
           // Nothing is possible here, so this must be unreachable code.
           info.inferences[curr] = PossibleContents::none();
