@@ -1755,8 +1755,7 @@
     (param $array.fill (ref null $B))
     (param $ref.test (ref null $A))
 
-    ;; All these parameters are cast, and all the operations trap on null, aside
-    ;; from ref.test.
+    ;; All the operations trap on null, aside from ref.test.
     (drop
       (struct.get $A 0
         (local.get $struct.get)
