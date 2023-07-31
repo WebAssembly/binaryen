@@ -147,14 +147,6 @@ struct GUFAOptimizer
     // This is reachable. Check if we can emit something optimized for it.
     // TODO: can we handle more general things here too?
     if (!contents.canMakeExpression()) {
-      if (getenv("CAST_ALL")) { // XXX do this in -O3, but only after refinalize
-                                //     risky as it might increase code size, but
-                                //     looks worthwhile in practice..?
-        if (contents.getType() != curr->type) {
-          assert(Type::isSubType(contents.getType(), curr->type));
-          replaceCurrent(builder.makeRefCast(curr, contents.getType()));
-        }
-      }
       return;
     }
 
