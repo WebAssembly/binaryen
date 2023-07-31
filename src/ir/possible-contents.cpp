@@ -1476,9 +1476,9 @@ void TNHOracle::scan(Function* func,
       if (auto* get = fallthrough->dynCast<LocalGet>()) {
         // To optimize, this needs to be a param, and of a useful type.
         //
-        // Note that if we see more than one cast we keep the first one.
-        // This is not important in optimized code, as the most refined cast
-        // would be the only one to exist there; we keep things simple here.
+        // Note that if we see more than one cast we keep the first one. This is
+        // not important in optimized code, as the most refined cast would be
+        // the only one to exist there, so it's ok to keep things simple here.
         if (getFunction()->isParam(get->index) && type != get->type &&
             info.castParams.count(get->index) == 0) {
           info.castParams[get->index] = type;
@@ -1486,8 +1486,10 @@ void TNHOracle::scan(Function* func,
       }
     }
 
-    // Operations that trap on null are equivalent to casts to non-null. We
-    // only look at them if the input is actually null, however, as if they
+    // Operations that trap on null are equivalent to casts to non-null, in that
+    // they imply that their input is non-null if traps never happen.
+    //
+    // We only look at them if the input is actually nullable, since if they
     // are non-nullable then we can add no information. (This is equivalent
     // to the handling of RefAsNonNull above, in the sense that in optimized
     // code the RefAs will not appear if the input is already non-nullable).
