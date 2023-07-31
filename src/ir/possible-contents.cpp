@@ -1717,7 +1717,8 @@ void TNHOracle::infer() {
     }
   });
 
-  // Combine all of our inferences.
+  // Combine all of our inferences from the parallel phase above us into the
+  // final list of inferences.
   for (auto& [_, info] : map) {
     for (auto& [expr, contents] : info.inferences) {
       inferences[expr] = contents;
@@ -1731,11 +1732,10 @@ void TNHOracle::optimizeCallCasts(Expression* call,
                                   const analysis::CFGBlockIndexes& blockIndexes,
                                   TNHInfo& info) {
   // Optimize in the same basic block as the call: all instructions still in
-  // that block will definitely execute if the call is reached.
+  // that block will definitely execute if the call is reached. We will do that
+  // by going backwards through the call's operands and fallthrough values, and
+  // optimizing while we are still in the same basic block.
   auto callBlockIndex = blockIndexes.get(call);
-
-  // Go backwards through the call's operands and fallthrough values, and
-  // optimize while we are still in the same basic block.
 
   // Operands must exist since there is a cast param, so a param exists.
   assert(operands.size() > 0);
@@ -1753,8 +1753,9 @@ void TNHOracle::optimizeCallCasts(Expression* call,
       continue;
     }
 
-    // If the call executes then this parameter is definitely evalled, and
-    // this particular param is then cast to a more refined type.
+    // If the call executes then this parameter is definitely reached (since it
+    // is in the same basic block), and we know that it will be cast to a more
+    // refined type.
     auto castType = iter->second;
 
     // Apply what we found to the operand and also to its fallthrough
@@ -1780,7 +1781,11 @@ void TNHOracle::optimizeCallCasts(Expression* call,
             info.inferences[curr] =
               PossibleContents::fullConeType(intersectionType);
           }
-        } else if (intersection.isNone()) {
+        } else {
+          // The intersection of two full cones must be another cone, which we
+          // handled above, or must be empty, which we handle here.
+          assert(intersection.isNone()) {
+
           // Nothing is possible here, so this must be unreachable code.
           info.inferences[curr] = PossibleContents::none();
         }
