@@ -1833,8 +1833,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $any anyref)
-    ;; All these casts will be refined aside from the last param, which is but a
-    ;; ref.test.
+    ;; All these casts will be refined to non-nullable, aside from the last
+    ;; param which is but a ref.test.
     (call $called
       (ref.cast null $A
         (local.get $any)
