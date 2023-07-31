@@ -140,8 +140,21 @@ PossibleContents PossibleContents::combine(const PossibleContents& a,
   return ConeType{lub, newDepth};
 }
 
-void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
-  assert(other.isFullConeType());
+void PossibleContents::intersect(const PossibleContents& other) {
+  // This does not yet handle all possible content.
+  assert(other.isFullConeType() || other.isLiteral() || other.isNone());
+
+  if (*this == other) {
+    // Nothing changes.
+    return;
+  }
+
+  if (!haveIntersection(*this, other)) {
+    // There is no intersection at all.
+    // Note that this code path handles |this| or |other| being None.
+    value = None();
+    return;
+  }
 
   if (isSubContents(other, *this)) {
     // The intersection is just |other|.
@@ -150,16 +163,18 @@ void PossibleContents::intersectWithFullCone(const PossibleContents& other) {
     return;
   }
 
-  if (!haveIntersection(*this, other)) {
-    // There is no intersection at all.
-    // Note that this code path handles |this| being None.
+  if (isSubContents(*this, other)) {
+    // The intersection is just |this|.
+    return;
+  }
+
+  if (isLiteral() || other.isLiteral()) {
+    // We've ruled out either being a subcontents of the other. A literal has
+    // no other intersection possibility.
     value = None();
     return;
   }
 
-  // There is an intersection here. Note that this implies |this| is a reference
-  // type, as it has an intersection with |other| which is a full cone type
-  // (which must be a reference type).
   auto type = getType();
   auto otherType = other.getType();
   auto heapType = type.getHeapType();
@@ -290,13 +305,19 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
     return true;
   }
 
+  if (a == b) {
+    // The intersection is equal to them.
+    return true;
+  }
+
   auto aType = a.getType();
   auto bType = b.getType();
 
   if (!aType.isRef() || !bType.isRef()) {
     // At least one is not a reference. The only way they can intersect is if
-    // the type is identical.
-    return aType == bType;
+    // the type is identical, and they are not both literals (we've already
+    // ruled out them being identical earlier).
+    return aType == bType && (!a.isLiteral() || !b.isLiteral());
   }
 
   // From here on we focus on references.
@@ -350,15 +371,37 @@ bool PossibleContents::haveIntersection(const PossibleContents& a,
 
 bool PossibleContents::isSubContents(const PossibleContents& a,
                                      const PossibleContents& b) {
-  // TODO: Everything else. For now we only call this when |a| or |b| is a full
-  //       cone type.
+  if (a == b) {
+    return true;
+  }
+
+  if (a.isNone()) {
+    return true;
+  }
+
+  if (b.isNone()) {
+    return false;
+  }
+
+  if (a.isMany()) {
+    return false;
+  }
+
+  if (b.isMany()) {
+    return true;
+  }
+
+  if (a.isLiteral()) {
+    // Note we already checked for |a == b| above. We need b to be a set that
+    // contains the literal a.
+    return !b.isLiteral() && Type::isSubType(a.getType(), b.getType());
+  }
+
+  if (b.isLiteral()) {
+    return false;
+  }
+
   if (b.isFullConeType()) {
-    if (a.isNone()) {
-      return true;
-    }
-    if (a.isMany()) {
-      return false;
-    }
     if (a.isNull()) {
       return b.getType().isNullable();
     }
@@ -366,12 +409,11 @@ bool PossibleContents::isSubContents(const PossibleContents& a,
   }
 
   if (a.isFullConeType()) {
-    // We've already ruled out b being a full cone type before, so the only way
-    // |a| can be contained in |b| is if |b| is everything.
-    return b.isMany();
+    // We've already ruled out b being a full cone type before.
+    return false;
   }
 
-  WASM_UNREACHABLE("a or b must be a full cone");
+  WASM_UNREACHABLE("unhandled case of isSubContents");
 }
 
 namespace {
@@ -1932,7 +1974,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // The maximal contents here are the declared type and all subtypes. Nothing
   // else can pass through, so filter such things out.
   auto maximalContents = PossibleContents::fullConeType(type);
-  contents.intersectWithFullCone(maximalContents);
+  contents.intersect(maximalContents);
   if (contents.isNone()) {
     // Nothing was left here at all.
     return;
@@ -1966,9 +2008,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   normalizeConeType(contents);
 
   // There is a chance that the intersection is equal to the maximal contents,
-  // which would mean nothing more can arrive here. (Note that we can't
-  // normalize |maximalContents| before the intersection as
-  // intersectWithFullCone assumes a full/infinite cone.)
+  // which would mean nothing more can arrive here.
   normalizeConeType(maximalContents);
 
   if (contents == maximalContents) {
