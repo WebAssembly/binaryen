@@ -1,7 +1,7 @@
 #ifndef wasm_analysis_stack_lattice_h
 #define wasm_analysis_stack_lattice_h
 
-#include <dequeue>
+#include <deque>
 
 #include "lattice.h"
 
@@ -16,8 +16,8 @@ public:
     : stackFrameLattice(stackFrameLattice) {}
 
   class Element {
-    std::dequeue<StackFrameLattice> stackValue;
-    bool isTop = false;
+    std::deque<typename StackFrameLattice::Element> stackValue;
+    bool top = false;
 
   public:
     Element() = default;
@@ -28,12 +28,16 @@ public:
     Element& operator=(Element&& source) = default;
     Element& operator=(const Element& source) = default;
 
-    bool isTop() { return isTop; }
-    bool setTop(bool val) { isTop = val; }
+    bool isTop() { return top; }
+    void setTop(bool val) { top = val; }
     bool isBottom() { return !isTop && stackValue.empty(); }
 
-    StackFrameLattice& stackTop() { return stackValue.back(); }
-    void push(StackFrameLattice& frame) { stackValue.push_back(frame); }
+    typename StackFrameLattice::Element& stackTop() {
+      return stackValue.back();
+    }
+    void push(typename StackFrameLattice::Element frame) {
+      stackValue.push_back(frame);
+    }
     void pop() { stackValue.pop_back(); }
 
     bool makeLeastUpperBound(const Element& other) {
@@ -48,12 +52,20 @@ public:
         }
       }
 
-      while (otherIterator != other.stackValue.cend();) {
+      while (otherIterator != other.stackValue.crend()) {
         stackValue.push_front(*otherIterator);
         modified = true;
+        ++otherIterator;
       }
 
       return modified;
+    }
+
+    void print(std::ostream& os) {
+      for (auto iter = stackValue.rbegin(); iter != stackValue.rend(); ++iter) {
+        (*iter).print(os);
+        os << std::endl;
+      }
     }
 
     friend StackLattice;
@@ -85,6 +97,8 @@ public:
         default:
           hasUnrelated = true;
       }
+      ++leftIterator;
+      ++rightIterator;
     }
 
     if (left.stackValue.size() > right.stackValue.size()) {
