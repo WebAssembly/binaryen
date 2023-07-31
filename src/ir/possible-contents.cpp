@@ -2487,9 +2487,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
     assert(worthSendingMore);
   }
 
-  // The maximal contents here are the declared type and all subtypes, unless
-  // we know better from the TNH oracle. Nothing else can pass through, so
-  // filter such things out.
+  // The TNH oracle informs us of the maximal contents possible here.
   auto maximalContents = getTNHContents(exprLoc.expr);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "TNHOracle informs us that " << *exprLoc.expr << " contains "
