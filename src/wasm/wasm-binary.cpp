@@ -1528,7 +1528,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       type = HeapType::ext;
     } else if (wasm->features.hasStrings()) {
       // Strings are enabled, and this isn't a func or an ext, so it must be a
-      // string type (string or stringview), which we'll emit below.
+      // string type (string or stringview), which we'll emit below, or a bottom
+      // type (which we must allow, because we wouldn't know whether to emit a
+      // string or stringview for it).
     } else {
       WASM_UNREACHABLE("invalid type without GC");
     }
