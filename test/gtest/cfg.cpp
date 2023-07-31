@@ -1,10 +1,12 @@
 #include <iostream>
 
+#include "analysis/bits-lattice.h"
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/monotone-analyzer.h"
 #include "analysis/reaching-definitions-transfer-function.h"
+#include "analysis/stack-lattice.h"
 #include "ir/find_all.h"
 #include "print-test.h"
 #include "wasm.h"
@@ -578,4 +580,68 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   expectedResult[getA4].insert(setA);
 
   EXPECT_EQ(expectedResult, getSetses);
+}
+
+TEST_F(CFGTest, StackBitsLatticeFunctioning) {
+  BitsLattice bitsLattice;
+  StackLattice<BitsLattice> stackLattice(bitsLattice);
+
+  StackLattice<BitsLattice>::Element firstStack = stackLattice.getBottom();
+  StackLattice<BitsLattice>::Element secondStack = stackLattice.getBottom();
+
+  for (uint32_t i = 0; i < 4; i++) {
+    BitsLattice::Element temp = bitsLattice.getBottom();
+    temp.setValue(i);
+    firstStack.push(temp);
+  }
+
+  for (uint32_t i = 0; i < 4; i++) {
+    BitsLattice::Element temp = bitsLattice.getBottom();
+    temp.setValue(i);
+    secondStack.push(temp);
+  }
+
+  EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
+            LatticeComparison::EQUAL);
+
+  secondStack.pop();
+  secondStack.pop();
+
+  EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
+            LatticeComparison::GREATER);
+  EXPECT_EQ(stackLattice.compare(secondStack, firstStack),
+            LatticeComparison::LESS);
+
+  std::stringstream ss;
+  firstStack.print(ss);
+  EXPECT_EQ(ss.str(), "3\n2\n1\n0\n");
+  ss.str(std::string());
+
+  secondStack.print(ss);
+  EXPECT_EQ(ss.str(), "1\n0\n");
+  ss.str(std::string());
+
+  StackLattice<BitsLattice>::Element thirdStack = stackLattice.getBottom();
+  {
+    BitsLattice::Element temp = bitsLattice.getBottom();
+    temp.setValue(32);
+    BitsLattice::Element temp2 = bitsLattice.getBottom();
+    temp2.setValue(51);
+    temp.makeLeastUpperBound(temp2);
+    thirdStack.push(temp);
+    thirdStack.push(temp2);
+  }
+
+  EXPECT_EQ(stackLattice.compare(firstStack, thirdStack),
+            LatticeComparison::NO_RELATION);
+
+  thirdStack.print(ss);
+  EXPECT_EQ(ss.str(), "51\nTOP\n");
+  ss.str(std::string());
+
+  thirdStack.makeLeastUpperBound(firstStack);
+
+  thirdStack.print(ss);
+  EXPECT_EQ(ss.str(), "TOP\nTOP\n1\n0\n");
+  ss.str(std::string());
 }
