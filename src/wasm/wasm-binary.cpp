@@ -1519,14 +1519,20 @@ void WasmBinaryWriter::writeType(Type type) {
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
   // ref.null always has a bottom heap type in Binaryen IR, but those types are
-  // only actually valid with GC enabled. When GC is not enabled, emit the
-  // corresponding valid top types instead.
+  // only actually valid with GC. Otherwise, emit the corresponding valid top
+  // types instead.
   if (!wasm->features.hasGC()) {
     if (HeapType::isSubType(type, HeapType::func)) {
       type = HeapType::func;
-    } else {
-      assert(HeapType::isSubType(type, HeapType::ext));
+    } else if (HeapType::isSubType(type, HeapType::ext)) {
       type = HeapType::ext;
+    } else if (wasm->features.hasStrings()) {
+      // Strings are enabled, and this isn't a func or an ext, so it must be a
+      // string type (string or stringview), which we'll emit below, or a bottom
+      // type (which we must allow, because we wouldn't know whether to emit a
+      // string or stringview for it).
+    } else {
+      WASM_UNREACHABLE("invalid type without GC");
     }
   }
 
