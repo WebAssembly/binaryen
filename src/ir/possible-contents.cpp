@@ -2079,10 +2079,6 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   finder.walkModuleCode(&wasm);
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
-  std::cout << "static phase\n";
-#endif
-
-#ifdef POSSIBLE_CONTENTS_DEBUG
   std::cout << "global init phase\n";
 #endif
 
