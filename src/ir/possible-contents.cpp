@@ -1340,6 +1340,7 @@ struct InfoCollector
 //
 // TODO: We could cycle between this and ContentOracle for repeated
 //       improvements.
+// TODO: This pass itself could benefit from internal cycles.
 //
 // This analysis mainly focuses on information across calls, as simple backwards
 // inference is done in OptimizeCasts. Note that it is not needed if a call is
@@ -1621,9 +1622,12 @@ void TNHOracle::infer() {
         continue;
       }
 
-      // We know the targets. As traps never happen, we can rule out any that
-      // will trap: we won't call those. That will leave us with the actually
-      // possible targets.
+      // We should only get here in a closed world, in which we know which
+      // functions might be called.
+      assert(options.closedWorld);
+
+      // Go through the targets and ignore any that will trap. That will leave
+      // us with the actually possible targets.
       const auto& targets = iter->second;
       std::vector<Function*> possibleTargets;
       for (Function* target : targets) {
@@ -1633,8 +1637,6 @@ void TNHOracle::infer() {
         }
 
         // If our operands will fail a cast, then we will trap.
-        // TODO: Use inferred data here about the operand from previous
-        //       iterations of inference.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
           auto operandType = call->operands[castIndex]->type;
@@ -1662,7 +1664,6 @@ void TNHOracle::infer() {
         // TODO: We could also optimizeCallCasts() here, but it is low priority
         //       as other opts will make this call direct later, after which a
         //       lot of other optimizations become possible anyhow.
-        // and optimize.
         auto target = possibleTargets[0]->name;
         info.inferences[call->target] = PossibleContents::literal(
           Literal(target, wasm.getFunction(target)->type));
