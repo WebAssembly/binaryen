@@ -1333,19 +1333,27 @@ struct InfoCollector
 // fail, so the local must contain a B, even though the IR only has A.
 //
 // This analysis complements ContentOracle, which uses this analysis internally.
+// ContentOracle does a forward flow analysis (as content moves from place to
+// place) which increases from "nothing", while this does a backwards analysis
+// that decreases from "everything" (or rather, from the type declared in the
+// IR), so the two cannot be done at once.
+//
+// TODO: We could cycle between this and ContentOracle for repeated
+//       improvements.
 //
 // This analysis mainly focuses on information across calls, as simple backwards
 // inference is done in OptimizeCasts. Note that it is not needed if a call is
 // inlined, obviously, and so it mostly helps cases like functions too large to
 // inline, or when optimizing for size, or with indirect calls.
 //
-// TODO: We could cycle between them for repeated improvements. The outcome of
-//       each is to refine the contents at each location, so this must converge.
-
 // We track cast parameters by mapping an index to the type it is definitely
-// cast to if the function is entered.
+// cast to if the function is entered. From that information we can infer things
+// about the values being sent to the function (which we can assume must have
+// the right type so that the casts do not trap).
 using CastParams = std::unordered_map<Index, Type>;
 
+// The information we collect and utilize as we operate in parallel in each
+// function.
 struct TNHInfo {
   CastParams castParams;
 
@@ -1382,20 +1390,19 @@ public:
 
   // Get the type we inferred was possible at a location.
   PossibleContents getContents(Expression* curr) {
-    // If we inferred a type, use that.
+    auto naiveContents = PossibleContents::fullConeType(curr->type);
+
+    // If we inferred nothing, use the naive type.
     auto iter = inferences.find(curr);
-    if (iter != inferences.end()) {
-      auto& contents = iter->second;
-      // We only store useful contents that improve on the naive estimate that
-      // uses the type in the IR.
-      [[maybe_unused]] auto naiveContents =
-        PossibleContents::fullConeType(curr->type);
-      assert(contents != naiveContents);
-      return contents;
+    if (iter == inferences.end()) {
+      return naiveContents;
     }
 
-    // Otherwise, all we have is the expression's type from the IR.
-    return PossibleContents::fullConeType(curr->type);
+    auto& contents = iter->second;
+    // We only store useful contents that improve on the naive estimate that
+    // uses the type in the IR.
+    assert(contents != naiveContents);
+    return contents;
   }
 
 private:
