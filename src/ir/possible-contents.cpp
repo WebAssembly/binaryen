@@ -1576,15 +1576,14 @@ void TNHOracle::infer() {
   }
 
   doAnalysis([&](Function* func, TNHInfo& info) {
-    // Constructing a CFG is expensive, so only do so if we find optimization
-    // opportunities.
-    std::optional<analysis::CFG> cfg;
+    // We will need some CFG information below. Computing this is expensive, so
+    // only do it if we find optimization opportunities.
     std::optional<analysis::CFGBlockIndexes> blockIndexes;
 
     auto ensureCFG = [&]() {
-      if (!cfg) {
-        cfg = analysis::CFG::fromFunction(func);
-        blockIndexes = analysis::CFGBlockIndexes(*cfg);
+      if (!blockIndexes) {
+        auto cfg = analysis::CFG::fromFunction(func);
+        blockIndexes = analysis::CFGBlockIndexes(cfg);
       }
     };
 
