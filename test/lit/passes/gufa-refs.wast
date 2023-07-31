@@ -5679,3 +5679,53 @@
     (struct.new $B)
   )
 )
+
+;; A situation that we need traps-never-happens to optimize. Here we do nothing,
+;; while in gufa-tnh we test with that flag.
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $x (ref null $A))
+    ;; The param is cast.
+    (drop
+      (ref.cast $B
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out") (param $any anyref)
+    (call $called
+      (ref.cast $A ;; This cast will could be refined with TNH, since we call a
+                   ;; function that casts (so if we do not trap as TNH assumes,
+                   ;; we must be sending in a $B). But without that flag we do
+                   ;; nothing.
+        (local.get $any)
+      )
+    )
+  )
+)
