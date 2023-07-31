@@ -370,7 +370,7 @@
   )
 )
 
-;; As above, but add a local.tee in the called function.
+;; As above, but add a local.tee etc. in the called function.
 (module
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (field (mut i32))))
