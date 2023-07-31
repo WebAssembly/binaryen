@@ -2041,7 +2041,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // Atm this oracle only helps on GC content, so disable it without GC.
   if (options.trapsNeverHappen && wasm.features.hasGC()) {
 #ifdef POSSIBLE_CONTENTS_DEBUG
-    std::cout << "parallel phase\n";
+    std::cout << "tnh phase\n";
 #endif
     tnhOracle = std::make_unique<TNHOracle>(wasm, options);
   }
