@@ -2495,9 +2495,7 @@ void Flower::filterExpressionContents(PossibleContents& contents,
   // function is the only place we can mark |worthSendingMore| as false for a
   // reference.
   bool isRef = type.isRef();
-  if (isRef) {
-    assert(worthSendingMore);
-  }
+  assert(!isRef || worthSendingMore);
 
   // The TNH oracle informs us of the maximal contents possible here.
   auto maximalContents = getTNHContents(exprLoc.expr);
