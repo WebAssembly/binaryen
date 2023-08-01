@@ -1681,7 +1681,7 @@ void TNHOracle::infer() {
       // constraints. That is, if they all cast the k-th parameter to type T (or
       // more) than we can apply that here.
       auto numParams = call->operands.size();
-      std::vector<Type> sharedCastParamsVec(numParams);
+      std::vector<Type> sharedCastParamsVec(numParams, Type::unreachable);
       for (auto* target : possibleTargets) {
         auto& targetInfo = map[target];
         auto& targetCastParams = targetInfo.castParams;
@@ -1696,14 +1696,8 @@ void TNHOracle::infer() {
 
           // This function casts this param. Combine this with existing info.
           auto castType = iter->second;
-          if (target == possibleTargets[0]) {
-            // This is the first target, so just apply the value.
-            sharedCastParamsVec[i] = castType;
-          } else {
-            // This is a later param, so combine the constraints.
-            sharedCastParamsVec[i] =
-              Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
-          }
+          sharedCastParamsVec[i] =
+            Type::getLeastUpperBound(sharedCastParamsVec[i], castType);
         }
       }
 
