@@ -171,6 +171,8 @@ public:
       return LatticeComparison::LESS;
     } else if (hasGreater && !hasLess) {
       return LatticeComparison::GREATER;
+    } else if (hasLess && hasGreater) {
+      return LatticeComparison::NO_RELATION;
     } else {
       return LatticeComparison::EQUAL;
     }
