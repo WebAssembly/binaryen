@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "analysis/bits-lattice.h"
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
@@ -582,66 +581,83 @@ TEST_F(CFGTest, ReachingDefinitionsLoop) {
   EXPECT_EQ(expectedResult, getSetses);
 }
 
-TEST_F(CFGTest, StackBitsLatticeFunctioning) {
-  BitsLattice bitsLattice;
-  StackLattice<BitsLattice> stackLattice(bitsLattice);
+TEST_F(CFGTest, StackLatticeFunctioning) {
+  FiniteIntPowersetLattice contentLattice(4);
+  StackLattice<FiniteIntPowersetLattice> stackLattice(contentLattice);
 
-  StackLattice<BitsLattice>::Element firstStack = stackLattice.getBottom();
-  StackLattice<BitsLattice>::Element secondStack = stackLattice.getBottom();
+  StackLattice<FiniteIntPowersetLattice>::Element firstStack =
+    stackLattice.getBottom();
+  StackLattice<FiniteIntPowersetLattice>::Element secondStack =
+    stackLattice.getBottom();
 
-  for (uint32_t i = 0; i < 4; i++) {
-    BitsLattice::Element temp = bitsLattice.getBottom();
-    temp.setValue(i);
-    firstStack.push(temp);
+  for (size_t i = 0; i < 4; i++) {
+    FiniteIntPowersetLattice::Element temp = contentLattice.getBottom();
+    for (size_t j = 0; j <= i; j++) {
+      temp.set(j, true);
+    }
+    firstStack.push(std::move(temp));
   }
 
   for (uint32_t i = 0; i < 4; i++) {
-    BitsLattice::Element temp = bitsLattice.getBottom();
-    temp.setValue(i);
-    secondStack.push(temp);
+    FiniteIntPowersetLattice::Element temp = contentLattice.getBottom();
+    for (size_t j = 0; j <= i; j++) {
+      temp.set(j, true);
+    }
+    secondStack.push(std::move(temp));
   }
 
   EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
             LatticeComparison::EQUAL);
 
-  secondStack.pop();
-  secondStack.pop();
+  std::stringstream ss;
+  secondStack.pop().print(ss);
+  EXPECT_EQ(ss.str(), "1111");
+  ss.str(std::string());
+
+  secondStack.pop().print(ss);
+  EXPECT_EQ(ss.str(), "1110");
+  ss.str(std::string());
 
   EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
             LatticeComparison::GREATER);
   EXPECT_EQ(stackLattice.compare(secondStack, firstStack),
             LatticeComparison::LESS);
 
-  std::stringstream ss;
   firstStack.print(ss);
-  EXPECT_EQ(ss.str(), "3\n2\n1\n0\n");
+  EXPECT_EQ(ss.str(), "1111\n1110\n1100\n1000\n");
   ss.str(std::string());
 
   secondStack.print(ss);
-  EXPECT_EQ(ss.str(), "1\n0\n");
+  EXPECT_EQ(ss.str(), "1100\n1000\n");
   ss.str(std::string());
 
-  StackLattice<BitsLattice>::Element thirdStack = stackLattice.getBottom();
+  StackLattice<FiniteIntPowersetLattice>::Element thirdStack =
+    stackLattice.getBottom();
   {
-    BitsLattice::Element temp = bitsLattice.getBottom();
-    temp.setValue(32);
-    BitsLattice::Element temp2 = bitsLattice.getBottom();
-    temp2.setValue(51);
-    temp.makeLeastUpperBound(temp2);
-    thirdStack.push(temp);
-    thirdStack.push(temp2);
+    FiniteIntPowersetLattice::Element temp = contentLattice.getBottom();
+    temp.set(0, true);
+    temp.set(3, true);
+    FiniteIntPowersetLattice::Element temp2 = contentLattice.getBottom();
+    temp2.set(1, true);
+    temp2.set(2, true);
+    FiniteIntPowersetLattice::Element temp3 = contentLattice.getBottom();
+    temp3.set(1, true);
+    temp3.set(3, true);
+    thirdStack.push(std::move(temp));
+    thirdStack.push(std::move(temp2));
+    thirdStack.push(std::move(temp3));
   }
 
-  EXPECT_EQ(stackLattice.compare(firstStack, thirdStack),
+  EXPECT_EQ(stackLattice.compare(secondStack, thirdStack),
             LatticeComparison::NO_RELATION);
 
   thirdStack.print(ss);
-  EXPECT_EQ(ss.str(), "51\nTOP\n");
+  EXPECT_EQ(ss.str(), "0101\n0110\n1001\n");
   ss.str(std::string());
 
-  thirdStack.makeLeastUpperBound(firstStack);
+  EXPECT_EQ(thirdStack.makeLeastUpperBound(secondStack), true);
 
   thirdStack.print(ss);
-  EXPECT_EQ(ss.str(), "TOP\nTOP\n1\n0\n");
+  EXPECT_EQ(ss.str(), "1101\n1110\n1001\n");
   ss.str(std::string());
 }
