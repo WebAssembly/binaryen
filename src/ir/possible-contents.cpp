@@ -1779,8 +1779,7 @@ void TNHOracle::optimizeCallCasts(Expression* call,
           auto intersectionType = intersection.getType();
           if (intersectionType != curr->type) {
             // We inferred a more refined type.
-            info.inferences[curr] =
-              PossibleContents::fullConeType(intersectionType);
+            info.inferences[curr] = intersection;
           }
         } else {
           // Otherwise, the intersection can be a null (if the heap types are
