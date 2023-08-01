@@ -82,7 +82,7 @@ public:
 
   public:
     Element(Element&& source) = default;
-    Element(Element& source) = default;
+    Element(const Element& source) = default;
 
     Element& operator=(Element&& source) = default;
     Element& operator=(const Element& source) = default;
