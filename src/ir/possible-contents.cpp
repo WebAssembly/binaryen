@@ -1788,13 +1788,15 @@ void TNHOracle::optimizeCallCasts(Expression* call,
             info.inferences[curr] =
               PossibleContents::fullConeType(intersectionType);
           }
-        } else {
-          // The intersection of two full cones must be another cone, which we
-          // handled above, or must be empty, which we handle here.
-          assert(intersection.isNone());
-
+        } else if (intersection.isNull()) {
+          // Only a null can avoid trapping here. This can happen when we cast
+          // incompatible heap types but nulls are allowed.
+          info.inferences[curr] = PossibleContents::literal(Literal::makeNull(curr->type.getHeapType()));
+        } else if (intersection.isNone()) {
           // Nothing is possible here, so this must be unreachable code.
           info.inferences[curr] = PossibleContents::none();
+        } else {
+          WASM_UNREACHABLE("bad intersection");
         }
       }
 

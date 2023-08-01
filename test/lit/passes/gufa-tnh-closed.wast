@@ -1054,24 +1054,18 @@
     (type $A (func (param anyref)))
   )
 
-  ;; CHECK:      (type $funcref_i32_structref_=>_none (func (param funcref i32 structref)))
-
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (elem declare func $possible-Y1)
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (export "out" (func $caller))
 
-  ;; CHECK:      (export "out2" (func $reffer))
-
-  ;; CHECK:      (func $possible-Y1 (type $A) (param $ref anyref)
+  ;; CHECK:      (func $called (type $A) (param $ref anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast null $Y1
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $possible-Y1 (type $A) (param $ref anyref)
+  (func $called (type $A) (param $ref anyref)
     (drop
       (ref.cast null $Y1
         (local.get $ref)
@@ -1079,89 +1073,54 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_i32_structref_=>_none) (param $func1 funcref) (param $i i32) (param $struct structref)
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (select (result (ref null $Y2))
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (struct.new_default $Y2)
-  ;; CHECK-NEXT:    (local.get $i)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK:      (func $caller (type $i32_=>_none) (param $i i32)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (select (result (ref $Y2))
-  ;; CHECK-NEXT:     (struct.new_default $Y2)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (ref.cast $Y1
+  ;; CHECK-NEXT:    (select (result (ref $X))
+  ;; CHECK-NEXT:     (struct.new_default $Y1)
   ;; CHECK-NEXT:     (struct.new_default $Y2)
   ;; CHECK-NEXT:     (local.get $i)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (select (result (ref $X))
-  ;; CHECK-NEXT:    (struct.new_default $Y1)
-  ;; CHECK-NEXT:    (struct.new_default $Y2)
-  ;; CHECK-NEXT:    (local.get $i)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.func $possible-Y1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out")
-    (param $func1 funcref)
     (param $i i32)
-    (param $struct structref)
 
-    ;; The param is either a null or a Y2. A null can pass the cast to a null or
-    ;; Y1. We can infer this will call $possible-Y1.
-    (call_ref $A
+    ;; The param is either a null or a Y2, but only the null can pass the cast
+    ;; in the called function, so we can infer a value of null here.
+    (call $called
       (select (result (ref null $Y2))
         (ref.null $Y2)
         (struct.new $Y2)
         (local.get $i)
       )
-      (ref.cast $A
-        (local.get $func1)
-      )
     )
 
-    ;; For comparison, if no null is possible, this must trap.
-    (call_ref $A
+    ;; If no null is possible, this must trap.
+    (call $called
       (select (result (ref $Y2))
         (struct.new $Y2)
         (struct.new $Y2)
         (local.get $i)
       )
-      (ref.cast $A
-        (local.get $func1)
-      )
     )
 
-    ;; And Y1 or Y2 will succeed (since Y1 would succeed), so we can infer this
-    ;; will call $possible-Y1.
-    (call_ref $A
-      (select (result (ref $X))
-        (struct.new $Y1)
-        (struct.new $Y2)
-        (local.get $i)
+    ;; Only Y1 would succeed, so we can infer that the cast can be to $Y1.
+    (call $called
+      (ref.cast $X
+        (select (result (ref $X))
+          (struct.new $Y1)
+          (struct.new $Y2)
+          (local.get $i)
+        )
       )
-      (ref.cast $A
-        (local.get $func1)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $reffer (type $none_=>_none)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.func $possible-Y1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $reffer (export "out2")
-    (drop
-      (ref.func $possible-Y1)
     )
   )
 )
