@@ -1944,6 +1944,8 @@
   (func $caller (export "out") (param $x funcref)
     ;; In closed world this call must trap, as the only function of the right
     ;; type will trap. But we are in open world so we do not optimize here.
+    ;; TODO: We could analyze publicly visible tables, exports, etc. to see
+    ;;       whether any more functions could be possible even in an open world.
     (call_ref $A
       (ref.cast $A
         (local.get $x)
