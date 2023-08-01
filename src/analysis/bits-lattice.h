@@ -5,6 +5,9 @@
 
 namespace wasm::analysis {
 
+// Lattice for used bits analysis. A flat uint32_t lattice, where
+// all numerical values are equal to each other in an abstract
+// sense, and there is a top above and a bottom below them.
 struct BitsLattice {
   enum Status { BOTTOM, NUMBER, TOP };
 
