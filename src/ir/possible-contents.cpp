@@ -1765,7 +1765,6 @@ void TNHOracle::optimizeCallCasts(Expression* call,
     // At the loop entry |curr| has been checked for a possible control flow
     // transfer (and that problem ruled out).
     auto* curr = operand;
-    bool transferred = false;
     while (1) {
       // Note the type if it is useful.
       if (castType != curr->type) {
@@ -1798,17 +1797,15 @@ void TNHOracle::optimizeCallCasts(Expression* call,
 
       // There is a fallthrough. Check for a control flow transfer.
       if (blockIndexes.get(next) != callBlockIndex) {
-        // Control flow might transfer; stop.
-        transferred = true;
-        break;
+        // Control flow might transfer; stop. We also cannot look at any further
+        // operands (if a child of this operand is in another basic block from
+        // the call, so are previous operands), so return from the entire
+        // function.
+        return;
       }
 
       // Continue to the fallthrough.
       curr = next;
-    }
-
-    if (transferred) {
-      break;
     }
   }
 }
