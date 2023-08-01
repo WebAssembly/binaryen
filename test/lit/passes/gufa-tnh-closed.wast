@@ -617,7 +617,7 @@
         (local.get $func3)
       )
     )
-    ;; Y1 in the first param fails in the second, so we optimize to the first.
+    ;; Y1 in the second param fails in the second, so we optimize to the first.
     (call_ref $A
       (local.get $struct)
       (struct.new $Y1)
