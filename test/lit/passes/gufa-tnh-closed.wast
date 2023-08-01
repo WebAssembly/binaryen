@@ -625,7 +625,7 @@
         (local.get $func3)
       )
     )
-    ;; Y2 in the first param works in both functions; no optimization.
+    ;; Y2 in the second param works in both functions; no optimization.
     (call_ref $A
       (local.get $struct)
       (struct.new $Y2)
