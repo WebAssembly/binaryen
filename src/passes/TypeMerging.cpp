@@ -41,7 +41,6 @@
 #include "pass.h"
 #include "support/dfa_minimization.h"
 #include "support/small_set.h"
-#include "support/topological_sort.h"
 #include "wasm-builder.h"
 #include "wasm-type-ordering.h"
 #include "wasm.h"
@@ -246,8 +245,9 @@ bool TypeMerging::merge(MergeKind kind) {
   Partitions partitions;
 
 #if TYPE_MERGING_DEBUG
+  auto printedPrivateTypes = ModuleUtils::getPrivateHeapTypes(*module);
   using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
-  Fallback printPrivate(ModuleUtils::getPrivateHeapTypes(*module), "private.");
+  Fallback printPrivate(printedPrivateTypes, "private.");
   ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
   auto dumpPartitions = [&]() {
     size_t i = 0;
@@ -342,7 +342,16 @@ bool TypeMerging::merge(MergeKind kind) {
   }
 
 #if TYPE_MERGING_DEBUG
-  std::cerr << "Initial partitions:\n";
+  std::cerr << "Initial partitions (";
+  switch (kind) {
+    case Supertypes:
+      std::cerr << "supertypes";
+      break;
+    case Siblings:
+      std::cerr << "siblings";
+      break;
+  }
+  std::cerr << "):\n";
   dumpPartitions();
 #endif
 

@@ -28,7 +28,9 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() {
+void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
+
+GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
@@ -56,7 +58,7 @@ void GlobalTypeRewriter::update() {
   }
 
   if (typeIndices.size() == 0) {
-    return;
+    return {};
   }
   typeBuilder.grow(typeIndices.size());
 
@@ -139,7 +141,7 @@ void GlobalTypeRewriter::update() {
     }
   }
 
-  mapTypes(oldToNewTypes);
+  return oldToNewTypes;
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {

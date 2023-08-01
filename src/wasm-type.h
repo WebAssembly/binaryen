@@ -655,6 +655,8 @@ struct TypeBuilder {
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
+
+  void dump();
 };
 
 std::ostream& operator<<(std::ostream&, Type);
