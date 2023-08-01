@@ -1565,6 +1565,12 @@ void TNHOracle::infer() {
   if (options.closedWorld) {
     for (auto& func : wasm.functions) {
       auto type = func->type;
+      auto& info = map[wasm.getFunction(func->name)];
+      if (info.traps) {
+        // This function definitely traps, so we can assume it is never called,
+        // and don't need to even bother putting it in |typeFunctions|.
+        continue;
+      }
       while (1) {
         typeFunctions[type].push_back(func.get());
         if (auto super = type.getSuperType()) {
@@ -1614,6 +1620,11 @@ void TNHOracle::infer() {
         continue;
       }
 
+      // We should only get here in a closed world, in which we know which
+      // functions might be called (the scan phase only notes callRefs if we are
+      // in fact in a closed world).
+      assert(options.closedWorld);
+
       auto iter = typeFunctions.find(targetType.getHeapType());
       if (iter == typeFunctions.end()) {
         // No function exists of this type, so the call_ref will trap. We can
@@ -1622,19 +1633,15 @@ void TNHOracle::infer() {
         continue;
       }
 
-      // We should only get here in a closed world, in which we know which
-      // functions might be called.
-      assert(options.closedWorld);
-
       // Go through the targets and ignore any that will trap. That will leave
       // us with the actually possible targets.
+      //
+      // Note that we did not even add functions that certainly trap to
+      // |typeFunctions| at all, so those are already excluded.
       const auto& targets = iter->second;
       std::vector<Function*> possibleTargets;
       for (Function* target : targets) {
         auto& targetInfo = map[target];
-        if (targetInfo.traps) {
-          continue;
-        }
 
         // If our operands will fail a cast, then we will trap.
         bool traps = false;
