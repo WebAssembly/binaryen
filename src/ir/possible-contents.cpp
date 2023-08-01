@@ -1643,12 +1643,12 @@ void TNHOracle::infer() {
       for (Function* target : targets) {
         auto& targetInfo = map[target];
 
-        // If our operands will fail a cast, then we will trap.
+        // If any of our operands will fail a cast, then we will trap.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
           auto operandType = call->operands[castIndex]->type;
-          if (!Type::isSubType(operandType, castType) &&
-              !Type::isSubType(castType, operandType)) {
+          auto result = GCTypeUtils::evaluateCastCheck(operandType, castType);
+          if (result == GCTypeUtils::Failure) {
             traps = true;
             break;
           }
