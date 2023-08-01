@@ -1513,6 +1513,12 @@ void TNHOracle::scan(Function* func,
       notePossibleTrap(curr->destRef);
     }
     void visitArrayFill(ArrayFill* curr) { notePossibleTrap(curr->ref); }
+    void visitArrayInitData(ArrayInitData* curr) {
+      notePossibleTrap(curr->ref);
+    }
+    void visitArrayInitElem(ArrayInitElem* curr) {
+      notePossibleTrap(curr->ref);
+    }
 
     void visitFunction(Function* curr) {
       // In optimized TNH code, a function that always traps will be turned

@@ -1695,13 +1695,23 @@
 
   (type $B (array (mut i32)))
 
-  ;; CHECK:      (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$A|_=>_none (func (param (ref null $A) (ref null $A) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $A))))
+  ;; CHECK:      (type $C (array (mut funcref)))
+  (type $C (array (mut funcref)))
+
+
+  ;; CHECK:      (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$C|_ref?|$A|_=>_none (func (param (ref null $A) (ref null $A) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $B) (ref null $C) (ref null $A))))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
+  ;; CHECK:      (data $d "a")
+  (data $d "a")
+
+  ;; CHECK:      (elem $e func)
+  (elem $e funcref)
+
   ;; CHECK:      (export "out" (func $caller))
 
-  ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$A|_=>_none) (param $struct.get (ref null $A)) (param $struct.set (ref null $A)) (param $array.get (ref null $B)) (param $array.set (ref null $B)) (param $array.len (ref null $B)) (param $array.copy.src (ref null $B)) (param $array.copy.dest (ref null $B)) (param $array.fill (ref null $B)) (param $ref.test (ref null $A))
+  ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$B|_ref?|$C|_ref?|$A|_=>_none) (param $struct.get (ref null $A)) (param $struct.set (ref null $A)) (param $array.get (ref null $B)) (param $array.set (ref null $B)) (param $array.len (ref null $B)) (param $array.copy.src (ref null $B)) (param $array.copy.dest (ref null $B)) (param $array.fill (ref null $B)) (param $array.init_data (ref null $B)) (param $array.init_elem (ref null $C)) (param $ref.test (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -1738,6 +1748,18 @@
   ;; CHECK-NEXT:   (i32.const 8)
   ;; CHECK-NEXT:   (i32.const 9)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_data $B $d
+  ;; CHECK-NEXT:   (local.get $array.init_data)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 11)
+  ;; CHECK-NEXT:   (i32.const 12)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.init_elem $C $e
+  ;; CHECK-NEXT:   (local.get $array.init_elem)
+  ;; CHECK-NEXT:   (i32.const 13)
+  ;; CHECK-NEXT:   (i32.const 14)
+  ;; CHECK-NEXT:   (i32.const 15)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test $A
   ;; CHECK-NEXT:    (local.get $ref.test)
@@ -1753,6 +1775,8 @@
     (param $array.copy.src (ref null $B))
     (param $array.copy.dest (ref null $B))
     (param $array.fill (ref null $B))
+    (param $array.init_data (ref null $B))
+    (param $array.init_elem (ref null $C))
     (param $ref.test (ref null $A))
 
     ;; All the operations trap on null, aside from ref.test.
@@ -1794,6 +1818,18 @@
       (i32.const 8)
       (i32.const 9)
     )
+    (array.init_data $B $d
+      (local.get $array.init_data)
+      (i32.const 10)
+      (i32.const 11)
+      (i32.const 12)
+    )
+    (array.init_elem $C $e
+      (local.get $array.init_elem)
+      (i32.const 13)
+      (i32.const 14)
+      (i32.const 15)
+    )
     (drop
       (ref.test $A
         (local.get $ref.test)
@@ -1827,6 +1863,12 @@
   ;; CHECK-NEXT:   (ref.cast $B
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:    (local.get $any)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (ref.cast null $A
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
@@ -1858,6 +1900,12 @@
         (local.get $any)
       )
       (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $B
+        (local.get $any)
+      )
+      (ref.cast null $C
         (local.get $any)
       )
       (ref.cast null $A
