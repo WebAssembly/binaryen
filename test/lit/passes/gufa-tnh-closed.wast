@@ -294,7 +294,6 @@
 
 ;; Two possible functions, but one has a parameter that will trap.
 (module
-
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $X (struct ))
@@ -1033,6 +1032,136 @@
     )
     (drop
       (ref.func $possible-2)
+    )
+  )
+)
+
+;; Test for a cast with incompatible heap types but nullability allows the cast
+;; to succeed at runtime.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct ))
+    (type $X (struct))
+
+    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    (type $Y1 (sub $X (struct)))
+
+    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    (type $Y2 (sub $X (struct)))
+
+    ;; CHECK:       (type $A (func (param anyref)))
+    (type $A (func (param anyref)))
+  )
+
+  ;; CHECK:      (type $funcref_i32_structref_=>_none (func (param funcref i32 structref)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (elem declare func $possible-Y1)
+
+  ;; CHECK:      (export "out" (func $caller))
+
+  ;; CHECK:      (export "out2" (func $reffer))
+
+  ;; CHECK:      (func $possible-Y1 (type $A) (param $ref anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast null $Y1
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $possible-Y1 (type $A) (param $ref anyref)
+    (drop
+      (ref.cast null $Y1
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $funcref_i32_structref_=>_none) (param $func1 funcref) (param $i i32) (param $struct structref)
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (select (result (ref null $Y2))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (struct.new_default $Y2)
+  ;; CHECK-NEXT:    (local.get $i)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (select (result (ref $Y2))
+  ;; CHECK-NEXT:     (struct.new_default $Y2)
+  ;; CHECK-NEXT:     (struct.new_default $Y2)
+  ;; CHECK-NEXT:     (local.get $i)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $A
+  ;; CHECK-NEXT:   (select (result (ref $X))
+  ;; CHECK-NEXT:    (struct.new_default $Y1)
+  ;; CHECK-NEXT:    (struct.new_default $Y2)
+  ;; CHECK-NEXT:    (local.get $i)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "out")
+    (param $func1 funcref)
+    (param $i i32)
+    (param $struct structref)
+
+    ;; The param is either a null or a Y2. A null can pass the cast to a null or
+    ;; Y1. We can infer this will call $possible-Y1.
+    (call_ref $A
+      (select (result (ref null $Y2))
+        (ref.null $Y2)
+        (struct.new $Y2)
+        (local.get $i)
+      )
+      (ref.cast $A
+        (local.get $func1)
+      )
+    )
+
+    ;; For comparison, if no null is possible, this must trap.
+    (call_ref $A
+      (select (result (ref $Y2))
+        (struct.new $Y2)
+        (struct.new $Y2)
+        (local.get $i)
+      )
+      (ref.cast $A
+        (local.get $func1)
+      )
+    )
+
+    ;; And Y1 or Y2 will succeed (since Y1 would succeed), so we can infer this
+    ;; will call $possible-Y1.
+    (call_ref $A
+      (select (result (ref $X))
+        (struct.new $Y1)
+        (struct.new $Y2)
+        (local.get $i)
+      )
+      (ref.cast $A
+        (local.get $func1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $possible-Y1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $reffer (export "out2")
+    (drop
+      (ref.func $possible-Y1)
     )
   )
 )
