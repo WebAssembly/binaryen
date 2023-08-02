@@ -1379,7 +1379,9 @@ class TNHOracleAnalysis
 
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
-  TNHOracleAnalysis(Module& wasm, const PassOptions& options, std::shared_ptr<Oracle> prevOracle)
+  TNHOracleAnalysis(Module& wasm,
+                    const PassOptions& options,
+                    std::shared_ptr<Oracle> prevOracle)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {
                scan(func, info, options);
@@ -1397,7 +1399,7 @@ public:
       // We only store useful contents that improve on the naive estimate that
       // uses the type in the IR.
       [[maybe_unused]] auto naiveContents =
-          PossibleContents::fullConeType(curr->type);
+        PossibleContents::fullConeType(curr->type);
       auto contents = iter->second;
       assert(contents != naiveContents);
       return contents;
@@ -1438,7 +1440,9 @@ class TNHOracle : public Oracle {
   TNHOracleAnalysis analysis;
 
 public:
-  TNHOracle(Module& wasm, const PassOptions& options, std::shared_ptr<Oracle> prevOracle)
+  TNHOracle(Module& wasm,
+            const PassOptions& options,
+            std::shared_ptr<Oracle> prevOracle)
     : Oracle(wasm, options), analysis(wasm, options, prevOracle) {}
 
   // Get the type we inferred was possible at a location.
@@ -1678,7 +1682,8 @@ void TNHOracleAnalysis::infer() {
         // If any of our operands will fail a cast, then we will trap.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
-          auto operandType = getPrevContents(call->operands[castIndex]).getType();
+          auto operandType =
+            getPrevContents(call->operands[castIndex]).getType();
           auto result = GCTypeUtils::evaluateCastCheck(operandType, castType);
           if (result == GCTypeUtils::Failure) {
             traps = true;
