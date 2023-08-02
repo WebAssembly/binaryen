@@ -918,6 +918,41 @@
   )
 )
 
+;; Regression test for a bug where we updated module types before building the
+;; new types, causing the set of private types to change unexpectedly and
+;; leading to a failure to build new types.
+;; TODO: Store a heap type on control flow structures to avoid creating
+;; standalone function types for them.
+;; TODO: Investigate why the rec group contains two of the same type below.
+(module
+ (rec
+  (type $A (func (result (ref any) (ref $C))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (func))
+  (type $B (func))
+  (type $C (sub $B (func)))
+  ;; CHECK:       (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+
+  ;; CHECK:       (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+
+  ;; CHECK:       (type $D (sub final $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B)))))
+  (type $D (sub final $A (func (result (ref any) (ref $C)))))
+ )
+
+ ;; CHECK:      (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+
+ ;; CHECK:      (func $test (type $D) (result (ref any) (ref $B))
+ ;; CHECK-NEXT:  (block $l (result (ref any) (ref $B))
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (type $D) (result (ref any) (ref $C))
+  (block $l (result (ref any) (ref $C))
+   (unreachable)
+  )
+ )
+)
+
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec

@@ -1621,6 +1621,9 @@ void TypePrinter::printHeapTypeName(HeapType type) {
     return;
   }
   os << '$' << generator(type).name;
+#if TRACE_CANONICALIZATION
+  os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
+#endif
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -1643,12 +1646,12 @@ std::ostream& TypePrinter::print(Type type) {
     }
   }
 
-  if (isTemp(type)) {
-    os << "(; temp ;) ";
-  }
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
+  if (isTemp(type)) {
+    os << "(; temp ;) ";
+  }
   if (type.isTuple()) {
     print(type.getTuple());
   } else if (type.isRef()) {
@@ -1741,10 +1744,6 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (isTemp(type)) {
     os << "(; temp ;) ";
   }
-
-#if TRACE_CANONICALIZATION
-  os << "(;" << ((type.getID() >> 4) % 1000) << ";)";
-#endif
 
   // TODO: Use shorthand for final types once we parse MVP signatures as final.
   bool useSub = false;
@@ -2521,6 +2520,34 @@ TypeBuilder::BuildResult TypeBuilder::build() {
   }
 
   return {results};
+}
+
+void TypeBuilder::dump() {
+  std::vector<HeapType> types;
+  for (size_t i = 0; i < size(); ++i) {
+    types.push_back((*this)[i]);
+  }
+  IndexedTypeNameGenerator<DefaultTypeNameGenerator> print(types);
+
+  std::optional<RecGroup> currGroup;
+  for (auto type : types) {
+    if (auto newGroup = type.getRecGroup(); newGroup != currGroup) {
+      if (currGroup && currGroup->size() > 1) {
+        std::cerr << ")\n";
+      }
+      if (newGroup.size() > 1) {
+        std::cerr << "(rec\n";
+      }
+      currGroup = newGroup;
+    }
+    if (currGroup->size() > 1) {
+      std::cerr << "  ";
+    }
+    std::cerr << print(type) << "\n";
+  }
+  if (currGroup && currGroup->size() > 1) {
+    std::cerr << ")\n";
+  }
 }
 
 } // namespace wasm
