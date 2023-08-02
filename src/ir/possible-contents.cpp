@@ -188,18 +188,11 @@ void PossibleContents::intersect(const PossibleContents& other) {
 
   auto setNoneOrNull = [&]() {
     if (nullability == Nullable) {
-      value = Literal::makeNull(otherHeapType);
+      value = Literal::makeNull(heapType);
     } else {
       value = None();
     }
   };
-
-  if (isNull()) {
-    // The intersection is either this null itself, or nothing if a null is not
-    // allowed.
-    setNoneOrNull();
-    return;
-  }
 
   // If the heap types are not compatible then they are in separate hierarchies
   // and there is no intersection, aside from possibly a null of the bottom
@@ -207,29 +200,15 @@ void PossibleContents::intersect(const PossibleContents& other) {
   auto isSubType = HeapType::isSubType(heapType, otherHeapType);
   auto otherIsSubType = HeapType::isSubType(otherHeapType, heapType);
   if (!isSubType && !otherIsSubType) {
-    if (nullability == Nullable &&
-        heapType.getBottom() == otherHeapType.getBottom()) {
-      value = Literal::makeNull(heapType.getBottom());
+    if (heapType.getBottom() == otherHeapType.getBottom()) {
+      setNoneOrNull();
     } else {
       value = None();
     }
     return;
   }
 
-  if (isLiteral()) {
-    // The information about the value being identical to a particular literal
-    // is not removed by intersection, if the type is in the cone we are
-    // intersecting with.
-    if (isSubType) {
-      return;
-    }
-
-    // The type must change in a nontrivial manner, so continue down to the
-    // generic code path. This will stop being a Literal. TODO: can we do better
-    // here?
-  }
-
-  // Intersect the cones, as there is no more specific information we can use.
+  // The heap types are compatible, so intersect the cones.
   auto depthFromRoot = heapType.getDepth();
   auto otherDepthFromRoot = otherHeapType.getDepth();
 
