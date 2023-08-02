@@ -8,9 +8,57 @@
 
 namespace wasm::analysis {
 
-// Models the WASM value stack
-// A lattice for modelling stack-related phenomena. It is templated
-// on a lattice representing the contents of each stack element.
+// Note that in comments, bottom is left and top is right.
+
+// This lattice models the behavior of a stack of values. The lattice
+// is templated on StackElementLattice, which is a lattice which can
+// model some abstract property of a value on the stack. The StackLattice
+// itself can push or pop abstract values and access the top of stack.
+//
+// Comparisons are done elementwise, starting from the top of the stack.
+// For instance, to compare the stacks [c,b,a], [b',a'], we first compare
+// a with a', then b with b'. Then we make note of the fact that the first
+// stack is higher, with an extra c element at the bottom.
+//
+// Similarly, Least Upper Bounds are done elementwise starting from the top.
+// For instance LUB([b, a], [b', a']) = [LUB(b, b'), LUB(a, a')], while
+// LUB([c, b, a], [b', a']) = [c, LUB(b, b'), LUB(a, a')].
+//
+// These are done from the top of the stack because this addresses the problem
+// of scopes. For instance, if we have the following program
+//
+// i32.const 0
+// i32.const 0
+// if (result i32)
+// i32.const 1
+// else
+// i32.const 2
+// endif
+// i32.add
+//
+// Before the if-else control flow, we have [] -> [i32], and after the if-else
+// control flow we have [i32, i32] -> [i32]. However, inside each of the if
+// and else conditions, we have [] -> [i32], because they cannot see the
+// stack elements pushed by the enclosing scope. In effect in the if and else,
+// we have a stack [i32 | i32], where we can't "see" left of the |.
+//
+// Conceptually, we can also imagine each stack [b, a] as being implicitly an
+// infinite stack of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). This
+// makes stacks in different scopes equivalent, with only their contents
+// different. Stacks in more "inner" scopes simply have more bottom elements in
+// the bottom portion.
+//
+// A common application for this lattice is modeling the Wasm value stack.
+// For instance, one could use this to analyze the maximum bit size of
+// values on the Wasm value stack. When new actual values are pushed
+// or popped off the Wasm value stack by instructions, the same is done
+// to abstract lattice elements in the StackLattice.
+//
+// When two control flows a joined together, one with stack [b, a] and
+// another with stack [b, a'], we can take the least upper bound to
+// produce a stack [b, LUB(a, a')], where LUB(a, a') takes the maximum
+// of the two maximum bit values.
+
 template<typename StackElementLattice> class StackLattice {
   static_assert(is_lattice<StackElementLattice>);
   StackElementLattice& stackElementLattice;
@@ -20,13 +68,12 @@ public:
     : stackElementLattice(stackElementLattice) {}
 
   class Element {
-    // The top lattice is
+    // The top lattice can be imagined as an infinitely high stack, which
+    // is unreachable in most cases. In practice, we make the stack an
+    // optional, and if we are the top lattice, the stack doesn't exist in
+    // the optional signalling the top lattice.
     std::optional<std::deque<typename StackElementLattice::Element>>
       stackValue = std::deque<typename StackElementLattice::Element>();
-
-    // Indicates if the lattice element is the top element, which theoretically
-    // would be an infinite-height stack. In practice, if this flag is raised,
-    // we ignore the actual stack and treat it like the top element.
 
   public:
     bool isTop() const { return !stackValue.has_value(); }
@@ -40,6 +87,10 @@ public:
     }
 
     void push(typename StackElementLattice::Element&& element) {
+      // We can imagine each stack [b, a] as being implicitly an infinite stack
+      // of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). In that case,
+      // adding a bottom element to an empty stack changes nothing, so we don't
+      // actually add a bottom.
       if (stackValue.has_value() &&
           (!stackValue->empty() || !element.isBottom())) {
         stackValue->push_back(std::move(element));
@@ -59,23 +110,31 @@ public:
       return value;
     }
 
-    // When taking the LUB, we take the LUBs of the elements of the suffixes of
-    // each stack. This is because when we have stack1 = [a] and stack2 = [b',
-    // a'] which is from a scope which encloses the scope of stack1, we want the
-    // result to be [b', LUB(a, a')]. We can alternatively imagine that each
-    // stack is of infinite height, with all elements lower than the lowest
-    // observable element abeing bottom elements.
+    // When taking the LUB, we take the LUBs of the elements of each stack
+    // starting from the top of the stack. So, LUB([b, a], [b', a']) is
+    // [LUB(b, b'), LUB(a, a')]. If one stack is higher than the other,
+    // the bottom of the higher stack will be kept, while the LUB of the
+    // corresponding tops of each stack will be taken. For instance,
+    // LUB([d, c, b, a], [b', a']) is [d, c, LUB(b, b'), LUB(a, a')].
+    //
+    // We start at the top because it makes taking the LUB of stacks with
+    // different scope easier, as mentioned at the top of the file. It also
+    // fits with the conception of the stack starting at the top and having
+    // an infinite bottom, which allows stacks of different height and scope
+    // to be easily joined.
     bool makeLeastUpperBound(const Element& other) {
-      if (!stackValue.has_value()) {
+      // Top element cases, since top elements don't actually have the stack
+      // value.
+      if (isTop()) {
         return false;
-      } else if (!other.stackValue.has_value()) {
+      } else if (other.isTop()) {
         stackValue.reset();
         return true;
       }
 
       bool modified = false;
 
-      // Merge the shorter height stack with the suffix of the longer height
+      // Merge the shorter height stack with the top of the longer height
       // stack. We do this by taking the LUB of each pair of matching elements
       // from both stacks.
       auto otherIterator = other.stackValue->crbegin();
@@ -86,7 +145,7 @@ public:
         modified |= thisIterator->makeLeastUpperBound(*otherIterator);
       }
 
-      // If the other stack is higher, append the prefix of it to our current
+      // If the other stack is higher, append the bottom of it to our current
       // stack.
       for (; otherIterator != other.stackValue->crend(); ++otherIterator) {
         stackValue->push_front(*otherIterator);
@@ -97,7 +156,7 @@ public:
     }
 
     void print(std::ostream& os) {
-      if (!stackValue.has_value()) {
+      if (isTop()) {
         os << "TOP STACK" << std::endl;
         return;
       }
@@ -112,13 +171,17 @@ public:
     friend StackLattice;
   };
 
-  // Like in computing the LUB, we compare the suffixes of the two stacks.
-  // If the left stack is higher, and left suffix >= right suffix, then we say
-  // that left stack > right stack. If the left stack is lower an left suffix >=
-  // right suffix or if the left stack is higher and the right suffix > left
-  // suffix or they are unrelated, then there is no relation. Same applies for
-  // the reverse relationship.
+  // Like in computing the LUB, we compare the tops of the two stacks, as it
+  // handles the case of stacks of different scopes. Comparisons are done by
+  // element starting from the top.
+  //
+  // If the left stack is higher, and left top >= right top, then we say
+  // that left stack > right stack. If the left stack is lower and the left top
+  // >= right top or if the left stack is higher and the right top > left top or
+  // they are unrelated, then there is no relation. Same applies for the reverse
+  // relationship.
   LatticeComparison compare(const Element& left, const Element& right) {
+    // Handle cases where there are top elements.
     if (left.isTop()) {
       if (right.isTop()) {
         return LatticeComparison::EQUAL;
@@ -132,9 +195,9 @@ public:
     bool hasLess = false;
     bool hasGreater = false;
 
-    // Check the suffixes of both stacks. If there is an unrelated pair of
-    // elements, or if there is both a > and a <, then the stacks must be
-    // unrelated.
+    // Check the tops of both stacks which match (i.e. are within the heights
+    // of both stacks). If there is a pair which is not related, the stacks
+    // cannot be related.
     for (auto leftIterator = left.stackValue->crbegin(),
               rightIterator = right.stackValue->crbegin();
          leftIterator != left.stackValue->crend() &&
@@ -145,7 +208,6 @@ public:
       switch (currComparison) {
         case LatticeComparison::NO_RELATION:
           return LatticeComparison::NO_RELATION;
-          break;
         case LatticeComparison::LESS:
           hasLess = true;
           break;
@@ -157,10 +219,10 @@ public:
       }
     }
 
-    // Check cases for when the stacks have unequal or equal heights.
-    // As a rule, if a stack is higher, it is greater than the other stack, but
-    // if and only if their suffixes have the same greater than or equal
-    // relationship.
+    // Check cases for when the stacks have unequal. As a rule, if a stack
+    // is higher, it is greater than the other stack, but if and only if
+    // when comparing their matching top portions the top portion of the
+    // higher stack is also >= the top portion of the shorter stack.
     if (left.stackValue->size() > right.stackValue->size()) {
       hasGreater = true;
     } else if (right.stackValue->size() > left.stackValue->size()) {
@@ -172,16 +234,14 @@ public:
     } else if (hasGreater && !hasLess) {
       return LatticeComparison::GREATER;
     } else if (hasLess && hasGreater) {
+      // Contradiction, and therefore must be unrelated.
       return LatticeComparison::NO_RELATION;
     } else {
       return LatticeComparison::EQUAL;
     }
   }
 
-  Element getBottom() {
-    Element result;
-    return result;
-  }
+  Element getBottom() { return Element{}; }
 };
 
 } // namespace wasm::analysis
