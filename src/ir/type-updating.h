@@ -366,7 +366,7 @@ public:
 
   // Builds new types after updating their contents using the hooks below and
   // returns a map from the old types to the modified types. Used internally in
-  // update()`.
+  // update().
   TypeMap rebuildTypes();
 
   // Subclasses can implement these methods to modify the new set of types that
@@ -443,18 +443,21 @@ public:
     // refer to the merged types.
     auto oldToNewTypes = rebuildTypes();
 
-    // Compose the given mapping from old types to old types with the new
-    // mapping from old types to new types.
+    // Compose the user-provided mapping from old types to other old types with
+    // the new mapping from old types to new types. `oldToNewtypes` will become
+    // a copy of `mapping` except that the destination types will be the newly
+    // built types.
     for (auto& [src, dest] : mapping) {
       if (auto it = oldToNewTypes.find(dest); it != oldToNewTypes.end()) {
         oldToNewTypes[src] = it->second;
       } else {
+        // This mapping was to a type that was not rebuilt, perhaps because it
+        // is a basic type. Just use this mapping unmodified.
         oldToNewTypes[src] = dest;
       }
     }
 
-    // Map the types of expressions (curr->type, etc.) to their merged
-    // types.
+    // Map the types of expressions (curr->type, etc.) to the correct new types.
     mapTypes(oldToNewTypes);
   }
 

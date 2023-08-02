@@ -918,12 +918,12 @@
   )
 )
 
-;; Regression test for bug where we updated module types before building the new
-;; types, causing the set of private types to change unexpectedly and leading to
-;; a failure to build new types.
+;; Regression test for a bug where we updated module types before building the
+;; new types, causing the set of private types to change unexpectedly and
+;; leading to a failure to build new types.
 :: TODO: Store a heap type on control flow structures to avoid creating
 ;; standalone function types for them.
-;; TODO: Investigate why the rec group contains two of the same type below
+;; TODO: Investigate why the rec group contains two of the same type below.
 (module
  (rec
   (type $A (func (result (ref any) (ref $C))))
