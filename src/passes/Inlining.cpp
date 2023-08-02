@@ -35,6 +35,7 @@
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
