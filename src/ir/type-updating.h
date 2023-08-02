@@ -364,11 +364,6 @@ public:
   // not appear, it is mapped to itself.
   void mapTypes(const TypeMap& oldToNewTypes);
 
-  // Builds new types after updating their contents using the hooks below and
-  // returns a map from the old types to the modified types. Used internally in
-  // update().
-  TypeMap rebuildTypes();
-
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through. The methods receive as input the
@@ -419,6 +414,12 @@ public:
     } rewriter(wasm, updates);
   }
 
+protected:
+  // Builds new types after updating their contents using the hooks below and
+  // returns a map from the old types to the modified types. Used internally in
+  // update().
+  TypeMap rebuildTypes();
+
 private:
   TypeBuilder typeBuilder;
 
@@ -441,24 +442,24 @@ public:
   void map() {
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
-    auto oldToNewTypes = rebuildTypes();
+    auto newMapping = rebuildTypes();
 
     // Compose the user-provided mapping from old types to other old types with
-    // the new mapping from old types to new types. `oldToNewtypes` will become
+    // the new mapping from old types to new types. `newMapping` will become
     // a copy of `mapping` except that the destination types will be the newly
     // built types.
     for (auto& [src, dest] : mapping) {
-      if (auto it = oldToNewTypes.find(dest); it != oldToNewTypes.end()) {
-        oldToNewTypes[src] = it->second;
+      if (auto it = newMapping.find(dest); it != newMapping.end()) {
+        newMapping[src] = it->second;
       } else {
         // This mapping was to a type that was not rebuilt, perhaps because it
         // is a basic type. Just use this mapping unmodified.
-        oldToNewTypes[src] = dest;
+        newMapping[src] = dest;
       }
     }
 
     // Map the types of expressions (curr->type, etc.) to the correct new types.
-    mapTypes(oldToNewTypes);
+    mapTypes(newMapping);
   }
 
   Type getNewType(Type type) {
