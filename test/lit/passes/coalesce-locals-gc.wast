@@ -223,7 +223,7 @@
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (ref.is_i31
+ ;; CHECK-NEXT:   (ref.test i31
  ;; CHECK-NEXT:    (ref.cast null i31
  ;; CHECK-NEXT:     (block (result i31ref)
  ;; CHECK-NEXT:      (i31.new
