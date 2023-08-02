@@ -415,7 +415,6 @@ struct StackLatticeChecker {
     StackLattice<FiniteIntPowersetLattice>::Element x = getRandomElement(rand);
     StackLattice<FiniteIntPowersetLattice>::Element y = getRandomElement(rand);
     StackLattice<FiniteIntPowersetLattice>::Element z = getRandomElement(rand);
-    std::cout << "HALK MARSI" << std::endl;
     if (verbose) {
       checker.printVerboseFunctionCase(std::cout, x, y, z);
     }
