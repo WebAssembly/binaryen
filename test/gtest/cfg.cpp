@@ -585,6 +585,12 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
   FiniteIntPowersetLattice contentLattice(4);
   StackLattice<FiniteIntPowersetLattice> stackLattice(contentLattice);
 
+  // These are constructed as expected references to compare everything else.
+  StackLattice<FiniteIntPowersetLattice>::Element expectedStack =
+    stackLattice.getBottom();
+  FiniteIntPowersetLattice::Element expectedStackElement =
+    contentLattice.getBottom();
+
   StackLattice<FiniteIntPowersetLattice>::Element firstStack =
     stackLattice.getBottom();
   StackLattice<FiniteIntPowersetLattice>::Element secondStack =
@@ -595,41 +601,46 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
     for (size_t j = 0; j <= i; j++) {
       temp.set(j, true);
     }
-    firstStack.push(std::move(temp));
-  }
-
-  for (uint32_t i = 0; i < 4; i++) {
-    FiniteIntPowersetLattice::Element temp = contentLattice.getBottom();
-    for (size_t j = 0; j <= i; j++) {
-      temp.set(j, true);
+    firstStack.push(temp);
+    secondStack.push(temp);
+    if (i < 2) {
+      expectedStack.push(temp);
     }
-    secondStack.push(std::move(temp));
   }
 
   EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
             LatticeComparison::EQUAL);
 
-  std::stringstream ss;
-  secondStack.pop().print(ss);
-  EXPECT_EQ(ss.str(), "1111");
-  ss.str(std::string());
+  for (size_t j = 0; j < 4; ++j) {
+    expectedStackElement.set(j, true);
+  }
 
-  secondStack.pop().print(ss);
-  EXPECT_EQ(ss.str(), "1110");
-  ss.str(std::string());
+  EXPECT_EQ(contentLattice.compare(secondStack.pop(), expectedStackElement),
+            LatticeComparison::EQUAL);
+  expectedStackElement.set(3, false);
+  EXPECT_EQ(contentLattice.compare(secondStack.pop(), expectedStackElement),
+            LatticeComparison::EQUAL);
 
   EXPECT_EQ(stackLattice.compare(firstStack, secondStack),
             LatticeComparison::GREATER);
   EXPECT_EQ(stackLattice.compare(secondStack, firstStack),
             LatticeComparison::LESS);
 
-  firstStack.print(ss);
-  EXPECT_EQ(ss.str(), "1111\n1110\n1100\n1000\n");
-  ss.str(std::string());
+  EXPECT_EQ(stackLattice.compare(secondStack, expectedStack),
+            LatticeComparison::EQUAL);
 
-  secondStack.print(ss);
-  EXPECT_EQ(ss.str(), "1100\n1000\n");
-  ss.str(std::string());
+  {
+    expectedStack.stackTop().set(0, false);
+    expectedStack.stackTop().set(2, true);
+    FiniteIntPowersetLattice::Element temp = expectedStack.pop();
+    expectedStack.stackTop().set(3, true);
+    expectedStack.push(temp);
+
+    FiniteIntPowersetLattice::Element temp2 = contentLattice.getBottom();
+    temp2.set(1, true);
+    temp2.set(3, true);
+    expectedStack.push(temp2);
+  }
 
   StackLattice<FiniteIntPowersetLattice>::Element thirdStack =
     stackLattice.getBottom();
@@ -651,13 +662,18 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
   EXPECT_EQ(stackLattice.compare(secondStack, thirdStack),
             LatticeComparison::NO_RELATION);
 
-  thirdStack.print(ss);
-  EXPECT_EQ(ss.str(), "0101\n0110\n1001\n");
-  ss.str(std::string());
+  EXPECT_EQ(stackLattice.compare(thirdStack, expectedStack),
+            LatticeComparison::EQUAL);
 
   EXPECT_EQ(thirdStack.makeLeastUpperBound(secondStack), true);
 
-  thirdStack.print(ss);
-  EXPECT_EQ(ss.str(), "1101\n1110\n1001\n");
-  ss.str(std::string());
+  {
+    expectedStack.stackTop().set(0, true);
+    FiniteIntPowersetLattice::Element temp = expectedStack.pop();
+    expectedStack.stackTop().set(0, true);
+    expectedStack.push(temp);
+  }
+
+  EXPECT_EQ(stackLattice.compare(thirdStack, expectedStack),
+            LatticeComparison::EQUAL);
 }
