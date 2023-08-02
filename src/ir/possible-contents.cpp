@@ -1375,11 +1375,11 @@ struct TNHInfo {
 class TNHOracleAnalysis
   : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
   const PassOptions& options;
-  const Oracle& prevOracle;
+  std::shared_ptr<Oracle> prevOracle;
 
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
-  TNHOracleAnalysis(Module& wasm, const PassOptions& options, const Oracle& prevOracle)
+  TNHOracleAnalysis(Module& wasm, const PassOptions& options, std::shared_ptr<Oracle> prevOracle)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {
                scan(func, info, options);
@@ -1393,9 +1393,7 @@ public:
 
   // Get the type we inferred was possible at a location.
   PossibleContents getContents(Expression* curr) const {
-std::cout << "  TNHOA::getC1 " << *curr << "\n";
     if (auto iter = inferences.find(curr); iter != inferences.end()) {
-std::cout << "    TNHOA::getC2\n";
       // We only store useful contents that improve on the naive estimate that
       // uses the type in the IR.
       [[maybe_unused]] auto naiveContents =
@@ -1404,10 +1402,9 @@ std::cout << "    TNHOA::getC2\n";
       assert(contents != naiveContents);
       return contents;
     }
-std::cout << "    TNHOA::getC3 " << size_t(&prevOracle) << "\n";
 
     // We inferred nothing ourselves, so defer to the previous oracle.
-    return prevOracle.getExprContents(curr);
+    return prevOracle->getExprContents(curr);
   }
 
 private:
@@ -1431,7 +1428,7 @@ private:
 
   // Get the information known by the previous oracle.
   PossibleContents getPrevContents(Expression* expr) {
-    return prevOracle.getExprContents(expr);
+    return prevOracle->getExprContents(expr);
   }
 };
 
@@ -1441,17 +1438,14 @@ class TNHOracle : public Oracle {
   TNHOracleAnalysis analysis;
 
 public:
-  TNHOracle(Module& wasm, const PassOptions& options, const Oracle& prevOracle)
+  TNHOracle(Module& wasm, const PassOptions& options, std::shared_ptr<Oracle> prevOracle)
     : Oracle(wasm, options), analysis(wasm, options, prevOracle) {}
 
   // Get the type we inferred was possible at a location.
   PossibleContents getContents(Location location) const override {
-std::cout << "TNHO::getC\n";
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-std::cout << "  TNHO::getC1\n";
       return analysis.getContents(exprLoc->expr);
     }
-std::cout << "  TNHO::getC2\n";
 
     // We do not infer about non-expression locations yet.
     return PossibleContents::many();
@@ -2070,8 +2064,7 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 
     // Start with an empty base oracle and infer TNH from there.
     // TODO: Look at doing more than one TNH inference.
-    Oracle base(wasm, options);
-    std::cout << "base oracle: " << size_t(&base) << '\n';
+    auto base = std::make_shared<Oracle>(wasm, options);
     tnhOracle = std::make_unique<TNHOracle>(wasm, options, base);
   }
 

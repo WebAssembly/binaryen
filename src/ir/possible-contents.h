@@ -621,27 +621,20 @@ public:
 
   // Get the contents possible at a location.
   virtual PossibleContents getContents(Location location) const {
-std::cout << "base oracle getC\n";
     // Nothing useful is known in this uninsightful oracle. If we have an
     // expression then we have its type, at least.
     // TODO: We could also repot types of other Locations.
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
-std::cout << "  base oracle getC1\n";
       return PossibleContents::fullConeType(exprLoc->expr->type);
     }
-std::cout << "  base oracle getC2\n";
     return PossibleContents::many();
   }
 
   // Helper for the common case of an expression location that is not a
   // multivalue.
   PossibleContents getExprContents(Expression* curr) const {
-std::cout << "  base oracle getEC0...\n";
-std::cout << "  base oracle of        " << *curr << "\n";
     assert(curr->type.size() == 1);
-std::cout << "  base oracle....................\n";
     auto ret = getContents(ExpressionLocation{curr, 0});
-std::cout << "  base oracle....................\n";
     return ret;
   }
 };
