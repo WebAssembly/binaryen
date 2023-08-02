@@ -2067,10 +2067,11 @@ Flower::Flower(Module& wasm, const PassOptions& options)
     std::cout << "tnh phase\n";
 #endif
 
-    // Start with an empty base oracle and infer TNH from there.
-    // TODO: Look at doing more than one TNH inference.
+    // Start with an empty base oracle, infer TNH once in the middle, and a
+    // second time.
     auto base = std::make_shared<Oracle>(wasm, options);
-    tnhOracle = std::make_unique<TNHOracle>(wasm, options, base);
+    auto mid = std::make_shared<TNHOracle>(wasm, options, base);
+    tnhOracle = std::make_unique<TNHOracle>(wasm, options, mid);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
