@@ -263,6 +263,8 @@ TEST_F(PossibleContentsTest, TestCombinations) {
   assertCombination(anyGlobal, i31Null, coneAnyref);
 }
 
+static PassOptions options;
+
 TEST_F(PossibleContentsTest, TestOracleMinimal) {
   // A minimal test of the public API of PossibleTypesOracle. See the lit test
   // for coverage of all the internals (using lit makes the result more
@@ -273,7 +275,7 @@ TEST_F(PossibleContentsTest, TestOracleMinimal) {
       (global $something i32 (i32.const 42))
     )
   )");
-  ContentOracle oracle(*wasm);
+  ContentOracle oracle(*wasm, options);
 
   // This will be a null constant.
   EXPECT_TRUE(oracle.getContents(GlobalLocation{"null"}).isNull());
@@ -917,7 +919,7 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
       )
     )
   )");
-  ContentOracle oracle(*wasm);
+  ContentOracle oracle(*wasm, options);
   // The body's contents must be a cone of data with depth 1.
   auto bodyContents =
     oracle.getContents(ResultLocation{wasm->getFunction("foo"), 0});
@@ -943,7 +945,7 @@ TEST_F(PossibleContentsTest, TestOracleNoFullCones) {
       )
     )
   )");
-  ContentOracle oracle(*wasm);
+  ContentOracle oracle(*wasm, options);
   // The function is exported, and all we know about the parameter $a is that it
   // is some subtype of $A. This is normalized to depth 2 because that is the
   // actual depth of subtypes.

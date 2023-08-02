@@ -634,11 +634,15 @@ namespace wasm {
 // here.
 class ContentOracle {
   Module& wasm;
+  const PassOptions& options;
 
   void analyze();
 
 public:
-  ContentOracle(Module& wasm) : wasm(wasm) { analyze(); }
+  ContentOracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    analyze();
+  }
 
   // Get the contents possible at a location.
   PossibleContents getContents(Location location) {
