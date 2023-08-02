@@ -1915,7 +1915,10 @@
   )
 )
 
-;; An inference that requires two passes of the TNH oracle to achieve.
+;; An inference that requires two internal passes of the TNH oracle to achieve.
+;; TODO: For this to pass, we need to not only update the oracle result for
+;;       the cast in $middle, but also the ref.cast itself (or read from
+;;       the oracle for the cast).
 (module
   (func $called (param $x (ref null func))
     (drop
