@@ -2092,20 +2092,6 @@ struct PrintExpressionContents
     printHeapType(o, curr->target->type.getHeapType(), wasm);
   }
   void visitRefTest(RefTest* curr) {
-    // TODO: These instructions are deprecated. Remove them.
-    if (auto type = curr->castType.getHeapType();
-        curr->castType.isNonNullable() && type.isBasic()) {
-      switch (type.getBasic()) {
-        case HeapType::func:
-          printMedium(o, "ref.is_func");
-          return;
-        case HeapType::i31:
-          printMedium(o, "ref.is_i31");
-          return;
-        default:
-          break;
-      }
-    }
     printMedium(o, "ref.test ");
     if (curr->castType.isNullable()) {
       printMedium(o, "null ");
@@ -2119,20 +2105,6 @@ struct PrintExpressionContents
     if (curr->safety == RefCast::Unsafe) {
       printMedium(o, "ref.cast_nop ");
     } else {
-      // TODO: These instructions are deprecated. Remove them.
-      if (auto type = curr->type.getHeapType();
-          type.isBasic() && curr->type.isNonNullable()) {
-        switch (type.getBasic()) {
-          case HeapType::func:
-            printMedium(o, "ref.as_func");
-            return;
-          case HeapType::i31:
-            printMedium(o, "ref.as_i31");
-            return;
-          default:
-            break;
-        }
-      }
       if (curr->type.isNullable()) {
         printMedium(o, "ref.cast null ");
       } else {
@@ -2153,22 +2125,6 @@ struct PrintExpressionContents
         printName(curr->name, o);
         return;
       case BrOnCast:
-        // TODO: These instructions are deprecated, so stop emitting them.
-        if (auto type = curr->castType.getHeapType();
-            type.isBasic() && curr->castType.isNonNullable()) {
-          switch (type.getBasic()) {
-            case HeapType::func:
-              printMedium(o, "br_on_func ");
-              printName(curr->name, o);
-              return;
-            case HeapType::i31:
-              printMedium(o, "br_on_i31 ");
-              printName(curr->name, o);
-              return;
-            default:
-              break;
-          }
-        }
         printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
@@ -2177,22 +2133,6 @@ struct PrintExpressionContents
         printType(o, curr->castType, wasm);
         return;
       case BrOnCastFail:
-        // TODO: These instructions are deprecated, so stop emitting them.
-        if (auto type = curr->castType.getHeapType();
-            type.isBasic() && curr->castType.isNonNullable()) {
-          switch (type.getBasic()) {
-            case HeapType::func:
-              printMedium(o, "br_on_non_func ");
-              printName(curr->name, o);
-              return;
-            case HeapType::i31:
-              printMedium(o, "br_on_non_i31 ");
-              printName(curr->name, o);
-              return;
-            default:
-              break;
-          }
-        }
         printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
