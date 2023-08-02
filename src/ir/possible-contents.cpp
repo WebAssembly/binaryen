@@ -1372,12 +1372,13 @@ struct TNHInfo {
   std::unordered_map<Expression*, PossibleContents> inferences;
 };
 
-class TNHOracle : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
+class TNHOracleAnalysis
+  : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
   const PassOptions& options;
 
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
-  TNHOracle(Module& wasm, const PassOptions& options)
+  TNHOracleAnalysis(Module& wasm, const PassOptions& options)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {
                scan(func, info, options);
@@ -1426,9 +1427,29 @@ private:
                          TNHInfo& info);
 };
 
-void TNHOracle::scan(Function* func,
-                     TNHInfo& info,
-                     const PassOptions& options) {
+// Wraps around a TNHOracleAnalysis in order to provide a standard Oracle
+// interface (this avoids multiple inheritance).
+class TNHOracle : public Oracle {
+  TNHOracleAnalysis analysis;
+
+public:
+  TNHOracle(Module& wasm, const PassOptions& options)
+    : Oracle(wasm, options), analysis(wasm, options) {}
+
+  // Get the type we inferred was possible at a location.
+  PossibleContents getContents(Location location) override {
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+      return analysis.getContents(exprLoc->expr);
+    }
+
+    // We do not infer about non-expression locations yet.
+    return PossibleContents::many();
+  }
+};
+
+void TNHOracleAnalysis::scan(Function* func,
+                             TNHInfo& info,
+                             const PassOptions& options) {
   if (func->imported()) {
     return;
   }
@@ -1532,7 +1553,7 @@ void TNHOracle::scan(Function* func,
   scanner.walkFunction(func);
 }
 
-void TNHOracle::infer() {
+void TNHOracleAnalysis::infer() {
   // Phase 2: Inside each function, optimize calls based on the cast params of
   // the called function (which we noted during phase 1).
   //
@@ -1733,11 +1754,12 @@ void TNHOracle::infer() {
   }
 }
 
-void TNHOracle::optimizeCallCasts(Expression* call,
-                                  const ExpressionList& operands,
-                                  const CastParams& targetCastParams,
-                                  const analysis::CFGBlockIndexes& blockIndexes,
-                                  TNHInfo& info) {
+void TNHOracleAnalysis::optimizeCallCasts(
+  Expression* call,
+  const ExpressionList& operands,
+  const CastParams& targetCastParams,
+  const analysis::CFGBlockIndexes& blockIndexes,
+  TNHInfo& info) {
   // Optimize in the same basic block as the call: all instructions still in
   // that block will definitely execute if the call is reached. We will do that
   // by going backwards through the call's operands and fallthrough values, and
@@ -1864,7 +1886,7 @@ struct Flower {
       // No oracle; just use the type in the IR.
       return PossibleContents::fullConeType(curr->type);
     }
-    return tnhOracle->getContents(curr);
+    return tnhOracle->getExprContents(curr);
   }
 
 private:

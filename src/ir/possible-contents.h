@@ -682,6 +682,9 @@ public:
   }
 
 private:
+  // Maps locations to the content we inferred there. If a location is not
+  // here then no content is possible there (which is the result of the flow
+  // analysis not sending anything here at all).
   std::unordered_map<Location, PossibleContents> locationContents;
 };
 
