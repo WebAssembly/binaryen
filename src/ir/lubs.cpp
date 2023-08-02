@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/find_all.h"
 #include "ir/lubs.h"
+#include "ir/find_all.h"
 #include "ir/utils.h"
 #include "wasm-type.h"
 #include "wasm.h"

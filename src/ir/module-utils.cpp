@@ -15,9 +15,9 @@
  */
 
 #include "module-utils.h"
+#include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
-#include "ir/intrinsics.h"
 #include "support/insert_ordered.h"
 #include "support/topological_sort.h"
 
@@ -25,8 +25,7 @@ namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
-Function*
-copyFunction(Function* func, Module& out, Name newName) {
+Function* copyFunction(Function* func, Module& out, Name newName) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
@@ -68,8 +67,7 @@ Tag* copyTag(Tag* tag, Module& out) {
   return ret;
 }
 
-ElementSegment* copyElementSegment(const ElementSegment* segment,
-                                          Module& out) {
+ElementSegment* copyElementSegment(const ElementSegment* segment, Module& out) {
   auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
     ret->name = segment->name;
     ret->hasExplicitName = segment->hasExplicitName;

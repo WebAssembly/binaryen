@@ -25,15 +25,13 @@ namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
-Function*
-copyFunction(Function* func, Module& out, Name newName = Name());
+Function* copyFunction(Function* func, Module& out, Name newName = Name());
 
 Global* copyGlobal(Global* global, Module& out);
 
 Tag* copyTag(Tag* tag, Module& out);
 
-ElementSegment* copyElementSegment(const ElementSegment* segment,
-                                          Module& out);
+ElementSegment* copyElementSegment(const ElementSegment* segment, Module& out);
 
 Table* copyTable(const Table* table, Module& out);
 
