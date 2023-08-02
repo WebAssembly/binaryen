@@ -269,7 +269,7 @@
 
   ;; CHECK:      (func $unneeded_unreachability (type $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:   (ref.test func
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -586,7 +586,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_i31
+  ;; CHECK-NEXT:     (ref.cast i31
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
