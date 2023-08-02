@@ -23,17 +23,17 @@
 
   ;; CHECK:      (func $called (type $funcref_funcref_funcref_funcref_=>_none) (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -69,26 +69,26 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (ref.cast null func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $f)
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $f)
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.cast func
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
