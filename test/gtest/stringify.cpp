@@ -231,8 +231,12 @@ TEST_F(StringifyTest, Substrings) {
     substrings.begin(),
     substrings.end(),
     [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
-      return (a.Length * a.StartIndices.size()) >
-             (b.Length * b.StartIndices.size());
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
     });
 
   EXPECT_EQ(
