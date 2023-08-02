@@ -33,7 +33,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_i31
+  ;; NO_TNH-NEXT:   (ref.cast i31
   ;; NO_TNH-NEXT:    (local.get $y)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )

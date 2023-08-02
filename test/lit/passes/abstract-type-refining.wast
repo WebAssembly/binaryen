@@ -218,7 +218,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.as_i31
+  ;; YESTNH-NEXT:   (ref.cast i31
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -230,7 +230,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_i31
+  ;; NO_TNH-NEXT:   (ref.cast i31
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )

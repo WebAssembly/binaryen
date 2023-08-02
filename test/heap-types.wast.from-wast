@@ -184,7 +184,7 @@
    (unreachable)
   )
   (if
-   (ref.is_i31
+   (ref.test i31
     (local.get $x)
    )
    (unreachable)
@@ -197,12 +197,12 @@
    )
   )
   (drop
-   (ref.as_func
+   (ref.cast func
     (local.get $f)
    )
   )
   (drop
-   (ref.as_i31
+   (ref.cast i31
     (local.get $x)
    )
   )
@@ -222,7 +222,7 @@
   (drop
    (block $i31 (result i31ref)
     (local.set $y
-     (br_on_i31 $i31
+     (br_on_cast $i31 anyref (ref i31)
       (local.get $x)
      )
     )
@@ -240,7 +240,7 @@
   (drop
    (block $non-i31 (result anyref)
     (local.set $temp-i31
-     (br_on_non_i31 $non-i31
+     (br_on_cast_fail $non-i31 anyref (ref i31)
       (local.get $x)
      )
     )
