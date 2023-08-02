@@ -50,6 +50,7 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "ir/subtypes.h"
 #include "pass.h"
 #include "wasm-builder.h"

@@ -40,6 +40,7 @@
 // the same semantics as v8, which is to bounds check all Atomic instructions
 // the same way and trap for out-of-bounds.
 
+#include "ir/abstract.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "wasm-builder.h"

@@ -17,6 +17,7 @@
 #ifndef wasm_ir_struct_utils_h
 #define wasm_ir_struct_utils_h
 
+#include "ir/properties.h"
 #include "ir/subtypes.h"
 #include "wasm.h"
 

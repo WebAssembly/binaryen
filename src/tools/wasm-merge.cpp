@@ -96,6 +96,7 @@
 #include "ir/names.h"
 #include "support/colors.h"
 #include "support/file.h"
+#include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
 #include "wasm.h"
