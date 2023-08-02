@@ -15,6 +15,12 @@ namespace wasm::analysis {
 // model some abstract property of a value on the stack. The StackLattice
 // itself can push or pop abstract values and access the top of stack.
 //
+// The goal here is not to operate directly on the stacks. Rather, the
+// StackLattice organizes the StackElementLattice elements in an efficient
+// and natural way which reflects the behavior of the wasm value stack.
+// Transfer functions will operate on stack elements individually. The
+// stack itself is an intermediate structure.
+//
 // Comparisons are done elementwise, starting from the top of the stack.
 // For instance, to compare the stacks [c,b,a], [b',a'], we first compare
 // a with a', then b with b'. Then we make note of the fact that the first
@@ -30,10 +36,10 @@ namespace wasm::analysis {
 // i32.const 0
 // i32.const 0
 // if (result i32)
-// i32.const 1
+//   i32.const 1
 // else
-// i32.const 2
-// endif
+//   i32.const 2
+// end
 // i32.add
 //
 // Before the if-else control flow, we have [] -> [i32], and after the if-else
@@ -44,7 +50,7 @@ namespace wasm::analysis {
 //
 // Conceptually, we can also imagine each stack [b, a] as being implicitly an
 // infinite stack of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). This
-// makes stacks in different scopes equivalent, with only their contents
+// makes stacks in different scopes comparable, with only their contents
 // different. Stacks in more "inner" scopes simply have more bottom elements in
 // the bottom portion.
 //
@@ -54,7 +60,7 @@ namespace wasm::analysis {
 // or popped off the Wasm value stack by instructions, the same is done
 // to abstract lattice elements in the StackLattice.
 //
-// When two control flows a joined together, one with stack [b, a] and
+// When two control flows are joined together, one with stack [b, a] and
 // another with stack [b, a'], we can take the least upper bound to
 // produce a stack [b, LUB(a, a')], where LUB(a, a') takes the maximum
 // of the two maximum bit values.
@@ -68,10 +74,9 @@ public:
     : stackElementLattice(stackElementLattice) {}
 
   class Element {
-    // The top lattice can be imagined as an infinitely high stack, which
-    // is unreachable in most cases. In practice, we make the stack an
-    // optional, and if we are the top lattice, the stack doesn't exist in
-    // the optional signalling the top lattice.
+    // The top lattice can be imagined as an infinitely high stack of top
+    // elements, which is unreachable in most cases. In practice, we make the
+    // stack an optional, and we represent top with the absence of a stack.
     std::optional<std::deque<typename StackElementLattice::Element>>
       stackValue = std::deque<typename StackElementLattice::Element>();
 
