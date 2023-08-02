@@ -1375,13 +1375,13 @@ struct TNHInfo {
 class TNHOracleAnalysis
   : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
   const PassOptions& options;
-  std::shared_ptr<Oracle> prevOracle;
+  std::shared_ptr<const Oracle> prevOracle;
 
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
   TNHOracleAnalysis(Module& wasm,
                     const PassOptions& options,
-                    std::shared_ptr<Oracle> prevOracle)
+                    std::shared_ptr<const Oracle> prevOracle)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {
                scan(func, info, options);
@@ -1442,7 +1442,7 @@ class TNHOracle : public Oracle {
 public:
   TNHOracle(Module& wasm,
             const PassOptions& options,
-            std::shared_ptr<Oracle> prevOracle)
+            std::shared_ptr<const Oracle> prevOracle)
     : Oracle(wasm, options), analysis(wasm, options, prevOracle) {}
 
   // Get the type we inferred was possible at a location.
