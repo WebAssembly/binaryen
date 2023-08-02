@@ -604,6 +604,10 @@ namespace wasm {
 //
 // This is not an abstract class, but can be instantiated in order to get a
 // "empty" oracle, i.e., one that returns no insightful responses.
+//
+// A common pattern in users is to chain oracles. Each oracle can benefit from
+// the inferences in the previous one before it, and it adds new inferences on
+// top of that.
 class Oracle {
 protected:
   Module& wasm;
@@ -616,16 +620,29 @@ public:
   virtual ~Oracle() {}
 
   // Get the contents possible at a location.
-  virtual PossibleContents getContents(Location location) {
-    // Nothing useful is known in this uninsightful oracle.
+  virtual PossibleContents getContents(Location location) const {
+std::cout << "base oracle getC\n";
+    // Nothing useful is known in this uninsightful oracle. If we have an
+    // expression then we have its type, at least.
+    // TODO: We could also repot types of other Locations.
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+std::cout << "  base oracle getC1\n";
+      return PossibleContents::fullConeType(exprLoc->expr->type);
+    }
+std::cout << "  base oracle getC2\n";
     return PossibleContents::many();
   }
 
   // Helper for the common case of an expression location that is not a
   // multivalue.
-  PossibleContents getExprContents(Expression* curr) {
+  PossibleContents getExprContents(Expression* curr) const {
+std::cout << "  base oracle getEC0...\n";
+std::cout << "  base oracle of        " << *curr << "\n";
     assert(curr->type.size() == 1);
-    return getContents(ExpressionLocation{curr, 0});
+std::cout << "  base oracle....................\n";
+    auto ret = getContents(ExpressionLocation{curr, 0});
+std::cout << "  base oracle....................\n";
+    return ret;
   }
 };
 
@@ -672,7 +689,7 @@ public:
   }
 
   // Get the contents possible at a location.
-  PossibleContents getContents(Location location) override {
+  PossibleContents getContents(Location location) const override {
     auto iter = locationContents.find(location);
     if (iter == locationContents.end()) {
       // We know of no possible contents here.

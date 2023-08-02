@@ -1375,15 +1375,16 @@ struct TNHInfo {
 class TNHOracleAnalysis
   : public ModuleUtils::ParallelFunctionAnalysis<TNHInfo> {
   const PassOptions& options;
+  const Oracle& prevOracle;
 
 public:
   using Parent = ModuleUtils::ParallelFunctionAnalysis<TNHInfo>;
-  TNHOracleAnalysis(Module& wasm, const PassOptions& options)
+  TNHOracleAnalysis(Module& wasm, const PassOptions& options, const Oracle& prevOracle)
     : Parent(wasm,
              [this, &options](Function* func, TNHInfo& info) {
                scan(func, info, options);
              }),
-      options(options) {
+      options(options), prevOracle(prevOracle) {
 
     // After the scanning phase that we run in the constructor, continue to the
     // second phase of analysis: inference.
@@ -1391,20 +1392,22 @@ public:
   }
 
   // Get the type we inferred was possible at a location.
-  PossibleContents getContents(Expression* curr) {
-    auto naiveContents = PossibleContents::fullConeType(curr->type);
-
-    // If we inferred nothing, use the naive type.
-    auto iter = inferences.find(curr);
-    if (iter == inferences.end()) {
-      return naiveContents;
+  PossibleContents getContents(Expression* curr) const {
+std::cout << "  TNHOA::getC1 " << *curr << "\n";
+    if (auto iter = inferences.find(curr); iter != inferences.end()) {
+std::cout << "    TNHOA::getC2\n";
+      // We only store useful contents that improve on the naive estimate that
+      // uses the type in the IR.
+      [[maybe_unused]] auto naiveContents =
+          PossibleContents::fullConeType(curr->type);
+      auto contents = iter->second;
+      assert(contents != naiveContents);
+      return contents;
     }
+std::cout << "    TNHOA::getC3 " << size_t(&prevOracle) << "\n";
 
-    auto& contents = iter->second;
-    // We only store useful contents that improve on the naive estimate that
-    // uses the type in the IR.
-    assert(contents != naiveContents);
-    return contents;
+    // We inferred nothing ourselves, so defer to the previous oracle.
+    return prevOracle.getExprContents(curr);
   }
 
 private:
@@ -1425,6 +1428,11 @@ private:
                          const CastParams& targetCastParams,
                          const analysis::CFGBlockIndexes& blockIndexes,
                          TNHInfo& info);
+
+  // Get the information known by the previous oracle.
+  PossibleContents getPrevContents(Expression* expr) {
+    return prevOracle.getExprContents(expr);
+  }
 };
 
 // Wraps around a TNHOracleAnalysis in order to provide a standard Oracle
@@ -1433,14 +1441,17 @@ class TNHOracle : public Oracle {
   TNHOracleAnalysis analysis;
 
 public:
-  TNHOracle(Module& wasm, const PassOptions& options)
-    : Oracle(wasm, options), analysis(wasm, options) {}
+  TNHOracle(Module& wasm, const PassOptions& options, const Oracle& prevOracle)
+    : Oracle(wasm, options), analysis(wasm, options, prevOracle) {}
 
   // Get the type we inferred was possible at a location.
-  PossibleContents getContents(Location location) override {
+  PossibleContents getContents(Location location) const override {
+std::cout << "TNHO::getC\n";
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+std::cout << "  TNHO::getC1\n";
       return analysis.getContents(exprLoc->expr);
     }
+std::cout << "  TNHO::getC2\n";
 
     // We do not infer about non-expression locations yet.
     return PossibleContents::many();
@@ -1641,7 +1652,7 @@ void TNHOracleAnalysis::infer() {
     }
 
     for (auto* call : info.callRefs) {
-      auto targetType = call->target->type;
+      auto targetType = getPrevContents(call->target).getType();
       if (!targetType.isRef()) {
         // This is unreachable or null, and other passes will optimize that.
         continue;
@@ -1673,7 +1684,7 @@ void TNHOracleAnalysis::infer() {
         // If any of our operands will fail a cast, then we will trap.
         bool traps = false;
         for (auto& [castIndex, castType] : targetInfo.castParams) {
-          auto operandType = call->operands[castIndex]->type;
+          auto operandType = getPrevContents(call->operands[castIndex]).getType();
           auto result = GCTypeUtils::evaluateCastCheck(operandType, castType);
           if (result == GCTypeUtils::Failure) {
             traps = true;
@@ -1795,26 +1806,15 @@ void TNHOracleAnalysis::optimizeCallCasts(
     auto* curr = operand;
     while (1) {
       // Note the type if it is useful.
-      if (castType != curr->type) {
-        // There are two constraints on this location: any value there must
-        // be of the declared type (curr->type) and also the cast type, so
-        // we know only their intersection can appear here.
-        auto declared = PossibleContents::fullConeType(curr->type);
-        auto intersection = PossibleContents::fullConeType(castType);
-        intersection.intersect(declared);
-        if (intersection.isConeType()) {
-          auto intersectionType = intersection.getType();
-          if (intersectionType != curr->type) {
-            // We inferred a more refined type.
-            info.inferences[curr] = intersection;
-          }
-        } else {
-          // Otherwise, the intersection can be a null (if the heap types are
-          // incompatible, but a null is allowed), or empty. We can apply
-          // either.
-          assert(intersection.isNull() || intersection.isNone());
-          info.inferences[curr] = intersection;
-        }
+      //
+      // There are two constraints on this location: what we know about it
+      // already (from the previous oracle), and also the cast type, so we know
+      // only their intersection can appear here.
+      auto known = getPrevContents(curr);
+      auto intersection = PossibleContents::fullConeType(castType);
+      intersection.intersect(known);
+      if (intersection != known) {
+        info.inferences[curr] = intersection;
       }
 
       auto* next = Properties::getImmediateFallthrough(curr, options, wasm);
@@ -2067,7 +2067,12 @@ Flower::Flower(Module& wasm, const PassOptions& options)
 #ifdef POSSIBLE_CONTENTS_DEBUG
     std::cout << "tnh phase\n";
 #endif
-    tnhOracle = std::make_unique<TNHOracle>(wasm, options);
+
+    // Start with an empty base oracle and infer TNH from there.
+    // TODO: Look at doing more than one TNH inference.
+    Oracle base(wasm, options);
+    std::cout << "base oracle: " << size_t(&base) << '\n';
+    tnhOracle = std::make_unique<TNHOracle>(wasm, options, base);
   }
 
 #ifdef POSSIBLE_CONTENTS_DEBUG
