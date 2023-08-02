@@ -599,6 +599,36 @@ template<> struct hash<wasm::ConeReadLocation> {
 
 namespace wasm {
 
+// A generic oracle, which provides an interface to query for contents at
+// locations.
+//
+// This is not an abstract class, but can be instantiated in order to get a
+// "empty" oracle, i.e., one that returns no insightful responses.
+class Oracle {
+protected:
+  Module& wasm;
+  const PassOptions& options;
+
+public:
+  Oracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {}
+
+  virtual ~Oracle() {}
+
+  // Get the contents possible at a location.
+  virtual PossibleContents getContents(Location location) {
+    // Nothing useful is known in this uninsightful oracle.
+    return PossibleContents::many();
+  }
+
+  // Helper for the common case of an expression location that is not a
+  // multivalue.
+  PossibleContents getExprContents(Expression* curr) {
+    assert(curr->type.size() == 1);
+    return getContents(ExpressionLocation{curr, 0});
+  }
+};
+
 // Analyze the entire wasm file to find which contents are possible in which
 // locations. This assumes a closed world and starts from roots - newly created
 // values - and propagates them to the locations they reach. After the
@@ -632,33 +662,23 @@ namespace wasm {
 // caller is assumed to know the wasm IR type anyhow, and also other
 // optimization passes work on the types in the IR, so we do not focus on that
 // here.
-class ContentOracle {
-  Module& wasm;
-  const PassOptions& options;
-
+class ContentOracle : public Oracle {
   void analyze();
 
 public:
   ContentOracle(Module& wasm, const PassOptions& options)
-    : wasm(wasm), options(options) {
+    : Oracle(wasm, options) {
     analyze();
   }
 
   // Get the contents possible at a location.
-  PossibleContents getContents(Location location) {
+  PossibleContents getContents(Location location) override {
     auto iter = locationContents.find(location);
     if (iter == locationContents.end()) {
       // We know of no possible contents here.
       return PossibleContents::none();
     }
     return iter->second;
-  }
-
-  // Helper for the common case of an expression location that is not a
-  // multivalue.
-  PossibleContents getContents(Expression* curr) {
-    assert(curr->type.size() == 1);
-    return getContents(ExpressionLocation{curr, 0});
   }
 
 private:
