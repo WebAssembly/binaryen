@@ -1,5 +1,6 @@
 #include "ir/subtypes.h"
 #include "type-test.h"
+#include "wasm-builder.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
 #include "gtest/gtest.h"

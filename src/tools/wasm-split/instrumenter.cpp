@@ -18,6 +18,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "support/name.h"
+#include "wasm-builder.h"
 #include "wasm-type.h"
 
 namespace wasm {
