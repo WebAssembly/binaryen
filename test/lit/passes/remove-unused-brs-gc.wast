@@ -68,10 +68,13 @@
  ;; CHECK:      (func $nested_br_on_cast (type $none_=>_i31ref) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $label$1
- ;; CHECK-NEXT:     (i31.new
- ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (br $label$1
+ ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -97,17 +100,31 @@
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $struct2)
+ ;; CHECK-NEXT:    (br_on_cast $block (ref struct) (ref $struct)
+ ;; CHECK-NEXT:     (block (result (ref struct))
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $struct2)
+ ;; CHECK-NEXT:    (br_on_cast $block structref (ref null $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    (br_on_cast $block structref (ref $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct2) (ref null $struct)
- ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    (br_on_cast $block structref (ref null $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -148,25 +165,33 @@
 
  ;; CHECK:      (func $br_on_cast_fail_unrelated (type $none_=>_anyref) (result anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
- ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref struct) (ref $struct)
+ ;; CHECK-NEXT:     (block (result (ref struct))
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block structref (ref null $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block structref (ref $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct2) (ref null $struct)
- ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block structref (ref null $struct)
+ ;; CHECK-NEXT:     (block (result structref)
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -209,8 +234,11 @@
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct) (ref $struct)
- ;; CHECK-NEXT:     (local.get $struct)
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (local.get $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -233,7 +261,9 @@
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:     (block (result nullref)
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -293,17 +323,22 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result anyref)
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (block $something (result anyref)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (br_on_cast $something (ref null $struct) (ref $struct)
- ;; CHECK-NEXT:       (local.get $struct)
+ ;; CHECK-NEXT:   (select (result anyref)
+ ;; CHECK-NEXT:    (block (result anyref)
+ ;; CHECK-NEXT:     (block $something (result anyref)
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (block (result nullref)
+ ;; CHECK-NEXT:        (br_on_non_null $something
+ ;; CHECK-NEXT:         (local.get $struct)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (ref.null none)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop

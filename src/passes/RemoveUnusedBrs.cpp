@@ -23,6 +23,7 @@
 #include <ir/effects.h>
 #include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
+#include <ir/names.h>
 #include <ir/utils.h>
 #include <parsing.h>
 #include <pass.h>
@@ -701,7 +702,51 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     struct Optimizer : public PostWalker<Optimizer> {
       bool worked = false;
 
+      // Set of seen labels, used to generate a fresh label.
+      std::unordered_set<Name> labels;
+      // Used to generate fresh labels.
+      Index freshNameHint = 0;
+      // Whether we need to uniquify the labels at the end.
+      bool hasLabelConflict = false;
+
+      void noteLabel(Name label) {
+        auto [it, inserted] = labels.insert(label);
+        if (!inserted) {
+          hasLabelConflict = true;
+        }
+      }
+
+      Name freshLabel() {
+        auto label = Names::getValidName(
+          "_br_on_opt",
+          [&](Name name) { return !labels.count(name); },
+          freshNameHint++);
+        labels.insert(label);
+        return label;
+      }
+
+      void visitBlock(Block* curr) { noteLabel(curr->name); }
+
+      void visitLoop(Loop* curr) { noteLabel(curr->name); }
+
+      void visitBreak(Break* curr) { noteLabel(curr->name); }
+
+      void visitTry(Try* curr) {
+        noteLabel(curr->name);
+        noteLabel(curr->delegateTarget);
+      }
+
+      void visitRethrow(Rethrow* curr) { noteLabel(curr->target); }
+
+      void visitSwitch(Switch* curr) {
+        for (auto label : curr->targets) {
+          noteLabel(label);
+        }
+        noteLabel(curr->default_);
+      }
+
       void visitBrOn(BrOn* curr) {
+        noteLabel(curr->name);
         // Ignore unreachable BrOns which we cannot improve anyhow. Note that
         // we must check the ref field manually, as we may be changing types as
         // we go here. (Another option would be to use a TypeUpdater here
@@ -711,6 +756,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             curr->ref->type == Type::unreachable) {
           return;
         }
+
+        Builder builder(*getModule());
 
         // First, check for a possible null which would prevent optimizations on
         // null checks.
@@ -733,38 +780,107 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (curr->op == BrOnNonNull) {
           assert(refType.isNonNullable());
           // This cannot be null, so the br is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          replaceCurrent(builder.makeBreak(curr->name, curr->ref));
           worked = true;
           return;
         }
 
-        // Check if the type is the kind we are checking for.
-        auto result = GCTypeUtils::evaluateCastCheck(refType, curr->castType);
+        // Most optimizations on br_on_cast{_fail} are required for validity and
+        // are therefore done in ReFinalize. However, ReFinalize only runs those
+        // optimizations on invalid br_on_* even though they can apply to valid
+        // br_on_* as well, so also perform the optimizations here.
+        assert(curr->op == BrOnCast || curr->op == BrOnCastFail);
+        auto brCond =
+          GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType);
         if (curr->op == BrOnCastFail) {
-          result = GCTypeUtils::flipEvaluationResult(result);
+          brCond = GCTypeUtils::flipEvaluationResult(brCond);
         }
 
-        if (result == GCTypeUtils::Success) {
-          // The cast succeeds, so we can switch from BrOn to a simple br that
-          // is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
-          worked = true;
-        } else if (result == GCTypeUtils::Failure ||
-                   result == GCTypeUtils::Unreachable) {
-          // The cast fails, so the branch is never taken, and the value just
-          // flows through. Or, the cast cannot even be reached, so it does not
-          // matter what we do, and we can handle it as a failure.
-          replaceCurrent(curr->ref);
-          worked = true;
+        switch (brCond) {
+          case GCTypeUtils::Success: {
+            replaceCurrent(builder.makeBreak(curr->name, curr->ref));
+            worked = true;
+            return;
+          }
+          case GCTypeUtils::Failure: {
+            replaceCurrent(curr->ref);
+            worked = true;
+            return;
+          }
+          case GCTypeUtils::SuccessOnlyIfNull: {
+            // Perform this replacement, which avoids using any scratch locals
+            // and only does a single null check:
+            //
+            //   (br_on_cast $l (ref null $X) (ref null $Y)
+            //     (...)
+            //   )
+            //     =>
+            //   (block $l' (result (ref $X))
+            //     (br_on_non_null $l' ;; reuses `curr`
+            //       (...)
+            //     )
+            //     (br $l
+            //       (ref.null bot<X>)
+            //     )
+            //   )
+            assert(curr->ref->type.isRef());
+            auto* br = builder.makeBreak(
+              curr->name,
+              builder.makeRefNull(curr->ref->type.getHeapType().getBottom()));
+
+            Name label = freshLabel();
+            curr->op = BrOnNonNull;
+            curr->name = label;
+            curr->castType = Type::none;
+            curr->type = Type::none;
+
+            replaceCurrent(
+              builder.makeBlock(label, {curr, br}, curr->getSentType()));
+            return;
+          }
+          case GCTypeUtils::SuccessOnlyIfNonNull: {
+            // Perform this replacement:
+            //
+            //   (br_on_cast $l (ref null $X') (ref $X))
+            //     (...)
+            //   )
+            //     =>
+            //   (block (result (ref bot<X>))
+            //     (br_on_non_null $l ;; reuses `curr`
+            //       (...)
+            //     (ref.null bot<X>)
+            //   )
+            curr->op = BrOnNonNull;
+            curr->castType = Type::none;
+            curr->type = Type::none;
+
+            assert(curr->ref->type.isRef());
+            auto* refNull = builder.makeRefNull(curr->ref->type.getHeapType());
+            replaceCurrent(builder.makeBlock({curr, refNull}, refNull->type));
+            return;
+          }
+          case GCTypeUtils::Unreachable: {
+            // The cast is never executed, possibly because its input type is
+            // uninhabitable. Replace it with unreachable.
+            auto* ref = curr->ref;
+            auto* unreachable = ExpressionManipulator::unreachable(curr);
+            replaceCurrent(builder.makeBlock({ref, unreachable}));
+            worked = true;
+            return;
+          }
+          default:
+            // Other results indicate invalid casts, so they will be optimized
+            // by ReFinalize.
+            break;
         }
-        // TODO: Handle SuccessOnlyIfNull and SuccessOnlyIfNonNull.
       }
     } optimizer;
 
     optimizer.setModule(getModule());
     optimizer.doWalkFunction(func);
+    if (optimizer.hasLabelConflict) {
+      UniqueNameMapper::uniquify(func->body);
+    }
 
     // If we removed any BrOn instructions, that might affect the reachability
     // of the things they used to break to, so update types.

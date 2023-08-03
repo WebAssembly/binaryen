@@ -16,6 +16,9 @@
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
+#include "ir/gc-type-utils.h"
+#include "ir/manipulation.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 
 namespace wasm {
@@ -33,8 +36,7 @@ void ReFinalize::visitBlock(Block* curr) {
     auto iter = breakTypes.find(curr->name);
     if (iter != breakTypes.end()) {
       // Set the type to be a supertype of the branch types and the flowed-out
-      // type. TODO: calculate proper LUBs to compute a new correct type in this
-      // situation.
+      // type.
       auto& types = iter->second;
       types.insert(curr->list.back()->type);
       curr->type = Type::getLeastUpperBound(types);
@@ -139,9 +141,107 @@ void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
 void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
 void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
-  if (curr->type == Type::unreachable) {
-    replaceUntaken(curr->ref, nullptr);
-  } else {
+  if ((curr->op == BrOnCast || curr->op == BrOnCastFail) &&
+      !Type::isSubType(curr->castType, curr->ref->type)) {
+    // If the input type has been refined such that it is no longer a supertype
+    // of the cast type, then this can no longer be a valid br_on_cast*. Replace
+    // it with someting else. Even though these optimizations could apply to
+    // valid br_on_*, only apply them to invalid br_on_* here to avoid
+    // validation failures after parsing valid but optimizable modules. These
+    // optimizations are applied more widely in RemoveUnusedBrs.
+    auto brCond =
+      GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->castType);
+    if (curr->op == BrOnCastFail) {
+      brCond = GCTypeUtils::flipEvaluationResult(brCond);
+    }
+    Builder builder(*getModule());
+    switch (brCond) {
+      case GCTypeUtils::Unknown: {
+        // The branch may or may not be taken, so the cast must be valid.
+        WASM_UNREACHABLE("expected cast to be valid");
+      }
+      case GCTypeUtils::Success: {
+        // The branch will certainly be taken, so replace it with a br.
+        auto* br = builder.makeBreak(curr->name, curr->ref);
+        visitBreak(br);
+        replaceCurrent(br);
+        return;
+      }
+      case GCTypeUtils::Failure: {
+        // The branch will certainly not be taken, so simply remove it.
+        replaceCurrent(curr->ref);
+        return;
+      }
+      case GCTypeUtils::SuccessOnlyIfNull: {
+        // Perform this replacement, which avoids using any scratch locals and
+        // only does a single null check:
+        //
+        //   (br_on_cast $l (ref null $X) (ref null $Y)
+        //     (...)
+        //   )
+        //     =>
+        //   (block $l' (result (ref $X))
+        //     (br_on_non_null $l' ;; reuses `curr`
+        //       (...)
+        //     )
+        //     (br $l
+        //       (ref.null bot<X>)
+        //     )
+        //   )
+
+        assert(curr->ref->type.isRef());
+        auto* br = builder.makeBreak(
+          curr->name,
+          builder.makeRefNull(curr->ref->type.getHeapType().getBottom()));
+        visitBreak(br);
+
+        Name freshTarget = Names::getValidName(
+          "_br_on",
+          [&](Name name) { return !breakTypes.count(name); },
+          freshNameHint++);
+        curr->op = BrOnNonNull;
+        curr->name = freshTarget;
+        curr->castType = Type::none;
+        curr->type = Type::none;
+
+        replaceCurrent(
+          builder.makeBlock(freshTarget, {curr, br}, curr->getSentType()));
+        return;
+      }
+      case GCTypeUtils::SuccessOnlyIfNonNull: {
+        // Perform this replacement:
+        //
+        //   (br_on_cast $l (ref null $X') (ref $X))
+        //     (...)
+        //   )
+        //     =>
+        //   (block (result (ref bot<X>))
+        //     (br_on_non_null $l ;; reuses `curr`
+        //       (...)
+        //     (ref.null bot<X>)
+        //   )
+        curr->op = BrOnNonNull;
+        curr->castType = Type::none;
+        curr->type = Type::none;
+        visitBrOn(curr);
+
+        assert(curr->ref->type.isRef());
+        auto* refNull = builder.makeRefNull(curr->ref->type.getHeapType());
+        replaceCurrent(builder.makeBlock({curr, refNull}, refNull->type));
+        return;
+      }
+      case GCTypeUtils::Unreachable: {
+        // The cast is never executed. To maintain the invariant that a valid
+        // br_on_cast* must have an unknown cast result, just replace this with
+        // unreachable.
+        auto* ref = curr->ref;
+        auto* unreachable = ExpressionManipulator::unreachable(curr);
+        replaceCurrent(builder.makeBlock({ref, unreachable}));
+        return;
+      }
+    }
+  }
+  if (curr->type != Type::unreachable) {
     updateBreakValueType(curr->name, curr->getSentType());
   }
 }
@@ -190,6 +290,16 @@ void ReFinalize::visitDataSegment(DataSegment* curr) {
 }
 void ReFinalize::visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
+
+void ReFinalize::visitFunction(Function* curr) {
+  if (freshNameHint > 0) {
+    // We generated a fresh name at some point, but it might have still ended up
+    // being the same as some other name we hadn't seen yet. Re-uniquify all the
+    // names to avoid problems.
+    // TODO: Detect conflicts more precisely like we do in RemoveUnusedBrs.
+    UniqueNameMapper::uniquify(curr->body);
+  }
+}
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
   if (type != Type::unreachable) {

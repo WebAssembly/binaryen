@@ -35,8 +35,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref (ref struct)
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast $label$1 structref (ref struct)
+  ;; CHECK-NEXT:      (block (result structref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
@@ -47,7 +49,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref (ref struct)
+          (br_on_cast $l anyref (ref struct)
             (ref.null none)
           )
         )
@@ -60,8 +62,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref structref
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast $label$1 structref structref
+  ;; CHECK-NEXT:      (block (result structref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
@@ -72,7 +76,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref structref
+          (br_on_cast $l anyref structref
             (ref.null none)
           )
         )
@@ -85,8 +89,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 nullref structref
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 structref structref
+  ;; CHECK-NEXT:      (block (result structref)
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
@@ -97,7 +103,7 @@
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast_fail $l nullref structref
+          (br_on_cast_fail $l anyref structref
             (ref.null none)
           )
         )

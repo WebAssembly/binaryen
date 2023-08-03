@@ -20,8 +20,10 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$1 (result i31ref)
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_cast $label$1 nullref (ref i31)
- ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     (br_on_cast $label$1 i31ref (ref i31)
+ ;; CHECK-NEXT:      (block (result i31ref)
+ ;; CHECK-NEXT:       (ref.null none)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)

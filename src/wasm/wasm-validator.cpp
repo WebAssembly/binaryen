@@ -2578,16 +2578,15 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
                       "br_on_cast must have reference cast type")) {
       return;
     }
-    shouldBeEqual(
-      curr->castType.getHeapType().getBottom(),
-      curr->ref->type.getHeapType().getBottom(),
-      curr,
-      "br_on_cast* target type and ref type must have a common supertype");
+    shouldBeSubType(curr->castType,
+                    curr->ref->type,
+                    curr,
+                    "br_on_cast* input must be a supertype of its output");
   } else {
     shouldBeEqual(curr->castType,
                   Type(Type::none),
                   curr,
-                  "non-cast br_on* must not set intendedType field");
+                  "non-cast br_on* must not set castType field");
   }
   noteBreak(curr->name, curr->getSentType(), curr);
 }

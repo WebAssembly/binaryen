@@ -2528,6 +2528,7 @@ void BinaryInstWriter::countScratchLocals() {
       scratchLocals[extract->type] = 0;
     }
   }
+  // Also add a scratch local for every
   for (auto& [type, _] : scratchLocals) {
     noteLocalType(type);
   }

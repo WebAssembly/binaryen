@@ -2885,6 +2885,21 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s, bool onFail) {
     throw ParseException(
       "br_on_cast* ref type does not match expected type", s.line, s.col);
   }
+  if (!Type::isSubType(castType, inputType)) {
+    throw ParseException(
+      "br_on_cast* input type must be a supertype of its cast type",
+      s.line,
+      s.col);
+  }
+  // It's possible that ref's type is not a supertype of the cast type even if
+  // the input annotation was a supertype. In that case, we cannot just drop the
+  // input annotation as we normally do because that would make the instruction
+  // invalid. Instead, "lose" just as much type information as necessary by
+  // wrapping ref with a type-annotated block.
+  if (ref->type != Type::unreachable && !Type::isSubType(castType, ref->type)) {
+    ref = Builder(wasm).makeBlock(
+      {ref}, Type::getLeastUpperBound(castType, ref->type));
+  }
   auto op = onFail ? BrOnCastFail : BrOnCast;
   return Builder(wasm).makeBrOn(op, name, ref, castType);
 }

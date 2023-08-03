@@ -22,6 +22,10 @@
   ;; NOP:      (type $none_=>_i32 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
+  ;; YES:       (type $A$2 (sub $A (struct )))
+
+  ;; YES:       (type $A$1 (sub $A (struct )))
+
   ;; YES:      (import "a" "b" (func $import (type $none_=>_i32) (result i32)))
   (import "a" "b" (func $import (result i32)))
 

@@ -133,6 +133,11 @@ struct ReFinalize
   // bulk, tracking break value types so we just do a linear pass.
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
 
+  // Sometimes we need to generate fresh block names. Use this hint to help
+  // generate the names, and re-uniquify names if it is nonzero after processing
+  // the function.
+  Index freshNameHint = 0;
+
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
@@ -145,6 +150,7 @@ struct ReFinalize
   void visitMemory(Memory* curr);
   void visitDataSegment(DataSegment* curr);
   void visitTag(Tag* curr);
+  void visitFunction(Function* curr);
   void visitModule(Module* curr);
 
 private:

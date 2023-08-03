@@ -7,8 +7,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref func)
-  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:     (br_on_cast $out funcref (ref func)
+  ;; CHECK-NEXT:      (block (result funcref)
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
@@ -48,8 +50,10 @@
   ;; CHECK-NEXT:     (ref.func $br_on_no)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref func)
-  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:     (br_on_cast $out funcref (ref func)
+  ;; CHECK-NEXT:      (block (result funcref)
+  ;; CHECK-NEXT:       (ref.null nofunc)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.func $br_on_no)
