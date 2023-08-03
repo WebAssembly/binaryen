@@ -43,10 +43,10 @@ constexpr bool has_makeLeastUpperBound =
                       const Element&>::value;
 template<typename Element>
 constexpr bool has_isTop =
-  std::is_invocable_r<bool, decltype(&Element::isTop), Element>::value;
+  std::is_invocable_r<bool, decltype(&Element::isTop), const Element>::value;
 template<typename Element>
 constexpr bool has_isBottom =
-  std::is_invocable_r<bool, decltype(&Element::isBottom), Element>::value;
+  std::is_invocable_r<bool, decltype(&Element::isBottom), const Element>::value;
 
 template<typename Lattice>
 constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
@@ -82,7 +82,7 @@ public:
 
   public:
     Element(Element&& source) = default;
-    Element(Element& source) = default;
+    Element(const Element& source) = default;
 
     Element& operator=(Element&& source) = default;
     Element& operator=(const Element& source) = default;
@@ -90,13 +90,13 @@ public:
     // Counts the number of members present the element itself. For instance, if
     // we had {true, false, true}, the count would be 2. O(N) operation which
     // iterates through the bitvector.
-    size_t count();
+    size_t count() const;
 
     bool get(size_t index) { return bitvector[index]; }
     void set(size_t index, bool value) { bitvector[index] = value; }
 
-    bool isTop() { return count() == bitvector.size(); }
-    bool isBottom() { return count() == 0; }
+    bool isTop() const { return count() == bitvector.size(); }
+    bool isBottom() const { return count() == 0; }
 
     // Calculates the LUB of this element with some other element and sets
     // this element to the LUB in place. Returns true if this element before

@@ -21,6 +21,7 @@
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/reaching-definitions-transfer-function.h"
+#include "analysis/stack-lattice.h"
 
 #include "support/command-line.h"
 #include "tools/fuzzing.h"
@@ -363,6 +364,65 @@ struct ReachingDefinitionsChecker {
   }
 };
 
+// Struct to set up and check the stack lattice. Uses the
+// FiniteIntPowersetLattice as to model stack contents.
+struct StackLatticeChecker {
+  FiniteIntPowersetLattice contentLattice;
+  StackLattice<FiniteIntPowersetLattice> stackLattice;
+
+  // Here only as a placeholder, since the checker utility currently wants a
+  // transfer function.
+  LivenessTransferFunction transferFunction;
+
+  AnalysisChecker<StackLattice<FiniteIntPowersetLattice>,
+                  LivenessTransferFunction>
+    checker;
+
+  StackLatticeChecker(Function* func,
+                      uint64_t latticeElementSeed,
+                      Name funcName)
+    : contentLattice(func->getNumLocals()), stackLattice(contentLattice),
+      checker(stackLattice,
+              transferFunction,
+              "StackLattice<FiniteIntPowersetLattice>",
+              "LivenessTransferFunction",
+              latticeElementSeed,
+              funcName) {}
+
+  StackLattice<FiniteIntPowersetLattice>::Element
+  getRandomElement(Random& rand) {
+    StackLattice<FiniteIntPowersetLattice>::Element result =
+      stackLattice.getBottom();
+
+    // Randomly decide on a stack height. A max height of 15 stack elements is
+    // arbitrarily chosen.
+    size_t stackHeight = rand.upTo(15);
+
+    for (size_t j = 0; j < stackHeight; ++j) {
+      // Randomly generate a FiniteIntPowersetLattice and push it onto the
+      // stack.
+      FiniteIntPowersetLattice::Element content = contentLattice.getBottom();
+      for (size_t i = 0; i < contentLattice.getSetSize(); ++i) {
+        content.set(i, rand.oneIn(2));
+      }
+      result.push(std::move(content));
+    }
+    return result;
+  }
+
+  // Runs all checks for the StackLattice analysis.
+  void runChecks(Random& rand, bool verbose) {
+    StackLattice<FiniteIntPowersetLattice>::Element x = getRandomElement(rand);
+    StackLattice<FiniteIntPowersetLattice>::Element y = getRandomElement(rand);
+    StackLattice<FiniteIntPowersetLattice>::Element z = getRandomElement(rand);
+    if (verbose) {
+      checker.printVerboseFunctionCase(std::cout, x, y, z);
+    }
+
+    checker.checkLatticeElements(x, y, z);
+  }
+};
+
 struct Fuzzer {
   bool verbose;
 
@@ -384,16 +444,22 @@ struct Fuzzer {
 
     CFG cfg = CFG::fromFunction(func);
 
-    switch (rand.upTo(2)) {
+    switch (rand.upTo(3)) {
       case 0: {
         LivenessChecker livenessChecker(func, latticeElementSeed, func->name);
         livenessChecker.runChecks(cfg, rand, verbose);
         break;
       }
-      default: {
+      case 1: {
         ReachingDefinitionsChecker reachingDefinitionsChecker(
           func, latticeElementSeed, func->name);
         reachingDefinitionsChecker.runChecks(cfg, rand, verbose);
+        break;
+      }
+      default: {
+        StackLatticeChecker stackLatticeChecker(
+          func, latticeElementSeed, func->name);
+        stackLatticeChecker.runChecks(rand, verbose);
       }
     }
   }
