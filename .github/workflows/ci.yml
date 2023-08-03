@@ -331,7 +331,9 @@ jobs:
     - name: build
       run: cmake --build out
     - name: test
-      run: python check.py --binaryen-bin=out/bin lit
+      run: |
+        python check.py --binaryen-bin=out/bin lit
+        python check.py --binaryen-bin=out/bin gtest
     - name: upload coverage
       uses: codecov/codecov-action@v3
       with:
