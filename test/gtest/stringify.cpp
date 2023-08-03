@@ -1,6 +1,7 @@
 #include "ir/utils.h"
 #include "passes/stringify-walker.h"
 #include "print-test.h"
+#include "support/suffix_tree.h"
 
 using namespace wasm;
 
@@ -124,8 +125,7 @@ adding unique symbol
   EXPECT_EQ(ss.str(), stringifyText);
 }
 
-TEST_F(StringifyTest, Stringify) {
-  auto moduleText = R"wasm(
+static auto dupModuleText = R"wasm(
     (module
     (func $a
       (block $block_a
@@ -161,8 +161,9 @@ TEST_F(StringifyTest, Stringify) {
    )
   )wasm";
 
+TEST_F(StringifyTest, Stringify) {
   Module wasm;
-  parseWast(wasm, moduleText);
+  parseWast(wasm, dupModuleText);
 
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
@@ -215,4 +216,40 @@ TEST_F(StringifyTest, Stringify) {
               14,            // i32.const 30
               (uint32_t)-13  // separate block_f if-true
             }));
+}
+
+TEST_F(StringifyTest, Substrings) {
+  Module wasm;
+  parseWast(wasm, dupModuleText);
+
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+
+  SuffixTree st(stringify.hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
+    });
+
+  EXPECT_EQ(
+    substrings,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // 5, 6, 7, 6 appears at idx 9 and again at 22
+      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
+      // 6, 7, 6 appears at idx 10 and again at 23
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{10, 23})},
+      // 10, 11, 6 appears at idx 18 and again at 27
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})},
+      // 11, 6 appears at idx 32, 19 and again at 28
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{32, 19, 28})},
+      // 7, 6 appears at idx 11 and again at 24
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})}}));
 }
