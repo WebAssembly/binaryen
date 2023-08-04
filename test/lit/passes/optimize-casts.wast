@@ -173,6 +173,43 @@
     )
   )
 
+  (func $not-past-call (param $x (ref struct))
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    ;; The call in the middle stops us from helping the last get, since a call
+    ;; might branch out. We could still optimize in this case, however, with
+    ;; more precision.
+    (drop
+      (call $get)
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
+  (func $not-past-call (param $x (ref struct))
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    ;; The call in the middle stops us from helping the last get, since a call
+    ;; might branch out. We could still optimize in this case, however, with
+    ;; more precision (since if we branch out it doesn't matter what we have
+    ;; below).
+    (drop
+      (call_ref
+        (ref.null func)
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
   ;; CHECK:      (func $best (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $B))
