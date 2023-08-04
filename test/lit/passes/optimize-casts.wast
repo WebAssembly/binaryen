@@ -11,6 +11,8 @@
   ;; CHECK:      (type $D (array (mut i32)))
   (type $D (array (mut i32)))
 
+  (type $void (func))
+
   ;; CHECK:      (global $a (mut i32) (i32.const 0))
   (global $a (mut i32) (i32.const 0))
 
@@ -173,6 +175,19 @@
     )
   )
 
+  ;; CHECK:      (func $not-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $get)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $not-past-call (param $x (ref struct))
     (drop
       (ref.cast $A
@@ -190,7 +205,23 @@
     )
   )
 
-  (func $not-past-call (param $x (ref struct))
+  ;; CHECK:      (func $not-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null nofunc)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-past-call_ref (param $x (ref struct))
     (drop
       (ref.cast $A
         (local.get $x)
@@ -200,10 +231,8 @@
     ;; might branch out. We could still optimize in this case, however, with
     ;; more precision (since if we branch out it doesn't matter what we have
     ;; below).
-    (drop
-      (call_ref
-        (ref.null func)
-      )
+    (call_ref $void
+      (ref.null func)
     )
     (drop
       (local.get $x)
