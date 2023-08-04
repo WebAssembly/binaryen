@@ -48,7 +48,7 @@ function asmFunc(imports) {
  function $2($0, $0$hi) {
   $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  var i64toi32_i32$0 = 0, $3$hi = 0;
+  var i64toi32_i32$0 = 0, $3$hi = 0, $4$hi = 0;
   i64toi32_i32$0 = $0$hi;
   wasm2js_scratch_store_i32(0 | 0, $0 | 0);
   wasm2js_scratch_store_i32(1 | 0, i64toi32_i32$0 | 0);
@@ -56,8 +56,9 @@ function asmFunc(imports) {
   i64toi32_i32$0 = wasm2js_scratch_load_i32(1 | 0) | 0;
   $3$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $0$hi;
+  $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $3$hi;
-  return (wasm2js_scratch_load_i32(0 | 0) | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($0$hi | 0) | 0 | 0;
+  return (wasm2js_scratch_load_i32(0 | 0) | 0 | 0) == ($0 | 0) & (i64toi32_i32$0 | 0) == ($4$hi | 0) | 0 | 0;
  }
  
  function legalstub$2($0, $1_1) {

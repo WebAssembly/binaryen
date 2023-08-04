@@ -20,7 +20,7 @@ function asmFunc(imports) {
   while (1) {
    if ($0 | $2) {
     $1 = $0;
-    $0 = $1 & $1 - 1;
+    $0 = $0 & $0 - 1;
     $2 = $2 - !$1 & $2;
     $3 = $3 + 1 | 0;
     $4 = $3 ? $4 : $4 + 1 | 0;
@@ -29,8 +29,9 @@ function asmFunc(imports) {
    break;
   };
   i64toi32_i32$HIGH_BITS = $4;
+  $0 = $3;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $3;
+  return $0;
  }
  
  function legalstub$ctz64($0, $1) {

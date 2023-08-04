@@ -106,8 +106,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$32() {
@@ -116,8 +117,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$34() {
@@ -126,8 +128,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$35() {
@@ -136,8 +139,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$36() {
@@ -146,8 +150,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$37() {
@@ -156,8 +161,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$38() {
@@ -166,8 +172,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$39() {
@@ -176,8 +183,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$41() {
@@ -186,8 +194,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$42() {
@@ -196,8 +205,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$44() {
@@ -206,8 +216,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$45() {
@@ -216,8 +227,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$46() {
@@ -226,8 +238,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$47() {
@@ -236,8 +249,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$48() {
@@ -246,8 +260,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$49() {
@@ -256,8 +271,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$50() {
@@ -266,8 +282,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  function legalstub$59() {
@@ -276,8 +293,9 @@ function asmFunc(imports) {
   $0_1 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   i64toi32_i32$HIGH_BITS = $0_1;
+  $0_1 = $1;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $1;
+  return $0_1;
  }
  
  return {
