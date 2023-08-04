@@ -8,6 +8,8 @@
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $D (array (mut i32)))
   (type $D (array (mut i32)))
 
@@ -211,11 +213,8 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null nofunc)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -232,7 +231,7 @@
     ;; more precision (since if we branch out it doesn't matter what we have
     ;; below).
     (call_ref $void
-      (ref.null func)
+      (ref.func $void)
     )
     (drop
       (local.get $x)
@@ -1294,5 +1293,12 @@
   (func $get (result (ref struct))
     ;; Helper for the above.
     (unreachable)
+  )
+
+  ;; CHECK:      (func $void (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $void
+    ;; Helper for the above.
   )
 )
