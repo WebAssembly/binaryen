@@ -197,10 +197,8 @@
       )
     )
     ;; The call in the middle stops us from helping the last get, since a call
-    ;; might branch out. We could still optimize in this case, however, with
-    ;; more precision. TODO we could still optimize in this case, however, with
-    ;; more precision (since if we branch out it doesn't matter what we have
-    ;; below).
+    ;; might branch out. TODO we could still optimize in this case, with more
+    ;; precision (since if we branch out it doesn't matter what we have below).
     (drop
       (call $get)
     )
