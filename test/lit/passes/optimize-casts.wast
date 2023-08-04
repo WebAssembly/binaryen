@@ -198,7 +198,9 @@
     )
     ;; The call in the middle stops us from helping the last get, since a call
     ;; might branch out. We could still optimize in this case, however, with
-    ;; more precision.
+    ;; more precision. TODO we could still optimize in this case, however, with
+    ;; more precision (since if we branch out it doesn't matter what we have
+    ;; below).
     (drop
       (call $get)
     )
@@ -226,10 +228,8 @@
         (local.get $x)
       )
     )
-    ;; The call in the middle stops us from helping the last get, since a call
-    ;; might branch out. We could still optimize in this case, however, with
-    ;; more precision (since if we branch out it doesn't matter what we have
-    ;; below).
+    ;; As in the last function, the call in the middle stops us from helping the
+    ;; last get (this time with a call_ref).
     (call_ref $void
       (ref.func $void)
     )
