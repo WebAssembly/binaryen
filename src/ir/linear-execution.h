@@ -81,10 +81,12 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
     Expression* curr = *currp;
 
     auto handleCall = [&](bool isReturn) {
-      // Control is nonlinear if we return, or if EH is enabled or may be.
-      if (isReturn || !self->getModule() ||
-          self->getModule()->features.hasExceptionHandling()) {
-        self->pushTask(SubType::doNoteNonLinear, currp);
+      if (!self->connectAdjacentBlocks) {
+        // Control is nonlinear if we return, or if EH is enabled or may be.
+        if (isReturn || !self->getModule() ||
+            self->getModule()->features.hasExceptionHandling()) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
       }
 
       // Scan the children normally.
@@ -111,7 +113,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<If>()->condition);
         break;
       }
