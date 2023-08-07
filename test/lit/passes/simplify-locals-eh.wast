@@ -158,11 +158,16 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $equivalent-set-removal-call)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-call
@@ -173,6 +178,7 @@
     (drop (local.get $1))
     (call $equivalent-set-removal-call)
     (drop (local.get $1))
+    (drop (local.get $0))
   )
 
   ;; CHECK:      (func $equivalent-set-removal-if (type $i32_=>_none) (param $p i32)
@@ -181,7 +187,9 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
@@ -194,6 +202,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-if (param $p i32)
@@ -208,5 +219,6 @@
       (drop (local.get $1))
     )
     (drop (local.get $1))
+    (drop (local.get $0))
   )
 )
