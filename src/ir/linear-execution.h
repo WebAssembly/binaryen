@@ -66,8 +66,8 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
   //    ..C..
   //  end
   //
-  // Here we will connect A and B, but *not* A and C (they are not adjacent) or
-  // B and C (they do not branch to each other).
+  // Here we will connect A and B, but *not* A and C (there is code in between)
+  // or B and C (they do not branch to each other).
   //
   // As the if case shows, this can be useful for cases where we want to look at
   // dominated blocks with their dominator, but it only handles the trivial
