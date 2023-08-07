@@ -152,55 +152,47 @@
     )
   )
 
-  ;; CHECK:      (func $equivalent-set-removal-call (type $none_=>_none)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $equivalent-set-removal-call (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $equivalent-set-removal-call
+  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $equivalent-set-removal-call)
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $equivalent-set-removal-call
-    (local $0 i32)
+  (func $equivalent-set-removal-call (param $0 i32)
     (local $1 i32)
-    (local.set $0 (i32.const 3))
     (local.set $1 (local.get $0))
     (drop (local.get $0))
     (drop (local.get $1))
-    (call $equivalent-set-removal-call)
+    ;; Even with EH enabled we can look past the call and optimize the final 1
+    ;; to a 0, since they contain the same (and while the call might branch,
+    ;; such a branch does not cause a problem here, as if we branch we just
+    ;; don't reach the change later down).
+    (call $equivalent-set-removal-call
+      (i32.const 2)
+    )
     (drop (local.get $0))
     (drop (local.get $1))
   )
 
-  ;; CHECK:      (func $equivalent-set-removal-if (type $i32_=>_none) (param $p i32)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $equivalent-set-removal-if (type $i32_i32_=>_none) (param $p i32) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
@@ -209,7 +201,7 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block
@@ -228,24 +220,29 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $equivalent-set-removal-if (param $p i32)
-    (local $0 i32)
+  (func $equivalent-set-removal-if (param $p i32) (param $0 i32)
     (local $1 i32)
-    (local.set $0 (i32.const 3))
     (local.set $1 (local.get $0))
     (drop (local.get $0))
+    ;; This local.get of 1 can be of 0.
     (drop (local.get $1))
     (if
       (local.get $p)
       (block
+        ;; We also optimize in this block, which is adjacent to the code before
+        ;; us. It is valid to optimize the 1 to a 0 here, as it is dominated by
+        ;; the code earlier.
         (drop (local.get $0))
         (drop (local.get $1))
       )
       (block
+        ;; We could also optimize here, but atm just look at code adjacent to
+        ;; its dominator. TODO
         (drop (local.get $0))
         (drop (local.get $1))
       )
     )
+    ;; As in the else, this could be optimized. TODO
     (drop (local.get $0))
     (drop (local.get $1))
   )
