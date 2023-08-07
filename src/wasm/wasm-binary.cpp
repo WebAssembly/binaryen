@@ -2256,48 +2256,14 @@ void WasmBinaryReader::readTypes() {
       }
       form = getS32LEB();
     }
-    if (form == BinaryConsts::EncodedType::Func ||
-        form == BinaryConsts::EncodedType::FuncSubtype) {
+    if (form == BinaryConsts::EncodedType::Func) {
       builder[i] = readSignatureDef();
-    } else if (form == BinaryConsts::EncodedType::Struct ||
-               form == BinaryConsts::EncodedType::StructSubtype) {
+    } else if (form == BinaryConsts::EncodedType::Struct) {
       builder[i] = readStructDef();
-    } else if (form == BinaryConsts::EncodedType::Array ||
-               form == BinaryConsts::EncodedType::ArraySubtype) {
+    } else if (form == BinaryConsts::EncodedType::Array) {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("Bad type form " + std::to_string(form));
-    }
-    if (form == BinaryConsts::EncodedType::FuncSubtype ||
-        form == BinaryConsts::EncodedType::StructSubtype ||
-        form == BinaryConsts::EncodedType::ArraySubtype) {
-      int64_t super = getS64LEB(); // TODO: Actually s33
-      if (super >= 0) {
-        superIndex = (uint32_t)super;
-      } else {
-        // Validate but otherwise ignore trivial supertypes.
-        HeapType basicSuper;
-        if (!getBasicHeapType(super, basicSuper)) {
-          throwError("Unrecognized supertype " + std::to_string(super));
-        }
-        if (form == BinaryConsts::EncodedType::FuncSubtype) {
-          if (basicSuper != HeapType::func) {
-            throwError(
-              "The only allowed trivial supertype for functions is func");
-          }
-        } else {
-          // Check for "struct" here even if we are parsing an array definition.
-          // This is the old nonstandard "struct_subtype" or "array_subtype"
-          // form of type definitions that used the old "data" type as the
-          // supertype placeholder when there was no nontrivial supertype.
-          // "data" no longer exists, but "struct" has the same encoding it used
-          // to have.
-          if (basicSuper != HeapType::struct_) {
-            throwError("The only allowed trivial supertype for structs and "
-                       "arrays is data");
-          }
-        }
-      }
     }
     if (superIndex) {
       if (*superIndex > builder.size()) {
@@ -4160,12 +4126,6 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStringSliceIter(curr, opcode)) {
-        break;
-      }
-      if (opcode == BinaryConsts::RefAsFunc ||
-          opcode == BinaryConsts::RefAsI31) {
-        visitRefAsCast((curr = allocator.alloc<RefCast>())->cast<RefCast>(),
-                       opcode);
         break;
       }
       if (opcode == BinaryConsts::ExternInternalize ||
@@ -7011,10 +6971,8 @@ bool WasmBinaryReader::maybeVisitI31Get(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryReader::maybeVisitRefTest(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest ||
-      code == BinaryConsts::RefTestNull) {
-    bool legacy = code == BinaryConsts::RefTestStatic;
-    auto castType = legacy ? getIndexedHeapType() : getHeapType();
+  if (code == BinaryConsts::RefTest || code == BinaryConsts::RefTestNull) {
+    auto castType = getHeapType();
     auto nullability =
       (code == BinaryConsts::RefTestNull) ? Nullable : NonNullable;
     auto* ref = popNonVoidExpression();
@@ -7024,40 +6982,13 @@ bool WasmBinaryReader::maybeVisitRefTest(Expression*& out, uint32_t code) {
   return false;
 }
 
-void WasmBinaryReader::visitRefAsCast(RefCast* curr, uint32_t code) {
-  // TODO: These instructions are deprecated. Remove them.
-  switch (code) {
-    case BinaryConsts::RefAsFunc:
-      curr->type = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::RefAsI31:
-      curr->type = Type(HeapType::i31, NonNullable);
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected ref.as*");
-  }
-  curr->ref = popNonVoidExpression();
-  curr->safety = RefCast::Safe;
-  curr->finalize();
-}
-
 bool WasmBinaryReader::maybeVisitRefCast(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCast ||
-      code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
-    bool legacy = code == BinaryConsts::RefCastStatic;
-    auto heapType = legacy ? getIndexedHeapType() : getHeapType();
-    auto* ref = popNonVoidExpression();
-    Nullability nullability;
-    if (legacy) {
-      // Legacy polymorphic behavior.
-      nullability = ref->type.getNullability();
-    } else {
-      nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
-    }
-    auto safety =
-      code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
+  if (code == BinaryConsts::RefCast || code == BinaryConsts::RefCastNull) {
+    auto heapType = getHeapType();
+    auto nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
     auto type = Type(heapType, nullability);
-    out = Builder(wasm).makeRefCast(ref, type, safety);
+    auto* ref = popNonVoidExpression();
+    out = Builder(wasm).makeRefCast(ref, type);
     return true;
   }
   return false;
@@ -7074,63 +7005,32 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
       op = BrOnNonNull;
       break;
     case BinaryConsts::BrOnCast:
-    case BinaryConsts::BrOnCastLegacy:
-    case BinaryConsts::BrOnCastNullLegacy:
       op = BrOnCast;
       break;
     case BinaryConsts::BrOnCastFail:
-    case BinaryConsts::BrOnCastFailLegacy:
-    case BinaryConsts::BrOnCastFailNullLegacy:
       op = BrOnCastFail;
-      break;
-    case BinaryConsts::BrOnFunc:
-      op = BrOnCast;
-      castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::BrOnNonFunc:
-      op = BrOnCastFail;
-      castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::BrOnI31:
-      op = BrOnCast;
-      castType = Type(HeapType::i31, NonNullable);
-      break;
-    case BinaryConsts::BrOnNonI31:
-      op = BrOnCastFail;
-      castType = Type(HeapType::i31, NonNullable);
       break;
     default:
       return false;
   }
-  bool hasInputAnnotation =
+  bool isCast =
     code == BinaryConsts::BrOnCast || code == BinaryConsts::BrOnCastFail;
   uint8_t flags = 0;
-  if (hasInputAnnotation) {
+  if (isCast) {
     flags = getInt8();
   }
   auto name = getBreakTarget(getU32LEB()).name;
   auto* ref = popNonVoidExpression();
-  if (op == BrOnCast || op == BrOnCastFail) {
-    Nullability inputNullability, castNullability;
-    HeapType inputHeapType, castHeapType;
-    if (hasInputAnnotation) {
-      inputNullability = (flags & 1) ? Nullable : NonNullable;
-      castNullability = (flags & 2) ? Nullable : NonNullable;
-      inputHeapType = getHeapType();
-    } else {
-      castNullability = (code == BinaryConsts::BrOnCastNullLegacy ||
-                         code == BinaryConsts::BrOnCastFailNullLegacy)
-                          ? Nullable
-                          : NonNullable;
-    }
-    castHeapType = getHeapType();
+  if (isCast) {
+    auto inputNullability = (flags & 1) ? Nullable : NonNullable;
+    auto castNullability = (flags & 2) ? Nullable : NonNullable;
+    auto inputHeapType = getHeapType();
+    auto castHeapType = getHeapType();
     castType = Type(castHeapType, castNullability);
-    if (hasInputAnnotation) {
-      auto inputType = Type(inputHeapType, inputNullability);
-      if (!Type::isSubType(ref->type, inputType)) {
-        throwError(std::string("Invalid reference type for ") +
-                   ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
-      }
+    auto inputType = Type(inputHeapType, inputNullability);
+    if (!Type::isSubType(ref->type, inputType)) {
+      throwError(std::string("Invalid reference type for ") +
+                 ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
     }
   }
   out = Builder(wasm).makeBrOn(op, name, ref, castType);
@@ -7288,10 +7188,7 @@ bool WasmBinaryReader::maybeVisitArraySet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryReader::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::ArrayLenAnnotated) {
-    // Ignore the type annotation and don't bother validating it.
-    getU32LEB();
-  } else if (code != BinaryConsts::ArrayLen) {
+  if (code != BinaryConsts::ArrayLen) {
     return false;
   }
   auto* ref = popNonVoidExpression();

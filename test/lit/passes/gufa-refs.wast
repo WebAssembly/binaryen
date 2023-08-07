@@ -54,7 +54,7 @@
     (ref.is_null
       (loop $loop (result (ref func))
         (nop)
-        (ref.as_func
+        (ref.cast func
           (ref.as_non_null
             (ref.null func)
           )

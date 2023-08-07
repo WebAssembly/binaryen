@@ -2374,18 +2374,12 @@ Result<typename Ctx::InstrT> makeCallRef(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeRefTest(Ctx&, Index, std::optional<Type> castType = std::nullopt);
-template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeRefCast(Ctx&, Index, std::optional<Type> castType = std::nullopt);
-template<typename Ctx> Result<typename Ctx::InstrT> makeRefCastNop(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefCast(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBrOnNull(Ctx&, Index, bool onFail = false);
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeBrOnCast(Ctx&, Index, std::optional<Type>, bool onFail = false);
+Result<typename Ctx::InstrT> makeBrOnCast(Ctx&, Index, bool onFail = false);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeStructNew(Ctx&, Index, bool default_);
 template<typename Ctx>
@@ -3480,19 +3474,12 @@ Result<typename Ctx::InstrT> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeRefTest(Ctx& ctx, Index pos, std::optional<Type> castType) {
+Result<typename Ctx::InstrT> makeRefTest(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeRefCast(Ctx& ctx, Index pos, std::optional<Type> castType) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeRefCastNop(Ctx& ctx, Index pos) {
+Result<typename Ctx::InstrT> makeRefCast(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
@@ -3502,8 +3489,7 @@ Result<typename Ctx::InstrT> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT>
-makeBrOnCast(Ctx& ctx, Index pos, std::optional<Type> castType, bool onFail) {
+Result<typename Ctx::InstrT> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
   return ctx.in.err("unimplemented instruction");
 }
 

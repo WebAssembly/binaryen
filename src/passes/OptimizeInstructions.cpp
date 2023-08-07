@@ -1406,13 +1406,13 @@ struct OptimizeInstructions
   // skipCast do): removing a cast is potentially dangerous, as it removes
   // information from the IR. For example:
   //
-  //  (ref.is_func
-  //    (ref.as_func
+  //  (ref.test (ref i31)
+  //    (ref.cast (ref i31)
   //      (local.get $anyref)))
   //
   // The local has no useful type info here (it is anyref). The cast forces it
-  // to be a function, so we know that if we do not trap then the ref.is will
-  // definitely be 1. But if we removed the ref.as first (which we can do in
+  // to be an i31, so we know that if we do not trap then the ref.test will
+  // definitely be 1. But if we removed the ref.cast first (which we can do in
   // traps-never-happen mode) then we'd not have the type info we need to
   // optimize that way.
   //
@@ -1420,12 +1420,12 @@ struct OptimizeInstructions
   //
   //  * Before removing a cast we should use its type information in the best
   //    way we can. Only after doing so should a cast be removed. In the exmaple
-  //    above, that means first seeing that the ref.is must return 1, and only
-  //    then possibly removing the ref.as.
+  //    above, that means first seeing that the ref.test must return 1, and only
+  //    then possibly removing the ref.cast.
   //  * Do not remove a cast if removing it might remove useful information for
   //    others. For example,
   //
-  //      (ref.cast $A
+  //      (ref.cast (ref null $A)
   //        (ref.as_non_null ..))
   //
   //    If we remove the inner cast then the outer cast becomes nullable. That

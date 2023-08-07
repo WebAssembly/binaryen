@@ -1525,11 +1525,6 @@ public:
 
   Expression* ref;
 
-  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
-  // measurements.
-  enum Safety { Safe, Unsafe };
-  Safety safety = Safe;
-
   void finalize();
 
   Type& getCastType() { return type; }

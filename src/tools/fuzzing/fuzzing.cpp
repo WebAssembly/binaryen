@@ -3394,8 +3394,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
-  // TODO: Fuzz unsafe casts?
-  return builder.makeRefCast(make(refType), type, RefCast::Safe);
+  return builder.makeRefCast(make(refType), type);
 }
 
 Expression* TranslateToFuzzReader::makeStructGet(Type type) {

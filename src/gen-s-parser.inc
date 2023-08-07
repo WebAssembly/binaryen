@@ -117,52 +117,19 @@ switch (buf[0]) {
                   case 'c': {
                     switch (buf[10]) {
                       case '\0':
-                        if (op == "br_on_cast"sv) { return makeBrOnCast(s, std::nullopt); }
+                        if (op == "br_on_cast"sv) { return makeBrOnCast(s); }
                         goto parse_error;
-                      case '_': {
-                        switch (buf[11]) {
-                          case 'f':
-                            if (op == "br_on_cast_fail"sv) { return makeBrOnCast(s, std::nullopt, true); }
-                            goto parse_error;
-                          case 's': {
-                            switch (buf[17]) {
-                              case '\0':
-                                if (op == "br_on_cast_static"sv) { return makeBrOnCast(s, std::nullopt); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "br_on_cast_static_fail"sv) { return makeBrOnCast(s, std::nullopt, true); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
-                        }
-                      }
+                      case '_':
+                        if (op == "br_on_cast_fail"sv) { return makeBrOnCast(s, true); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'f':
-                    if (op == "br_on_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable)); }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "br_on_i31"sv) { return makeBrOnCast(s, Type(HeapType::i31, NonNullable)); }
-                    goto parse_error;
                   case 'n': {
                     switch (buf[7]) {
-                      case 'o': {
-                        switch (buf[10]) {
-                          case 'f':
-                            if (op == "br_on_non_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable), true); }
-                            goto parse_error;
-                          case 'i':
-                            if (op == "br_on_non_i31"sv) { return makeBrOnCast(s, Type(HeapType::i31, NonNullable), true); }
-                            goto parse_error;
-                          case 'n':
-                            if (op == "br_on_non_null"sv) { return makeBrOnNull(s, true); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
+                      case 'o':
+                        if (op == "br_on_non_null"sv) { return makeBrOnNull(s, true); }
+                        goto parse_error;
                       case 'u':
                         if (op == "br_on_null"sv) { return makeBrOnNull(s); }
                         goto parse_error;
@@ -3008,81 +2975,27 @@ switch (buf[0]) {
     switch (buf[2]) {
       case 'f': {
         switch (buf[4]) {
-          case 'a': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.as_func"sv) { return makeRefCast(s, Type(HeapType::func, NonNullable)); }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.as_i31"sv) { return makeRefCast(s, Type(HeapType::i31, NonNullable)); }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.as_non_null"sv) { return makeRefAs(s, RefAsNonNull); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
-          case 'c': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.cast"sv) { return makeRefCast(s); }
-                goto parse_error;
-              case '_': {
-                switch (buf[9]) {
-                  case 'n': {
-                    switch (buf[12]) {
-                      case '\0':
-                        if (op == "ref.cast_nop"sv) { return makeRefCastNop(s); }
-                        goto parse_error;
-                      case '_':
-                        if (op == "ref.cast_nop_static"sv) { return makeRefCastNop(s); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 's':
-                    if (op == "ref.cast_static"sv) { return makeRefCast(s); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              default: goto parse_error;
-            }
-          }
+          case 'a':
+            if (op == "ref.as_non_null"sv) { return makeRefAs(s, RefAsNonNull); }
+            goto parse_error;
+          case 'c':
+            if (op == "ref.cast"sv) { return makeRefCast(s); }
+            goto parse_error;
           case 'e':
             if (op == "ref.eq"sv) { return makeRefEq(s); }
             goto parse_error;
           case 'f':
             if (op == "ref.func"sv) { return makeRefFunc(s); }
             goto parse_error;
-          case 'i': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.is_func"sv) { return makeRefTest(s, Type(HeapType::func, NonNullable)); }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.is_i31"sv) { return makeRefTest(s, Type(HeapType::i31, NonNullable)); }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
+          case 'i':
+            if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
+            goto parse_error;
           case 'n':
             if (op == "ref.null"sv) { return makeRefNull(s); }
             goto parse_error;
-          case 't': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.test"sv) { return makeRefTest(s); }
-                goto parse_error;
-              case '_':
-                if (op == "ref.test_static"sv) { return makeRefTest(s); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
+          case 't':
+            if (op == "ref.test"sv) { return makeRefTest(s); }
+            goto parse_error;
           default: goto parse_error;
         }
       }
@@ -3795,87 +3708,30 @@ switch (buf[0]) {
                     switch (buf[10]) {
                       case '\0':
                         if (op == "br_on_cast"sv) {
-                          auto ret = makeBrOnCast(ctx, pos, std::nullopt);
+                          auto ret = makeBrOnCast(ctx, pos);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case '_': {
-                        switch (buf[11]) {
-                          case 'f':
-                            if (op == "br_on_cast_fail"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, std::nullopt, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 's': {
-                            switch (buf[17]) {
-                              case '\0':
-                                if (op == "br_on_cast_static"sv) {
-                                  auto ret = makeBrOnCast(ctx, pos, std::nullopt);
-                                  CHECK_ERR(ret);
-                                  return *ret;
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "br_on_cast_static_fail"sv) {
-                                  auto ret = makeBrOnCast(ctx, pos, std::nullopt, true);
-                                  CHECK_ERR(ret);
-                                  return *ret;
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
+                      case '_':
+                        if (op == "br_on_cast_fail"sv) {
+                          auto ret = makeBrOnCast(ctx, pos, true);
+                          CHECK_ERR(ret);
+                          return *ret;
                         }
-                      }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'f':
-                    if (op == "br_on_func"sv) {
-                      auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable));
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "br_on_i31"sv) {
-                      auto ret = makeBrOnCast(ctx, pos, Type(HeapType::i31, NonNullable));
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
                   case 'n': {
                     switch (buf[7]) {
-                      case 'o': {
-                        switch (buf[10]) {
-                          case 'f':
-                            if (op == "br_on_non_func"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable), true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 'i':
-                            if (op == "br_on_non_i31"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, Type(HeapType::i31, NonNullable), true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 'n':
-                            if (op == "br_on_non_null"sv) {
-                              auto ret = makeBrOnNull(ctx, pos, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
+                      case 'o':
+                        if (op == "br_on_non_null"sv) {
+                          auto ret = makeBrOnNull(ctx, pos, true);
+                          CHECK_ERR(ret);
+                          return *ret;
                         }
-                      }
+                        goto parse_error;
                       case 'u':
                         if (op == "br_on_null"sv) {
                           auto ret = makeBrOnNull(ctx, pos);
@@ -8649,75 +8505,20 @@ switch (buf[0]) {
     switch (buf[2]) {
       case 'f': {
         switch (buf[4]) {
-          case 'a': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.as_func"sv) {
-                  auto ret = makeRefCast(ctx, pos, Type(HeapType::func, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.as_i31"sv) {
-                  auto ret = makeRefCast(ctx, pos, Type(HeapType::i31, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.as_non_null"sv) {
-                  auto ret = makeRefAs(ctx, pos, RefAsNonNull);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 'a':
+            if (op == "ref.as_non_null"sv) {
+              auto ret = makeRefAs(ctx, pos, RefAsNonNull);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
-          case 'c': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.cast"sv) {
-                  auto ret = makeRefCast(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case '_': {
-                switch (buf[9]) {
-                  case 'n': {
-                    switch (buf[12]) {
-                      case '\0':
-                        if (op == "ref.cast_nop"sv) {
-                          auto ret = makeRefCastNop(ctx, pos);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      case '_':
-                        if (op == "ref.cast_nop_static"sv) {
-                          auto ret = makeRefCastNop(ctx, pos);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 's':
-                    if (op == "ref.cast_static"sv) {
-                      auto ret = makeRefCast(ctx, pos);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              default: goto parse_error;
+            goto parse_error;
+          case 'c':
+            if (op == "ref.cast"sv) {
+              auto ret = makeRefCast(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           case 'e':
             if (op == "ref.eq"sv) {
               auto ret = makeRefEq(ctx, pos);
@@ -8732,32 +8533,13 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
-          case 'i': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.is_func"sv) {
-                  auto ret = makeRefTest(ctx, pos, Type(HeapType::func, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.is_i31"sv) {
-                  auto ret = makeRefTest(ctx, pos, Type(HeapType::i31, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.is_null"sv) {
-                  auto ret = makeRefIsNull(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 'i':
+            if (op == "ref.is_null"sv) {
+              auto ret = makeRefIsNull(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           case 'n':
             if (op == "ref.null"sv) {
               auto ret = makeRefNull(ctx, pos);
@@ -8765,25 +8547,13 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
-          case 't': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.test"sv) {
-                  auto ret = makeRefTest(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case '_':
-                if (op == "ref.test_static"sv) {
-                  auto ret = makeRefTest(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 't':
+            if (op == "ref.test"sv) {
+              auto ret = makeRefTest(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           default: goto parse_error;
         }
       }

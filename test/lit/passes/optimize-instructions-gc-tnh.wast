@@ -127,6 +127,16 @@
   ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.cast $struct
+  ;; TNH-NEXT:      (local.get $a)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (i32.const 0)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (ref.is_null
   ;; TNH-NEXT:   (local.get $f)
   ;; TNH-NEXT:  )
@@ -137,6 +147,16 @@
   ;; NO_TNH-NEXT:    (ref.cast null $struct
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast $struct
+  ;; NO_TNH-NEXT:      (local.get $a)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.const 0)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.is_null
@@ -156,39 +176,21 @@
         )
       )
     )
+    ;; If the cast eliminates null, then we can optimize.
+    (drop
+      (ref.is_null
+        (ref.cast $struct
+          (local.get $a)
+        )
+      )
+    )
     ;; It works on func references, too.
     (ref.is_null
       (ref.cast null $void
         (local.get $f)
       )
     )
-  )
 
-  ;; TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.as_non_null
-  ;; TNH-NEXT:    (local.get $a)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (i32.const 1)
-  ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (local.get $a)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (i32.const 1)
-  ;; NO_TNH-NEXT: )
-  (func $ref.is_func (param $a funcref) (result i32)
-    ;; The check must succeed. We can return 1 here, and drop the rest, with or
-    ;; without TNH (in particular, TNH should not just remove the cast but not
-    ;; return a 1).
-    (ref.is_func
-      (ref.as_func
-        (local.get $a)
-      )
-    )
   )
 
   ;; TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))

@@ -389,10 +389,6 @@ enum EncodedType {
   Array = -0x22,    // 0x5e
   Sub = -0x30,      // 0x50
   SubFinal = -0x32, // 0x4e
-  // prototype nominal forms we still parse
-  FuncSubtype = -0x23,   // 0x5d
-  StructSubtype = -0x24, // 0x5c
-  ArraySubtype = -0x25,  // 0x5b
   // isorecursive recursion groups
   Rec = -0x31, // 0x4f
   // block_type
@@ -1108,7 +1104,6 @@ enum ASTNodes {
   ArrayGetS = 0x14,
   ArrayGetU = 0x15,
   ArraySet = 0x16,
-  ArrayLenAnnotated = 0x17,
   ArrayCopy = 0x18,
   ArrayLen = 0x19,
   ArrayNewFixed = 0x1a,
@@ -1120,23 +1115,10 @@ enum ASTNodes {
   I31GetU = 0x22,
   RefTest = 0x40,
   RefCast = 0x41,
-  BrOnCastLegacy = 0x42,
-  BrOnCastFailLegacy = 0x43,
-  BrOnCastNullLegacy = 0x4a,
-  BrOnCastFailNullLegacy = 0x4b,
   BrOnCast = 0x4e,
   BrOnCastFail = 0x4f,
-  RefTestStatic = 0x44,
-  RefCastStatic = 0x45,
   RefTestNull = 0x48,
   RefCastNull = 0x49,
-  RefCastNop = 0x4c,
-  RefAsFunc = 0x58,
-  RefAsI31 = 0x5a,
-  BrOnFunc = 0x60,
-  BrOnI31 = 0x62,
-  BrOnNonFunc = 0x63,
-  BrOnNonI31 = 0x65,
   ExternInternalize = 0x70,
   ExternExternalize = 0x71,
   ArrayFill = 0x0f,

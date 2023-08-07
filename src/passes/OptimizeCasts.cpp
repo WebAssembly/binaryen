@@ -385,10 +385,8 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
 
     auto refCastIter = finder.refCastToApply.find(curr);
     if (refCastIter != finder.refCastToApply.end()) {
-      currPtr = replaceCurrent(Builder(*getModule())
-                                 .makeRefCast(currPtr,
-                                              refCastIter->second->type,
-                                              refCastIter->second->safety));
+      currPtr = replaceCurrent(
+        Builder(*getModule()).makeRefCast(currPtr, refCastIter->second->type));
     }
 
     auto refAsIter = finder.refAsToApply.find(curr);
