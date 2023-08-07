@@ -35,7 +35,7 @@ function asmFunc(imports) {
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
    $8 = i64toi32_i32$5;
    $8$hi = i64toi32_i32$3;
-   i64toi32_i32$3 = i64toi32_i32$2;
+   i64toi32_i32$3 = $0$hi;
    i64toi32_i32$5 = $8$hi;
    i64toi32_i32$5 = __wasm_i64_mul($0_1 | 0, i64toi32_i32$3 | 0, $8 | 0, i64toi32_i32$5 | 0) | 0;
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
@@ -69,7 +69,7 @@ function asmFunc(imports) {
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;
    $8 = i64toi32_i32$5;
    $8$hi = i64toi32_i32$3;
-   i64toi32_i32$3 = i64toi32_i32$2;
+   i64toi32_i32$3 = n$hi;
    i64toi32_i32$5 = $8$hi;
    i64toi32_i32$5 = __wasm_i64_mul(n | 0, i64toi32_i32$3 | 0, $8 | 0, i64toi32_i32$5 | 0) | 0;
    i64toi32_i32$3 = i64toi32_i32$HIGH_BITS;

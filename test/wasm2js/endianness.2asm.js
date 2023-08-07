@@ -76,7 +76,6 @@ function asmFunc(imports) {
   i64toi32_i32$0 = value$hi;
   i32_store_little(address | 0, value | 0);
   $6_1 = address + 4 | 0;
-  i64toi32_i32$0 = value$hi;
   i64toi32_i32$2 = value;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;

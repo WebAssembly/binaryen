@@ -28,9 +28,8 @@ function asmFunc(imports) {
    break;
   };
   i64toi32_i32$HIGH_BITS = $3;
-  $0 = $2;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0;
+  return $2;
  }
  
  function __wasm_i64_mul($0, $1, $2, $3) {
