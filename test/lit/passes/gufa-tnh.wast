@@ -1953,3 +1953,62 @@
     )
   )
 )
+
+;; Control flow around calls.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; CHECK:      (type $B (sub $A (struct )))
+  (type $B (sub $A (struct)))
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
+  ;; CHECK:      (import "a" "b" (func $import-throw (type $none_=>_none)))
+  (import "a" "b" (func $import-throw))
+
+  ;; CHECK:      (export "a" (func $caller))
+
+  ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $0 (ref null $A))
+  ;; CHECK-NEXT:  (call $import-throw)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $called (param $0 (ref null $A))
+    ;; This function calls an import, and later casts. We cannot use those casts
+    ;; to infer anything in the callers, since the import might throw (in which
+    ;; case we'd never reach the cast).
+    (call $import-throw)
+    (drop
+      (ref.cast $B
+        (local.get $0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new_default $B)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $called
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (export "a")
+    ;; This call sends a $B which will be cast to $B (assuming the import does
+    ;; not trap), so nothing should happen here.
+    (call $called
+      (struct.new $B)
+    )
+    ;; This call sends an $A, which would fail the cast if it were reached. But
+    ;; it might not, so we do nothing here.
+    (call $called
+      (struct.new $A)
+    )
+  )
+)

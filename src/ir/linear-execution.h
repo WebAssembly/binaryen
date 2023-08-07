@@ -17,9 +17,9 @@
 #ifndef wasm_ir_linear_execution_h
 #define wasm_ir_linear_execution_h
 
-#include <ir/properties.h>
-#include <wasm-traversal.h>
-#include <wasm.h>
+#include "ir/properties.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -46,6 +46,17 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
+
+    auto handleCall = [&](bool isReturn) {
+      // Control is nonlinear if we return, or if EH is enabled or may be.
+      if (isReturn || !self->getModule() ||
+          self->getModule()->features.hasExceptionHandling()) {
+        self->pushTask(SubType::doNoteNonLinear, currp);
+      }
+
+      // Scan the children normally.
+      PostWalker<SubType, VisitorType>::scan(self, currp);
+    };
 
     switch (curr->_id) {
       case Expression::Id::InvalidId:
@@ -96,6 +107,14 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
+      }
+      case Expression::Id::CallId: {
+        handleCall(curr->cast<Call>()->isReturn);
+        return;
+      }
+      case Expression::Id::CallRefId: {
+        handleCall(curr->cast<CallRef>()->isReturn);
+        return;
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);

@@ -997,9 +997,9 @@ struct SimplifyLocals
     // will inhibit us creating an if return value.
     struct EquivalentOptimizer
       : public LinearExecutionWalker<EquivalentOptimizer> {
+
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
-      Module* module;
       PassOptions passOptions;
 
       bool anotherCycle = false;
@@ -1016,6 +1016,8 @@ struct SimplifyLocals
       }
 
       void visitLocalSet(LocalSet* curr) {
+        auto* module = this->getModule();
+
         // Remove trivial copies, even through a tee
         auto* value =
           Properties::getFallthrough(curr->value, passOptions, *module);
@@ -1123,11 +1125,10 @@ struct SimplifyLocals
     };
 
     EquivalentOptimizer eqOpter;
-    eqOpter.module = this->getModule();
     eqOpter.passOptions = this->getPassOptions();
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
-    eqOpter.walkFunction(func);
+    eqOpter.walkFunctionInModule(func, this->getModule());
     if (eqOpter.refinalize) {
       ReFinalize().walkFunctionInModule(func, this->getModule());
     }

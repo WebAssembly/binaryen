@@ -8,8 +8,12 @@
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
+  ;; CHECK:      (type $void (func))
+
   ;; CHECK:      (type $D (array (mut i32)))
   (type $D (array (mut i32)))
+
+  (type $void (func))
 
   ;; CHECK:      (global $a (mut i32) (i32.const 0))
   (global $a (mut i32) (i32.const 0))
@@ -167,6 +171,65 @@
     ;; The local.set in the middle stops us from helping the last get.
     (local.set $x
       (call $get)
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $not-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $get)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-past-call (param $x (ref struct))
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    ;; The call in the middle stops us from helping the last get, since a call
+    ;; might branch out. TODO we could still optimize in this case, with more
+    ;; precision (since if we branch out it doesn't matter what we have below).
+    (drop
+      (call $get)
+    )
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $not-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-past-call_ref (param $x (ref struct))
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+    ;; As in the last function, the call in the middle stops us from helping the
+    ;; last get (this time with a call_ref).
+    (call_ref $void
+      (ref.func $void)
     )
     (drop
       (local.get $x)
@@ -1228,5 +1291,12 @@
   (func $get (result (ref struct))
     ;; Helper for the above.
     (unreachable)
+  )
+
+  ;; CHECK:      (func $void (type $void)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $void
+    ;; Helper for the above.
   )
 )
