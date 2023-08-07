@@ -1016,7 +1016,7 @@ struct SimplifyLocals
       }
 
       void visitLocalSet(LocalSet* curr) {
-        auto* module = getModule();
+        auto* module = this->getModule();
 
         // Remove trivial copies, even through a tee
         auto* value =
