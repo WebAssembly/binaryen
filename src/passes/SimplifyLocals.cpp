@@ -998,6 +998,11 @@ struct SimplifyLocals
     struct EquivalentOptimizer
       : public LinearExecutionWalker<EquivalentOptimizer> {
 
+      // It is ok to look at adjacent blocks together, as if a later part of a
+      // block is not reached that is fine - changes we make there would not be
+      // reached in that case.
+      bool connectAdjacentBlocks = true;
+
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
       PassOptions passOptions;
