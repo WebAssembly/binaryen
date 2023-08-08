@@ -341,6 +341,11 @@ struct ConstantGlobalApplier
     return std::make_unique<ConstantGlobalApplier>(constantGlobals, optimize);
   }
 
+  // It is ok to look at adjacent blocks together, as if a later part of a block
+  // is not reached that is fine - changes we make there would not be reached in
+  // that case.
+  bool connectAdjacentBlocks = true;
+
   bool refinalize = false;
 
   void replaceCurrent(Expression* rep) {

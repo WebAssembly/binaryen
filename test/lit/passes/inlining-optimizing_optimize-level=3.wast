@@ -1342,13 +1342,13 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (i32.load
- ;; CHECK-NEXT:       (i32.const 12)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (call $_fflush
+ ;; CHECK-NEXT:      (local.tee $0
  ;; CHECK-NEXT:       (i32.load
  ;; CHECK-NEXT:        (i32.const 12)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (call $_fflush
+ ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )

@@ -232,6 +232,11 @@ struct Scanner
     // information, leaving the things we need later.
   }
 
+  // It is ok to look at adjacent blocks together, as if a later part of a block
+  // is not reached that is fine - changes we make there would not be reached in
+  // that case.
+  bool connectAdjacentBlocks = true;
+
   void visitExpression(Expression* curr) {
     // Compute the hash, using the pre-computed hashes of the children, which
     // are saved. This allows us to hash everything in linear time.
@@ -465,6 +470,9 @@ struct Checker
     assert(self->activeOriginals.empty());
   }
 
+  // See the same code above.
+  bool connectAdjacentBlocks = true;
+
   void visitFunction(Function* curr) {
     // At the end of the function there can be no active originals.
     assert(activeOriginals.empty());
@@ -516,6 +524,9 @@ struct Applier
     // Clear the state between blocks.
     self->originalLocalMap.clear();
   }
+
+  // See the same code above.
+  bool connectAdjacentBlocks = true;
 };
 
 } // anonymous namespace
