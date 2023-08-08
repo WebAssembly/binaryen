@@ -423,6 +423,16 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
     self->mostCastedGets.clear();
   }
 
+  // It is ok to look at adjacent blocks together, as if a later part of a block
+  // is not reached that is fine - changes we make there would not be reached in
+  // that case.
+  //
+  // Note that we *cannot* do the same in EarlyCastFinder, as it modifies the
+  // earlier code in a dangerous way: it may move a trap to an earlier position.
+  // We cannot move a trap before a branch, as perhaps the branch is all that
+  // prevented us from trapping.
+  bool connectAdjacentBlocks = true;
+
   void visitLocalSet(LocalSet* curr) {
     // Clear any information about this local; it has a new value here.
     mostCastedGets.erase(curr->index);
