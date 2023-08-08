@@ -177,28 +177,30 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $get)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $not-past-call (param $x (ref struct))
+  (func $yes-past-call (param $x (ref struct))
     (drop
       (ref.cast $A
         (local.get $x)
       )
     )
-    ;; The call in the middle stops us from helping the last get, since a call
-    ;; might branch out. TODO we could still optimize in this case, with more
-    ;; precision (since if we branch out it doesn't matter what we have below).
+    ;; The call in the middle does not stops us from helping the last get, since
+    ;; if we branch out it doesn't matter what we have below.
     (drop
       (call $get)
     )
@@ -208,16 +210,19 @@
   )
 
   ;; CHECK:      (func $not-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $void
   ;; CHECK-NEXT:   (ref.func $void)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $not-past-call_ref (param $x (ref struct))
@@ -226,13 +231,65 @@
         (local.get $x)
       )
     )
-    ;; As in the last function, the call in the middle stops us from helping the
-    ;; last get (this time with a call_ref).
+    ;; As in the last function, but a call_ref.
     (call_ref $void
       (ref.func $void)
     )
     (drop
       (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $not-backwards-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-backwards-past-call (param $x (ref struct))
+    ;; As above, but here we would like to move a cast *earlier*. We must not do
+    ;; that past a possible branch.
+    (drop
+      (local.get $x)
+    )
+    (call $void)
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $not-backwards-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-backwards-past-call_ref (param $x (ref struct))
+    ;; As above, but with a call_ref.
+    (drop
+      (local.get $x)
+    )
+    (call_ref $void
+      (ref.func $void)
+    )
+    (drop
+      (ref.cast $A
+        (local.get $x)
+      )
     )
   )
 

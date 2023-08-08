@@ -34,26 +34,28 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-return_call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-return_call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return_call $none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $not-past-return_call (param $x (ref struct))
+  (func $yes-past-return_call (param $x (ref struct))
     (drop
       (ref.cast $A
         (local.get $x)
       )
     )
-    ;; The call_return in the middle stops us from helping the last get. We
-    ;; could still optimize in this case, however, with more precision (since
-    ;; after we branch out it doesn't matter what we have below).
+    ;; The call_return in the middle does not stop us from optimizing, since
+    ;; after we branch out it doesn't matter what we have below.
     (return_call $none)
     (drop
       (local.get $x)
