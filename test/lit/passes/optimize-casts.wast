@@ -254,7 +254,6 @@
   (func $not-backwards-past-call (param $x (ref struct))
     ;; As above, but here we would like to move a cast *earlier*. We must not do
     ;; that past a possible branch.
-    ;; As in the last function, but a call_ref.
     (drop
       (local.get $x)
     )
