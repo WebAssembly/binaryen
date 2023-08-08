@@ -366,9 +366,7 @@
   ;; CHECK-NEXT:   (local.get $nn-any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (local.tee $any
-  ;; CHECK-NEXT:   (local.get $nn-any)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $nn-any)
   ;; CHECK-NEXT: )
   (func $pick-casted (param $any anyref) (result anyref)
     (local $nn-any (ref any))
@@ -384,10 +382,7 @@
     (call $use-nn-any
       (local.get $nn-any)
     )
-    ;; This copy is not needed, as they hold the same value. However, the call
-    ;; before us inhibits us from optimizing here. TODO: with a more precise
-    ;; analysis we could optimize this, as if the call branches out it doesn't
-    ;; matter what happens after it.
+    ;; This copy is not needed, as they hold the same value.
     (local.set $any
       (local.get $nn-any)
     )

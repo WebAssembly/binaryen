@@ -195,11 +195,9 @@
   )
   ;; CHECK:      (func $12 (type $i32_i32_=>_i32) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)

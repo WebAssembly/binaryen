@@ -44,14 +44,49 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
     self->noteNonLinear(*currp);
   }
 
+  // Optionally, we can connect adjacent basic blocks. "Adjacent" here means
+  // that the first branches to the second, and that there is no other code in
+  // between them. As a result, the first dominates the second, but it might not
+  // reach it.
+  //
+  // For example, a call may branch if exceptions are enabled, but if this
+  // option is flipped on then we will *not* call doNoteNonLinear on the call:
+  //
+  //  ..A..
+  //  call();
+  //  ..B..
+  //
+  // As a result, we'd consider A and B to be together. Another example is an
+  // if:
+  //
+  //  ..A..
+  //  if
+  //    ..B..
+  //  else
+  //    ..C..
+  //  end
+  //
+  // Here we will connect A and B, but *not* A and C (there is code in between)
+  // or B and C (they do not branch to each other).
+  //
+  // As the if case shows, this can be useful for cases where we want to look at
+  // dominated blocks with their dominator, but it only handles the trivial
+  // adjacent cases of such dominance. Passes should generally uses a full CFG
+  // and dominator tree for this, but this option does help some very common
+  // cases (calls, if without an else) and it has very low overhead (we still
+  // only do a simple postorder walk on the IR, no CFG is constructed, etc.).
+  bool connectAdjacentBlocks = false;
+
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
     auto handleCall = [&](bool isReturn) {
-      // Control is nonlinear if we return, or if EH is enabled or may be.
-      if (isReturn || !self->getModule() ||
-          self->getModule()->features.hasExceptionHandling()) {
-        self->pushTask(SubType::doNoteNonLinear, currp);
+      if (!self->connectAdjacentBlocks) {
+        // Control is nonlinear if we return, or if EH is enabled or may be.
+        if (isReturn || !self->getModule() ||
+            self->getModule()->features.hasExceptionHandling()) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
       }
 
       // Scan the children normally.
@@ -78,7 +113,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<If>()->condition);
         break;
       }
