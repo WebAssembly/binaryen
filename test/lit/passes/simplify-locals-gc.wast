@@ -562,6 +562,13 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $0)
@@ -584,6 +591,11 @@
       )
       ;; We can optimize these to both use the same local index, as they must
       ;; contain the same value, even past the br_if and br_on_null.
+      (drop (local.get $0))
+      (drop (local.get $1))
+      (br $block)
+      ;; But we do not optimize these as they are after an unconditional br
+      ;; (so they are unreachable code).
       (drop (local.get $0))
       (drop (local.get $1))
     )
