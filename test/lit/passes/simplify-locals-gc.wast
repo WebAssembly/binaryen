@@ -545,7 +545,9 @@
   ;; CHECK:      (func $equivalent-set-removal-branching (type $i32_anyref_=>_none) (param $0 i32) (param $any anyref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $block
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
@@ -560,6 +562,12 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-branching (param $0 i32) (param $any anyref)
@@ -579,5 +587,9 @@
       (drop (local.get $0))
       (drop (local.get $1))
     )
+    ;; Past the end of the block we do not optimize. The local.set actually does
+    ;; dominate these, but currently we do not realize that in this pass. TODO
+    (drop (local.get $0))
+    (drop (local.get $1))
   )
 )
