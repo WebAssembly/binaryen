@@ -137,6 +137,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::SwitchId: {
         self->pushTask(SubType::doVisitSwitch, currp);
+        // Note that technically we could avoid calling this if
+        // !connectAdjacentBlocks, but the code after us is unreachable anyhow,
+        // so it does not matter, and prefer to keep the code simple.
         self->pushTask(SubType::doNoteNonLinear, currp);
         self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
         self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);

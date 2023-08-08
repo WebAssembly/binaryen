@@ -564,14 +564,16 @@
     (local $1 i32)
     (block $block
       (local.set $1 (local.get $0))
-      (br $block)
+      (br_if $block
+        (local.get $0)
+      )
       (drop
         (br_on_null $block
           (local.get $any)
         )
       )
       ;; We can optimize these to both use the same local index, as they must
-      ;; contain the same value, even past the br.
+      ;; contain the same value, even past the br_if and br_on_null.
       (drop (local.get $0))
       (drop (local.get $1))
     )
