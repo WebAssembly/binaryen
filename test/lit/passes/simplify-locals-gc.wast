@@ -546,7 +546,9 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_null $block
   ;; CHECK-NEXT:     (local.get $any)

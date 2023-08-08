@@ -128,7 +128,11 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::BreakId: {
         self->pushTask(SubType::doVisitBreak, currp);
         auto* br = curr->cast<Break>();
-        if (br->condition && !self->connectAdjacentBlocks) {
+        // If there is no condition then we note non-linearity as the code after
+        // us is unreachable anyhow (we do the same for Switch, Return, etc.).
+        // If there is a condition, then we note or do not note depending on
+        // whether we allow adjacent blocks.
+        if (!br->condition || !self->connectAdjacentBlocks) {
           self->pushTask(SubType::doNoteNonLinear, currp);
         }
         self->maybePushTask(SubType::scan, &br->condition);
