@@ -250,7 +250,9 @@
   ;; CHECK:      (func $equivalent-set-removal-branching (type $i32_=>_none) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $block
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $block)
   ;; CHECK-NEXT:   (br_if $block
   ;; CHECK-NEXT:    (local.get $0)
@@ -269,6 +271,12 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-branching (param $0 i32)
@@ -293,6 +301,11 @@
       (drop (local.get $0))
       (drop (local.get $1))
     )
+    ;; We cannot optimize here, however, as atm we assume any named block
+    ;; prevents optimization. In this case we could see that the set is at the
+    ;; top, so it must still dominate here. TODO
+    (drop (local.get $0))
+    (drop (local.get $1))
   )
 
   ;; CHECK:      (func $equivalent-set-removal-rethrow (type $i32_=>_none) (param $0 i32)
@@ -305,7 +318,9 @@
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (rethrow $try)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $0)
@@ -314,6 +329,12 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $equivalent-set-removal-rethrow (param $0 i32)
@@ -331,5 +352,8 @@
         (drop (local.get $1))
       )
     )
+    ;; We cannot optimize here, however, where we are not dominated by the set.
+    (drop (local.get $0))
+    (drop (local.get $1))
   )
 )
