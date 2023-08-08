@@ -48,6 +48,7 @@ Pass* createExtractFunctionPass();
 Pass* createExtractFunctionIndexPass();
 Pass* createFlattenPass();
 Pass* createFuncCastEmulationPass();
+Pass* createJsCallIndirectPass();
 Pass* createFullPrinterPass();
 Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
