@@ -350,70 +350,63 @@ enum SegmentFlag {
 };
 
 enum EncodedType {
-  // value_type
+  // value types
   i32 = -0x1,  // 0x7f
   i64 = -0x2,  // 0x7e
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
-  i8 = -0x6,   // 0x7a
-  i16 = -0x7,  // 0x79
-  // function reference type
-  funcref = -0x10, // 0x70
-  // external (host) references
-  externref = -0x11, // 0x6f
-  // top type of references to non-function Wasm data.
-  anyref = -0x12, // 0x6e
-  // comparable reference type
-  eqref = -0x13, // 0x6d
-  // nullable typed function reference type, with parameter
-  nullable = -0x14, // 0x6c
-  // non-nullable typed function reference type, with parameter
-  nonnullable = -0x15, // 0x6b
-  // integer reference type
-  i31ref = -0x16, // 0x6a
-  // gc and string reference types
-  structref = -0x19,        // 0x67
-  arrayref = -0x1a,         // 0x66
-  stringref = -0x1c,        // 0x64
-  stringview_wtf8 = -0x1d,  // 0x63
+  // packed types
+  i8 = -0x8,  // 0x78
+  i16 = -0x9, // 0x77
+  // reference types
+  nullfuncref = -0xd,   // 0x73
+  nullexternref = -0xe, // 0x72
+  nullref = -0xf,       // 0x71
+  funcref = -0x10,      // 0x70
+  externref = -0x11,    // 0x6f
+  anyref = -0x12,       // 0x6e
+  eqref = -0x13,        // 0x6d
+  i31ref = -0x14,       // 0x6c
+  structref = -0x15,    // 0x6b
+  arrayref = -0x16,     // 0x6a
+  nullable = -0x1c,     // 0x64
+  nonnullable = -0x1d,  // 0x63
+  // string reference types
+  stringref = -0x19,        // 0x67
+  stringview_wtf8 = -0x1a,  // 0x66
   stringview_wtf16 = -0x1e, // 0x62
   stringview_iter = -0x1f,  // 0x61
-  // bottom types
-  nullexternref = -0x17, // 0x69
-  nullfuncref = -0x18,   // 0x68
-  nullref = -0x1b,       // 0x65
   // type forms
   Func = -0x20,     // 0x60
   Struct = -0x21,   // 0x5f
   Array = -0x22,    // 0x5e
   Sub = -0x30,      // 0x50
-  SubFinal = -0x32, // 0x4e
+  SubFinal = -0x31, // 0x4f
   // isorecursive recursion groups
-  Rec = -0x31, // 0x4f
+  Rec = -0x32, // 0x4e
   // block_type
-  Empty = -0x40 // 0x40
+  Empty = -0x40, // 0x40
 };
 
 enum EncodedHeapType {
+  nofunc = -0xd,   // 0x73
+  noext = -0xe,    // 0x72
+  none = -0xf,     // 0x71
   func = -0x10,    // 0x70
   ext = -0x11,     // 0x6f
   any = -0x12,     // 0x6e
   eq = -0x13,      // 0x6d
-  i31 = -0x16,     // 0x6a
-  struct_ = -0x19, // 0x67
-  array = -0x1a,   // 0x66
-  string = -0x1c,  // 0x64
+  i31 = -0x14,     // 0x6c
+  struct_ = -0x15, // 0x6b
+  array = -0x16,   // 0x6a
+  string = -0x19,  // 0x67
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See
   // https://github.com/WebAssembly/stringref/issues/12
-  stringview_wtf8_heap = -0x1d,  // 0x63
+  stringview_wtf8_heap = -0x1a,  // 0x66
   stringview_wtf16_heap = -0x1e, // 0x62
   stringview_iter_heap = -0x1f,  // 0x61
-  // bottom types
-  noext = -0x17,  // 0x69
-  nofunc = -0x18, // 0x68
-  none = -0x1b,   // 0x65
 };
 
 namespace CustomSections {
@@ -1072,8 +1065,9 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
-  RefAsNonNull = 0xd3,
-  BrOnNull = 0xd4,
+  RefEq = 0xd3,
+  RefAsNonNull = 0xd4,
+  BrOnNull = 0xd5,
   BrOnNonNull = 0xd6,
 
   // exception handling opcodes
@@ -1092,38 +1086,40 @@ enum ASTNodes {
 
   // gc opcodes
 
-  RefEq = 0xd5,
-  StructGet = 0x03,
-  StructGetS = 0x04,
-  StructGetU = 0x05,
-  StructSet = 0x06,
-  StructNew = 0x07,
-  StructNewDefault = 0x08,
-  ArrayNewElem = 0x10,
-  ArrayGet = 0x13,
-  ArrayGetS = 0x14,
-  ArrayGetU = 0x15,
-  ArraySet = 0x16,
-  ArrayCopy = 0x18,
-  ArrayLen = 0x19,
-  ArrayNewFixed = 0x1a,
-  ArrayNew = 0x1b,
-  ArrayNewDefault = 0x1c,
-  ArrayNewData = 0x1d,
-  I31New = 0x20,
-  I31GetS = 0x21,
-  I31GetU = 0x22,
-  RefTest = 0x40,
-  RefCast = 0x41,
-  BrOnCast = 0x4e,
-  BrOnCastFail = 0x4f,
-  RefTestNull = 0x48,
-  RefCastNull = 0x49,
-  ExternInternalize = 0x70,
-  ExternExternalize = 0x71,
-  ArrayFill = 0x0f,
-  ArrayInitData = 0x54,
-  ArrayInitElem = 0x55,
+  StructNew = 0x00,
+  StructNewDefault = 0x01,
+  StructGet = 0x02,
+  StructGetS = 0x03,
+  StructGetU = 0x04,
+  StructSet = 0x05,
+  ArrayNew = 0x06,
+  ArrayNewDefault = 0x07,
+  ArrayNewFixed = 0x08,
+  ArrayNewData = 0x09,
+  ArrayNewElem = 0x0a,
+  ArrayGet = 0x0b,
+  ArrayGetS = 0x0c,
+  ArrayGetU = 0x0d,
+  ArraySet = 0x0e,
+  ArrayLen = 0x0f,
+  ArrayFill = 0x10,
+  ArrayCopy = 0x11,
+  ArrayInitData = 0x12,
+  ArrayInitElem = 0x13,
+  RefTest = 0x14,
+  RefTestNull = 0x15,
+  RefCast = 0x16,
+  RefCastNull = 0x17,
+  BrOnCast = 0x18,
+  BrOnCastFail = 0x19,
+  ExternInternalize = 0x1a,
+  ExternExternalize = 0x1b,
+  I31New = 0x1c,
+  I31GetS = 0x1d,
+  I31GetU = 0x1e,
+
+  // stringref opcodes
+
   StringNewUTF8 = 0x80,
   StringNewWTF16 = 0x81,
   StringConst = 0x82,

@@ -20,6 +20,7 @@ Current Trunk
 - C API: Add BinaryenAddFunctionWithHeapType() which is like BinaryenAddFunction
   but takes a heap type. The old function is kept for backwards compatibility
   and as a convenience.
+- Update the WasmGC opcodes to match the final spec. This is a breaking change.
 
 v114
 ----
