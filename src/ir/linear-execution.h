@@ -127,21 +127,27 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::BreakId: {
         self->pushTask(SubType::doVisitBreak, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
         self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
         break;
       }
       case Expression::Id::SwitchId: {
         self->pushTask(SubType::doVisitSwitch, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
         self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
         break;
       }
       case Expression::Id::ReturnId: {
         self->pushTask(SubType::doVisitReturn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
         break;
       }
@@ -166,7 +172,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::ThrowId: {
         self->pushTask(SubType::doVisitThrow, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         auto& list = curr->cast<Throw>()->operands;
         for (int i = int(list.size()) - 1; i >= 0; i--) {
           self->pushTask(SubType::scan, &list[i]);
@@ -175,17 +183,23 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::RethrowId: {
         self->pushTask(SubType::doVisitRethrow, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         break;
       }
       case Expression::Id::UnreachableId: {
         self->pushTask(SubType::doVisitUnreachable, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         break;
       }
       case Expression::Id::BrOnId: {
         self->pushTask(SubType::doVisitBrOn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<BrOn>()->ref);
         break;
       }

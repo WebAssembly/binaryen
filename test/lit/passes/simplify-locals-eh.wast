@@ -246,4 +246,45 @@
     (drop (local.get $0))
     (drop (local.get $1))
   )
+
+  (func $equivalent-set-removal-branching (param $0 i32)
+    (local $1 i32)
+    (block $block
+      (local.set $1 (local.get $0))
+      (br $block)
+      (br_if $block
+        (local.get $0)
+      )
+      (br_table $block $block
+        (local.get $0)
+      )
+      (return)
+      (unreachable)
+      (throw $e-i32
+        (local.get $0)
+      )      
+      ;; We can optimize these to both use the same local index, as they must
+      ;; contain the same value, even past the br etc., if it wasn't unreachable
+      ;; code.
+      (drop (local.get $0))
+      (drop (local.get $1))
+    )
+  )
+
+  (func $equivalent-set-removal-rethrow (param $0 i32)
+    (local $1 i32)
+    (try
+      (do)
+      (catch $e-i32
+        (local.set $0 (pop i32))
+        (local.set $1 (local.get $0))
+        (rethrow)
+        ;; We can optimize these to both use the same local index, as they must
+        ;; contain the same value, even past the rethrow, if it wasn't
+        ;; unreachable code.
+        (drop (local.get $0))
+        (drop (local.get $1))
+      )
+    )
+  )
 )
