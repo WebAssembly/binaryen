@@ -34,7 +34,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-return_call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-return_call (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1

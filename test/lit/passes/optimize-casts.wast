@@ -240,6 +240,17 @@
     )
   )
 
+  ;; CHECK:      (func $not-backwards-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $void)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $not-backwards-past-call (param $x (ref struct))
     ;; As above, but here we would like to move a cast *earlier*. We must not do
     ;; that past a possible branch.
@@ -255,6 +266,19 @@
     )
   )
 
+  ;; CHECK:      (func $not-backwards-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $void
+  ;; CHECK-NEXT:   (ref.func $void)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $not-backwards-past-call_ref (param $x (ref struct))
     ;; As above, but here we would like to move a cast *earlier*. We must not do
     ;; that past a possible branch.
