@@ -40,7 +40,8 @@
           (global.get $global)
         )
         (call $test)
-        ;; This is after a call, so we do nothing.
+        ;; This is after a call, so we do nothing (we are still dominated by the
+        ;; global.set, but the call might set the global to another value).
         (drop
           (global.get $global)
         )
