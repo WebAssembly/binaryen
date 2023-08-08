@@ -12552,7 +12552,7 @@ function asmFunc(imports) {
  }
  
  function $20() {
-  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
+  var $1_1 = 0, $2_1 = 0;
   __binaryen_fake_return : {
    loop_in : while (1) {
     $1_1 = 3;
@@ -12566,7 +12566,7 @@ function asmFunc(imports) {
  }
  
  function $21() {
-  var $1_1 = 0, $2_1 = 0, $4_1 = 0;
+  var $1_1 = 0, $2_1 = 0;
   __binaryen_fake_return : {
    loop_in : while (1) {
     dummy();
@@ -12735,7 +12735,7 @@ function asmFunc(imports) {
  function $34($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $3_1 = 0, $4_1 = 0, $5_1 = 0;
+  var $3_1 = 0;
   block : {
    $3_1 = 5;
    switch (0 | 0) {
@@ -12749,9 +12749,8 @@ function asmFunc(imports) {
  function $35($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $2_1 = 0, $4_1 = 0, $5_1 = 0;
+  var $4_1 = 0;
   block : {
-   $2_1 = $0;
    $4_1 = 6;
    switch (1 | 0) {
    default:

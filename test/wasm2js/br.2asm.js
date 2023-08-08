@@ -103,7 +103,7 @@ function asmFunc(imports) {
  }
  
  function $13() {
-  var $0 = 0, $1_1 = 0, $3_1 = 0;
+  var $0 = 0, $1_1 = 0;
   block : {
    loop_in : while (1) {
     $0 = 3;
@@ -114,7 +114,7 @@ function asmFunc(imports) {
  }
  
  function $14() {
-  var $0 = 0, $1_1 = 0, $3_1 = 0;
+  var $0 = 0, $1_1 = 0;
   block : {
    loop_in : while (1) {
     dummy();
@@ -247,7 +247,7 @@ function asmFunc(imports) {
  function $27($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $2_1 = 0, $3_1 = 0, $4_1 = 0;
+  var $2_1 = 0;
   block : {
    $2_1 = 5;
    break block;
@@ -258,9 +258,8 @@ function asmFunc(imports) {
  function $28($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $2_1 = 0, $3_1 = 0, $4_1 = 0;
+  var $3_1 = 0;
   block : {
-   $2_1 = $0;
    $3_1 = 6;
    break block;
   }

@@ -1621,8 +1621,7 @@ function asmFunc(imports) {
               if (!var$3) {
                break label$11
               }
-              i64toi32_i32$1 = var$1$hi;
-              i64toi32_i32$0 = var$1;
+              i64toi32_i32$0 = var$3;
               i64toi32_i32$2 = 0;
               i64toi32_i32$3 = 32;
               i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -1652,7 +1651,8 @@ function asmFunc(imports) {
              }
              i64toi32_i32$1 = var$0$hi;
              var$2 = var$0;
-             i64toi32_i32$1 = var$1$hi;
+             i64toi32_i32$1 = i64toi32_i32$2;
+             i64toi32_i32$1 = i64toi32_i32$2;
              var$3 = var$1;
              var$2 = (var$2 >>> 0) / (var$3 >>> 0) | 0;
              i64toi32_i32$1 = 0;
