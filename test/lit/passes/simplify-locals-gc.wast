@@ -542,13 +542,33 @@
     )
   )
 
+  ;; CHECK:      (func $equivalent-set-removal-branching (type $i32_anyref_=>_none) (param $0 i32) (param $any anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $block
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $equivalent-set-removal-branching (param $0 i32) (param $any anyref)
     (local $1 i32)
     (block $block
       (local.set $1 (local.get $0))
       (br $block)
-      (br_on_null $block
-        (local.get $any)
+      (drop
+        (br_on_null $block
+          (local.get $any)
+        )
       )
       ;; We can optimize these to both use the same local index, as they must
       ;; contain the same value, even past the br.

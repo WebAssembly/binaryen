@@ -247,6 +247,30 @@
     (drop (local.get $1))
   )
 
+  ;; CHECK:      (func $equivalent-set-removal-branching (type $i32_=>_none) (param $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_table $block $block
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (throw $e-i32
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $equivalent-set-removal-branching (param $0 i32)
     (local $1 i32)
     (block $block
@@ -262,7 +286,7 @@
       (unreachable)
       (throw $e-i32
         (local.get $0)
-      )      
+      )
       ;; We can optimize these to both use the same local index, as they must
       ;; contain the same value, even past the br etc., if it wasn't unreachable
       ;; code.
@@ -271,14 +295,35 @@
     )
   )
 
+  ;; CHECK:      (func $equivalent-set-removal-rethrow (type $i32_=>_none) (param $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-i32
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (rethrow $try)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $equivalent-set-removal-rethrow (param $0 i32)
     (local $1 i32)
-    (try
+    (try $try
       (do)
       (catch $e-i32
         (local.set $0 (pop i32))
         (local.set $1 (local.get $0))
-        (rethrow)
+        (rethrow $try)
         ;; We can optimize these to both use the same local index, as they must
         ;; contain the same value, even past the rethrow, if it wasn't
         ;; unreachable code.

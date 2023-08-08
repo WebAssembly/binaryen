@@ -3555,7 +3555,7 @@
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (nop)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $6)
+  ;; CHECK-NEXT:         (local.get $var$0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (nop)
   ;; CHECK-NEXT:        (local.set $6
@@ -3566,7 +3566,7 @@
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (nop)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $6)
+  ;; CHECK-NEXT:         (local.get $var$0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (unreachable)
   ;; CHECK-NEXT:        (unreachable)
@@ -3682,7 +3682,7 @@
   ;; CHECK-NEXT:          (nop)
   ;; CHECK-NEXT:          (local.set $6
   ;; CHECK-NEXT:           (i32.clz
-  ;; CHECK-NEXT:            (local.get $6)
+  ;; CHECK-NEXT:            (local.get $var$0)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
