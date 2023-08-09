@@ -20,6 +20,7 @@ Current Trunk
    the `else` branch itself.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
    to configure which features to enable in the parser.
+ - The build-time option to use legacy WasmGC opcodes is removed.
 
 v117
 ----
