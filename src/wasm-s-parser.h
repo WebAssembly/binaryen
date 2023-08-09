@@ -287,14 +287,10 @@ private:
   Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
-  Expression* makeRefTest(Element& s,
-                          std::optional<Type> castType = std::nullopt);
-  Expression* makeRefCast(Element& s,
-                          std::optional<Type> castType = std::nullopt);
-  Expression* makeRefCastNop(Element& s);
+  Expression* makeRefTest(Element& s);
+  Expression* makeRefCast(Element& s);
   Expression* makeBrOnNull(Element& s, bool onFail = false);
-  Expression*
-  makeBrOnCast(Element& s, std::optional<Type> castType, bool onFail = false);
+  Expression* makeBrOnCast(Element& s, bool onFail = false);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);

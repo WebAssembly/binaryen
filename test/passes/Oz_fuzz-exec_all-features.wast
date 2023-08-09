@@ -179,7 +179,7 @@
  )
  (func "ref-as-func-of-func"
   (drop
-   (ref.as_func
+   (ref.cast func
     (ref.func $0)
    )
   )

@@ -1768,8 +1768,7 @@ BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
                                       BinaryenType type) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeRefCast((Expression*)ref, Type(type), RefCast::Safety::Safe));
+    Builder(*(Module*)module).makeRefCast((Expression*)ref, Type(type)));
 }
 BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                    BinaryenOp op,

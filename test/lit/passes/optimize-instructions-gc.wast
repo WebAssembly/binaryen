@@ -122,8 +122,8 @@
   )
 
   ;; ref.is_null is not needed on a non-nullable value, and if something is
-  ;; a func we don't need that either etc. if we know the result
-  ;; CHECK:      (func $unneeded_is (type $ref|$struct|_ref|func|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
+  ;; cast to its own type, we don't need that either, etc.
+  ;; CHECK:      (func $unneeded_test (type $ref|$struct|_ref|func|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -149,7 +149,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unneeded_is
+  (func $unneeded_test
     (param $struct (ref $struct))
     (param $func (ref func))
     (param $i31 (ref i31))
@@ -157,16 +157,16 @@
       (ref.is_null (local.get $struct))
     )
     (drop
-       (ref.is_func (local.get $func))
+       (ref.test func (local.get $func))
      )
     (drop
-      (ref.is_i31 (local.get $i31))
+      (ref.test i31 (local.get $i31))
     )
   )
 
   ;; similar to $unneeded_is, but the values are nullable. we can at least
   ;; leave just the null check.
-  ;; CHECK:      (func $unneeded_is_null (type $ref?|$struct|_funcref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_test_null (type $ref?|$struct|_funcref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -187,7 +187,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unneeded_is_null
+  (func $unneeded_test_null
    (param $struct (ref null $struct))
     (param $func (ref null func))
     (param $i31 (ref null i31))
@@ -197,17 +197,17 @@
     ;; This can be optimized to !is_null rather than ref.test func, since we
     ;; know the heap type is what we want, so the only possible issue is a null.
     (drop
-      (ref.is_func (local.get $func))
+      (ref.test func (local.get $func))
     )
     ;; This can be optimized similarly.
     (drop
-      (ref.is_i31 (local.get $i31))
+      (ref.test i31 (local.get $i31))
     )
   )
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc., and can just return the value.
-  ;; CHECK:      (func $unneeded_as (type $ref|$struct|_ref|func|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
+  ;; CHECK:      (func $unneeded_cast (type $ref|$struct|_ref|func|_ref|i31|_=>_none) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
@@ -218,7 +218,7 @@
   ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unneeded_as
+  (func $unneeded_cast
     (param $struct (ref $struct))
     (param $func (ref func))
     (param $i31 (ref i31))
@@ -226,16 +226,16 @@
       (ref.as_non_null (local.get $struct))
     )
     (drop
-      (ref.as_func (local.get $func))
+      (ref.cast func (local.get $func))
     )
     (drop
-      (ref.as_i31 (local.get $i31))
+      (ref.cast i31 (local.get $i31))
     )
   )
 
-  ;; similar to $unneeded_as, but the values are nullable. we can turn the
+  ;; similar to $unneeded_cast, but the values are nullable. we can turn the
   ;; more specific things into ref.as_non_null.
-  ;; CHECK:      (func $unneeded_as_null (type $ref?|$struct|_funcref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_cast_null (type $ref?|$struct|_funcref_i31ref_=>_none) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -252,7 +252,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unneeded_as_null
+  (func $unneeded_cast_null
     (param $struct (ref null $struct))
     (param $func (ref null func))
     (param $i31 (ref null i31))
@@ -260,10 +260,10 @@
       (ref.as_non_null (local.get $struct))
     )
     (drop
-      (ref.as_func (local.get $func))
+      (ref.cast func (local.get $func))
     )
     (drop
-      (ref.as_i31 (local.get $i31))
+      (ref.cast i31 (local.get $i31))
     )
   )
 
@@ -285,10 +285,10 @@
   (func $unneeded_unreachability
     ;; unreachable instructions can simply be ignored
     (drop
-      (ref.is_func (unreachable))
+      (ref.test func (unreachable))
     )
     (drop
-      (ref.as_func (unreachable))
+      (ref.cast func (unreachable))
     )
   )
 
@@ -617,7 +617,7 @@
     ;; This will trap, so we can emit an unreachable.
     (drop
       (ref.cast $struct
-        (ref.as_i31
+        (ref.cast i31
           (local.get $x)
         )
       )

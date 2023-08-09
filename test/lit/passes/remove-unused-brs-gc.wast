@@ -11,57 +11,6 @@
   (type $struct2 (struct))
  )
 
- ;; CHECK:      (func $br_on_non_i31-1 (type $none_=>_none)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result (ref null $struct))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br $any
- ;; CHECK-NEXT:      (struct.new_default $struct)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $br_on_non_i31-1
-  (drop
-   (block $any (result anyref)
-    (drop
-     ;; An struct is not an i31, and so we should branch.
-     (br_on_non_i31 $any
-      (struct.new $struct)
-     )
-    )
-    (ref.null any)
-   )
-  )
- )
- ;; CHECK:      (func $br_on_non_i31-2 (type $none_=>_none)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $any (result nullref)
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (i31.new
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $br_on_non_i31-2
-  (drop
-   (block $any (result anyref)
-    (drop
-     ;; An i31 is provided here, and so we will not branch.
-     (br_on_non_i31 $any
-      (i31.new (i32.const 0))
-     )
-    )
-    (ref.null any)
-   )
-  )
- )
-
  ;; CHECK:      (func $br_on-if (type $ref|struct|_=>_none) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
@@ -93,34 +42,6 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on (type $none_=>_i31ref) (result i31ref)
- ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br $label$1
- ;; CHECK-NEXT:     (i31.new
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $nested_br_on (result i31ref)
-  (block $label$1 (result i31ref)
-   (drop
-    ;; The inner br_on_i31 will become a direct br since the type proves it
-    ;; is in fact data. That then becomes unreachable, and the parent must
-    ;; handle that properly (do nothing without hitting an assertion).
-    (br_on_i31 $label$1
-     (br_on_i31 $label$1
-      (i31.new (i32.const 0))
-     )
-    )
-   )
-   (unreachable)
-  )
- )
-
  ;; CHECK:      (func $br_on_cast (type $none_=>_ref|$struct|) (result (ref $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -138,6 +59,34 @@
     ;; taken, so we can turn it into a normal br.
     (br_on_cast $block anyref (ref $struct)
      (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $nested_br_on_cast (type $none_=>_i31ref) (result i31ref)
+ ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $label$1
+ ;; CHECK-NEXT:     (i31.new
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $nested_br_on_cast (result i31ref)
+  (block $label$1 (result i31ref)
+   (drop
+    ;; The inner br_on_cast will become a direct br since the type proves it
+    ;; is in fact i31. That then becomes unreachable, and the parent must
+    ;; handle that properly (do nothing without hitting an assertion).
+    (br_on_cast $label$1 (ref any) (ref i31)
+     (br_on_cast $label$1 (ref any) (ref i31)
+      (i31.new (i32.const 0))
+     )
     )
    )
    (unreachable)

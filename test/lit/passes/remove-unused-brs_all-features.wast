@@ -8,9 +8,9 @@
  (type $vector (array (mut i32)))
  ;; CHECK:      (type $struct (struct (field (ref null $vector))))
  (type $struct (struct (field (ref null $vector))))
- ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
-
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+ ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
@@ -20,9 +20,11 @@
 
  ;; CHECK:      (type $i32_=>_funcref (func (param i32) (result funcref)))
 
+ ;; CHECK:      (type $none_=>_none (func))
+
  ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (import "out" "log" (func $log (param i32)))
- ;; CHECK:      (elem declare func $br_on-to-br $i32_=>_none $none_=>_i32)
+ ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $i32_=>_none $none_=>_i32)
 
  ;; CHECK:      (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
@@ -116,110 +118,57 @@
   )
  )
 
- ;; CHECK:      (func $br_on-to-br (type $ref|func|_=>_none) (param $func (ref func))
- ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $br_on_null (type $none_=>_none)
  ;; CHECK-NEXT:  (block $null
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.func $br_on-to-br)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (call $log
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $func (result (ref $ref|func|_=>_none))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br $func
- ;; CHECK-NEXT:      (ref.func $br_on-to-br)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $log
- ;; CHECK-NEXT:     (i32.const 3)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.func $br_on-to-br)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 4)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $i31 (result (ref i31))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br $i31
- ;; CHECK-NEXT:      (i31.new
- ;; CHECK-NEXT:       (i32.const 42)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $log
- ;; CHECK-NEXT:     (i32.const 5)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i31.new
- ;; CHECK-NEXT:     (i32.const 1337)
+ ;; CHECK-NEXT:    (br_on_null $null
+ ;; CHECK-NEXT:     (ref.null nofunc)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 6)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $non-null (result (ref $ref|func|_=>_none))
- ;; CHECK-NEXT:    (br $non-null
- ;; CHECK-NEXT:     (ref.func $br_on-to-br)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $log
- ;; CHECK-NEXT:     (i32.const 7)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.func $br_on-to-br)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.func $br_on_null)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on-to-br (param $func (ref func))
-  (call $log (i32.const 0))
+ (func $br_on_null
   (block $null
-   ;; a non-null reference is not null, and the br is never taken
+   ;; A null reference to bottom is definitely null, and the br is always taken.
+   ;; TODO: Optimize this.
    (drop
-    (br_on_null $null (ref.func $br_on-to-br))
+    (br_on_null $null (ref.null nofunc))
    )
-   (call $log (i32.const 1))
-  )
-  (call $log (i32.const 2))
-  (drop
-   (block $func (result funcref)
-    ;; a non-null function reference means we always take the br
-    (drop
-     (br_on_func $func (ref.func $br_on-to-br))
-    )
-    (call $log (i32.const 3))
-    (ref.func $br_on-to-br)
+   ;; On the other hand, if we know the input is not null, the branch will never
+   ;; be taken.
+   (drop
+    (br_on_null $null (ref.func $br_on_null))
    )
   )
-  (call $log (i32.const 4))
-  (drop
-   (block $i31 (result i31ref)
-    ;; a non-null i31 reference means we always take the br
-    (drop
-     (br_on_i31 $i31
-      (i31.new (i32.const 42))
-     )
-    )
-    (call $log (i32.const 5))
-    (i31.new (i32.const 1337))
+ )
+
+ ;; CHECK:      (func $br_on_non_null (type $none_=>_funcref) (result funcref)
+ ;; CHECK-NEXT:  (block $non-null (result (ref $none_=>_funcref))
+ ;; CHECK-NEXT:   (br $non-null
+ ;; CHECK-NEXT:    (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_on_non_null $non-null
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null (result funcref)
+  (block $non-null (result (ref func))
+   ;; A non-null reference is not null, and the br is always taken.
+   (br_on_non_null $non-null
+    (ref.func $br_on_non_null)
    )
-  )
-  (call $log (i32.const 6))
-  (drop
-   (block $non-null (result (ref func))
-    ;; a non-null reference is not null, and the br is always taken
-    (br_on_non_null $non-null (ref.func $br_on-to-br))
-    (call $log (i32.const 7))
-    (ref.func $br_on-to-br)
+   ;; On the other hand, if we know the input is null, the branch will never be
+   ;; taken.
+   ;; TODO: Optimize this.
+   (br_on_non_null $non-null
+    (ref.null nofunc)
    )
+   (ref.func $br_on_non_null)
   )
  )
 )

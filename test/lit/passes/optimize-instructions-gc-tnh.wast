@@ -146,7 +146,7 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $ref.is_b (param $a eqref) (param $f funcref) (result i32)
-    ;; Here we only have a cast, and no ref.as operations that force the value
+    ;; Here we only have a cast, and no cast operations that force the value
     ;; to be non-nullable. That means we cannot remove the ref.is, but we can
     ;; remove the cast in TNH.
     (drop
@@ -164,28 +164,56 @@
     )
   )
 
-  ;; TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
+  ;; TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.as_non_null
-  ;; TNH-NEXT:    (local.get $a)
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.cast null i31
+  ;; TNH-NEXT:      (local.get $a)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (i32.const 1)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (i32.const 1)
+  ;; TNH-NEXT:  (block (result i32)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (ref.as_non_null
+  ;; TNH-NEXT:     (local.get $a)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
-  ;; NO_TNH:      (func $ref.is_func (type $funcref_=>_i32) (param $a funcref) (result i32)
+  ;; NO_TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_non_null
-  ;; NO_TNH-NEXT:    (local.get $a)
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast null i31
+  ;; NO_TNH-NEXT:      (local.get $a)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.const 1)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (i32.const 1)
+  ;; NO_TNH-NEXT:  (block (result i32)
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (local.get $a)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
-  (func $ref.is_func (param $a funcref) (result i32)
-    ;; The check must succeed. We can return 1 here, and drop the rest, with or
-    ;; without TNH (in particular, TNH should not just remove the cast but not
-    ;; return a 1).
-    (ref.is_func
-      (ref.as_func
+  (func $ref.test (param $a eqref) (result i32)
+    (drop
+      (ref.test null i31
+        (ref.cast null i31
+          (local.get $a)
+        )
+      )
+    )
+    (ref.test eq
+      (ref.cast eq
         (local.get $a)
       )
     )

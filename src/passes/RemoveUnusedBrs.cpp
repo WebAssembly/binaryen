@@ -714,9 +714,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         // First, check for a possible null which would prevent optimizations on
         // null checks.
-        // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
-        // input is (ref null func) with br_on_non_null (as only the null check
-        // would be needed).
         // TODO: Use the fallthrough to determine in more cases that we
         // definitely have a null.
         auto refType = curr->ref->type;

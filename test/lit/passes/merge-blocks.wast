@@ -34,7 +34,7 @@
    (block $label$1 (result (ref null i31)) ;; this block type must stay, we
                                            ;; cannot remove it due to the br_on
     (drop
-     (br_on_i31 $label$1
+     (br_on_cast $label$1 anyref (ref i31)
       (ref.null any)
      )
     )
