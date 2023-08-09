@@ -24,7 +24,7 @@
 
  ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (import "out" "log" (func $log (param i32)))
- ;; CHECK:      (elem declare func $br_on_non_null $i32_=>_none $none_=>_i32)
+ ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $i32_=>_none $none_=>_i32)
 
  ;; CHECK:      (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
@@ -125,14 +125,22 @@
  ;; CHECK-NEXT:     (ref.null nofunc)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.func $br_on_null)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_null
   (block $null
-   ;; a null reference to bottom is definitely null, and the br is always taken
+   ;; A null reference to bottom is definitely null, and the br is always taken.
    ;; TODO: Optimize this.
    (drop
     (br_on_null $null (ref.null nofunc))
+   )
+   ;; On the other hand, if we know the input is not null, the branch will never
+   ;; be taken.
+   (drop
+    (br_on_null $null (ref.func $br_on_null))
    )
   )
  )
@@ -142,13 +150,24 @@
  ;; CHECK-NEXT:   (br $non-null
  ;; CHECK-NEXT:    (ref.func $br_on_non_null)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br_on_non_null $non-null
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (ref.func $br_on_non_null)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_non_null (result funcref)
   (block $non-null (result (ref func))
-   ;; a non-null reference is not null, and the br is always taken
-   (br_on_non_null $non-null (ref.func $br_on_non_null))
+   ;; A non-null reference is not null, and the br is always taken.
+   (br_on_non_null $non-null
+    (ref.func $br_on_non_null)
+   )
+   ;; On the other hand, if we know the input is null, the branch will never be
+   ;; taken.
+   ;; TODO: Optimize this.
+   (br_on_non_null $non-null
+    (ref.null nofunc)
+   )
    (ref.func $br_on_non_null)
   )
  )
