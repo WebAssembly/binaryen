@@ -10,6 +10,8 @@
  (type $struct (struct (field (ref null $vector))))
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
+ ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+
  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
@@ -18,9 +20,11 @@
 
  ;; CHECK:      (type $i32_=>_funcref (func (param i32) (result funcref)))
 
+ ;; CHECK:      (type $none_=>_none (func))
+
  ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (import "out" "log" (func $log (param i32)))
- ;; CHECK:      (elem declare func $i32_=>_none $none_=>_i32)
+ ;; CHECK:      (elem declare func $br_on_non_null $i32_=>_none $none_=>_i32)
 
  ;; CHECK:      (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
@@ -111,6 +115,41 @@
    (local.get $x)
    (ref.func $none_=>_i32)
    (ref.func $i32_=>_none)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_null (type $none_=>_none)
+ ;; CHECK-NEXT:  (block $null
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $null
+ ;; CHECK-NEXT:     (ref.null nofunc)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null
+  (block $null
+   ;; a null reference to bottom is definitely null, and the br is always taken
+   ;; TODO: Optimize this.
+   (drop
+    (br_on_null $null (ref.null nofunc))
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null (type $none_=>_funcref) (result funcref)
+ ;; CHECK-NEXT:  (block $non-null (result (ref $none_=>_funcref))
+ ;; CHECK-NEXT:   (br $non-null
+ ;; CHECK-NEXT:    (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null (result funcref)
+  (block $non-null (result (ref func))
+   ;; a non-null reference is not null, and the br is always taken
+   (br_on_non_null $non-null (ref.func $br_on_non_null))
+   (ref.func $br_on_non_null)
   )
  )
 )
