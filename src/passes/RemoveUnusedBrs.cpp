@@ -706,47 +706,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       std::unordered_set<Name> labels;
       // Used to generate fresh labels.
       Index freshNameHint = 0;
-      // Whether we need to uniquify the labels at the end.
-      bool hasLabelConflict = false;
 
-      void noteLabel(Name label) {
-        auto [it, inserted] = labels.insert(label);
-        if (!inserted) {
-          hasLabelConflict = true;
-        }
-      }
-
-      Name freshLabel() {
+      Name freshLabel(Expression* curr) {
+        // TODO: Optimize this by collecting names as we go if this becomes hot.
+        auto names = BranchUtils::getUniqueTargets(curr);
         auto label = Names::getValidName(
           "_br_on_opt",
-          [&](Name name) { return !labels.count(name); },
+          [&](Name name) { return !names.count(name); },
           freshNameHint++);
-        labels.insert(label);
         return label;
       }
 
-      void visitBlock(Block* curr) { noteLabel(curr->name); }
-
-      void visitLoop(Loop* curr) { noteLabel(curr->name); }
-
-      void visitBreak(Break* curr) { noteLabel(curr->name); }
-
-      void visitTry(Try* curr) {
-        noteLabel(curr->name);
-        noteLabel(curr->delegateTarget);
-      }
-
-      void visitRethrow(Rethrow* curr) { noteLabel(curr->target); }
-
-      void visitSwitch(Switch* curr) {
-        for (auto label : curr->targets) {
-          noteLabel(label);
-        }
-        noteLabel(curr->default_);
-      }
-
       void visitBrOn(BrOn* curr) {
-        noteLabel(curr->name);
         // Ignore unreachable BrOns which we cannot improve anyhow. Note that
         // we must check the ref field manually, as we may be changing types as
         // we go here. (Another option would be to use a TypeUpdater here
@@ -828,7 +799,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               curr->name,
               builder.makeRefNull(curr->ref->type.getHeapType().getBottom()));
 
-            Name label = freshLabel();
+            Name label = freshLabel(curr);
             curr->op = BrOnNonNull;
             curr->name = label;
             curr->castType = Type::none;
@@ -878,7 +849,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     optimizer.setModule(getModule());
     optimizer.doWalkFunction(func);
-    if (optimizer.hasLabelConflict) {
+    if (optimizer.freshNameHint > 0) {
+      // We generated a label name, so we may need to uniquify it.
       UniqueNameMapper::uniquify(func->body);
     }
 

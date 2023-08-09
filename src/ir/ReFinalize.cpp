@@ -296,7 +296,6 @@ void ReFinalize::visitFunction(Function* curr) {
     // We generated a fresh name at some point, but it might have still ended up
     // being the same as some other name we hadn't seen yet. Re-uniquify all the
     // names to avoid problems.
-    // TODO: Detect conflicts more precisely like we do in RemoveUnusedBrs.
     UniqueNameMapper::uniquify(curr->body);
   }
 }
