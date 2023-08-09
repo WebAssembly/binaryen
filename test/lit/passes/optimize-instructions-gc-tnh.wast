@@ -127,16 +127,6 @@
   ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
-  ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block (result i32)
-  ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (ref.cast $struct
-  ;; TNH-NEXT:      (local.get $a)
-  ;; TNH-NEXT:     )
-  ;; TNH-NEXT:    )
-  ;; TNH-NEXT:    (i32.const 0)
-  ;; TNH-NEXT:   )
-  ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (ref.is_null
   ;; TNH-NEXT:   (local.get $f)
   ;; TNH-NEXT:  )
@@ -149,16 +139,6 @@
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
-  ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block (result i32)
-  ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast $struct
-  ;; NO_TNH-NEXT:      (local.get $a)
-  ;; NO_TNH-NEXT:     )
-  ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (i32.const 0)
-  ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.is_null
   ;; NO_TNH-NEXT:   (ref.cast null $void
   ;; NO_TNH-NEXT:    (local.get $f)
@@ -166,20 +146,12 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT: )
   (func $ref.is_b (param $a eqref) (param $f funcref) (result i32)
-    ;; Here we only have a cast, and no ref.as operations that force the value
+    ;; Here we only have a cast, and no cast operations that force the value
     ;; to be non-nullable. That means we cannot remove the ref.is, but we can
     ;; remove the cast in TNH.
     (drop
       (ref.is_null
         (ref.cast null $struct
-          (local.get $a)
-        )
-      )
-    )
-    ;; If the cast eliminates null, then we can optimize.
-    (drop
-      (ref.is_null
-        (ref.cast $struct
           (local.get $a)
         )
       )
@@ -190,7 +162,61 @@
         (local.get $f)
       )
     )
+  )
 
+  ;; TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (block (result i32)
+  ;; TNH-NEXT:    (drop
+  ;; TNH-NEXT:     (ref.cast null i31
+  ;; TNH-NEXT:      (local.get $a)
+  ;; TNH-NEXT:     )
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (block (result i32)
+  ;; TNH-NEXT:   (drop
+  ;; TNH-NEXT:    (ref.as_non_null
+  ;; TNH-NEXT:     (local.get $a)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:   (i32.const 1)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $ref.test (type $eqref_=>_i32) (param $a eqref) (result i32)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (block (result i32)
+  ;; NO_TNH-NEXT:    (drop
+  ;; NO_TNH-NEXT:     (ref.cast null i31
+  ;; NO_TNH-NEXT:      (local.get $a)
+  ;; NO_TNH-NEXT:     )
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (block (result i32)
+  ;; NO_TNH-NEXT:   (drop
+  ;; NO_TNH-NEXT:    (ref.as_non_null
+  ;; NO_TNH-NEXT:     (local.get $a)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:   (i32.const 1)
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $ref.test (param $a eqref) (result i32)
+    (drop
+      (ref.test null i31
+        (ref.cast null i31
+          (local.get $a)
+        )
+      )
+    )
+    (ref.test eq
+      (ref.cast eq
+        (local.get $a)
+      )
+    )
   )
 
   ;; TNH:      (func $if.arm.null (type $i32_ref|$struct|_=>_none) (param $x i32) (param $ref (ref $struct))
