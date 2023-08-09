@@ -541,4 +541,67 @@
       )
     )
   )
+
+  ;; CHECK:      (func $equivalent-set-removal-branching (type $i32_anyref_=>_none) (param $0 i32) (param $any anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $block
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $equivalent-set-removal-branching (param $0 i32) (param $any anyref)
+    (local $1 i32)
+    (block $block
+      (local.set $1 (local.get $0))
+      (br_if $block
+        (local.get $0)
+      )
+      (drop
+        (br_on_null $block
+          (local.get $any)
+        )
+      )
+      ;; We can optimize these to both use the same local index, as they must
+      ;; contain the same value, even past the br_if and br_on_null.
+      (drop (local.get $0))
+      (drop (local.get $1))
+      (br $block)
+      ;; But we do not optimize these as they are after an unconditional br
+      ;; (so they are unreachable code).
+      (drop (local.get $0))
+      (drop (local.get $1))
+    )
+    ;; Past the end of the block we do not optimize. The local.set actually does
+    ;; dominate these, but currently we do not realize that in this pass. TODO
+    (drop (local.get $0))
+    (drop (local.get $1))
+  )
 )

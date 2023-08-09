@@ -127,9 +127,16 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::BreakId: {
         self->pushTask(SubType::doVisitBreak, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
+        auto* br = curr->cast<Break>();
+        // If there is no condition then we note non-linearity as the code after
+        // us is unreachable anyhow (we do the same for Switch, Return, etc.).
+        // If there is a condition, then we note or do not note depending on
+        // whether we allow adjacent blocks.
+        if (!br->condition || !self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
+        self->maybePushTask(SubType::scan, &br->condition);
+        self->maybePushTask(SubType::scan, &br->value);
         break;
       }
       case Expression::Id::SwitchId: {
@@ -185,7 +192,9 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       }
       case Expression::Id::BrOnId: {
         self->pushTask(SubType::doVisitBrOn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        if (!self->connectAdjacentBlocks) {
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<BrOn>()->ref);
         break;
       }
