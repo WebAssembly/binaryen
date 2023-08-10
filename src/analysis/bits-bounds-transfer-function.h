@@ -1,5 +1,5 @@
 #ifndef wasm_analysis_bits_bounds_transfer_function_h
-#define wasm_analysis_bits_bounds_transfer_function_H
+#define wasm_analysis_bits_bounds_transfer_function_h
 
 #include <unordered_map>
 
@@ -364,4 +364,4 @@ public:
 
 } // namespace wasm::analysis
 
-#endif // wasm_analysis_bits_bounds_transfer_function_H
+#endif // wasm_analysis_bits_bounds_transfer_function_h
