@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef wasm_analysis_bits_bounds_transfer_function_h
 #define wasm_analysis_bits_bounds_transfer_function_h
 
@@ -26,25 +42,22 @@ public:
   void visitConst(Const* curr) {
     MaxBitsLattice::Element currElement = bitsLattice.getBottom();
 
-    bool addInformation = true;
     switch (curr->type.getBasic()) {
       case Type::i32:
-        currElement.setUpperBound(
-          32 - curr->value.countLeadingZeroes().geti32(), curr->value);
+        currElement.setLiteralValue(curr->value);
+        if (collectingResults) {
+          exprMaxBounds[curr] = currElement.getUpperBound().value();
+        }
         break;
       case Type::i64:
-        currElement.setUpperBound(
-          64 - curr->value.countLeadingZeroes().geti64(), curr->value);
+        currElement.setLiteralValue(curr->value);
+        if (collectingResults) {
+          exprMaxBounds[curr] = currElement.getUpperBound().value();
+        }
         break;
       default: {
-        addInformation = false;
       }
     }
-
-    if (collectingResults && addInformation) {
-      exprMaxBounds[curr] = currElement.upperBound;
-    }
-
     currState->push(std::move(currElement));
   }
 
@@ -59,22 +72,27 @@ public:
       case RotLInt32:
       case RotRInt32:
       case SubInt32: {
+        // TODO: Use a more precise estimate for these cases.
         currElement.setUpperBound(32);
         break;
       }
       case AddInt32: {
         currElement.setUpperBound(
-          std::min(Index(32), std::max(left.upperBound, right.upperBound) + 1));
+          std::min(Index(32),
+                   std::max(left.geti32ApproxUpperBound(),
+                            right.geti32ApproxUpperBound()) +
+                     1));
         break;
       }
       case MulInt32: {
-        currElement.setUpperBound(
-          std::min(Index(32), left.upperBound + right.upperBound));
+        currElement.setUpperBound(std::min(Index(32),
+                                           left.geti32ApproxUpperBound() +
+                                             right.geti32ApproxUpperBound()));
         break;
       }
       case DivSInt32: {
-        int32_t maxBitsLeft = left.upperBound;
-        int32_t maxBitsRight = right.upperBound;
+        int32_t maxBitsLeft = left.geti32ApproxUpperBound();
+        int32_t maxBitsRight = right.geti32ApproxUpperBound();
         if (maxBitsLeft == 32 || maxBitsRight == 32) {
           currElement.setUpperBound(32);
         } else {
@@ -84,19 +102,21 @@ public:
         break;
       }
       case DivUInt32: {
-        int32_t maxBitsLeft = left.upperBound;
-        int32_t maxBitsRight = right.upperBound;
+        int32_t maxBitsLeft = left.geti32ApproxUpperBound();
+        int32_t maxBitsRight = right.geti32ApproxUpperBound();
         currElement.setUpperBound(std::max(0, maxBitsLeft - maxBitsRight + 1));
         break;
       }
       case RemSInt32: {
-        if (right.constVal.has_value()) {
-          if (left.upperBound == 32) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
+          Index leftUpperBound = left.geti32ApproxUpperBound();
+          if (leftUpperBound == 32) {
             currElement.setUpperBound(32);
           } else {
             auto bitsRight =
-              Index(wasm::Bits::ceilLog2(right.constVal.value().geti32()));
-            currElement.setUpperBound(std::min(left.upperBound, bitsRight));
+              Index(wasm::Bits::ceilLog2(constRightValue.value().geti32()));
+            currElement.setUpperBound(std::min(leftUpperBound, bitsRight));
           }
         } else {
           currElement.setUpperBound(32);
@@ -104,56 +124,67 @@ public:
         break;
       }
       case RemUInt32: {
-        if (right.constVal.has_value()) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
           auto bitsRight =
-            Index(wasm::Bits::ceilLog2(right.constVal.value().geti32()));
-          currElement.setUpperBound(std::min(left.upperBound, bitsRight));
+            Index(wasm::Bits::ceilLog2(constRightValue.value().geti32()));
+          currElement.setUpperBound(
+            std::min(left.geti32ApproxUpperBound(), bitsRight));
         } else {
           currElement.setUpperBound(32);
         }
         break;
       }
       case AndInt32: {
-        currElement.setUpperBound(std::min(left.upperBound, right.upperBound));
+        currElement.setUpperBound(std::min(left.geti32ApproxUpperBound(),
+                                           right.geti32ApproxUpperBound()));
         break;
       }
       case OrInt32:
       case XorInt32: {
-        currElement.setUpperBound(std::max(left.upperBound, right.upperBound));
+        currElement.setUpperBound(std::max(left.geti32ApproxUpperBound(),
+                                           right.geti32ApproxUpperBound()));
         break;
       }
       case ShlInt32: {
-        if (right.constVal.has_value()) {
-          currElement.setUpperBound(std::min(
-            Index(32),
-            left.upperBound + Bits::getEffectiveShifts(
-                                right.constVal.value().geti32(), Type::i32)));
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
+          currElement.setUpperBound(
+            std::min(Index(32),
+                     left.geti32ApproxUpperBound() +
+                       Bits::getEffectiveShifts(
+                         constRightValue.value().geti32(), Type::i32)));
         }
         break;
       }
       case ShrUInt32: {
-        if (right.constVal.has_value()) {
-          auto shifts = std::min(Index(Bits::getEffectiveShifts(
-                                   right.constVal.value().geti32(), Type::i32)),
-                                 left.upperBound);
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
+          Index leftUpperBound = left.geti32ApproxUpperBound();
+          auto shifts =
+            std::min(Index(Bits::getEffectiveShifts(
+                       constRightValue.value().geti32(), Type::i32)),
+                     leftUpperBound);
           currElement.setUpperBound(
-            std::max(Index(0), left.upperBound - shifts));
+            std::max(Index(0), leftUpperBound - shifts));
         } else {
           currElement.setUpperBound(32);
         }
         break;
       }
       case ShrSInt32: {
-        if (right.constVal.has_value()) {
-          if (left.upperBound == 32) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        Index leftUpperBound = left.geti32ApproxUpperBound();
+        if (constRightValue.has_value()) {
+          if (leftUpperBound == 32) {
             currElement.setUpperBound(32);
           } else {
             auto shifts =
               std::min(Index(Bits::getEffectiveShifts(
-                         right.constVal.value().geti32(), Type::i32)),
-                       left.upperBound);
+                         constRightValue.value().geti32(), Type::i32)),
+                       leftUpperBound);
             currElement.setUpperBound(
-              std::max(Index(0), left.upperBound - shifts));
+              std::max(Index(0), leftUpperBound - shifts));
           }
         } else {
           currElement.setUpperBound(32);
@@ -168,17 +199,20 @@ public:
       }
       case AddInt64: {
         currElement.setUpperBound(
-          std::min(Index(64), std::max(left.upperBound, right.upperBound)));
+          std::min(Index(64),
+                   std::max(left.geti64ApproxUpperBound(),
+                            right.geti64ApproxUpperBound())));
         break;
       }
       case MulInt64: {
-        currElement.setUpperBound(
-          std::min(Index(64), left.upperBound + right.upperBound));
+        currElement.setUpperBound(std::min(Index(64),
+                                           left.geti64ApproxUpperBound() +
+                                             right.geti64ApproxUpperBound()));
         break;
       }
       case DivSInt64: {
-        int32_t maxBitsLeft = left.upperBound;
-        int32_t maxBitsRight = right.upperBound;
+        int32_t maxBitsLeft = left.geti64ApproxUpperBound();
+        int32_t maxBitsRight = right.geti64ApproxUpperBound();
         if (maxBitsLeft == 64 || maxBitsRight == 64) {
           currElement.setUpperBound(64);
         } else {
@@ -188,19 +222,21 @@ public:
         break;
       }
       case DivUInt64: {
-        int32_t maxBitsLeft = left.upperBound;
-        int32_t maxBitsRight = right.upperBound;
+        int32_t maxBitsLeft = left.geti64ApproxUpperBound();
+        int32_t maxBitsRight = right.geti64ApproxUpperBound();
         currElement.setUpperBound(std::max(0, maxBitsLeft - maxBitsRight + 1));
         break;
       }
       case RemSInt64: {
-        if (right.constVal.has_value()) {
-          if (left.upperBound == 64) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        Index leftUpperBound = left.geti64ApproxUpperBound();
+        if (constRightValue.has_value()) {
+          if (leftUpperBound == 64) {
             currElement.setUpperBound(64);
           } else {
             auto bitsRight =
-              Index(wasm::Bits::ceilLog2(right.constVal.value().geti64()));
-            currElement.setUpperBound(std::min(left.upperBound, bitsRight));
+              Index(wasm::Bits::ceilLog2(constRightValue.value().geti64()));
+            currElement.setUpperBound(std::min(leftUpperBound, bitsRight));
           }
         } else {
           currElement.setUpperBound(64);
@@ -208,59 +244,69 @@ public:
         break;
       }
       case RemUInt64: {
-        if (right.constVal.has_value()) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
           auto bitsRight =
-            Index(wasm::Bits::ceilLog2(right.constVal.value().geti64()));
-          currElement.setUpperBound(std::min(left.upperBound, bitsRight));
+            Index(wasm::Bits::ceilLog2(constRightValue.value().geti64()));
+          currElement.setUpperBound(
+            std::min(left.geti64ApproxUpperBound(), bitsRight));
         } else {
           currElement.setUpperBound(64);
         }
         break;
       }
       case AndInt64: {
-        currElement.setUpperBound(std::min(left.upperBound, right.upperBound));
+        currElement.setUpperBound(std::min(left.geti64ApproxUpperBound(),
+                                           right.geti64ApproxUpperBound()));
         break;
       }
       case OrInt64:
       case XorInt64: {
-        currElement.setUpperBound(std::max(left.upperBound, right.upperBound));
+        currElement.setUpperBound(std::max(left.geti64ApproxUpperBound(),
+                                           right.geti64ApproxUpperBound()));
         break;
       }
       case ShlInt64: {
-        if (right.constVal.has_value()) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
           currElement.setUpperBound(
             std::min(Index(64),
-                     Bits::getEffectiveShifts(right.constVal.value().geti64(),
+                     Bits::getEffectiveShifts(constRightValue.value().geti64(),
                                               Type::i64) +
-                       left.upperBound));
+                       left.geti64ApproxUpperBound()));
         } else {
           currElement.setUpperBound(64);
         }
         break;
       }
       case ShrUInt64: {
-        if (right.constVal.has_value()) {
-          auto shifts = std::min(Index(Bits::getEffectiveShifts(
-                                   right.constVal.value().geti64(), Type::i64)),
-                                 left.upperBound);
+        std::optional<Literal> constRightValue = right.getLiteral();
+        if (constRightValue.has_value()) {
+          Index leftUpperBound = left.geti64ApproxUpperBound();
+          auto shifts =
+            std::min(Index(Bits::getEffectiveShifts(
+                       constRightValue.value().geti64(), Type::i64)),
+                     leftUpperBound);
           currElement.setUpperBound(
-            std::max(Index(0), left.upperBound - shifts));
+            std::max(Index(0), leftUpperBound - shifts));
         } else {
           currElement.setUpperBound(64);
         }
         break;
       }
       case ShrSInt64: {
-        if (right.constVal.has_value()) {
-          if (left.upperBound == 64) {
+        std::optional<Literal> constRightValue = right.getLiteral();
+        Index leftUpperBound = left.geti64ApproxUpperBound();
+        if (constRightValue.has_value()) {
+          if (leftUpperBound == 64) {
             currElement.setUpperBound(64);
           } else {
             auto shifts =
               std::min(Index(Bits::getEffectiveShifts(
-                         right.constVal.value().geti64(), Type::i64)),
-                       left.upperBound);
+                         constRightValue.value().geti64(), Type::i64)),
+                       leftUpperBound);
             currElement.setUpperBound(
-              std::max(Index(0), left.upperBound - shifts));
+              std::max(Index(0), leftUpperBound - shifts));
           }
         } else {
           currElement.setUpperBound(64);
@@ -273,14 +319,14 @@ public:
     }
 
     if (collectingResults && addInformation) {
-      exprMaxBounds[curr] = currElement.upperBound;
+      exprMaxBounds[curr] = currElement.getUpperBound().value();
     }
 
     currState->push(std::move(currElement));
   }
 
   void visitUnary(Unary* curr) {
-    MaxBitsLattice::Element unaryVal = currState->pop();
+    MaxBitsLattice::Element val = currState->pop();
     MaxBitsLattice::Element currElement = bitsLattice.getBottom();
 
     bool addInformation = true;
@@ -297,35 +343,43 @@ public:
         currElement.setUpperBound(7);
         break;
       }
-      case WrapInt64:
+      case WrapInt64: {
+        currElement.setUpperBound(val.geti64ApproxUpperBound());
+        break;
+      }
       case ExtendUInt32: {
-        currElement.setUpperBound(unaryVal.upperBound);
+        currElement.setUpperBound(val.geti32ApproxUpperBound());
         break;
       }
       case ExtendS8Int32: {
-        currElement.setUpperBound(
-          unaryVal.upperBound >= 8 ? Index(32) : unaryVal.upperBound);
+        Index upperBound = val.geti32ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 8 ? Index(32) : upperBound);
         break;
       }
       case ExtendS16Int32: {
-        currElement.setUpperBound(
-          unaryVal.upperBound >= 16 ? Index(32) : unaryVal.upperBound);
+        Index upperBound = val.geti32ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 16 ? Index(32) : upperBound);
         break;
       }
       case ExtendS8Int64: {
-        currElement.setUpperBound(
-          unaryVal.upperBound >= 8 ? Index(64) : unaryVal.upperBound);
+        Index upperBound = val.geti64ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 8 ? Index(64) : upperBound);
         break;
       }
       case ExtendS16Int64: {
-        currElement.setUpperBound(
-          unaryVal.upperBound >= 16 ? Index(64) : unaryVal.upperBound);
+        Index upperBound = val.geti64ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 16 ? Index(64) : upperBound);
         break;
       }
-      case ExtendS32Int64:
+      case ExtendS32Int64: {
+        Index upperBound = val.geti64ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 32 ? Index(64) : upperBound);
+        break;
+      }
+      // TODO: What's the difference of this with the above?
       case ExtendSInt32: {
-        currElement.setUpperBound(
-          unaryVal.upperBound >= 32 ? Index(64) : unaryVal.upperBound);
+        Index upperBound = val.geti32ApproxUpperBound();
+        currElement.setUpperBound(upperBound >= 32 ? Index(64) : upperBound);
         break;
       }
       default: {
@@ -334,7 +388,7 @@ public:
     }
 
     if (collectingResults && addInformation) {
-      exprMaxBounds[curr] = currElement.upperBound;
+      exprMaxBounds[curr] = currElement.getUpperBound().value();
     }
 
     currState->push(std::move(currElement));
@@ -343,8 +397,11 @@ public:
   void visitLocalSet(LocalSet* curr) {
     MaxBitsLattice::Element val = currState->pop();
 
-    if (collectingResults && !val.isTop()) {
-      exprMaxBounds[curr] = val.upperBound;
+    if (collectingResults && curr->isTee()) {
+      std::optional<Index> upperBound = val.getUpperBound();
+      if (upperBound.has_value()) {
+        exprMaxBounds[curr] = upperBound.value();
+      }
     }
   }
 

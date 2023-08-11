@@ -680,6 +680,7 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
             LatticeComparison::EQUAL);
 }
 
+// TODO: Add more thorough test cases for max bits analysis.
 TEST_F(CFGTest, MaxBitsAnalysis) {
   auto moduleText = R"wasm(
     (module

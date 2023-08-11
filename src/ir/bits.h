@@ -163,6 +163,9 @@ Index getMaxBits(Expression* curr,
             return 32;
           }
           int32_t bitsRight = getMaxBits(c);
+          // TODO: If the bitsRight is equal to maxBitsLeft, because we are
+          // making an estimate, it is possible that the right could be 1,
+          // meaning that the actual division result is maxBitsLeft.
           return std::max(0, maxBitsLeft - bitsRight + 1);
         }
         return 32;
