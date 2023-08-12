@@ -2013,6 +2013,7 @@ struct OptimizeInstructions
       // the rest, but we'd need to do more work to make sure all the local
       // state in this function is in sync which this change; it's easier to
       // just do another clean pass on this node.)
+      refinalize = true;
       replaceCurrent(curr);
       return;
     }
@@ -2030,9 +2031,6 @@ struct OptimizeInstructions
         auto** refp = Properties::getMostRefinedFallthrough(
           &curr->ref, getPassOptions(), *getModule());
         auto* ref = *refp;
-        if (curr->type != refType) {
-          refinalize = true;
-        }
         // We know ref's heap type matches, but the knowledge that the
         // nullabillity matches might come from somewhere else or we might not
         // know at all whether the nullability matches, so we might need to emit
@@ -2115,6 +2113,7 @@ struct OptimizeInstructions
         // is not already a null type.
         if (curr->type != nullType) {
           curr->type = nullType;
+          refinalize = true;
           replaceCurrent(curr);
           return;
         }

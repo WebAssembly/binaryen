@@ -1842,7 +1842,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast $array
   ;; CHECK-NEXT:      (local.get $x)
@@ -1852,7 +1852,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast $array
   ;; CHECK-NEXT:      (local.get $x)
@@ -1862,7 +1862,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast $array
   ;; CHECK-NEXT:      (local.get $x)
@@ -2174,7 +2174,7 @@
 
   ;; CHECK:      (func $ref-cast-heap-type-incompatible (type $ref?|$B|_ref|$B|_=>_none) (param $null-b (ref null $B)) (param $b (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $b)
   ;; CHECK-NEXT:    )
@@ -2182,7 +2182,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $null-b)
   ;; CHECK-NEXT:    )
@@ -2190,7 +2190,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $b)
   ;; CHECK-NEXT:    )
@@ -2275,7 +2275,7 @@
   ;; CHECK-NEXT:  (local $1 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $eqref
-  ;; CHECK-NEXT:    (block (result i31ref)
+  ;; CHECK-NEXT:    (block (result eqref)
   ;; CHECK-NEXT:     (local.tee $1
   ;; CHECK-NEXT:      (ref.cast null i31
   ;; CHECK-NEXT:       (local.get $eqref)
@@ -2418,9 +2418,9 @@
   ;; CHECK:      (func $incompatible-cast-separate-fallthrough (type $eqref_=>_structref) (param $eqref eqref) (result structref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $eqref
-  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:    (block (result (ref i31))
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:      (block (result i31ref)
   ;; CHECK-NEXT:       (ref.cast null i31
   ;; CHECK-NEXT:        (local.get $eqref)
   ;; CHECK-NEXT:       )
