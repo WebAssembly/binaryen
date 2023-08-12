@@ -1283,6 +1283,75 @@
       )
     )
   )
+
+  ;; CHECK:      (func $compatible-test-separate-fallthrough (type $eqref_=>_i32) (param $eqref eqref) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $eqref
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (ref.cast null i31
+  ;; CHECK-NEXT:        (local.get $eqref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $compatible-test-separate-fallthrough (param $eqref eqref) (result i32)
+    (ref.test i31
+      (local.tee $eqref
+        (block (result eqref)
+          ;; Prove that the value is non-nullable
+          (ref.as_non_null
+            (block (result eqref)
+              ;; Prove that the value is an i31
+              (ref.cast null i31
+                (local.get $eqref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-test-separate-fallthrough (type $eqref_=>_i32) (param $eqref eqref) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $eqref
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (ref.cast null i31
+  ;; CHECK-NEXT:        (local.get $eqref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $incompatible-test-separate-fallthrough (param $eqref eqref) (result i32)
+    (ref.test null struct
+      (local.tee $eqref
+        (block (result eqref)
+          ;; Prove that the value is non-nullable
+          (ref.as_non_null
+            (block (result eqref)
+              ;; Prove that the value is an i31
+              (ref.cast null i31
+                (local.get $eqref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $ref.test-unreachable (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test $A
@@ -2162,6 +2231,224 @@
     )
   )
 
+  ;; CHECK:      (func $compatible-cast-separate-fallthrough (type $eqref_=>_ref|i31|) (param $eqref eqref) (result (ref i31))
+  ;; CHECK-NEXT:  (local $1 i31ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $eqref
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (local.tee $1
+  ;; CHECK-NEXT:        (ref.cast null i31
+  ;; CHECK-NEXT:         (local.get $eqref)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compatible-cast-separate-fallthrough (param $eqref eqref) (result (ref i31))
+    ;; This cast will succeed even though no individual fallthrough value is sufficiently refined.
+    (ref.cast i31
+      (local.tee $eqref
+        (block (result eqref)
+          ;; Prove that the value is non-nullable
+          (ref.as_non_null
+            (block (result eqref)
+              ;; Prove that the value is an i31
+              (ref.cast null i31
+                (local.get $eqref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compatible-cast-fallthrough-null-check (type $eqref_=>_ref|i31|) (param $eqref eqref) (result (ref i31))
+  ;; CHECK-NEXT:  (local $1 i31ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $eqref
+  ;; CHECK-NEXT:    (block (result i31ref)
+  ;; CHECK-NEXT:     (local.tee $1
+  ;; CHECK-NEXT:      (ref.cast null i31
+  ;; CHECK-NEXT:       (local.get $eqref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.as_non_null
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compatible-cast-fallthrough-null-check (param $eqref eqref) (result (ref i31))
+    ;; Similar to above, but now the cast only succeeds if the value is non-null.
+    (ref.cast i31
+      (local.tee $eqref
+        (block (result eqref)
+          ;; Prove that the value is an i31
+          (ref.cast null i31
+            (local.get $eqref)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compatible-cast-separate-fallthrough-multiple-options-1 (type $eqref_=>_ref|eq|) (param $eqref eqref) (result (ref eq))
+  ;; CHECK-NEXT:  (local $1 i31ref)
+  ;; CHECK-NEXT:  (block $outer (result (ref eq))
+  ;; CHECK-NEXT:   (block (result (ref i31))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $eqref
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (local.tee $1
+  ;; CHECK-NEXT:        (br_on_cast_fail $outer eqref i31ref
+  ;; CHECK-NEXT:         (block (result eqref)
+  ;; CHECK-NEXT:          (ref.as_non_null
+  ;; CHECK-NEXT:           (block (result eqref)
+  ;; CHECK-NEXT:            (ref.cast null i31
+  ;; CHECK-NEXT:             (local.get $eqref)
+  ;; CHECK-NEXT:            )
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compatible-cast-separate-fallthrough-multiple-options-1
+      (param $eqref eqref) (result (ref eq))
+    ;; There are multiple "best" values we could tee and propagate. Choose the
+    ;; shallowest.
+    (block $outer (result (ref eq))
+      (ref.cast i31
+        (local.tee $eqref
+          (block (result eqref)
+            ;; Prove that the value is an i31 a second time. This one will be
+            ;; propagated.
+            (br_on_cast_fail $outer eqref i31ref
+              (block (result eqref)
+                ;; Prove that the value is non-nullable
+                (ref.as_non_null
+                  (block (result eqref)
+                    ;; Prove that the value is an i31
+                    (ref.cast null i31
+                      (local.get $eqref)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $compatible-cast-separate-fallthrough-multiple-options-2 (type $eqref_=>_ref|eq|) (param $eqref eqref) (result (ref eq))
+  ;; CHECK-NEXT:  (local $1 (ref i31))
+  ;; CHECK-NEXT:  (block $outer (result (ref eq))
+  ;; CHECK-NEXT:   (block (result (ref i31))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.tee $eqref
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (br_on_cast_fail $outer eqref i31ref
+  ;; CHECK-NEXT:        (block (result eqref)
+  ;; CHECK-NEXT:         (ref.as_non_null
+  ;; CHECK-NEXT:          (block (result eqref)
+  ;; CHECK-NEXT:           (local.tee $1
+  ;; CHECK-NEXT:            (ref.cast i31
+  ;; CHECK-NEXT:             (local.get $eqref)
+  ;; CHECK-NEXT:            )
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $compatible-cast-separate-fallthrough-multiple-options-2
+      (param $eqref eqref) (result (ref eq))
+    (block $outer (result (ref eq))
+      (ref.cast i31
+        (local.tee $eqref
+          (block (result eqref)
+            ;; Prove that the value is an i31 a second time, but not that it is
+            ;; non-null at the same time.
+            (br_on_cast_fail $outer eqref i31ref
+              (block (result eqref)
+                ;; Prove that the value is non-nullable but not i31.
+                (ref.as_non_null
+                  (block (result eqref)
+                    ;; Now this is non-nullable and an exact match, so we
+                    ;; propagate this one.
+                    (ref.cast i31
+                      (local.get $eqref)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-separate-fallthrough (type $eqref_=>_structref) (param $eqref eqref) (result structref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $eqref
+  ;; CHECK-NEXT:    (block (result eqref)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (block (result eqref)
+  ;; CHECK-NEXT:       (ref.cast null i31
+  ;; CHECK-NEXT:        (local.get $eqref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $incompatible-cast-separate-fallthrough (param $eqref eqref) (result structref)
+    (ref.cast null struct
+      (local.tee $eqref
+        (block (result eqref)
+          ;; Prove that the value is non-nullable
+          (ref.as_non_null
+            (block (result eqref)
+              ;; Prove that the value is an i31
+              (ref.cast null i31
+                (local.get $eqref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $as_of_unreachable (type $none_=>_ref|$A|) (result (ref $A))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -2368,21 +2655,18 @@
 
   ;; CHECK:      (func $non-null-bottom-ref-test (type $none_=>_i32) (result i32)
   ;; CHECK-NEXT:  (local $0 funcref)
-  ;; CHECK-NEXT:  (i32.eqz
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.tee $0
-  ;; CHECK-NEXT:     (loop (result (ref nofunc))
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (loop (result (ref nofunc))
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $non-null-bottom-ref-test (result i32)
     (local $0 (ref null func))
-    ;; As above, but ref.test instead of cast. This is ok - we can turn the test
-    ;; into a ref.is_null. TODO: if ref.test looked into intermediate casts
-    ;; before it, it could do better.
+    ;; As above, but now it's a ref.test instead of cast.
     (ref.test func
       (local.tee $0
         (loop (result (ref nofunc))
