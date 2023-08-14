@@ -388,9 +388,18 @@ inline Type getFallthroughType(Expression* curr,
     if (type.isNullable() && next->type.isNonNullable()) {
       type = Type(type.getHeapType(), NonNullable);
     }
-    if (next->type.getHeapType() != type.getHeapType() &&
-        HeapType::isSubType(next->type.getHeapType(), type.getHeapType())) {
-      type = Type(next->type.getHeapType(), type.getNullability());
+    auto currType = type.getHeapType();
+    auto nextType = next->type.getHeapType();
+    if (nextType != currType) {
+      if (HeapType::isSubType(nextType, currType)) {
+        // We found a more refined type.
+        type = Type(nextType, type.getNullability());
+      } else if (!HeapType::isSubType(currType, nextType)) {
+        // The next type is neither more refined nor less refined; it is
+        // unrelated. No non-null value can be typed with two unrelated heap
+        // types types, so we can refine all the way down to the bottom type.
+        type = Type(nextType.getBottom(), type.getNullability());
+      }
     }
     curr = next;
   }

@@ -2031,73 +2031,73 @@ struct OptimizeInstructions
         auto** refp = Properties::getMostRefinedFallthrough(
           &curr->ref, getPassOptions(), *getModule());
         auto* ref = *refp;
-        // We know ref's heap type matches, but the knowledge that the
-        // nullabillity matches might come from somewhere else or we might not
-        // know at all whether the nullability matches, so we might need to emit
-        // a null check.
         assert(ref->type.isRef());
-        assert(HeapType::isSubType(ref->type.getHeapType(),
-                                   curr->type.getHeapType()));
-        bool needsNullCheck = ref->type.getNullability() == Nullable &&
-                              curr->type.getNullability() == NonNullable;
-        // If the best value to propagate is the argument to the cast, we can
-        // simply remove the cast (or downgrade it to a null check if
-        // necessary).
-        if (ref == curr->ref) {
-          if (needsNullCheck) {
-            replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
-          } else {
-            replaceCurrent(ref);
+        if (HeapType::isSubType(ref->type.getHeapType(),
+                                curr->type.getHeapType())) {
+          // We know ref's heap type matches, but the knowledge that the
+          // nullabillity matches might come from somewhere else or we might not
+          // know at all whether the nullability matches, so we might need to
+          // emit a null check.
+          bool needsNullCheck = ref->type.getNullability() == Nullable &&
+                                curr->type.getNullability() == NonNullable;
+          // If the best value to propagate is the argument to the cast, we can
+          // simply remove the cast (or downgrade it to a null check if
+          // necessary).
+          if (ref == curr->ref) {
+            if (needsNullCheck) {
+              replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
+            } else {
+              replaceCurrent(ref);
+            }
+            return;
           }
+          // Otherwise we can't just remove the cast and replace it with `ref`
+          // because the intermediate expressions might have had side effects.
+          // We can replace the cast with a drop followed by a direct return of
+          // the value, though.
+          if (ref->type.isNull()) {
+            // We can materialize the resulting null value directly.
+            //
+            // The type must be nullable for us to do that, which it normally
+            // would be, aside from the interesting corner case of
+            // uninhabitable types:
+            //
+            //  (ref.cast func
+            //    (block (result (ref nofunc))
+            //      (unreachable)
+            //    )
+            //  )
+            //
+            // (ref nofunc) is a subtype of (ref func), so the cast might seem
+            // to be successful, but since the input is uninhabitable we won't
+            // even reach the cast. Such casts will be evaluated as
+            // Unreachable, so we'll not hit this assertion.
+            assert(curr->type.isNullable());
+            auto nullType = curr->type.getHeapType().getBottom();
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                                builder.makeRefNull(nullType)));
+            return;
+          }
+          // We need to use a tee to return the value since we can't materialize
+          // it directly.
+          auto scratch = builder.addVar(getFunction(), ref->type);
+          *refp = builder.makeLocalTee(scratch, ref, ref->type);
+          Expression* get = builder.makeLocalGet(scratch, ref->type);
+          if (needsNullCheck) {
+            get = builder.makeRefAs(RefAsNonNull, get);
+          }
+          replaceCurrent(
+            builder.makeSequence(builder.makeDrop(curr->ref), get));
           return;
         }
-        // Otherwise we can't just remove the cast and replace it with `ref`
-        // because the intermediate expressions might have had side effects.
-        // We can replace the cast with a drop followed by a direct return of
-        // the value, though.
-        if (ref->type.isNull()) {
-          // We can materialize the resulting null value directly.
-          //
-          // The type must be nullable for us to do that, which it normally
-          // would be, aside from the interesting corner case of
-          // uninhabitable types:
-          //
-          //  (ref.cast func
-          //    (block (result (ref nofunc))
-          //      (unreachable)
-          //    )
-          //  )
-          //
-          // (ref nofunc) is a subtype of (ref func), so the cast might seem
-          // to be successful, but since the input is uninhabitable we won't
-          // even reach the cast. Such casts will be evaluated as
-          // Unreachable, so we'll not hit this assertion.
-          assert(curr->type.isNullable());
-          auto nullType = curr->type.getHeapType().getBottom();
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                              builder.makeRefNull(nullType)));
-          return;
-        }
-        // We need to use a tee to return the value since we can't materialize
-        // it directly.
-        auto scratch = builder.addVar(getFunction(), ref->type);
-        *refp = builder.makeLocalTee(scratch, ref, ref->type);
-        Expression* get = builder.makeLocalGet(scratch, ref->type);
-        if (needsNullCheck) {
-          get = builder.makeRefAs(RefAsNonNull, get);
-        }
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), get));
-        return;
+        // If we get here, then we know that the heap type of the cast value is
+        // more refined than the heap type of best available fallthrough
+        // expression. The only way this can happen is if we were able to infer
+        // that the value has bottom heap type because it was typed with
+        // multiple, incompatible heap types. In this case, the cast succeeds
+        // only if the value is null, so we can fall through to that case.
       }
-      case GCTypeUtils::Unreachable:
-      case GCTypeUtils::Failure:
-        // This cast cannot succeed, or it cannot even be reached, so we can
-        // trap. Make sure to emit a block with the same type as us; leave
-        // updating types for other passes.
-        replaceCurrent(builder.makeBlock(
-          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-          curr->type));
-        return;
+        [[fallthrough]];
       case GCTypeUtils::SuccessOnlyIfNull: {
         auto nullType = Type(curr->type.getHeapType().getBottom(), Nullable);
         // The cast either returns null or traps. In trapsNeverHappen mode
@@ -2119,6 +2119,15 @@ struct OptimizeInstructions
         }
         break;
       }
+      case GCTypeUtils::Unreachable:
+      case GCTypeUtils::Failure:
+        // This cast cannot succeed, or it cannot even be reached, so we can
+        // trap. Make sure to emit a block with the same type as us; leave
+        // updating types for other passes.
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+          curr->type));
+        return;
     }
 
     // If we got past the optimizations above, it must be the case that we

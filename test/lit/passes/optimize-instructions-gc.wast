@@ -1352,6 +1352,131 @@
     )
   )
 
+  ;; CHECK:      (func $incompatible-test-heap-types-nonnullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result anyref)
+  ;; CHECK-NEXT:       (br_on_cast_fail $outer anyref i31ref
+  ;; CHECK-NEXT:        (block (result anyref)
+  ;; CHECK-NEXT:         (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:          (local.get $anyref)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $anyref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-test-heap-types-nonnullable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      (drop
+        ;; The value cannot be both i31 and struct, so it must be null and we
+        ;; can optimize to 0.
+        (ref.test any
+          (block (result anyref)
+            (br_on_cast_fail $outer anyref i31ref
+              (block (result anyref)
+                (br_on_cast_fail $outer anyref structref
+                  (local.get $anyref)
+                )
+              )
+            )
+          )
+        )
+      )
+      (local.get $anyref)
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-test-heap-types-nullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result anyref)
+  ;; CHECK-NEXT:       (br_on_cast_fail $outer anyref i31ref
+  ;; CHECK-NEXT:        (block (result anyref)
+  ;; CHECK-NEXT:         (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:          (local.get $anyref)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $anyref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-test-heap-types-nullable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      (drop
+        ;; Same as above, but now we allow null, so we optimize to 1.
+        (ref.test null any
+          (block (result anyref)
+            (br_on_cast_fail $outer anyref i31ref
+              (block (result anyref)
+                (br_on_cast_fail $outer anyref structref
+                  (local.get $anyref)
+                )
+              )
+            )
+          )
+        )
+      )
+      (local.get $anyref)
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-test-heap-types-unreachable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result anyref)
+  ;; CHECK-NEXT:       (br_on_cast_fail $outer anyref (ref i31)
+  ;; CHECK-NEXT:        (block (result anyref)
+  ;; CHECK-NEXT:         (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:          (local.get $anyref)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $anyref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-test-heap-types-unreachable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      (drop
+        ;; Same as above, but now we know the value must be non-null and bottom,
+        ;; so it cannot exist at all.
+        (ref.test null any
+          (block (result anyref)
+            (br_on_cast_fail $outer anyref (ref i31)
+              (block (result anyref)
+                (br_on_cast_fail $outer anyref structref
+                  (local.get $anyref)
+                )
+              )
+            )
+          )
+        )
+      )
+      (local.get $anyref)
+    )
+  )
+
   ;; CHECK:      (func $ref.test-unreachable (type $ref?|$A|_=>_none) (param $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test $A
@@ -2441,6 +2566,109 @@
               ;; Prove that the value is an i31
               (ref.cast null i31
                 (local.get $eqref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (block (result (ref struct))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (br_on_cast_fail $outer anyref i31ref
+  ;; CHECK-NEXT:       (block (result anyref)
+  ;; CHECK-NEXT:        (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:         (local.get $anyref)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-cast-heap-types-nonnullable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      ;; The value cannot be both an i31 and a struct, so it must be null, so
+      ;; the cast will fail.
+      (ref.cast struct
+        (block (result anyref)
+          (br_on_cast_fail $outer anyref i31ref
+            (block (result anyref)
+              (br_on_cast_fail $outer anyref structref
+                (local.get $anyref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (ref.cast null none
+  ;; CHECK-NEXT:    (block (result i31ref)
+  ;; CHECK-NEXT:     (br_on_cast_fail $outer structref i31ref
+  ;; CHECK-NEXT:      (block (result structref)
+  ;; CHECK-NEXT:       (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:        (local.get $anyref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-cast-heap-types-nullable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      ;; As above, but now the cast might succeed because we allow null.
+      (ref.cast null struct
+        (block (result anyref)
+          (br_on_cast_fail $outer anyref i31ref
+            (block (result anyref)
+              (br_on_cast_fail $outer anyref structref
+                (local.get $anyref)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $incompatible-cast-heap-types-unreachable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
+  ;; CHECK-NEXT:  (block $outer (result anyref)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref i31))
+  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref (ref i31)
+  ;; CHECK-NEXT:       (block (result structref)
+  ;; CHECK-NEXT:        (br_on_cast_fail $outer anyref structref
+  ;; CHECK-NEXT:         (local.get $anyref)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $incompatible-cast-heap-types-unreachable (param $anyref anyref) (result anyref)
+    (block $outer (result anyref)
+      ;; As above, but now we know the value is not null, so the cast is unreachable.
+      (ref.cast null struct
+        (block (result anyref)
+          (br_on_cast_fail $outer anyref (ref i31)
+            (block (result anyref)
+              (br_on_cast_fail $outer anyref structref
+                (local.get $anyref)
               )
             )
           )
