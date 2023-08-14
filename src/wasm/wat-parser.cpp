@@ -56,11 +56,6 @@
 // may be passed the appropriate context type and return the correct result type
 // for each phase.
 
-#define CHECK_ERR(val)                                                         \
-  if (auto _val = (val); auto err = _val.getErr()) {                           \
-    return Err{*err};                                                          \
-  }
-
 using namespace std::string_view_literals;
 
 namespace wasm::WATParser {
