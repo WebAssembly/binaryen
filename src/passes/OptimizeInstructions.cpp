@@ -2028,7 +2028,7 @@ struct OptimizeInstructions
       case GCTypeUtils::SuccessOnlyIfNonNull: {
         // We know the cast will succeed, or at most requires a null check, so
         // we can try to optimize it out. Find the best-typed fallthrough value
-        // to propagate.        
+        // to propagate.
         auto** refp = Properties::getMostRefinedFallthrough(
           &curr->ref, getPassOptions(), *getModule());
         auto* ref = *refp;
