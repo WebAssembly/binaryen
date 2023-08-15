@@ -463,10 +463,9 @@ struct Heap2LocalOptimizer {
         // which may be more refined.
         refinalize = true;
       }
-      replaceCurrent(
-        builder.makeSequence(builder.makeDrop(curr->ref),
-                             builder.makeLocalGet(localIndexes[curr->index],
-                                                  type)));
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeLocalGet(localIndexes[curr->index], type)));
     }
   };
 
