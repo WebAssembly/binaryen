@@ -371,7 +371,7 @@ inline Type getFallthroughType(Expression* curr,
   if (!type.isRef()) {
     // Only reference types can be improved (excepting improvements to
     // unreachable, which we leave to refinalization).
-    // TOOD: Handle tuples if that ever becomes important.
+    // TODO: Handle tuples if that ever becomes important.
     return type;
   }
   while (1) {
