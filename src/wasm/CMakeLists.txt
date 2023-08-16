@@ -8,6 +8,7 @@ set(wasm_SOURCES
   wasm-emscripten.cpp
   wasm-interpreter.cpp
   wasm-io.cpp
+  wasm-ir-builder.cpp
   wasm-s-parser.cpp
   wasm-stack.cpp
   wasm-type.cpp
