@@ -2173,6 +2173,13 @@ struct OptimizeInstructions
     // we are given, but at fallthrough values as well.
     Type refType =
       Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
+
+    // Improve the cast type as much as we can without changing the results.
+    auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+    if (glb != Type::unreachable && glb != curr->castType) {
+      curr->castType = glb;
+    }
+
     switch (GCTypeUtils::evaluateCastCheck(refType, curr->castType)) {
       case GCTypeUtils::Unknown:
         break;

@@ -1318,6 +1318,27 @@
     )
   )
 
+  ;; CHECK:      (func $improvable-test-separate-fallthrough (type $eqref_=>_i32) (param $eqref eqref) (result i32)
+  ;; CHECK-NEXT:  (ref.test i31
+  ;; CHECK-NEXT:   (block (result eqref)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $eqref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $improvable-test-separate-fallthrough (param $eqref eqref) (result i32)
+    ;; There is no need to admit null here, but we don't know whether we have an i31.
+    (ref.test null i31
+      (block (result eqref)
+        ;; Prove that the value is non-nullable
+        (ref.as_non_null
+          (local.get $eqref)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $incompatible-test-separate-fallthrough (type $eqref_=>_i32) (param $eqref eqref) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $eqref
