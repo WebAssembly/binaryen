@@ -158,13 +158,16 @@
  )
 
  ;; CHECK:      (func $fallthrough-bad-type (type $none_=>_i32) (result i32)
- ;; CHECK-NEXT:  (call_ref $none_=>_i32
- ;; CHECK-NEXT:   (block (result (ref $none_=>_i32))
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (ref.func $return-nothing)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (ref.func $return-nothing)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $fallthrough-bad-type (result i32)
