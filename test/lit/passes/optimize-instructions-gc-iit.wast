@@ -39,7 +39,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $other))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $child)
   ;; CHECK-NEXT:    )
@@ -60,7 +60,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block (result (ref $other))
+  ;; TNH-NEXT:   (block
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (local.get $child)
   ;; TNH-NEXT:    )
