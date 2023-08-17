@@ -318,7 +318,8 @@ struct SignatureRefining : public Pass {
       }
 
       auto name = Names::getValidFunctionName(*module, import->name);
-      auto newImport = module->addFunction(Builder(*module).makeFunction(name, newType, {}));
+      auto newImport =
+        module->addFunction(Builder(*module).makeFunction(name, newType, {}));
 
       // Copy the binaryen intrinsic module.base import names.
       newImport->module = import->module;
@@ -346,7 +347,9 @@ struct SignatureRefining : public Pass {
 
           // The target was refined, so we need to update here. Create a new
           // import of the refined type, and call that instead.
-          call->target = getImportWithNewResults(module->getFunction(call->target), newResults)->name;
+          call->target = getImportWithNewResults(
+                           module->getFunction(call->target), newResults)
+                           ->name;
           call->type = newResults;
         }
       }
