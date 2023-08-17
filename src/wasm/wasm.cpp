@@ -923,16 +923,20 @@ void CallRef::finalize() {
   handleUnreachableOperands(this);
   if (isReturn) {
     type = Type::unreachable;
+    return;
   }
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
+    return;
   }
+  assert(target->type.isRef());
+  if (target->type.getHeapType().isBottom()) {
+    return;
+  }
+  assert(target->type.getHeapType().isSignature());
+  type = target->type.getHeapType().getSignature().results;
 }
 
-void CallRef::finalize(Type type_) {
-  type = type_;
-  finalize();
-}
 
 void RefTest::finalize() {
   if (ref->type == Type::unreachable) {
