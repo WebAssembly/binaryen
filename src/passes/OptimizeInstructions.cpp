@@ -2099,8 +2099,15 @@ struct OptimizeInstructions
         // expression. The only way this can happen is if we were able to infer
         // that the input has bottom heap type because it was typed with
         // multiple, incompatible heap types in different fallthrough
-        // expressions. In this case, the cast succeeds only if the value is
-        // null, so we can fall through to that case.
+        // expressions. For example:
+        //
+        // (ref.cast eqref
+        //   (br_on_cast_fail $l anyref i31ref
+        //     (br_on_cast_fail $l anyref structref
+        //       ...)))
+        //
+        // In this case, the cast succeeds because the value must be null, so we
+        // can fall through to handle that case.
         assert(Type::isSubType(refType, ref->type));
         assert(refType.getHeapType().isBottom());
       }
