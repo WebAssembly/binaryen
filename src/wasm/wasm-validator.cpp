@@ -2583,6 +2583,11 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type.getHeapType().getBottom(),
       curr,
       "br_on_cast* target type and ref type must have a common supertype");
+    shouldBeSubType(
+      curr->castType,
+      curr->ref->type,
+      curr,
+      "br_on_cast* target type must be a subtype of its input type");
   } else {
     shouldBeEqual(curr->castType,
                   Type(Type::none),

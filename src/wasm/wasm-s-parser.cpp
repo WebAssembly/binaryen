@@ -2880,6 +2880,12 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s, bool onFail) {
   auto name = getLabel(*s[i++]);
   auto inputType = elementToType(*s[i++]);
   auto castType = elementToType(*s[i++]);
+  if (!Type::isSubType(castType, inputType)) {
+    throw ParseException(
+      "br_on_cast* cast type must be a subtype of its input type",
+      s.line,
+      s.col);
+  }
   auto* ref = parseExpression(*s[i]);
   if (!Type::isSubType(ref->type, inputType)) {
     throw ParseException(

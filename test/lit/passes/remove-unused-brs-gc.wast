@@ -95,7 +95,7 @@
 
  ;; CHECK:      (func $br_on_cast_unrelated (type $none_=>_ref?|$struct|) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
- ;; CHECK-NEXT:  (block $block (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $struct2)
  ;; CHECK-NEXT:   )
@@ -106,7 +106,7 @@
  ;; CHECK-NEXT:    (local.get $nullable-struct2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct2) (ref null $struct)
+ ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct2) nullref
  ;; CHECK-NEXT:     (local.get $nullable-struct2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -165,7 +165,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct2) (ref null $struct)
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct2) nullref
  ;; CHECK-NEXT:     (local.get $nullable-struct2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

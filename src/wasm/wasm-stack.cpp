@@ -2048,6 +2048,7 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
         o << U32LEB(BinaryConsts::BrOnCastFail);
       }
       assert(curr->ref->type.isRef());
+      assert(Type::isSubType(curr->castType, curr->ref->type));
       uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
                       (curr->castType.isNullable() ? 2 : 0);
       o << flags;

@@ -7028,6 +7028,9 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
     auto castHeapType = getHeapType();
     castType = Type(castHeapType, castNullability);
     auto inputType = Type(inputHeapType, inputNullability);
+    if (!Type::isSubType(castType, inputType)) {
+      throwError("br_on_cast* cast type must be subtype of input type");
+    }
     if (!Type::isSubType(ref->type, inputType)) {
       throwError(std::string("Invalid reference type for ") +
                  ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
