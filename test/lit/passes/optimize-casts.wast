@@ -824,7 +824,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast $D
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result anyref)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -841,7 +843,9 @@
     )
     (drop
       (ref.cast $D
-        (local.get $x)
+        (block (result anyref)
+          (local.get $x)
+        )
       )
     )
   )

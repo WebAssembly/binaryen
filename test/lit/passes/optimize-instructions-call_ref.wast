@@ -160,7 +160,7 @@
  ;; CHECK:      (func $fallthrough-bad-type (type $none_=>_i32) (result i32)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (block (result (ref nofunc))
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (ref.func $return-nothing)
  ;; CHECK-NEXT:     )
