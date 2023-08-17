@@ -2842,13 +2842,14 @@
 
   ;; CHECK:      (func $non-null-bottom-ref (type $none_=>_ref|func|) (result (ref func))
   ;; CHECK-NEXT:  (local $0 funcref)
-  ;; CHECK-NEXT:  (ref.cast func
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $0
   ;; CHECK-NEXT:    (loop (result (ref nofunc))
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $non-null-bottom-ref (result (ref func))
     (local $0 (ref null func))

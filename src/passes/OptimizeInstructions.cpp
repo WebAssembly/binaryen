@@ -2009,11 +2009,7 @@ struct OptimizeInstructions
     // have. We know any less specific type either cannot appear or will fail
     // the cast anyways.
     auto glb = Type::getGreatestLowerBound(curr->type, refType);
-    if (glb == Type::unreachable) {
-      // Let DCE do the rest of the work here.
-      return;
-    }
-    if (glb != curr->type) {
+    if (glb != Type::unreachable && glb != curr->type) {
       curr->type = glb;
       refinalize = true;
       // Call replaceCurrent() to make us re-optimize this node, as we may have
