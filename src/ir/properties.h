@@ -379,27 +379,9 @@ inline Type getFallthroughType(Expression* curr,
     if (next == curr) {
       return type;
     }
-    if (next->type == Type::unreachable) {
-      return Type::unreachable;
-    }
-    assert(next->type.isRef());
-    // Improve nullability and heap type independently. This can lead to more
-    // precise results than if we checked subtyping on the type as a whole.
-    if (type.isNullable() && next->type.isNonNullable()) {
-      type = Type(type.getHeapType(), NonNullable);
-    }
-    auto currType = type.getHeapType();
-    auto nextType = next->type.getHeapType();
-    if (nextType != currType) {
-      if (HeapType::isSubType(nextType, currType)) {
-        // We found a more refined type.
-        type = Type(nextType, type.getNullability());
-      } else if (!HeapType::isSubType(currType, nextType)) {
-        // The next type is neither more refined nor less refined; it is
-        // unrelated. No non-null value can be typed with two unrelated heap
-        // types types, so we can refine all the way down to the bottom type.
-        type = Type(nextType.getBottom(), type.getNullability());
-      }
+    type = Type::getGreatestLowerBound(type, next->type);
+    if (type == Type::unreachable) {
+      return type;
     }
     curr = next;
   }

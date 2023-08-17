@@ -584,7 +584,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.cast i31
   ;; CHECK-NEXT:      (local.get $x)
@@ -1088,7 +1088,7 @@
 
   ;; CHECK:      (func $incompatible-cast-of-non-null (type $ref|$struct|_=>_none) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
@@ -1888,9 +1888,9 @@
 
   ;; CHECK:      (func $ref-cast-static-fallthrough-remaining-impossible (type $ref|eq|_=>_none) (param $x (ref eq))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref eq))
+  ;; CHECK-NEXT:     (block (result (ref $struct))
   ;; CHECK-NEXT:      (call $ref-cast-static-fallthrough-remaining-impossible
   ;; CHECK-NEXT:       (local.get $x)
   ;; CHECK-NEXT:      )
@@ -2575,12 +2575,12 @@
   )
 
   ;; CHECK:      (func $incompatible-cast-heap-types-nonnullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
-  ;; CHECK-NEXT:  (block $outer (result anyref)
-  ;; CHECK-NEXT:   (block (result (ref struct))
+  ;; CHECK-NEXT:  (block $outer (result (ref any))
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result anyref)
-  ;; CHECK-NEXT:      (br_on_cast_fail $outer anyref i31ref
-  ;; CHECK-NEXT:       (block (result anyref)
+  ;; CHECK-NEXT:     (block (result i31ref)
+  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref i31ref
+  ;; CHECK-NEXT:       (block (result structref)
   ;; CHECK-NEXT:        (br_on_cast_fail $outer anyref structref
   ;; CHECK-NEXT:         (local.get $anyref)
   ;; CHECK-NEXT:        )
@@ -2842,14 +2842,13 @@
 
   ;; CHECK:      (func $non-null-bottom-ref (type $none_=>_ref|func|) (result (ref func))
   ;; CHECK-NEXT:  (local $0 funcref)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (ref.cast func
   ;; CHECK-NEXT:   (local.tee $0
   ;; CHECK-NEXT:    (loop (result (ref nofunc))
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $non-null-bottom-ref (result (ref func))
     (local $0 (ref null func))

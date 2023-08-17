@@ -2004,16 +2004,23 @@ struct OptimizeInstructions
     Type refType =
       Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
 
-    // If the cast admits null but we know the value is not null, then as a
-    // first step we can tighten up the cast to stop admitting nulls.
-    if (curr->type.isNullable() && refType.isNonNullable()) {
-      curr->type = Type(curr->type.getHeapType(), NonNullable);
+    // As a first step, we can tighten up the cast type to be the greatest lower
+    // bound of the original cast type and the type we know the cast value to
+    // have. We know any less specific type either cannot appear or will fail
+    // the cast anyways.
+    auto glb = Type::getGreatestLowerBound(curr->type, refType);
+    if (glb == Type::unreachable) {
+      // Let DCE do the rest of the work here.
+      return;
+    }
+    if (glb != curr->type) {
+      curr->type = glb;
+      refinalize = true;
       // Call replaceCurrent() to make us re-optimize this node, as we may have
       // just unlocked further opportunities. (We could just continue down to
       // the rest, but we'd need to do more work to make sure all the local
       // state in this function is in sync which this change; it's easier to
       // just do another clean pass on this node.)
-      refinalize = true;
       replaceCurrent(curr);
       return;
     }

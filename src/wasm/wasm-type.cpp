@@ -1035,6 +1035,31 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   WASM_UNREACHABLE("unexpected type");
 }
 
+Type Type::getGreatestLowerBound(Type a, Type b) {
+  if (a == b) {
+    return a;
+  }
+  if (!a.isRef() || !b.isRef()) {
+    return Type::unreachable;
+  }
+  auto heapA = a.getHeapType();
+  auto heapB = b.getHeapType();
+  if (heapA.getBottom() != heapB.getBottom()) {
+    return Type::unreachable;
+  }
+  auto nullability =
+    (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
+  HeapType heapType;
+  if (HeapType::isSubType(heapA, heapB)) {
+    heapType = heapA;
+  } else if (HeapType::isSubType(heapB, heapA)) {
+    heapType = heapB;
+  } else {
+    heapType = heapA.getBottom();
+  }
+  return Type(heapType, nullability);
+}
+
 size_t Type::size() const {
   if (isTuple()) {
     return getTypeInfo(*this)->tuple.size();

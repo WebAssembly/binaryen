@@ -264,6 +264,8 @@ public:
     return lub;
   }
 
+  static Type getGreatestLowerBound(Type a, Type b);
+
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
   // makes it less convenient to use.
