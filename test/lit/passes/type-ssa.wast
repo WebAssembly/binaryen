@@ -453,3 +453,36 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct ))
+
+  ;; CHECK:      (type $A$1 (sub $A (struct )))
+
+  ;; CHECK:      (type $none_=>_ref|$A| (func (result (ref $A))))
+
+  ;; CHECK:      (func $0 (type $none_=>_ref|$A|) (result (ref $A))
+  ;; CHECK-NEXT:  (block $label (result (ref $A$1))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A$1) (ref $A$1)
+  ;; CHECK-NEXT:     (struct.new_default $A$1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (result (ref $A))
+    ;; After creating a subtype of $A as the input to the br_on_cast, the cast
+    ;; must be refinalized so that it validates (otherwise, it would try to cast
+    ;; to a supertype).
+    (block $label (result (ref $A))
+      (drop
+        (br_on_cast $label (ref $A) (ref $A)
+          (struct.new_default $A)
+        )
+      )
+      (unreachable)
+    )
+  )
+)
