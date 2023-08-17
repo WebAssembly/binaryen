@@ -810,7 +810,7 @@
 
  ;; CHECK:      (func $odd-cast-and-get-non-null (type $ref|$func-return-i32|_=>_none) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (ref.cast $func-return-i32
+ ;; CHECK-NEXT:   (ref.cast nofunc
  ;; CHECK-NEXT:    (ref.func $receive-f64)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

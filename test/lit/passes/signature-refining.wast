@@ -873,7 +873,7 @@
 
  ;; CHECK:      (func $1 (type $ref|$[i8]|_=>_none) (param $2 (ref $[i8]))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast struct
+ ;; CHECK-NEXT:   (ref.cast none
  ;; CHECK-NEXT:    (local.get $2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
