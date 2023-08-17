@@ -986,9 +986,9 @@
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block $parent (result (ref $parent))
+  ;; CHECK-NEXT:      (block $parent (result (ref none))
   ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (br_on_cast $parent (ref $unrelated) (ref $parent)
+  ;; CHECK-NEXT:        (br_on_cast $parent (ref $unrelated) (ref none)
   ;; CHECK-NEXT:         (struct.new_default $unrelated)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )

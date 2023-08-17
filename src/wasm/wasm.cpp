@@ -972,6 +972,13 @@ void BrOn::finalize() {
     type = Type::unreachable;
     return;
   }
+  if (op == BrOnCast || op == BrOnCastFail) {
+    // The cast type must be a subtype of the input type. If we've refined the
+    // input type so that this is no longer true, we can fix it by similarly
+    // refining the cast type in a way that will not change the cast behavior.
+    castType = Type::getGreatestLowerBound(castType, ref->type);
+    assert(castType.isRef());
+  }
   switch (op) {
     case BrOnNull:
       // If we do not branch, we flow out the existing value as non-null.

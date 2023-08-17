@@ -31,24 +31,24 @@
     )
   )
 
-  ;; CHECK:      (func $br (type $none_=>_none)
+  ;; CHECK:      (func $br (type $anyref_=>_none) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref (ref struct)
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast $label$1 anyref (ref struct)
+  ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br
+  (func $br (param $anyref anyref)
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref (ref struct)
-            (ref.null none)
+          (br_on_cast $l anyref (ref struct)
+            (local.get $anyref)
           )
         )
         (ref.null none)
@@ -56,24 +56,24 @@
     )
   )
 
-  ;; CHECK:      (func $br-null (type $none_=>_none)
+  ;; CHECK:      (func $br-null (type $anyref_=>_none) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $label$1 (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 nullref structref
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast $label$1 anyref structref
+  ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-null
+  (func $br-null (param $anyref anyref)
     (drop
       (block $l (result structref)
         (drop
-          (br_on_cast $l nullref structref
-            (ref.null none)
+          (br_on_cast $l anyref structref
+            (local.get $anyref)
           )
         )
         (ref.null none)
@@ -81,24 +81,24 @@
     )
   )
 
-  ;; CHECK:      (func $br-fail-null (type $none_=>_none)
+  ;; CHECK:      (func $br-fail-null (type $anyref_=>_none) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result structref)
+  ;; CHECK-NEXT:   (block $label$1 (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 nullref structref
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 anyref structref
+  ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br-fail-null
+  (func $br-fail-null (param $anyref anyref)
     (drop
-      (block $l (result structref)
+      (block $l (result anyref)
         (drop
-          (br_on_cast_fail $l nullref structref
-            (ref.null none)
+          (br_on_cast_fail $l anyref structref
+            (local.get $anyref)
           )
         )
         (ref.null none)

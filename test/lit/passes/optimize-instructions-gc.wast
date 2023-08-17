@@ -2600,8 +2600,8 @@
   ;; CHECK-NEXT:  (block $outer (result (ref any))
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i31ref)
-  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref i31ref
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref nullref
   ;; CHECK-NEXT:       (block (result structref)
   ;; CHECK-NEXT:        (br_on_cast_fail $outer anyref structref
   ;; CHECK-NEXT:         (local.get $anyref)
@@ -2635,8 +2635,8 @@
   ;; CHECK:      (func $incompatible-cast-heap-types-nullable (type $anyref_=>_anyref) (param $anyref anyref) (result anyref)
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (ref.cast null none
-  ;; CHECK-NEXT:    (block (result i31ref)
-  ;; CHECK-NEXT:     (br_on_cast_fail $outer structref i31ref
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (br_on_cast_fail $outer structref nullref
   ;; CHECK-NEXT:      (block (result structref)
   ;; CHECK-NEXT:       (br_on_cast_fail $outer anyref structref
   ;; CHECK-NEXT:        (local.get $anyref)
@@ -2668,8 +2668,8 @@
   ;; CHECK-NEXT:  (block $outer (result anyref)
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref i31))
-  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref (ref i31)
+  ;; CHECK-NEXT:     (block (result (ref none))
+  ;; CHECK-NEXT:      (br_on_cast_fail $outer structref (ref none)
   ;; CHECK-NEXT:       (block (result structref)
   ;; CHECK-NEXT:        (br_on_cast_fail $outer anyref structref
   ;; CHECK-NEXT:         (local.get $anyref)
