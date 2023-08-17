@@ -2115,15 +2115,9 @@ struct OptimizeInstructions
             curr->type));
           return;
         }
-
-        // Without trapsNeverHappen we can at least refine the type here if it
-        // is not already a null type.
-        if (curr->type != nullType) {
-          curr->type = nullType;
-          refinalize = true;
-          replaceCurrent(curr);
-          return;
-        }
+        // Otherwise, we should have already refined the cast type to cast
+        // directly to null.
+        assert(curr->type == nullType);
         break;
       }
       case GCTypeUtils::Unreachable:
