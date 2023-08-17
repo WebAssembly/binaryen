@@ -2414,7 +2414,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $compatible-cast-fallthrough-null-check (param $eqref eqref) (result (ref i31))
-    ;; Similar to above, but now the cast only succeeds if the value is non-null.
+    ;; Similar to above, but now we no longer know whether the value going into
+    ;; the cast is null or not.
     (ref.cast i31
       (local.tee $eqref
         (block (result eqref)
