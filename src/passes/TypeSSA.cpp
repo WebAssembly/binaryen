@@ -51,6 +51,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/possible-constant.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
 #include "wasm-builder.h"
@@ -204,6 +205,9 @@ struct TypeSSA : public Pass {
     // in the isorecursive type system we want to create a single new rec group
     // for them all (see below).
     modifyNews();
+
+    // Finally, refinalize to propagate the new types to parents.
+    ReFinalize().run(getPassRunner(), module);
   }
 
   News newsToModify;
