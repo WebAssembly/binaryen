@@ -2095,7 +2095,7 @@ struct OptimizeInstructions
           return;
         }
         // If we get here, then we know that the heap type of the cast input is
-        // more refined than the heap type of best available fallthrough
+        // more refined than the heap type of the best available fallthrough
         // expression. The only way this can happen is if we were able to infer
         // that the input has bottom heap type because it was typed with
         // multiple, incompatible heap types in different fallthrough
