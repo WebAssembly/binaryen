@@ -19,6 +19,7 @@
 #include "support/debug.h"
 
 #ifdef _WIN32
+#include "support/path.h"
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
