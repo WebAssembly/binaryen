@@ -937,7 +937,6 @@ void CallRef::finalize() {
   type = target->type.getHeapType().getSignature().results;
 }
 
-
 void RefTest::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
