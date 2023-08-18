@@ -267,7 +267,7 @@ void Options::parse(int argc, const char* argv[]) {
                       << currentOption << "'\n";
             exit(EXIT_FAILURE);
           }
-          argument = argv[++i];
+          argument = argList[++i];
         }
         break;
       case Arguments::Optional:
