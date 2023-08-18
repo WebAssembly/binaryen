@@ -2,7 +2,7 @@
 
 ;; RUN: wasm-split %s --instrument -S -o - | filecheck %s
 
-;; CHECK: (memory $0 1 1)
+;; CHECK: (memory $combined_memory 1 1)
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
 (module

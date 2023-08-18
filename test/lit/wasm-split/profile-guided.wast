@@ -25,33 +25,6 @@
 ;; RUN: wasm-split -all %s --profile=%t.none.prof -v -o1 %t.none.1.wasm -o2 %t.none.2.wasm \
 ;; RUN:   | filecheck %s --check-prefix NONE
 
-;; =================================
-;; Do it all again using --in-memory
-;; =================================
-
-;; RUN: wasm-split -all --instrument --in-memory %s -o %t.instrumented.wasm
-
-;; Create profiles
-
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.bar.prof bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.both.prof foo bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.none.prof
-
-;; Create profile-guided splits
-
-;; RUN: wasm-split -all %s --profile=%t.foo.prof -v -o1 %t.foo.1.wasm -o2 %t.foo.2.wasm \
-;; RUN:   | filecheck %s --check-prefix FOO
-
-;; RUN: wasm-split -all %s --profile=%t.bar.prof -v -o1 %t.bar.1.wasm -o2 %t.bar.2.wasm \
-;; RUN:   | filecheck %s --check-prefix BAR
-
-;; RUN: wasm-split -all %s --profile=%t.both.prof -v -o1 %t.both.1.wasm -o2 %t.both.2.wasm \
-;; RUN:   | filecheck %s --check-prefix BOTH
-
-;; RUN: wasm-split -all %s --profile=%t.none.prof -v -o1 %t.none.1.wasm -o2 %t.none.2.wasm \
-;; RUN:   | filecheck %s --check-prefix NONE
-
 ;; =======
 ;; Results
 ;; =======

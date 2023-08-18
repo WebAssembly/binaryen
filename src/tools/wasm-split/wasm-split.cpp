@@ -52,6 +52,11 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
                "request for silly amounts of memory)";
   }
 
+  // Setting features we need when the instrumenter pass is run
+  // Multi-MemoryLoweringPass will run afterwards, disabling the multi-memories
+  // feature
+  wasm.features.setMultiMemories();
+  wasm.features.setBulkMemory();
   if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
     Fatal() << "error validating input";
   }
@@ -110,18 +115,10 @@ void instrumentModule(const WasmSplitOptions& options) {
   }
 
   uint64_t moduleHash = hashFile(options.inputFiles[0]);
-  InstrumenterConfig config;
-  if (options.importNamespace.size()) {
-    config.importNamespace = options.importNamespace;
-  }
-  if (options.secondaryMemoryName.size()) {
-    config.secondaryMemoryName = options.secondaryMemoryName;
-  }
-  config.storageKind = options.storageKind;
-  config.profileExport = options.profileExport;
 
   PassRunner runner(&wasm, options.passOptions);
-  runner.add(std::make_unique<Instrumenter>(config, moduleHash));
+  runner.add(std::make_unique<Instrumenter>(options, moduleHash));
+  runner.add("multi-memory-lowering");
   runner.run();
 
   adjustTableSize(wasm, options.initialTableSize);

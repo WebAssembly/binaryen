@@ -34,13 +34,6 @@ struct WasmSplitOptions : ToolOptions {
   constexpr static size_t NumModes =
     static_cast<unsigned>(Mode::PrintProfile) + 1;
 
-  enum class StorageKind : unsigned {
-    InGlobals, // Store profile data in WebAssembly Globals
-    InMemory,  // Store profile data in memory, accessible from all threads
-    InSecondaryMemory, // Store profile data in memory separate from main memory
-  };
-  StorageKind storageKind = StorageKind::InGlobals;
-
   bool unescape = false;
   bool verbose = false;
   bool emitBinary = true;
@@ -64,7 +57,6 @@ struct WasmSplitOptions : ToolOptions {
 
   std::string importNamespace;
   std::string placeholderNamespace;
-  std::string secondaryMemoryName;
   std::string exportPrefix;
 
   // A hack to ensure the split and instrumented modules have the same table

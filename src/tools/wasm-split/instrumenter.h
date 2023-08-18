@@ -23,27 +23,13 @@
 
 namespace wasm {
 
-struct InstrumenterConfig {
-  // The namespace from which to import the secondary memory
-  Name importNamespace = "env";
-  // The name of the secondary memory created to store profile data during
-  // instrumentation
-  Name secondaryMemoryName = "profile-data";
-  // Where to store the profile data
-  WasmSplitOptions::StorageKind storageKind =
-    WasmSplitOptions::StorageKind::InGlobals;
-  // The export name of the function the embedder calls to write the profile
-  // into memory
-  std::string profileExport = DEFAULT_PROFILE_EXPORT;
-};
-
-// Add a global monotonic counter and a timestamp global for each function, code
-// at the beginning of each function to set its timestamp, and a new exported
-// function for dumping the profile data.
+// Adds code at the beginning of each function that keeps track of whether the
+// function was called in memory, and a new exported function for dumping the
+// profile data.
 struct Instrumenter : public Pass {
   Module* wasm = nullptr;
 
-  const InstrumenterConfig& config;
+  const WasmSplitOptions& options;
   uint64_t moduleHash;
 
   Name counterGlobal;
@@ -51,15 +37,16 @@ struct Instrumenter : public Pass {
 
   Name secondaryMemory;
 
-  Instrumenter(const InstrumenterConfig& config, uint64_t moduleHash);
+  Instrumenter(const WasmSplitOptions& options, uint64_t moduleHash);
 
   void run(Module* wasm) override;
 
 private:
+  void ensureFirstMemory(size_t profileSize);
   void addGlobals(size_t numFuncs);
   void addSecondaryMemory(size_t numFuncs);
   void instrumentFuncs();
-  void addProfileExport(size_t numFuncs);
+  void addProfileExport(size_t profileSize, size_t numFuncs);
 };
 
 } // namespace wasm
