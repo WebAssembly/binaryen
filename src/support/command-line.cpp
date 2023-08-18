@@ -22,8 +22,8 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include "windows.h"
 #include "shellapi.h"
+#include "windows.h"
 #endif
 
 using namespace wasm;

@@ -41,7 +41,8 @@ std::wstring string_to_wstring(const std::string& s) {
 std::string wstring_to_string(const std::wstring& s) {
   const wchar_t* inptr = s.data();
   size_t inlen = s.size();
-  size_t outlen = WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, NULL, 0, NULL, NULL);
+  size_t outlen =
+    WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, NULL, 0, NULL, NULL);
   std::string outstr(outlen, 0);
   const LPSTR outptr = outstr.data();
   WideCharToMultiByte(CP_UTF8, 0, inptr, inlen, outptr, outlen, NULL, NULL);

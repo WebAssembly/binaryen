@@ -163,7 +163,8 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
     sourceMapStream = std::make_unique<std::ofstream>();
     sourceMapStream->open(wasm::Path::to_path(sourceMapFilename));
     if (!sourceMapStream->is_open()) {
-      Fatal() << "Failed opening sourcemap output file '" << sourceMapFilename << "'";
+      Fatal() << "Failed opening sourcemap output file '" << sourceMapFilename
+              << "'";
     }
     writer.setSourceMap(sourceMapStream.get(), sourceMapUrl);
   }
