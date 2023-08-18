@@ -17,10 +17,11 @@
 #include "support/command-line.h"
 #include "config.h"
 #include "support/debug.h"
-#include "support/path.h"
 
 #ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include "windows.h"
 #include "shellapi.h"
 #endif
@@ -171,13 +172,17 @@ Options& Options::add_positional(const std::string& name,
 
 void Options::parse(int argc, const char* argv[]) {
 
+// On Windows, get the wide char version of the command line flags, and convert
+// each one to std::string with UTF-8 manually. This means that all paths in
+// Binaryen are stored this way on all platforms right up until a library call
+// is made to open a file (at which point we use Path::to_path to convert back)
+// so that it works with the underlying Win32 APIs.
+// Only argList (and not argv) should be used below.
 #ifdef _WIN32
   LPWSTR* argListW = CommandLineToArgvW(GetCommandLineW(), &argc);
   std::vector<std::string> argList;
-  //std::cerr << "cmd line ";
   for (size_t i = 0, e = argc; i < e; ++i) {
     argList.push_back(wasm::Path::wstring_to_string(argListW[i]));
-    //std::cerr << *argListW[i] << " " << argList[i] << "\n";
   }
 #else
   const char** argList = argv;

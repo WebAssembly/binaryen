@@ -64,7 +64,6 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   }
   infile.seekg(0, std::ios::end);
   std::streampos insize = infile.tellg();
-  //std::cerr << "insize " <<insize<< " "<<filename;
   if (uint64_t(insize) >= std::numeric_limits<size_t>::max()) {
     // Building a 32-bit executable where size_t == 32 bits, we are not able to
     // create strings larger than 2^32 bytes in length, so must abort here.
