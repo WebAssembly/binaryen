@@ -26,7 +26,7 @@
 namespace wasm::Path {
 
 #ifdef _WIN32
-PathString to_path(const std::string& s) { return string_to_wstring(s); }
+const PathString::value_type* to_path(const std::string& s) { return string_to_wstring(s); }
 
 std::wstring string_to_wstring(const std::string& s) {
   const char* inptr = s.data();
