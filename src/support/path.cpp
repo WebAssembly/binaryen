@@ -49,7 +49,7 @@ std::string wstring_to_string(const std::wstring& s) {
   return outstr;
 }
 #else
-PathString to_path(const std::string& s) { return s; }
+const PathString::value_type* to_path(const std::string& s) { return s.c_str(); }
 #endif
 
 char getPathSeparator() {
