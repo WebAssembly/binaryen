@@ -531,7 +531,7 @@
     ;; As the get must trap, we can optimize to an unreachable here.
     (drop
       (struct.get $substruct 0
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (call $create)
         )
       )
@@ -590,7 +590,7 @@
   (func $get
     (drop
       (struct.get $substruct 0
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (call $create)
         )
       )
@@ -644,7 +644,7 @@
         ;; to $struct. But no null is possible since the local gets written a
         ;; non-null value before we get here, so we can optimize this to an
         ;; unreachable.
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -824,7 +824,7 @@
     (drop
       (struct.get $struct 0
         ;; This cast is added, ensuring only a $substruct can reach the get.
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (select
             (struct.new $struct
               (i32.const 10)
@@ -906,7 +906,7 @@
       (struct.get $substruct 0
         ;; This cast will be refined to be non-nullable, as the LocalGraph
         ;; analysis will show that it must be so.
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -985,7 +985,7 @@
         ;; analysis will show that it must be so. After that, the dropped
         ;; struct.get can be removed as it has no side effects (the only
         ;; possible effect was a trap on null).
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -2057,7 +2057,7 @@
     ;; below. (Note that finalize will turn the cast into a cast of $C
     ;; automatically; that is not part of GUFA.)
     (struct.set $A 0
-      (ref.cast $A
+      (ref.cast (ref $A)
         (call $create-C)
       )
       (i32.const 20) ;; different value than in $create

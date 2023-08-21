@@ -456,7 +456,7 @@
     ;; nullability but not the heap type.
     (local $B (ref null $B))
     (local.set $B
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $A)
       )
     )
@@ -532,9 +532,9 @@
     ;; After doing so, the outer cast should become non-nullable as we
     ;; refinalize.
     (drop
-      (ref.cast null any
+      (ref.cast anyref
         (local.tee $x
-          (ref.cast any
+          (ref.cast (ref any)
             (local.get $x)
           )
         )

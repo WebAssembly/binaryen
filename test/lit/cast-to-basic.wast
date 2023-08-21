@@ -11,7 +11,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (result i32)
-    (ref.test struct
+    (ref.test (ref struct)
       (ref.null none)
     )
   )
@@ -25,7 +25,7 @@
   ;; CHECK-NEXT: )
   (func $cast (param $x (ref null struct))
     (drop
-      (ref.cast null struct
+      (ref.cast structref
         (local.get $x)
       )
     )

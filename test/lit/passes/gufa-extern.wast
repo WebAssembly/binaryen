@@ -24,7 +24,7 @@
     ;; We must not turn these into unreachable code, as the function is
     ;; exported.
     (drop
-      (ref.cast struct
+      (ref.cast (ref struct)
         (extern.internalize
           (local.get $ext)
         )
@@ -58,7 +58,7 @@
     ;; This is not exported, so the params are dead code, and can be turned
     ;; unreachable.
     (drop
-      (ref.cast struct
+      (ref.cast (ref struct)
         (extern.internalize
           (local.get $ext)
         )

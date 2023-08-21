@@ -126,27 +126,27 @@
     ;; List out all possible casts for comprehensiveness. For other instructions
     ;; we are more focused, below.
     (drop
-      (ref.cast $A     ;; This will be $B in TNH.
+      (ref.cast (ref $A)     ;; This will be $B in TNH.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $D     ;; This will be $E in TNH.
+      (ref.cast (ref $D)     ;; This will be $E in TNH.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $E
+      (ref.cast (ref $E)
         (local.get $x)
       )
     )
@@ -168,7 +168,7 @@
   ;; NO_TNH-NEXT: )
   (func $ref.test (param $x anyref)
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $x)
       )
     )
@@ -228,7 +228,7 @@
   (func $basic (param $x anyref)
     ;; Casts to basic types should not be modified.
     (drop
-      (ref.cast struct
+      (ref.cast (ref struct)
         (local.get $x)
       )
     )
@@ -340,17 +340,17 @@
   ;; NO_TNH-NEXT: )
   (func $ref.cast (param $x anyref)
     (drop
-      (ref.cast $A     ;; This will not be optimized like before.
+      (ref.cast (ref $A)     ;; This will not be optimized like before.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B1
+      (ref.cast (ref $B1)
         (local.get $x)
       )
     )
@@ -429,17 +429,17 @@
   ;; NO_TNH-NEXT: )
   (func $ref.cast (param $x anyref)
     (drop
-      (ref.cast $A     ;; This will be optimized to $B1.
+      (ref.cast (ref $A)     ;; This will be optimized to $B1.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B     ;; $B is never created, so this will trap, in both TNH
+      (ref.cast (ref $B)     ;; $B is never created, so this will trap, in both TNH
         (local.get $x) ;; and non-TNH modes.
       )
     )
     (drop
-      (ref.cast $B1
+      (ref.cast (ref $B1)
         (local.get $x)
       )
     )
@@ -516,17 +516,17 @@
   ;; NO_TNH-NEXT: )
   (func $ref.cast (param $x anyref)
     (drop
-      (ref.cast $A     ;; This can be $C.
+      (ref.cast (ref $A)     ;; This can be $C.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B     ;; This can also be $C.
+      (ref.cast (ref $B)     ;; This can also be $C.
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
@@ -603,22 +603,22 @@
   (func $ref.cast (param $x anyref)
     ;; All these will trap.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C1
+      (ref.cast (ref $C1)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C2
+      (ref.cast (ref $C2)
         (local.get $x)
       )
     )
@@ -671,22 +671,22 @@
   (func $ref.cast.null (param $x anyref)
     ;; These can only pass through a null.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast null $C1
+      (ref.cast (ref null $C1)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast null $C2
+      (ref.cast (ref null $C2)
         (local.get $x)
       )
     )
@@ -719,13 +719,13 @@
   (func $ref.test (param $x anyref)
     ;; This will return 0.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $x)
       )
     )
     ;; This can test for a null.
     (drop
-      (ref.test null $A
+      (ref.test (ref null $A)
         (local.get $x)
       )
     )
@@ -891,23 +891,23 @@
   (func $ref.cast (param $x anyref)
     ;; These three can be cast to $C1 in TNH.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C1
+      (ref.cast (ref $C1)
         (local.get $x)
       )
     )
     ;; This will trap.
     (drop
-      (ref.cast $C2
+      (ref.cast (ref $C2)
         (local.get $x)
       )
     )
@@ -960,23 +960,23 @@
   (func $ref.cast.null (param $x anyref)
     ;; These three can be cast to $C1 in TNH.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast null $C1
+      (ref.cast (ref null $C1)
         (local.get $x)
       )
     )
     ;; This returns null.
     (drop
-      (ref.cast null $C2
+      (ref.cast (ref null $C2)
         (local.get $x)
       )
     )
@@ -1059,17 +1059,17 @@
     ;; $A and $C have functions of their types, so in theory we could optimize
     ;; $B here.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
@@ -1176,17 +1176,17 @@
     ;; $A and $C have functions of their types, and references to them, so in
     ;; theory we could optimize $B here.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
@@ -1288,17 +1288,17 @@
   ;; NO_TNH-NEXT: )
   (func $casts (param $x anyref)
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )

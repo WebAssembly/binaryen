@@ -1451,7 +1451,7 @@
     ;;
     ;; In other words, we can propagate unreachability in DCE, but should cause
     ;; no other type changes.
-    (ref.cast null i31
+    (ref.cast i31ref
       (if (result i31ref)
         (i32.const 0)
         (block (result i31ref)

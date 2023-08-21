@@ -81,7 +81,7 @@
  (func $pick-refined (param $A (ref null $A)) (param $x i32)
   (local $B (ref null $B))
   (local.set $B
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (local.get $A)
    )
   )
@@ -129,7 +129,7 @@
   ;; As above, but now the types are both non-nullable. We should still switch
   ;; to $B.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )
@@ -161,7 +161,7 @@
   ;; nullable, that means neither is a subtype of the other, and we will make
   ;; no changes.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )

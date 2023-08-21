@@ -48,7 +48,7 @@
   (func $caller (export "out") (param $x funcref)
     ;; This call must trap: the only function of the right type will trap.
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -93,7 +93,7 @@
   (func $caller (export "out") (param $x funcref)
     ;; No function exists of type $A, so this will trap.
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -130,7 +130,7 @@
   (func $caller (export "out") (param $x funcref)
     ;; This must call $possible.
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -174,7 +174,7 @@
   (func $caller (export "out") (param $x funcref)
     ;; This must call $possible, as the trapping function won't be called.
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -221,7 +221,7 @@
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $x funcref)
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -279,13 +279,13 @@
     ;; A has one function, but it has a subtype with another, so we cannot
     ;; optimize
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     ;; The second call can be optimized, as B has just one function.
     (call_ref $B
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -328,7 +328,7 @@
   ;; CHECK-NEXT: )
   (func $possible-Y1 (type $A) (param $ref anyref)
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref)
       )
     )
@@ -343,7 +343,7 @@
   ;; CHECK-NEXT: )
   (func $possible-Y2 (type $A) (param $ref anyref)
     (drop
-      (ref.cast $Y2
+      (ref.cast (ref $Y2)
         (local.get $ref)
       )
     )
@@ -375,21 +375,21 @@
     ;; calling possible-Y1.
     (call_ref $A
       (struct.new $Y1)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func1)
       )
     )
     ;; Inverse of the above: we must call possible-Y2.
     (call_ref $A
       (struct.new $Y2)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func2)
       )
     )
     ;; This can call either one, and cannot be optimized.
     (call_ref $A
       (local.get $struct)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -457,7 +457,7 @@
   ;; CHECK-NEXT: )
   (func $possible-Y1 (type $A) (param $ref anyref) (param $ref2 anyref)
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref)
       )
     )
@@ -472,7 +472,7 @@
   ;; CHECK-NEXT: )
   (func $possible-Y2 (type $A) (param $ref anyref) (param $ref2 anyref)
     (drop
-      (ref.cast $Y2
+      (ref.cast (ref $Y2)
         (local.get $ref2) ;; this changed from ref to ref2.
       )
     )
@@ -520,7 +520,7 @@
     (call_ref $A
       (struct.new $Y1)
       (struct.new $Y1)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func1)
       )
     )
@@ -529,7 +529,7 @@
     (call_ref $A
       (struct.new $Y2)
       (struct.new $Y2)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func2)
       )
     )
@@ -538,7 +538,7 @@
     (call_ref $A
       (struct.new $Y1)
       (struct.new $Y2)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -546,7 +546,7 @@
     (call_ref $A
       (struct.new $Y2)
       (struct.new $Y1)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func4)
       )
     )
@@ -597,7 +597,7 @@
     (call_ref $A
       (local.get $struct)
       (local.get $struct)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -605,7 +605,7 @@
     (call_ref $A
       (struct.new $Y1)
       (local.get $struct)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -613,7 +613,7 @@
     (call_ref $A
       (struct.new $Y2)
       (local.get $struct)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -621,7 +621,7 @@
     (call_ref $A
       (local.get $struct)
       (struct.new $Y1)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -629,7 +629,7 @@
     (call_ref $A
       (local.get $struct)
       (struct.new $Y2)
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func3)
       )
     )
@@ -711,27 +711,27 @@
   ;; CHECK-NEXT: )
   (func $possible-1 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref)
       )
     )
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref2)
       )
     )
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref4)
       )
     )
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref5)
       )
     )
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref6)
       )
     )
@@ -766,27 +766,27 @@
   ;; CHECK-NEXT: )
   (func $possible-2 (type $A) (param $ref anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref)
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref)
       )
     )
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref3)
       )
     )
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref4)
       )
     )
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref5)
       )
     )
     (drop
-      (ref.cast $Y2
+      (ref.cast (ref $Y2)
         (local.get $ref6)
       )
     )
@@ -831,30 +831,30 @@
     ;; on the call targets.
     (call_ref $A
       ;; The first param is cast to $X in both targets, so we can apply that.
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref1)
       )
       ;; The second and third are cast to $X just in one of them, so we do
       ;; nothing.
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref2)
       )
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref3)
       )
       ;; The fourth and fifth are cast to $X and $Y1, so we can apply the LUB,
       ;; which is $X.
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref4)
       )
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref5)
       )
       ;; The last is cast to $Y1 and $Y2, and the LUB is $X.
-      (ref.cast null any
+      (ref.cast anyref
         (local.get $ref6)
       )
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func)
       )
     )
@@ -922,12 +922,12 @@
   ;; CHECK-NEXT: )
   (func $possible-1 (type $A) (param $ref (ref null $X)) (param $ref2 (ref null $X)) (param $ref3 (ref null $X))
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref2)
       )
     )
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref3)
       )
     )
@@ -952,17 +952,17 @@
   ;; CHECK-NEXT: )
   (func $possible-2 (type $A) (param $ref (ref null $X)) (param $ref2 (ref null $X)) (param $ref3 (ref null $X))
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref)
       )
     )
     (drop
-      (ref.cast $X
+      (ref.cast (ref $X)
         (local.get $ref2)
       )
     )
     (drop
-      (ref.cast $Y1
+      (ref.cast (ref $Y1)
         (local.get $ref3)
       )
     )
@@ -998,19 +998,19 @@
     ;; on the call targets.
     (call_ref $A
       ;; The first is cast to $Y1 in only one target, so we can do nothing.
-      (ref.cast null $X
+      (ref.cast (ref null $X)
         (local.get $ref1)
       )
       ;; The second is cast to $X in one $Y1 in the other, so we can refine the
       ;; nullability at least.
-      (ref.cast null $X
+      (ref.cast (ref null $X)
         (local.get $ref2)
       )
       ;; The third parameter is cast to $Y1 in both, so we can optimize to that.
-      (ref.cast null $X
+      (ref.cast (ref null $X)
         (local.get $ref3)
       )
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $func)
       )
     )
@@ -1067,7 +1067,7 @@
   ;; CHECK-NEXT: )
   (func $called (type $A) (param $ref anyref)
     (drop
-      (ref.cast null $Y1
+      (ref.cast (ref null $Y1)
         (local.get $ref)
       )
     )
@@ -1114,7 +1114,7 @@
 
     ;; Only Y1 would succeed, so we can infer that the cast can be to $Y1.
     (call $called
-      (ref.cast $X
+      (ref.cast (ref $X)
         (select (result (ref $X))
           (struct.new $Y1)
           (struct.new $Y2)

@@ -575,7 +575,7 @@
    (drop
     (br_on_cast $block anyref (ref i31)
      (block (result anyref)
-      (ref.cast struct
+      (ref.cast (ref struct)
        (block (result anyref)
         (local.get $i31ref)
        )
@@ -585,7 +585,7 @@
    )
    (br_on_cast_fail $block anyref (ref i31)
     (block (result anyref)
-     (ref.cast struct
+     (ref.cast (ref struct)
       (block (result anyref)
        (local.get $i31ref)
       )
@@ -662,7 +662,7 @@
   (drop
    (if (result i32)
     (local.get $x)
-    (ref.test $struct
+    (ref.test (ref $struct)
      (ref.null any)
     )
     (i32.const 0)
@@ -672,7 +672,7 @@
    (if (result anyref)
     (local.get $x)
     (ref.null any)
-    (ref.cast null $struct
+    (ref.cast (ref null $struct)
      (ref.null any)
     )
    )

@@ -57,7 +57,7 @@
 
     ;; Other casts as well.
     (drop
-      (ref.cast null i31
+      (ref.cast i31ref
         (local.get $y)
       )
     )

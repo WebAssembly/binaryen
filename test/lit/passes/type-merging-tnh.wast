@@ -16,7 +16,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result (ref $B))
-    (ref.cast $B
+    (ref.cast (ref $B)
       (local.get $a)
     )
   )
@@ -38,7 +38,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result i32)
-    (ref.test $B
+    (ref.test (ref $B)
       (local.get $a)
     )
   )

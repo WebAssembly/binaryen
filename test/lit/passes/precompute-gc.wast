@@ -751,7 +751,7 @@
   ;; ref.cast null instruction has, that is, the value is a null of type $B). So this
   ;; is an odd cast that "works".
   (local.set $temp
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (ref.null $A)
    )
   )
@@ -786,7 +786,7 @@
   ;; As above, but with a tuple.
   (local.set $temp
    (tuple.make
-    (ref.cast null $B
+    (ref.cast (ref null $B)
      (ref.null $A)
     )
     (i32.const 10)
@@ -823,7 +823,7 @@
  (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
-   (ref.cast $func-return-i32
+   (ref.cast (ref $func-return-i32)
     (ref.func $receive-f64)
    )
   )

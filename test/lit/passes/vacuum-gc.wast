@@ -32,7 +32,7 @@
       )
     )
     (drop
-      (ref.cast null i31
+      (ref.cast i31ref
         (local.get $x)
       )
     )
@@ -90,7 +90,7 @@
     ;; on a non-nullable input. That is, we are refining the input to the cast.
     ;; The cast must be updated properly following that, to be a non-nullable
     ;; cast.
-    (ref.cast null ${}
+    (ref.cast (ref null ${})
       (block (result (ref null ${}))
         (local.get $ref)
       )

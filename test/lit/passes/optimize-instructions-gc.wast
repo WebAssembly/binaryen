@@ -157,10 +157,10 @@
       (ref.is_null (local.get $struct))
     )
     (drop
-       (ref.test func (local.get $func))
+       (ref.test (ref func) (local.get $func))
      )
     (drop
-      (ref.test i31 (local.get $i31))
+      (ref.test (ref i31) (local.get $i31))
     )
   )
 
@@ -197,11 +197,11 @@
     ;; This can be optimized to !is_null rather than ref.test func, since we
     ;; know the heap type is what we want, so the only possible issue is a null.
     (drop
-      (ref.test func (local.get $func))
+      (ref.test (ref func) (local.get $func))
     )
     ;; This can be optimized similarly.
     (drop
-      (ref.test i31 (local.get $i31))
+      (ref.test (ref i31) (local.get $i31))
     )
   )
 
@@ -226,10 +226,10 @@
       (ref.as_non_null (local.get $struct))
     )
     (drop
-      (ref.cast func (local.get $func))
+      (ref.cast (ref func) (local.get $func))
     )
     (drop
-      (ref.cast i31 (local.get $i31))
+      (ref.cast (ref i31) (local.get $i31))
     )
   )
 
@@ -260,10 +260,10 @@
       (ref.as_non_null (local.get $struct))
     )
     (drop
-      (ref.cast func (local.get $func))
+      (ref.cast (ref func) (local.get $func))
     )
     (drop
-      (ref.cast i31 (local.get $i31))
+      (ref.cast (ref i31) (local.get $i31))
     )
   )
 
@@ -285,10 +285,10 @@
   (func $unneeded_unreachability
     ;; unreachable instructions can simply be ignored
     (drop
-      (ref.test func (unreachable))
+      (ref.test (ref func) (unreachable))
     )
     (drop
-      (ref.cast func (unreachable))
+      (ref.cast (ref func) (unreachable))
     )
   )
 
@@ -563,7 +563,7 @@
     (drop
       (ref.eq
         (local.get $x)
-        (ref.cast null $struct
+        (ref.cast (ref null $struct)
           (local.get $x)
         )
       )
@@ -596,7 +596,7 @@
   ;; CHECK-NEXT: )
   (func $flip-cast-of-as-non-null (param $x anyref)
     (drop
-      (ref.cast $struct
+      (ref.cast (ref $struct)
         ;; this can be folded into the outer cast, which checks for null too
         (ref.as_non_null
           (local.get $x)
@@ -606,7 +606,7 @@
     (drop
       ;; an example of how this helps: the struct.get will trap on null anyhow
       (struct.get_u $struct 0
-        (ref.cast $struct
+        (ref.cast (ref $struct)
           ;; this can be moved through the ref.cast null outward.
           (ref.as_non_null
             (local.get $x)
@@ -616,8 +616,8 @@
     )
     ;; This will trap, so we can emit an unreachable.
     (drop
-      (ref.cast $struct
-        (ref.cast i31
+      (ref.cast (ref $struct)
+        (ref.cast (ref i31)
           (local.get $x)
         )
       )
@@ -773,8 +773,8 @@
   (func $ref-cast-squared (param $x eqref)
     ;; Identical ref.casts can be folded together.
     (drop
-      (ref.cast null $struct
-        (ref.cast null $struct
+      (ref.cast (ref null $struct)
+        (ref.cast (ref null $struct)
           (local.get $x)
         )
       )
@@ -800,9 +800,9 @@
   (func $ref-cast-squared-fallthrough (param $x eqref)
     ;; A fallthrough in the middle does not prevent this optimization.
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (local.tee $x
-          (ref.cast null $struct
+          (ref.cast (ref null $struct)
             (local.get $x)
           )
         )
@@ -819,9 +819,9 @@
   (func $ref-cast-cubed (param $x eqref)
     ;; Three and more also work.
     (drop
-      (ref.cast null $struct
-        (ref.cast null $struct
-          (ref.cast null $struct
+      (ref.cast (ref null $struct)
+        (ref.cast (ref null $struct)
+          (ref.cast (ref null $struct)
             (local.get $x)
           )
         )
@@ -839,8 +839,8 @@
     ;; Different casts cannot be folded. We can emit a cast to null here, which
     ;; is the only possible thing that can pass through.
     (drop
-      (ref.cast null $struct
-        (ref.cast null $empty
+      (ref.cast (ref null $struct)
+        (ref.cast (ref null $empty)
           (local.get $x)
         )
       )
@@ -905,10 +905,10 @@
     ;; they are both null, so we cannot optimize here.
     (drop
       (ref.eq
-        (ref.cast null $struct
+        (ref.cast (ref null $struct)
           (local.get $x)
         )
-        (ref.cast null $array
+        (ref.cast (ref null $array)
           (local.get $y)
         )
       )
@@ -967,12 +967,12 @@
     ;; equal, and the result must be 0.
     (drop
       (ref.eq
-        (ref.cast $struct
+        (ref.cast (ref $struct)
           (ref.as_non_null
             (local.get $x)
           )
         )
-        (ref.cast null $array
+        (ref.cast (ref null $array)
           (local.get $y)
         )
       )
@@ -980,10 +980,10 @@
     ;; As above but the cast is on the other one.
     (drop
       (ref.eq
-        (ref.cast null $struct
+        (ref.cast (ref null $struct)
           (local.get $x)
         )
-        (ref.cast $array
+        (ref.cast (ref $array)
           (ref.as_non_null
             (local.get $y)
           )
@@ -993,12 +993,12 @@
     ;; As above but the cast is both.
     (drop
       (ref.eq
-        (ref.cast $struct
+        (ref.cast (ref $struct)
           (ref.as_non_null
             (local.get $x)
           )
         )
-        (ref.cast $array
+        (ref.cast (ref $array)
           (ref.as_non_null
             (local.get $y)
           )
@@ -1034,10 +1034,10 @@
     ;; subtype of A, so we cannot optimize.
     (drop
       (ref.eq
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $x)
         )
-        (ref.cast $B
+        (ref.cast (ref $B)
           (local.get $y)
         )
       )
@@ -1045,10 +1045,10 @@
     ;; As above but flipped.
     (drop
       (ref.eq
-        (ref.cast $B
+        (ref.cast (ref $B)
           (local.get $x)
         )
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $y)
         )
       )
@@ -1098,7 +1098,7 @@
   ;; CHECK-NEXT: )
   (func $incompatible-cast-of-non-null (param $struct (ref $struct))
     (drop
-      (ref.cast $array
+      (ref.cast (ref $array)
         (local.get $struct)
       )
     )
@@ -1121,14 +1121,14 @@
   ;; CHECK-NEXT: )
   (func $incompatible-cast-of-null (param $x (ref null $struct))
     (drop
-      (ref.cast $array
+      (ref.cast (ref $array)
         ;; The child is null, so the cast will trap. Replace it with an
         ;; unreachable.
         (ref.null none)
       )
     )
     (drop
-      (ref.cast $array
+      (ref.cast (ref $array)
         ;; Even though the child type is non-null, it is still valid to do this
         ;; transformation. In practice this code will trap before getting to our
         ;; new unreachable.
@@ -1148,7 +1148,7 @@
   ;; CHECK-NEXT: )
   (func $incompatible-cast-of-unknown (param $struct (ref null $struct))
     (drop
-      (ref.cast null $array
+      (ref.cast (ref null $array)
         (local.get $struct)
       )
     )
@@ -1182,7 +1182,7 @@
   (func $incompatible-test (param $struct (ref null $struct))
     (drop
       ;; This test will definitely fail, so we can turn it into 0.
-      (ref.test $array
+      (ref.test (ref $array)
         (local.get $struct)
       )
     )
@@ -1190,13 +1190,13 @@
       ;; But this one might succeed due to a null, so don't optimize it away.
       ;; We can however change it from ref.test to ref.is_null, as a null is the
       ;; only possible way this will succeed.
-      (ref.test null $array
+      (ref.test (ref null $array)
         (local.get $struct)
       )
     )
     (drop
       ;; This one cannot succeed due to a null, so optimize it.
-      (ref.test null $array
+      (ref.test (ref null $array)
         (ref.as_non_null
           (local.get $struct)
         )
@@ -1249,26 +1249,26 @@
   (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
     (drop
       ;; B is a subtype of A, so this can work.
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $A)
       )
     )
     (drop
       ;; The other direction can work too. It will only fail if the input is a
       ;; null, so we can switch to checking that.
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $B)
       )
     )
     (drop
       ;; If the test is nullable, this will succeed.
-      (ref.test null $A
+      (ref.test (ref null $A)
         (local.get $B)
       )
     )
     (drop
       ;; We will also succeed if the input is non-nullable.
-      (ref.test $A
+      (ref.test (ref $A)
         (ref.as_non_null
           (local.get $B)
         )
@@ -1276,7 +1276,7 @@
     )
     (drop
       ;; Or if the test is nullable and the input is non-nullable.
-      (ref.test null $A
+      (ref.test (ref null $A)
         (ref.as_non_null
           (local.get $B)
         )
@@ -1301,14 +1301,14 @@
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $compatible-test-separate-fallthrough (param $eqref eqref) (result i32)
-    (ref.test i31
+    (ref.test (ref i31)
       (local.tee $eqref
         (block (result eqref)
           ;; Prove that the value is non-nullable
           (ref.as_non_null
             (block (result eqref)
               ;; Prove that the value is an i31
-              (ref.cast null i31
+              (ref.cast i31ref
                 (local.get $eqref)
               )
             )
@@ -1329,7 +1329,7 @@
   ;; CHECK-NEXT: )
   (func $improvable-test-separate-fallthrough (param $eqref eqref) (result i32)
     ;; There is no need to admit null here, but we don't know whether we have an i31.
-    (ref.test null i31
+    (ref.test i31ref
       (block (result eqref)
         ;; Prove that the value is non-nullable
         (ref.as_non_null
@@ -1356,14 +1356,14 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $incompatible-test-separate-fallthrough (param $eqref eqref) (result i32)
-    (ref.test null struct
+    (ref.test structref
       (local.tee $eqref
         (block (result eqref)
           ;; Prove that the value is non-nullable
           (ref.as_non_null
             (block (result eqref)
               ;; Prove that the value is an i31
-              (ref.cast null i31
+              (ref.cast i31ref
                 (local.get $eqref)
               )
             )
@@ -1399,7 +1399,7 @@
       (drop
         ;; The value cannot be both i31 and struct, so it must be null and we
         ;; can optimize to 0.
-        (ref.test any
+        (ref.test (ref any)
           (block (result anyref)
             (br_on_cast_fail $outer anyref i31ref
               (block (result anyref)
@@ -1440,7 +1440,7 @@
     (block $outer (result anyref)
       (drop
         ;; Same as above, but now we allow null, so we optimize to 1.
-        (ref.test null any
+        (ref.test anyref
           (block (result anyref)
             (br_on_cast_fail $outer anyref i31ref
               (block (result anyref)
@@ -1482,7 +1482,7 @@
       (drop
         ;; Same as above, but now we know the value must be non-null and bottom,
         ;; so it cannot exist at all.
-        (ref.test null any
+        (ref.test anyref
           (block (result anyref)
             (br_on_cast_fail $outer anyref (ref i31)
               (block (result anyref)
@@ -1514,12 +1514,12 @@
     (drop
       ;; We should ignore unreachable ref.tests and not try to compare their
       ;; HeapTypes.
-      (ref.test $A
+      (ref.test (ref $A)
         (unreachable)
       )
     )
     (drop
-      (ref.test null $A
+      (ref.test (ref null $A)
         (unreachable)
       )
     )
@@ -1579,13 +1579,13 @@
     (local $a (ref null $A))
     ;; Casting nulls results in a null.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (ref.null none)
       )
     )
     ;; A fallthrough works too.
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.tee $a
           (ref.null none)
         )
@@ -1593,7 +1593,7 @@
     )
     ;; A non-null cast of a falling-though null will trap.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.tee $a
           (ref.null none)
         )
@@ -1602,18 +1602,18 @@
     ;; The prior two examples work even if the fallthrough is only later proven
     ;; to be null.
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (block (result (ref null $A))
-          (ref.cast null none
+          (ref.cast nullref
             (local.get $a)
           )
         )
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (block (result (ref null $A))
-          (ref.cast null none
+          (ref.cast nullref
             (local.get $a)
           )
         )
@@ -1643,24 +1643,24 @@
     ;; In the general case, a static cast of something simply succeeds if the
     ;; type is a subtype.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $a)
       )
     )
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $b)
       )
     )
     ;; This is the only one that we cannot know for sure will succeed.
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $a)
       )
     )
     ;; A fallthrough works too.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.tee $a
           (local.get $a)
         )
@@ -1688,23 +1688,23 @@
   (func $ref-cast-static-squared (param $x eqref)
     ;; Identical ref.casts can be folded together.
     (drop
-      (ref.cast null $A
-        (ref.cast null $A
+      (ref.cast (ref null $A)
+        (ref.cast (ref null $A)
           (local.get $x)
         )
       )
     )
     ;; When subtypes exist, we only need the stricter one.
     (drop
-      (ref.cast null $A
-        (ref.cast null $B
+      (ref.cast (ref null $A)
+        (ref.cast (ref null $B)
           (local.get $x)
         )
       )
     )
     (drop
-      (ref.cast null $B
-        (ref.cast null $A
+      (ref.cast (ref null $B)
+        (ref.cast (ref null $A)
           (local.get $x)
         )
       )
@@ -1747,54 +1747,54 @@
     ;; We should optimize a long sequence of static casts when we can. All six
     ;; orderings of these casts should collapse into the strictest one.
     (drop
-      (ref.cast null $A
-        (ref.cast null $B
-          (ref.cast null $B-child
+      (ref.cast (ref null $A)
+        (ref.cast (ref null $B)
+          (ref.cast (ref null $B-child)
             (local.get $x)
           )
         )
       )
     )
     (drop
-      (ref.cast null $A
-        (ref.cast null $B-child
-          (ref.cast null $B
+      (ref.cast (ref null $A)
+        (ref.cast (ref null $B-child)
+          (ref.cast (ref null $B)
             (local.get $x)
           )
         )
       )
     )
     (drop
-      (ref.cast null $B
-        (ref.cast null $A
-          (ref.cast null $B-child
+      (ref.cast (ref null $B)
+        (ref.cast (ref null $A)
+          (ref.cast (ref null $B-child)
             (local.get $x)
           )
         )
       )
     )
     (drop
-      (ref.cast null $B
-        (ref.cast null $B-child
-          (ref.cast null $A
+      (ref.cast (ref null $B)
+        (ref.cast (ref null $B-child)
+          (ref.cast (ref null $A)
             (local.get $x)
           )
         )
       )
     )
     (drop
-      (ref.cast null $B-child
-        (ref.cast null $A
-          (ref.cast null $B
+      (ref.cast (ref null $B-child)
+        (ref.cast (ref null $A)
+          (ref.cast (ref null $B)
             (local.get $x)
           )
         )
       )
     )
     (drop
-      (ref.cast null $B-child
-        (ref.cast null $B
-          (ref.cast null $A
+      (ref.cast (ref null $B-child)
+        (ref.cast (ref null $B)
+          (ref.cast (ref null $A)
             (local.get $x)
           )
         )
@@ -1812,18 +1812,18 @@
   (func $ref-cast-static-very-many (param $x eqref)
     ;; We should optimize an arbitrarily-long long sequence of static casts.
     (drop
-      (ref.cast null $A
-        (ref.cast null $B
-          (ref.cast null $B-child
-            (ref.cast null $A
-              (ref.cast null $A
-                (ref.cast null $B-child
-                  (ref.cast null $B-child
-                    (ref.cast null $B
-                      (ref.cast null $B
-                        (ref.cast null $B
-                          (ref.cast null $B-child
-                            (ref.cast null $A
+      (ref.cast (ref null $A)
+        (ref.cast (ref null $B)
+          (ref.cast (ref null $B-child)
+            (ref.cast (ref null $A)
+              (ref.cast (ref null $A)
+                (ref.cast (ref null $B-child)
+                  (ref.cast (ref null $B-child)
+                    (ref.cast (ref null $B)
+                      (ref.cast (ref null $B)
+                        (ref.cast (ref null $B)
+                          (ref.cast (ref null $B-child)
+                            (ref.cast (ref null $A)
                               (local.get $x)
                             )
                           )
@@ -1854,7 +1854,7 @@
   ;; CHECK-NEXT: )
   (func $ref-cast-static-fallthrough-remaining (param $x eqref)
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (block (result (ref null $B))
           ;; Additional contents in between redundant casts must be preserved.
           ;; That is, when we see that the casts are redundant, by seeing that
@@ -1867,7 +1867,7 @@
           (call $ref-cast-static-fallthrough-remaining
             (local.get $x)
           )
-          (ref.cast null $B
+          (ref.cast (ref null $B)
             (local.get $x)
           )
         )
@@ -1894,12 +1894,12 @@
       ;; As above, but with $A and $B flipped. Now the inner cast is not needed.
       ;; However, we do not remove it, as it may be necessary for validation,
       ;; and we hope other opts help out here.
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (block (result (eqref))
           (call $ref-cast-static-fallthrough-remaining-child
             (local.get $x)
           )
-          (ref.cast null $A
+          (ref.cast (ref null $A)
             (local.get $x)
           )
         )
@@ -1929,12 +1929,12 @@
       ;; As above, but with an impossible cast of an array to a struct. The
       ;; block with the side effects and the inner cast must be kept around and
       ;; dropped, and then we replace the outer cast with an unreachable.
-      (ref.cast $array
+      (ref.cast (ref $array)
         (block (result (ref eq))
           (call $ref-cast-static-fallthrough-remaining-impossible
             (local.get $x)
           )
-          (ref.cast $struct
+          (ref.cast (ref $struct)
             (local.get $x)
           )
         )
@@ -1968,12 +1968,12 @@
     ;; mis-optimize this case: The outer cast is not needed, so we can optimize
     ;; it out, but we have to be careful not to remove any side effects.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (block (result (ref eq))
           (call $ref-cast-static-fallthrough-remaining
             (local.get $x)
           )
-          (ref.cast $B
+          (ref.cast (ref $B)
             (local.get $x)
           )
         )
@@ -2022,29 +2022,29 @@
     ;; Impossible casts will trap unless the input is null. Only the first one
     ;; here, which lets a null get through, will not trap.
     (drop
-      (ref.cast null $struct
-        (ref.cast null $array
+      (ref.cast (ref null $struct)
+        (ref.cast (ref null $array)
           (local.get $x)
         )
       )
     )
     (drop
-      (ref.cast $struct
-        (ref.cast null $array
+      (ref.cast (ref $struct)
+        (ref.cast (ref null $array)
           (local.get $x)
         )
       )
     )
     (drop
-      (ref.cast null $struct
-        (ref.cast $array
+      (ref.cast (ref null $struct)
+        (ref.cast (ref $array)
           (local.get $x)
         )
       )
     )
     (drop
-      (ref.cast $struct
-        (ref.cast $array
+      (ref.cast (ref $struct)
+        (ref.cast (ref $array)
           (ref.as_non_null (local.get $x))
         )
       )
@@ -2072,13 +2072,13 @@
     ;; A nullable value cannot be optimized here even though it is the same
     ;; type. But we can at least use !ref.is_null rather than ref.test.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $nullable)
       )
     )
     ;; But if it is non-nullable, it must succeed.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $non-nullable)
       )
     )
@@ -2104,12 +2104,12 @@
   (func $ref-test-static-subtype (param $nullable (ref null $B)) (param $non-nullable (ref $B))
     ;; As above, but the input is a subtype, so the same things happen.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $nullable)
       )
     )
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $non-nullable)
       )
     )
@@ -2131,12 +2131,12 @@
     ;; As above, but the input is a supertype. We can't know at compile time
     ;; what to do here.
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $nullable)
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $non-nullable)
       )
     )
@@ -2163,12 +2163,12 @@
   (func $ref-test-static-impossible (param $nullable (ref null $array)) (param $non-nullable (ref $array))
     ;; Testing an impossible cast will definitely fail.
     (drop
-      (ref.test $struct
+      (ref.test (ref $struct)
         (local.get $nullable)
       )
     )
     (drop
-      (ref.test $struct
+      (ref.test (ref $struct)
         (local.get $non-nullable)
       )
     )
@@ -2214,7 +2214,7 @@
     )
     (drop
       (i32.and
-        (ref.test $A
+        (ref.test (ref $A)
           (local.get $x)
         )
         (i32.const 1)
@@ -2293,26 +2293,26 @@
 
     ;; Non-nullable casts. When the input is non-nullable we must succeed.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $b)
       )
     )
     ;; When the input can be null, we might fail if it is a null. But we can
     ;; switch to checking only that.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $null-b)
       )
     )
 
     ;; Null casts. Both of these must succeed.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $b)
       )
     )
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $null-b)
       )
     )
@@ -2354,24 +2354,24 @@
     ;; types, $B and $struct, so the only possible way the cast succeeds is if
     ;; the cast allows null and the input is a null.
     (drop
-      (ref.cast $struct
+      (ref.cast (ref $struct)
         (local.get $b)
       )
     )
     (drop
-      (ref.cast $struct
+      (ref.cast (ref $struct)
         (local.get $null-b)
       )
     )
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (local.get $b)
       )
     )
     ;; This last case is the only one that can succeed. We turn it into a cast
     ;; to a null.
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (local.get $null-b)
       )
     )
@@ -2400,14 +2400,14 @@
   ;; CHECK-NEXT: )
   (func $compatible-cast-separate-fallthrough (param $eqref eqref) (result (ref i31))
     ;; This cast will succeed even though no individual fallthrough value is sufficiently refined.
-    (ref.cast i31
+    (ref.cast (ref i31)
       (local.tee $eqref
         (block (result eqref)
           ;; Prove that the value is non-nullable
           (ref.as_non_null
             (block (result eqref)
               ;; Prove that the value is an i31
-              (ref.cast null i31
+              (ref.cast i31ref
                 (local.get $eqref)
               )
             )
@@ -2437,11 +2437,11 @@
   (func $compatible-cast-fallthrough-null-check (param $eqref eqref) (result (ref i31))
     ;; Similar to above, but now we no longer know whether the value going into
     ;; the cast is null or not.
-    (ref.cast i31
+    (ref.cast (ref i31)
       (local.tee $eqref
         (block (result eqref)
           ;; Prove that the value is an i31
-          (ref.cast null i31
+          (ref.cast i31ref
             (local.get $eqref)
           )
         )
@@ -2483,7 +2483,7 @@
     ;; There are multiple "best" values we could tee and propagate. Choose the
     ;; shallowest.
     (block $outer (result (ref eq))
-      (ref.cast i31
+      (ref.cast (ref i31)
         (local.tee $eqref
           (block (result eqref)
             ;; Prove that the value is an i31 a second time. This one will be
@@ -2494,7 +2494,7 @@
                 (ref.as_non_null
                   (block (result eqref)
                     ;; Prove that the value is an i31
-                    (ref.cast null i31
+                    (ref.cast i31ref
                       (local.get $eqref)
                     )
                   )
@@ -2537,7 +2537,7 @@
   (func $compatible-cast-separate-fallthrough-multiple-options-2
       (param $eqref eqref) (result (ref eq))
     (block $outer (result (ref eq))
-      (ref.cast i31
+      (ref.cast (ref i31)
         (local.tee $eqref
           (block (result eqref)
             ;; Prove that the value is an i31 a second time, but not that it is
@@ -2549,7 +2549,7 @@
                   (block (result eqref)
                     ;; Now this is non-nullable and an exact match, so we
                     ;; propagate this one.
-                    (ref.cast i31
+                    (ref.cast (ref i31)
                       (local.get $eqref)
                     )
                   )
@@ -2579,14 +2579,14 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $incompatible-cast-separate-fallthrough (param $eqref eqref) (result structref)
-    (ref.cast null struct
+    (ref.cast structref
       (local.tee $eqref
         (block (result eqref)
           ;; Prove that the value is non-nullable
           (ref.as_non_null
             (block (result eqref)
               ;; Prove that the value is an i31
-              (ref.cast null i31
+              (ref.cast i31ref
                 (local.get $eqref)
               )
             )
@@ -2618,7 +2618,7 @@
     (block $outer (result anyref)
       ;; The value cannot be both an i31 and a struct, so it must be null, so
       ;; the cast will fail.
-      (ref.cast struct
+      (ref.cast (ref struct)
         (block (result anyref)
           (br_on_cast_fail $outer anyref i31ref
             (block (result anyref)
@@ -2650,7 +2650,7 @@
   (func $incompatible-cast-heap-types-nullable (param $anyref anyref) (result anyref)
     (block $outer (result anyref)
       ;; As above, but now the cast might succeed because we allow null.
-      (ref.cast null struct
+      (ref.cast structref
         (block (result anyref)
           (br_on_cast_fail $outer anyref i31ref
             (block (result anyref)
@@ -2685,7 +2685,7 @@
   (func $incompatible-cast-heap-types-unreachable (param $anyref anyref) (result anyref)
     (block $outer (result anyref)
       ;; As above, but now we know the value is not null, so the cast is unreachable.
-      (ref.cast null struct
+      (ref.cast structref
         (block (result anyref)
           (br_on_cast_fail $outer anyref (ref i31)
             (block (result anyref)
@@ -2707,7 +2707,7 @@
     ;; ref.as must then ignore the unreachable input and not error on trying to
     ;; infer anything about it.
     (ref.as_non_null
-      (ref.cast $A
+      (ref.cast (ref $A)
         (ref.null none)
       )
     )
@@ -2727,7 +2727,7 @@
     ;; externref as falling through to the cast and incorrectly inferring that
     ;; the cast cannot succeed.
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (extern.internalize
           (local.get $externref)
         )
@@ -2812,7 +2812,7 @@
     ;; type (the arms are more refined than the declared type), so we must
     ;; refinalize or we'll error.
     (drop
-      (ref.cast null $void2
+      (ref.cast (ref null $void2)
         (select (result (ref null $void))
           (ref.func $refinalize.select.arm)
           (ref.func $refinalize.select.arm)
@@ -2832,7 +2832,7 @@
   (func $refinalize.select.arm.flip
     ;; Flipped of the above.
     (drop
-      (ref.cast null $void2
+      (ref.cast (ref null $void2)
         (select (result (ref null $void))
           (ref.func $refinalize.select.arm)
           (ref.func $refinalize.select.arm)
@@ -2852,7 +2852,7 @@
   (func $refinalize.select.arm.unknown (param $x i32)
     ;; As above but use an unknown value at compile time for the condition.
     (drop
-      (ref.cast null $void2
+      (ref.cast (ref null $void2)
         (select (result (ref null $void))
           (ref.func $refinalize.select.arm)
           (ref.func $refinalize.select.arm)
@@ -2881,7 +2881,7 @@
     ;; succeed, and replaced the cast with its child, we'd fail to validate.
     ;; Instead, since the cast fails, we can replace it with an unreachable
     ;; (after the dropped child).
-    (ref.cast func
+    (ref.cast (ref func)
       (local.tee $0
         (loop (result (ref nofunc))
           (unreachable)
@@ -2898,7 +2898,7 @@
   ;; CHECK-NEXT: )
   (func $non-null-bottom-cast (result (ref nofunc))
     ;; As above, but now the cast is uninhabitable.
-    (ref.cast nofunc
+    (ref.cast (ref nofunc)
       (ref.func $non-null-bottom-cast)
     )
   )
@@ -2917,7 +2917,7 @@
   (func $non-null-bottom-ref-test (result i32)
     (local $0 (ref null func))
     ;; As above, but now it's a ref.test instead of cast.
-    (ref.test func
+    (ref.test (ref func)
       (local.tee $0
         (loop (result (ref nofunc))
           (unreachable)
@@ -2939,7 +2939,7 @@
     (local $0 (ref null func))
     ;; As above, but without an intermediate local.tee. Now ref.test will see
     ;; that it is unreachable, as the input is uninhabitable.
-    (ref.test func
+    (ref.test (ref func)
       (loop (result (ref nofunc))
         (unreachable)
       )
@@ -2955,7 +2955,7 @@
   (func $non-null-bottom-test (result i32)
     ;; As above, but now the cast type is uninhabitable, and also use ref.test.
     ;; This cast cannot succeed, so return 0.
-    (ref.test nofunc
+    (ref.test (ref nofunc)
       (ref.func $non-null-bottom-cast)
     )
   )
@@ -2992,7 +2992,7 @@
     ;; thinks it can succeed and nothing happens here (GUFA can optimize this,
     ;; however).
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.tee $A
           (struct.new $A
             (i32.const 10)
@@ -3003,7 +3003,7 @@
     ;; This test will succeed, even though we tee to the parent type in the
     ;; middle.
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.tee $A
           (struct.new $B
             (i32.const 20)
@@ -3039,8 +3039,8 @@
       (i32.const 1)
       (i32.add
         (i32.const 2)
-        (ref.test func
-          (ref.cast func
+        (ref.test (ref func)
+          (ref.cast (ref func)
             (ref.null nofunc)
           )
         )

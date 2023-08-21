@@ -1157,7 +1157,7 @@
     ;; well, as otherwise the struct.new will not validate - we can't write a
     ;; (ref struct) to a field of (ref $B).
     (struct.new $A
-      (ref.cast struct
+      (ref.cast (ref struct)
         (struct.get $A 0
           (struct.new $A
             (struct.new_default $B)

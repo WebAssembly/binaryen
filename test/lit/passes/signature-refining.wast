@@ -882,7 +882,7 @@
   ;; The param will become non-nullable after we refine. We must refinalize
   ;; after doing so, so the cast becomes non-nullable as well.
   (drop
-   (ref.cast null struct
+   (ref.cast structref
     (local.get $2)
    )
   )

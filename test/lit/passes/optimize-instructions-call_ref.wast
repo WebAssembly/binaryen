@@ -178,7 +178,7 @@
   ;; call_ref that returns nothing with a call that returns an i32. In fact, we
   ;; end up optimizing the cast into an unreachable.
   (call_ref $none_=>_i32
-   (ref.cast $none_=>_i32
+   (ref.cast (ref $none_=>_i32)
     (ref.func $return-nothing)
    )
   )

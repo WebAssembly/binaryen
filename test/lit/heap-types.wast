@@ -20,7 +20,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (ref.test $struct.B (ref.null $struct.A))
+      (ref.test (ref $struct.B) (ref.null $struct.A))
     )
   )
 )
@@ -39,7 +39,7 @@
     ;; Note that this will not round-trip precisely because Binaryen IR will
     ;; apply the more refined type to the cast automatically (in finalize).
     (drop
-      (ref.cast null $struct.B (ref.null $struct.A))
+      (ref.cast (ref null $struct.B) (ref.null $struct.A))
     )
   )
 )

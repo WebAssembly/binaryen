@@ -36,7 +36,7 @@
       (i32.const 10)
     )
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )

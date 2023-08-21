@@ -470,7 +470,7 @@
     ;; cast will remain since we monomorphize without bothering to optimize and
     ;; see if there is any benefit.)
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $ref)
       )
     )
@@ -485,18 +485,18 @@
       )
     )
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     ;; Another use of $ref, also to avoid opts merging $x and $ref.
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $ref)
       )
     )

@@ -238,8 +238,8 @@
   (local $local i31ref)
   (i32.add
    (unreachable)
-   (ref.test i31
-    (ref.cast null i31
+   (ref.test (ref i31)
+    (ref.cast i31ref
      ;; This local.get is in unreachable code, and coalesce-locals will remove
      ;; it in order to avoid using the local index at all. While doing so it
      ;; must emit something of the exact same type so validation still works
@@ -271,7 +271,7 @@
    (block (result f64)
     (unreachable)
    )
-   (ref.cast null $A
+   (ref.cast (ref null $A)
     (local.tee $A
      (struct.new_default $A)
     )

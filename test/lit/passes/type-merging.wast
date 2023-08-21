@@ -62,13 +62,13 @@
 
     ;; A cast of $A has no effect.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $a)
       )
     )
     ;; A cast of $F prevents it from being merged.
     (drop
-      (ref.cast null $F
+      (ref.cast (ref null $F)
         (local.get $a)
       )
     )
@@ -356,7 +356,7 @@
     (local $y (ref null $Y))
 
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $a)
       )
     )
@@ -908,7 +908,7 @@
 
     ;; Cast to prevent $x and $y from being merged.
     (drop
-      (ref.test $y
+      (ref.test (ref $y)
         (struct.new_default $x)
       )
     )
@@ -969,7 +969,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result i32)
-    (ref.test $B
+    (ref.test (ref $B)
       (local.get $a)
     )
   )

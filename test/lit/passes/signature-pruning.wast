@@ -833,7 +833,7 @@
     ;; we do need to handle it in the optimization as well as print it (note how
     ;; type $A is declared in the output here - it would be a bug if it were
     ;; not, which this is a regression test for).
-    (ref.cast null $A
+    (ref.cast (ref null $A)
       (unreachable)
     )
   )

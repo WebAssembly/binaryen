@@ -21,7 +21,7 @@
   ;; CHECK-NEXT: )
   (func $yes-past-call (param $x (ref struct))
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -50,7 +50,7 @@
   ;; CHECK-NEXT: )
   (func $yes-past-return_call (param $x (ref struct))
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
