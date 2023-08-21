@@ -35,7 +35,7 @@
   ;; CHECK-NEXT:   (struct.new_default $B)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -104,7 +104,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $none_=>_none
+  ;; CHECK-NEXT:   (ref.cast (ref $none_=>_none)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

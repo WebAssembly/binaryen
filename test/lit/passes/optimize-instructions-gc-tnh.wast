@@ -23,10 +23,10 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.eq (type $eqref_eqref_=>_i32) (param $a eqref) (param $b eqref) (result i32)
   ;; NO_TNH-NEXT:  (ref.eq
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref $struct)
   ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
-  ;; NO_TNH-NEXT:   (ref.cast struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref struct)
   ;; NO_TNH-NEXT:    (local.get $b)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -64,10 +64,10 @@
   ;; NO_TNH:      (func $ref.eq-no (type $eqref_eqref_anyref_=>_none) (param $a eqref) (param $b eqref) (param $any anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.eq
-  ;; NO_TNH-NEXT:    (ref.cast null $struct
+  ;; NO_TNH-NEXT:    (ref.cast (ref null $struct)
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
-  ;; NO_TNH-NEXT:    (ref.cast struct
+  ;; NO_TNH-NEXT:    (ref.cast (ref struct)
   ;; NO_TNH-NEXT:     (local.get $any)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
@@ -93,7 +93,7 @@
 
   ;; TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast $struct
+  ;; TNH-NEXT:   (ref.cast (ref $struct)
   ;; TNH-NEXT:    (local.get $a)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
@@ -101,7 +101,7 @@
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $ref.is (type $eqref_=>_i32) (param $a eqref) (result i32)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref $struct)
   ;; NO_TNH-NEXT:    (local.get $a)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -134,13 +134,13 @@
   ;; NO_TNH:      (func $ref.is_b (type $eqref_funcref_=>_i32) (param $a eqref) (param $f funcref) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (ref.is_null
-  ;; NO_TNH-NEXT:    (ref.cast null $struct
+  ;; NO_TNH-NEXT:    (ref.cast (ref null $struct)
   ;; NO_TNH-NEXT:     (local.get $a)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (ref.is_null
-  ;; NO_TNH-NEXT:   (ref.cast null $void
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $void)
   ;; NO_TNH-NEXT:    (local.get $f)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -168,7 +168,7 @@
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block (result i32)
   ;; TNH-NEXT:    (drop
-  ;; TNH-NEXT:     (ref.cast null i31
+  ;; TNH-NEXT:     (ref.cast i31ref
   ;; TNH-NEXT:      (local.get $a)
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
@@ -188,7 +188,7 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (block (result i32)
   ;; NO_TNH-NEXT:    (drop
-  ;; NO_TNH-NEXT:     (ref.cast null i31
+  ;; NO_TNH-NEXT:     (ref.cast i31ref
   ;; NO_TNH-NEXT:      (local.get $a)
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
@@ -559,19 +559,19 @@
   ;; TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (struct.get $struct 0
-  ;; TNH-NEXT:    (ref.cast $struct
+  ;; TNH-NEXT:    (ref.cast (ref $struct)
   ;; TNH-NEXT:     (local.get $ref)
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (ref.cast $struct
+  ;; TNH-NEXT:   (ref.cast (ref $struct)
   ;; TNH-NEXT:    (local.get $ref)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (struct.set $struct 0
-  ;; TNH-NEXT:   (ref.cast null $struct
+  ;; TNH-NEXT:   (ref.cast (ref null $struct)
   ;; TNH-NEXT:    (local.get $ref)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:   (block (result i32)
@@ -583,19 +583,19 @@
   ;; NO_TNH:      (func $set-get-cast (type $structref_=>_none) (param $ref structref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
-  ;; NO_TNH-NEXT:    (ref.cast $struct
+  ;; NO_TNH-NEXT:    (ref.cast (ref $struct)
   ;; NO_TNH-NEXT:     (local.get $ref)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (ref.cast null $struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $struct)
   ;; NO_TNH-NEXT:    (local.get $ref)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
-  ;; NO_TNH-NEXT:   (ref.cast null $struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $struct)
   ;; NO_TNH-NEXT:    (local.get $ref)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (block (result i32)
@@ -766,7 +766,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $nullable-ref)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )

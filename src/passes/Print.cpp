@@ -2093,21 +2093,14 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
-    if (curr->castType.isNullable()) {
-      printMedium(o, "null ");
-    }
-    printHeapType(o, curr->castType.getHeapType(), wasm);
+    printType(o, curr->castType, wasm);
   }
   void visitRefCast(RefCast* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    if (curr->type.isNullable()) {
-      printMedium(o, "ref.cast null ");
-    } else {
-      printMedium(o, "ref.cast ");
-    }
-    printHeapType(o, curr->type.getHeapType(), wasm);
+    printMedium(o, "ref.cast ");
+    printType(o, curr->type, wasm);
   }
 
   void visitBrOn(BrOn* curr) {

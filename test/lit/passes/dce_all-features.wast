@@ -1433,7 +1433,7 @@
   ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
 
   ;; CHECK:      (func $if (type $none_=>_anyref) (result anyref)
-  ;; CHECK-NEXT:  (ref.cast null i31
+  ;; CHECK-NEXT:  (ref.cast i31ref
   ;; CHECK-NEXT:   (if (result i31ref)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (unreachable)

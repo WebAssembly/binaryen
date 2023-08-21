@@ -11,7 +11,7 @@
   ;; CHECK:       (type $ref|$A|_=>_ref|$A| (func (param (ref $A)) (result (ref $A))))
 
   ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$A|) (param $a (ref $A)) (result (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK-NEXT:  (ref.cast (ref $A)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -33,7 +33,7 @@
   ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
 
   ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (ref.test $B
+  ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

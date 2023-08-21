@@ -13,7 +13,7 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $struct.A
+  ;; CHECK-NEXT:   (ref.test (ref $struct.A)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -30,7 +30,7 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null none
+  ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

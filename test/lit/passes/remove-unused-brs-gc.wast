@@ -101,7 +101,7 @@
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (ref.cast $struct
+ ;; CHECK-NEXT:     (ref.cast (ref $struct)
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (struct.new_default $struct)
  ;; CHECK-NEXT:      )
@@ -111,7 +111,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
- ;; CHECK-NEXT:      (ref.cast null $struct
+ ;; CHECK-NEXT:      (ref.cast (ref null $struct)
  ;; CHECK-NEXT:       (local.tee $any
  ;; CHECK-NEXT:        (local.get $struct)
  ;; CHECK-NEXT:       )
@@ -355,7 +355,7 @@
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.cast $struct
+ ;; CHECK-NEXT:    (ref.cast (ref $struct)
  ;; CHECK-NEXT:     (local.tee $any
  ;; CHECK-NEXT:      (struct.new_default $struct)
  ;; CHECK-NEXT:     )
@@ -545,7 +545,7 @@
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block (result (ref none))
- ;; CHECK-NEXT:       (ref.cast none
+ ;; CHECK-NEXT:       (ref.cast (ref none)
  ;; CHECK-NEXT:        (block (result i31ref)
  ;; CHECK-NEXT:         (local.get $i31ref)
  ;; CHECK-NEXT:        )
@@ -558,7 +558,7 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result (ref none))
- ;; CHECK-NEXT:      (ref.cast none
+ ;; CHECK-NEXT:      (ref.cast (ref none)
  ;; CHECK-NEXT:       (block (result i31ref)
  ;; CHECK-NEXT:        (local.get $i31ref)
  ;; CHECK-NEXT:       )
@@ -600,7 +600,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.test $struct
+ ;; CHECK-NEXT:    (ref.test (ref $struct)
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
@@ -610,7 +610,7 @@
  ;; CHECK-NEXT:   (if (result nullref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast null none
+ ;; CHECK-NEXT:    (ref.cast nullref
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

@@ -34,12 +34,12 @@
   ;; CHECK-NEXT:  (local $f (ref null $F))
   ;; CHECK-NEXT:  (local $g (ref null $G))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:   (ref.cast (ref null $A)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $F
+  ;; CHECK-NEXT:   (ref.cast (ref null $F)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -342,7 +342,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -896,7 +896,7 @@
   ;; CHECK:      (func $test (type $none_=>_ref|$b|) (result (ref $b))
   ;; CHECK-NEXT:  (local $0 (ref null $a))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $y
+  ;; CHECK-NEXT:   (ref.test (ref $y)
   ;; CHECK-NEXT:    (struct.new_default $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -964,7 +964,7 @@
   ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
 
   ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (ref.test $B
+  ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

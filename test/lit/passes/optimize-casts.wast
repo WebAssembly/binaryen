@@ -112,7 +112,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -144,7 +144,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -181,7 +181,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -213,7 +213,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -246,7 +246,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $void)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -273,7 +273,7 @@
   ;; CHECK-NEXT:   (ref.func $void)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -298,7 +298,7 @@
   ;; CHECK-NEXT:  (local $2 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -314,7 +314,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -362,7 +362,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -371,7 +371,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -404,7 +404,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (block (result (ref struct))
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -431,7 +431,7 @@
 
   ;; CHECK:      (func $past-basic-block (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -473,14 +473,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $4
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $5
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $b)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -543,9 +543,9 @@
   ;; CHECK:      (func $move-cast-1 (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.tee $1
-  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -555,7 +555,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -584,16 +584,16 @@
   ;; CHECK:      (func $move-cast-2 (type $ref|struct|_=>_none) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.tee $1
-  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -625,18 +625,18 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -663,18 +663,18 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -701,13 +701,13 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -738,7 +738,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -747,7 +747,7 @@
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -775,7 +775,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -823,7 +823,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $D
+  ;; CHECK-NEXT:   (ref.cast (ref $D)
   ;; CHECK-NEXT:    (block (result anyref)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -915,20 +915,20 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $2
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $3
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -936,12 +936,12 @@
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1044,7 +1044,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:     (ref.cast (ref null $A)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1052,7 +1052,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1081,14 +1081,14 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:     (ref.cast (ref null $A)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1124,7 +1124,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
   ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.cast null $A
+  ;; CHECK-NEXT:     (ref.cast (ref null $A)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1136,7 +1136,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1165,7 +1165,7 @@
 
   ;; CHECK:      (func $unoptimizable-nested-casts (type $structref_=>_none) (param $x structref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (ref.as_non_null
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -1189,7 +1189,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.tee $x
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -1217,13 +1217,13 @@
   ;; CHECK-NEXT:  (local $3 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $3
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.tee $a
   ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
@@ -1249,18 +1249,18 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1307,7 +1307,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

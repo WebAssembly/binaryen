@@ -803,7 +803,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $substruct
+  ;; CHECK-NEXT:     (ref.cast (ref $substruct)
   ;; CHECK-NEXT:      (select (result (ref $struct))
   ;; CHECK-NEXT:       (struct.new $struct
   ;; CHECK-NEXT:        (i32.const 10)
@@ -876,7 +876,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $substruct 0
-  ;; CHECK-NEXT:    (ref.cast $substruct
+  ;; CHECK-NEXT:    (ref.cast (ref $substruct)
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -951,7 +951,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $substruct
+  ;; CHECK-NEXT:     (ref.cast (ref $substruct)
   ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2044,7 +2044,7 @@
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $C 0
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)

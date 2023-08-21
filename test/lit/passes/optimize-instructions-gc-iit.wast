@@ -34,7 +34,7 @@
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $child
+  ;; CHECK-NEXT:   (ref.cast (ref $child)
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -55,7 +55,7 @@
   ;; TNH-NEXT:   (local.get $child)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast $child
+  ;; TNH-NEXT:   (ref.cast (ref $child)
   ;; TNH-NEXT:    (local.get $parent)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )

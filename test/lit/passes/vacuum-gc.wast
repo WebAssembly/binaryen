@@ -18,7 +18,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null i31
+  ;; CHECK-NEXT:   (ref.cast i31ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -81,7 +81,7 @@
   )
 
   ;; CHECK:      (func $ref.cast.null.block (type $ref|${}|_=>_structref) (param $ref (ref ${})) (result structref)
-  ;; CHECK-NEXT:  (ref.cast ${}
+  ;; CHECK-NEXT:  (ref.cast (ref ${})
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

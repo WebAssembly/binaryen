@@ -1907,7 +1907,7 @@
   ;; CHECK-NEXT:  (local $a (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $B
+  ;; CHECK-NEXT:  (ref.cast (ref $B)
   ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)

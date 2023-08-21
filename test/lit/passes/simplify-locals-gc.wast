@@ -433,7 +433,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
   ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -520,8 +520,8 @@
 
   ;; CHECK:      (func $redundant-tee-finalize (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast any
-  ;; CHECK-NEXT:    (ref.cast any
+  ;; CHECK-NEXT:   (ref.cast (ref any)
+  ;; CHECK-NEXT:    (ref.cast (ref any)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

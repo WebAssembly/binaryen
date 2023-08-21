@@ -52,7 +52,7 @@
  ;; CHECK:      (func $pick-refined (type $ref?|$A|_i32_=>_none) (param $A (ref null $A)) (param $x i32)
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast null $B
+ ;; CHECK-NEXT:   (ref.cast (ref null $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -113,7 +113,7 @@
  ;; CHECK:      (func $pick-refined-nn (type $ref|$A|_=>_none) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -144,7 +144,7 @@
  ;; CHECK:      (func $avoid-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

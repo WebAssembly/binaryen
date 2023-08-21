@@ -223,8 +223,8 @@
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (ref.test i31
- ;; CHECK-NEXT:    (ref.cast null i31
+ ;; CHECK-NEXT:   (ref.test (ref i31)
+ ;; CHECK-NEXT:    (ref.cast i31ref
  ;; CHECK-NEXT:     (block (result i31ref)
  ;; CHECK-NEXT:      (i31.new
  ;; CHECK-NEXT:       (i32.const 0)
@@ -256,7 +256,7 @@
  ;; CHECK-NEXT:   (block (result f64)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.cast null $A
+ ;; CHECK-NEXT:   (ref.cast (ref null $A)
  ;; CHECK-NEXT:    (block (result (ref null $A))
  ;; CHECK-NEXT:     (struct.new_default $A)
  ;; CHECK-NEXT:    )

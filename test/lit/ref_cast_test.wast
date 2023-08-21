@@ -8,82 +8,82 @@
   (type $array (array i32))
   ;; CHECK:      (func $test (type $eqref_=>_none) (param $0 eqref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $array
+  ;; CHECK-NEXT:   (ref.cast (ref $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $array
+  ;; CHECK-NEXT:   (ref.cast (ref null $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast i31
+  ;; CHECK-NEXT:   (ref.cast (ref i31)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null i31
+  ;; CHECK-NEXT:   (ref.cast i31ref
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $array
+  ;; CHECK-NEXT:   (ref.cast (ref $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $array
+  ;; CHECK-NEXT:   (ref.cast (ref null $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast i31
+  ;; CHECK-NEXT:   (ref.cast (ref i31)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null i31
+  ;; CHECK-NEXT:   (ref.cast i31ref
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $array
+  ;; CHECK-NEXT:   (ref.test (ref $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null $array
+  ;; CHECK-NEXT:   (ref.test (ref null $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test i31
+  ;; CHECK-NEXT:   (ref.test (ref i31)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null i31
+  ;; CHECK-NEXT:   (ref.test i31ref
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $array
+  ;; CHECK-NEXT:   (ref.test (ref $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null $array
+  ;; CHECK-NEXT:   (ref.test (ref null $array)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test i31
+  ;; CHECK-NEXT:   (ref.test (ref i31)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test null i31
+  ;; CHECK-NEXT:   (ref.test i31ref
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

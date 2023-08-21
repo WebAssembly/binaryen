@@ -70,54 +70,54 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast (ref $E)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $E
+  ;; YESTNH-NEXT:   (ref.cast (ref $E)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $D
+  ;; NO_TNH-NEXT:   (ref.cast (ref $D)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $E
+  ;; NO_TNH-NEXT:   (ref.cast (ref $E)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -154,14 +154,14 @@
 
   ;; YESTNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.test $B
+  ;; YESTNH-NEXT:   (ref.test (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.test $A
+  ;; NO_TNH-NEXT:   (ref.test (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -213,14 +213,14 @@
 
   ;; YESTNH:      (func $basic (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast struct
+  ;; YESTNH-NEXT:   (ref.cast (ref struct)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $basic (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast struct
+  ;; NO_TNH-NEXT:   (ref.cast (ref struct)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -306,34 +306,34 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:   (ref.cast (ref $A)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B1
+  ;; YESTNH-NEXT:   (ref.cast (ref $B1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B1
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B1)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -395,34 +395,34 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B1
+  ;; YESTNH-NEXT:   (ref.cast (ref $B1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B1
+  ;; YESTNH-NEXT:   (ref.cast (ref $B1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B1
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B1)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -482,34 +482,34 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -553,22 +553,22 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
@@ -580,22 +580,22 @@
 
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -626,44 +626,44 @@
 
   ;; YESTNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -694,24 +694,24 @@
 
   ;; YESTNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.test none
+  ;; YESTNH-NEXT:   (ref.test (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.test null none
+  ;; YESTNH-NEXT:   (ref.test nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.test (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.test none
+  ;; NO_TNH-NEXT:   (ref.test (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.test null none
+  ;; NO_TNH-NEXT:   (ref.test nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -846,44 +846,44 @@
 
   ;; YESTNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast none
+  ;; YESTNH-NEXT:   (ref.cast (ref none)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C1
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C1)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast none
+  ;; NO_TNH-NEXT:   (ref.cast (ref none)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -915,44 +915,44 @@
 
   ;; YESTNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref null $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref null $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null $C1
+  ;; YESTNH-NEXT:   (ref.cast (ref null $C1)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast null none
+  ;; YESTNH-NEXT:   (ref.cast nullref
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $ref.cast.null (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null $C1
+  ;; NO_TNH-NEXT:   (ref.cast (ref null $C1)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null none
+  ;; NO_TNH-NEXT:   (ref.cast nullref
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -1023,34 +1023,34 @@
 
   ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:   (ref.cast (ref $A)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -1140,34 +1140,34 @@
 
   ;; YESTNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:   (ref.cast (ref $A)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $casts (type $funcref_=>_none) (param $x funcref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -1254,34 +1254,34 @@
 
   ;; YESTNH:      (func $casts (type $anyref_=>_none) (param $x anyref)
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $A
+  ;; YESTNH-NEXT:   (ref.cast (ref $A)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $B
+  ;; YESTNH-NEXT:   (ref.cast (ref $B)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (ref.cast $C
+  ;; YESTNH-NEXT:   (ref.cast (ref $C)
   ;; YESTNH-NEXT:    (local.get $x)
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $casts (type $anyref_=>_none) (param $x anyref)
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $A
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $B
+  ;; NO_TNH-NEXT:   (ref.cast (ref $B)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast $C
+  ;; NO_TNH-NEXT:   (ref.cast (ref $C)
   ;; NO_TNH-NEXT:    (local.get $x)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )

@@ -9,7 +9,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -38,7 +38,7 @@
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
