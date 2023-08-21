@@ -2328,7 +2328,7 @@ BinaryenFeatureAll: 126975
        (i32.const 2)
       )
       (drop
-       (string.new_wtf8 utf8
+       (string.new_utf8
         (i32.const 0)
         (i32.const 0)
        )
@@ -2340,13 +2340,13 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8 wtf8
+       (string.new_wtf8
         (i32.const 0)
         (i32.const 0)
        )
       )
       (drop
-       (string.new_wtf8 replace
+       (string.new_lossy_utf8
         (i32.const 0)
         (i32.const 0)
        )
@@ -2358,7 +2358,7 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8_array utf8
+       (string.new_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
@@ -2372,14 +2372,14 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8_array wtf8
+       (string.new_wtf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
        )
       )
       (drop
-       (string.new_wtf8_array replace
+       (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
@@ -2401,12 +2401,12 @@ BinaryenFeatureAll: 126975
        (string.const "hello world")
       )
       (drop
-       (string.measure_wtf8 utf8
+       (string.measure_utf8
         (global.get $string-global)
        )
       )
       (drop
-       (string.measure_wtf8 wtf8
+       (string.measure_wtf8
         (global.get $string-global)
        )
       )
@@ -2428,19 +2428,19 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.encode_wtf8 utf8
+       (string.encode_utf8
         (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8 replace
+       (string.encode_lossy_utf8
         (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8 wtf8
+       (string.encode_wtf8
         (global.get $string-global)
         (i32.const 0)
        )
@@ -2452,21 +2452,21 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.encode_wtf8_array utf8
+       (string.encode_utf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8_array replace
+       (string.encode_lossy_utf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8_array wtf8
+       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)

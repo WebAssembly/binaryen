@@ -48,19 +48,19 @@
 
   ;; CHECK:      (func $string.new (type $stringref_stringview_wtf8_stringview_wtf16_stringview_iter_stringref_stringview_wtf8_stringview_wtf16_stringview_iter_ref|string|_ref|stringview_wtf8|_ref|stringview_wtf16|_ref|stringview_iter|_=>_none) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 utf8
+  ;; CHECK-NEXT:   (string.new_utf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
@@ -72,19 +72,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 utf8
+  ;; CHECK-NEXT:   (string.new_utf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (i32.const 6)
   ;; CHECK-NEXT:   )
@@ -174,13 +174,13 @@
   ;; CHECK:      (func $string.measure (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.measure_wtf8 wtf8
+  ;; CHECK-NEXT:    (string.measure_wtf8
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.measure_wtf8 utf8
+  ;; CHECK-NEXT:   (string.measure_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -190,12 +190,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.measure_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.measure_wtf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.measure_wtf8 utf8
+  ;; CHECK-NEXT:   (string.measure_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -233,7 +233,7 @@
   ;; CHECK:      (func $string.encode (type $stringref_=>_none) (param $ref stringref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_wtf8 wtf8
+  ;; CHECK-NEXT:    (string.encode_wtf8
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:     (i32.const 10)
   ;; CHECK-NEXT:    )
@@ -241,14 +241,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_wtf8 replace
+  ;; CHECK-NEXT:    (string.encode_lossy_utf8
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:     (i32.const 10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 utf8
+  ;; CHECK-NEXT:   (string.encode_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -260,19 +260,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.encode_wtf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 replace
+  ;; CHECK-NEXT:   (string.encode_lossy_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 utf8
+  ;; CHECK-NEXT:   (string.encode_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -584,21 +584,21 @@
 
   ;; CHECK:      (func $string.new.gc (type $ref|$array|_ref|$array16|_=>_none) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.new_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -612,21 +612,21 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.new_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 3)
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 5)
   ;; CHECK-NEXT:    (i32.const 6)
@@ -688,7 +688,7 @@
   ;; CHECK:      (func $string.encode.gc (type $stringref_ref|$array|_ref|$array16|_=>_none) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_wtf8_array wtf8
+  ;; CHECK-NEXT:    (string.encode_wtf8_array
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:     (local.get $array)
   ;; CHECK-NEXT:     (i32.const 10)
@@ -697,7 +697,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_wtf8_array replace
+  ;; CHECK-NEXT:    (string.encode_lossy_utf8_array
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:     (local.get $array)
   ;; CHECK-NEXT:     (i32.const 10)
@@ -705,7 +705,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.encode_utf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 20)
@@ -719,21 +719,21 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array wtf8
+  ;; CHECK-NEXT:   (string.encode_wtf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array replace
+  ;; CHECK-NEXT:   (string.encode_lossy_utf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.encode_utf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 20)
