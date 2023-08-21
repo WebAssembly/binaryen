@@ -2999,6 +2999,14 @@ Expression* SExpressionWasmBuilder::makeArrayNewFixed(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
   std::vector<Expression*> values;
+  if (i < s.size() && s[i]->isStr()) {
+    // With the standard syntax one should specify explicitly the size
+    // of the array
+    if ((size_t)parseIndex(*s[i]) != s.size() - 3) {
+      throw ParseException("wrong number of elements in array", s.line, s.col);
+    }
+    i++;
+  }
   while (i < s.size()) {
     values.push_back(parseExpression(*s[i++]));
   }
