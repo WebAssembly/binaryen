@@ -14,6 +14,11 @@
 
   (type $array (array_subtype i8 data))
 
+  ;; CHECK:      (type $ret-any (func (result anyref)))
+  (type $ret-any (sub (func (result anyref))))
+  ;; CHECK:      (type $ret-i31 (sub $ret-any (func (result i31ref))))
+  (type $ret-i31 (sub $ret-any (func (result i31ref))))
+
   ;; CHECK:      (import "out" "i32" (func $i32 (type $none_=>_i32) (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
   ;; CHECK:      (import "out" "i64" (func $i64 (type $none_=>_i64) (result i64)))
@@ -227,6 +232,71 @@
         (local.get $i)
       )
     )
+  )
+
+  ;; CHECK:      (func $multiple-iterations-refinalize-call-ref (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $f (ref $ret-i31))
+  ;; CHECK-NEXT:  (local $x i31ref)
+  ;; CHECK-NEXT:  (local.set $f
+  ;; CHECK-NEXT:   (ref.func $ret-i31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (call_ref $ret-i31
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multiple-iterations-refinalize-call-ref
+    (local $f (ref null $ret-any))
+    (local $x (anyref))
+    (local.set $f
+      (ref.func $ret-i31)
+    )
+    (local.set $x
+      ;; After $f is refined to hold $ret-i31 and the call_ref is refinalized,
+      ;; we will be able to refine $x to i31.
+      (call_ref $ret-any
+        (local.get $f)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $multiple-iterations-refinalize-call-ref-bottom (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $f nullfuncref)
+  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local.set $f
+  ;; CHECK-NEXT:   (ref.null nofunc)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $f)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multiple-iterations-refinalize-call-ref-bottom
+    (local $f (ref null $ret-any))
+    (local $x (anyref))
+    ;; Same as above, but now we refine $f to nullfuncref. Check that we don't crash.
+    (local.set $f
+      (ref.null nofunc)
+    )
+    (local.set $x
+      ;; We can no longer refine $x because there is no result type we can use
+      ;; after refining $f.
+      (call_ref $ret-any
+        (local.get $f)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ret-i31 (type $ret-i31) (result i31ref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $ret-i31 (type $ret-i31) (result i31ref)
+    (unreachable)
   )
 
   ;; CHECK:      (func $nondefaultable (type $none_=>_none)

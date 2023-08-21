@@ -6936,7 +6936,10 @@ void WasmBinaryReader::visitCallRef(CallRef* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  curr->finalize(sig.results);
+  // If the target has bottom type, we won't be able to infer the correct type
+  // from it, so set the type manually to be safe.
+  curr->type = sig.results;
+  curr->finalize();
 }
 
 bool WasmBinaryReader::maybeVisitI31New(Expression*& out, uint32_t code) {

@@ -2822,6 +2822,13 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
       s.line,
       s.col);
   }
+  if (!Type::isSubType(target->type, Type(sigType, Nullable))) {
+    throw ParseException(
+      std::string(isReturn ? "return_call_ref" : "call_ref") +
+        " target should match expected type",
+      s.line,
+      s.col);
+  }
   return Builder(wasm).makeCallRef(
     target, operands, sigType.getSignature().results, isReturn);
 }

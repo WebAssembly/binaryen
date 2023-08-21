@@ -920,18 +920,23 @@ void I31Get::finalize() {
 }
 
 void CallRef::finalize() {
-  handleUnreachableOperands(this);
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
   if (isReturn) {
     type = Type::unreachable;
+    return;
   }
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
+    return;
   }
-}
-
-void CallRef::finalize(Type type_) {
-  type = type_;
-  finalize();
+  assert(target->type.isRef());
+  if (target->type.getHeapType().isBottom()) {
+    return;
+  }
+  assert(target->type.getHeapType().isSignature());
+  type = target->type.getHeapType().getSignature().results;
 }
 
 void RefTest::finalize() {

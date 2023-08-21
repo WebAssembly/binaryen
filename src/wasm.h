@@ -1503,7 +1503,6 @@ public:
   bool isReturn = false;
 
   void finalize();
-  void finalize(Type type_);
 };
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
