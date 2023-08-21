@@ -2843,26 +2843,42 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
   int i = 1;
-  auto nullability = NonNullable;
-  if (s[1]->str().str == "null") {
-    nullability = Nullable;
-    ++i;
+  Type castType;
+  if (s[i]->isList() ||
+      !(s[i]->dollared() ||
+        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
+    castType = elementToType(*s[i++]);
+  } else {
+    // legacy syntax
+    auto nullability = NonNullable;
+    if (s[1]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto type = parseHeapType(*s[i++]);
-  auto castType = Type(type, nullability);
   auto* ref = parseExpression(*s[i++]);
   return Builder(wasm).makeRefTest(ref, castType);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   int i = 1;
-  Nullability nullability = NonNullable;
-  if (s[i]->str().str == "null") {
-    nullability = Nullable;
-    ++i;
+  Type castType;
+  if (s[i]->isList() ||
+      !(s[i]->dollared() ||
+        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
+    castType = elementToType(*s[i++]);
+  } else {
+    // legacy syntax
+    Nullability nullability = NonNullable;
+    if (s[i]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto type = parseHeapType(*s[i++]);
-  auto castType = Type(type, nullability);
   auto* ref = parseExpression(*s[i++]);
   return Builder(wasm).makeRefCast(ref, castType);
 }
