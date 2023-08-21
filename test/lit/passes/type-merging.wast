@@ -698,7 +698,7 @@
       (i32.const 0)
       (global.get $global$0)
       (i64.const 0)
-      (array.new_fixed $I)
+      (array.new_fixed $I 0)
     )
   )
 )

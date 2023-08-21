@@ -50,7 +50,7 @@
  (func $test2 (result externref)
   ;; This will be evalled into an externalization of a global.get.
   (extern.externalize
-   (array.new_fixed $array
+   (array.new_fixed $array 3
     (i32.const 1)
     (i32.const 2)
     (i32.const 3)

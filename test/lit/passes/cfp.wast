@@ -2078,7 +2078,7 @@
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
-  (global $global (ref $itable) (array.new_fixed $itable
+  (global $global (ref $itable) (array.new_fixed $itable 2
     (struct.new $vtable
       (ref.null func)
     )

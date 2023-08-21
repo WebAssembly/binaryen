@@ -335,26 +335,26 @@
   (func $array.new_fixed (param $refined (ref i31)) (param $null-any (ref null any))
     ;; Null, interesting, so we get a new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (ref.null none)
       )
     )
     ;; More refined type, interesting.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $refined)
       )
     )
     ;; Same type as declared - boring, no new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $null-any)
       )
     )
     ;; Mixture of boring and interesting => boring (since we infer a single type
     ;; for the entire array).
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 2
         (local.get $refined)
         (local.get $null-any)
       )

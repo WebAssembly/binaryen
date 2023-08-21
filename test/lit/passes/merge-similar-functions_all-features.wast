@@ -58,7 +58,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-null-array
-      (array.new_fixed $[i8])
+      (array.new_fixed $[i8] 0)
     )
   )
   ;; CHECK:      (func $no-call-subtyping-same-operand-1 (type $none_=>_none)
@@ -89,7 +89,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-eq
-      (array.new_fixed $[i8])
+      (array.new_fixed $[i8] 0)
     )
   )
 )

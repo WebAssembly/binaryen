@@ -903,7 +903,7 @@
     )
     (drop
       (ref.as_non_null
-        (array.new_fixed $vector
+        (array.new_fixed $vector 2
           (f64.const 1.1)
           (f64.const 2.2)
         )
@@ -3713,12 +3713,12 @@
     ;; which means two things are possible in $chars, and we can't optimize
     ;; there.
     (local.set $bytes
-      (array.new_fixed $bytes
+      (array.new_fixed $bytes 1
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.new_fixed $chars
+      (array.new_fixed $chars 1
         (ref.null any)
       )
     )
@@ -3802,12 +3802,12 @@
     (local $bytes (ref null $bytes))
     (local $chars (ref null $chars))
     (local.set $bytes
-      (array.new_fixed $bytes
+      (array.new_fixed $bytes 1
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.new_fixed $chars
+      (array.new_fixed $chars 1
         (ref.null any)
       )
     )
@@ -4154,7 +4154,7 @@
   (func $arrays (param $B (ref $B))
     (drop
       (array.len $B
-        (array.new_fixed $B
+        (array.new_fixed $B 2
           (ref.null none)
           (ref.null none)
         )

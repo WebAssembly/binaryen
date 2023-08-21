@@ -95,7 +95,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (array.new_fixed $vector
+      (array.new_fixed $vector 4
         (f64.const 1)
         (f64.const 2)
         (f64.const 4)

@@ -674,7 +674,7 @@
   ;; CHECK-NEXT:  (ref.func $nested-creations)
   ;; CHECK-NEXT: ))
   (global $vtable (ref $vtable)
-    (array.new_fixed $vtable
+    (array.new_fixed $vtable 1
       (ref.func $nested-creations)
     )
   )
@@ -760,7 +760,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $itable (ref $itable)
-    (array.new_fixed $itable
+    (array.new_fixed $itable 2
       (struct.new $vtable-0
         (ref.func $nested-creations)
       )

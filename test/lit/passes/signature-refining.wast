@@ -867,7 +867,7 @@
  ;; CHECK-NEXT: )
  (func $0
   (call $1
-   (array.new_fixed $[i8])
+   (array.new_fixed $[i8] 0)
   )
  )
 

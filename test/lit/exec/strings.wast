@@ -9,7 +9,7 @@
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
   (func "new_wtf16_array" (result stringref)
     (string.new_wtf16_array
-      (array.new_fixed $array16
+      (array.new_fixed $array16 5
         (i32.const 104) ;; h
         (i32.const 101) ;; e
         (i32.const 108) ;; l

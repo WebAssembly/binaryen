@@ -772,7 +772,7 @@
   )
   (global.set $c
    (local.tee $c
-    (array.new_fixed $C
+    (array.new_fixed $C 2
      (local.get $b)
      (local.get $a)
     )
@@ -884,7 +884,7 @@
   )
   (global.set $c
    (local.tee $c
-    (array.new_fixed $C
+    (array.new_fixed $C 2
      (local.get $b)
      (local.get $a)
     )
@@ -974,7 +974,7 @@
    )
   )
   (global.set $b
-   (array.new_fixed $B
+   (array.new_fixed $B 3
     (struct.new_default $A)
     (global.get $a)
     (struct.new_default $A)
@@ -1084,7 +1084,7 @@
   (local $b (ref $B))
   (global.set $b
    (local.tee $b
-    (array.new_fixed $B
+    (array.new_fixed $B 3
      (struct.new_default $A)
      (ref.null $A)
      (struct.new_default $A)

@@ -274,7 +274,7 @@
  (func "array.new_fixed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.new_fixed $bytes
+   (array.new_fixed $bytes 2
     (i32.const 42) ;; first value
     (i32.const 50) ;; second value
    )
@@ -295,7 +295,7 @@
  (func "array.new_fixed-packed"
   (local $x (ref null $bytes))
   (local.set $x
-   (array.new_fixed $bytes
+   (array.new_fixed $bytes 1
     (i32.const -11512)
    )
   )
