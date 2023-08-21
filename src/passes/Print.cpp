@@ -2217,6 +2217,8 @@ struct PrintExpressionContents
     printMedium(o, "array.new_fixed");
     o << ' ';
     TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    o << ' ';
+    o << curr->values.size();
   }
   void visitArrayGet(ArrayGet* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {

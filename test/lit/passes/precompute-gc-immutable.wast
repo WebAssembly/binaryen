@@ -670,7 +670,7 @@
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
   (type $object (struct (ref $vtable)))
 
-  ;; CHECK:      (global $vtable (ref $vtable) (array.new_fixed $vtable
+  ;; CHECK:      (global $vtable (ref $vtable) (array.new_fixed $vtable 1
   ;; CHECK-NEXT:  (ref.func $nested-creations)
   ;; CHECK-NEXT: ))
   (global $vtable (ref $vtable)
@@ -751,7 +751,7 @@
     (type $vtable-1 (struct funcref))
   )
 
-  ;; CHECK:      (global $itable (ref $itable) (array.new_fixed $itable
+  ;; CHECK:      (global $itable (ref $itable) (array.new_fixed $itable 2
   ;; CHECK-NEXT:  (struct.new $vtable-0
   ;; CHECK-NEXT:   (ref.func $nested-creations)
   ;; CHECK-NEXT:  )

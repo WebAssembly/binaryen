@@ -85,7 +85,7 @@
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $vector
+  ;; CHECK-NEXT:   (array.new_fixed $vector 4
   ;; CHECK-NEXT:    (f64.const 1)
   ;; CHECK-NEXT:    (f64.const 2)
   ;; CHECK-NEXT:    (f64.const 4)

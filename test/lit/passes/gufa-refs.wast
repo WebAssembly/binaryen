@@ -875,7 +875,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (array.new_fixed $vector
+  ;; CHECK-NEXT:    (array.new_fixed $vector 2
   ;; CHECK-NEXT:     (f64.const 1.1)
   ;; CHECK-NEXT:     (f64.const 2.2)
   ;; CHECK-NEXT:    )
@@ -3674,14 +3674,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.new_fixed $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes 1
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.new_fixed $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3762,14 +3762,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.new_fixed $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes 1
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.new_fixed $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -4144,7 +4144,7 @@
   ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.len
-  ;; CHECK-NEXT:    (array.new_fixed $B
+  ;; CHECK-NEXT:    (array.new_fixed $B 2
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )

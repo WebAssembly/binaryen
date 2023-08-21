@@ -689,7 +689,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $global$0)
   ;; CHECK-NEXT:   (i64.const 0)
-  ;; CHECK-NEXT:   (array.new_fixed $I)
+  ;; CHECK-NEXT:   (array.new_fixed $I 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (type $G) (param $0 (ref $C)) (result (ref $D))

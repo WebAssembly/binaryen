@@ -862,7 +862,7 @@
 
  ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (call $1
- ;; CHECK-NEXT:   (array.new_fixed $[i8])
+ ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0

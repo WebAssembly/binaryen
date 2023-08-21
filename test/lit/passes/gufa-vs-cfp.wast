@@ -2625,7 +2625,7 @@
 
   ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
-  ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable
+  ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable 2
   ;; CHECK-NEXT:  (struct.new $vtable
   ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
