@@ -3089,26 +3089,53 @@ switch (buf[0]) {
                   case 'e': {
                     switch (buf[8]) {
                       case 'n': {
-                        switch (buf[17]) {
-                          case '1': {
-                            switch (buf[19]) {
+                        switch (buf[14]) {
+                          case 'l': {
+                            switch (buf[24]) {
                               case '\0':
-                                if (op == "string.encode_wtf16"sv) { return makeStringEncode(s, StringEncodeWTF16); }
+                                if (op == "string.encode_lossy_utf8"sv) { return makeStringEncode(s, StringEncodeLossyUTF8); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                                if (op == "string.encode_lossy_utf8_array"sv) { return makeStringEncode(s, StringEncodeLossyUTF8Array); }
                                 goto parse_error;
                               default: goto parse_error;
                             }
                           }
-                          case '8': {
+                          case 'u': {
                             switch (buf[18]) {
                               case '\0':
-                                if (op == "string.encode_wtf8"sv) { return makeStringEncode(s, StringEncodeWTF8); }
+                                if (op == "string.encode_utf8"sv) { return makeStringEncode(s, StringEncodeUTF8); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf8_array"sv) { return makeStringEncode(s, StringEncodeWTF8Array); }
+                                if (op == "string.encode_utf8_array"sv) { return makeStringEncode(s, StringEncodeUTF8Array); }
                                 goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case 'w': {
+                            switch (buf[17]) {
+                              case '1': {
+                                switch (buf[19]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf16"sv) { return makeStringEncode(s, StringEncodeWTF16); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case '8': {
+                                switch (buf[18]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf8"sv) { return makeStringEncode(s, StringEncodeWTF8); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf8_array"sv) { return makeStringEncode(s, StringEncodeWTF8Array); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
                               default: goto parse_error;
                             }
                           }
@@ -3131,26 +3158,61 @@ switch (buf[0]) {
                     if (op == "string.is_usv_sequence"sv) { return makeStringMeasure(s, StringMeasureIsUSV); }
                     goto parse_error;
                   case 'm': {
-                    switch (buf[18]) {
-                      case '1':
-                        if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                    switch (buf[15]) {
+                      case 'u':
+                        if (op == "string.measure_utf8"sv) { return makeStringMeasure(s, StringMeasureUTF8); }
                         goto parse_error;
-                      case '8':
-                        if (op == "string.measure_wtf8"sv) { return makeStringMeasure(s, StringMeasureWTF8); }
-                        goto parse_error;
+                      case 'w': {
+                        switch (buf[18]) {
+                          case '1':
+                            if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.measure_wtf8"sv) { return makeStringMeasure(s, StringMeasureWTF8); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
+                      case 'l': {
+                        switch (buf[21]) {
+                          case '\0':
+                            if (op == "string.new_lossy_utf8"sv) { return makeStringNew(s, StringNewLossyUTF8, false); }
+                            goto parse_error;
+                          case '_':
+                            if (op == "string.new_lossy_utf8_array"sv) { return makeStringNew(s, StringNewLossyUTF8Array, false); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'u': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
+                        switch (buf[15]) {
+                          case '\0':
+                            if (op == "string.new_utf8"sv) { return makeStringNew(s, StringNewUTF8, false); }
                             goto parse_error;
-                          case 't':
-                            if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
-                            goto parse_error;
+                          case '_': {
+                            switch (buf[16]) {
+                              case 'a': {
+                                switch (buf[21]) {
+                                  case '\0':
+                                    if (op == "string.new_utf8_array"sv) { return makeStringNew(s, StringNewUTF8Array, false); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case 't':
+                                if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
                           default: goto parse_error;
                         }
                       }
@@ -8695,19 +8757,19 @@ switch (buf[0]) {
                   case 'e': {
                     switch (buf[8]) {
                       case 'n': {
-                        switch (buf[17]) {
-                          case '1': {
-                            switch (buf[19]) {
+                        switch (buf[14]) {
+                          case 'l': {
+                            switch (buf[24]) {
                               case '\0':
-                                if (op == "string.encode_wtf16"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16);
+                                if (op == "string.encode_lossy_utf8"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeLossyUTF8);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf16_array"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16Array);
+                                if (op == "string.encode_lossy_utf8_array"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeLossyUTF8Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8715,22 +8777,65 @@ switch (buf[0]) {
                               default: goto parse_error;
                             }
                           }
-                          case '8': {
+                          case 'u': {
                             switch (buf[18]) {
                               case '\0':
-                                if (op == "string.encode_wtf8"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8);
+                                if (op == "string.encode_utf8"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeUTF8);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf8_array"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8Array);
+                                if (op == "string.encode_utf8_array"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeUTF8Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case 'w': {
+                            switch (buf[17]) {
+                              case '1': {
+                                switch (buf[19]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf16"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf16_array"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16Array);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case '8': {
+                                switch (buf[18]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf8"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf8_array"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8Array);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
                               default: goto parse_error;
                             }
                           }
@@ -8769,42 +8874,97 @@ switch (buf[0]) {
                     }
                     goto parse_error;
                   case 'm': {
-                    switch (buf[18]) {
-                      case '1':
-                        if (op == "string.measure_wtf16"sv) {
-                          auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF16);
+                    switch (buf[15]) {
+                      case 'u':
+                        if (op == "string.measure_utf8"sv) {
+                          auto ret = makeStringMeasure(ctx, pos, StringMeasureUTF8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case '8':
-                        if (op == "string.measure_wtf8"sv) {
-                          auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF8);
-                          CHECK_ERR(ret);
-                          return *ret;
+                      case 'w': {
+                        switch (buf[18]) {
+                          case '1':
+                            if (op == "string.measure_wtf16"sv) {
+                              auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF16);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.measure_wtf8"sv) {
+                              auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF8);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
                         }
-                        goto parse_error;
+                      }
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
+                      case 'l': {
+                        switch (buf[21]) {
+                          case '\0':
+                            if (op == "string.new_lossy_utf8"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewLossyUTF8, false);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '_':
+                            if (op == "string.new_lossy_utf8_array"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewLossyUTF8Array, false);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'u': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "string.new_utf8_array_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, true);
+                        switch (buf[15]) {
+                          case '\0':
+                            if (op == "string.new_utf8"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewUTF8, false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
-                          case 't':
-                            if (op == "string.new_utf8_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewUTF8, true);
-                              CHECK_ERR(ret);
-                              return *ret;
+                          case '_': {
+                            switch (buf[16]) {
+                              case 'a': {
+                                switch (buf[21]) {
+                                  case '\0':
+                                    if (op == "string.new_utf8_array"sv) {
+                                      auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, false);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.new_utf8_array_try"sv) {
+                                      auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, true);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case 't':
+                                if (op == "string.new_utf8_try"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewUTF8, true);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           default: goto parse_error;
                         }
                       }
