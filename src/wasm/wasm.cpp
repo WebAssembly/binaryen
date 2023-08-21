@@ -50,7 +50,7 @@ const char* Memory64Feature = "memory64";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
-const char* MultiMemoriesFeature = "multi-memories";
+const char* MultiMemoryFeature = "multimemory";
 } // namespace CustomSections
 } // namespace BinaryConsts
 

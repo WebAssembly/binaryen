@@ -378,7 +378,7 @@ struct MultiMemoryLowering : public Pass {
   };
 
   void run(Module* module) override {
-    module->features.disable(FeatureSet::MultiMemories);
+    module->features.disable(FeatureSet::MultiMemory);
 
     // If there are no memories or 1 memory, skip this pass
     if (module->memories.size() <= 1) {

@@ -73,7 +73,7 @@ void Instrumenter::addSecondaryMemory(size_t numFuncs) {
     // Don't need secondary memory
     return;
   }
-  if (!wasm->features.hasMultiMemories()) {
+  if (!wasm->features.hasMultiMemory()) {
     Fatal()
       << "error: --in-secondary-memory requires multi-memories to be enabled";
   }
