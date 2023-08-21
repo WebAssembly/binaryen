@@ -920,7 +920,9 @@ void I31Get::finalize() {
 }
 
 void CallRef::finalize() {
-  handleUnreachableOperands(this);
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
   if (isReturn) {
     type = Type::unreachable;
     return;
