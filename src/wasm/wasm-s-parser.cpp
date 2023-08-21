@@ -1680,7 +1680,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
 Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   auto ret = allocator.alloc<Block>();
   size_t i = 1;
-  if (s[1]->isStr()) {
+  if (s.size() > 1 && s[1]->isStr()) {
     i++;
   }
   for (; i < s.size(); i++) {
