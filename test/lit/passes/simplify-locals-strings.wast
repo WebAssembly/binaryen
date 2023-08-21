@@ -69,7 +69,7 @@
     (local $temp stringref)
     ;; A string.new cannot be moved past a memory store.
     (local.set $temp
-      (string.new_wtf8 utf8
+      (string.new_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -82,7 +82,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8 wtf8
+      (string.new_wtf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -95,7 +95,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8 replace
+      (string.new_lossy_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -141,7 +141,7 @@
     (local $temp stringref)
     ;; A string.new can be moved past a memory load.
     (local.set $temp
-      (string.new_wtf8 utf8
+      (string.new_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -223,7 +223,7 @@
     (local $temp stringref)
     ;; A string.new_***_array cannot be moved past a GC store.
     (local.set $temp
-      (string.new_wtf8_array utf8
+      (string.new_utf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -238,7 +238,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8_array wtf8
+      (string.new_wtf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -253,7 +253,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8_array replace
+      (string.new_lossy_utf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -352,7 +352,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 wtf8
+      (string.encode_wtf8
         (local.get $ref)
         (i32.const 10)
       )
@@ -366,7 +366,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 utf8
+      (string.encode_utf8
         (local.get $ref)
         (i32.const 20)
       )
@@ -380,7 +380,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 replace
+      (string.encode_lossy_utf8
         (local.get $ref)
         (i32.const 30)
       )
@@ -482,7 +482,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array wtf8
+      (string.encode_wtf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 10)
@@ -498,7 +498,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array utf8
+      (string.encode_utf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 20)
@@ -514,7 +514,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array replace
+      (string.encode_lossy_utf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 30)
