@@ -403,7 +403,15 @@ public:
   ArenaVector(MixedArena& allocator) : allocator(allocator) {}
 
   ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
+    swap(other);
+  }
+
+  ArenaVector<T>& operator=(ArenaVector<T>&& other) {
+    if (this != &other) {
+      this->clear();
+      this->swap(other);
+    }
+    return *this;
   }
 
   void allocate(size_t size) {

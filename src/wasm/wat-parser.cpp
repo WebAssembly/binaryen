@@ -18,6 +18,7 @@
 #include "ir/names.h"
 #include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-ir-builder.h"
 #include "wasm-type.h"
 #include "wasm.h"
 #include "wat-lexer.h"
@@ -1305,20 +1306,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   // local.get, etc.
   Function* func = nullptr;
 
-  // The context for a single block scope, including the instructions parsed
-  // inside that scope so far and the ultimate result type we expect this block
-  // to have.
-  struct BlockCtx {
-    std::vector<Expression*> exprStack;
-    Type type;
-  };
+  IRBuilder irBuilder;
 
-  // The stack of block contexts currently being parsed.
-  std::vector<BlockCtx> scopeStack;
-
-  // Whether we have seen an unreachable instruction and are in
-  // stack-polymorphic unreachable mode.
-  bool unreachable = false;
+  void setFunction(Function* func) {
+    this->func = func;
+    irBuilder.setFunction(func);
+  }
 
   ParseDefsCtx(std::string_view in,
                Module& wasm,
@@ -1326,105 +1319,27 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                const std::unordered_map<Index, HeapType>& implicitTypes,
                const IndexMap& typeIndices)
     : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
-      types(types), implicitTypes(implicitTypes) {}
+      types(types), implicitTypes(implicitTypes), irBuilder(wasm) {}
 
-  std::vector<Expression*>& getExprStack() {
-    if (scopeStack.empty()) {
-      // We are not in a function, so push a dummy scope.
-      scopeStack.push_back({{}, Type::none});
+  template<typename T> Result<T> withLoc(Index pos, Result<T> res) {
+    if (auto err = res.getErr()) {
+      return in.err(pos, err->msg);
     }
-    return scopeStack.back().exprStack;
+    return res;
   }
 
-  void pushScope(Type type) { scopeStack.push_back({{}, type}); }
-
-  Type getResultType() {
-    assert(!scopeStack.empty());
-    return scopeStack.back().type;
-  }
-
-  Result<> push(Index pos, Expression* expr) {
-    auto& exprStack = getExprStack();
-    if (expr->type == Type::unreachable) {
-      // We want to avoid popping back past this most recent unreachable
-      // instruction. Drop all prior instructions so they won't be consumed by
-      // later instructions but will still be emitted for their side effects, if
-      // any.
-      for (auto& expr : exprStack) {
-        expr = builder.dropIfConcretelyTyped(expr);
-      }
-      unreachable = true;
-      exprStack.push_back(expr);
-    } else if (expr->type.isTuple()) {
-      auto scratchIdx = addScratchLocal(pos, expr->type);
-      CHECK_ERR(scratchIdx);
-      CHECK_ERR(push(pos, builder.makeLocalSet(*scratchIdx, expr)));
-      for (Index i = 0; i < expr->type.size(); ++i) {
-        CHECK_ERR(push(pos,
-                       builder.makeTupleExtract(
-                         builder.makeLocalGet(*scratchIdx, expr->type), i)));
-      }
-    } else {
-      exprStack.push_back(expr);
-    }
-    return Ok{};
-  }
-
-  Result<Expression*> pop(Index pos) {
-    auto& exprStack = getExprStack();
-
-    // Find the suffix of expressions that do not produce values.
-    auto firstNone = exprStack.size();
-    for (; firstNone > 0; --firstNone) {
-      auto* expr = exprStack[firstNone - 1];
-      if (expr->type != Type::none) {
-        break;
-      }
-    }
-
-    if (firstNone == 0) {
-      // There are no expressions that produce values.
-      if (unreachable) {
-        return builder.makeUnreachable();
-      }
-      return in.err(pos, "popping from empty stack");
-    }
-
-    if (firstNone == exprStack.size()) {
-      // The last expression produced a value.
-      auto expr = exprStack.back();
-      exprStack.pop_back();
-      return expr;
-    }
-
-    // We need to assemble a block of expressions that returns the value of the
-    // first one using a scratch local (unless it's unreachable, in which case
-    // we can throw the following expressions away).
-    auto* expr = exprStack[firstNone - 1];
-    if (expr->type == Type::unreachable) {
-      exprStack.resize(firstNone - 1);
-      return expr;
-    }
-    auto scratchIdx = addScratchLocal(pos, expr->type);
-    CHECK_ERR(scratchIdx);
-    std::vector<Expression*> exprs;
-    exprs.reserve(exprStack.size() - firstNone + 2);
-    exprs.push_back(builder.makeLocalSet(*scratchIdx, expr));
-    exprs.insert(exprs.end(), exprStack.begin() + firstNone, exprStack.end());
-    exprs.push_back(builder.makeLocalGet(*scratchIdx, expr->type));
-
-    exprStack.resize(firstNone - 1);
-    return builder.makeBlock(exprs, expr->type);
+  template<typename T> Result<T> withLoc(Result<T> res) {
+    return withLoc(in.getPos(), res);
   }
 
   HeapType getBlockTypeFromResult(const std::vector<Type> results) {
     assert(results.size() == 1);
-    pushScope(results[0]);
+    irBuilder.pushScope(results[0]);
     return HeapType(Signature(Type::none, results[0]));
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
-    pushScope(type.getSignature().results);
+    irBuilder.pushScope(type.getSignature().results);
     return type;
   }
 
@@ -1433,52 +1348,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   void appendInstr(Ok&, InstrT instr) {}
 
   Result<InstrsT> finishInstrs(Ok&) {
-    auto& exprStack = getExprStack();
-    auto type = getResultType();
-
-    // We have finished parsing a sequence of instructions. Fix up the parsed
-    // instructions and reset the context for the next sequence.
-    if (type.isTuple()) {
-      std::vector<Expression*> elems(type.size());
-      bool hadUnreachableElem = false;
-      for (size_t i = 0; i < elems.size(); ++i) {
-        auto elem = pop(self().in.getPos());
-        CHECK_ERR(elem);
-        elems[elems.size() - 1 - i] = *elem;
-        if ((*elem)->type == Type::unreachable) {
-          // We don't want to pop back past an unreachable here. Push the
-          // unreachable back and throw away any post-unreachable values we have
-          // popped.
-          exprStack.push_back(*elem);
-          hadUnreachableElem = true;
-          break;
-        }
-      }
-      if (!hadUnreachableElem) {
-        exprStack.push_back(builder.makeTupleMake(std::move(elems)));
-      }
-    } else if (type != Type::none) {
-      // Ensure the last expression produces the value.
-      auto expr = pop(self().in.getPos());
-      CHECK_ERR(expr);
-      exprStack.push_back(*expr);
-    }
-    unreachable = false;
-    auto ret = std::move(exprStack);
-    scopeStack.pop_back();
-    return ret;
+    return withLoc(irBuilder.finishInstrs());
   }
 
-  Expression* instrToExpr(Ok&) {
-    auto& exprStack = getExprStack();
-    assert(scopeStack.size() == 1);
-    assert(exprStack.size() == 1);
-
-    auto e = exprStack.back();
-    exprStack.clear();
-    unreachable = false;
-    return e;
-  }
+  Expression* instrToExpr(Ok&) { return irBuilder.build(); }
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -1677,17 +1550,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
-  Result<> validateTypeAnnotation(Index pos, HeapType type, Expression* child) {
-    if (child->type == Type::unreachable) {
-      return Ok{};
-    }
-    if (!child->type.isRef() ||
-        !HeapType::isSubType(child->type.getHeapType(), type)) {
-      return in.err(pos, "invalid reference type on stack");
-    }
-    return Ok{};
-  }
-
   Result<Name> getMemory(Index pos, Name* mem) {
     if (mem) {
       return *mem;
@@ -1705,126 +1567,88 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
     auto results = type.getSignature().results;
+    Block* block = wasm.allocator.alloc<Block>();
+    block->type = results;
     if (label) {
-      return push(pos, builder.makeBlock(*label, instrs, results));
-    } else {
-      return push(pos, builder.makeBlock(instrs, results));
+      block->name = *label;
     }
+    block->list.set(instrs);
+    return withLoc(pos, irBuilder.visit(block));
   }
 
   Result<> makeUnreachable(Index pos) {
-    return push(pos, builder.makeUnreachable());
+    return withLoc(pos, irBuilder.makeUnreachable());
   }
 
-  Result<> makeNop(Index pos) { return push(pos, builder.makeNop()); }
+  Result<> makeNop(Index pos) { return withLoc(pos, irBuilder.makeNop()); }
 
   Result<> makeBinary(Index pos, BinaryOp op) {
-    auto rhs = pop(pos);
-    CHECK_ERR(rhs);
-    auto lhs = pop(pos);
-    CHECK_ERR(lhs);
-    return push(pos, builder.makeBinary(op, *lhs, *rhs));
+    return withLoc(pos, irBuilder.makeBinary(op));
   }
 
   Result<> makeUnary(Index pos, UnaryOp op) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeUnary(op, *val));
+    return withLoc(pos, irBuilder.makeUnary(op));
   }
 
   Result<> makeSelect(Index pos, std::vector<Type>* res) {
-    if (res && res->size() > 1) {
-      return in.err(pos, "select may not have more than one result type");
+    if (res && res->size()) {
+      if (res->size() > 1) {
+        return in.err(pos, "select may not have more than one result type");
+      }
+      return withLoc(pos, irBuilder.makeSelect((*res)[0]));
     }
-    auto cond = pop(pos);
-    CHECK_ERR(cond);
-    auto ifFalse = pop(pos);
-    CHECK_ERR(ifFalse);
-    auto ifTrue = pop(pos);
-    CHECK_ERR(ifTrue);
-    auto select = builder.makeSelect(*cond, *ifTrue, *ifFalse);
-    if (res && !res->empty() && !Type::isSubType(select->type, res->front())) {
-      return in.err(pos, "select type annotation is incorrect");
-    }
-    return push(pos, builder.makeSelect(*cond, *ifTrue, *ifFalse));
+    return withLoc(pos, irBuilder.makeSelect());
   }
 
-  Result<> makeDrop(Index pos) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeDrop(*val));
-  }
+  Result<> makeDrop(Index pos) { return withLoc(pos, irBuilder.makeDrop()); }
 
   Result<> makeMemorySize(Index pos, Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    return push(pos, builder.makeMemorySize(*m));
+    return withLoc(pos, irBuilder.makeMemorySize(*m));
   }
 
   Result<> makeMemoryGrow(Index pos, Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeMemoryGrow(*val, *m));
+    return withLoc(pos, irBuilder.makeMemoryGrow(*m));
   }
 
   Result<> makeLocalGet(Index pos, Index local) {
-    if (!func) {
-      return in.err(pos, "local.get must be inside a function");
-    }
-    assert(local < func->getNumLocals());
-    return push(pos, builder.makeLocalGet(local, func->getLocalType(local)));
+    return withLoc(pos, irBuilder.makeLocalGet(local));
   }
 
   Result<> makeLocalTee(Index pos, Index local) {
-    if (!func) {
-      return in.err(pos, "local.tee must be inside a function");
-    }
-    assert(local < func->getNumLocals());
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos,
-                builder.makeLocalTee(local, *val, func->getLocalType(local)));
+    return withLoc(pos, irBuilder.makeLocalTee(local));
   }
 
   Result<> makeLocalSet(Index pos, Index local) {
-    if (!func) {
-      return in.err(pos, "local.set must be inside a function");
-    }
-    assert(local < func->getNumLocals());
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeLocalSet(local, *val));
+    return withLoc(pos, irBuilder.makeLocalSet(local));
   }
 
   Result<> makeGlobalGet(Index pos, Name global) {
-    assert(wasm.getGlobalOrNull(global));
-    auto type = wasm.getGlobal(global)->type;
-    return push(pos, builder.makeGlobalGet(global, type));
+    return withLoc(pos, irBuilder.makeGlobalGet(global));
   }
 
   Result<> makeGlobalSet(Index pos, Name global) {
     assert(wasm.getGlobalOrNull(global));
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeGlobalSet(global, *val));
+    return withLoc(pos, irBuilder.makeGlobalSet(global));
   }
 
   Result<> makeI32Const(Index pos, uint32_t c) {
-    return push(pos, builder.makeConst(Literal(c)));
+    return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
   Result<> makeI64Const(Index pos, uint64_t c) {
-    return push(pos, builder.makeConst(Literal(c)));
+    return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
   Result<> makeF32Const(Index pos, float c) {
-    return push(pos, builder.makeConst(Literal(c)));
+    return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
   Result<> makeF64Const(Index pos, double c) {
-    return push(pos, builder.makeConst(Literal(c)));
+    return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
   Result<> makeLoad(Index pos,
@@ -1836,168 +1660,103 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                     Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
     if (isAtomic) {
-      return push(pos,
-                  builder.makeAtomicLoad(bytes, memarg.offset, *ptr, type, *m));
+      return withLoc(pos,
+                     irBuilder.makeAtomicLoad(bytes, memarg.offset, type, *m));
     }
-    return push(pos,
-                builder.makeLoad(
-                  bytes, signed_, memarg.offset, memarg.align, *ptr, type, *m));
+    return withLoc(pos,
+                   irBuilder.makeLoad(
+                     bytes, signed_, memarg.offset, memarg.align, type, *m));
   }
 
   Result<> makeStore(
     Index pos, Type type, int bytes, bool isAtomic, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
     if (isAtomic) {
-      return push(
-        pos,
-        builder.makeAtomicStore(bytes, memarg.offset, *ptr, *val, type, *m));
+      return withLoc(pos,
+                     irBuilder.makeAtomicStore(bytes, memarg.offset, type, *m));
     }
-    return push(pos,
-                builder.makeStore(
-                  bytes, memarg.offset, memarg.align, *ptr, *val, type, *m));
+    return withLoc(
+      pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
   }
 
   Result<> makeAtomicRMW(
     Index pos, AtomicRMWOp op, Type type, int bytes, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(
-      pos,
-      builder.makeAtomicRMW(op, bytes, memarg.offset, *ptr, *val, type, *m));
+    return withLoc(pos,
+                   irBuilder.makeAtomicRMW(op, bytes, memarg.offset, type, *m));
   }
 
   Result<>
   makeAtomicCmpxchg(Index pos, Type type, int bytes, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto replacement = pop(pos);
-    CHECK_ERR(replacement);
-    auto expected = pop(pos);
-    CHECK_ERR(expected);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(
-      pos,
-      builder.makeAtomicCmpxchg(
-        bytes, memarg.offset, *ptr, *expected, *replacement, type, *m));
+    return withLoc(pos,
+                   irBuilder.makeAtomicCmpxchg(bytes, memarg.offset, type, *m));
   }
 
   Result<> makeAtomicWait(Index pos, Type type, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto timeout = pop(pos);
-    CHECK_ERR(timeout);
-    auto expected = pop(pos);
-    CHECK_ERR(expected);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(pos,
-                builder.makeAtomicWait(
-                  *ptr, *expected, *timeout, type, memarg.offset, *m));
+    return withLoc(pos, irBuilder.makeAtomicWait(type, memarg.offset, *m));
   }
 
   Result<> makeAtomicNotify(Index pos, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto count = pop(pos);
-    CHECK_ERR(count);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(pos, builder.makeAtomicNotify(*ptr, *count, memarg.offset, *m));
+    return withLoc(pos, irBuilder.makeAtomicNotify(memarg.offset, *m));
   }
 
   Result<> makeAtomicFence(Index pos) {
-    return push(pos, builder.makeAtomicFence());
+    return withLoc(pos, irBuilder.makeAtomicFence());
   }
 
   Result<> makeSIMDExtract(Index pos, SIMDExtractOp op, uint8_t lane) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeSIMDExtract(op, *val, lane));
+    return withLoc(pos, irBuilder.makeSIMDExtract(op, lane));
   }
 
   Result<> makeSIMDReplace(Index pos, SIMDReplaceOp op, uint8_t lane) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto vec = pop(pos);
-    CHECK_ERR(vec);
-    return push(pos, builder.makeSIMDReplace(op, *vec, lane, *val));
+    return withLoc(pos, irBuilder.makeSIMDReplace(op, lane));
   }
 
   Result<> makeSIMDShuffle(Index pos, const std::array<uint8_t, 16>& lanes) {
-    auto rhs = pop(pos);
-    CHECK_ERR(rhs);
-    auto lhs = pop(pos);
-    CHECK_ERR(lhs);
-    return push(pos, builder.makeSIMDShuffle(*lhs, *rhs, lanes));
+    return withLoc(pos, irBuilder.makeSIMDShuffle(lanes));
   }
 
   Result<> makeSIMDTernary(Index pos, SIMDTernaryOp op) {
-    auto c = pop(pos);
-    CHECK_ERR(c);
-    auto b = pop(pos);
-    CHECK_ERR(b);
-    auto a = pop(pos);
-    CHECK_ERR(a);
-    return push(pos, builder.makeSIMDTernary(op, *a, *b, *c));
+    return withLoc(pos, irBuilder.makeSIMDTernary(op));
   }
 
   Result<> makeSIMDShift(Index pos, SIMDShiftOp op) {
-    auto shift = pop(pos);
-    CHECK_ERR(shift);
-    auto vec = pop(pos);
-    CHECK_ERR(vec);
-    return push(pos, builder.makeSIMDShift(op, *vec, *shift));
+    return withLoc(pos, irBuilder.makeSIMDShift(op));
   }
 
   Result<> makeSIMDLoad(Index pos, SIMDLoadOp op, Name* mem, Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(
-      pos, builder.makeSIMDLoad(op, memarg.offset, memarg.align, *ptr, *m));
+    return withLoc(pos,
+                   irBuilder.makeSIMDLoad(op, memarg.offset, memarg.align, *m));
   }
 
   Result<> makeSIMDLoadStoreLane(
     Index pos, SIMDLoadStoreLaneOp op, Name* mem, Memarg memarg, uint8_t lane) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto vec = pop(pos);
-    CHECK_ERR(vec);
-    auto ptr = pop(pos);
-    CHECK_ERR(ptr);
-    return push(pos,
-                builder.makeSIMDLoadStoreLane(
-                  op, memarg.offset, memarg.align, lane, *ptr, *vec, *m));
+    return withLoc(pos,
+                   irBuilder.makeSIMDLoadStoreLane(
+                     op, memarg.offset, memarg.align, lane, *m));
   }
 
   Result<> makeMemoryInit(Index pos, Name* mem, Name data) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto offset = pop(pos);
-    CHECK_ERR(offset);
-    auto dest = pop(pos);
-    CHECK_ERR(dest);
-    return push(pos, builder.makeMemoryInit(data, *dest, *offset, *size, *m));
+    return withLoc(pos, irBuilder.makeMemoryInit(data, *m));
   }
 
   Result<> makeDataDrop(Index pos, Name data) {
-    return push(pos, builder.makeDataDrop(data));
+    return withLoc(pos, irBuilder.makeDataDrop(data));
   }
 
   Result<> makeMemoryCopy(Index pos, Name* destMem, Name* srcMem) {
@@ -2005,240 +1764,87 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     CHECK_ERR(destMemory);
     auto srcMemory = getMemory(pos, srcMem);
     CHECK_ERR(srcMemory);
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto src = pop(pos);
-    CHECK_ERR(src);
-    auto dest = pop(pos);
-    CHECK_ERR(dest);
-    return push(
-      pos, builder.makeMemoryCopy(*dest, *src, *size, *destMemory, *srcMemory));
+    return withLoc(pos, irBuilder.makeMemoryCopy(*destMemory, *srcMemory));
   }
 
   Result<> makeMemoryFill(Index pos, Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto dest = pop(pos);
-    CHECK_ERR(dest);
-    return push(pos, builder.makeMemoryFill(*dest, *val, *size, *m));
+    return withLoc(pos, irBuilder.makeMemoryFill(*m));
   }
 
   Result<> makeReturn(Index pos) {
-    if (!func) {
-      return in.err("cannot return outside of a function");
-    }
-    size_t n = func->getResults().size();
-    if (n == 0) {
-      return push(pos, builder.makeReturn());
-    }
-    if (n == 1) {
-      auto val = pop(pos);
-      CHECK_ERR(val);
-      return push(pos, builder.makeReturn(*val));
-    }
-    std::vector<Expression*> vals(n);
-    for (size_t i = 0; i < n; ++i) {
-      auto val = pop(pos);
-      CHECK_ERR(val);
-      vals[n - i - 1] = *val;
-    }
-    return push(pos, builder.makeReturn(builder.makeTupleMake(vals)));
+    return withLoc(pos, irBuilder.makeReturn());
   }
 
   Result<> makeRefNull(Index pos, HeapType type) {
-    return push(pos, builder.makeRefNull(type));
+    return withLoc(pos, irBuilder.makeRefNull(type));
   }
 
   Result<> makeRefIsNull(Index pos) {
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    return push(pos, builder.makeRefIsNull(*ref));
+    return withLoc(pos, irBuilder.makeRefIsNull());
   }
 
-  Result<> makeRefEq(Index pos) {
-    auto rhs = pop(pos);
-    CHECK_ERR(rhs);
-    auto lhs = pop(pos);
-    CHECK_ERR(lhs);
-    return push(pos, builder.makeRefEq(*lhs, *rhs));
-  }
+  Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
 
   Result<> makeI31New(Index pos) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeI31New(*val));
+    return withLoc(pos, irBuilder.makeI31New());
   }
 
   Result<> makeI31Get(Index pos, bool signed_) {
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeI31Get(*val, signed_));
+    return withLoc(pos, irBuilder.makeI31Get(signed_));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {
-    if (!type.isStruct()) {
-      return in.err(pos, "expected struct type annotation");
-    }
-    size_t numOps = type.getStruct().fields.size();
-    std::vector<Expression*> ops(numOps);
-    for (size_t i = 0; i < numOps; ++i) {
-      auto op = pop(pos);
-      CHECK_ERR(op);
-      ops[numOps - i - 1] = *op;
-    }
-    return push(pos, builder.makeStructNew(type, ops));
+    return withLoc(pos, irBuilder.makeStructNew(type));
   }
 
   Result<> makeStructNewDefault(Index pos, HeapType type) {
-    return push(pos, builder.makeStructNew(type, std::array<Expression*, 0>{}));
+    return withLoc(pos, irBuilder.makeStructNewDefault(type));
   }
 
   Result<> makeStructGet(Index pos, HeapType type, Index field, bool signed_) {
-    if (!type.isStruct()) {
-      return in.err(pos, "expected struct type annotation");
-    }
-    const auto& fields = type.getStruct().fields;
-    if (field >= fields.size()) {
-      return in.err(pos, "struct field index out of bounds");
-    }
-    auto fieldType = fields[field].type;
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
-    return push(pos, builder.makeStructGet(field, *ref, fieldType, signed_));
+    return withLoc(pos, irBuilder.makeStructGet(type, field, signed_));
   }
 
   Result<> makeStructSet(Index pos, HeapType type, Index field) {
-    if (!type.isStruct()) {
-      return in.err(pos, "expected struct type annotation");
-    }
-    if (field >= type.getStruct().fields.size()) {
-      return in.err(pos, "struct field index out of bounds");
-    }
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
-    return push(pos, builder.makeStructSet(field, *ref, *val));
+    return withLoc(pos, irBuilder.makeStructSet(type, field));
   }
 
   Result<> makeArrayNew(Index pos, HeapType type) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    return push(pos, builder.makeArrayNew(type, *size, *val));
+    return withLoc(pos, irBuilder.makeArrayNew(type));
   }
 
   Result<> makeArrayNewDefault(Index pos, HeapType type) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    return push(pos, builder.makeArrayNew(type, *size));
+    return withLoc(pos, irBuilder.makeArrayNewDefault(type));
   }
 
   Result<> makeArrayNewData(Index pos, HeapType type, Name data) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto offset = pop(pos);
-    CHECK_ERR(offset);
-    return push(pos, builder.makeArrayNewData(type, data, *offset, *size));
+    return withLoc(pos, irBuilder.makeArrayNewData(type, data));
   }
 
-  Result<> makeArrayNewElem(Index pos, HeapType type, Name data) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto offset = pop(pos);
-    CHECK_ERR(offset);
-    return push(pos, builder.makeArrayNewElem(type, data, *offset, *size));
+  Result<> makeArrayNewElem(Index pos, HeapType type, Name elem) {
+    return withLoc(pos, irBuilder.makeArrayNewElem(type, elem));
   }
 
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto elemType = type.getArray().element.type;
-    auto index = pop(pos);
-    CHECK_ERR(index);
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
-    return push(pos, builder.makeArrayGet(*ref, *index, elemType, signed_));
+    return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
   }
 
   Result<> makeArraySet(Index pos, HeapType type) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto val = pop(pos);
-    CHECK_ERR(val);
-    auto index = pop(pos);
-    CHECK_ERR(index);
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
-    return push(pos, builder.makeArraySet(*ref, *index, *val));
+    return withLoc(pos, irBuilder.makeArraySet(type));
   }
 
   Result<> makeArrayLen(Index pos) {
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    return push(pos, builder.makeArrayLen(*ref));
+    return withLoc(pos, irBuilder.makeArrayLen());
   }
 
   Result<> makeArrayCopy(Index pos, HeapType destType, HeapType srcType) {
-    if (!destType.isArray()) {
-      return in.err(pos, "expected array destination type annotation");
-    }
-    if (!srcType.isArray()) {
-      return in.err(pos, "expected array source type annotation");
-    }
-    auto len = pop(pos);
-    CHECK_ERR(len);
-    auto srcIdx = pop(pos);
-    CHECK_ERR(srcIdx);
-    auto srcRef = pop(pos);
-    CHECK_ERR(srcRef);
-    auto destIdx = pop(pos);
-    CHECK_ERR(destIdx);
-    auto destRef = pop(pos);
-    CHECK_ERR(destRef);
-    CHECK_ERR(validateTypeAnnotation(pos, srcType, *srcRef));
-    CHECK_ERR(validateTypeAnnotation(pos, destType, *destRef));
-    return push(
-      pos, builder.makeArrayCopy(*destRef, *destIdx, *srcRef, *srcIdx, *len));
+    return withLoc(pos, irBuilder.makeArrayCopy(destType, srcType));
   }
 
   Result<> makeArrayFill(Index pos, HeapType type) {
-    if (!type.isArray()) {
-      return in.err(pos, "expected array type annotation");
-    }
-    auto size = pop(pos);
-    CHECK_ERR(size);
-    auto value = pop(pos);
-    CHECK_ERR(value);
-    auto index = pop(pos);
-    CHECK_ERR(index);
-    auto ref = pop(pos);
-    CHECK_ERR(ref);
-    CHECK_ERR(validateTypeAnnotation(pos, type, *ref));
-    return push(pos, builder.makeArrayFill(*ref, *index, *value, *size));
+    return withLoc(pos, irBuilder.makeArrayFill(type));
   }
 };
 
@@ -4286,8 +3892,8 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
-      ctx.func = wasm.functions[i].get();
-      ctx.pushScope(ctx.func->getResults());
+      ctx.setFunction(wasm.functions[i].get());
+      ctx.irBuilder.pushScope(ctx.func->getResults());
       WithPosition with(ctx, decls.funcDefs[i].pos);
       auto parsed = func(ctx);
       CHECK_ERR(parsed);

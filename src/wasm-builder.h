@@ -893,6 +893,21 @@ public:
     ret->finalize();
     return ret;
   }
+  StructNew* makeStructNew(HeapType type,
+                           std::initializer_list<Expression*> args) {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    ret->operands.set(args);
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  StructNew* makeStructNew(HeapType type, ExpressionList&& args) {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    ret->operands = std::move(args);
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
   template<typename T> StructNew* makeStructNew(HeapType type, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->operands.set(args);
