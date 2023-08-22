@@ -99,7 +99,7 @@ function test_features() {
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
-  console.log("Features.MultiMemories: " + binaryen.Features.MultiMemories);
+  console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
