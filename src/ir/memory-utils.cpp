@@ -20,7 +20,7 @@
 namespace wasm::MemoryUtils {
 
 bool flatten(Module& wasm) {
-  // Flatten does not currently have support for multi-memories
+  // Flatten does not currently have support for multimemory
   if (wasm.memories.size() > 1) {
     return false;
   }

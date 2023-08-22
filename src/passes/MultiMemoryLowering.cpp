@@ -18,9 +18,9 @@
 // Condensing a module with multiple memories into a module with a single memory
 // for browsers that don’t support multiple memories.
 //
-// This pass also disables multi-memories so that the target features section in
+// This pass also disables multimemory so that the target features section in
 // the emitted module does not report the use of MultiMemories. Disabling the
-// multi-memories feature also prevents later passes from adding additional
+// multimemory feature also prevents later passes from adding additional
 // memories.
 //
 // The offset computation in function maybeMakeBoundsCheck is not precise

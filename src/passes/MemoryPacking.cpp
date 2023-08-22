@@ -126,7 +126,7 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(Module* module) {
-  // Does not have multi-memories support
+  // Does not have multimemory support
   if (!canOptimize(module->memories, module->dataSegments)) {
     return;
   }
