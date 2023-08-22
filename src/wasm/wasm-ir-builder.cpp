@@ -181,8 +181,8 @@ Result<> IRBuilder::visit(Expression* curr) {
   if (auto* block = curr->dynCast<Block>()) {
     block->finalize(block->type);
   } else {
-    // TODO: Call more efficient versions of finalize() for other kinds of nodes
-    // as well.
+    // TODO: Call more efficient versions of finalize() that take the known type
+    // for other kinds of nodes as well, as done above.
     ReFinalizeNode{}.visit(curr);
   }
   return push(curr);
