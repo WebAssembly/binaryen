@@ -1347,6 +1347,7 @@ public:
 
 class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
 public:
+  RefIsNull() = default;
   RefIsNull(MixedArena& allocator) {}
 
   Expression* value;
@@ -1366,6 +1367,7 @@ public:
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
 public:
+  RefEq() = default;
   RefEq(MixedArena& allocator) {}
 
   Expression* left;
@@ -1478,6 +1480,7 @@ public:
 
 class I31New : public SpecificExpression<Expression::I31NewId> {
 public:
+  I31New() = default;
   I31New(MixedArena& allocator) {}
 
   Expression* value;
@@ -1487,6 +1490,7 @@ public:
 
 class I31Get : public SpecificExpression<Expression::I31GetId> {
 public:
+  I31Get() = default;
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
@@ -1563,6 +1567,7 @@ public:
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
+  StructGet() = default;
   StructGet(MixedArena& allocator) {}
 
   Index index;
@@ -1575,6 +1580,7 @@ public:
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
+  StructSet() = default;
   StructSet(MixedArena& allocator) {}
 
   Index index;
@@ -1586,6 +1592,7 @@ public:
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
+  ArrayNew() = default;
   ArrayNew(MixedArena& allocator) {}
 
   // If set, then the initial value is assigned to all entries in the array. If
@@ -1601,6 +1608,7 @@ public:
 
 class ArrayNewData : public SpecificExpression<Expression::ArrayNewDataId> {
 public:
+  ArrayNewData() = default;
   ArrayNewData(MixedArena& allocator) {}
 
   Name segment;
@@ -1612,6 +1620,7 @@ public:
 
 class ArrayNewElem : public SpecificExpression<Expression::ArrayNewElemId> {
 public:
+  ArrayNewElem() = default;
   ArrayNewElem(MixedArena& allocator) {}
 
   Name segment;
@@ -1632,6 +1641,7 @@ public:
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
+  ArrayGet() = default;
   ArrayGet(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1644,6 +1654,7 @@ public:
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
+  ArraySet() = default;
   ArraySet(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1655,6 +1666,7 @@ public:
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
+  ArrayLen() = default;
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1664,6 +1676,7 @@ public:
 
 class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
 public:
+  ArrayCopy() = default;
   ArrayCopy(MixedArena& allocator) {}
 
   Expression* destRef;
@@ -1677,6 +1690,7 @@ public:
 
 class ArrayFill : public SpecificExpression<Expression::ArrayFillId> {
 public:
+  ArrayFill() = default;
   ArrayFill(MixedArena& allocator) {}
 
   Expression* ref;

@@ -47,122 +47,126 @@ public:
   [[nodiscard]] Result<std::vector<Expression*>> finishInstrs();
 
   // Call visit() on an existing Expression with its non-child fields
-  // initialized to initialize the child fields and refinalize it. These
-  // specific visitors are internal implementation details.
-  Result<> visitExpression(Expression*);
-  Result<> visitBlock(Block*);
-  Result<> visitReturn(Return*);
-  Result<> visitStructNew(StructNew*);
-  Result<> visitArrayNew(ArrayNew*);
+  // initialized to initialize the child fields and refinalize it. The specific
+  // visitors are internal implementation details.
+  [[nodiscard]] Result<> visit(Expression*);
+  [[nodiscard]] Result<> visitExpression(Expression*);
+  [[nodiscard]] Result<> visitBlock(Block*);
+  [[nodiscard]] Result<> visitReturn(Return*);
+  [[nodiscard]] Result<> visitStructNew(StructNew*);
+  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
 
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
   // is generally safer than calling `visit` because the function signatures
   // ensure that there are no missing fields.
-  Result<> makeNop();
-  Result<> makeBlock();
-  // Result<> makeIf();
-  // Result<> makeLoop();
-  // Result<> makeBreak();
-  // Result<> makeSwitch();
-  // Result<> makeCall();
-  // Result<> makeCallIndirect();
-  Result<> makeLocalGet(Index local);
-  Result<> makeLocalSet(Index local);
-  Result<> makeLocalTee(Index local);
-  Result<> makeGlobalGet(Name global);
-  Result<> makeGlobalSet(Name global);
-  Result<> makeLoad(unsigned bytes,
-                    bool signed_,
-                    Address offset,
-                    unsigned align,
-                    Type type,
-                    Name mem);
-  Result<> makeStore(
+  [[nodiscard]] Result<> makeNop();
+  [[nodiscard]] Result<> makeBlock();
+  // [[nodiscard]] Result<> makeIf();
+  // [[nodiscard]] Result<> makeLoop();
+  // [[nodiscard]] Result<> makeBreak();
+  // [[nodiscard]] Result<> makeSwitch();
+  // [[nodiscard]] Result<> makeCall();
+  // [[nodiscard]] Result<> makeCallIndirect();
+  [[nodiscard]] Result<> makeLocalGet(Index local);
+  [[nodiscard]] Result<> makeLocalSet(Index local);
+  [[nodiscard]] Result<> makeLocalTee(Index local);
+  [[nodiscard]] Result<> makeGlobalGet(Name global);
+  [[nodiscard]] Result<> makeGlobalSet(Name global);
+  [[nodiscard]] Result<> makeLoad(unsigned bytes,
+                                  bool signed_,
+                                  Address offset,
+                                  unsigned align,
+                                  Type type,
+                                  Name mem);
+  [[nodiscard]] Result<> makeStore(
     unsigned bytes, Address offset, unsigned align, Type type, Name mem);
-  Result<> makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
-  Result<> makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
-  Result<> makeAtomicRMW(
+  [[nodiscard]] Result<>
+  makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem);
+  [[nodiscard]] Result<>
+  makeAtomicStore(unsigned bytes, Address offset, Type type, Name mem);
+  [[nodiscard]] Result<> makeAtomicRMW(
     AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem);
-  Result<>
+  [[nodiscard]] Result<>
   makeAtomicCmpxchg(unsigned bytes, Address offset, Type type, Name mem);
-  Result<> makeAtomicWait(Type type, Address offset, Name mem);
-  Result<> makeAtomicNotify(Address offset, Name mem);
-  Result<> makeAtomicFence();
-  Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
-  Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
-  Result<> makeSIMDShuffle(const std::array<uint8_t, 16>& lanes);
-  Result<> makeSIMDTernary(SIMDTernaryOp op);
-  Result<> makeSIMDShift(SIMDShiftOp op);
-  Result<>
+  [[nodiscard]] Result<> makeAtomicWait(Type type, Address offset, Name mem);
+  [[nodiscard]] Result<> makeAtomicNotify(Address offset, Name mem);
+  [[nodiscard]] Result<> makeAtomicFence();
+  [[nodiscard]] Result<> makeSIMDExtract(SIMDExtractOp op, uint8_t lane);
+  [[nodiscard]] Result<> makeSIMDReplace(SIMDReplaceOp op, uint8_t lane);
+  [[nodiscard]] Result<> makeSIMDShuffle(const std::array<uint8_t, 16>& lanes);
+  [[nodiscard]] Result<> makeSIMDTernary(SIMDTernaryOp op);
+  [[nodiscard]] Result<> makeSIMDShift(SIMDShiftOp op);
+  [[nodiscard]] Result<>
   makeSIMDLoad(SIMDLoadOp op, Address offset, unsigned align, Name mem);
-  Result<> makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
-                                 Address offset,
-                                 unsigned align,
-                                 uint8_t lane,
-                                 Name mem);
-  Result<> makeMemoryInit(Name data, Name mem);
-  Result<> makeDataDrop(Name data);
-  Result<> makeMemoryCopy(Name destMem, Name srcMem);
-  Result<> makeMemoryFill(Name mem);
-  Result<> makeConst(Literal val);
-  Result<> makeUnary(UnaryOp op);
-  Result<> makeBinary(BinaryOp op);
-  Result<> makeSelect(std::optional<Type> type = std::nullopt);
-  Result<> makeDrop();
-  Result<> makeReturn();
-  Result<> makeMemorySize(Name mem);
-  Result<> makeMemoryGrow(Name mem);
-  Result<> makeUnreachable();
-  // Result<> makePop();
-  Result<> makeRefNull(HeapType type);
-  Result<> makeRefIsNull();
-  // Result<> makeRefFunc();
-  Result<> makeRefEq();
-  // Result<> makeTableGet();
-  // Result<> makeTableSet();
-  // Result<> makeTableSize();
-  // Result<> makeTableGrow();
-  // Result<> makeTry();
-  // Result<> makeThrow();
-  // Result<> makeRethrow();
-  // Result<> makeTupleMake();
-  // Result<> makeTupleExtract();
-  Result<> makeI31New();
-  Result<> makeI31Get(bool signed_);
-  // Result<> makeCallRef();
-  // Result<> makeRefTest();
-  // Result<> makeRefCast();
-  // Result<> makeBrOn();
-  Result<> makeStructNew(HeapType type);
-  Result<> makeStructNewDefault(HeapType type);
-  Result<> makeStructGet(HeapType type, Index field, bool signed_);
-  Result<> makeStructSet(HeapType type, Index field);
-  Result<> makeArrayNew(HeapType type);
-  Result<> makeArrayNewDefault(HeapType type);
-  Result<> makeArrayNewData(HeapType type, Name data);
-  Result<> makeArrayNewElem(HeapType type, Name elem);
-  // Result<> makeArrayNewFixed();
-  Result<> makeArrayGet(HeapType type, bool signed_);
-  Result<> makeArraySet(HeapType type);
-  Result<> makeArrayLen();
-  Result<> makeArrayCopy(HeapType destType, HeapType srcType);
-  Result<> makeArrayFill(HeapType type);
-  // Result<> makeArrayInitData();
-  // Result<> makeArrayInitElem();
-  // Result<> makeRefAs();
-  // Result<> makeStringNew();
-  // Result<> makeStringConst();
-  // Result<> makeStringMeasure();
-  // Result<> makeStringEncode();
-  // Result<> makeStringConcat();
-  // Result<> makeStringEq();
-  // Result<> makeStringAs();
-  // Result<> makeStringWTF8Advance();
-  // Result<> makeStringWTF16Get();
-  // Result<> makeStringIterNext();
-  // Result<> makeStringIterMove();
-  // Result<> makeStringSliceWTF();
-  // Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
+                                               Address offset,
+                                               unsigned align,
+                                               uint8_t lane,
+                                               Name mem);
+  [[nodiscard]] Result<> makeMemoryInit(Name data, Name mem);
+  [[nodiscard]] Result<> makeDataDrop(Name data);
+  [[nodiscard]] Result<> makeMemoryCopy(Name destMem, Name srcMem);
+  [[nodiscard]] Result<> makeMemoryFill(Name mem);
+  [[nodiscard]] Result<> makeConst(Literal val);
+  [[nodiscard]] Result<> makeUnary(UnaryOp op);
+  [[nodiscard]] Result<> makeBinary(BinaryOp op);
+  [[nodiscard]] Result<> makeSelect(std::optional<Type> type = std::nullopt);
+  [[nodiscard]] Result<> makeDrop();
+  [[nodiscard]] Result<> makeReturn();
+  [[nodiscard]] Result<> makeMemorySize(Name mem);
+  [[nodiscard]] Result<> makeMemoryGrow(Name mem);
+  [[nodiscard]] Result<> makeUnreachable();
+  // [[nodiscard]] Result<> makePop();
+  [[nodiscard]] Result<> makeRefNull(HeapType type);
+  [[nodiscard]] Result<> makeRefIsNull();
+  // [[nodiscard]] Result<> makeRefFunc();
+  [[nodiscard]] Result<> makeRefEq();
+  // [[nodiscard]] Result<> makeTableGet();
+  // [[nodiscard]] Result<> makeTableSet();
+  // [[nodiscard]] Result<> makeTableSize();
+  // [[nodiscard]] Result<> makeTableGrow();
+  // [[nodiscard]] Result<> makeTry();
+  // [[nodiscard]] Result<> makeThrow();
+  // [[nodiscard]] Result<> makeRethrow();
+  // [[nodiscard]] Result<> makeTupleMake();
+  // [[nodiscard]] Result<> makeTupleExtract();
+  [[nodiscard]] Result<> makeI31New();
+  [[nodiscard]] Result<> makeI31Get(bool signed_);
+  // [[nodiscard]] Result<> makeCallRef();
+  // [[nodiscard]] Result<> makeRefTest();
+  // [[nodiscard]] Result<> makeRefCast();
+  // [[nodiscard]] Result<> makeBrOn();
+  [[nodiscard]] Result<> makeStructNew(HeapType type);
+  [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
+  [[nodiscard]] Result<>
+  makeStructGet(HeapType type, Index field, bool signed_);
+  [[nodiscard]] Result<> makeStructSet(HeapType type, Index field);
+  [[nodiscard]] Result<> makeArrayNew(HeapType type);
+  [[nodiscard]] Result<> makeArrayNewDefault(HeapType type);
+  [[nodiscard]] Result<> makeArrayNewData(HeapType type, Name data);
+  [[nodiscard]] Result<> makeArrayNewElem(HeapType type, Name elem);
+  // [[nodiscard]] Result<> makeArrayNewFixed();
+  [[nodiscard]] Result<> makeArrayGet(HeapType type, bool signed_);
+  [[nodiscard]] Result<> makeArraySet(HeapType type);
+  [[nodiscard]] Result<> makeArrayLen();
+  [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
+  [[nodiscard]] Result<> makeArrayFill(HeapType type);
+  // [[nodiscard]] Result<> makeArrayInitData();
+  // [[nodiscard]] Result<> makeArrayInitElem();
+  // [[nodiscard]] Result<> makeRefAs();
+  // [[nodiscard]] Result<> makeStringNew();
+  // [[nodiscard]] Result<> makeStringConst();
+  // [[nodiscard]] Result<> makeStringMeasure();
+  // [[nodiscard]] Result<> makeStringEncode();
+  // [[nodiscard]] Result<> makeStringConcat();
+  // [[nodiscard]] Result<> makeStringEq();
+  // [[nodiscard]] Result<> makeStringAs();
+  // [[nodiscard]] Result<> makeStringWTF8Advance();
+  // [[nodiscard]] Result<> makeStringWTF16Get();
+  // [[nodiscard]] Result<> makeStringIterNext();
+  // [[nodiscard]] Result<> makeStringIterMove();
+  // [[nodiscard]] Result<> makeStringSliceWTF();
+  // [[nodiscard]] Result<> makeStringSliceIter();
 
   // TODO: make this private.
   void pushScope(Type type) { scopeStack.push_back({{}, type}); }
@@ -195,7 +199,7 @@ private:
   bool unreachable = false;
 
   Result<Index> addScratchLocal(Type);
-  Result<> push(Expression*);
+  [[nodiscard]] Result<> push(Expression*);
   Result<Expression*> pop();
 };
 

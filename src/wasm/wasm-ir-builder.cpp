@@ -17,6 +17,7 @@
 #include <cassert>
 
 #include "ir/names.h"
+#include "ir/utils.h"
 #include "wasm-ir-builder.h"
 
 using namespace std::string_literals;
@@ -175,16 +176,28 @@ Result<std::vector<Expression*>> IRBuilder::finishInstrs() {
   return ret;
 }
 
+Result<> IRBuilder::visit(Expression* curr) {
+  UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
+  if (auto* block = curr->dynCast<Block>()) {
+    block->finalize(block->type);
+  } else {
+    // TODO: Call more efficient versions of finalize() for other kinds of nodes
+    // as well.
+    ReFinalizeNode{}.visit(curr);
+  }
+  return push(curr);
+}
+
 // Handle the common case of instructions with a constant number of children
 // uniformly.
 Result<> IRBuilder::visitExpression(Expression* curr) {
 #define DELEGATE_ID curr->_id
-#define DELEGATE_START(id) auto* expr = curr->cast<id>();
+#define DELEGATE_START(id) [[maybe_unused]] auto* expr = curr->cast<id>();
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
   auto field = pop();                                                          \
   CHECK_ERR(field);                                                            \
   expr->field = *field;
-#define DELEGATE_END(id) expr->finalize();
+#define DELEGATE_END(id)
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
   WASM_UNREACHABLE("should have called visit" #id " because " #id              \
@@ -207,12 +220,12 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 
 #include "wasm-delegations-fields.def"
 
-  return push(curr);
+  return Ok{};
 }
 
 Result<> IRBuilder::visitBlock(Block* curr) {
   // TODO: Handle popping scope and filling block here instead of externally.
-  return push(curr);
+  return Ok{};
 }
 
 Result<> IRBuilder::visitReturn(Return* curr) {
@@ -235,25 +248,16 @@ Result<> IRBuilder::visitReturn(Return* curr) {
     }
     curr->value = builder.makeTupleMake(vals);
   }
-  curr->finalize();
-  return push(curr);
+  return Ok{};
 }
 
 Result<> IRBuilder::visitStructNew(StructNew* curr) {
-  if (curr->isWithDefault()) {
-    return push(curr);
-  }
-  assert(curr->type.isRef());
-  assert(curr->type.getHeapType().isStruct());
-  assert(curr->operands.size() ==
-         curr->type.getHeapType().getStruct().fields.size());
   for (size_t i = 0, n = curr->operands.size(); i < n; ++i) {
     auto val = pop();
     CHECK_ERR(val);
     curr->operands[n - 1 - i] = *val;
   }
-  curr->finalize();
-  return push(curr);
+  return Ok{};
 }
 
 Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
@@ -265,99 +269,50 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
     CHECK_ERR(init);
     curr->init = *init;
   }
-  curr->finalize();
-  return push(curr);
+  return Ok{};
 }
 
-Result<> IRBuilder::makeNop() { return visit(wasm.allocator.alloc<Nop>()); }
+Result<> IRBuilder::makeNop() { return push(builder.makeNop()); }
 
-Result<> IRBuilder::makeBlock() { return visit(wasm.allocator.alloc<Block>()); }
+Result<> IRBuilder::makeBlock() { return push(builder.makeBlock()); }
 
-// Result<> IRBuilder::makeIf() {
-//   auto* curr = wasm.allocator.alloc<If>();
-//   return visitBlock(curr);
-// }
+// Result<> IRBuilder::makeIf() {}
 
-// Result<> IRBuilder::makeLoop() {
-//   auto* curr = wasm.allocator.alloc<Loop>();
-//   return visitLoop(curr);
-// }
+// Result<> IRBuilder::makeLoop() {}
 
-// Result<> IRBuilder::makeBreak() {
-//   auto* curr = wasm.allocator.alloc<Break>();
-//   return visitBreak(curr);
-// }
+// Result<> IRBuilder::makeBreak() {}
 
-// Result<> IRBuilder::makeSwitch() {
-//   auto* curr = wasm.allocator.alloc<Switch>();
-//   return visitSwitch(curr);
-// }
+// Result<> IRBuilder::makeSwitch() {}
 
-// Result<> IRBuilder::makeCall() {
-//   auto* curr = wasm.allocator.alloc<Call>();
-//   return visitCall(curr);
-// }
+// Result<> IRBuilder::makeCall() {}
 
-// Result<> IRBuilder::makeCallIndirect() {
-//   auto* curr = wasm.allocator.alloc<CallIndirect>();
-//   return visitCallIndirect(curr);
-// }
+// Result<> IRBuilder::makeCallIndirect() {}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
-  if (!func) {
-    return Err{"local.get must be inside a function"};
-  }
-  if (local >= func->getNumLocals()) {
-    return Err{"local index out of bounds"};
-  }
-  auto* curr = wasm.allocator.alloc<LocalGet>();
-  curr->type = func->getLocalType(local);
-  curr->index = local;
-  return visitLocalGet(curr);
+  return push(builder.makeLocalGet(local, func->getLocalType(local)));
 }
 
 Result<> IRBuilder::makeLocalSet(Index local) {
-  if (!func) {
-    return Err{"local.set must be inside a function"};
-  }
-  if (local >= func->getNumLocals()) {
-    return Err{"local index out of bounds"};
-  }
-  auto* curr = wasm.allocator.alloc<LocalSet>();
-  curr->index = local;
-  return visitLocalSet(curr);
+  LocalSet curr;
+  CHECK_ERR(visitLocalSet(&curr));
+  return push(builder.makeLocalSet(local, curr.value));
 }
 
 Result<> IRBuilder::makeLocalTee(Index local) {
-  if (!func) {
-    return Err{"local.tee must be inside a function"};
-  }
-  if (local >= func->getNumLocals()) {
-    return Err{"local index out of bounds"};
-  }
-  auto* curr = wasm.allocator.alloc<LocalSet>();
-  curr->type = func->getLocalType(local);
-  curr->index = local;
-  return visitLocalSet(curr);
+  LocalSet curr;
+  CHECK_ERR(visitLocalSet(&curr));
+  return push(
+    builder.makeLocalTee(local, curr.value, func->getLocalType(local)));
 }
 
 Result<> IRBuilder::makeGlobalGet(Name global) {
-  if (!wasm.getGlobalOrNull(global)) {
-    return Err{"global '"s + global.toString() + "' does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<GlobalGet>();
-  curr->type = wasm.getGlobal(global)->type;
-  curr->name = global;
-  return visitGlobalGet(curr);
+  return push(builder.makeGlobalGet(global, wasm.getGlobal(global)->type));
 }
 
 Result<> IRBuilder::makeGlobalSet(Name global) {
-  if (!wasm.getGlobalOrNull(global)) {
-    return Err{"global '"s + global.toString() + "' does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<GlobalSet>();
-  curr->name = global;
-  return visitGlobalSet(curr);
+  GlobalSet curr;
+  CHECK_ERR(visitGlobalSet(&curr));
+  return push(builder.makeGlobalSet(global, curr.value));
 }
 
 Result<> IRBuilder::makeLoad(unsigned bytes,
@@ -366,140 +321,110 @@ Result<> IRBuilder::makeLoad(unsigned bytes,
                              unsigned align,
                              Type type,
                              Name mem) {
-  auto* curr = wasm.allocator.alloc<Load>();
-  curr->isAtomic = false;
-  curr->bytes = bytes;
-  curr->signed_ = signed_;
-  curr->offset = offset;
-  curr->align = align;
-  curr->type = type;
-  curr->memory = mem;
-  return visitLoad(curr);
+  Load curr;
+  CHECK_ERR(visitLoad(&curr));
+  return push(
+    builder.makeLoad(bytes, signed_, offset, align, curr.ptr, type, mem));
 }
 
 Result<> IRBuilder::makeStore(
   unsigned bytes, Address offset, unsigned align, Type type, Name mem) {
-  auto* curr = wasm.allocator.alloc<Store>();
-  curr->isAtomic = false;
-  curr->bytes = bytes;
-  curr->offset = offset;
-  curr->align = align;
-  curr->valueType = type;
-  curr->memory = mem;
-  return visitStore(curr);
+  Store curr;
+  CHECK_ERR(visitStore(&curr));
+  return push(
+    builder.makeStore(bytes, offset, align, curr.ptr, curr.value, type, mem));
 }
 
 Result<>
 IRBuilder::makeAtomicLoad(unsigned bytes, Address offset, Type type, Name mem) {
-  auto* curr = wasm.allocator.alloc<Load>();
-  curr->isAtomic = true;
-  curr->bytes = bytes;
-  curr->signed_ = false;
-  curr->offset = offset;
-  curr->align = bytes;
-  curr->type = type;
-  curr->memory = mem;
-  return visitLoad(curr);
+  Load curr;
+  CHECK_ERR(visitLoad(&curr));
+  return push(builder.makeAtomicLoad(bytes, offset, curr.ptr, type, mem));
 }
 
 Result<> IRBuilder::makeAtomicStore(unsigned bytes,
                                     Address offset,
                                     Type type,
                                     Name mem) {
-  auto* curr = wasm.allocator.alloc<Store>();
-  curr->isAtomic = true;
-  curr->bytes = bytes;
-  curr->offset = offset;
-  curr->align = bytes;
-  curr->valueType = type;
-  curr->memory = mem;
-  return visitStore(curr);
+  Store curr;
+  CHECK_ERR(visitStore(&curr));
+  return push(
+    builder.makeAtomicStore(bytes, offset, curr.ptr, curr.value, type, mem));
 }
 
 Result<> IRBuilder::makeAtomicRMW(
   AtomicRMWOp op, unsigned bytes, Address offset, Type type, Name mem) {
-  auto* curr = wasm.allocator.alloc<AtomicRMW>();
-  curr->op = op;
-  curr->bytes = bytes;
-  curr->offset = offset;
-  curr->type = type;
-  curr->memory = mem;
-  return visitAtomicRMW(curr);
+  AtomicRMW curr;
+  CHECK_ERR(visitAtomicRMW(&curr));
+  return push(
+    builder.makeAtomicRMW(op, bytes, offset, curr.ptr, curr.value, type, mem));
 }
 
 Result<> IRBuilder::makeAtomicCmpxchg(unsigned bytes,
                                       Address offset,
                                       Type type,
                                       Name mem) {
-  auto* curr = wasm.allocator.alloc<AtomicCmpxchg>();
-  curr->bytes = bytes;
-  curr->offset = offset;
-  curr->type = type;
-  curr->memory = mem;
-  return visitAtomicCmpxchg(curr);
+  AtomicCmpxchg curr;
+  CHECK_ERR(visitAtomicCmpxchg(&curr));
+  return push(builder.makeAtomicCmpxchg(
+    bytes, offset, curr.ptr, curr.expected, curr.replacement, type, mem));
 }
 
 Result<> IRBuilder::makeAtomicWait(Type type, Address offset, Name mem) {
-  auto* curr = wasm.allocator.alloc<AtomicWait>();
-  curr->offset = offset;
-  curr->expectedType = type;
-  curr->memory = mem;
-  return visitAtomicWait(curr);
+  AtomicWait curr;
+  CHECK_ERR(visitAtomicWait(&curr));
+  return push(builder.makeAtomicWait(
+    curr.ptr, curr.expected, curr.timeout, type, offset, mem));
 }
 
 Result<> IRBuilder::makeAtomicNotify(Address offset, Name mem) {
-  auto* curr = wasm.allocator.alloc<AtomicNotify>();
-  curr->offset = offset;
-  curr->memory = mem;
-  return visitAtomicNotify(curr);
+  AtomicNotify curr;
+  CHECK_ERR(visitAtomicNotify(&curr));
+  return push(
+    builder.makeAtomicNotify(curr.ptr, curr.notifyCount, offset, mem));
 }
 
 Result<> IRBuilder::makeAtomicFence() {
-  return visit(wasm.allocator.alloc<AtomicFence>());
+  return push(builder.makeAtomicFence());
 }
 
 Result<> IRBuilder::makeSIMDExtract(SIMDExtractOp op, uint8_t lane) {
-  auto* curr = wasm.allocator.alloc<SIMDExtract>();
-  curr->op = op;
-  curr->index = lane;
-  return visitSIMDExtract(curr);
+  SIMDExtract curr;
+  CHECK_ERR(visitSIMDExtract(&curr));
+  return push(builder.makeSIMDExtract(op, curr.vec, lane));
 }
 
 Result<> IRBuilder::makeSIMDReplace(SIMDReplaceOp op, uint8_t lane) {
-  auto* curr = wasm.allocator.alloc<SIMDReplace>();
-  curr->op = op;
-  curr->index = lane;
-  return visitSIMDReplace(curr);
+  SIMDReplace curr;
+  CHECK_ERR(visitSIMDReplace(&curr));
+  return push(builder.makeSIMDReplace(op, curr.vec, lane, curr.value));
 }
 
 Result<> IRBuilder::makeSIMDShuffle(const std::array<uint8_t, 16>& lanes) {
-  auto* curr = wasm.allocator.alloc<SIMDShuffle>();
-  curr->mask = lanes;
-  return visitSIMDShuffle(curr);
+  SIMDShuffle curr;
+  CHECK_ERR(visitSIMDShuffle(&curr));
+  return push(builder.makeSIMDShuffle(curr.left, curr.right, lanes));
 }
 
 Result<> IRBuilder::makeSIMDTernary(SIMDTernaryOp op) {
-  auto* curr = wasm.allocator.alloc<SIMDTernary>();
-  curr->op = op;
-  return visitSIMDTernary(curr);
+  SIMDTernary curr;
+  CHECK_ERR(visitSIMDTernary(&curr));
+  return push(builder.makeSIMDTernary(op, curr.a, curr.b, curr.c));
 }
 
 Result<> IRBuilder::makeSIMDShift(SIMDShiftOp op) {
-  auto* curr = wasm.allocator.alloc<SIMDShift>();
-  curr->op = op;
-  return visitSIMDShift(curr);
+  SIMDShift curr;
+  CHECK_ERR(visitSIMDShift(&curr));
+  return push(builder.makeSIMDShift(op, curr.vec, curr.shift));
 }
 
 Result<> IRBuilder::makeSIMDLoad(SIMDLoadOp op,
                                  Address offset,
                                  unsigned align,
                                  Name mem) {
-  auto* curr = wasm.allocator.alloc<SIMDLoad>();
-  curr->op = op;
-  curr->offset = offset;
-  curr->align = align;
-  curr->memory = mem;
-  return visitSIMDLoad(curr);
+  SIMDLoad curr;
+  CHECK_ERR(visitSIMDLoad(&curr));
+  return push(builder.makeSIMDLoad(op, offset, align, curr.ptr, mem));
 }
 
 Result<> IRBuilder::makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
@@ -507,415 +432,272 @@ Result<> IRBuilder::makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp op,
                                           unsigned align,
                                           uint8_t lane,
                                           Name mem) {
-  auto* curr = wasm.allocator.alloc<SIMDLoadStoreLane>();
-  curr->op = op;
-  curr->offset = offset;
-  curr->align = align;
-  curr->index = lane;
-  curr->memory = mem;
-  return visitSIMDLoadStoreLane(curr);
+  SIMDLoadStoreLane curr;
+  CHECK_ERR(visitSIMDLoadStoreLane(&curr));
+  return push(builder.makeSIMDLoadStoreLane(
+    op, offset, align, lane, curr.ptr, curr.vec, mem));
 }
 
 Result<> IRBuilder::makeMemoryInit(Name data, Name mem) {
-  auto* curr = wasm.allocator.alloc<MemoryInit>();
-  curr->segment = data;
-  curr->memory = mem;
-  return visitMemoryInit(curr);
+  MemoryInit curr;
+  CHECK_ERR(visitMemoryInit(&curr));
+  return push(
+    builder.makeMemoryInit(data, curr.dest, curr.offset, curr.size, mem));
 }
 
 Result<> IRBuilder::makeDataDrop(Name data) {
-  auto* curr = wasm.allocator.alloc<DataDrop>();
-  curr->segment = data;
-  return visitDataDrop(curr);
+  return push(builder.makeDataDrop(data));
 }
 
 Result<> IRBuilder::makeMemoryCopy(Name destMem, Name srcMem) {
-  auto* curr = wasm.allocator.alloc<MemoryCopy>();
-  curr->destMemory = destMem;
-  curr->sourceMemory = srcMem;
-  return visitMemoryCopy(curr);
+  MemoryCopy curr;
+  CHECK_ERR(visitMemoryCopy(&curr));
+  return push(
+    builder.makeMemoryCopy(curr.dest, curr.source, curr.size, destMem, srcMem));
 }
 
 Result<> IRBuilder::makeMemoryFill(Name mem) {
-  auto* curr = wasm.allocator.alloc<MemoryFill>();
-  curr->memory = mem;
-  return visitMemoryFill(curr);
+  MemoryFill curr;
+  CHECK_ERR(visitMemoryFill(&curr));
+  return push(builder.makeMemoryFill(curr.dest, curr.value, curr.size, mem));
 }
 
 Result<> IRBuilder::makeConst(Literal val) {
-  if (!val.type.isNumber()) {
-    return Err{"const value must be numeric"};
-  }
-  auto* curr = wasm.allocator.alloc<Const>();
-  curr->value = val;
-  curr->type = val.type;
-  return visitConst(curr);
+  return push(builder.makeConst(val));
 }
 
 Result<> IRBuilder::makeUnary(UnaryOp op) {
-  auto* curr = wasm.allocator.alloc<Unary>();
-  curr->op = op;
-  return visitUnary(curr);
+  Unary curr;
+  CHECK_ERR(visitUnary(&curr));
+  return push(builder.makeUnary(op, curr.value));
 }
 
 Result<> IRBuilder::makeBinary(BinaryOp op) {
-  auto* curr = wasm.allocator.alloc<Binary>();
-  curr->op = op;
-  return visitBinary(curr);
+  Binary curr;
+  CHECK_ERR(visitBinary(&curr));
+  return push(builder.makeBinary(op, curr.left, curr.right));
 }
 
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
-  auto* curr = wasm.allocator.alloc<Select>();
-  CHECK_ERR(visitSelect(curr));
-  if (type && !Type::isSubType(curr->type, *type)) {
+  Select curr;
+  CHECK_ERR(visitSelect(&curr));
+  auto* built =
+    type ? builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse, *type)
+         : builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse);
+  if (type && !Type::isSubType(built->type, *type)) {
     return Err{"select type does not match expected type"};
   }
-  return Ok{};
+  return push(built);
 }
 
-Result<> IRBuilder::makeDrop() { return visit(wasm.allocator.alloc<Drop>()); }
+Result<> IRBuilder::makeDrop() {
+  Drop curr;
+  CHECK_ERR(visitDrop(&curr));
+  return push(builder.makeDrop(curr.value));
+}
 
 Result<> IRBuilder::makeReturn() {
-  return visit(wasm.allocator.alloc<Return>());
+  Return curr;
+  CHECK_ERR(visitReturn(&curr));
+  return push(builder.makeReturn(curr.value));
 }
 
 Result<> IRBuilder::makeMemorySize(Name mem) {
-  auto* memory = wasm.getMemoryOrNull(mem);
-  if (!memory) {
-    return Err{"memory '"s + mem.toString() + "' does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<MemorySize>();
-  curr->memory = mem;
-  if (memory->is64()) {
-    curr->make64();
-  }
-  return visitMemorySize(curr);
+  return push(builder.makeMemorySize(mem));
 }
 
 Result<> IRBuilder::makeMemoryGrow(Name mem) {
-  auto* memory = wasm.getMemoryOrNull(mem);
-  if (!memory) {
-    return Err{"memory '"s + mem.toString() + "' does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<MemoryGrow>();
-  curr->memory = mem;
-  if (memory->is64()) {
-    curr->make64();
-  }
-  return visitMemoryGrow(curr);
+  MemoryGrow curr;
+  CHECK_ERR(visitMemoryGrow(&curr));
+  return push(builder.makeMemoryGrow(curr.delta, mem));
 }
 
 Result<> IRBuilder::makeUnreachable() {
-  return visit(wasm.allocator.alloc<Unreachable>());
+  return push(builder.makeUnreachable());
 }
 
 // Result<> IRBuilder::makePop() {}
 
 Result<> IRBuilder::makeRefNull(HeapType type) {
-  auto* curr = wasm.allocator.alloc<RefNull>();
-  curr->type = Type(type.getBottom(), Nullable);
-  return visitRefNull(curr);
+  return push(builder.makeRefNull(type));
 }
 
 Result<> IRBuilder::makeRefIsNull() {
-  return visit(wasm.allocator.alloc<RefIsNull>());
+  RefIsNull curr;
+  CHECK_ERR(visitRefIsNull(&curr));
+  return push(builder.makeRefIsNull(curr.value));
 }
 
-// Result<> IRBuilder::makeRefFunc() {
-//   auto* curr = wasm.allocator.alloc<RefFunc>();
-//   return visitRefFunc(curr);
-// }
+// Result<> IRBuilder::makeRefFunc() {}
 
-Result<> IRBuilder::makeRefEq() { return visit(wasm.allocator.alloc<RefEq>()); }
+Result<> IRBuilder::makeRefEq() {
+  RefEq curr;
+  CHECK_ERR(visitRefEq(&curr));
+  return push(builder.makeRefEq(curr.left, curr.right));
+}
 
-// Result<> IRBuilder::makeTableGet() {
-//   auto* curr = wasm.allocator.alloc<TableGet>();
-//   return visitTableGet(curr);
-// }
+// Result<> IRBuilder::makeTableGet() {}
 
-// Result<> IRBuilder::makeTableSet() {
-//   auto* curr = wasm.allocator.alloc<TableSet>();
-//   return visitTableSet(curr);
-// }
+// Result<> IRBuilder::makeTableSet() {}
 
-// Result<> IRBuilder::makeTableSize() {
-//   auto* curr = wasm.allocator.alloc<TableSize>();
-//   return visitTableSize(curr);
-// }
+// Result<> IRBuilder::makeTableSize() {}
 
-// Result<> IRBuilder::makeTableGrow() {
-//   auto* curr = wasm.allocator.alloc<TableGrow>();
-//   return visitTableGrow(curr);
-// }
+// Result<> IRBuilder::makeTableGrow() {}
 
-// Result<> IRBuilder::makeTry() {
-//   auto* curr = wasm.allocator.alloc<Try>();
-//   return visitTry(curr);
-// }
+// Result<> IRBuilder::makeTry() {}
 
-// Result<> IRBuilder::makeThrow() {
-//   auto* curr = wasm.allocator.alloc<Throw>();
-//   return visitThrow(curr);
-// }
+// Result<> IRBuilder::makeThrow() {}
 
-// Result<> IRBuilder::makeRethrow() {
-//   auto* curr = wasm.allocator.alloc<Rethrow>();
-//   return visitRethrow(curr);
-// }
+// Result<> IRBuilder::makeRethrow() {}
 
-// Result<> IRBuilder::makeTupleMake() {
-//   auto* curr = wasm.allocator.alloc<TupleMake>();
-//   return visitTupleMake(curr);
-// }
+// Result<> IRBuilder::makeTupleMake() {}
 
-// Result<> IRBuilder::makeTupleExtract() {
-//   auto* curr = wasm.allocator.alloc<TupleExtract>();
-//   return visitTupleExtract(curr);
-// }
+// Result<> IRBuilder::makeTupleExtract() {}
 
 Result<> IRBuilder::makeI31New() {
-  return visit(wasm.allocator.alloc<I31New>());
+  I31New curr;
+  CHECK_ERR(visitI31New(&curr));
+  return push(builder.makeI31New(curr.value));
 }
 
 Result<> IRBuilder::makeI31Get(bool signed_) {
-  auto* curr = wasm.allocator.alloc<I31Get>();
-  curr->signed_ = signed_;
-  return visitI31Get(curr);
+  I31Get curr;
+  CHECK_ERR(visitI31Get(&curr));
+  return push(builder.makeI31Get(curr.i31, signed_));
 }
 
-// Result<> IRBuilder::makeCallRef() {
-//   auto* curr = wasm.allocator.alloc<CallRef>();
-//   return visitCallRef(curr);
-// }
+// Result<> IRBuilder::makeCallRef() {}
 
-// Result<> IRBuilder::makeRefTest() {
-//   auto* curr = wasm.allocator.alloc<RefTest>();
-//   return visitRefTest(curr);
-// }
+// Result<> IRBuilder::makeRefTest() {}
 
-// Result<> IRBuilder::makeRefCast() {
-//   auto* curr = wasm.allocator.alloc<RefCast>();
-//   return visitRefCast(curr);
-// }
+// Result<> IRBuilder::makeRefCast() {}
 
-// Result<> IRBuilder::makeBrOn() {
-//   auto* curr = wasm.allocator.alloc<BrOn>();
-//   return visitBrOn(curr);
-// }
+// Result<> IRBuilder::makeBrOn() {}
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
-  if (!type.isStruct()) {
-    return Err{"type is not a struct type"};
-  }
-  auto* curr = wasm.allocator.alloc<StructNew>();
-  curr->type = Type(type, NonNullable);
+  StructNew curr(wasm.allocator);
   // Differentiate from struct.new_default with a non-empty expression list.
-  curr->operands.resize(type.getStruct().fields.size());
-  return visitStructNew(curr);
+  curr.operands.resize(type.getStruct().fields.size());
+  CHECK_ERR(visitStructNew(&curr));
+  return push(builder.makeStructNew(type, std::move(curr.operands)));
 }
 
 Result<> IRBuilder::makeStructNewDefault(HeapType type) {
-  auto* curr = wasm.allocator.alloc<StructNew>();
-  curr->type = Type(type, NonNullable);
-  curr->operands.clear();
-  return visitStructNew(curr);
+  return push(builder.makeStructNew(type, {}));
 }
 
 Result<> IRBuilder::makeStructGet(HeapType type, Index field, bool signed_) {
-  if (!type.isStruct()) {
-    return Err{"type is not a struct type"};
-  }
   const auto& fields = type.getStruct().fields;
-  if (field >= fields.size()) {
-    return Err{"field index is out of bounds"};
-  }
-  auto* curr = wasm.allocator.alloc<StructGet>();
-  curr->type = fields[field].type;
-  curr->index = field;
-  curr->signed_ = signed_;
-  CHECK_ERR(visitStructGet(curr));
-  return validateTypeAnnotation(type, curr->ref);
+  StructGet curr;
+  CHECK_ERR(visitStructGet(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  return push(
+    builder.makeStructGet(field, curr.ref, fields[field].type, signed_));
 }
 
 Result<> IRBuilder::makeStructSet(HeapType type, Index field) {
-  if (!type.isStruct()) {
-    return Err{"type is not a struct type"};
-  }
-  const auto& fields = type.getStruct().fields;
-  if (field >= fields.size()) {
-    return Err{"field index is out of bounds"};
-  }
-  auto* curr = wasm.allocator.alloc<StructSet>();
-  curr->index = field;
-  CHECK_ERR(visitStructSet(curr));
-  return validateTypeAnnotation(type, curr->ref);
+  StructSet curr;
+  CHECK_ERR(visitStructSet(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  return push(builder.makeStructSet(field, curr.ref, curr.value));
 }
 
 Result<> IRBuilder::makeArrayNew(HeapType type) {
-  if (!type.isArray()) {
-    return Err{"type is not an array type"};
-  }
-  auto* curr = wasm.allocator.alloc<ArrayNew>();
-  curr->type = Type(type, NonNullable);
+  ArrayNew curr;
   // Differentiate from array.new_default with dummy initializer.
-  curr->init = (Expression*)0x01;
-  return visitArrayNew(curr);
+  curr.init = (Expression*)0x01;
+  CHECK_ERR(visitArrayNew(&curr));
+  return push(builder.makeArrayNew(type, curr.size, curr.init));
 }
 
 Result<> IRBuilder::makeArrayNewDefault(HeapType type) {
-  if (!type.isArray()) {
-    return Err{"type is not an array type"};
-  }
-  auto* curr = wasm.allocator.alloc<ArrayNew>();
-  curr->type = Type(type, NonNullable);
-  curr->init = nullptr;
-  return visitArrayNew(curr);
+  ArrayNew curr;
+  CHECK_ERR(visitArrayNew(&curr));
+  return push(builder.makeArrayNew(type, curr.size));
 }
 
 Result<> IRBuilder::makeArrayNewData(HeapType type, Name data) {
-  if (!type.isArray()) {
-    return Err{"type is not an array type"};
-  }
-  if (!wasm.getDataSegmentOrNull(data)) {
-    return Err{"data segment does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<ArrayNewData>();
-  curr->type = Type(type, NonNullable);
-  curr->segment = data;
-  return visitArrayNewData(curr);
+  ArrayNewData curr;
+  CHECK_ERR(visitArrayNewData(&curr));
+  return push(builder.makeArrayNewData(type, data, curr.offset, curr.size));
 }
 
 Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
-  if (!type.isArray()) {
-    return Err{"type is not an array type"};
-  }
-  if (!wasm.getElementSegmentOrNull(elem)) {
-    return Err{"element segment does not exist"};
-  }
-  auto* curr = wasm.allocator.alloc<ArrayNewElem>();
-  curr->type = Type(type, NonNullable);
-  curr->segment = elem;
-  return visitArrayNewElem(curr);
+  ArrayNewElem curr;
+  CHECK_ERR(visitArrayNewElem(&curr));
+  return push(builder.makeArrayNewElem(type, elem, curr.offset, curr.size));
 }
 
-// Result<> IRBuilder::makeArrayNewFixed() {
-//   auto* curr = wasm.allocator.alloc<ArrayNewFixed>();
-//   return visitArrayNewFixed(curr);
-// }
+// Result<> IRBuilder::makeArrayNewFixed() {}
 
 Result<> IRBuilder::makeArrayGet(HeapType type, bool signed_) {
-  if (!type.isArray()) {
-    return Err{"type is not an array type"};
-  }
-  auto* curr = wasm.allocator.alloc<ArrayGet>();
-  curr->type = type.getArray().element.type;
-  curr->signed_ = signed_;
-  CHECK_ERR(visitArrayGet(curr));
-  return validateTypeAnnotation(type, curr->ref);
+  ArrayGet curr;
+  CHECK_ERR(visitArrayGet(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  return push(builder.makeArrayGet(
+    curr.ref, curr.index, type.getArray().element.type, signed_));
 }
 
 Result<> IRBuilder::makeArraySet(HeapType type) {
-  auto* curr = wasm.allocator.alloc<ArraySet>();
-  CHECK_ERR(visitArraySet(curr));
-  return validateTypeAnnotation(type, curr->ref);
+  ArraySet curr;
+  CHECK_ERR(visitArraySet(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  return push(builder.makeArraySet(curr.ref, curr.index, curr.value));
 }
 
 Result<> IRBuilder::makeArrayLen() {
-  return visit(wasm.allocator.alloc<ArrayLen>());
+  ArrayLen curr;
+  CHECK_ERR(visitArrayLen(&curr));
+  return push(builder.makeArrayLen(curr.ref));
 }
 
 Result<> IRBuilder::makeArrayCopy(HeapType destType, HeapType srcType) {
-  auto* curr = wasm.allocator.alloc<ArrayCopy>();
-  CHECK_ERR(visitArrayCopy(curr));
-  CHECK_ERR(validateTypeAnnotation(destType, curr->destRef));
-  CHECK_ERR(validateTypeAnnotation(srcType, curr->srcRef));
-  return Ok{};
+  ArrayCopy curr;
+  CHECK_ERR(visitArrayCopy(&curr));
+  CHECK_ERR(validateTypeAnnotation(destType, curr.destRef));
+  CHECK_ERR(validateTypeAnnotation(srcType, curr.srcRef));
+  return push(builder.makeArrayCopy(
+    curr.destRef, curr.destIndex, curr.srcRef, curr.srcIndex, curr.length));
 }
 
 Result<> IRBuilder::makeArrayFill(HeapType type) {
-  auto* curr = wasm.allocator.alloc<ArrayFill>();
-  CHECK_ERR(visitArrayFill(curr));
-  return validateTypeAnnotation(type, curr->ref);
+  ArrayFill curr;
+  CHECK_ERR(visitArrayFill(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  return push(
+    builder.makeArrayFill(curr.ref, curr.index, curr.value, curr.size));
 }
 
-// Result<> IRBuilder::makeArrayInitData() {
-//   auto* curr = wasm.allocator.alloc<ArrayInitData>();
-//   return visitArrayInitData(curr);
-// }
+// Result<> IRBuilder::makeArrayInitData() {}
 
-// Result<> IRBuilder::makeArrayInitElem() {
-//   auto* curr = wasm.allocator.alloc<ArrayInitElem>();
-//   return visitArrayInitElem(curr);
-// }
+// Result<> IRBuilder::makeArrayInitElem() {}
 
-// Result<> IRBuilder::makeRefAs() {
-//   auto* curr = wasm.allocator.alloc<RefAs>();
-//   return visitRefAs(curr);
-// }
+// Result<> IRBuilder::makeRefAs() {}
 
-// Result<> IRBuilder::makeStringNew() {
-//   auto* curr = wasm.allocator.alloc<StringNew>();
-//   return visitStringNew(curr);
-// }
+// Result<> IRBuilder::makeStringNew() {}
 
-// Result<> IRBuilder::makeStringConst() {
-//   auto* curr = wasm.allocator.alloc<StringConst>();
-//   return visitStringConst(curr);
-// }
+// Result<> IRBuilder::makeStringConst() {}
 
-// Result<> IRBuilder::makeStringMeasure() {
-//   auto* curr = wasm.allocator.alloc<StringMeasure>();
-//   return visitStringMeasure(curr);
-// }
+// Result<> IRBuilder::makeStringMeasure() {}
 
-// Result<> IRBuilder::makeStringEncode() {
-//   auto* curr = wasm.allocator.alloc<StringEncode>();
-//   return visitStringEncode(curr);
-// }
+// Result<> IRBuilder::makeStringEncode() {}
 
-// Result<> IRBuilder::makeStringConcat() {
-//   auto* curr = wasm.allocator.alloc<StringConcat>();
-//   return visitStringConcat(curr);
-// }
+// Result<> IRBuilder::makeStringConcat() {}
 
-// Result<> IRBuilder::makeStringEq() {
-//   auto* curr = wasm.allocator.alloc<StringEq>();
-//   return visitStringEq(curr);
-// }
+// Result<> IRBuilder::makeStringEq() {}
 
-// Result<> IRBuilder::makeStringAs() {
-//   auto* curr = wasm.allocator.alloc<StringAs>();
-//   return visitStringAs(curr);
-// }
+// Result<> IRBuilder::makeStringAs() {}
 
-// Result<> IRBuilder::makeStringWTF8Advance() {
-//   auto* curr = wasm.allocator.alloc<StringWTF8Advance>();
-//   return visitStringWTF8Advance(curr);
-// }
+// Result<> IRBuilder::makeStringWTF8Advance() {}
 
-// Result<> IRBuilder::makeStringWTF16Get() {
-//   auto* curr = wasm.allocator.alloc<StringWTF16Get>();
-//   return visitStringWTF16Get(curr);
-// }
+// Result<> IRBuilder::makeStringWTF16Get() {}
 
-// Result<> IRBuilder::makeStringIterNext() {
-//   auto* curr = wasm.allocator.alloc<StringIterNext>();
-//   return visitStringIterNext(curr);
-// }
+// Result<> IRBuilder::makeStringIterNext() {}
 
-// Result<> IRBuilder::makeStringIterMove() {
-//   auto* curr = wasm.allocator.alloc<StringIterMove>();
-//   return visitStringIterMove(curr);
-// }
+// Result<> IRBuilder::makeStringIterMove() {}
 
-// Result<> IRBuilder::makeStringSliceWTF() {
-//   auto* curr = wasm.allocator.alloc<StringSliceWTF>();
-//   return visitStringSliceWTF(curr);
-// }
+// Result<> IRBuilder::makeStringSliceWTF() {}
 
-// Result<> IRBuilder::makeStringSliceIter() {
-//   auto* curr = wasm.allocator.alloc<StringSliceIter>();
-//   return visitStringSliceIter(curr);
-// }
+// Result<> IRBuilder::makeStringSliceIter() {}
 
 } // namespace wasm

@@ -403,7 +403,20 @@ public:
   ArenaVector(MixedArena& allocator) : allocator(allocator) {}
 
   ArenaVector(ArenaVector<T>&& other) : allocator(other.allocator) {
-    *this = other;
+    if (this != &other) {
+      this->data = other.data;
+      this->usedElements = other.usedElements;
+      this->allocatedElements = other.allocatedElements;
+      other.data = nullptr;
+      other.usedElements = 0;
+      other.allocatedElements = 0;
+    }
+  }
+
+  ArenaVector<T>& operator=(ArenaVector<T>&& other) {
+    this->~ArenaVector<T>();
+    new (this) ArenaVector<T>(std::move(other));
+    return *this;
   }
 
   void allocate(size_t size) {
