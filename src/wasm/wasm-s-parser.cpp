@@ -1680,7 +1680,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
 Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   auto ret = allocator.alloc<Block>();
   size_t i = 1;
-  if (s[1]->isStr()) {
+  if (s.size() > 1 && s[1]->isStr()) {
     i++;
   }
   for (; i < s.size(); i++) {
@@ -2850,26 +2850,42 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
   int i = 1;
-  auto nullability = NonNullable;
-  if (s[1]->str().str == "null") {
-    nullability = Nullable;
-    ++i;
+  Type castType;
+  if (s[i]->isList() ||
+      !(s[i]->dollared() ||
+        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
+    castType = elementToType(*s[i++]);
+  } else {
+    // legacy syntax
+    auto nullability = NonNullable;
+    if (s[1]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto type = parseHeapType(*s[i++]);
-  auto castType = Type(type, nullability);
   auto* ref = parseExpression(*s[i++]);
   return Builder(wasm).makeRefTest(ref, castType);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   int i = 1;
-  Nullability nullability = NonNullable;
-  if (s[i]->str().str == "null") {
-    nullability = Nullable;
-    ++i;
+  Type castType;
+  if (s[i]->isList() ||
+      !(s[i]->dollared() ||
+        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
+    castType = elementToType(*s[i++]);
+  } else {
+    // legacy syntax
+    Nullability nullability = NonNullable;
+    if (s[i]->str().str == "null") {
+      nullability = Nullable;
+      ++i;
+    }
+    auto type = parseHeapType(*s[i++]);
+    castType = Type(type, nullability);
   }
-  auto type = parseHeapType(*s[i++]);
-  auto castType = Type(type, nullability);
   auto* ref = parseExpression(*s[i++]);
   return Builder(wasm).makeRefCast(ref, castType);
 }
@@ -2990,6 +3006,14 @@ Expression* SExpressionWasmBuilder::makeArrayNewFixed(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   size_t i = 2;
   std::vector<Expression*> values;
+  if (i < s.size() && s[i]->isStr()) {
+    // With the standard syntax one should specify explicitly the size
+    // of the array
+    if ((size_t)parseIndex(*s[i]) != s.size() - 3) {
+      throw ParseException("wrong number of elements in array", s.line, s.col);
+    }
+    i++;
+  }
   while (i < s.size()) {
     values.push_back(parseExpression(*s[i++]));
   }
