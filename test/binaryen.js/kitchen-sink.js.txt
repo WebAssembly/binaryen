@@ -32,7 +32,7 @@ Features.Memory64: 2048
 Features.RelaxedSIMD: 8192
 Features.ExtendedConst: 16384
 Features.Strings: 32768
-Features.MultiMemories: 65536
+Features.MultiMemory: 65536
 Features.All: 126975
 InvalidId: 0
 BlockId: 1

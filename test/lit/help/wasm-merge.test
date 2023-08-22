@@ -115,9 +115,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                    Disable strings
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-multi-memories              Enable multi-memories
+;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-multi-memories             Disable multi-memories
+;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

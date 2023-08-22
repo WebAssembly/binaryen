@@ -45,7 +45,7 @@ struct FeatureSet {
     RelaxedSIMD = 1 << 13,
     ExtendedConst = 1 << 14,
     Strings = 1 << 15,
-    MultiMemories = 1 << 16,
+    MultiMemory = 1 << 16,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
@@ -91,8 +91,8 @@ struct FeatureSet {
         return "extended-const";
       case Strings:
         return "strings";
-      case MultiMemories:
-        return "multi-memories";
+      case MultiMemory:
+        return "multimemory";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -137,7 +137,7 @@ struct FeatureSet {
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
   bool hasStrings() const { return (features & Strings) != 0; }
-  bool hasMultiMemories() const { return (features & MultiMemories) != 0; }
+  bool hasMultiMemory() const { return (features & MultiMemory) != 0; }
   bool hasAll() const { return (features & AllPossible) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -159,7 +159,7 @@ struct FeatureSet {
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setStrings(bool v = true) { set(Strings, v); }
-  void setMultiMemories(bool v = true) { set(MultiMemories, v); }
+  void setMultiMemory(bool v = true) { set(MultiMemory, v); }
   void setMVP() { features = MVP; }
   void setAll() {
     // Do not set GCNNLocals, which forces the user to opt in to that feature

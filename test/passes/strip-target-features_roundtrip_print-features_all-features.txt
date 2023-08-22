@@ -13,7 +13,7 @@
 --enable-relaxed-simd
 --enable-extended-const
 --enable-strings
---enable-multi-memories
+--enable-multimemory
 (module
  (type $none_=>_v128_externref (func (result v128 externref)))
  (func $foo (type $none_=>_v128_externref) (result v128 externref)

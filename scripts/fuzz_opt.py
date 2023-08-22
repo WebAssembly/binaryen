@@ -306,7 +306,7 @@ INITIAL_CONTENTS_IGNORE = [
     'fib2_emptylocspan_dwarf.wasm',
     'fannkuch3_dwarf.wasm',
     'multi_unit_abbrev_noprint.wasm',
-    # TODO fuzzer support for multi-memories
+    # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
     'multi-memories-basics.wast',
     'multi-memories-simd.wast',
@@ -918,7 +918,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'multivalue', 'multi-memories'])
+        return all_disallowed(['simd', 'multivalue', 'multimemory'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -1062,7 +1062,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multi-memories'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
 class Asyncify(TestCaseHandler):
@@ -1132,7 +1132,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multi-memories'])
+        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
 # given a wasm and a list of exports we want to keep, remove all other exports.
