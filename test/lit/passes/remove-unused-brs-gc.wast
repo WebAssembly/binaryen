@@ -6,9 +6,11 @@
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (struct ))
-  (type $struct (struct))
+  (type $struct (sub (struct)))
   ;; CHECK:       (type $struct2 (struct ))
   (type $struct2 (struct))
+  ;; CHECK:       (type $substruct (sub $struct (struct )))
+  (type $substruct (sub $struct (struct)))
  )
 
  ;; CHECK:      (func $br_on-if (type $ref|struct|_=>_none) (param $0 (ref struct))
@@ -43,9 +45,23 @@
  )
 
  ;; CHECK:      (func $br_on_cast (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (local.get $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block (ref $struct) (ref $substruct)
  ;; CHECK-NEXT:     (struct.new_default $struct)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -53,12 +69,89 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br_on_cast (result (ref $struct))
+  (local $struct (ref null $struct))
   (block $block (result (ref $struct))
    (drop
-    ;; This static cast can be computed at compile time: it will definitely be
-    ;; taken, so we can turn it into a normal br.
+    ;; This cast can be computed at compile time: it will definitely be taken,
+    ;; so we can turn it into a normal br.
     (br_on_cast $block anyref (ref $struct)
      (struct.new $struct)
+    )
+   )
+   (drop
+    ;; This cast can be partially computed at compile time, but we still need to
+    ;; do a null check.
+    (br_on_cast $block anyref (ref $struct)
+     (local.get $struct)
+    )
+   )
+   (drop
+    ;; This cast cannot be optimized at all.
+    (br_on_cast $block anyref (ref $substruct)
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (ref.cast $struct
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (struct.new_default $struct)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (ref.cast null $struct
+ ;; CHECK-NEXT:       (local.tee $any
+ ;; CHECK-NEXT:        (local.get $struct)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block anyref (ref $substruct)
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast-fallthrough (result (ref $struct))
+  ;; Same as above, but now the type information comes from fallthrough values.
+  (local $struct (ref null $struct))
+  (local $any anyref)
+  (block $block (result (ref $struct))
+   (drop
+    ;; Definitely taken, but will need a cast for validity.
+    (br_on_cast $block anyref (ref $struct)
+     (local.tee $any (struct.new $struct))
+    )
+   )
+   (drop
+    ;; Needs a null check and cast for validity.
+    (br_on_cast $block anyref (ref $struct)
+     (local.tee $any (local.get $struct))
+    )
+   )
+   (drop
+    ;; This cannot be optimized, but at least it still doesn't need an
+    ;; additional cast.
+    (br_on_cast $block anyref (ref $substruct)
+     (local.tee $any (struct.new $struct))
     )
    )
    (unreachable)
@@ -136,10 +229,177 @@
     )
    )
    (drop
-    ;; But if both are nullable, then we can't optimize because the cast would
-    ;; succeed if the value is a null.
+    ;; But if both are nullable, then the cast will succeed only if the value is
+    ;; null, so we can partially optimize.
+    ;; TODO: Optimize this.
     (br_on_cast $block anyref (ref null $struct)
      (local.get $nullable-struct2)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result nullref)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.tee $any
+ ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.tee $any
+ ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.tee $any
+ ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $block anyref nullref
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_unrelated-fallthrough (result (ref null $struct))
+  ;; Same as above, but now all the type information comes from fallthrough values.
+  (local $any anyref)
+  (local $nullable-struct2 (ref null $struct2))
+  (block $block (result (ref null $struct))
+   (drop
+    ;; Definitely not taken.
+    (br_on_cast $block anyref (ref $struct)
+     (local.tee $any (struct.new $struct2))
+    )
+   )
+   (drop
+    ;; Still not taken.
+    (br_on_cast $block anyref (ref null $struct)
+     (local.tee $any (struct.new $struct2))
+    )
+   )
+   (drop
+    ;; Also not taken.
+    (br_on_cast $block anyref (ref $struct)
+     (local.tee $any (local.get $nullable-struct2))
+    )
+   )
+   (drop
+    ;; Taken only if null.
+    ;; TODO: Optimize this.
+    (br_on_cast $block anyref (ref null $struct)
+     (local.tee $any (local.get $nullable-struct2))
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail (type $none_=>_anyref) (result anyref)
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref null $struct))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct) (ref $struct)
+ ;; CHECK-NEXT:     (local.get $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block (ref $struct) (ref $substruct)
+ ;; CHECK-NEXT:     (struct.new_default $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail (result anyref)
+  (local $struct (ref null $struct))
+  (block $block (result anyref)
+   (drop
+    ;; This cast can be computed at compile time: it will definitely succeed so
+    ;; the branch will not be taken.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (struct.new $struct)
+    )
+   )
+   (drop
+    ;; This cast can be partially computed at compile time, but we still need to
+    ;; do a null check.
+    ;; TODO: optimize this.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (local.get $struct)
+    )
+   )
+   (drop
+    ;; This cast cannot be optimized at all.
+    (br_on_cast_fail $block anyref (ref $substruct)
+     (struct.new $struct)
+    )
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $none_=>_anyref) (result anyref)
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (local $struct (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result anyref)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.cast $struct
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block anyref (ref $struct)
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (local.get $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast_fail $block anyref (ref $substruct)
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_cast_fail-fallthrough (result anyref)
+  ;; Same as above, but now the type information comes from fallthrough values.
+  (local $any anyref)
+  (local $struct (ref null $struct))
+  (block $block (result anyref)
+   (drop
+    ;; This cast will succeed. We will need a cast for validity.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (local.tee $any (struct.new $struct))
+    )
+   )
+   (drop
+    ;; We will still need a null check.
+    ;; TODO: optimize this.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (local.tee $any (local.get $struct))
+    )
+   )
+   (drop
+    ;; This cast cannot be optimized at all.
+    (br_on_cast_fail $block anyref (ref $substruct)
+     (local.tee $any (struct.new $struct))
     )
    )
    (unreachable)
@@ -165,8 +425,11 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast_fail $block (ref null $struct2) nullref
- ;; CHECK-NEXT:     (local.get $nullable-struct2)
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
@@ -195,8 +458,8 @@
     )
    )
    (drop
-    ;; But if both are nullable, then we can't optimize because the cast would
-    ;; succeed if the value is a null.
+    ;; But if both are nullable, then we can only partially optimize because we
+    ;; still have to do a null check.
     (br_on_cast_fail $block anyref (ref null $struct)
      (local.get $nullable-struct2)
     )
@@ -205,70 +468,130 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_no (type $none_=>_ref|$struct|) (result (ref $struct))
- ;; CHECK-NEXT:  (local $struct (ref null $struct))
- ;; CHECK-NEXT:  (block $block (result (ref $struct))
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_cast $block (ref null $struct) (ref $struct)
- ;; CHECK-NEXT:     (local.get $struct)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $br_on_cast_no (result (ref $struct))
-  (local $struct (ref null $struct))
-  (block $block (result (ref $struct))
-   (drop
-    (br_on_cast $block anyref (ref $struct)
-     ;; As above, but now the type is nullable, so we cannot infer anything.
-     (local.get $struct)
-    )
-   )
-   (unreachable)
-  )
- )
-
- ;; CHECK:      (func $br_on_cast_nullable (type $none_=>_ref?|$struct|) (result (ref null $struct))
- ;; CHECK-NEXT:  (block $block (result nullref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $none_=>_anyref) (result anyref)
+ ;; CHECK-NEXT:  (local $any anyref)
+ ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
+ ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br $block
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (local.get $nullable-struct2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result nullref)
+ ;; CHECK-NEXT:     (br_on_non_null $block
+ ;; CHECK-NEXT:      (local.tee $any
+ ;; CHECK-NEXT:       (local.get $nullable-struct2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_nullable (result (ref null $struct))
-  (block $block (result (ref null $struct))
+ (func $br_on_cast_fail_unrelated-fallthrough (result anyref)
+  ;; Same as above, but now type information comes from fallthrough values.
+  (local $any anyref)
+  (local $nullable-struct2 (ref null $struct2))
+  (block $block (result anyref)
    (drop
-    (br_on_cast $block anyref (ref null $struct)
-     ;; As above, but now the cast allows nulls, so we can optimize.
-     (ref.null $struct)
+    ;; Will definitely take the branch.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (local.tee $any (struct.new $struct2))
+    )
+   )
+   (drop
+    ;; Ditto.
+    (br_on_cast_fail $block anyref (ref null $struct)
+     (local.tee $any (struct.new $struct2))
+    )
+   )
+   (drop
+    ;; Ditto.
+    (br_on_cast_fail $block anyref (ref $struct)
+     (local.tee $any (local.get $nullable-struct2))
+    )
+   )
+   (drop
+    ;; Still has to do a null check.
+    (br_on_cast_fail $block anyref (ref null $struct)
+     (local.tee $any (local.get $nullable-struct2))
     )
    )
    (unreachable)
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $none_=>_ref|$struct|) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-unreachable (type $i31ref_=>_anyref) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result (ref none))
+ ;; CHECK-NEXT:       (ref.cast none
+ ;; CHECK-NEXT:        (block (result i31ref)
+ ;; CHECK-NEXT:         (local.get $i31ref)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref none))
+ ;; CHECK-NEXT:      (ref.cast none
+ ;; CHECK-NEXT:       (block (result i31ref)
+ ;; CHECK-NEXT:        (local.get $i31ref)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_cast_fail (result (ref $struct))
-  (block $block (result (ref $struct))
+ (func $br_on_cast-unreachable (param $i31ref i31ref) (result anyref)
+  ;; Optimize out br_on_cast* where the input is uninhabitable.
+  (block $block (result anyref)
    (drop
-    ;; As $br_on_cast, but this checks for a failing cast, so we know it will
-    ;; *not* be taken.
-    (br_on_cast_fail $block anyref (ref $struct)
-     (struct.new $struct)
+    (br_on_cast $block anyref (ref i31)
+     (block (result anyref)
+      (ref.cast struct
+       (block (result anyref)
+        (local.get $i31ref)
+       )
+      )
+     )
     )
    )
-   (unreachable)
+   (br_on_cast_fail $block anyref (ref i31)
+    (block (result anyref)
+     (ref.cast struct
+      (block (result anyref)
+       (local.get $i31ref)
+      )
+     )
+    )
+   )
   )
  )
 
@@ -284,7 +607,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result anyref)
+ ;; CHECK-NEXT:   (if (result nullref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (ref.cast null none
@@ -293,26 +616,34 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result anyref)
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (block $something (result anyref)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (br_on_cast $something (ref null $struct) (ref $struct)
- ;; CHECK-NEXT:       (local.get $struct)
+ ;; CHECK-NEXT:   (select (result (ref null $struct))
+ ;; CHECK-NEXT:    (block (result (ref null $struct))
+ ;; CHECK-NEXT:     (block $something (result (ref null $struct))
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (block (result nullref)
+ ;; CHECK-NEXT:        (br_on_non_null $something
+ ;; CHECK-NEXT:         (local.get $struct)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (ref.null none)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result anyref)
- ;; CHECK-NEXT:    (block (result anyref)
+ ;; CHECK-NEXT:   (select (result nullref)
+ ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (block $nothing
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (br_on_null $nothing
- ;; CHECK-NEXT:        (ref.null none)
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (drop
+ ;; CHECK-NEXT:         (ref.null none)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (br $nothing)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )

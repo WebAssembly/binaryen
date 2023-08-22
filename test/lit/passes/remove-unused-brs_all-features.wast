@@ -10,8 +10,6 @@
  (type $struct (struct (field (ref null $vector))))
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
-
  ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 
  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
@@ -20,7 +18,13 @@
 
  ;; CHECK:      (type $i32_=>_funcref (func (param i32) (result funcref)))
 
+ ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+
  ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $funcref_=>_funcref (func (param funcref) (result funcref)))
+
+ ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
  ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
  (import "out" "log" (func $log (param i32)))
@@ -118,22 +122,29 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (type $none_=>_none)
+ ;; CHECK:      (func $br_on_null (type $funcref_=>_none) (param $x funcref)
  ;; CHECK-NEXT:  (block $null
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (br_on_null $null
- ;; CHECK-NEXT:     (ref.null nofunc)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (ref.null nofunc)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $null)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.func $br_on_null)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $null
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_null
+ (func $br_on_null (param $x funcref)
   (block $null
    ;; A null reference to bottom is definitely null, and the br is always taken.
-   ;; TODO: Optimize this.
    (drop
     (br_on_null $null (ref.null nofunc))
    )
@@ -142,21 +153,66 @@
    (drop
     (br_on_null $null (ref.func $br_on_null))
    )
+   ;; If we don't know whether the input is null, we can't optimize.
+   (drop
+    (br_on_null $null (local.get $x))
+   )
   )
  )
 
- ;; CHECK:      (func $br_on_non_null (type $none_=>_funcref) (result funcref)
- ;; CHECK-NEXT:  (block $non-null (result (ref $none_=>_funcref))
+ ;; CHECK:      (func $br_on_null-fallthrough (type $none_=>_none)
+ ;; CHECK-NEXT:  (local $x funcref)
+ ;; CHECK-NEXT:  (block $null
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (local.tee $x
+ ;; CHECK-NEXT:       (ref.null nofunc)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $null)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.tee $x
+ ;; CHECK-NEXT:      (ref.func $br_on_null)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_null-fallthrough
+  ;; This is the same as above, but now the necessary type information comes
+  ;; from fallthrough values.
+  (local $x funcref)
+  (block $null
+   ;; Definitely taken.
+   (drop
+    (br_on_null $null (local.tee $x (ref.null nofunc)))
+   )
+   ;; Definitely not taken. Optimizable, but still requires a cast for validity.
+   (drop
+    (br_on_null $null (local.tee $x (ref.func $br_on_null)))
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null (type $funcref_=>_funcref) (param $x funcref) (result funcref)
+ ;; CHECK-NEXT:  (block $non-null (result (ref func))
  ;; CHECK-NEXT:   (br $non-null
  ;; CHECK-NEXT:    (ref.func $br_on_non_null)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br_on_non_null $non-null
+ ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null nofunc)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:   (br_on_non_null $non-null
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $br_on_non_null (result funcref)
+ (func $br_on_non_null (param $x funcref) (result funcref)
   (block $non-null (result (ref func))
    ;; A non-null reference is not null, and the br is always taken.
    (br_on_non_null $non-null
@@ -164,11 +220,48 @@
    )
    ;; On the other hand, if we know the input is null, the branch will never be
    ;; taken.
-   ;; TODO: Optimize this.
    (br_on_non_null $non-null
     (ref.null nofunc)
    )
-   (ref.func $br_on_non_null)
+   ;; If we don't know whether the input is null, we can't optimize.
+   (br_on_non_null $non-null
+    (local.get $x)
+   )
+   (unreachable)
+  )
+ )
+
+ ;; CHECK:      (func $br_on_non_null-fallthrough (type $none_=>_funcref) (result funcref)
+ ;; CHECK-NEXT:  (local $x funcref)
+ ;; CHECK-NEXT:  (block $non-null (result (ref func))
+ ;; CHECK-NEXT:   (br $non-null
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.tee $x
+ ;; CHECK-NEXT:      (ref.func $br_on_non_null)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.tee $x
+ ;; CHECK-NEXT:     (ref.null nofunc)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_non_null-fallthrough (result funcref)
+  ;; Same as above, but now using fallthrough values.
+  (local $x funcref)
+  (block $non-null (result (ref func))
+   ;; Definitely taken. Requires cast.
+   (br_on_non_null $non-null
+    (local.tee $x (ref.func $br_on_non_null))
+   )
+   ;; Definitely not taken.
+   (br_on_non_null $non-null
+    (local.tee $x (ref.null nofunc))
+   )
+   (unreachable)
   )
  )
 )
