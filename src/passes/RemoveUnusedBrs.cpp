@@ -770,8 +770,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             return;
           }
           if (refType.isNonNullable()) {
-            // Definitely taken. OptimizeInstructions will remove the null cast
-            // if possible.
+            // Definitely taken.
             replaceCurrent(builder.makeBreak(
               curr->name, maybeCast(curr->ref, curr->getSentType())));
             worked = true;
@@ -782,7 +781,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         // Improve the cast target type as much as possible given what we know
         // about the input. Unlike in BrOn::finalize(), we consider type
-        // information from all the fallthrough values here.
+        // information from all the fallthrough values here. We can continue to
+        // further optimizations after this, and those optimizations might even
+        // benefit from this improvement.
         auto glb = Type::getGreatestLowerBound(curr->castType, refType);
         if (glb != Type::unreachable && glb != curr->castType) {
           curr->castType = glb;
