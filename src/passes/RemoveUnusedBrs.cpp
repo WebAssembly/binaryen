@@ -719,6 +719,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         Type refType =
           Properties::getFallthroughType(curr->ref, passOptions, *getModule());
+        if (refType == Type::unreachable) {
+          // Leave this to DCE.
+          return;
+        }
         assert(refType.isRef());
 
         // When we optimize based on all the fallthrough type information

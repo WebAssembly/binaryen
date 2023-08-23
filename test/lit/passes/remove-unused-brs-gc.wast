@@ -595,6 +595,45 @@
   )
  )
 
+ ;; CHECK:      (func $fallthrough-unreachable (type $i31ref_=>_anyref) (param $0 i31ref) (result anyref)
+ ;; CHECK-NEXT:  (block $outer
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (ref.cast none
+ ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $fallthrough-unreachable (param $0 i31ref) (result anyref)
+  (block $outer (result (ref none))
+   (drop
+    ;; This should not crash due to the new unreachable below.
+    (br_on_cast $outer (ref none) (ref none)
+     (ref.cast none
+      ;; This will be optimized to a drop + unreachable.
+      (br_on_cast $outer (ref none) (ref none)
+       (ref.cast none
+        (local.get $0)
+       )
+      )
+     )
+    )
+   )
+   (unreachable)
+  )
+ )
+
  ;; CHECK:      (func $casts-are-costly (type $i32_=>_none) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
