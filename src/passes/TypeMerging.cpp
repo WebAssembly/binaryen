@@ -154,7 +154,8 @@ struct TypeMerging : public Pass {
 
   // Split a partition into potentially multiple partitions for each
   // disconnected group of types it contains.
-  std::vector<Partition> splitSupertypePartition(const std::vector<HeapType>&);
+  std::vector<std::vector<HeapType>>
+  splitSupertypePartition(const std::vector<HeapType>&);
 
   CastTypes findCastTypes();
   std::vector<HeapType> getPublicChildren(HeapType type);
@@ -253,9 +254,9 @@ bool TypeMerging::merge(MergeKind kind) {
   using Fallback = IndexedTypeNameGenerator<DefaultTypeNameGenerator>;
   Fallback printPrivate(printedPrivateTypes, "private.");
   ModuleTypeNameGenerator<Fallback> print(*module, printPrivate);
-  auto dumpDFA = [&](const auto& dfa) {
+  auto dumpPartitions = [&]() {
     size_t i = 0;
-    for (auto& partition : dfa) {
+    for (auto& partition : partitions) {
       std::cerr << i++ << ": " << print(partition[0].val) << "\n";
       for (size_t j = 1; j < partition.size(); ++j) {
         std::cerr << "   " << print(partition[j].val) << "\n";
@@ -263,7 +264,6 @@ bool TypeMerging::merge(MergeKind kind) {
       std::cerr << "\n";
     }
   };
-  auto dumpPartitions = [&]() { dumpDFA(partitions); };
 
 #endif // TYPE_MERGING_DEBUG
 
@@ -368,7 +368,6 @@ bool TypeMerging::merge(MergeKind kind) {
 
 #if TYPE_MERGING_DEBUG
   auto dumpRefinedPartitions = [&]() {
-    std::cerr << "Refined partitions:\n";
     size_t i = 0;
     for (auto& partition : refinedPartitions) {
       std::cerr << i++ << ": " << print(partition[0]) << "\n";
@@ -378,6 +377,7 @@ bool TypeMerging::merge(MergeKind kind) {
       std::cerr << "\n";
     }
   };
+  std::cerr << "Refined partitions:\n";
   dumpRefinedPartitions();
 #endif
 
@@ -387,31 +387,25 @@ bool TypeMerging::merge(MergeKind kind) {
     // together in the other new partition. Since we are only supposed to be
     // merging types into their supertypes, merging such unrelated types would
     // be unsafe. Post-process the refined partitions to manually split any
-    // partitions containing unrelated types, then re-refine the partitions if
-    // necessary.
-    while (true) {
-      std::vector<Partition> newDFA;
-      for (const auto& partitionTypes : refinedPartitions) {
-        auto newPartitions = splitSupertypePartition(partitionTypes);
-        newDFA.insert(newDFA.end(), newPartitions.begin(), newPartitions.end());
-      }
-      if (newDFA.size() == refinedPartitions.size()) {
-        break;
-      }
+    // partitions containing unrelated types
+    //
+    // Normally splitting partitions like this would require re-running DFA
+    // minimization afterward, but in this case it is not possible that the
+    // manual splits cause types in any other partition to become
+    // differentiatable. A type and its subtype cannot differ by referring to
+    // different, unrelated types in the same position because then they would
+    // not be in a valid subtype relationship.
+    std::vector<std::vector<HeapType>> newPartitions;
+    for (const auto& partitionTypes : refinedPartitions) {
+      auto split = splitSupertypePartition(partitionTypes);
+      newPartitions.insert(newPartitions.end(), split.begin(), split.end());
+    }
+    refinedPartitions = newPartitions;
 
 #if TYPE_MERGING_DEBUG
       std::cerr << "Manually split partitions:\n";
-      dumpDFA(newDFA);
-#endif
-
-      // We split a partition, so we have to refine again in case that causes
-      // other partitions to be splittable.
-      refinedPartitions = DFA::refinePartitions(newDFA);
-
-#if TYPE_MERGING_DEBUG
       dumpRefinedPartitions();
 #endif
-    }
   }
 
   // Merge each refined partition into a single type. We should only merge into
@@ -450,26 +444,26 @@ bool TypeMerging::merge(MergeKind kind) {
   return merged;
 }
 
-std::vector<TypeMerging::Partition>
+std::vector<std::vector<HeapType>>
 TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   if (types.size() == 1) {
     // Cannot split a partition containing just one type.
-    return {{makeDFAState(types[0])}};
+    return {types};
   }
   std::unordered_set<HeapType> includedTypes(types.begin(), types.end());
-  std::vector<Partition> partitions;
+  std::vector<std::vector<HeapType>> partitions;
   std::unordered_map<HeapType, Index> partitionIndices;
   for (auto type : MergeableSupertypesFirst(*this, types)) {
     auto super = type.getSuperType();
     if (super && includedTypes.count(*super)) {
       // We must already have a partition for the supertype we can add to.
       auto index = partitionIndices.at(*super);
-      partitions[index].push_back(makeDFAState(type));
+      partitions[index].push_back(type);
       partitionIndices[type] = index;
     } else {
       // This is a new root type. Create a new partition.
       auto index = partitions.size();
-      partitions.push_back({makeDFAState(type)});
+      partitions.push_back({type});
       partitionIndices[type] = index;
     }
   }
