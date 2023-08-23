@@ -403,8 +403,8 @@ bool TypeMerging::merge(MergeKind kind) {
     refinedPartitions = newPartitions;
 
 #if TYPE_MERGING_DEBUG
-      std::cerr << "Manually split partitions:\n";
-      dumpRefinedPartitions();
+    std::cerr << "Manually split partitions:\n";
+    dumpRefinedPartitions();
 #endif
   }
 
