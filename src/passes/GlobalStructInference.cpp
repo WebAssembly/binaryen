@@ -265,14 +265,17 @@ struct GlobalStructInference : public Pass {
           // will unlock those other optimizations. Note we must trap if the ref
           // is null, so add RefAsNonNull here.
           auto global = globals[0];
+          auto globalType = wasm.getGlobal(global)->type;
+          if (globalType != curr->ref->type) {
+            // The struct.get will now read from something of the type of the
+            // global, which might be more refined compared to before, so the
+            // field being read might be refined as well, which could change the
+            // struct.get's type.
+            refinalize = true;
+          }
           curr->ref = builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
-          // The struct.get will now read from something of the type of the
-          // global, which might be more refined compared to before, so the
-          // field being read might be refined as well, which could change the
-          // struct.get's type.
-          refinalize = true;
+            builder.makeGlobalGet(global, globalType));
           return;
         }
 
