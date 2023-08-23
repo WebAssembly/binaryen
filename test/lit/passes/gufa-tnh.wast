@@ -23,17 +23,17 @@
 
   ;; CHECK:      (func $called (type $funcref_funcref_funcref_funcref_=>_none) (param $x funcref) (param $no-cast funcref) (param $y funcref) (param $z funcref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -43,17 +43,17 @@
     ;; optimization in the caller. Nothing significant changes here in this
     ;; function.
     (drop
-      (ref.cast func
+      (ref.cast (ref func)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast func
+      (ref.cast (ref func)
         (local.get $y)
       )
     )
     (drop
-      (ref.cast func
+      (ref.cast (ref func)
         (local.get $z)
       )
     )
@@ -69,26 +69,26 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast null func
+  ;; CHECK-NEXT:   (ref.cast funcref
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $f)
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $f)
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast func
+  ;; CHECK-NEXT:   (ref.cast (ref func)
   ;; CHECK-NEXT:    (local.get $f)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -120,28 +120,28 @@
     ;; are cast both here and in the called function. Those casts will lose the
     ;; "null" and become non-nullable.
     (call $called
-      (ref.cast null func
+      (ref.cast funcref
         (local.get $f)
       )
-      (ref.cast null func
+      (ref.cast funcref
         (local.get $f)
       )
       (local.get $f)
-      (ref.cast null func
+      (ref.cast funcref
         (local.get $f)
       )
     )
 
     ;; Another call, but with different casts.
     (call $called
-      (ref.cast func ;; this is now non-nullable, and will not change
+      (ref.cast funcref ;; this is now non-nullable, and will not change
         (local.get $f)
       )
       (local.get $f) ;; this is not cast, and will not change.
-      (ref.cast null func
+      (ref.cast funcref
         (local.get $f) ;; this is now cast, and will be optimized.
       )
-      (ref.cast null func ;; this is the same as before, and will be optimized.
+      (ref.cast funcref ;; this is the same as before, and will be optimized.
         (local.get $f)
       )
     )
@@ -199,7 +199,7 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -207,7 +207,7 @@
   (func $called (param $x (ref null $A))
     ;; Cast the input to a $B, which will help the caller.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -217,20 +217,20 @@
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:   (ref.test (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -249,7 +249,7 @@
     ;; analysis will use that fact in the local.get $x below.
     (call $called
       (local.tee $x
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -259,13 +259,13 @@
     ;; $any appears.)
     (drop
       (struct.get $A 0
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $any)
       )
     )
@@ -277,7 +277,7 @@
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $x)
       )
     )
@@ -326,7 +326,7 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -334,7 +334,7 @@
   (func $called (param $x (ref null $A))
     ;; Cast the input to a $B, which will help the caller.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -397,7 +397,7 @@
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.tee $local
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
@@ -416,7 +416,7 @@
       (i32.const 1337)
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         ;; This local.tee should not stop us from optimizing.
         (local.tee $local
           (local.get $x)
@@ -429,7 +429,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -439,7 +439,7 @@
     (local $x (ref null $A))
     (call $called
       (local.tee $x
-        (ref.cast $A ;; this cast will be refined
+        (ref.cast (ref $A) ;; this cast will be refined
           (local.get $any)
         )
       )
@@ -468,7 +468,7 @@
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -481,7 +481,7 @@
       (return)
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -491,7 +491,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -501,7 +501,7 @@
     (local $x (ref null $A))
     (call $called
       (local.tee $x
-        (ref.cast $A ;; this cast will *not* be refined
+        (ref.cast (ref $A) ;; this cast will *not* be refined
           (local.get $any)
         )
       )
@@ -524,14 +524,14 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast $A ;; This cast only removes nullability.
+      (ref.cast (ref $A) ;; This cast only removes nullability.
         (local.get $x)
       )
     )
@@ -541,7 +541,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -551,7 +551,8 @@
     (local $x (ref null $A))
     (call $called
       (local.tee $x
-        (ref.cast $A ;; This cast will *not* be refined, as it is already non-
+        (ref.cast (ref $A)
+                     ;; This cast will *not* be refined, as it is already non-
                      ;; nullable here, and the other cast did not improve the
                      ;; heap type.
           (local.get $any)
@@ -580,12 +581,12 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -595,12 +596,12 @@
     ;; the general case as other optimizations will leave the most-refined one.
     ;; (But in this test, it is less optimal actually.)
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
@@ -610,7 +611,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $x
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -620,7 +621,7 @@
     (local $x (ref null $A))
     (call $called
       (local.tee $x
-        (ref.cast $A ;; this cast will be refined to $B.
+        (ref.cast (ref $A) ;; this cast will be refined to $B.
           (local.get $any)
         )
       )
@@ -644,17 +645,17 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none) (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -662,17 +663,17 @@
   (func $called (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
     ;; All parameters are cast.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $y)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $z)
       )
     )
@@ -681,7 +682,7 @@
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -690,12 +691,12 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -709,7 +710,7 @@
     ;; first.
     (call $called
       (block (result (ref $A))
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -718,12 +719,12 @@
           (i32.const 0)
           (return)
         )
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
       (block (result (ref $A))
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -747,7 +748,7 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none) (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -755,14 +756,14 @@
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -771,7 +772,7 @@
       (local.get $y)
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $z)
       )
     )
@@ -780,7 +781,7 @@
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -789,12 +790,12 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -806,7 +807,7 @@
     ;; we can still refine the last one.
     (call $called
       (block (result (ref $A))
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -815,12 +816,12 @@
           (i32.const 0)
           (return)
         )
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
       (block (result (ref $A))
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -849,17 +850,17 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none) (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -867,17 +868,17 @@
   (func $called (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
     ;; All parameters are cast.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $y)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $z)
       )
     )
@@ -885,28 +886,28 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (call $get-any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $any anyref)
     (call $called
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $any)
       )
-      (ref.cast $A
+      (ref.cast (ref $A)
         ;; This call might transfer control flow (if it throws), so we
         ;; can't optimize before it, but the last two casts will become $B.
         (call $get-any)
       )
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $any)
       )
     )
@@ -934,17 +935,17 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_ref?|$A|_ref?|$A|_=>_none) (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $z)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -952,17 +953,17 @@
   (func $called (param $x (ref null $A)) (param $y (ref null $A)) (param $z (ref null $A))
     ;; All parameters are cast.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $y)
       )
     )
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $z)
       )
     )
@@ -970,24 +971,24 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if (result (ref $A))
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (return)
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $any anyref)
     (call $called
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $any)
       )
       ;; One if arm transfers control flow, so while we have a fallthrough
@@ -997,11 +998,11 @@
       (if (result (ref $A))
         (i32.const 0)
         (return)
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $any)
       )
     )
@@ -1024,14 +1025,14 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -1093,7 +1094,7 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1101,7 +1102,7 @@
   (func $caller (export "out") (param $any anyref)
     (call $called
       ;; This cast can become non-nullable.
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $any)
       )
     )
@@ -1133,7 +1134,7 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1141,7 +1142,7 @@
   (func $called (param $x (ref null $A))
     ;; This function casts the A to a B.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -1188,7 +1189,7 @@
   ;; CHECK-NEXT:  (local $temp-any anyref)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $temp-C
-  ;; CHECK-NEXT:    (ref.cast $C
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
   ;; CHECK-NEXT:     (local.tee $temp-any
   ;; CHECK-NEXT:      (local.get $any)
   ;; CHECK-NEXT:     )
@@ -1200,14 +1201,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $temp-any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $A 0
-  ;; CHECK-NEXT:    (ref.cast $A
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1218,7 +1219,8 @@
     (local $temp-any anyref)
     (call $called
       (local.tee $temp-C
-        (ref.cast $C ;; This cast is already more refined than even the called
+        (ref.cast (ref $C)
+                     ;; This cast is already more refined than even the called
                      ;; function casts to. It should stay as it is.
           (local.tee $temp-any
             (local.get $any)
@@ -1228,7 +1230,7 @@
     )
     (drop
       (struct.get $A 0 ;; the reference contains a C, so this value is 30.
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $temp-C)
         )
       )
@@ -1239,7 +1241,7 @@
                        ;; value (which can be 20 or 30).
                        ;; TODO: We can infer from the ref.cast $C in this
                        ;;       function backwards into the tee and its value.
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $temp-any)
         )
       )
@@ -1247,7 +1249,7 @@
     (drop
       (struct.get $A 0 ;; We have not inferred anything about the param, so this
                        ;; is not optimized yet, but it could be. TODO
-        (ref.cast $A
+        (ref.cast (ref $A)
           (local.get $any)
         )
       )
@@ -1258,7 +1260,7 @@
   ;; CHECK-NEXT:  (local $temp (ref $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1273,7 +1275,7 @@
     (local $temp (ref $A))
     (call $called
       (local.tee $temp
-        (ref.cast $B ;; This cast is equal to the called cast. It should remain.
+        (ref.cast (ref $B) ;; This cast is equal to the called cast. It should remain.
           (local.get $any)
         )
       )
@@ -1289,7 +1291,7 @@
   ;; CHECK-NEXT:  (local $temp (ref $A))
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (ref.cast $B
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1304,7 +1306,7 @@
     (local $temp (ref $A))
     (call $called
       (local.tee $temp
-        (ref.cast $A ;; This cast is less refined, and can be improved to B.
+        (ref.cast (ref $A) ;; This cast is less refined, and can be improved to B.
           (local.get $any)
         )
       )
@@ -1343,14 +1345,14 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B1
+  ;; CHECK-NEXT:   (ref.cast (ref $B1)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast $B1
+      (ref.cast (ref $B1)
         (local.get $x)
       )
     )
@@ -1424,7 +1426,7 @@
     ;; This casts a local in the entry block, but it is not a parameter, so we
     ;; should ignore it and not error.
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
@@ -1457,14 +1459,14 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:   (ref.cast (ref null $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
@@ -1472,32 +1474,32 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:   (ref.cast (ref null $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast null $B
+  ;; CHECK-NEXT:   (ref.cast (ref null $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast null $C
+  ;; CHECK-NEXT:   (ref.cast (ref null $C)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1506,35 +1508,35 @@
     ;; A non-nullable A passed into a cast of B means this value must be a non-
     ;; nullable B.
     (call $called
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     ;; This will be refined to (nullable) B.
     (call $called
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $x)
       )
     )
     ;; Casts of B remain the same.
     (call $called
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (call $called
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
     ;; Casts of C remain the same.
     (call $called
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
     (call $called
-      (ref.cast null $C
+      (ref.cast (ref null $C)
         (local.get $x)
       )
     )
@@ -1560,14 +1562,14 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x (ref null $A))
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -1575,32 +1577,32 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1608,37 +1610,37 @@
   (func $caller (export "out") (param $x anyref)
     ;; Casts of A are refined.
     (call $called
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
     ;; This will be refined to B.
     (call $called
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $x)
       )
     )
     ;; Casts of B turn or stay as non-nullable B.
     (call $called
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (call $called
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $x)
       )
     )
     ;; This cast of C remains the same.
     (call $called
-      (ref.cast $C
+      (ref.cast (ref $C)
         (local.get $x)
       )
     )
     ;; A nullable C passed into a cast of non-null B means this value must be a
     ;; non-nullable C.
     (call $called
-      (ref.cast null $C
+      (ref.cast (ref null $C)
         (local.get $x)
       )
     )
@@ -1656,14 +1658,14 @@
 
   ;; CHECK:      (func $called (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $called (param $x anyref)
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -1671,7 +1673,7 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1679,7 +1681,7 @@
   (func $caller (export "out") (param $x anyref)
     (call $called
       ;; This will be refined to a non-nullable cast.
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $x)
       )
     )
@@ -1761,7 +1763,7 @@
   ;; CHECK-NEXT:   (i32.const 15)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $A
+  ;; CHECK-NEXT:   (ref.test (ref $A)
   ;; CHECK-NEXT:    (local.get $ref.test)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1831,7 +1833,7 @@
       (i32.const 15)
     )
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $ref.test)
       )
     )
@@ -1839,37 +1841,37 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:   (ref.cast (ref null $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1878,37 +1880,37 @@
     ;; All these casts will be refined to non-nullable, aside from the last
     ;; param which is but a ref.test.
     (call $called
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $any)
       )
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $B
+      (ref.cast (ref null $B)
         (local.get $any)
       )
-      (ref.cast null $C
+      (ref.cast (ref null $C)
         (local.get $any)
       )
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $any)
       )
     )
@@ -1936,7 +1938,7 @@
 
   ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1947,7 +1949,7 @@
     ;; TODO: We could analyze publicly visible tables, exports, etc. to see
     ;;       whether any more functions could be possible even in an open world.
     (call_ref $A
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $x)
       )
     )
@@ -1974,7 +1976,7 @@
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $0 (ref null $A))
   ;; CHECK-NEXT:  (call $import-throw)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1985,7 +1987,7 @@
     ;; case we'd never reach the cast).
     (call $import-throw)
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $0)
       )
     )

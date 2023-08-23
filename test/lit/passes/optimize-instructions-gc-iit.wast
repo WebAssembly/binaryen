@@ -34,7 +34,7 @@
   ;; CHECK-NEXT:   (local.get $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $child
+  ;; CHECK-NEXT:   (ref.cast (ref $child)
   ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -55,7 +55,7 @@
   ;; TNH-NEXT:   (local.get $child)
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (ref.cast $child
+  ;; TNH-NEXT:   (ref.cast (ref $child)
   ;; TNH-NEXT:    (local.get $parent)
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
@@ -76,13 +76,13 @@
     ;; a cast of parent to parent. We can optimize this as the new type will be
     ;; valid.
     (drop
-      (ref.cast $parent
+      (ref.cast (ref $parent)
         (local.get $parent)
       )
     )
     ;; a cast of child to a supertype: again, we replace with a valid type.
     (drop
-      (ref.cast $parent
+      (ref.cast (ref $parent)
         (local.get $child)
       )
     )
@@ -90,13 +90,13 @@
     ;; $child with one that is not equal or more specific, like $parent, so we
     ;; cannot optimize here.
     (drop
-      (ref.cast $child
+      (ref.cast (ref $child)
         (local.get $parent)
       )
     )
     ;; a cast of child to an unrelated type: it will trap anyhow
     (drop
-      (ref.cast $other
+      (ref.cast (ref $other)
         (local.get $child)
       )
     )
@@ -139,7 +139,7 @@
 
     ;; optimizing this cast away requires reordering.
     (drop
-      (ref.cast $parent
+      (ref.cast (ref $parent)
         (block (result (ref $parent))
           (call $foo)
           (local.get $parent)
@@ -149,7 +149,7 @@
 
     ;; ignore unreachability
     (drop
-      (ref.cast null $parent
+      (ref.cast (ref null $parent)
         (unreachable)
       )
     )
@@ -170,7 +170,7 @@
     (drop
       (ref.eq
         (local.get $x)
-        (ref.cast null $parent
+        (ref.cast (ref null $parent)
           (local.get $x)
         )
       )
@@ -227,14 +227,14 @@
   ;; TNH-NEXT: )
   (func $test (param $C (ref $C)) (result anyref)
     (struct.get $B 0
-      (ref.cast $B ;; Try to cast a $C to its parent, $B. That always
-                   ;; works, so the cast can be removed.
-                   ;; Then once the cast is removed, the outer struct.get
-                   ;; will have a reference with a different type,
-                   ;; making it a (struct.get $C ..) instead of $B.
-                   ;; But $B and $C have different types on field 0, and
-                   ;; so the struct.get must be refinalized so the node
-                   ;; has the expected type.
+      (ref.cast (ref $B) ;; Try to cast a $C to its parent, $B. That always
+                         ;; works, so the cast can be removed.
+                         ;; Then once the cast is removed, the outer struct.get
+                         ;; will have a reference with a different type,
+                         ;; making it a (struct.get $C ..) instead of $B.
+                         ;; But $B and $C have different types on field 0, and
+                         ;; so the struct.get must be refinalized so the node
+                         ;; has the expected type.
         (local.get $C)
       )
     )

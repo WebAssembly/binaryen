@@ -70,7 +70,7 @@
  (func $test-A (export "test-A") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func1
    (struct.get $itable1 0  ;; this is the sub-object in the global $itable1
-    (ref.cast $itable1
+    (ref.cast (ref $itable1)
      (local.get $ref)       ;; this can be inferred to be the global $itable1
     )
    )
@@ -83,7 +83,7 @@
  (func $test-B (export "test-B") (param $ref (ref any)) (result funcref)
   (struct.get $vtable 0    ;; this is a reference to $func2
    (struct.get $itable2 0  ;; this is the sub-object in the global $itable2
-    (ref.cast $itable2
+    (ref.cast (ref $itable2)
      (local.get $ref)       ;; this can be inferred to be the global $itable2
     )
    )

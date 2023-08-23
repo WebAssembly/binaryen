@@ -12,7 +12,7 @@
   (type $array (array i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array
+  ;; CHECK-NEXT:   (array.new_fixed $array 2
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )

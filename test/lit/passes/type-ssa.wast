@@ -311,22 +311,22 @@
 
   ;; CHECK:      (func $array.new_fixed (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array$5
+  ;; CHECK-NEXT:   (array.new_fixed $array$5 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array$6
+  ;; CHECK-NEXT:   (array.new_fixed $array$6 1
   ;; CHECK-NEXT:    (local.get $refined)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
   ;; CHECK-NEXT:    (local.get $null-any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array
+  ;; CHECK-NEXT:   (array.new_fixed $array 2
   ;; CHECK-NEXT:    (local.get $refined)
   ;; CHECK-NEXT:    (local.get $null-any)
   ;; CHECK-NEXT:   )
@@ -335,26 +335,26 @@
   (func $array.new_fixed (param $refined (ref i31)) (param $null-any (ref null any))
     ;; Null, interesting, so we get a new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (ref.null none)
       )
     )
     ;; More refined type, interesting.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $refined)
       )
     )
     ;; Same type as declared - boring, no new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $null-any)
       )
     )
     ;; Mixture of boring and interesting => boring (since we infer a single type
     ;; for the entire array).
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 2
         (local.get $refined)
         (local.get $null-any)
       )

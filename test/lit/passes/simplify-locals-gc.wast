@@ -433,7 +433,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
   ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -456,7 +456,7 @@
     ;; nullability but not the heap type.
     (local $B (ref null $B))
     (local.set $B
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $A)
       )
     )
@@ -520,8 +520,8 @@
 
   ;; CHECK:      (func $redundant-tee-finalize (type $anyref_=>_none) (param $x anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast any
-  ;; CHECK-NEXT:    (ref.cast any
+  ;; CHECK-NEXT:   (ref.cast (ref any)
+  ;; CHECK-NEXT:    (ref.cast (ref any)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -532,9 +532,9 @@
     ;; After doing so, the outer cast should become non-nullable as we
     ;; refinalize.
     (drop
-      (ref.cast null any
+      (ref.cast anyref
         (local.tee $x
-          (ref.cast any
+          (ref.cast (ref any)
             (local.get $x)
           )
         )

@@ -30,7 +30,7 @@
  ;; CHECK-NEXT: )
  (func $target (param $0 (ref null $A))
   (drop
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (struct.get $A 0
      (call $get-null)
     )

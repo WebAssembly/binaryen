@@ -34,12 +34,12 @@
   ;; CHECK-NEXT:  (local $f (ref null $F))
   ;; CHECK-NEXT:  (local $g (ref null $G))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $A
+  ;; CHECK-NEXT:   (ref.cast (ref null $A)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $F
+  ;; CHECK-NEXT:   (ref.cast (ref null $F)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -62,13 +62,13 @@
 
     ;; A cast of $A has no effect.
     (drop
-      (ref.cast null $A
+      (ref.cast (ref null $A)
         (local.get $a)
       )
     )
     ;; A cast of $F prevents it from being merged.
     (drop
-      (ref.cast null $F
+      (ref.cast (ref null $F)
         (local.get $a)
       )
     )
@@ -342,7 +342,7 @@
   ;; CHECK-NEXT:  (local $x (ref null $X))
   ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $a)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -356,7 +356,7 @@
     (local $y (ref null $Y))
 
     (drop
-      (ref.cast $A
+      (ref.cast (ref $A)
         (local.get $a)
       )
     )
@@ -689,7 +689,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (global.get $global$0)
   ;; CHECK-NEXT:   (i64.const 0)
-  ;; CHECK-NEXT:   (array.new_fixed $I)
+  ;; CHECK-NEXT:   (array.new_fixed $I 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $0 (type $G) (param $0 (ref $C)) (result (ref $D))
@@ -698,7 +698,7 @@
       (i32.const 0)
       (global.get $global$0)
       (i64.const 0)
-      (array.new_fixed $I)
+      (array.new_fixed $I 0)
     )
   )
 )
@@ -896,7 +896,7 @@
   ;; CHECK:      (func $test (type $none_=>_ref|$b|) (result (ref $b))
   ;; CHECK-NEXT:  (local $0 (ref null $a))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $y
+  ;; CHECK-NEXT:   (ref.test (ref $y)
   ;; CHECK-NEXT:    (struct.new_default $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -908,7 +908,7 @@
 
     ;; Cast to prevent $x and $y from being merged.
     (drop
-      (ref.test $y
+      (ref.test (ref $y)
         (struct.new_default $x)
       )
     )
@@ -964,12 +964,12 @@
   ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
 
   ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (ref.test $B
+  ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result i32)
-    (ref.test $B
+    (ref.test (ref $B)
       (local.get $a)
     )
   )

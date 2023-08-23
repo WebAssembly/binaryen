@@ -101,7 +101,7 @@
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $block
- ;; CHECK-NEXT:     (ref.cast $struct
+ ;; CHECK-NEXT:     (ref.cast (ref $struct)
  ;; CHECK-NEXT:      (local.tee $any
  ;; CHECK-NEXT:       (struct.new_default $struct)
  ;; CHECK-NEXT:      )
@@ -111,7 +111,7 @@
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result nullref)
  ;; CHECK-NEXT:     (br_on_non_null $block
- ;; CHECK-NEXT:      (ref.cast null $struct
+ ;; CHECK-NEXT:      (ref.cast (ref null $struct)
  ;; CHECK-NEXT:       (local.tee $any
  ;; CHECK-NEXT:        (local.get $struct)
  ;; CHECK-NEXT:       )
@@ -355,7 +355,7 @@
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.cast $struct
+ ;; CHECK-NEXT:    (ref.cast (ref $struct)
  ;; CHECK-NEXT:     (local.tee $any
  ;; CHECK-NEXT:      (struct.new_default $struct)
  ;; CHECK-NEXT:     )
@@ -545,7 +545,7 @@
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block (result (ref none))
- ;; CHECK-NEXT:       (ref.cast none
+ ;; CHECK-NEXT:       (ref.cast (ref none)
  ;; CHECK-NEXT:        (block (result i31ref)
  ;; CHECK-NEXT:         (local.get $i31ref)
  ;; CHECK-NEXT:        )
@@ -558,7 +558,7 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result (ref none))
- ;; CHECK-NEXT:      (ref.cast none
+ ;; CHECK-NEXT:      (ref.cast (ref none)
  ;; CHECK-NEXT:       (block (result i31ref)
  ;; CHECK-NEXT:        (local.get $i31ref)
  ;; CHECK-NEXT:       )
@@ -575,7 +575,7 @@
    (drop
     (br_on_cast $block anyref (ref i31)
      (block (result anyref)
-      (ref.cast struct
+      (ref.cast (ref struct)
        (block (result anyref)
         (local.get $i31ref)
        )
@@ -585,7 +585,7 @@
    )
    (br_on_cast_fail $block anyref (ref i31)
     (block (result anyref)
-     (ref.cast struct
+     (ref.cast (ref struct)
       (block (result anyref)
        (local.get $i31ref)
       )
@@ -639,7 +639,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.test $struct
+ ;; CHECK-NEXT:    (ref.test (ref $struct)
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)
@@ -649,7 +649,7 @@
  ;; CHECK-NEXT:   (if (result nullref)
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast null none
+ ;; CHECK-NEXT:    (ref.cast nullref
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -701,7 +701,7 @@
   (drop
    (if (result i32)
     (local.get $x)
-    (ref.test $struct
+    (ref.test (ref $struct)
      (ref.null any)
     )
     (i32.const 0)
@@ -711,7 +711,7 @@
    (if (result anyref)
     (local.get $x)
     (ref.null any)
-    (ref.cast null $struct
+    (ref.cast (ref null $struct)
      (ref.null any)
     )
    )

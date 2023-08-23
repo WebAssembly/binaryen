@@ -1433,7 +1433,7 @@
   ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
 
   ;; CHECK:      (func $if (type $none_=>_anyref) (result anyref)
-  ;; CHECK-NEXT:  (ref.cast null i31
+  ;; CHECK-NEXT:  (ref.cast i31ref
   ;; CHECK-NEXT:   (if (result i31ref)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (unreachable)
@@ -1451,7 +1451,7 @@
     ;;
     ;; In other words, we can propagate unreachability in DCE, but should cause
     ;; no other type changes.
-    (ref.cast null i31
+    (ref.cast i31ref
       (if (result i31ref)
         (i32.const 0)
         (block (result i31ref)

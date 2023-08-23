@@ -1907,7 +1907,7 @@
   ;; CHECK-NEXT:  (local $a (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $B
+  ;; CHECK-NEXT:  (ref.cast (ref $B)
   ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
@@ -1933,7 +1933,7 @@
     ;; precision, into a local.get of $A. After heap2local we'll end up using a
     ;; local of the type of $B's field which is more precise than $A's, and the
     ;; cast must be updated to be non-nullable.
-    (ref.cast null $B
+    (ref.cast (ref null $B)
       (struct.get $A 0
         (local.tee $a
           (struct.new $B

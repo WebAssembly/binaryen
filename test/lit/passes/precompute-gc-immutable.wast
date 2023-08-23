@@ -670,11 +670,11 @@
   ;; CHECK:      (type $object (struct (field (ref $vtable))))
   (type $object (struct (ref $vtable)))
 
-  ;; CHECK:      (global $vtable (ref $vtable) (array.new_fixed $vtable
+  ;; CHECK:      (global $vtable (ref $vtable) (array.new_fixed $vtable 1
   ;; CHECK-NEXT:  (ref.func $nested-creations)
   ;; CHECK-NEXT: ))
   (global $vtable (ref $vtable)
-    (array.new_fixed $vtable
+    (array.new_fixed $vtable 1
       (ref.func $nested-creations)
     )
   )
@@ -751,7 +751,7 @@
     (type $vtable-1 (struct funcref))
   )
 
-  ;; CHECK:      (global $itable (ref $itable) (array.new_fixed $itable
+  ;; CHECK:      (global $itable (ref $itable) (array.new_fixed $itable 2
   ;; CHECK-NEXT:  (struct.new $vtable-0
   ;; CHECK-NEXT:   (ref.func $nested-creations)
   ;; CHECK-NEXT:  )
@@ -760,7 +760,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $itable (ref $itable)
-    (array.new_fixed $itable
+    (array.new_fixed $itable 2
       (struct.new $vtable-0
         (ref.func $nested-creations)
       )
@@ -794,7 +794,7 @@
     ;; We can precompute all these operations away into the final constants.
     (call $helper
       (struct.get $vtable-0 0
-        (ref.cast null $vtable-0
+        (ref.cast (ref null $vtable-0)
           (array.get $itable
             (struct.get $object 0
               (local.get $ref)
@@ -806,7 +806,7 @@
     )
     (call $helper
       (struct.get $vtable-1 0
-        (ref.cast null $vtable-1
+        (ref.cast (ref null $vtable-1)
           (array.get $itable
             (struct.get $object 0
               (local.get $ref)

@@ -2260,12 +2260,12 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (ref.test null $[mut:i8]
+       (ref.test (ref null $[mut:i8])
         (global.get $i8Array-global)
        )
       )
       (drop
-       (ref.cast null $[mut:i8]
+       (ref.cast (ref null $[mut:i8])
         (global.get $i8Array-global)
        )
       )
@@ -2298,7 +2298,7 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (array.new_fixed $[mut:i8]
+       (array.new_fixed $[mut:i8] 3
         (i32.const 1)
         (i32.const 2)
         (i32.const 3)

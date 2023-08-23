@@ -531,7 +531,7 @@
     ;; As the get must trap, we can optimize to an unreachable here.
     (drop
       (struct.get $substruct 0
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (call $create)
         )
       )
@@ -590,7 +590,7 @@
   (func $get
     (drop
       (struct.get $substruct 0
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (call $create)
         )
       )
@@ -644,7 +644,7 @@
         ;; to $struct. But no null is possible since the local gets written a
         ;; non-null value before we get here, so we can optimize this to an
         ;; unreachable.
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -803,7 +803,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $substruct
+  ;; CHECK-NEXT:     (ref.cast (ref $substruct)
   ;; CHECK-NEXT:      (select (result (ref $struct))
   ;; CHECK-NEXT:       (struct.new $struct
   ;; CHECK-NEXT:        (i32.const 10)
@@ -824,7 +824,7 @@
     (drop
       (struct.get $struct 0
         ;; This cast is added, ensuring only a $substruct can reach the get.
-        (ref.cast $substruct
+        (ref.cast (ref $substruct)
           (select
             (struct.new $struct
               (i32.const 10)
@@ -876,7 +876,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $substruct 0
-  ;; CHECK-NEXT:    (ref.cast $substruct
+  ;; CHECK-NEXT:    (ref.cast (ref $substruct)
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -906,7 +906,7 @@
       (struct.get $substruct 0
         ;; This cast will be refined to be non-nullable, as the LocalGraph
         ;; analysis will show that it must be so.
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -951,7 +951,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast $substruct
+  ;; CHECK-NEXT:     (ref.cast (ref $substruct)
   ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -985,7 +985,7 @@
         ;; analysis will show that it must be so. After that, the dropped
         ;; struct.get can be removed as it has no side effects (the only
         ;; possible effect was a trap on null).
-        (ref.cast null $substruct
+        (ref.cast (ref null $substruct)
           (local.get $ref)
         )
       )
@@ -2044,7 +2044,7 @@
   )
   ;; CHECK:      (func $set (type $none_=>_none)
   ;; CHECK-NEXT:  (struct.set $C 0
-  ;; CHECK-NEXT:   (ref.cast $C
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
   ;; CHECK-NEXT:    (call $create-C)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 20)
@@ -2057,7 +2057,7 @@
     ;; below. (Note that finalize will turn the cast into a cast of $C
     ;; automatically; that is not part of GUFA.)
     (struct.set $A 0
-      (ref.cast $A
+      (ref.cast (ref $A)
         (call $create-C)
       )
       (i32.const 20) ;; different value than in $create
@@ -2625,7 +2625,7 @@
 
   ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
 
-  ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable
+  ;; CHECK:      (global $global (ref $itable) (array.new_fixed $itable 2
   ;; CHECK-NEXT:  (struct.new $vtable
   ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
@@ -2633,7 +2633,7 @@
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
-  (global $global (ref $itable) (array.new_fixed $itable
+  (global $global (ref $itable) (array.new_fixed $itable 2
     (struct.new $vtable
       (ref.null func)
     )

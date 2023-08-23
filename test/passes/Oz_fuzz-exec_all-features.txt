@@ -274,7 +274,7 @@
   (call $log
    (array.len
     (local.tee $0
-     (array.new_fixed $bytes
+     (array.new_fixed $bytes 2
       (i32.const 42)
       (i32.const 50)
      )
@@ -297,7 +297,7 @@
  (func $17 (type $void_func) (; has Stack IR ;)
   (call $log
    (array.get_u $bytes
-    (array.new_fixed $bytes
+    (array.new_fixed $bytes 1
      (i32.const -11512)
     )
     (i32.const 0)

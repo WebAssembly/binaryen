@@ -862,18 +862,18 @@
 
  ;; CHECK:      (func $0 (type $none_=>_none)
  ;; CHECK-NEXT:  (call $1
- ;; CHECK-NEXT:   (array.new_fixed $[i8])
+ ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
   (call $1
-   (array.new_fixed $[i8])
+   (array.new_fixed $[i8] 0)
   )
  )
 
  ;; CHECK:      (func $1 (type $ref|$[i8]|_=>_none) (param $2 (ref $[i8]))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast none
+ ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (local.get $2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -882,7 +882,7 @@
   ;; The param will become non-nullable after we refine. We must refinalize
   ;; after doing so, so the cast becomes non-nullable as well.
   (drop
-   (ref.cast null struct
+   (ref.cast structref
     (local.get $2)
    )
   )

@@ -14,14 +14,14 @@
 
  ;; CHECK:      (func $func (type $A)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.cast $A
+ ;; CHECK-NEXT:   (ref.cast (ref $A)
  ;; CHECK-NEXT:    (ref.func $func)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $func
   (drop
-   (ref.cast null $A
+   (ref.cast (ref null $A)
     ;; This global can be replaced with a ref.func of $func. That has a more
     ;; refined type, so we should refinalize (if we do not, then the ref.cast
     ;; will fail to validate as it must become a non-nullable cast).

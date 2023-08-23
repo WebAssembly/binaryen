@@ -50,7 +50,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $take-ref-null-array
-  ;; CHECK-NEXT:   (array.new_fixed $[i8])
+  ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-call-subtyping-same-operand-0
@@ -58,7 +58,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-null-array
-      (array.new_fixed $[i8])
+      (array.new_fixed $[i8] 0)
     )
   )
   ;; CHECK:      (func $no-call-subtyping-same-operand-1 (type $none_=>_none)
@@ -81,7 +81,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $take-ref-eq
-  ;; CHECK-NEXT:   (array.new_fixed $[i8])
+  ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-call-subtyping-same-operand-1
@@ -89,7 +89,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-eq
-      (array.new_fixed $[i8])
+      (array.new_fixed $[i8] 0)
     )
   )
 )

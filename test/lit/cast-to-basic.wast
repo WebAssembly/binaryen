@@ -6,26 +6,26 @@
 
 (module
   ;; CHECK:      (func $test (type $none_=>_i32) (result i32)
-  ;; CHECK-NEXT:  (ref.test struct
+  ;; CHECK-NEXT:  (ref.test (ref struct)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (result i32)
-    (ref.test struct
+    (ref.test (ref struct)
       (ref.null none)
     )
   )
 
   ;; CHECK:      (func $cast (type $structref_=>_none) (param $x structref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null struct
+  ;; CHECK-NEXT:   (ref.cast structref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast (param $x (ref null struct))
     (drop
-      (ref.cast null struct
+      (ref.cast structref
         (local.get $x)
       )
     )

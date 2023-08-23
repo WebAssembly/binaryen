@@ -33,7 +33,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.cast null i31
+  ;; NO_TNH-NEXT:   (ref.cast i31ref
   ;; NO_TNH-NEXT:    (local.get $y)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -57,7 +57,7 @@
 
     ;; Other casts as well.
     (drop
-      (ref.cast null i31
+      (ref.cast i31ref
         (local.get $y)
       )
     )

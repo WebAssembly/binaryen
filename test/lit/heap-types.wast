@@ -13,14 +13,14 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $struct.A
+  ;; CHECK-NEXT:   (ref.test (ref $struct.A)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (ref.test $struct.B (ref.null $struct.A))
+      (ref.test (ref $struct.B) (ref.null $struct.A))
     )
   )
 )
@@ -30,7 +30,7 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null none
+  ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -39,7 +39,7 @@
     ;; Note that this will not round-trip precisely because Binaryen IR will
     ;; apply the more refined type to the cast automatically (in finalize).
     (drop
-      (ref.cast null $struct.B (ref.null $struct.A))
+      (ref.cast (ref null $struct.B) (ref.null $struct.A))
     )
   )
 )
@@ -85,7 +85,7 @@
   (type $vector (array (mut f64)))
   ;; CHECK:      (func $test (type $none_=>_none)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $vector
+  ;; CHECK-NEXT:   (array.new_fixed $vector 4
   ;; CHECK-NEXT:    (f64.const 1)
   ;; CHECK-NEXT:    (f64.const 2)
   ;; CHECK-NEXT:    (f64.const 4)
@@ -95,7 +95,7 @@
   ;; CHECK-NEXT: )
   (func $test
     (drop
-      (array.new_fixed $vector
+      (array.new_fixed $vector 4
         (f64.const 1)
         (f64.const 2)
         (f64.const 4)

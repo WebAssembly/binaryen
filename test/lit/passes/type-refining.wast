@@ -1139,7 +1139,7 @@
 
   ;; CHECK:      (func $0 (type $none_=>_ref|$A|) (result (ref $A))
   ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (struct.get $A 0
   ;; CHECK-NEXT:     (struct.new $A
   ;; CHECK-NEXT:      (struct.new_default $B)
@@ -1157,7 +1157,7 @@
     ;; well, as otherwise the struct.new will not validate - we can't write a
     ;; (ref struct) to a field of (ref $B).
     (struct.new $A
-      (ref.cast struct
+      (ref.cast (ref struct)
         (struct.get $A 0
           (struct.new $A
             (struct.new_default $B)
@@ -1245,7 +1245,7 @@
 
   ;; CHECK:      (func $struct.new (type $externref_=>_anyref) (param $extern externref) (result anyref)
   ;; CHECK-NEXT:  (struct.new $A
-  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try $try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0
@@ -1297,7 +1297,7 @@
   ;; CHECK:      (func $struct.set (type $ref|$A|_externref_=>_none) (param $ref (ref $A)) (param $extern externref)
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (ref.cast noextern
+  ;; CHECK-NEXT:   (ref.cast (ref noextern)
   ;; CHECK-NEXT:    (try $try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0

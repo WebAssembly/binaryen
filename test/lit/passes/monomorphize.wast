@@ -405,7 +405,7 @@
   ;; ALWAYS:      (func $refinable (type $ref|$A|_=>_none) (param $ref (ref $A))
   ;; ALWAYS-NEXT:  (local $x (ref $A))
   ;; ALWAYS-NEXT:  (call $import
-  ;; ALWAYS-NEXT:   (ref.cast $B
+  ;; ALWAYS-NEXT:   (ref.cast (ref $B)
   ;; ALWAYS-NEXT:    (local.get $ref)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
@@ -417,17 +417,17 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT:  (call $import
-  ;; ALWAYS-NEXT:   (ref.cast $B
+  ;; ALWAYS-NEXT:   (ref.cast (ref $B)
   ;; ALWAYS-NEXT:    (local.get $x)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT:  (call $import
-  ;; ALWAYS-NEXT:   (ref.cast $B
+  ;; ALWAYS-NEXT:   (ref.cast (ref $B)
   ;; ALWAYS-NEXT:    (local.get $x)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT:  (call $import
-  ;; ALWAYS-NEXT:   (ref.cast $B
+  ;; ALWAYS-NEXT:   (ref.cast (ref $B)
   ;; ALWAYS-NEXT:    (local.get $ref)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
@@ -435,12 +435,12 @@
   ;; CAREFUL:      (func $refinable (type $ref|$A|_=>_none) (param $0 (ref $A))
   ;; CAREFUL-NEXT:  (local $1 (ref $A))
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast $B
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
   ;; CAREFUL-NEXT:    (local.get $0)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast $B
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
   ;; CAREFUL-NEXT:    (local.tee $1
   ;; CAREFUL-NEXT:     (select (result (ref $A))
   ;; CAREFUL-NEXT:      (local.get $0)
@@ -451,12 +451,12 @@
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast $B
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
   ;; CAREFUL-NEXT:    (local.get $1)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (ref.cast $B
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
   ;; CAREFUL-NEXT:    (local.get $0)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
@@ -470,7 +470,7 @@
     ;; cast will remain since we monomorphize without bothering to optimize and
     ;; see if there is any benefit.)
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $ref)
       )
     )
@@ -485,18 +485,18 @@
       )
     )
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
     ;; Another use of $ref, also to avoid opts merging $x and $ref.
     (call $import
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $ref)
       )
     )
@@ -506,7 +506,7 @@
 ;; ALWAYS:      (func $refinable_3 (type $ref|$B|_=>_none) (param $ref (ref $B))
 ;; ALWAYS-NEXT:  (local $x (ref $A))
 ;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast $B
+;; ALWAYS-NEXT:   (ref.cast (ref $B)
 ;; ALWAYS-NEXT:    (local.get $ref)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
@@ -518,17 +518,17 @@
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast $B
+;; ALWAYS-NEXT:   (ref.cast (ref $B)
 ;; ALWAYS-NEXT:    (local.get $x)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast $B
+;; ALWAYS-NEXT:   (ref.cast (ref $B)
 ;; ALWAYS-NEXT:    (local.get $x)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast $B
+;; ALWAYS-NEXT:   (ref.cast (ref $B)
 ;; ALWAYS-NEXT:    (local.get $ref)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )

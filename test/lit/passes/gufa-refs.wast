@@ -54,7 +54,7 @@
     (ref.is_null
       (loop $loop (result (ref func))
         (nop)
-        (ref.cast func
+        (ref.cast (ref func)
           (ref.as_non_null
             (ref.null func)
           )
@@ -875,7 +875,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (array.new_fixed $vector
+  ;; CHECK-NEXT:    (array.new_fixed $vector 2
   ;; CHECK-NEXT:     (f64.const 1.1)
   ;; CHECK-NEXT:     (f64.const 2.2)
   ;; CHECK-NEXT:    )
@@ -903,7 +903,7 @@
     )
     (drop
       (ref.as_non_null
-        (array.new_fixed $vector
+        (array.new_fixed $vector 2
           (f64.const 1.1)
           (f64.const 2.2)
         )
@@ -1042,7 +1042,7 @@
     ;; trapping contents in ref.cast, but not br_on_cast, so test both.
     (drop
       (struct.get $parent 0
-        (ref.cast $parent
+        (ref.cast (ref $parent)
           (struct.new $unrelated)
         )
       )
@@ -1101,7 +1101,7 @@
   ;; CHECK-NEXT:      (br $block1
   ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (ref.cast null none
+  ;; CHECK-NEXT:         (ref.cast nullref
   ;; CHECK-NEXT:          (ref.null none)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -1153,7 +1153,7 @@
     (drop
       (block $block (result (ref null $child))
         (br $block
-          (ref.cast null $child
+          (ref.cast (ref null $child)
             (ref.null $parent)
           )
         )
@@ -1664,7 +1664,7 @@
     (drop
       (ref.as_non_null
         (array.get $something-child
-          (ref.cast $something-child
+          (ref.cast (ref $something-child)
             (array.new_default $something
               (i32.const 10)
             )
@@ -2486,7 +2486,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast (ref $substruct)
   ;; CHECK-NEXT:    (struct.new $substruct
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -2494,7 +2494,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $subsubstruct
+  ;; CHECK-NEXT:   (ref.cast (ref $subsubstruct)
   ;; CHECK-NEXT:    (struct.new $subsubstruct
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:     (i32.const 4)
@@ -2507,7 +2507,7 @@
     ;; The cast here will fail, and the ref.cast null allows nothing through, so we
     ;; can emit an unreachable here.
     (drop
-      (ref.cast $substruct
+      (ref.cast (ref $substruct)
         (struct.new $struct
           (i32.const 0)
         )
@@ -2516,7 +2516,7 @@
     ;; This cast of a type to itself can succeed (in fact, it will), so we make
     ;; no changes here.
     (drop
-      (ref.cast $substruct
+      (ref.cast (ref $substruct)
         (struct.new $substruct
           (i32.const 1)
           (i32.const 2)
@@ -2525,7 +2525,7 @@
     )
     ;; This cast of a subtype will also succeed. As above, we make no changes.
     (drop
-      (ref.cast $substruct
+      (ref.cast (ref $substruct)
         (struct.new $subsubstruct
           (i32.const 3)
           (i32.const 4)
@@ -2539,7 +2539,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null none
+  ;; CHECK-NEXT:     (ref.cast nullref
   ;; CHECK-NEXT:      (block (result nullref)
   ;; CHECK-NEXT:       (drop
   ;; CHECK-NEXT:        (call $import)
@@ -2554,7 +2554,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast null none
+  ;; CHECK-NEXT:     (ref.cast nullref
   ;; CHECK-NEXT:      (select (result i31ref)
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:       (i31.new
@@ -2568,7 +2568,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
   ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (struct.new $struct
@@ -2583,7 +2583,7 @@
     ;; Only a null can flow through the cast, which we can infer for the value
     ;; of the cast.
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (select
           (ref.null $struct)
           (ref.null $struct)
@@ -2597,7 +2597,7 @@
     ;; to null, but it is dropped right before we return a null, so that has no
     ;; benefit in this case.)
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (select
           (ref.null $struct)
           (i31.new (i32.const 0))
@@ -2607,7 +2607,7 @@
     )
     ;; A null or a $struct may arrive, and so we cannot do anything here.
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (select
           (ref.null $struct)
           (struct.new $struct
@@ -2621,7 +2621,7 @@
 
   ;; CHECK:      (func $test-cones (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast null $struct
+  ;; CHECK-NEXT:   (ref.cast (ref null $struct)
   ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
@@ -2632,7 +2632,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $struct
+  ;; CHECK-NEXT:   (ref.cast (ref $struct)
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
@@ -2646,7 +2646,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $substruct
+  ;; CHECK-NEXT:   (ref.cast (ref $substruct)
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 4)
@@ -2666,7 +2666,7 @@
   (func $test-cones (export "test-cones") (param $x i32)
     ;; The input to the ref.cast null is potentially null, so we cannot infer here.
     (drop
-      (ref.cast null $struct
+      (ref.cast (ref null $struct)
         (select
           (struct.new $struct
             (i32.const 0)
@@ -2679,7 +2679,7 @@
     ;; The input to the ref.cast is either $struct or $substruct, both of which
     ;; work, so we cannot optimize anything here away.
     (drop
-      (ref.cast $struct
+      (ref.cast (ref $struct)
         (select
           (struct.new $struct
             (i32.const 1)
@@ -2695,7 +2695,7 @@
     ;; As above, but now we test with $substruct, so one possibility fails and
     ;; one succeeds. We cannot infer here either.
     (drop
-      (ref.cast $substruct
+      (ref.cast (ref $substruct)
         (select
           (struct.new $struct
             (i32.const 4)
@@ -2712,7 +2712,7 @@
     ;; can infer an unreachable. The combination of these two is a cone from
     ;; $struct of depth 1, which does not overlap with $subsubstruct.
     (drop
-      (ref.cast $subsubstruct
+      (ref.cast (ref $subsubstruct)
         (select
           (struct.new $struct
             (i32.const 7)
@@ -2742,7 +2742,7 @@
     ;; This cast will fail: we know the exact type of the reference, and it is
     ;; not a subtype.
     (drop
-      (ref.test $substruct
+      (ref.test (ref $substruct)
         (struct.new $struct
           (i32.const 0)
         )
@@ -2750,7 +2750,7 @@
     )
     ;; Casting a thing to itself must succeed.
     (drop
-      (ref.test $substruct
+      (ref.test (ref $substruct)
         (struct.new $substruct
           (i32.const 1)
           (i32.const 2)
@@ -2759,7 +2759,7 @@
     )
     ;; Casting a thing to a supertype must succeed.
     (drop
-      (ref.test $substruct
+      (ref.test (ref $substruct)
         (struct.new $subsubstruct
           (i32.const 3)
           (i32.const 4)
@@ -2771,7 +2771,7 @@
 
   ;; CHECK:      (func $ref.test-inexact (type $i32_=>_none) (param $x i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $struct
+  ;; CHECK-NEXT:   (ref.test (ref $struct)
   ;; CHECK-NEXT:    (select (result (ref null $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 0)
@@ -2785,7 +2785,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $substruct
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
   ;; CHECK-NEXT:    (select (result (ref $struct))
   ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 4)
@@ -2805,7 +2805,7 @@
   (func $ref.test-inexact (export "ref.test-inexact") (param $x i32)
     ;; The input to the ref.test is potentially null, so we cannot infer here.
     (drop
-      (ref.test $struct
+      (ref.test (ref $struct)
         (select
           (struct.new $struct
             (i32.const 0)
@@ -2820,7 +2820,7 @@
     ;; combination of those two types is a cone on $struct of depth 1, and that
     ;; cone is 100% a subtype of $struct, so the test will succeed.
     (drop
-      (ref.test $struct
+      (ref.test (ref $struct)
         (select
           (struct.new $struct
             (i32.const 1)
@@ -2836,7 +2836,7 @@
     ;; As above, but now we test with $substruct, so one possibility fails and
     ;; one succeeds. We cannot infer here.
     (drop
-      (ref.test $substruct
+      (ref.test (ref $substruct)
         (select
           (struct.new $struct
             (i32.const 4)
@@ -2853,7 +2853,7 @@
     ;; can infer a 0. The combination of these two is a cone from $struct of
     ;; depth 1, which does not overlap with $subsubstruct.
     (drop
-      (ref.test $subsubstruct
+      (ref.test (ref $subsubstruct)
         (select
           (struct.new $struct
             (i32.const 7)
@@ -3578,7 +3578,7 @@
 
   ;; CHECK:      (func $foo (type $none_=>_ref|$B|) (result (ref $B))
   ;; CHECK-NEXT:  (local $A (ref null $A))
-  ;; CHECK-NEXT:  (ref.cast $B
+  ;; CHECK-NEXT:  (ref.cast (ref $B)
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.tee $A
   ;; CHECK-NEXT:     (struct.new $B
@@ -3594,7 +3594,7 @@
 
     ;; Read the following from the most nested comment first.
 
-    (ref.cast $B ;; if we mistakenly think this contains content of
+    (ref.cast (ref $B) ;; if we mistakenly think this contains content of
                  ;; type $A, it would trap, but it should not, and we
                  ;; have nothing to optimize here
       (ref.as_non_null ;; also $B, based on the child's *contents* (not type!)
@@ -3674,14 +3674,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.new_fixed $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes 1
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.new_fixed $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3713,12 +3713,12 @@
     ;; which means two things are possible in $chars, and we can't optimize
     ;; there.
     (local.set $bytes
-      (array.new_fixed $bytes
+      (array.new_fixed $bytes 1
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.new_fixed $chars
+      (array.new_fixed $chars 1
         (ref.null any)
       )
     )
@@ -3762,14 +3762,14 @@
   ;; CHECK-NEXT:  (local $bytes (ref null $bytes))
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
-  ;; CHECK-NEXT:   (array.new_fixed $bytes
+  ;; CHECK-NEXT:   (array.new_fixed $bytes 1
   ;; CHECK-NEXT:    (i31.new
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $chars
-  ;; CHECK-NEXT:   (array.new_fixed $chars
+  ;; CHECK-NEXT:   (array.new_fixed $chars 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3802,12 +3802,12 @@
     (local $bytes (ref null $bytes))
     (local $chars (ref null $chars))
     (local.set $bytes
-      (array.new_fixed $bytes
+      (array.new_fixed $bytes 1
         (i31.new (i32.const 0))
       )
     )
     (local.set $chars
-      (array.new_fixed $chars
+      (array.new_fixed $chars 1
         (ref.null any)
       )
     )
@@ -4144,7 +4144,7 @@
   ;; CHECK:      (func $arrays (type $ref|$B|_=>_none) (param $B (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.len
-  ;; CHECK-NEXT:    (array.new_fixed $B
+  ;; CHECK-NEXT:    (array.new_fixed $B 2
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
@@ -4154,7 +4154,7 @@
   (func $arrays (param $B (ref $B))
     (drop
       (array.len $B
-        (array.new_fixed $B
+        (array.new_fixed $B 2
           (ref.null none)
           (ref.null none)
         )
@@ -5267,27 +5267,27 @@
     ;; An imported global has a known type, at least, which in this case is
     ;; enough for us to infer a result of 1.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (global.get $A)
       )
     )
     ;; Likewise, a function result.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (call $A)
       )
     )
     ;; Likewise, a parameter to this function, which is exported, but we do
     ;; still know the type it will be called with, and can optimize to 1.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (local.get $A)
       )
     )
     ;; Likewise, an exported mutable global can be modified by the outside, but
     ;; the type remains known, and we can optimize to 1.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (global.get $A)
       )
     )
@@ -5295,22 +5295,22 @@
 
   ;; CHECK:      (func $no (type $ref|$A|_=>_none) (param $A (ref $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:   (ref.test (ref $B)
   ;; CHECK-NEXT:    (global.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:   (ref.test (ref $B)
   ;; CHECK-NEXT:    (call $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:   (ref.test (ref $B)
   ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test $B
+  ;; CHECK-NEXT:   (ref.test (ref $B)
   ;; CHECK-NEXT:    (global.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5319,22 +5319,22 @@
     ;; Identical to the above function, but now all tests are vs type $B. We
     ;; cannot optimize any of these, as all we know is the type is $A.
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (global.get $A)
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (call $A)
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (local.get $A)
       )
     )
     (drop
-      (ref.test $B
+      (ref.test (ref $B)
         (global.get $A)
       )
     )
@@ -5401,7 +5401,7 @@
     ;; But casting to $A will succeed, so the block is reachable, and also the
     ;; cast will return 1.
     (drop
-      (ref.test $A
+      (ref.test (ref $A)
         (block $A (result (ref $A))
           (drop
             (br_on_cast $A anyref (ref $A)
@@ -5659,7 +5659,7 @@
   ;; CHECK:      (export "func" (func $func))
 
   ;; CHECK:      (func $func (type $none_=>_ref|$A|) (result (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $B
+  ;; CHECK-NEXT:  (ref.cast (ref $B)
   ;; CHECK-NEXT:   (call $get-B-def-any)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -5667,7 +5667,7 @@
     ;; Call a function that actually returns a B, though it is defined as
     ;; returning an anyref. Then cast it to A. We can infer that it will be a B,
     ;; so we can cast to B here instead.
-    (ref.cast $A
+    (ref.cast (ref $A)
       (call $get-B-def-any)
     )
   )
@@ -5697,7 +5697,7 @@
 
   ;; CHECK:      (func $called (type $ref?|$A|_=>_none) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast $B
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5705,7 +5705,7 @@
   (func $called (param $x (ref null $A))
     ;; The param is cast.
     (drop
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $x)
       )
     )
@@ -5713,14 +5713,15 @@
 
   ;; CHECK:      (func $caller (type $anyref_=>_none) (param $any anyref)
   ;; CHECK-NEXT:  (call $called
-  ;; CHECK-NEXT:   (ref.cast $A
+  ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller (export "out") (param $any anyref)
     (call $called
-      (ref.cast $A ;; This cast will could be refined with TNH, since we call a
+      (ref.cast (ref $A)
+                   ;; This cast will could be refined with TNH, since we call a
                    ;; function that casts (so if we do not trap as TNH assumes,
                    ;; we must be sending in a $B). But without that flag we do
                    ;; nothing.

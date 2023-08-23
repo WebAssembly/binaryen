@@ -31,7 +31,7 @@
           ;; which is invalid. We fix this up at the end up OptimizeInstruction,
           ;; assigning the 'pop' to a local at the start of this 'catch' body
           ;; and later using 'local.get' to get it.
-          (ref.cast null $struct.A
+          (ref.cast (ref null $struct.A)
             (pop (ref null $struct.A))
           )
         )

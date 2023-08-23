@@ -52,7 +52,7 @@
  ;; CHECK:      (func $pick-refined (type $ref?|$A|_i32_=>_none) (param $A (ref null $A)) (param $x i32)
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast null $B
+ ;; CHECK-NEXT:   (ref.cast (ref null $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -81,7 +81,7 @@
  (func $pick-refined (param $A (ref null $A)) (param $x i32)
   (local $B (ref null $B))
   (local.set $B
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (local.get $A)
    )
   )
@@ -113,7 +113,7 @@
  ;; CHECK:      (func $pick-refined-nn (type $ref|$A|_=>_none) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -129,7 +129,7 @@
   ;; As above, but now the types are both non-nullable. We should still switch
   ;; to $B.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )
@@ -144,7 +144,7 @@
  ;; CHECK:      (func $avoid-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
- ;; CHECK-NEXT:   (ref.cast $B
+ ;; CHECK-NEXT:   (ref.cast (ref $B)
  ;; CHECK-NEXT:    (local.get $A)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -161,7 +161,7 @@
   ;; nullable, that means neither is a subtype of the other, and we will make
   ;; no changes.
   (local.set $B
-   (ref.cast $B
+   (ref.cast (ref $B)
     (local.get $A)
    )
   )
