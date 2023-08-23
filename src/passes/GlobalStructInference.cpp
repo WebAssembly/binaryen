@@ -268,9 +268,8 @@ struct GlobalStructInference : public Pass {
           auto globalType = wasm.getGlobal(global)->type;
           if (globalType != curr->ref->type) {
             // The struct.get will now read from something of the type of the
-            // global, which might be more refined compared to before, so the
-            // field being read might be refined as well, which could change the
-            // struct.get's type.
+            // global, which is different, so the field being read might be
+            // refined, which could change the struct.get's type.
             refinalize = true;
           }
           curr->ref = builder.makeSequence(
