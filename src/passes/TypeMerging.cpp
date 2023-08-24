@@ -387,7 +387,7 @@ bool TypeMerging::merge(MergeKind kind) {
     // together in the other new partition. Since we are only supposed to be
     // merging types into their supertypes, merging such unrelated types would
     // be unsafe. Post-process the refined partitions to manually split any
-    // partitions containing unrelated types
+    // partitions containing unrelated types.
     //
     // Normally splitting partitions like this would require re-running DFA
     // minimization afterward, but in this case it is not possible that the

@@ -958,7 +958,7 @@
 ;; supertype merging partition, but partition refinement will show that A, B,
 ;; and C are distinct. We previously continued to merge D1 and D2, but that is
 ;; incorrect, as such a merge will either make g1 or g2 invalid below. The fix
-;; was to manually split partitions that end up containing separate type treess.
+;; was to manually split partitions that end up containing separate type trees.
 (module
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $I (struct (field anyref)))
@@ -988,7 +988,7 @@
  (global $g2 (ref $C) (struct.new_default $D2))
 )
 
-;; Same as above, but with some addition types that can be merged.
+;; Same as above, but with some additional types that can be merged.
 (module
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $I (struct (field anyref)))
