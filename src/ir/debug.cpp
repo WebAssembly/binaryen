@@ -15,40 +15,55 @@
  */
 
 #include "ir/debug.h"
+#include "ir/iteration.h"
 #include "ir/properties.h"
 
 namespace wasm::debug {
 
-void forageDebugInfo(Expression* curr,
-                     Expression* other,
-                     Function* func,
-                     const PassOptions& options,
-                     Module& wasm) {
+void scavengeDebugInfo(Expression* replacement,
+                       Expression* original,
+                       Function* func,
+                       const PassOptions& options,
+                       Module& wasm) {
   auto& debug = func->debugLocations;
 
-  // Check if |other| has debug info.
-  auto iter = debug.find(other);
-  if (iter != debug.end()) {
-    debug[curr] = iter->second;
+  // Given an expression, use its debug info if it has any, and return true if
+  // so.
+  auto useDebugInfo = [&](Expression* expr) {
+    auto iter = debug.find(expr);
+    if (iter != debug.end()) {
+      debug[replacement] = iter->second;
+      return true;
+    }
+    return false;
+  };
+
+  // Check if |original| has debug info. If so, that is the best info to use.
+  if (useDebugInfo(original)) {
     return;
   }
 
-  // Check if |other| has a fallthrough with debug info. This is often the right
-  // thing, as the fallthrough value is what is actually computed here, e.g.,
+  // Check if |original| has a fallthrough with debug info. This is often good,
+  // as the fallthrough value is what actually is emitted here, e.g.,
   //
   //  (block
   //    (i32.const 42))
   //
   // Debug info on the const can be used in place of the block (e.g. when we
   // optimize away the block).
-  auto fallthrough = Properties::getFallthrough(curr, options, wasm);
-  iter = debug.find(fallthrough);
-  if (iter != debug.end()) {
-    debug[curr] = iter->second;
+  auto fallthrough = Properties::getFallthrough(original, options, wasm);
+  if (fallthrough != original && useDebugInfo(fallthrough)) {
+    return;
   }
 
-  // TODO: We can look in a more sophisticated manner that depends on what kind
-  //       of expression |curr| is.
-};
+  // Failing the above, see if any child has debug info, and use that. This may
+  // not always be accurate, but should help much more than it confuses.
+  // TODO: go expression type by type and decide specifically.
+  for (auto* child : ChildIterator(original)) {
+    if (useDebugInfo(child)) {
+      return;
+    }
+  }
+}
 
 } // namespace wasm::debug

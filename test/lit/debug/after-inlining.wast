@@ -7,7 +7,6 @@
   ;; CHECK:      (export "bar" (func $bar))
   (export "bar" (func $bar))
   ;; CHECK:      (func $bar (; has Stack IR ;) (result i32)
-  ;; CHECK-NEXT:  ;;@ file.cpp:80:4
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $bar (result i32)

@@ -270,6 +270,8 @@ struct Precompute
   }
 
   void visitExpression(Expression* curr) {
+std::cout << "visit " << curr << " : " << *curr << '\n';
+if (auto* b = curr->dynCast<Block>()) std::cout << "block child: " << b->list.back() << '\n';
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
@@ -313,9 +315,11 @@ struct Precompute
       return;
     }
     // this was precomputed
+if (auto* b = curr->dynCast<Block>()) std::cout << "b block child: " << b->list.back() << '\n';
     if (flow.values.isConcrete()) {
       auto* replacement = flow.getConstExpression(*getModule());
-      debug::forageDebugInfo(replacement, curr, getFunction(), getPassOptions(), *getModule());
+if (auto* b = curr->dynCast<Block>()) std::cout << "c block child: " << b->list.back() << '\n';
+      debug::scavengeDebugInfo(replacement, curr, getFunction(), getPassOptions(), *getModule());
       replaceCurrent(replacement);
     } else {
       ExpressionManipulator::nop(curr);

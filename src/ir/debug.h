@@ -52,15 +52,14 @@ inline void copyDebugInfo(Expression* origin,
   }
 };
 
-// Given an expression and another one, see if we can find useful debug info of
-// some kind on the other that we can use for the former. This may be literal
-// debug info on |other|, but may also be something we can infer from its
-// children.
-void forageDebugInfo(Expression* curr,
-                     Expression* other,
-                     Function* func,
-                     const PassOptions& options,
-                     Module& wasm);
+// Given a replacement expression and an original that it will replace, try to
+// scavenge debug info from the original to use on the replacement. Any useful
+// debug info will be used, including from a child of the original if relevant.
+void scavengeDebugInfo(Expression* replacement,
+                       Expression* original,
+                       Function* func,
+                       const PassOptions& options,
+                       Module& wasm);
 
 } // namespace wasm::debug
 
