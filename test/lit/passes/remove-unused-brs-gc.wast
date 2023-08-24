@@ -602,7 +602,7 @@
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (drop
- ;; CHECK-NEXT:        (ref.cast none
+ ;; CHECK-NEXT:        (ref.cast (ref none)
  ;; CHECK-NEXT:         (local.get $0)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )

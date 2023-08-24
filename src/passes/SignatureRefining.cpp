@@ -30,6 +30,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -284,8 +285,75 @@ struct SignatureRefining : public Pass {
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
+    // Update intrinsics.
+    updateIntrinsics(module, allInfo);
+
     // TODO: we could do this only in relevant functions perhaps
     ReFinalize().run(getPassRunner(), module);
+  }
+
+  template<typename HeapInfoMap>
+  void updateIntrinsics(Module* module, HeapInfoMap& map) {
+    // The call.without.effects intrinsic needs to be updated if we refine the
+    // function reference it receives. Imagine that we have this:
+    //
+    //  (call $call.without.effects
+    //    (ref.func $returns.A)
+    //  )
+    //
+    // If we refined that $returns.A function to actually return a subtype $B,
+    // then now the call.without.effects should return $B, because logically it
+    // is still a direct call to that function. (We could also defer this to
+    // later, if we relaxed validation here, but updating right now is better
+    // for followup optimizations.)
+
+    // Each time we update we create a new import with the proper type. Keep a
+    // map of them to avoid creating more than one for each type.
+    std::unordered_map<HeapType, Function*> newImports;
+
+    auto getImportWithNewResults = [&](Function* import, Type newResults) {
+      auto newType = Signature(import->getParams(), newResults);
+      if (auto iter = newImports.find(newType); iter != newImports.end()) {
+        return iter->second;
+      }
+
+      auto name = Names::getValidFunctionName(*module, import->name);
+      auto newImport =
+        module->addFunction(Builder(*module).makeFunction(name, newType, {}));
+
+      // Copy the binaryen intrinsic module.base import names.
+      newImport->module = import->module;
+      newImport->base = import->base;
+
+      newImports[newType] = newImport;
+      return newImport;
+    };
+
+    for (auto& [_, info] : map) {
+      for (auto* call : info.calls) {
+        if (Intrinsics(*module).isCallWithoutEffects(call)) {
+          auto targetType = call->operands.back()->type;
+          if (!targetType.isRef()) {
+            continue;
+          }
+          auto heapType = targetType.getHeapType();
+          if (!heapType.isSignature()) {
+            continue;
+          }
+          auto newResults = heapType.getSignature().results;
+          if (call->type == newResults) {
+            continue;
+          }
+
+          // The target was refined, so we need to update here. Create a new
+          // import of the refined type, and call that instead.
+          call->target = getImportWithNewResults(
+                           module->getFunction(call->target), newResults)
+                           ->name;
+          call->type = newResults;
+        }
+      }
+    }
   }
 };
 
