@@ -327,7 +327,8 @@ struct Precompute
       //    (i32.const 42)
       //  )
       //
-      auto fallthrough = Properties::getFallthrough(curr, getPassOptions(), *getModule());
+      auto fallthrough =
+        Properties::getFallthrough(curr, getPassOptions(), *getModule());
       replaceCurrent(reuseConstantNode(flow, fallthrough));
     } else {
       ExpressionManipulator::nop(curr);
