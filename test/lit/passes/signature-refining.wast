@@ -910,27 +910,27 @@
   (type $return_A_2 (func (result (ref null $A))))
  )
 
- ;; CHECK:       (type $none_=>_none (func))
+ ;; CHECK:       (type $5 (func))
 
- ;; CHECK:       (type $funcref_=>_ref?|$A| (func (param funcref) (result (ref null $A))))
+ ;; CHECK:       (type $6 (func (param funcref) (result (ref null $A))))
 
- ;; CHECK:      (type $funcref_=>_ref|$B| (func (param funcref) (result (ref $B))))
+ ;; CHECK:      (type $7 (func (param funcref) (result (ref $B))))
 
- ;; CHECK:      (type $funcref_=>_ref|$C| (func (param funcref) (result (ref $C))))
+ ;; CHECK:      (type $8 (func (param funcref) (result (ref $C))))
 
- ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects (type $funcref_=>_ref?|$A|) (param funcref) (result (ref null $A))))
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects (type $func.0) (param funcref) (result (ref null $A))))
  (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects
    (param funcref)
    (result (ref null $A))
  ))
 
- ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects_4 (type $funcref_=>_ref|$B|) (param funcref) (result (ref $B))))
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects_4 (type $7) (param funcref) (result (ref $B))))
 
- ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects_5 (type $funcref_=>_ref|$C|) (param funcref) (result (ref $C))))
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects_5 (type $8) (param funcref) (result (ref $C))))
 
  ;; CHECK:      (elem declare func $other $other2)
 
- ;; CHECK:      (func $func (type $none_=>_none)
+ ;; CHECK:      (func $func (type $5)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $no.side.effects_4
  ;; CHECK-NEXT:    (ref.func $other)
