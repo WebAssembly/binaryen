@@ -926,11 +926,14 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
     Element* super = nullptr;
+    bool isFinal = useStandardFinalTypes;
     if (kind == SUB) {
       Index i = 1;
       if (*def[i] == FINAL) {
-        builder[index].setFinal();
+        isFinal = true;
         ++i;
+      } else {
+        isFinal = false;
       }
       if (def[i]->dollared()) {
         super = def[i];
@@ -959,6 +962,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       if (kind == FUNC) {
         builder[index] = parseSignatureDef(def, 0);
       } else if (kind == FUNC_SUBTYPE) {
+        isFinal = false;
         builder[index] = parseSignatureDef(def, 1);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == FUNC) {
@@ -968,6 +972,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == STRUCT) {
         builder[index] = parseStructDef(def, index, 0);
       } else if (kind == STRUCT_SUBTYPE) {
+        isFinal = false;
         builder[index] = parseStructDef(def, index, 1);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == DATA) {
@@ -977,6 +982,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == ARRAY) {
         builder[index] = parseArrayDef(def);
       } else if (kind == ARRAY_SUBTYPE) {
+        isFinal = false;
         builder[index] = parseArrayDef(def);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == DATA) {
@@ -993,6 +999,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       }
     } else if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
       // '(' 'extends' $supertype ')'
+      isFinal = false;
       Element& extends = *elem[elem.size() - 1];
       super = extends[1];
     }
@@ -1002,6 +1009,9 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
         throw ParseException("unknown supertype", super->line, super->col);
       }
       builder[index].subTypeOf(builder[it->second]);
+    }
+    if (isFinal) {
+      builder[index].setFinal();
     }
     ++index;
   });

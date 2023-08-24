@@ -265,9 +265,8 @@ void WasmBinaryWriter::writeTypes() {
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
     auto super = type.getSuperType();
-    // TODO: Use the binary shorthand for final types once we parse MVP
-    // signatures as final.
-    if (type.isFinal() || super || hasSubtypes[i]) {
+    if (super || (type.isFinal() != useStandardFinalTypes) ||
+        (!useStandardFinalTypes && hasSubtypes[i])) {
       if (type.isFinal()) {
         o << S32LEB(BinaryConsts::EncodedType::SubFinal);
       } else {
@@ -2226,6 +2225,7 @@ void WasmBinaryReader::readTypes() {
 
   for (size_t i = 0; i < builder.size(); i++) {
     BYN_TRACE("read one\n");
+    bool isFinal = useStandardFinalTypes;
     auto form = getS32LEB();
     if (form == BinaryConsts::EncodedType::Rec) {
       uint32_t groupSize = getU32LEB();
@@ -2242,10 +2242,7 @@ void WasmBinaryReader::readTypes() {
     std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
-      if (form == BinaryConsts::EncodedType::SubFinal) {
-        // TODO: Interpret type definitions without any `sub` as final as well.
-        builder[i].setFinal();
-      }
+      isFinal = form == BinaryConsts::EncodedType::SubFinal;
       uint32_t supers = getU32LEB();
       if (supers > 0) {
         if (supers != 1) {
@@ -2271,6 +2268,9 @@ void WasmBinaryReader::readTypes() {
                    std::to_string(*superIndex));
       }
       builder[i].subTypeOf(builder[*superIndex]);
+    }
+    if (isFinal) {
+      builder[i].setFinal();
     }
   }
 
