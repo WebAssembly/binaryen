@@ -253,3 +253,35 @@ TEST_F(StringifyTest, Substrings) {
       // 7, 6 appears at idx 11 and again at 24
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})}}));
 }
+
+TEST_F(StringifyTest, FuncMap) {
+  auto dupFuncModuleText = R"wasm(
+    (module
+    (func $a
+      (block
+        (drop (i32.const 20))
+      )
+    )
+    (func $b
+        (drop (i32.const 5))
+    )
+   )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, dupFuncModuleText);
+
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  EXPECT_EQ(stringify.hashString,
+            (std::vector<uint32_t>{8}));
+
+  for (size_t i = 0; i < stringify.exprs.size(); i++) {
+    std::cout << i << ": (";
+    if (stringify.exprs[i]) {
+      std::cout << ShallowExpression{stringify.exprs[i], &wasm} << ")";
+    } else {
+      std::cout << "separator)";
+    }
+    std::cout << std::endl;
+  }
+}

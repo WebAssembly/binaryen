@@ -57,15 +57,22 @@ void HashStringifyWalker::addUniqueSymbol() {
   // for Expressions
   assert((uint32_t)nextSeparatorVal >= nextVal);
   hashString.push_back((uint32_t)nextSeparatorVal);
+  exprs.push_back(NULL);
   nextSeparatorVal--;
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
   auto [it, inserted] = exprToCounter.insert({curr, nextVal});
   hashString.push_back(it->second);
+  exprs.push_back(curr);
   if (inserted) {
     nextVal++;
   }
+}
+
+void HashStringifyWalker::markFunctionBegin(Name func) {
+  idxToFuncName.insert({hashString.size(), func});
+  funcIdx.insert(hashString.size());
 }
 
 } // namespace wasm

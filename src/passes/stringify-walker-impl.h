@@ -31,6 +31,7 @@ inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
+  this->doMarkFunctionBegin(func->name);
   walk(func->body);
   /*
    * We add a unique symbol after walking the function body to separate the
@@ -74,7 +75,8 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 
 // This dequeueControlFlow is responsible for visiting the children expressions
 // of control flow.
-template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
+template<typename SubType>
+void StringifyWalker<SubType>::dequeueControlFlow() {
   auto& queue = controlFlowQueue;
   if (queue.empty()) {
     return;
@@ -134,10 +136,18 @@ template<typename SubType>
 inline void StringifyWalker<SubType>::addUniqueSymbol() {
   // TODO: Add the following static_assert when the compilers running our GitHub
   // actions are updated enough to know that this is a constant condition:
-  // static_assert(&StringifyWalker<SubType>::addUniqueSymbol !=
-  // &SubType::addUniqueSymbol);
+  static_assert(&StringifyWalker<SubType>::addUniqueSymbol !=
+  &SubType::addUniqueSymbol);
   auto self = static_cast<SubType*>(this);
   self->addUniqueSymbol();
+}
+
+template<typename SubType>
+inline void StringifyWalker<SubType>::doMarkFunctionBegin(Name func) {
+  //static_assert(&StringifyWalker<SubType>::doMarkFunctionBegin !=
+  //&SubType::markFunctionBegin);
+  auto self = static_cast<SubType*>(this);
+  self->markFunctionBegin(func);
 }
 
 } // namespace wasm

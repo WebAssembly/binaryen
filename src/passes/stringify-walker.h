@@ -21,6 +21,7 @@
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 #include <queue>
 
 namespace wasm {
@@ -84,6 +85,7 @@ struct StringifyWalker
   static void scan(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);
 
+  void doMarkFunctionBegin(Name func);
 private:
   void dequeueControlFlow();
 };
@@ -128,9 +130,19 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // when evaluating if expressions.
   std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
+  // This map is for keeping track of where each function begins in terms of
+  // index of index relative to the hashString
+  //
+  // The plan is to do a binary search of the keys of the unordered_map in order
+  // to determine which function needs to be iterated through to find the
+  // Expressions represented in the repeat substring
+  std::unordered_map<uint32_t, Name> idxToFuncName;
+  std::set<uint32_t>funcIdx;
 
   void addUniqueSymbol();
   void visitExpression(Expression* curr);
+  void markFunctionBegin(Name func);
+  std::vector<Expression *> exprs;
 };
 
 } // namespace wasm
