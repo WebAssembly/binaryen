@@ -17,7 +17,6 @@
 #ifndef wasm_ir_debug_h
 #define wasm_ir_debug_h
 
-#include "pass.h"
 #include "wasm-traversal.h"
 
 namespace wasm::debug {
@@ -57,9 +56,7 @@ inline void copyDebugInfo(Expression* origin,
 // debug info will be used, including from a child of the original if relevant.
 void scavengeDebugInfo(Expression* replacement,
                        Expression* original,
-                       Function* func,
-                       const PassOptions& options,
-                       Module& wasm);
+                       Function* func);
 
 } // namespace wasm::debug
 

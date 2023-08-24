@@ -16,15 +16,12 @@
 
 #include "ir/debug.h"
 #include "ir/iteration.h"
-#include "ir/properties.h"
 
 namespace wasm::debug {
 
 void scavengeDebugInfo(Expression* replacement,
                        Expression* original,
-                       Function* func,
-                       const PassOptions& options,
-                       Module& wasm) {
+                       Function* func) {
   auto& debug = func->debugLocations;
 
   // Given an expression, use its debug info if it has any, and return true if
@@ -40,19 +37,6 @@ void scavengeDebugInfo(Expression* replacement,
 
   // Check if |original| has debug info. If so, that is the best info to use.
   if (useDebugInfo(original)) {
-    return;
-  }
-
-  // Check if |original| has a fallthrough with debug info. This is often good,
-  // as the fallthrough value is what actually is emitted here, e.g.,
-  //
-  //  (block
-  //    (i32.const 42))
-  //
-  // Debug info on the const can be used in place of the block (e.g. when we
-  // optimize away the block).
-  auto fallthrough = Properties::getFallthrough(original, options, wasm);
-  if (fallthrough != original && useDebugInfo(fallthrough)) {
     return;
   }
 

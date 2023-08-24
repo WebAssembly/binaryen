@@ -315,7 +315,7 @@ struct Precompute
     // this was precomputed
     if (flow.values.isConcrete()) {
       auto* replacement = flow.getConstExpression(*getModule());
-      debug::scavengeDebugInfo(replacement, curr, getFunction(), getPassOptions(), *getModule());
+      debug::scavengeDebugInfo(replacement, curr, getFunction());
       replaceCurrent(replacement);
     } else {
       ExpressionManipulator::nop(curr);
