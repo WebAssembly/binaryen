@@ -21,7 +21,6 @@
 )
 
 ;; As above, but test starting from an earlier point, before inlining.
-;; This depends on us looking for debug info among children.
 (module
   (func $foo (result i32)
     ;;@ file.cpp:80:4

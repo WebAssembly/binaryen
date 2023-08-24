@@ -57,7 +57,9 @@ void scavengeDebugInfo(Expression* replacement,
   }
 
   // Failing the above, see if any child has debug info, and use that. This may
-  // not always be accurate, but should help much more than it confuses.
+  // not always be accurate, but should help much more than it confuses. We at
+  // least only look at direct children (as ones farther away may be more
+  // confusing).
   // TODO: go expression type by type and decide specifically.
   for (auto* child : ChildIterator(original)) {
     if (useDebugInfo(child)) {
