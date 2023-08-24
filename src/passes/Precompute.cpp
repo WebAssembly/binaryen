@@ -27,6 +27,7 @@
 // looked at.
 //
 
+#include <ir/debug.h>
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
@@ -233,44 +234,39 @@ struct Precompute
     // --converge.
   }
 
-  // We are given a flow (the result of precomputation) and an expression. If we
-  // can, we will reuse that expression to contain the right value for the flow.
-  // If not, we create a new expression. Either way, we return the expression
-  // that contains the right value for the flow (or nullptr if the flow has no
-  // concrete value in it).
-  //
-  // This is useful both to avoid extra allocation, and also it will preserve
-  // debug info automatically.
-  Expression* reuseConstantNode(Flow flow, Expression* value) {
+  template<typename T> void reuseConstantNode(T* curr, Flow flow) {
     if (flow.values.isConcrete()) {
       // reuse a const / ref.null / ref.func node if there is one
-      if (value && flow.values.size() == 1) {
+      if (curr->value && flow.values.size() == 1) {
         Literal singleValue = flow.getSingleValue();
         if (singleValue.type.isNumber()) {
-          if (auto* c = value->template dynCast<Const>()) {
+          if (auto* c = curr->value->template dynCast<Const>()) {
             c->value = singleValue;
             c->finalize();
-            return c;
+            curr->finalize();
+            return;
           }
         } else if (singleValue.isNull()) {
-          if (auto* n = value->template dynCast<RefNull>()) {
+          if (auto* n = curr->value->template dynCast<RefNull>()) {
             n->finalize(singleValue.type);
-            return n;
+            curr->finalize();
+            return;
           }
         } else if (singleValue.type.isRef() &&
                    singleValue.type.getHeapType() == HeapType::func) {
-          if (auto* r = value->template dynCast<RefFunc>()) {
+          if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();
-            return r;
+            curr->finalize();
+            return;
           }
         }
       }
-      return flow.getConstExpression(*getModule());
+      curr->value = flow.getConstExpression(*getModule());
+    } else {
+      curr->value = nullptr;
     }
-
-    // Otherwise, the flow is not concrete, and there is no value.
-    return nullptr;
+    curr->finalize();
   }
 
   void visitExpression(Expression* curr) {
@@ -292,8 +288,7 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          ret->value = reuseConstantNode(flow, ret->value);
-          ret->finalize();
+          reuseConstantNode(ret, flow);
         } else {
           Builder builder(*getModule());
           replaceCurrent(builder.makeReturn(
@@ -307,8 +302,7 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        br->value = reuseConstantNode(flow, br->value);
-        br->finalize();
+        reuseConstantNode(br, flow);
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(
@@ -320,16 +314,9 @@ struct Precompute
     }
     // this was precomputed
     if (flow.values.isConcrete()) {
-      // The fallthrough value may be suitable for reuse; in fact it will
-      // contain the exactly correct value in cases like this:
-      //
-      //  (block
-      //    (i32.const 42)
-      //  )
-      //
-      auto fallthrough =
-        Properties::getFallthrough(curr, getPassOptions(), *getModule());
-      replaceCurrent(reuseConstantNode(flow, fallthrough));
+      auto* replacement = flow.getConstExpression(*getModule());
+      debug::forageDebugInfo(replacement, curr, getFunction(), getPassOptions(), *getModule());
+      replaceCurrent(replacement);
     } else {
       ExpressionManipulator::nop(curr);
     }
