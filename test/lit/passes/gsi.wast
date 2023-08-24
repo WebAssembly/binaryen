@@ -1390,3 +1390,50 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (struct (field funcref)))
+    (type $A (struct (field funcref)))
+    ;; CHECK:       (type $B (sub $A (struct (field (ref func)))))
+    (type $B (sub $A (struct (field (ref func)))))
+  )
+
+  ;; CHECK:      (type $2 (func (param (ref null $A) (ref null $B)) (result funcref)))
+
+  ;; CHECK:      (global $global (ref $B) (struct.new $B
+  ;; CHECK-NEXT:  (ref.func $func)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $B) (struct.new $B
+    (ref.func $func)
+  ))
+
+  ;; CHECK:      (func $func (type $2) (param $a (ref null $A)) (param $b (ref null $B)) (result funcref)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (block (result (ref $B))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.tee $a
+  ;; CHECK-NEXT:       (local.get $b)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $global)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $a (ref null $A)) (param $b (ref null $B)) (result funcref)
+    (struct.get $A 0
+      ;; We can infer that we read from $global here, since it is the only place
+      ;; a $B is created (the tee in the middle to $A does not confuse us).
+      ;; After that, the struct.get will be reading a global.get of $global,
+      ;; which is of type $B, and compared to $A from before we will read a more
+      ;; refined type from the field, ref func vs funcref, which must be updated
+      ;; in the IR.
+      (local.tee $a
+        (local.get $b)
+      )
+    )
+  )
+)
