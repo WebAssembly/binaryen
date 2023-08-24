@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (import "env" "memory_base" (global $memory_base i32))
  (import "env" "table_base" (global $table_base i32))
  (memory $0 1)
