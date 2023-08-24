@@ -6,11 +6,11 @@
 ;; parsed correctly.
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $array (array i32))
   (type $array (array i32))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_fixed $array 2
   ;; CHECK-NEXT:    (i32.const 0)

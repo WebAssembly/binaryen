@@ -2,7 +2,7 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (global $global (mut i32) (i32.const 0))
  (global $global (mut i32) (i32.const 0))
@@ -31,7 +31,7 @@
 
 ;; CHECK:      (export "test" (func $test_1))
 
-;; CHECK:      (func $test_1 (type $none_=>_none)
+;; CHECK:      (func $test_1 (type $0)
 ;; CHECK-NEXT:  (global.set $global
 ;; CHECK-NEXT:   (i32.const 999)
 ;; CHECK-NEXT:  )

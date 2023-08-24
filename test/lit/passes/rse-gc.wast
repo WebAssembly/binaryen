@@ -10,7 +10,7 @@
  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
  (type $B (struct_subtype (field (ref struct)) $A))
 
- ;; CHECK:      (func $test (type $none_=>_none)
+ ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))
  ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
  ;; CHECK-NEXT:  (nop)
@@ -24,7 +24,7 @@
   (local $tuple ((ref any) (ref any)))
  )
 
- ;; CHECK:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
+ ;; CHECK:      (func $needs-refinalize (type $4) (param $b (ref $B)) (result anyref)
  ;; CHECK-NEXT:  (local $a (ref null $A))
  ;; CHECK-NEXT:  (local.set $a
  ;; CHECK-NEXT:   (local.get $b)
@@ -49,7 +49,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined (type $ref?|$A|_i32_=>_none) (param $A (ref null $A)) (param $x i32)
+ ;; CHECK:      (func $pick-refined (type $5) (param $A (ref null $A)) (param $x i32)
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
  ;; CHECK-NEXT:   (ref.cast (ref null $B)
@@ -110,7 +110,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-nn (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $pick-refined-nn (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref $B))
  ;; CHECK-NEXT:  (local.set $B
  ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -141,7 +141,7 @@
   )
  )
 
- ;; CHECK:      (func $avoid-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $avoid-unrefined (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $B (ref null $B))
  ;; CHECK-NEXT:  (local.set $B
  ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -173,7 +173,7 @@
   )
  )
 
- ;; CHECK:      (func $pick-refined-earlier (type $ref|$A|_=>_none) (param $A (ref $A))
+ ;; CHECK:      (func $pick-refined-earlier (type $2) (param $A (ref $A))
  ;; CHECK-NEXT:  (local $A2 (ref null $A))
  ;; CHECK-NEXT:  (local.set $A2
  ;; CHECK-NEXT:   (local.get $A)
@@ -200,7 +200,7 @@
   )
  )
 
- ;; CHECK:      (func $different-choices (type $ref|$A|_=>_none) (param $non-nullable (ref $A))
+ ;; CHECK:      (func $different-choices (type $2) (param $non-nullable (ref $A))
  ;; CHECK-NEXT:  (local $nullable (ref null $A))
  ;; CHECK-NEXT:  (local.set $nullable
  ;; CHECK-NEXT:   (local.get $non-nullable)
@@ -248,7 +248,7 @@
   )
  )
 
- ;; CHECK:      (func $string (type $none_=>_none)
+ ;; CHECK:      (func $string (type $3)
  ;; CHECK-NEXT:  (local $s stringref)
  ;; CHECK-NEXT:  (local $t stringref)
  ;; CHECK-NEXT:  (drop

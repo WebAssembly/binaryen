@@ -4,14 +4,14 @@
 ;; Like start, but flipped - now only the first module has a start.
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (export "start" (func $start_1))
 
   ;; CHECK:      (start $start)
   (start $start)
 
-  ;; CHECK:      (func $start (type $none_=>_none)
+  ;; CHECK:      (func $start (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
@@ -23,7 +23,7 @@
   )
 )
 
-;; CHECK:      (func $start_1 (type $none_=>_none)
+;; CHECK:      (func $start_1 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )

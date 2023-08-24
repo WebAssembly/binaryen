@@ -11,7 +11,7 @@
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
   (type $struct.B (struct i32))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref $struct.A)
   ;; CHECK-NEXT:    (ref.null none)
@@ -28,7 +28,7 @@
 (module
   (type $struct.A (struct i32))
   (type $struct.B (struct i32))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (ref.null none)
@@ -47,7 +47,7 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
   ;; CHECK-NEXT:  )
@@ -62,7 +62,7 @@
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new $vector
   ;; CHECK-NEXT:    (f64.const 3.14159)
@@ -83,7 +83,7 @@
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_fixed $vector 4
   ;; CHECK-NEXT:    (f64.const 1)
@@ -108,7 +108,7 @@
 (module
   ;; CHECK:      (type $vector (array (mut f64)))
   (type $vector (array (mut f64)))
-  ;; CHECK:      (func $test (type $ref|$vector|_i32_f64_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $value f64) (param $size i32)
+  ;; CHECK:      (func $test (type $1) (param $ref (ref $vector)) (param $index i32) (param $value f64) (param $size i32)
   ;; CHECK-NEXT:  (array.fill $vector
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $index)
@@ -133,7 +133,7 @@
   ;; CHECK:      (type $vector (array (mut i32)))
   (type $vector (array (mut i32)))
   (data "")
-  ;; CHECK:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
+  ;; CHECK:      (func $test (type $1) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
   ;; CHECK-NEXT:  (array.init_data $vector $0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $index)
@@ -158,7 +158,7 @@
   ;; CHECK:      (type $vector (array (mut funcref)))
   (type $vector (array (mut funcref)))
   (elem func)
-  ;; CHECK:      (func $test (type $ref|$vector|_i32_i32_i32_=>_none) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
+  ;; CHECK:      (func $test (type $1) (param $ref (ref $vector)) (param $index i32) (param $offset i32) (param $size i32)
   ;; CHECK-NEXT:  (array.init_elem $vector $0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (local.get $index)

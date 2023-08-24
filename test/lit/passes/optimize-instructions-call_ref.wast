@@ -14,12 +14,12 @@
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $3 (func (param i32)))
 
  ;; CHECK:      (type $struct_=>_none (func (param (ref struct))))
  (type $struct_=>_none (func (param (ref struct))))
 
- ;; CHECK:      (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none (func (param i32 i32 i32 (ref $i32_i32_=>_none))))
+ ;; CHECK:      (type $5 (func (param i32 i32 i32 (ref $i32_i32_=>_none))))
 
  ;; CHECK:      (table $table-1 10 (ref null $i32_i32_=>_none))
  (table $table-1 10 (ref null $i32_i32_=>_none))
@@ -58,7 +58,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough (type $i32_=>_none) (param $x i32)
+ ;; CHECK:      (func $fallthrough (type $3) (param $x i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.tee $x
@@ -227,7 +227,7 @@
   )
  )
 
- ;; CHECK:      (func $call-table-get (type $i32_=>_none) (param $x i32)
+ ;; CHECK:      (func $call-table-get (type $3) (param $x i32)
  ;; CHECK-NEXT:  (call_indirect $table-1 (type $i32_i32_=>_none)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 2)
@@ -244,7 +244,7 @@
   )
  )
 
- ;; CHECK:      (func $call_ref-to-select (type $i32_i32_i32_ref|$i32_i32_=>_none|_=>_none) (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
+ ;; CHECK:      (func $call_ref-to-select (type $5) (param $x i32) (param $y i32) (param $z i32) (param $f (ref $i32_i32_=>_none))
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local $5 i32)
  ;; CHECK-NEXT:  (block

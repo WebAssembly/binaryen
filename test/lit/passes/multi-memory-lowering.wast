@@ -8,17 +8,17 @@
   (memory $memory3 3)
   (data (memory $memory1) (i32.const 0) "a")
   (data (memory $memory3) (i32.const 1) "123")
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_v128 (func (param i32) (result v128)))
+  ;; CHECK:      (type $1 (func (param i32) (result v128)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $3 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
+  ;; CHECK:      (type $4 (func (param i32 v128) (result v128)))
 
-  ;; CHECK:      (type $i32_i64_=>_none (func (param i32 i64)))
+  ;; CHECK:      (type $5 (func (param i32 i64)))
 
   ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
@@ -53,17 +53,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; BOUNDS:      (type $none_=>_none (func))
+  ;; BOUNDS:      (type $0 (func))
 
-  ;; BOUNDS:      (type $i32_=>_v128 (func (param i32) (result v128)))
+  ;; BOUNDS:      (type $1 (func (param i32) (result v128)))
 
-  ;; BOUNDS:      (type $none_=>_i32 (func (result i32)))
+  ;; BOUNDS:      (type $2 (func (result i32)))
 
-  ;; BOUNDS:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; BOUNDS:      (type $3 (func (param i32) (result i32)))
 
-  ;; BOUNDS:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
+  ;; BOUNDS:      (type $4 (func (param i32 v128) (result v128)))
 
-  ;; BOUNDS:      (type $i32_i64_=>_none (func (param i32 i64)))
+  ;; BOUNDS:      (type $5 (func (param i32 i64)))
 
   ;; BOUNDS:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 

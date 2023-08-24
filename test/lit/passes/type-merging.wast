@@ -23,9 +23,9 @@
     (type $G (sub final $A (struct (field anyref))))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $6 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $6)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $C))
@@ -88,9 +88,9 @@
   (type $F (struct_subtype (field i32) (field f64) $E))
   (type $G (struct_subtype (field i32) (field f64) $F))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $A))
@@ -132,9 +132,9 @@
   (type $F (struct_subtype (field i32) (field f64) $E))
   (type $G (struct_subtype (field i32) (field f64) $F))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $A))
@@ -166,9 +166,9 @@
   ;; CHECK:       (type $C (sub $A (struct (field (ref $X)))))
   (type $C (struct_subtype (field (ref $Y)) $A))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $C))
@@ -190,9 +190,9 @@
   (type $A (struct         (ref null $A)))
   (type $B (struct_subtype (ref null $B) $A))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (nop)
@@ -217,9 +217,9 @@
     (type $Y (struct_subtype (ref null $B) f32 $X))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
@@ -246,9 +246,9 @@
     (type $Y (struct_subtype (ref null $B) $X))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $A))
@@ -276,9 +276,9 @@
     (type $X (struct (ref null $A) f32))
     (type $Y (struct (ref null $B) f32))
   )
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $B))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $x (ref null $Y))
@@ -304,9 +304,9 @@
     (type $X (struct (ref null $A)))
     (type $Y (struct (ref null $B)))
   )
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (local $a (ref null $B))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $x (ref null $B))
@@ -334,9 +334,9 @@
     (type $Y (struct_subtype (ref null $B) $X))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $x (ref null $X))
@@ -418,9 +418,9 @@
   (type $M  (struct i32 i32))
   (type $M' (struct i32 i32))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $13 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $13)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $a' (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $B))
@@ -491,9 +491,9 @@
   (type $B (struct_subtype (ref null $Y) $A))
   (type $C (struct_subtype (ref null $Y) $A))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $4 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $4)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $B))
   ;; CHECK-NEXT:  (local $c (ref null $B))
@@ -518,9 +518,9 @@
     (type $C (struct_subtype eqref $A))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $C))
   ;; CHECK-NEXT:  (local $c (ref null $C))
@@ -547,9 +547,9 @@
     (type $E (struct_subtype eqref $C))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $A))
@@ -597,9 +597,9 @@
     (type $D' (struct_subtype (ref $A') i32 i32 $C'))
   )
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $4 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $4)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $a' (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $B'))
@@ -629,9 +629,9 @@
   (type $A (struct))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $none_=>_ref?|$A| (func (result (ref null $A))))
+  ;; CHECK:       (type $1 (func (result (ref null $A))))
 
-  ;; CHECK:      (func $returner (type $none_=>_ref?|$A|) (result (ref null $A))
+  ;; CHECK:      (func $returner (type $1) (result (ref null $A))
   ;; CHECK-NEXT:  (local $local (ref null $A))
   ;; CHECK-NEXT:  (local.get $local)
   ;; CHECK-NEXT: )
@@ -718,9 +718,9 @@
   (type $sub-refarray    (array_subtype (ref null any) $refarray))
   (type $sub-refarray-nn (array_subtype (ref      any) $refarray))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $3 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (local $a (ref null $intarray))
   ;; CHECK-NEXT:  (local $b (ref null $intarray))
   ;; CHECK-NEXT:  (nop)
@@ -732,7 +732,7 @@
     (local $b (ref null $sub-intarray))
   )
 
-  ;; CHECK:      (func $bar (type $none_=>_none)
+  ;; CHECK:      (func $bar (type $3)
   ;; CHECK-NEXT:  (local $a (ref null $refarray))
   ;; CHECK-NEXT:  (local $b (ref null $refarray))
   ;; CHECK-NEXT:  (local $c (ref null $sub-refarray-nn))
@@ -756,9 +756,9 @@
   ;; CHECK:       (type $sub-func-refined (sub $func (func (param anyref))))
   (type $sub-func-refined (func_subtype (param anyref) $func))
 
-  ;; CHECK:       (type $none_=>_none (func))
+  ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $func))
   ;; CHECK-NEXT:  (local $b (ref null $func))
   ;; CHECK-NEXT:  (local $c (ref null $sub-func-refined))
@@ -782,7 +782,7 @@
   (type $B (func_subtype $A)) ;; public
   (type $C (func_subtype $B)) ;; private
 
-  ;; CHECK:      (type $ref|$A|_ref|$B|_ref|$B|_=>_none (func (param (ref $A) (ref $B) (ref $B))))
+  ;; CHECK:      (type $2 (func (param (ref $A) (ref $B) (ref $B))))
 
   ;; CHECK:      (export "foo" (func $foo))
   (export "foo" (func $foo))
@@ -813,7 +813,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $quux (type $ref|$A|_ref|$B|_ref|$B|_=>_none) (param $0 (ref $A)) (param $1 (ref $B)) (param $2 (ref $B))
+  ;; CHECK:      (func $quux (type $2) (param $0 (ref $A)) (param $1 (ref $B)) (param $2 (ref $B))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $quux (param (ref $A) (ref $B) (ref $C))
@@ -852,9 +852,9 @@
   (type $X (struct (ref $B)))
   (type $A' (struct))
  )
- ;; CHECK:       (type $none_=>_none (func))
+ ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK:      (func $foo (type $2)
  ;; CHECK-NEXT:  (local $b (ref null $A))
  ;; CHECK-NEXT:  (local $x (ref null $X))
  ;; CHECK-NEXT:  (nop)
@@ -891,9 +891,9 @@
     (type $b1 (struct_subtype (ref null $y) $b))
   )
 
-  ;; CHECK:       (type $none_=>_ref|$b| (func (result (ref $b))))
+  ;; CHECK:       (type $5 (func (result (ref $b))))
 
-  ;; CHECK:      (func $test (type $none_=>_ref|$b|) (result (ref $b))
+  ;; CHECK:      (func $test (type $5) (result (ref $b))
   ;; CHECK-NEXT:  (local $0 (ref null $a))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.test (ref $y)
@@ -931,15 +931,15 @@
   ;; CHECK-NEXT:  (type $B (func))
   (type $B (func))
   (type $C (sub $B (func)))
-  ;; CHECK:       (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+  ;; CHECK:       (type $1 (func (result (ref any) (ref $B))))
 
-  ;; CHECK:       (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+  ;; CHECK:       (type $2 (func (result (ref any) (ref $B))))
 
-  ;; CHECK:       (type $D (sub final $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B)))))
+  ;; CHECK:       (type $D (sub final $2 (func (result (ref any) (ref $B)))))
   (type $D (sub final $A (func (result (ref any) (ref $C)))))
  )
 
- ;; CHECK:      (type $none_=>_ref|any|_ref|$B| (func (result (ref any) (ref $B))))
+ ;; CHECK:      (type $4 (func (result (ref any) (ref $B))))
 
  ;; CHECK:      (func $test (type $D) (result (ref any) (ref $B))
  ;; CHECK-NEXT:  (block $l (result (ref any) (ref $B))
@@ -1035,9 +1035,9 @@
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
@@ -1057,9 +1057,9 @@
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
-  ;; CHECK:       (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
   ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)

@@ -14,9 +14,9 @@
  (type $1 (struct_subtype nullfuncref anyref data))
  (type $2 (struct_subtype nullexternref anyref data))
 
- ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
+ ;; CHECK:       (type $3 (func (param (ref $0) (ref $1) (ref $2))))
 
- ;; CHECK:      (func $foo (type $ref|$0|_ref|$1|_ref|$2|_=>_none) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
+ ;; CHECK:      (func $foo (type $3) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $0
  ;; CHECK-NEXT:    (ref.null none)
@@ -77,9 +77,9 @@
  (type $1 (struct_subtype anyref anyref $0))
  (type $2 (struct_subtype anyref anyref $1))
 
- ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
+ ;; CHECK:       (type $4 (func (param (ref $0) (ref $1) (ref $2))))
 
- ;; CHECK:      (func $foo (type $ref|$0|_ref|$1|_ref|$2|_=>_none) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
+ ;; CHECK:      (func $foo (type $4) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
  ;; CHECK-NEXT:  (local $all (ref null $all))
  ;; CHECK-NEXT:  (local.set $all
  ;; CHECK-NEXT:   (struct.new $all

@@ -7,7 +7,7 @@
 (module
   (func (export "f"))
 )
-;; CHECK:      (type $none_=>_none (func))
+;; CHECK:      (type $0 (func))
 
 ;; CHECK:      (export "f" (func $0))
 
@@ -15,10 +15,10 @@
 
 ;; CHECK:      (export "h" (func $0_2))
 
-;; CHECK:      (func $0 (type $none_=>_none)
+;; CHECK:      (func $0 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_2 (type $none_=>_none)
+;; CHECK:      (func $0_2 (type $0)
 ;; CHECK-NEXT:  (call $0)
 ;; CHECK-NEXT: )

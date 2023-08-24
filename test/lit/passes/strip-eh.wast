@@ -7,20 +7,20 @@
   (tag $e-i32 (param i32))
   (tag $e-f32 (param f32))
 
-  ;; CHECK:      (func $throw-i32 (type $none_=>_none)
+  ;; CHECK:      (func $throw-i32 (type $0)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $throw-i32
     (throw $e-i32 (i32.const 0))
   )
-  ;; CHECK:      (func $throw-f32 (type $none_=>_none)
+  ;; CHECK:      (func $throw-f32 (type $0)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $throw-f32
     (throw $e-f32 (f32.const 0.0))
   )
 
-  ;; CHECK:      (func $try-catch (type $none_=>_none)
+  ;; CHECK:      (func $try-catch (type $0)
   ;; CHECK-NEXT:  (call $throw-i32)
   ;; CHECK-NEXT: )
   (func $try-catch
@@ -35,7 +35,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-catch2 (type $none_=>_none)
+  ;; CHECK:      (func $try-catch2 (type $0)
   ;; CHECK-NEXT:  (call $throw-i32)
   ;; CHECK-NEXT:  (call $throw-f32)
   ;; CHECK-NEXT: )
@@ -51,7 +51,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-catch-all (type $none_=>_none)
+  ;; CHECK:      (func $try-catch-all (type $0)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $try-catch-all
@@ -65,7 +65,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-catch-nested (type $none_=>_none)
+  ;; CHECK:      (func $try-catch-nested (type $0)
   ;; CHECK-NEXT:  (call $throw-i32)
   ;; CHECK-NEXT: )
   (func $try-catch-nested
@@ -93,7 +93,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-unreachable-body (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $try-unreachable-body (type $1) (result i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (i32.const 0)

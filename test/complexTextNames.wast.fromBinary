@@ -1,10 +1,10 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (export "$zoo (.bar)" (func $1))
- (func $foo\20\28.bar\29 (type $none_=>_none)
+ (func $foo\20\28.bar\29 (type $0)
   (nop)
  )
- (func $1 (type $none_=>_none)
+ (func $1 (type $0)
   (call $foo\20\28.bar\29)
  )
 )

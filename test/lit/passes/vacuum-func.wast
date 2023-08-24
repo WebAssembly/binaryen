@@ -5,7 +5,7 @@
 ;; effects like a return or changes to locals.
 
 (module
-  ;; CHECK:      (func $optimizable (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $optimizable (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -26,7 +26,7 @@
     (return)
   )
 
-  ;; CHECK:      (func $result (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK:      (func $result (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -55,7 +55,7 @@
     )
   )
 
-  ;; CHECK:      (func $partial (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $partial (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)

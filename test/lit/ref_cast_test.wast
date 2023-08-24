@@ -6,7 +6,7 @@
 (module
   ;; CHECK:      (type $array (array i32))
   (type $array (array i32))
-  ;; CHECK:      (func $test (type $eqref_=>_none) (param $0 eqref)
+  ;; CHECK:      (func $test (type $1) (param $0 eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $array)
   ;; CHECK-NEXT:    (local.get $0)

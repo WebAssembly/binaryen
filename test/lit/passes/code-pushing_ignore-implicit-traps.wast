@@ -5,9 +5,9 @@
 
 (module
   (memory 1)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $1 (func (result i32)))
 
   ;; CHECK:      (memory $0 1)
 

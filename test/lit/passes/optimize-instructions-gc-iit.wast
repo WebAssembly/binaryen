@@ -18,15 +18,15 @@
   ;; TNH:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $foo (type $none_=>_none)
+  ;; TNH:      (func $foo (type $2)
   ;; TNH-NEXT:  (nop)
   ;; TNH-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $ref-cast-iit (type $ref|$parent|_ref|$child|_ref|$other|_=>_none) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
+  ;; CHECK:      (func $ref-cast-iit (type $4) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $parent)
   ;; CHECK-NEXT:  )
@@ -47,7 +47,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $ref-cast-iit (type $ref|$parent|_ref|$child|_ref|$other|_=>_none) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
+  ;; TNH:      (func $ref-cast-iit (type $4) (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (local.get $parent)
   ;; TNH-NEXT:  )
@@ -102,7 +102,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-iit-bad (type $ref|$parent|_=>_none) (param $parent (ref $parent))
+  ;; CHECK:      (func $ref-cast-iit-bad (type $5) (param $parent (ref $parent))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (call $foo)
@@ -118,7 +118,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $ref-cast-iit-bad (type $ref|$parent|_=>_none) (param $parent (ref $parent))
+  ;; TNH:      (func $ref-cast-iit-bad (type $5) (param $parent (ref $parent))
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (block (result (ref $parent))
   ;; TNH-NEXT:    (call $foo)
@@ -155,12 +155,12 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
+  ;; CHECK:      (func $ref-eq-ref-cast (type $6) (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $ref-eq-ref-cast (type $eqref_=>_none) (param $x eqref)
+  ;; TNH:      (func $ref-eq-ref-cast (type $6) (param $x eqref)
   ;; TNH-NEXT:  (drop
   ;; TNH-NEXT:   (i32.const 1)
   ;; TNH-NEXT:  )
@@ -177,12 +177,12 @@
     )
   )
 
-  ;; CHECK:      (func $set-of-as-non-null (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK:      (func $set-of-as-non-null (type $7) (param $x anyref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $set-of-as-non-null (type $anyref_=>_none) (param $x anyref)
+  ;; TNH:      (func $set-of-as-non-null (type $7) (param $x anyref)
   ;; TNH-NEXT:  (local.set $x
   ;; TNH-NEXT:   (local.get $x)
   ;; TNH-NEXT:  )
@@ -215,12 +215,12 @@
     (type $D (struct_subtype  $A))
   )
 
-  ;; CHECK:      (func $test (type $ref|$C|_=>_anyref) (param $C (ref $C)) (result anyref)
+  ;; CHECK:      (func $test (type $4) (param $C (ref $C)) (result anyref)
   ;; CHECK-NEXT:  (struct.get $C 0
   ;; CHECK-NEXT:   (local.get $C)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $test (type $ref|$C|_=>_anyref) (param $C (ref $C)) (result anyref)
+  ;; TNH:      (func $test (type $4) (param $C (ref $C)) (result anyref)
   ;; TNH-NEXT:  (struct.get $C 0
   ;; TNH-NEXT:   (local.get $C)
   ;; TNH-NEXT:  )

@@ -10,9 +10,9 @@
  ;; CHECK:      (type $A (struct ))
  (type $A (struct))
 
- ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
+ ;; CHECK:      (type $1 (func (result (ref any))))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $2 (func))
 
  ;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
 
@@ -30,11 +30,11 @@
  )
 )
 
-;; CHECK:      (func $new_2 (type $none_=>_ref|any|) (result (ref any))
+;; CHECK:      (func $new_2 (type $1) (result (ref any))
 ;; CHECK-NEXT:  (global.get $ctor-eval$global)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $nop_3 (type $none_=>_none)
+;; CHECK:      (func $nop_3 (type $2)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
@@ -44,9 +44,9 @@
  ;; CHECK:      (type $A (struct ))
  (type $A (struct))
 
- ;; CHECK:      (type $none_=>_ref|any| (func (result (ref any))))
+ ;; CHECK:      (type $1 (func (result (ref any))))
 
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+ ;; CHECK:      (type $2 (func (result anyref)))
 
  ;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
  (global $ctor-eval$global (ref $A)
@@ -69,10 +69,10 @@
   (global.get $ctor-eval$global)
  )
 )
-;; CHECK:      (func $new_2 (type $none_=>_ref|any|) (result (ref any))
+;; CHECK:      (func $new_2 (type $1) (result (ref any))
 ;; CHECK-NEXT:  (global.get $ctor-eval$global_1)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $nop_3 (type $none_=>_anyref) (result anyref)
+;; CHECK:      (func $nop_3 (type $2) (result anyref)
 ;; CHECK-NEXT:  (global.get $ctor-eval$global)
 ;; CHECK-NEXT: )

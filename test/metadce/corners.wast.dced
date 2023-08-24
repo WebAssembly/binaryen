@@ -1,13 +1,13 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (import "env" "table" (table $timport$0 10 10 funcref))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
- (import "env" "imported_twice" (func $imported_twice_a (type $none_=>_none)))
- (import "env" "an-imported-table-func" (func $imported_table_func (type $none_=>_none)))
+ (import "env" "imported_twice" (func $imported_twice_a (type $0)))
+ (import "env" "an-imported-table-func" (func $imported_table_func (type $0)))
  (global $STACKTOP (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (elem $0 (i32.const 0) $imported_table_func)
  (export "stackAlloc" (func $stackAlloc))
- (func $stackAlloc (type $none_=>_none)
+ (func $stackAlloc (type $0)
   (drop
    (global.get $STACKTOP)
   )

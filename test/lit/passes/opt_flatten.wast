@@ -7,10 +7,10 @@
 (module
  ;; CHECK:      (export "foo" (func $foo))
  (export "foo" (func $foo))
- ;; CHECK:      (func $foo (type $none_=>_funcref) (result funcref)
+ ;; CHECK:      (func $foo (type $0) (result funcref)
  ;; CHECK-NEXT:  (local $0 funcref)
- ;; CHECK-NEXT:  (local $1 (ref $none_=>_funcref))
- ;; CHECK-NEXT:  (local $2 (ref $none_=>_funcref))
+ ;; CHECK-NEXT:  (local $1 (ref $0))
+ ;; CHECK-NEXT:  (local $2 (ref $0))
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (local.set $0

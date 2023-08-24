@@ -5,7 +5,7 @@
  (type ${i32} (struct (field i32)))
  ;; CHECK:      (export "export" (func $test))
  (export "export" (func $test))
- ;; CHECK:      (func $test (type $none_=>_none)
+ ;; CHECK:      (func $test (type $1)
  ;; CHECK-NEXT:  (local $0 (ref $\7bi32\7d))
  ;; CHECK-NEXT:  (call $help
  ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
@@ -31,13 +31,13 @@
    )
   )
  )
- ;; CHECK:      (func $help (type $ref|$\7bi32\7d|_i32_=>_none) (param $3 (ref $\7bi32\7d)) (param $4 i32)
+ ;; CHECK:      (func $help (type $2) (param $3 (ref $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT: )
  (func $help (param $3 (ref ${i32})) (param $4 i32)
   (nop)
  )
 
- ;; CHECK:      (func $other (type $none_=>_none)
+ ;; CHECK:      (func $other (type $1)
  ;; CHECK-NEXT: )
  (func $other
  )

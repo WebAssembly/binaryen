@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
- ;; CHECK:      (func $nn-locals (type $ref|any|_=>_none) (param $0 (ref any))
+ ;; CHECK:      (func $nn-locals (type $0) (param $0 (ref any))
  ;; CHECK-NEXT:  (local $1 ((ref any) (ref any)))
  ;; CHECK-NEXT:  (local $2 ((ref any) (ref any)))
  ;; CHECK-NEXT:  (local.set $1
@@ -82,7 +82,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-of-non-nullable (type $none_=>_none)
+ ;; CHECK:      (func $unreachable-get-of-non-nullable (type $1)
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (drop

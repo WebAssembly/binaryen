@@ -8,9 +8,9 @@
  ;; CHECK:      (type $struct (struct (field externref)))
  (type $struct (struct (field externref)))
 
- ;; CHECK:      (type $none_=>_externref (func (result externref)))
+ ;; CHECK:      (type $2 (func (result externref)))
 
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+ ;; CHECK:      (type $3 (func (result anyref)))
 
  ;; CHECK:      (global $ctor-eval$global (ref $array) (array.new_fixed $array 3
  ;; CHECK-NEXT:  (i32.const 1)
@@ -70,7 +70,7 @@
  )
 )
 
-;; CHECK:      (func $test1_3 (type $none_=>_externref) (result externref)
+;; CHECK:      (func $test1_3 (type $2) (result externref)
 ;; CHECK-NEXT:  (extern.externalize
 ;; CHECK-NEXT:   (i31.new
 ;; CHECK-NEXT:    (i32.const 42)
@@ -78,12 +78,12 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $test2_4 (type $none_=>_externref) (result externref)
+;; CHECK:      (func $test2_4 (type $2) (result externref)
 ;; CHECK-NEXT:  (extern.externalize
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $test3_5 (type $none_=>_anyref) (result anyref)
+;; CHECK:      (func $test3_5 (type $3) (result anyref)
 ;; CHECK-NEXT:  (global.get $ctor-eval$global_1)
 ;; CHECK-NEXT: )

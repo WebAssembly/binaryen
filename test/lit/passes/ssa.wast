@@ -5,12 +5,12 @@
  ;; CHECK:      (type $A (struct ))
  (type $A (struct ))
 
- ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK:      (func $foo (type $1)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo)
 
- ;; CHECK:      (func $bar (type $ref|func|_=>_none) (param $x (ref func))
+ ;; CHECK:      (func $bar (type $2) (param $x (ref func))
  ;; CHECK-NEXT:  (local $1 (ref func))
  ;; CHECK-NEXT:  (local $2 (ref func))
  ;; CHECK-NEXT:  (local.set $1
@@ -35,7 +35,7 @@
   (drop (local.get $x))
  )
 
- ;; CHECK:      (func $refine-to-null (type $none_=>_ref|$A|) (result (ref $A))
+ ;; CHECK:      (func $refine-to-null (type $3) (result (ref $A))
  ;; CHECK-NEXT:  (local $0 (ref null $A))
  ;; CHECK-NEXT:  (block $label (result (ref none))
  ;; CHECK-NEXT:   (drop

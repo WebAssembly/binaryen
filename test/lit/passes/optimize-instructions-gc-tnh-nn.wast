@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (func $set-of-as-non-null (type $none_=>_none)
+  ;; CHECK:      (func $set-of-as-non-null (type $0)
   ;; CHECK-NEXT:  (local $x anyref)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.as_non_null

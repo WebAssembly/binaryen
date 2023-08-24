@@ -8,11 +8,11 @@
  ;; CHECK-NOT: (type $A
  (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $funcref_i32_=>_none (func (param funcref i32)))
+ ;; CHECK:      (type $0 (func (param funcref i32)))
 
- ;; CHECK:      (type $ref|none|_=>_none (func (param (ref none))))
+ ;; CHECK:      (type $1 (func (param (ref none))))
 
- ;; CHECK:      (func $struct.get (type $ref|none|_=>_none) (param $0 (ref none))
+ ;; CHECK:      (func $struct.get (type $1) (param $0 (ref none))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -31,7 +31,7 @@
   )
  )
 
- ;; CHECK:      (func $caller (type $funcref_i32_=>_none) (param $0 funcref) (param $1 i32)
+ ;; CHECK:      (func $caller (type $0) (param $0 funcref) (param $1 i32)
  ;; CHECK-NEXT:  (call $struct.get
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null none)
