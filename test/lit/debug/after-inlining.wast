@@ -2,14 +2,44 @@
 ;; RUN: foreach %s %t wasm-opt -O3 -S -o - | filecheck %s
 
 (module
- (type $0 (func (result i32)))
- (export "bar" (func $bar))
- (func $bar (result i32)
-  ;; The constant in the block here must still have a debug annotation after
-  ;; we run the optimizer pipeline.
-  (block $__inlined_func$foo (result i32)
-   ;;@ file.cpp:80:4
-   (i32.const 42)
+  ;; CHECK:      (type $0 (func (result i32)))
+  (type $0 (func (result i32)))
+  ;; CHECK:      (export "bar" (func $bar))
+  (export "bar" (func $bar))
+  ;; CHECK:      (func $bar (; has Stack IR ;) (result i32)
+  ;; CHECK-NEXT:  ;;@ file.cpp:80:4
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $bar (result i32)
+    ;; The constant in the block here must still have a debug annotation after
+    ;; we run the optimizer pipeline.
+    (block $__inlined_func$foo (result i32)
+      ;;@ file.cpp:80:4
+      (i32.const 42)
+    )
   )
- )
+)
+
+;; As above, but test starting from an earlier point, before inlining.
+;; TODO: this does not work yet
+(module
+  (func $foo (result i32)
+    ;;@ file.cpp:80:4
+    (return
+      (i32.const 42)
+    )
+  )
+
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (export "bar" (func $bar))
+
+  ;; CHECK:      (func $bar (; has Stack IR ;) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $bar (export "bar") (result i32)
+    (return
+      (call $foo)
+    )
+  )
 )
