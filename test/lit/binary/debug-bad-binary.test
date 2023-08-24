@@ -31,7 +31,7 @@ RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
 
 ;; CHECK:      Fatal: error parsing wasm. here is what we read up to the error:
 ;; CHECK-NEXT: (module
-;; CHECK-NEXT:  (type $none_=>_none (func))
+;; CHECK-NEXT:  (type $0 (func))
 ;; CHECK-NEXT:  (global $global$0 (mut i32) (i32.const 10))
 ;; CHECK-NEXT:  (func $0
 ;; CHECK-NEXT:   (drop
@@ -39,4 +39,3 @@ RUN: not wasm-opt --debug %s.wasm 2>&1 | filecheck %s
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
-

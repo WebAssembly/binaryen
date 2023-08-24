@@ -3,16 +3,16 @@
 ;; RUN: wasm-opt --enable-memory64 --asyncify %s -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32)))
 
   ;; CHECK:      (type $f (func (param i32)))
   (type $f (func (param i32)))
   (memory i64 1 2)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $i64_=>_none (func (param i64)))
+  ;; CHECK:      (type $3 (func (param i64)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $4 (func (result i32)))
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))

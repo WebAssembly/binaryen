@@ -3,7 +3,7 @@
 ;; RUN: wasm-dis %t.2.wasm | filecheck %s --check-prefix SECONDARY
 
 ;; PRIMARY:      (module
-;; PRIMARY-NEXT:   (type $none_=>_none (func))
+;; PRIMARY-NEXT:   (type $0 (func))
 ;; PRIMARY-NEXT:   (export "%a" (func $1))
 ;; PRIMARY-NEXT:   (export "%b" (func $0))
 ;; PRIMARY-NEXT:   (func $0
@@ -15,7 +15,7 @@
 ;; PRIMARY-NEXT: )
 
 ;; SECONDARY:      (module
-;; SECONDARY-NEXT:   (type $none_=>_none (func))
+;; SECONDARY-NEXT:   (type $0 (func))
 ;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0))
 ;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1))
 ;; SECONDARY-NEXT:   (func $0

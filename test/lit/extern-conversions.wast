@@ -7,15 +7,15 @@
 
 
 (module
- ;; CHECK:      (type $ref|any|_=>_ref|extern| (func (param (ref any)) (result (ref extern))))
+ ;; CHECK:      (type $0 (func (param (ref any)) (result (ref extern))))
 
- ;; CHECK:      (type $externref_=>_anyref (func (param externref) (result anyref)))
+ ;; CHECK:      (type $1 (func (param externref) (result anyref)))
 
  ;; CHECK:      (export "ext" (func $extern.externalize))
 
  ;; CHECK:      (export "int" (func $extern.internalize))
 
- ;; CHECK:      (func $extern.externalize (type $ref|any|_=>_ref|extern|) (param $0 (ref any)) (result (ref extern))
+ ;; CHECK:      (func $extern.externalize (type $0) (param $0 (ref any)) (result (ref extern))
  ;; CHECK-NEXT:  (extern.externalize
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -26,7 +26,7 @@
   )
  )
 
- ;; CHECK:      (func $extern.internalize (type $externref_=>_anyref) (param $0 externref) (result anyref)
+ ;; CHECK:      (func $extern.internalize (type $1) (param $0 externref) (result anyref)
  ;; CHECK-NEXT:  (extern.internalize
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )

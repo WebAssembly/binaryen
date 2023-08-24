@@ -5,7 +5,7 @@
   ;; CHECK:      (tag $tag$0 (param i32))
   (tag $tag$0 (param i32))
 
-  ;; CHECK:      (func $func0 (type $none_=>_none)
+  ;; CHECK:      (func $func0 (type $0)
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -52,7 +52,7 @@
     )
   )
 
-  ;; CHECK:      (func $func1 (type $none_=>_none)
+  ;; CHECK:      (func $func1 (type $0)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)

@@ -17,9 +17,9 @@
   ;; CHECK:      (type $4 (func (param i32 f64 i32 i32)))
   (type $4 (func (param i32 f64 i32 i32)))
   (import $int "env" "int" (result i32))
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $5 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+  ;; CHECK:      (type $6 (func (result f64)))
 
   ;; CHECK:      (import "env" "int" (func $int (type $3) (result i32)))
 
@@ -660,7 +660,7 @@
       )
     )
   )
-  ;; CHECK:      (func $if-1-block (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK:      (func $if-1-block (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
@@ -765,7 +765,7 @@
       )
     )
   )
-  ;; CHECK:      (func $leave-block-even-if-br-not-taken (type $none_=>_f64) (result f64)
+  ;; CHECK:      (func $leave-block-even-if-br-not-taken (type $6) (result f64)
   ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (f64.store align=1
   ;; CHECK-NEXT:    (i32.const 879179022)
@@ -1032,9 +1032,9 @@
 )
 (module ;; vacuum away a drop on an if where both arms can be vacuumed
  (memory 1 1)
- ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $1 (func (param i32 i32 i32)))
 
  ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
@@ -1042,7 +1042,7 @@
 
  ;; CHECK:      (export "compress" (func $3))
 
- ;; CHECK:      (func $_deflate (type $i32_=>_i32) (param $0 i32) (result i32)
+ ;; CHECK:      (func $_deflate (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflate
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -1050,7 +1050,7 @@
  (func $_deflate (param i32) (result i32)
   (call $_deflate (local.get $0))
  )
- ;; CHECK:      (func $_deflateInit2_ (type $i32_=>_i32) (param $0 i32) (result i32)
+ ;; CHECK:      (func $_deflateInit2_ (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateInit2_
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -1058,7 +1058,7 @@
  (func $_deflateInit2_ (param i32) (result i32)
   (call $_deflateInit2_ (local.get $0))
  )
- ;; CHECK:      (func $_deflateEnd (type $i32_=>_i32) (param $0 i32) (result i32)
+ ;; CHECK:      (func $_deflateEnd (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateEnd
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -1165,7 +1165,7 @@
  )
 )
 
-;; CHECK:      (func $3 (type $i32_i32_i32_=>_none) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CHECK:      (func $3 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
 ;; CHECK-NEXT:  (local $3 i32)
 ;; CHECK-NEXT:  (local.set $3
 ;; CHECK-NEXT:   (global.get $global$1)
@@ -1260,9 +1260,9 @@
 ;; CHECK-NEXT: )
 (module
  (type $A (struct (field (mut i32))))
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK:      (func $foo (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
@@ -1278,11 +1278,11 @@
  )
 )
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
- ;; CHECK:      (func $1 (type $none_=>_none)
+ ;; CHECK:      (func $1 (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $1

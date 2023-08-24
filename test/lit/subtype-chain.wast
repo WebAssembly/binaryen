@@ -22,7 +22,7 @@
   ;; CHECK:      (type $leaf (sub $twig (struct (field i32) (field i64) (field f32) (field f64))))
   (type $leaf (struct_subtype i32 i64 f32 f64 $twig))
 
-  ;; CHECK:      (func $make-root (type $ref|$leaf|_=>_ref?|$root|) (param $leaf (ref $leaf)) (result (ref null $root))
+  ;; CHECK:      (func $make-root (type $5) (param $leaf (ref $leaf)) (result (ref null $root))
   ;; CHECK-NEXT:  (local.get $leaf)
   ;; CHECK-NEXT: )
   (func $make-root (param $leaf (ref $leaf)) (result (ref null $root))

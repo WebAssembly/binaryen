@@ -348,7 +348,7 @@ console.log("# CallIndirect");
   assert(
     theCallIndirect.toText()
     ==
-    "(call_indirect $0 (type $i32_i32_=>_i32)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
+    "(call_indirect $0 (type $func.0)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
   );
 
   module.dispose();

@@ -7,7 +7,7 @@
 
 (module
 )
-;; CHECK:      (type $none_=>_none (func))
+;; CHECK:      (type $0 (func))
 
 ;; CHECK:      (export "start" (func $start))
 
@@ -15,7 +15,7 @@
 
 ;; CHECK:      (start $merged.start.old)
 
-;; CHECK:      (func $start (type $none_=>_none)
+;; CHECK:      (func $start (type $0)
 ;; CHECK-NEXT:  (local $x i32)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $x)
@@ -25,12 +25,12 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $user (type $none_=>_none)
+;; CHECK:      (func $user (type $0)
 ;; CHECK-NEXT:  (call $start)
 ;; CHECK-NEXT:  (call $start)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $merged.start.old (type $none_=>_none)
+;; CHECK:      (func $merged.start.old (type $0)
 ;; CHECK-NEXT:  (local $x i32)
 ;; CHECK-NEXT:  (block
 ;; CHECK-NEXT:   (drop
@@ -43,7 +43,7 @@
 ;; CHECK-NEXT:  (call $merged.start.new)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $merged.start.new (type $none_=>_none)
+;; CHECK:      (func $merged.start.new (type $0)
 ;; CHECK-NEXT:  (local $x f64)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $x)

@@ -8,29 +8,29 @@
  (type $vector (array (mut i32)))
  ;; CHECK:      (type $struct (struct (field (ref null $vector))))
  (type $struct (struct (field (ref null $vector))))
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $2 (func (param i32)))
 
- ;; CHECK:      (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
+ ;; CHECK:      (type $3 (func (result (ref null $struct))))
 
- ;; CHECK:      (type $none_=>_f64 (func (result f64)))
+ ;; CHECK:      (type $4 (func (result f64)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $5 (func (result i32)))
 
- ;; CHECK:      (type $i32_=>_funcref (func (param i32) (result funcref)))
+ ;; CHECK:      (type $6 (func (param i32) (result funcref)))
 
- ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+ ;; CHECK:      (type $7 (func (param funcref)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $8 (func))
 
- ;; CHECK:      (type $funcref_=>_funcref (func (param funcref) (result funcref)))
+ ;; CHECK:      (type $9 (func (param funcref) (result funcref)))
 
- ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+ ;; CHECK:      (type $10 (func (result funcref)))
 
- ;; CHECK:      (import "out" "log" (func $log (type $i32_=>_none) (param i32)))
+ ;; CHECK:      (import "out" "log" (func $log (type $2) (param i32)))
  (import "out" "log" (func $log (param i32)))
  ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $i32_=>_none $none_=>_i32)
 
- ;; CHECK:      (func $foo (type $none_=>_ref?|$struct|) (result (ref null $struct))
+ ;; CHECK:      (func $foo (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (struct.new $struct
@@ -55,7 +55,7 @@
   )
  )
 
- ;; CHECK:      (func $test-prefinalize (type $none_=>_f64) (result f64)
+ ;; CHECK:      (func $test-prefinalize (type $4) (result f64)
  ;; CHECK-NEXT:  (loop $loop (result f64)
  ;; CHECK-NEXT:   (if (result f64)
  ;; CHECK-NEXT:    (i32.const 1)
@@ -94,18 +94,18 @@
   )
  )
 
- ;; CHECK:      (func $none_=>_i32 (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $none_=>_i32 (type $5) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $none_=>_i32 (result i32)
   (unreachable)
  )
- ;; CHECK:      (func $i32_=>_none (type $i32_=>_none) (param $0 i32)
+ ;; CHECK:      (func $i32_=>_none (type $2) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $i32_=>_none (param i32)
  )
- ;; CHECK:      (func $selectify (type $i32_=>_funcref) (param $x i32) (result funcref)
+ ;; CHECK:      (func $selectify (type $6) (param $x i32) (result funcref)
  ;; CHECK-NEXT:  (select (result funcref)
  ;; CHECK-NEXT:   (ref.func $none_=>_i32)
  ;; CHECK-NEXT:   (ref.func $i32_=>_none)
@@ -122,7 +122,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null (type $funcref_=>_none) (param $x funcref)
+ ;; CHECK:      (func $br_on_null (type $7) (param $x funcref)
  ;; CHECK-NEXT:  (block $null
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -160,7 +160,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_null-fallthrough (type $none_=>_none)
+ ;; CHECK:      (func $br_on_null-fallthrough (type $8)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (block $null
  ;; CHECK-NEXT:   (drop
@@ -198,7 +198,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_non_null (type $funcref_=>_funcref) (param $x funcref) (result funcref)
+ ;; CHECK:      (func $br_on_non_null (type $9) (param $x funcref) (result funcref)
  ;; CHECK-NEXT:  (block $non-null (result (ref func))
  ;; CHECK-NEXT:   (br $non-null
  ;; CHECK-NEXT:    (ref.func $br_on_non_null)
@@ -231,7 +231,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_non_null-fallthrough (type $none_=>_funcref) (result funcref)
+ ;; CHECK:      (func $br_on_non_null-fallthrough (type $10) (result funcref)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (block $non-null (result (ref func))
  ;; CHECK-NEXT:   (br $non-null

@@ -155,7 +155,8 @@ struct TypePrinter {
   std::ostream& print(const Tuple& tuple);
   std::ostream& print(const Field& field);
   std::ostream& print(const Signature& sig);
-  std::ostream& print(const Struct& struct_);
+  std::ostream& print(const Struct& struct_,
+                      const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
 };
 
@@ -1762,9 +1763,9 @@ std::ostream& TypePrinter::print(HeapType type) {
     }
   }
 
-  os << "(type ";
-  printHeapTypeName(type);
-  os << " ";
+  auto names = generator(type);
+
+  os << "(type $" << names.name << ' ';
 
   if (isTemp(type)) {
     os << "(; temp ;) ";
@@ -1787,7 +1788,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (type.isSignature()) {
     print(type.getSignature());
   } else if (type.isStruct()) {
-    print(type.getStruct());
+    print(type.getStruct(), names.fieldNames);
   } else if (type.isArray()) {
     print(type.getArray());
   } else {
@@ -1854,19 +1855,24 @@ std::ostream& TypePrinter::print(const Signature& sig) {
   return os << ')';
 }
 
-std::ostream& TypePrinter::print(const Struct& struct_) {
+std::ostream&
+TypePrinter::print(const Struct& struct_,
+                   const std::unordered_map<Index, Name>& fieldNames) {
   os << "(struct";
-  if (struct_.fields.size()) {
-    os << " (field";
-  }
-  for (const Field& field : struct_.fields) {
-    os << ' ';
-    print(field);
-  }
-  if (struct_.fields.size()) {
+  for (Index i = 0; i < struct_.fields.size(); ++i) {
+    // TODO: move this to the function for printing fields.
+    os << " (field ";
+    if (auto it = fieldNames.find(i); it != fieldNames.end()) {
+      os << '$' << it->second << ' ';
+    }
+    print(struct_.fields[i]);
     os << ')';
   }
-  return os << ')';
+  // TODO: Remove this extra space kept to minimize test diffs.
+  if (struct_.fields.size() == 0) {
+    os << ' ';
+  }
+  return os << ")";
 }
 
 std::ostream& TypePrinter::print(const Array& array) {

@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $br_on (type $none_=>_none)
+  ;; CHECK:      (func $br_on (type $0)
   ;; CHECK-NEXT:  (local $x funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))
@@ -40,7 +40,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_no (type $none_=>_none)
+  ;; CHECK:      (func $br_on_no (type $0)
   ;; CHECK-NEXT:  (local $x funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))

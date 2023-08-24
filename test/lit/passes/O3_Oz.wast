@@ -28,7 +28,7 @@
     )
   )
 )
-;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+;; CHECK:      (type $0 (func (param i32) (result i32)))
 
 ;; CHECK:      (export "export" (func $1))
 

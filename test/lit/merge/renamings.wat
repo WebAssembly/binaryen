@@ -9,17 +9,17 @@
 
   ;; This tag has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $f64_=>_none (func (param f64)))
+  ;; CHECK:      (type $2 (func (param f64)))
 
-  ;; CHECK:      (type $ref|$array|_=>_none (func (param (ref $array))))
+  ;; CHECK:      (type $3 (func (param (ref $array))))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $4 (func (param i32)))
 
-  ;; CHECK:      (type $i64_=>_none (func (param i64)))
+  ;; CHECK:      (type $5 (func (param i64)))
 
-  ;; CHECK:      (type $f32_=>_none (func (param f32)))
+  ;; CHECK:      (type $6 (func (param f32)))
 
   ;; CHECK:      (import "elsewhere" "some.tag" (tag $imported (param f64)))
 
@@ -114,7 +114,7 @@
 
   ;; CHECK:      (export "other-b" (func $other))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -127,7 +127,7 @@
     )
   )
 
-  ;; CHECK:      (func $bar (type $none_=>_none)
+  ;; CHECK:      (func $bar (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
@@ -138,7 +138,7 @@
     )
   )
 
-  ;; CHECK:      (func $uses (type $ref|$array|_=>_none) (param $array (ref $array))
+  ;; CHECK:      (func $uses (type $3) (param $array (ref $array))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -276,19 +276,19 @@
     (call $bar)
   )
 )
-;; CHECK:      (func $foo_3 (type $none_=>_none)
+;; CHECK:      (func $foo_3 (type $1)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 3)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $other (type $none_=>_none)
+;; CHECK:      (func $other (type $1)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $uses.second (type $ref|$array|_=>_none) (param $array (ref $array))
+;; CHECK:      (func $uses.second (type $3) (param $array (ref $array))
 ;; CHECK-NEXT:  (try $try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)

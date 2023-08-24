@@ -12,7 +12,7 @@
     (type $B (func))
   )
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $2 (func (param funcref)))
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -37,7 +37,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $2) (param $x funcref)
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
@@ -58,7 +58,7 @@
 ;; As above, but now there are no functions of type $A at all.
 (module
   (rec
-    ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+    ;; CHECK:      (type $0 (func (param funcref)))
 
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (func))
@@ -82,7 +82,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $0) (param $x funcref)
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
@@ -105,7 +105,7 @@
   ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $1 (func (param funcref)))
 
   ;; CHECK:      (elem declare func $possible)
 
@@ -122,7 +122,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $1) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.func $possible)
   ;; CHECK-NEXT:  )
@@ -142,7 +142,7 @@
   ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $1 (func (param funcref)))
 
   ;; CHECK:      (elem declare func $possible)
 
@@ -166,7 +166,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $1) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.func $possible)
   ;; CHECK-NEXT:  )
@@ -186,7 +186,7 @@
   ;; CHECK:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $1 (func (param funcref)))
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -212,7 +212,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $1) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
@@ -237,7 +237,7 @@
   ;; CHECK:      (type $B (sub $A (func)))
   (type $B (sub $A (func)))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $2 (func (param funcref)))
 
   ;; CHECK:      (elem declare func $possible-2)
 
@@ -265,7 +265,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_=>_none) (param $x funcref)
+  ;; CHECK:      (func $caller (type $2) (param $x funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
@@ -309,9 +309,9 @@
     (type $A (func (param anyref)))
   )
 
-  ;; CHECK:      (type $funcref_funcref_funcref_structref_=>_none (func (param funcref funcref funcref structref)))
+  ;; CHECK:      (type $4 (func (param funcref funcref funcref structref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $5 (func))
 
   ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
 
@@ -349,7 +349,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $funcref_funcref_funcref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $struct structref)
+  ;; CHECK:      (func $caller (type $4) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $struct structref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (struct.new_default $Y1)
   ;; CHECK-NEXT:   (ref.func $possible-Y1)
@@ -395,7 +395,7 @@
     )
   )
 
-  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK:      (func $reffer (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $possible-Y1)
   ;; CHECK-NEXT:  )
@@ -434,11 +434,11 @@
     (type $A (func (param anyref) (param anyref)))
   )
 
-  ;; CHECK:      (type $funcref_funcref_funcref_funcref_=>_none (func (param funcref funcref funcref funcref)))
+  ;; CHECK:      (type $4 (func (param funcref funcref funcref funcref)))
 
-  ;; CHECK:      (type $funcref_funcref_funcref_funcref_structref_=>_none (func (param funcref funcref funcref funcref structref)))
+  ;; CHECK:      (type $5 (func (param funcref funcref funcref funcref structref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $6 (func))
 
   ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
 
@@ -478,7 +478,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller1 (type $funcref_funcref_funcref_funcref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref)
+  ;; CHECK:      (func $caller1 (type $4) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (struct.new_default $Y1)
   ;; CHECK-NEXT:   (struct.new_default $Y1)
@@ -552,7 +552,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller2 (type $funcref_funcref_funcref_funcref_structref_=>_none) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref) (param $struct structref)
+  ;; CHECK:      (func $caller2 (type $5) (param $func1 funcref) (param $func2 funcref) (param $func3 funcref) (param $func4 funcref) (param $struct structref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (local.get $struct)
@@ -635,7 +635,7 @@
     )
   )
 
-  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK:      (func $reffer (type $6)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $possible-Y1)
   ;; CHECK-NEXT:  )
@@ -672,9 +672,9 @@
     (type $A (func (param anyref) (param anyref) (param anyref) (param anyref) (param anyref) (param anyref)))
   )
 
-  ;; CHECK:      (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none (func (param anyref anyref anyref anyref anyref anyref funcref)))
+  ;; CHECK:      (type $4 (func (param anyref anyref anyref anyref anyref anyref funcref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $5 (func))
 
   ;; CHECK:      (elem declare func $possible-1 $possible-2)
 
@@ -792,7 +792,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller1 (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none) (param $ref1 anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref) (param $func funcref)
+  ;; CHECK:      (func $caller1 (type $4) (param $ref1 anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref) (param $func funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.cast (ref $X)
   ;; CHECK-NEXT:    (local.get $ref1)
@@ -860,7 +860,7 @@
     )
   )
 
-  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK:      (func $reffer (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $possible-1)
   ;; CHECK-NEXT:  )
@@ -898,9 +898,9 @@
     (type $A (func (param (ref null $X)) (param (ref null $X)) (param (ref null $X))))
   )
 
-  ;; CHECK:      (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none (func (param anyref anyref anyref anyref anyref anyref funcref)))
+  ;; CHECK:      (type $4 (func (param anyref anyref anyref anyref anyref anyref funcref)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $5 (func))
 
   ;; CHECK:      (elem declare func $possible-1 $possible-2)
 
@@ -968,7 +968,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller1 (type $anyref_anyref_anyref_anyref_anyref_anyref_funcref_=>_none) (param $ref1 anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref) (param $func funcref)
+  ;; CHECK:      (func $caller1 (type $4) (param $ref1 anyref) (param $ref2 anyref) (param $ref3 anyref) (param $ref4 anyref) (param $ref5 anyref) (param $ref6 anyref) (param $func funcref)
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (ref.cast (ref null $X)
   ;; CHECK-NEXT:    (local.get $ref1)
@@ -1016,7 +1016,7 @@
     )
   )
 
-  ;; CHECK:      (func $reffer (type $none_=>_none)
+  ;; CHECK:      (func $reffer (type $5)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $possible-1)
   ;; CHECK-NEXT:  )
@@ -1054,7 +1054,7 @@
     (type $A (func (param anyref)))
   )
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $4 (func (param i32)))
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -1073,7 +1073,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $i32_=>_none) (param $i i32)
+  ;; CHECK:      (func $caller (type $4) (param $i i32)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )

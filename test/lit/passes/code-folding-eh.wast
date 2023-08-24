@@ -6,7 +6,7 @@
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      (func $pop-test (type $none_=>_none)
+  ;; CHECK:      (func $pop-test (type $0)
   ;; CHECK-NEXT:  (block $folding-inner0
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
@@ -67,12 +67,12 @@
     )
   )
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $2) (result i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (call $foo)
@@ -116,7 +116,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $try-call-optimize-expression-tails (type $none_=>_none)
+  ;; CHECK:      (func $try-call-optimize-expression-tails (type $0)
   ;; CHECK-NEXT:  (block $x
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do

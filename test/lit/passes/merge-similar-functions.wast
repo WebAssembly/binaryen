@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt --enable-reference-types --enable-gc --merge-similar-functions -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (func $big-const-42 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $big-const-42 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$big-const-42
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -18,7 +18,7 @@
   )
 
   ;; same as $big-const-42, but the set of $big-const-* derives {42, 42, 43} params
-  ;; CHECK:      (func $big-const-42-1 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $big-const-42-1 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$big-const-42
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -28,7 +28,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (i32.const 42)
   )
-  ;; CHECK:      (func $big-const-43 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $big-const-43 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$big-const-42
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
@@ -39,13 +39,13 @@
     (i32.const 43)
   )
 
-  ;; CHECK:      (func $small-const-44 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $small-const-44 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 44)
   ;; CHECK-NEXT: )
   (func $small-const-44 (result i32)
     (i32.const 44)
   )
-  ;; CHECK:      (func $small-const-45 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $small-const-45 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 45)
   ;; CHECK-NEXT: )
   (func $small-const-45 (result i32)
@@ -54,7 +54,7 @@
 )
 
 ;; offset locals for extra params
-;; CHECK:      (func $byn$mgfn-shared$big-const-42 (type $i32_=>_i32) (param $0 i32) (result i32)
+;; CHECK:      (func $byn$mgfn-shared$big-const-42 (type $1) (param $0 i32) (result i32)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -70,11 +70,11 @@
 ;; CHECK-NEXT:  (local.get $0)
 ;; CHECK-NEXT: )
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (func $take-param-and-local-0 (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $take-param-and-local-0 (type $0) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$take-param-and-local-0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 42)
@@ -86,7 +86,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (i32.add (i32.add (i32.const 42) (local.get $0)) (local.get $1))
   )
-  ;; CHECK:      (func $take-param-and-local-1 (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $take-param-and-local-1 (type $0) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$take-param-and-local-0
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (i32.const 43)
@@ -102,7 +102,7 @@
 )
 
 ;; different callees
-;; CHECK:      (func $byn$mgfn-shared$take-param-and-local-0 (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK:      (func $byn$mgfn-shared$take-param-and-local-0 (type $1) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-NEXT:  (local $2 i32)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -125,43 +125,43 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $ref|none_->_i32|_=>_i32 (func (param (ref $none_=>_i32)) (result i32)))
+  ;; CHECK:      (type $2 (func (param (ref $0)) (result i32)))
 
-  ;; CHECK:      (type $ref|i32_->_i32|_i32_=>_i32 (func (param (ref $i32_=>_i32) i32) (result i32)))
+  ;; CHECK:      (type $3 (func (param (ref $1) i32) (result i32)))
 
   ;; CHECK:      (elem declare func $callee-0 $callee-1 $callee-2 $callee-take-arg-0 $callee-take-arg-1)
 
-  ;; CHECK:      (func $callee-0 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $callee-0 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $callee-0 (result i32) (i32.const 0))
-  ;; CHECK:      (func $callee-1 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $callee-1 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $callee-1 (result i32) (i32.const 1))
-  ;; CHECK:      (func $callee-2 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $callee-2 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $callee-2 (result i32) (i32.const 2))
 
-  ;; CHECK:      (func $callee-take-arg-0 (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $callee-take-arg-0 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $callee-take-arg-0 (param i32) (result i32) (i32.const 0))
-  ;; CHECK:      (func $callee-take-arg-1 (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $callee-take-arg-1 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $callee-take-arg-1 (param i32) (result i32) (i32.const 1))
-  ;; CHECK:      (func $callee-take-arg-2 (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $callee-take-arg-2 (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $callee-take-arg-2 (param i32) (result i32) (i32.const 2))
 
-  ;; CHECK:      (func $yes-call-callee-0 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $yes-call-callee-0 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-call-callee-0
   ;; CHECK-NEXT:   (ref.func $callee-0)
   ;; CHECK-NEXT:  )
@@ -172,7 +172,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $callee-0)
   )
-  ;; CHECK:      (func $yes-call-callee-1 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $yes-call-callee-1 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-call-callee-0
   ;; CHECK-NEXT:   (ref.func $callee-1)
   ;; CHECK-NEXT:  )
@@ -183,7 +183,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $callee-1)
   )
-  ;; CHECK:      (func $yes-call-callee-2 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $yes-call-callee-2 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-call-callee-0
   ;; CHECK-NEXT:   (ref.func $callee-2)
   ;; CHECK-NEXT:  )
@@ -196,7 +196,7 @@
   )
 
 
-  ;; CHECK:      (func $yes-call-callee-take-arg-0 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $yes-call-callee-take-arg-0 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-call-callee-take-arg-0
   ;; CHECK-NEXT:   (ref.func $callee-take-arg-0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -208,7 +208,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $callee-take-arg-0 (i32.const 0))
   )
-  ;; CHECK:      (func $yes-call-callee-take-arg-1 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $yes-call-callee-take-arg-1 (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-call-callee-take-arg-0
   ;; CHECK-NEXT:   (ref.func $callee-take-arg-1)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -224,7 +224,7 @@
 
   ;; NOTE: calls with different argument expressions are not mergeable
 
-  ;; CHECK:      (func $no-call-callee-take-arg-0 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $no-call-callee-take-arg-0 (type $0) (result i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
@@ -263,7 +263,7 @@
       )
     )
   )
-  ;; CHECK:      (func $no-call-callee-take-arg-1 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $no-call-callee-take-arg-1 (type $0) (result i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
@@ -309,7 +309,7 @@
 
 )
 
-;; CHECK:      (func $byn$mgfn-shared$yes-call-callee-0 (type $ref|none_->_i32|_=>_i32) (param $0 (ref $none_=>_i32)) (result i32)
+;; CHECK:      (func $byn$mgfn-shared$yes-call-callee-0 (type $2) (param $0 (ref $0)) (result i32)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -328,12 +328,12 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref $none_=>_i32
+;; CHECK-NEXT:  (call_ref $0
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $byn$mgfn-shared$yes-call-callee-take-arg-0 (type $ref|i32_->_i32|_i32_=>_i32) (param $0 (ref $i32_=>_i32)) (param $1 i32) (result i32)
+;; CHECK:      (func $byn$mgfn-shared$yes-call-callee-take-arg-0 (type $3) (param $0 (ref $1)) (param $1 i32) (result i32)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -352,17 +352,17 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  (call_ref $i32_=>_i32
+;; CHECK-NEXT:  (call_ref $1
 ;; CHECK-NEXT:   (local.get $1)
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (func $use-42-twice (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $use-42-twice (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$use-42-twice
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -375,7 +375,7 @@
       (i32.const 42)
     )
   )
-  ;; CHECK:      (func $use-43-twice (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $use-43-twice (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$use-42-twice
   ;; CHECK-NEXT:   (i32.const 43)
   ;; CHECK-NEXT:  )
@@ -391,7 +391,7 @@
 
 )
 
-;; CHECK:      (func $byn$mgfn-shared$use-42-twice (type $i32_=>_i32) (param $0 i32) (result i32)
+;; CHECK:      (func $byn$mgfn-shared$use-42-twice (type $1) (param $0 i32) (result i32)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT:  (nop)
@@ -410,11 +410,11 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32)))
 
-  ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+  ;; CHECK:      (type $1 (func (param i32 i32 i32)))
 
-  ;; CHECK:      (func $yes-offset-local-indices-1 (type $i32_i32_=>_none) (param $a i32) (param $b i32)
+  ;; CHECK:      (func $yes-offset-local-indices-1 (type $0) (param $a i32) (param $b i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-offset-local-indices-1
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
@@ -434,7 +434,7 @@
     (drop (local.tee $b (local.get $b)))
     (drop (i32.const 1))
   )
-  ;; CHECK:      (func $yes-offset-local-indices-2 (type $i32_i32_=>_none) (param $a i32) (param $b i32)
+  ;; CHECK:      (func $yes-offset-local-indices-2 (type $0) (param $a i32) (param $b i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$yes-offset-local-indices-1
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:   (local.get $b)
@@ -456,7 +456,7 @@
   )
 
 )
-;; CHECK:      (func $byn$mgfn-shared$yes-offset-local-indices-1 (type $i32_i32_i32_=>_none) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CHECK:      (func $byn$mgfn-shared$yes-offset-local-indices-1 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
 ;; CHECK-NEXT:  (local $3 i32)
 ;; CHECK-NEXT:  (local $4 i32)
 ;; CHECK-NEXT:  (drop

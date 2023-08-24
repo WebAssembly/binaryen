@@ -33,7 +33,7 @@
   (type $used-a-bit (struct_subtype data))
  )
 
- ;; CHECK:      (func $use (type $ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_=>_ref|$used-a-bit|_ref|$used-a-bit|_ref|$used-a-bit|_ref|$used-a-bit|) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
+ ;; CHECK:      (func $use (type $8) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $use (param (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot) (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
@@ -79,7 +79,7 @@
   (type $used-a-lot (struct_subtype $twig))
  )
 
- ;; CHECK:      (func $use (type $ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_ref|$used-a-lot|_=>_ref|$used-a-bit|_ref|$used-a-bit|_ref|$used-a-bit|) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
+ ;; CHECK:      (func $use (type $8) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
  ;; CHECK-NEXT:  (local $6 (ref null $used-a-ton))
  ;; CHECK-NEXT:  (local $7 (ref null $used-a-ton))
  ;; CHECK-NEXT:  (local $8 (ref null $used-a-ton))
@@ -103,7 +103,7 @@
   (type $contains-basic (struct_subtype (ref any) data))
  )
 
- ;; CHECK:      (func $use (type $ref|$contains-basic|_=>_none) (param $0 (ref $contains-basic))
+ ;; CHECK:      (func $use (type $1) (param $0 (ref $contains-basic))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $use (param (ref $contains-basic))

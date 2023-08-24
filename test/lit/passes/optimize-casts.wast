@@ -18,7 +18,7 @@
   ;; CHECK:      (global $a (mut i32) (i32.const 0))
   (global $a (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $ref.as (type $ref?|$A|_=>_none) (param $x (ref null $A))
+  ;; CHECK:      (func $ref.as (type $8) (param $x (ref null $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -66,7 +66,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.as-no (type $ref|$A|_=>_none) (param $x (ref $A))
+  ;; CHECK:      (func $ref.as-no (type $6) (param $x (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -108,7 +108,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $ref.cast (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -140,7 +140,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-set (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $not-past-set (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -177,7 +177,7 @@
     )
   )
 
-  ;; CHECK:      (func $yes-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-call (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -209,7 +209,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $not-past-call_ref (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -240,7 +240,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-backwards-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $not-backwards-past-call (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -265,7 +265,7 @@
     )
   )
 
-  ;; CHECK:      (func $not-backwards-past-call_ref (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $not-backwards-past-call_ref (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -293,7 +293,7 @@
     )
   )
 
-  ;; CHECK:      (func $best (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $best (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $B))
   ;; CHECK-NEXT:  (drop
@@ -358,7 +358,7 @@
     )
   )
 
-  ;; CHECK:      (func $best-2 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $best-2 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -400,7 +400,7 @@
     )
   )
 
-  ;; CHECK:      (func $fallthrough (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $fallthrough (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -429,7 +429,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-basic-block (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $past-basic-block (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $A)
   ;; CHECK-NEXT:    (local.get $x)
@@ -460,7 +460,7 @@
     )
   )
 
-  ;; CHECK:      (func $multiple (type $ref|struct|_ref|struct|_=>_none) (param $x (ref struct)) (param $y (ref struct))
+  ;; CHECK:      (func $multiple (type $7) (param $x (ref struct)) (param $y (ref struct))
   ;; CHECK-NEXT:  (local $a (ref struct))
   ;; CHECK-NEXT:  (local $b (ref struct))
   ;; CHECK-NEXT:  (local $4 (ref $A))
@@ -540,7 +540,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-1 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-1 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -581,7 +581,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-2 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-2 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -621,7 +621,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-3 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-3 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -659,7 +659,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-4 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-4 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -697,7 +697,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-5 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-5 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -734,7 +734,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-6 (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-cast-6 (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -770,7 +770,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-move-already-refined-local (type $ref|$B|_=>_none) (param $x (ref $B))
+  ;; CHECK:      (func $no-move-already-refined-local (type $9) (param $x (ref $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -793,7 +793,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-move-ref.as-to-non-nullable-local (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $no-move-ref.as-to-non-nullable-local (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -817,7 +817,7 @@
     )
   )
 
-  ;; CHECK:      (func $avoid-erroneous-cast-move (type $ref|$A|_=>_none) (param $x (ref $A))
+  ;; CHECK:      (func $avoid-erroneous-cast-move (type $6) (param $x (ref $A))
   ;; CHECK-NEXT:  (local $a (ref $A))
   ;; CHECK-NEXT:  (local.set $a
   ;; CHECK-NEXT:   (local.get $x)
@@ -850,7 +850,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-as-1 (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-as-1 (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -878,7 +878,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-as-2 (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-as-2 (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -904,7 +904,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-cast-side-effects (type $ref|struct|_ref|struct|_=>_none) (param $x (ref struct)) (param $y (ref struct))
+  ;; CHECK:      (func $move-cast-side-effects (type $7) (param $x (ref struct)) (param $y (ref struct))
   ;; CHECK-NEXT:  (local $2 (ref $A))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (drop
@@ -987,7 +987,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref.as-for-separate-index (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK:      (func $move-ref.as-for-separate-index (type $5) (param $x structref) (param $y structref)
   ;; CHECK-NEXT:  (local $2 (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -1039,7 +1039,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref.as-and-ref.cast (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-ref.as-and-ref.cast (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1076,7 +1076,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref.as-and-ref.cast-2 (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-ref.as-and-ref.cast-2 (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1119,7 +1119,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-ref.as-and-ref.cast-3 (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $move-ref.as-and-ref.cast-3 (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1163,7 +1163,7 @@
     )
   )
 
-  ;; CHECK:      (func $unoptimizable-nested-casts (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $unoptimizable-nested-casts (type $3) (param $x structref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -1184,7 +1184,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-move-over-self-tee (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK:      (func $no-move-over-self-tee (type $5) (param $x structref) (param $y structref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -1212,7 +1212,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-over-tee (type $structref_structref_=>_none) (param $x structref) (param $y structref)
+  ;; CHECK:      (func $move-over-tee (type $5) (param $x structref) (param $y structref)
   ;; CHECK-NEXT:  (local $a structref)
   ;; CHECK-NEXT:  (local $3 (ref $A))
   ;; CHECK-NEXT:  (drop
@@ -1245,7 +1245,7 @@
     )
   )
 
-  ;; CHECK:      (func $move-identical-repeated-casts (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $move-identical-repeated-casts (type $2) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -1284,7 +1284,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-move-past-non-linear (type $structref_=>_none) (param $x structref)
+  ;; CHECK:      (func $no-move-past-non-linear (type $3) (param $x structref)
   ;; CHECK-NEXT:  (local $1 (ref struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -1346,7 +1346,7 @@
     )
   )
 
-  ;; CHECK:      (func $get (type $none_=>_ref|struct|) (result (ref struct))
+  ;; CHECK:      (func $get (type $11) (result (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $get (result (ref struct))

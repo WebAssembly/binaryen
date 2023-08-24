@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --code-pushing -tnh -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+  ;; CHECK:      (type $0 (func (param i32 i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (func $div (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (local $temp i32)

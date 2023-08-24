@@ -15,7 +15,7 @@
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (func $tee (type $none_=>_none)
+  ;; CHECK:      (func $tee (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -36,7 +36,7 @@
     )
   )
 
-  ;; CHECK:      (func $side-effects-in-old-value (type $none_=>_none)
+  ;; CHECK:      (func $side-effects-in-old-value (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -64,7 +64,7 @@
     )
   )
 
-  ;; CHECK:      (func $side-effects-in-new-value (type $none_=>_none)
+  ;; CHECK:      (func $side-effects-in-new-value (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -87,7 +87,7 @@
     )
   )
 
-  ;; CHECK:      (func $many-fields (type $none_=>_none)
+  ;; CHECK:      (func $many-fields (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct2))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct2
@@ -126,7 +126,7 @@
     )
   )
 
-  ;; CHECK:      (func $side-effect-conflict (type $none_=>_none)
+  ;; CHECK:      (func $side-effect-conflict (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct2))
   ;; CHECK-NEXT:  (struct.set $struct2 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -157,7 +157,7 @@
     )
   )
 
-  ;; CHECK:      (func $side-effect-ok (type $none_=>_none)
+  ;; CHECK:      (func $side-effect-ok (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct2))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct2
@@ -189,7 +189,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-subsequent (type $none_=>_none)
+  ;; CHECK:      (func $optimize-subsequent (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -212,7 +212,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-subsequent-bad-local (type $none_=>_none)
+  ;; CHECK:      (func $optimize-subsequent-bad-local (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $other (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
@@ -241,7 +241,7 @@
     )
   )
 
-  ;; CHECK:      (func $optimize-chain (type $none_=>_none)
+  ;; CHECK:      (func $optimize-chain (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -269,7 +269,7 @@
     )
   )
 
-  ;; CHECK:      (func $pattern-breaker (type $none_=>_none)
+  ;; CHECK:      (func $pattern-breaker (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -297,7 +297,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-local-write (type $none_=>_none)
+  ;; CHECK:      (func $ref-local-write (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -333,7 +333,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-local-write-tee (type $none_=>_none)
+  ;; CHECK:      (func $ref-local-write-tee (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -367,7 +367,7 @@
     )
   )
 
-  ;; CHECK:      (func $other-local-write (type $none_=>_none)
+  ;; CHECK:      (func $other-local-write (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $other (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
@@ -402,7 +402,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-local-read (type $none_=>_none)
+  ;; CHECK:      (func $ref-local-read (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
@@ -438,7 +438,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-local-read-tee (type $none_=>_none)
+  ;; CHECK:      (func $ref-local-read-tee (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -472,7 +472,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-other-read (type $none_=>_none)
+  ;; CHECK:      (func $ref-other-read (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local $other (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
@@ -507,7 +507,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee-and-subsequent (type $none_=>_none)
+  ;; CHECK:      (func $tee-and-subsequent (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct3))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct3
@@ -543,7 +543,7 @@
     )
   )
 
-  ;; CHECK:      (func $side-effect-subsequent-ok (type $none_=>_none)
+  ;; CHECK:      (func $side-effect-subsequent-ok (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct2))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct2
@@ -573,7 +573,7 @@
     )
   )
 
-  ;; CHECK:      (func $default (type $none_=>_none)
+  ;; CHECK:      (func $default (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -594,7 +594,7 @@
     )
   )
 
-  ;; CHECK:      (func $many-news (type $none_=>_none)
+  ;; CHECK:      (func $many-news (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct3))
   ;; CHECK-NEXT:  (local $ref2 (ref null $struct3))
   ;; CHECK-NEXT:  (local.set $ref
@@ -710,7 +710,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable (type $none_=>_none)
+  ;; CHECK:      (func $unreachable (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.tee $ref
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
@@ -760,7 +760,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper-i32 (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK:      (func $helper-i32 (type $4) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $helper-i32 (param $x i32) (result i32)

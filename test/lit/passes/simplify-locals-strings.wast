@@ -10,7 +10,7 @@
   ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array_subtype (mut i16) data))
 
-  ;; CHECK:      (func $no-new-past-store (type $none_=>_none)
+  ;; CHECK:      (func $no-new-past-store (type $1)
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (string.new_utf8
@@ -122,7 +122,7 @@
     )
   )
 
-  ;; CHECK:      (func $yes-new-past-store (type $none_=>_none)
+  ;; CHECK:      (func $yes-new-past-store (type $1)
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -156,7 +156,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-new-past-store-gc (type $ref|$array|_ref|$array16|_=>_none) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $no-new-past-store-gc (type $3) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (string.new_utf8_array
@@ -284,7 +284,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-load-past-encode (type $stringref_=>_none) (param $ref stringref)
+  ;; CHECK:      (func $no-load-past-encode (type $4) (param $ref stringref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (i32.load
@@ -404,7 +404,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-load-past-encode-gc (type $stringref_ref|$array|_ref|$array16|_=>_none) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $no-load-past-encode-gc (type $5) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.get_u $array
@@ -541,7 +541,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-iteration-past-each-other (type $stringview_iter_=>_none) (param $iter stringview_iter)
+  ;; CHECK:      (func $no-iteration-past-each-other (type $6) (param $iter stringview_iter)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_iter.next

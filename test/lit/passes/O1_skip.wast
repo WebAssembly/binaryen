@@ -7,9 +7,9 @@
 ;; CHECK-NOT: warning:
 
 (module
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
+ ;; CHECK:      (type $0 (func (param i32 i32)))
 
- ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $1 (func (param i32)))
 
  ;; CHECK:      (import "a" "b" (func $log (param i32 i32)))
  (import "a" "b" (func $log (param i32 i32)))

@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $externref_anyref_=>_none (func (param externref anyref)))
+  ;; CHECK:      (type $0 (func (param externref anyref)))
 
   ;; CHECK:      (export "externals" (func $externals))
 
-  ;; CHECK:      (func $externals (type $externref_anyref_=>_none) (param $ext externref) (param $any anyref)
+  ;; CHECK:      (func $externals (type $0) (param $ext externref) (param $any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref struct)
   ;; CHECK-NEXT:    (extern.internalize
@@ -37,7 +37,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exported (type $externref_anyref_=>_none) (param $ext externref) (param $any anyref)
+  ;; CHECK:      (func $non-exported (type $0) (param $ext externref) (param $any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:    (drop

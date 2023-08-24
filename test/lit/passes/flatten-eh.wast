@@ -7,7 +7,7 @@
   ;; CHECK:      (tag $e-f32 (param f32))
   (tag $e-f32 (param f32))
 
-  ;; CHECK:      (func $try_catch (type $none_=>_none)
+  ;; CHECK:      (func $try_catch (type $1)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f32)
@@ -55,7 +55,7 @@
     )
   )
 
-  ;; CHECK:      (func $try_catch_pop_fixup (type $none_=>_none)
+  ;; CHECK:      (func $try_catch_pop_fixup (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $l0
@@ -101,7 +101,7 @@
     )
   )
 
-  ;; CHECK:      (func $try_catch_return_value (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $try_catch_return_value (type $0) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -138,7 +138,7 @@
     )
   )
 
-  ;; CHECK:      (func $try_unreachable (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $try_unreachable (type $0) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -174,7 +174,7 @@
     )
   )
 
-  ;; CHECK:      (func $catch_unreachable (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $catch_unreachable (type $0) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)

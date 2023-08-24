@@ -5,7 +5,7 @@
   ;; CHECK:      (type $A (struct ))
   (type $A (struct))
 
-  ;; CHECK:      (func $yes-past-call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-call (type $1) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -34,7 +34,7 @@
     )
   )
 
-  ;; CHECK:      (func $yes-past-return_call (type $ref|struct|_=>_none) (param $x (ref struct))
+  ;; CHECK:      (func $yes-past-return_call (type $1) (param $x (ref struct))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -62,7 +62,7 @@
     )
   )
 
-  ;; CHECK:      (func $none (type $none_=>_none)
+  ;; CHECK:      (func $none (type $2)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $none

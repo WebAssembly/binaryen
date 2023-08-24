@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s -all --optimize-instructions -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $string.checks (type $ref|string|_ref|string|_=>_none) (param $a (ref string)) (param $b (ref string))
+  ;; CHECK:      (func $string.checks (type $0) (param $a (ref string)) (param $b (ref string))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.eq
   ;; CHECK-NEXT:    (local.get $a)

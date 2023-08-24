@@ -2,17 +2,17 @@
 ;; RUN: foreach %s %t wasm-opt -all --reorder-functions-by-name -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (func $a (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $a (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $b (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $b (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $c (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $c (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 30)
   ;; CHECK-NEXT: )
   (func $c (result i32)
@@ -29,23 +29,23 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (func $a (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $a (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT: )
   (func $a (result i32)
     (i32.const 10)
   )
 
-  ;; CHECK:      (func $b (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $b (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
   (func $b (result i32)
     (i32.const 20)
   )
 
-  ;; CHECK:      (func $c (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $c (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 30)
   ;; CHECK-NEXT: )
   (func $c (result i32)
@@ -54,13 +54,13 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (func $a (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $a (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $b (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $b (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
   (func $b (result i32)
@@ -71,7 +71,7 @@
     (i32.const 10)
   )
 
-  ;; CHECK:      (func $c (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $c (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 30)
   ;; CHECK-NEXT: )
   (func $c (result i32)
@@ -80,17 +80,17 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (func $a (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $a (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 10)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $b (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $b (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $c (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $c (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 30)
   ;; CHECK-NEXT: )
   (func $c (result i32)

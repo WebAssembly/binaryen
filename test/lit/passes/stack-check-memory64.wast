@@ -5,9 +5,9 @@
 
 (module
  (memory i64 (data))
- ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+ ;; CHECK:      (type $0 (func (result i64)))
 
- ;; CHECK:      (type $i64_i64_=>_none (func (param i64 i64)))
+ ;; CHECK:      (type $1 (func (param i64 i64)))
 
  ;; CHECK:      (global $sp (mut i64) (i64.const 0))
  (global $sp (mut i64) (i64.const 0))
@@ -64,7 +64,7 @@
 (module
  ;; if the global names are taken we should not crash
  (memory i64 (data))
- ;; CHECK:      (type $i64_i64_=>_none (func (param i64 i64)))
+ ;; CHECK:      (type $0 (func (param i64 i64)))
 
  ;; CHECK:      (global $sp (mut i64) (i64.const 0))
  (global $sp (mut i64) (i64.const 0)))

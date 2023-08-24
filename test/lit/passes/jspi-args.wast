@@ -3,13 +3,13 @@
 
 (module
   ;; sleep_async should have a wrapper function built.
-  ;; CHECK:      (type $f64_=>_i32 (func (param f64) (result i32)))
+  ;; CHECK:      (type $0 (func (param f64) (result i32)))
 
-  ;; CHECK:      (type $externref_f64_=>_i32 (func (param externref f64) (result i32)))
+  ;; CHECK:      (type $1 (func (param externref f64) (result i32)))
 
-  ;; CHECK:      (import "js" "sleep_sync" (func $sleep_sync (type $f64_=>_i32) (param f64) (result i32)))
+  ;; CHECK:      (import "js" "sleep_sync" (func $sleep_sync (type $0) (param f64) (result i32)))
   (import "js" "sleep_async" (func $sleep_async (param f64) (result i32)))
-  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (type $externref_f64_=>_i32) (param externref f64) (result i32)))
+  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (type $1) (param externref f64) (result i32)))
   (import "js" "sleep_sync" (func $sleep_sync (param f64) (result i32)))
   ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 
@@ -18,7 +18,7 @@
   ;; CHECK:      (export "update_state_sync" (func $update_state_sync))
   (export "update_state_sync" (func $update_state_sync))
   ;; This function calls an async sleep so a wrapper should be created for it.
-  ;; CHECK:      (func $update_state_async (type $f64_=>_i32) (param $param f64) (result i32)
+  ;; CHECK:      (func $update_state_async (type $0) (param $param f64) (result i32)
   ;; CHECK-NEXT:  (call $sleep_async
   ;; CHECK-NEXT:   (f64.sub
   ;; CHECK-NEXT:    (f64.const 1.1)
@@ -29,7 +29,7 @@
   (func $update_state_async (param $param f64) (result i32)
     (call $sleep_async (f64.sub (f64.const 1.1) (local.get $param)))
   )
-  ;; CHECK:      (func $update_state_sync (type $f64_=>_i32) (param $param f64) (result i32)
+  ;; CHECK:      (func $update_state_sync (type $0) (param $param f64) (result i32)
   ;; CHECK-NEXT:  (call $sleep_sync
   ;; CHECK-NEXT:   (f64.sub
   ;; CHECK-NEXT:    (f64.const 1.1)
@@ -41,7 +41,7 @@
     (call $sleep_sync (f64.sub (f64.const 1.1) (local.get $param)))
   )
 )
-;; CHECK:      (func $export$update_state_async (type $externref_f64_=>_i32) (param $susp externref) (param $param f64) (result i32)
+;; CHECK:      (func $export$update_state_async (type $1) (param $susp externref) (param $param f64) (result i32)
 ;; CHECK-NEXT:  (global.set $suspender
 ;; CHECK-NEXT:   (local.get $susp)
 ;; CHECK-NEXT:  )
@@ -50,7 +50,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $sleep_async (type $f64_=>_i32) (param $0 f64) (result i32)
+;; CHECK:      (func $sleep_async (type $0) (param $0 f64) (result i32)
 ;; CHECK-NEXT:  (local $1 externref)
 ;; CHECK-NEXT:  (local $2 i32)
 ;; CHECK-NEXT:  (local.set $1
