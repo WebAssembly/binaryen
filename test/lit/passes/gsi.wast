@@ -1400,7 +1400,7 @@
     (type $B (sub $A (struct (field (ref func)))))
   )
 
-  ;; CHECK:      (type $ref?|$A|_ref?|$B|_=>_funcref (func (param (ref null $A) (ref null $B)) (result funcref)))
+  ;; CHECK:      (type $2 (func (param (ref null $A) (ref null $B)) (result funcref)))
 
   ;; CHECK:      (global $global (ref $B) (struct.new $B
   ;; CHECK-NEXT:  (ref.func $func)
@@ -1409,7 +1409,7 @@
     (ref.func $func)
   ))
 
-  ;; CHECK:      (func $func (type $ref?|$A|_ref?|$B|_=>_funcref) (param $a (ref null $A)) (param $b (ref null $B)) (result funcref)
+  ;; CHECK:      (func $func (type $2) (param $a (ref null $A)) (param $b (ref null $B)) (result funcref)
   ;; CHECK-NEXT:  (struct.get $B 0
   ;; CHECK-NEXT:   (block (result (ref $B))
   ;; CHECK-NEXT:    (drop
