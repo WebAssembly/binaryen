@@ -23,6 +23,10 @@ void scavengeDebugInfo(Expression* replacement,
                        Expression* original,
                        Function* func) {
   auto& debug = func->debugLocations;
+  if (debug.empty()) {
+    // No debug info is present at all.
+    return;
+  }
 
   // Given an expression, use its debug info if it has any, and return true if
   // so.
