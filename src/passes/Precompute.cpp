@@ -292,7 +292,7 @@ struct Precompute
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          reuseConstantNode(flow, ret->value);
+          ret->value = reuseConstantNode(flow, ret->value);
           ret->finalize();
         } else {
           Builder builder(*getModule());
@@ -307,7 +307,7 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        reuseConstantNode(flow, br->value);
+        br->value = reuseConstantNode(flow, br->value);
         br->finalize();
       } else {
         Builder builder(*getModule());
