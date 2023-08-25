@@ -42,9 +42,7 @@ public:
   // Get the valid Binaryen IR expression representing the sequence of visited
   // instructions. The IRBuilder is reset and can be used with a fresh sequence
   // of instructions after this is called.
-  Expression* build();
-
-  [[nodiscard]] Result<std::vector<Expression*>> finishInstrs();
+  [[nodiscard]] Result<Expression*> build();
 
   // Call visit() on an existing Expression with its non-child fields
   // initialized to initialize the child fields and refinalize it. The specific
@@ -56,11 +54,13 @@ public:
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
 
+  [[nodiscard]] Result<> visitEnd();
+
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
   // is generally safer than calling `visit` because the function signatures
   // ensure that there are no missing fields.
   [[nodiscard]] Result<> makeNop();
-  [[nodiscard]] Result<> makeBlock();
+  [[nodiscard]] Result<> makeBlock(Name label, Type type);
   // [[nodiscard]] Result<> makeIf();
   // [[nodiscard]] Result<> makeLoop();
   // [[nodiscard]] Result<> makeBreak();
@@ -168,9 +168,6 @@ public:
   // [[nodiscard]] Result<> makeStringSliceWTF();
   // [[nodiscard]] Result<> makeStringSliceIter();
 
-  // TODO: make this private.
-  void pushScope(Type type) { scopeStack.push_back({{}, type}); }
-
   void setFunction(Function* func) { this->func = func; }
 
 private:
@@ -183,24 +180,42 @@ private:
   // to have.
   struct BlockCtx {
     std::vector<Expression*> exprStack;
-    Type type;
+    Block* block;
+    // Whether we have seen an unreachable instruction and are in
+    // stack-polymorphic unreachable mode.
+    bool unreachable = false;
   };
 
   // The stack of block contexts currently being parsed.
   std::vector<BlockCtx> scopeStack;
-  std::vector<Expression*>& getExprStack();
-  Type getResultType() {
-    assert(!scopeStack.empty());
-    return scopeStack.back().type;
+
+  BlockCtx& getScope() {
+    if (scopeStack.empty()) {
+      // We are not in a block context, so push a dummy scope.
+      scopeStack.push_back({{}, nullptr});
+    }
+    return scopeStack.back();
   }
 
-  // Whether we have seen an unreachable instruction and are in
-  // stack-polymorphic unreachable mode.
-  bool unreachable = false;
+  [[nodiscard]] Result<Index> addScratchLocal(Type);
+  [[nodiscard]] Result<Expression*> pop();
+  void push(Expression*);
 
-  Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<> push(Expression*);
-  Result<Expression*> pop();
+  struct HoistedVal {
+    // The index in the stack of the original value-producing expression.
+    Index valIndex;
+    // The local.get placed on the stack, if any.
+    LocalGet* get;
+  };
+
+  // Find the last value-producing expression, if any, and hoist its value to
+  // the top of the stack using a scratch local if necessary.
+  [[nodiscard]] MaybeResult<HoistedVal> hoistLastValue();
+  // Transform the stack as necessary such that the original producer of the
+  // hoisted value will be popped along with the final expression that produces
+  // the value, if they are different. May only be called directly after
+  // hoistLastValue().
+  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
 };
 
 } // namespace wasm
