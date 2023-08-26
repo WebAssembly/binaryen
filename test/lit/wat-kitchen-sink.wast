@@ -841,7 +841,6 @@
   end
  )
 
-
  ;; CHECK:      (func $binary (type $15) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add
