@@ -330,6 +330,9 @@ Result<> IRBuilder::visitEnd() {
     CHECK_ERR(hoisted);
   }
   block->list.set(scope.exprStack);
+  // TODO: Track branches so we can know whether this block is a target and
+  // finalize more efficiently.
+  block->finalize(block->type);
   scopeStack.pop_back();
   push(block);
   return Ok{};
