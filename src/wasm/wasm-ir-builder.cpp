@@ -56,7 +56,7 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
     }
   }
   if (index < 0) {
-    // There is no value-producing expression.
+    // There is no value-producing or unreachable expression.
     return {};
   }
   if (unsigned(index) == stack.size() - 1) {
