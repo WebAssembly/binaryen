@@ -407,8 +407,8 @@ enum EncodedType {
 #else
 #endif
 #if STANDARD_GC_ENCODINGS
-  nullable = -0x1c,    // 0x64
-  nonnullable = -0x1d, // 0x63
+  nonnullable = -0x1c, // 0x64
+  nullable = -0x1d,    // 0x63
 #else
   nullable = -0x14,             // 0x6c
   nonnullable = -0x15,          // 0x6b
