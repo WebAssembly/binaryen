@@ -676,7 +676,7 @@ struct NullInstrParserCtx {
   InstrsT finishInstrs(InstrsT&) { return Ok{}; }
 
   ExprT makeExpr(InstrsT) { return Ok{}; }
-  ExprT instrToExpr(InstrT) { return Ok{}; }
+  Result<ExprT> instrToExpr(InstrT) { return Ok{}; }
 
   template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
     return Ok{};
@@ -696,9 +696,11 @@ struct NullInstrParserCtx {
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
-  InstrT makeBlock(Index, std::optional<Name>, BlockTypeT, InstrsT) {
+  InstrT makeBlock(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
+  InstrT finishBlock(Index, InstrsT) { return Ok{}; }
+
   InstrT makeUnreachable(Index) { return Ok{}; }
   InstrT makeNop(Index) { return Ok{}; }
   InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
@@ -1280,7 +1282,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   // Keep track of instructions internally rather than letting the general
   // parser collect them.
   using InstrT = Ok;
-  using InstrsT = std::vector<Expression*>;
+  using InstrsT = Ok;
   using ExprT = Expression*;
 
   using FieldIdxT = Index;
@@ -1334,12 +1336,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   HeapType getBlockTypeFromResult(const std::vector<Type> results) {
     assert(results.size() == 1);
-    irBuilder.pushScope(results[0]);
     return HeapType(Signature(Type::none, results[0]));
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
-    irBuilder.pushScope(type.getSignature().results);
     return type;
   }
 
@@ -1347,11 +1347,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   void appendInstr(Ok&, InstrT instr) {}
 
-  Result<InstrsT> finishInstrs(Ok&) {
-    return withLoc(irBuilder.finishInstrs());
-  }
+  Result<InstrsT> finishInstrs(Ok&) { return Ok{}; }
 
-  Expression* instrToExpr(Ok&) { return irBuilder.build(); }
+  Result<Expression*> instrToExpr(Ok&) { return irBuilder.build(); }
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -1475,25 +1473,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
-                   std::optional<InstrsT> insts,
-                   Index) {
-    Expression* body;
-    if (insts) {
-      switch (insts->size()) {
-        case 0:
-          body = builder.makeNop();
-          break;
-        case 1:
-          body = insts->back();
-          break;
-        default:
-          body = builder.makeBlock(*insts, wasm.functions[index]->getResults());
-          break;
-      }
-    } else {
-      body = builder.makeNop();
-    }
-    wasm.functions[index]->body = body;
+                   std::optional<InstrsT>,
+                   Index pos) {
+    CHECK_ERR(withLoc(pos, irBuilder.visitEnd()));
+    auto body = irBuilder.build();
+    CHECK_ERR(withLoc(pos, body));
+    wasm.functions[index]->body = *body;
     return Ok{};
   }
 
@@ -1537,16 +1522,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Expression* makeExpr(InstrsT& instrs) {
-    switch (instrs.size()) {
-      case 0:
-        return builder.makeNop();
-      case 1:
-        return instrs.front();
-      default:
-        return builder.makeBlock(instrs);
-    }
-  }
+  Result<Expression*> makeExpr(InstrsT& instrs) { return irBuilder.build(); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
@@ -1560,20 +1536,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return wasm.memories[0]->name;
   }
 
-  Result<> makeBlock(Index pos,
-                     std::optional<Name> label,
-                     HeapType type,
-                     const std::vector<Expression*>& instrs) {
+  Result<> makeBlock(Index pos, std::optional<Name> label, HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
-    auto results = type.getSignature().results;
-    Block* block = wasm.allocator.alloc<Block>();
-    block->type = results;
-    if (label) {
-      block->name = *label;
-    }
-    block->list.set(instrs);
-    return withLoc(pos, irBuilder.visit(block));
+    return withLoc(pos,
+                   irBuilder.makeBlock(label ? *label : Name{},
+                                       type.getSignature().results));
+  }
+
+  Result<> finishBlock(Index pos, InstrsT) {
+    return withLoc(pos, irBuilder.visitEnd());
   }
 
   Result<> makeUnreachable(Index pos) {
@@ -2595,6 +2567,8 @@ MaybeResult<typename Ctx::InstrT> block(Ctx& ctx, bool folded) {
   auto type = blocktype(ctx);
   CHECK_ERR(type);
 
+  ctx.makeBlock(pos, label, *type);
+
   auto insts = instrs(ctx);
   CHECK_ERR(insts);
 
@@ -2612,7 +2586,7 @@ MaybeResult<typename Ctx::InstrT> block(Ctx& ctx, bool folded) {
     }
   }
 
-  return ctx.makeBlock(pos, label, *type, std::move(*insts));
+  return ctx.finishBlock(pos, std::move(*insts));
 }
 
 template<typename Ctx>
@@ -3745,7 +3719,9 @@ template<typename Ctx> MaybeResult<> data(Ctx& ctx) {
   } else if (ctx.in.takeLParen()) {
     auto inst = instr(ctx);
     CHECK_ERR(inst);
-    offset = ctx.instrToExpr(*inst);
+    auto offsetExpr = ctx.instrToExpr(*inst);
+    CHECK_ERR(offsetExpr);
+    offset = *offsetExpr;
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of offset instruction");
     }
@@ -3893,7 +3869,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
       ctx.setFunction(wasm.functions[i].get());
-      ctx.irBuilder.pushScope(ctx.func->getResults());
+      CHECK_ERR(ctx.irBuilder.makeBlock(Name{}, ctx.func->getResults()));
       WithPosition with(ctx, decls.funcDefs[i].pos);
       auto parsed = func(ctx);
       CHECK_ERR(parsed);

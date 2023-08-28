@@ -170,6 +170,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   std::vector<HeapType> heapTypes;
 
+  unsigned lastPrintIndent = 0;
+
   // Print type names by saved name or index if we have a module, or otherwise
   // by generating minimalist names. TODO: Handle conflicts between
   // user-provided names and the fallback indexed names.
@@ -2375,10 +2377,11 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 
 void PrintSExpression::printDebugLocation(
   const Function::DebugLocation& location) {
-  if (lastPrintedLocation == location) {
+  if (lastPrintedLocation == location && indent > lastPrintIndent) {
     return;
   }
   lastPrintedLocation = location;
+  lastPrintIndent = indent;
   auto fileName = currModule->debugInfoFileNames[location.fileIndex];
   o << ";;@ " << fileName << ":" << location.lineNumber << ":"
     << location.columnNumber << '\n';
