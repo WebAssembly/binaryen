@@ -8,9 +8,9 @@
 ;; be identical to the input.
 
 (module
-  ;; CHECK:      (func $func (param $0 i32) (result i32)
+  ;; CHECK:      (func $test (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $func
+  ;; CHECK-NEXT:   (call $test
   ;; CHECK-NEXT:    ;;@ waka:100:1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -27,7 +27,7 @@
     ;; that only happens in that state: removing the debug info either before or
     ;; after would avoid the bug.)
     (drop
-      (call $func
+      (call $test
         ;;@ waka:100:1
         (i32.const 1)
       )
@@ -36,10 +36,20 @@
     (i32.const 2)
   )
 
+  ;; CHECK:      (func $same-later (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $test
+  ;; CHECK-NEXT:    ;;@ waka:100:1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  ;;@ waka:100:1
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
   (func $same-later (param i32) (result i32)
     ;; As the first, but now the later debug info is also 100:1.
     (drop
-      (call $func
+      (call $test
         ;;@ waka:100:1
         (i32.const 1)
       )
@@ -48,14 +58,28 @@
     (i32.const 2)
   )
 
+  ;; CHECK:      (func $more-before (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  ;;@ waka:50:5
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ waka:50:5
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $test
+  ;; CHECK-NEXT:    ;;@ waka:100:1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  ;;@ waka:200:2
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
   (func $more-before (param i32) (result i32)
     ;; As the first, but now there is more debug info before the 100:1 (the
     ;; very first debug info in a function has special handling, so we test it
     ;; more carefully).
     ;;@ waka:50:5
     (nop)
+    ;; XXX bad!
     (drop
-      (call $func
+      (call $test
         ;;@ waka:100:1
         (i32.const 1)
       )
@@ -64,12 +88,23 @@
     (i32.const 2)
   )
 
+  ;; CHECK:      (func $nothing-before (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $test
+  ;; CHECK-NEXT:    ;;@ waka:100:1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  ;;@ waka:200:2
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
   (func $nothing-before (param i32) (result i32)
     ;; As before, but no debug info on the nop before us (so the first
     ;; instruction in the function no longer has a debug annotation).
     (nop)
     (drop
-      (call $func
+      (call $test
         ;;@ waka:100:1
         (i32.const 1)
       )
