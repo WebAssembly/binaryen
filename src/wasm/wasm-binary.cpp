@@ -140,7 +140,6 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   // things backwards.
   auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
   if (adjustmentForLEBShrinking) {
-std::cout << "waka adjusttt down section " << adjustmentForLEBShrinking << '\n';
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes,
@@ -422,7 +421,6 @@ void WasmBinaryWriter::writeFunctions() {
     // things backwards.
     auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
     if (adjustmentForLEBShrinking) {
-std::cout << "waka adjusttt down func " << adjustmentForLEBShrinking << '\n';
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
@@ -1197,9 +1195,6 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       writeBase64VLQ(*sourceMap,
                      int32_t(loc->columnNumber - lastLoc.columnNumber));
       lastLoc = *loc;
-      std::cout << "waka write 4-er " << loc->lineNumber << ":" << loc->columnNumber << "\n";
-    } else {
-      std::cout << "waka waka write a 1-er\n";
     }
   }
   *sourceMap << "\"}";
@@ -1351,9 +1346,6 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
     if (iter != debugLocations.end()) {
       // There is debug information here, write it out.
       writeDebugLocation(iter->second);
-
-std::cout << "waka write debug location " << iter->second.lineNumber << ":" << iter->second.columnNumber << " for " << getExpressionName(curr) << " : " << *curr << " at offset " << o.size() << '\n';
-
     } else {
       // This expression has no debug location. We need to emit an indication
       // of that (so that we do not get "smeared" with debug info from anything
@@ -1363,11 +1355,10 @@ std::cout << "waka write debug location " << iter->second.lineNumber << ":" << i
       // single one is enough to make it clear that the debug information before
       // us is valid no longer. We also don't need to write one if there is
       // nothing before us.
-      // waka waka this is good i hope
       if (!sourceMapLocations.empty() &&
           sourceMapLocations.back().second != nullptr) {
         sourceMapLocations.emplace_back(o.size(), nullptr);
-std::cout << "waka write NULL debug location at offset " << o.size() << "\n";
+
         // Initialize the state of debug info to indicate there is no current
         // debug info relevant. This sets |lastDebugLocation| to a dummy value,
         // so that later places with debug info can see that they differ from
@@ -2818,12 +2809,9 @@ void WasmBinaryReader::readSourceMapHeader() {
   nextDebugLocation = {
     position, position, {fileIndex, lineNumber, columnNumber}};
   nextDebugLocationHasDebugInfo = true;
-std::cout << "read initial deblug log waka " << position << " : " << lineNumber << ':' << columnNumber << '\n';
 }
 
 void WasmBinaryReader::readNextDebugLocation() {
-std::cout << "readNextDebugLoc! For pos " << pos << " compared to prev, avail: " << nextDebugLocation.previousPos << " .. " << nextDebugLocation.availablePos << '\n';
-
   if (!sourceMap) {
     return;
   }
@@ -2842,17 +2830,14 @@ std::cout << "readNextDebugLoc! For pos " << pos << " compared to prev, avail: "
     // use debugLocation only for function expressions
     if (currFunction) {
       if (nextDebugLocationHasDebugInfo) {
-std::cout << " insert nextDebugLocation: " << nextDebugLocation.next.lineNumber << ":" << nextDebugLocation.next.columnNumber << "\n";
         debugLocation.insert(nextDebugLocation.next);
       } else {
-std::cout << " insert null nextDebugLocation\n";
-            debugLocation.clear();
+        debugLocation.clear();
       }
     }
 
     char ch;
     *sourceMap >> ch;
-    std::cout << "read a char '" << ch << "' (" << int(ch) << ")\n";
     if (ch == '\"') { // end of records
       nextDebugLocation.availablePos = 0;
       break;
@@ -2861,18 +2846,14 @@ std::cout << " insert null nextDebugLocation\n";
       throw MapParseException("Unexpected delimiter");
     }
 
-
-
     int32_t positionDelta = readBase64VLQ(*sourceMap);
     uint32_t position = nextDebugLocation.availablePos + positionDelta;
 
     nextDebugLocation.previousPos = nextDebugLocation.availablePos;
     nextDebugLocation.availablePos = position;
 
-    // waka waka good I thinks
     auto peek = sourceMap->peek();
     if (peek == ',' || peek == '\"') {
-std::cout << "waka read 1-length for position " << position << " so .next is -1\n";
       // This is a 1-length entry, so the next location has no debug info.
       nextDebugLocationHasDebugInfo = false;
       break;
@@ -2888,7 +2869,6 @@ std::cout << "waka read 1-length for position " << position << " so .next is -1\
 
     nextDebugLocation.next = {fileIndex, lineNumber, columnNumber};
     nextDebugLocationHasDebugInfo = true;
-    std::cout << "read a 4-length at pos " << position << " : " << lineNumber << ':' << columnNumber << '\n';
   }
 }
 
@@ -3835,7 +3815,6 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
   }
   BYN_TRACE("zz recurse into " << ++depth << " at " << pos << std::endl);
 
-std::cout << "waka readd a new instr. We are at pos " << pos << " and start with debug info NOW\n";
   readNextDebugLocation();
   std::set<Function::DebugLocation> currDebugLocation;
   if (debugLocation.size()) {
@@ -4220,11 +4199,9 @@ std::cout << "waka readd a new instr. We are at pos " << pos << " and start with
     }
   }
   if (curr) {
-std::cout << " waka readd a " << getExpressionName(curr) << " at pos " << startPos << '\n';
     if (currDebugLocation.size()) {
       requireFunctionContext("debugLocation");
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
-std::cout << "  waka readdd debug location " << currFunction->debugLocations[curr].lineNumber << ":" << currFunction->debugLocations[curr].columnNumber << " for " << getExpressionName(curr) << '\n';
     }
     if (DWARF && currFunction) {
       currFunction->expressionLocations[curr] =
