@@ -19,13 +19,14 @@
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $test (param i32) (result i32)
-    ;; This drop has on debug info, and should stay that way. Specifically the
-    ;; instruction right before it in the binary (the const 1) should not
+    ;; The drop&call have no debug info, and should remain so. Specifically the
+    ;; instruction right before them in the binary (the const 1) should not
     ;; smear its debug info on it. And the drop is between an instruction that
     ;; has debug info (the const 1) and another (the i32.const 2): we should not
     ;; receive the debug info of either. (This is a regression test for a bug
     ;; that only happens in that state: removing the debug info either before or
-    ;; after would avoid the bug.)
+    ;; after would avoid that bug.)
+
     (drop
       (call $test
         ;;@ waka:100:1
@@ -47,7 +48,9 @@
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $same-later (param i32) (result i32)
-    ;; As the first, but now the later debug info is also 100:1.
+    ;; As the first, but now the later debug info is also 100:1. No debug info
+    ;; should change here.
+
     (drop
       (call $test
         ;;@ waka:100:1
@@ -78,6 +81,7 @@
     ;;
     ;; The s-parser actually smears 50:5 on the drop and call after it, so the
     ;; output here looks incorrect. This may be a bug there, TODO
+
     ;;@ waka:50:5
     (nop)
     (drop
@@ -103,7 +107,8 @@
   ;; CHECK-NEXT: )
   (func $nothing-before (param i32) (result i32)
     ;; As before, but no debug info on the nop before us (so the first
-    ;; instruction in the function no longer has a debug annotation).
+    ;; instruction in the function no longer has a debug annotation). Nothing
+    ;; should change in the debug info.
     (nop)
     (drop
       (call $test

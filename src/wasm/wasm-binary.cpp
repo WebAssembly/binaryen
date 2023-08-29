@@ -3819,7 +3819,6 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     throwError("Reached function end without seeing End opcode");
   }
   BYN_TRACE("zz recurse into " << ++depth << " at " << pos << std::endl);
-
   readNextDebugLocation();
   std::set<Function::DebugLocation> currDebugLocation;
   if (debugLocation.size()) {
