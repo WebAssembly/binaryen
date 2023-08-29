@@ -18,7 +18,7 @@
   ;; CHECK-NEXT:  ;;@ waka:200:2
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
-  (func $func (param i32) (result i32)
+  (func $test (param i32) (result i32)
     ;; This drop has on debug info, and should stay that way. Specifically the
     ;; instruction right before it in the binary (the const 1) should not
     ;; smear its debug info on it. And the drop is between an instruction that
@@ -35,8 +35,46 @@
     ;;@ waka:200:2
     (i32.const 2)
   )
-)
 
-;; TODO test with same debug info after, so 200:2 is 100:1
-;; TOOD; test with no debug info for the first thing in the function
-;; TODO: add another debug location before the first, so 100:1 isn't first (the very first is special)
+  (func $same-later (param i32) (result i32)
+    ;; As the first, but now the later debug info is also 100:1.
+    (drop
+      (call $func
+        ;;@ waka:100:1
+        (i32.const 1)
+      )
+    )
+    ;;@ waka:100:1
+    (i32.const 2)
+  )
+
+  (func $more-before (param i32) (result i32)
+    ;; As the first, but now there is more debug info before the 100:1 (the
+    ;; very first debug info in a function has special handling, so we test it
+    ;; more carefully).
+    ;;@ waka:50:5
+    (nop)
+    (drop
+      (call $func
+        ;;@ waka:100:1
+        (i32.const 1)
+      )
+    )
+    ;;@ waka:200:2
+    (i32.const 2)
+  )
+
+  (func $nothing-before (param i32) (result i32)
+    ;; As before, but no debug info on the nop before us (so the first
+    ;; instruction in the function no longer has a debug annotation).
+    (nop)
+    (drop
+      (call $func
+        ;;@ waka:100:1
+        (i32.const 1)
+      )
+    )
+    ;;@ waka:200:2
+    (i32.const 2)
+  )
+)
