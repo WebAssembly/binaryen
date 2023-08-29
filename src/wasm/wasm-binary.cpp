@@ -1186,12 +1186,16 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       *sourceMap << ",";
     }
     writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
-    writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
-    writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
-    writeBase64VLQ(*sourceMap,
-                   int32_t(loc->columnNumber - lastLoc.columnNumber));
-    lastLoc = *loc;
     lastOffset = offset;
+    if (loc) {
+      writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
+      writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
+      writeBase64VLQ(*sourceMap,
+                     int32_t(loc->columnNumber - lastLoc.columnNumber));
+      lastLoc = *loc;
+    } else {
+      std::cout << "waka waka write a 1-er\n";
+    }
   }
   *sourceMap << "\"}";
 }
@@ -1341,6 +1345,14 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
       writeDebugLocation(iter->second);
+    } else {
+      // This expression has no debug location. Emit a size 1 segment to stop
+      // the current segment (otherwise one instruction with debug info would
+      // "smear" its debug info on everything after it).
+      // waka waka this is good i hope
+      // TODO: don't write repeated ones.
+      sourceMapLocations.emplace_back(o.size(), nullptr);
+      initializeDebugInfo(); // XXX
     }
   }
   // If this is an instruction in a function, and if the original wasm had
@@ -2816,7 +2828,28 @@ void WasmBinaryReader::readNextDebugLocation() {
       throw MapParseException("Unexpected delimiter");
     }
 
+
+
+  // TODO refactor to share
+  auto maybeReadChar = [&](char expected) {
+    if (sourceMap->peek() != expected) {
+      return false;
+    }
+    sourceMap->get();
+    return true;
+  };
+
     int32_t positionDelta = readBase64VLQ(*sourceMap);
+    // waka waka good I thinks
+    if (maybeReadChar(',') || maybeReadChar('\"')) {
+std::cout << "waka read 1-length\n";
+      // This is a 1-length entry, and after it is either another one or the
+      // end of the entire record.
+      nextDebugLocation.availablePos = 0; // XXX we need this updated below don't we?
+      break;
+    }
+
+
     uint32_t position = nextDebugLocation.availablePos + positionDelta;
     int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
     uint32_t fileIndex = nextDebugLocation.next.fileIndex + fileIndexDelta;
