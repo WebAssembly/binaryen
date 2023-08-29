@@ -2802,6 +2802,10 @@ void WasmBinaryReader::readSourceMapHeader() {
     return;
   }
   // read first debug location
+  // TODO: Handle the case where the very first one has only a position but ont
+  //       debug info. In practice that does not happen, which needs
+  //       investigation (if it does, it will assert in readBase64VLQ, so it
+  //       would not be a silent error at least).
   uint32_t position = readBase64VLQ(*sourceMap);
   uint32_t fileIndex = readBase64VLQ(*sourceMap);
   uint32_t lineNumber =

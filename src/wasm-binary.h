@@ -1537,7 +1537,7 @@ class WasmBinaryReader {
   // Whether debug info is present next or not in the next debug location. A
   // debug location can contain debug info (file:line:col) or it might not. We
   // need to track this boolean alongside |nextDebugLocation| - that is, we
-  // can' justt do something like std::optional<DebugLocation> or such) - as we
+  // can't just do something like std::optional<DebugLocation> or such) - as we
   // still need to track the values in |next|, as later positions are relative
   // to them. That is, if we have line number 100, then no debug info, and then
   // line number 500, then when we get to 500 we will see "+400" which is
