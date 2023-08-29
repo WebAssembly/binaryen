@@ -1490,8 +1490,11 @@ private:
 
   MixedArena allocator;
 
-  // storage of source map locations until the section is placed at its final
-  // location (shrinking LEBs may cause changes there)
+  // Storage of source map locations until the section is placed at its final
+  // location (shrinking LEBs may cause changes there).
+  //
+  // A null DebugLocation* indicates we have no debug information for that
+  // location.
   std::vector<std::pair<size_t, const Function::DebugLocation*>>
     sourceMapLocations;
   size_t sourceMapLocationsSizeAtSectionStart;

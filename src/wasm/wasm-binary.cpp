@@ -1188,6 +1188,8 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
     writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
     lastOffset = offset;
     if (loc) {
+      // There is debug information for this location, so emit the next 3
+      // fields and update lastLoc.
       writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
       writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
       writeBase64VLQ(*sourceMap,
@@ -1344,15 +1346,27 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
     auto& debugLocations = func->debugLocations;
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
+      // There is debug information here, write it out.
       writeDebugLocation(iter->second);
     } else {
-      // This expression has no debug location. Emit a size 1 segment to stop
-      // the current segment (otherwise one instruction with debug info would
-      // "smear" its debug info on everything after it).
+      // This expression has no debug location. We need to emit an indication
+      // of that (so that we do not get "smeared" with debug info from anything
+      // before or after us).
+      //
+      // We don't need to write repeated "no debug info" indications, as a
+      // single one is enough to make it clear that the debug information before
+      // us is valid no longer. We also don't need to write one if there is
+      // nothing before us.
       // waka waka this is good i hope
-      // TODO: don't write repeated ones.
-      sourceMapLocations.emplace_back(o.size(), nullptr);
-//      initializeDebugInfo(); // XXX
+      if (!sourceMapLocations.empty() && sourceMapLocations.back() != nullptr) {
+        sourceMapLocations.emplace_back(o.size(), nullptr);
+        // Initialize the state of debug info to indicate there is no current
+        // debug info relevant. This sets |lastDebugLocation| to a dummy value,
+        // so that later places with debug info can see that they differ from
+        // it (without this, if we had some debug info, then a nullptr for none,
+        // and then the same debug info, we could get confused).
+        initializeDebugInfo();
+      }
     }
   }
   // If this is an instruction in a function, and if the original wasm had
@@ -2848,8 +2862,8 @@ void WasmBinaryReader::readNextDebugLocation() {
     // waka waka good I thinks
     if (maybeReadChar(',') || maybeReadChar('\"')) {
 std::cout << "waka read 1-length\n";
-      // This is a 1-length entry, and after it is either another one or the
-      // end of the entire record.
+      // This is a 1-length entry, so this is a location without debug info on
+      // it.
       debugLocation.clear();
       break;
     }
