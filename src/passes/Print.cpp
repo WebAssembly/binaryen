@@ -170,6 +170,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   std::vector<HeapType> heapTypes;
 
+  // Track the print indent so that we can see when it changes. That affects how
+  // we print debug annotations. In particular, we don't want to print repeated
+  // debug locations for children, like this:
+  //
+  //  ;;@ file.cpp:20:4
+  //  (block
+  //    ;; no need to annotate here; children have the parent's location by
+  //    ;; default anyhow
+  //    (nop)
+  //
+  // But we do want to print an annotation even if it repeats if it is not a
+  // child:
+  //
+  //  ;;@ file.cpp:20:4
+  //  (block)
+  //  ;;@ file.cpp:20:4 - this is clearer to annotate, to avoid confusion with
+  //                      the case where there is no debug info on the nop
+  //  (nop)
+  //
   unsigned lastPrintIndent = 0;
 
   // Print type names by saved name or index if we have a module, or otherwise
@@ -2377,7 +2396,9 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 
 void PrintSExpression::printDebugLocation(
   const Function::DebugLocation& location) {
-  if (lastPrintedLocation == location && indent > lastPrintIndent) {
+  // Do not skip repeated debug info in full mode, for less-confusing debugging:
+  // full mode prints out everything in the most verbose manner.
+  if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
     return;
   }
   lastPrintedLocation = location;
