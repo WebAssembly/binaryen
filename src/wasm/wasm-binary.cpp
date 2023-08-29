@@ -1352,7 +1352,7 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       // waka waka this is good i hope
       // TODO: don't write repeated ones.
       sourceMapLocations.emplace_back(o.size(), nullptr);
-      initializeDebugInfo(); // XXX
+//      initializeDebugInfo(); // XXX
     }
   }
   // If this is an instruction in a function, and if the original wasm had
@@ -2840,17 +2840,20 @@ void WasmBinaryReader::readNextDebugLocation() {
   };
 
     int32_t positionDelta = readBase64VLQ(*sourceMap);
+    uint32_t position = nextDebugLocation.availablePos + positionDelta;
+
+    nextDebugLocation.previousPos = nextDebugLocation.availablePos;
+    nextDebugLocation.availablePos = position;
+
     // waka waka good I thinks
     if (maybeReadChar(',') || maybeReadChar('\"')) {
 std::cout << "waka read 1-length\n";
       // This is a 1-length entry, and after it is either another one or the
       // end of the entire record.
-      nextDebugLocation.availablePos = 0; // XXX we need this updated below don't we?
+      debugLocation.clear();
       break;
     }
 
-
-    uint32_t position = nextDebugLocation.availablePos + positionDelta;
     int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
     uint32_t fileIndex = nextDebugLocation.next.fileIndex + fileIndexDelta;
     int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
@@ -2859,9 +2862,7 @@ std::cout << "waka read 1-length\n";
     uint32_t columnNumber =
       nextDebugLocation.next.columnNumber + columnNumberDelta;
 
-    nextDebugLocation = {position,
-                         nextDebugLocation.availablePos,
-                         {fileIndex, lineNumber, columnNumber}};
+    nextDebugLocation.next = {fileIndex, lineNumber, columnNumber};
   }
 }
 
