@@ -9,12 +9,13 @@
 
 (module
   ;; CHECK:      (func $func (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  ;;@ waka:100:1
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $func
-  ;; CHECK-NEXT:    ;;@ waka:100:1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  ;;@ waka:200:2
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $func (param i32) (result i32)
@@ -35,3 +36,7 @@
     (i32.const 2)
   )
 )
+
+;; TODO test with same debug info after, so 200:2 is 100:1
+;; TOOD; test with no debug info for the first thing in the function
+;; TODO: add another debug location before the first, so 100:1 isn't first (the very first is special)

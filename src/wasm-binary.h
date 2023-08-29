@@ -1525,13 +1525,26 @@ class WasmBinaryReader {
   Module& wasm;
   MixedArena& allocator;
   const std::vector<char>& input;
+
   std::istream* sourceMap;
+
   struct NextDebugLocation {
     uint32_t availablePos;
     uint32_t previousPos;
     Function::DebugLocation next;
-  };
-  NextDebugLocation nextDebugLocation;
+  } nextDebugLocation;
+
+  // Whether debug info is present next or not in the next debug location. A
+  // debug location can contain debug info (file:line:col) or it might not. We
+  // need to track this boolean alongside |nextDebugLocation| - that is, we
+  // can' justt do something like std::optional<DebugLocation> or such) - as we
+  // still need to track the values in |next|, as later positions are relative
+  // to them. That is, if we have line number 100, then no debug info, and then
+  // line number 500, then when we get to 500 we will see "+400" which is
+  // relative to the last existing line number (we "skip" over the place without
+  // debug info).
+  bool nextDebugLocationHasDebugInfo;
+
   bool debugInfo = true;
   bool DWARF = false;
   bool skipFunctionBodies = false;

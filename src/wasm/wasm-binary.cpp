@@ -140,6 +140,7 @@ void WasmBinaryWriter::finishSection(int32_t start) {
   // things backwards.
   auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
   if (adjustmentForLEBShrinking) {
+std::cout << "waka adjusttt down section " << adjustmentForLEBShrinking << '\n';
     // we can save some room, nice
     assert(sizeFieldSize < MaxLEB32Bytes);
     std::move(&o[start] + MaxLEB32Bytes,
@@ -421,6 +422,7 @@ void WasmBinaryWriter::writeFunctions() {
     // things backwards.
     auto adjustmentForLEBShrinking = MaxLEB32Bytes - sizeFieldSize;
     if (adjustmentForLEBShrinking) {
+std::cout << "waka adjusttt down func " << adjustmentForLEBShrinking << '\n';
       // we can save some room, nice
       assert(sizeFieldSize < MaxLEB32Bytes);
       std::move(&o[start], &o[start] + size, &o[sizePos] + sizeFieldSize);
@@ -1195,6 +1197,7 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       writeBase64VLQ(*sourceMap,
                      int32_t(loc->columnNumber - lastLoc.columnNumber));
       lastLoc = *loc;
+      std::cout << "waka write 4-er " << loc->lineNumber << ":" << loc->columnNumber << "\n";
     } else {
       std::cout << "waka waka write a 1-er\n";
     }
@@ -1348,6 +1351,9 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
     if (iter != debugLocations.end()) {
       // There is debug information here, write it out.
       writeDebugLocation(iter->second);
+
+std::cout << "waka write debug location " << iter->second.lineNumber << ":" << iter->second.columnNumber << " for " << getExpressionName(curr) << " : " << *curr << " at offset " << o.size() << '\n';
+
     } else {
       // This expression has no debug location. We need to emit an indication
       // of that (so that we do not get "smeared" with debug info from anything
@@ -1361,6 +1367,7 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       if (!sourceMapLocations.empty() &&
           sourceMapLocations.back().second != nullptr) {
         sourceMapLocations.emplace_back(o.size(), nullptr);
+std::cout << "waka write NULL debug location at offset " << o.size() << "\n";
         // Initialize the state of debug info to indicate there is no current
         // debug info relevant. This sets |lastDebugLocation| to a dummy value,
         // so that later places with debug info can see that they differ from
@@ -1641,7 +1648,7 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
   : wasm(wasm), allocator(wasm.allocator), input(input),
-    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}}, debugLocation() {
+    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}}, nextDebugLocationHasDebugInfo(false), debugLocation() {
   wasm.features = features;
 }
 
@@ -2810,9 +2817,13 @@ void WasmBinaryReader::readSourceMapHeader() {
   uint32_t columnNumber = readBase64VLQ(*sourceMap);
   nextDebugLocation = {
     position, position, {fileIndex, lineNumber, columnNumber}};
+  nextDebugLocationHasDebugInfo = true;
+std::cout << "read initial deblug log waka " << position << " : " << lineNumber << ':' << columnNumber << '\n';
 }
 
 void WasmBinaryReader::readNextDebugLocation() {
+std::cout << "readNextDebugLoc! For pos " << pos << " compared to prev, avail: " << nextDebugLocation.previousPos << " .. " << nextDebugLocation.availablePos << '\n';
+
   if (!sourceMap) {
     return;
   }
@@ -2830,11 +2841,18 @@ void WasmBinaryReader::readNextDebugLocation() {
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
-      debugLocation.insert(nextDebugLocation.next);
+      if (nextDebugLocationHasDebugInfo) {
+std::cout << " insert nextDebugLocation: " << nextDebugLocation.next.lineNumber << ":" << nextDebugLocation.next.columnNumber << "\n";
+        debugLocation.insert(nextDebugLocation.next);
+      } else {
+std::cout << " insert null nextDebugLocation\n";
+            debugLocation.clear();
+      }
     }
 
     char ch;
     *sourceMap >> ch;
+    std::cout << "read a char '" << ch << "' (" << int(ch) << ")\n";
     if (ch == '\"') { // end of records
       nextDebugLocation.availablePos = 0;
       break;
@@ -2845,15 +2863,6 @@ void WasmBinaryReader::readNextDebugLocation() {
 
 
 
-  // TODO refactor to share
-  auto maybeReadChar = [&](char expected) {
-    if (sourceMap->peek() != expected) {
-      return false;
-    }
-    sourceMap->get();
-    return true;
-  };
-
     int32_t positionDelta = readBase64VLQ(*sourceMap);
     uint32_t position = nextDebugLocation.availablePos + positionDelta;
 
@@ -2861,11 +2870,11 @@ void WasmBinaryReader::readNextDebugLocation() {
     nextDebugLocation.availablePos = position;
 
     // waka waka good I thinks
-    if (maybeReadChar(',') || maybeReadChar('\"')) {
-std::cout << "waka read 1-length\n";
-      // This is a 1-length entry, so this is a location without debug info on
-      // it.
-      debugLocation.clear();
+    auto peek = sourceMap->peek();
+    if (peek == ',' || peek == '\"') {
+std::cout << "waka read 1-length for position " << position << " so .next is -1\n";
+      // This is a 1-length entry, so the next location has no debug info.
+      nextDebugLocationHasDebugInfo = false;
       break;
     }
 
@@ -2878,6 +2887,8 @@ std::cout << "waka read 1-length\n";
       nextDebugLocation.next.columnNumber + columnNumberDelta;
 
     nextDebugLocation.next = {fileIndex, lineNumber, columnNumber};
+    nextDebugLocationHasDebugInfo = true;
+    std::cout << "read a 4-length at pos " << position << " : " << lineNumber << ':' << columnNumber << '\n';
   }
 }
 
@@ -3823,6 +3834,8 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     throwError("Reached function end without seeing End opcode");
   }
   BYN_TRACE("zz recurse into " << ++depth << " at " << pos << std::endl);
+
+std::cout << "waka readd a new instr. We are at pos " << pos << " and start with debug info NOW\n";
   readNextDebugLocation();
   std::set<Function::DebugLocation> currDebugLocation;
   if (debugLocation.size()) {
@@ -4207,9 +4220,11 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     }
   }
   if (curr) {
+std::cout << " waka readd a " << getExpressionName(curr) << " at pos " << startPos << '\n';
     if (currDebugLocation.size()) {
       requireFunctionContext("debugLocation");
       currFunction->debugLocations[curr] = *currDebugLocation.begin();
+std::cout << "  waka readdd debug location " << currFunction->debugLocations[curr].lineNumber << ":" << currFunction->debugLocations[curr].columnNumber << " for " << getExpressionName(curr) << '\n';
     }
     if (DWARF && currFunction) {
       currFunction->expressionLocations[curr] =
