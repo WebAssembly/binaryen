@@ -40,10 +40,10 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    RelaxedSIMD = 1 << 13,
-    ExtendedConst = 1 << 14,
-    Strings = 1 << 15,
-    MultiMemory = 1 << 16,
+    RelaxedSIMD = 1 << 12,
+    ExtendedConst = 1 << 13,
+    Strings = 1 << 14,
+    MultiMemory = 1 << 15,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
