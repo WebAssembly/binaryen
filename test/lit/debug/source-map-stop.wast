@@ -75,9 +75,11 @@
     ;; As the first, but now there is more debug info before the 100:1 (the
     ;; very first debug info in a function has special handling, so we test it
     ;; more carefully).
+    ;;
+    ;; The s-parser actually smears 50:5 on the drop and call after it, so the
+    ;; output here looks incorrect. This may be a bug there, TODO
     ;;@ waka:50:5
     (nop)
-    ;; XXX bad!
     (drop
       (call $test
         ;;@ waka:100:1
