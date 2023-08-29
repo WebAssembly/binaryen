@@ -9,9 +9,9 @@
 
 (module
   ;; CHECK:      (func $func (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  ;;@ waka:100:1
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $func
+  ;; CHECK-NEXT:    ;;@ waka:100:1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
