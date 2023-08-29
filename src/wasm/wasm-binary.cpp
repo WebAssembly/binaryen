@@ -1358,7 +1358,8 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       // us is valid no longer. We also don't need to write one if there is
       // nothing before us.
       // waka waka this is good i hope
-      if (!sourceMapLocations.empty() && sourceMapLocations.back() != nullptr) {
+      if (!sourceMapLocations.empty() &&
+          sourceMapLocations.back().second != nullptr) {
         sourceMapLocations.emplace_back(o.size(), nullptr);
         // Initialize the state of debug info to indicate there is no current
         // debug info relevant. This sets |lastDebugLocation| to a dummy value,
