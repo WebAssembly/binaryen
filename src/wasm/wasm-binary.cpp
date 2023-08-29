@@ -1639,7 +1639,8 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
   : wasm(wasm), allocator(wasm.allocator), input(input),
-    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}}, nextDebugLocationHasDebugInfo(false), debugLocation() {
+    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}},
+    nextDebugLocationHasDebugInfo(false), debugLocation() {
   wasm.features = features;
 }
 
