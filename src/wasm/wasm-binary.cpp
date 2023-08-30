@@ -3006,32 +3006,14 @@ void WasmBinaryReader::skipUnreachableCode() {
 void WasmBinaryReader::pushExpression(Expression* curr) {
   auto type = curr->type;
   if (type.isTuple()) {
-    // Store tuple to local and push individual extracted values
+    // Store tuple to local and push individual extracted values.
     Builder builder(wasm);
-    // Non-nullable types require special handling as they cannot be stored to
-    // a local, so we may need to use a different local type than the original.
-    auto localType = type;
-    if (!wasm.features.hasGCNNLocals()) {
-      std::vector<Type> finalTypes;
-      for (auto t : type) {
-        if (t.isNonNullable()) {
-          t = Type(t.getHeapType(), Nullable);
-        }
-        finalTypes.push_back(t);
-      }
-      localType = Type(Tuple(finalTypes));
-    }
     requireFunctionContext("pushExpression-tuple");
-    Index tuple = builder.addVar(currFunction, localType);
+    Index tuple = builder.addVar(currFunction, type);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    for (Index i = 0; i < localType.size(); ++i) {
-      Expression* value =
-        builder.makeTupleExtract(builder.makeLocalGet(tuple, localType), i);
-      if (localType[i] != type[i]) {
-        // We modified this to be nullable; undo that.
-        value = builder.makeRefAs(RefAsNonNull, value);
-      }
-      expressionStack.push_back(value);
+    for (Index i = 0; i < type.size(); ++i) {
+      expressionStack.push_back(
+        builder.makeTupleExtract(builder.makeLocalGet(tuple, type), i));
     }
   } else {
     expressionStack.push_back(curr);
