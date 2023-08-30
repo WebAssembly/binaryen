@@ -3200,9 +3200,12 @@ void FunctionValidator::visitFunction(Function* curr) {
       // that is, a set allows gets until the end of the block.
       LocalStructuralDominance info(curr, *getModule());
       for (auto index : info.nonDominatingIndices) {
-        shouldBeTrue(!curr->getLocalType(index).isNonNullable(),
-                     index,
-                     "non-nullable local's sets must dominate gets");
+        auto localType = curr->getLocalType(index);
+        for (auto type : localType) {
+          shouldBeTrue(!type.isNonNullable(),
+                       index,
+                       "non-nullable local's sets must dominate gets");
+        }
       }
     } else {
       // With the special GCNNLocals feature, we allow gets anywhere, so long as
