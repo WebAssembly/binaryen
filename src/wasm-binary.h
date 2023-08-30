@@ -1531,25 +1531,29 @@ class WasmBinaryReader {
   std::istream* sourceMap;
 
   // The binary position that the next debug location refers to. That is, this
-  // is the first item in a source map entry that we have read, but have not
-  // used yet (we use it when we read the expression at this debug location).
+  // is the first item in a source map entry that we have read (the "column", in
+  // source map terms, which for wasm means the offset in the binary). We have
+  // read this entry, but have not used it yet (we use it when we read the
+  // expression at this binary offset).
   //
-  // This is set to 0 if we reach the end of the source and there is nothing
-  // left to read.
+  // This is set to 0 as an invalid value if we reach the end of the source map
+  // and there is nothing left to read.
   size_t nextDebugPos;
 
-  // The debug location (file:line:col) corresponding to |nextDebugOffset|. If
-  // that location has no debug info, then this contains the info from the
-  // previous one (because in a source map, these fields are relative to their
-  // last appearance (we "skip" over a place without debug info).
+  // The debug location (file:line:col) corresponding to |nextDebugOffset|. That
+  // is, this is the next 3 fields in a source map entry that we have read, but
+  // not used yet.
+  //
+  // If that location has no debug info (it lacks those 3 fields), then this
+  // contains the info from the previous one, because in a source map, these
+  // fields are relative to their last appearance, so we cannot forget them (we
+  // can't just do something like std::optional<DebugLocation> or such); for
+  // example, if we have line number 100, then no debug info, and then line
+  // number 500, then when we get to 500 we will see "+400" which is relative to
+  // the last existing line number (we "skip" over a place without debug info).
   Function::DebugLocation nextDebugLocation;
 
-  // Whether debug info is present on |nextDebugOffset|. As mentioned there, we
-  // need to track this boolean alongside |nextDebugLocation| - that is, we
-  // can't just do something like std::optional<DebugLocation> or such - as we
-  // still need to track the previous values anyhow (e.g. if we have line number
-  // 100, then no debug info, and then line number 500, then when we get to 500
-  // we will see "+400" which is relative to the last existing line number).
+  // Whether debug info is present on |nextDebugOffset| (see comment there).
   bool nextDebugLocationHasDebugInfo;
 
   // Settings.
