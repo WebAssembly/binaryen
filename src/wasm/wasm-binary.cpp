@@ -1638,8 +1638,8 @@ void WasmBinaryWriter::writeField(const Field& field) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input),
-    sourceMap(nullptr), nextDebugPos(0), nextDebugLocation{0, 0, 0},
+  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
+    nextDebugPos(0), nextDebugLocation{0, 0, 0},
     nextDebugLocationHasDebugInfo(false), debugLocation() {
   wasm.features = features;
 }
@@ -2827,8 +2827,7 @@ void WasmBinaryReader::readNextDebugLocation() {
     return;
   }
 
-  while (nextDebugPos &&
-         nextDebugPos <= pos) {
+  while (nextDebugPos && nextDebugPos <= pos) {
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
@@ -2866,8 +2865,7 @@ void WasmBinaryReader::readNextDebugLocation() {
     int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
     uint32_t lineNumber = nextDebugLocation.lineNumber + lineNumberDelta;
     int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t columnNumber =
-      nextDebugLocation.columnNumber + columnNumberDelta;
+    uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
 
     nextDebugLocation = {fileIndex, lineNumber, columnNumber};
     nextDebugLocationHasDebugInfo = true;
