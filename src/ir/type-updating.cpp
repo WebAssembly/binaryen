@@ -373,8 +373,24 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
     if (badIndexes.count(set->index)) {
       auto type = func->getLocalType(set->index);
-      set->type = Type(type.getHeapType(), Nullable);
-      *setp = builder.makeRefAs(RefAsNonNull, set);
+      auto validType = getValidLocalType(type, wasm.features);
+      if (type.isRef()) {
+        set->type = validType;
+        *setp = builder.makeRefAs(RefAsNonNull, set);
+      } else {
+        assert(type.isTuple());
+        set->makeSet();
+        std::vector<Expression*> elems(type.size());
+        for (size_t i = 0, size = type.size(); i < size; ++i) {
+          elems[i] = builder.makeTupleExtract(
+            builder.makeLocalGet(set->index, validType), i);
+          if (type[i].isNonNullable()) {
+            elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
+          }
+        }
+        *setp =
+          builder.makeSequence(set, builder.makeTupleMake(std::move(elems)));
+      }
     }
   }
 
