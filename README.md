@@ -881,7 +881,7 @@ debug location).
 
 There is no shorthand in the binary format. That is, roundtripping (writing and
 reading) through a binary + source map should not change which expressions have
-debug info on them and the contents of that info.
+debug info on them or the contents of that info.
 
 #### Implementation Details
 
