@@ -879,6 +879,10 @@ environment. That will print this for the above `add`:
 (full print mode also adds a `[type]` for each expression, right before the
 debug location).
 
+There is no shorthand in the binary format. That is, roundtripping (writing and
+reading) through a binary + source map should not change which expressions have
+debug info on them and the contents of that info.
+
 #### Implementation Details
 
 The [source maps format](https://sourcemaps.info/spec.html) defines a mapping
