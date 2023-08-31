@@ -977,6 +977,55 @@
     )
   )
 
+  ;; TNH:      (func $set-of-as-non-null (type $void)
+  ;; TNH-NEXT:  (local $x anyref)
+  ;; TNH-NEXT:  (local.set $x
+  ;; TNH-NEXT:   (local.get $x)
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT:  (drop
+  ;; TNH-NEXT:   (ref.as_non_null
+  ;; TNH-NEXT:    (local.tee $x
+  ;; TNH-NEXT:     (local.get $x)
+  ;; TNH-NEXT:    )
+  ;; TNH-NEXT:   )
+  ;; TNH-NEXT:  )
+  ;; TNH-NEXT: )
+  ;; NO_TNH:      (func $set-of-as-non-null (type $void)
+  ;; NO_TNH-NEXT:  (local $x anyref)
+  ;; NO_TNH-NEXT:  (local.set $x
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.as_non_null
+  ;; NO_TNH-NEXT:    (local.tee $x
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $set-of-as-non-null
+    (local $x anyref)
+    ;; We can remove the ref.as_non_null here because the local is nullable and
+    ;; we are ignoring traps.
+    ;; TODO: Should we keep the cast to let us refine the local later?
+    (local.set $x
+      (ref.as_non_null
+        (local.get $x)
+      )
+    )
+    ;; The same for a tee.
+    (drop
+      (local.tee $x
+        (ref.as_non_null
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+
   ;; Helper functions.
 
   ;; TNH:      (func $get-i32 (type $2) (result i32)
