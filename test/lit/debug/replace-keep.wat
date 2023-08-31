@@ -37,4 +37,36 @@
       )
     )
   )
+
+  ;; CHECK:      (func $test-no-trample
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  [none] ;;@ src.cpp:300:3
+  ;; CHECK-NEXT:  [none](block
+  ;; CHECK-NEXT:   [none] ;;@ src.cpp:400:4
+  ;; CHECK-NEXT:   (call $test)
+  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:   (local.set $temp
+  ;; CHECK-NEXT:    [i32] ;;@ src.cpp:500:5
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  ) ;; end block
+  ;; CHECK-NEXT:  ;;@ src.cpp:200:2
+  ;; CHECK-NEXT: )
+  (func $test-no-trample
+    (local $temp i32)
+
+    ;; As above, but now the inner block has debug info (300), which should not
+    ;; be trampled as it is moved outside.
+
+    ;;@ src.cpp:200:2
+    (local.set $temp
+      ;;@ src.cpp:300:3
+      (block (result i32)
+        ;;@ src.cpp:400:4
+        (call $test)
+        ;;@ src.cpp:500:5
+        (i32.const 1)
+      )
+    )
+  )
 )
