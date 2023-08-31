@@ -34,7 +34,7 @@ std::string wstring_to_string(const std::wstring& s);
 using PathString = std::string;
 #endif
 
-const PathString::value_type* to_path(const std::string& s);
+PathString to_path(const std::string& s);
 
 char getPathSeparator();
 std::string getDirName(const std::string& path);
