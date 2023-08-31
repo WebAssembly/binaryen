@@ -40,7 +40,7 @@
 
   ;; CHECK:      (func $test-no-trample
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  [none] ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:  [none] ;;@ src.cpp:300:3
   ;; CHECK-NEXT:  [none](block
   ;; CHECK-NEXT:   [none] ;;@ src.cpp:400:4
   ;; CHECK-NEXT:   (call $test)
