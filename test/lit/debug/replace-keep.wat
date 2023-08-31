@@ -7,6 +7,19 @@
 ;; local.set.
 
 (module
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:  [none](block
+  ;; CHECK-NEXT:   [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:   (call $test)
+  ;; CHECK-NEXT:   [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:   (local.set $temp
+  ;; CHECK-NEXT:    [i32] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  ) ;; end block
+  ;; CHECK-NEXT: )
   (func $test
     (local $temp i32)
 
