@@ -126,9 +126,9 @@ struct Walker : public VisitorType {
       auto& debugLocations = currFunction->debugLocations;
       // Early exit if there is no debug info at all. Also, leave if we already
       // have debug info on the new expression, which we don't want to trample:
-      // if there is no debug info we do want to copy, as a replacement operation
-      // suggests the new code plays the same role (it is an optimized version
-      // of the old), but if the code is already annotated, trust that.
+      // if there is no debug info we do want to copy, as a replacement
+      // operation suggests the new code plays the same role (it is an optimized
+      // version of the old), but if the code is already annotated, trust that.
       if (!debugLocations.empty() && !debugLocations.count(expression)) {
         auto* curr = getCurrent();
         auto iter = debugLocations.find(curr);
