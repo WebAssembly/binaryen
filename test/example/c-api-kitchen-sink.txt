@@ -50,10 +50,10 @@ BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
-BinaryenFeatureRelaxedSIMD: 8192
-BinaryenFeatureExtendedConst: 16384
-BinaryenFeatureStrings: 32768
-BinaryenFeatureAll: 126975
+BinaryenFeatureRelaxedSIMD: 4096
+BinaryenFeatureExtendedConst: 8192
+BinaryenFeatureStrings: 16384
+BinaryenFeatureAll: 65535
 (f32.neg
  (f32.const -33.61199951171875)
 )

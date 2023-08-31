@@ -1,8 +1,8 @@
 ;; Test for validation of non-nullable locals
 
-;; RUN: not wasm-opt -all --enable-gc-nn-locals %s 2>&1 | filecheck %s
+;; RUN: not wasm-opt -all %s 2>&1 | filecheck %s
 
-;; CHECK: non-nullable local must not read null
+;; CHECK: non-nullable local's sets must dominate gets
 
 (module
   (tag $tag (param i32))
