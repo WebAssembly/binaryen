@@ -29,11 +29,11 @@ Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
-Features.RelaxedSIMD: 8192
-Features.ExtendedConst: 16384
-Features.Strings: 32768
-Features.MultiMemory: 65536
-Features.All: 126975
+Features.RelaxedSIMD: 4096
+Features.ExtendedConst: 8192
+Features.Strings: 16384
+Features.MultiMemory: 32768
+Features.All: 65535
 InvalidId: 0
 BlockId: 1
 IfId: 2
