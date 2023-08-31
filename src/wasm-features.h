@@ -48,7 +48,7 @@ struct FeatureSet {
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 17) - 1,
+    All = (1 << 16) - 1,
   };
 
   static std::string toString(Feature f) {
