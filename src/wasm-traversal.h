@@ -128,9 +128,24 @@ struct Walker : public VisitorType {
         auto* curr = getCurrent();
         auto iter = debugLocations.find(curr);
         if (iter != debugLocations.end()) {
-          auto location = iter->second;
-          debugLocations.erase(iter);
-          debugLocations[expression] = location;
+          debugLocations[expression] = iter->second;
+          // Note that we do *not* erase the debug info of the expression being
+          // replaced, because it may still exist: we might replace
+          //
+          //  (call
+          //    (block ..
+          //
+          // with
+          //
+          //  (block
+          //    (call ..
+          //
+          // We still want the call here to have its old debug info.
+          //
+          // (In most cases, of course, we do remove the replaced expression,
+          // which means we accumulate unused garbage in debugLocations, but
+          // that's not that bad; we use arena allocation for Expressions, after
+          // all.)
         }
       }
     }
