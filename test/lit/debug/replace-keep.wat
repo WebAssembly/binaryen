@@ -9,13 +9,13 @@
 (module
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:  [none] ;;@ src.cpp:200:2
   ;; CHECK-NEXT:  [none](block
-  ;; CHECK-NEXT:   [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
   ;; CHECK-NEXT:   (call $test)
-  ;; CHECK-NEXT:   [none] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    [i32] ;;@ javaemul/internal/Exceptions.java:200:2
+  ;; CHECK-NEXT:    [i32] ;;@ src.cpp:200:2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  ) ;; end block
@@ -27,7 +27,7 @@
     ;; optimize (we can remove the inner block, move the call up to before
     ;; the local.set, and merge the outer blocks).
 
-    ;;@ javaemul/internal/Exceptions.java:200:2
+    ;;@ src.cpp:200:2
     (block
       (local.set $temp
         (block (result i32)
