@@ -20,6 +20,8 @@ Current Trunk
 - C API: Add BinaryenAddFunctionWithHeapType() which is like BinaryenAddFunction
   but takes a heap type. The old function is kept for backwards compatibility
   and as a convenience.
+- The nonstandard, experimental gc-nn-locals feature has been removed now that
+  standard non-nullable locals are supported.
 
 v114
 ----
