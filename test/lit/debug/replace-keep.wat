@@ -11,8 +11,8 @@
     (local $temp i32)
 
     ;; Everything here should stay with 200 as their debug info, while we
-    ;; optimize (we can remove the inner block and move the call up to before
-    ;; the local.set).
+    ;; optimize (we can remove the inner block, move the call up to before
+    ;; the local.set, and merge the outer blocks).
 
     ;;@ javaemul/internal/Exceptions.java:200:2
     (block
