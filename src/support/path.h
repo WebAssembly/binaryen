@@ -26,7 +26,7 @@
 
 namespace wasm::Path {
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 using PathString = std::wstring;
 std::wstring string_to_wstring(const std::string& s);
 std::string wstring_to_string(const std::wstring& s);
