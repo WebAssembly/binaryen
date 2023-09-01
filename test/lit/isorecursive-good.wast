@@ -6,7 +6,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super-struct (struct (field i32)))
+    ;; CHECK-NEXT:  (type $super-struct (sub (struct (field i32))))
     (type $super-struct (sub (struct i32)))
     ;; CHECK:       (type $sub-struct (sub $super-struct (struct (field i32) (field i64))))
     (type $sub-struct (sub $super-struct (struct i32 i64)))
@@ -16,7 +16,7 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super-array (array (ref $super-struct)))
+    ;; CHECK-NEXT:  (type $super-array (sub (array (ref $super-struct))))
     (type $super-array (sub (array (ref $super-struct))))
     ;; CHECK:       (type $sub-array (sub $super-array (array (ref $sub-struct))))
     (type $sub-array (sub $super-array (array (ref $sub-struct))))
@@ -26,7 +26,7 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $super-func (func (param (ref $sub-array)) (result (ref $super-array))))
+    ;; CHECK-NEXT:  (type $super-func (sub (func (param (ref $sub-array)) (result (ref $super-array)))))
     (type $super-func (sub (func (param (ref $sub-array)) (result (ref $super-array)))))
     ;; CHECK:       (type $sub-func (sub $super-func (func (param (ref $super-array)) (result (ref $sub-array)))))
     (type $sub-func (sub $super-func (func (param (ref $super-array)) (result (ref $sub-array)))))
@@ -34,7 +34,7 @@
     (type $final-func (sub final $sub-func (func (param (ref $super-array)) (result (ref $final-array)))))
   )
 
-  ;; CHECK:      (type $final-root (sub final (struct )))
+  ;; CHECK:      (type $final-root (struct ))
   (type $final-root (sub final (struct)))
 
   ;; CHECK:      (func $make-super-struct (type $6) (result (ref $super-struct))

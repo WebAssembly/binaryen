@@ -33,8 +33,8 @@
 
 ;; Check GC types and subtyping
 (module
-  ;; CHECK:      (type $A (struct (field i32)))
-  (type $A (struct i32))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
+  (type $A (sub (struct i32)))
 
   ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32))))
   (type $B (struct_subtype i32 i32 $A))

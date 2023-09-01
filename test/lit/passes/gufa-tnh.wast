@@ -157,8 +157,8 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -286,8 +286,8 @@
 
 ;; A local.tee by itself, without a cast.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -372,8 +372,8 @@
 
 ;; As above, but add a local.tee etc. in the called function.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -449,8 +449,8 @@
 
 ;; As above, but now add some control flow before the cast in the function.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $1 (func (param (ref null $A))))
 
@@ -511,8 +511,8 @@
 
 ;; As above, but make the cast uninteresting so we do not optimize.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   (type $B (sub $A (struct (field (mut i32)))))
 
@@ -564,8 +564,8 @@
 
 ;; As above, but two casts in the called function.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -631,8 +631,8 @@
 
 ;; Multiple parameters with control flow between them.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -734,8 +734,8 @@
 
 ;; As above, but without the cast in the middle of the called function.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -831,8 +831,8 @@
 
 ;; As above, but with a different control flow transfer in the caller, a call.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -916,8 +916,8 @@
 
 ;; As above, but with yet another control flow transfer, using an if.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -1011,8 +1011,8 @@
 
 ;; A cast that will fail.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -1111,8 +1111,8 @@
 
 ;; Verify we do not propagate *less*-refined information.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -1322,8 +1322,8 @@
 ;; Refine a type to unreachable. B1 and B2 are sibling subtypes of A, and the
 ;; caller passes in a B1 that is cast in the function to B2.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   (rec
     ;; CHECK:      (type $1 (func (param (ref null $A))))
@@ -1408,8 +1408,8 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   (type $B (sub $A (struct (field (mut i32)))))
 
@@ -1442,8 +1442,8 @@
 
 ;; Check all combinations of types passed to a nullable cast.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -1545,8 +1545,8 @@
 
 ;; Check all combinations of types passed to a *non*-nullable cast.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
@@ -1960,8 +1960,8 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))

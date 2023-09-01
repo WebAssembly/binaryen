@@ -5,7 +5,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 f64)))
+  ;; CHECK:       (type $sig (sub (func (param i32 f64))))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
@@ -71,7 +71,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i64 f32)))
+  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
@@ -136,7 +136,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 i64 f32)))
+  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
@@ -213,7 +213,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 i64 f32)))
+  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
@@ -284,7 +284,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
+  ;; CHECK:       (type $sig (sub (func)))
   (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
 
   (memory 1 1)
@@ -331,7 +331,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
+  ;; CHECK:       (type $sig (sub (func)))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -375,7 +375,7 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func))
+  ;; CHECK:      (type $sig (sub (func)))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -393,12 +393,12 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
   (type $sig (func_subtype (param i32) func))
 
   ;; As above, but now an import also uses this signature, which prevents us
   ;; from changing anything.
-  ;; CHECK:      (import "out" "func" (func $import (type $sig) (param i32)))
+  ;; CHECK:      (import "out" "func" (func $import (type $func.0) (param i32)))
   (import "out" "func" (func $import (type $sig) (param i32)))
 
   (memory 1 1)
@@ -413,7 +413,7 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -445,9 +445,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig2 (func (param i32)))
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param i32))))
 
-    ;; CHECK:       (type $sig (func))
+    ;; CHECK:       (type $sig (sub (func)))
     (type $sig (func_subtype (param i32) func))
 
     (type $sig2 (func_subtype (param i32) func))
@@ -484,7 +484,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
+  ;; CHECK:       (type $sig (sub (func)))
   (type $sig (func_subtype (param i32) func))
 
   (memory 1 1)
@@ -558,7 +558,7 @@
   ;; The presence of a table prevents us from doing any optimizations.
   (table 1 1 anyref)
 
-  ;; CHECK:      (type $sig (func (param i32)))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
   (type $sig (func_subtype (param i32) func))
 
   ;; CHECK:      (table $0 1 1 anyref)
@@ -573,7 +573,7 @@
 ;; Exports cannot be optimized in any way: we cannot remove parameters from
 ;; them, and also we cannot apply constant parameter values either.
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
   (type $sig (func_subtype (param i32) func))
 
   ;; CHECK:      (type $1 (func))
@@ -613,9 +613,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig2 (func))
+    ;; CHECK-NEXT:  (type $sig2 (sub (func)))
 
-    ;; CHECK:       (type $sig1 (func))
+    ;; CHECK:       (type $sig1 (sub (func)))
     (type $sig1 (func_subtype (param i32) func))
     (type $sig2 (func_subtype (param f64) func))
   )
@@ -638,9 +638,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param i32)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param i32))))
 
-    ;; CHECK:       (type $sig-foo (func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
     (type $sig-foo (func_subtype (param i32) func))
     (type $sig-bar (func_subtype (param i32) func))
   )
@@ -706,9 +706,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param funcref)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param funcref))))
 
-    ;; CHECK:       (type $sig-foo (func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
     (type $sig-foo (func_subtype (param funcref) func))
     (type $sig-bar (func_subtype (param funcref) func))
   )
@@ -762,9 +762,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param anyref)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param anyref))))
 
-    ;; CHECK:       (type $sig-foo (func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
     (type $sig-foo (func_subtype (param anyref) func))
     (type $sig-bar (func_subtype (param anyref) func))
   )
@@ -882,19 +882,19 @@
 ;; relationship. Atm we do not prune such "cycles" so we do not optimize here.
 ;; TODO
 (module
-  ;; CHECK:      (type $struct.A (struct (field i32)))
-  (type $struct.A (struct (field i32)))
-  ;; CHECK:      (type $array.A (array (ref $struct.A)))
+  ;; CHECK:      (type $struct.A (sub (struct (field i32))))
+  (type $struct.A (sub (struct (field i32))))
+  ;; CHECK:      (type $array.A (sub (array (ref $struct.A))))
 
   ;; CHECK:      (type $struct.B (sub $struct.A (struct (field i32) (field i64))))
   (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
 
-  (type $array.A (array (ref $struct.A)))
+  (type $array.A (sub (array (ref $struct.A))))
   ;; CHECK:      (type $array.B (sub $array.A (array (ref $struct.B))))
   (type $array.B (array_subtype (ref $struct.B) $array.A))
 
-  ;; CHECK:      (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
-  (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
+  ;; CHECK:      (type $func.A (sub (func (param (ref $array.B)) (result (ref $array.A)))))
+  (type $func.A (sub (func (param (ref $array.B)) (result (ref $array.A)))))
   ;; CHECK:      (type $func.B (sub $func.A (func (param (ref $array.A)) (result (ref $array.B)))))
   (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
 

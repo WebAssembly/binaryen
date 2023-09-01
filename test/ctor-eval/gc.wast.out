@@ -1,5 +1,5 @@
 (module
- (type $struct (struct (field i32)))
+ (type $struct (sub (struct (field i32))))
  (type $1 (func (param anyref)))
  (type $2 (func (result i32)))
  (type $3 (func))

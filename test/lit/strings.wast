@@ -20,9 +20,9 @@
 
   ;; CHECK:      (type $2 (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
 
-  ;; CHECK:      (type $array (array (mut i8)))
+  ;; CHECK:      (type $array (sub (array (mut i8))))
   (type $array (array_subtype (mut i8) data))
-  ;; CHECK:      (type $array16 (array (mut i16)))
+  ;; CHECK:      (type $array16 (sub (array (mut i16))))
   (type $array16 (array_subtype (mut i16) data))
 
   ;; CHECK:      (type $5 (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))

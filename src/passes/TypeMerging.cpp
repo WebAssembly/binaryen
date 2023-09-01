@@ -538,7 +538,7 @@ bool shapeEq(HeapType a, HeapType b) {
   // Check whether `a` and `b` have the same top-level structure, including the
   // position and identity of any children that are not included as transitions
   // in the DFA, i.e. any children that are not nontrivial references.
-  if (a.isFinal() != b.isFinal()) {
+  if (a.isOpen() != b.isOpen()) {
     return false;
   }
   if (a.isStruct() && b.isStruct()) {
@@ -554,7 +554,7 @@ bool shapeEq(HeapType a, HeapType b) {
 }
 
 size_t shapeHash(HeapType a) {
-  size_t digest = hash(a.isFinal());
+  size_t digest = hash(a.isOpen());
   if (a.isStruct()) {
     rehash(digest, 0);
     hash_combine(digest, shapeHash(a.getStruct()));
