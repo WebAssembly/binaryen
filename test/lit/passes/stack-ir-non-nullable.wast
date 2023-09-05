@@ -454,7 +454,7 @@
  ;; CHECK-NEXT: )
  (func $nesting-left (param $param (ref eq))
   (local $temp (ref eq))
-  ;; As $nesting, but now the left arm has one one get, and can be optimized.
+  ;; As $nesting, but now the left arm has one get, and can be optimized.
   (local.set $temp
    (local.get $param)
   )
@@ -767,7 +767,7 @@
  (func $nesting-covered-but-ended (param $param (ref eq))
   (local $temp (ref eq))
   ;; We cannot optimize this first pair, because while we see another set after
-  ;; us, its scope ends, so out set must help the very final get validate.
+  ;; us, its scope ends, so our set must help the very final get validate.
   (local.set $temp
    (local.get $param)
   )
@@ -789,8 +789,3 @@
   )
  )
 )
-
-;; TODO: test nesting etc.
-;; TODO: test param
-
-;; TODO: test set before as a TODO
