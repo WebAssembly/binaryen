@@ -602,6 +602,25 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $nesting-irrelevant (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-irrelevant (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; The block in the middle here adds a scope, but it does not prevent us from
+  ;; optimizing.
+  (local.set $temp
+   (local.get $param)
+  )
+  (block $block
+  )
+  (drop
+   (local.get $temp)
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
