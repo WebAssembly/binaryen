@@ -145,8 +145,6 @@ private:
     // We also maintain a stack of values vectors for control flow,
     // saving the stack as we enter and restoring it when we exit.
     std::vector<std::vector<Index>> savedValues;
-    // Some sets cannot be removed, if they are dependended on for validation.
-    auto necessarySets = findNecessarySets();
 #ifdef STACK_OPT_DEBUG
     std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
@@ -208,9 +206,9 @@ private:
                 break;
               }
               auto* set = insts[index]->origin->cast<LocalSet>();
-              // Check if the set corresponds to the get, and is not a necessary
-              // one (which we cannot remove).
-              if (set->index == get->index && !necessarySets.count(set)) {
+              // Check if the set corresponds to the get, and if the pair can
+              // be removed.
+              if (set->index == get->index && canRemoveSetGetPair(index, i)) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
                 auto& sets = localGraph.getSetses[get];
@@ -355,140 +353,84 @@ private:
     return ChildIterator(inst->origin).children.size();
   }
 
-  // Find LocalSet instructions that cannot be removed because they are
-  // necessary in the binary format for validation. Specifically, we must keep
-  // sets of non-nullable locals that dominate a get until the end of the block,
-  // such as here:
+  // Given a pair of a local.set and local.get, see if we can remove them
+  // without breaking validation. Specifically, we must keep sets of non-
+  //nullable locals that dominate a get until the end of the block, such as
+  // here:
   //
-  //  local.set 0
+  //  local.set 0    ;; Can we remove
+  //  local.get 0    ;; this pair?
   //  if
   //    local.set 0
   //  else
   //    local.set 0
   //  end
-  //  local.get 0
+  //  local.get 0    ;; This get poses a problem.
   //
   // Logically the 2nd&3rd sets ensure a value is applied to the local before we
   // read it, but the validation rules only track each set until the end of its
-  // scope, so the 1st set (before the if) is necessary.
+  // scope, so the 1st set (before the if, in the pair) is necessary.
   //
   // The logic below is related to LocalStructuralDominance, but sharing code
-  // with it is difficult as this uses StackIR and not BinaryenIR, and also
-  // there we only collect indexes that have dominance issues while here we need
-  // to identify specific sets necessary for dominance.
-  std::unordered_set<LocalSet*> findNecessarySets() {
-    std::unordered_set<LocalSet*> necessary;
+  // with it is difficult as this uses StackIR and not BinaryenIR, and it checks
+  // a particular set/get pair.
+  //
+  // We are given the indexes of the set and get instructions in |insts|.
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex) {
+    // The set must be before the get.
+    assert(setIndex < getIndex);
 
-    // Exit early if no non-nullable local exists anyhow.
-    if (!features.hasReferenceTypes()) {
-      return necessary;
+    auto* set = insts[setIndex]->origin->cast<LocalSet>();
+    if (func->isParam(set->index) ||
+        !func->getLocalType(set->index).isNonNullable()) {
+      // This local cannot pose a problem for validation (params are always
+      // initialized, and nullable locals may be uninitialized).
+      return true;
     }
 
-    bool hasNonNullableVar = false;
-    for (auto var : func->vars) {
-      for (auto type : var) {
-        if (type.isNonNullable()) {
-          hasNonNullableVar = true;
-          break;
-        }
-      }
-    }
-    if (!hasNonNullableVar) {
-      return necessary;
-    }
-
-    // There may be ambiguity as we go regarding which set is necessary, like
-    // this:
-    //
-    //  local.set 0
-    //  block
-    //    local.set 0
-    //    local.get 0
-    //  end
-    //
-    // Either of those two would suffice for the get to validate, so we could
-    // pick either one. To keep things simple, we do a forward pass and assume
-    // the first set seen is responsible. That keeps outermost sets, which makes
-    // sense as a heuristic because such sets dominate a larger area and can
-    // support more gets.
-    //
-    // Given that, in our forward pass we represent the current state as a
-    // mapping of local indexes to the set that dominates there. We can then
-    // ignore later sets as we go, and if we see a get then we mark that set as
-    // necessary.
-
-    // Map of local index to the set that dominates gets of that index.
-    // TODO: vector?
-    std::unordered_map<Index, LocalSet*> indexSetMap;
-
-    // Stack of local indexes that have entries in indexSetMap. The first value
-    // is for the indexes of depth 0, then depth 1, etc. We need this map to
-    // know what to do when the depth decreases, because then we want to remove
-    // all sets no longer relevant after their scope ended.
-    //
-    // Initialize this to set us up for the function scope itself.
-    std::vector<std::vector<Index>> depthIndexMap;
-    depthIndexMap.resize(1);
-
-    // The current depth.
+    // Track the depth (in block/if/loop/etc. scopes) relative to our starting
+    // point. Anything less deep than that is not interesting, as we can only
+    // help things at our depth or deeper to validate.
     Index currDepth = 0;
 
-    auto startScope = [&]() {
-      currDepth++;
-      depthIndexMap.emplace_back();
-    };
-    auto endScope = [&]() {
-      currDepth--;
-
-      // Remove sets that no longer dominate anything since their scope ended.
-      auto& depthIndexes = depthIndexMap.back();
-      for (auto index : depthIndexes) {
-        indexSetMap.erase(index);
-      }
-      depthIndexMap.pop_back();
-    };
-
-    auto relevant = [&](Index index) {
-      // We only care about non-nullable local gets being dominated by sets.
-      return func->isVar(index) && func->getLocalType(index).isNonNullable();
-    };
-
-    for (Index i = 0; i < insts.size(); i++) {
+    // Look for another get than the one in getIndex (since that one is being
+    // removed) which would stop validating without us.
+    //
+    // TODO: We could look more carefully here to check if *another* set is
+    //       present that ensures validation even without ours.
+    for (Index i = setIndex + 1; i < insts.size(); i++) {
       auto* inst = insts[i];
       if (!inst) {
         continue;
       }
       if (isControlFlowBegin(inst)) {
-        startScope();
+        currDepth++;
       } else if (isControlFlowEnd(inst)) {
-        endScope();
+        if (currDepth == 0) {
+          // Less deep than the start, so we found no problem.
+          return true;
+        }
+        currDepth--;
       } else if (isControlFlowBarrier(inst)) {
         // A barrier, like the else in an if-else, not only ends a scope but
         // opens a new one.
-        startScope();
-        endScope();
-      } else if (auto* set = inst->origin->dynCast<LocalSet>()) {
-        auto index = set->index;
-        if (relevant(index)) {
-          // If there is no set for this index, then this is the set at this
-          // depth, and deeper.
-          if (indexSetMap.count(index) == 0) {
-            indexSetMap[index] = set;
-            depthIndexMap.back().push_back(index);
-          }
+        if (currDepth == 0) {
+          // Another scope with the same depth begins, but ours ended, so stop.
+          return true;
         }
+      //} else if (auto* set = inst->origin->dynCast<LocalSet>()) {
+      //  // TODO?
       } else if (auto* get = inst->origin->dynCast<LocalGet>()) {
-        auto index = get->index;
-        if (relevant(index)) {
-          // This makes some local.set necessary. One must exist, or the wasm
-          // would not validate.
-          assert(indexSetMap.count(index));
-          necessary.insert(indexSetMap[index]);
+        if (get->index == set->index && i != getIndex) {
+          // We found a get that might be a problem: it uses the same index, but
+          // is not the get we were told about.
+          return false;
         }
       }
     }
 
-    return necessary;
+    // No problem.
+    return true;
   }
 };
 
