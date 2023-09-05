@@ -242,8 +242,54 @@
   )
   (local.get $temp)
  )
+
+ ;; CHECK:      (func $if-nullable (type $2) (param $param (ref eq)) (result eqref)
+ ;; CHECK-NEXT:  (local $temp eqref)
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.eq
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   i32.const 1
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   i32.const 2
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT: )
+ (func $if-nullable (param $param (ref eq)) (result (ref null eq))
+  (local $temp (ref null eq)) ;; this changed
+  ;; As the original testcase, but now $temp is a nullable. Validation is no
+  ;; longer an issue, so we can optimize away the pair.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (ref.eq
+    (local.get $temp)
+    (i31.new
+     (i32.const 0)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 1)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 2)
+    )
+   )
+  )
+  (local.get $temp)
+ )
 )
 
 ;; TODO: test nesting etc.
 ;; TODO: test param
 
+;; TODO: test set before as a TODO
