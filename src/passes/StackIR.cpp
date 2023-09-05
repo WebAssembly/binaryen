@@ -356,7 +356,7 @@ private:
 
   // Given a pair of a local.set and local.get, see if we can remove them
   // without breaking validation. Specifically, we must keep sets of non-
-  //nullable locals that dominate a get until the end of the block, such as
+  // nullable locals that dominate a get until the end of the block, such as
   // here:
   //
   //  local.set 0    ;; Can we remove
