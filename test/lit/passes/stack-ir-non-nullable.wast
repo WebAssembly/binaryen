@@ -672,6 +672,42 @@
    )
   )
  )
+
+ ;; CHECK:      (func $nesting-third (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-third (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; A third block is nested in the second. We can still optimize all these.
+  (local.set $temp
+   (local.get $param)
+  )
+  (drop
+   (local.get $temp)
+  )
+  (block $block
+   (local.set $temp
+    (local.get $param)
+   )
+   (drop
+    (local.get $temp)
+   )
+   (block $block2
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
