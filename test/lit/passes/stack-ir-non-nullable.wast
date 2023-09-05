@@ -5,7 +5,7 @@
 ;; Shrink level is set to 1 to enable local2stack in StackIR opts.
 
 (module
- ;; CHECK:      (func $if (type $0) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $if (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -55,7 +55,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $if-no-last-get (type $0) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $if-no-last-get (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
@@ -100,7 +100,7 @@
   (local.get $param) ;; this changed from $temp to $param
  )
 
- ;; CHECK:      (func $if-extra-set (type $0) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $if-extra-set (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
@@ -148,7 +148,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $if-wrong-extra-set (type $0) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $if-wrong-extra-set (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -323,7 +323,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $nesting (type $1) (param $param (ref eq))
+ ;; CHECK:      (func $nesting (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -384,7 +384,7 @@
   )
  )
 
- ;; CHECK:      (func $nesting-left (type $1) (param $param (ref eq))
+ ;; CHECK:      (func $nesting-left (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -432,7 +432,7 @@
   )
  )
 
- ;; CHECK:      (func $nesting-right (type $1) (param $param (ref eq))
+ ;; CHECK:      (func $nesting-right (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -480,7 +480,7 @@
   )
  )
 
- ;; CHECK:      (func $nesting-both (type $1) (param $param (ref eq))
+ ;; CHECK:      (func $nesting-both (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  local.set $temp
@@ -518,6 +518,42 @@
      (local.get $temp)
     )
     ;; A get was removed here.
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nesting-both-less (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT: )
+ (func $nesting-both-less (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As above, but without the initial set-get at the top. We can still
+  ;; optimize both arms.
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
    )
   )
  )
