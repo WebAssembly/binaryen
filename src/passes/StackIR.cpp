@@ -394,23 +394,40 @@ private:
     Index currDepth = 0;
 
     // Look for another get than the one in getIndex (since that one is being
-    // removed) which would stop validating without us.
+    // removed) which would stop validating without us. While doing so, note
+    // other sets that ensure validation even if our set is remove. We track
+    // those in this stack of booleans, one for each scope, which is true if
+    // another sets covers us and ours is not needed.
     //
-    // TODO: We could look more carefully here to check if *another* set is
-    //       present that ensures validation even without ours.
+    // We begin in the current scope and with no other set covering us.
+    std::vector<bool> coverStack = {false};
+
+    // Track the total number of covers as well, for quick checking below.
+    Index covers = 0;
+
+    // TODO: We could look before us as well, but then we might end up scanning
+    //       much of the function every time.
     for (Index i = setIndex + 1; i < insts.size(); i++) {
       auto* inst = insts[i];
       if (!inst) {
         continue;
       }
       if (isControlFlowBegin(inst)) {
+        // A new scope begins.
         currDepth++;
+        coverStack.push_back(false);
       } else if (isControlFlowEnd(inst)) {
         if (currDepth == 0) {
           // Less deep than the start, so we found no problem.
           return true;
         }
         currDepth--;
+
+        if (coverStack.back()) {
+          // A cover existed in the scope which ended.
+          covers--;
+        }
+        coverStack.pop_back();
       } else if (isControlFlowBarrier(inst)) {
         // A barrier, like the else in an if-else, not only ends a scope but
         // opens a new one.
@@ -418,12 +435,22 @@ private:
           // Another scope with the same depth begins, but ours ended, so stop.
           return true;
         }
-      //} else if (auto* set = inst->origin->dynCast<LocalSet>()) {
-      //  // TODO?
-      } else if (auto* get = inst->origin->dynCast<LocalGet>()) {
-        if (get->index == set->index && i != getIndex) {
+
+        if (coverStack.back()) {
+          // A cover existed in the scope which ended.
+          covers--;
+        }
+        coverStack.back() = false;
+      } else if (auto* otherSet = inst->origin->dynCast<LocalSet>()) {
+        // We are covered in this scope henceforth.
+        if (otherSet->index == set->index) {
+          coverStack.back() = true;
+          covers++;
+        }
+      } else if (auto* otherGet = inst->origin->dynCast<LocalGet>()) {
+        if (otherGet->index == set->index && i != getIndex && !covers) {
           // We found a get that might be a problem: it uses the same index, but
-          // is not the get we were told about.
+          // is not the get we were told about, and no other set covers us.
           return false;
         }
       }
