@@ -8,6 +8,8 @@
  ;; CHECK:      (func $if (type $0) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  i31.new
  ;; CHECK-NEXT:  ref.eq
@@ -54,6 +56,6 @@
  )
 )
 
-;; TODO: test without the final local.get 
+;; TODO: test without the final local.get
 ;; TODO: test nesting etc.
 

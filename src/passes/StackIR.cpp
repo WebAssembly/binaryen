@@ -208,7 +208,9 @@ private:
                 break;
               }
               auto* set = insts[index]->origin->cast<LocalSet>();
-              if (set->index == get->index) {
+              // Check if the set corresponds to the get, and is not a necessary
+              // one (which we cannot remove).
+              if (set->index == get->index && !necessarySets.count(set)) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
                 auto& sets = localGraph.getSetses[get];
@@ -369,6 +371,11 @@ private:
   // Logically the 2nd&3rd sets ensure a value is applied to the local before we
   // read it, but the validation rules only track each set until the end of its
   // scope, so the 1st set (before the if) is necessary.
+  //
+  // The logic below is related to LocalStructuralDominance, but sharing code
+  // with it is difficult as this uses StackIR and not BinaryenIR, and also
+  // there we only collect indexes that have dominance issues while here we need
+  // to identify specific sets necessary for dominance.
   std::unordered_set<LocalSet*> findNecessarySets() {
     std::unordered_set<LocalSet*> necessary;
 
