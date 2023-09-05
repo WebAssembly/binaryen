@@ -287,6 +287,41 @@
   )
   (local.get $temp)
  )
+
+ ;; CHECK:      (func $if-non-ref (type $3) (param $param i32) (result i32)
+ ;; CHECK-NEXT:  (local $temp i32)
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  i32.eqz
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   i32.const 1
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   i32.const 2
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT: )
+ (func $if-non-ref (param $param i32) (result i32)
+  (local $temp i32)
+  ;; As the original testcase, but now $temp is not a ref. Validation is no
+  ;; longer an issue, so we can optimize away the pair.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (i32.eqz
+    (local.get $temp)
+    (i32.const 0)
+   )
+   (local.set $temp
+    (i32.const 1)
+   )
+   (local.set $temp
+    (i32.const 2)
+   )
+  )
+  (local.get $temp)
+ )
 )
 
 ;; TODO: test nesting etc.
