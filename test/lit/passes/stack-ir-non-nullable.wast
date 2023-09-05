@@ -621,6 +621,31 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $nesting-relevant (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-relevant (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As above, but now there is a get in that scope, which is a problem.
+  (local.set $temp
+   (local.get $param)
+  )
+  (block $block
+   (drop
+    (local.get $temp)
+   )
+  )
+  (drop
+   (local.get $temp)
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
