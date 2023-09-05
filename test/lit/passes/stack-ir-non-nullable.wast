@@ -479,6 +479,48 @@
    )
   )
  )
+
+ ;; CHECK:      (func $nesting-both (type $1) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT: )
+ (func $nesting-both (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As above, but now we can optimize both arms.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    ;; A get was removed here.
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    ;; A get was removed here.
+   )
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
