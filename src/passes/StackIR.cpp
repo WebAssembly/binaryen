@@ -145,6 +145,8 @@ private:
     // We also maintain a stack of values vectors for control flow,
     // saving the stack as we enter and restoring it when we exit.
     std::vector<std::vector<Index>> savedValues;
+    // Some sets cannot be removed, if they are dependended on for validation.
+    auto necessarySets = findNecessarySets();
 #ifdef STACK_OPT_DEBUG
     std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
@@ -349,6 +351,137 @@ private:
     }
     // Otherwise, for basic instructions, just count the expression children.
     return ChildIterator(inst->origin).children.size();
+  }
+
+  // Find LocalSet instructions that cannot be removed because they are
+  // necessary in the binary format for validation. Specifically, we must keep
+  // sets of non-nullable locals that dominate a get until the end of the block,
+  // such as here:
+  //
+  //  local.set 0
+  //  if
+  //    local.set 0
+  //  else
+  //    local.set 0
+  //  end
+  //  local.get 0
+  //
+  // Logically the 2nd&3rd sets ensure a value is applied to the local before we
+  // read it, but the validation rules only track each set until the end of its
+  // scope, so the 1st set (before the if) is necessary.
+  std::unordered_set<LocalSet*> findNecessarySets() {
+    std::unordered_set<LocalSet*> necessary;
+
+    // Exit early if no non-nullable local exists anyhow.
+    if (!features.hasReferenceTypes()) {
+      return necessary;
+    }
+
+    bool hasNonNullableVar = false;
+    for (auto var : func->vars) {
+      for (auto type : var) {
+        if (type.isNonNullable()) {
+          hasNonNullableVar = true;
+          break;
+        }
+      }
+    }
+    if (!hasNonNullableVar) {
+      return necessary;
+    }
+
+    // There may be ambiguity as we go regarding which set is necessary, like
+    // this:
+    //
+    //  local.set 0
+    //  block
+    //    local.set 0
+    //    local.get 0
+    //  end
+    //
+    // Either of those two would suffice for the get to validate, so we could
+    // pick either one. To keep things simple, we do a forward pass and assume
+    // the first set seen is responsible. That keeps outermost sets, which makes
+    // sense as a heuristic because such sets dominate a larger area and can
+    // support more gets.
+    //
+    // Given that, in our forward pass we represent the current state as a
+    // mapping of local indexes to the set that dominates there. We can then
+    // ignore later sets as we go, and if we see a get then we mark that set as
+    // necessary.
+
+    // Map of local index to the set that dominates gets of that index.
+    // TODO: vector?
+    std::unordered_map<Index, LocalSet*> indexSetMap;
+
+    // Stack of local indexes that have entries in indexSetMap. The first value
+    // is for the indexes of depth 0, then depth 1, etc. We need this map to
+    // know what to do when the depth decreases, because then we want to remove
+    // all sets no longer relevant after their scope ended.
+    //
+    // Initialize this to set us up for the function scope itself.
+    std::vector<std::vector<Index>> depthIndexMap;
+    depthIndexMap.resize(1);
+
+    // The current depth.
+    Index currDepth = 0;
+
+    auto startScope = [&]() {
+      currDepth++;
+      depthIndexMap.emplace_back();
+    };
+    auto endScope = [&]() {
+      currDepth--;
+
+      // Remove sets that no longer dominate anything since their scope ended.
+      auto& depthIndexes = depthIndexMap.back();
+      for (auto index : depthIndexes) {
+        indexSetMap.erase(index);
+      }
+      depthIndexMap.pop_back();
+    };
+
+    auto relevant = [&](Index index) {
+      // We only care about non-nullable local gets being dominated by sets.
+      return func->isVar(index) && func->getLocalType(index).isNonNullable();
+    };
+
+    for (Index i = 0; i < insts.size(); i++) {
+      auto* inst = insts[i];
+      if (!inst) {
+        continue;
+      }
+      if (isControlFlowBegin(inst)) {
+        startScope();
+      } else if (isControlFlowEnd(inst)) {
+        endScope();
+      } else if (isControlFlowBarrier(inst)) {
+        // A barrier, like the else in an if-else, not only ends a scope but
+        // opens a new one.
+        startScope();
+        endScope();
+      } else if (auto* set = inst->origin->dynCast<LocalSet>()) {
+        auto index = set->index;
+        if (relevant(index)) {
+          // If there is no set for this index, then this is the set at this
+          // depth, and deeper.
+          if (indexSetMap.count(index) == 0) {
+            indexSetMap[index] = set;
+            depthIndexMap.back().push_back(index);
+          }
+        }
+      } else if (auto* get = inst->origin->dynCast<LocalGet>()) {
+        auto index = get->index;
+        if (relevant(index)) {
+          // This makes some local.set necessary. One must exist, or the wasm
+          // would not validate.
+          assert(indexSetMap.count(index));
+          necessary.insert(indexSetMap[index]);
+        }
+      }
+    }
+
+    return necessary;
   }
 };
 
