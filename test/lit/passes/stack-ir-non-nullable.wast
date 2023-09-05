@@ -199,6 +199,49 @@
   )
   (local.get $temp)
  )
+
+ ;; CHECK:      (func $if-param (type $1) (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.eq
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   i32.const 1
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   i32.const 2
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT: )
+ (func $if-param (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
+  ;; As the original testcase, but now $temp is a param. Validation is no
+  ;; longer an issue, so we can optimize away the pair.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (ref.eq
+    (local.get $temp)
+    (i31.new
+     (i32.const 0)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 1)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 2)
+    )
+   )
+  )
+  (local.get $temp)
+ )
 )
 
 ;; TODO: test nesting etc.
