@@ -200,7 +200,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $if-param (type $1) (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
+ ;; CHECK:      (func $if-param (type $2) (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  i31.new
@@ -243,7 +243,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $if-nullable (type $2) (param $param (ref eq)) (result eqref)
+ ;; CHECK:      (func $if-nullable (type $3) (param $param (ref eq)) (result eqref)
  ;; CHECK-NEXT:  (local $temp eqref)
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
@@ -288,7 +288,7 @@
   (local.get $temp)
  )
 
- ;; CHECK:      (func $if-non-ref (type $3) (param $param i32) (result i32)
+ ;; CHECK:      (func $if-non-ref (type $4) (param $param i32) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.eqz
@@ -321,6 +321,114 @@
    )
   )
   (local.get $temp)
+ )
+
+ ;; CHECK:      (func $nesting (type $1) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; The if arms contain optimization opportunities, even though there are 2
+  ;; gets in each one, because this top set helps them all validate. Atm we do
+  ;; not look backwards, however, so we fail to optimize here.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+  )
+  (drop
+   (local.get $temp)
+  )
+ )
+
+ ;; CHECK:      (func $nesting-left (type $1) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT: )
+ (func $nesting-left (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As $nesting, but now the left arm has one one get, and can be optimized.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+  )
  )
 )
 
