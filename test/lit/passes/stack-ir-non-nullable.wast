@@ -646,6 +646,32 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $nesting-after (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-after (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; A set-get pair with another after it in a block. We can optimize both.
+  (local.set $temp
+   (local.get $param)
+  )
+  (drop
+   (local.get $temp)
+  )
+  (block $block
+   (local.set $temp
+    (local.get $param)
+   )
+   (drop
+    (local.get $temp)
+   )
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
