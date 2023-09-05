@@ -206,15 +206,16 @@ private:
                 break;
               }
               auto* set = insts[index]->origin->cast<LocalSet>();
-              // Check if the set corresponds to the get, and if the pair can
-              // be removed.
-              if (set->index == get->index && canRemoveSetGetPair(index, i)) {
+              if (set->index == get->index) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
                 auto& sets = localGraph.getSetses[get];
                 if (sets.size() == 1 && *sets.begin() == set) {
                   auto& setInfluences = localGraph.setInfluences[set];
-                  if (setInfluences.size() == 1) {
+                  // If this has the proper value of 1, also do the potentially-
+                  // expensive check of whether we can remove this pair at all.
+                  if (setInfluences.size() == 1 &&
+                      canRemoveSetGetPair(index, i)) {
                     assert(*setInfluences.begin() == get);
                     // Do it! The set and the get can go away, the proper
                     // value is on the stack.
