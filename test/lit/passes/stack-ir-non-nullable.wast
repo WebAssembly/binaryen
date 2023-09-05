@@ -416,6 +416,7 @@
     (drop
      (local.get $temp)
     )
+    ;; A get was removed here.
    )
    (block
     (local.set $temp
@@ -427,6 +428,54 @@
     (drop
      (local.get $temp)
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $nesting-right (type $1) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:   local.get $temp
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT: )
+ (func $nesting-right (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As above, but now we can optimize the right arm.
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+    ;; A get was removed here.
    )
   )
  )
