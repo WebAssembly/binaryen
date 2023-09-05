@@ -699,6 +699,44 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $nesting-covered-but-ended (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-covered-but-ended (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; We cannot optimize this first pair, because while we see another set after
+  ;; us, its scope ends, so out set must help the very final get validate.
+  (local.set $temp
+   (local.get $param)
+  )
+  (drop
+   (local.get $temp)
+  )
+  (block $block
+   ;; This pair we can almost optimize, but the get after the block reads from
+   ;; it, so we don't.
+   (local.set $temp
+    (local.get $param)
+   )
+   (drop
+    (local.get $temp)
+   )
+  )
+  (drop
+   (local.get $temp)
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
