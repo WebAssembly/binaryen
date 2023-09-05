@@ -673,24 +673,17 @@
   )
  )
 
- ;; CHECK:      (func $nesting-third (type $0) (param $param (ref eq))
+ ;; CHECK:      (func $nesting-reverse (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  drop
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
  ;; CHECK-NEXT: )
- (func $nesting-third (param $param (ref eq))
+ (func $nesting-reverse (param $param (ref eq))
   (local $temp (ref eq))
-  ;; A third block is nested in the second. We can still optimize all these.
-  (local.set $temp
-   (local.get $param)
-  )
-  (drop
-   (local.get $temp)
-  )
+  ;; The reverse of the last case, now the block is first. We can optimize
+  ;; both pairs.
   (block $block
    (local.set $temp
     (local.get $param)
@@ -698,14 +691,12 @@
    (drop
     (local.get $temp)
    )
-   (block $block2
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
-    )
-   )
+  )
+  (local.set $temp
+   (local.get $param)
+  )
+  (drop
+   (local.get $temp)
   )
  )
 )
