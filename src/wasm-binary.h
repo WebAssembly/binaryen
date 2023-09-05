@@ -1553,7 +1553,7 @@ class WasmBinaryReader {
   // the last existing line number (we "skip" over a place without debug info).
   Function::DebugLocation nextDebugLocation;
 
-  // Whether debug info is present on |nextDebugOffset| (see comment there).
+  // Whether debug info is present on |nextDebugPos| (see comment there).
   bool nextDebugLocationHasDebugInfo;
 
   // Settings.
