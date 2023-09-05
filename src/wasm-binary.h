@@ -1540,7 +1540,7 @@ class WasmBinaryReader {
   // and there is nothing left to read.
   size_t nextDebugPos;
 
-  // The debug location (file:line:col) corresponding to |nextDebugOffset|. That
+  // The debug location (file:line:col) corresponding to |nextDebugPos|. That
   // is, this is the next 3 fields in a source map entry that we have read, but
   // not used yet.
   //
