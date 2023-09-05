@@ -408,20 +408,16 @@ private:
 
     // TODO: We could look before us as well, but then we might end up scanning
     //       much of the function every time.
-std::cerr << "to chak " << setIndex << "-" << getIndex << '\n';
     for (Index i = setIndex + 1; i < insts.size(); i++) {
-std::cerr << " chak " << i << '\n';
       auto* inst = insts[i];
       if (!inst) {
         continue;
       }
       if (isControlFlowBegin(inst)) {
-std::cerr << "  chak begin\n";
         // A new scope begins.
         currDepth++;
         coverStack.push_back(false);
       } else if (isControlFlowEnd(inst)) {
-std::cerr << "  chak end\n";
         if (currDepth == 0) {
           // Less deep than the start, so we found no problem.
           return true;
@@ -434,7 +430,6 @@ std::cerr << "  chak end\n";
         }
         coverStack.pop_back();
       } else if (isControlFlowBarrier(inst)) {
-std::cerr << "  chak barrier at depth " << currDepth << "\n";
         // A barrier, like the else in an if-else, not only ends a scope but
         // opens a new one.
         if (currDepth == 0) {
@@ -457,7 +452,6 @@ std::cerr << "  chak barrier at depth " << currDepth << "\n";
         if (otherGet->index == set->index && i != getIndex && !covers) {
           // We found a get that might be a problem: it uses the same index, but
           // is not the get we were told about, and no other set covers us.
-std::cout << "return FALSE!\n";
           return false;
         }
       }
