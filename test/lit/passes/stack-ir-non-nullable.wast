@@ -73,8 +73,8 @@
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT: )
  (func $if-no-last-get (param $param (ref eq)) (result (ref eq))
-  ;; As above, but now there is no final get, so we can remove the set-get
-  ;; pair of $temp before the if.
+  ;; As the original, but now there is no final get, so we can remove the set-
+  ;; get pair of $temp before the if.
   (local $temp (ref eq))
   (local.set $temp
    (local.get $param)
@@ -98,6 +98,54 @@
    )
   )
   (local.get $param) ;; this changed from $temp to $param
+ )
+
+ ;; CHECK:      (func $if-yes-extra-set (type $0) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.eq
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   i32.const 1
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   i32.const 2
+ ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT: )
+ (func $if-yes-extra-set (param $param (ref eq)) (result (ref eq))
+  ;; As the original, but now there is an extra set before the final get, so
+  ;; we can optimize - the extra set ensures validation.
+  (local $temp (ref eq))
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (ref.eq
+    (local.get $temp)
+    (i31.new
+     (i32.const 0)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 1)
+    )
+   )
+   (local.set $temp
+    (i31.new
+     (i32.const 2)
+    )
+   )
+  )
+  (local.set $temp    ;; This set is new.
+   (local.get $param)
+  )
+  (local.get $temp)
  )
 )
 
