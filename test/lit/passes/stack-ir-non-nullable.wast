@@ -557,6 +557,51 @@
    )
   )
  )
+
+ ;; CHECK:      (func $nesting-both-after (type $0) (param $param (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   drop
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT: )
+ (func $nesting-both-after (param $param (ref eq))
+  (local $temp (ref eq))
+  ;; As above, but now there is a set-get at the end of the function. The get
+  ;; there should not confuse us; we can still optimize both arms, and after
+  ;; them as well.
+  (if
+   (i32.const 0)
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+   (block
+    (local.set $temp
+     (local.get $param)
+    )
+    (drop
+     (local.get $temp)
+    )
+   )
+  )
+  (local.set $temp
+   (local.get $param)
+  )
+  (drop
+   (local.get $temp)
+  )
+ )
 )
 
 ;; TODO: test nesting etc.
