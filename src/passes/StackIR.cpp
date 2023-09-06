@@ -445,8 +445,10 @@ private:
       } else if (auto* otherSet = inst->origin->dynCast<LocalSet>()) {
         // We are covered in this scope henceforth.
         if (otherSet->index == set->index) {
-          coverStack.back() = true;
-          covers++;
+          if (!coverStack.back()) {
+            covers++;
+            coverStack.back() = true;
+          }
         }
       } else if (auto* otherGet = inst->origin->dynCast<LocalGet>()) {
         if (otherGet->index == set->index && i != getIndex && !covers) {

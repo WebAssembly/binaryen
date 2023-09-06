@@ -788,4 +788,49 @@
    (local.get $temp)
   )
  )
+
+ ;; CHECK:      (func $two-covers (type $1) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK-NEXT:  (local $temp (ref eq))
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.eq
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.tee $temp
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   local.get $param
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT: )
+ (func $two-covers (param $param (ref eq)) (result (ref eq))
+  (local $temp (ref eq))
+  (local.set $temp
+   (local.get $param)
+  )
+  (if
+   (ref.eq
+    (local.get $temp)
+    (i31.new
+     (i32.const 0)
+    )
+   )
+   ;; In this if arm we write to $temp twice. That shouldn't confuse us; there's
+   ;; still a use after the if, and we should not remove the set-get pair before
+   ;; the if.
+   (local.set $temp
+    (local.tee $temp
+     (local.get $param)
+    )
+   )
+   (local.set $temp
+    (local.get $param)
+   )
+  )
+  (local.get $temp)
+ )
 )
