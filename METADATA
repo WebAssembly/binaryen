@@ -1,0 +1,19 @@
+# proto-message: MetaData
+
+name: "binaryen"
+description: "Compiler infrastructure and toolchain library for WebAssembly"
+
+third_party {
+  last_upgrade_date { year: 2023 month: 8 day: 31 }
+  version: "126d4fab3e00f003a06dac23f96aa70cbb75aa67"
+  security {
+    tag: "NVD-CPE2.3:cpe:/a:webassembly:binaryen"
+  }
+  identifier: {
+    type: "Git"
+    value: "https://github.com/WebAssembly/binaryen"
+    version: "126d4fab3e00f003a06dac23f96aa70cbb75aa67"
+    closest_version: "version_114"
+    primary_source: true
+  }
+}
