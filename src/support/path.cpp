@@ -19,7 +19,7 @@
 //
 
 #include "support/path.h"
-#ifdef _WIN32
+#ifdef USE_WSTRING_PATHS
 #include "windows.h"
 #endif
 

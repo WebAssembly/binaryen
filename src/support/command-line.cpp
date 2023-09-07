@@ -17,9 +17,9 @@
 #include "support/command-line.h"
 #include "config.h"
 #include "support/debug.h"
-
-#ifdef _WIN32
 #include "support/path.h"
+
+#ifdef USE_WSTRING_PATHS
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif

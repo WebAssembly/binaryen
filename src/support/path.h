@@ -25,7 +25,7 @@
 #include <string>
 
 #if defined(_WIN32) && !defined(__MINGW32__)
-#define USE_WSTRING_PATHS
+#define USE_WSTRING_PATHS 1
 #endif
 
 namespace wasm::Path {
