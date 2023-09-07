@@ -21,7 +21,7 @@ v115
 - The nonstandard, experimental gc-nn-locals feature has been removed now that
   standard non-nullable locals are supported. (#5080)
 - Print all debug annotations when `BINARYEN_PRINT_FULL`. (#5904)
-- Use the standard text format for WasmGC now that things are stabile there.
+- Use the standard text format for WasmGC now that things are stable there.
   (#5894, #5889, #5852, #5801)
 - Rename multimemory flag to `--multimemory` to match its naming in LLVM.
   (#5890)
@@ -34,7 +34,7 @@ v115
   `BinaryenAddFunction` but takes a heap type. The old function is kept for
   backwards compatibility and as a convenience. (#5829)
 - Work on new optimization framework using lattices. (#5784, #5794, #5800,
-  #5817, #5831, #5849
+  #5817, #5831, #5849)
 
 v114
 ----
