@@ -25,7 +25,7 @@
 
 namespace wasm::Path {
 
-#ifdef _WIN32
+#ifdef USE_WSTRING_PATHS
 PathString to_path(const std::string& s) { return string_to_wstring(s); }
 
 std::wstring string_to_wstring(const std::string& s) {

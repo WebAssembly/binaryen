@@ -24,9 +24,13 @@
 #include <cstdlib>
 #include <string>
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+#define USE_WSTRING_PATHS
+#endif
+
 namespace wasm::Path {
 
-#if defined(_WIN32) && !defined(__MINGW32__)
+#ifdef USE_WSTRING_PATHS
 using PathString = std::wstring;
 std::wstring string_to_wstring(const std::string& s);
 std::string wstring_to_string(const std::wstring& s);

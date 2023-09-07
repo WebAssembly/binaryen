@@ -179,7 +179,7 @@ void Options::parse(int argc, const char* argv[]) {
 // is made to open a file (at which point we use Path::to_path to convert back)
 // so that it works with the underlying Win32 APIs.
 // Only argList (and not argv) should be used below.
-#ifdef _WIN32
+#ifdef USE_WSTRING_PATHS
   LPWSTR* argListW = CommandLineToArgvW(GetCommandLineW(), &argc);
   std::vector<std::string> argList;
   for (size_t i = 0, e = argc; i < e; ++i) {
