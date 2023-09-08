@@ -2,9 +2,6 @@
 
 ;; RUN: foreach %s %t wasm-opt --type-ssa -all -S -o - | filecheck %s
 
-;; Test in both isorecursive and nominal modes to make sure we create the new
-;; types properly in both.
-
 ;; Every struct.new here should get a new type.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
@@ -369,18 +366,20 @@
 ;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
 ;; but that is not important here.)
 (module
-  ;; CHECK:      (type $empty (struct ))
-  (type $empty (struct))
+  ;; CHECK:      (type $empty (sub (struct )))
+  (type $empty (sub (struct)))
 
-  ;; CHECK:      (type $1 (func (param anyref)))
+  ;; CHECK:      (type $empty$1 (sub final $empty (struct )))
 
-  ;; CHECK:      (type $struct (struct (field externref) (field anyref) (field externref)))
-  (type $struct (struct externref anyref externref))
+  ;; CHECK:      (type $2 (func (param anyref)))
 
-  ;; CHECK:      (global $g (mut anyref) (struct.new_default $empty))
+  ;; CHECK:      (type $struct (sub (struct (field externref) (field anyref) (field externref))))
+  (type $struct (sub (struct externref anyref externref)))
+
+  ;; CHECK:      (global $g (mut anyref) (struct.new_default $empty$1))
   (global $g (mut anyref) (struct.new $empty))
 
-  ;; CHECK:      (func $0 (type $1) (param $param anyref)
+  ;; CHECK:      (func $0 (type $2) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (extern.externalize
@@ -450,16 +449,18 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct ))
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
-  ;; CHECK:      (type $1 (func (result (ref $A))))
+  ;; CHECK:      (type $A$1 (sub final $A (struct )))
 
-  ;; CHECK:      (func $0 (type $1) (result (ref $A))
-  ;; CHECK-NEXT:  (block $label (result (ref $A))
+  ;; CHECK:      (type $2 (func (result (ref $A))))
+
+  ;; CHECK:      (func $0 (type $2) (result (ref $A))
+  ;; CHECK-NEXT:  (block $label (result (ref $A$1))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $label (ref $A) (ref $A)
-  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A$1) (ref $A$1)
+  ;; CHECK-NEXT:     (struct.new_default $A$1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
