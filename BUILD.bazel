@@ -131,7 +131,11 @@ cc_binary(
 # copybara:insert_end
 
 cc_binary(
-    name = "wasm-opt-impl",
+    # copybara:strip_begin
+    name = "wasm-opt",
+    # copybara:strip_end_and_replace_begin
+    # name = "wasm-opt-impl",
+    # copybara:replace_end
     srcs = [
         "src/tools/execution-results.h",
         "src/tools/fuzzing.h",
@@ -227,10 +231,18 @@ genrule(
 # <version number> must contain only digits because emscripten will throw an
 # error otherwise.
 # copybara:strip_begin
+py_binary(
+    name = "generate_config",
+    srcs = ["generate_config.py"],
+    python_version = "PY3",
+    deps = ["@com_google_absl_py//absl:app"],
+)
+
 genrule(
     name = "config",
     outs = ["src/config.h"],
-    cmd = """echo '#define PROJECT_VERSION "HEAD"' >> $@""",
+    cmd = "$(location :generate_config) $(location :src/config.h)",
+    tools = [":generate_config"]
 )
 # copybara:strip_end_and_replace_begin
 # genrule(
