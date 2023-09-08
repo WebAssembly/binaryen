@@ -255,6 +255,7 @@ struct TypeSSA : public Pass {
         builder[i] = oldType.getArray();
       }
       builder[i].subTypeOf(oldType);
+      builder[i].setOpen();
     }
     builder.createRecGroup(0, num);
     auto result = builder.build();

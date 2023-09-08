@@ -22,9 +22,9 @@
   ;; NOP:      (type $2 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $2) (result i32)))
-  ;; YES:       (type $A$2 (sub final $A (struct )))
+  ;; YES:       (type $A$2 (sub $A (struct )))
 
-  ;; YES:       (type $A$1 (sub final $A (struct )))
+  ;; YES:       (type $A$1 (sub $A (struct )))
 
   ;; YES:      (import "a" "b" (func $import (type $0) (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -46,7 +46,7 @@
 
   ;; YES:      (func $main1 (type $0) (result i32)
   ;; YES-NEXT:  (call $get-a-1
-  ;; YES-NEXT:   (struct.new_default $A$2)
+  ;; YES-NEXT:   (struct.new_default $A)
   ;; YES-NEXT:  )
   ;; YES-NEXT:  (i32.const 42)
   ;; YES-NEXT: )
@@ -66,7 +66,7 @@
   ;; NOP-NEXT: )
   ;; YES:      (func $main2 (type $0) (result i32)
   ;; YES-NEXT:  (call $get-a-2
-  ;; YES-NEXT:   (struct.new_default $A$2)
+  ;; YES-NEXT:   (struct.new_default $A)
   ;; YES-NEXT:  )
   ;; YES-NEXT:  (i32.const 1337)
   ;; YES-NEXT: )

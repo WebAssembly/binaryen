@@ -10,15 +10,15 @@
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct$1 (sub final $struct (struct (field i32))))
+  ;; CHECK-NEXT:  (type $struct$1 (sub $struct (struct (field i32))))
 
-  ;; CHECK:       (type $struct$2 (sub final $struct (struct (field i32))))
+  ;; CHECK:       (type $struct$2 (sub $struct (struct (field i32))))
 
-  ;; CHECK:       (type $struct$3 (sub final $struct (struct (field i32))))
+  ;; CHECK:       (type $struct$3 (sub $struct (struct (field i32))))
 
-  ;; CHECK:       (type $struct$4 (sub final $struct (struct (field i32))))
+  ;; CHECK:       (type $struct$4 (sub $struct (struct (field i32))))
 
-  ;; CHECK:       (type $struct$5 (sub final $struct (struct (field i32))))
+  ;; CHECK:       (type $struct$5 (sub $struct (struct (field i32))))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct$4
   ;; CHECK-NEXT:  (i32.const 42)
@@ -139,11 +139,11 @@
   (type $struct (struct_subtype (field (ref null any)) data))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct$1 (sub final $struct (struct (field anyref))))
+  ;; CHECK-NEXT:  (type $struct$1 (sub $struct (struct (field anyref))))
 
-  ;; CHECK:       (type $struct$2 (sub final $struct (struct (field anyref))))
+  ;; CHECK:       (type $struct$2 (sub $struct (struct (field anyref))))
 
-  ;; CHECK:       (type $struct$3 (sub final $struct (struct (field anyref))))
+  ;; CHECK:       (type $struct$3 (sub $struct (struct (field anyref))))
 
   ;; CHECK:      (func $foo (type $0) (param $any anyref) (param $array arrayref)
   ;; CHECK-NEXT:  (drop
@@ -216,17 +216,17 @@
   (elem func $array.new)
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $array$1 (sub final $array (array (mut anyref))))
+  ;; CHECK-NEXT:  (type $array$1 (sub $array (array (mut anyref))))
 
-  ;; CHECK:       (type $array$2 (sub final $array (array (mut anyref))))
+  ;; CHECK:       (type $array$2 (sub $array (array (mut anyref))))
 
-  ;; CHECK:       (type $array$3 (sub final $array (array (mut anyref))))
+  ;; CHECK:       (type $array$3 (sub $array (array (mut anyref))))
 
-  ;; CHECK:       (type $array-func$4 (sub final $array-func (array (mut funcref))))
+  ;; CHECK:       (type $array-func$4 (sub $array-func (array (mut funcref))))
 
-  ;; CHECK:       (type $array$5 (sub final $array (array (mut anyref))))
+  ;; CHECK:       (type $array$5 (sub $array (array (mut anyref))))
 
-  ;; CHECK:       (type $array$6 (sub final $array (array (mut anyref))))
+  ;; CHECK:       (type $array$6 (sub $array (array (mut anyref))))
 
   ;; CHECK:      (type $9 (func))
 
@@ -369,7 +369,7 @@
   ;; CHECK:      (type $empty (sub (struct )))
   (type $empty (sub (struct)))
 
-  ;; CHECK:      (type $empty$1 (sub final $empty (struct )))
+  ;; CHECK:      (type $empty$1 (sub $empty (struct )))
 
   ;; CHECK:      (type $2 (func (param anyref)))
 
@@ -427,7 +427,10 @@
 
   ;; CHECK:      (type $2 (func (param (ref $subarray))))
 
-  ;; CHECK:      (type $array$1 (sub final $array (array (mut f32))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $array$1 (sub $array (array (mut f32))))
+
+  ;; CHECK:       (type $4 (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $1 (type $2) (param $ref (ref $subarray))
   ;; CHECK-NEXT:  (drop
@@ -452,7 +455,7 @@
   ;; CHECK:      (type $A (sub (struct )))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $A$1 (sub final $A (struct )))
+  ;; CHECK:      (type $A$1 (sub $A (struct )))
 
   ;; CHECK:      (type $2 (func (result (ref $A))))
 
