@@ -1526,34 +1526,48 @@ class WasmBinaryReader {
   MixedArena& allocator;
   const std::vector<char>& input;
 
+  // Source map debugging support.
+
   std::istream* sourceMap;
 
-  struct NextDebugLocation {
-    uint32_t availablePos;
-    uint32_t previousPos;
-    Function::DebugLocation next;
-  } nextDebugLocation;
+  // The binary position that the next debug location refers to. That is, this
+  // is the first item in a source map entry that we have read (the "column", in
+  // source map terms, which for wasm means the offset in the binary). We have
+  // read this entry, but have not used it yet (we use it when we read the
+  // expression at this binary offset).
+  //
+  // This is set to 0 as an invalid value if we reach the end of the source map
+  // and there is nothing left to read.
+  size_t nextDebugPos;
 
-  // Whether debug info is present next or not in the next debug location. A
-  // debug location can contain debug info (file:line:col) or it might not. We
-  // need to track this boolean alongside |nextDebugLocation| - that is, we
-  // can't just do something like std::optional<DebugLocation> or such - as we
-  // still need to track the values in |next|, as later positions are relative
-  // to them. That is, if we have line number 100, then no debug info, and then
-  // line number 500, then when we get to 500 we will see "+400" which is
-  // relative to the last existing line number (we "skip" over the place without
-  // debug info).
+  // The debug location (file:line:col) corresponding to |nextDebugPos|. That
+  // is, this is the next 3 fields in a source map entry that we have read, but
+  // not used yet.
+  //
+  // If that location has no debug info (it lacks those 3 fields), then this
+  // contains the info from the previous one, because in a source map, these
+  // fields are relative to their last appearance, so we cannot forget them (we
+  // can't just do something like std::optional<DebugLocation> or such); for
+  // example, if we have line number 100, then no debug info, and then line
+  // number 500, then when we get to 500 we will see "+400" which is relative to
+  // the last existing line number (we "skip" over a place without debug info).
+  Function::DebugLocation nextDebugLocation;
+
+  // Whether debug info is present on |nextDebugPos| (see comment there).
   bool nextDebugLocationHasDebugInfo;
+
+  // Settings.
 
   bool debugInfo = true;
   bool DWARF = false;
   bool skipFunctionBodies = false;
 
+  // Internal state.
+
   size_t pos = 0;
   Index startIndex = -1;
   std::set<Function::DebugLocation> debugLocation;
   size_t codeSectionLocation;
-
   std::set<BinaryConsts::Section> seenSections;
 
   // All types defined in the type section
