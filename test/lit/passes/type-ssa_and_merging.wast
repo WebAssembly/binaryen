@@ -10,13 +10,13 @@
   ;; NOP:      (rec
   ;; NOP-NEXT:  (type $0 (func (param (ref $A)) (result i32)))
 
-  ;; NOP:       (type $A (struct (field i32)))
+  ;; NOP:       (type $A (sub (struct (field i32))))
   ;; YES:      (type $0 (func (result i32)))
 
   ;; YES:      (rec
   ;; YES-NEXT:  (type $1 (func (param (ref $A))))
 
-  ;; YES:       (type $A (struct ))
+  ;; YES:       (type $A (sub (struct )))
   (type $A (struct_subtype (field (mut i32)) data))
 
   ;; NOP:      (type $2 (func (result i32)))

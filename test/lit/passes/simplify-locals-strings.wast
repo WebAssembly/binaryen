@@ -5,9 +5,9 @@
 (module
   (memory 10 10)
 
-  ;; CHECK:      (type $array (array (mut i8)))
+  ;; CHECK:      (type $array (sub (array (mut i8))))
   (type $array (array_subtype (mut i8) data))
-  ;; CHECK:      (type $array16 (array (mut i16)))
+  ;; CHECK:      (type $array16 (sub (array (mut i16))))
   (type $array16 (array_subtype (mut i16) data))
 
   ;; CHECK:      (func $no-new-past-store (type $1)

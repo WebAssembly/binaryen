@@ -2,8 +2,8 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $A (struct (field structref)))
- (type $A (struct (field (ref null struct))))
+ ;; CHECK:      (type $A (sub (struct (field structref))))
+ (type $A (sub (struct (field (ref null struct)))))
 
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
  ;; nullable).

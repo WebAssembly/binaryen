@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --optimize-casts -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct ))
+  ;; CHECK:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
 
   ;; CHECK:      (type $B (sub $A (struct )))

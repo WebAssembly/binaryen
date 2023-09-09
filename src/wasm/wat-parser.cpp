@@ -849,6 +849,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addFuncType(SignatureT) {}
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
+  void setOpen() {}
   Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
     subtypeDefs.push_back({name, pos, Index(subtypeDefs.size())});
@@ -1077,6 +1078,8 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   }
 
   void addArrayType(ArrayT& type) { builder[index] = type; }
+
+  void setOpen() { builder[index].setOpen(); }
 
   Result<> addSubtype(Index super) {
     if (super >= builder.size()) {
@@ -3463,6 +3466,9 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   }
 
   if (ctx.in.takeSExprStart("sub"sv)) {
+    if (ctx.in.takeKeyword("open"sv)) {
+      ctx.setOpen();
+    }
     if (auto super = maybeTypeidx(ctx)) {
       CHECK_ERR(super);
       CHECK_ERR(ctx.addSubtype(*super));

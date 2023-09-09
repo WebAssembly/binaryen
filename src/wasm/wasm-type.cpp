@@ -85,7 +85,7 @@ struct HeapTypeInfo {
   // Used in assertions to ensure that temporary types don't leak into the
   // global store.
   bool isTemp = false;
-  bool isFinal = false;
+  bool isOpen = false;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -1180,11 +1180,11 @@ bool HeapType::isBottom() const {
   return false;
 }
 
-bool HeapType::isFinal() const {
+bool HeapType::isOpen() const {
   if (isBasic()) {
     return false;
   } else {
-    return getHeapTypeInfo(*this)->isFinal;
+    return getHeapTypeInfo(*this)->isOpen;
   }
 }
 
@@ -1771,13 +1771,12 @@ std::ostream& TypePrinter::print(HeapType type) {
     os << "(; temp ;) ";
   }
 
-  // TODO: Use shorthand for final types once we parse MVP signatures as final.
   bool useSub = false;
   auto super = type.getSuperType();
-  if (super || type.isFinal()) {
+  if (super || type.isOpen()) {
     useSub = true;
     os << "(sub ";
-    if (type.isFinal()) {
+    if (!type.isOpen()) {
       os << "final ";
     }
     if (super) {
@@ -1946,7 +1945,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   if (info.supertype) {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
-  wasm::rehash(digest, info.isFinal);
+  wasm::rehash(digest, info.isOpen);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2069,7 +2068,7 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
       return false;
     }
   }
-  if (a.isFinal != b.isFinal) {
+  if (a.isOpen != b.isOpen) {
     return false;
   }
   if (a.kind != b.kind) {
@@ -2325,15 +2324,15 @@ void TypeBuilder::createRecGroup(size_t index, size_t length) {
     {RecGroup(uintptr_t(groupInfo.get())), std::move(groupInfo)});
 }
 
-void TypeBuilder::setFinal(size_t i, bool final) {
+void TypeBuilder::setOpen(size_t i, bool open) {
   assert(i < size() && "index out of bounds");
-  impl->entries[i].info->isFinal = final;
+  impl->entries[i].info->isOpen = open;
 }
 
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
-  if (super.isFinal) {
+  if (!super.isOpen) {
     return false;
   }
   if (sub.kind != super.kind) {
