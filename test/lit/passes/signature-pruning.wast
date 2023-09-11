@@ -398,7 +398,7 @@
 
   ;; As above, but now an import also uses this signature, which prevents us
   ;; from changing anything.
-  ;; CHECK:      (import "out" "func" (func $import (type $func.0) (param i32)))
+  ;; CHECK:      (import "out" "func" (func $import (type $sig) (param i32)))
   (import "out" "func" (func $import (type $sig) (param i32)))
 
   (memory 1 1)
