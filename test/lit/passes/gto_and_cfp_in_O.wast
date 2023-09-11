@@ -8,7 +8,7 @@
 ;; open world we do not run them.
 
 (module
-  ;; OPEN_WORLD:      (type $struct (struct (field (mut funcref)) (field (mut i32))))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
   (type $struct (struct_subtype (field (mut funcref)) (field (mut i32)) data))
 
   ;; OPEN_WORLD:      (type $1 (func))

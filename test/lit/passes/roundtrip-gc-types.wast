@@ -9,8 +9,8 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field (ref $C))))
-  (type $A (struct (field (ref $C))))
+  ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $C)))))
+  (type $A (sub (struct (field (ref $C)))))
 
   ;; CHECK:       (type $B (func (param (ref $A)) (result (ref $B))))
   (type $B (func (param (ref $A)) (result (ref $B))))

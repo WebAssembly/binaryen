@@ -5,7 +5,7 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (sub (struct )))
   (type $struct (sub (struct)))
   ;; CHECK:       (type $struct2 (struct ))
   (type $struct2 (struct))

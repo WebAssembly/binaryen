@@ -929,8 +929,9 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     if (kind == SUB) {
       Index i = 1;
       if (*def[i] == FINAL) {
-        builder[index].setFinal();
         ++i;
+      } else {
+        builder[index].setOpen();
       }
       if (def[i]->dollared()) {
         super = def[i];
@@ -959,6 +960,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       if (kind == FUNC) {
         builder[index] = parseSignatureDef(def, 0);
       } else if (kind == FUNC_SUBTYPE) {
+        builder[index].setOpen();
         builder[index] = parseSignatureDef(def, 1);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == FUNC) {
@@ -968,6 +970,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == STRUCT) {
         builder[index] = parseStructDef(def, index, 0);
       } else if (kind == STRUCT_SUBTYPE) {
+        builder[index].setOpen();
         builder[index] = parseStructDef(def, index, 1);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == DATA) {
@@ -977,6 +980,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (kind == ARRAY) {
         builder[index] = parseArrayDef(def);
       } else if (kind == ARRAY_SUBTYPE) {
+        builder[index].setOpen();
         builder[index] = parseArrayDef(def);
         super = def[def.size() - 1];
         if (!super->dollared() && super->str() == DATA) {
@@ -993,6 +997,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       }
     } else if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
       // '(' 'extends' $supertype ')'
+      builder[index].setOpen();
       Element& extends = *elem[elem.size() - 1];
       super = extends[1];
     }

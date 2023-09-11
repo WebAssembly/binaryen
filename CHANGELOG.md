@@ -22,6 +22,8 @@ Current Trunk
   and as a convenience.
 - The nonstandard, experimental gc-nn-locals feature has been removed now that
   standard non-nullable locals are supported.
+- Heap types are now final by default and openness must be opted into both in
+  the text and binary formats as well as in the TypeBuilder API.
 
 v114
 ----

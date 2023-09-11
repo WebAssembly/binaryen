@@ -2,8 +2,8 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type ${} (struct ))
- (type ${} (struct))
+ ;; CHECK:      (type ${} (sub (struct )))
+ (type ${} (sub (struct)))
 
  ;; CHECK:      (type ${i32} (sub ${} (struct (field i32))))
  (type ${i32} (struct_subtype (field i32) ${}))

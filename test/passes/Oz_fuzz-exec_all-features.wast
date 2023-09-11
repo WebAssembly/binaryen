@@ -1,5 +1,5 @@
 (module
- (type $struct (struct (mut i32)))
+ (type $struct (sub (struct (mut i32))))
  (type $extendedstruct (struct_subtype (mut i32) f64 $struct))
  (type $bytes (array (mut i8)))
 

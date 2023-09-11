@@ -2,12 +2,9 @@
 
 ;; RUN: foreach %s %t wasm-opt --type-ssa -all -S -o - | filecheck %s
 
-;; Test in both isorecursive and nominal modes to make sure we create the new
-;; types properly in both.
-
 ;; Every struct.new here should get a new type.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $1 (func))
@@ -77,7 +74,7 @@
 ;; The same module as before, except that now the type is final, so we cannot
 ;; create any subtypes.
 (module
-  ;; CHECK:      (type $struct (sub final (struct (field i32))))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (sub final (struct (field i32))))
 
   ;; CHECK:      (type $1 (func))
@@ -138,7 +135,7 @@
 
   ;; CHECK:      (type $0 (func (param anyref arrayref)))
 
-  ;; CHECK:      (type $struct (struct (field anyref)))
+  ;; CHECK:      (type $struct (sub (struct (field anyref))))
   (type $struct (struct_subtype (field (ref null any)) data))
 
   ;; CHECK:      (rec
@@ -208,13 +205,13 @@
 )
 
 (module
-  ;; CHECK:      (type $array (array (mut anyref)))
-  (type $array (array (mut (ref null any))))
+  ;; CHECK:      (type $array (sub (array (mut anyref))))
+  (type $array (sub (array (mut (ref null any)))))
 
   ;; CHECK:      (type $1 (func (param (ref i31) anyref)))
 
-  ;; CHECK:      (type $array-func (array (mut funcref)))
-  (type $array-func (array (mut funcref)))
+  ;; CHECK:      (type $array-func (sub (array (mut funcref))))
+  (type $array-func (sub (array (mut funcref))))
 
   (elem func $array.new)
 
@@ -369,15 +366,15 @@
 ;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
 ;; but that is not important here.)
 (module
-  ;; CHECK:      (type $empty (struct ))
-  (type $empty (struct))
+  ;; CHECK:      (type $empty (sub (struct )))
+  (type $empty (sub (struct)))
 
   ;; CHECK:      (type $empty$1 (sub $empty (struct )))
 
   ;; CHECK:      (type $2 (func (param anyref)))
 
-  ;; CHECK:      (type $struct (struct (field externref) (field anyref) (field externref)))
-  (type $struct (struct externref anyref externref))
+  ;; CHECK:      (type $struct (sub (struct (field externref) (field anyref) (field externref))))
+  (type $struct (sub (struct externref anyref externref)))
 
   ;; CHECK:      (global $g (mut anyref) (struct.new_default $empty$1))
   (global $g (mut anyref) (struct.new $empty))
@@ -422,8 +419,8 @@
 )
 
 (module
-  ;; CHECK:      (type $array (array (mut f32)))
-  (type $array (array (mut f32)))
+  ;; CHECK:      (type $array (sub (array (mut f32))))
+  (type $array (sub (array (mut f32))))
 
   ;; CHECK:      (type $subarray (sub $array (array (mut f32))))
   (type $subarray (array_subtype (mut f32) $array))
@@ -455,8 +452,8 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct ))
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (type $A$1 (sub $A (struct )))
 

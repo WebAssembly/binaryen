@@ -6413,6 +6413,9 @@ void TypeBuilderSetSubType(TypeBuilderRef builder,
                            BinaryenHeapType superType) {
   ((TypeBuilder*)builder)->setSubType(index, HeapType(superType));
 }
+void TypeBuilderSetOpen(TypeBuilderRef builder, BinaryenIndex index) {
+  ((TypeBuilder*)builder)->setOpen(index);
+}
 void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
                                BinaryenIndex index,
                                BinaryenIndex length) {

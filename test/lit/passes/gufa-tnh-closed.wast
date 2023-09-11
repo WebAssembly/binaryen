@@ -231,8 +231,8 @@
 ;; As above, but now the second possible function is of a subtype. We still
 ;; cannot optimize a call to the parent, but we can for the child.
 (module
-  ;; CHECK:      (type $A (func))
-  (type $A (func))
+  ;; CHECK:      (type $A (sub (func)))
+  (type $A (sub (func)))
 
   ;; CHECK:      (type $B (sub $A (func)))
   (type $B (sub $A (func)))
@@ -296,8 +296,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct ))
-    (type $X (struct))
+    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    (type $X (sub (struct)))
 
     ;; CHECK:       (type $Y1 (sub $X (struct )))
     (type $Y1 (sub $X (struct)))
@@ -421,8 +421,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct ))
-    (type $X (struct))
+    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    (type $X (sub (struct)))
 
     ;; CHECK:       (type $Y1 (sub $X (struct )))
     (type $Y1 (sub $X (struct)))
@@ -659,8 +659,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct ))
-    (type $X (struct))
+    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    (type $X (sub (struct)))
 
     ;; CHECK:       (type $Y1 (sub $X (struct )))
     (type $Y1 (sub $X (struct)))
@@ -885,8 +885,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct ))
-    (type $X (struct))
+    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    (type $X (sub (struct)))
 
     ;; CHECK:       (type $Y1 (sub $X (struct )))
     (type $Y1 (sub $X (struct)))
@@ -1041,8 +1041,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct ))
-    (type $X (struct))
+    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    (type $X (sub (struct)))
 
     ;; CHECK:       (type $Y1 (sub $X (struct )))
     (type $Y1 (sub $X (struct)))

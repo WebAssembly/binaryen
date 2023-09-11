@@ -7,7 +7,7 @@
 
 ;; void function type
 (module
-  ;; CHECK:      (type $super (func))
+  ;; CHECK:      (type $super (sub (func)))
   (type $super (func_subtype func))
 
   ;; CHECK:      (type $sub (sub $super (func)))
@@ -19,7 +19,7 @@
 
 ;; function type with params and results
 (module
-  ;; CHECK:      (type $super (func (param i32) (result i32)))
+  ;; CHECK:      (type $super (sub (func (param i32) (result i32))))
   (type $super (func_subtype (param i32) (result i32) func))
 
   ;; CHECK:      (type $sub (sub $super (func (param i32) (result i32))))
@@ -31,7 +31,7 @@
 
 ;; empty struct type
 (module
-  ;; CHECK:      (type $super (struct ))
+  ;; CHECK:      (type $super (sub (struct )))
   (type $super (struct_subtype data))
 
   ;; CHECK:      (type $sub (sub $super (struct )))
@@ -43,7 +43,7 @@
 
 ;; struct type with fields
 (module
-  ;; CHECK:      (type $super (struct (field i32) (field i64)))
+  ;; CHECK:      (type $super (sub (struct (field i32) (field i64))))
   (type $super (struct_subtype (field i32) i64 data))
 
   ;; CHECK:      (type $sub (sub $super (struct (field i32) (field i64))))
@@ -55,7 +55,7 @@
 
 ;; array type
 (module
-  ;; CHECK:      (type $super (array i8))
+  ;; CHECK:      (type $super (sub (array i8)))
   (type $super (array_subtype i8 data))
 
   ;; CHECK:      (type $sub (sub $super (array i8)))

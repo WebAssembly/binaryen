@@ -8,9 +8,9 @@
 ;; RUN:   | filecheck %s --check-prefix TNH
 
 (module
-  ;; CHECK:      (type $parent (struct (field i32)))
-  ;; TNH:      (type $parent (struct (field i32)))
-  (type $parent (struct (field i32)))
+  ;; CHECK:      (type $parent (sub (struct (field i32))))
+  ;; TNH:      (type $parent (sub (struct (field i32))))
+  (type $parent (sub (struct (field i32))))
   ;; CHECK:      (type $child (sub $parent (struct (field i32) (field f64))))
   ;; TNH:      (type $child (sub $parent (struct (field i32) (field f64))))
   (type $child (struct_subtype (field i32) (field f64) $parent))
@@ -200,9 +200,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct ))
+    ;; CHECK-NEXT:  (type $A (sub (struct )))
     ;; TNH:      (rec
-    ;; TNH-NEXT:  (type $A (struct ))
+    ;; TNH-NEXT:  (type $A (sub (struct )))
     (type $A (struct_subtype  data))
     ;; CHECK:       (type $B (sub $A (struct (field (ref null $A)))))
     ;; TNH:       (type $B (sub $A (struct (field (ref null $A)))))

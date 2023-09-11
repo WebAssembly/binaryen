@@ -4,8 +4,8 @@
 ;; ref.cast does not inhibit merging if traps never happen.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   (type $B (struct_subtype $A))
 
   ;; CHECK:       (type $1 (func (param (ref $A)) (result (ref $A))))
@@ -25,8 +25,8 @@
 ;; Check that a ref.test still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
@@ -47,8 +47,8 @@
 ;; Check that a br_on_cast still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
@@ -93,8 +93,8 @@
 
 ;; call_indirect should not inhibit merging if traps never happen.
 (module
-  ;; CHECK:      (type $A (func))
-  (type $A (func))
+  ;; CHECK:      (type $A (sub (func)))
+  (type $A (sub (func)))
   (type $B (func_subtype $A))
 
   (table 1 1 (ref null $A))
