@@ -2846,7 +2846,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = {0, 0, 0};
   o << '(';
   emitImportHeader(curr);
-  handleSignature(curr->getSig(), curr->name);
+  handleSignature(curr->type, curr->name);
   o << ')';
   o << maybeNewLine;
 }

@@ -918,7 +918,7 @@
 
  ;; CHECK:      (type $8 (func (param funcref) (result (ref $C))))
 
- ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects (type $func.0) (param funcref) (result (ref null $A))))
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects (type $6) (param funcref) (result (ref null $A))))
  (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects
    (param funcref)
    (result (ref null $A))
