@@ -3,8 +3,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions                      -all -S -o - | filecheck %s --check-prefix NO_TNH
 
 (module
-  ;; TNH:      (type $struct (struct (field (mut i32))))
-  ;; NO_TNH:      (type $struct (struct (field (mut i32))))
+  ;; TNH:      (type $struct (sub (struct (field (mut i32)))))
+  ;; NO_TNH:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (struct_subtype (field (mut i32)) data))
 
   ;; TNH:      (type $void (func))

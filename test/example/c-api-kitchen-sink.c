@@ -2160,6 +2160,7 @@ void test_typebuilder() {
                           tempArrayType,
                           BinaryenPackedTypeNotPacked(),
                           true);
+  TypeBuilderSetOpen(builder, tempArrayIndex);
 
   // Create a recursive struct with a field of its own type
   const BinaryenIndex tempStructIndex = 1;
@@ -2173,6 +2174,7 @@ void test_typebuilder() {
     bool fieldMutables[] = {true};
     TypeBuilderSetStructType(
       builder, tempStructIndex, fieldTypes, fieldPackedTypes, fieldMutables, 1);
+    TypeBuilderSetOpen(builder, tempStructIndex);
   }
 
   // Create a recursive signature with parameter and result including its own
@@ -2189,6 +2191,7 @@ void test_typebuilder() {
       tempSignatureIndex,
       TypeBuilderGetTempTupleType(builder, (BinaryenType*)&paramTypes, 2),
       tempSignatureType);
+    TypeBuilderSetOpen(builder, tempSignatureIndex);
   }
 
   // Create a subtype (with an additional immutable packed field)
@@ -2209,10 +2212,9 @@ void test_typebuilder() {
                              fieldPackedTypes,
                              fieldMutables,
                              2);
+    TypeBuilderSetOpen(builder, tempSubStructIndex);
   }
   TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructHeapType);
-
-  // TODO: Rtts (post-MVP?)
 
   // Build the type hierarchy and dispose the builder
   BinaryenHeapType heapTypes[4];

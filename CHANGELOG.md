@@ -35,6 +35,8 @@ v115
   backwards compatibility and as a convenience. (#5829)
 - Work on new optimization framework using lattices. (#5784, #5794, #5800,
   #5817, #5831, #5849)
+- Heap types are now final by default and openness must be opted into both in
+  the text and binary formats as well as in the TypeBuilder API. (#5918)
 
 v114
 ----

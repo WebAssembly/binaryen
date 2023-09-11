@@ -7,8 +7,8 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
-  ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $A (struct ))
+  ;; ALWAYS:      (type $A (sub (struct )))
+  ;; CAREFUL:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
@@ -124,10 +124,10 @@
   ;; As above, but now the refinable function uses the local in a way that
   ;; requires a fixup.
 
-  ;; ALWAYS:      (type $A (struct ))
+  ;; ALWAYS:      (type $A (sub (struct )))
   ;; CAREFUL:      (type $0 (func))
 
-  ;; CAREFUL:      (type $A (struct ))
+  ;; CAREFUL:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
@@ -204,10 +204,10 @@
 (module
   ;; Multiple refinings of the same function, and of different functions.
 
-  ;; ALWAYS:      (type $A (struct ))
+  ;; ALWAYS:      (type $A (sub (struct )))
   ;; CAREFUL:      (type $0 (func))
 
-  ;; CAREFUL:      (type $A (struct ))
+  ;; CAREFUL:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
@@ -327,8 +327,8 @@
   ;; A case where even CAREFUL mode will monomorphize, as it helps the target
   ;; function get optimized better.
 
-  ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $A (struct ))
+  ;; ALWAYS:      (type $A (sub (struct )))
+  ;; CAREFUL:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
 
   ;; ALWAYS:      (type $B (sub $A (struct )))
@@ -558,8 +558,8 @@
 (module
   ;; Test that we avoid recursive calls.
 
-  ;; ALWAYS:      (type $A (struct ))
-  ;; CAREFUL:      (type $A (struct ))
+  ;; ALWAYS:      (type $A (sub (struct )))
+  ;; CAREFUL:      (type $A (sub (struct )))
   (type $A (struct_subtype data))
   ;; ALWAYS:      (type $1 (func (param (ref $A))))
 

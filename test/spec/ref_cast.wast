@@ -1,5 +1,5 @@
 (module
-  (type $t0  (struct))
+  (type $t0  (sub (struct)))
   (type $t1  (struct_subtype (field i32) $t0))
   (type $t1' (struct_subtype (field i32) $t1))
   (type $t2  (struct_subtype (field i32) (field i32) $t1))

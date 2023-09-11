@@ -9,10 +9,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A-super (func))
+    ;; CHECK-NEXT:  (type $A-super (sub (func)))
     ;; OPEN_WORLD:      (rec
-    ;; OPEN_WORLD-NEXT:  (type $A-super (func))
-    (type $A-super (func))
+    ;; OPEN_WORLD-NEXT:  (type $A-super (sub (func)))
+    (type $A-super (sub (func)))
 
     ;; CHECK:       (type $A (sub $A-super (func)))
     ;; OPEN_WORLD:       (type $A (sub $A-super (func)))
@@ -634,8 +634,8 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
@@ -754,12 +754,12 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
-  ;; CHECK:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
-  ;; OPEN_WORLD:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
+  ;; CHECK:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
   (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
@@ -1070,8 +1070,8 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
 
   ;; CHECK:      (elem declare func $a $b $void)
@@ -1174,8 +1174,8 @@
     ;; OPEN_WORLD:      (rec
     ;; OPEN_WORLD-NEXT:  (type $vtable-func (func (param (ref $vtable))))
     (type $vtable-func (func (param (ref $vtable))))
-    ;; CHECK:       (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
-    ;; OPEN_WORLD:       (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
+    ;; CHECK:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
+    ;; OPEN_WORLD:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
     (type $vtable (struct_subtype (field (ref $vtable-func)) (field (ref $vtable-func)) data))
   )
 
@@ -1368,9 +1368,9 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $struct (struct (field funcref)))
-  ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
-  (type $struct (struct (field funcref)))
+  ;; CHECK:      (type $struct (sub (struct (field funcref))))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field funcref))))
+  (type $struct (sub (struct (field funcref))))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field funcref))))
   ;; OPEN_WORLD:      (type $substruct (sub $struct (struct (field funcref))))

@@ -72,7 +72,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
   // Create the temporary heap types.
   i = 0;
   for (auto [type, _] : typeIndices) {
-    typeBuilder[i].setFinal(type.isFinal());
+    typeBuilder[i].setOpen(type.isOpen());
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;

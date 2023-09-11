@@ -3572,6 +3572,9 @@ BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
 BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
                                         BinaryenIndex index,
                                         BinaryenHeapType superType);
+// Sets the type at `index` to be open (i.e. non-final).
+BINARYEN_API void TypeBuilderSetOpen(TypeBuilderRef builder,
+                                     BinaryenIndex index);
 // Creates a new recursion group in the range `index` inclusive to `index +
 // length` exclusive. Recursion groups must not overlap.
 BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,

@@ -496,8 +496,8 @@
 ;;            subtype, the get must trap anyhow (the reference it receives can
 ;;            only be null in this closed world).
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct i32))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
   (type $substruct (struct_subtype i32 $struct))
 
   ;; CHECK:      (type $1 (func (result (ref $struct))))
@@ -543,8 +543,8 @@
 ;; however, cannot write to the subtype, so we still know that any reads from
 ;; the subtype must trap.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (mut i32)))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
   (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (type $1 (func))
@@ -602,8 +602,8 @@
 ;; to a read of the subtype. Still, no actual instance of the subtype can
 ;; appear in the get, so we can optimize to an unreachable.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (mut i32)))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
   (type $substruct (struct_subtype (mut i32) $struct))
 
   ;; CHECK:      (type $1 (func))
@@ -655,7 +655,7 @@
 ;; Subtyping: Create a subtype and get a supertype. The get must receive a
 ;;            reference to the subtype and so we can infer the value of the get.
 (module
-  (type $struct (struct i32))
+  (type $struct (sub (struct i32)))
 
   (type $substruct (struct_subtype i32 f64 $struct))
 
@@ -681,8 +681,8 @@
 ;; Subtyping: Create both a subtype and a supertype, with identical constants
 ;;            for the shared field, and get the supertype.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct i32))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
   ;; CHECK:      (type $1 (func (result i32)))
 
   ;; CHECK:      (type $2 (func))
@@ -735,8 +735,8 @@
 ;;            for the shared field, preventing optimization, as a get of the
 ;;            supertype may receive an instance of the subtype.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct i32))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
   ;; CHECK:      (type $1 (func (result i32)))
 
   ;; CHECK:      (type $2 (func))
@@ -786,8 +786,8 @@
 ;;            shared between the types, but we only create the subtype with
 ;;            one value, so we can optimize.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct i32))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (struct_subtype i32 f64 $struct))
@@ -843,8 +843,8 @@
 
 ;; As above, but add a set of $struct. The set prevents the optimization.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (mut i32)))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
@@ -917,8 +917,8 @@
 ;; As above, but now the constant in the set agrees with the substruct value,
 ;; so we can optimize.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (mut i32)))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
+  (type $struct (sub (struct (mut i32))))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (struct_subtype (mut i32) f64 $struct))
@@ -996,7 +996,7 @@
 ;; Multi-level subtyping, check that we propagate not just to the immediate
 ;; supertype but all the way as needed.
 (module
-  ;; CHECK:      (type $struct1 (struct (field i32)))
+  ;; CHECK:      (type $struct1 (sub (struct (field i32))))
   (type $struct1 (struct_subtype i32 data))
 
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field i32) (field f64))))
@@ -1137,8 +1137,8 @@
 ;; different values in the sub-most type. Create the top and bottom types, but
 ;; not the middle one.
 (module
-  ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
-  (type $struct1 (struct i32 i32))
+  ;; CHECK:      (type $struct1 (sub (struct (field i32) (field i32))))
+  (type $struct1 (sub (struct i32 i32)))
 
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field i32) (field i32) (field f64) (field f64))))
   (type $struct2 (struct_subtype i32 i32 f64 f64 $struct1))
@@ -1371,8 +1371,8 @@
 
 ;; Multi-level subtyping with a different value in the middle of the chain.
 (module
-  ;; CHECK:      (type $struct1 (struct (field (mut i32))))
-  (type $struct1 (struct (mut i32)))
+  ;; CHECK:      (type $struct1 (sub (struct (field (mut i32)))))
+  (type $struct1 (sub (struct (mut i32))))
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $2 (func))
@@ -1676,8 +1676,8 @@
 ;; but also a set. We can see that the set just affects the middle class,
 ;; though, so it is not a problem.
 (module
-  ;; CHECK:      (type $struct1 (struct (field (mut i32))))
-  (type $struct1 (struct (mut i32)))
+  ;; CHECK:      (type $struct1 (sub (struct (field (mut i32)))))
+  (type $struct1 (sub (struct (mut i32))))
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
@@ -1792,8 +1792,8 @@
 
 ;; As above, but the set is of a different value.
 (module
-  ;; CHECK:      (type $struct1 (struct (field (mut i32))))
-  (type $struct1 (struct (mut i32)))
+  ;; CHECK:      (type $struct1 (sub (struct (field (mut i32)))))
+  (type $struct1 (sub (struct (mut i32))))
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field (mut i32)) (field f64))))
   (type $struct2 (struct_subtype (mut i32) f64 $struct1))
   ;; CHECK:      (type $struct3 (sub $struct2 (struct (field (mut i32)) (field f64) (field anyref))))
@@ -2019,8 +2019,8 @@
 ;; sets, and the final subtype C has a create and a get. The set to A should
 ;; apply to it, preventing optimization.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (mut i32)))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (mut i32))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (struct_subtype (mut i32) $A))

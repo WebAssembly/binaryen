@@ -13,7 +13,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref $struct))))
+  ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
@@ -43,7 +43,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref $struct))))
+  ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (elem declare func $func)
@@ -79,7 +79,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param eqref)))
+  ;; CHECK:       (type $sig (sub (func (param eqref))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (elem declare func $func)
@@ -121,7 +121,7 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (struct ))
+    ;; CHECK-NEXT:  (type $struct (sub (struct )))
 
     ;; CHECK:       (type $struct-sub2 (sub $struct (struct )))
 
@@ -129,10 +129,10 @@
 
     ;; CHECK:       (type $3 (func))
 
-    ;; CHECK:       (type $sig (func (param (ref $struct))))
+    ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
     (type $sig (func_subtype (param anyref) func))
 
-    (type $struct (struct))
+    (type $struct (sub (struct)))
 
     (type $struct-sub1 (struct_subtype $struct))
 
@@ -178,7 +178,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref $struct))))
+  ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (func_subtype (param anyref) func))
 
   (type $struct (struct))
@@ -212,11 +212,11 @@
   ;; to check for proper validation after the update.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct (field (ref $sig))))
+  ;; CHECK-NEXT:  (type $struct (sub (struct (field (ref $sig)))))
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref $struct) (ref $sig))))
+  ;; CHECK:       (type $sig (sub (func (param (ref $struct) (ref $sig)))))
   (type $sig (func_subtype (param anyref funcref) func))
 
   (type $struct (struct_subtype (field (ref $sig)) data))
@@ -282,7 +282,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref $struct))))
+  ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (elem declare func $func)
@@ -319,7 +319,7 @@
 
   (type $struct (struct))
 
-  ;; CHECK:      (type $sig (func (param anyref)))
+  ;; CHECK:      (type $sig (sub (func (param anyref))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $1 (func))
@@ -352,7 +352,7 @@
 
   (type $struct (struct))
 
-  ;; CHECK:      (type $sig (func (param anyref)))
+  ;; CHECK:      (type $sig (sub (func (param anyref))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
@@ -371,9 +371,9 @@
 
     ;; CHECK:       (type $1 (func))
 
-    ;; CHECK:       (type $sig-2 (func (param eqref (ref $struct))))
+    ;; CHECK:       (type $sig-2 (sub (func (param eqref (ref $struct)))))
 
-    ;; CHECK:       (type $sig-1 (func (param structref anyref)))
+    ;; CHECK:       (type $sig-1 (sub (func (param structref anyref))))
     (type $sig-1 (func_subtype (param anyref) (param anyref) func))
     (type $sig-2 (func_subtype (param anyref) (param anyref) func))
   )
@@ -442,7 +442,7 @@
 (module
   ;; The presence of a table prevents us from doing any optimizations.
 
-  ;; CHECK:      (type $sig (func (param anyref)))
+  ;; CHECK:      (type $sig (sub (func (param anyref))))
   (type $sig (func_subtype (param anyref) func))
 
   ;; CHECK:      (type $1 (func))
@@ -481,7 +481,7 @@
 
   ;; CHECK:       (type $1 (func))
 
-  ;; CHECK:       (type $sig (func (param (ref null $struct))))
+  ;; CHECK:       (type $sig (sub (func (param (ref null $struct)))))
   (type $sig (func_subtype (param anyref) func))
 
   (type $struct (struct))
@@ -515,16 +515,16 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $0 (func))
 
-    ;; CHECK:       (type $sig-unreachable (func (result anyref)))
+    ;; CHECK:       (type $sig-unreachable (sub (func (result anyref))))
 
-    ;; CHECK:       (type $sig-cannot-refine (func (result (ref func))))
+    ;; CHECK:       (type $sig-cannot-refine (sub (func (result (ref func)))))
 
     ;; CHECK:       (type $struct (struct ))
     (type $struct (struct))
 
     ;; This signature has a single function using it, which returns a more
     ;; refined type, and we can refine to that.
-    ;; CHECK:       (type $sig-can-refine (func (result (ref $struct))))
+    ;; CHECK:       (type $sig-can-refine (sub (func (result (ref $struct)))))
     (type $sig-can-refine (func_subtype (result anyref) func))
 
     ;; Also a single function, but no refinement is possible.
@@ -614,7 +614,7 @@
 
   ;; This signature has multiple functions using it, and some of them have nulls
   ;; which should be updated when we refine.
-  ;; CHECK:       (type $sig (func (result (ref null $struct))))
+  ;; CHECK:       (type $sig (sub (func (result (ref null $struct)))))
   (type $sig (func_subtype (result anyref) func))
 
   ;; CHECK:      (func $func-1 (type $sig) (result (ref null $struct))
@@ -660,7 +660,7 @@
 
 ;; Exports prevent optimization, so $func's type will not change here.
 (module
-  ;; CHECK:      (type $sig (func (param anyref)))
+  ;; CHECK:      (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (type $1 (func))
 
@@ -690,7 +690,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (func (param i32)))
+  ;; CHECK:      (type $A (sub (func (param i32))))
   (type $A (func_subtype (param i32) func))
   ;; CHECK:      (type $B (sub $A (func (param i32))))
   (type $B (func_subtype (param i32) $A))
@@ -783,8 +783,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (func (param (ref null $B)) (result (ref null $A))))
-    (type $A (func         (param (ref null $B)) (result (ref null $A))))
+    ;; CHECK-NEXT:  (type $A (sub (func (param (ref null $B)) (result (ref null $A)))))
+    (type $A (sub (func    (param (ref null $B)) (result (ref null $A)))))
     ;; CHECK:       (type $B (sub $A (func (param (ref null $A)) (result (ref null $B)))))
     (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
   )
@@ -805,8 +805,8 @@
 ;; supertype. In this example, refining the child's anyref to nullref would
 ;; cause an error.
 (module
-  ;; CHECK:      (type $parent (func (param anyref)))
-  (type $parent (func (param anyref)))
+  ;; CHECK:      (type $parent (sub (func (param anyref))))
+  (type $parent (sub (func (param anyref))))
   ;; CHECK:      (type $child (sub $parent (func (param anyref))))
   (type $child (func_subtype (param anyref) $parent))
 
@@ -893,8 +893,8 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))

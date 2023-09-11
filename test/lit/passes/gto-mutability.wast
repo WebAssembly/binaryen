@@ -431,8 +431,8 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func (param (ref null $super) (ref null $sub))))
 
-  ;; CHECK:       (type $super (struct (field i32)))
-  (type $super (struct (field (mut i32))))
+  ;; CHECK:       (type $super (sub (struct (field i32))))
+  (type $super (sub (struct (field (mut i32)))))
   ;; CHECK:       (type $sub (sub $super (struct (field i32))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
@@ -485,8 +485,8 @@
 (module
   ;; As above, but add a write in the super, which prevents optimization.
 
-  ;; CHECK:      (type $super (struct (field (mut i32))))
-  (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $super (sub (struct (field (mut i32)))))
+  (type $super (sub (struct (field (mut i32)))))
   ;; CHECK:      (type $sub (sub $super (struct (field (mut i32)))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 
@@ -550,8 +550,8 @@
   ;; As above, but add a write in the sub, which prevents optimization.
 
 
-  ;; CHECK:      (type $super (struct (field (mut i32))))
-  (type $super (struct (field (mut i32))))
+  ;; CHECK:      (type $super (sub (struct (field (mut i32)))))
+  (type $super (sub (struct (field (mut i32)))))
   ;; CHECK:      (type $sub (sub $super (struct (field (mut i32)))))
   (type $sub (struct_subtype (field (mut i32)) $super))
 

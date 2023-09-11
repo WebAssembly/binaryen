@@ -11,9 +11,9 @@
 ;; which is temporarily inconsistent. We must be careful to avoid confusion
 ;; there.
 (module
- ;; CHECK:      (type $B (struct ))
+ ;; CHECK:      (type $B (sub (struct )))
  (type $B (struct_subtype  data))
- ;; CHECK:      (type $A (struct (field (ref null $B))))
+ ;; CHECK:      (type $A (sub (struct (field (ref null $B)))))
  (type $A (struct_subtype (field (ref null $B)) data))
  ;; CHECK:      (type $2 (func (param (ref null $A))))
 

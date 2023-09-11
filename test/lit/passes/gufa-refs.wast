@@ -923,10 +923,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (struct ))
+    ;; CHECK-NEXT:  (type $struct (sub (struct )))
     (type $struct (struct_subtype data))
 
-    ;; CHECK:       (type $parent (struct (field (mut (ref null $struct)))))
+    ;; CHECK:       (type $parent (sub (struct (field (mut (ref null $struct))))))
     (type $parent (struct_subtype (field (mut (ref null $struct))) data))
     ;; CHECK:       (type $child (sub $parent (struct (field (mut (ref null $struct))) (field (mut (ref null $struct))))))
     (type $child (struct_subtype (field (mut (ref null $struct))) (field (mut (ref null $struct))) $parent))
@@ -1201,9 +1201,9 @@
 
 ;; Exact types: Writes to the parent class do not confuse us.
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (sub (struct )))
   (type $struct (struct_subtype data))
-  ;; CHECK:      (type $parent (struct (field (mut (ref null $struct)))))
+  ;; CHECK:      (type $parent (sub (struct (field (mut (ref null $struct))))))
   (type $parent (struct_subtype (field (mut (ref null $struct))) data))
   ;; CHECK:      (type $child (sub $parent (struct (field (mut (ref null $struct))) (field i32))))
   (type $child (struct_subtype (field (mut (ref null $struct))) (field i32) $parent))
@@ -1285,7 +1285,7 @@
 
 ;; Write values to the parent *and* the child and read from the child.
 (module
-  ;; CHECK:      (type $parent (struct (field (mut i32))))
+  ;; CHECK:      (type $parent (sub (struct (field (mut i32)))))
   (type $parent (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $child (sub $parent (struct (field (mut i32)) (field i32))))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
@@ -1377,7 +1377,7 @@
 
 ;; As above, but the $parent local can now contain a child too.
 (module
-  ;; CHECK:      (type $parent (struct (field (mut i32))))
+  ;; CHECK:      (type $parent (sub (struct (field (mut i32)))))
   (type $parent (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $child (sub $parent (struct (field (mut i32)) (field i32))))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
@@ -1460,7 +1460,7 @@
 
 ;; As above, but now the parent and child happen to agree on the aliased value.
 (module
-  ;; CHECK:      (type $parent (struct (field (mut i32))))
+  ;; CHECK:      (type $parent (sub (struct (field (mut i32)))))
   (type $parent (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $child (sub $parent (struct (field (mut i32)) (field i32))))
   (type $child (struct_subtype (field (mut i32)) (field i32) $parent))
@@ -1538,13 +1538,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $nothing (array (mut anyref)))
+    ;; CHECK-NEXT:  (type $nothing (sub (array (mut anyref))))
     (type $nothing (array_subtype (mut (ref null any)) data))
 
-    ;; CHECK:       (type $null (array (mut anyref)))
+    ;; CHECK:       (type $null (sub (array (mut anyref))))
     (type $null (array_subtype (mut (ref null any)) data))
 
-    ;; CHECK:       (type $something (array (mut anyref)))
+    ;; CHECK:       (type $something (sub (array (mut anyref))))
     (type $something (array_subtype (mut (ref null any)) data))
 
     ;; CHECK:       (type $something-child (sub $something (array (mut anyref))))
@@ -2203,7 +2203,7 @@
 )
 
 (module
-  ;; CHECK:      (type ${} (struct ))
+  ;; CHECK:      (type ${} (sub (struct )))
   (type ${} (struct_subtype data))
 
   ;; CHECK:      (type $1 (func (result (ref ${}))))
@@ -2239,13 +2239,13 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
-  ;; CHECK:      (type $B (struct (field i64)))
+  ;; CHECK:      (type $B (sub (struct (field i64))))
   (type $B (struct_subtype (field i64) data))
-  ;; CHECK:      (type $C (struct (field f32)))
+  ;; CHECK:      (type $C (sub (struct (field f32))))
   (type $C (struct_subtype (field f32) data))
-  ;; CHECK:      (type $D (struct (field f64)))
+  ;; CHECK:      (type $D (sub (struct (field f64))))
   (type $D (struct_subtype (field f64) data))
 
   ;; CHECK:      (func $many-types (type $0)
@@ -2312,7 +2312,7 @@
 ;; locations being properly noticed, both from global locations (the global's
 ;; init) and a function ($create).
 (module
-  ;; CHECK:      (type $vtable-A (struct (field funcref) (field funcref) (field funcref)))
+  ;; CHECK:      (type $vtable-A (sub (struct (field funcref) (field funcref) (field funcref))))
   (type $vtable-A (struct_subtype (field (ref null func)) (field (ref null func)) (field (ref null func)) data))
 
   ;; CHECK:      (type $1 (func))
@@ -2395,7 +2395,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (struct_subtype (field i32) data))
 
   ;; CHECK:      (type $1 (func))
@@ -2446,7 +2446,7 @@
 
 ;; Casts.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (struct_subtype (field i32) data))
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field i32))))
   (type $substruct (struct_subtype (field i32) (field i32) $struct))
@@ -2457,7 +2457,7 @@
 
   ;; CHECK:      (type $4 (func (param i32)))
 
-  ;; CHECK:      (type $other (struct ))
+  ;; CHECK:      (type $other (sub (struct )))
   (type $other (struct_subtype data))
 
   ;; CHECK:      (type $6 (func (result i32)))
@@ -3347,7 +3347,7 @@
 
 ;; Test ref.eq on globals.
 (module
-  ;; CHECK:      (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
 
@@ -3511,11 +3511,11 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
-  ;; CHECK:      (type $B (struct (field (ref $A))))
+  ;; CHECK:      (type $B (sub (struct (field (ref $A)))))
   (type $B (struct_subtype (ref $A) data))
-  ;; CHECK:      (type $C (struct (field (ref $B))))
+  ;; CHECK:      (type $C (sub (struct (field (ref $B)))))
   (type $C (struct_subtype (ref $B) data))
 
   ;; CHECK:      (type $3 (func (result i32)))
@@ -3564,7 +3564,7 @@
 
 ;; ref.as* test.
 (module
-  ;; CHECK:      (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
   ;; CHECK:      (type $B (sub $A (struct (field i32) (field f64))))
   (type $B (struct_subtype (field i32) (field f64) $A))
@@ -3610,7 +3610,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
   ;; CHECK:      (type $1 (func (result i32)))
 
@@ -4223,7 +4223,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (struct_subtype (mut i32) data))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
@@ -4299,7 +4299,7 @@
 ;; As above, but we can no longer infer an exact type for the struct.set on the
 ;; global $something.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (struct_subtype (mut i32) data))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
@@ -4377,7 +4377,7 @@
 ;; As above, but change the constants in the first field in all cases to 10. Now
 ;; we can optimize.
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (struct_subtype (mut i32) data))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
@@ -4585,7 +4585,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
     (type $A (struct_subtype (field (mut i32)) data))
     ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
     (type $B (struct_subtype (field (mut i32)) $A))
@@ -4693,7 +4693,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
     (type $A (struct_subtype (field (mut i32)) data))
     ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
     (type $B (struct_subtype (field (mut i32)) $A))
@@ -4801,7 +4801,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
     (type $A (struct_subtype (field (mut i32)) data))
     ;; CHECK:       (type $B (sub $A (struct (field (mut i32)))))
     (type $B (struct_subtype (field (mut i32)) $A))
@@ -4915,7 +4915,7 @@
 
 ;; Cone writes.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   (type $A (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (struct_subtype (field (mut i32)) $A))
@@ -5013,7 +5013,7 @@
 
 ;; As above, but write a different value.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   (type $A (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (struct_subtype (field (mut i32)) $A))
@@ -5112,7 +5112,7 @@
 
 ;; As above, but write a different cone.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   (type $A (struct_subtype (field (mut i32)) data))
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
   (type $B (struct_subtype (field (mut i32)) $A))
@@ -5212,7 +5212,7 @@
 ;; Tests for proper inference of imported etc. values - we do know their type,
 ;; at least.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   (type $A (struct_subtype (field (mut i32)) data))
 
   ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
@@ -5646,8 +5646,8 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))
@@ -5683,8 +5683,8 @@
 ;; A situation that we need traps-never-happens to optimize. Here we do nothing,
 ;; while in gufa-tnh we test with that flag.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; CHECK:      (type $1 (func (param (ref null $A))))
 

@@ -22,11 +22,11 @@
 (module
  (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $vtable (struct (field funcref)))
+   ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
    (type $vtable (struct_subtype (field funcref) data))
-   ;; CHECK:       (type $itable1 (struct (field (ref $vtable))))
+   ;; CHECK:       (type $itable1 (sub (struct (field (ref $vtable)))))
    (type $itable1 (struct_subtype (field (ref $vtable)) data))
-   ;; CHECK:       (type $itable2 (struct (field (ref $vtable))))
+   ;; CHECK:       (type $itable2 (sub (struct (field (ref $vtable)))))
    (type $itable2 (struct_subtype (field (ref $vtable)) data))
  )
 

@@ -361,7 +361,7 @@ public:
   bool isArray() const;
   bool isString() const;
   bool isBottom() const;
-  bool isFinal() const;
+  bool isOpen() const;
 
   Signature getSignature() const;
   const Struct& getStruct() const;
@@ -587,7 +587,7 @@ struct TypeBuilder {
   // not overlap or go out of bounds.
   void createRecGroup(size_t i, size_t length);
 
-  void setFinal(size_t i, bool final = true);
+  void setOpen(size_t i, bool open = true);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -650,8 +650,8 @@ struct TypeBuilder {
       builder.setSubType(index, other);
       return *this;
     }
-    Entry& setFinal(bool final = true) {
-      builder.setFinal(index, final);
+    Entry& setOpen(bool open = true) {
+      builder.setOpen(index, open);
       return *this;
     }
   };

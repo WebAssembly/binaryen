@@ -9,7 +9,7 @@
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $void (func))
+  ;; CHECK:      (type $void (sub (func)))
 
   ;; CHECK:      (type $pair (struct (field (mut i32)) (field (mut i64))))
 
@@ -33,7 +33,7 @@
 
   ;; CHECK:      (type $packed-i16 (array (mut i16)))
 
-  ;; CHECK:      (type $many (func (param i32 i64 f32 f64) (result anyref (ref func))))
+  ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
   ;; CHECK:      (type $14 (func (param i32 i32)))
 
@@ -137,16 +137,16 @@
  (type $packed-i16 (array (mut i16)))
 
  (rec
-   (type $void (func))
+   (type $void (sub open (func)))
  )
 
- ;; CHECK:      (type $subvoid (sub $void (func)))
+ ;; CHECK:      (type $subvoid (sub final $void (func)))
  (type $subvoid (sub $void (func)))
 
- (type $many (func (param $x i32) (param i64 f32) (param) (param $y f64)
-                   (result anyref (ref func))))
+ (type $many (sub open (func (param $x i32) (param i64 f32) (param) (param $y f64)
+                             (result anyref (ref func)))))
 
- ;; CHECK:      (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+ ;; CHECK:      (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
  (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
  ;; globals
@@ -168,7 +168,7 @@
 
  ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
 
- ;; CHECK:      (import "mod" "f5" (func $fimport$1 (type $void)))
+ ;; CHECK:      (import "mod" "f5" (func $fimport$1 (type $func.0)))
 
  ;; CHECK:      (global $2 (mut i32) (i32.const 0))
 

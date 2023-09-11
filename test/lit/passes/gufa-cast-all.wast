@@ -6,8 +6,8 @@
   ;; CHECK:      (type $none_=>_none (func))
   (type $none_=>_none (func))
 
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))

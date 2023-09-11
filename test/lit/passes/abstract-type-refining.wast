@@ -14,13 +14,13 @@
   ;; NO_TNH:      (rec
   ;; NO_TNH-NEXT:  (type $0 (func))
 
-  ;; NO_TNH:       (type $A (struct ))
-  (type $A (struct))
+  ;; NO_TNH:       (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $0 (func))
 
-  ;; YESTNH:       (type $B (struct ))
+  ;; YESTNH:       (type $B (sub (struct )))
   ;; NO_TNH:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
@@ -264,10 +264,10 @@
 (module
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (struct ))
+    ;; YESTNH-NEXT:  (type $A (sub (struct )))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (struct ))
-    (type $A (struct))
+    ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+    (type $A (sub (struct)))
 
     ;; YESTNH:       (type $B1 (sub $A (struct )))
 
@@ -362,13 +362,13 @@
 (module
   (rec
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (struct ))
-    (type $A (struct))
+    ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+    (type $A (sub (struct)))
 
     (type $B (struct_subtype $A))
 
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $B1 (struct ))
+    ;; YESTNH-NEXT:  (type $B1 (sub (struct )))
     ;; NO_TNH:       (type $B1 (sub $A (struct )))
     (type $B1 (struct_subtype $A)) ;; this is a new type
   )
@@ -449,14 +449,14 @@
 ;; A chain, $A :> $B :> $C, where we can optimize $A all the way to $C.
 (module
   ;; NO_TNH:      (rec
-  ;; NO_TNH-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
 
   ;; NO_TNH:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
   ;; YESTNH:      (rec
-  ;; YESTNH-NEXT:  (type $C (struct ))
+  ;; YESTNH-NEXT:  (type $C (sub (struct )))
   ;; NO_TNH:       (type $C (sub $B (struct )))
   (type $C (struct_subtype $B))
 
@@ -537,7 +537,7 @@
 ;; created here. No type needs to be emitted in the output.
 (module
   (rec
-    (type $A (struct))
+    (type $A (sub (struct)))
 
     (type $B (struct_subtype $A))
 
@@ -824,8 +824,8 @@
     ;; NO_TNH:      (rec
     ;; NO_TNH-NEXT:  (type $0 (func (param anyref)))
 
-    ;; NO_TNH:       (type $A (struct ))
-    (type $A (struct))
+    ;; NO_TNH:       (type $A (sub (struct )))
+    (type $A (sub (struct)))
 
     ;; NO_TNH:       (type $B (sub $A (struct )))
     (type $B (struct_subtype $A))
@@ -833,7 +833,7 @@
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $0 (func (param anyref)))
 
-    ;; YESTNH:       (type $C1 (struct ))
+    ;; YESTNH:       (type $C1 (sub (struct )))
     ;; NO_TNH:       (type $C1 (sub $B (struct )))
     (type $C1 (struct_subtype $B))
 
@@ -986,10 +986,10 @@
 ;; Function subtyping, which is a TODO - for now we do nothing.
 (module
   ;; YESTNH:      (rec
-  ;; YESTNH-NEXT:  (type $A (func))
+  ;; YESTNH-NEXT:  (type $A (sub (func)))
   ;; NO_TNH:      (rec
-  ;; NO_TNH-NEXT:  (type $A (func))
-  (type $A (func))
+  ;; NO_TNH-NEXT:  (type $A (sub (func)))
+  (type $A (sub (func)))
 
   ;; YESTNH:       (type $B (sub $A (func)))
   ;; NO_TNH:       (type $B (sub $A (func)))
@@ -1079,9 +1079,9 @@
 ;; As above, but now the functions are also public types (exported). We should
 ;; be careful here in the future even when we do optimize function types.
 (module
-  ;; YESTNH:      (type $A (func))
-  ;; NO_TNH:      (type $A (func))
-  (type $A (func))
+  ;; YESTNH:      (type $A (sub (func)))
+  ;; NO_TNH:      (type $A (sub (func)))
+  (type $A (sub (func)))
 
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $1 (func (param funcref)))
@@ -1198,12 +1198,12 @@
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $0 (func (param anyref)))
 
-  ;; YESTNH:       (type $A (array (mut i32)))
+  ;; YESTNH:       (type $A (sub (array (mut i32))))
   ;; NO_TNH:      (rec
   ;; NO_TNH-NEXT:  (type $0 (func (param anyref)))
 
-  ;; NO_TNH:       (type $A (array (mut i32)))
-  (type $A (array (mut i32)))
+  ;; NO_TNH:       (type $A (sub (array (mut i32))))
+  (type $A (sub (array (mut i32))))
 
   ;; YESTNH:       (type $B (sub $A (array (mut i32))))
   ;; NO_TNH:       (type $B (sub $A (array (mut i32))))
