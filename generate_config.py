@@ -3,6 +3,7 @@
 from typing import Sequence
 from absl import app
 
+
 def main(argv: Sequence[str]) -> None:
     if len(argv) != 2:
         raise app.UsageError('Usage: {} OUTPUT_FILE'.format(argv[0]))
@@ -13,4 +14,3 @@ def main(argv: Sequence[str]) -> None:
 
 if __name__ == '__main__':
     app.run(main)
-
