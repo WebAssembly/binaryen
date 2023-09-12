@@ -132,7 +132,7 @@ void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
-void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitRefI31(RefI31* curr) { curr->finalize(); }
 void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }

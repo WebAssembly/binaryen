@@ -718,7 +718,7 @@ private:
     }
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
-    void visitI31New(I31New* curr) {}
+    void visitRefI31(RefI31* curr) {}
     void visitI31Get(I31Get* curr) {
       // traps when the ref is null
       if (curr->i31->type.isNullable()) {

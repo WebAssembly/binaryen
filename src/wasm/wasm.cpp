@@ -903,7 +903,7 @@ void TupleExtract::finalize() {
   }
 }
 
-void I31New::finalize() {
+void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {

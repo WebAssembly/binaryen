@@ -448,7 +448,7 @@ public:
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
-  void visitI31New(I31New* curr);
+  void visitRefI31(RefI31* curr);
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
@@ -2502,7 +2502,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
   }
 }
 
-void FunctionValidator::visitI31New(I31New* curr) {
+void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "i31.new requires gc [--enable-gc]");
   shouldBeSubType(curr->value->type,

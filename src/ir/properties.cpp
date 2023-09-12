@@ -40,7 +40,7 @@ bool isGenerative(Expression* curr, FeatureSet features) {
 // to whether it is valid in a wasm constant expression.
 static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   if (isSingleConstantExpression(expr) || expr->is<StructNew>() ||
-      expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<I31New>() ||
+      expr->is<ArrayNew>() || expr->is<ArrayNewFixed>() || expr->is<RefI31>() ||
       expr->is<StringConst>()) {
     return true;
   }

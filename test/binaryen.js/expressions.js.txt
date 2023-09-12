@@ -330,7 +330,7 @@
  )
 )
 
-# I31New
+# RefI31
 (i31.new
  (local.get $2)
 )

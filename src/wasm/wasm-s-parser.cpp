@@ -2838,8 +2838,8 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
     target, operands, sigType.getSignature().results, isReturn);
 }
 
-Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
-  auto ret = allocator.alloc<I31New>();
+Expression* SExpressionWasmBuilder::makeRefI31(Element& s) {
+  auto ret = allocator.alloc<RefI31>();
   ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;

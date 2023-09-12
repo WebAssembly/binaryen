@@ -1409,8 +1409,8 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitI31New(I31New* curr) {
-    NOTE_ENTER("I31New");
+  Flow visitRefI31(RefI31* curr) {
+    NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
     if (flow.breaking()) {
       return flow;

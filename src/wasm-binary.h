@@ -1188,7 +1188,7 @@ enum ASTNodes {
   BrOnCastFail = 0x19,
   ExternInternalize = 0x1a,
   ExternExternalize = 0x1b,
-  I31New = 0x1c,
+  RefI31 = 0x1c,
   I31GetS = 0x1d,
   I31GetU = 0x1e,
 #else
@@ -1209,7 +1209,7 @@ enum ASTNodes {
   ArrayNew = 0x1b,
   ArrayNewDefault = 0x1c,
   ArrayNewData = 0x1d,
-  I31New = 0x20,
+  RefI31 = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
   RefTest = 0x40,
@@ -1838,7 +1838,7 @@ public:
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
   bool maybeVisitTableSize(Expression*& out, uint32_t code);
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
-  bool maybeVisitI31New(Expression*& out, uint32_t code);
+  bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
   bool maybeVisitRefCast(Expression*& out, uint32_t code);

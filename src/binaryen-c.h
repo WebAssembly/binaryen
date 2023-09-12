@@ -1028,7 +1028,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
   BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
-BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+BINARYEN_API BinaryenExpressionRef BinaryenRefI31(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
@@ -2306,13 +2306,13 @@ BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
                                                BinaryenIndex index);
 
-// I31New
+// RefI31
 
 // Gets the value expression of an `i31.new` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenI31NewGetValue(BinaryenExpressionRef expr);
+BinaryenRefI31GetValue(BinaryenExpressionRef expr);
 // Sets the value expression of an `i31.new` expression.
-BINARYEN_API void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+BINARYEN_API void BinaryenRefI31SetValue(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef valueExpr);
 
 // I31Get

@@ -678,7 +678,7 @@ struct InfoCollector
     totalPops++;
 #endif
   }
-  void visitI31New(I31New* curr) {
+  void visitRefI31(RefI31* curr) {
     // TODO: optimize like struct references
     addRoot(curr);
   }

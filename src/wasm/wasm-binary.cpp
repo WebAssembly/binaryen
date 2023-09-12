@@ -4055,7 +4055,7 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     }
     case BinaryConsts::GCPrefix: {
       auto opcode = getU32LEB();
-      if (maybeVisitI31New(curr, opcode)) {
+      if (maybeVisitRefI31(curr, opcode)) {
         break;
       }
       if (maybeVisitI31Get(curr, opcode)) {
@@ -6959,11 +6959,11 @@ void WasmBinaryReader::visitCallRef(CallRef* curr) {
   curr->finalize();
 }
 
-bool WasmBinaryReader::maybeVisitI31New(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::I31New) {
+bool WasmBinaryReader::maybeVisitRefI31(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefI31) {
     return false;
   }
-  auto* curr = allocator.alloc<I31New>();
+  auto* curr = allocator.alloc<RefI31>();
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
