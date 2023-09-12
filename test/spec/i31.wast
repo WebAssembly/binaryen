@@ -1,13 +1,13 @@
 (module
   (func (export "new") (param $i i32) (result (ref i31))
-    (i31.new (local.get $i))
+    (ref.i31 (local.get $i))
   )
 
   (func (export "get_u") (param $i i32) (result i32)
-    (i31.get_u (i31.new (local.get $i)))
+    (i31.get_u (ref.i31 (local.get $i)))
   )
   (func (export "get_s") (param $i i32) (result i32)
-    (i31.get_s (i31.new (local.get $i)))
+    (i31.get_s (ref.i31 (local.get $i)))
   )
 )
 

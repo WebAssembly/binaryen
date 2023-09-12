@@ -1437,7 +1437,7 @@
   ;; CHECK-NEXT:   (if (result i31ref)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1457,7 +1457,7 @@
         (block (result i31ref)
           (unreachable)
         )
-        (i31.new
+        (ref.i31
           (i32.const 42)
         )
       )
@@ -1473,7 +1473,7 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1491,7 +1491,7 @@
         )
       )
       (catch_all
-        (i31.new
+        (ref.i31
           (i32.const 42)
         )
       )

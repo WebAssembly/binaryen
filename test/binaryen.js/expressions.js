@@ -1776,7 +1776,7 @@ console.log("# RefI31");
   const module = new binaryen.Module();
 
   var value = module.local.get(1, binaryen.i32);
-  const theRefI31 = binaryen.RefI31(module.i31.new(value));
+  const theRefI31 = binaryen.RefI31(module.ref.i31(value));
   assert(theRefI31 instanceof binaryen.RefI31);
   assert(theRefI31 instanceof binaryen.Expression);
   assert(theRefI31.value === value);
@@ -1792,7 +1792,7 @@ console.log("# RefI31");
   assert(
     theRefI31.toText()
     ==
-    "(i31.new\n (local.get $2)\n)\n"
+    "(ref.i31\n (local.get $2)\n)\n"
   );
 
   module.dispose();

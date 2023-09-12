@@ -1959,7 +1959,7 @@ struct PrintExpressionContents
     printMedium(o, "tuple.extract ");
     o << curr->index;
   }
-  void visitRefI31(RefI31* curr) { printMedium(o, "i31.new"); }
+  void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }

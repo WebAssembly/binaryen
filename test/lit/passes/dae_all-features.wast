@@ -542,7 +542,7 @@
  ;; CHECK-NEXT: )
  (func $1
   (call $0
-   (i31.new (i32.const 0))
+   (ref.i31 (i32.const 0))
   )
  )
 )

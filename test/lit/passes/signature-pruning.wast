@@ -797,7 +797,7 @@
   ;; CHECK-NEXT:   (local.get $anyref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $bar
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -808,7 +808,7 @@
   (func $bar (type $sig-bar) (param $anyref anyref)
     (drop (local.get $anyref))
     ;; Mixing a null with something else prevents optimization, of course.
-    (call $bar (i31.new (i32.const 0)))
+    (call $bar (ref.i31 (i32.const 0)))
     (call $bar (ref.null none))
   )
 )

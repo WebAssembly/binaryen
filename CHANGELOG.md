@@ -15,7 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - "I31New" changed to "RefI31" everywhere it appears in the C API.
+ - "I31New" changed to "RefI31" everywhere it appears in the C API and similarly
+   "i31.new" has been replaced with "ref.i31" in the JS API and in printed
+   output.
 
 v115
 ----

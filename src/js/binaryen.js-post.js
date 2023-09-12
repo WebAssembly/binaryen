@@ -2370,6 +2370,9 @@ function wrapModule(module, self = {}) {
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
     },
+    'i31'(value) {
+      return Module['_BinaryenRefI31'](module, value);
+    },
     'eq'(left, right) {
       return Module['_BinaryenRefEq'](module, left, right);
     }
@@ -2418,9 +2421,6 @@ function wrapModule(module, self = {}) {
   };
 
   self['i31'] = {
-    'new'(value) {
-      return Module['_BinaryenRefI31'](module, value);
-    },
     'get_s'(i31) {
       return Module['_BinaryenI31Get'](module, i31, 1);
     },

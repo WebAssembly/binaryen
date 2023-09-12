@@ -14,13 +14,13 @@
   ;; CHECK:      (func $work (type $1) (param $struct (ref $struct))
   ;; CHECK-NEXT:  (struct.set $struct 1
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 2
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -33,11 +33,11 @@
   (func $work (param $struct (ref $struct))
     (struct.set $struct 1
       (local.get $struct)
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
     )
     (struct.set $struct 2
       (local.get $struct)
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
     )
     (drop
       ;; The type of this struct.get must be updated after the field's type
@@ -66,7 +66,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -77,7 +77,7 @@
     )
     (struct.set $struct 0
       (local.get $struct)
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
     )
   )
 )

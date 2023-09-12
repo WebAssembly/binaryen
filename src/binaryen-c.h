@@ -2308,10 +2308,10 @@ BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
 
 // RefI31
 
-// Gets the value expression of an `i31.new` expression.
+// Gets the value expression of a `ref.i31` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefI31GetValue(BinaryenExpressionRef expr);
-// Sets the value expression of an `i31.new` expression.
+// Sets the value expression of a `ref.i31` expression.
 BINARYEN_API void BinaryenRefI31SetValue(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef valueExpr);
 

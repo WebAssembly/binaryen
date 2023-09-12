@@ -159,7 +159,7 @@
  (func "br-on_non_null"
   (drop
    (block $non-null (result (ref any))
-    (br_on_non_null $non-null (i31.new (i32.const 0)))
+    (br_on_non_null $non-null (ref.i31 (i32.const 0)))
     ;; $x refers to an i31, which is not null, so we will branch, and not
     ;; log
     (call $log (i32.const 1))

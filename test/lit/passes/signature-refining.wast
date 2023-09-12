@@ -96,7 +96,7 @@
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $sig
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (ref.func $func)
@@ -109,7 +109,7 @@
       (local.get $struct)
     )
     (call_ref $sig
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
       (ref.func $func)
     )
   )
