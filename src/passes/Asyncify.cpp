@@ -505,7 +505,6 @@ public:
 class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
-  bool propagateAddList;
 
   struct Info
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
@@ -680,13 +679,14 @@ public:
       module.removeFunction(name);
     }
 
-    // When propagateAddList is enabled, we should check a add-list before scannerpropagateBack
-    // so that callers of functions in add-list should also be instrumented.
+    // When propagateAddList is enabled, we should check a add-list before
+    // scannerpropagateBack so that callers of functions in add-list should also
+    // be instrumented.
     if (propagateAddList) {
       if (!addListInput.empty()) {
         for (auto& func : module.functions) {
           if (addList.match(func->name) && removeList.match(func->name)) {
-            Fatal() << func->name 
+            Fatal() << func->name
                     << " is found in the add-list and in the remove-list\n";
           }
 
@@ -739,7 +739,7 @@ public:
       }
     }
 
-    // When propagateAddList is disabled, which is default behavior, 
+    // When propagateAddList is disabled, which is default behavior,
     // functions in add-list are just prepended to instrumented functions.
     if (!propagateAddList) {
       if (!addListInput.empty()) {
