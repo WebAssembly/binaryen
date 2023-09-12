@@ -50,7 +50,7 @@ cc_library(
             "src/support/suffix_tree_node.h",
         ],
     ) + [":src/config.h"],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src"],
     textual_hdrs = glob([
         "src/**/*.inc",
@@ -65,7 +65,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm2js.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -77,7 +77,7 @@ cc_binary(
         "src/tools/tool-utils.h",
         "src/tools/wasm-as.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -88,7 +88,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm-ctor-eval.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -99,7 +99,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm-dis.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -110,7 +110,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm-emscripten-finalize.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -121,7 +121,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm-metadce.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -157,7 +157,7 @@ cc_binary(
         "src/tools/wasm-opt.cpp",
         "src/tools/wasm2c-wrapper.h",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     # copybara:strip_begin
     visibility = ["//visibility:private"],
@@ -173,7 +173,7 @@ cc_binary(
         "src/tools/tool-options.h",
         "src/tools/wasm-reduce.cpp",
     ],
-    copts = BINARYEN_COPTS + [
+    copts = BINARYEN_COPTS + ["-std=c++17"] + [
         "-Wno-unused-but-set-parameter",  # opt compiles
     ],
     includes = ["src/tools"],
@@ -186,7 +186,7 @@ cc_binary(
         "src/tools/execution-results.h",
         "src/tools/wasm-shell.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
@@ -201,7 +201,7 @@ cc_binary(
         "src/tools/wasm-split/split-options.h",
         "src/tools/wasm-split/wasm-split.cpp",
     ],
-    copts = BINARYEN_COPTS,
+    copts = BINARYEN_COPTS + ["-std=c++17"],
     includes = ["src/tools"],
     deps = [":binaryen_lib"],
 )
