@@ -1,1 +1,2 @@
 build --action_env=BAZEL_CXXOPTS=-std=c++17
+common --enable_bzlmod

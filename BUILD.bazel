@@ -210,7 +210,11 @@ py_binary(
     name = "generate_intrinsics",
     srcs = ["generate_intrinsics.py"],
     python_version = "PY3",
-    deps = ["@com_google_absl_py//absl:app"],
+    # copybara:strip_begin
+    deps = ["@absl_py//absl:app"],
+    # copybara:strip_end_and_replace_begin
+    # deps = ["//third_party/py/absl:app"],
+    # copybara:replace_end
 )
 
 genrule(
@@ -240,7 +244,7 @@ py_binary(
     name = "generate_config",
     srcs = ["generate_config.py"],
     python_version = "PY3",
-    deps = ["@com_google_absl_py//absl:app"],
+    deps = ["@absl_py//absl:app"],
 )
 
 genrule(
