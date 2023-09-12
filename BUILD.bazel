@@ -253,25 +253,4 @@ genrule(
     cmd = "$(location :generate_config) $(location :src/config.h)",
     tools = [":generate_config"]
 )
-# copybara:strip_end_and_replace_begin
-# genrule(
-#     name = "config",
-#     srcs = [
-#         "METADATA",
-#         "config.h.in",
-#         "CMakeLists.txt",
-#     ],
-#     outs = ["src/config.h"],
-#     cmd = """VER=$$(grep \"project(\" $(location CMakeLists.txt) | cut -d \" \" -f 6 | sed \"s/)//\")
-#              HASH=$$(grep version $(location METADATA) | cut -d '\"' -f 2 | head -n 1)
-#              sed \"s/\\$${PROJECT_VERSION}/$${VER} (version_$${VER}-$${HASH})/\" $(location config.h.in) | sed 's/cmake//' > $(@D)/config.h""",
-# )
-#
-# sh_test(
-#     name = "version_test",
-#     size = "small",
-#     srcs = ["version_test.sh"],
-#     data = [":src/config.h"],
-#     deps = ["//testing/shbase"],
-# )
-# copybara:replace_end
+# copybara:strip_end
