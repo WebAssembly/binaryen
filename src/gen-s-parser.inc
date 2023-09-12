@@ -1202,8 +1202,8 @@ switch (buf[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'r':
-                if (op == "i31.ref"sv) { return makeRefI31(s); }
+              case 'n':
+                if (op == "i31.new"sv) { return makeRefI31(s); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -5599,8 +5599,8 @@ switch (buf[0]) {
                   default: goto parse_error;
                 }
               }
-              case 'r':
-                if (op == "i31.ref"sv) {
+              case 'n':
+                if (op == "i31.new"sv) {
                   auto ret = makeRefI31(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
