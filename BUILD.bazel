@@ -161,7 +161,7 @@ cc_binary(
     copts = BINARYEN_COPTS,
     includes = ["src/tools"],
     # copybara:strip_begin
-    visibility = ["//visibility:private"],
+    visibility = ["//visibility:public"],
     # copybara:strip_end_and_replace_begin
     # visibility = ["//third_party/emscripten:__subpackages__"],
     # copybara:replace_end
