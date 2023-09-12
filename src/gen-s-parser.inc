@@ -46,9 +46,6 @@ switch (buf[0]) {
               case 'e':
                 if (op == "array.init_elem"sv) { return makeArrayInitElem(s); }
                 goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
-                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -3646,13 +3643,6 @@ switch (buf[0]) {
               case 'e':
                 if (op == "array.init_elem"sv) {
                   auto ret = makeArrayInitElem(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) {
-                  auto ret = makeArrayNewFixed(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
