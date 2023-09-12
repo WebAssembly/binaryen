@@ -685,6 +685,11 @@ public:
     if (propagateAddList) {
       if (!addListInput.empty()) {
         for (auto& func : module.functions) {
+          if (addList.match(func->name) && removeList.match(func->name)) {
+            Fatal() << func->name 
+                    << " is found in the add-list and in the remove-list\n";
+          }
+
           if (!func->imported() && addList.match(func->name)) {
             auto& info = scanner.map[func.get()];
             if (verbose && !info.canChangeState) {
