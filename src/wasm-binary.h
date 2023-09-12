@@ -21,10 +21,9 @@
 #ifndef wasm_wasm_binary_h
 #define wasm_wasm_binary_h
 
-// Default to using the legacy encodings. Switch this when WasmGC ships.
-// Override the default with USE_STANDARD_GC_ENCODINGS or
-// USE_LEGACY_GC_ENCODINGS.
-#define STANDARD_GC_ENCODINGS 0
+// Default to using the standard encodings. Override the default with
+// USE_STANDARD_GC_ENCODINGS or USE_LEGACY_GC_ENCODINGS.
+#define STANDARD_GC_ENCODINGS 1
 
 #ifdef USE_STANDARD_GC_ENCODINGS
 #ifdef USE_LEGACY_GC_ENCODINGS
