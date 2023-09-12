@@ -14,7 +14,7 @@
 
   (type $array (array_subtype i8 data))
 
-  ;; CHECK:      (type $ret-any (func (result anyref)))
+  ;; CHECK:      (type $ret-any (sub (func (result anyref))))
   (type $ret-any (sub (func (result anyref))))
   ;; CHECK:      (type $ret-i31 (sub $ret-any (func (result i31ref))))
   (type $ret-i31 (sub $ret-any (func (result i31ref))))

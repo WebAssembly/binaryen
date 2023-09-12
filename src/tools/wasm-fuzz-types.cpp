@@ -264,7 +264,7 @@ void Fuzzer::checkCanonicalization() {
 
       // Set finality
       for (size_t i = 0; i < types.size(); ++i) {
-        builder[i].setFinal(types[i].isFinal());
+        builder[i].setOpen(types[i].isOpen());
       }
 
       // Set up recursion groups and record group ends to ensure we only select

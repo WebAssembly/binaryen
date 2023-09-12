@@ -4,7 +4,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field anyref))))
     (type $A (struct_subtype (field anyref) data))
     (type $B (struct_subtype (field anyref) $A))
     ;; CHECK:       (type $G (sub final $A (struct (field anyref))))
@@ -78,7 +78,7 @@
 ;; Multiple levels of merging.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field i32)))
+  ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
   (type $C (struct_subtype (field i32) $B))
@@ -122,7 +122,7 @@
 ;; should remain the same as before, everything merged into either $A or $D.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field i32)))
+  ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
   (type $A (struct_subtype (field i32) data))
   (type $B (struct_subtype (field i32) $A))
   (type $C (struct_subtype (field i32) $B))
@@ -157,11 +157,11 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (struct ))
-  (type $X (struct))
+  ;; CHECK-NEXT:  (type $X (sub (struct )))
+  (type $X (sub (struct)))
   (type $Y (struct_subtype $X))
-  ;; CHECK:       (type $A (struct (field (ref null $X))))
-  (type $A (struct (field (ref null $X))))
+  ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
+  (type $A (sub (struct (field (ref null $X)))))
   (type $B (struct_subtype (field (ref null $Y)) $A))
   ;; CHECK:       (type $C (sub $A (struct (field (ref $X)))))
   (type $C (struct_subtype (field (ref $Y)) $A))
@@ -186,8 +186,8 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
-  (type $A (struct         (ref null $A)))
+  ;; CHECK-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+  (type $A (sub (struct    (ref null $A))))
   (type $B (struct_subtype (ref null $B) $A))
 
   ;; CHECK:       (type $1 (func))
@@ -208,12 +208,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct (field (ref null $A)) (field f32)))
+    ;; CHECK-NEXT:  (type $X (sub (struct (field (ref null $A)) (field f32))))
 
-    ;; CHECK:       (type $A (struct (field (ref null $X)) (field i32)))
-    (type $A (struct         (ref null $X) i32))
+    ;; CHECK:       (type $A (sub (struct (field (ref null $X)) (field i32))))
+    (type $A (sub (struct    (ref null $X) i32)))
     (type $B (struct_subtype (ref null $Y) i32 $A))
-    (type $X (struct         (ref null $A) f32))
+    (type $X (sub (struct    (ref null $A) f32)))
     (type $Y (struct_subtype (ref null $B) f32 $X))
   )
 
@@ -239,10 +239,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field (ref null $A))))
-    (type $A (struct         (ref null $X)))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+    (type $A (sub (struct    (ref null $X))))
     (type $B (struct_subtype (ref null $Y) $A))
-    (type $X (struct         (ref null $A)))
+    (type $X (sub (struct    (ref null $A))))
     (type $Y (struct_subtype (ref null $B) $X))
   )
 
@@ -325,12 +325,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (struct (field (ref null $A))))
+    ;; CHECK-NEXT:  (type $X (sub (struct (field (ref null $A)))))
 
-    ;; CHECK:       (type $A (struct (field (ref null $X))))
-    (type $A (struct         (ref null $X)))
+    ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
+    (type $A (sub (struct    (ref null $X))))
     (type $B (struct_subtype (ref null $Y) $A))
-    (type $X (struct         (ref null $A)))
+    (type $X (sub (struct    (ref null $A))))
     (type $Y (struct_subtype (ref null $B) $X))
   )
 
@@ -481,12 +481,12 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (struct (field anyref)))
-  (type $X (struct anyref))
+  ;; CHECK-NEXT:  (type $X (sub (struct (field anyref))))
+  (type $X (sub (struct anyref)))
   ;; CHECK:       (type $Y (sub $X (struct (field eqref))))
   (type $Y (struct_subtype eqref $X))
-  ;; CHECK:       (type $A (struct (field (ref null $X))))
-  (type $A (struct         (ref null $X)))
+  ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
+  (type $A (sub (struct         (ref null $X))))
   ;; CHECK:       (type $B (sub $A (struct (field (ref null $Y)))))
   (type $B (struct_subtype (ref null $Y) $A))
   (type $C (struct_subtype (ref null $Y) $A))
@@ -511,8 +511,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
-    (type $A (struct         anyref))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field anyref))))
+    (type $A (sub (struct    anyref)))
     (type $B (struct_subtype eqref $A))
     ;; CHECK:       (type $C (sub $A (struct (field eqref))))
     (type $C (struct_subtype eqref $A))
@@ -538,8 +538,8 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (struct (field anyref)))
-    (type $A (struct         anyref))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field anyref))))
+    (type $A (sub (struct    anyref)))
     (type $B (struct_subtype anyref $A))
     (type $C (struct_subtype anyref $A))
     (type $D (struct_subtype eqref $B))
@@ -574,19 +574,19 @@
   (rec
     ;; These will get merged in the initial supertype merging stage.
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $B' (struct (field (ref $A))))
+    ;; CHECK-NEXT:  (type $B' (sub (struct (field (ref $A)))))
 
     ;; CHECK:       (type $C (sub $B' (struct (field (ref $A)) (field i32))))
 
     ;; CHECK:       (type $D' (sub $C (struct (field (ref $A)) (field i32) (field i32))))
 
-    ;; CHECK:       (type $A (struct ))
-    (type $A (struct))
+    ;; CHECK:       (type $A (sub (struct )))
+    (type $A (sub (struct)))
     (type $A' (struct_subtype $A))
 
     ;; These siblings will be merged only after $a and $a' are merged.
-    (type $B (struct (ref $A)))
-    (type $B' (struct (ref $A')))
+    (type $B (sub (struct (ref $A))))
+    (type $B' (sub (struct (ref $A'))))
 
     ;; These will get merged only after $b and $b' are merged.
     (type $C (struct_subtype (ref $A) i32 $B))
@@ -625,8 +625,8 @@
 ;; Check that we refinalize properly.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   (type $B (struct_subtype $A))
 
   ;; CHECK:       (type $1 (func (result (ref null $A))))
@@ -653,7 +653,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $C (struct (field (mut i32))))
+    ;; CHECK-NEXT:  (type $C (sub (struct (field (mut i32)))))
 
     ;; CHECK:       (type $D (sub $C (struct (field (mut i32)) (field (mut i32)))))
 
@@ -663,7 +663,7 @@
 
     ;; CHECK:       (type $I (array (mut (ref null $C))))
     (type $I (array (mut (ref null $C))))
-    (type $C (struct (field (mut i32))))
+    (type $C (sub (struct (field (mut i32)))))
     (type $D (struct_subtype (field (mut i32)) (field (mut i32)) $C))
     (type $E (struct_subtype (field (mut i32)) (field (mut i32)) $D))
     (type $F (struct_subtype (field (mut i32)) (field (mut i32)) $E))
@@ -706,15 +706,15 @@
 ;; Arrays
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $refarray (array anyref))
+  ;; CHECK-NEXT:  (type $refarray (sub (array anyref)))
 
   ;; CHECK:       (type $sub-refarray-nn (sub $refarray (array (ref any))))
 
-  ;; CHECK:       (type $intarray (array (mut i32)))
-  (type $intarray (array (mut i32)))
+  ;; CHECK:       (type $intarray (sub (array (mut i32))))
+  (type $intarray (sub (array (mut i32))))
   (type $sub-intarray (array_subtype (mut i32) $intarray))
 
-  (type $refarray (array (ref null any)))
+  (type $refarray (sub (array (ref null any))))
   (type $sub-refarray    (array_subtype (ref null any) $refarray))
   (type $sub-refarray-nn (array_subtype (ref      any) $refarray))
 
@@ -750,8 +750,8 @@
 ;; Function types
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $func (func (param eqref)))
-  (type $func (func (param eqref)))
+  ;; CHECK-NEXT:  (type $func (sub (func (param eqref))))
+  (type $func (sub (func (param eqref))))
   (type $sub-func (func_subtype (param eqref) $func))
   ;; CHECK:       (type $sub-func-refined (sub $func (func (param anyref))))
   (type $sub-func-refined (func_subtype (param anyref) $func))
@@ -776,8 +776,8 @@
 
 ;; Check that public types are not merged.
 (module
-  ;; CHECK:      (type $A (func))
-  (type $A (func))            ;; public
+  ;; CHECK:      (type $A (sub (func)))
+  (type $A (sub (func)))      ;; public
   ;; CHECK:      (type $B (sub $A (func)))
   (type $B (func_subtype $A)) ;; public
   (type $C (func_subtype $B)) ;; private
@@ -825,8 +825,8 @@
 ;; other way around, causing an assertion failure in type-updating.cpp.
 (module
   (rec
-    ;; CHECK:      (type $A (func (param (ref null $A)) (result (ref null $A))))
-    (type $A (func (param (ref null $B)) (result (ref null $A))))
+    ;; CHECK:      (type $A (sub (func (param (ref null $A)) (result (ref null $A)))))
+    (type $A (sub (func (param (ref null $B)) (result (ref null $A)))))
     (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
   )
 
@@ -844,18 +844,18 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (struct (field (ref $A))))
-
-  ;; CHECK:       (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   (type $B (struct_subtype $A))
+  ;; CHECK:       (type $X (struct (field (ref $A))))
   (type $X (struct (ref $B)))
+  ;; CHECK:       (type $A' (struct ))
   (type $A' (struct))
  )
- ;; CHECK:       (type $2 (func))
+ ;; CHECK:       (type $3 (func))
 
- ;; CHECK:      (func $foo (type $2)
- ;; CHECK-NEXT:  (local $b (ref null $A))
+ ;; CHECK:      (func $foo (type $3)
+ ;; CHECK-NEXT:  (local $b (ref null $A'))
  ;; CHECK-NEXT:  (local $x (ref null $X))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
@@ -872,12 +872,12 @@
     ;; $x and $y are structurally identical, but won't be merged because there is
     ;; a cast to $y.
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $b (struct (field (ref null $x))))
+    ;; CHECK-NEXT:  (type $b (sub (struct (field (ref null $x)))))
 
     ;; CHECK:       (type $b1 (sub $b (struct (field (ref null $y)))))
 
-    ;; CHECK:       (type $x (struct (field anyref)))
-    (type $x (struct anyref))
+    ;; CHECK:       (type $x (sub (struct (field anyref))))
+    (type $x (sub (struct anyref)))
     ;; CHECK:       (type $y (sub $x (struct (field anyref))))
     (type $y (struct_subtype anyref $x))
 
@@ -887,7 +887,7 @@
     ;; subtype of $b.
     ;; CHECK:       (type $a (struct (field (ref null $y))))
     (type $a (struct (ref null $y)))
-    (type $b (struct (ref null $x)))
+    (type $b (sub (struct (ref null $x))))
     (type $b1 (struct_subtype (ref null $y) $b))
   )
 
@@ -926,16 +926,16 @@
 ;; TODO: Investigate why the rec group contains two of the same type below.
 (module
  (rec
-  (type $A (func (result (ref any) (ref $C))))
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $B (func))
-  (type $B (func))
-  (type $C (sub $B (func)))
+  ;; CHECK-NEXT:  (type $B (sub (func)))
+
   ;; CHECK:       (type $1 (func (result (ref any) (ref $B))))
 
-  ;; CHECK:       (type $2 (func (result (ref any) (ref $B))))
-
-  ;; CHECK:       (type $D (sub final $2 (func (result (ref any) (ref $B)))))
+  ;; CHECK:       (type $A (sub (func (result (ref any) (ref $B)))))
+  (type $A (sub (func (result (ref any) (ref $C)))))
+  (type $B (sub (func)))
+  (type $C (sub $B (func)))
+  ;; CHECK:       (type $D (sub final $A (func (result (ref any) (ref $B)))))
   (type $D (sub final $A (func (result (ref any) (ref $C)))))
  )
 
@@ -961,14 +961,14 @@
 ;; was to manually split partitions that end up containing separate type trees.
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $I (struct (field anyref)))
+ ;; CHECK-NEXT:  (type $I (sub (struct (field anyref))))
  (type $I (sub    (struct (field anyref))))
  ;; CHECK:       (type $J (sub $I (struct (field eqref))))
  (type $J (sub $I (struct (field eqref))))
  ;; CHECK:       (type $K (sub $J (struct (field i31ref))))
  (type $K (sub $J (struct (field i31ref))))
  (rec
-  ;; CHECK:       (type $A (struct (field (ref null $A)) (field (ref null $I))))
+  ;; CHECK:       (type $A (sub (struct (field (ref null $A)) (field (ref null $I)))))
   (type $A  (sub    (struct (ref null $A) (ref null $I))))
   ;; CHECK:       (type $C (sub $A (struct (field (ref null $A)) (field (ref null $K)))))
 
@@ -991,14 +991,14 @@
 ;; Same as above, but with some additional types that can be merged.
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $I (struct (field anyref)))
+ ;; CHECK-NEXT:  (type $I (sub (struct (field anyref))))
  (type $I (sub    (struct (field anyref))))
  ;; CHECK:       (type $J (sub $I (struct (field eqref))))
  (type $J (sub $I (struct (field eqref))))
  ;; CHECK:       (type $K (sub $J (struct (field i31ref))))
  (type $K (sub $J (struct (field i31ref))))
  (rec
-  ;; CHECK:       (type $A (struct (field (ref null $A)) (field (ref null $I))))
+  ;; CHECK:       (type $A (sub (struct (field (ref null $A)) (field (ref null $I)))))
   (type $A  (sub     (struct (ref null $A) (ref null $I))))
   (type $A' (sub $A  (struct (ref null $A) (ref null $I))))
   ;; CHECK:       (type $C (sub $A (struct (field (ref null $A)) (field (ref null $K)))))
@@ -1030,8 +1030,8 @@
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
@@ -1052,8 +1052,8 @@
 ;; Check that a br_on_cast inhibits merging.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
   (type $B (struct_subtype $A))
 
@@ -1099,8 +1099,8 @@
 ;; Check that a call_indirect inhibits merging.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (func))
-  (type $A (func))
+  ;; CHECK-NEXT:  (type $A (sub (func)))
+  (type $A (sub (func)))
   ;; CHECK:       (type $B (sub $A (func)))
   (type $B (func_subtype $A))
 

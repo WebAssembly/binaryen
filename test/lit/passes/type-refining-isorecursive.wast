@@ -5,11 +5,11 @@
  ;; The types should be refined to a set of three mutually recursive types.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $2 (struct (field nullexternref) (field (ref $0))))
+ ;; CHECK-NEXT:  (type $2 (sub (struct (field nullexternref) (field (ref $0)))))
 
- ;; CHECK:       (type $1 (struct (field nullfuncref) (field (ref $2))))
+ ;; CHECK:       (type $1 (sub (struct (field nullfuncref) (field (ref $2)))))
 
- ;; CHECK:       (type $0 (struct (field nullref) (field (ref $1))))
+ ;; CHECK:       (type $0 (sub (struct (field nullref) (field (ref $1)))))
  (type $0 (struct_subtype nullref anyref data))
  (type $1 (struct_subtype nullfuncref anyref data))
  (type $2 (struct_subtype nullexternref anyref data))
@@ -64,13 +64,13 @@
  ;; correctly.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $0 (struct (field (ref null $all)) (field (ref $0))))
+ ;; CHECK-NEXT:  (type $0 (sub (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $all)) (field (ref $0)))))
 
- ;; CHECK:       (type $all (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2))))
+ ;; CHECK:       (type $all (sub (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2)))))
  (type $all (struct_subtype i32 anyref anyref anyref data))
 
  (type $0 (struct_subtype anyref anyref data))

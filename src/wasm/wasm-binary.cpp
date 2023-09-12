@@ -265,13 +265,11 @@ void WasmBinaryWriter::writeTypes() {
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
     auto super = type.getSuperType();
-    // TODO: Use the binary shorthand for final types once we parse MVP
-    // signatures as final.
-    if (type.isFinal() || super || hasSubtypes[i]) {
-      if (type.isFinal()) {
-        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
-      } else {
+    if (super || type.isOpen()) {
+      if (type.isOpen()) {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
       }
       if (super) {
         o << U32LEB(1);
@@ -1638,8 +1636,8 @@ void WasmBinaryWriter::writeField(const Field& field) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input),
-    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}},
+  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
+    nextDebugPos(0), nextDebugLocation{0, 0, 0},
     nextDebugLocationHasDebugInfo(false), debugLocation() {
   wasm.features = features;
 }
@@ -2268,9 +2266,8 @@ void WasmBinaryReader::readTypes() {
     std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
-      if (form == BinaryConsts::EncodedType::SubFinal) {
-        // TODO: Interpret type definitions without any `sub` as final as well.
-        builder[i].setFinal();
+      if (form == BinaryConsts::EncodedType::Sub) {
+        builder[i].setOpen();
       }
       uint32_t supers = getU32LEB();
       if (supers > 0) {
@@ -2796,7 +2793,7 @@ void WasmBinaryReader::readSourceMapHeader() {
 
   mustReadChar('\"');
   if (maybeReadChar('\"')) { // empty mappings
-    nextDebugLocation.availablePos = 0;
+    nextDebugPos = 0;
     return;
   }
   // read first debug location
@@ -2809,8 +2806,8 @@ void WasmBinaryReader::readSourceMapHeader() {
   uint32_t lineNumber =
     readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
   uint32_t columnNumber = readBase64VLQ(*sourceMap);
-  nextDebugLocation = {
-    position, position, {fileIndex, lineNumber, columnNumber}};
+  nextDebugPos = position;
+  nextDebugLocation = {fileIndex, lineNumber, columnNumber};
   nextDebugLocationHasDebugInfo = true;
 }
 
@@ -2819,21 +2816,18 @@ void WasmBinaryReader::readNextDebugLocation() {
     return;
   }
 
-  if (nextDebugLocation.availablePos == 0 &&
-      nextDebugLocation.previousPos <= pos) {
-    // if source map file had already reached the end and cache position also
-    // cannot cover the pos clear the debug location
+  if (nextDebugPos == 0) {
+    // We reached the end of the source map; nothing left to read.
     debugLocation.clear();
     return;
   }
 
-  while (nextDebugLocation.availablePos &&
-         nextDebugLocation.availablePos <= pos) {
+  while (nextDebugPos && nextDebugPos <= pos) {
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
       if (nextDebugLocationHasDebugInfo) {
-        debugLocation.insert(nextDebugLocation.next);
+        debugLocation.insert(nextDebugLocation);
       } else {
         debugLocation.clear();
       }
@@ -2842,7 +2836,7 @@ void WasmBinaryReader::readNextDebugLocation() {
     char ch;
     *sourceMap >> ch;
     if (ch == '\"') { // end of records
-      nextDebugLocation.availablePos = 0;
+      nextDebugPos = 0;
       break;
     }
     if (ch != ',') {
@@ -2850,10 +2844,9 @@ void WasmBinaryReader::readNextDebugLocation() {
     }
 
     int32_t positionDelta = readBase64VLQ(*sourceMap);
-    uint32_t position = nextDebugLocation.availablePos + positionDelta;
+    uint32_t position = nextDebugPos + positionDelta;
 
-    nextDebugLocation.previousPos = nextDebugLocation.availablePos;
-    nextDebugLocation.availablePos = position;
+    nextDebugPos = position;
 
     auto peek = sourceMap->peek();
     if (peek == ',' || peek == '\"') {
@@ -2863,14 +2856,13 @@ void WasmBinaryReader::readNextDebugLocation() {
     }
 
     int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-    uint32_t fileIndex = nextDebugLocation.next.fileIndex + fileIndexDelta;
+    uint32_t fileIndex = nextDebugLocation.fileIndex + fileIndexDelta;
     int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber = nextDebugLocation.next.lineNumber + lineNumberDelta;
+    uint32_t lineNumber = nextDebugLocation.lineNumber + lineNumberDelta;
     int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t columnNumber =
-      nextDebugLocation.next.columnNumber + columnNumberDelta;
+    uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
 
-    nextDebugLocation.next = {fileIndex, lineNumber, columnNumber};
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
     nextDebugLocationHasDebugInfo = true;
   }
 }

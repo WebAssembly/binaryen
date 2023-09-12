@@ -539,14 +539,11 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   */
   TypeBuilder builder(5);
   builder.createRecGroup(0, 5);
-  builder.setHeapType(0, Struct(FieldList{}));
-  builder.setHeapType(1, Struct(FieldList{}));
-  builder.setHeapType(2, Struct(FieldList{}));
-  builder.setHeapType(3, Struct(FieldList{}));
-  builder.setHeapType(4, Struct(FieldList{}));
-  builder.setSubType(1, builder.getTempHeapType(0));
-  builder.setSubType(2, builder.getTempHeapType(0));
-  builder.setSubType(3, builder.getTempHeapType(2));
+  builder[0].setOpen() = Struct(FieldList{});
+  builder[1].setOpen().subTypeOf(builder[0]) = Struct(FieldList{});
+  builder[2].setOpen().subTypeOf(builder[0]) = Struct(FieldList{});
+  builder[3].setOpen().subTypeOf(builder[2]) = Struct(FieldList{});
+  builder[4].setOpen() = Struct(FieldList{});
   auto result = builder.build();
   ASSERT_TRUE(result);
   auto types = *result;

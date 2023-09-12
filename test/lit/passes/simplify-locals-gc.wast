@@ -4,7 +4,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct (field structref)))
+  ;; CHECK:      (type $A (sub (struct (field structref))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
 

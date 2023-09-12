@@ -6,7 +6,7 @@
 ;; of $0 and $1, so we want to merge them and pass ref.funcs of $2 and $3.
 ;; However, their nominal types differ, so in nominal typing we cannot do so.
 (module
- ;; CHECK:      (type $type$0 (func))
+ ;; CHECK:      (type $type$0 (sub (func)))
  (type $type$0 (func_subtype func))
  (type $type$1 (func_subtype func))
  (type $type$2 (func_subtype func))
@@ -110,7 +110,7 @@
 (module
  ;; As above, but now the nominal types do match, so we can optimize in all
  ;; modes.
- ;; CHECK:      (type $type$0 (func))
+ ;; CHECK:      (type $type$0 (sub (func)))
  (type $type$0 (func_subtype func))
  (type $type$1 (func_subtype func))
  (type $type$3 (func_subtype (param f32) (result f32) func))

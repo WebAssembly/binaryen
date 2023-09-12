@@ -1898,8 +1898,8 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct (field (ref null $A))))
-  (type $A (struct (field (ref null $A))))
+  ;; CHECK:      (type $A (sub (struct (field (ref null $A)))))
+  (type $A (sub (struct (field (ref null $A)))))
   ;; CHECK:      (type $B (sub $A (struct (field (ref $A)))))
   (type $B (sub $A (struct (field (ref $A)))))
 

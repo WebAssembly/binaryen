@@ -3,13 +3,13 @@
   ;; Arrays
   (type $vector-i32 (array i32))
 
-  (type $vector-any (array (ref any)))
+  (type $vector-any (sub (array (ref any))))
   (type $vector-i31 (array_subtype (ref i31) $vector-any))
 
   ;; Structs
-  (type $struct-any (struct
+  (type $struct-any (sub (struct
     (field (ref any))
-  ))
+  )))
   (type $struct-i31 (struct_subtype
     (field (ref i31))
     $struct-any
@@ -21,9 +21,9 @@
   ))
 
   ;; Recursive structs
-  (type $struct-rec-one (struct
+  (type $struct-rec-one (sub (struct
     (field (ref $struct-rec-one))
-  ))
+  )))
   (type $struct-rec-two (struct_subtype
     (field (ref $struct-rec-two))
     (field (ref $struct-rec-two))
