@@ -447,6 +447,11 @@ private:
         if (otherSet->index == set->index) {
           if (!coverStack.back()) {
             covers++;
+            if (currDepth == 0) {
+              // We have a cover at depth 0, so everything from here on out
+              // will be covered.
+              return true;
+            }
             coverStack.back() = true;
           }
         }
