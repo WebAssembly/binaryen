@@ -686,7 +686,7 @@ public:
       if (!addListInput.empty()) {
         for (auto& func : module.functions) {
           if (!func->imported() && addList.match(func->name)) {
-            auto& info = map[func.get()];
+            auto& info = scanner.map[func.get()];
             if (verbose && !info.canChangeState) {
               std::cout << "[asyncify] " << func->name
                         << " is in the add-list, add\n";
@@ -1664,8 +1664,6 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
-    auto propagateAddList =
-      runner->options.getArgumentOrDefault("asyncify-propagate-addlist", "");
     std::string onlyListInput =
       options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
@@ -1678,6 +1676,7 @@ struct Asyncify : public Pass {
     auto verbose = options.hasArgument("asyncify-verbose");
     auto relocatable = options.hasArgument("asyncify-relocatable");
     auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
+    auto propagateAddList = options.hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
