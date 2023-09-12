@@ -9,7 +9,7 @@
 
 (module
   ;; OPEN_WORLD:      (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
-  (type $struct (struct_subtype (field (mut funcref)) (field (mut i32)) data))
+  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
 
   ;; OPEN_WORLD:      (type $1 (func))
 

@@ -10,9 +10,9 @@
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $used (sub (struct )))
-  (type $used (struct_subtype data))
+  (type $used (sub (struct)))
   ;; CHECK:       (type $unused (sub (struct )))
-  (type $unused (struct_subtype data))
+  (type $unused (sub (struct)))
  )
 
  ;; CHECK:      (global $g (ref null $used) (ref.null none))

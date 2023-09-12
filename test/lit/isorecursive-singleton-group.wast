@@ -11,7 +11,7 @@
 
  (rec
   ;; CHECK:      (type $singleton (sub (struct )))
-  (type $singleton (struct_subtype data))
+  (type $singleton (sub (struct)))
  )
 
  ;; Use the type so it appears in the output.

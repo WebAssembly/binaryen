@@ -22,18 +22,18 @@
 
   ;; YESTNH:       (type $B (sub (struct )))
   ;; NO_TNH:       (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; YESTNH:       (type $C (sub $B (struct )))
   ;; NO_TNH:       (type $C (sub $B (struct )))
-  (type $C (struct_subtype $B))
+  (type $C (sub $B (struct)))
 
   ;; NO_TNH:       (type $D (sub $C (struct )))
-  (type $D (struct_subtype $C))
+  (type $D (sub $C (struct)))
 
   ;; YESTNH:       (type $E (sub $C (struct )))
   ;; NO_TNH:       (type $E (sub $D (struct )))
-  (type $E (struct_subtype $D))
+  (type $E (sub $D (struct)))
 
   ;; YESTNH:       (type $4 (func (param anyref)))
 
@@ -279,9 +279,9 @@
     ;; NO_TNH:       (type $2 (func (param anyref)))
 
     ;; NO_TNH:       (type $B (sub $A (struct )))
-    (type $B (struct_subtype $A))
+    (type $B (sub $A (struct)))
 
-    (type $B1 (struct_subtype $A)) ;; this is a new type
+    (type $B1 (sub $A (struct))) ;; this is a new type
   )
 
   ;; YESTNH:      (global $global anyref (struct.new_default $B))
@@ -365,12 +365,12 @@
     ;; NO_TNH-NEXT:  (type $A (sub (struct )))
     (type $A (sub (struct)))
 
-    (type $B (struct_subtype $A))
+    (type $B (sub $A (struct)))
 
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $B1 (sub (struct )))
     ;; NO_TNH:       (type $B1 (sub $A (struct )))
-    (type $B1 (struct_subtype $A)) ;; this is a new type
+    (type $B1 (sub $A (struct))) ;; this is a new type
   )
 
   ;; YESTNH:       (type $1 (func (param anyref)))
@@ -453,12 +453,12 @@
   (type $A (sub (struct)))
 
   ;; NO_TNH:       (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $C (sub (struct )))
   ;; NO_TNH:       (type $C (sub $B (struct )))
-  (type $C (struct_subtype $B))
+  (type $C (sub $B (struct)))
 
   ;; YESTNH:       (type $1 (func (param anyref)))
 
@@ -539,11 +539,11 @@
   (rec
     (type $A (sub (struct)))
 
-    (type $B (struct_subtype $A))
+    (type $B (sub $A (struct)))
 
-    (type $C1 (struct_subtype $B))
+    (type $C1 (sub $B (struct)))
 
-    (type $C2 (struct_subtype $B))
+    (type $C2 (sub $B (struct)))
   )
 
   ;; YESTNH:      (rec
@@ -828,16 +828,16 @@
     (type $A (sub (struct)))
 
     ;; NO_TNH:       (type $B (sub $A (struct )))
-    (type $B (struct_subtype $A))
+    (type $B (sub $A (struct)))
 
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $0 (func (param anyref)))
 
     ;; YESTNH:       (type $C1 (sub (struct )))
     ;; NO_TNH:       (type $C1 (sub $B (struct )))
-    (type $C1 (struct_subtype $B))
+    (type $C1 (sub $B (struct)))
 
-    (type $C2 (struct_subtype $B))
+    (type $C2 (sub $B (struct)))
   )
 
   ;; YESTNH:      (global $global anyref (struct.new_default $C1))
@@ -993,11 +993,11 @@
 
   ;; YESTNH:       (type $B (sub $A (func)))
   ;; NO_TNH:       (type $B (sub $A (func)))
-  (type $B (func_subtype $A))
+  (type $B (sub $A (func)))
 
   ;; YESTNH:       (type $C (sub $B (func)))
   ;; NO_TNH:       (type $C (sub $B (func)))
-  (type $C (func_subtype $B))
+  (type $C (sub $B (func)))
 
   ;; YESTNH:       (type $3 (func (param funcref)))
 
@@ -1091,11 +1091,11 @@
   ;; NO_TNH-NEXT:  (type $1 (func (param funcref)))
 
   ;; NO_TNH:       (type $B (sub $A (func)))
-  (type $B (func_subtype $A))
+  (type $B (sub $A (func)))
 
   ;; YESTNH:       (type $C (sub $B (func)))
   ;; NO_TNH:       (type $C (sub $B (func)))
-  (type $C (func_subtype $B))
+  (type $C (sub $B (func)))
 
   ;; YESTNH:      (elem declare func $A $C)
 
@@ -1207,11 +1207,11 @@
 
   ;; YESTNH:       (type $B (sub $A (array (mut i32))))
   ;; NO_TNH:       (type $B (sub $A (array (mut i32))))
-  (type $B (array_subtype (mut i32) $A))
+  (type $B (sub $A (array (mut i32))))
 
   ;; YESTNH:       (type $C (sub $B (array (mut i32))))
   ;; NO_TNH:       (type $C (sub $B (array (mut i32))))
-  (type $C (array_subtype (mut i32) $B))
+  (type $C (sub $B (array (mut i32))))
 
   ;; YESTNH:      (global $A (ref $A) (array.new $A
   ;; YESTNH-NEXT:  (i32.const 10)
