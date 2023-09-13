@@ -262,7 +262,7 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
     //
     // We replace the local.tee with a block of sets of the new non-tuple
     // locals, and the outer set must then (1) keep those around and also (2)
-    // identify the local that was tee'd, so we know what to set (which has been
+    // identify the local that was tee'd, so we know what to get (which has been
     // replaced by the block). To make that simple keep a map of the things that
     // replaced tees.
     std::unordered_map<Expression*, LocalSet*> teeReplacements;
