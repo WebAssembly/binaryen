@@ -152,12 +152,13 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
   void optimize(Function* func) {
     auto numLocals = func->getNumLocals();
 
-    // Find the set of bad indexes. We each each such candidate to a worklist
+    // Find the set of bad indexes. We add each such candidate to a worklist
     // that we will then flow to find all those corrupted.
     std::vector<bool> bad(numLocals);
     UniqueDeferredQueue<Index> work;
 
     for (Index i = 0; i < uses.size(); i++) {
+      assert(validUses[i] <= uses[i]);
       if (uses[i] > 0 && validUses[i] < uses[i]) {
         // This is a bad tuple.
         work.push(i);
