@@ -32,11 +32,16 @@
 //
 //  * They are always written either a tuple.make or another tuple local with
 //    these properties.
-//  * They are always used either in tuple.extract or to be copied to another
+//  * They are always used either in tuple.extract or they are copied to another
 //    tuple local with these properties.
 //
 // The set of those tuple locals can be easily optimized into individual locals,
-// as the tuple does not "escape" into say a return value.
+// as the tuple does not "escape" into, say, a return value.
+//
+// TODO: Blocks etc. might be handled here, but it's not clear if we want to:
+//       there are situations where multivalue leads to smaller code using
+//       those constructs. Atm this pass should only remove things that are
+//       definitely worth lowering.
 //
 
 #include <pass.h>
