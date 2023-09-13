@@ -498,4 +498,28 @@
       )
     )
   )
+
+  ;; CHECK:      (func $set-of-block (type $1)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (block (result i32 i32)
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set-of-block
+    (local $tuple (i32 i32))
+    ;; We do not handle blocks yet, so this is not optimized.
+    (local.set $tuple
+      (block (result i32 i32)
+        (tuple.make
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+  )
 )
