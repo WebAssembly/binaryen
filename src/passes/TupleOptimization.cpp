@@ -40,6 +40,7 @@
 //
 
 #include <pass.h>
+#include <support/unique_deferring_queue.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -63,6 +64,14 @@ struct TupleOptimization
   // one, and the local cannot be optimized.
   std::vector<bool> validUses;
 
+  // When one tuple local copies the value of another, we need to track the
+  // index that was copied, as if the source ends up bad then the target is bad
+  // as well.
+  //
+  // This is a map of the source to the indexes it is copied into (so that we
+  // can easily flow badness forward).
+  std::vector<std::unordered_set<Index>> copiedIndexes;
+
   void doWalkFunction(Function* func) {
     // If tuples are not enabled, or there are no tuple locals, then there is no
     // work to do.
@@ -80,12 +89,17 @@ struct TupleOptimization
       return;
     }
 
-    // Walk the code to collect information.
+    // Prepare global data structures before we collect info.
     auto numLocals = func->getNumLocals();
     uses.resize(numLocals);
     validUses.resize(numLocals);
+    copiedIndexes.resize(numLocals);
 
+    // Walk the code to collect info.
     super::doWalkFunction(func);
+
+    // Analyze and optimize.
+    optimize(func);
   }
 
   void visitLocalGet(LocalGet* curr) {
@@ -99,8 +113,13 @@ struct TupleOptimization
       auto* value = curr->value;
       // We need the input to the local to be another such local (from a tee, or
       // a get), or a tuple.make.
-      if (value->is<LocalSet>() || value->is<LocalGet>() ||
-          value->is<TupleMake>()) {
+      if (auto* set = value->dynCast<LocalSet>()) {
+        validUses[set->index]++;
+        copiedIndexes[set->index].insert(curr->index);
+      } else if (auto* get = value->dynCast<LocalGet>()) {
+        validUses[get->index]++;
+        copiedIndexes[set->index].insert(curr->index);
+      } else if (value->is<TupleMake>()) {
         validUses[curr->index]++;
       }
     }
@@ -113,6 +132,51 @@ struct TupleOptimization
     } else if (auto* get = curr->tuple->dynCast<LocalGet>()) {
       validUses[get->index]++;
     }
+  }
+
+  void optimize(Function* func) {
+    auto numLocals = func->getNumLocals();
+
+    std::vector<bool> bad(numLocals);
+    UniqueDeferredQueue<Index> work;
+
+    for (Index i = 0; i < uses.size(); i++) {
+      if (uses[i] > 0 && validUses[i] < uses[i]) {
+        // This is a bad tuple. Note that, and also set it up for the flow to
+        // corrupt those it is written into.
+        bad[i] = true;
+        work.push(i);
+      }
+    }
+
+    // Flow badness forward.
+    while (!work.empty()) {
+      auto i = work.pop();
+      if (bad[i]) {
+        continue;
+      }
+      bad[i] = true;
+      for (auto target : copiedIndexes[i]) {
+        work.push(target);
+      }
+    }
+
+    // Good indexes we can optimize are tuple locals with uses that are not bad.
+    std::vector<bool> good(numLocals);
+    bool hasGood = false;
+    for (Index i = 0; i < uses.size(); i++) {
+      if (uses[i] > 0 && !bad[i]) {
+        good[i] = true;
+        hasGood = true;
+      }
+    }
+
+    if (!hasGood) {
+      return;
+    }
+
+    // We found things to optimize!
+
   }
 };
 
