@@ -599,6 +599,7 @@
         (i32.const 2)
       )
     )
+    ;; We should not error here, and do nothing.
     (local.set $tuple
       (unreachable)
     )
