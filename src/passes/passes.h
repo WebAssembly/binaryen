@@ -153,6 +153,7 @@ Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
+Pass* createTupleOptimizationPass();
 Pass* createTypeRefiningPass();
 Pass* createTypeMergingPass();
 Pass* createTypeSSAPass();

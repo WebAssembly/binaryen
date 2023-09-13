@@ -480,6 +480,9 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("tuple-optimization",
+               "optimize trivial tuples away",
+               createTupleOptimizationPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
@@ -557,6 +560,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("code-pushing");
+  }
+  if (wasm->features.hasMultivalue()) {
+    addIfNoDWARFIssues("tuple-optimization");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit
