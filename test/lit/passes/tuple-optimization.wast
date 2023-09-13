@@ -733,10 +733,11 @@
   ;; CHECK-NEXT:   (local.get $11)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $loop
+  (func $chain-3
     (local $tuple (i32 i32 i32))
     (local $tuple2 (i32 i32 i32))
     (local $tuple3 (i32 i32 i32))
+    ;; A chain of 3 copied tuples.
     (local.set $tuple
       (tuple.make
         (i32.const 1)
@@ -802,7 +803,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $tuple)
   ;; CHECK-NEXT: )
-  (func $loop-corruption (result i32 i32 i32)
+  (func $chain-3-corruption (result i32 i32 i32)
     (local $tuple (i32 i32 i32))
     (local $tuple2 (i32 i32 i32))
     (local $tuple3 (i32 i32 i32))
