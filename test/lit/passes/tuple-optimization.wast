@@ -524,8 +524,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $make-extract-no-local-but-other
-    ;; As above, but now there is an unrelated local as well that can be
-    ;; optimized.
     (local $tuple (i32 i32))
     (local.set $tuple
       (tuple.make
@@ -533,6 +531,8 @@
         (i32.const 2)
       )
     )
+    ;; The code below is as in the previous testcase, but now before us there
+    ;; is an unrelated local that can be optimized. We should remain as before.
     (drop
       (tuple.extract 0
         (tuple.make
