@@ -58,7 +58,8 @@ struct TupleOptimization
   // TupleOptimization() {}
 
   // Track the number of uses for each tuple local. We consider a use as a
-  // local.get, set, or tee.
+  // local.get a set, or a tee. A tee counts as two uses (since it both sets
+  // and gets, and so we must see that it is both used and uses properly).
   std::vector<Index> uses;
 
   // Tracks which tuple local uses are valid, that is, follow the properties
@@ -106,23 +107,32 @@ struct TupleOptimization
 
   void visitLocalGet(LocalGet* curr) {
     if (curr->type.isTuple()) {
+std::cout << "  use++get\n";
       uses[curr->index]++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
+std::cout << "pre set: " << curr->index <<"\n";
     if (getFunction()->getLocalType(curr->index).isTuple()) {
-      uses[curr->index]++;
+std::cout << "  use++set\n";
+      uses[curr->index] += curr->isTee() ? 2 : 1;
       auto* value = curr->value;
       // We need the input to the local to be another such local (from a tee, or
       // a get), or a tuple.make.
       if (auto* set = value->dynCast<LocalSet>()) {
+        assert(set->isTee());
         validUses[set->index]++;
+        validUses[curr->index]++;
+std::cout << "  valid++set\n";
         copiedIndexes[set->index].insert(curr->index);
       } else if (auto* get = value->dynCast<LocalGet>()) {
+std::cout << "  valid++get\n";
         validUses[get->index]++;
+        validUses[curr->index]++;
         copiedIndexes[set->index].insert(curr->index);
       } else if (value->is<TupleMake>()) {
+std::cout << "  valid++make\n";
         validUses[curr->index]++;
       }
     }
@@ -144,11 +154,13 @@ struct TupleOptimization
     UniqueDeferredQueue<Index> work;
 
     for (Index i = 0; i < uses.size(); i++) {
+std::cout << "consider " << i << " which has use/valid " << uses[i] << ", " << validUses[i] << "\n";
       if (uses[i] > 0 && validUses[i] < uses[i]) {
         // This is a bad tuple. Note that, and also set it up for the flow to
         // corrupt those it is written into.
         bad[i] = true;
         work.push(i);
+std::cout << "bad: " << i <<"\n";
       }
     }
 
@@ -159,6 +171,7 @@ struct TupleOptimization
         continue;
       }
       bad[i] = true;
+std::cout << "badd: " << i <<"\n";
       for (auto target : copiedIndexes[i]) {
         work.push(target);
       }
@@ -171,6 +184,7 @@ struct TupleOptimization
       if (uses[i] > 0 && !bad[i]) {
         good[i] = true;
         hasGood = true;
+std::cout << "good: " << i <<"\n";
       }
     }
 
@@ -243,47 +257,99 @@ struct TupleOptimization
       return base;
     }
 
+    // Replacing a local.tee requires some care, since we might have
+    //
+    //  (local.set
+    //   (local.tee
+    //    ..
+    //
+    // We replace the local.tee with a block of sets of the new non-tuple
+    // locals, and the outer set must then (1) keep those around and also (2)
+    // identify the local that was tee'd, so we know what to set (which has been
+    // replaced by the block). To make that simple keep a map of the things that
+    // replaced tees.
+    std::unordered_map<Expression*, LocalSet*> teeReplacements;
+
     void visitLocalSet(LocalSet* curr) {
+std::cout << "set " << curr->index << '\n';
+      auto replace = [&](Expression* replacement) {
+        if (curr->isTee()) {
+          teeReplacements[replacement] = curr;
+        }
+        replaceCurrent(replacement);
+      };
+
       if (auto targetBase = getNewBaseIndex(curr->index)) {
+std::cout << "  set a\n";
         Builder builder(*getModule());
         auto type = getFunction()->getLocalType(curr->index);
 
         auto* value = curr->value;
         if (auto* make = value->dynCast<TupleMake>()) {
+std::cout << "  set b\n";
           // Write each of the tuple.make fields into the proper local.
           std::vector<Expression*> sets;
           for (Index i = 0; i < type.size(); i++) {
             auto* value = make->operands[i];
             sets.push_back(builder.makeLocalSet(targetBase + i, value));
           }
-          replaceCurrent(builder.makeBlock(sets));
+          replace(builder.makeBlock(sets));
           return;
         }
+
+        std::vector<Expression*> contents;
+
+        auto iter = teeReplacements.find(value);
+        if (iter != teeReplacements.end()) {
+std::cout << "  set c\n";
+          // The input to us was a tee that has been replaced. The actual value
+          // we read from (the tee) can be found in teeReplacements. Also, we
+          // need to keep around the replacement of the tee.
+          contents.push_back(value);
+          value = iter->second;
+        }
+std::cout << "  set d\n";
 
         // This is a copy of a tuple local into another. Copy all the fields
         // between them.
         // TODO: test a tee chain.
         Index sourceBase = getSetOrGetBaseIndex(value);
 
-        std::vector<Expression*> sets;
         for (Index i = 0; i < type.size(); i++) {
           auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
-          sets.push_back(builder.makeLocalSet(targetBase + i, get));
+          contents.push_back(builder.makeLocalSet(targetBase + i, get));
         }
-        replaceCurrent(builder.makeBlock(sets));
+        replace(builder.makeBlock(contents));
       }
     }
 
     void visitTupleExtract(TupleExtract* curr) {
-      auto type = curr->tuple->type;
+      auto* value = curr->tuple;
+      auto type = value->type;
       if (type == Type::unreachable) {
         return;
       }
-      Index sourceBase = getSetOrGetBaseIndex(curr->tuple);
+
+      Expression* contents = nullptr;
+
+      auto iter = teeReplacements.find(value);
+      if (iter != teeReplacements.end()) {
+        // The input to us was a tee that has been replaced. Handle it as in
+        // visitLocalSet.
+        contents = value;
+        value = iter->second;
+      }
+
+      Index sourceBase = getSetOrGetBaseIndex(value);
       Builder builder(*getModule());
       auto i = curr->index;
       auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
-      replaceCurrent(get);
+      if (contents) {
+        contents = builder.makeSequence(contents, get);
+        replaceCurrent(contents);
+      } else {
+        replaceCurrent(get);
+      }
     }
   };
 };
