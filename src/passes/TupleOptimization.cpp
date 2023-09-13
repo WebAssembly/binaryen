@@ -58,8 +58,6 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
     return std::make_unique<TupleOptimization>();
   }
 
-  // TupleOptimization() {}
-
   // Track the number of uses for each tuple local. We consider a use as a
   // local.get a set, or a tee. A tee counts as two uses (since it both sets
   // and gets, and so we must see that it is both used and uses properly).
