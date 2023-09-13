@@ -7,20 +7,33 @@
   ;; CHECK-NEXT:  (local $other f64)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $3
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  (local.set $other
+  ;; CHECK-NEXT:   (local.tee $other
+  ;; CHECK-NEXT:    (local.get $other)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-set
     (local $tuple (i32 i32))
-    (local $other f64) ;; a non-tuple local is ignored
+    (local $other f64)
     (local.set $tuple
       (tuple.make
         (i32.const 1)
         (i32.const 2)
+      )
+    )
+    ;; A non-tuple local and all operations on it should be ignored.
+    (local.set $other
+      (local.tee $other
+        (local.get $other)
       )
     )
   )
