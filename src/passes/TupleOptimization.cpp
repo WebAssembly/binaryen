@@ -275,9 +275,12 @@ struct TupleOptimization
     }
 
     void visitTupleExtract(TupleExtract* curr) {
+      auto type = curr->tuple->type;
+      if (type == Type::unreachable) {
+        return;
+      }
       Index sourceBase = getSetOrGetBaseIndex(curr->tuple);
       Builder builder(*getModule());
-      auto type = getFunction()->getLocalType(curr->index);
       auto i = curr->index;
       auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
       replaceCurrent(get);
