@@ -38,6 +38,8 @@
   ;; CHECK-NEXT: )
   (func $just-get
     (local $tuple (i32 i32))
+    ;; The default value of the tuple lanes is used here in the new locals we
+    ;; add.
     (drop
       (tuple.extract 0
         (local.get $tuple)
