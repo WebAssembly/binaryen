@@ -2278,7 +2278,8 @@ struct OptimizeInstructions
       // drop of the tuple (which might have side effects).
       auto valueType = make->type[curr->index];
       Index tempLocal = builder.addVar(getFunction(), valueType);
-      make->operands[curr->index] = builder.makeLocalTee(tempLocal, make->operands[curr->index], valueType);
+      make->operands[curr->index] =
+        builder.makeLocalTee(tempLocal, make->operands[curr->index], valueType);
       auto* get = builder.makeLocalGet(tempLocal, valueType);
       replaceCurrent(getDroppedChildrenAndAppend(make, get));
     }
