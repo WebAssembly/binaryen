@@ -120,6 +120,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -137,7 +143,7 @@
         )
       )
     )
-    (;; Read the first tuple.
+    ;; Read the first tuple.
     (drop
       (tuple.extract 0
         (local.get $tuple)
@@ -147,7 +153,7 @@
       (tuple.extract 1
         (local.get $tuple)
       )
-    ;;)
+    )
     ;; Read the second tuple.
     (drop
       (tuple.extract 0
