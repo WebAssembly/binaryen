@@ -499,6 +499,47 @@
     )
   )
 
+  ;; CHECK:      (func $make-extract-no-local-but-other (type $1)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $make-extract-no-local-but-other
+    ;; As above, but now there is an unrelated local as well that can be
+    ;; optimized.
+    (local $tuple (i32 i32))
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (tuple.extract 0
+        (tuple.make
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $set-of-block (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple

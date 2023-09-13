@@ -242,7 +242,8 @@ struct TupleOptimization
     }
 
     // Given a local.get or local.set, return the new base index for the local
-    // index used there.
+    // index used there. Returns 0 (an impossible value, as the base index
+    // cannot be 0 - tuple locals exist, so 0 was taken) otherwise.
     Index getSetOrGetBaseIndex(Expression* setOrGet) {
       Index index;
       if (auto* set = setOrGet->dynCast<LocalSet>()) {
@@ -250,7 +251,7 @@ struct TupleOptimization
       } else if (auto* get = setOrGet->dynCast<LocalGet>()) {
         index = get->index;
       } else {
-        WASM_UNREACHABLE("bad set child");
+        return 0;
       }
 
       // This must always be called on a local that is being mapped.
@@ -316,6 +317,7 @@ struct TupleOptimization
         // between them.
         // TODO: test a tee chain.
         Index sourceBase = getSetOrGetBaseIndex(value);
+        assert(sourceBase);
 
         for (Index i = 0; i < type.size(); i++) {
           auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
@@ -343,6 +345,10 @@ struct TupleOptimization
       }
 
       Index sourceBase = getSetOrGetBaseIndex(value);
+      if (!sourceBase) {
+        return;
+      }
+
       Builder builder(*getModule());
       auto i = curr->index;
 //std::cout << type << " : " << i << '\n';
