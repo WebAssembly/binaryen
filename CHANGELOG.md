@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - "I31New" changed to "RefI31" everywhere it appears in the C API.
+
 v115
 ----
 

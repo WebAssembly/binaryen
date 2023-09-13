@@ -2341,7 +2341,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       if (type.isNullable() && oneIn(4)) {
         return builder.makeRefNull(HeapType::none);
       }
-      return builder.makeI31New(makeConst(Type::i32));
+      return builder.makeRefI31(makeConst(Type::i32));
     }
     case HeapType::struct_: {
       assert(wasm.features.hasGC());

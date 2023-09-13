@@ -564,7 +564,7 @@ instructions = [
     ("call_ref",             "makeCallRef(s, /*isReturn=*/false)"),
     ("return_call_ref",      "makeCallRef(s, /*isReturn=*/true)"),
     # GC
-    ("i31.new",              "makeI31New(s)"),
+    ("i31.new",              "makeRefI31(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),
     ("ref.test",             "makeRefTest(s)"),

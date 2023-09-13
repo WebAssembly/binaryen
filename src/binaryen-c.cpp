@@ -1732,10 +1732,10 @@ BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRethrow(target));
 }
 
-BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenRefI31(BinaryenModuleRef module,
                                      BinaryenExpressionRef value) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeI31New((Expression*)value));
+    Builder(*(Module*)module).makeRefI31((Expression*)value));
 }
 
 BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
@@ -3952,18 +3952,18 @@ void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
   assert(expression->is<TupleExtract>());
   static_cast<TupleExtract*>(expression)->index = index;
 }
-// I31New
-BinaryenExpressionRef BinaryenI31NewGetValue(BinaryenExpressionRef expr) {
+// RefI31
+BinaryenExpressionRef BinaryenRefI31GetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<I31New>());
-  return static_cast<I31New*>(expression)->value;
+  assert(expression->is<RefI31>());
+  return static_cast<RefI31*>(expression)->value;
 }
-void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+void BinaryenRefI31SetValue(BinaryenExpressionRef expr,
                             BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<I31New>());
+  assert(expression->is<RefI31>());
   assert(valueExpr);
-  static_cast<I31New*>(expression)->value = (Expression*)valueExpr;
+  static_cast<RefI31*>(expression)->value = (Expression*)valueExpr;
 }
 // I31Get
 BinaryenExpressionRef BinaryenI31GetGetI31(BinaryenExpressionRef expr) {

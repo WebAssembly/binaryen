@@ -618,10 +618,10 @@ switch (DELEGATE_ID) {
     DELEGATE_END(TupleExtract);
     break;
   }
-  case Expression::Id::I31NewId: {
-    DELEGATE_START(I31New);
-    DELEGATE_FIELD_CHILD(I31New, value);
-    DELEGATE_END(I31New);
+  case Expression::Id::RefI31Id: {
+    DELEGATE_START(RefI31);
+    DELEGATE_FIELD_CHILD(RefI31, value);
+    DELEGATE_END(RefI31);
     break;
   }
   case Expression::Id::I31GetId: {

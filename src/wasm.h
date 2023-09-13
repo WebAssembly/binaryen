@@ -703,7 +703,7 @@ public:
     RethrowId,
     TupleMakeId,
     TupleExtractId,
-    I31NewId,
+    RefI31Id,
     I31GetId,
     CallRefId,
     RefTestId,
@@ -1478,10 +1478,10 @@ public:
   void finalize();
 };
 
-class I31New : public SpecificExpression<Expression::I31NewId> {
+class RefI31 : public SpecificExpression<Expression::RefI31Id> {
 public:
-  I31New() = default;
-  I31New(MixedArena& allocator) {}
+  RefI31() = default;
+  RefI31(MixedArena& allocator) {}
 
   Expression* value;
 

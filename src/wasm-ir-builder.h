@@ -130,7 +130,7 @@ public:
   // [[nodiscard]] Result<> makeRethrow();
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
-  [[nodiscard]] Result<> makeI31New();
+  [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   // [[nodiscard]] Result<> makeCallRef();
   // [[nodiscard]] Result<> makeRefTest();

@@ -87,7 +87,7 @@ ThrowId: 50
 RethrowId: 51
 TupleMakeId: 52
 TupleExtractId: 53
-I31NewId: 54
+RefI31Id: 54
 I31GetId: 55
 CallRefId: 56
 RefTestId: 57

@@ -856,8 +856,8 @@ public:
     ret->finalize();
     return ret;
   }
-  I31New* makeI31New(Expression* value) {
-    auto* ret = wasm.allocator.alloc<I31New>();
+  RefI31* makeRefI31(Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefI31>();
     ret->value = value;
     ret->finalize();
     return ret;
@@ -1209,7 +1209,7 @@ public:
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
     if (type.isRef() && type.getHeapType() == HeapType::i31) {
-      return makeI31New(makeConst(value.geti31()));
+      return makeRefI31(makeConst(value.geti31()));
     }
     if (type.isString()) {
       // TODO: more than ascii support
@@ -1359,7 +1359,7 @@ public:
       return ExpressionManipulator::refNull(curr, curr->type);
     }
     if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
-      Expression* ret = makeI31New(makeConst(0));
+      Expression* ret = makeRefI31(makeConst(0));
       if (curr->type.isNullable()) {
         // To keep the type identical, wrap it in a block that adds nullability.
         ret = makeBlock({ret}, curr->type);

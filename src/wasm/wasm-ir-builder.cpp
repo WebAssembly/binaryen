@@ -661,10 +661,10 @@ Result<> IRBuilder::makeRefEq() {
 
 // Result<> IRBuilder::makeTupleExtract() {}
 
-Result<> IRBuilder::makeI31New() {
-  I31New curr;
-  CHECK_ERR(visitI31New(&curr));
-  push(builder.makeI31New(curr.value));
+Result<> IRBuilder::makeRefI31() {
+  RefI31 curr;
+  CHECK_ERR(visitRefI31(&curr));
+  push(builder.makeRefI31(curr.value));
   return Ok{};
 }
 
