@@ -78,8 +78,8 @@
         (local.get $tuple)
       )
     )
-    ;; This get is not used by something we can handle, so we should not try to
-    ;; optimize this tuple.
+    ;; This get is not used by something we can handle (it escapes from the
+    ;; function), so we should not try to optimize this tuple.
     (local.get $tuple)
   )
 
