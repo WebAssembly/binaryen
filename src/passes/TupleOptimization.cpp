@@ -72,8 +72,10 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
   // index that was copied, as if the source ends up bad then the target is bad
   // as well.
   //
-  // This is a symmetrical map, that is, we consider copies to work both ways,
-  // and x \in copiedIndexed[y]  <==>  y \in copiedIndexed[x]
+  // This is a symmetrical map, that is, we consider copies to work both ways:
+  //
+  //    x \in copiedIndexed[y]    <==>    y \in copiedIndexed[x]
+  //
   std::vector<std::unordered_set<Index>> copiedIndexes;
 
   void doWalkFunction(Function* func) {
