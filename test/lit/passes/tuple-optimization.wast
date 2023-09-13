@@ -2,5 +2,22 @@
 ;; RUN: wasm-opt %s --tuple-optimization -all -S -o - | filecheck %s
 
 (module
-  
+  ;; CHECK:      (func $just-set (type $0)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $just-set
+    (local $tuple (i32 i32))
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+  )
 )

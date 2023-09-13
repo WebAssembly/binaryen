@@ -57,7 +57,8 @@ struct TupleOptimization
 
   // TupleOptimization() {}
 
-  // Track the number of uses for each tuple local.
+  // Track the number of uses for each tuple local. We consider a use as a
+  // local.get, set, or tee.
   std::vector<Index> uses;
 
   // Tracks which tuple local uses are valid, that is, follow the properties
@@ -76,6 +77,7 @@ struct TupleOptimization
   void doWalkFunction(Function* func) {
     // If tuples are not enabled, or there are no tuple locals, then there is no
     // work to do.
+std::cout << "a1\n";
     if (!getModule()->features.hasMultivalue()) {
       return;
     }
@@ -89,6 +91,7 @@ struct TupleOptimization
     if (!hasTuple) {
       return;
     }
+std::cout << "a2\n";
 
     // Prepare global data structures before we collect info.
     auto numLocals = func->getNumLocals();
@@ -105,12 +108,15 @@ struct TupleOptimization
 
   void visitLocalGet(LocalGet* curr) {
     if (curr->type.isTuple()) {
-      validUses[curr->index]++;
+      uses[curr->index]++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
+std::cout << "set!\n";
     if (getFunction()->getLocalType(curr->index).isTuple()) {
+std::cout << "  set2\n";
+      uses[curr->index]++;
       auto* value = curr->value;
       // We need the input to the local to be another such local (from a tee, or
       // a get), or a tuple.make.
@@ -122,6 +128,7 @@ struct TupleOptimization
         copiedIndexes[set->index].insert(curr->index);
       } else if (value->is<TupleMake>()) {
         validUses[curr->index]++;
+std::cout << "  set3: " << curr->index << " now has " << validUses[curr->index] << "uses\n";
       }
     }
   }
@@ -166,15 +173,18 @@ struct TupleOptimization
     std::vector<bool> good(numLocals);
     bool hasGood = false;
     for (Index i = 0; i < uses.size(); i++) {
+std::cout << "consider " << i << " which has uses=" << uses[i] << " and is bad=" << bad[i] << '\n';
       if (uses[i] > 0 && !bad[i]) {
         good[i] = true;
         hasGood = true;
       }
     }
+std::cout << "a3\n";
 
     if (!hasGood) {
       return;
     }
+std::cout << "a4\n";
 
     // We found things to optimize! Create new non-tuple locals for their
     // contents, and then rewrite the code to use those according to the
