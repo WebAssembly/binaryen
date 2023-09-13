@@ -41,6 +41,7 @@
 
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
+#include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -175,8 +176,31 @@ struct TupleOptimization
       return;
     }
 
-    // We found things to optimize!
-
+    // We found things to optimize! Create new non-tuple locals for their
+    // contents, and then rewrite the code to use those according to the
+    // mapping from tuple locals to normal ones. The mapping maps a tuple local
+    // to the first index used for its contents (subsequent indexes are used
+    // contiguously).
+    std::unordered_map<Index, Index> tupleToNormalMap;
+    for (Index i = 0; i < good.size(); i++) {
+      if (good[i]) {
+        auto normal = func->getNumLocals();
+        tupleToNormalMap[i] = normal;
+        auto lastNewIndex = 0;
+        for (auto t : func->getLocalType(i)) {
+          auto newIndex = Builder::addVar(func, t);
+          if (lastNewIndex == 0) {
+            // This is the first new local we added (0 is an impossible value,
+            // since tuple locals exist, hence index 0 was already taken).
+            assert(newIndex == normal);
+          } else {
+            // This must be right after the former.
+            assert(newIndex == lastNewIndex + 1);
+          }
+          lastNewIndex = newIndex;
+        }
+      }
+    }
   }
 };
 
