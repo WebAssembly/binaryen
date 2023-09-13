@@ -101,6 +101,8 @@ struct TupleOptimization
     // Walk the code to collect info.
     super::doWalkFunction(func);
 
+//std::cout << "opt:" << *func << "\n";
+
     // Analyze and optimize.
     optimize(func);
   }
