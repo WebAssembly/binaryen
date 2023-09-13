@@ -71,8 +71,8 @@ struct TupleOptimization
   // index that was copied, as if the source ends up bad then the target is bad
   // as well.
   //
-  // This is a map of the source to the indexes it is copied into (so that we
-  // can easily flow badness forward).
+  // This is a symmetrical map, that is, we consider copies to work both ways,
+  // and x \in copiedIndexed[y]  <==>  y \in copiedIndexed[x]
   std::vector<std::unordered_set<Index>> copiedIndexes;
 
   void doWalkFunction(Function* func) {
@@ -126,11 +126,13 @@ std::cout << "  use++set\n";
         validUses[curr->index]++;
 std::cout << "  valid++set\n";
         copiedIndexes[set->index].insert(curr->index);
+        copiedIndexes[curr->index].insert(set->index);
       } else if (auto* get = value->dynCast<LocalGet>()) {
 std::cout << "  valid++get\n";
         validUses[get->index]++;
         validUses[curr->index]++;
-        copiedIndexes[set->index].insert(curr->index);
+        copiedIndexes[get->index].insert(curr->index);
+        copiedIndexes[curr->index].insert(get->index);
       } else if (value->is<TupleMake>()) {
 std::cout << "  valid++make\n";
         validUses[curr->index]++;
@@ -150,15 +152,15 @@ std::cout << "  valid++make\n";
   void optimize(Function* func) {
     auto numLocals = func->getNumLocals();
 
+    // Find the set of bad indexes. We each each such candidate to a worklist
+    // that we will then flow to find all those corrupted.
     std::vector<bool> bad(numLocals);
     UniqueDeferredQueue<Index> work;
 
     for (Index i = 0; i < uses.size(); i++) {
 std::cout << "consider " << i << " which has use/valid " << uses[i] << ", " << validUses[i] << "\n";
       if (uses[i] > 0 && validUses[i] < uses[i]) {
-        // This is a bad tuple. Note that, and also set it up for the flow to
-        // corrupt those it is written into.
-        bad[i] = true;
+        // This is a bad tuple.
         work.push(i);
 std::cout << "bad: " << i <<"\n";
       }

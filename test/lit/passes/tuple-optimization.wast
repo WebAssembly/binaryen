@@ -301,4 +301,33 @@
       )
     )
   )
+
+  ;; CHECK:      (func $corruption-tee (type $1) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (local.tee $tuple2
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $tuple2)
+  ;; CHECK-NEXT: )
+  (func $corruption-tee (result i32 i32)
+    (local $tuple (i32 i32))
+    (local $tuple2 (i32 i32))
+    ;; As above, but the tee's tuple is bad and it prevents the other from
+    ;; being optimized too, due to the copy between them.
+    (local.set $tuple
+      (local.tee $tuple2
+        (tuple.make
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+    (local.get $tuple2)
+  )
 )
