@@ -16,7 +16,7 @@
   (func $just-set
     (local $tuple (i32 i32))
     ;; This tuple local can be optimized into separate locals per lane. The
-    ;; tuple local itself then has no uses and other passes will remove it. 
+    ;; tuple local itself then has no uses and other passes will remove it.
     (local.set $tuple
       (tuple.make
         (i32.const 1)
@@ -677,7 +677,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop (type $0)
+  ;; CHECK:      (func $chain-3 (type $0)
   ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
   ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
@@ -769,7 +769,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-corruption (type $2) (result i32 i32 i32)
+  ;; CHECK:      (func $chain-3-corruption (type $2) (result i32 i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
   ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
