@@ -101,23 +101,18 @@ struct TupleOptimization
     // Walk the code to collect info.
     super::doWalkFunction(func);
 
-//std::cout << "opt:" << *func << "\n";
-
     // Analyze and optimize.
     optimize(func);
   }
 
   void visitLocalGet(LocalGet* curr) {
     if (curr->type.isTuple()) {
-//std::cout << "  use++get\n";
       uses[curr->index]++;
     }
   }
 
   void visitLocalSet(LocalSet* curr) {
-//std::cout << "pre set: " << curr->index <<"\n";
     if (getFunction()->getLocalType(curr->index).isTuple()) {
-//std::cout << "  use++set\n";
       uses[curr->index] += curr->isTee() ? 2 : 1;
       auto* value = curr->value;
       // We need the input to the local to be another such local (from a tee, or
@@ -126,17 +121,14 @@ struct TupleOptimization
         assert(set->isTee());
         validUses[set->index]++;
         validUses[curr->index]++;
-//std::cout << "  valid++set\n";
         copiedIndexes[set->index].insert(curr->index);
         copiedIndexes[curr->index].insert(set->index);
       } else if (auto* get = value->dynCast<LocalGet>()) {
-//std::cout << "  valid++get\n";
         validUses[get->index]++;
         validUses[curr->index]++;
         copiedIndexes[get->index].insert(curr->index);
         copiedIndexes[curr->index].insert(get->index);
       } else if (value->is<TupleMake>()) {
-//std::cout << "  valid++make\n";
         validUses[curr->index]++;
       }
     }
@@ -160,11 +152,9 @@ struct TupleOptimization
     UniqueDeferredQueue<Index> work;
 
     for (Index i = 0; i < uses.size(); i++) {
-//std::cout << "consider " << i << " which has use/valid " << uses[i] << ", " << validUses[i] << "\n";
       if (uses[i] > 0 && validUses[i] < uses[i]) {
         // This is a bad tuple.
         work.push(i);
-//std::cout << "bad: " << i <<"\n";
       }
     }
 
@@ -175,7 +165,6 @@ struct TupleOptimization
         continue;
       }
       bad[i] = true;
-//std::cout << "badd: " << i <<"\n";
       for (auto target : copiedIndexes[i]) {
         work.push(target);
       }
@@ -188,7 +177,6 @@ struct TupleOptimization
       if (uses[i] > 0 && !bad[i]) {
         good[i] = true;
         hasGood = true;
-//std::cout << "good: " << i <<"\n";
       }
     }
 
@@ -272,7 +260,6 @@ struct TupleOptimization
     std::unordered_map<Expression*, LocalSet*> teeReplacements;
 
     void visitLocalSet(LocalSet* curr) {
-//std::cout << "set " << curr->index << '\n';
       auto replace = [&](Expression* replacement) {
         if (curr->isTee()) {
           teeReplacements[replacement] = curr;
@@ -281,13 +268,11 @@ struct TupleOptimization
       };
 
       if (auto targetBase = getNewBaseIndex(curr->index)) {
-//std::cout << "  set a\n";
         Builder builder(*getModule());
         auto type = getFunction()->getLocalType(curr->index);
 
         auto* value = curr->value;
         if (auto* make = value->dynCast<TupleMake>()) {
-//std::cout << "  set b\n";
           // Write each of the tuple.make fields into the proper local.
           std::vector<Expression*> sets;
           for (Index i = 0; i < type.size(); i++) {
@@ -302,14 +287,12 @@ struct TupleOptimization
 
         auto iter = teeReplacements.find(value);
         if (iter != teeReplacements.end()) {
-//std::cout << "  set c\n";
           // The input to us was a tee that has been replaced. The actual value
           // we read from (the tee) can be found in teeReplacements. Also, we
           // need to keep around the replacement of the tee.
           contents.push_back(value);
           value = iter->second;
         }
-//std::cout << "  set d\n";
 
         // This is a copy of a tuple local into another. Copy all the fields
         // between them.
@@ -351,7 +334,6 @@ struct TupleOptimization
 
       Builder builder(*getModule());
       auto i = curr->index;
-//std::cout << type << " : " << i << '\n';
       auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
       if (extraContents) {
         replaceCurrent(builder.makeSequence(extraContents, get));
