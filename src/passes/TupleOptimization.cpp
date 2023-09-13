@@ -120,6 +120,7 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
       // separate use).
       uses[curr->index] += curr->isTee() ? 2 : 1;
       auto* value = curr->value;
+
       // We need the input to the local to be another such local (from a tee, or
       // a get), or a tuple.make.
       if (auto* set = value->dynCast<LocalSet>()) {
