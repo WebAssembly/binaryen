@@ -242,8 +242,7 @@ struct TupleOptimization
     }
 
     // Given a local.get or local.set, return the new base index for the local
-    // index used there. Returns 0 (an impossible value, as the base index
-    // cannot be 0 - tuple locals exist, so 0 was taken) otherwise.
+    // index used there. Returns 0 (an impossible value, see above) otherwise.
     Index getSetOrGetBaseIndex(Expression* setOrGet) {
       Index index;
       if (auto* set = setOrGet->dynCast<LocalSet>()) {
@@ -254,10 +253,7 @@ struct TupleOptimization
         return 0;
       }
 
-      // This must always be called on a local that is being mapped.
-      auto base = getNewBaseIndex(index);
-      assert(base);
-      return base;
+      return getNewBaseIndex(index);
     }
 
     // Replacing a local.tee requires some care, since we might have
@@ -317,6 +313,9 @@ struct TupleOptimization
         // between them.
         // TODO: test a tee chain.
         Index sourceBase = getSetOrGetBaseIndex(value);
+
+        // The target is being optimized, so the source must be as well, or else
+        // we were confused earlier and target should not be.
         assert(sourceBase);
 
         for (Index i = 0; i < type.size(); i++) {
