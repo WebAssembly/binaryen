@@ -672,4 +672,167 @@
       )
     )
   )
+
+  ;; CHECK:      (func $loop (type $0)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (local $8 i32)
+  ;; CHECK-NEXT:  (local $9 i32)
+  ;; CHECK-NEXT:  (local $10 i32)
+  ;; CHECK-NEXT:  (local $11 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $7
+  ;; CHECK-NEXT:    (local.get $4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $8
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $9
+  ;; CHECK-NEXT:    (local.get $6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $10
+  ;; CHECK-NEXT:    (local.get $7)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $11
+  ;; CHECK-NEXT:    (local.get $8)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $11)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop
+    (local $tuple (i32 i32 i32))
+    (local $tuple2 (i32 i32 i32))
+    (local $tuple3 (i32 i32 i32))
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (local.set $tuple2
+      (local.get $tuple)
+    )
+    (local.set $tuple3
+      (local.get $tuple2)
+    )
+    ;; Read from each.
+    (drop
+      (tuple.extract 0
+        (local.get $tuple)
+      )
+    )
+    (drop
+      (tuple.extract 1
+        (local.get $tuple2)
+      )
+    )
+    (drop
+      (tuple.extract 2
+        (local.get $tuple3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $loop-corruption (type $2) (result i32 i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $tuple2
+  ;; CHECK-NEXT:   (local.get $tuple)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $tuple3
+  ;; CHECK-NEXT:   (local.get $tuple2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:    (local.get $tuple)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 1
+  ;; CHECK-NEXT:    (local.get $tuple2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 2
+  ;; CHECK-NEXT:    (local.get $tuple3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $tuple)
+  ;; CHECK-NEXT: )
+  (func $loop-corruption (result i32 i32 i32)
+    (local $tuple (i32 i32 i32))
+    (local $tuple2 (i32 i32 i32))
+    (local $tuple3 (i32 i32 i32))
+    ;; As above, but a get at the very end prevents the entire chain from being
+    ;; optimized.
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (local.set $tuple2
+      (local.get $tuple)
+    )
+    (local.set $tuple3
+      (local.get $tuple2)
+    )
+    ;; Read from each.
+    (drop
+      (tuple.extract 0
+        (local.get $tuple)
+      )
+    )
+    (drop
+      (tuple.extract 1
+        (local.get $tuple2)
+      )
+    )
+    (drop
+      (tuple.extract 2
+        (local.get $tuple3)
+      )
+    )
+    (local.get $tuple) ;; this was added
+  )
 )
