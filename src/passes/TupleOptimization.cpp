@@ -223,6 +223,23 @@ struct TupleOptimization
       return iter->second;
     }
 
+    // Given a local.get or local.set, return the new base index for the local
+    // index used there.
+    Index getSetOrGetBaseIndex(Expression* setOrGet) {
+      Index base;
+      if (auto* set = value->dynCast<LocalSet>()) {
+        base = getNewBaseIndex(set->index);
+      } else if (auto* get = value->dynCast<LocalGet>()) {
+        base = getNewBaseIndex(get->index);
+      } else {
+        WASM_UNREACHABLE("bad set child");
+      }
+
+      // This must always be called on a local that is being mapped.
+      assert(base);
+      return base;
+    }
+
     void visitLocalSet(LocalSet* curr) {
       if (auto targetBase = getNewBaseIndex(curr->index)) {
         Builder builder(*getModule());
@@ -230,23 +247,21 @@ struct TupleOptimization
 
         auto* value = curr->value;
         if (auto* make = value->dynCast<TupleMake>()) {
-        ..
+          // Write each of the tuple.make fields into the proper local.
+          std::vector<Expression*> sets;
+          for (auto i = 0; i < type.size(); i++) {
+            auto* value = make->operands[i];
+            sets.push_back(builder.makeLocalSet(targetBase + i, value));
+          }
+          replaceCurrent(builder.makeBlock(sets));
           return;
         }
 
         // This is a copy of a tuple local into another. Copy all the fields
         // between them.
         // TODO: test a tee chain.
-        Index sourceBase;
-        if (auto* set = value->dynCast<LocalSet>()) {
-          sourceBase = getNewBaseIndex(set->index);
-        } else if (auto* get = value->dynCast<LocalGet>()) {
-          sourceBase = getNewBaseIndex(get->index);
-        } else {
-          WASM_UNREACHABLE("bad set child");
-        }
+        Index sourceBase = getSetOrGetBaseIndex(value);
 
-        assert(sourceBase);
         std::vector<Expression*> sets;
         for (auto i = 0; i < type.size(); i++) {
           auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
@@ -257,12 +272,12 @@ struct TupleOptimization
     }
 
     void visitTupleExtract(TupleExtract* curr) {
-      // We need the input to be a local, either from a tee or a get.
-      if (auto* set = curr->tuple->dynCast<LocalSet>()) {
-        validUses[set->index]++;
-      } else if (auto* get = curr->tuple->dynCast<LocalGet>()) {
-        validUses[get->index]++;
-      }
+      Index sourceBase = getSetOrGetBaseIndex(value);
+      Builder builder(*getModule());
+      auto type = getFunction()->getLocalType(curr->index);
+      auto i = curr->index;
+      auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
+      replaceCurrent(get);
     }
   };
 };
