@@ -313,7 +313,6 @@ struct TupleOptimization
 
         // This is a copy of a tuple local into another. Copy all the fields
         // between them.
-        // TODO: test a tee chain.
         Index sourceBase = getSetOrGetBaseIndex(value);
 
         // The target is being optimized, so the source must be as well, or else
