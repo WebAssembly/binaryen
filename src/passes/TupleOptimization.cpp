@@ -52,7 +52,7 @@ struct TupleOptimization
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<TupleOptimization>(propagate);
+    return std::make_unique<TupleOptimization>();
   }
 
   // TupleOptimization() {}
@@ -63,7 +63,7 @@ struct TupleOptimization
   // Tracks which tuple local uses are valid, that is, follow the properties
   // above. If we have more uses than valid uses then we must have an invalid
   // one, and the local cannot be optimized.
-  std::vector<bool> validUses;
+  std::vector<Index> validUses;
 
   // When one tuple local copies the value of another, we need to track the
   // index that was copied, as if the source ends up bad then the target is bad
@@ -81,7 +81,7 @@ struct TupleOptimization
     }
     bool hasTuple = false;
     for (auto var : func->vars) {
-      if (var->type.isTuple()) {
+      if (var.isTuple()) {
         hasTuple = true;
         break;
       }
@@ -186,9 +186,9 @@ struct TupleOptimization
       if (good[i]) {
         auto newBase = func->getNumLocals();
         tupleToNewBaseMap[i] = newBase;
-        auto lastNewIndex = 0;
+        Index lastNewIndex = 0;
         for (auto t : func->getLocalType(i)) {
-          auto newIndex = Builder::addVar(func, t);
+          Index newIndex = Builder::addVar(func, t);
           if (lastNewIndex == 0) {
             // This is the first new local we added (0 is an impossible value,
             // since tuple locals exist, hence index 0 was already taken), so it
@@ -226,16 +226,17 @@ struct TupleOptimization
     // Given a local.get or local.set, return the new base index for the local
     // index used there.
     Index getSetOrGetBaseIndex(Expression* setOrGet) {
-      Index base;
-      if (auto* set = value->dynCast<LocalSet>()) {
-        base = getNewBaseIndex(set->index);
-      } else if (auto* get = value->dynCast<LocalGet>()) {
-        base = getNewBaseIndex(get->index);
+      Index index;
+      if (auto* set = setOrGet->dynCast<LocalSet>()) {
+        index = set->index;
+      } else if (auto* get = setOrGet->dynCast<LocalGet>()) {
+        index = get->index;
       } else {
         WASM_UNREACHABLE("bad set child");
       }
 
       // This must always be called on a local that is being mapped.
+      auto base = getNewBaseIndex(index);
       assert(base);
       return base;
     }
@@ -249,7 +250,7 @@ struct TupleOptimization
         if (auto* make = value->dynCast<TupleMake>()) {
           // Write each of the tuple.make fields into the proper local.
           std::vector<Expression*> sets;
-          for (auto i = 0; i < type.size(); i++) {
+          for (Index i = 0; i < type.size(); i++) {
             auto* value = make->operands[i];
             sets.push_back(builder.makeLocalSet(targetBase + i, value));
           }
@@ -263,7 +264,7 @@ struct TupleOptimization
         Index sourceBase = getSetOrGetBaseIndex(value);
 
         std::vector<Expression*> sets;
-        for (auto i = 0; i < type.size(); i++) {
+        for (Index i = 0; i < type.size(); i++) {
           auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
           sets.push_back(builder.makeLocalSet(targetBase + i, get));
         }
@@ -272,7 +273,7 @@ struct TupleOptimization
     }
 
     void visitTupleExtract(TupleExtract* curr) {
-      Index sourceBase = getSetOrGetBaseIndex(value);
+      Index sourceBase = getSetOrGetBaseIndex(curr->tuple);
       Builder builder(*getModule());
       auto type = getFunction()->getLocalType(curr->index);
       auto i = curr->index;
