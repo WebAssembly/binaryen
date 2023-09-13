@@ -46,9 +46,7 @@
 
 namespace wasm {
 
-struct TupleOptimization
-  : public WalkerPass<
-      PostWalker<TupleOptimization>> {
+struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -218,7 +216,8 @@ struct TupleOptimization
   struct MapApplier : public PostWalker<MapApplier> {
     std::unordered_map<Index, Index>& tupleToNewBaseMap;
 
-    MapApplier(std::unordered_map<Index, Index>& tupleToNewBaseMap) : tupleToNewBaseMap(tupleToNewBaseMap) {}
+    MapApplier(std::unordered_map<Index, Index>& tupleToNewBaseMap)
+      : tupleToNewBaseMap(tupleToNewBaseMap) {}
 
     // Gets the new base index if there is one, or 0 if not (0 is an impossible
     // value for a new index, as local index 0 was taken before, as tuple
