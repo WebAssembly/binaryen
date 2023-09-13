@@ -179,20 +179,21 @@ struct TupleOptimization
     // We found things to optimize! Create new non-tuple locals for their
     // contents, and then rewrite the code to use those according to the
     // mapping from tuple locals to normal ones. The mapping maps a tuple local
-    // to the first index used for its contents (subsequent indexes are used
-    // contiguously).
-    std::unordered_map<Index, Index> tupleToNormalMap;
+    // to the base index used for its contents: an index and several others
+    // right after it, depending on the tuple size.
+    std::unordered_map<Index, Index> tupleToNewBaseMap;
     for (Index i = 0; i < good.size(); i++) {
       if (good[i]) {
-        auto normal = func->getNumLocals();
-        tupleToNormalMap[i] = normal;
+        auto newBase = func->getNumLocals();
+        tupleToNewBaseMap[i] = newBase;
         auto lastNewIndex = 0;
         for (auto t : func->getLocalType(i)) {
           auto newIndex = Builder::addVar(func, t);
           if (lastNewIndex == 0) {
             // This is the first new local we added (0 is an impossible value,
-            // since tuple locals exist, hence index 0 was already taken).
-            assert(newIndex == normal);
+            // since tuple locals exist, hence index 0 was already taken), so it
+            // must be equal to the base.
+            assert(newIndex == newBase);
           } else {
             // This must be right after the former.
             assert(newIndex == lastNewIndex + 1);
