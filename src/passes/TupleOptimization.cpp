@@ -307,7 +307,7 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
         Index sourceBase = getSetOrGetBaseIndex(value);
 
         // The target is being optimized, so the source must be as well, or else
-        // we were confused earlier and target should not be.
+        // we were confused earlier and the target should not be.
         assert(sourceBase);
 
         for (Index i = 0; i < type.size(); i++) {
