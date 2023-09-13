@@ -213,6 +213,24 @@
     )
   )
 
+  ;; CHECK:      (func $just-tee (type $0)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $just-tee
     (local $tuple (i32 i32))
     (drop
@@ -223,6 +241,26 @@
             (i32.const 2)
           )
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $just-tee-bad (type $1) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local.tee $tuple
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $just-tee-bad (result i32 i32)
+    (local $tuple (i32 i32))
+    ;; This tee goes somewhere we cannot handle, so we do not optimize here.
+    (local.tee $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
       )
     )
   )
