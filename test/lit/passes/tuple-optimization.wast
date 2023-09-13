@@ -356,7 +356,7 @@
         )
       )
     )
-    (local.get $tuple) ;; this changed from $tuple2
+    (local.get $tuple) ;; this changed from $tuple2; same outcome.
   )
 
   ;; CHECK:      (func $set-after-set (type $1)
@@ -439,5 +439,34 @@
     )
     ;; This local.get prevents both locals from being optimized.
     (local.get $tuple)
+  )
+
+  ;; CHECK:      (func $corruption-second-set (type $0) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $tuple2
+  ;; CHECK-NEXT:   (local.get $tuple)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $tuple2)
+  ;; CHECK-NEXT: )
+  (func $corruption-second-set (result i32 i32)
+    (local $tuple (i32 i32))
+    (local $tuple2 (i32 i32))
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (local.set $tuple2
+      (local.get $tuple)
+    )
+    (local.get $tuple2) ;; this changed from $tuple; same outcome.
   )
 )
