@@ -202,7 +202,69 @@ struct TupleOptimization
         }
       }
     }
+
+    MapApplier mapApplier(tupleToNewBaseMap);
+    mapApplier.walkFunctionInModule(func, getModule());
   }
+
+  struct MapApplier : public PostWalker<MapApplier> {
+    std::unordered_map<Index, Index>& tupleToNewBaseMap;
+
+    MapApplier(std::unordered_map<Index, Index>& tupleToNewBaseMap) : tupleToNewBaseMap(tupleToNewBaseMap) {}
+
+    // Gets the new base index if there is one, or 0 if not (0 is an impossible
+    // value for a new index, as local index 0 was taken before, as tuple
+    // locals existed).
+    Index getNewBaseIndex(Index i) {
+      auto iter = tupleToNewBaseMap.find(i);
+      if (iter == tupleToNewBaseMap.end()) {
+        return 0;
+      }
+      return iter->second;
+    }
+
+    void visitLocalSet(LocalSet* curr) {
+      if (auto targetBase = getNewBaseIndex(curr->index)) {
+        Builder builder(*getModule());
+        auto type = getFunction()->getLocalType(curr->index);
+
+        auto* value = curr->value;
+        if (auto* make = value->dynCast<TupleMake>()) {
+        ..
+          return;
+        }
+
+        // This is a copy of a tuple local into another. Copy all the fields
+        // between them.
+        // TODO: test a tee chain.
+        Index sourceBase;
+        if (auto* set = value->dynCast<LocalSet>()) {
+          sourceBase = getNewBaseIndex(set->index);
+        } else if (auto* get = value->dynCast<LocalGet>()) {
+          sourceBase = getNewBaseIndex(get->index);
+        } else {
+          WASM_UNREACHABLE("bad set child");
+        }
+
+        assert(sourceBase);
+        std::vector<Expression*> sets;
+        for (auto i = 0; i < type.size(); i++) {
+          auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
+          sets.push_back(builder.makeLocalSet(targetBase + i, get));
+        }
+        replaceCurrent(builder.makeBlock(sets));
+      }
+    }
+
+    void visitTupleExtract(TupleExtract* curr) {
+      // We need the input to be a local, either from a tee or a get.
+      if (auto* set = curr->tuple->dynCast<LocalSet>()) {
+        validUses[set->index]++;
+      } else if (auto* get = curr->tuple->dynCast<LocalGet>()) {
+        validUses[get->index]++;
+      }
+    }
+  };
 };
 
 Pass* createTupleOptimizationPass() { return new TupleOptimization(); }
