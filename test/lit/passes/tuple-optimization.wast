@@ -416,7 +416,6 @@
   (func $corruption-first-set (result i32 i32)
     (local $tuple (i32 i32))
     (local $tuple2 (i32 i32))
-    ;; We can optimize both these tuples.
     (local.set $tuple
       (tuple.make
         (i32.const 1)
