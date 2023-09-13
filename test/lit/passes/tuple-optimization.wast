@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --tuple-optimization -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $just-set (type $0)
+  ;; CHECK:      (func $just-set (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $other f64)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -38,7 +38,7 @@
     )
   )
 
-  ;; CHECK:      (func $just-get (type $0)
+  ;; CHECK:      (func $just-get (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -63,7 +63,7 @@
     )
   )
 
-  ;; CHECK:      (func $just-get-bad (type $1) (result i32 i32)
+  ;; CHECK:      (func $just-get-bad (type $0) (result i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (tuple.extract 0
@@ -94,7 +94,7 @@
     (local.get $tuple)
   )
 
-  ;; CHECK:      (func $set-and-gets (type $0)
+  ;; CHECK:      (func $set-and-gets (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -142,7 +142,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee (type $0)
+  ;; CHECK:      (func $tee (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -213,7 +213,7 @@
     )
   )
 
-  ;; CHECK:      (func $just-tee (type $0)
+  ;; CHECK:      (func $just-tee (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -245,7 +245,7 @@
     )
   )
 
-  ;; CHECK:      (func $just-tee-bad (type $1) (result i32 i32)
+  ;; CHECK:      (func $just-tee-bad (type $0) (result i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local.tee $tuple
   ;; CHECK-NEXT:   (tuple.make
@@ -265,7 +265,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-uses (type $0)
+  ;; CHECK:      (func $no-uses (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -302,7 +302,7 @@
     )
   )
 
-  ;; CHECK:      (func $corruption-tee (type $1) (result i32 i32)
+  ;; CHECK:      (func $corruption-tee (type $0) (result i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
@@ -331,7 +331,7 @@
     (local.get $tuple2)
   )
 
-  ;; CHECK:      (func $corruption-set (type $1) (result i32 i32)
+  ;; CHECK:      (func $corruption-set (type $0) (result i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
@@ -359,7 +359,7 @@
     (local.get $tuple) ;; this changed from $tuple2
   )
 
-  ;; CHECK:      (func $set-after-set (type $0)
+  ;; CHECK:      (func $set-after-set (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -408,5 +408,36 @@
     (local.set $tuple
       (local.get $tuple)
     )
+  )
+
+  ;; CHECK:      (func $corruption-first-set (type $0) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $tuple2
+  ;; CHECK-NEXT:   (local.get $tuple)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $tuple)
+  ;; CHECK-NEXT: )
+  (func $corruption-first-set (result i32 i32)
+    (local $tuple (i32 i32))
+    (local $tuple2 (i32 i32))
+    ;; We can optimize both these tuples.
+    (local.set $tuple
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (local.set $tuple2
+      (local.get $tuple)
+    )
+    ;; This local.get prevents both locals from being optimized.
+    (local.get $tuple)
   )
 )
