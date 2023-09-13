@@ -212,4 +212,18 @@
       )
     )
   )
+
+  (func $just-tee
+    (local $tuple (i32 i32))
+    (drop
+      (tuple.extract 0
+        (local.tee $tuple
+          (tuple.make
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+      )
+    )
+  )
 )

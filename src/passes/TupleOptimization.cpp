@@ -325,28 +325,28 @@ std::cout << "  set d\n";
 
     void visitTupleExtract(TupleExtract* curr) {
       auto* value = curr->tuple;
-      auto type = value->type;
-      if (type == Type::unreachable) {
-        return;
-      }
-
-      Expression* contents = nullptr;
+      Expression* extraContents = nullptr;
 
       auto iter = teeReplacements.find(value);
       if (iter != teeReplacements.end()) {
         // The input to us was a tee that has been replaced. Handle it as in
         // visitLocalSet.
-        contents = value;
+        extraContents = value;
         value = iter->second;
+      }
+
+      auto type = value->type;
+      if (type == Type::unreachable) {
+        return;
       }
 
       Index sourceBase = getSetOrGetBaseIndex(value);
       Builder builder(*getModule());
       auto i = curr->index;
+std::cout << type << " : " << i << '\n';
       auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
-      if (contents) {
-        contents = builder.makeSequence(contents, get);
-        replaceCurrent(contents);
+      if (extraContents) {
+        replaceCurrent(builder.makeSequence(extraContents, get));
       } else {
         replaceCurrent(get);
       }
