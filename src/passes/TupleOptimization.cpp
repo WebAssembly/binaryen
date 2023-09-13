@@ -116,6 +116,8 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
   void visitLocalSet(LocalSet* curr) {
     if (getFunction()->getLocalType(curr->index).isTuple()) {
+      // See comment above about tees (we consider their set and get each a
+      // separate use).
       uses[curr->index] += curr->isTee() ? 2 : 1;
       auto* value = curr->value;
       // We need the input to the local to be another such local (from a tee, or
