@@ -476,6 +476,8 @@
 ;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
 ;; CHECK-NEXT:                                                 js semantics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --tuple-optimization                          optimize trivial tuples away
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-merging                                merge types to their supertypes
 ;; CHECK-NEXT:                                                 where possible
 ;; CHECK-NEXT:
