@@ -23,27 +23,6 @@
     )
   )
 
-  ;; CHECK:      (func $other (type $1)
-  ;; CHECK-NEXT:  (local $other f64)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local.set $other
-  ;; CHECK-NEXT:   (local.tee $other
-  ;; CHECK-NEXT:    (local.get $other)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $other
-    ;; A non-tuple local and all operations on it should be ignored.
-    (local $other f64)
-    ;; A tuple local with no uses at all should be ignored.
-    (local $tuple (i32 i32))
-    (local.set $other
-      (local.tee $other
-        (local.get $other)
-      )
-    )
-  )
-
   ;; CHECK:      (func $just-get (type $1)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
@@ -474,5 +453,26 @@
       (local.get $tuple)
     )
     (local.get $tuple2) ;; this changed from $tuple; same outcome.
+  )
+
+  ;; CHECK:      (func $other (type $1)
+  ;; CHECK-NEXT:  (local $other f64)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local.set $other
+  ;; CHECK-NEXT:   (local.tee $other
+  ;; CHECK-NEXT:    (local.get $other)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $other
+    ;; A non-tuple local and all operations on it should be ignored.
+    (local $other f64)
+    ;; A tuple local with no uses at all should be ignored.
+    (local $tuple (i32 i32))
+    (local.set $other
+      (local.tee $other
+        (local.get $other)
+      )
+    )
   )
 )
