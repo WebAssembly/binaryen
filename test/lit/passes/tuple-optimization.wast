@@ -475,4 +475,27 @@
       )
     )
   )
+
+  ;; CHECK:      (func $make-extract-no-local (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $make-extract-no-local
+    ;; Tuple operations without locals. We do nothing here; other passes can
+    ;; help on this kind of thing.
+    (drop
+      (tuple.extract 0
+        (tuple.make
+          (i32.const 1)
+          (i32.const 2)
+        )
+      )
+    )
+  )
 )
