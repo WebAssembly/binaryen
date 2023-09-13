@@ -4,17 +4,19 @@
 (module
   ;; CHECK:      (func $just-set (type $0)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $other f64)
   ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:  (local.set $3
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-set
     (local $tuple (i32 i32))
+    (local $other f64) ;; a non-tuple local is ignored
     (local.set $tuple
       (tuple.make
         (i32.const 1)
