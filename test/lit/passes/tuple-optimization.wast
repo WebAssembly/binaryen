@@ -15,6 +15,8 @@
   ;; CHECK-NEXT: )
   (func $just-set
     (local $tuple (i32 i32))
+    ;; This tuple local can be optimized into separate locals per lane. The
+    ;; tuple local itself then has no uses and other passes will remove it. 
     (local.set $tuple
       (tuple.make
         (i32.const 1)
