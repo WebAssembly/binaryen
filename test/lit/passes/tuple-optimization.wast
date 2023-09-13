@@ -63,6 +63,37 @@
     )
   )
 
+  ;; CHECK:      (func $just-get-bad (type $1) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:    (local.get $tuple)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 1
+  ;; CHECK-NEXT:    (local.get $tuple)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $tuple)
+  ;; CHECK-NEXT: )
+  (func $just-get-bad (result i32 i32)
+    (local $tuple (i32 i32))
+    (drop
+      (tuple.extract 0
+        (local.get $tuple)
+      )
+    )
+    (drop
+      (tuple.extract 1
+        (local.get $tuple)
+      )
+    )
+    ;; This get is not used by something we can handle, so we should not try to
+    ;; optimize this tuple.
+    (local.get $tuple)
+  )
+
   ;; CHECK:      (func $set-and-gets (type $0)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
