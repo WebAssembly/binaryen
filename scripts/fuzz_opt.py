@@ -254,7 +254,8 @@ def init_important_initial_contents():
             return False
 
     if not is_git_repo() and shared.options.auto_initial_contents:
-        print('Warning: The current directory is not a git repository, so you cannot use "--auto-initial-contents". Using the manually selected contents.\n')
+        print('Warning: The current directory is not a git repository, ' +
+              'so not automatically selecting initial contents.')
         shared.options.auto_initial_contents = False
 
     print('- Perenially-important initial contents:')
@@ -1765,8 +1766,8 @@ on valid wasm files.)
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
                 auto_init = ''
-                if shared.options.auto_initial_contents:
-                    auto_init = '--auto-initial-contents'
+                if not shared.options.auto_initial_contents:
+                    auto_init = '--no-auto-initial-contents'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file

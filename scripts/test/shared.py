@@ -96,8 +96,8 @@ def parse_args(args):
     # TODO Allow each script to inherit the default set of options and add its
     # own custom options on top of that
     parser.add_argument(
-        '--auto-initial-contents', dest='auto_initial_contents',
-        action='store_true', default=False,
+        '--no-auto-initial-contents', dest='auto_initial_contents',
+        action='store_false', default=True,
         help='Select important initial contents automaticaly in fuzzer. '
              'Default: disabled.')
 
