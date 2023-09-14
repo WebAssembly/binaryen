@@ -11,19 +11,19 @@
   ;; DOFINAL:      (type $open-public (sub (struct (field i32))))
   (type $open-public (sub (struct (field i32))))
 
+  ;; UNFINAL:      (type $final-public (struct (field i64)))
+  ;; DOFINAL:      (type $final-public (struct (field i64)))
+  (type $final-public (sub final (struct (field i64))))
+
   ;; UNFINAL:      (rec
-  ;; UNFINAL-NEXT:  (type $final-private (struct (field f64)))
+  ;; UNFINAL-NEXT:  (type $final-private (sub (struct (field f64))))
   ;; DOFINAL:      (rec
   ;; DOFINAL-NEXT:  (type $final-private (struct (field f64)))
   (type $final-private (sub final (struct (field f64))))
 
   ;; UNFINAL:       (type $open-private (sub (struct (field f32))))
-  ;; DOFINAL:       (type $open-private (sub (struct (field f32))))
+  ;; DOFINAL:       (type $open-private (struct (field f32)))
   (type $open-private (sub (struct (field f32))))
-
-  ;; UNFINAL:       (type $final-public (struct (field i64)))
-  ;; DOFINAL:       (type $final-public (struct (field i64)))
-  (type $final-public (sub final (struct (field i64))))
 
   ;; Globals.
 
@@ -48,7 +48,7 @@
   ;; UNFINAL:      (export "a" (global $open-public))
   ;; DOFINAL:      (export "a" (global $open-public))
   (export "a" (global $open-public))
-  ;; UNFINAL:      (export "b" (global $open-public))
-  ;; DOFINAL:      (export "b" (global $open-public))
-  (export "b" (global $open-public))
+  ;; UNFINAL:      (export "b" (global $final-public))
+  ;; DOFINAL:      (export "b" (global $final-public))
+  (export "b" (global $final-public))
 )
