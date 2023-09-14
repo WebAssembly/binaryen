@@ -53,7 +53,9 @@ struct TypeFinalizing : public Pass {
       TypeRewriter(Module& wasm, TypeFinalizing& parent)
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
-      void modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
+      void modifyTypeBuilderEntry(TypeBuilder& typeBuilder,
+                                  Index i,
+                                  HeapType oldType) override {
         if (parent.modifiableTypes.count(oldType)) {
           typeBuilder[i].setOpen(!parent.finalize);
         }
@@ -66,12 +68,8 @@ struct TypeFinalizing : public Pass {
 
 } // anonymous namespace
 
-Pass* createTypeFinalizingPass() {
-  return new TypeFinalizing(true);
-}
+Pass* createTypeFinalizingPass() { return new TypeFinalizing(true); }
 
-Pass* createTypeUnFinalizingPass() {
-  return new TypeFinalizing(false);
-}
+Pass* createTypeUnFinalizingPass() { return new TypeFinalizing(false); }
 
 } // namespace wasm

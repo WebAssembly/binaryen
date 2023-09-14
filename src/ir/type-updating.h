@@ -378,7 +378,8 @@ public:
   //
   // This is provided the builder, the index we are on, and the old heap type
   // for that index.
-  virtual void modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) {}
+  virtual void
+  modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) {}
 
   // Subclasses can override this method to modify supertypes. The new
   // supertype, if any, must be a supertype (or the same as) the original
