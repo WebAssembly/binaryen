@@ -198,23 +198,26 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
     // right after it, depending on the tuple size.
     std::unordered_map<Index, Index> tupleToNewBaseMap;
     for (Index i = 0; i < good.size(); i++) {
-      if (good[i]) {
-        auto newBase = func->getNumLocals();
-        tupleToNewBaseMap[i] = newBase;
-        Index lastNewIndex = 0;
-        for (auto t : func->getLocalType(i)) {
-          Index newIndex = Builder::addVar(func, t);
-          if (lastNewIndex == 0) {
-            // This is the first new local we added (0 is an impossible value,
-            // since tuple locals exist, hence index 0 was already taken), so it
-            // must be equal to the base.
-            assert(newIndex == newBase);
-          } else {
-            // This must be right after the former.
-            assert(newIndex == lastNewIndex + 1);
-          }
-          lastNewIndex = newIndex;
+      if (!good[i]) {
+        continue;
+      }
+
+      auto newBase = func->getNumLocals();
+      tupleToNewBaseMap[i] = newBase;
+      Index lastNewIndex = 0;
+      for (auto t : func->getLocalType(i)) {
+        Index newIndex = Builder::addVar(func, t);
+        if (lastNewIndex == 0) {
+          // This is the first new local we added (0 is an impossible value,
+          // since tuple locals exist, hence index 0 was already taken), so it
+          // must be equal to the base.
+          assert(newIndex == newBase);
+        } else {
+          // This must be right after the former.
+          assert(newIndex == lastNewIndex + 1);
         }
+        lastNewIndex = newIndex;
+      }
       }
     }
 
