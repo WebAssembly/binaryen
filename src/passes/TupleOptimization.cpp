@@ -268,12 +268,12 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
     // identify the local that was tee'd, so we know what to get (which has been
     // replaced by the block). To make that simple keep a map of the things that
     // replaced tees.
-    std::unordered_map<Expression*, LocalSet*> teeReplacements;
+    std::unordered_map<Expression*, LocalSet*> replacedTees;
 
     void visitLocalSet(LocalSet* curr) {
       auto replace = [&](Expression* replacement) {
         if (curr->isTee()) {
-          teeReplacements[replacement] = curr;
+          replacedTees[replacement] = curr;
         }
         replaceCurrent(replacement);
       };
@@ -296,10 +296,10 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
         std::vector<Expression*> contents;
 
-        auto iter = teeReplacements.find(value);
-        if (iter != teeReplacements.end()) {
+        auto iter = replacedTees.find(value);
+        if (iter != replacedTees.end()) {
           // The input to us was a tee that has been replaced. The actual value
-          // we read from (the tee) can be found in teeReplacements. Also, we
+          // we read from (the tee) can be found in replacedTees. Also, we
           // need to keep around the replacement of the tee.
           contents.push_back(value);
           value = iter->second;
@@ -325,8 +325,8 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
       auto* value = curr->tuple;
       Expression* extraContents = nullptr;
 
-      auto iter = teeReplacements.find(value);
-      if (iter != teeReplacements.end()) {
+      auto iter = replacedTees.find(value);
+      if (iter != replacedTees.end()) {
         // The input to us was a tee that has been replaced. Handle it as in
         // visitLocalSet.
         extraContents = value;
