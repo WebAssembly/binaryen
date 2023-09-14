@@ -39,14 +39,12 @@ struct TypeFinalizing : public Pass {
   TypeFinalizing(bool finalize) : finalize(finalize) {}
 
   void run(Module* module) override {
-std::cout << "a1\n";
     if (!module->features.hasGC()) {
       return;
     }
 
     auto privateTypes = ModuleUtils::getPrivateHeapTypes(*module);
     modifiableTypes.insert(privateTypes.begin(), privateTypes.end());
-std::cout << "a2 has mod num " << modifiableTypes.size() << "\n";
 
     class TypeRewriter : public GlobalTypeRewriter {
       TypeFinalizing& parent;
@@ -56,9 +54,7 @@ std::cout << "a2 has mod num " << modifiableTypes.size() << "\n";
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
-std::cout << "a3\n";
         if (parent.modifiableTypes.count(oldType)) {
-std::cout << "a4 " << oldType << (parent.finalize) << "\n";
           typeBuilder[i].setOpen(!parent.finalize);
         }
       }
