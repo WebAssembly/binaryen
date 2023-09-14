@@ -483,12 +483,18 @@ void PassRegistry::registerPasses() {
   registerPass("tuple-optimization",
                "optimize trivial tuples away",
                createTupleOptimizationPass);
+  registerPass("type-finalizing",
+               "mark all leaf types as final",
+               createTypeFinalizingPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
   registerPass("type-ssa",
                "create new nominal types to help other optimizations",
                createTypeSSAPass);
+  registerPass("type-unfinalizing",
+               "mark all types as non-final (open)",
+               createTypeUnFinalizingPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
