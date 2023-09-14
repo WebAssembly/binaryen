@@ -20,6 +20,7 @@
 //
 
 #include "ir/module-utils.h"
+#include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-type.h"
@@ -33,7 +34,7 @@ struct TypeFinalizing : public Pass {
   // Whether we should finalize or unfinalize types.
   bool finalize;
 
-  // We will only modify types that we are allowed to (which are private ones).
+  // We will only modify types that we are allowed to.
   std::unordered_set<HeapType> modifiableTypes;
 
   TypeFinalizing(bool finalize) : finalize(finalize) {}
@@ -43,8 +44,20 @@ struct TypeFinalizing : public Pass {
       return;
     }
 
+    // To make a type final, it must have no subtypes.
+    std::unique_ptr<SubTypes> subTypes;
+    if (finalize) {
+      subTypes = std::make_unique<SubTypes>(*module);
+    }
+
     auto privateTypes = ModuleUtils::getPrivateHeapTypes(*module);
-    modifiableTypes.insert(privateTypes.begin(), privateTypes.end());
+    for (auto type : privateTypes) {
+      // If we are finalizing types then we can only do that to leaf types. If
+      // we are unfinalizing, we can do that unconditionally.
+      if (!finalize || subTypes->getImmediateSubTypes(type).empty()) {
+        modifiableTypes.insert(type);
+      }
+    }
 
     class TypeRewriter : public GlobalTypeRewriter {
       TypeFinalizing& parent;

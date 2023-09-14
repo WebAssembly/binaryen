@@ -52,3 +52,45 @@
   ;; DOFINAL:      (export "b" (global $final-public))
   (export "b" (global $final-public))
 )
+
+;; Test we do not make a type with a subtype final. $parent should always
+;; remain open, while the children can be modified.
+(module
+  (rec
+    ;; UNFINAL:      (rec
+    ;; UNFINAL-NEXT:  (type $parent (sub (struct )))
+    ;; DOFINAL:      (rec
+    ;; DOFINAL-NEXT:  (type $parent (sub (struct )))
+    (type $parent (sub (struct)))
+
+    ;; UNFINAL:       (type $child-open (sub $parent (struct )))
+    ;; DOFINAL:       (type $child-open (sub final $parent (struct )))
+    (type $child-open (sub $parent (struct)))
+
+    ;; UNFINAL:       (type $child-final (sub $parent (struct )))
+    ;; DOFINAL:       (type $child-final (sub final $parent (struct )))
+    (type $child-final (sub final $parent (struct)))
+  )
+
+  ;; UNFINAL:       (type $3 (sub (func)))
+
+  ;; UNFINAL:      (func $keepalive (type $3)
+  ;; UNFINAL-NEXT:  (local $parent (ref $parent))
+  ;; UNFINAL-NEXT:  (local $child-final (ref $child-final))
+  ;; UNFINAL-NEXT:  (local $child-open (ref $child-open))
+  ;; UNFINAL-NEXT:  (nop)
+  ;; UNFINAL-NEXT: )
+  ;; DOFINAL:       (type $3 (func))
+
+  ;; DOFINAL:      (func $keepalive (type $3)
+  ;; DOFINAL-NEXT:  (local $parent (ref $parent))
+  ;; DOFINAL-NEXT:  (local $child-final (ref $child-final))
+  ;; DOFINAL-NEXT:  (local $child-open (ref $child-open))
+  ;; DOFINAL-NEXT:  (nop)
+  ;; DOFINAL-NEXT: )
+  (func $keepalive
+    (local $parent (ref $parent))
+    (local $child-final (ref $child-final))
+    (local $child-open (ref $child-open))
+  )
+)
