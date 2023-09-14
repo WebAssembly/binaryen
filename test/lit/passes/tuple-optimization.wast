@@ -840,4 +840,16 @@
     )
     (local.get $tuple) ;; this was added
   )
+
+  (func $set-call (result i32 i32)
+    (local $tuple (i32 i32))
+    ;; Setting from a call prevents optimization.
+    (local.set $tuple
+      (call $set-call)
+    )
+    (drop
+      (tuple.extract 0
+        (local.get $tuple)
+      )
+    )
 )
