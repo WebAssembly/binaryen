@@ -3,14 +3,14 @@
  (type $i31ref_ref|i31|_structref_ref|struct|_=>_none (func (param i31ref (ref i31) structref (ref struct))))
  (global $global$0 (mut anyref) (ref.null none))
  (global $global$1 (mut eqref) (ref.null none))
- (global $global$2 (mut i31ref) (i31.new
+ (global $global$2 (mut i31ref) (ref.i31
   (i32.const 0)
  ))
  (global $global$3 (mut anyref) (ref.null none))
- (global $global$4 (mut anyref) (i31.new
+ (global $global$4 (mut anyref) (ref.i31
   (i32.const 0)
  ))
- (global $global$5 (mut eqref) (i31.new
+ (global $global$5 (mut eqref) (ref.i31
   (i32.const 0)
  ))
  (func $0 (type $i31ref_structref_=>_none) (param $0 i31ref) (param $1 structref)
@@ -42,7 +42,7 @@
    (global.get $global$2)
   )
   (local.set $0
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -62,7 +62,7 @@
    (global.get $global$2)
   )
   (local.set $3
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -73,7 +73,7 @@
    (global.get $global$2)
   )
   (local.set $4
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -102,7 +102,7 @@
    (global.get $global$2)
   )
   (global.set $global$2
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -122,7 +122,7 @@
    (global.get $global$2)
   )
   (global.set $global$0
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -133,7 +133,7 @@
    (global.get $global$2)
   )
   (global.set $global$1
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )

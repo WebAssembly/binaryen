@@ -123,7 +123,7 @@
 
   ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -142,7 +142,7 @@
   ;; CHECK-NEXT: )
   ;; CLOSD:      (func $foo (type $0)
   ;; CLOSD-NEXT:  (global.set $global
-  ;; CLOSD-NEXT:   (i31.new
+  ;; CLOSD-NEXT:   (ref.i31
   ;; CLOSD-NEXT:    (i32.const 0)
   ;; CLOSD-NEXT:   )
   ;; CLOSD-NEXT:  )
@@ -160,7 +160,7 @@
   ;; CLOSD-NEXT:  )
   ;; CLOSD-NEXT: )
   (func $foo
-   (global.set $global (i31.new (i32.const 0)))
+   (global.set $global (ref.i31 (i32.const 0)))
    (global.set $global (struct.new_default $struct))
    (global.set $global (ref.null eq))
    ;; These nulls will be updated.

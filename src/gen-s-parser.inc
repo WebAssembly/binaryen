@@ -2984,9 +2984,17 @@ switch (buf[0]) {
           case 'f':
             if (op == "ref.func"sv) { return makeRefFunc(s); }
             goto parse_error;
-          case 'i':
-            if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
-            goto parse_error;
+          case 'i': {
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) { return makeRefI31(s); }
+                goto parse_error;
+              case 's':
+                if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'n':
             if (op == "ref.null"sv) { return makeRefNull(s); }
             goto parse_error;
@@ -8585,13 +8593,25 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
-          case 'i':
-            if (op == "ref.is_null"sv) {
-              auto ret = makeRefIsNull(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
+          case 'i': {
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) {
+                  auto ret = makeRefI31(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 's':
+                if (op == "ref.is_null"sv) {
+                  auto ret = makeRefIsNull(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'n':
             if (op == "ref.null"sv) {
               auto ret = makeRefNull(ctx, pos);

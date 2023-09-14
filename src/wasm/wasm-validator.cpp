@@ -2504,11 +2504,11 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
 
 void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
-    getModule()->features.hasGC(), curr, "i31.new requires gc [--enable-gc]");
+    getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
   shouldBeSubType(curr->value->type,
                   Type::i32,
                   curr->value,
-                  "i31.new's argument should be i32");
+                  "ref.i31's argument should be i32");
 }
 
 void FunctionValidator::visitI31Get(I31Get* curr) {

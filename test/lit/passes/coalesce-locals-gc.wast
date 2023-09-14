@@ -17,12 +17,12 @@
  (global $global (ref null $array) (ref.null $array))
 
  ;; CHECK:      (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make
- ;; CHECK-NEXT:  (i31.new
+ ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: ))
- (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make (i31.new (i32.const 0)) (i32.const 1)))
+ (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
  ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
@@ -160,7 +160,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i31ref)
- ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:    (ref.i31
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -230,7 +230,7 @@
  ;; CHECK-NEXT:   (ref.test (ref i31)
  ;; CHECK-NEXT:    (ref.cast i31ref
  ;; CHECK-NEXT:     (block (result i31ref)
- ;; CHECK-NEXT:      (i31.new
+ ;; CHECK-NEXT:      (ref.i31
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )

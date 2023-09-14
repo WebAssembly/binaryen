@@ -30,10 +30,10 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref i31))
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -41,11 +41,11 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref i31))
   ;; CHECK-NEXT:    (br $block
-  ;; CHECK-NEXT:     (i31.new
+  ;; CHECK-NEXT:     (ref.i31
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -55,16 +55,16 @@
     (drop
       (if (result anyref)
         (local.get $x)
-        (i31.new (i32.const 0))
-        (i31.new (i32.const 1))
+        (ref.i31 (i32.const 0))
+        (ref.i31 (i32.const 1))
       )
     )
     (drop
       (block $block (result anyref)
         (br $block
-          (i31.new (i32.const 0))
+          (ref.i31 (i32.const 0))
         )
-        (i31.new (i32.const 1))
+        (ref.i31 (i32.const 1))
       )
     )
   )
@@ -99,7 +99,7 @@
   ;; CHECK-NEXT:  (local $z structref)
   ;; CHECK-NEXT:  (local $w (ref func))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -107,12 +107,12 @@
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -136,17 +136,17 @@
     (local $w funcref)
     ;; x is assigned two different types with a new LUB possible
     (local.set $x
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
     )
     (local.set $x
       (local.get $struct)
     )
     ;; y and z are assigned the same more specific type twice
     (local.set $y
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
     )
     (local.set $y
-      (i31.new (i32.const 1))
+      (ref.i31 (i32.const 1))
     )
     (local.set $z
       (local.get $struct)

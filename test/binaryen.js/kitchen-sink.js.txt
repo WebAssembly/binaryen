@@ -2202,20 +2202,20 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i31.new
+       (ref.i31
         (i32.const 0)
        )
       )
       (drop
        (i31.get_s
-        (i31.new
+        (ref.i31
          (i32.const 1)
         )
        )
       )
       (drop
        (i31.get_u
-        (i31.new
+        (ref.i31
          (i32.const 2)
         )
        )
@@ -4306,20 +4306,20 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i31.new
+       (ref.i31
         (i32.const 0)
        )
       )
       (drop
        (i31.get_s
-        (i31.new
+        (ref.i31
          (i32.const 1)
         )
        )
       )
       (drop
        (i31.get_u
-        (i31.new
+        (ref.i31
          (i32.const 2)
         )
        )

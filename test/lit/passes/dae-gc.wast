@@ -10,7 +10,7 @@
  ;; CHECK-NEXT: )
  (func $foo
   (call $bar
-   (i31.new
+   (ref.i31
     (i32.const 1)
    )
   )
@@ -19,7 +19,7 @@
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $0
- ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:    (ref.i31
  ;; CHECK-NEXT:     (i32.const 2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -35,7 +35,7 @@
    ;; and also add a ref.as_non_null so that the outside still receives the
    ;; same type as before
    (local.tee $0
-    (i31.new
+    (ref.i31
      (i32.const 2)
     )
    )
@@ -134,7 +134,7 @@
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (i31.new
+ ;; CHECK-NEXT:   (ref.i31
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -149,7 +149,7 @@
   )
   (call $bar
    (ref.null none)
-   (i31.new (i32.const 0))
+   (ref.i31 (i32.const 0))
   )
  )
 
