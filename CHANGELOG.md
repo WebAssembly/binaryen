@@ -15,9 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v116
+----
+
  - "I31New" changed to "RefI31" everywhere it appears in the C API and similarly
    "i31.new" has been replaced with "ref.i31" in the JS API and in printed
-   output.
+   output (#5930, #3931).
+ - The standard WasmGC opcodes are now on by default (#5873).
 
 v115
 ----
