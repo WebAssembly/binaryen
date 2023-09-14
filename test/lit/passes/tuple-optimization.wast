@@ -841,6 +841,21 @@
     (local.get $tuple) ;; this was added
   )
 
+  ;; CHECK:      (func $set-call (type $1) (result i32 i32)
+  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local.set $tuple
+  ;; CHECK-NEXT:   (call $set-call)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:    (local.get $tuple)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (tuple.make
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $set-call (result i32 i32)
     (local $tuple (i32 i32))
     ;; Setting from a call prevents optimization.
@@ -852,4 +867,76 @@
         (local.get $tuple)
       )
     )
+    (tuple.make
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      (func $two-2-three (type $0)
+  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $4
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $5
+  ;; CHECK-NEXT:    (local.get $3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $6
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $6)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-2-three
+    (local $tuple2 (i32 i32))
+    (local $tuple3 (i32 i32 i32))
+    (local.set $tuple2
+      (tuple.make
+        (i32.const 1)
+        (i32.const 2)
+      )
+    )
+    (local.set $tuple3
+      (tuple.make
+        (tuple.extract 0
+          (local.get $tuple2)
+        )
+        (tuple.extract 1
+          (local.get $tuple2)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; Read from each.
+    (drop
+      (tuple.extract 1
+        (local.get $tuple2)
+      )
+    )
+    (drop
+      (tuple.extract 2
+        (local.get $tuple3)
+      )
+    )
+  )
 )
