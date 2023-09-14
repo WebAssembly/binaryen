@@ -562,6 +562,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("code-pushing");
   }
   if (wasm->features.hasMultivalue()) {
+    // Optimize tuples before local opts (as splitting tuples can help local
+    // opts), but also not too early, as we want to be after
+    // optimize-instructions at least (which can remove tuple-related things).
     addIfNoDWARFIssues("tuple-optimization");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
