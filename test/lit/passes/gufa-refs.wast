@@ -2557,7 +2557,7 @@
   ;; CHECK-NEXT:     (ref.cast nullref
   ;; CHECK-NEXT:      (select (result i31ref)
   ;; CHECK-NEXT:       (ref.null none)
-  ;; CHECK-NEXT:       (i31.new
+  ;; CHECK-NEXT:       (ref.i31
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (call $import)
@@ -2600,7 +2600,7 @@
       (ref.cast (ref null $struct)
         (select
           (ref.null $struct)
-          (i31.new (i32.const 0))
+          (ref.i31 (i32.const 0))
           (call $import)
         )
       )
@@ -3675,7 +3675,7 @@
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
   ;; CHECK-NEXT:   (array.new_fixed $bytes 1
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3714,7 +3714,7 @@
     ;; there.
     (local.set $bytes
       (array.new_fixed $bytes 1
-        (i31.new (i32.const 0))
+        (ref.i31 (i32.const 0))
       )
     )
     (local.set $chars
@@ -3763,7 +3763,7 @@
   ;; CHECK-NEXT:  (local $chars (ref null $chars))
   ;; CHECK-NEXT:  (local.set $bytes
   ;; CHECK-NEXT:   (array.new_fixed $bytes 1
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3803,7 +3803,7 @@
     (local $chars (ref null $chars))
     (local.set $bytes
       (array.new_fixed $bytes 1
-        (i31.new (i32.const 0))
+        (ref.i31 (i32.const 0))
       )
     )
     (local.set $chars
@@ -4125,7 +4125,7 @@
   ;; CHECK:      (func $i31 (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i31.get_s
-  ;; CHECK-NEXT:    (i31.new
+  ;; CHECK-NEXT:    (ref.i31
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -4134,7 +4134,7 @@
   (func $i31
     (drop
       (i31.get_s
-        (i31.new
+        (ref.i31
           (i32.const 0)
         )
       )

@@ -2321,7 +2321,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         return builder.makeRefNull(HeapType::none);
       }
       auto nullability = getSubType(type.getNullability());
-      // i31.new is not allowed in initializer expressions.
+      // ref.i31 is not allowed in initializer expressions.
       HeapType subtype;
       switch (upTo(3)) {
         case 0:

@@ -732,7 +732,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         //
         //   (br_on_cast $l anyref i31ref
         //     (block (result anyref)
-        //       (i31.new ...)))
+        //       (ref.i31 ...)))
         //
         // We could just always do the cast and leave removing the casts to
         // OptimizeInstructions, but it's simple enough to avoid unnecessary

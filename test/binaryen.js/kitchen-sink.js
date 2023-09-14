@@ -669,16 +669,16 @@ function test_core() {
     module.memory.grow(makeInt32(0)),
 
     // GC
-    module.i31.new(
+    module.ref.i31(
       module.i32.const(0)
     ),
     module.i31.get_s(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(1)
       )
     ),
     module.i31.get_u(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(2)
       )
     ),
