@@ -218,7 +218,6 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
         }
         lastNewIndex = newIndex;
       }
-      }
     }
 
     MapApplier mapApplier(tupleToNewBaseMap);
