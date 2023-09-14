@@ -116,7 +116,7 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
     // We only need to get the single extracted value.
     if (it->second == 0) {
       o << int8_t(BinaryConsts::LocalTee)
-        << U32LEB(mappedLocals[std::make_pair(curr->index, it->second)]);
+        << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
     } else {
       o << int8_t(BinaryConsts::LocalSet)
         << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
@@ -2564,8 +2564,8 @@ void BinaryInstWriter::countScratchLocals() {
   for (auto& [type, _] : scratchLocals) {
     noteLocalType(type);
   }
-  // While we have all the tuple.extracts, also find extracts of local.gets and
-  // local.tees that we can optimize.
+  // While we have all the tuple.extracts, also find extracts of local.gets,
+  // local.tees, and global.gets that we can optimize.
   for (auto* extract : extracts.list) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
