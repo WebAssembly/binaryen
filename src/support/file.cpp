@@ -16,6 +16,7 @@
 
 #include "support/file.h"
 #include "support/debug.h"
+#include "support/path.h"
 #include "support/utilities.h"
 
 #include <cstdint>
@@ -57,7 +58,7 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
   if (binary == Flags::Binary) {
     flags |= std::ifstream::binary;
   }
-  infile.open(filename, flags);
+  infile.open(wasm::Path::to_path(filename), flags);
   if (!infile.is_open()) {
     Fatal() << "Failed opening '" << filename << "'";
   }
@@ -108,13 +109,15 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
         buffer = std::cout.rdbuf();
       } else {
         BYN_TRACE("Opening '" << filename << "'\n");
-        auto flags = std::ofstream::out | std::ofstream::trunc;
+        std::ios_base::openmode flags =
+          std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
           flags |= std::ofstream::binary;
         }
-        outfile.open(filename, flags);
+        outfile.open(wasm::Path::to_path(filename), flags);
         if (!outfile.is_open()) {
-          Fatal() << "Failed opening '" << filename << "'";
+          Fatal() << "Failed opening output file '" << filename
+                  << "': " << strerror(errno);
         }
         buffer = outfile.rdbuf();
       }
@@ -122,12 +125,13 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
     }()) {}
 
 void wasm::copy_file(std::string input, std::string output) {
-  std::ifstream src(input, std::ios::binary);
-  std::ofstream dst(output, std::ios::binary);
+  std::ifstream src(wasm::Path::to_path(input), std::ios::binary);
+  std::ofstream dst(wasm::Path::to_path(output), std::ios::binary);
   dst << src.rdbuf();
 }
 
 size_t wasm::file_size(std::string filename) {
-  std::ifstream infile(filename, std::ifstream::ate | std::ifstream::binary);
+  std::ifstream infile(wasm::Path::to_path(filename),
+                       std::ifstream::ate | std::ifstream::binary);
   return infile.tellg();
 }

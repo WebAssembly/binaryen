@@ -31,6 +31,7 @@
 #include "support/command-line.h"
 #include "support/debug.h"
 #include "support/file.h"
+#include "support/path.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
@@ -330,19 +331,19 @@ int main(int argc, const char* argv[]) {
 
   if (emitJSWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(emitJSWrapper, std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitJSWrapper), std::ofstream::out);
     outfile << generateJSWrapper(wasm);
     outfile.close();
   }
   if (emitSpecWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(emitSpecWrapper, std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitSpecWrapper), std::ofstream::out);
     outfile << generateSpecWrapper(wasm);
     outfile.close();
   }
   if (emitWasm2CWrapper.size() > 0) {
     std::ofstream outfile;
-    outfile.open(emitWasm2CWrapper, std::ofstream::out);
+    outfile.open(wasm::Path::to_path(emitWasm2CWrapper), std::ofstream::out);
     outfile << generateWasm2CWrapper(wasm);
     outfile.close();
   }
