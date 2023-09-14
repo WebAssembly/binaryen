@@ -43,7 +43,7 @@ struct TypeFinalizing : public Pass {
       return;
     }
 
-    auto privateTypes = getPublicHeapTypes(*module);
+    auto privateTypes = ModuleUtils::getPublicHeapTypes(*module);
     modifiableTypes.insert(privateTypes.begin(), privateTypes.end());
 
     class TypeRewriter : public GlobalTypeRewriter {
@@ -54,13 +54,13 @@ struct TypeFinalizing : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) override {
-        if (parent.modifiableTypes.count(oldStructType)) {
+        if (parent.modifiableTypes.count(oldType)) {
           typeBuilder[i].setOpen(!parent.finalize);
         }
       }
     };
 
-    TypeRewriter(wasm, *this).update();
+    TypeRewriter(*module, *this).update();
   }
 };
 
