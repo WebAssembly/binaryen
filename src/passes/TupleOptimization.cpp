@@ -123,12 +123,12 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
 
       // We need the input to the local to be another such local (from a tee, or
       // a get), or a tuple.make.
-      if (auto* set = value->dynCast<LocalSet>()) {
-        assert(set->isTee());
-        validUses[set->index]++;
+      if (auto* tee = value->dynCast<LocalSet>()) {
+        assert(tee->isTee());
+        validUses[tee->index]++;
         validUses[curr->index]++;
-        copiedIndexes[set->index].insert(curr->index);
-        copiedIndexes[curr->index].insert(set->index);
+        copiedIndexes[tee->index].insert(curr->index);
+        copiedIndexes[curr->index].insert(tee->index);
       } else if (auto* get = value->dynCast<LocalGet>()) {
         validUses[get->index]++;
         validUses[curr->index]++;
