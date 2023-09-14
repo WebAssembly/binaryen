@@ -2266,6 +2266,25 @@ struct OptimizeInstructions
     }
   }
 
+  void visitTupleExtract(TupleExtract* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    if (auto* make = curr->tuple->dynCast<TupleMake>()) {
+      Builder builder(*getModule());
+
+      // Store the value of the lane we want in a tee, and return that after a
+      // drop of the tuple (which might have side effects).
+      auto valueType = make->type[curr->index];
+      Index tempLocal = builder.addVar(getFunction(), valueType);
+      make->operands[curr->index] =
+        builder.makeLocalTee(tempLocal, make->operands[curr->index], valueType);
+      auto* get = builder.makeLocalGet(tempLocal, valueType);
+      replaceCurrent(getDroppedChildrenAndAppend(make, get));
+    }
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
