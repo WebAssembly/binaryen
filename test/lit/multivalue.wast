@@ -155,13 +155,6 @@
  ;; CHECK-NEXT:  (local $5 (i32 i64 f32))
  ;; CHECK-NEXT:  (local $6 i64)
  ;; CHECK-NEXT:  (local $7 i32)
- ;; CHECK-NEXT:  (local $8 i64)
- ;; CHECK-NEXT:  (local $9 i32)
- ;; CHECK-NEXT:  (local $10 i64)
- ;; CHECK-NEXT:  (local $11 i32)
- ;; CHECK-NEXT:  (local $12 i64)
- ;; CHECK-NEXT:  (local $13 i32)
- ;; CHECK-NEXT:  (local $14 f32)
  ;; CHECK-NEXT:  (local.set $5
  ;; CHECK-NEXT:   (call $triple)
  ;; CHECK-NEXT:  )
@@ -190,69 +183,10 @@
  ;; CHECK-NEXT:    (local.get $7)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $9
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block (result i64)
- ;; CHECK-NEXT:      (local.set $8
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.set $4
- ;; CHECK-NEXT:       (local.get $3)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $8)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $9)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make
- ;; CHECK-NEXT:   (block (result f32)
- ;; CHECK-NEXT:    (local.set $14
- ;; CHECK-NEXT:     (local.get $4)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block (result i32)
- ;; CHECK-NEXT:      (local.set $11
- ;; CHECK-NEXT:       (local.get $x)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.set $2
- ;; CHECK-NEXT:       (block (result i64)
- ;; CHECK-NEXT:        (local.set $10
- ;; CHECK-NEXT:         (local.get $1)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (drop
- ;; CHECK-NEXT:         (local.get $3)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (local.get $10)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $11)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $14)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $13
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block (result i64)
- ;; CHECK-NEXT:      (local.set $12
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (local.get $3)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $12)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $13)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $reverse (result f32 i64 i32)
@@ -296,7 +230,6 @@
  ;; CHECK:      (func $global (type $0) (result i32 i64)
  ;; CHECK-NEXT:  (local $0 i64)
  ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (global.set $g1
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $1
@@ -309,18 +242,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (local.set $2
- ;; CHECK-NEXT:     (global.get $g1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (global.get $g2)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:   (global.get $g2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make
  ;; CHECK-NEXT:   (global.get $global$2)
