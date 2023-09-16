@@ -698,6 +698,7 @@ public:
     TableSetId,
     TableSizeId,
     TableGrowId,
+    TableFillId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1417,6 +1418,19 @@ public:
   Name table;
   Expression* value;
   Expression* delta;
+
+  void finalize();
+};
+
+class TableFill : public SpecificExpression<Expression::TableFillId> {
+public:
+  TableFill() = default;
+  TableFill(MixedArena& allocator) : TableFill() {}
+
+  Name table;
+  Expression* dest;
+  Expression* value;
+  Expression* size;
 
   void finalize();
 };

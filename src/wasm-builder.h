@@ -759,6 +759,18 @@ public:
     ret->finalize();
     return ret;
   }
+  TableFill* makeTableFill(Name table,
+                           Expression* dest,
+                           Expression* value,
+                           Expression* size) {
+    auto* ret = wasm.allocator.alloc<TableFill>();
+    ret->table = table;
+    ret->dest = dest;
+    ret->value = value;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,
