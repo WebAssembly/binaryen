@@ -547,6 +547,7 @@ instructions = [
     ("table.set",            "makeTableSet(s)"),
     ("table.size",           "makeTableSize(s)"),
     ("table.grow",           "makeTableGrow(s)"),
+    ("table.fill",           "makeTableFill(s)"),
     # TODO:
     # table.init
     # table.fill

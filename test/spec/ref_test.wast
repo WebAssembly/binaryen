@@ -180,14 +180,14 @@
 ;; Concrete Types
 
 (module
-  (type $t0 (struct_subtype data))
-  (type $t1 (struct_subtype i32 $t0))
-  (type $t1' (struct_subtype i32 $t0))
-  (type $t2 (struct_subtype i32 i32 $t1))
-  (type $t2' (struct_subtype i32 i32 $t1'))
-  (type $t3 (struct_subtype i32 i32 $t0))
-  (type $t0' (struct_subtype $t0))
-  (type $t4 (struct_subtype i32 i32 $t0'))
+  (type $t0 (sub (struct)))
+  (type $t1 (sub $t0 (struct i32)))
+  (type $t1' (sub $t0 (struct i32)))
+  (type $t2 (sub $t1 (struct i32 i32)))
+  (type $t2' (sub $t1' (struct i32 i32)))
+  (type $t3 (sub $t0 (struct i32 i32)))
+  (type $t0' (sub $t0 (struct)))
+  (type $t4 (sub $t0' (struct i32 i32)))
 
   (table $tab 20 (ref null struct))
 

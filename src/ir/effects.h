@@ -692,6 +692,10 @@ private:
       parent.readsTable = true;
       parent.writesTable = true;
     }
+    void visitTableFill(TableFill* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);

@@ -12,9 +12,9 @@
 ;; there.
 (module
  ;; CHECK:      (type $B (sub (struct )))
- (type $B (struct_subtype  data))
+ (type $B (sub (struct )))
  ;; CHECK:      (type $A (sub (struct (field (ref null $B)))))
- (type $A (struct_subtype (field (ref null $B)) data))
+ (type $A (sub (struct (field (ref null $B)))))
  ;; CHECK:      (type $2 (func (param (ref null $A))))
 
  ;; CHECK:      (func $target (type $2) (param $0 (ref null $A))

@@ -8,11 +8,11 @@
 ;; testcases.
 
 (module
-  (type ${} (struct_subtype data))
+  (type ${} (sub (struct)))
 
-  (type ${i32} (struct_subtype (field i32) data))
+  (type ${i32} (sub (struct (field i32))))
 
-  (type $array (array_subtype i8 data))
+  (type $array (sub (array i8)))
 
   ;; CHECK:      (type $ret-any (sub (func (result anyref))))
   (type $ret-any (sub (func (result anyref))))

@@ -668,12 +668,12 @@
 ;; A subtype is not optimizable, which prevents $struct from being optimized.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
-  (type $struct (struct_subtype i32 data))
+  (type $struct (sub (struct i32)))
 
   ;; CHECK:      (type $1 (func (param (ref null $struct))))
 
   ;; CHECK:      (type $sub-struct (sub $struct (struct (field i32))))
-  (type $sub-struct (struct_subtype i32 $struct))
+  (type $sub-struct (sub $struct (struct i32)))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -719,10 +719,10 @@
 ;; optimize.
 (module
   ;; CHECK:      (type $super-struct (sub (struct (field i32))))
-  (type $super-struct (struct_subtype i32 data))
+  (type $super-struct (sub (struct i32)))
 
   ;; CHECK:      (type $struct (sub $super-struct (struct (field i32))))
-  (type $struct (struct_subtype i32 $super-struct))
+  (type $struct (sub $super-struct (struct i32)))
 
   ;; CHECK:      (type $2 (func (param (ref null $struct))))
 
@@ -777,10 +777,10 @@
 ;; between their 2 values.
 (module
   ;; CHECK:      (type $super-struct (sub (struct (field i32))))
-  (type $super-struct (struct_subtype i32 data))
+  (type $super-struct (sub (struct i32)))
 
   ;; CHECK:      (type $struct (sub $super-struct (struct (field i32))))
-  (type $struct (struct_subtype i32 $super-struct))
+  (type $struct (sub $super-struct (struct i32)))
 
   ;; CHECK:      (type $2 (func (param (ref null $struct) (ref null $super-struct))))
 
@@ -888,13 +888,13 @@
 ;; supertype.
 (module
   ;; CHECK:      (type $super-struct (sub (struct (field i32))))
-  (type $super-struct (struct_subtype i32 data))
+  (type $super-struct (sub (struct i32)))
 
   ;; CHECK:      (type $struct1 (sub $super-struct (struct (field i32) (field f32))))
-  (type $struct1 (struct_subtype i32 f32 $super-struct))
+  (type $struct1 (sub $super-struct (struct i32 f32)))
 
   ;; CHECK:      (type $struct2 (sub $super-struct (struct (field i32) (field f64))))
-  (type $struct2 (struct_subtype i32 f64 $super-struct))
+  (type $struct2 (sub $super-struct (struct i32 f64)))
 
 
   ;; CHECK:      (type $3 (func (param (ref null $super-struct) (ref null $struct1) (ref null $struct2))))
@@ -981,13 +981,13 @@
 ;; As above, but now the subtypes each have 2 values, and we can optimize.
 (module
   ;; CHECK:      (type $super-struct (sub (struct (field i32))))
-  (type $super-struct (struct_subtype i32 data))
+  (type $super-struct (sub (struct i32)))
 
   ;; CHECK:      (type $struct1 (sub $super-struct (struct (field i32) (field f32))))
-  (type $struct1 (struct_subtype i32 f32 $super-struct))
+  (type $struct1 (sub $super-struct (struct i32 f32)))
 
   ;; CHECK:      (type $struct2 (sub $super-struct (struct (field i32) (field f64))))
-  (type $struct2 (struct_subtype i32 f64 $super-struct))
+  (type $struct2 (sub $super-struct (struct i32 f64)))
 
 
   ;; CHECK:      (type $3 (func (param (ref null $super-struct) (ref null $struct1) (ref null $struct2))))
@@ -1229,13 +1229,13 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (struct (field i32))))
-    (type $struct (struct_subtype i32 data))
+    (type $struct (sub (struct i32)))
 
     ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
-    (type $sub-struct1 (struct_subtype i32 $struct))
+    (type $sub-struct1 (sub $struct (struct i32)))
 
     ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
-    (type $sub-struct2 (struct_subtype i32 $struct))
+    (type $sub-struct2 (sub $struct (struct i32)))
   )
 
   ;; CHECK:      (type $3 (func (param (ref null $struct))))
@@ -1283,13 +1283,13 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (struct (field i32))))
-    (type $struct (struct_subtype i32 data))
+    (type $struct (sub (struct i32)))
 
     ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
-    (type $sub-struct1 (struct_subtype i32 $struct))
+    (type $sub-struct1 (sub $struct (struct i32)))
 
     ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
-    (type $sub-struct2 (struct_subtype i32 $struct))
+    (type $sub-struct2 (sub $struct (struct i32)))
   )
 
   ;; CHECK:      (type $3 (func (param (ref null $struct))))
@@ -1340,13 +1340,13 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $struct (sub (struct (field i32))))
-    (type $struct (struct_subtype i32 data))
+    (type $struct (sub (struct i32)))
 
     ;; CHECK:       (type $sub-struct1 (sub $struct (struct (field i32))))
-    (type $sub-struct1 (struct_subtype i32 $struct))
+    (type $sub-struct1 (sub $struct (struct i32)))
 
     ;; CHECK:       (type $sub-struct2 (sub $struct (struct (field i32))))
-    (type $sub-struct2 (struct_subtype i32 $struct))
+    (type $sub-struct2 (sub $struct (struct i32)))
   )
 
   ;; CHECK:      (type $3 (func (param (ref null $struct))))

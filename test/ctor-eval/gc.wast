@@ -1,5 +1,5 @@
 (module
-  (type $struct (struct_subtype (field i32) data))
+  (type $struct (sub (struct (field i32))))
 
   (import "import" "import" (func $import (param anyref)))
 
@@ -62,4 +62,3 @@
     )
   )
 )
-

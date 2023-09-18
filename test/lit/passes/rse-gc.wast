@@ -8,7 +8,7 @@
  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
  ;; nullable).
  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
- (type $B (struct_subtype (field (ref struct)) $A))
+ (type $B (sub $A (struct (field (ref struct)))))
 
  ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))

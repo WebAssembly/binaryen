@@ -8,10 +8,10 @@
  ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
 
- (type $A (struct_subtype (field (ref null struct)) data))
+ (type $A (sub (struct (field (ref null struct)))))
 
  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
- (type $B (struct_subtype (field (ref struct)) $A))
+ (type $B (sub $A (struct (field (ref struct)))))
 
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))

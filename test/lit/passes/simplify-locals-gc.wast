@@ -14,11 +14,11 @@
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  (type $A (struct_subtype (field (ref null struct)) data))
+  (type $A (sub (struct (field (ref null struct)))))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
-  (type $B (struct_subtype (field (ref struct)) $A))
+  (type $B (sub $A (struct (field (ref struct)))))
 
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (type $4) (param $x (ref $struct)) (result i32)

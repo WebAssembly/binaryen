@@ -125,6 +125,7 @@ public:
   // [[nodiscard]] Result<> makeTableSet();
   // [[nodiscard]] Result<> makeTableSize();
   // [[nodiscard]] Result<> makeTableGrow();
+  // [[nodiscard]] Result<> makeTableFill();
   // [[nodiscard]] Result<> makeTry();
   // [[nodiscard]] Result<> makeThrow();
   // [[nodiscard]] Result<> makeRethrow();

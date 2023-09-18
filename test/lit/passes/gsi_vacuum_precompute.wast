@@ -23,11 +23,11 @@
  (rec
    ;; CHECK:      (rec
    ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
-   (type $vtable (struct_subtype (field funcref) data))
+   (type $vtable (sub (struct (field funcref))))
    ;; CHECK:       (type $itable1 (sub (struct (field (ref $vtable)))))
-   (type $itable1 (struct_subtype (field (ref $vtable)) data))
+   (type $itable1 (sub (struct (field (ref $vtable)))))
    ;; CHECK:       (type $itable2 (sub (struct (field (ref $vtable)))))
-   (type $itable2 (struct_subtype (field (ref $vtable)) data))
+   (type $itable2 (sub (struct (field (ref $vtable)))))
  )
 
  ;; Two $vtable instances are created, in separate enclosing objects.

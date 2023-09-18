@@ -3,7 +3,7 @@
 
 (module
   ;; CHECK:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (global $a (mut i32) (i32.const 0))
   (global $a (mut i32) (i32.const 0))
@@ -42,4 +42,3 @@
     )
   )
 )
-

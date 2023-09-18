@@ -7,11 +7,11 @@
 ;; However, their nominal types differ, so in nominal typing we cannot do so.
 (module
  ;; CHECK:      (type $type$0 (sub (func)))
- (type $type$0 (func_subtype func))
- (type $type$1 (func_subtype func))
- (type $type$2 (func_subtype func))
- (type $type$3 (func_subtype (param f32) (result f32) func))
- (type $type$4 (func_subtype (param f64) (result f64) func))
+ (type $type$0 (sub (func)))
+ (type $type$1 (sub (func)))
+ (type $type$2 (sub (func)))
+ (type $type$3 (sub (func (param f32) (result f32))))
+ (type $type$4 (sub (func (param f64) (result f64))))
  ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
  ;; CHECK:      (elem declare func $2 $3)
@@ -111,10 +111,10 @@
  ;; As above, but now the nominal types do match, so we can optimize in all
  ;; modes.
  ;; CHECK:      (type $type$0 (sub (func)))
- (type $type$0 (func_subtype func))
- (type $type$1 (func_subtype func))
- (type $type$3 (func_subtype (param f32) (result f32) func))
- (type $type$4 (func_subtype (param f64) (result f64) func))
+ (type $type$0 (sub (func)))
+ (type $type$1 (sub (func)))
+ (type $type$3 (sub (func (param f32) (result f32))))
+ (type $type$4 (sub (func (param f64) (result f64))))
 
  ;; CHECK:      (type $1 (func (param (ref $type$0))))
 

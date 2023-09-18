@@ -3,10 +3,10 @@
 
 (module
   ;; CHECK:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
 
   ;; CHECK:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; CHECK:      (type $void (func))
 

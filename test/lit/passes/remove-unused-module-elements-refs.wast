@@ -16,11 +16,11 @@
 
     ;; CHECK:       (type $A (sub $A-super (func)))
     ;; OPEN_WORLD:       (type $A (sub $A-super (func)))
-    (type $A (func_subtype $A-super))
+    (type $A (sub $A-super (func)))
 
     ;; CHECK:       (type $A-sub (sub $A (func)))
     ;; OPEN_WORLD:       (type $A-sub (sub $A (func)))
-    (type $A-sub (func_subtype $A))
+    (type $A-sub (sub $A (func)))
 
     ;; CHECK:       (type $B (func))
     ;; OPEN_WORLD:       (type $B (func))
@@ -636,7 +636,7 @@
 
   ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $a)
@@ -756,11 +756,11 @@
 
   ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
   ;; CHECK:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
   ;; OPEN_WORLD:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
-  (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
+  (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $a)
@@ -1072,7 +1072,7 @@
 
   ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
   ;; CHECK:      (elem declare func $a $b $void)
 
@@ -1176,7 +1176,7 @@
     (type $vtable-func (func (param (ref $vtable))))
     ;; CHECK:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
     ;; OPEN_WORLD:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
-    (type $vtable (struct_subtype (field (ref $vtable-func)) (field (ref $vtable-func)) data))
+    (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
   )
 
   ;; CHECK:      (type $2 (func))
@@ -1374,11 +1374,11 @@
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field funcref))))
   ;; OPEN_WORLD:      (type $substruct (sub $struct (struct (field funcref))))
-  (type $substruct (struct_subtype (field funcref) $struct))
+  (type $substruct (sub $struct (struct (field funcref))))
 
   ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field funcref))))
   ;; OPEN_WORLD:      (type $subsubstruct (sub $substruct (struct (field funcref))))
-  (type $subsubstruct (struct_subtype (field funcref) $substruct))
+  (type $subsubstruct (sub $substruct (struct (field funcref))))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (ref.func $f)
