@@ -4012,6 +4012,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitTableGrow(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableFill(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
       break;
     }
@@ -5366,6 +5369,23 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableFill) {
+    return false;
+  }
+  Index tableIdx = getU32LEB();
+  if (tableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  auto* size = popNonVoidExpression();
+  auto* value = popNonVoidExpression();
+  auto* dest = popNonVoidExpression();
+  auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
+  tableRefs[tableIdx].push_back(&ret->table);
+  out = ret;
   return true;
 }
 

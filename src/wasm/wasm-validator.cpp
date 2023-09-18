@@ -440,6 +440,7 @@ public:
   void visitTableSet(TableSet* curr);
   void visitTableSize(TableSize* curr);
   void visitTableGrow(TableGrow* curr);
+  void visitTableFill(TableFill* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2292,6 +2293,24 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
                   curr,
                   "table.grow must match table index type");
   }
+}
+
+void FunctionValidator::visitTableFill(TableFill* curr) {
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "table.fill requires reference types [--enable-reference-types]");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.fill table must exist")) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.fill value must have right type");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {

@@ -2641,6 +2641,18 @@ Expression* SExpressionWasmBuilder::makeTableGrow(Element& s) {
   return Builder(wasm).makeTableGrow(tableName, value, delta);
 }
 
+Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
+  auto tableName = s[1]->str();
+  auto* table = wasm.getTableOrNull(tableName);
+  if (!table) {
+    throw ParseException("invalid table name in table.fill", s.line, s.col);
+  }
+  auto* dest = parseExpression(s[2]);
+  auto* value = parseExpression(s[3]);
+  auto* size = parseExpression(s[4]);
+  return Builder(wasm).makeTableFill(tableName, dest, value, size);
+}
+
 // try can be either in the form of try-catch or try-delegate.
 // try-catch is written in the folded wast format as
 // (try

@@ -16,12 +16,16 @@
 
   ;; CHECK-BINARY:      (type $2 (func (param i32) (result i32)))
 
+  ;; CHECK-BINARY:      (type $3 (func (param i32 funcref i32)))
+
   ;; CHECK-BINARY:      (table $table-1 1 1 funcref)
   ;; CHECK-TEXT:      (type $0 (func))
 
   ;; CHECK-TEXT:      (type $1 (func (result i32)))
 
   ;; CHECK-TEXT:      (type $2 (func (param i32) (result i32)))
+
+  ;; CHECK-TEXT:      (type $3 (func (param i32 funcref i32)))
 
   ;; CHECK-TEXT:      (table $table-1 1 1 funcref)
   (table $table-1 funcref
@@ -147,12 +151,36 @@
   (func $table-grow (param $sz i32) (result i32)
     (table.grow $table-1 (ref.null func) (local.get $sz))
   )
+
+  ;; CHECK-BINARY:      (func $table-fill (type $3) (param $dest i32) (param $value funcref) (param $size i32)
+  ;; CHECK-BINARY-NEXT:  (table.fill $table-1
+  ;; CHECK-BINARY-NEXT:   (local.get $dest)
+  ;; CHECK-BINARY-NEXT:   (local.get $value)
+  ;; CHECK-BINARY-NEXT:   (local.get $size)
+  ;; CHECK-BINARY-NEXT:  )
+  ;; CHECK-BINARY-NEXT: )
+  ;; CHECK-TEXT:      (func $table-fill (type $3) (param $dest i32) (param $value funcref) (param $size i32)
+  ;; CHECK-TEXT-NEXT:  (table.fill $table-1
+  ;; CHECK-TEXT-NEXT:   (local.get $dest)
+  ;; CHECK-TEXT-NEXT:   (local.get $value)
+  ;; CHECK-TEXT-NEXT:   (local.get $size)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  (func $table-fill (param $dest i32) (param $value funcref) (param $size i32)
+    (table.fill $table-1
+      (local.get $dest)
+      (local.get $value)
+      (local.get $size)
+    )
+  )
 )
 ;; CHECK-NODEBUG:      (type $0 (func))
 
 ;; CHECK-NODEBUG:      (type $1 (func (result i32)))
 
 ;; CHECK-NODEBUG:      (type $2 (func (param i32) (result i32)))
+
+;; CHECK-NODEBUG:      (type $3 (func (param i32 funcref i32)))
 
 ;; CHECK-NODEBUG:      (table $0 1 1 funcref)
 
@@ -199,5 +227,13 @@
 ;; CHECK-NODEBUG-NEXT:  (table.grow $0
 ;; CHECK-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-NODEBUG-NEXT:  )
+;; CHECK-NODEBUG-NEXT: )
+
+;; CHECK-NODEBUG:      (func $5 (type $3) (param $0 i32) (param $1 funcref) (param $2 i32)
+;; CHECK-NODEBUG-NEXT:  (table.fill $0
+;; CHECK-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-NODEBUG-NEXT:  )
 ;; CHECK-NODEBUG-NEXT: )

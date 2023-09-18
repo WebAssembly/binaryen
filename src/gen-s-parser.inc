@@ -3357,6 +3357,9 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) { return makeTableFill(s); }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':
@@ -9190,6 +9193,13 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) {
+              auto ret = makeTableFill(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':
