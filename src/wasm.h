@@ -698,12 +698,13 @@ public:
     TableSetId,
     TableSizeId,
     TableGrowId,
+    TableFillId,
     TryId,
     ThrowId,
     RethrowId,
     TupleMakeId,
     TupleExtractId,
-    I31NewId,
+    RefI31Id,
     I31GetId,
     CallRefId,
     RefTestId,
@@ -1421,6 +1422,19 @@ public:
   void finalize();
 };
 
+class TableFill : public SpecificExpression<Expression::TableFillId> {
+public:
+  TableFill() = default;
+  TableFill(MixedArena& allocator) : TableFill() {}
+
+  Name table;
+  Expression* dest;
+  Expression* value;
+  Expression* size;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1478,10 +1492,10 @@ public:
   void finalize();
 };
 
-class I31New : public SpecificExpression<Expression::I31NewId> {
+class RefI31 : public SpecificExpression<Expression::RefI31Id> {
 public:
-  I31New() = default;
-  I31New(MixedArena& allocator) {}
+  RefI31() = default;
+  RefI31(MixedArena& allocator) {}
 
   Expression* value;
 

@@ -661,6 +661,7 @@ struct InfoCollector
   void visitTableSet(TableSet* curr) {}
   void visitTableSize(TableSize* curr) { addRoot(curr); }
   void visitTableGrow(TableGrow* curr) { addRoot(curr); }
+  void visitTableFill(TableFill* curr) { addRoot(curr); }
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -678,7 +679,7 @@ struct InfoCollector
     totalPops++;
 #endif
   }
-  void visitI31New(I31New* curr) {
+  void visitRefI31(RefI31* curr) {
     // TODO: optimize like struct references
     addRoot(curr);
   }

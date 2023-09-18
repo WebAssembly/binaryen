@@ -6,7 +6,7 @@
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $struct (sub (struct (field i32))))
-  (type $struct (struct_subtype (field i32) data))
+  (type $struct (sub (struct (field i32))))
 
   ;; CHECK:      (type $2 (func (param (ref null $struct))))
 

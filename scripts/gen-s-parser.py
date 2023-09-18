@@ -547,6 +547,7 @@ instructions = [
     ("table.set",            "makeTableSet(s)"),
     ("table.size",           "makeTableSize(s)"),
     ("table.grow",           "makeTableGrow(s)"),
+    ("table.fill",           "makeTableFill(s)"),
     # TODO:
     # table.init
     # table.fill
@@ -564,7 +565,8 @@ instructions = [
     ("call_ref",             "makeCallRef(s, /*isReturn=*/false)"),
     ("return_call_ref",      "makeCallRef(s, /*isReturn=*/true)"),
     # GC
-    ("i31.new",              "makeI31New(s)"),
+    ("i31.new",              "makeRefI31(s)"),  # deprecated
+    ("ref.i31",              "makeRefI31(s)"),
     ("i31.get_s",            "makeI31Get(s, true)"),
     ("i31.get_u",            "makeI31Get(s, false)"),
     ("ref.test",             "makeRefTest(s)"),
@@ -583,7 +585,6 @@ instructions = [
     ("array.new_default",    "makeArrayNew(s, true)"),
     ("array.new_data",       "makeArrayNewData(s)"),
     ("array.new_elem",       "makeArrayNewElem(s)"),
-    ("array.init_static",    "makeArrayNewFixed(s)"),  # deprecated
     ("array.new_fixed",      "makeArrayNewFixed(s)"),
     ("array.get",            "makeArrayGet(s)"),
     ("array.get_s",          "makeArrayGet(s, true)"),

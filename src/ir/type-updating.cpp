@@ -115,6 +115,9 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
         typeBuilder[i].subTypeOf(*super);
       }
     }
+
+    modifyTypeBuilderEntry(typeBuilder, i, type);
+
     i++;
   }
 

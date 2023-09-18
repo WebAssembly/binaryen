@@ -6,9 +6,9 @@
   (memory 10 10)
 
   ;; CHECK:      (type $array (sub (array (mut i8))))
-  (type $array (array_subtype (mut i8) data))
+  (type $array (sub (array (mut i8))))
   ;; CHECK:      (type $array16 (sub (array (mut i16))))
-  (type $array16 (array_subtype (mut i16) data))
+  (type $array16 (sub (array (mut i16))))
 
   ;; CHECK:      (func $no-new-past-store (type $1)
   ;; CHECK-NEXT:  (local $temp stringref)

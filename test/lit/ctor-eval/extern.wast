@@ -20,7 +20,7 @@
 
  ;; CHECK:      (global $ctor-eval$global_1 (ref $struct) (struct.new $struct
  ;; CHECK-NEXT:  (extern.externalize
- ;; CHECK-NEXT:   (i31.new
+ ;; CHECK-NEXT:   (ref.i31
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -38,7 +38,7 @@
   ;; serialization of an externalized i31 is what is written here. But the add
   ;; will be evalled out.
   (extern.externalize
-   (i31.new
+   (ref.i31
     (i32.add
      (i32.const 41)
      (i32.const 1)
@@ -62,7 +62,7 @@
   ;; This will add a global that contains an externalization operation.
   (struct.new $struct
    (extern.externalize
-    (i31.new
+    (ref.i31
      (i32.const 1)
     )
    )
@@ -72,7 +72,7 @@
 
 ;; CHECK:      (func $test1_3 (type $2) (result externref)
 ;; CHECK-NEXT:  (extern.externalize
-;; CHECK-NEXT:   (i31.new
+;; CHECK-NEXT:   (ref.i31
 ;; CHECK-NEXT:    (i32.const 42)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )

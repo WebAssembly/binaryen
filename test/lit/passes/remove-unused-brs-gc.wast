@@ -162,7 +162,7 @@
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
- ;; CHECK-NEXT:     (i31.new
+ ;; CHECK-NEXT:     (ref.i31
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -178,7 +178,7 @@
     ;; handle that properly (do nothing without hitting an assertion).
     (br_on_cast $label$1 (ref any) (ref i31)
      (br_on_cast $label$1 (ref any) (ref i31)
-      (i31.new (i32.const 0))
+      (ref.i31 (i32.const 0))
      )
     )
    )
@@ -620,10 +620,10 @@
    (drop
     ;; This should not crash due to the new unreachable below.
     (br_on_cast $outer (ref none) (ref none)
-     (ref.cast none
+     (ref.cast (ref none)
       ;; This will be optimized to a drop + unreachable.
       (br_on_cast $outer (ref none) (ref none)
-       (ref.cast none
+       (ref.cast (ref none)
         (local.get $0)
        )
       )

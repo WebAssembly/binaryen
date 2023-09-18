@@ -125,12 +125,13 @@ public:
   // [[nodiscard]] Result<> makeTableSet();
   // [[nodiscard]] Result<> makeTableSize();
   // [[nodiscard]] Result<> makeTableGrow();
+  // [[nodiscard]] Result<> makeTableFill();
   // [[nodiscard]] Result<> makeTry();
   // [[nodiscard]] Result<> makeThrow();
   // [[nodiscard]] Result<> makeRethrow();
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
-  [[nodiscard]] Result<> makeI31New();
+  [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   // [[nodiscard]] Result<> makeCallRef();
   // [[nodiscard]] Result<> makeRefTest();

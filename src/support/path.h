@@ -24,7 +24,21 @@
 #include <cstdlib>
 #include <string>
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+#define USE_WSTRING_PATHS 1
+#endif
+
 namespace wasm::Path {
+
+#ifdef USE_WSTRING_PATHS
+using PathString = std::wstring;
+std::wstring string_to_wstring(const std::string& s);
+std::string wstring_to_string(const std::wstring& s);
+#else
+using PathString = std::string;
+#endif
+
+PathString to_path(const std::string& s);
 
 char getPathSeparator();
 std::string getDirName(const std::string& path);

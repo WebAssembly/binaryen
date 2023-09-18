@@ -692,6 +692,10 @@ private:
       parent.readsTable = true;
       parent.writesTable = true;
     }
+    void visitTableFill(TableFill* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);
@@ -718,7 +722,7 @@ private:
     }
     void visitTupleMake(TupleMake* curr) {}
     void visitTupleExtract(TupleExtract* curr) {}
-    void visitI31New(I31New* curr) {}
+    void visitRefI31(RefI31* curr) {}
     void visitI31Get(I31Get* curr) {
       // traps when the ref is null
       if (curr->i31->type.isNullable()) {

@@ -46,9 +46,6 @@ switch (buf[0]) {
               case 'e':
                 if (op == "array.init_elem"sv) { return makeArrayInitElem(s); }
                 goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
-                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -1206,7 +1203,7 @@ switch (buf[0]) {
                 }
               }
               case 'n':
-                if (op == "i31.new"sv) { return makeI31New(s); }
+                if (op == "i31.new"sv) { return makeRefI31(s); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -2987,9 +2984,17 @@ switch (buf[0]) {
           case 'f':
             if (op == "ref.func"sv) { return makeRefFunc(s); }
             goto parse_error;
-          case 'i':
-            if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
-            goto parse_error;
+          case 'i': {
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) { return makeRefI31(s); }
+                goto parse_error;
+              case 's':
+                if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'n':
             if (op == "ref.null"sv) { return makeRefNull(s); }
             goto parse_error;
@@ -3352,6 +3357,9 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) { return makeTableFill(s); }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':
@@ -3646,13 +3654,6 @@ switch (buf[0]) {
               case 'e':
                 if (op == "array.init_elem"sv) {
                   auto ret = makeArrayInitElem(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) {
-                  auto ret = makeArrayNewFixed(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -5603,7 +5604,7 @@ switch (buf[0]) {
               }
               case 'n':
                 if (op == "i31.new"sv) {
-                  auto ret = makeI31New(ctx, pos);
+                  auto ret = makeRefI31(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8595,13 +8596,25 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
-          case 'i':
-            if (op == "ref.is_null"sv) {
-              auto ret = makeRefIsNull(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
+          case 'i': {
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) {
+                  auto ret = makeRefI31(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              case 's':
+                if (op == "ref.is_null"sv) {
+                  auto ret = makeRefIsNull(ctx, pos);
+                  CHECK_ERR(ret);
+                  return *ret;
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'n':
             if (op == "ref.null"sv) {
               auto ret = makeRefNull(ctx, pos);
@@ -9180,6 +9193,13 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) {
+              auto ret = makeTableFill(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':

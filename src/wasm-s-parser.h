@@ -278,6 +278,7 @@ private:
   Expression* makeTableSet(Element& s);
   Expression* makeTableSize(Element& s);
   Expression* makeTableGrow(Element& s);
+  Expression* makeTableFill(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -285,7 +286,7 @@ private:
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
   Expression* makeCallRef(Element& s, bool isReturn);
-  Expression* makeI31New(Element& s);
+  Expression* makeRefI31(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
   Expression* makeRefCast(Element& s);

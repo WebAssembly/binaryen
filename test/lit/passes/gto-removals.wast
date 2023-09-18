@@ -7,7 +7,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct )))
-  (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -23,7 +23,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct )))
-  (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -54,7 +54,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct )))
-  (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -78,7 +78,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct )))
-  (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -101,7 +101,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct (field funcref))))
-  (type $struct (struct_subtype (field (mut funcref)) data))
+  (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
 
@@ -133,11 +133,11 @@
   ;; CHECK:       (type $1 (func (param (ref $imm-struct))))
 
   ;; CHECK:       (type $mut-struct (sub (struct (field $r i32) (field $rw (mut i32)) (field $r-2 i32) (field $rw-2 (mut i32)))))
-  (type $mut-struct (struct_subtype (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32)) (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32)) data))
+  (type $mut-struct (sub (struct (field $r (mut i32)) (field $w (mut i32)) (field $rw (mut i32)) (field $r-2 (mut i32)) (field $w-2 (mut i32)) (field $rw-2 (mut i32)))))
 
   ;; A similar struct but with all fields marked immutable, and the only
   ;; writes are from during creation (so all fields are at least writeable).
-  (type $imm-struct (struct_subtype (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32) data))
+  (type $imm-struct (sub (struct (field $w i32) (field $rw i32) (field $w-2 i32) (field $rw-2 i32))))
 
   ;; CHECK:       (type $3 (func (param (ref $mut-struct))))
 
@@ -284,7 +284,7 @@
   ;; CHECK-NEXT:  (type $0 (func))
 
   ;; CHECK:       (type $vtable (sub (struct (field $v1 funcref) (field $v2 funcref))))
-  (type $vtable (struct_subtype (field $v0 funcref) (field $v1 funcref) (field $v2 funcref) (field $v3 funcref) (field $v4 funcref) data))
+  (type $vtable (sub (struct (field $v0 funcref) (field $v1 funcref) (field $v2 funcref) (field $v3 funcref) (field $v4 funcref))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $func-1)
@@ -359,7 +359,7 @@
   ;; CHECK-NEXT:  (type $0 (func))
 
   ;; CHECK:       (type $vtable (sub (struct (field $v1 i64) (field $v2 f32))))
-  (type $vtable (struct_subtype (field $v0 i32) (field $v1 i64) (field $v2 f32) (field $v3 f64) (field $v4 anyref) data))
+  (type $vtable (sub (struct (field $v0 i32) (field $v1 i64) (field $v2 f32) (field $v3 f64) (field $v4 anyref))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (i64.const 1)
@@ -636,10 +636,10 @@
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64))))
-  (type $parent (struct_subtype (field i32) (field i64) (field f32) (field f64) data))
+  (type $parent (sub (struct (field i32) (field i64) (field f32) (field f64))))
 
   ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
-  (type $child (struct_subtype (field i32) (field i64) (field f32) (field f64) (field anyref) $parent))
+  (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
@@ -686,10 +686,10 @@
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64) (field (mut f32)))))
-  (type $parent (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) data))
+  (type $parent (sub (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)))))
 
   ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field (mut f32)) (field f64) (field anyref))))
-  (type $child (struct_subtype (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)) $parent))
+  (type $child (sub $parent (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
@@ -744,11 +744,11 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $parent (sub (struct (field i32))))
-    (type $parent (struct_subtype (field i32) data))
+    (type $parent (sub (struct (field i32))))
     ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
-    (type $child1 (struct_subtype (field i32) $parent))
+    (type $child1 (sub $parent (struct (field i32))))
     ;; CHECK:       (type $child2 (sub $parent (struct (field i32))))
-    (type $child2 (struct_subtype (field i32) $parent))
+    (type $child2 (sub $parent (struct (field i32))))
   )
 
   ;; CHECK:      (type $3 (func (param (ref $parent) (ref $child1) (ref $child2))))
@@ -771,13 +771,13 @@
   (rec
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $parent (sub (struct )))
-    (type $parent (struct_subtype (field i32) data))
+    (type $parent (sub (struct (field i32))))
 
     ;; CHECK:       (type $child2 (sub $parent (struct )))
 
     ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
-    (type $child1 (struct_subtype (field i32) $parent))
-    (type $child2 (struct_subtype (field i32) $parent))
+    (type $child1 (sub $parent (struct (field i32))))
+    (type $child2 (sub $parent (struct (field i32))))
   )
 
   ;; CHECK:       (type $3 (func (param (ref $parent) (ref $child1) (ref $child2))))
@@ -803,7 +803,7 @@
   ;; CHECK:       (type $2 (func))
 
   ;; CHECK:       (type ${mut:i8} (sub (struct )))
-  (type ${mut:i8} (struct_subtype (field (mut i8)) data))
+  (type ${mut:i8} (sub (struct (field (mut i8)))))
 
   ;; CHECK:       (type $4 (func (param (ref null ${mut:i8}))))
 

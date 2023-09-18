@@ -574,6 +574,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitTableGrow(TableGrow* curr) {
     return Unacceptable + visit(curr->value) + visit(curr->delta);
   }
+  CostType visitTableFill(TableFill* curr) {
+    return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
+  }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
@@ -598,7 +601,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitNop(Nop* curr) { return 0; }
   CostType visitUnreachable(Unreachable* curr) { return 0; }
   CostType visitDataDrop(DataDrop* curr) { return 5; }
-  CostType visitI31New(I31New* curr) { return 3 + visit(curr->value); }
+  CostType visitRefI31(RefI31* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
     // Casts have a very high cost because in the VM they end up implemented as

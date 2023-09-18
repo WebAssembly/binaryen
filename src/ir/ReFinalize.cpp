@@ -124,6 +124,7 @@ void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
+void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
@@ -132,7 +133,7 @@ void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
-void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitRefI31(RefI31* curr) { curr->finalize(); }
 void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }

@@ -5,7 +5,7 @@
 ;; Every struct.new here should get a new type.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
-  (type $struct (struct_subtype (field i32) data))
+  (type $struct (sub (struct (field i32))))
 
   ;; CHECK:      (type $1 (func))
 
@@ -136,7 +136,7 @@
   ;; CHECK:      (type $0 (func (param anyref arrayref)))
 
   ;; CHECK:      (type $struct (sub (struct (field anyref))))
-  (type $struct (struct_subtype (field (ref null any)) data))
+  (type $struct (sub (struct (field (ref null any)))))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct$1 (sub $struct (struct (field anyref))))
@@ -423,7 +423,7 @@
   (type $array (sub (array (mut f32))))
 
   ;; CHECK:      (type $subarray (sub $array (array (mut f32))))
-  (type $subarray (array_subtype (mut f32) $array))
+  (type $subarray (sub $array (array (mut f32))))
 
   ;; CHECK:      (type $2 (func (param (ref $subarray))))
 

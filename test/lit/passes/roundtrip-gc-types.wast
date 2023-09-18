@@ -19,7 +19,7 @@
   (type $C (struct (field (mut (ref $B)))))
 
   ;; CHECK:       (type $D (sub $A (struct (field (ref $C)) (field (ref $A)))))
-  (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+  (type $D (sub $A (struct (field (ref $C)) (field (ref $A)))))
  )
 
  ;; CHECK:      (func $use-types (type $4) (param $0 (ref $A)) (param $1 (ref $D))

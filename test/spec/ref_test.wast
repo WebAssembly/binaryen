@@ -16,10 +16,10 @@
     (table.set $ta (i32.const 0) (ref.null any))
     (table.set $ta (i32.const 1) (ref.null struct))
     (table.set $ta (i32.const 2) (ref.null none))
-    (table.set $ta (i32.const 3) (i31.new (i32.const 7)))
+    (table.set $ta (i32.const 3) (ref.i31 (i32.const 7)))
     (table.set $ta (i32.const 4) (struct.new_default $st))
     (table.set $ta (i32.const 5) (array.new_default $at (i32.const 0)))
-    (table.set $ta (i32.const 6) (extern.internalize (extern.externalize (i31.new (i32.const 0)))))
+    (table.set $ta (i32.const 6) (extern.internalize (extern.externalize (ref.i31 (i32.const 0)))))
     (table.set $ta (i32.const 7) (extern.internalize (ref.null extern)))
 
     (table.set $tf (i32.const 0) (ref.null nofunc))
@@ -28,8 +28,8 @@
 
     (table.set $te (i32.const 0) (ref.null noextern))
     (table.set $te (i32.const 1) (ref.null extern))
-    (table.set $te (i32.const 2) (extern.externalize (i31.new (i32.const 0))))
-    (table.set $te (i32.const 3) (extern.externalize (i31.new (i32.const 8))))
+    (table.set $te (i32.const 2) (extern.externalize (ref.i31 (i32.const 0))))
+    (table.set $te (i32.const 3) (extern.externalize (ref.i31 (i32.const 8))))
     (table.set $te (i32.const 4) (extern.externalize (struct.new_default $st)))
     (table.set $te (i32.const 5) (extern.externalize (ref.null any)))
   )
@@ -180,14 +180,14 @@
 ;; Concrete Types
 
 (module
-  (type $t0 (struct_subtype data))
-  (type $t1 (struct_subtype i32 $t0))
-  (type $t1' (struct_subtype i32 $t0))
-  (type $t2 (struct_subtype i32 i32 $t1))
-  (type $t2' (struct_subtype i32 i32 $t1'))
-  (type $t3 (struct_subtype i32 i32 $t0))
-  (type $t0' (struct_subtype $t0))
-  (type $t4 (struct_subtype i32 i32 $t0'))
+  (type $t0 (sub (struct)))
+  (type $t1 (sub $t0 (struct i32)))
+  (type $t1' (sub $t0 (struct i32)))
+  (type $t2 (sub $t1 (struct i32 i32)))
+  (type $t2' (sub $t1' (struct i32 i32)))
+  (type $t3 (sub $t0 (struct i32 i32)))
+  (type $t0' (sub $t0 (struct)))
+  (type $t4 (sub $t0' (struct i32 i32)))
 
   (table $tab 20 (ref null struct))
 

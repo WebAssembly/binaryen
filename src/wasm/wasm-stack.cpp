@@ -1909,6 +1909,11 @@ void BinaryInstWriter::visitTableGrow(TableGrow* curr) {
   o << U32LEB(parent.getTableIndex(curr->table));
 }
 
+void BinaryInstWriter::visitTableFill(TableFill* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableFill);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
@@ -1989,8 +1994,8 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
 }
 
-void BinaryInstWriter::visitI31New(I31New* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+void BinaryInstWriter::visitRefI31(RefI31* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefI31);
 }
 
 void BinaryInstWriter::visitI31Get(I31Get* curr) {

@@ -440,6 +440,7 @@ public:
   void visitTableSet(TableSet* curr);
   void visitTableSize(TableSize* curr);
   void visitTableGrow(TableGrow* curr);
+  void visitTableFill(TableFill* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -448,7 +449,7 @@ public:
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
-  void visitI31New(I31New* curr);
+  void visitRefI31(RefI31* curr);
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
@@ -2294,6 +2295,23 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
   }
 }
 
+void FunctionValidator::visitTableFill(TableFill* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.fill requires bulk-memory [--enable-bulk-memory]");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.fill table must exist")) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.fill value must have right type");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,
@@ -2502,13 +2520,13 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
   }
 }
 
-void FunctionValidator::visitI31New(I31New* curr) {
+void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
-    getModule()->features.hasGC(), curr, "i31.new requires gc [--enable-gc]");
+    getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
   shouldBeSubType(curr->value->type,
                   Type::i32,
                   curr->value,
-                  "i31.new's argument should be i32");
+                  "ref.i31's argument should be i32");
 }
 
 void FunctionValidator::visitI31Get(I31Get* curr) {

@@ -10,9 +10,9 @@
  ;; CHECK:       (type $1 (sub (struct (field nullfuncref) (field (ref $2)))))
 
  ;; CHECK:       (type $0 (sub (struct (field nullref) (field (ref $1)))))
- (type $0 (struct_subtype nullref anyref data))
- (type $1 (struct_subtype nullfuncref anyref data))
- (type $2 (struct_subtype nullexternref anyref data))
+ (type $0 (sub (struct nullref anyref)))
+ (type $1 (sub (struct nullfuncref anyref)))
+ (type $2 (sub (struct nullexternref anyref)))
 
  ;; CHECK:       (type $3 (func (param (ref $0) (ref $1) (ref $2))))
 
@@ -71,11 +71,11 @@
  ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $all (sub (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2)))))
- (type $all (struct_subtype i32 anyref anyref anyref data))
+ (type $all (sub (struct i32 anyref anyref anyref)))
 
- (type $0 (struct_subtype anyref anyref data))
- (type $1 (struct_subtype anyref anyref $0))
- (type $2 (struct_subtype anyref anyref $1))
+ (type $0 (sub (struct anyref anyref)))
+ (type $1 (sub $0 (struct anyref anyref)))
+ (type $2 (sub $1 (struct anyref anyref)))
 
  ;; CHECK:       (type $4 (func (param (ref $0) (ref $1) (ref $2))))
 

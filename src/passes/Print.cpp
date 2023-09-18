@@ -1925,6 +1925,10 @@ struct PrintExpressionContents
     printMedium(o, "table.grow ");
     printName(curr->table, o);
   }
+  void visitTableFill(TableFill* curr) {
+    printMedium(o, "table.fill ");
+    printName(curr->table, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -1959,7 +1963,7 @@ struct PrintExpressionContents
     printMedium(o, "tuple.extract ");
     o << curr->index;
   }
-  void visitI31New(I31New* curr) { printMedium(o, "i31.new"); }
+  void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
@@ -2846,7 +2850,7 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
   lastPrintedLocation = {0, 0, 0};
   o << '(';
   emitImportHeader(curr);
-  handleSignature(curr->getSig(), curr->name);
+  handleSignature(curr->type, curr->name);
   o << ')';
   o << maybeNewLine;
 }

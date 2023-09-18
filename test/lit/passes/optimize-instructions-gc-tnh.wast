@@ -5,7 +5,7 @@
 (module
   ;; TNH:      (type $struct (sub (struct (field (mut i32)))))
   ;; NO_TNH:      (type $struct (sub (struct (field (mut i32)))))
-  (type $struct (struct_subtype (field (mut i32)) data))
+  (type $struct (sub (struct (field (mut i32)))))
 
   ;; TNH:      (type $void (func))
   ;; NO_TNH:      (type $void (func))

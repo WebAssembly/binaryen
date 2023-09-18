@@ -185,7 +185,9 @@ public:
       return Iterator(*this) += off;
     }
 
-    off_t operator-(const Iterator& other) const { return index - other.index; }
+    difference_type operator-(const Iterator& other) const {
+      return index - other.index;
+    }
 
     bool operator==(const Iterator& other) const {
       return parent == other.parent && index == other.index;

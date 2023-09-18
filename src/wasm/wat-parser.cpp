@@ -760,7 +760,7 @@ struct NullInstrParserCtx {
 
   InstrT makeRefEq(Index) { return Ok{}; }
 
-  InstrT makeI31New(Index) { return Ok{}; }
+  InstrT makeRefI31(Index) { return Ok{}; }
   InstrT makeI31Get(Index, bool) { return Ok{}; }
 
   template<typename HeapTypeT> InstrT makeStructNew(Index, HeapTypeT) {
@@ -1762,8 +1762,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
 
-  Result<> makeI31New(Index pos) {
-    return withLoc(pos, irBuilder.makeI31New());
+  Result<> makeRefI31(Index pos) {
+    return withLoc(pos, irBuilder.makeRefI31());
   }
 
   Result<> makeI31Get(Index pos, bool signed_) {
@@ -1936,6 +1936,7 @@ template<typename Ctx> Result<typename Ctx::InstrT> makeTableGet(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeTableSet(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeTableSize(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeTableGrow(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeTableFill(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeTry(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT>
@@ -1947,7 +1948,7 @@ template<typename Ctx>
 Result<typename Ctx::InstrT> makeTupleExtract(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeCallRef(Ctx&, Index, bool isReturn);
-template<typename Ctx> Result<typename Ctx::InstrT> makeI31New(Ctx&, Index);
+template<typename Ctx> Result<typename Ctx::InstrT> makeRefI31(Ctx&, Index);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeI31Get(Ctx&, Index, bool signed_);
 template<typename Ctx> Result<typename Ctx::InstrT> makeRefTest(Ctx&, Index);
@@ -3006,6 +3007,11 @@ Result<typename Ctx::InstrT> makeTableGrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx>
+Result<typename Ctx::InstrT> makeTableFill(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx>
 Result<typename Ctx::InstrT> makeTry(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
@@ -3042,8 +3048,8 @@ Result<typename Ctx::InstrT> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
 }
 
 template<typename Ctx>
-Result<typename Ctx::InstrT> makeI31New(Ctx& ctx, Index pos) {
-  return ctx.makeI31New(pos);
+Result<typename Ctx::InstrT> makeRefI31(Ctx& ctx, Index pos) {
+  return ctx.makeRefI31(pos);
 }
 
 template<typename Ctx>

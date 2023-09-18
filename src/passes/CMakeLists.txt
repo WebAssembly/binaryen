@@ -113,6 +113,8 @@ set(passes_SOURCES
   StackCheck.cpp
   StripEH.cpp
   SSAify.cpp
+  TupleOptimization.cpp
+  TypeFinalizing.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp

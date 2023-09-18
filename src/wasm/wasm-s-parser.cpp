@@ -49,11 +49,9 @@ int unhex(char c) {
 
 namespace wasm {
 
-static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
-  FUNC_SUBTYPE("func_subtype"), STRUCT_SUBTYPE("struct_subtype"),
-  ARRAY_SUBTYPE("array_subtype"), EXTENDS("extends"), REC("rec"), I8("i8"),
-  I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"), SUB("sub"),
-  FINAL("final");
+static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), REC("rec"),
+  I8("i8"), I16("i16"), DECLARE("declare"), ITEM("item"), OFFSET("offset"),
+  SUB("sub"), FINAL("final");
 
 static Address getAddress(const Element* s) {
   return std::stoll(s->toString());
@@ -959,51 +957,17 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     } else {
       if (kind == FUNC) {
         builder[index] = parseSignatureDef(def, 0);
-      } else if (kind == FUNC_SUBTYPE) {
-        builder[index].setOpen();
-        builder[index] = parseSignatureDef(def, 1);
-        super = def[def.size() - 1];
-        if (!super->dollared() && super->str() == FUNC) {
-          // OK; no supertype
-          super = nullptr;
-        }
       } else if (kind == STRUCT) {
         builder[index] = parseStructDef(def, index, 0);
-      } else if (kind == STRUCT_SUBTYPE) {
-        builder[index].setOpen();
-        builder[index] = parseStructDef(def, index, 1);
-        super = def[def.size() - 1];
-        if (!super->dollared() && super->str() == DATA) {
-          // OK; no supertype
-          super = nullptr;
-        }
       } else if (kind == ARRAY) {
         builder[index] = parseArrayDef(def);
-      } else if (kind == ARRAY_SUBTYPE) {
-        builder[index].setOpen();
-        builder[index] = parseArrayDef(def);
-        super = def[def.size() - 1];
-        if (!super->dollared() && super->str() == DATA) {
-          // OK; no supertype
-          super = nullptr;
-        }
       } else {
         throw ParseException("unknown heaptype kind", kind.line, kind.col);
       }
     }
     if (super) {
-      if (!super->dollared()) {
-        throw ParseException("unknown supertype", super->line, super->col);
-      }
-    } else if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
-      // '(' 'extends' $supertype ')'
-      builder[index].setOpen();
-      Element& extends = *elem[elem.size() - 1];
-      super = extends[1];
-    }
-    if (super) {
       auto it = typeIndices.find(super->toString());
-      if (it == typeIndices.end()) {
+      if (!super->dollared() || it == typeIndices.end()) {
         throw ParseException("unknown supertype", super->line, super->col);
       }
       builder[index].subTypeOf(builder[it->second]);
@@ -2677,6 +2641,18 @@ Expression* SExpressionWasmBuilder::makeTableGrow(Element& s) {
   return Builder(wasm).makeTableGrow(tableName, value, delta);
 }
 
+Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
+  auto tableName = s[1]->str();
+  auto* table = wasm.getTableOrNull(tableName);
+  if (!table) {
+    throw ParseException("invalid table name in table.fill", s.line, s.col);
+  }
+  auto* dest = parseExpression(s[2]);
+  auto* value = parseExpression(s[3]);
+  auto* size = parseExpression(s[4]);
+  return Builder(wasm).makeTableFill(tableName, dest, value, size);
+}
+
 // try can be either in the form of try-catch or try-delegate.
 // try-catch is written in the folded wast format as
 // (try
@@ -2838,8 +2814,8 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
     target, operands, sigType.getSignature().results, isReturn);
 }
 
-Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
-  auto ret = allocator.alloc<I31New>();
+Expression* SExpressionWasmBuilder::makeRefI31(Element& s) {
+  auto ret = allocator.alloc<RefI31>();
   ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;
@@ -2854,44 +2830,14 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  int i = 1;
-  Type castType;
-  if (s[i]->isList() ||
-      !(s[i]->dollared() ||
-        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
-    castType = elementToType(*s[i++]);
-  } else {
-    // legacy syntax
-    auto nullability = NonNullable;
-    if (s[1]->str().str == "null") {
-      nullability = Nullable;
-      ++i;
-    }
-    auto type = parseHeapType(*s[i++]);
-    castType = Type(type, nullability);
-  }
-  auto* ref = parseExpression(*s[i++]);
+  Type castType = elementToType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, castType);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  int i = 1;
-  Type castType;
-  if (s[i]->isList() ||
-      !(s[i]->dollared() ||
-        stringToType(s[i]->str(), true /* allowError */) == Type::none)) {
-    castType = elementToType(*s[i++]);
-  } else {
-    // legacy syntax
-    Nullability nullability = NonNullable;
-    if (s[i]->str().str == "null") {
-      nullability = Nullable;
-      ++i;
-    }
-    auto type = parseHeapType(*s[i++]);
-    castType = Type(type, nullability);
-  }
-  auto* ref = parseExpression(*s[i++]);
+  Type castType = elementToType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, castType);
 }
 

@@ -168,7 +168,7 @@
 
  ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
 
- ;; CHECK:      (import "mod" "f5" (func $fimport$1 (type $func.0)))
+ ;; CHECK:      (import "mod" "f5" (func $fimport$1 (type $void)))
 
  ;; CHECK:      (global $2 (mut i32) (i32.const 0))
 
@@ -1454,13 +1454,13 @@
  )
 
  ;; CHECK:      (func $i31-new (type $28) (param $0 i32) (result i31ref)
- ;; CHECK-NEXT:  (i31.new
+ ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $i31-new (param i32) (result i31ref)
   local.get 0
-  i31.new
+  ref.i31
  )
 
  ;; CHECK:      (func $i31-get (type $29) (param $0 i31ref)
