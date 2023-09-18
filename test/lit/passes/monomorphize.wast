@@ -9,10 +9,10 @@
 (module
   ;; ALWAYS:      (type $A (sub (struct )))
   ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $2 (func (param (ref $A))))
 
@@ -128,10 +128,10 @@
   ;; CAREFUL:      (type $0 (func))
 
   ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
 
 
@@ -208,10 +208,10 @@
   ;; CAREFUL:      (type $0 (func))
 
   ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $2 (func))
 
@@ -219,7 +219,7 @@
   ;; CAREFUL:      (type $3 (func (param (ref $A))))
 
   ;; CAREFUL:      (type $C (sub $B (struct )))
-  (type $C (struct_subtype $B))
+  (type $C (sub $B (struct)))
 
   ;; ALWAYS:      (type $4 (func (param (ref $A))))
 
@@ -329,11 +329,11 @@
 
   ;; ALWAYS:      (type $A (sub (struct )))
   ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
 
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $2 (func (param (ref $B))))
 
@@ -560,14 +560,14 @@
 
   ;; ALWAYS:      (type $A (sub (struct )))
   ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (struct_subtype data))
+  (type $A (sub (struct)))
   ;; ALWAYS:      (type $1 (func (param (ref $A))))
 
   ;; ALWAYS:      (type $B (sub $A (struct )))
   ;; CAREFUL:      (type $1 (func (param (ref $A))))
 
   ;; CAREFUL:      (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
 
   ;; ALWAYS:      (func $calls (type $1) (param $ref (ref $A))

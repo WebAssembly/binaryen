@@ -14,7 +14,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -44,7 +44,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -80,7 +80,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param eqref))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -130,13 +130,13 @@
     ;; CHECK:       (type $3 (func))
 
     ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
-    (type $sig (func_subtype (param anyref) func))
+    (type $sig (sub (func (param anyref))))
 
     (type $struct (sub (struct)))
 
-    (type $struct-sub1 (struct_subtype $struct))
+    (type $struct-sub1 (sub $struct (struct)))
 
-    (type $struct-sub2 (struct_subtype $struct))
+    (type $struct-sub2 (sub $struct (struct)))
   )
 
   ;; CHECK:      (func $func-1 (type $sig) (param $x (ref $struct))
@@ -179,7 +179,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   (type $struct (struct))
 
@@ -217,9 +217,9 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref $struct) (ref $sig)))))
-  (type $sig (func_subtype (param anyref funcref) func))
+  (type $sig (sub (func (param anyref funcref))))
 
-  (type $struct (struct_subtype (field (ref $sig)) data))
+  (type $struct (sub (struct (field (ref $sig)))))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -283,7 +283,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (elem declare func $func)
 
@@ -320,7 +320,7 @@
   (type $struct (struct))
 
   ;; CHECK:      (type $sig (sub (func (param anyref))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (type $1 (func))
 
@@ -353,7 +353,7 @@
   (type $struct (struct))
 
   ;; CHECK:      (type $sig (sub (func (param anyref))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
   ;; CHECK-NEXT:  (nop)
@@ -374,8 +374,8 @@
     ;; CHECK:       (type $sig-2 (sub (func (param eqref (ref $struct)))))
 
     ;; CHECK:       (type $sig-1 (sub (func (param structref anyref))))
-    (type $sig-1 (func_subtype (param anyref) (param anyref) func))
-    (type $sig-2 (func_subtype (param anyref) (param anyref) func))
+    (type $sig-1 (sub (func (param anyref) (param anyref))))
+    (type $sig-2 (sub (func (param anyref) (param anyref))))
   )
 
   ;; CHECK:      (elem declare func $func-2)
@@ -443,7 +443,7 @@
   ;; The presence of a table prevents us from doing any optimizations.
 
   ;; CHECK:      (type $sig (sub (func (param anyref))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (type $1 (func))
 
@@ -482,7 +482,7 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:       (type $sig (sub (func (param (ref null $struct)))))
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   (type $struct (struct))
 
@@ -525,13 +525,13 @@
     ;; This signature has a single function using it, which returns a more
     ;; refined type, and we can refine to that.
     ;; CHECK:       (type $sig-can-refine (sub (func (result (ref $struct)))))
-    (type $sig-can-refine (func_subtype (result anyref) func))
+    (type $sig-can-refine (sub (func (result anyref))))
 
     ;; Also a single function, but no refinement is possible.
-    (type $sig-cannot-refine (func_subtype (result (ref func)) func))
+    (type $sig-cannot-refine (sub (func (result (ref func)))))
 
   ;; The single function never returns, so no refinement is possible.
-    (type $sig-unreachable (func_subtype (result anyref) func))
+    (type $sig-unreachable (sub (func (result anyref))))
   )
 
   ;; CHECK:      (elem declare func $func-can-refine $func-cannot-refine)
@@ -615,7 +615,7 @@
   ;; This signature has multiple functions using it, and some of them have nulls
   ;; which should be updated when we refine.
   ;; CHECK:       (type $sig (sub (func (result (ref null $struct)))))
-  (type $sig (func_subtype (result anyref) func))
+  (type $sig (sub (func (result anyref))))
 
   ;; CHECK:      (func $func-1 (type $sig) (result (ref null $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
@@ -667,7 +667,7 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  (type $sig (func_subtype (param anyref) func))
+  (type $sig (sub (func (param anyref))))
 
   ;; CHECK:      (export "prevent-opts" (func $func))
 
@@ -691,9 +691,9 @@
 
 (module
   ;; CHECK:      (type $A (sub (func (param i32))))
-  (type $A (func_subtype (param i32) func))
+  (type $A (sub (func (param i32))))
   ;; CHECK:      (type $B (sub $A (func (param i32))))
-  (type $B (func_subtype (param i32) $A))
+  (type $B (sub $A (func (param i32))))
 
   ;; CHECK:      (func $bar (type $B) (param $x i32)
   ;; CHECK-NEXT:  (nop)
@@ -786,7 +786,7 @@
     ;; CHECK-NEXT:  (type $A (sub (func (param (ref null $B)) (result (ref null $A)))))
     (type $A (sub (func    (param (ref null $B)) (result (ref null $A)))))
     ;; CHECK:       (type $B (sub $A (func (param (ref null $A)) (result (ref null $B)))))
-    (type $B (func_subtype (param (ref null $A)) (result (ref null $B)) $A))
+    (type $B (sub $A (func (param (ref null $A)) (result (ref null $B)))))
   )
 
   ;; CHECK:      (elem declare func $func)
@@ -808,7 +808,7 @@
   ;; CHECK:      (type $parent (sub (func (param anyref))))
   (type $parent (sub (func (param anyref))))
   ;; CHECK:      (type $child (sub $parent (func (param anyref))))
-  (type $child (func_subtype (param anyref) $parent))
+  (type $child (sub $parent (func (param anyref))))
 
   ;; CHECK:      (type $2 (func))
 

@@ -15,22 +15,22 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $unused-1 (sub (struct )))
-  (type $unused-1 (struct_subtype data))
+  (type $unused-1 (sub (struct)))
   ;; CHECK:       (type $unused-2 (sub (struct )))
-  (type $unused-2 (struct_subtype data))
+  (type $unused-2 (sub (struct)))
   ;; CHECK:       (type $unused-3 (sub (struct )))
-  (type $unused-3 (struct_subtype data))
+  (type $unused-3 (sub (struct)))
   ;; CHECK:       (type $unused-4 (sub (struct )))
-  (type $unused-4 (struct_subtype data))
+  (type $unused-4 (sub (struct)))
   ;; CHECK:       (type $used-a-lot (sub (struct )))
-  (type $used-a-lot (struct_subtype data))
+  (type $used-a-lot (sub (struct)))
   ;; CHECK:       (type $unused-5 (sub (struct )))
-  (type $unused-5 (struct_subtype data))
+  (type $unused-5 (sub (struct)))
  )
 
  (rec
-  (type $unused-6 (struct_subtype data))
-  (type $used-a-bit (struct_subtype data))
+  (type $unused-6 (sub (struct)))
+  (type $used-a-bit (sub (struct)))
  )
 
  ;; CHECK:      (func $use (type $8) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
@@ -48,9 +48,9 @@
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $leaf (sub (struct )))
-  (type $leaf (struct_subtype data))
+  (type $leaf (sub (struct)))
   ;; CHECK:       (type $unused (sub (struct )))
-  (type $unused (struct_subtype data))
+  (type $unused (sub (struct)))
  )
 
  (rec
@@ -61,22 +61,22 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $twig (sub (struct )))
-  (type $twig (struct_subtype data))
+  (type $twig (sub (struct)))
   ;; CHECK:       (type $used-a-bit (sub (struct (field (ref $leaf)))))
-  (type $used-a-bit (struct_subtype (ref $leaf) data))
+  (type $used-a-bit (sub (struct (ref $leaf))))
  )
 
  (rec
-  (type $shrub (struct_subtype $leaf))
-  (type $used-a-ton (struct_subtype data))
+  (type $shrub (sub $leaf (struct)))
+  (type $used-a-ton (sub (struct)))
  )
 
  (rec
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $root (sub (struct )))
-  (type $root (struct_subtype data))
+  (type $root (sub (struct)))
   ;; CHECK:       (type $used-a-lot (sub $twig (struct )))
-  (type $used-a-lot (struct_subtype $twig))
+  (type $used-a-lot (sub $twig (struct)))
  )
 
  ;; CHECK:      (func $use (type $8) (param $0 (ref $used-a-lot)) (param $1 (ref $used-a-lot)) (param $2 (ref $used-a-lot)) (param $3 (ref $used-a-lot)) (param $4 (ref $used-a-lot)) (param $5 (ref $used-a-lot)) (result (ref $used-a-bit) (ref $used-a-bit) (ref $used-a-bit))
@@ -100,7 +100,7 @@
 
  (rec
   ;; CHECK:      (type $contains-basic (sub (struct (field (ref any)))))
-  (type $contains-basic (struct_subtype (ref any) data))
+  (type $contains-basic (sub (struct (ref any))))
  )
 
  ;; CHECK:      (func $use (type $1) (param $0 (ref $contains-basic))

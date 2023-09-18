@@ -6,18 +6,18 @@
  (type ${} (sub (struct)))
 
  ;; CHECK:      (type ${i32} (sub ${} (struct (field i32))))
- (type ${i32} (struct_subtype (field i32) ${}))
+ (type ${i32} (sub ${} (struct (field i32))))
 
  ;; CHECK:      (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
 
  ;; CHECK:      (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
 
  ;; CHECK:      (type ${f64} (sub ${} (struct (field f64))))
- (type ${f64} (struct_subtype (field f64) ${}))
+ (type ${f64} (sub ${} (struct (field f64))))
 
- (type ${i32_i64} (struct_subtype (field i32) (field i64) ${i32}))
+ (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
 
- (type ${i32_f32} (struct_subtype (field i32) (field f32) ${i32}))
+ (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
 
  ;; CHECK:      (func $call-various-params-no (type $0)
  ;; CHECK-NEXT:  (call $various-params-no

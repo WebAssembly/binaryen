@@ -17,7 +17,7 @@
   ;; YES-NEXT:  (type $1 (func (param (ref $A))))
 
   ;; YES:       (type $A (sub (struct )))
-  (type $A (struct_subtype (field (mut i32)) data))
+  (type $A (sub (struct (field (mut i32)))))
 
   ;; NOP:      (type $2 (func (result i32)))
 

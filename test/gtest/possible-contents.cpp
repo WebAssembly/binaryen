@@ -895,10 +895,10 @@ TEST_F(PossibleContentsTest, TestOracleManyTypes) {
   // we'll just report that more than one is possible, a cone of data.
   auto wasm = parse(R"(
     (module
-      (type $A (struct_subtype (field i32) data))
-      (type $B (struct_subtype (field i64) data))
-      (type $C (struct_subtype (field f32) data))
-      (type $D (struct_subtype (field f64) data))
+      (type $A (sub (struct (field i32))))
+      (type $B (sub (struct (field i64))))
+      (type $C (sub (struct (field f32))))
+      (type $D (sub (struct (field f64))))
       (func $foo (result (ref any))
         (select (result (ref any))
           (select (result (ref any))
@@ -930,9 +930,9 @@ TEST_F(PossibleContentsTest, TestOracleNoFullCones) {
   // infinity).
   auto wasm = parse(R"(
     (module
-      (type $A (struct_subtype (field i32) data))
-      (type $B (struct_subtype (field i32) $A))
-      (type $C (struct_subtype (field i32) $B))
+      (type $A (sub (struct (field i32))))
+      (type $B (sub $A (struct (field i32))))
+      (type $C (sub $B (struct (field i32))))
       (func $foo (export "foo")
         ;; Note we must declare $C so that $B and $C have uses and are not
         ;; removed automatically from consideration.

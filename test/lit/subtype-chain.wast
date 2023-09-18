@@ -11,16 +11,16 @@
   (type $root (sub (struct)))
 
   ;; CHECK:      (type $trunk (sub $root (struct (field i32))))
-  (type $trunk (struct_subtype i32 $root))
+  (type $trunk (sub $root (struct i32)))
 
   ;; CHECK:      (type $branch (sub $trunk (struct (field i32) (field i64))))
-  (type $branch (struct_subtype i32 i64 $trunk))
+  (type $branch (sub $trunk (struct i32 i64)))
 
   ;; CHECK:      (type $twig (sub $branch (struct (field i32) (field i64) (field f32))))
-  (type $twig (struct_subtype i32 i64 f32 $branch))
+  (type $twig (sub $branch (struct i32 i64 f32)))
 
   ;; CHECK:      (type $leaf (sub $twig (struct (field i32) (field i64) (field f32) (field f64))))
-  (type $leaf (struct_subtype i32 i64 f32 f64 $twig))
+  (type $leaf (sub $twig (struct i32 i64 f32 f64)))
 
   ;; CHECK:      (func $make-root (type $5) (param $leaf (ref $leaf)) (result (ref null $root))
   ;; CHECK-NEXT:  (local.get $leaf)

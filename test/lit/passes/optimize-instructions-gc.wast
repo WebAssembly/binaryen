@@ -20,10 +20,10 @@
   ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
-  (type $B (struct_subtype (field i32) (field i32) (field f32) $A))
+  (type $B (sub $A (struct (field i32) (field i32) (field f32))))
 
   ;; CHECK:      (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
-  (type $B-child (struct_subtype (field i32) (field i32) (field f32) (field i64) $B))
+  (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
 
   (type $empty (struct))
 
@@ -32,11 +32,11 @@
   ;; CHECK:      (type $void2 (sub $void (func)))
 
   ;; CHECK:      (type $C (sub $A (struct (field i32) (field i32) (field f64))))
-  (type $C (struct_subtype (field i32) (field i32) (field f64) $A))
+  (type $C (sub $A (struct (field i32) (field i32) (field f64))))
 
   (type $void (sub (func)))
 
-  (type $void2 (func_subtype $void))
+  (type $void2 (sub $void (func)))
 
   ;; CHECK:      (type $struct_i64 (func (param structref) (result i64)))
   (type $struct_i64 (func (param (ref null struct)) (result i64)))
