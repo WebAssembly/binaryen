@@ -1897,14 +1897,28 @@
   )
 
   ;; CHECK:      (func $ref-cast (type $5) (result i32)
-  ;; CHECK-NEXT:  (struct.get $struct.A 0
-  ;; CHECK-NEXT:   (ref.cast (ref $struct.A)
-  ;; CHECK-NEXT:    (struct.new $struct.A
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $ref-cast (result i32)
     (struct.get $struct.A 0
@@ -1924,7 +1938,7 @@
   ;; CHECK:      (type $B (sub $A (struct (field (ref $A)))))
   (type $B (sub $A (struct (field (ref $A)))))
 
-  ;; CHECK:      (func $func (type $2) (result anyref)
+  ;; CHECK:      (func $func (type $1) (result anyref)
   ;; CHECK-NEXT:  (local $a (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
   ;; CHECK-NEXT:  (local $2 (ref $A))
@@ -1967,16 +1981,23 @@
     )
   )
 
-  ;; CHECK:      (func $cast-success (type $2) (result anyref)
-  ;; CHECK-NEXT:  (struct.get $B 0
-  ;; CHECK-NEXT:   (ref.cast (ref $B)
-  ;; CHECK-NEXT:    (struct.new $B
+  ;; CHECK:      (func $cast-success (type $1) (result anyref)
+  ;; CHECK-NEXT:  (local $0 (ref $A))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (struct.new $A
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $cast-success (result anyref)
     (struct.get $A 0
@@ -1989,7 +2010,7 @@
       )
     )
   )
-  ;; CHECK:      (func $cast-failure (type $2) (result anyref)
+  ;; CHECK:      (func $cast-failure (type $1) (result anyref)
   ;; CHECK-NEXT:  (struct.get $B 0
   ;; CHECK-NEXT:   (ref.cast (ref $B)
   ;; CHECK-NEXT:    (struct.new $A
