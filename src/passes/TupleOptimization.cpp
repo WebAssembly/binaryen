@@ -125,10 +125,18 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
       // a get), or a tuple.make.
       if (auto* tee = value->dynCast<LocalSet>()) {
         assert(tee->isTee());
-        validUses[tee->index]++;
-        validUses[curr->index]++;
-        copiedIndexes[tee->index].insert(curr->index);
-        copiedIndexes[curr->index].insert(tee->index);
+        // We don't want to count anything as valid if the inner tee is
+        // unreachable. In that case the outer tee is also unreachable, of
+        // course, and in fact they might not even have the same tuple type or
+        // the inner one might not even be a tuple (since we are in unreachable
+        // code, that is possible). We could try to optimize unreachable tees in
+        // some cases, but it's simpler to let DCE simplify the code first.
+        if (tee->type != Type::unreachable) {
+          validUses[tee->index]++;
+          validUses[curr->index]++;
+          copiedIndexes[tee->index].insert(curr->index);
+          copiedIndexes[curr->index].insert(tee->index);
+        }
       } else if (auto* get = value->dynCast<LocalGet>()) {
         validUses[get->index]++;
         validUses[curr->index]++;

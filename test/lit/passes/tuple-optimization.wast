@@ -569,6 +569,7 @@
 
   ;; CHECK:      (func $unreachability (type $0)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $nontuple f64)
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (tuple.make
   ;; CHECK-NEXT:    (i32.const 1)
@@ -590,9 +591,17 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $tuple
+  ;; CHECK-NEXT:    (local.tee $nontuple
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachability
     (local $tuple (i32 i32))
+    (local $nontuple f64)
     (local.set $tuple
       (tuple.make
         (i32.const 1)
@@ -611,6 +620,17 @@
     (drop
       (tuple.extract 1
         (local.tee $tuple
+          (unreachable)
+        )
+      )
+    )
+    ;; Teeing a nontuple into a tuple is allowed in unreachable code (the input
+    ;; to the outer tee is simply unreachable, so there is no checking that we
+    ;; are copying a local into another local of a compatible type). We should
+    ;; not error here.
+    (drop
+      (local.tee $tuple
+        (local.tee $nontuple
           (unreachable)
         )
       )
