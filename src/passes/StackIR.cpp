@@ -395,7 +395,7 @@ private:
     Index currDepth = 0;
 
     // Look for a different get than the one in getIndex (since that one is
-    // being removed) which would stop validating without us. While doing so,
+    // being removed) which would stop validating without the set. While doing so,
     // note other sets that ensure validation even if our set is removed. We
     // track those in this stack of booleans, one for each scope, which is true
     // if another sets covers us and ours is not needed.
