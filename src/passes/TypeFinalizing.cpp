@@ -45,9 +45,9 @@ struct TypeFinalizing : public Pass {
     }
 
     // To make a type final, it must have no subtypes.
-    std::unique_ptr<SubTypes> subTypes;
+    std::optional<SubTypes> subTypes;
     if (finalize) {
-      subTypes = std::make_unique<SubTypes>(*module);
+      subTypes = SubTypes(*module);
     }
 
     auto privateTypes = ModuleUtils::getPrivateHeapTypes(*module);
