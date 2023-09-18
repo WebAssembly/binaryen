@@ -155,8 +155,10 @@ Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
 Pass* createTypeRefiningPass();
+Pass* createTypeFinalizingPass();
 Pass* createTypeMergingPass();
 Pass* createTypeSSAPass();
+Pass* createTypeUnFinalizingPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
 

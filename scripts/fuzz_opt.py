@@ -1546,9 +1546,11 @@ opt_choices = [
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
     ("--tuple-optimization",),
+    ("--type-finalizing",),
     ("--type-refining",),
     ("--type-merging",),
     ("--type-ssa",),
+    ("--type-unfinalizing",),
     ("--vacuum",),
 ]
 

@@ -373,6 +373,14 @@ public:
   virtual void modifyArray(HeapType oldType, Array& array) {}
   virtual void modifySignature(HeapType oldType, Signature& sig) {}
 
+  // This additional hook is called after modify* and other operations, and
+  // allows the caller to do things like typeBuilder[i].setOpen(false);
+  //
+  // This is provided the builder, the index we are on, and the old heap type
+  // for that index.
+  virtual void
+  modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) {}
+
   // Subclasses can override this method to modify supertypes. The new
   // supertype, if any, must be a supertype (or the same as) the original
   // supertype.
