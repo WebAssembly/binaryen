@@ -2297,7 +2297,7 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
 
 void FunctionValidator::visitTableFill(TableFill* curr) {
   shouldBeTrue(
-    getModule()->features.hasReferenceTypes(),
+    getModule()->features.hasBulkMemory(),
     curr,
     "table.fill requires reference types [--enable-reference-types]");
   auto* table = getModule()->getTableOrNull(curr->table);
