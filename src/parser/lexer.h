@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 WebAssembly Community Group participants
+ * Copyright 2023 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@
 #include <string_view>
 #include <variant>
 
-#ifndef wasm_wat_lexer_h
-#define wasm_wat_lexer_h
+#ifndef parser_lexer_h
+#define parser_lexer_h
 
 namespace wasm::WATParser {
 
@@ -224,4 +224,4 @@ private:
 
 } // namespace wasm::WATParser
 
-#endif // wasm_wat_lexer_h
+#endif // parser_lexer_h

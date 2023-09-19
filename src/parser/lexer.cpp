@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 WebAssembly Community Group participants
+ * Copyright 2023 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <sstream>
 #include <variant>
 
-#include "wat-lexer.h"
+#include "lexer.h"
 
 using namespace std::string_view_literals;
 
