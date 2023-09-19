@@ -17,6 +17,8 @@
 #ifndef parser_common_h
 #define parser_common_h
 
+#include "support/name.h"
+
 namespace wasm::WATParser {
 
 struct ImportNames {

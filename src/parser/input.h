@@ -18,6 +18,8 @@
 #define parser_input_h
 
 #include "lexer.h"
+#include "support/result.h"
+#include "wasm.h"
 
 namespace wasm::WATParser {
 
