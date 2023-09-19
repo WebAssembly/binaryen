@@ -150,6 +150,8 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder, UnifiedExpressionVis
     noteCallRef(curr->target->type.getHeapType());
   }
 
+  void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
+
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return;
