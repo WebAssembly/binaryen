@@ -22,7 +22,7 @@
 #include <sstream>
 #include <variant>
 
-#include "wat-lexer.h"
+#include "lexer.h"
 
 using namespace std::string_view_literals;
 
