@@ -1,0 +1,16 @@
+;; Test that we error properly on a block with a bad multivalue (inputs).
+
+;; File contents:
+;;
+;; (module
+;;   (func $test
+;;     i32.const 0
+;;     (block (param i32)
+;;       drop
+;;     )
+;;   )
+;; )
+
+;; RUN: not wasm-opt -all %s.wasm 2>&1 | filecheck %s
+
+;; CHECK: control flow inputs are not supported yet
