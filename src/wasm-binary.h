@@ -1615,11 +1615,6 @@ public:
   HeapType getIndexedHeapType();
 
   Type getConcreteType();
-
-  // Get the type of a control flow construct. This is like getType() but adds
-  // validation.
-  Type getControlFlowType();
-
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
