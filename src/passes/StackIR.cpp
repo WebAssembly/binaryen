@@ -194,7 +194,11 @@ private:
       // This is something we should handle, look into it.
       if (inst->type.isConcrete()) {
         bool optimized = false;
-        if (auto* get = inst->origin->dynCast<LocalGet>()) {
+        // Do not optimize multivalue locals, since those will be better
+        // optimized when they are visited in the binary writer and this
+        // optimization would intefere with that one.
+        if (auto* get = inst->origin->dynCast<LocalGet>();
+            get && inst->type.isSingle()) {
           // This is a potential optimization opportunity! See if we
           // can reach the set.
           if (values.size() > 0) {
