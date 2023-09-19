@@ -1,0 +1,12 @@
+(module
+ (type $0 (func))
+ (elem declare func $func)
+ (export "test" (func $func))
+ (func $func (type $0)
+  (table.fill $table
+   (i32.const 0)
+   (ref.func $func)
+   (i32.const 0)
+  )
+ )
+)

@@ -59,11 +59,19 @@ struct MetaDCEGraph {
   std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
   std::unordered_map<Name, Name> globalToDCENode;   // global name => DCE name
   std::unordered_map<Name, Name> tagToDCENode;      // tag name => DCE name
+  std::unordered_map<Name, Name> tableToDCENode;    // table name => DCE name
+  std::unordered_map<Name, Name> memoryToDCENode;   // memory name => DCE name
+  std::unordered_map<Name, Name> dataSegToDCENode;  // seg name => DCE name
+  std::unordered_map<Name, Name> elemSegToDCENode;  // seg name => DCE name
 
   std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
   std::unordered_map<Name, Name> DCENodeToTag;
+  std::unordered_map<Name, Name> DCENodeToTable;
+  std::unordered_map<Name, Name> DCENodeToMemory;
+  std::unordered_map<Name, Name> DCENodeToDataSeg;
+  std::unordered_map<Name, Name> DCENodeToElemSeg;
 
   // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
   // be imported twice, for example. So we don't map a DCE node to an Import,
@@ -100,6 +108,16 @@ struct MetaDCEGraph {
     return getImportId(imp->module, imp->base);
   }
 
+  ImportId getTableImportId(Name name) {
+    auto* imp = wasm.getTable(name);
+    return getImportId(imp->module, imp->base);
+  }
+
+  ImportId getMemoryImportId(Name name) {
+    auto* imp = wasm.getMemory(name);
+    return getImportId(imp->module, imp->base);
+  }
+
   // import module.base => DCE name
   std::unordered_map<Name, Name> importIdToDCENode;
 
@@ -132,6 +150,30 @@ struct MetaDCEGraph {
       tagToDCENode[tag->name] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
+    ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
+      auto dceName = getName("table", table->name.toString());
+      DCENodeToTable[dceName] = table->name;
+      tableToDCENode[table->name] = dceName;
+      nodes[dceName] = DCENode(dceName);
+    });
+    ModuleUtils::iterDefinedMemories(wasm, [&](Memory* memory) {
+      auto dceName = getName("memory", memory->name.toString());
+      DCENodeToMemory[dceName] = memory->name;
+      memoryToDCENode[memory->name] = dceName;
+      nodes[dceName] = DCENode(dceName);
+    });
+    for (auto& seg : wasm.elementSegments) {
+      auto dceName = getName("eseg", seg->name.toString());
+      DCENodeToElemSeg[dceName] = seg->name;
+      elemSegToDCENode[seg->name] = dceName;
+      nodes[dceName] = DCENode(dceName);
+    }
+    for (auto& seg : wasm.dataSegments) {
+      auto dceName = getName("dseg", seg->name.toString());
+      DCENodeToDataSeg[dceName] = seg->name;
+      dataSegToDCENode[seg->name] = dceName;
+      nodes[dceName] = DCENode(dceName);
+    }
     // only process function, global, and tag imports - the table and memory are
     // always there
     ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
@@ -155,6 +197,20 @@ struct MetaDCEGraph {
         importIdToDCENode[id] = dceName;
       }
     });
+    ModuleUtils::iterImportedTables(wasm, [&](Table* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.toString());
+        importIdToDCENode[id] = dceName;
+      }
+    });
+    ModuleUtils::iterImportedMemories(wasm, [&](Memory* import) {
+      auto id = getImportId(import->module, import->base);
+      if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
+        auto dceName = getName("importId", import->name.toString());
+        importIdToDCENode[id] = dceName;
+      }
+    });
     for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
         auto dceName = getName("export", exp->name.toString());
@@ -167,18 +223,13 @@ struct MetaDCEGraph {
       if (exp->kind == ExternalKind::Function) {
         node.reaches.push_back(getFunctionDCEName(exp->value));
       } else if (exp->kind == ExternalKind::Global) {
-        if (!wasm.getGlobal(exp->value)->imported()) {
-          node.reaches.push_back(globalToDCENode[exp->value]);
-        } else {
-          node.reaches.push_back(
-            importIdToDCENode[getGlobalImportId(exp->value)]);
-        }
+        node.reaches.push_back(getGlobalDCEName(exp->value));
       } else if (exp->kind == ExternalKind::Tag) {
-        if (!wasm.getTag(exp->value)->imported()) {
-          node.reaches.push_back(tagToDCENode[exp->value]);
-        } else {
-          node.reaches.push_back(importIdToDCENode[getTagImportId(exp->value)]);
-        }
+        node.reaches.push_back(getTagDCEName(exp->value));
+      } else if (exp->kind == ExternalKind::Table) {
+        node.reaches.push_back(getTableDCEName(exp->value));
+      } else if (exp->kind == ExternalKind::Memory) {
+        node.reaches.push_back(getMemoryDCEName(exp->value));
       }
     }
     // Add initializer dependencies
@@ -236,7 +287,7 @@ struct MetaDCEGraph {
       wasm, [&](DataSegment* segment) { rooter.walk(segment->offset); });
 
     // A parallel scanner for function bodies
-    struct Scanner : public WalkerPass<PostWalker<Scanner>> {
+    struct Scanner : public WalkerPass<PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
       bool isFunctionParallel() override { return true; }
 
       Scanner(MetaDCEGraph* parent) : parent(parent) {}
@@ -245,10 +296,35 @@ struct MetaDCEGraph {
         return std::make_unique<Scanner>(parent);
       }
 
-      void visitCall(Call* curr) { handleFunction(curr->target); }
-      void visitRefFunc(RefFunc* curr) { handleFunction(curr->func); }
-      void visitGlobalGet(GlobalGet* curr) { handleGlobal(curr->name); }
-      void visitGlobalSet(GlobalSet* curr) { handleGlobal(curr->name); }
+      void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (cast->field.is()) {                                                      \
+    handleNameAndKind(cast->field, kind);                                      \
+  }
+
+#include "wasm-delegations-fields.def"
+      }
+
       void visitThrow(Throw* curr) { handleTag(curr->tag); }
       void visitTry(Try* curr) {
         for (auto tag : curr->catchTags) {
@@ -259,36 +335,67 @@ struct MetaDCEGraph {
     private:
       MetaDCEGraph* parent;
 
+      void handleNameAndKind(Name name, ModuleItemKind kind) {
+        switch (kind) {
+          case ModuleItemKind::Function:
+            handleFunction(name);
+            break;
+          case ModuleItemKind::Table:
+            handleTable(name);
+            break;
+          case ModuleItemKind::Memory:
+            handleMemory(name);
+            break;
+          case ModuleItemKind::Global:
+            handleGlobal(name);
+            break;
+          case ModuleItemKind::Tag:
+            handleTag(name);
+            break;
+          case ModuleItemKind::DataSegment:
+            handleDataSegment(name);
+            break;
+          case ModuleItemKind::ElementSegment:
+            handleElementSegment(name);
+            break;
+          default:
+            WASM_UNREACHABLE("invalid kind");
+        }
+      }
+
       void handleFunction(Name name) {
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
           .reaches.push_back(parent->getFunctionDCEName(name));
       }
 
       void handleGlobal(Name name) {
-        if (!getFunction()) {
-          return; // non-function stuff (initializers) are handled separately
-        }
-        Name dceName;
-        if (!getModule()->getGlobal(name)->imported()) {
-          // its a global
-          dceName = parent->globalToDCENode[name];
-        } else {
-          // it's an import.
-          dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
-        }
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
-          .reaches.push_back(dceName);
+          .reaches.push_back(parent->getGlobalDCEName(name));
       }
 
       void handleTag(Name name) {
-        Name dceName;
-        if (!getModule()->getTag(name)->imported()) {
-          dceName = parent->tagToDCENode[name];
-        } else {
-          dceName = parent->importIdToDCENode[parent->getTagImportId(name)];
-        }
         parent->nodes[parent->functionToDCENode[getFunction()->name]]
-          .reaches.push_back(dceName);
+          .reaches.push_back(parent->getTagDCEName(name));
+      }
+
+      void handleTable(Name name) {
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(parent->getTableDCEName(name));
+      }
+
+      void handleMemory(Name name) {
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(parent->getMemoryDCEName(name));
+      }
+
+      void handleElementSegment(Name name) {
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(parent->getElementSegmentDCEName(name));
+      }
+
+      void handleDataSegment(Name name) {
+        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+          .reaches.push_back(parent->getDataSegmentDCEName(name));
       }
     };
 
@@ -302,6 +409,46 @@ struct MetaDCEGraph {
     } else {
       return importIdToDCENode[getFunctionImportId(name)];
     }
+  }
+
+  Name getGlobalDCEName(Name name) {
+    if (!wasm.getGlobal(name)->imported()) {
+      return globalToDCENode[name];
+    } else {
+      return importIdToDCENode[getGlobalImportId(name)];
+    }
+  }
+
+  Name getTagDCEName(Name name) {
+    if (!wasm.getTag(name)->imported()) {
+      return tagToDCENode[name];
+    } else {
+      return importIdToDCENode[getTagImportId(name)];
+    }
+  }
+
+  Name getTableDCEName(Name name) {
+    if (!wasm.getTable(name)->imported()) {
+      return tableToDCENode[name];
+    } else {
+      return importIdToDCENode[getTableImportId(name)];
+    }
+  }
+
+  Name getMemoryDCEName(Name name) {
+    if (!wasm.getMemory(name)->imported()) {
+      return memoryToDCENode[name];
+    } else {
+      return importIdToDCENode[getMemoryImportId(name)];
+    }
+  }
+
+  Name getElementSegmentDCEName(Name name) {
+    return elemSegToDCENode[name];
+  }
+
+  Name getDataSegmentDCEName(Name name) {
+    return dataSegToDCENode[name];
   }
 
 private:

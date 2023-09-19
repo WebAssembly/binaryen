@@ -1,0 +1,11 @@
+[
+  {
+    "name": "tag_import",
+    "import": ["env", "imported_tag"]
+  },
+  {
+    "name": "func_export",
+    "root": true,
+    "export": "test"
+  }
+]
