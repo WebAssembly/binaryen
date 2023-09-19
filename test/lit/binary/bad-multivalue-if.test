@@ -5,8 +5,14 @@
 ;; (module
 ;;   (func $test
 ;;     i32.const 0
-;;     (block (param i32)
-;;       drop
+;;     i32.const 1
+;;     (if (param i32)
+;;       (then
+;;         drop
+;;       )
+;;       (else
+;;         drop
+;;       )
 ;;     )
 ;;   )
 ;; )
