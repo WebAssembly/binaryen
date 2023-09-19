@@ -58,7 +58,9 @@ using ModuleElementKind = ModuleItemKind;
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // Visit or walk an expression to find what things are referenced.
-struct ReferenceFinder : public PostWalker<ReferenceFinder, UnifiedExpressionVisitor<ReferenceFinder>> {
+struct ReferenceFinder
+  : public PostWalker<ReferenceFinder,
+                      UnifiedExpressionVisitor<ReferenceFinder>> {
   // Our findings are placed in these data structures, which the user of this
   // code can then process.
   std::vector<ModuleElement> elements;
