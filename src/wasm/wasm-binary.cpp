@@ -2088,7 +2088,25 @@ HeapType WasmBinaryReader::getIndexedHeapType() {
 Type WasmBinaryReader::getConcreteType() {
   auto type = getType();
   if (!type.isConcrete()) {
-    throw ParseException("non-concrete type when one expected");
+    throwError("non-concrete type when one expected");
+  }
+  return type;
+}
+
+Type WasmBinaryReader::getControlFlowType() {
+  auto type = getType();
+  if (!type.isRef()) {
+    return type;
+  }
+
+  auto heapType = type.getHeapType();
+  if (!heapType.isSignature()) {
+    return type;
+  }
+
+  auto sig = heapType.getSignature();
+  if (sig.params != Type::none) {
+    throwError("control flow inputs are not supported yet");
   }
   return type;
 }
@@ -4236,15 +4254,6 @@ void WasmBinaryReader::pushBlockElements(Block* curr, Type type, size_t start) {
   }
 }
 
-static void checkControlFlowType(Type type) {
-  if (type.isSignature()) {
-    auto sig = type.getSignature();
-    if (type.params != Type::none) {
-      throwError("control flow inputs are not supported yet");
-    }
-  }
-}
-
 void WasmBinaryReader::visitBlock(Block* curr) {
   BYN_TRACE("zz node: Block\n");
   startControlFlow(curr);
@@ -4252,8 +4261,7 @@ void WasmBinaryReader::visitBlock(Block* curr) {
   // that is a common pattern that can be very highly nested.
   std::vector<Block*> stack;
   while (1) {
-    curr->type = getType();
-    checkControlFlowType(curr->type);
+    curr->type = getControlFlowType();
     curr->name = getNextLabel();
     breakStack.push_back({curr->name, curr->type});
     stack.push_back(curr);
@@ -4330,8 +4338,7 @@ Expression* WasmBinaryReader::getBlockOrSingleton(Type type) {
 void WasmBinaryReader::visitIf(If* curr) {
   BYN_TRACE("zz node: If\n");
   startControlFlow(curr);
-  curr->type = getType();
-  checkControlFlowType(curr->type);
+  curr->type = getControlFlowType();
   curr->condition = popNonVoidExpression();
   curr->ifTrue = getBlockOrSingleton(curr->type);
   if (lastSeparator == BinaryConsts::Else) {
@@ -4346,8 +4353,7 @@ void WasmBinaryReader::visitIf(If* curr) {
 void WasmBinaryReader::visitLoop(Loop* curr) {
   BYN_TRACE("zz node: Loop\n");
   startControlFlow(curr);
-  curr->type = getType();
-  checkControlFlowType(curr->type);
+  curr->type = getControlFlowType();
   curr->name = getNextLabel();
   breakStack.push_back({curr->name, Type::none});
   // find the expressions in the block, and create the body
@@ -6794,8 +6800,7 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   // For simplicity of implementation, like if scopes, we create a hidden block
   // within each try-body and catch-body, and let branches target those inner
   // blocks instead.
-  curr->type = getType();
-  checkControlFlowType(curr->type);
+  curr->type = getControlFlowType();
   curr->body = getBlockOrSingleton(curr->type);
 
   Builder builder(wasm);
