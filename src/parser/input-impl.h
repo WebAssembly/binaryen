@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "input.h"
+
 #ifndef parser_input_impl_h
 #define parser_input_impl_h
 
