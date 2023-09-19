@@ -148,6 +148,11 @@ private:
   InsertOrderedMap<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
+
+  // local.get, local.tee, and glboal.get expressions that will be followed by
+  // tuple.extracts. We can optimize these by getting only the local for the
+  // extracted index.
+  std::unordered_map<Expression*, Index> extractedGets;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
