@@ -16,7 +16,7 @@
 
 #include <cmath>
 
-#include "wat-lexer.h"
+#include "parser/lexer.h"
 #include "gtest/gtest.h"
 
 using namespace wasm::WATParser;

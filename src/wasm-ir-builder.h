@@ -45,15 +45,13 @@ public:
   [[nodiscard]] Result<Expression*> build();
 
   // Call visit() on an existing Expression with its non-child fields
-  // initialized to initialize the child fields and refinalize it. The specific
-  // visitors are internal implementation details.
+  // initialized to initialize the child fields and refinalize it.
   [[nodiscard]] Result<> visit(Expression*);
-  [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<> visitBlock(Block*);
-  [[nodiscard]] Result<> visitReturn(Return*);
-  [[nodiscard]] Result<> visitStructNew(StructNew*);
-  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
 
+  // Handle the boundaries of control flow structures. Users may choose to use
+  // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
+  // either way must call `visitEnd` and friends at the appropriate times.
+  [[nodiscard]] Result<> visitBlockStart(Block* block);
   [[nodiscard]] Result<> visitEnd();
 
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
@@ -170,6 +168,13 @@ public:
   // [[nodiscard]] Result<> makeStringSliceIter();
 
   void setFunction(Function* func) { this->func = func; }
+
+  // Private functions that must be public for technical reasons.
+  [[nodiscard]] Result<> visitExpression(Expression*);
+  [[nodiscard]] Result<> visitBlock(Block*);
+  [[nodiscard]] Result<> visitReturn(Return*);
+  [[nodiscard]] Result<> visitStructNew(StructNew*);
+  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
 
 private:
   Module& wasm;

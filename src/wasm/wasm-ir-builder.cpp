@@ -233,7 +233,7 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 }
 
 Result<> IRBuilder::visitBlock(Block* curr) {
-  scopeStack.push_back({{}, curr});
+  // No children; pushing and finalizing will be handled by `visit`.
   return Ok{};
 }
 
@@ -278,6 +278,11 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
     CHECK_ERR(init);
     curr->init = *init;
   }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitBlockStart(Block* curr) {
+  scopeStack.push_back({{}, curr});
   return Ok{};
 }
 
@@ -347,7 +352,7 @@ Result<> IRBuilder::makeBlock(Name label, Type type) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
   block->type = type;
-  scopeStack.push_back({{}, block});
+  CHECK_ERR(visitBlockStart(block));
   return Ok{};
 }
 
