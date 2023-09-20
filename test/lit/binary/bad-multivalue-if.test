@@ -1,0 +1,22 @@
+;; Test that we error properly on an if with a bad multivalue (inputs).
+
+;; File contents:
+;;
+;; (module
+;;   (func $test
+;;     i32.const 0
+;;     i32.const 1
+;;     (if (param i32)
+;;       (then
+;;         drop
+;;       )
+;;       (else
+;;         drop
+;;       )
+;;     )
+;;   )
+;; )
+
+;; RUN: not wasm-opt -all %s.wasm 2>&1 | filecheck %s
+
+;; CHECK: control flow inputs are not supported yet
