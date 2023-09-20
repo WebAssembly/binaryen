@@ -1119,6 +1119,26 @@
   )
  )
 
+;; CHECK:      (func $if-else-atypical-condition (type $void)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.eqz
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(func $if-else-atypical-condition
+ i32.const 0
+ (if (then) (else))
+ (if (i32.const 0) (i32.eqz) (then) (else))
+)
+
  ;; CHECK:      (func $if-else-mixed (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (if (result i32)

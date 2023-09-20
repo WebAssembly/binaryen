@@ -611,77 +611,86 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
 }
 
 template<typename Ctx> Result<> foldedinstrs(Ctx& ctx) {
-  if (auto blockinst = foldedBlockinstr(ctx)) {
-    CHECK_ERR(blockinst);
-    return Ok{};
-  }
-  // Parse an arbitrary number of folded instructions.
-  if (ctx.in.takeLParen()) {
-    // A stack of (start, end) position pairs defining the positions of
-    // instructions that need to be parsed after their folded children.
-    std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
-
-    // Begin a folded instruction. Push its start position and a placeholder
-    // end position.
-    foldedInstrs.push_back({ctx.in.getPos(), {}});
-    while (!foldedInstrs.empty()) {
-      // Consume everything up to the next paren. This span will be parsed as
-      // an instruction later after its folded children have been parsed.
-      if (!ctx.in.takeUntilParen()) {
-        return ctx.in.err(foldedInstrs.back().first,
-                          "unterminated folded instruction");
-      }
-
-      if (!foldedInstrs.back().second) {
-        // The folded instruction we just started should end here.
-        foldedInstrs.back().second = ctx.in.getPos();
-      }
-
-      // We have either the start of a new folded child or the end of the last
-      // one.
-      if (auto blockinst = foldedBlockinstr(ctx)) {
-        CHECK_ERR(blockinst);
-      } else if (ctx.in.takeLParen()) {
-        foldedInstrs.push_back({ctx.in.getPos(), {}});
-      } else if (ctx.in.takeRParen()) {
-        auto [start, end] = foldedInstrs.back();
-        assert(end && "Should have found end of instruction");
-        foldedInstrs.pop_back();
-
-        WithPosition with(ctx, start);
-        if (auto inst = plaininstr(ctx)) {
-          CHECK_ERR(inst);
-        } else {
-          return ctx.in.err(start, "expected folded instruction");
-        }
-
-        if (ctx.in.getPos() != *end) {
-          return ctx.in.err("expected end of instruction");
-        }
-      } else {
-        WASM_UNREACHABLE("expected paren");
-      }
+  while (true) {
+    if (auto blockinst = foldedBlockinstr(ctx)) {
+      CHECK_ERR(blockinst);
+      continue;
     }
-    return Ok{};
+    if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else"sv)) {
+      // This is not the beginning of a folded instruction, despite looking like
+      // one.
+      break;
+    }
+    // Parse an arbitrary number of folded instructions.
+    if (ctx.in.takeLParen()) {
+      // A stack of (start, end) position pairs defining the positions of
+      // instructions that need to be parsed after their folded children.
+      std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
+
+      // Begin a folded instruction. Push its start position and a placeholder
+      // end position.
+      foldedInstrs.push_back({ctx.in.getPos(), {}});
+      while (!foldedInstrs.empty()) {
+        // Consume everything up to the next paren. This span will be parsed as
+        // an instruction later after its folded children have been parsed.
+        if (!ctx.in.takeUntilParen()) {
+          return ctx.in.err(foldedInstrs.back().first,
+                            "unterminated folded instruction");
+        }
+
+        if (!foldedInstrs.back().second) {
+          // The folded instruction we just started should end here.
+          foldedInstrs.back().second = ctx.in.getPos();
+        }
+
+        // We have either the start of a new folded child or the end of the last
+        // one.
+        if (auto blockinst = foldedBlockinstr(ctx)) {
+          CHECK_ERR(blockinst);
+        } else if (ctx.in.takeLParen()) {
+          foldedInstrs.push_back({ctx.in.getPos(), {}});
+        } else if (ctx.in.takeRParen()) {
+          auto [start, end] = foldedInstrs.back();
+          assert(end && "Should have found end of instruction");
+          foldedInstrs.pop_back();
+
+          WithPosition with(ctx, start);
+          if (auto inst = plaininstr(ctx)) {
+            CHECK_ERR(inst);
+          } else {
+            return ctx.in.err(start, "expected folded instruction");
+          }
+
+          if (ctx.in.getPos() != *end) {
+            return ctx.in.err("expected end of instruction");
+          }
+        } else {
+          WASM_UNREACHABLE("expected paren");
+        }
+      }
+      continue;
+    }
+    break;
   }
-  return ctx.in.err("expected folded instruction");
+  return Ok{};
 }
 
 template<typename Ctx> Result<> instrs(Ctx& ctx) {
   while (true) {
-    // Try to parse a folded instruction tree.
-    if (!foldedinstrs(ctx).getErr()) {
-      continue;
-    }
-
-    // Otherwise parse a non-folded instruction.
+    // Parse a non-folded instruction.
     if (auto inst = instr(ctx)) {
       CHECK_ERR(inst);
     } else {
-      break;
+      // Parse any folded instructions, then try again with an unfolded
+      // instruction. If we still can't parse, then we're done.
+      CHECK_ERR(foldedinstrs(ctx));
+      if (auto next = instr(ctx)) {
+        CHECK_ERR(inst);
+      } else {
+        break;
+      }
     }
   }
-
   return Ok{};
 }
 
@@ -770,7 +779,7 @@ template<typename Ctx> MaybeResult<> block(Ctx& ctx, bool folded) {
 }
 
 // if ::= 'if' label blocktype instr1* ('else' id1? instr2*)? 'end' id2?
-//      | '(' 'if' label blocktype instr* '(' 'then' instr1* ')'
+//      | '(' 'if' label blocktype foldedinstr* '(' 'then' instr1* ')'
 //            ('(' 'else' instr2* ')')? ')'
 template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();
