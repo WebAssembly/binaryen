@@ -294,6 +294,11 @@ Result<> IRBuilder::visitIfStart(If* iff, Name label) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitLoopStart(Loop* loop) {
+  scopeStack.push_back(ScopeCtx::makeLoop(loop));
+  return Ok{};
+}
+
 Result<Expression*> IRBuilder::finishScope(Block* block) {
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
@@ -403,6 +408,13 @@ Result<> IRBuilder::visitEnd() {
     block->finalize(block->type);
     push(block);
     return Ok{};
+  } else if (auto* loop = scope.getLoop()) {
+    auto expr = finishScope();
+    CHECK_ERR(expr);
+    loop->body = *expr;
+    loop->finalize(loop->type);
+    push(loop);
+    return Ok{};
   }
   auto label = scope.getLabel();
   Expression* scopeExpr = nullptr;
@@ -411,13 +423,13 @@ Result<> IRBuilder::visitEnd() {
     CHECK_ERR(expr);
     iff->ifTrue = *expr;
     iff->ifFalse = nullptr;
-    iff->finalize();
+    iff->finalize(iff->type);
     scopeExpr = iff;
   } else if (auto* iff = scope.getElse()) {
     auto expr = finishScope();
     CHECK_ERR(expr);
     iff->ifFalse = *expr;
-    iff->finalize();
+    iff->finalize(iff->type);
     scopeExpr = iff;
   }
   assert(scopeExpr && "unexpected scope kind");
@@ -449,9 +461,12 @@ Result<> IRBuilder::makeIf(Name label, Type type) {
   return visitIfStart(iff, label);
 }
 
-// Result<> IRBuilder::makeIf() {}
-
-// Result<> IRBuilder::makeLoop() {}
+Result<> IRBuilder::makeLoop(Name label, Type type) {
+  auto* loop = wasm.allocator.alloc<Loop>();
+  loop->name = label;
+  loop->type = type;
+  return visitLoopStart(loop);
+}
 
 // Result<> IRBuilder::makeBreak() {}
 

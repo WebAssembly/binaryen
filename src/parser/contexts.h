@@ -309,8 +309,12 @@ struct NullInstrParserCtx {
   Result<> makeIf(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
-  Result<> visitEnd(Index) { return Ok{}; }
-  Result<> visitElse(Index) { return Ok{}; }
+  Result<> visitElse() { return Ok{}; }
+  template<typename BlockTypeT>
+  Result<> makeLoop(Index, std::optional<Name>, BlockTypeT) {
+    return Ok{};
+  }
+  Result<> visitEnd() { return Ok{}; }
 
   Result<> makeUnreachable(Index) { return Ok{}; }
   Result<> makeNop(Index) { return Ok{}; }
@@ -989,9 +993,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
   }
 
-  Result<> visitEnd(Index pos) { return withLoc(pos, irBuilder.visitEnd()); }
+  Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
 
-  Result<> visitElse(Index pos) { return withLoc(pos, irBuilder.visitElse()); }
+  Result<> makeLoop(Index pos, std::optional<Name> label, HeapType type) {
+    // TODO: validate labels?
+    // TODO: Move error on input types to here?
+    return withLoc(
+      pos,
+      irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> visitEnd() { return withLoc(irBuilder.visitEnd()); }
 
   Result<> makeUnreachable(Index pos) {
     return withLoc(pos, irBuilder.makeUnreachable());

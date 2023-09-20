@@ -810,6 +810,38 @@
   nop
  )
 
+
+ ;; CHECK:      (func $multivalue-nested (type $ret2) (result i32 i32)
+ ;; CHECK-NEXT:  (local $scratch (i32 i32))
+ ;; CHECK-NEXT:  (block (result i32 i32)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (local.set $scratch
+ ;; CHECK-NEXT:    (block (result i32 i32)
+ ;; CHECK-NEXT:     (block (result i32 i32)
+ ;; CHECK-NEXT:      (tuple.make
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (local.get $scratch)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $multivalue-nested (type $ret2)
+  block (type $ret2)
+   nop
+   block (type $ret2)
+    block (type $ret2)
+     i32.const 0
+     i32.const 1
+    end
+   end
+   nop
+  end
+ )
+
  ;; CHECK:      (func $if-else (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
@@ -883,6 +915,30 @@
   else
    f64.const 2
    drop
+  end
+ )
+
+ ;; CHECK:      (func $if-else-folded-body (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-body
+  i32.const 0
+  if
+   (drop
+    (f32.const 1)
+   )
+  else
+   (drop
+    (f32.const 2)
+   )
   end
  )
 
@@ -1190,35 +1246,181 @@
   end
  )
 
- ;; CHECK:      (func $multivalue-nested (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:  (local $scratch (i32 i32))
- ;; CHECK-NEXT:  (block (result i32 i32)
+ ;; CHECK:      (func $loop (type $void)
+ ;; CHECK-NEXT:  (loop
  ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (local.set $scratch
- ;; CHECK-NEXT:    (block (result i32 i32)
- ;; CHECK-NEXT:     (block (result i32 i32)
- ;; CHECK-NEXT:      (tuple.make
- ;; CHECK-NEXT:       (i32.const 0)
- ;; CHECK-NEXT:       (i32.const 1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (local.get $scratch)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $multivalue-nested (type $ret2)
-  block (type $ret2)
-   nop
-   block (type $ret2)
-    block (type $ret2)
-     i32.const 0
-     i32.const 1
-    end
-   end
+ (func $loop
+  loop
    nop
   end
+ )
+
+ ;; CHECK:      (func $loop-empty (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-empty
+  loop
+  end
+ )
+
+ ;; CHECK:      (func $loop-many (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-many
+  loop
+   nop
+   nop
+  end
+ )
+
+ ;; CHECK:      (func $loop-nested (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-nested
+  loop
+   i32.const 0
+   drop
+  end
+ )
+
+ ;; CHECK:      (func $loop-folded-body (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-body
+  loop
+   (drop
+    (i32.const 0)
+   )
+  end
+ )
+
+ ;; CHECK:      (func $loop-labeled (type $void)
+ ;; CHECK-NEXT:  (loop $l
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-labeled
+  loop $l
+   nop
+  end $l
+ )
+
+ ;; CHECK:      (func $loop-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (loop (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-result (result i32)
+  loop (result i32)
+   i32.const 0
+  end
+ )
+
+ ;; CHECK:      (func $loop-labeled-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (loop $l (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-labeled-result (result i32)
+  loop $l (result i32)
+   i32.const 0
+  end $l
+ )
+
+ ;; CHECK:      (func $loop-folded (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded
+  (loop
+   (nop)
+  )
+ )
+
+ ;; CHECK:      (func $loop-folded-empty (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-empty
+  (loop)
+ )
+
+ ;; CHECK:      (func $loop-folded-many (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-many
+  (loop
+   nop
+   nop
+  )
+ )
+
+ ;; CHECK:      (func $loop-folded-nested (type $void)
+ ;; CHECK-NEXT:  (loop
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-nested
+  (loop
+   (drop
+    (f32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $loop-folded-labeled (type $void)
+ ;; CHECK-NEXT:  (loop $l
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-labeled
+  (loop $l
+   nop
+  )
+ )
+
+ ;; CHECK:      (func $loop-folded-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (loop (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-result (result i32)
+  (loop (result i32)
+   i32.const 0
+  )
+ )
+
+ ;; CHECK:      (func $loop-folded-labeled-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (loop $l (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop-folded-labeled-result (result i32)
+  (loop $l (result i32)
+   i32.const 0
+  )
  )
 
  ;; CHECK:      (func $binary (type $15) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
