@@ -272,8 +272,6 @@ template<typename Ctx> struct TypeParserCtx {
 };
 
 struct NullInstrParserCtx {
-  using InstrT = Ok;
-  using InstrsT = Ok;
   using ExprT = Ok;
 
   using FieldIdxT = Ok;
@@ -284,12 +282,7 @@ struct NullInstrParserCtx {
 
   using MemargT = Ok;
 
-  InstrsT makeInstrs() { return Ok{}; }
-  void appendInstr(InstrsT&, InstrT) {}
-  InstrsT finishInstrs(InstrsT&) { return Ok{}; }
-
-  ExprT makeExpr(InstrsT) { return Ok{}; }
-  Result<ExprT> instrToExpr(InstrT) { return Ok{}; }
+  Result<> makeExpr() { return Ok{}; }
 
   template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
     return Ok{};
@@ -309,118 +302,122 @@ struct NullInstrParserCtx {
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
-  InstrT makeBlock(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeBlock(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
   template<typename BlockTypeT>
-  InstrT makeIf(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeIf(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
-  InstrT visitEnd(Index, InstrsT) { return Ok{}; }
-  InstrT visitElse(Index) { return Ok{}; }
+  Result<> visitEnd(Index) { return Ok{}; }
+  Result<> visitElse(Index) { return Ok{}; }
 
-  InstrT makeUnreachable(Index) { return Ok{}; }
-  InstrT makeNop(Index) { return Ok{}; }
-  InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
-  InstrT makeUnary(Index, UnaryOp) { return Ok{}; }
-  template<typename ResultsT> InstrT makeSelect(Index, ResultsT*) {
+  Result<> makeUnreachable(Index) { return Ok{}; }
+  Result<> makeNop(Index) { return Ok{}; }
+  Result<> makeBinary(Index, BinaryOp) { return Ok{}; }
+  Result<> makeUnary(Index, UnaryOp) { return Ok{}; }
+  template<typename ResultsT> Result<> makeSelect(Index, ResultsT*) {
     return Ok{};
   }
-  InstrT makeDrop(Index) { return Ok{}; }
-  InstrT makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
-  InstrT makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
-  InstrT makeLocalGet(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeLocalTee(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeLocalSet(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
-  InstrT makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
+  Result<> makeDrop(Index) { return Ok{}; }
+  Result<> makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeLocalGet(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeLocalTee(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeLocalSet(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
+  Result<> makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
 
-  InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
-  InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
-  InstrT makeF32Const(Index, float) { return Ok{}; }
-  InstrT makeF64Const(Index, double) { return Ok{}; }
-  InstrT makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
+  Result<> makeI32Const(Index, uint32_t) { return Ok{}; }
+  Result<> makeI64Const(Index, uint64_t) { return Ok{}; }
+  Result<> makeF32Const(Index, float) { return Ok{}; }
+  Result<> makeF64Const(Index, double) { return Ok{}; }
+  Result<> makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
+  Result<> makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
+  Result<> makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
+  Result<> makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicFence(Index) { return Ok{}; }
-  InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
-  InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
-  InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
-  InstrT makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
-  InstrT makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
-  InstrT makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeSIMDLoadStoreLane(
+  Result<> makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
+  Result<> makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
+  Result<> makeAtomicFence(Index) { return Ok{}; }
+  Result<> makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
+  Result<> makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
+  Result<> makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) {
+    return Ok{};
+  }
+  Result<> makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
+  Result<> makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
+  Result<> makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  Result<> makeSIMDLoadStoreLane(
     Index, SIMDLoadStoreLaneOp, MemoryIdxT*, MemargT, uint8_t) {
     return Ok{};
   }
-  InstrT makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
-  InstrT makeDataDrop(Index, DataIdxT) { return Ok{}; }
+  Result<> makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
+  Result<> makeDataDrop(Index, DataIdxT) { return Ok{}; }
 
-  InstrT makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
-  InstrT makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
+  Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
 
-  InstrT makeReturn(Index) { return Ok{}; }
-  template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
+  Result<> makeReturn(Index) { return Ok{}; }
+  template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
     return Ok{};
   }
-  InstrT makeRefIsNull(Index) { return Ok{}; }
+  Result<> makeRefIsNull(Index) { return Ok{}; }
 
-  InstrT makeRefEq(Index) { return Ok{}; }
+  Result<> makeRefEq(Index) { return Ok{}; }
 
-  InstrT makeRefI31(Index) { return Ok{}; }
-  InstrT makeI31Get(Index, bool) { return Ok{}; }
+  Result<> makeRefI31(Index) { return Ok{}; }
+  Result<> makeI31Get(Index, bool) { return Ok{}; }
 
-  template<typename HeapTypeT> InstrT makeStructNew(Index, HeapTypeT) {
+  template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeStructNewDefault(Index, HeapTypeT) {
+  template<typename HeapTypeT> Result<> makeStructNewDefault(Index, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
+  Result<> makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeStructSet(Index, HeapTypeT, FieldIdxT) {
+  Result<> makeStructSet(Index, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayNew(Index, HeapTypeT) {
+  template<typename HeapTypeT> Result<> makeArrayNew(Index, HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayNewDefault(Index, HeapTypeT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT>
-  InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
+  template<typename HeapTypeT> Result<> makeArrayNewDefault(Index, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+  Result<> makeArrayNewData(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayGet(Index, HeapTypeT, bool) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> InstrT makeArraySet(Index, HeapTypeT) {
-    return Ok{};
-  }
-  InstrT makeArrayLen(Index) { return Ok{}; }
   template<typename HeapTypeT>
-  InstrT makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
+  Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayFill(Index, HeapTypeT) {
+  template<typename HeapTypeT> Result<> makeArrayGet(Index, HeapTypeT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> Result<> makeArraySet(Index, HeapTypeT) {
+    return Ok{};
+  }
+  Result<> makeArrayLen(Index) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<> makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
     return Ok{};
   }
 };
@@ -509,7 +506,6 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    ImportNames* import,
                    TypeUseT type,
                    std::optional<LocalsT>,
-                   std::optional<InstrsT>,
                    Index pos);
 
   Result<Memory*>
@@ -745,7 +741,6 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
-                   std::optional<InstrsT>,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -790,10 +785,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalTypeT = Ok;
   using TypeUseT = HeapType;
 
-  // Keep track of instructions internally rather than letting the general
-  // parser collect them.
-  using InstrT = Ok;
-  using InstrsT = Ok;
   using ExprT = Expression*;
 
   using FieldIdxT = Index;
@@ -853,14 +844,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
     return type;
   }
-
-  Ok makeInstrs() { return Ok{}; }
-
-  void appendInstr(Ok&, InstrT instr) {}
-
-  Result<InstrsT> finishInstrs(Ok&) { return Ok{}; }
-
-  Result<Expression*> instrToExpr(Ok&) { return irBuilder.build(); }
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -957,7 +940,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
-                   std::optional<InstrsT>,
                    Index pos);
 
   Result<> addGlobal(Name,
@@ -977,7 +959,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr(InstrsT& instrs) { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return irBuilder.build(); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
@@ -1007,9 +989,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
   }
 
-  Result<> visitEnd(Index pos, InstrsT) {
-    return withLoc(pos, irBuilder.visitEnd());
-  }
+  Result<> visitEnd(Index pos) { return withLoc(pos, irBuilder.visitEnd()); }
 
   Result<> visitElse(Index pos) { return withLoc(pos, irBuilder.visitElse()); }
 

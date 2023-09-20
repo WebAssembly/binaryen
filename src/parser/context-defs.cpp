@@ -55,7 +55,6 @@ Result<> ParseDefsCtx::addFunc(Name,
                                ImportNames*,
                                TypeUseT,
                                std::optional<LocalsT>,
-                               std::optional<InstrsT>,
                                Index pos) {
   CHECK_ERR(withLoc(pos, irBuilder.visitEnd()));
   auto body = irBuilder.build();
