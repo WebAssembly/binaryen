@@ -53,8 +53,8 @@ public:
   // either way must call `visitEnd` and friends at the appropriate times.
   [[nodiscard]] Result<> visitBlockStart(Block* block);
   [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
-  [[nodiscard]] Result<> visitEnd();
   [[nodiscard]] Result<> visitElse();
+  [[nodiscard]] Result<> visitEnd();
 
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
   // is generally safer than calling `visit` because the function signatures

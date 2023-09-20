@@ -375,6 +375,20 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   return ret;
 }
 
+Result<> IRBuilder::visitElse() {
+  auto& scope = getScope();
+  auto* iff = scope.getIf();
+  if (!iff) {
+    return Err{"unexpected else"};
+  }
+  auto label = scope.getLabel();
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  iff->ifTrue = *expr;
+  scopeStack.push_back(ScopeCtx::makeElse(iff, label));
+  return Ok{};
+}
+
 Result<> IRBuilder::visitEnd() {
   auto& scope = getScope();
   if (scope.isNone()) {
@@ -414,20 +428,6 @@ Result<> IRBuilder::visitEnd() {
   } else {
     push(scopeExpr);
   }
-  return Ok{};
-}
-
-Result<> IRBuilder::visitElse() {
-  auto& scope = getScope();
-  auto* iff = scope.getIf();
-  if (!iff) {
-    return Err{"unexpected else"};
-  }
-  auto label = scope.getLabel();
-  auto expr = finishScope();
-  CHECK_ERR(expr);
-  iff->ifTrue = *expr;
-  scopeStack.push_back(ScopeCtx::makeElse(iff, label));
   return Ok{};
 }
 
