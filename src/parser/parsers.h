@@ -48,11 +48,14 @@ MaybeResult<typename Ctx::InstrT> unfoldedBlockinstr(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> blockinstr(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> plaininstr(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx&);
-template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::InstrsT> instrs(Ctx&, bool requireFolded = false);
+template<typename Ctx> Result<typename Ctx::InstrsT> foldedinstrs(Ctx&);
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemargT> memarg(Ctx&, uint32_t);
 template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::InstrT> block(Ctx&, bool);
+template<typename Ctx> MaybeResult<typename Ctx::InstrT> ifelse(Ctx&, bool);
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<typename Ctx::InstrT> makeNop(Ctx&, Index);
@@ -594,6 +597,9 @@ MaybeResult<typename Ctx::InstrT> foldedBlockinstr(Ctx& ctx) {
   if (auto i = block(ctx, true)) {
     return i;
   }
+  if (auto i = ifelse(ctx, true)) {
+    return i;
+  }
   // TODO: Other block instructions
   return {};
 }
@@ -601,6 +607,9 @@ MaybeResult<typename Ctx::InstrT> foldedBlockinstr(Ctx& ctx) {
 template<typename Ctx>
 MaybeResult<typename Ctx::InstrT> unfoldedBlockinstr(Ctx& ctx) {
   if (auto i = block(ctx, false)) {
+    return i;
+  }
+  if (auto i = ifelse(ctx, false)) {
     return i;
   }
   // TODO: Other block instructions
@@ -635,7 +644,7 @@ template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
   // Check for valid strings that are not instructions.
   if (auto tok = ctx.in.peek()) {
     if (auto keyword = tok->getKeyword()) {
-      if (keyword == "end"sv) {
+      if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv) {
         return {};
       }
     }
@@ -650,13 +659,20 @@ template<typename Ctx> MaybeResult<typename Ctx::InstrT> instr(Ctx& ctx) {
   return {};
 }
 
-template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::InstrsT> instrs(Ctx& ctx, bool requireFolded) {
   auto insts = ctx.makeInstrs();
+  bool parsedFolded = false;
 
   while (true) {
     if (auto blockinst = foldedBlockinstr(ctx)) {
       CHECK_ERR(blockinst);
       ctx.appendInstr(insts, *blockinst);
+      parsedFolded = true;
+      if (requireFolded) {
+        // Do not continue to parse another sibling folded instruction.
+        break;
+      }
       continue;
     }
     // Parse an arbitrary number of folded instructions.
@@ -686,6 +702,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
         if (auto blockinst = foldedBlockinstr(ctx)) {
           CHECK_ERR(blockinst);
           ctx.appendInstr(insts, *blockinst);
+          parsedFolded = true;
         } else if (ctx.in.takeLParen()) {
           foldedInstrs.push_back({ctx.in.getPos(), {}});
         } else if (ctx.in.takeRParen()) {
@@ -697,6 +714,7 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
           if (auto inst = plaininstr(ctx)) {
             CHECK_ERR(inst);
             ctx.appendInstr(insts, *inst);
+            parsedFolded = true;
           } else {
             return ctx.in.err(start, "expected folded instruction");
           }
@@ -708,7 +726,16 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
           WASM_UNREACHABLE("expected paren");
         }
       }
+      if (requireFolded) {
+        // Do not continue to parse another sibling folded instruction.
+        break;
+      }
       continue;
+    }
+
+    if (requireFolded) {
+      // Do not continue to parse a non-folded instruction.
+      break;
     }
 
     // A non-folded instruction.
@@ -720,7 +747,15 @@ template<typename Ctx> Result<typename Ctx::InstrsT> instrs(Ctx& ctx) {
     }
   }
 
+  if (requireFolded && !parsedFolded) {
+    return ctx.in.err("expected folded instructions");
+  }
+
   return ctx.finishInstrs(insts);
+}
+
+template<typename Ctx> Result<typename Ctx::InstrsT> foldedinstrs(Ctx& ctx) {
+  return instrs(ctx, true);
 }
 
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
@@ -807,7 +842,81 @@ MaybeResult<typename Ctx::InstrT> block(Ctx& ctx, bool folded) {
     }
   }
 
-  return ctx.finishBlock(pos, std::move(*insts));
+  return ctx.visitEnd(pos, std::move(*insts));
+}
+
+// if ::= 'if' label blocktype instr1* ('else' id1? instr2*)? 'end' id2?
+//      | '(' 'if' label blocktype instr* '(' 'then' instr1* ')'
+//            ('(' 'else' instr2* ')')? ')'
+template<typename Ctx>
+MaybeResult<typename Ctx::InstrT> ifelse(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if (folded) {
+    if (!ctx.in.takeSExprStart("if"sv)) {
+      return {};
+    }
+  } else {
+    if (!ctx.in.takeKeyword("if"sv)) {
+      return {};
+    }
+  }
+
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  if (folded) {
+    CHECK_ERR(foldedinstrs(ctx));
+  }
+
+  ctx.makeIf(pos, label, *type);
+
+  if (folded && !ctx.in.takeSExprStart("then"sv)) {
+    return ctx.in.err("expected 'then' before if instructions");
+  }
+
+  auto insts = instrs(ctx);
+  CHECK_ERR(insts);
+
+  if (folded && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected ')' at end of then block");
+  }
+
+  if ((folded && ctx.in.takeSExprStart("else"sv)) ||
+      (!folded && ctx.in.takeKeyword("else"sv))) {
+    auto id1 = ctx.in.takeID();
+    if (id1 && id1 != label) {
+      return ctx.in.err("else label does not match if label");
+    }
+
+    ctx.visitElse(pos);
+
+    auto elseInsts = instrs(ctx);
+    CHECK_ERR(elseInsts);
+
+    if (folded && !ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of else block");
+    }
+  }
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of if");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of if");
+    }
+  }
+
+  auto id2 = ctx.in.takeID();
+  if (id2 && id2 != label) {
+    return ctx.in.err("end label does not match if label");
+  }
+
+  return ctx.visitEnd(pos, std::move(*insts));
 }
 
 template<typename Ctx>
@@ -893,11 +1002,6 @@ Result<typename Ctx::InstrT> makeGlobalSet(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<typename Ctx::InstrT> makeBlock(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<typename Ctx::InstrT> makeThenOrElse(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

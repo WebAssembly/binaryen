@@ -5,17 +5,17 @@
 (module $parse
  ;; types
 
+ ;; CHECK:      (type $void (sub (func)))
+
  ;; CHECK:      (type $ret2 (func (result i32 i32)))
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $void (sub (func)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (type $pair (struct (field (mut i32)) (field (mut i64))))
 
   ;; CHECK:      (type $a1 (array i64))
-
-  ;; CHECK:      (type $4 (func (result i32)))
 
   ;; CHECK:      (type $5 (func (param i32 i64)))
 
@@ -233,7 +233,7 @@
  ;; CHECK:      (func $f2 (type $8) (param $x i32)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
- ;; CHECK:      (func $f3 (type $4) (result i32)
+ ;; CHECK:      (func $f3 (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
  (func $f3 (result i32)
@@ -307,7 +307,7 @@
   nop
  )
 
- ;; CHECK:      (func $add (type $4) (result i32)
+ ;; CHECK:      (func $add (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 2)
@@ -319,7 +319,7 @@
   i32.add
  )
 
- ;; CHECK:      (func $add-folded (type $4) (result i32)
+ ;; CHECK:      (func $add-folded (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const 2)
@@ -332,7 +332,7 @@
   )
  )
 
- ;; CHECK:      (func $add-stacky (type $4) (result i32)
+ ;; CHECK:      (func $add-stacky (type $2) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (block (result i32)
@@ -352,7 +352,7 @@
   i32.add
  )
 
- ;; CHECK:      (func $add-stacky-2 (type $4) (result i32)
+ ;; CHECK:      (func $add-stacky-2 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (i32.const 1)
@@ -372,7 +372,7 @@
   i32.add
  )
 
- ;; CHECK:      (func $add-stacky-3 (type $4) (result i32)
+ ;; CHECK:      (func $add-stacky-3 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (local.set $scratch
  ;; CHECK-NEXT:   (i32.add
@@ -390,7 +390,7 @@
   nop
  )
 
- ;; CHECK:      (func $add-stacky-4 (type $4) (result i32)
+ ;; CHECK:      (func $add-stacky-4 (type $2) (result i32)
  ;; CHECK-NEXT:  (local $scratch i32)
  ;; CHECK-NEXT:  (local $scratch_1 i32)
  ;; CHECK-NEXT:  (local $scratch_2 i32)
@@ -424,7 +424,7 @@
   nop
  )
 
- ;; CHECK:      (func $add-unreachable (type $4) (result i32)
+ ;; CHECK:      (func $add-unreachable (type $2) (result i32)
  ;; CHECK-NEXT:  (i32.add
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (i32.const 1)
@@ -436,7 +436,7 @@
   i32.add
  )
 
- ;; CHECK:      (func $add-unreachable-2 (type $4) (result i32)
+ ;; CHECK:      (func $add-unreachable-2 (type $2) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -451,7 +451,7 @@
   i32.add
  )
 
- ;; CHECK:      (func $add-unreachable-3 (type $4) (result i32)
+ ;; CHECK:      (func $add-unreachable-3 (type $2) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -808,6 +808,366 @@
    drop
   )
   nop
+ )
+
+ ;; CHECK:      (func $if-else (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else
+  i32.const 0
+  if
+   nop
+  else
+   nop
+  end
+ )
+
+ ;; CHECK:      (func $if-else-empty (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-empty
+  i32.const 0
+  if
+  else
+  end
+ )
+
+ ;; CHECK:      (func $if-else-many (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-many
+  i32.const 0
+  if
+   nop
+   nop
+  else
+   nop
+   nop
+  end
+ )
+
+ ;; CHECK:      (func $if-else-single-nested (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-single-nested
+  i32.const 0
+  if
+   f32.const 1
+   drop
+  else
+   f64.const 2
+   drop
+  end
+ )
+
+ ;; CHECK:      (func $if-else-labeled (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-labeled
+  i32.const 0
+  if $l
+   nop
+  else $l
+   nop
+  end $l
+ )
+
+ ;; CHECK:      (func $if-no-else (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-no-else
+  i32.const 0
+  if
+   nop
+  end
+ )
+
+ ;; CHECK:      (func $if-else-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-result (result i32)
+  i32.const 0
+  if (result i32)
+   i32.const 1
+  else
+   i32.const 2
+  end
+ )
+
+ ;; CHECK:      (func $if-else-labeled-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-labeled-result (result i32)
+  i32.const 0
+  if $l (result i32)
+   i32.const 1
+  else
+   i32.const 2
+  end
+ )
+
+ ;; CHECK:      (func $if-else-folded (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded
+  (if
+   (i32.const 0)
+   (then
+    nop
+   )
+   (else
+    nop
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-empty (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-empty
+  (if
+   (i32.const 0)
+   (then)
+   (else)
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-many (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-many
+  (if
+   (i32.const 0)
+   (then
+    nop
+    nop
+   )
+   (else
+    nop
+    nop
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-single-nested (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-single-nested
+  (if
+   (i32.eqz
+    (i32.const 0)
+   )
+   (then
+    (drop
+     (i32.const 1)
+    )
+   )
+   (else
+    (drop
+     (i32.const 2)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-labeled (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-labeled
+  (if $l
+   (i32.const 0)
+   (then
+    nop
+   )
+   (else
+    nop
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-no-else-folded (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-no-else-folded
+  (if
+   (i32.const 0)
+   (then
+    nop
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (if (result i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-result (result i32)
+  (if (result i32)
+   (i32.const 0)
+   (then
+    i32.const 1
+   )
+   (else
+    i32.const 2
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-folded-labeled-result (type $2) (result i32)
+ ;; CHECK-NEXT:  (block $l (result i32)
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-folded-labeled-result (result i32)
+  (if $l (result i32)
+   (i32.const 0)
+   (then
+    i32.const 1
+   )
+   (else
+    i32.const 2
+   )
+  )
+ )
+
+ ;; CHECK:      (func $if-else-mixed (type $void)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (if (result i32)
+ ;; CHECK-NEXT:     (i32.const 3)
+ ;; CHECK-NEXT:     (i32.const 4)
+ ;; CHECK-NEXT:     (i32.const 5)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (if
+ ;; CHECK-NEXT:     (i32.const 6)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (i32.const 7)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-mixed
+  i32.const 0
+  if (result i32)
+   i32.const 1
+  else
+   i32.const 2
+  end
+  if
+   (if
+    (if (result i32)
+     (i32.const 3)
+     (then
+      (i32.const 4)
+     )
+     (else
+      (i32.const 5)
+     )
+    )
+    (then
+     i32.const 6
+     if
+      i32.const 7
+      drop
+     end
+    )
+   )
+  end
  )
 
  ;; CHECK:      (func $multivalue-nested (type $ret2) (result i32 i32)
