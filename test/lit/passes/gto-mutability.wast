@@ -617,7 +617,7 @@
 
   (type $struct (struct (field (mut funcref))))
 
-  ;; CHECK:       (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:       (type $4 (func (param funcref)))
 
   ;; CHECK:      (import "a" "b" (global $i8 (ref $array8)))
   (import "a" "b" (global $i8 (ref $array8)))
@@ -625,7 +625,7 @@
   ;; CHECK:      (import "a" "c" (global $i16 (ref $array16)))
   (import "a" "c" (global $i16 (ref $array16)))
 
-  ;; CHECK:      (func $use (type $funcref_=>_none) (param $funcref funcref)
+  ;; CHECK:      (func $use (type $4) (param $funcref funcref)
   ;; CHECK-NEXT:  (local $array8 (ref $array8))
   ;; CHECK-NEXT:  (local $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $array32 (ref $array32))
