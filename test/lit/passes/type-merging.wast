@@ -388,17 +388,17 @@
 
   ;; CHECK:       (type $C (array i16))
 
-  ;; CHECK:       (type $B (array (mut i8)))
+  ;; CHECK:       (type $B (array (mut i32)))
 
   ;; CHECK:       (type $A (array i8))
   (type $A  (array i8))
   (type $A' (array i8))
-  (type $B  (array (mut i8)))
-  (type $B' (array (mut i8)))
   (type $C  (array i16))
   (type $C' (array i16))
   (type $D  (array i32))
   (type $D' (array i32))
+  (type $B  (array (mut i32)))
+  (type $B' (array (mut i32)))
   (type $E  (array i64))
   (type $E' (array i64))
   (type $F  (array anyref))
