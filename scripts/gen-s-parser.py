@@ -712,6 +712,9 @@ def instruction_parser(new_parser=False):
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:
+        if new_parser and inst in {"then", "else"}:
+            # These are not real instructions! skip them.
+            continue
         inst_length = max(inst_length, len(inst))
         trie.insert(inst, expr)
 

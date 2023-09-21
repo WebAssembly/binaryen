@@ -3875,33 +3875,21 @@ switch (buf[0]) {
     }
   }
   case 'e': {
-    switch (buf[1]) {
-      case 'l':
-        if (op == "else"sv) {
-          auto ret = makeThenOrElse(ctx, pos);
+    switch (buf[7]) {
+      case 'e':
+        if (op == "extern.externalize"sv) {
+          auto ret = makeRefAs(ctx, pos, ExternExternalize);
           CHECK_ERR(ret);
           return *ret;
         }
         goto parse_error;
-      case 'x': {
-        switch (buf[7]) {
-          case 'e':
-            if (op == "extern.externalize"sv) {
-              auto ret = makeRefAs(ctx, pos, ExternExternalize);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          case 'i':
-            if (op == "extern.internalize"sv) {
-              auto ret = makeRefAs(ctx, pos, ExternInternalize);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          default: goto parse_error;
+      case 'i':
+        if (op == "extern.internalize"sv) {
+          auto ret = makeRefAs(ctx, pos, ExternInternalize);
+          CHECK_ERR(ret);
+          return *ret;
         }
-      }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -9241,25 +9229,13 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'h': {
-        switch (buf[2]) {
-          case 'e':
-            if (op == "then"sv) {
-              auto ret = makeThenOrElse(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          case 'r':
-            if (op == "throw"sv) {
-              auto ret = makeThrow(ctx, pos);
-              CHECK_ERR(ret);
-              return *ret;
-            }
-            goto parse_error;
-          default: goto parse_error;
+      case 'h':
+        if (op == "throw"sv) {
+          auto ret = makeThrow(ctx, pos);
+          CHECK_ERR(ret);
+          return *ret;
         }
-      }
+        goto parse_error;
       case 'r':
         if (op == "try"sv) {
           auto ret = makeTry(ctx, pos);

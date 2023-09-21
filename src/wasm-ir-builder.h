@@ -52,6 +52,8 @@ public:
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
   [[nodiscard]] Result<> visitBlockStart(Block* block);
+  [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
+  [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitEnd();
 
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
@@ -59,7 +61,7 @@ public:
   // ensure that there are no missing fields.
   [[nodiscard]] Result<> makeNop();
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
-  // [[nodiscard]] Result<> makeIf();
+  [[nodiscard]] Result<> makeIf(Name label, Type type);
   // [[nodiscard]] Result<> makeLoop();
   // [[nodiscard]] Result<> makeBreak();
   // [[nodiscard]] Result<> makeSwitch();
@@ -184,24 +186,103 @@ private:
   // The context for a single block scope, including the instructions parsed
   // inside that scope so far and the ultimate result type we expect this block
   // to have.
-  struct BlockCtx {
+  struct ScopeCtx {
+    struct NoScope {};
+    struct BlockScope {
+      Block* block;
+    };
+    struct IfScope {
+      If* iff;
+      Name label;
+    };
+    struct ElseScope {
+      If* iff;
+      Name label;
+    };
+    using Scope = std::variant<NoScope, BlockScope, IfScope, ElseScope>;
+
+    // The control flow structure we are building expressions for.
+    Scope scope;
+
     std::vector<Expression*> exprStack;
-    Block* block;
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
+
+    ScopeCtx() : scope(NoScope{}) {}
+    ScopeCtx(Scope scope) : scope(scope) {}
+
+    static ScopeCtx makeBlock(Block* block) {
+      return ScopeCtx(BlockScope{block});
+    }
+    static ScopeCtx makeIf(If* iff, Name label = {}) {
+      return ScopeCtx(IfScope{iff, label});
+    }
+    static ScopeCtx makeElse(If* iff, Name label = {}) {
+      return ScopeCtx(ElseScope{iff, label});
+    }
+
+    bool isNone() { return std::get_if<NoScope>(&scope); }
+    Block* getBlock() {
+      if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
+        return blockScope->block;
+      }
+      return nullptr;
+    }
+    If* getIf() {
+      if (auto* ifScope = std::get_if<IfScope>(&scope)) {
+        return ifScope->iff;
+      }
+      return nullptr;
+    }
+    If* getElse() {
+      if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
+        return elseScope->iff;
+      }
+      return nullptr;
+    }
+    Type getResultType() {
+      if (auto* block = getBlock()) {
+        return block->type;
+      }
+      if (auto* iff = getIf()) {
+        return iff->type;
+      }
+      if (auto* iff = getElse()) {
+        return iff->type;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
+    Name getLabel() {
+      if (auto* block = getBlock()) {
+        return block->name;
+      }
+      if (auto* ifScope = std::get_if<IfScope>(&scope)) {
+        return ifScope->label;
+      }
+      if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
+        return elseScope->label;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
   };
 
   // The stack of block contexts currently being parsed.
-  std::vector<BlockCtx> scopeStack;
+  std::vector<ScopeCtx> scopeStack;
 
-  BlockCtx& getScope() {
+  ScopeCtx& getScope() {
     if (scopeStack.empty()) {
       // We are not in a block context, so push a dummy scope.
-      scopeStack.push_back({{}, nullptr});
+      scopeStack.push_back({});
     }
     return scopeStack.back();
   }
+
+  // Collect the current scope into a single expression. If it has multiple
+  // top-level expressions, this requires collecting them into a block. If we
+  // are in a block context, we can collect them directly into the destination
+  // `block`, but otherwise we will have to allocate a new block.
+  Result<Expression*> finishScope(Block* block = nullptr);
 
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();

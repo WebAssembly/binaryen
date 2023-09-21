@@ -172,7 +172,7 @@ Result<Expression*> IRBuilder::build() {
   if (scopeStack.empty()) {
     return builder.makeNop();
   }
-  if (scopeStack.size() > 1 || scopeStack.back().block != nullptr) {
+  if (scopeStack.size() > 1 || !scopeStack.back().isNone()) {
     return Err{"unfinished block context"};
   }
   if (scopeStack.back().exprStack.size() > 1) {
@@ -282,18 +282,26 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
 }
 
 Result<> IRBuilder::visitBlockStart(Block* curr) {
-  scopeStack.push_back({{}, curr});
+  scopeStack.push_back(ScopeCtx::makeBlock(curr));
   return Ok{};
 }
 
-Result<> IRBuilder::visitEnd() {
-  if (scopeStack.empty() || !scopeStack.back().block) {
-    return Err{"unexpected end"};
+Result<> IRBuilder::visitIfStart(If* iff, Name label) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  iff->condition = *cond;
+  scopeStack.push_back(ScopeCtx::makeIf(iff, label));
+  return Ok{};
+}
+
+Result<Expression*> IRBuilder::finishScope(Block* block) {
+  if (scopeStack.empty() || scopeStack.back().isNone()) {
+    return Err{"unexpected end of scope"};
   }
 
   auto& scope = scopeStack.back();
-  Block* block = scope.block;
-  if (block->type.isTuple()) {
+  auto type = scope.getResultType();
+  if (type.isTuple()) {
     if (scope.unreachable) {
       // We may not have enough concrete values on the stack to construct the
       // full tuple, and if we tried to fill out the beginning of a tuple.make
@@ -328,18 +336,98 @@ Result<> IRBuilder::visitEnd() {
         scope.exprStack.push_back(builder.makeTupleMake(std::move(elems)));
       }
     }
-  } else if (block->type.isConcrete()) {
+  } else if (type.isConcrete()) {
     // If the value is buried in none-typed expressions, we have to bring it to
     // the top.
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
   }
-  block->list.set(scope.exprStack);
-  // TODO: Track branches so we can know whether this block is a target and
-  // finalize more efficiently.
-  block->finalize(block->type);
+  Expression* ret = nullptr;
+  if (scope.exprStack.size() == 0) {
+    // No expressions for this scope, but we need something. If we were given a
+    // block, we can empty it out and return it, but otherwise we need a nop.
+    if (block) {
+      block->list.clear();
+      ret = block;
+    } else {
+      ret = builder.makeNop();
+    }
+  } else if (scope.exprStack.size() == 1) {
+    // We can put our single expression directly into the surrounding scope.
+    if (block) {
+      block->list.resize(1);
+      block->list[0] = scope.exprStack.back();
+      ret = block;
+    } else {
+      ret = scope.exprStack.back();
+    }
+  } else {
+    // More than one expression, so we need a block. Allocate one if we weren't
+    // already given one.
+    if (!block) {
+      block = wasm.allocator.alloc<Block>();
+      block->type = type;
+    }
+    block->list.set(scope.exprStack);
+    ret = block;
+  }
   scopeStack.pop_back();
-  push(block);
+  return ret;
+}
+
+Result<> IRBuilder::visitElse() {
+  auto& scope = getScope();
+  auto* iff = scope.getIf();
+  if (!iff) {
+    return Err{"unexpected else"};
+  }
+  auto label = scope.getLabel();
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  iff->ifTrue = *expr;
+  scopeStack.push_back(ScopeCtx::makeElse(iff, label));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitEnd() {
+  auto& scope = getScope();
+  if (scope.isNone()) {
+    return Err{"unexpected end"};
+  }
+  if (auto* block = scope.getBlock()) {
+    auto expr = finishScope(block);
+    CHECK_ERR(expr);
+    assert(*expr == block);
+    // TODO: Track branches so we can know whether this block is a target and
+    // finalize more efficiently.
+    block->finalize(block->type);
+    push(block);
+    return Ok{};
+  }
+  auto label = scope.getLabel();
+  Expression* scopeExpr = nullptr;
+  if (auto* iff = scope.getIf()) {
+    auto expr = finishScope();
+    CHECK_ERR(expr);
+    iff->ifTrue = *expr;
+    iff->ifFalse = nullptr;
+    iff->finalize();
+    scopeExpr = iff;
+  } else if (auto* iff = scope.getElse()) {
+    auto expr = finishScope();
+    CHECK_ERR(expr);
+    iff->ifFalse = *expr;
+    iff->finalize();
+    scopeExpr = iff;
+  }
+  assert(scopeExpr && "unexpected scope kind");
+  if (label) {
+    // We cannot directly name an If in Binaryen IR, so we need to wrap it in
+    // a block.
+    push(builder.makeBlock(label, {scopeExpr}, scopeExpr->type));
+  } else {
+    push(scopeExpr);
+  }
   return Ok{};
 }
 
@@ -352,8 +440,13 @@ Result<> IRBuilder::makeBlock(Name label, Type type) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
   block->type = type;
-  CHECK_ERR(visitBlockStart(block));
-  return Ok{};
+  return visitBlockStart(block);
+}
+
+Result<> IRBuilder::makeIf(Name label, Type type) {
+  auto* iff = wasm.allocator.alloc<If>();
+  iff->type = type;
+  return visitIfStart(iff, label);
 }
 
 // Result<> IRBuilder::makeIf() {}
