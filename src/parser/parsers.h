@@ -668,8 +668,6 @@ template<typename Ctx> Result<> foldedinstrs(Ctx& ctx) {
 }
 
 template<typename Ctx> Result<> instrs(Ctx& ctx) {
-  bool parsedFolded = false;
-
   while (true) {
     // Try to parse a folded instruction tree.
     if (!foldedinstrs(ctx).getErr()) {
@@ -682,10 +680,6 @@ template<typename Ctx> Result<> instrs(Ctx& ctx) {
     } else {
       break;
     }
-  }
-
-  if (requireFolded && !parsedFolded) {
-    return ctx.in.err("expected folded instructions");
   }
 
   return Ok{};
