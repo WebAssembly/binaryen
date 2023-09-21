@@ -6,19 +6,44 @@
  (type $obnoxious-super-long-type-name_____________________________1 (struct))
 
  ;; A reasonable name that will be kept.
- ;; CHECK:      (type $type$1 (struct ))
+ ;; CHECK:      (type $type (struct ))
 
  ;; CHECK:      (type $reasonable-name (struct (field i32)))
  (type $reasonable-name (struct (field i32)))
 
- ;; CHECK:      (type $type$0 (func (param (ref $type$1) (ref $reasonable-name))))
+ ;; lintable is a name that can be polished up a bit. We'll remove the _7. But
+ ;; unlintable cannot be shortened because a conflict would occur. onelintable
+ ;; allows one of the two longer names to be shortened, but the second would
+ ;; conflict.
+ (type $lintable-name_7 (struct (field i64)))
 
- ;; CHECK:      (func $foo (type $type$0) (param $x (ref $type$1)) (param $y (ref $reasonable-name))
+ ;; CHECK:      (type $lintable-name (struct (field i64)))
+
+ ;; CHECK:      (type $unlintable-name_7 (struct (field f32)))
+ (type $unlintable-name_7 (struct (field f32)))
+
+ ;; CHECK:      (type $unlintable-name (struct (field f64)))
+ (type $unlintable-name (struct (field f64)))
+
+ (type $onelintable-name_6 (struct (field i32) (field i32) (field i32)))
+ ;; CHECK:      (type $onelintable-name (struct (field i32) (field i32) (field i32)))
+
+ ;; CHECK:      (type $onelintable-name_8 (struct (field i32) (field i32) (field i32) (field i32)))
+ (type $onelintable-name_8 (struct (field i32) (field i32) (field i32) (field i32)))
+
+ ;; CHECK:      (type $type_0 (func (param (ref $type) (ref $reasonable-name) (ref $lintable-name) (ref $unlintable-name_7) (ref $unlintable-name) (ref $onelintable-name) (ref $onelintable-name_8))))
+
+ ;; CHECK:      (func $foo (type $type_0) (param $x (ref $type)) (param $y (ref $reasonable-name)) (param $z (ref $lintable-name)) (param $w (ref $unlintable-name_7)) (param $t (ref $unlintable-name)) (param $a (ref $onelintable-name)) (param $b (ref $onelintable-name_8))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
   ;; Use the types to keep them alive.
   (param $x (ref $obnoxious-super-long-type-name_____________________________1))
   (param $y (ref $reasonable-name))
+  (param $z (ref $lintable-name_7))
+  (param $w (ref $unlintable-name_7))
+  (param $t (ref $unlintable-name))
+  (param $a (ref $onelintable-name_6))
+  (param $b (ref $onelintable-name_8))
  )
 )
