@@ -68,7 +68,6 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 ImportNames* import,
                                 TypeUseT type,
                                 std::optional<LocalsT>,
-                                std::optional<InstrsT>,
                                 Index pos) {
   if (import && hasNonImport) {
     return in.err(pos, "import after non-import");
