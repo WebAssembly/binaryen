@@ -430,6 +430,18 @@ struct Heap2LocalOptimizer {
       replaceCurrent(curr->value);
     }
 
+    void visitRefCast(RefCast* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // It is safe to optimize out this RefCast, since we proved it
+      // contains our allocation and we have checked that the type of
+      // the allocation is a subtype of the type of the cast, and so
+      // cannot trap.
+      replaceCurrent(curr->ref);
+    }
+
     void visitStructSet(StructSet* curr) {
       if (!reached.count(curr)) {
         return;
@@ -526,7 +538,7 @@ struct Heap2LocalOptimizer {
         return;
       }
 
-      switch (getParentChildInteraction(parent, child)) {
+      switch (getParentChildInteraction(allocation, parent, child)) {
         case ParentChildInteraction::Escapes: {
           // If the parent may let us escape then we are done.
           return;
@@ -586,7 +598,8 @@ struct Heap2LocalOptimizer {
     rewriter.applyOptimization();
   }
 
-  ParentChildInteraction getParentChildInteraction(Expression* parent,
+  ParentChildInteraction getParentChildInteraction(StructNew* allocation,
+                                                   Expression* parent,
                                                    Expression* child) {
     // If there is no parent then we are the body of the function, and that
     // means we escape by flowing to the caller.
@@ -595,6 +608,7 @@ struct Heap2LocalOptimizer {
     }
 
     struct Checker : public Visitor<Checker> {
+      StructNew* allocation;
       Expression* child;
 
       // Assume escaping (or some other problem we cannot analyze) unless we are
@@ -647,6 +661,15 @@ struct Heap2LocalOptimizer {
         }
       }
 
+      void visitRefCast(RefCast* curr) {
+        // As it is our allocation that flows through here, we need to
+        // check that the cast will not trap, so that we can continue
+        // to (hopefully) optimize this allocation.
+        if (Type::isSubType(allocation->type, curr->type)) {
+          escapes = false;
+        }
+      }
+
       // GC operations.
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
@@ -664,6 +687,7 @@ struct Heap2LocalOptimizer {
       // TODO Array and I31 operations
     } checker;
 
+    checker.allocation = allocation;
     checker.child = child;
     checker.visit(parent);
 

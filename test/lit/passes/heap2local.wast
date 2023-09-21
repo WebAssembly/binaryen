@@ -629,7 +629,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies-conditional (type $7) (param $x i32) (result f64)
+  ;; CHECK:      (func $local-copies-conditional (type $8) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
@@ -719,7 +719,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-get (type $7) (param $x i32) (result f64)
+  ;; CHECK:      (func $non-exclusive-get (type $8) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -751,7 +751,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee (type $8) (result i32)
+  ;; CHECK:      (func $tee (type $5) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -871,7 +871,7 @@
     )
   )
 
-  ;; CHECK:      (func $escape-flow-out (type $5) (result anyref)
+  ;; CHECK:      (func $escape-flow-out (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -893,7 +893,7 @@
     (local.get $ref)
   )
 
-  ;; CHECK:      (func $escape-return (type $5) (result anyref)
+  ;; CHECK:      (func $escape-return (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
   ;; CHECK-NEXT:   (local.tee $ref
@@ -1636,7 +1636,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-as-non-null-through-local (type $8) (result i32)
+  ;; CHECK:      (func $ref-as-non-null-through-local (type $5) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1774,7 +1774,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-nullable-local (type $5) (result anyref)
+  ;; CHECK:      (func $non-nullable-local (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1895,6 +1895,41 @@
       (br $loop)
     )
   )
+
+  ;; CHECK:      (func $ref-cast (type $5) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $ref-cast (result i32)
+    (struct.get $struct.A 0
+      (ref.cast (ref $struct.A)
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+    )
+  )
 )
 
 (module
@@ -1940,6 +1975,60 @@
             (struct.new $A
               (ref.null none)
             )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-success (type $1) (result anyref)
+  ;; CHECK-NEXT:  (local $0 (ref $A))
+  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $0)
+  ;; CHECK-NEXT: )
+  (func $cast-success (result anyref)
+    (struct.get $A 0
+      (ref.cast (ref $A)
+        (struct.new $B
+          (struct.new $A
+            (ref.null none)
+          )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $cast-failure (type $1) (result anyref)
+  ;; CHECK-NEXT:  (struct.get $B 0
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (struct.new $A
+  ;; CHECK-NEXT:     (struct.new $A
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-failure (result anyref)
+    (struct.get $B 0
+      ;; The allocated $A arrives here, but the cast will fail,
+      ;; so we do not optimize.
+      (ref.cast (ref $B)
+        (struct.new $A
+          (struct.new $A
+            (ref.null none)
           )
         )
       )
