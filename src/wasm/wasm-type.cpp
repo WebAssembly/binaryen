@@ -2551,7 +2551,6 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
   return {results};
 }
-  
 void TypeBuilder::dump() {
   std::vector<HeapType> types;
   for (size_t i = 0; i < size(); ++i) {
