@@ -6,7 +6,7 @@
  (type $obnoxious-super-long-type-name_____________________________1 (struct))
 
  ;; A reasonable name that will be kept.
- ;; CHECK:      (type $type (struct ))
+ ;; CHECK:      (type $type_1 (struct ))
 
  ;; CHECK:      (type $reasonable-name (struct (field i32)))
  (type $reasonable-name (struct (field i32)))
@@ -31,9 +31,9 @@
  ;; CHECK:      (type $onelintable-name_8 (struct (field i32) (field i32) (field i32) (field i32)))
  (type $onelintable-name_8 (struct (field i32) (field i32) (field i32) (field i32)))
 
- ;; CHECK:      (type $type_0 (func (param (ref $type) (ref $reasonable-name) (ref $lintable-name) (ref $unlintable-name_7) (ref $unlintable-name) (ref $onelintable-name) (ref $onelintable-name_8))))
+ ;; CHECK:      (type $type (func (param (ref $type_1) (ref $reasonable-name) (ref $lintable-name) (ref $unlintable-name_7) (ref $unlintable-name) (ref $onelintable-name) (ref $onelintable-name_8))))
 
- ;; CHECK:      (func $foo (type $type_0) (param $x (ref $type)) (param $y (ref $reasonable-name)) (param $z (ref $lintable-name)) (param $w (ref $unlintable-name_7)) (param $t (ref $unlintable-name)) (param $a (ref $onelintable-name)) (param $b (ref $onelintable-name_8))
+ ;; CHECK:      (func $foo (type $type) (param $x (ref $type_1)) (param $y (ref $reasonable-name)) (param $z (ref $lintable-name)) (param $w (ref $unlintable-name_7)) (param $t (ref $unlintable-name)) (param $a (ref $onelintable-name)) (param $b (ref $onelintable-name_8))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo
