@@ -2580,7 +2580,7 @@ void TypeBuilder::dump() {
   }
 }
 
-  std::unordered_set<HeapType> getIgnorablePublicTypes() {
+std::unordered_set<HeapType> getIgnorablePublicTypes() {
   auto array8 = Array(Field(Field::i8, Mutable));
   auto array16 = Array(Field(Field::i16, Mutable));
   TypeBuilder builder(4);
