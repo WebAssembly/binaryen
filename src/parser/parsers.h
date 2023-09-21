@@ -47,8 +47,9 @@ template<typename Ctx> MaybeResult<> unfoldedBlockinstr(Ctx&);
 template<typename Ctx> MaybeResult<> blockinstr(Ctx&);
 template<typename Ctx> MaybeResult<> plaininstr(Ctx&);
 template<typename Ctx> MaybeResult<> instr(Ctx&);
-template<typename Ctx> Result<> foldedinstrs(Ctx&);
+template<typename Ctx> MaybeResult<> foldedinstr(Ctx&);
 template<typename Ctx> Result<> instrs(Ctx&);
+template<typename Ctx> Result<> foldedinstrs(Ctx&);
 template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemargT> memarg(Ctx&, uint32_t);
 template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx&);
@@ -600,88 +601,95 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
       }
     }
   }
-  if (auto i = blockinstr(ctx)) {
-    return i;
+  if (auto inst = blockinstr(ctx)) {
+    return inst;
   }
-  if (auto i = plaininstr(ctx)) {
-    return i;
+  if (auto inst = plaininstr(ctx)) {
+    return inst;
   }
   // TODO: Handle folded plain instructions as well.
   return {};
 }
 
-template<typename Ctx> Result<> foldedinstrs(Ctx& ctx) {
-  if (auto blockinst = foldedBlockinstr(ctx)) {
-    CHECK_ERR(blockinst);
-    return Ok{};
+template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
+  // Check for valid strings that are not instructions.
+  if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else")) {
+    return {};
   }
-  // Parse an arbitrary number of folded instructions.
-  if (ctx.in.takeLParen()) {
-    // A stack of (start, end) position pairs defining the positions of
-    // instructions that need to be parsed after their folded children.
-    std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
+  if (auto inst = foldedBlockinstr(ctx)) {
+    return inst;
+  }
+  if (!ctx.in.takeLParen()) {
+    return {};
+  }
 
-    // Begin a folded instruction. Push its start position and a placeholder
-    // end position.
-    foldedInstrs.push_back({ctx.in.getPos(), {}});
-    while (!foldedInstrs.empty()) {
-      // Consume everything up to the next paren. This span will be parsed as
-      // an instruction later after its folded children have been parsed.
-      if (!ctx.in.takeUntilParen()) {
-        return ctx.in.err(foldedInstrs.back().first,
-                          "unterminated folded instruction");
-      }
+  // A stack of (start, end) position pairs defining the positions of
+  // instructions that need to be parsed after their folded children.
+  std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
 
-      if (!foldedInstrs.back().second) {
-        // The folded instruction we just started should end here.
-        foldedInstrs.back().second = ctx.in.getPos();
-      }
-
-      // We have either the start of a new folded child or the end of the last
-      // one.
-      if (auto blockinst = foldedBlockinstr(ctx)) {
-        CHECK_ERR(blockinst);
-      } else if (ctx.in.takeLParen()) {
-        foldedInstrs.push_back({ctx.in.getPos(), {}});
-      } else if (ctx.in.takeRParen()) {
-        auto [start, end] = foldedInstrs.back();
-        assert(end && "Should have found end of instruction");
-        foldedInstrs.pop_back();
-
-        WithPosition with(ctx, start);
-        if (auto inst = plaininstr(ctx)) {
-          CHECK_ERR(inst);
-        } else {
-          return ctx.in.err(start, "expected folded instruction");
-        }
-
-        if (ctx.in.getPos() != *end) {
-          return ctx.in.err("expected end of instruction");
-        }
-      } else {
-        WASM_UNREACHABLE("expected paren");
-      }
+  // Begin a folded instruction. Push its start position and a placeholder
+  // end position.
+  foldedInstrs.push_back({ctx.in.getPos(), {}});
+  while (!foldedInstrs.empty()) {
+    // Consume everything up to the next paren. This span will be parsed as
+    // an instruction later after its folded children have been parsed.
+    if (!ctx.in.takeUntilParen()) {
+      return ctx.in.err(foldedInstrs.back().first,
+                        "unterminated folded instruction");
     }
-    return Ok{};
+
+    if (!foldedInstrs.back().second) {
+      // The folded instruction we just started should end here.
+      foldedInstrs.back().second = ctx.in.getPos();
+    }
+
+    // We have either the start of a new folded child or the end of the last
+    // one.
+    if (auto blockinst = foldedBlockinstr(ctx)) {
+      CHECK_ERR(blockinst);
+    } else if (ctx.in.takeLParen()) {
+      foldedInstrs.push_back({ctx.in.getPos(), {}});
+    } else if (ctx.in.takeRParen()) {
+      auto [start, end] = foldedInstrs.back();
+      assert(end && "Should have found end of instruction");
+      foldedInstrs.pop_back();
+
+      WithPosition with(ctx, start);
+      if (auto inst = plaininstr(ctx)) {
+        CHECK_ERR(inst);
+      } else {
+        return ctx.in.err(start, "expected folded instruction");
+      }
+
+      if (ctx.in.getPos() != *end) {
+        return ctx.in.err("expected end of instruction");
+      }
+    } else {
+      WASM_UNREACHABLE("expected paren");
+    }
   }
-  return ctx.in.err("expected folded instruction");
+  return Ok{};
 }
 
 template<typename Ctx> Result<> instrs(Ctx& ctx) {
   while (true) {
-    // Try to parse a folded instruction tree.
-    if (!foldedinstrs(ctx).getErr()) {
-      continue;
-    }
-
-    // Otherwise parse a non-folded instruction.
     if (auto inst = instr(ctx)) {
       CHECK_ERR(inst);
-    } else {
-      break;
+      continue;
     }
+    if (auto inst = foldedinstr(ctx)) {
+      CHECK_ERR(inst);
+      continue;
+    }
+    break;
   }
+  return Ok{};
+}
 
+template<typename Ctx> Result<> foldedinstrs(Ctx& ctx) {
+  while (auto inst = foldedinstr(ctx)) {
+    CHECK_ERR(inst);
+  }
   return Ok{};
 }
 
@@ -770,7 +778,7 @@ template<typename Ctx> MaybeResult<> block(Ctx& ctx, bool folded) {
 }
 
 // if ::= 'if' label blocktype instr1* ('else' id1? instr2*)? 'end' id2?
-//      | '(' 'if' label blocktype instr* '(' 'then' instr1* ')'
+//      | '(' 'if' label blocktype foldedinstr* '(' 'then' instr1* ')'
 //            ('(' 'else' instr2* ')')? ')'
 template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();

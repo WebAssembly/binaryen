@@ -257,6 +257,16 @@ inline bool ParseInput::takeSExprStart(std::string_view expected) {
   return false;
 }
 
+inline bool ParseInput::peekSExprStart(std::string_view expected) {
+  auto original = lexer;
+  if (!takeLParen()) {
+    return false;
+  }
+  bool ret = takeKeyword(expected);
+  lexer = original;
+  return ret;
+}
+
 inline Index ParseInput::getPos() {
   if (auto t = peek()) {
     return lexer.getIndex() - t->span.size();

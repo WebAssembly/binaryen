@@ -62,6 +62,7 @@ struct ParseInput {
   std::optional<std::string_view> takeString();
   std::optional<Name> takeName();
   bool takeSExprStart(std::string_view expected);
+  bool peekSExprStart(std::string_view expected);
 
   Index getPos();
   [[nodiscard]] Err err(Index pos, std::string reason);
