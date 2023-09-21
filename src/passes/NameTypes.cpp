@@ -50,17 +50,20 @@ struct NameTypes : public Pass {
     // "Lint" the names a little. In particular a name with a "_7" or such
     // suffix, as TypeSSA creates, can be removed if it does not cause a
     // collision. This keeps the names unique while removing 'noise.'
-    for (auto& [_, names] : module->typeNames) {
+    //
+    // Note we must iterate in a deterministic order here, so do it on |types|.
+    for (auto& type : types) {
+      auto& names = module->typeNames[type];
       std::string name = names.name.toString();
       while (name.size() > 1 && isdigit(name.back())) {
         name.pop_back();
       }
       if (name.size() > 1 && name.back() == '_') {
         name.pop_back();
-      }
-      if (!used.count(name)) {
-        names.name = name;
-        used.insert(name);
+        if (!used.count(name)) {
+          names.name = name;
+          used.insert(name);
+        }
       }
     }
   }
