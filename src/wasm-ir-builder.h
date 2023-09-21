@@ -54,6 +54,7 @@ public:
   [[nodiscard]] Result<> visitBlockStart(Block* block);
   [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
   [[nodiscard]] Result<> visitElse();
+  [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitEnd();
 
   // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
@@ -62,7 +63,7 @@ public:
   [[nodiscard]] Result<> makeNop();
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
   [[nodiscard]] Result<> makeIf(Name label, Type type);
-  // [[nodiscard]] Result<> makeLoop();
+  [[nodiscard]] Result<> makeLoop(Name label, Type type);
   // [[nodiscard]] Result<> makeBreak();
   // [[nodiscard]] Result<> makeSwitch();
   // [[nodiscard]] Result<> makeCall();
@@ -199,7 +200,11 @@ private:
       If* iff;
       Name label;
     };
-    using Scope = std::variant<NoScope, BlockScope, IfScope, ElseScope>;
+    struct LoopScope {
+      Loop* loop;
+    };
+    using Scope =
+      std::variant<NoScope, BlockScope, IfScope, ElseScope, LoopScope>;
 
     // The control flow structure we are building expressions for.
     Scope scope;
@@ -221,6 +226,7 @@ private:
     static ScopeCtx makeElse(If* iff, Name label = {}) {
       return ScopeCtx(ElseScope{iff, label});
     }
+    static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
 
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Block* getBlock() {
@@ -241,6 +247,12 @@ private:
       }
       return nullptr;
     }
+    Loop* getLoop() {
+      if (auto* loopScope = std::get_if<LoopScope>(&scope)) {
+        return loopScope->loop;
+      }
+      return nullptr;
+    }
     Type getResultType() {
       if (auto* block = getBlock()) {
         return block->type;
@@ -250,6 +262,9 @@ private:
       }
       if (auto* iff = getElse()) {
         return iff->type;
+      }
+      if (auto* loop = getLoop()) {
+        return loop->type;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -262,6 +277,9 @@ private:
       }
       if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
         return elseScope->label;
+      }
+      if (auto* loop = getLoop()) {
+        return loop->name;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }

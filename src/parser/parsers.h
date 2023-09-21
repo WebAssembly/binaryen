@@ -55,6 +55,7 @@ template<typename Ctx> Result<typename Ctx::MemargT> memarg(Ctx&, uint32_t);
 template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx&);
 template<typename Ctx> MaybeResult<> block(Ctx&, bool);
 template<typename Ctx> MaybeResult<> ifelse(Ctx&, bool);
+template<typename Ctx> MaybeResult<> loop(Ctx&, bool);
 template<typename Ctx> Result<> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<> makeNop(Ctx&, Index);
 template<typename Ctx> Result<> makeBinary(Ctx&, Index, BinaryOp op);
@@ -553,6 +554,9 @@ template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = ifelse(ctx, true)) {
     return i;
   }
+  if (auto i = loop(ctx, true)) {
+    return i;
+  }
   // TODO: Other block instructions
   return {};
 }
@@ -562,6 +566,9 @@ template<typename Ctx> MaybeResult<> unfoldedBlockinstr(Ctx& ctx) {
     return i;
   }
   if (auto i = ifelse(ctx, false)) {
+    return i;
+  }
+  if (auto i = loop(ctx, false)) {
     return i;
   }
   // TODO: Other block instructions
@@ -741,14 +748,9 @@ template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
 template<typename Ctx> MaybeResult<> block(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();
 
-  if (folded) {
-    if (!ctx.in.takeSExprStart("block"sv)) {
-      return {};
-    }
-  } else {
-    if (!ctx.in.takeKeyword("block"sv)) {
-      return {};
-    }
+  if ((folded && !ctx.in.takeSExprStart("block"sv)) ||
+      (!folded && !ctx.in.takeKeyword("block"sv))) {
+    return {};
   }
 
   auto label = ctx.in.takeID();
@@ -774,7 +776,7 @@ template<typename Ctx> MaybeResult<> block(Ctx& ctx, bool folded) {
     }
   }
 
-  return ctx.visitEnd(pos);
+  return ctx.visitEnd();
 }
 
 // if ::= 'if' label blocktype instr1* ('else' id1? instr2*)? 'end' id2?
@@ -783,14 +785,9 @@ template<typename Ctx> MaybeResult<> block(Ctx& ctx, bool folded) {
 template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();
 
-  if (folded) {
-    if (!ctx.in.takeSExprStart("if"sv)) {
-      return {};
-    }
-  } else {
-    if (!ctx.in.takeKeyword("if"sv)) {
-      return {};
-    }
+  if ((folded && !ctx.in.takeSExprStart("if"sv)) ||
+      (!folded && !ctx.in.takeKeyword("if"sv))) {
+    return {};
   }
 
   auto label = ctx.in.takeID();
@@ -821,7 +818,7 @@ template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
       return ctx.in.err("else label does not match if label");
     }
 
-    ctx.visitElse(pos);
+    ctx.visitElse();
 
     CHECK_ERR(instrs(ctx));
 
@@ -838,14 +835,48 @@ template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
     if (!ctx.in.takeKeyword("end"sv)) {
       return ctx.in.err("expected 'end' at end of if");
     }
+    auto id2 = ctx.in.takeID();
+    if (id2 && id2 != label) {
+      return ctx.in.err("end label does not match if label");
+    }
   }
 
-  auto id2 = ctx.in.takeID();
-  if (id2 && id2 != label) {
-    return ctx.in.err("end label does not match if label");
+  return ctx.visitEnd();
+}
+
+// loop ::= 'loop' label blocktype instr* end id?
+//        | '(' 'loop' label blocktype instr* ')'
+template<typename Ctx> MaybeResult<> loop(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if ((folded && !ctx.in.takeSExprStart("loop"sv)) ||
+      (!folded && !ctx.in.takeKeyword("loop"sv))) {
+    return {};
   }
 
-  return ctx.visitEnd(pos);
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  ctx.makeLoop(pos, label, *type);
+
+  CHECK_ERR(instrs(ctx));
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of loop");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of loop");
+    }
+    auto id = ctx.in.takeID();
+    if (id && id != label) {
+      return ctx.in.err("end label does not match loop label");
+    }
+  }
+  return ctx.visitEnd();
 }
 
 template<typename Ctx> Result<> makeUnreachable(Ctx& ctx, Index pos) {
