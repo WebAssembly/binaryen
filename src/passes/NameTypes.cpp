@@ -50,7 +50,7 @@ struct NameTypes : public Pass {
     // "Lint" the names a little. In particular a name with a "_7" or such
     // suffix, as TypeSSA creates, can be removed if it does not cause a
     // collision. This keeps the names unique while removing 'noise.'
-    for (auto& [type, names] : module->typeNames) {
+    for (auto& [_, names] : module->typeNames) {
       std::string name = names.name.toString();
       while (name.size() > 1 && isdigit(name.back())) {
         name.pop_back();
