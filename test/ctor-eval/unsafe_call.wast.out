@@ -1,9 +1,9 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (memory $0 256 256)
  (data $0 (i32.const 10) "waka waka waka waka waka")
  (export "test1" (func $test1))
- (func $test1 (type $none_=>_none)
+ (func $test1 (type $0)
   (call $unsafe-to-call)
   (i32.store
    (i32.const 12)
@@ -18,7 +18,7 @@
    (i32.const 120)
   )
  )
- (func $unsafe-to-call (type $none_=>_none)
+ (func $unsafe-to-call (type $0)
   (unreachable)
  )
 )

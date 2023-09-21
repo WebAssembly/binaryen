@@ -11,6 +11,18 @@ namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
 
+// If parameter "comparison" compares x and y, the function returns the opposite
+// direction comparison between y and x.
+inline LatticeComparison reverseComparison(LatticeComparison comparison) {
+  if (comparison == LatticeComparison::LESS) {
+    return LatticeComparison::GREATER;
+  } else if (comparison == LatticeComparison::GREATER) {
+    return LatticeComparison::LESS;
+  } else {
+    return comparison;
+  }
+}
+
 template<typename Lattice>
 constexpr bool has_getBottom =
   std::is_invocable_r<typename Lattice::Element,
@@ -19,7 +31,8 @@ constexpr bool has_getBottom =
 template<typename Lattice>
 constexpr bool has_compare =
   std::is_invocable_r<LatticeComparison,
-                      decltype(Lattice::compare),
+                      decltype(&Lattice::compare),
+                      Lattice,
                       const typename Lattice::Element&,
                       const typename Lattice::Element&>::value;
 template<typename Element>
@@ -30,10 +43,10 @@ constexpr bool has_makeLeastUpperBound =
                       const Element&>::value;
 template<typename Element>
 constexpr bool has_isTop =
-  std::is_invocable_r<bool, decltype(&Element::isTop), Element>::value;
+  std::is_invocable_r<bool, decltype(&Element::isTop), const Element>::value;
 template<typename Element>
 constexpr bool has_isBottom =
-  std::is_invocable_r<bool, decltype(&Element::isBottom), Element>::value;
+  std::is_invocable_r<bool, decltype(&Element::isBottom), const Element>::value;
 
 template<typename Lattice>
 constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
@@ -52,6 +65,9 @@ class FiniteIntPowersetLattice {
 public:
   FiniteIntPowersetLattice(size_t setSize) : setSize(setSize) {}
 
+  // Returns the size of the set that the powerset lattices was created from.
+  size_t getSetSize() { return setSize; }
+
   // This represents an element of a powerset lattice. The element is itself a
   // set which has set members. The bitvector tracks which possible members of
   // the element are actually present.
@@ -66,7 +82,7 @@ public:
 
   public:
     Element(Element&& source) = default;
-    Element(Element& source) = default;
+    Element(const Element& source) = default;
 
     Element& operator=(Element&& source) = default;
     Element& operator=(const Element& source) = default;
@@ -74,13 +90,13 @@ public:
     // Counts the number of members present the element itself. For instance, if
     // we had {true, false, true}, the count would be 2. O(N) operation which
     // iterates through the bitvector.
-    size_t count();
+    size_t count() const;
 
     bool get(size_t index) { return bitvector[index]; }
     void set(size_t index, bool value) { bitvector[index] = value; }
 
-    bool isTop() { return count() == bitvector.size(); }
-    bool isBottom() { return count() == 0; }
+    bool isTop() const { return count() == bitvector.size(); }
+    bool isBottom() const { return count() == 0; }
 
     // Calculates the LUB of this element with some other element and sets
     // this element to the LUB in place. Returns true if this element before
@@ -95,7 +111,7 @@ public:
 
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
-  static LatticeComparison compare(const Element& left, const Element& right);
+  LatticeComparison compare(const Element& left, const Element& right);
 
   // Returns an instance of the bottom lattice element.
   Element getBottom();
@@ -127,6 +143,12 @@ public:
     }
   }
 
+  // Iterator to access the list of element members.
+  using membersIterator = typename std::vector<T>::const_iterator;
+  membersIterator membersBegin() { return members.cbegin(); }
+  membersIterator membersEnd() { return members.cend(); }
+  size_t getSetSize() { return intLattice.getSetSize(); }
+
   T indexToMember(size_t index) { return members[index]; }
 
   size_t memberToIndex(T member) { return memberIndices[member]; }
@@ -147,8 +169,8 @@ public:
   }
 
   // We use implementations from FiniteIntPowersetLattice here.
-  static LatticeComparison compare(const Element& left, const Element& right) {
-    return FiniteIntPowersetLattice::compare(left, right);
+  LatticeComparison compare(const Element& left, const Element& right) {
+    return intLattice.compare(left, right);
   }
 
   Element getBottom() { return intLattice.getBottom(); }

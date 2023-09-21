@@ -15,8 +15,36 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v116
+----
+
+ - "I31New" changed to "RefI31" everywhere it appears in the C API and similarly
+   "i31.new" has been replaced with "ref.i31" in the JS API and in printed
+   output (#5930, #3931).
+ - The standard WasmGC opcodes are now on by default (#5873).
+
+v115
+----
+
+- The nonstandard, experimental gc-nn-locals feature has been removed now that
+  standard non-nullable locals are supported. (#5080)
+- Print all debug annotations when `BINARYEN_PRINT_FULL`. (#5904)
+- Use the standard text format for WasmGC now that things are stable there.
+  (#5894, #5889, #5852, #5801)
+- Rename multimemory flag to `--multimemory` to match its naming in LLVM.
+  (#5890)
+- Allow opting into standard GC encodings at compile time. (#5868)
+- Remove legacy WasmGC instructions. (#5861)
+- GUFA: Infer using TrapsNeverHappen. (#5850)
 - Add a pass to reorder functions by name, which can be useful for debugging
-  (e.g. comparisons after optimizations), `--reorder-functions-by-name`.
+  (e.g. comparisons after optimizations), `--reorder-functions-by-name`. (#5811)
+- C API: Add `BinaryenAddFunctionWithHeapType` which is like
+  `BinaryenAddFunction` but takes a heap type. The old function is kept for
+  backwards compatibility and as a convenience. (#5829)
+- Work on new optimization framework using lattices. (#5784, #5794, #5800,
+  #5817, #5831, #5849)
+- Heap types are now final by default and openness must be opted into both in
+  the text and binary formats as well as in the TypeBuilder API. (#5918)
 
 v114
 ----

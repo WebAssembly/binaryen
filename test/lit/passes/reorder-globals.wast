@@ -14,7 +14,7 @@
   (global $a i32 (i32.const 10))
   (global $b i32 (i32.const 20))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -35,7 +35,7 @@
   (global $a (mut i32) (i32.const 10))
   (global $b (mut i32) (i32.const 20))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (global.set $b
   ;; CHECK-NEXT:   (i32.const 30)
   ;; CHECK-NEXT:  )
@@ -66,7 +66,7 @@
   ;; CHECK:      (global $b (mut i32) (i32.const 20))
   (global $b (mut i32) (i32.const 20))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (global.set $a
   ;; CHECK-NEXT:   (i32.const 30)
   ;; CHECK-NEXT:  )
@@ -97,7 +97,7 @@
   ;; CHECK:      (global $b i32 (global.get $a))
   (global $b i32 (global.get $a))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -119,7 +119,7 @@
   ;; CHECK:      (global $c i32 (global.get $b))
   (global $c i32 (global.get $b))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -156,7 +156,7 @@
   (global $b i32 (i32.const 20))
   (global $c i32 (i32.const 30))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -192,7 +192,7 @@
   (global $b i32 (global.get $a))
   (global $c i32 (i32.const 30))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -229,7 +229,7 @@
   (global $b i32 (i32.const 20))
   (global $c i32 (global.get $b))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -260,7 +260,7 @@
   ;; CHECK:      (global $b i32 (i32.const 10))
   (global $b i32 (i32.const 10))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -281,7 +281,7 @@
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
 
-  ;; CHECK:      (func $uses (type $none_=>_none)
+  ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $a)
   ;; CHECK-NEXT:  )

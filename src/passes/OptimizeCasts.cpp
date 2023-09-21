@@ -385,10 +385,8 @@ struct EarlyCastApplier : public PostWalker<EarlyCastApplier> {
 
     auto refCastIter = finder.refCastToApply.find(curr);
     if (refCastIter != finder.refCastToApply.end()) {
-      currPtr = replaceCurrent(Builder(*getModule())
-                                 .makeRefCast(currPtr,
-                                              refCastIter->second->type,
-                                              refCastIter->second->safety));
+      currPtr = replaceCurrent(
+        Builder(*getModule()).makeRefCast(currPtr, refCastIter->second->type));
     }
 
     auto refAsIter = finder.refAsToApply.find(curr);
@@ -422,6 +420,16 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   static void doNoteNonLinear(BestCastFinder* self, Expression** currp) {
     self->mostCastedGets.clear();
   }
+
+  // It is ok to look at adjacent blocks together, as if a later part of a block
+  // is not reached that is fine - changes we make there would not be reached in
+  // that case.
+  //
+  // Note that we *cannot* do the same in EarlyCastFinder, as it modifies the
+  // earlier code in a dangerous way: it may move a trap to an earlier position.
+  // We cannot move a trap before a branch, as perhaps the branch is all that
+  // prevented us from trapping.
+  bool connectAdjacentBlocks = true;
 
   void visitLocalSet(LocalSet* curr) {
     // Clear any information about this local; it has a new value here.

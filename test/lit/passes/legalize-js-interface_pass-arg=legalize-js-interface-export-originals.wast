@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --legalize-js-interface --pass-arg=legalize-js-interface-export-originals -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $0 (func (result i64)))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
 

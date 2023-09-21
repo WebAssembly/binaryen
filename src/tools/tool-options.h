@@ -89,11 +89,10 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
       .addFeature(FeatureSet::GC, "garbage collection")
       .addFeature(FeatureSet::Memory64, "memory64")
-      .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .addFeature(FeatureSet::RelaxedSIMD, "relaxed SIMD")
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
       .addFeature(FeatureSet::Strings, "strings")
-      .addFeature(FeatureSet::MultiMemories, "multi-memories")
+      .addFeature(FeatureSet::MultiMemory, "multimemory")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

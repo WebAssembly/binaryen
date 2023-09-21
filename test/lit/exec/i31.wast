@@ -24,7 +24,7 @@
   ;; CHECK-NEXT: [fuzz-exec] note result: non-null => 0
   (func "non-null" (result i32)
     (ref.is_null
-      (i31.new
+      (ref.i31
         (i32.const 1234)
       )
     )
@@ -34,7 +34,7 @@
   ;; CHECK-NEXT: [fuzz-exec] note result: nn-u => 2147483647
   (func "nn-u" (result i32)
     (i31.get_u
-      (i31.new
+      (ref.i31
         (i32.const 0xffffffff)
       )
     )
@@ -44,7 +44,7 @@
   ;; CHECK-NEXT: [fuzz-exec] note result: nn-s => -1
   (func "nn-s" (result i32)
     (i31.get_s
-      (i31.new
+      (ref.i31
         (i32.const 0xffffffff)
       )
     )
@@ -55,7 +55,7 @@
   (func "zero-is-not-null" (result i32)
     (local $ref (ref null i31))
     (local.set $ref
-      (i31.new
+      (ref.i31
         (i32.const 0)
       )
     )

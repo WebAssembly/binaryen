@@ -2,11 +2,11 @@
 ;; RUN: wasm-ctor-eval %s --ctors=multivalue-local --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $1 (func (result i32)))
 
- ;; CHECK:      (import "a" "b" (func $import (type $none_=>_none)))
+ ;; CHECK:      (import "a" "b" (func $import (type $0)))
  (import "a" "b" (func $import))
 
  (func $multivalue-local (export "multivalue-local") (result i32)
@@ -43,23 +43,14 @@
 )
 ;; CHECK:      (export "multivalue-local" (func $multivalue-local_2))
 
-;; CHECK:      (func $multivalue-local_2 (type $none_=>_i32) (result i32)
+;; CHECK:      (func $multivalue-local_2 (type $1) (result i32)
 ;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local $1 (i32 i32))
 ;; CHECK-NEXT:  (local.set $0
 ;; CHECK-NEXT:   (i32.const 42)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (local.set $1
-;; CHECK-NEXT:   (tuple.make
-;; CHECK-NEXT:    (i32.const 42)
-;; CHECK-NEXT:    (i32.const 1000)
-;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $import)
 ;; CHECK-NEXT:  (i32.add
 ;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (tuple.extract 0
-;; CHECK-NEXT:    (local.get $1)
-;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

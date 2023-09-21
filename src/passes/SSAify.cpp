@@ -53,6 +53,7 @@
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/permutations.h"
 #include "wasm-builder.h"
@@ -85,11 +86,12 @@ struct SSAify : public Pass {
   Function* func;
   // things we add to the function prologue
   std::vector<Expression*> functionPrepends;
+  bool refinalize = false;
 
   void runOnFunction(Module* module_, Function* func_) override {
     module = module_;
     func = func_;
-    LocalGraph graph(func);
+    LocalGraph graph(func, module);
     graph.computeSetInfluences();
     graph.computeSSAIndexes();
     // create new local indexes, one for each set
@@ -99,6 +101,10 @@ struct SSAify : public Pass {
     computeGetsAndPhis(graph);
     // add prepends to function
     addPrepends();
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, module);
+    }
   }
 
   void createNewIndexes(LocalGraph& graph) {
@@ -142,6 +148,11 @@ struct SSAify : public Pass {
             // zero it out
             (*graph.locations[get]) =
               LiteralUtils::makeZero(get->type, *module);
+            // If we replace a local.get with a null then we are refining the
+            // type that the parent receives to a bottom type.
+            if (get->type.isRef()) {
+              refinalize = true;
+            }
           } else {
             // No zero exists here, so this is a nondefaultable type. The
             // default won't be used anyhow, so this value does not really

@@ -7,11 +7,11 @@
  ;; CHECK:      (type $vec (array i32))
  (type $vec (array i32))
  (data "")
- ;; CHECK:      (type $none_=>_ref|$vec| (func (result (ref $vec))))
+ ;; CHECK:      (type $1 (func (result (ref $vec))))
 
  ;; CHECK:      (data $0 "")
 
- ;; CHECK:      (func $test (type $none_=>_ref|$vec|) (result (ref $vec))
+ ;; CHECK:      (func $test (type $1) (result (ref $vec))
  ;; CHECK-NEXT:  (array.new_data $vec $0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)

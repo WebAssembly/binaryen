@@ -1,7 +1,7 @@
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (memory $0 (shared 16 16))
- (func $atomics-are-always-unsigned (type $none_=>_i32) (result i32)
+ (func $atomics-are-always-unsigned (type $0) (result i32)
   (local $0 i32)
   (drop
    (block (result i32)

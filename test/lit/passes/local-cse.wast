@@ -5,11 +5,11 @@
 
 (module
   (memory 100 100)
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $2 (func (result i64)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -386,10 +386,59 @@
       )
     )
   )
+
+  ;; CHECK:      (func $dominance
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dominance
+    (drop
+      (i32.add
+        (i32.const 2)
+        (i32.const 3)
+      )
+    )
+    (if
+      (i32.const 0)
+      ;; This add is dominated by the above, so we can use a tee of it.
+      (drop
+        (i32.add
+          (i32.const 2)
+          (i32.const 3)
+        )
+      )
+      ;; We could optimize this add as well, but do not yet. TODO
+      (drop
+        (i32.add
+          (i32.const 2)
+          (i32.const 3)
+        )
+      )
+    )
+  )
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $glob (mut i32) (i32.const 1))
   (global $glob (mut i32) (i32.const 1))

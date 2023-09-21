@@ -5,21 +5,21 @@
  ;; CHECK:      (type ${} (struct ))
  (type ${} (struct))
 
- ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK:      (func $foo (type $0)
  ;; CHECK-NEXT:  (call $bar)
  ;; CHECK-NEXT: )
  (func $foo
   (call $bar
-   (i31.new
+   (ref.i31
     (i32.const 1)
    )
   )
  )
- ;; CHECK:      (func $bar (type $none_=>_none)
+ ;; CHECK:      (func $bar (type $0)
  ;; CHECK-NEXT:  (local $0 i31ref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $0
- ;; CHECK-NEXT:    (i31.new
+ ;; CHECK-NEXT:    (ref.i31
  ;; CHECK-NEXT:     (i32.const 2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -35,7 +35,7 @@
    ;; and also add a ref.as_non_null so that the outside still receives the
    ;; same type as before
    (local.tee $0
-    (i31.new
+    (ref.i31
      (i32.const 2)
     )
    )
@@ -49,14 +49,14 @@
  )
  ;; A function that gets a non-nullable reference that is never used. We can
  ;; still create a non-nullable local for that parameter.
- ;; CHECK:      (func $get-nonnull (type $none_=>_none)
+ ;; CHECK:      (func $get-nonnull (type $0)
  ;; CHECK-NEXT:  (local $0 (ref ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $get-nonnull (param $0 (ref ${}))
   (nop)
  )
- ;; CHECK:      (func $send-nonnull (type $none_=>_none)
+ ;; CHECK:      (func $send-nonnull (type $0)
  ;; CHECK-NEXT:  (call $get-nonnull)
  ;; CHECK-NEXT: )
  (func $send-nonnull
@@ -68,8 +68,8 @@
 
 ;; Test ref.func and ref.null optimization of constant parameter values.
 (module
- ;; CHECK:      (func $foo (type $ref|none_->_none|_=>_none) (param $0 (ref $none_=>_none))
- ;; CHECK-NEXT:  (local $1 (ref $none_=>_none))
+ ;; CHECK:      (func $foo (type $1) (param $0 (ref $0))
+ ;; CHECK-NEXT:  (local $1 (ref $0))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.func $a)
  ;; CHECK-NEXT:  )
@@ -88,7 +88,7 @@
   (drop (local.get $y))
  )
 
- ;; CHECK:      (func $call-foo (type $none_=>_none)
+ ;; CHECK:      (func $call-foo (type $0)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (ref.func $b)
  ;; CHECK-NEXT:  )
@@ -109,7 +109,7 @@
   )
  )
 
- ;; CHECK:      (func $bar (type $i31ref_=>_none) (param $0 i31ref)
+ ;; CHECK:      (func $bar (type $2) (param $0 i31ref)
  ;; CHECK-NEXT:  (local $1 nullref)
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (ref.null none)
@@ -129,12 +129,12 @@
   (drop (local.get $y))
  )
 
- ;; CHECK:      (func $call-bar (type $none_=>_none)
+ ;; CHECK:      (func $call-bar (type $0)
  ;; CHECK-NEXT:  (call $bar
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $bar
- ;; CHECK-NEXT:   (i31.new
+ ;; CHECK-NEXT:   (ref.i31
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -149,20 +149,20 @@
   )
   (call $bar
    (ref.null none)
-   (i31.new (i32.const 0))
+   (ref.i31 (i32.const 0))
   )
  )
 
  ;; Helper functions so we have something to take the reference of.
- ;; CHECK:      (func $a (type $none_=>_none)
+ ;; CHECK:      (func $a (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $a)
- ;; CHECK:      (func $b (type $none_=>_none)
+ ;; CHECK:      (func $b (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $b)
- ;; CHECK:      (func $c (type $none_=>_none)
+ ;; CHECK:      (func $c (type $0)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $c)
@@ -170,7 +170,7 @@
 
 ;; Test that string constants can be applied.
 (module
- ;; CHECK:      (func $0 (type $none_=>_none)
+ ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (call $1)
  ;; CHECK-NEXT: )
  (func $0
@@ -179,7 +179,7 @@
    (string.const "929")
   )
  )
- ;; CHECK:      (func $1 (type $none_=>_none)
+ ;; CHECK:      (func $1 (type $0)
  ;; CHECK-NEXT:  (local $0 (ref string))
  ;; CHECK-NEXT:  (local $1 (ref string))
  ;; CHECK-NEXT:  (local.set $0

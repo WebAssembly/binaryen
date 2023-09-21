@@ -50,10 +50,10 @@ BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
-BinaryenFeatureRelaxedSIMD: 8192
-BinaryenFeatureExtendedConst: 16384
-BinaryenFeatureStrings: 32768
-BinaryenFeatureAll: 126975
+BinaryenFeatureRelaxedSIMD: 4096
+BinaryenFeatureExtendedConst: 8192
+BinaryenFeatureStrings: 16384
+BinaryenFeatureAll: 65535
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -70,23 +70,23 @@ BinaryenFeatureAll: 126975
  (i32.const 0)
 )
 (module
- (type $[mut:i8] (array (mut i8)))
- (type ${mut:i32} (struct (field (mut i32))))
- (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
- (type $[mut:i16] (array (mut i16)))
- (type $i32_=>_none (func (param i32)))
- (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (type $none_=>_none (func))
- (import "module" "base" (func $an-imported (type $i32_f64_=>_f32) (param i32 f64) (result f32)))
+ (type $0 (array (mut i8)))
+ (type $1 (struct (field (mut i32))))
+ (type $2 (func (param i32 i64 f32 f64) (result i32)))
+ (type $3 (array (mut i16)))
+ (type $4 (func (param i32)))
+ (type $5 (func (param i32 f64) (result f32)))
+ (type $6 (func))
+ (import "module" "base" (func $an-imported (type $5) (param i32 f64) (result f32)))
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
- (global $i8Array-global (mut (ref null $[mut:i8])) (array.new_default $[mut:i8]
+ (global $i8Array-global (mut (ref null $0)) (array.new_default $0
   (i32.const 0)
  ))
- (global $i16Array-global (mut (ref null $[mut:i16])) (array.new_default $[mut:i16]
+ (global $i16Array-global (mut (ref null $3)) (array.new_default $3
   (i32.const 0)
  ))
- (global $i32Struct-global (mut (ref null ${mut:i32})) (struct.new_default ${mut:i32}))
+ (global $i32Struct-global (mut (ref null $1)) (struct.new_default $1))
  (global $string-global (mut stringref) (string.const ""))
  (memory $0 (shared 1 256))
  (data $0 (i32.const 10) "hello, world")
@@ -99,7 +99,7 @@ BinaryenFeatureAll: 126975
  (export "mem" (memory $0))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (start $starter)
- (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $2) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 externref)
   (block $the-body (result i32)
@@ -2034,7 +2034,7 @@ BinaryenFeatureAll: 126975
       )
       (drop
        (i32.eqz
-        (call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $tab (type $2)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -2098,7 +2098,7 @@ BinaryenFeatureAll: 126975
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $tab (type $2)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -2241,76 +2241,76 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (i31.new
+       (ref.i31
         (i32.const 0)
        )
       )
       (drop
        (i31.get_s
-        (i31.new
+        (ref.i31
          (i32.const 1)
         )
        )
       )
       (drop
        (i31.get_u
-        (i31.new
+        (ref.i31
          (i32.const 2)
         )
        )
       )
       (drop
-       (ref.test null $[mut:i8]
+       (ref.test (ref null $0)
         (global.get $i8Array-global)
        )
       )
       (drop
-       (ref.cast null $[mut:i8]
+       (ref.cast (ref null $0)
         (global.get $i8Array-global)
        )
       )
       (drop
-       (struct.new_default ${mut:i32})
+       (struct.new_default $1)
       )
       (drop
-       (struct.new ${mut:i32}
+       (struct.new $1
         (i32.const 0)
        )
       )
       (drop
-       (struct.get ${mut:i32} 0
+       (struct.get $1 0
         (global.get $i32Struct-global)
        )
       )
-      (struct.set ${mut:i32} 0
+      (struct.set $1 0
        (global.get $i32Struct-global)
        (i32.const 0)
       )
       (drop
-       (array.new_default $[mut:i8]
+       (array.new_default $0
         (i32.const 3)
        )
       )
       (drop
-       (array.new $[mut:i8]
+       (array.new $0
         (i32.const 42)
         (i32.const 3)
        )
       )
       (drop
-       (array.new_fixed $[mut:i8]
+       (array.new_fixed $0 3
         (i32.const 1)
         (i32.const 2)
         (i32.const 3)
        )
       )
       (drop
-       (array.get_s $[mut:i8]
+       (array.get_s $0
         (global.get $i8Array-global)
         (i32.const 0)
        )
       )
-      (array.set $[mut:i8]
+      (array.set $0
        (global.get $i8Array-global)
        (i32.const 0)
        (i32.const 42)
@@ -2320,7 +2320,7 @@ BinaryenFeatureAll: 126975
         (global.get $i8Array-global)
        )
       )
-      (array.copy $[mut:i8] $[mut:i8]
+      (array.copy $0 $0
        (global.get $i8Array-global)
        (i32.const 0)
        (global.get $i8Array-global)
@@ -2328,7 +2328,7 @@ BinaryenFeatureAll: 126975
        (i32.const 2)
       )
       (drop
-       (string.new_wtf8 utf8
+       (string.new_utf8
         (i32.const 0)
         (i32.const 0)
        )
@@ -2340,13 +2340,13 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8 wtf8
+       (string.new_wtf8
         (i32.const 0)
         (i32.const 0)
        )
       )
       (drop
-       (string.new_wtf8 replace
+       (string.new_lossy_utf8
         (i32.const 0)
         (i32.const 0)
        )
@@ -2358,7 +2358,7 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8_array utf8
+       (string.new_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
@@ -2372,14 +2372,14 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.new_wtf8_array wtf8
+       (string.new_wtf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
        )
       )
       (drop
-       (string.new_wtf8_array replace
+       (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
         (i32.const 0)
@@ -2401,12 +2401,12 @@ BinaryenFeatureAll: 126975
        (string.const "hello world")
       )
       (drop
-       (string.measure_wtf8 utf8
+       (string.measure_utf8
         (global.get $string-global)
        )
       )
       (drop
-       (string.measure_wtf8 wtf8
+       (string.measure_wtf8
         (global.get $string-global)
        )
       )
@@ -2428,19 +2428,19 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.encode_wtf8 utf8
+       (string.encode_utf8
         (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8 replace
+       (string.encode_lossy_utf8
         (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8 wtf8
+       (string.encode_wtf8
         (global.get $string-global)
         (i32.const 0)
        )
@@ -2452,21 +2452,21 @@ BinaryenFeatureAll: 126975
        )
       )
       (drop
-       (string.encode_wtf8_array utf8
+       (string.encode_utf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8_array replace
+       (string.encode_lossy_utf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
        )
       )
       (drop
-       (string.encode_wtf8_array wtf8
+       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2586,24 +2586,24 @@ BinaryenFeatureAll: 126975
    (i32.const 42)
   )
  )
- (func $starter (type $none_=>_none)
+ (func $starter (type $6)
   (nop)
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_i64 (func (result i64)))
+ (type $0 (func (result i32)))
+ (type $1 (func (result i64)))
  (func $unreachable-fn (result i32)
-  (call_indirect (type $none_=>_i64)
+  (call_indirect (type $1)
    (unreachable)
   )
  )
 )
 raw:
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block
   (local $0 i32)
@@ -3069,7 +3069,7 @@ optimized:
 )
 module loaded from binary form:
 (module
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32 i32) (result i32)))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -3079,7 +3079,7 @@ module loaded from binary form:
 )
 module s-expr printed (in memory):
 (module
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32 i32) (result i32)))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -3090,7 +3090,7 @@ module s-expr printed (in memory):
 
 module s-expr printed (in memory, caller-owned):
 (module
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32 i32) (result i32)))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
@@ -3100,8 +3100,8 @@ module s-expr printed (in memory, caller-owned):
 )
 
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $0 (func (param i32)))
+ (type $1 (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter
@@ -3112,7 +3112,7 @@ module s-expr printed (in memory, caller-owned):
 )
 1234 : i32
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (func $func
   (local $0 i32)
   (local.set $0
@@ -3122,7 +3122,7 @@ module s-expr printed (in memory, caller-owned):
 )
 validation: 0
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (global $a-global i32 (i32.const 125))
  (memory $0 1 256)
  (data $0 (i32.const 10) "hello, world")
@@ -3145,7 +3145,7 @@ validation: 0
 )
 module with a function to optimize:
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (func $adder (result i32)
   (i32.add
    (i32.const 1)
@@ -3155,7 +3155,7 @@ module with a function to optimize:
 )
 optimized:
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (func $adder (result i32)
   (i32.const 4)
  )
@@ -3166,16 +3166,19 @@ TypeBuilderErrorReasonForwardSupertypeReference: 2
 TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
- (type $SomeArray (array (mut (ref null $SomeArray))))
- (type $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct)))))
- (type $SomeSignature (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature))))
- (type $none_=>_none (func))
+ (type $SomeArray (sub (array (mut (ref null $SomeArray)))))
+ (type $SomeSignature (sub (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)))))
+ (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
+ (type $3 (func))
  (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
- (func $test (type $none_=>_none)
+ (func $test (type $3)
   (local $0 (ref null $SomeArray))
   (local $1 (ref null $SomeStruct))
   (local $2 (ref null $SomeSignature))
   (local $3 (ref null $SomeSubStruct))
   (nop)
+ )
+ (func $test2 (type $SomeSignature) (param $0 (ref null $SomeSignature)) (param $1 (ref null $SomeArray)) (result (ref null $SomeSignature))
+  (unreachable)
  )
 )

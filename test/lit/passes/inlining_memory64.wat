@@ -3,7 +3,7 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --enable-memory64 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $0 (func (result i64)))
 
   ;; CHECK:      (memory $0 i64 256 256)
   (memory $0 i64 256 256)

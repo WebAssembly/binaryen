@@ -105,7 +105,7 @@ function initializeConstants() {
     'TupleMake',
     'TupleExtract',
     'Pop',
-    'I31New',
+    'RefI31',
     'I31Get',
     'CallRef',
     'RefTest',
@@ -167,7 +167,7 @@ function initializeConstants() {
     'RelaxedSIMD',
     'ExtendedConst',
     'Strings',
-    'MultiMemories',
+    'MultiMemory',
     'All'
   ].forEach(name => {
     Module['Features'][name] = Module['_BinaryenFeature' + name]();
@@ -2370,6 +2370,9 @@ function wrapModule(module, self = {}) {
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
     },
+    'i31'(value) {
+      return Module['_BinaryenRefI31'](module, value);
+    },
     'eq'(left, right) {
       return Module['_BinaryenRefEq'](module, left, right);
     }
@@ -2418,9 +2421,6 @@ function wrapModule(module, self = {}) {
   };
 
   self['i31'] = {
-    'new'(value) {
-      return Module['_BinaryenI31New'](module, value);
-    },
     'get_s'(i31) {
       return Module['_BinaryenI31Get'](module, i31, 1);
     },
@@ -3271,11 +3271,11 @@ Module['getExpressionInfo'] = function(expr) {
         'tuple': Module['_BinaryenTupleExtractGetTuple'](expr),
         'index': Module['_BinaryenTupleExtractGetIndex'](expr)
       };
-    case Module['I31NewId']:
+    case Module['RefI31Id']:
       return {
         'id': id,
         'type': type,
-        'value': Module['_BinaryenI31NewGetValue'](expr)
+        'value': Module['_BinaryenRefI31GetValue'](expr)
       };
     case Module['I31GetId']:
       return {
@@ -4837,12 +4837,12 @@ Module['TupleExtract'] = makeExpressionWrapper({
   }
 });
 
-Module['I31New'] = makeExpressionWrapper({
+Module['RefI31'] = makeExpressionWrapper({
   'getValue'(expr) {
-    return Module['_BinaryenI31NewGetValue'](expr);
+    return Module['_BinaryenRefI31GetValue'](expr);
   },
   'setValue'(expr, valueExpr) {
-    Module['_BinaryenI31NewSetValue'](expr, valueExpr);
+    Module['_BinaryenRefI31SetValue'](expr, valueExpr);
   }
 });
 

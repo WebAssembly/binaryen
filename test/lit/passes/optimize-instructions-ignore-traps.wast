@@ -5,7 +5,7 @@
 (module
   ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
-  ;; CHECK:      (import "a" "b" (func $get-i32 (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $get-i32 (type $2) (result i32)))
 
   ;; CHECK:      (memory $0 0)
   (memory $0 0)
@@ -643,7 +643,7 @@
    (return (local.get $1))
   )
 
- ;; CHECK:      (func $conditionalize-if-type-change (type $none_=>_f64) (result f64)
+ ;; CHECK:      (func $conditionalize-if-type-change (type $3) (result f64)
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (loop $label$1 (result f32)
@@ -717,7 +717,7 @@
   )
   (f64.const -nan:0xfffffffffffff)
  )
- ;; CHECK:      (func $optimize-bulk-memory-copy (type $i32_i32_i32_=>_none) (param $dst i32) (param $src i32) (param $sz i32)
+ ;; CHECK:      (func $optimize-bulk-memory-copy (type $1) (param $dst i32) (param $src i32) (param $sz i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dst)
@@ -775,7 +775,7 @@
   )
  )
 
- ;; CHECK:      (func $optimize-bulk-memory-fill (type $i32_i32_i32_=>_none) (param $dst i32) (param $val i32) (param $sz i32)
+ ;; CHECK:      (func $optimize-bulk-memory-fill (type $1) (param $dst i32) (param $val i32) (param $sz i32)
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $dst)

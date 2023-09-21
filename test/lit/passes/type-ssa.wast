@@ -2,15 +2,12 @@
 
 ;; RUN: foreach %s %t wasm-opt --type-ssa -all -S -o - | filecheck %s
 
-;; Test in both isorecursive and nominal modes to make sure we create the new
-;; types properly in both.
-
 ;; Every struct.new here should get a new type.
 (module
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct$1 (sub $struct (struct (field i32))))
@@ -37,7 +34,7 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct$1)
   ;; CHECK-NEXT:  )
@@ -58,7 +55,7 @@
     )
   )
 
-  ;; CHECK:      (func $another-func (type $none_=>_none)
+  ;; CHECK:      (func $another-func (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct$3
   ;; CHECK-NEXT:    (i32.const 100)
@@ -77,10 +74,10 @@
 ;; The same module as before, except that now the type is final, so we cannot
 ;; create any subtypes.
 (module
-  ;; CHECK:      (type $struct (sub final (struct (field i32))))
+  ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (sub final (struct (field i32))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (i32.const 42)
@@ -96,7 +93,7 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
@@ -117,7 +114,7 @@
     )
   )
 
-  ;; CHECK:      (func $another-func (type $none_=>_none)
+  ;; CHECK:      (func $another-func (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 100)
@@ -136,10 +133,10 @@
 ;; Some of these are uninteresting and should not get a new type.
 (module
 
-  ;; CHECK:      (type $anyref_arrayref_=>_none (func (param anyref arrayref)))
+  ;; CHECK:      (type $0 (func (param anyref arrayref)))
 
-  ;; CHECK:      (type $struct (struct (field anyref)))
-  (type $struct (struct_subtype (field (ref null any)) data))
+  ;; CHECK:      (type $struct (sub (struct (field anyref))))
+  (type $struct (sub (struct (field (ref null any)))))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct$1 (sub $struct (struct (field anyref))))
@@ -148,7 +145,7 @@
 
   ;; CHECK:       (type $struct$3 (sub $struct (struct (field anyref))))
 
-  ;; CHECK:      (func $foo (type $anyref_arrayref_=>_none) (param $any anyref) (param $array arrayref)
+  ;; CHECK:      (func $foo (type $0) (param $any anyref) (param $array arrayref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct$1)
   ;; CHECK-NEXT:  )
@@ -208,13 +205,13 @@
 )
 
 (module
-  ;; CHECK:      (type $array (array (mut anyref)))
-  (type $array (array (mut (ref null any))))
+  ;; CHECK:      (type $array (sub (array (mut anyref))))
+  (type $array (sub (array (mut (ref null any)))))
 
-  ;; CHECK:      (type $ref|i31|_anyref_=>_none (func (param (ref i31) anyref)))
+  ;; CHECK:      (type $1 (func (param (ref i31) anyref)))
 
-  ;; CHECK:      (type $array-func (array (mut funcref)))
-  (type $array-func (array (mut funcref)))
+  ;; CHECK:      (type $array-func (sub (array (mut funcref))))
+  (type $array-func (sub (array (mut funcref))))
 
   (elem func $array.new)
 
@@ -231,11 +228,11 @@
 
   ;; CHECK:       (type $array$6 (sub $array (array (mut anyref))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $9 (func))
 
   ;; CHECK:      (elem $0 func $array.new)
 
-  ;; CHECK:      (func $array.new (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; CHECK:      (func $array.new (type $1) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_default $array$1
   ;; CHECK-NEXT:    (i32.const 5)
@@ -290,7 +287,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_seg (type $none_=>_none)
+  ;; CHECK:      (func $array.new_seg (type $9)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_elem $array-func$4 $0
   ;; CHECK-NEXT:    (i32.const 0)
@@ -309,24 +306,24 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $ref|i31|_anyref_=>_none) (param $refined (ref i31)) (param $null-any anyref)
+  ;; CHECK:      (func $array.new_fixed (type $1) (param $refined (ref i31)) (param $null-any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array$5
+  ;; CHECK-NEXT:   (array.new_fixed $array$5 1
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array$6
+  ;; CHECK-NEXT:   (array.new_fixed $array$6 1
   ;; CHECK-NEXT:    (local.get $refined)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
   ;; CHECK-NEXT:    (local.get $null-any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (array.new_fixed $array
+  ;; CHECK-NEXT:   (array.new_fixed $array 2
   ;; CHECK-NEXT:    (local.get $refined)
   ;; CHECK-NEXT:    (local.get $null-any)
   ;; CHECK-NEXT:   )
@@ -335,26 +332,26 @@
   (func $array.new_fixed (param $refined (ref i31)) (param $null-any (ref null any))
     ;; Null, interesting, so we get a new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (ref.null none)
       )
     )
     ;; More refined type, interesting.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $refined)
       )
     )
     ;; Same type as declared - boring, no new type.
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 1
         (local.get $null-any)
       )
     )
     ;; Mixture of boring and interesting => boring (since we infer a single type
     ;; for the entire array).
     (drop
-      (array.new_fixed $array
+      (array.new_fixed $array 2
         (local.get $refined)
         (local.get $null-any)
       )
@@ -369,20 +366,20 @@
 ;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
 ;; but that is not important here.)
 (module
-  ;; CHECK:      (type $empty (struct ))
-  (type $empty (struct))
+  ;; CHECK:      (type $empty (sub (struct )))
+  (type $empty (sub (struct)))
 
   ;; CHECK:      (type $empty$1 (sub $empty (struct )))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+  ;; CHECK:      (type $2 (func (param anyref)))
 
-  ;; CHECK:      (type $struct (struct (field externref) (field anyref) (field externref)))
-  (type $struct (struct externref anyref externref))
+  ;; CHECK:      (type $struct (sub (struct (field externref) (field anyref) (field externref))))
+  (type $struct (sub (struct externref anyref externref)))
 
   ;; CHECK:      (global $g (mut anyref) (struct.new_default $empty$1))
   (global $g (mut anyref) (struct.new $empty))
 
-  ;; CHECK:      (func $0 (type $anyref_=>_none) (param $param anyref)
+  ;; CHECK:      (func $0 (type $2) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (extern.externalize
@@ -422,20 +419,20 @@
 )
 
 (module
-  ;; CHECK:      (type $array (array (mut f32)))
-  (type $array (array (mut f32)))
+  ;; CHECK:      (type $array (sub (array (mut f32))))
+  (type $array (sub (array (mut f32))))
 
   ;; CHECK:      (type $subarray (sub $array (array (mut f32))))
-  (type $subarray (array_subtype (mut f32) $array))
+  (type $subarray (sub $array (array (mut f32))))
 
-  ;; CHECK:      (type $ref|$subarray|_=>_none (func (param (ref $subarray))))
+  ;; CHECK:      (type $2 (func (param (ref $subarray))))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $array$1 (sub $array (array (mut f32))))
 
-  ;; CHECK:       (type ${mut:i32_mut:i32_mut:f64_mut:f64_mut:i32_mut:f64_mut:f64_mut:i32_mut:i32_mut:i32_mut:i32} (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+  ;; CHECK:       (type $4 (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (func $1 (type $ref|$subarray|_=>_none) (param $ref (ref $subarray))
+  ;; CHECK:      (func $1 (type $2) (param $ref (ref $subarray))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new_default $array$1
   ;; CHECK-NEXT:    (i32.const 64)
@@ -450,6 +447,39 @@
       (array.new_default $array
         (i32.const 64)
       )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $A (sub (struct )))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (type $A$1 (sub $A (struct )))
+
+  ;; CHECK:      (type $2 (func (result (ref $A))))
+
+  ;; CHECK:      (func $0 (type $2) (result (ref $A))
+  ;; CHECK-NEXT:  (block $label (result (ref $A$1))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A$1) (ref $A$1)
+  ;; CHECK-NEXT:     (struct.new_default $A$1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0 (result (ref $A))
+    ;; After creating a subtype of $A as the input to the br_on_cast, the cast
+    ;; must be refinalized so that it validates (otherwise, it would try to cast
+    ;; to a supertype).
+    (block $label (result (ref $A))
+      (drop
+        (br_on_cast $label (ref $A) (ref $A)
+          (struct.new_default $A)
+        )
+      )
+      (unreachable)
     )
   )
 )

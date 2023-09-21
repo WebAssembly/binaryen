@@ -264,6 +264,8 @@ public:
     return lub;
   }
 
+  static Type getGreatestLowerBound(Type a, Type b);
+
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
   // makes it less convenient to use.
@@ -359,7 +361,7 @@ public:
   bool isArray() const;
   bool isString() const;
   bool isBottom() const;
-  bool isFinal() const;
+  bool isOpen() const;
 
   Signature getSignature() const;
   const Struct& getStruct() const;
@@ -585,7 +587,7 @@ struct TypeBuilder {
   // not overlap or go out of bounds.
   void createRecGroup(size_t i, size_t length);
 
-  void setFinal(size_t i, bool final = true);
+  void setOpen(size_t i, bool open = true);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -648,13 +650,15 @@ struct TypeBuilder {
       builder.setSubType(index, other);
       return *this;
     }
-    Entry& setFinal(bool final = true) {
-      builder.setFinal(index, final);
+    Entry& setOpen(bool open = true) {
+      builder.setOpen(index, open);
       return *this;
     }
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
+
+  void dump();
 };
 
 // We consider certain specific types to always be public, to allow closed-

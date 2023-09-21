@@ -99,7 +99,7 @@ function test_features() {
   console.log("Features.RelaxedSIMD: " + binaryen.Features.RelaxedSIMD);
   console.log("Features.ExtendedConst: " + binaryen.Features.ExtendedConst);
   console.log("Features.Strings: " + binaryen.Features.Strings);
-  console.log("Features.MultiMemories: " + binaryen.Features.MultiMemories);
+  console.log("Features.MultiMemory: " + binaryen.Features.MultiMemory);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -157,7 +157,7 @@ function test_ids() {
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("TupleMakeId: " + binaryen.TupleMakeId);
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
-  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("RefI31Id: " + binaryen.RefI31Id);
   console.log("I31GetId: " + binaryen.I31GetId);
   console.log("CallRefId: " + binaryen.CallRefId);
   console.log("RefTestId: " + binaryen.RefTestId);
@@ -669,16 +669,16 @@ function test_core() {
     module.memory.grow(makeInt32(0)),
 
     // GC
-    module.i31.new(
+    module.ref.i31(
       module.i32.const(0)
     ),
     module.i31.get_s(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(1)
       )
     ),
     module.i31.get_u(
-      module.i31.new(
+      module.ref.i31(
         module.i32.const(2)
       )
     ),

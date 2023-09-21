@@ -60,7 +60,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     //
     // TODO: Optimize this, as LocalGraph computes more than we need, and on
     //       more locals than we need.
-    LocalGraph localGraph(func);
+    LocalGraph localGraph(func, getModule());
 
     // For each local index, compute all the the sets and gets.
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
@@ -78,27 +78,11 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     // Find which vars can be non-nullable.
     std::unordered_set<Index> cannotBeNonNullable;
 
-    if (getModule()->features.hasGCNNLocals()) {
-      // If the feature is enabled then the only constraint is being able to
-      // read the default value - if it is readable, the local cannot become
-      // non-nullable.
-      for (auto& [get, sets] : localGraph.getSetses) {
-        auto index = get->index;
-        if (func->isVar(index) &&
-            std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
-              return set == nullptr;
-            })) {
-          cannotBeNonNullable.insert(index);
-        }
-      }
-    } else {
-      // Without GCNNLocals, validation rules follow the spec rules: all gets
-      // must be dominated structurally by sets, for the local to be non-
-      // nullable.
-      LocalStructuralDominance info(func, *getModule());
-      for (auto index : info.nonDominatingIndices) {
-        cannotBeNonNullable.insert(index);
-      }
+    // All gets must be dominated structurally by sets for the local to be non-
+    // nullable.
+    LocalStructuralDominance info(func, *getModule());
+    for (auto index : info.nonDominatingIndices) {
+      cannotBeNonNullable.insert(index);
     }
 
     auto varBase = func->getVarIndexBase();

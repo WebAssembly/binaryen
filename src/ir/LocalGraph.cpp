@@ -41,9 +41,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   Flower(LocalGraph::GetSetses& getSetses,
          LocalGraph::Locations& locations,
-         Function* func)
+         Function* func,
+         Module* module)
     : getSetses(getSetses), locations(locations) {
     setFunction(func);
+    setModule(module);
     // create the CFG by walking the IR
     CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
     // flow gets across blocks
@@ -51,6 +53,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
+
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
 
   // cfg traversal work
 
@@ -227,8 +233,8 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func) : func(func) {
-  LocalGraphInternal::Flower flower(getSetses, locations, func);
+LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
+  LocalGraphInternal::Flower flower(getSetses, locations, func, module);
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";

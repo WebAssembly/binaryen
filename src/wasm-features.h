@@ -40,21 +40,15 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    // TODO: Remove this feature when the wasm spec stabilizes.
-    GCNNLocals = 1 << 12,
-    RelaxedSIMD = 1 << 13,
-    ExtendedConst = 1 << 14,
-    Strings = 1 << 15,
-    MultiMemories = 1 << 16,
+    RelaxedSIMD = 1 << 12,
+    ExtendedConst = 1 << 13,
+    Strings = 1 << 14,
+    MultiMemory = 1 << 15,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    // GCNNLocals are opt-in: merely asking for "All" does not apply them. To
-    // get all possible values use AllPossible. See setAll() below for more
-    // details.
-    All = ((1 << 17) - 1) & ~GCNNLocals,
-    AllPossible = (1 << 17) - 1,
+    All = (1 << 16) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -83,16 +77,14 @@ struct FeatureSet {
         return "gc";
       case Memory64:
         return "memory64";
-      case GCNNLocals:
-        return "gc-nn-locals";
       case RelaxedSIMD:
         return "relaxed-simd";
       case ExtendedConst:
         return "extended-const";
       case Strings:
         return "strings";
-      case MultiMemories:
-        return "multi-memories";
+      case MultiMemory:
+        return "multimemory";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -101,7 +93,7 @@ struct FeatureSet {
   std::string toString() const {
     std::string ret;
     uint32_t x = 1;
-    while (x & Feature::AllPossible) {
+    while (x & Feature::All) {
       if (features & x) {
         if (!ret.empty()) {
           ret += ", ";
@@ -133,12 +125,11 @@ struct FeatureSet {
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasGC() const { return (features & GC) != 0; }
   bool hasMemory64() const { return (features & Memory64) != 0; }
-  bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasRelaxedSIMD() const { return (features & RelaxedSIMD) != 0; }
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
   bool hasStrings() const { return (features & Strings) != 0; }
-  bool hasMultiMemories() const { return (features & MultiMemories) != 0; }
-  bool hasAll() const { return (features & AllPossible) != 0; }
+  bool hasMultiMemory() const { return (features & MultiMemory) != 0; }
+  bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
     features = v ? (features | f) : (features & ~f);
@@ -155,34 +146,18 @@ struct FeatureSet {
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
   void setMemory64(bool v = true) { set(Memory64, v); }
-  void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setRelaxedSIMD(bool v = true) { set(RelaxedSIMD, v); }
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setStrings(bool v = true) { set(Strings, v); }
-  void setMultiMemories(bool v = true) { set(MultiMemories, v); }
+  void setMultiMemory(bool v = true) { set(MultiMemory, v); }
   void setMVP() { features = MVP; }
-  void setAll() {
-    // Do not set GCNNLocals, which forces the user to opt in to that feature
-    // explicitly. That is, wasm-opt -all will enable GC but *not* enable
-    // non-nullable locals. To get them, do wasm-opt -all --enable-gc-nn-locals
-    // FIXME: When the wasm spec stabilizes, this feature will go away, as the
-    //        non-nullable locals experiment will either become the standard,
-    //        or it will go away.
-    // Leave the old GCNNLocals value unmodified. This makes things like
-    // --enable-gc-nn-locals -all work (that is, if we enable the feature,
-    // then -all does not disable it; it simply does not enable it by itself).
-    auto oldGCNNLocals = hasGCNNLocals();
-    features = AllPossible;
-    setGCNNLocals(oldGCNNLocals);
-  }
+  void setAll() { features = All; }
 
   void enable(const FeatureSet& other) { features |= other.features; }
-  void disable(const FeatureSet& other) {
-    features = features & ~other.features & AllPossible;
-  }
+  void disable(const FeatureSet& other) { features &= ~other.features; }
 
   template<typename F> void iterFeatures(F f) const {
-    for (uint32_t feature = MVP + 1; feature < AllPossible; feature <<= 1) {
+    for (uint32_t feature = MVP + 1; feature < All; feature <<= 1) {
       if (has(feature)) {
         f(static_cast<Feature>(feature));
       }

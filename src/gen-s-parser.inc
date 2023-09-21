@@ -46,9 +46,6 @@ switch (buf[0]) {
               case 'e':
                 if (op == "array.init_elem"sv) { return makeArrayInitElem(s); }
                 goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) { return makeArrayNewFixed(s); }
-                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -117,52 +114,19 @@ switch (buf[0]) {
                   case 'c': {
                     switch (buf[10]) {
                       case '\0':
-                        if (op == "br_on_cast"sv) { return makeBrOnCast(s, std::nullopt); }
+                        if (op == "br_on_cast"sv) { return makeBrOnCast(s); }
                         goto parse_error;
-                      case '_': {
-                        switch (buf[11]) {
-                          case 'f':
-                            if (op == "br_on_cast_fail"sv) { return makeBrOnCast(s, std::nullopt, true); }
-                            goto parse_error;
-                          case 's': {
-                            switch (buf[17]) {
-                              case '\0':
-                                if (op == "br_on_cast_static"sv) { return makeBrOnCast(s, std::nullopt); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "br_on_cast_static_fail"sv) { return makeBrOnCast(s, std::nullopt, true); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
-                        }
-                      }
+                      case '_':
+                        if (op == "br_on_cast_fail"sv) { return makeBrOnCast(s, true); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'f':
-                    if (op == "br_on_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable)); }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "br_on_i31"sv) { return makeBrOnCast(s, Type(HeapType::i31, NonNullable)); }
-                    goto parse_error;
                   case 'n': {
                     switch (buf[7]) {
-                      case 'o': {
-                        switch (buf[10]) {
-                          case 'f':
-                            if (op == "br_on_non_func"sv) { return makeBrOnCast(s, Type(HeapType::func, NonNullable), true); }
-                            goto parse_error;
-                          case 'i':
-                            if (op == "br_on_non_i31"sv) { return makeBrOnCast(s, Type(HeapType::i31, NonNullable), true); }
-                            goto parse_error;
-                          case 'n':
-                            if (op == "br_on_non_null"sv) { return makeBrOnNull(s, true); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
+                      case 'o':
+                        if (op == "br_on_non_null"sv) { return makeBrOnNull(s, true); }
+                        goto parse_error;
                       case 'u':
                         if (op == "br_on_null"sv) { return makeBrOnNull(s); }
                         goto parse_error;
@@ -1239,7 +1203,7 @@ switch (buf[0]) {
                 }
               }
               case 'n':
-                if (op == "i31.new"sv) { return makeI31New(s); }
+                if (op == "i31.new"sv) { return makeRefI31(s); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -3008,47 +2972,12 @@ switch (buf[0]) {
     switch (buf[2]) {
       case 'f': {
         switch (buf[4]) {
-          case 'a': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.as_func"sv) { return makeRefCast(s, Type(HeapType::func, NonNullable)); }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.as_i31"sv) { return makeRefCast(s, Type(HeapType::i31, NonNullable)); }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.as_non_null"sv) { return makeRefAs(s, RefAsNonNull); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
-          case 'c': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.cast"sv) { return makeRefCast(s); }
-                goto parse_error;
-              case '_': {
-                switch (buf[9]) {
-                  case 'n': {
-                    switch (buf[12]) {
-                      case '\0':
-                        if (op == "ref.cast_nop"sv) { return makeRefCastNop(s); }
-                        goto parse_error;
-                      case '_':
-                        if (op == "ref.cast_nop_static"sv) { return makeRefCastNop(s); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 's':
-                    if (op == "ref.cast_static"sv) { return makeRefCast(s); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              default: goto parse_error;
-            }
-          }
+          case 'a':
+            if (op == "ref.as_non_null"sv) { return makeRefAs(s, RefAsNonNull); }
+            goto parse_error;
+          case 'c':
+            if (op == "ref.cast"sv) { return makeRefCast(s); }
+            goto parse_error;
           case 'e':
             if (op == "ref.eq"sv) { return makeRefEq(s); }
             goto parse_error;
@@ -3056,14 +2985,11 @@ switch (buf[0]) {
             if (op == "ref.func"sv) { return makeRefFunc(s); }
             goto parse_error;
           case 'i': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.is_func"sv) { return makeRefTest(s, Type(HeapType::func, NonNullable)); }
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) { return makeRefI31(s); }
                 goto parse_error;
-              case 'i':
-                if (op == "ref.is_i31"sv) { return makeRefTest(s, Type(HeapType::i31, NonNullable)); }
-                goto parse_error;
-              case 'n':
+              case 's':
                 if (op == "ref.is_null"sv) { return makeRefIsNull(s); }
                 goto parse_error;
               default: goto parse_error;
@@ -3072,17 +2998,9 @@ switch (buf[0]) {
           case 'n':
             if (op == "ref.null"sv) { return makeRefNull(s); }
             goto parse_error;
-          case 't': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.test"sv) { return makeRefTest(s); }
-                goto parse_error;
-              case '_':
-                if (op == "ref.test_static"sv) { return makeRefTest(s); }
-                goto parse_error;
-              default: goto parse_error;
-            }
-          }
+          case 't':
+            if (op == "ref.test"sv) { return makeRefTest(s); }
+            goto parse_error;
           default: goto parse_error;
         }
       }
@@ -3176,26 +3094,53 @@ switch (buf[0]) {
                   case 'e': {
                     switch (buf[8]) {
                       case 'n': {
-                        switch (buf[17]) {
-                          case '1': {
-                            switch (buf[19]) {
+                        switch (buf[14]) {
+                          case 'l': {
+                            switch (buf[24]) {
                               case '\0':
-                                if (op == "string.encode_wtf16"sv) { return makeStringEncode(s, StringEncodeWTF16); }
+                                if (op == "string.encode_lossy_utf8"sv) { return makeStringEncode(s, StringEncodeLossyUTF8); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                                if (op == "string.encode_lossy_utf8_array"sv) { return makeStringEncode(s, StringEncodeLossyUTF8Array); }
                                 goto parse_error;
                               default: goto parse_error;
                             }
                           }
-                          case '8': {
+                          case 'u': {
                             switch (buf[18]) {
                               case '\0':
-                                if (op == "string.encode_wtf8"sv) { return makeStringEncode(s, StringEncodeWTF8); }
+                                if (op == "string.encode_utf8"sv) { return makeStringEncode(s, StringEncodeUTF8); }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf8_array"sv) { return makeStringEncode(s, StringEncodeWTF8Array); }
+                                if (op == "string.encode_utf8_array"sv) { return makeStringEncode(s, StringEncodeUTF8Array); }
                                 goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case 'w': {
+                            switch (buf[17]) {
+                              case '1': {
+                                switch (buf[19]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf16"sv) { return makeStringEncode(s, StringEncodeWTF16); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case '8': {
+                                switch (buf[18]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf8"sv) { return makeStringEncode(s, StringEncodeWTF8); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf8_array"sv) { return makeStringEncode(s, StringEncodeWTF8Array); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
                               default: goto parse_error;
                             }
                           }
@@ -3218,26 +3163,61 @@ switch (buf[0]) {
                     if (op == "string.is_usv_sequence"sv) { return makeStringMeasure(s, StringMeasureIsUSV); }
                     goto parse_error;
                   case 'm': {
-                    switch (buf[18]) {
-                      case '1':
-                        if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                    switch (buf[15]) {
+                      case 'u':
+                        if (op == "string.measure_utf8"sv) { return makeStringMeasure(s, StringMeasureUTF8); }
                         goto parse_error;
-                      case '8':
-                        if (op == "string.measure_wtf8"sv) { return makeStringMeasure(s, StringMeasureWTF8); }
-                        goto parse_error;
+                      case 'w': {
+                        switch (buf[18]) {
+                          case '1':
+                            if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.measure_wtf8"sv) { return makeStringMeasure(s, StringMeasureWTF8); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
+                      case 'l': {
+                        switch (buf[21]) {
+                          case '\0':
+                            if (op == "string.new_lossy_utf8"sv) { return makeStringNew(s, StringNewLossyUTF8, false); }
+                            goto parse_error;
+                          case '_':
+                            if (op == "string.new_lossy_utf8_array"sv) { return makeStringNew(s, StringNewLossyUTF8Array, false); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'u': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
+                        switch (buf[15]) {
+                          case '\0':
+                            if (op == "string.new_utf8"sv) { return makeStringNew(s, StringNewUTF8, false); }
                             goto parse_error;
-                          case 't':
-                            if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
-                            goto parse_error;
+                          case '_': {
+                            switch (buf[16]) {
+                              case 'a': {
+                                switch (buf[21]) {
+                                  case '\0':
+                                    if (op == "string.new_utf8_array"sv) { return makeStringNew(s, StringNewUTF8Array, false); }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case 't':
+                                if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
                           default: goto parse_error;
                         }
                       }
@@ -3377,6 +3357,9 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) { return makeTableFill(s); }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':
@@ -3675,13 +3658,6 @@ switch (buf[0]) {
                   return *ret;
                 }
                 goto parse_error;
-              case 's':
-                if (op == "array.init_static"sv) {
-                  auto ret = makeArrayNewFixed(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
               default: goto parse_error;
             }
           }
@@ -3795,87 +3771,30 @@ switch (buf[0]) {
                     switch (buf[10]) {
                       case '\0':
                         if (op == "br_on_cast"sv) {
-                          auto ret = makeBrOnCast(ctx, pos, std::nullopt);
+                          auto ret = makeBrOnCast(ctx, pos);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case '_': {
-                        switch (buf[11]) {
-                          case 'f':
-                            if (op == "br_on_cast_fail"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, std::nullopt, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 's': {
-                            switch (buf[17]) {
-                              case '\0':
-                                if (op == "br_on_cast_static"sv) {
-                                  auto ret = makeBrOnCast(ctx, pos, std::nullopt);
-                                  CHECK_ERR(ret);
-                                  return *ret;
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "br_on_cast_static_fail"sv) {
-                                  auto ret = makeBrOnCast(ctx, pos, std::nullopt, true);
-                                  CHECK_ERR(ret);
-                                  return *ret;
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
+                      case '_':
+                        if (op == "br_on_cast_fail"sv) {
+                          auto ret = makeBrOnCast(ctx, pos, true);
+                          CHECK_ERR(ret);
+                          return *ret;
                         }
-                      }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
-                  case 'f':
-                    if (op == "br_on_func"sv) {
-                      auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable));
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "br_on_i31"sv) {
-                      auto ret = makeBrOnCast(ctx, pos, Type(HeapType::i31, NonNullable));
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
                   case 'n': {
                     switch (buf[7]) {
-                      case 'o': {
-                        switch (buf[10]) {
-                          case 'f':
-                            if (op == "br_on_non_func"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, Type(HeapType::func, NonNullable), true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 'i':
-                            if (op == "br_on_non_i31"sv) {
-                              auto ret = makeBrOnCast(ctx, pos, Type(HeapType::i31, NonNullable), true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          case 'n':
-                            if (op == "br_on_non_null"sv) {
-                              auto ret = makeBrOnNull(ctx, pos, true);
-                              CHECK_ERR(ret);
-                              return *ret;
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
+                      case 'o':
+                        if (op == "br_on_non_null"sv) {
+                          auto ret = makeBrOnNull(ctx, pos, true);
+                          CHECK_ERR(ret);
+                          return *ret;
                         }
-                      }
+                        goto parse_error;
                       case 'u':
                         if (op == "br_on_null"sv) {
                           auto ret = makeBrOnNull(ctx, pos);
@@ -5685,7 +5604,7 @@ switch (buf[0]) {
               }
               case 'n':
                 if (op == "i31.new"sv) {
-                  auto ret = makeI31New(ctx, pos);
+                  auto ret = makeRefI31(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
@@ -8649,75 +8568,20 @@ switch (buf[0]) {
     switch (buf[2]) {
       case 'f': {
         switch (buf[4]) {
-          case 'a': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.as_func"sv) {
-                  auto ret = makeRefCast(ctx, pos, Type(HeapType::func, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'i':
-                if (op == "ref.as_i31"sv) {
-                  auto ret = makeRefCast(ctx, pos, Type(HeapType::i31, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'n':
-                if (op == "ref.as_non_null"sv) {
-                  auto ret = makeRefAs(ctx, pos, RefAsNonNull);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 'a':
+            if (op == "ref.as_non_null"sv) {
+              auto ret = makeRefAs(ctx, pos, RefAsNonNull);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
-          case 'c': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.cast"sv) {
-                  auto ret = makeRefCast(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case '_': {
-                switch (buf[9]) {
-                  case 'n': {
-                    switch (buf[12]) {
-                      case '\0':
-                        if (op == "ref.cast_nop"sv) {
-                          auto ret = makeRefCastNop(ctx, pos);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      case '_':
-                        if (op == "ref.cast_nop_static"sv) {
-                          auto ret = makeRefCastNop(ctx, pos);
-                          CHECK_ERR(ret);
-                          return *ret;
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 's':
-                    if (op == "ref.cast_static"sv) {
-                      auto ret = makeRefCast(ctx, pos);
-                      CHECK_ERR(ret);
-                      return *ret;
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
-              default: goto parse_error;
+            goto parse_error;
+          case 'c':
+            if (op == "ref.cast"sv) {
+              auto ret = makeRefCast(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           case 'e':
             if (op == "ref.eq"sv) {
               auto ret = makeRefEq(ctx, pos);
@@ -8733,22 +8597,15 @@ switch (buf[0]) {
             }
             goto parse_error;
           case 'i': {
-            switch (buf[7]) {
-              case 'f':
-                if (op == "ref.is_func"sv) {
-                  auto ret = makeRefTest(ctx, pos, Type(HeapType::func, NonNullable));
+            switch (buf[5]) {
+              case '3':
+                if (op == "ref.i31"sv) {
+                  auto ret = makeRefI31(ctx, pos);
                   CHECK_ERR(ret);
                   return *ret;
                 }
                 goto parse_error;
-              case 'i':
-                if (op == "ref.is_i31"sv) {
-                  auto ret = makeRefTest(ctx, pos, Type(HeapType::i31, NonNullable));
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case 'n':
+              case 's':
                 if (op == "ref.is_null"sv) {
                   auto ret = makeRefIsNull(ctx, pos);
                   CHECK_ERR(ret);
@@ -8765,25 +8622,13 @@ switch (buf[0]) {
               return *ret;
             }
             goto parse_error;
-          case 't': {
-            switch (buf[8]) {
-              case '\0':
-                if (op == "ref.test"sv) {
-                  auto ret = makeRefTest(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              case '_':
-                if (op == "ref.test_static"sv) {
-                  auto ret = makeRefTest(ctx, pos);
-                  CHECK_ERR(ret);
-                  return *ret;
-                }
-                goto parse_error;
-              default: goto parse_error;
+          case 't':
+            if (op == "ref.test"sv) {
+              auto ret = makeRefTest(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
             }
-          }
+            goto parse_error;
           default: goto parse_error;
         }
       }
@@ -8925,19 +8770,19 @@ switch (buf[0]) {
                   case 'e': {
                     switch (buf[8]) {
                       case 'n': {
-                        switch (buf[17]) {
-                          case '1': {
-                            switch (buf[19]) {
+                        switch (buf[14]) {
+                          case 'l': {
+                            switch (buf[24]) {
                               case '\0':
-                                if (op == "string.encode_wtf16"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16);
+                                if (op == "string.encode_lossy_utf8"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeLossyUTF8);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf16_array"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16Array);
+                                if (op == "string.encode_lossy_utf8_array"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeLossyUTF8Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
@@ -8945,22 +8790,65 @@ switch (buf[0]) {
                               default: goto parse_error;
                             }
                           }
-                          case '8': {
+                          case 'u': {
                             switch (buf[18]) {
                               case '\0':
-                                if (op == "string.encode_wtf8"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8);
+                                if (op == "string.encode_utf8"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeUTF8);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
                               case '_':
-                                if (op == "string.encode_wtf8_array"sv) {
-                                  auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8Array);
+                                if (op == "string.encode_utf8_array"sv) {
+                                  auto ret = makeStringEncode(ctx, pos, StringEncodeUTF8Array);
                                   CHECK_ERR(ret);
                                   return *ret;
                                 }
                                 goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
+                          case 'w': {
+                            switch (buf[17]) {
+                              case '1': {
+                                switch (buf[19]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf16"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf16_array"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF16Array);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case '8': {
+                                switch (buf[18]) {
+                                  case '\0':
+                                    if (op == "string.encode_wtf8"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.encode_wtf8_array"sv) {
+                                      auto ret = makeStringEncode(ctx, pos, StringEncodeWTF8Array);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
                               default: goto parse_error;
                             }
                           }
@@ -8999,42 +8887,97 @@ switch (buf[0]) {
                     }
                     goto parse_error;
                   case 'm': {
-                    switch (buf[18]) {
-                      case '1':
-                        if (op == "string.measure_wtf16"sv) {
-                          auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF16);
+                    switch (buf[15]) {
+                      case 'u':
+                        if (op == "string.measure_utf8"sv) {
+                          auto ret = makeStringMeasure(ctx, pos, StringMeasureUTF8);
                           CHECK_ERR(ret);
                           return *ret;
                         }
                         goto parse_error;
-                      case '8':
-                        if (op == "string.measure_wtf8"sv) {
-                          auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF8);
-                          CHECK_ERR(ret);
-                          return *ret;
+                      case 'w': {
+                        switch (buf[18]) {
+                          case '1':
+                            if (op == "string.measure_wtf16"sv) {
+                              auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF16);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '8':
+                            if (op == "string.measure_wtf8"sv) {
+                              auto ret = makeStringMeasure(ctx, pos, StringMeasureWTF8);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
                         }
-                        goto parse_error;
+                      }
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
+                      case 'l': {
+                        switch (buf[21]) {
+                          case '\0':
+                            if (op == "string.new_lossy_utf8"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewLossyUTF8, false);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          case '_':
+                            if (op == "string.new_lossy_utf8_array"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewLossyUTF8Array, false);
+                              CHECK_ERR(ret);
+                              return *ret;
+                            }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'u': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "string.new_utf8_array_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, true);
+                        switch (buf[15]) {
+                          case '\0':
+                            if (op == "string.new_utf8"sv) {
+                              auto ret = makeStringNew(ctx, pos, StringNewUTF8, false);
                               CHECK_ERR(ret);
                               return *ret;
                             }
                             goto parse_error;
-                          case 't':
-                            if (op == "string.new_utf8_try"sv) {
-                              auto ret = makeStringNew(ctx, pos, StringNewUTF8, true);
-                              CHECK_ERR(ret);
-                              return *ret;
+                          case '_': {
+                            switch (buf[16]) {
+                              case 'a': {
+                                switch (buf[21]) {
+                                  case '\0':
+                                    if (op == "string.new_utf8_array"sv) {
+                                      auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, false);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  case '_':
+                                    if (op == "string.new_utf8_array_try"sv) {
+                                      auto ret = makeStringNew(ctx, pos, StringNewUTF8Array, true);
+                                      CHECK_ERR(ret);
+                                      return *ret;
+                                    }
+                                    goto parse_error;
+                                  default: goto parse_error;
+                                }
+                              }
+                              case 't':
+                                if (op == "string.new_utf8_try"sv) {
+                                  auto ret = makeStringNew(ctx, pos, StringNewUTF8, true);
+                                  CHECK_ERR(ret);
+                                  return *ret;
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           default: goto parse_error;
                         }
                       }
@@ -9250,6 +9193,13 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'f':
+            if (op == "table.fill"sv) {
+              auto ret = makeTableFill(ctx, pos);
+              CHECK_ERR(ret);
+              return *ret;
+            }
+            goto parse_error;
           case 'g': {
             switch (buf[7]) {
               case 'e':

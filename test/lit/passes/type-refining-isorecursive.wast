@@ -5,18 +5,18 @@
  ;; The types should be refined to a set of three mutually recursive types.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $2 (struct (field nullexternref) (field (ref $0))))
+ ;; CHECK-NEXT:  (type $2 (sub (struct (field nullexternref) (field (ref $0)))))
 
- ;; CHECK:       (type $1 (struct (field nullfuncref) (field (ref $2))))
+ ;; CHECK:       (type $1 (sub (struct (field nullfuncref) (field (ref $2)))))
 
- ;; CHECK:       (type $0 (struct (field nullref) (field (ref $1))))
- (type $0 (struct_subtype nullref anyref data))
- (type $1 (struct_subtype nullfuncref anyref data))
- (type $2 (struct_subtype nullexternref anyref data))
+ ;; CHECK:       (type $0 (sub (struct (field nullref) (field (ref $1)))))
+ (type $0 (sub (struct nullref anyref)))
+ (type $1 (sub (struct nullfuncref anyref)))
+ (type $2 (sub (struct nullexternref anyref)))
 
- ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
+ ;; CHECK:       (type $3 (func (param (ref $0) (ref $1) (ref $2))))
 
- ;; CHECK:      (func $foo (type $ref|$0|_ref|$1|_ref|$2|_=>_none) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
+ ;; CHECK:      (func $foo (type $3) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new $0
  ;; CHECK-NEXT:    (ref.null none)
@@ -64,22 +64,22 @@
  ;; correctly.
 
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $0 (struct (field (ref null $all)) (field (ref $0))))
+ ;; CHECK-NEXT:  (type $0 (sub (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $1 (sub $0 (struct (field (ref null $all)) (field (ref $0)))))
 
  ;; CHECK:       (type $2 (sub $1 (struct (field (ref null $all)) (field (ref $0)))))
 
- ;; CHECK:       (type $all (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2))))
- (type $all (struct_subtype i32 anyref anyref anyref data))
+ ;; CHECK:       (type $all (sub (struct (field i32) (field (ref $0)) (field (ref $1)) (field (ref $2)))))
+ (type $all (sub (struct i32 anyref anyref anyref)))
 
- (type $0 (struct_subtype anyref anyref data))
- (type $1 (struct_subtype anyref anyref $0))
- (type $2 (struct_subtype anyref anyref $1))
+ (type $0 (sub (struct anyref anyref)))
+ (type $1 (sub $0 (struct anyref anyref)))
+ (type $2 (sub $1 (struct anyref anyref)))
 
- ;; CHECK:       (type $ref|$0|_ref|$1|_ref|$2|_=>_none (func (param (ref $0) (ref $1) (ref $2))))
+ ;; CHECK:       (type $4 (func (param (ref $0) (ref $1) (ref $2))))
 
- ;; CHECK:      (func $foo (type $ref|$0|_ref|$1|_ref|$2|_=>_none) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
+ ;; CHECK:      (func $foo (type $4) (param $x (ref $0)) (param $y (ref $1)) (param $z (ref $2))
  ;; CHECK-NEXT:  (local $all (ref null $all))
  ;; CHECK-NEXT:  (local.set $all
  ;; CHECK-NEXT:   (struct.new $all

@@ -29,11 +29,11 @@ Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
-Features.RelaxedSIMD: 8192
-Features.ExtendedConst: 16384
-Features.Strings: 32768
-Features.MultiMemories: 65536
-Features.All: 126975
+Features.RelaxedSIMD: 4096
+Features.ExtendedConst: 8192
+Features.Strings: 16384
+Features.MultiMemory: 32768
+Features.All: 65535
 InvalidId: 0
 BlockId: 1
 IfId: 2
@@ -82,40 +82,40 @@ TableGetId: 45
 TableSetId: 46
 TableSizeId: 47
 TableGrowId: 48
-TryId: 49
-ThrowId: 50
-RethrowId: 51
-TupleMakeId: 52
-TupleExtractId: 53
-I31NewId: 54
-I31GetId: 55
-CallRefId: 56
-RefTestId: 57
-RefCastId: 58
-BrOnId: 59
-StructNewId: 60
-StructGetId: 61
-StructSetId: 62
-ArrayNewId: 63
-ArrayNewFixedId: 66
-ArrayGetId: 67
-ArraySetId: 68
-ArrayLenId: 69
-ArrayCopy: 70
-RefAs: 74
-StringNew: 75
-StringConst: 76
-StringMeasure: 77
-StringEncode: 78
-StringConcat: 79
-StringEq: 80
-StringAs: 81
-StringWTF8Advance: 82
-StringWTF16Get: 83
-StringIterNext: 84
-StringIterMove: 85
-StringSliceWTF: 86
-StringSliceIter: 87
+TryId: 50
+ThrowId: 51
+RethrowId: 52
+TupleMakeId: 53
+TupleExtractId: 54
+RefI31Id: 55
+I31GetId: 56
+CallRefId: 57
+RefTestId: 58
+RefCastId: 59
+BrOnId: 60
+StructNewId: 61
+StructGetId: 62
+StructSetId: 63
+ArrayNewId: 64
+ArrayNewFixedId: 67
+ArrayGetId: 68
+ArraySetId: 69
+ArrayLenId: 70
+ArrayCopy: 71
+RefAs: 75
+StringNew: 76
+StringConst: 77
+StringMeasure: 78
+StringEncode: 79
+StringConcat: 80
+StringEq: 81
+StringAs: 82
+StringWTF8Advance: 83
+StringWTF16Get: 84
+StringIterNext: 85
+StringIterMove: 86
+StringSliceWTF: 87
+StringSliceIter: 88
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -130,13 +130,13 @@ getExpressionInfo(tuple[1])={"id":14,"type":3,"value":{"low":37,"high":0}}
 getExpressionInfo(tuple[2])={"id":14,"type":4,"value":1.2999999523162842}
 getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
 (module
- (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (type $none_=>_none (func))
+ (type $0 (func (param i32 i64 f32 f64) (result i32)))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32 f64) (result f32)))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
- (import "module" "base" (func $an-imported (type $i32_f64_=>_f32) (param i32 f64) (result f32)))
+ (import "module" "base" (func $an-imported (type $2) (param i32 f64) (result f32)))
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
@@ -150,7 +150,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $0) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -1999,7 +1999,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32.eqz
-        (call_indirect $t0 (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $t0 (type $0)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -2063,7 +2063,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect $t0 (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $t0 (type $0)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -2202,20 +2202,20 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i31.new
+       (ref.i31
         (i32.const 0)
        )
       )
       (drop
        (i31.get_s
-        (i31.new
+        (ref.i31
          (i32.const 1)
         )
        )
       )
       (drop
        (i31.get_u
-        (i31.new
+        (ref.i31
          (i32.const 2)
         )
        )
@@ -2228,19 +2228,19 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter (type $none_=>_none)
+ (func $starter (type $3)
   (nop)
  )
 )
 
 (module
- (type $i32_i64_f32_f64_=>_i32 (func (param i32 i64 f32 f64) (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $i32_f64_=>_f32 (func (param i32 f64) (result f32)))
- (type $none_=>_none (func))
+ (type $0 (func (param i32 i64 f32 f64) (result i32)))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32 f64) (result f32)))
+ (type $3 (func))
  (import "module" "base" (global $a-global-imp i32))
  (import "module" "base" (global $a-mut-global-imp (mut i32)))
- (import "module" "base" (func $an-imported (type $i32_f64_=>_f32) (param i32 f64) (result f32)))
+ (import "module" "base" (func $an-imported (type $2) (param i32 f64) (result f32)))
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 (shared 1 256))
@@ -2254,7 +2254,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (export "a-global-exp" (global $a-global))
  (export "a-tag-exp" (tag $a-tag))
  (start $starter)
- (func "$kitchen()sinker" (type $i32_i64_f32_f64_=>_i32) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func "$kitchen()sinker" (type $0) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (block $the-body (result i32)
    (block $the-nothing
@@ -4103,7 +4103,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32.eqz
-        (call_indirect $t0 (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $t0 (type $0)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -4167,7 +4167,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect $t0 (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $t0 (type $0)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -4306,20 +4306,20 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i31.new
+       (ref.i31
         (i32.const 0)
        )
       )
       (drop
        (i31.get_s
-        (i31.new
+        (ref.i31
          (i32.const 1)
         )
        )
       )
       (drop
        (i31.get_u
-        (i31.new
+        (ref.i31
          (i32.const 2)
         )
        )
@@ -4332,16 +4332,16 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
    (i32.const 42)
   )
  )
- (func $starter (type $none_=>_none)
+ (func $starter (type $3)
   (nop)
  )
 )
 
 raw:
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (result i32)))
  (import "module" "check" (func $check (param i32)))
  (func $just-one-block
   (local $0 i32)
@@ -4809,11 +4809,11 @@ optimized:
 
 module loaded from binary form:
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32 i32)))
+ (type $1 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32 i32))
- (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4822,8 +4822,8 @@ module loaded from binary form:
 )
 
 (module
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $0 (func (param i32)))
+ (type $1 (func))
  (import "spectest" "print" (func $print-i32 (param i32)))
  (start $starter)
  (func $starter
@@ -4835,7 +4835,7 @@ module loaded from binary form:
 
 1234 : i32
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (func $func
   (local $0 i32)
   (local.set $0
@@ -4851,11 +4851,11 @@ module loaded from binary form:
 validation: 0
 test_parsing text:
 (module
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $adder (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
+ (func $adder (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4865,11 +4865,11 @@ test_parsing text:
 
 module loaded from text form:
 (module
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $0 (func (param i32)))
+ (type $1 (func (param i32 i32) (result i32)))
  (global $a-global i32 (i32.const 3))
  (tag $a-tag (param i32))
- (func $ADD_ER (type $i32_i32_=>_i32) (param $0 i32) (param $1 i32) (result i32)
+ (func $ADD_ER (type $1) (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (local.get $0)
    (local.get $1)
@@ -4879,7 +4879,7 @@ module loaded from text form:
 
 sizeof Literal: 24
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (global $a-global i32 (i32.const 125))
  (global $a-global2 i32 (i32.const 2))
  (global $a-global3 i32 (i32.const 3))

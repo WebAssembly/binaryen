@@ -997,9 +997,14 @@ struct SimplifyLocals
     // will inhibit us creating an if return value.
     struct EquivalentOptimizer
       : public LinearExecutionWalker<EquivalentOptimizer> {
+
+      // It is ok to look at adjacent blocks together, as if a later part of a
+      // block is not reached that is fine - changes we make there would not be
+      // reached in that case.
+      bool connectAdjacentBlocks = true;
+
       std::vector<Index>* numLocalGets;
       bool removeEquivalentSets;
-      Module* module;
       PassOptions passOptions;
 
       bool anotherCycle = false;
@@ -1016,6 +1021,8 @@ struct SimplifyLocals
       }
 
       void visitLocalSet(LocalSet* curr) {
+        auto* module = this->getModule();
+
         // Remove trivial copies, even through a tee
         auto* value =
           Properties::getFallthrough(curr->value, passOptions, *module);
@@ -1024,6 +1031,9 @@ struct SimplifyLocals
             // This is an unnecessary copy!
             if (removeEquivalentSets) {
               if (curr->isTee()) {
+                if (curr->value->type != curr->type) {
+                  refinalize = true;
+                }
                 this->replaceCurrent(curr->value);
               } else {
                 this->replaceCurrent(Builder(*module).makeDrop(curr->value));
@@ -1120,11 +1130,10 @@ struct SimplifyLocals
     };
 
     EquivalentOptimizer eqOpter;
-    eqOpter.module = this->getModule();
     eqOpter.passOptions = this->getPassOptions();
     eqOpter.numLocalGets = &getCounter.num;
     eqOpter.removeEquivalentSets = allowStructure;
-    eqOpter.walkFunction(func);
+    eqOpter.walkFunctionInModule(func, this->getModule());
     if (eqOpter.refinalize) {
       ReFinalize().walkFunctionInModule(func, this->getModule());
     }

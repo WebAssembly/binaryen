@@ -9,10 +9,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $used (struct ))
-  (type $used (struct_subtype data))
-  ;; CHECK:       (type $unused (struct ))
-  (type $unused (struct_subtype data))
+  ;; CHECK-NEXT:  (type $used (sub (struct )))
+  (type $used (sub (struct)))
+  ;; CHECK:       (type $unused (sub (struct )))
+  (type $unused (sub (struct)))
  )
 
  ;; CHECK:      (global $g (ref null $used) (ref.null none))

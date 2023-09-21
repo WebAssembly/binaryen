@@ -1,5 +1,6 @@
 #include "ir/subtypes.h"
 #include "type-test.h"
+#include "wasm-builder.h"
 #include "wasm-type-printing.h"
 #include "wasm-type.h"
 #include "gtest/gtest.h"
@@ -260,7 +261,7 @@ TEST_F(TypeTest, InvalidFinalSupertype) {
   TypeBuilder builder(2);
   builder[0] = Struct{};
   builder[1] = Struct{};
-  builder[0].setFinal();
+  builder[0].setOpen(false);
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -425,19 +426,16 @@ TEST_F(TypeTest, CanonicalizeSelfReferences) {
 
 TEST_F(TypeTest, CanonicalizeSupertypes) {
   TypeBuilder builder(6);
-  builder[0] = Struct{};
-  builder[1] = Struct{};
+  builder[0].setOpen() = Struct{};
+  builder[1].setOpen() = Struct{};
   // Type with a supertype
-  builder[2] = Struct{};
-  builder[2].subTypeOf(builder[0]);
+  builder[2].setOpen().subTypeOf(builder[0]) = Struct{};
   // Type with the same supertype after canonicalization.
-  builder[3] = Struct{};
-  builder[3].subTypeOf(builder[1]);
+  builder[3].setOpen().subTypeOf(builder[1]) = Struct{};
   // Type with a different supertype
-  builder[4] = Struct{};
-  builder[4].subTypeOf(builder[2]);
+  builder[4].setOpen().subTypeOf(builder[2]) = Struct{};
   // Type with no supertype
-  builder[5] = Struct{};
+  builder[5].setOpen() = Struct{};
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -454,16 +452,15 @@ TEST_F(TypeTest, CanonicalizeFinal) {
   // Types are different if their finality flag is different.
   TypeBuilder builder(2);
   builder[0] = Struct{};
-  builder[1] = Struct{};
-  builder[0].setFinal();
+  builder[1].setOpen() = Struct{};
 
   auto result = builder.build();
   ASSERT_TRUE(result);
   auto built = *result;
 
   EXPECT_NE(built[0], built[1]);
-  EXPECT_TRUE(built[0].isFinal());
-  EXPECT_FALSE(built[1].isFinal());
+  EXPECT_TRUE(!built[0].isOpen());
+  EXPECT_FALSE(!built[1].isOpen());
 }
 
 TEST_F(TypeTest, HeapTypeConstructors) {
@@ -499,21 +496,21 @@ TEST_F(TypeTest, CanonicalizeTypesBeforeSubtyping) {
   TypeBuilder builder(6);
   // A rec group
   builder.createRecGroup(0, 2);
-  builder[0] = Struct{};
-  builder[1] = Struct{};
+  builder[0].setOpen() = Struct{};
+  builder[1].setOpen() = Struct{};
   builder[1].subTypeOf(builder[0]);
 
   // The same rec group again
   builder.createRecGroup(2, 2);
-  builder[2] = Struct{};
-  builder[3] = Struct{};
+  builder[2].setOpen() = Struct{};
+  builder[3].setOpen() = Struct{};
   builder[3].subTypeOf(builder[2]);
 
   // This subtyping only validates if the previous two groups are deduplicated
   // before checking subtype validity.
-  builder[4] =
+  builder[4].setOpen() =
     Struct({Field(builder.getTempRefType(builder[0], Nullable), Immutable)});
-  builder[5] =
+  builder[5].setOpen() =
     Struct({Field(builder.getTempRefType(builder[3], Nullable), Immutable)});
   builder[5].subTypeOf(builder[4]);
 
@@ -753,9 +750,8 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   {
     // Immutable array fields are covariant.
     TypeBuilder builder(2);
-    builder[0] = Array(Field(anyref, Immutable));
-    builder[1] = Array(Field(eqref, Immutable));
-    builder[1].subTypeOf(builder[0]);
+    builder[0].setOpen() = Array(Field(anyref, Immutable));
+    builder[1].setOpen().subTypeOf(builder[0]) = Array(Field(eqref, Immutable));
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;
@@ -765,9 +761,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   {
     // Depth subtyping
     TypeBuilder builder(2);
-    builder[0] = Struct({Field(anyref, Immutable)});
-    builder[1] = Struct({Field(eqref, Immutable)});
-    builder[1].subTypeOf(builder[0]);
+    builder[0].setOpen() = Struct({Field(anyref, Immutable)});
+    builder[1].setOpen().subTypeOf(builder[0]) =
+      Struct({Field(eqref, Immutable)});
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;
@@ -777,9 +773,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   {
     // Width subtyping
     TypeBuilder builder(2);
-    builder[0] = Struct({Field(anyref, Immutable)});
-    builder[1] = Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
-    builder[1].subTypeOf(builder[0]);
+    builder[0].setOpen() = Struct({Field(anyref, Immutable)});
+    builder[1].setOpen().subTypeOf(builder[0]) =
+      Struct({Field(anyref, Immutable), Field(anyref, Immutable)});
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;
@@ -791,12 +787,12 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     TypeBuilder builder(4);
     auto ref0 = builder.getTempRefType(builder[0], Nullable);
     auto ref1 = builder.getTempRefType(builder[1], Nullable);
-    builder[0] = Struct({Field(anyref, Immutable)});
-    builder[1] = Struct({Field(eqref, Immutable)});
-    builder[2] = Struct({Field(ref0, Immutable)});
-    builder[3] = Struct({Field(ref1, Immutable)});
-    builder[1].subTypeOf(builder[0]);
-    builder[3].subTypeOf(builder[2]);
+    builder[0].setOpen() = Struct({Field(anyref, Immutable)});
+    builder[1].setOpen().subTypeOf(builder[0]) =
+      Struct({Field(eqref, Immutable)});
+    builder[2].setOpen() = Struct({Field(ref0, Immutable)});
+    builder[3].setOpen().subTypeOf(builder[2]) =
+      Struct({Field(ref1, Immutable)});
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;
@@ -808,9 +804,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     TypeBuilder builder(2);
     auto ref0 = builder.getTempRefType(builder[0], Nullable);
     auto ref1 = builder.getTempRefType(builder[1], Nullable);
-    builder[0] = Struct({Field(ref0, Immutable)});
-    builder[1] = Struct({Field(ref1, Immutable)});
-    builder[1].subTypeOf(builder[0]);
+    builder[0].setOpen() = Struct({Field(ref0, Immutable)});
+    builder[1].setOpen().subTypeOf(builder[0]) =
+      Struct({Field(ref1, Immutable)});
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;
@@ -867,8 +863,8 @@ TEST_F(TypeTest, TestSubTypes) {
 
   // Build type types, the second of which is a subtype.
   TypeBuilder builder(2);
-  builder[0] = Struct({Field(anyref, Immutable)});
-  builder[1] = Struct({Field(eqref, Immutable)});
+  builder[0].setOpen() = Struct({Field(anyref, Immutable)});
+  builder[1].setOpen() = Struct({Field(eqref, Immutable)});
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -901,7 +897,7 @@ TEST_F(TypeTest, TestExistingSuperType) {
   Type A1;
   {
     TypeBuilder builder(1);
-    builder[0] = Struct();
+    builder[0].setOpen() = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -912,7 +908,7 @@ TEST_F(TypeTest, TestExistingSuperType) {
   Type A2;
   {
     TypeBuilder builder(1);
-    builder[0] = Struct();
+    builder[0].setOpen() = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -923,8 +919,7 @@ TEST_F(TypeTest, TestExistingSuperType) {
   Type B1;
   {
     TypeBuilder builder(1);
-    builder[0] = Struct();
-    builder.setSubType(0, A1.getHeapType());
+    builder[0].setOpen().subTypeOf(A1.getHeapType()) = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -935,8 +930,7 @@ TEST_F(TypeTest, TestExistingSuperType) {
   Type B2;
   {
     TypeBuilder builder(1);
-    builder[0] = Struct();
-    builder.setSubType(0, A2.getHeapType());
+    builder[0].setOpen().subTypeOf(A2.getHeapType()) = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -958,9 +952,8 @@ TEST_F(TypeTest, TestMaxStructDepths) {
   HeapType A, B;
   {
     TypeBuilder builder(2);
-    builder[0] = Struct();
-    builder[1] = Struct();
-    builder.setSubType(1, builder.getTempHeapType(0));
+    builder[0].setOpen() = Struct();
+    builder[1].setOpen().subTypeOf(builder[0]) = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -1003,10 +996,9 @@ TEST_F(TypeTest, TestDepth) {
   HeapType A, B, C;
   {
     TypeBuilder builder(3);
-    builder[0] = Struct();
-    builder[1] = Struct();
-    builder[2] = Array(Field(Type::i32, Immutable));
-    builder.setSubType(1, builder.getTempHeapType(0));
+    builder[0].setOpen() = Struct();
+    builder[1].setOpen().subTypeOf(builder[0]) = Struct();
+    builder[2].setOpen() = Array(Field(Type::i32, Immutable));
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
@@ -1053,13 +1045,10 @@ TEST_F(TypeTest, TestIterSubTypes) {
   HeapType A, B, C, D;
   {
     TypeBuilder builder(4);
-    builder[0] = Struct();
-    builder[1] = Struct();
-    builder[2] = Struct();
-    builder[3] = Struct();
-    builder.setSubType(1, builder.getTempHeapType(0));
-    builder.setSubType(2, builder.getTempHeapType(0));
-    builder.setSubType(3, builder.getTempHeapType(2));
+    builder[0].setOpen() = Struct();
+    builder[1].setOpen().subTypeOf(builder[0]) = Struct();
+    builder[2].setOpen().subTypeOf(builder[0]) = Struct();
+    builder[3].setOpen().subTypeOf(builder[2]) = Struct();
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;

@@ -8,7 +8,7 @@
   ;; CHECK:      (tag $e (param (ref null $struct.A)))
   (tag $e (param (ref null $struct.A)))
 
-  ;; CHECK:      (func $ref-cast-statically-removed (type $none_=>_none)
+  ;; CHECK:      (func $ref-cast-statically-removed (type $2)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -31,7 +31,7 @@
           ;; which is invalid. We fix this up at the end up OptimizeInstruction,
           ;; assigning the 'pop' to a local at the start of this 'catch' body
           ;; and later using 'local.get' to get it.
-          (ref.cast null $struct.A
+          (ref.cast (ref null $struct.A)
             (pop (ref null $struct.A))
           )
         )

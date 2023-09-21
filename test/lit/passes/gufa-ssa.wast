@@ -2,11 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
   ;; CHECK:      (export "test" (func $test))
 
-  ;; CHECK:      (func $test (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $test (type $0) (param $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)

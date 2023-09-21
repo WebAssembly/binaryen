@@ -55,6 +55,10 @@ struct CoalesceLocals
     return std::make_unique<CoalesceLocals>();
   }
 
+  // Branches outside of the function can be ignored, as we only look at locals
+  // which vanish when we leave.
+  bool ignoreBranchesOutsideOfFunc = true;
+
   // main entry point
 
   void doWalkFunction(Function* func);

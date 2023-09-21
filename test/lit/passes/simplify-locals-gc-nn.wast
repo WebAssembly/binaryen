@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --simplify-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $test-nn (type $none_=>_none)
+  ;; CHECK:      (func $test-nn (type $0)
   ;; CHECK-NEXT:  (local $nn anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (try $try
@@ -49,7 +49,67 @@
     )
   )
 
-  ;; CHECK:      (func $test-nullable (type $none_=>_none)
+  ;; CHECK:      (func $test-nn-tuple (type $0)
+  ;; CHECK-NEXT:  (local $nn (i32 anyref i64))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (local.set $nn
+  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:      (tuple.extract 0
+  ;; CHECK-NEXT:       (local.get $nn)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (tuple.extract 1
+  ;; CHECK-NEXT:        (local.get $nn)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (tuple.extract 2
+  ;; CHECK-NEXT:       (local.get $nn)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-nn-tuple
+    ;; Same as above, but now the local is a tuple containing a non-nullable element
+    (local $nn (i32 (ref any) i64))
+    (local.set $nn
+      (tuple.make
+        (i32.const 0)
+        (ref.as_non_null
+          (ref.null any)
+        )
+        (i64.const 0)
+      )
+    )
+    (try
+      (do
+        (drop
+          (local.get $nn)
+        )
+      )
+      (catch_all
+        (drop
+          (local.get $nn)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-nullable (type $0)
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (try $try

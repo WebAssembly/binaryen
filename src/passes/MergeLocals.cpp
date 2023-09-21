@@ -107,7 +107,7 @@ struct MergeLocals
     }
     // compute all dependencies
     auto* func = getFunction();
-    LocalGraph preGraph(func);
+    LocalGraph preGraph(func, getModule());
     preGraph.computeInfluences();
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
@@ -193,7 +193,7 @@ struct MergeLocals
       // if one does not work, we need to undo all its siblings (don't extend
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
-      LocalGraph postGraph(func);
+      LocalGraph postGraph(func, getModule());
       postGraph.computeSetInfluences();
       for (auto& [copy, trivial] : optimizedToCopy) {
         auto& trivialInfluences = preGraph.setInfluences[trivial];

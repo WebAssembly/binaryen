@@ -373,6 +373,14 @@ public:
   virtual void modifyArray(HeapType oldType, Array& array) {}
   virtual void modifySignature(HeapType oldType, Signature& sig) {}
 
+  // This additional hook is called after modify* and other operations, and
+  // allows the caller to do things like typeBuilder[i].setOpen(false);
+  //
+  // This is provided the builder, the index we are on, and the old heap type
+  // for that index.
+  virtual void
+  modifyTypeBuilderEntry(TypeBuilder& typeBuilder, Index i, HeapType oldType) {}
+
   // Subclasses can override this method to modify supertypes. The new
   // supertype, if any, must be a supertype (or the same as) the original
   // supertype.
@@ -414,6 +422,12 @@ public:
     } rewriter(wasm, updates);
   }
 
+protected:
+  // Builds new types after updating their contents using the hooks below and
+  // returns a map from the old types to the modified types. Used internally in
+  // update().
+  TypeMap rebuildTypes();
+
 private:
   TypeBuilder typeBuilder;
 
@@ -434,13 +448,26 @@ public:
     : GlobalTypeRewriter(wasm), mapping(mapping) {}
 
   void map() {
-    // Map the types of expressions (curr->type, etc.) to their merged
-    // types.
-    mapTypes(mapping);
-
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
-    update();
+    auto newMapping = rebuildTypes();
+
+    // Compose the user-provided mapping from old types to other old types with
+    // the new mapping from old types to new types. `newMapping` will become
+    // a copy of `mapping` except that the destination types will be the newly
+    // built types.
+    for (auto& [src, dest] : mapping) {
+      if (auto it = newMapping.find(dest); it != newMapping.end()) {
+        newMapping[src] = it->second;
+      } else {
+        // This mapping was to a type that was not rebuilt, perhaps because it
+        // is a basic type. Just use this mapping unmodified.
+        newMapping[src] = dest;
+      }
+    }
+
+    // Map the types of expressions (curr->type, etc.) to the correct new types.
+    mapTypes(newMapping);
   }
 
   Type getNewType(Type type) {

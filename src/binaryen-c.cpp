@@ -487,8 +487,8 @@ BinaryenFeatures BinaryenFeatureExtendedConst(void) {
 BinaryenFeatures BinaryenFeatureStrings(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::Strings);
 }
-BinaryenFeatures BinaryenFeatureMultiMemories(void) {
-  return static_cast<BinaryenFeatures>(FeatureSet::MultiMemories);
+BinaryenFeatures BinaryenFeatureMultiMemory(void) {
+  return static_cast<BinaryenFeatures>(FeatureSet::MultiMemory);
 }
 BinaryenFeatures BinaryenFeatureAll(void) {
   return static_cast<BinaryenFeatures>(FeatureSet::All);
@@ -1732,10 +1732,10 @@ BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRethrow(target));
 }
 
-BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+BinaryenExpressionRef BinaryenRefI31(BinaryenModuleRef module,
                                      BinaryenExpressionRef value) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeI31New((Expression*)value));
+    Builder(*(Module*)module).makeRefI31((Expression*)value));
 }
 
 BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
@@ -1768,8 +1768,7 @@ BinaryenExpressionRef BinaryenRefCast(BinaryenModuleRef module,
                                       BinaryenExpressionRef ref,
                                       BinaryenType type) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeRefCast((Expression*)ref, Type(type), RefCast::Safety::Safe));
+    Builder(*(Module*)module).makeRefCast((Expression*)ref, Type(type)));
 }
 BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                    BinaryenOp op,
@@ -3953,18 +3952,18 @@ void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
   assert(expression->is<TupleExtract>());
   static_cast<TupleExtract*>(expression)->index = index;
 }
-// I31New
-BinaryenExpressionRef BinaryenI31NewGetValue(BinaryenExpressionRef expr) {
+// RefI31
+BinaryenExpressionRef BinaryenRefI31GetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<I31New>());
-  return static_cast<I31New*>(expression)->value;
+  assert(expression->is<RefI31>());
+  return static_cast<RefI31*>(expression)->value;
 }
-void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+void BinaryenRefI31SetValue(BinaryenExpressionRef expr,
                             BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<I31New>());
+  assert(expression->is<RefI31>());
   assert(valueExpr);
-  static_cast<I31New*>(expression)->value = (Expression*)valueExpr;
+  static_cast<RefI31*>(expression)->value = (Expression*)valueExpr;
 }
 // I31Get
 BinaryenExpressionRef BinaryenI31GetGetI31(BinaryenExpressionRef expr) {
@@ -4909,17 +4908,15 @@ void BinaryenStringSliceIterSetNum(BinaryenExpressionRef expr,
 
 // Functions
 
-BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
-                                        const char* name,
-                                        BinaryenType params,
-                                        BinaryenType results,
-                                        BinaryenType* varTypes,
-                                        BinaryenIndex numVarTypes,
-                                        BinaryenExpressionRef body) {
+static BinaryenFunctionRef addFunctionInternal(BinaryenModuleRef module,
+                                               const char* name,
+                                               HeapType type,
+                                               BinaryenType* varTypes,
+                                               BinaryenIndex numVarTypes,
+                                               BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  // TODO: Take a HeapType rather than params and results.
-  ret->type = Signature(Type(params), Type(results));
+  ret->type = type;
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -4933,6 +4930,27 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
   }
 
   return ret;
+}
+
+BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
+                                        const char* name,
+                                        BinaryenType params,
+                                        BinaryenType results,
+                                        BinaryenType* varTypes,
+                                        BinaryenIndex numVarTypes,
+                                        BinaryenExpressionRef body) {
+  HeapType type = Signature(Type(params), Type(results));
+  return addFunctionInternal(module, name, type, varTypes, numVarTypes, body);
+}
+BinaryenFunctionRef
+BinaryenAddFunctionWithHeapType(BinaryenModuleRef module,
+                                const char* name,
+                                BinaryenHeapType type,
+                                BinaryenType* varTypes,
+                                BinaryenIndex numVarTypes,
+                                BinaryenExpressionRef body) {
+  return addFunctionInternal(
+    module, name, HeapType(type), varTypes, numVarTypes, body);
 }
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
@@ -6394,6 +6412,9 @@ void TypeBuilderSetSubType(TypeBuilderRef builder,
                            BinaryenIndex index,
                            BinaryenHeapType superType) {
   ((TypeBuilder*)builder)->setSubType(index, HeapType(superType));
+}
+void TypeBuilderSetOpen(TypeBuilderRef builder, BinaryenIndex index) {
+  ((TypeBuilder*)builder)->setOpen(index);
 }
 void TypeBuilderCreateRecGroup(TypeBuilderRef builder,
                                BinaryenIndex index,

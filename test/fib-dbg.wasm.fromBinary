@@ -1,9 +1,9 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
+ (type $0 (func (param i32) (result i32)))
+ (type $1 (func (param i32 i32)))
+ (type $2 (func (result i32)))
+ (type $3 (func (param i32)))
+ (type $4 (func))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "table" (table $timport$0 0 0 funcref))
  (import "env" "DYNAMICTOP_PTR" (global $gimport$0 i32))
@@ -133,6 +133,7 @@
      (i32.const 0)
     )
    )
+   ;;@ fib.c:3:0
    (if
     (local.get $6)
     (block
@@ -156,6 +157,7 @@
      )
     )
    )
+   ;;@ fib.c:8:0
    (loop $label$4
     (block $label$5
      ;;@ fib.c:4:0
@@ -172,12 +174,14 @@
        (i32.const 1)
       )
      )
+     ;;@ fib.c:3:0
      (local.set $7
       (i32.eq
        (local.get $9)
        (local.get $0)
       )
      )
+     ;;@ fib.c:3:0
      (if
       (local.get $7)
       (block
@@ -201,6 +205,7 @@
        )
       )
      )
+     ;;@ fib.c:3:0
      (br $label$4)
     )
    )

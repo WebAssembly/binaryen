@@ -2,12 +2,15 @@
 ;; RUN: wasm-opt %s -all --ssa -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $foo (type $none_=>_none)
+ ;; CHECK:      (type $A (struct ))
+ (type $A (struct ))
+
+ ;; CHECK:      (func $foo (type $1)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $foo)
 
- ;; CHECK:      (func $bar (type $ref|func|_=>_none) (param $x (ref func))
+ ;; CHECK:      (func $bar (type $2) (param $x (ref func))
  ;; CHECK-NEXT:  (local $1 (ref func))
  ;; CHECK-NEXT:  (local $2 (ref func))
  ;; CHECK-NEXT:  (local.set $1
@@ -30,5 +33,30 @@
   (drop (local.get $x))
   (local.set $x (ref.func $bar))
   (drop (local.get $x))
+ )
+
+ ;; CHECK:      (func $refine-to-null (type $3) (result (ref $A))
+ ;; CHECK-NEXT:  (local $0 (ref null $A))
+ ;; CHECK-NEXT:  (block $label (result (ref none))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_cast $label nullref (ref none)
+ ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refine-to-null (result (ref $A))
+  (local $0 (ref null $A))
+  (block $label (result (ref $A))
+   (drop
+    (br_on_cast $label (ref null $A) (ref $A)
+     ;; This will turn into a null, which has a more refined type that affects
+     ;; the br_on_cast parent.
+     (local.get $0)
+    )
+   )
+   (unreachable)
+  )
  )
 )

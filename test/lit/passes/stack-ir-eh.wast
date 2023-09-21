@@ -6,7 +6,7 @@
   ;; CHECK:      (tag $e0 (param i32))
   (tag $e0 (param i32))
 
-  ;; CHECK:      (func $eh (type $none_=>_none)
+  ;; CHECK:      (func $eh (type $1)
   ;; CHECK-NEXT:  try $l0
   ;; CHECK-NEXT:   i32.const 0
   ;; CHECK-NEXT:   throw $e0

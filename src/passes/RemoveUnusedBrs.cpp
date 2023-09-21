@@ -699,7 +699,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
 
     struct Optimizer : public PostWalker<Optimizer> {
+      PassOptions& passOptions;
       bool worked = false;
+
+      Optimizer(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBrOn(BrOn* curr) {
         // Ignore unreachable BrOns which we cannot improve anyhow. Note that
@@ -712,59 +715,163 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return;
         }
 
-        // First, check for a possible null which would prevent optimizations on
-        // null checks.
-        // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
-        // input is (ref null func) with br_on_non_null (as only the null check
-        // would be needed).
-        // TODO: Use the fallthrough to determine in more cases that we
-        // definitely have a null.
-        auto refType = curr->ref->type;
-        if (refType.isNullable() &&
-            (curr->op == BrOnNull || curr->op == BrOnNonNull)) {
+        Builder builder(*getModule());
+
+        Type refType =
+          Properties::getFallthroughType(curr->ref, passOptions, *getModule());
+        if (refType == Type::unreachable) {
+          // Leave this to DCE.
           return;
         }
+        assert(refType.isRef());
+
+        // When we optimize based on all the fallthrough type information
+        // available, we may need to insert a cast to maintain validity. For
+        // example, in this case we know the cast will succeed, but it would be
+        // invalid to send curr->ref directly:
+        //
+        //   (br_on_cast $l anyref i31ref
+        //     (block (result anyref)
+        //       (ref.i31 ...)))
+        //
+        // We could just always do the cast and leave removing the casts to
+        // OptimizeInstructions, but it's simple enough to avoid unnecessary
+        // casting here.
+        auto maybeCast = [&](Expression* expr, Type type) -> Expression* {
+          assert(expr->type.isRef() && type.isRef());
+          if (Type::isSubType(expr->type, type)) {
+            return expr;
+          }
+          if (HeapType::isSubType(expr->type.getHeapType(),
+                                  type.getHeapType())) {
+            return builder.makeRefAs(RefAsNonNull, expr);
+          }
+          return builder.makeRefCast(expr, type);
+        };
 
         if (curr->op == BrOnNull) {
-          assert(refType.isNonNullable());
-          // This cannot be null, so the br is never taken, and the non-null
-          // value flows through.
-          replaceCurrent(curr->ref);
-          worked = true;
-          return;
-        }
-        if (curr->op == BrOnNonNull) {
-          assert(refType.isNonNullable());
-          // This cannot be null, so the br is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
-          worked = true;
+          if (refType.isNull()) {
+            // The branch will definitely be taken.
+            replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                                builder.makeBreak(curr->name)));
+            worked = true;
+            return;
+          }
+          if (refType.isNonNullable()) {
+            // The branch will definitely not be taken.
+            replaceCurrent(maybeCast(curr->ref, curr->type));
+            worked = true;
+            return;
+          }
           return;
         }
 
-        // Check if the type is the kind we are checking for.
+        if (curr->op == BrOnNonNull) {
+          if (refType.isNull()) {
+            // Definitely not taken.
+            replaceCurrent(builder.makeDrop(curr->ref));
+            worked = true;
+            return;
+          }
+          if (refType.isNonNullable()) {
+            // Definitely taken.
+            replaceCurrent(builder.makeBreak(
+              curr->name, maybeCast(curr->ref, curr->getSentType())));
+            worked = true;
+            return;
+          }
+          return;
+        }
+
+        // Improve the cast target type as much as possible given what we know
+        // about the input. Unlike in BrOn::finalize(), we consider type
+        // information from all the fallthrough values here. We can continue to
+        // further optimizations after this, and those optimizations might even
+        // benefit from this improvement.
+        auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+        if (glb != Type::unreachable && glb != curr->castType) {
+          curr->castType = glb;
+          curr->finalize();
+          worked = true;
+        }
+
+        // Depending on what we know about the cast results, we may be able to
+        // optimize.
         auto result = GCTypeUtils::evaluateCastCheck(refType, curr->castType);
         if (curr->op == BrOnCastFail) {
           result = GCTypeUtils::flipEvaluationResult(result);
         }
 
-        if (result == GCTypeUtils::Success) {
-          // The cast succeeds, so we can switch from BrOn to a simple br that
-          // is always taken.
-          replaceCurrent(
-            Builder(*getModule()).makeBreak(curr->name, curr->ref));
-          worked = true;
-        } else if (result == GCTypeUtils::Failure ||
-                   result == GCTypeUtils::Unreachable) {
-          // The cast fails, so the branch is never taken, and the value just
-          // flows through. Or, the cast cannot even be reached, so it does not
-          // matter what we do, and we can handle it as a failure.
-          replaceCurrent(curr->ref);
-          worked = true;
+        switch (result) {
+          case GCTypeUtils::Unknown:
+            // Anything could happen, so we cannot optimize.
+            return;
+          case GCTypeUtils::Success: {
+            replaceCurrent(builder.makeBreak(
+              curr->name, maybeCast(curr->ref, curr->getSentType())));
+            worked = true;
+            return;
+          }
+          case GCTypeUtils::Failure: {
+            replaceCurrent(maybeCast(curr->ref, curr->type));
+            worked = true;
+            return;
+          }
+          case GCTypeUtils::SuccessOnlyIfNull: {
+            // TODO: optimize this case using the following replacement, which
+            // avoids using any scratch locals and only does a single null
+            // check, but does require generating a fresh label:
+            //
+            //   (br_on_cast $l (ref null $X) (ref null $Y)
+            //     (...)
+            //   )
+            //     =>
+            //   (block $l' (result (ref $X))
+            //     (br_on_non_null $l' ;; reuses `curr`
+            //       (...)
+            //     )
+            //     (br $l
+            //       (ref.null bot<X>)
+            //     )
+            //   )
+            return;
+          }
+          case GCTypeUtils::SuccessOnlyIfNonNull: {
+            // Perform this replacement:
+            //
+            //   (br_on_cast $l (ref null $X') (ref $X))
+            //     (...)
+            //   )
+            //     =>
+            //   (block (result (ref bot<X>))
+            //     (br_on_non_null $l ;; reuses `curr`
+            //       (...)
+            //     (ref.null bot<X>)
+            //   )
+            curr->ref = maybeCast(
+              curr->ref, Type(curr->getSentType().getHeapType(), Nullable));
+            curr->op = BrOnNonNull;
+            curr->castType = Type::none;
+            curr->type = Type::none;
+
+            assert(curr->ref->type.isRef());
+            auto* refNull = builder.makeRefNull(curr->ref->type.getHeapType());
+            replaceCurrent(builder.makeBlock({curr, refNull}, refNull->type));
+            worked = true;
+            return;
+          }
+          case GCTypeUtils::Unreachable: {
+            // The cast is never executed, possibly because its input type is
+            // uninhabitable. Replace it with unreachable.
+            auto* drop = builder.makeDrop(curr->ref);
+            auto* unreachable = ExpressionManipulator::unreachable(curr);
+            replaceCurrent(builder.makeBlock({drop, unreachable}));
+            worked = true;
+            return;
+          }
         }
-        // TODO: Handle SuccessOnlyIfNull and SuccessOnlyIfNonNull.
       }
-    } optimizer;
+    } optimizer(getPassOptions());
 
     optimizer.setModule(getModule());
     optimizer.doWalkFunction(func);

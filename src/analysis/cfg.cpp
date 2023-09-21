@@ -103,4 +103,12 @@ void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   }
 }
 
+CFGBlockIndexes::CFGBlockIndexes(const CFG& cfg) {
+  for (auto& block : cfg) {
+    for (auto* expr : block) {
+      map[expr] = block.getIndex();
+    }
+  }
+}
+
 } // namespace wasm::analysis

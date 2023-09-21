@@ -2,13 +2,13 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $br_on (type $none_=>_none)
+  ;; CHECK:      (func $br_on (type $0)
   ;; CHECK-NEXT:  (local $x funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_func $out
-  ;; CHECK-NEXT:      (ref.func $br_on)
+  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref nofunc)
+  ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $x
@@ -28,8 +28,8 @@
         ;; We can push the local.set past the br_on.
         (local.set $x (ref.func $br_on))
         (drop
-          (br_on_func $out
-            (ref.func $br_on)
+          (br_on_cast $out funcref (ref func)
+            (ref.null nofunc)
           )
         )
         (drop
@@ -40,7 +40,7 @@
     )
   )
 
-  ;; CHECK:      (func $br_on_no (type $none_=>_none)
+  ;; CHECK:      (func $br_on_no (type $0)
   ;; CHECK-NEXT:  (local $x funcref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result (ref func))
@@ -48,8 +48,8 @@
   ;; CHECK-NEXT:     (ref.func $br_on_no)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_func $out
-  ;; CHECK-NEXT:      (ref.func $br_on_no)
+  ;; CHECK-NEXT:     (br_on_cast $out nullfuncref (ref nofunc)
+  ;; CHECK-NEXT:      (ref.null nofunc)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.func $br_on_no)
@@ -61,13 +61,13 @@
   ;; CHECK-NEXT: )
   (func $br_on_no
     (local $x (ref null func))
-    ;; We can't push here since the local.get is outside of the loop.
+    ;; We can't push here since the local.get is outside of the block.
     (drop
       (block $out (result (ref func))
         (local.set $x (ref.func $br_on_no))
         (drop
-          (br_on_func $out
-            (ref.func $br_on_no)
+          (br_on_cast $out funcref (ref func)
+            (ref.null nofunc)
           )
         )
         (ref.func $br_on_no)

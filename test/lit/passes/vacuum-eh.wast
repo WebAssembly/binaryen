@@ -7,7 +7,7 @@
   ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
 
-  ;; CHECK:      (func $try-test (type $none_=>_none)
+  ;; CHECK:      (func $try-test (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $try-test
@@ -22,7 +22,7 @@
     )
   )
 
-  ;; CHECK:      (func $inner-try-catch_all-test (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $inner-try-catch_all-test (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try0
   ;; CHECK-NEXT:   (do
@@ -60,7 +60,7 @@
     (i32.const 2)
   )
 
-  ;; CHECK:      (func $inner-try-catch-test (type $none_=>_none)
+  ;; CHECK:      (func $inner-try-catch-test (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -108,7 +108,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-in-catch (type $none_=>_none)
+  ;; CHECK:      (func $br-in-catch (type $0)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $br-in-catch
@@ -128,7 +128,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-delegate-outer-target (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate-outer-target (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $label$0
   ;; CHECK-NEXT:   (do
@@ -179,7 +179,7 @@
     )
   )
 
-  ;; CHECK:      (func $trivial-catch-all-of-throw (type $none_=>_none)
+  ;; CHECK:      (func $trivial-catch-all-of-throw (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try3
   ;; CHECK-NEXT:   (do

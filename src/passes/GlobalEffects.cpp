@@ -19,6 +19,7 @@
 // PassOptions structure; see more details there.
 //
 
+#include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "wasm.h"

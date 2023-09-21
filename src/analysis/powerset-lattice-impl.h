@@ -48,7 +48,7 @@ inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
 
 // We count the number of element members present in the element by counting the
 // trues in the bitvector.
-inline size_t FiniteIntPowersetLattice::Element::count() {
+inline size_t FiniteIntPowersetLattice::Element::count() const {
   size_t count = 0;
   for (auto it : bitvector) {
     count += it;

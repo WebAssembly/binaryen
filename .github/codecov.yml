@@ -1,0 +1,8 @@
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+
+github_checks:
+    annotations: false

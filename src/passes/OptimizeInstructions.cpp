@@ -1155,17 +1155,9 @@ struct OptimizeInstructions
 
   void visitLocalSet(LocalSet* curr) {
     // Interactions between local.set/tee and ref.as_non_null can be optimized
-    // in some cases, by removing or moving the ref.as_non_null operation. In
-    // all cases, we only do this when we do *not* allow non-nullable locals. If
-    // we do allow such locals, then (1) this local might be non-nullable, so we
-    // can't remove or move a ref.as_non_null flowing into a local.set/tee, and
-    // (2) even if the local were nullable, if we change things we might prevent
-    // the LocalSubtyping pass from turning it into a non-nullable local later.
-    // Note that we must also check if this local is nullable regardless, as a
-    // parameter might be non-nullable even if nullable locals are disallowed
-    // (as that just affects vars, and not params).
+    // in some cases, by removing or moving the ref.as_non_null operation.
     if (auto* as = curr->value->dynCast<RefAs>()) {
-      if (as->op == RefAsNonNull && !getModule()->features.hasGCNNLocals() &&
+      if (as->op == RefAsNonNull &&
           getFunction()->getLocalType(curr->index).isNullable()) {
         //   (local.tee (ref.as_non_null ..))
         // =>
@@ -1406,13 +1398,13 @@ struct OptimizeInstructions
   // skipCast do): removing a cast is potentially dangerous, as it removes
   // information from the IR. For example:
   //
-  //  (ref.is_func
-  //    (ref.as_func
+  //  (ref.test (ref i31)
+  //    (ref.cast (ref i31)
   //      (local.get $anyref)))
   //
   // The local has no useful type info here (it is anyref). The cast forces it
-  // to be a function, so we know that if we do not trap then the ref.is will
-  // definitely be 1. But if we removed the ref.as first (which we can do in
+  // to be an i31, so we know that if we do not trap then the ref.test will
+  // definitely be 1. But if we removed the ref.cast first (which we can do in
   // traps-never-happen mode) then we'd not have the type info we need to
   // optimize that way.
   //
@@ -1420,12 +1412,12 @@ struct OptimizeInstructions
   //
   //  * Before removing a cast we should use its type information in the best
   //    way we can. Only after doing so should a cast be removed. In the exmaple
-  //    above, that means first seeing that the ref.is must return 1, and only
-  //    then possibly removing the ref.as.
+  //    above, that means first seeing that the ref.test must return 1, and only
+  //    then possibly removing the ref.cast.
   //  * Do not remove a cast if removing it might remove useful information for
   //    others. For example,
   //
-  //      (ref.cast $A
+  //      (ref.cast (ref null $A)
   //        (ref.as_non_null ..))
   //
   //    If we remove the inner cast then the outer cast becomes nullable. That
@@ -1995,39 +1987,64 @@ struct OptimizeInstructions
       return;
     }
 
-    // Check whether the cast will definitely fail (or succeed). Look not just
-    // at the fallthrough but all intermediatary fallthrough values as well, as
-    // if any of them has a type that cannot be cast to us, then we will trap,
-    // e.g.
-    //
-    //   (ref.cast $struct-A
-    //     (ref.cast $struct-B
-    //       (ref.cast $array
-    //         (local.get $x)
-    //
-    // The fallthrough is the local.get, but the array cast in the middle
-    // proves a trap must happen.
     Builder builder(*getModule());
-    auto nullType = curr->type.getHeapType().getBottom();
-    {
-      auto** refp = &curr->ref;
-      while (1) {
+
+    // Look at all the fallthrough values to get the most precise possible type
+    // of the value we are casting. local.tee, br_if, and blocks can all "lose"
+    // type information, so looking at all the fallthrough values can give us a
+    // more precise type than is stored in the IR.
+    Type refType =
+      Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
+
+    // As a first step, we can tighten up the cast type to be the greatest lower
+    // bound of the original cast type and the type we know the cast value to
+    // have. We know any less specific type either cannot appear or will fail
+    // the cast anyways.
+    auto glb = Type::getGreatestLowerBound(curr->type, refType);
+    if (glb != Type::unreachable && glb != curr->type) {
+      curr->type = glb;
+      refinalize = true;
+      // Call replaceCurrent() to make us re-optimize this node, as we may have
+      // just unlocked further opportunities. (We could just continue down to
+      // the rest, but we'd need to do more work to make sure all the local
+      // state in this function is in sync which this change; it's easier to
+      // just do another clean pass on this node.)
+      replaceCurrent(curr);
+      return;
+    }
+
+    // Given what we know about the type of the value, determine what we know
+    // about the results of the cast and optimize accordingly.
+    switch (GCTypeUtils::evaluateCastCheck(refType, curr->type)) {
+      case GCTypeUtils::Unknown:
+        // The cast may or may not succeed, so we cannot optimize.
+        break;
+      case GCTypeUtils::Success:
+      case GCTypeUtils::SuccessOnlyIfNonNull: {
+        // We know the cast will succeed, or at most requires a null check, so
+        // we can try to optimize it out. Find the best-typed fallthrough value
+        // to propagate.
+        auto** refp = Properties::getMostRefinedFallthrough(
+          &curr->ref, getPassOptions(), *getModule());
         auto* ref = *refp;
-
-        auto result = GCTypeUtils::evaluateCastCheck(ref->type, curr->type);
-
-        if (result == GCTypeUtils::Success) {
-          // The cast will succeed. This can only happen if the ref is a subtype
-          // of the cast instruction, which means we can replace the cast with
-          // the ref.
-          assert(Type::isSubType(ref->type, curr->type));
-          if (curr->type != ref->type) {
-            refinalize = true;
-          }
-          // If there were no intermediate expressions, we can just skip the
-          // cast.
+        assert(ref->type.isRef());
+        if (HeapType::isSubType(ref->type.getHeapType(),
+                                curr->type.getHeapType())) {
+          // We know ref's heap type matches, but the knowledge that the
+          // nullabillity matches might come from somewhere else or we might not
+          // know at all whether the nullability matches, so we might need to
+          // emit a null check.
+          bool needsNullCheck = ref->type.getNullability() == Nullable &&
+                                curr->type.getNullability() == NonNullable;
+          // If the best value to propagate is the argument to the cast, we can
+          // simply remove the cast (or downgrade it to a null check if
+          // necessary).
           if (ref == curr->ref) {
-            replaceCurrent(ref);
+            if (needsNullCheck) {
+              replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
+            } else {
+              replaceCurrent(ref);
+            }
             return;
           }
           // Otherwise we can't just remove the cast and replace it with `ref`
@@ -2052,6 +2069,7 @@ struct OptimizeInstructions
             // even reach the cast. Such casts will be evaluated as
             // Unreachable, so we'll not hit this assertion.
             assert(curr->type.isNullable());
+            auto nullType = curr->type.getHeapType().getBottom();
             replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                                 builder.makeRefNull(nullType)));
             return;
@@ -2060,114 +2078,80 @@ struct OptimizeInstructions
           // it directly.
           auto scratch = builder.addVar(getFunction(), ref->type);
           *refp = builder.makeLocalTee(scratch, ref, ref->type);
+          Expression* get = builder.makeLocalGet(scratch, ref->type);
+          if (needsNullCheck) {
+            get = builder.makeRefAs(RefAsNonNull, get);
+          }
           replaceCurrent(
-            builder.makeSequence(builder.makeDrop(curr->ref),
-                                 builder.makeLocalGet(scratch, ref->type)));
+            builder.makeSequence(builder.makeDrop(curr->ref), get));
           return;
-        } else if (result == GCTypeUtils::Failure ||
-                   result == GCTypeUtils::Unreachable) {
-          // This cast cannot succeed, or it cannot even be reached, so we can
-          // trap.
-          // Make sure to emit a block with the same type as us; leave updating
-          // types for other passes.
+        }
+        // If we get here, then we know that the heap type of the cast input is
+        // more refined than the heap type of the best available fallthrough
+        // expression. The only way this can happen is if we were able to infer
+        // that the input has bottom heap type because it was typed with
+        // multiple, incompatible heap types in different fallthrough
+        // expressions. For example:
+        //
+        // (ref.cast eqref
+        //   (br_on_cast_fail $l anyref i31ref
+        //     (br_on_cast_fail $l anyref structref
+        //       ...)))
+        //
+        // In this case, the cast succeeds because the value must be null, so we
+        // can fall through to handle that case.
+        assert(Type::isSubType(refType, ref->type));
+        assert(refType.getHeapType().isBottom());
+      }
+        [[fallthrough]];
+      case GCTypeUtils::SuccessOnlyIfNull: {
+        auto nullType = Type(curr->type.getHeapType().getBottom(), Nullable);
+        // The cast either returns null or traps. In trapsNeverHappen mode
+        // we know the result, since by assumption it will not trap.
+        if (getPassOptions().trapsNeverHappen) {
           replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+            {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
             curr->type));
           return;
-        } else if (result == GCTypeUtils::SuccessOnlyIfNull) {
-          // If either cast or ref types were non-nullable then the cast could
-          // never succeed, and we'd have reached |Failure|, above.
-          assert(curr->type.isNullable() && curr->ref->type.isNullable());
-
-          // The cast either returns null, or traps. In trapsNeverHappen mode
-          // we know the result, since it by assumption will not trap.
-          if (getPassOptions().trapsNeverHappen) {
-            replaceCurrent(builder.makeBlock(
-              {builder.makeDrop(curr->ref), builder.makeRefNull(nullType)},
-              curr->type));
-            return;
-          }
-
-          // Without trapsNeverHappen we can at least sharpen the type here, if
-          // it is not already a null type.
-          auto newType = Type(nullType, Nullable);
-          if (curr->type != newType) {
-            curr->type = newType;
-            // Call replaceCurrent() to make us re-optimize this node, as we
-            // may have just unlocked further opportunities. (We could just
-            // continue down to the rest, but we'd need to do more work to
-            // make sure all the local state in this function is in sync
-            // which this change; it's easier to just do another clean pass
-            // on this node.)
-            replaceCurrent(curr);
-            return;
-          }
         }
-
-        auto** last = refp;
-        refp = Properties::getImmediateFallthroughPtr(
-          refp, getPassOptions(), *getModule());
-        if (refp == last) {
-          break;
-        }
+        // Otherwise, we should have already refined the cast type to cast
+        // directly to null.
+        assert(curr->type == nullType);
+        break;
       }
+      case GCTypeUtils::Unreachable:
+      case GCTypeUtils::Failure:
+        // This cast cannot succeed, or it cannot even be reached, so we can
+        // trap. Make sure to emit a block with the same type as us; leave
+        // updating types for other passes.
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()},
+          curr->type));
+        return;
     }
 
-    // See what we know about the cast result.
-    //
-    // Note that we could look at the fallthrough for the ref, but that would
-    // require additional work to make sure we emit something that validates
-    // properly. TODO
-    auto result = GCTypeUtils::evaluateCastCheck(curr->ref->type, curr->type);
-
-    if (result == GCTypeUtils::Success) {
-      replaceCurrent(curr->ref);
-      return;
-    } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
-      // All we need to do is check for a null here.
-      //
-      // As above, we must refinalize as we may now be emitting a more refined
-      // type (specifically a more refined heap type).
-      replaceCurrent(builder.makeRefAs(RefAsNonNull, curr->ref));
-      return;
-    }
+    // If we got past the optimizations above, it must be the case that we
+    // cannot tell from the static types whether the cast will succeed or not,
+    // which means we must have a proper down cast.
+    assert(Type::isSubType(curr->type, curr->ref->type));
 
     if (auto* child = curr->ref->dynCast<RefCast>()) {
-      // Repeated casts can be removed, leaving just the most demanding of
-      // them. Note that earlier we already checked for the cast of the ref's
-      // type being more refined, so all we need to handle is the opposite, that
-      // is, something like this:
-      //
-      //   (ref.cast $B
-      //     (ref.cast $A
-      //
-      // where $B is a subtype of $A. We don't need to cast to $A here; we can
-      // just cast all the way to $B immediately. To check this, see if the
-      // parent's type would succeed if cast by the child's; if it must then the
-      // child's is redundant.
-      auto result = GCTypeUtils::evaluateCastCheck(curr->type, child->type);
-      if (result == GCTypeUtils::Success) {
-        curr->ref = child->ref;
-        return;
-      } else if (result == GCTypeUtils::SuccessOnlyIfNonNull) {
-        // Similar to above, but we must also trap on null.
-        curr->ref = child->ref;
-        curr->type = Type(curr->type.getHeapType(), NonNullable);
-        return;
-      }
+      // Repeated casts can be removed, leaving just the most demanding of them.
+      // Since we know the current cast is a downcast, it must be strictly
+      // stronger than its child cast and we can remove the child cast entirely.
+      curr->ref = child->ref;
+      return;
     }
 
-    // ref.cast can be combined with ref.as_non_null,
+    // Similarly, ref.cast can be combined with ref.as_non_null.
     //
     //   (ref.cast null (ref.as_non_null ..))
     // =>
     //   (ref.cast ..)
     //
-    if (auto* as = curr->ref->dynCast<RefAs>()) {
-      if (as->op == RefAsNonNull) {
-        curr->ref = as->value;
-        curr->type = Type(curr->type.getHeapType(), NonNullable);
-      }
+    if (auto* as = curr->ref->dynCast<RefAs>(); as && as->op == RefAsNonNull) {
+      curr->ref = as->value;
+      curr->type = Type(curr->type.getHeapType(), NonNullable);
     }
   }
 
@@ -2180,47 +2164,45 @@ struct OptimizeInstructions
 
     // Parallel to the code in visitRefCast: we look not just at the final type
     // we are given, but at fallthrough values as well.
-    auto* ref = curr->ref;
-    while (1) {
-      switch (GCTypeUtils::evaluateCastCheck(ref->type, curr->castType)) {
-        case GCTypeUtils::Unknown:
-          break;
-        case GCTypeUtils::Success:
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
-          return;
-        case GCTypeUtils::Unreachable:
-          // Make sure to emit a block with the same type as us, to avoid other
-          // code in this pass needing to handle unexpected unreachable code
-          // (which is only properly propagated at the end of this pass when we
-          // refinalize).
-          replaceCurrent(builder.makeBlock(
-            {builder.makeDrop(curr->ref), builder.makeUnreachable()},
-            Type::i32));
-          return;
-        case GCTypeUtils::Failure:
-          replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
-                                              builder.makeConst(int32_t(0))));
-          return;
-        case GCTypeUtils::SuccessOnlyIfNull:
-          replaceCurrent(builder.makeRefIsNull(curr->ref));
-          return;
-        case GCTypeUtils::SuccessOnlyIfNonNull:
-          // This adds an EqZ, but code size does not regress since ref.test
-          // also encodes a type, and ref.is_null does not. The EqZ may also add
-          // some work, but a cast is likely more expensive than a null check +
-          // a fast int operation.
-          replaceCurrent(
-            builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
-          return;
-      }
+    Type refType =
+      Properties::getFallthroughType(curr->ref, getPassOptions(), *getModule());
 
-      auto* fallthrough = Properties::getImmediateFallthrough(
-        ref, getPassOptions(), *getModule());
-      if (fallthrough == ref) {
+    // Improve the cast type as much as we can without changing the results.
+    auto glb = Type::getGreatestLowerBound(curr->castType, refType);
+    if (glb != Type::unreachable && glb != curr->castType) {
+      curr->castType = glb;
+    }
+
+    switch (GCTypeUtils::evaluateCastCheck(refType, curr->castType)) {
+      case GCTypeUtils::Unknown:
+        break;
+      case GCTypeUtils::Success:
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeConst(int32_t(1))}));
         return;
-      }
-      ref = fallthrough;
+      case GCTypeUtils::Unreachable:
+        // Make sure to emit a block with the same type as us, to avoid other
+        // code in this pass needing to handle unexpected unreachable code
+        // (which is only properly propagated at the end of this pass when we
+        // refinalize).
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref), builder.makeUnreachable()}, Type::i32));
+        return;
+      case GCTypeUtils::Failure:
+        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                            builder.makeConst(int32_t(0))));
+        return;
+      case GCTypeUtils::SuccessOnlyIfNull:
+        replaceCurrent(builder.makeRefIsNull(curr->ref));
+        return;
+      case GCTypeUtils::SuccessOnlyIfNonNull:
+        // This adds an EqZ, but code size does not regress since ref.test
+        // also encodes a type, and ref.is_null does not. The EqZ may also add
+        // some work, but a cast is likely more expensive than a null check +
+        // a fast int operation.
+        replaceCurrent(
+          builder.makeUnary(EqZInt32, builder.makeRefIsNull(curr->ref)));
+        return;
     }
   }
 
@@ -2281,6 +2263,25 @@ struct OptimizeInstructions
       assert(!cast->type.isNonNullable());
       cast->type = Type(cast->type.getHeapType(), NonNullable);
       replaceCurrent(cast);
+    }
+  }
+
+  void visitTupleExtract(TupleExtract* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    if (auto* make = curr->tuple->dynCast<TupleMake>()) {
+      Builder builder(*getModule());
+
+      // Store the value of the lane we want in a tee, and return that after a
+      // drop of the tuple (which might have side effects).
+      auto valueType = make->type[curr->index];
+      Index tempLocal = builder.addVar(getFunction(), valueType);
+      make->operands[curr->index] =
+        builder.makeLocalTee(tempLocal, make->operands[curr->index], valueType);
+      auto* get = builder.makeLocalGet(tempLocal, valueType);
+      replaceCurrent(getDroppedChildrenAndAppend(make, get));
     }
   }
 

@@ -1,18 +1,18 @@
 (module
  (type $array (array (mut i32)))
- (type $none_=>_i32 (func (result i32)))
- (global $global1 (ref $array) (array.new_fixed $array
+ (type $1 (func (result i32)))
+ (global $global1 (ref $array) (array.new_fixed $array 4
   (i32.const 10)
   (i32.const 20)
   (i32.const 30)
   (i32.const 40)
  ))
- (global $global2 (ref $array) (array.new_fixed $array
+ (global $global2 (ref $array) (array.new_fixed $array 2
   (i32.const 42)
   (i32.const 1337)
  ))
  (export "keepalive" (func $1))
- (func $1 (type $none_=>_i32) (result i32)
+ (func $1 (type $1) (result i32)
   (i32.add
    (array.get $array
     (global.get $global1)

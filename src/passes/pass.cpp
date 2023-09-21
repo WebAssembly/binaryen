@@ -187,6 +187,9 @@ void PassRegistry::registerPasses() {
                "information about what content can actually appear in each "
                "location",
                createGUFAPass);
+  registerPass("gufa-cast-all",
+               "GUFA plus add casts for all inferences",
+               createGUFACastAllPass);
   registerPass("gufa-optimizing",
                "GUFA plus local optimizations in functions we modified",
                createGUFAOptimizingPass);
@@ -477,12 +480,21 @@ void PassRegistry::registerPasses() {
   registerPass("trap-mode-js",
                "replace trapping operations with js semantics",
                createTrapModeJS);
+  registerPass("tuple-optimization",
+               "optimize trivial tuples away",
+               createTupleOptimizationPass);
+  registerPass("type-finalizing",
+               "mark all leaf types as final",
+               createTypeFinalizingPass);
   registerPass("type-merging",
                "merge types to their supertypes where possible",
                createTypeMergingPass);
   registerPass("type-ssa",
                "create new nominal types to help other optimizations",
                createTypeSSAPass);
+  registerPass("type-unfinalizing",
+               "mark all types as non-final (open)",
+               createTypeUnFinalizingPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -554,6 +566,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("code-pushing");
+  }
+  if (wasm->features.hasMultivalue()) {
+    // Optimize tuples before local opts (as splitting tuples can help local
+    // opts), but also not too early, as we want to be after
+    // optimize-instructions at least (which can remove tuple-related things).
+    addIfNoDWARFIssues("tuple-optimization");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit

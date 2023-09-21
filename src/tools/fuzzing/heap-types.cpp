@@ -87,9 +87,7 @@ struct HeapTypeGeneratorImpl {
 
     // Types without nontrivial subtypes may be marked final.
     for (Index i = 0; i < builder.size(); ++i) {
-      if (subtypeIndices[i].size() == 1 && rand.oneIn(2)) {
-        builder[i].setFinal();
-      }
+      builder[i].setOpen(subtypeIndices[i].size() > 1 || rand.oneIn(2));
     }
 
     // Initialize the recursion groups.
@@ -894,7 +892,7 @@ std::vector<HeapType> Inhabitator::build() {
         builder[i].subTypeOf(*super);
       }
     }
-    builder[i].setFinal(types[i].isFinal());
+    builder[i].setOpen(types[i].isOpen());
   }
 
   auto built = builder.build();

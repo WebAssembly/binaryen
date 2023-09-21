@@ -10,8 +10,8 @@
 
 
  (rec
-  ;; CHECK:      (type $singleton (struct ))
-  (type $singleton (struct_subtype data))
+  ;; CHECK:      (type $singleton (sub (struct )))
+  (type $singleton (sub (struct)))
  )
 
  ;; Use the type so it appears in the output.

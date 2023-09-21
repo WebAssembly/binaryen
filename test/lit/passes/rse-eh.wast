@@ -7,7 +7,7 @@
   ;; CHECK:      (tag $e2 (param))
   (tag $e2)
 
-  ;; CHECK:      (func $try1 (type $none_=>_none)
+  ;; CHECK:      (func $try1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -35,7 +35,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try2 (type $none_=>_none)
+  ;; CHECK:      (func $try2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -68,7 +68,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try3 (type $none_=>_none)
+  ;; CHECK:      (func $try3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -101,12 +101,12 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try4 (type $none_=>_none)
+  ;; CHECK:      (func $try4 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -137,7 +137,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try5 (type $none_=>_none)
+  ;; CHECK:      (func $try5 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -168,7 +168,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $nested-try1 (type $none_=>_none)
+  ;; CHECK:      (func $nested-try1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -216,7 +216,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $nested-try2 (type $none_=>_none)
+  ;; CHECK:      (func $nested-try2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -263,7 +263,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $nested-try3 (type $none_=>_none)
+  ;; CHECK:      (func $nested-try3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -314,7 +314,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $nested-catch1 (type $none_=>_none)
+  ;; CHECK:      (func $nested-catch1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -380,7 +380,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $nested-catch2 (type $none_=>_none)
+  ;; CHECK:      (func $nested-catch2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -453,7 +453,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $catchless-try (type $none_=>_none)
+  ;; CHECK:      (func $catchless-try (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -482,7 +482,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-delegate0 (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate0 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
@@ -537,7 +537,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-delegate1 (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
@@ -593,7 +593,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-delegate2 (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
@@ -653,7 +653,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-delegate3 (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
@@ -734,7 +734,7 @@
     (local.set $x (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-delegate4 (type $none_=>_none)
+  ;; CHECK:      (func $try-delegate4 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do

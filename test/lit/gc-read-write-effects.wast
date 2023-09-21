@@ -22,7 +22,7 @@
   ;;   a.0 = 10
   ;;   return a.0
   ;;
-  ;; CHECK:      (func $test (type $ref?|$A|_=>_i32) (param $x (ref null $A)) (result i32)
+  ;; CHECK:      (func $test (type $1) (param $x (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (struct.get $A 0

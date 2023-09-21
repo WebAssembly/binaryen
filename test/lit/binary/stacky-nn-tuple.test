@@ -36,7 +36,7 @@
 #  )
 # )
 
-RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
+RUN: wasm-opt -all %s.wasm -all --print
 
 # CHECK:      (module
 # CHECK-NEXT:  (type ${mut:i32} (struct (field (mut i32))))
@@ -109,4 +109,4 @@ RUN: wasm-opt -all --enable-gc-nn-locals %s.wasm -all --print
 # CHECK-NEXT:   )
 # CHECK-NEXT:  )
 # CHECK-NEXT: )
-# CHECK-NEXT: 
+# CHECK-NEXT:

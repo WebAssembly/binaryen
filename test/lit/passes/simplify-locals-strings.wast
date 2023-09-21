@@ -5,15 +5,15 @@
 (module
   (memory 10 10)
 
-  ;; CHECK:      (type $array (array (mut i8)))
-  (type $array (array_subtype (mut i8) data))
-  ;; CHECK:      (type $array16 (array (mut i16)))
-  (type $array16 (array_subtype (mut i16) data))
+  ;; CHECK:      (type $array (sub (array (mut i8))))
+  (type $array (sub (array (mut i8))))
+  ;; CHECK:      (type $array16 (sub (array (mut i16))))
+  (type $array16 (sub (array (mut i16))))
 
-  ;; CHECK:      (func $no-new-past-store (type $none_=>_none)
+  ;; CHECK:      (func $no-new-past-store (type $1)
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8 utf8
+  ;; CHECK-NEXT:   (string.new_utf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -26,7 +26,7 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -39,7 +39,7 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8 replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -69,7 +69,7 @@
     (local $temp stringref)
     ;; A string.new cannot be moved past a memory store.
     (local.set $temp
-      (string.new_wtf8 utf8
+      (string.new_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -82,7 +82,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8 wtf8
+      (string.new_wtf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -95,7 +95,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8 replace
+      (string.new_lossy_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -122,7 +122,7 @@
     )
   )
 
-  ;; CHECK:      (func $yes-new-past-store (type $none_=>_none)
+  ;; CHECK:      (func $yes-new-past-store (type $1)
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -131,7 +131,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8 utf8
+  ;; CHECK-NEXT:   (string.new_utf8
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -141,7 +141,7 @@
     (local $temp stringref)
     ;; A string.new can be moved past a memory load.
     (local.set $temp
-      (string.new_wtf8 utf8
+      (string.new_utf8
         (i32.const 1)
         (i32.const 2)
       )
@@ -156,10 +156,10 @@
     )
   )
 
-  ;; CHECK:      (func $no-new-past-store-gc (type $ref|$array|_ref|$array16|_=>_none) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $no-new-past-store-gc (type $3) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp stringref)
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.new_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
@@ -174,7 +174,7 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8_array wtf8
+  ;; CHECK-NEXT:   (string.new_wtf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
@@ -189,7 +189,7 @@
   ;; CHECK-NEXT:   (local.get $temp)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (string.new_wtf8_array replace
+  ;; CHECK-NEXT:   (string.new_lossy_utf8_array
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
@@ -223,7 +223,7 @@
     (local $temp stringref)
     ;; A string.new_***_array cannot be moved past a GC store.
     (local.set $temp
-      (string.new_wtf8_array utf8
+      (string.new_utf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -238,7 +238,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8_array wtf8
+      (string.new_wtf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -253,7 +253,7 @@
       (local.get $temp)
     )
     (local.set $temp
-      (string.new_wtf8_array replace
+      (string.new_lossy_utf8_array
         (local.get $array)
         (i32.const 1)
         (i32.const 2)
@@ -284,7 +284,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-load-past-encode (type $stringref_=>_none) (param $ref stringref)
+  ;; CHECK:      (func $no-load-past-encode (type $4) (param $ref stringref)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (i32.load
@@ -292,7 +292,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 wtf8
+  ;; CHECK-NEXT:   (string.encode_wtf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
@@ -306,7 +306,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 utf8
+  ;; CHECK-NEXT:   (string.encode_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
@@ -320,7 +320,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8 replace
+  ;; CHECK-NEXT:   (string.encode_lossy_utf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
@@ -352,7 +352,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 wtf8
+      (string.encode_wtf8
         (local.get $ref)
         (i32.const 10)
       )
@@ -366,7 +366,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 utf8
+      (string.encode_utf8
         (local.get $ref)
         (i32.const 20)
       )
@@ -380,7 +380,7 @@
       )
     )
     (drop
-      (string.encode_wtf8 replace
+      (string.encode_lossy_utf8
         (local.get $ref)
         (i32.const 30)
       )
@@ -404,7 +404,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-load-past-encode-gc (type $stringref_ref|$array|_ref|$array16|_=>_none) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
+  ;; CHECK:      (func $no-load-past-encode-gc (type $5) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.get_u $array
@@ -413,7 +413,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array wtf8
+  ;; CHECK-NEXT:   (string.encode_wtf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 10)
@@ -429,7 +429,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array utf8
+  ;; CHECK-NEXT:   (string.encode_utf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 20)
@@ -445,7 +445,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8_array replace
+  ;; CHECK-NEXT:   (string.encode_lossy_utf8_array
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (local.get $array)
   ;; CHECK-NEXT:    (i32.const 30)
@@ -482,7 +482,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array wtf8
+      (string.encode_wtf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 10)
@@ -498,7 +498,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array utf8
+      (string.encode_utf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 20)
@@ -514,7 +514,7 @@
       )
     )
     (drop
-      (string.encode_wtf8_array replace
+      (string.encode_lossy_utf8_array
         (local.get $ref)
         (local.get $array)
         (i32.const 30)
@@ -541,7 +541,7 @@
     )
   )
 
-  ;; CHECK:      (func $no-iteration-past-each-other (type $stringview_iter_=>_none) (param $iter stringview_iter)
+  ;; CHECK:      (func $no-iteration-past-each-other (type $6) (param $iter stringview_iter)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (stringview_iter.next

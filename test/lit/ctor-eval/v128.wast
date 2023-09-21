@@ -2,9 +2,9 @@
 ;; RUN: wasm-ctor-eval %s --ctors=v128 --kept-exports=v128 --quiet -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_v128 (func (result v128)))
+  ;; CHECK:      (type $1 (func (result v128)))
 
   ;; CHECK:      (memory $0 (shared 16 17))
   (memory $0 (shared 16 17))
@@ -26,7 +26,7 @@
     )
   )
 
-  ;; CHECK:      (func $keepalive (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; CHECK:      (func $keepalive (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.load
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
@@ -38,6 +38,6 @@
     )
   )
 )
-;; CHECK:      (func $v128_2 (type $none_=>_v128) (result v128)
+;; CHECK:      (func $v128_2 (type $1) (result v128)
 ;; CHECK-NEXT:  (v128.const i32x4 0x4ec0ffe0 0xfe00008e 0x81120001 0x90fffd85)
 ;; CHECK-NEXT: )

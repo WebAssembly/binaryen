@@ -370,7 +370,7 @@ private:
     // compute other sets as locals (since some of the gets they read may be
     // constant).
     // compute all dependencies
-    LocalGraph localGraph(func);
+    LocalGraph localGraph(func, getModule());
     localGraph.computeInfluences();
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything

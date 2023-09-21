@@ -184,8 +184,8 @@ struct Heap2LocalOptimizer {
   Heap2LocalOptimizer(Function* func,
                       Module* module,
                       const PassOptions& passOptions)
-    : func(func), module(module), passOptions(passOptions), localGraph(func),
-      parents(func->body), branchTargets(func->body) {
+    : func(func), module(module), passOptions(passOptions),
+      localGraph(func, module), parents(func->body), branchTargets(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -233,11 +233,12 @@ struct Heap2LocalOptimizer {
   struct Rewriter : PostWalker<Rewriter> {
     StructNew* allocation;
     Function* func;
+    Module* module;
     Builder builder;
     const FieldList& fields;
 
     Rewriter(StructNew* allocation, Function* func, Module* module)
-      : allocation(allocation), func(func), builder(*module),
+      : allocation(allocation), func(func), module(module), builder(*module),
         fields(allocation->type.getHeapType().getStruct().fields) {}
 
     // We must track all the local.sets that write the allocation, to verify
@@ -252,6 +253,9 @@ struct Heap2LocalOptimizer {
     // Maps indexes in the struct to the local index that will replace them.
     std::vector<Index> localIndexes;
 
+    // In rare cases we may need to refinalize, see below.
+    bool refinalize = false;
+
     void applyOptimization() {
       // Allocate locals to store the allocation's fields in.
       for (auto field : fields) {
@@ -260,6 +264,10 @@ struct Heap2LocalOptimizer {
 
       // Replace the things we need to using the visit* methods.
       walk(func->body);
+
+      if (refinalize) {
+        ReFinalize().walkFunctionInModule(func, module);
+      }
     }
 
     // Rewrite the code in visit* methods. The general approach taken is to
@@ -439,10 +447,25 @@ struct Heap2LocalOptimizer {
         return;
       }
 
-      replaceCurrent(
-        builder.makeSequence(builder.makeDrop(curr->ref),
-                             builder.makeLocalGet(localIndexes[curr->index],
-                                                  fields[curr->index].type)));
+      auto type = fields[curr->index].type;
+      if (type != curr->type) {
+        // Normally we are just replacing a struct.get with a local.get of a
+        // local that was created to have the same type as the struct's field,
+        // but in some cases we may refine, if the struct.get's reference type
+        // is less refined than the reference that actually arrives, like here:
+        //
+        //  (struct.get $parent 0
+        //    (block (ref $parent)
+        //      (struct.new $child)))
+        //
+        // We allocated locals for the field of the child, and are replacing a
+        // get of the parent field with a local of the same type as the child's,
+        // which may be more refined.
+        refinalize = true;
+      }
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeLocalGet(localIndexes[curr->index], type)));
     }
   };
 

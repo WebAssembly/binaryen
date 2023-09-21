@@ -1391,6 +1391,7 @@ public:
   Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -1409,8 +1410,8 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitI31New(I31New* curr) {
-    NOTE_ENTER("I31New");
+  Flow visitRefI31(RefI31* curr) {
+    NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
     if (flow.breaking()) {
       return flow;
@@ -2205,6 +2206,10 @@ public:
     NOTE_ENTER("TableGrow");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableFill(TableFill* curr) {
+    NOTE_ENTER("TableFill");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2987,6 +2992,38 @@ public:
       return fail;
     }
     return ret;
+  }
+
+  Flow visitTableFill(TableFill* curr) {
+    NOTE_ENTER("TableFill");
+    Flow destFlow = self()->visit(curr->dest);
+    if (destFlow.breaking()) {
+      return destFlow;
+    }
+    Flow valueFlow = self()->visit(curr->value);
+    if (valueFlow.breaking()) {
+      return valueFlow;
+    }
+    Flow sizeFlow = self()->visit(curr->size);
+    if (sizeFlow.breaking()) {
+      return sizeFlow;
+    }
+    Name tableName = curr->table;
+    auto info = getTableInterfaceInfo(tableName);
+
+    Index dest = destFlow.getSingleValue().geti32();
+    Literal value = valueFlow.getSingleValue();
+    Index size = sizeFlow.getSingleValue().geti32();
+
+    Index tableSize = info.interface->tableSize(tableName);
+    if (dest + size > tableSize) {
+      trap("out of bounds table access");
+    }
+
+    for (Index i = 0; i < size; ++i) {
+      info.interface->tableStore(info.name, dest + i, value);
+    }
+    return Flow();
   }
 
   Flow visitLocalGet(LocalGet* curr) {

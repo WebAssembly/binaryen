@@ -8,13 +8,13 @@
 ;; that bar is moved to the secondary module.
 
 (module
- ;; PRIMARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; PRIMARY:      (type $0 (func (param i32) (result i32)))
 
- ;; PRIMARY:      (type $externref_=>_none (func (param externref)))
+ ;; PRIMARY:      (type $3 (func (param externref)))
 
- ;; PRIMARY:      (type $externref_i32_=>_i32 (func (param externref i32) (result i32)))
+ ;; PRIMARY:      (type $1 (func (param externref i32) (result i32)))
 
- ;; PRIMARY:      (type $none_=>_none (func))
+ ;; PRIMARY:      (type $2 (func))
 
  ;; PRIMARY:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (param externref)))
 
@@ -45,7 +45,7 @@
  ;; PRIMARY-NEXT:   )
  ;; PRIMARY-NEXT:   (call $__load_secondary_module)
  ;; PRIMARY-NEXT:  )
- ;; PRIMARY-NEXT:  (call_indirect (type $i32_=>_i32)
+ ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:   (i32.const 0)
  ;; PRIMARY-NEXT:  )
@@ -53,7 +53,7 @@
  (func $foo (param i32) (result i32)
   (call $bar (i32.const 0))
  )
- ;; SECONDARY:      (type $i32_=>_i32 (func (param i32) (result i32)))
+ ;; SECONDARY:      (type $0 (func (param i32) (result i32)))
 
  ;; SECONDARY:      (import "primary" "%table" (table $timport$0 1 funcref))
 

@@ -34,6 +34,7 @@
 
 #include "call-utils.h"
 #include "ir/drop.h"
+#include "ir/find_all.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
 #include "pass.h"

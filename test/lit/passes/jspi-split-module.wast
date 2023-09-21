@@ -6,17 +6,17 @@
 ;;  - JSPI'ed version of the import
 ;;  - export of the above
 (module)
-;; CHECK:      (type $none_=>_none (func))
+;; CHECK:      (type $0 (func))
 
-;; CHECK:      (type $externref_=>_none (func (param externref)))
+;; CHECK:      (type $1 (func (param externref)))
 
-;; CHECK:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (type $externref_=>_none) (param externref)))
+;; CHECK:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (type $1) (param externref)))
 
 ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 
 ;; CHECK:      (export "__load_secondary_module" (func $__load_secondary_module))
 
-;; CHECK:      (func $__load_secondary_module (type $none_=>_none)
+;; CHECK:      (func $__load_secondary_module (type $0)
 ;; CHECK-NEXT:  (local $0 externref)
 ;; CHECK-NEXT:  (local.set $0
 ;; CHECK-NEXT:   (global.get $suspender)

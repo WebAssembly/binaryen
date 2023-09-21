@@ -4,6 +4,6 @@
 
 ;; CHECK: Fatal: Invalid type: Heap type has an invalid supertype at type $sub
 (module
-  (type $super (struct_subtype i32 data))
-  (type $sub (struct_subtype i64 $super))
+  (type $super (sub (struct i32)))
+  (type $sub (sub $super (struct i64)))
 )

@@ -5,9 +5,9 @@
 (module
   (memory $memory1 1)
   (memory $memory2 1 1)
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
   ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 
@@ -17,7 +17,7 @@
   (export "mem" (memory $memory1))
 )
 
-;; CHECK:      (func $memory1_size (type $none_=>_i32) (result i32)
+;; CHECK:      (func $memory1_size (type $0) (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.div_u
 ;; CHECK-NEXT:    (global.get $memory2_byte_offset)
@@ -26,7 +26,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $memory2_size (type $none_=>_i32) (result i32)
+;; CHECK:      (func $memory2_size (type $0) (result i32)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.sub
 ;; CHECK-NEXT:    (memory.size)
@@ -38,7 +38,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $memory1_grow (type $i32_=>_i32) (param $page_delta i32) (result i32)
+;; CHECK:      (func $memory1_grow (type $1) (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $return_size i32)
 ;; CHECK-NEXT:  (local $memory_size i32)
 ;; CHECK-NEXT:  (local.set $return_size
@@ -87,7 +87,7 @@
 ;; CHECK-NEXT:  (local.get $return_size)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $memory2_grow (type $i32_=>_i32) (param $page_delta i32) (result i32)
+;; CHECK:      (func $memory2_grow (type $1) (param $page_delta i32) (result i32)
 ;; CHECK-NEXT:  (local $return_size i32)
 ;; CHECK-NEXT:  (local.set $return_size
 ;; CHECK-NEXT:   (call $memory2_size)

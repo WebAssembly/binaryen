@@ -4,27 +4,27 @@
 (module
   ;; CHECK:      (type ${} (struct ))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $i32_i32_funcref_=>_anyref) (param i32 i32 funcref) (result anyref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $i32_i32_funcref_=>_ref|any|) (param i32 i32 funcref) (result (ref any))))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $3) (param i32 i32 funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
 
   (type ${} (struct))
 
-  ;; CHECK:      (func $drop-ref-as (type $anyref_=>_none) (param $x anyref)
+  ;; CHECK:      (func $drop-ref-as (type $4) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_i31
+  ;; CHECK-NEXT:   (ref.cast i31ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-ref-as (param $x anyref)
-    ;; Without -tnh, we must assume all ref_as* can have a trap effect, and so
+    ;; Without -tnh, we must assume all casts can have a trap effect, and so
     ;; we cannot remove anything here.
     (drop
       (ref.as_non_null
@@ -32,13 +32,13 @@
       )
     )
     (drop
-      (ref.as_i31
+      (ref.cast i31ref
         (local.get $x)
       )
     )
   )
 
-  ;; CHECK:      (func $vacuum-nonnull (type $none_=>_none)
+  ;; CHECK:      (func $vacuum-nonnull (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $vacuum-nonnull
@@ -59,7 +59,7 @@
     )
   )
 
-  ;; CHECK:      (func $drop-i31.get (type $i31ref_ref|i31|_=>_none) (param $ref i31ref) (param $ref-nn (ref i31))
+  ;; CHECK:      (func $drop-i31.get (type $5) (param $ref i31ref) (param $ref-nn (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i31.get_s
   ;; CHECK-NEXT:    (local.get $ref)
@@ -80,8 +80,8 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast.null.block (type $ref|${}|_=>_structref) (param $ref (ref ${})) (result structref)
-  ;; CHECK-NEXT:  (ref.cast ${}
+  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref ${})) (result structref)
+  ;; CHECK-NEXT:  (ref.cast (ref ${})
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -90,14 +90,14 @@
     ;; on a non-nullable input. That is, we are refining the input to the cast.
     ;; The cast must be updated properly following that, to be a non-nullable
     ;; cast.
-    (ref.cast null ${}
+    (ref.cast (ref null ${})
       (block (result (ref null ${}))
         (local.get $ref)
       )
     )
   )
 
-  ;; CHECK:      (func $dropped-calls (type $none_=>_none)
+  ;; CHECK:      (func $dropped-calls (type $0)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (call $helper-i32)
@@ -166,28 +166,28 @@
     )
   )
 
-  ;; CHECK:      (func $helper-i32 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $helper-i32 (type $7) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $helper-i32 (result i32)
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $helper-ref (type $none_=>_eqref) (result eqref)
+  ;; CHECK:      (func $helper-ref (type $8) (result eqref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-ref (result eqref)
     (unreachable)
   )
 
-  ;; CHECK:      (func $helper-two-refs (type $i32_i32_=>_anyref) (param $0 i32) (param $1 i32) (result anyref)
+  ;; CHECK:      (func $helper-two-refs (type $9) (param $0 i32) (param $1 i32) (result anyref)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-two-refs (param i32) (param i32) (result (ref null any))
     (unreachable)
   )
 
-  ;; CHECK:      (func $helper-two-refs-non-null (type $i32_i32_=>_ref|any|) (param $0 i32) (param $1 i32) (result (ref any))
+  ;; CHECK:      (func $helper-two-refs-non-null (type $10) (param $0 i32) (param $1 i32) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-two-refs-non-null (param i32) (param i32) (result (ref any))

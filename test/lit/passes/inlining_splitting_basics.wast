@@ -10,27 +10,27 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 --partial-inlining-ifs=1 --all-features -S -o - | filecheck %s --check-prefix PARTIAL
 
 (module
-  ;; NORMAL_:      (type $none_=>_none (func))
+  ;; NORMAL_:      (type $0 (func))
 
-  ;; NORMAL_:      (type $i32_=>_none (func (param i32)))
+  ;; NORMAL_:      (type $1 (func (param i32)))
 
-  ;; NORMAL_:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; NORMAL_:      (type $2 (func (param i32) (result i32)))
 
-  ;; NORMAL_:      (import "a" "b" (func $import (type $none_=>_none)))
-  ;; PARTIAL:      (type $none_=>_none (func))
+  ;; NORMAL_:      (import "a" "b" (func $import (type $0)))
+  ;; PARTIAL:      (type $0 (func))
 
-  ;; PARTIAL:      (type $i32_=>_none (func (param i32)))
+  ;; PARTIAL:      (type $1 (func (param i32)))
 
-  ;; PARTIAL:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; PARTIAL:      (type $2 (func (param i32) (result i32)))
 
-  ;; PARTIAL:      (import "a" "b" (func $import (type $none_=>_none)))
+  ;; PARTIAL:      (import "a" "b" (func $import (type $0)))
   (import "a" "b" (func $import))
 
   ;; Pattern A: functions beginning with
   ;;
   ;;   if (simple) return;
 
-  ;; NORMAL_:      (func $pattern-A (type $i32_=>_none) (param $x i32)
+  ;; NORMAL_:      (func $pattern-A (type $1) (param $x i32)
   ;; NORMAL_-NEXT:  (if
   ;; NORMAL_-NEXT:   (local.get $x)
   ;; NORMAL_-NEXT:   (return)
@@ -51,7 +51,7 @@
     )
   )
 
-  ;; NORMAL_:      (func $call-pattern-A (type $none_=>_none)
+  ;; NORMAL_:      (func $call-pattern-A (type $0)
   ;; NORMAL_-NEXT:  (call $pattern-A
   ;; NORMAL_-NEXT:   (i32.const 1)
   ;; NORMAL_-NEXT:  )
@@ -59,7 +59,7 @@
   ;; NORMAL_-NEXT:   (i32.const 2)
   ;; NORMAL_-NEXT:  )
   ;; NORMAL_-NEXT: )
-  ;; PARTIAL:      (func $call-pattern-A (type $none_=>_none)
+  ;; PARTIAL:      (func $call-pattern-A (type $0)
   ;; PARTIAL-NEXT:  (local $0 i32)
   ;; PARTIAL-NEXT:  (local $1 i32)
   ;; PARTIAL-NEXT:  (block
@@ -104,7 +104,7 @@
   ;;   if (simple..) heavy-work-that-is-unreachable;
   ;;   simplek
 
-  ;; NORMAL_:      (func $pattern-B (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; NORMAL_:      (func $pattern-B (type $2) (param $x i32) (result i32)
   ;; NORMAL_-NEXT:  (if
   ;; NORMAL_-NEXT:   (i32.eqz
   ;; NORMAL_-NEXT:    (local.get $x)
@@ -129,7 +129,7 @@
     (local.get $x)
   )
 
-  ;; NORMAL_:      (func $call-pattern-B (type $none_=>_none)
+  ;; NORMAL_:      (func $call-pattern-B (type $0)
   ;; NORMAL_-NEXT:  (drop
   ;; NORMAL_-NEXT:   (call $pattern-B
   ;; NORMAL_-NEXT:    (i32.const 1)
@@ -141,7 +141,7 @@
   ;; NORMAL_-NEXT:   )
   ;; NORMAL_-NEXT:  )
   ;; NORMAL_-NEXT: )
-  ;; PARTIAL:      (func $call-pattern-B (type $none_=>_none)
+  ;; PARTIAL:      (func $call-pattern-B (type $0)
   ;; PARTIAL-NEXT:  (local $0 i32)
   ;; PARTIAL-NEXT:  (local $1 i32)
   ;; PARTIAL-NEXT:  (drop
@@ -194,14 +194,14 @@
     (drop (call $pattern-B (i32.const 2)))
   )
 )
-;; PARTIAL:      (func $byn-split-outlined-A$pattern-A (type $i32_=>_none) (param $x i32)
+;; PARTIAL:      (func $byn-split-outlined-A$pattern-A (type $1) (param $x i32)
 ;; PARTIAL-NEXT:  (loop $l
 ;; PARTIAL-NEXT:   (call $import)
 ;; PARTIAL-NEXT:   (br $l)
 ;; PARTIAL-NEXT:  )
 ;; PARTIAL-NEXT: )
 
-;; PARTIAL:      (func $byn-split-outlined-B$pattern-B (type $i32_=>_i32) (param $x i32) (result i32)
+;; PARTIAL:      (func $byn-split-outlined-B$pattern-B (type $2) (param $x i32) (result i32)
 ;; PARTIAL-NEXT:  (call $import)
 ;; PARTIAL-NEXT:  (unreachable)
 ;; PARTIAL-NEXT: )

@@ -2,10 +2,10 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $i32_funcref_=>_i32) (param i32 funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 funcref) (result i32)))
 
-  ;; CHECK:      (func $if-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -25,7 +25,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-nop-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-nop-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -46,7 +46,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -71,7 +71,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-use-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -97,7 +97,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-else-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-else-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -124,7 +124,7 @@
     )
   )
 
-  ;; CHECK:      (func $unpushed-interference (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $unpushed-interference (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -154,7 +154,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-use-use (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-use (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -180,7 +180,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-use-after (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -206,7 +206,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-nop (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-nop (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -233,7 +233,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-else-use-after (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-else-use-after (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -260,7 +260,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-unreachable (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-unreachable (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -291,7 +291,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $if-use-after-unreachable-else (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-use-after-unreachable-else (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -321,7 +321,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $optimize-many (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $optimize-many (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $z i32)
@@ -372,7 +372,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-other (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-other (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (nop)
@@ -403,7 +403,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-other-no (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-other-no (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -433,7 +433,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-condition-no (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-condition-no (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -459,7 +459,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-condition-no-2 (type $none_=>_none)
+  ;; CHECK:      (func $past-condition-no-2 (type $3)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -483,7 +483,7 @@
     )
   )
 
-  ;; CHECK:      (func $past-condition-no-3 (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $past-condition-no-3 (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -509,7 +509,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-condition-return (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-condition-return (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -541,7 +541,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-condition-break-used (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $if-condition-break-used (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -580,7 +580,7 @@
     (drop (local.get $x))
   )
 
-  ;; CHECK:      (func $one-push-prevents-another (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $one-push-prevents-another (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -616,7 +616,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-push-prevents-another-flipped (type $i32_=>_none) (param $p i32)
+  ;; CHECK:      (func $one-push-prevents-another-flipped (type $0) (param $p i32)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $x
@@ -652,7 +652,7 @@
     )
   )
 
-  ;; CHECK:      (func $sink-call (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-call (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -691,7 +691,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -728,7 +728,7 @@
     (local.get $temp) ;; this line changed.
   )
 
-  ;; CHECK:      (func $no-sink-call-2 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-2 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -766,7 +766,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $no-sink-call-3 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -812,7 +812,7 @@
     (i32.const 0) ;; this line was added.
   )
 
-  ;; CHECK:      (func $sink-call-3 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $sink-call-3 (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
@@ -862,7 +862,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $no-sink-call-sub (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; CHECK:      (func $no-sink-call-sub (type $1) (param $p i32) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $other i32)
   ;; CHECK-NEXT:  (local.set $temp
@@ -904,7 +904,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $ref-into-if (type $ref|any|_=>_none) (param $0 (ref any))
+  ;; CHECK:      (func $ref-into-if (type $4) (param $0 (ref any))
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if

@@ -37,7 +37,7 @@
 namespace wasm {
 
 template<typename SubType, typename VisitorType, typename Contents>
-struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
+struct CFGWalker : public PostWalker<SubType, VisitorType> {
 
   // public interface
 
@@ -87,7 +87,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // analysis on the CFG once it is constructed).
   BasicBlock* currBasicBlock;
   // a block or loop => its branches
-  std::map<Expression*, std::vector<BasicBlock*>> branches;
+  std::map<Name, std::vector<BasicBlock*>> branches;
   // stack of the last blocks of if conditions + the last blocks of if true
   // bodies
   std::vector<BasicBlock*> ifStack;
@@ -142,7 +142,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     if (!curr->name.is()) {
       return;
     }
-    auto iter = self->branches.find(curr);
+    auto iter = self->branches.find(curr->name);
     if (iter == self->branches.end()) {
       return;
     }
@@ -158,7 +158,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     for (auto* origin : origins) {
       self->link(origin, self->currBasicBlock);
     }
-    self->branches.erase(curr);
+    self->branches.erase(curr->name);
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
@@ -206,11 +206,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // branches to the top of the loop
     if (curr->name.is()) {
       auto* loopStart = self->loopStack.back();
-      auto& origins = self->branches[curr];
+      auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
-      self->branches.erase(curr);
+      self->branches.erase(curr->name);
     }
     self->loopStack.pop_back();
   }
@@ -220,8 +220,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     auto branchTargets = BranchUtils::getUniqueTargets(curr);
     // Add branches to the targets.
     for (auto target : branchTargets) {
-      self->branches[self->findBreakTarget(target)].push_back(
-        self->currBasicBlock);
+      self->branches[target].push_back(self->currBasicBlock);
     }
     if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
@@ -294,10 +293,31 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     }
   }
 
+  // We can optionally ignore branches to outside of the function. Such a branch
+  // does not link two basic blocks (since the target is outside of the
+  // function), but it can cause us to end the current basic block and link to a
+  // new one, just in order to preserve the property that blocks do not have
+  // instructions in the middle that can transfer control flow somewhere. That
+  // property is useful to have in general, but if a user of this code just does
+  // not care about what happens when we leave the current function (say, if it
+  // only reads locals, which are gone anyhow if we leave) then it can flip this
+  // option to avoid creating new blocks just for such branches.
+  //
+  // The main situation where this matters is calls, which can throw if EH is
+  // enabled. With this set to ignore, we don't create new basic blocks just
+  // because of that, which can save a significant amount of overhead (~10%).
+  bool ignoreBranchesOutsideOfFunc = false;
+
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->throwingInstsStack.empty()) {
-      // exception not thrown. link to the continuation BB
+    if (!self->throwingInstsStack.empty() ||
+        !self->ignoreBranchesOutsideOfFunc) {
+      // |doEndThrowingInst| added a link from the current block to a catch, so
+      // we must end the current block and start another. Or, we are not
+      // ignoring branches to outside of the function, so even without a branch
+      // to a catch we want to start a new basic block here, to preserve the
+      // property that control flow transfers (both within the function or to
+      // the outside) can only happen at the end of basic blocks.
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
     }
@@ -394,7 +414,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        self->pushTask(SubType::doEndCall, currp);
+        auto* module = self->getModule();
+        if (!module || module->features.hasExceptionHandling()) {
+          // This call might throw, so run the code to handle that.
+          self->pushTask(SubType::doEndCall, currp);
+        }
         break;
       }
       case Expression::Id::TryId: {
@@ -424,7 +448,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       }
     }
 
-    ControlFlowWalker<SubType, VisitorType>::scan(self, currp);
+    PostWalker<SubType, VisitorType>::scan(self, currp);
 
     switch (curr->_id) {
       case Expression::Id::LoopId: {
@@ -441,7 +465,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
     startBasicBlock();
     entry = currBasicBlock;
-    ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
+    PostWalker<SubType, VisitorType>::doWalkFunction(func);
     exit = currBasicBlock;
 
     assert(branches.size() == 0);

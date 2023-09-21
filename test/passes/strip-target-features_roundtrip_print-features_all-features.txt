@@ -13,16 +13,16 @@
 --enable-relaxed-simd
 --enable-extended-const
 --enable-strings
---enable-multi-memories
+--enable-multimemory
 (module
- (type $none_=>_v128_externref (func (result v128 externref)))
- (func $foo (type $none_=>_v128_externref) (result v128 externref)
+ (type $0 (func (result v128 externref)))
+ (func $foo (type $0) (result v128 externref)
   (tuple.make
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
    (ref.null noextern)
   )
  )
- (func $bar (type $none_=>_v128_externref) (result v128 externref)
+ (func $bar (type $0) (result v128 externref)
   (return_call $foo)
  )
 )

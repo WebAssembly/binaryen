@@ -274,7 +274,7 @@
     (drop
       (if (result anyref)
         (i32.const 1)
-        (i31.new
+        (ref.i31
           (i32.const 0)
         )
         (ref.null eq)
@@ -356,7 +356,7 @@
     (drop
       (select (result anyref)
         (local.get $local_eqref)
-        (i31.new
+        (ref.i31
           (i32.const 0)
         )
         (i32.const 1)

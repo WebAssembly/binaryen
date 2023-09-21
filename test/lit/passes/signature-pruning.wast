@@ -3,10 +3,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 f64)))
-  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+  ;; CHECK:       (type $sig (sub (func (param i32 f64))))
+  (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
 
@@ -39,7 +39,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (f64.const 3)
@@ -69,10 +69,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i64 f32)))
-  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
+  (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
 
@@ -104,7 +104,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
@@ -134,10 +134,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 i64 f32)))
-  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
+  (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
 
@@ -168,7 +168,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (call $caller)
@@ -211,10 +211,10 @@
 ;; away the very last param.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func (param i32 i64 f32)))
-  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
+  (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
 
@@ -244,7 +244,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
@@ -282,10 +282,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
-  (type $sig (func_subtype (param i32) (param i64) (param f32) (param f64) func))
+  ;; CHECK:       (type $sig (sub (func)))
+  (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
 
@@ -304,7 +304,7 @@
     ;; Use nothing at all: all params can be removed.
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -329,10 +329,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:       (type $sig (sub (func)))
+  (type $sig (sub (func (param i32))))
 
   (memory 1 1)
 
@@ -361,7 +361,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT: )
@@ -375,8 +375,8 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (sub (func)))
+  (type $sig (sub (func (param i32))))
 
   (memory 1 1)
 
@@ -393,8 +393,8 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
+  (type $sig (sub (func (param i32))))
 
   ;; As above, but now an import also uses this signature, which prevents us
   ;; from changing anything.
@@ -413,8 +413,8 @@
 )
 
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
+  (type $sig (sub (func (param i32))))
 
   (memory 1 1)
 
@@ -445,12 +445,12 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig2 (func (param i32)))
+    ;; CHECK-NEXT:  (type $sig2 (sub (func (param i32))))
 
-    ;; CHECK:       (type $sig (func))
-    (type $sig (func_subtype (param i32) func))
+    ;; CHECK:       (type $sig (sub (func)))
+    (type $sig (sub (func (param i32))))
 
-    (type $sig2 (func_subtype (param i32) func))
+    (type $sig2 (sub (func (param i32))))
   )
 
   (memory 1 1)
@@ -482,10 +482,10 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $none_=>_none (func))
+  ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (func))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:       (type $sig (sub (func)))
+  (type $sig (sub (func (param i32))))
 
   (memory 1 1)
 
@@ -509,7 +509,7 @@
     ;; has the same type. We can optimize both at once.
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $foo)
   ;; CHECK-NEXT:  (call $bar)
   ;; CHECK-NEXT:  (call_ref $sig
@@ -536,7 +536,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller-2 (type $none_=>_none)
+  ;; CHECK:      (func $caller-2 (type $0)
   ;; CHECK-NEXT:  (call $bar)
   ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (ref.func $foo)
@@ -558,8 +558,8 @@
   ;; The presence of a table prevents us from doing any optimizations.
   (table 1 1 anyref)
 
-  ;; CHECK:      (type $sig (func (param i32)))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
+  (type $sig (sub (func (param i32))))
 
   ;; CHECK:      (table $0 1 1 anyref)
 
@@ -573,10 +573,10 @@
 ;; Exports cannot be optimized in any way: we cannot remove parameters from
 ;; them, and also we cannot apply constant parameter values either.
 (module
-  ;; CHECK:      (type $sig (func (param i32)))
-  (type $sig (func_subtype (param i32) func))
+  ;; CHECK:      (type $sig (sub (func (param i32))))
+  (type $sig (sub (func (param i32))))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -594,7 +594,7 @@
   (func $bar (export "bar") (type $sig) (param $i32 i32)
   )
 
-  ;; CHECK:      (func $call-bar (type $none_=>_none)
+  ;; CHECK:      (func $call-bar (type $1)
   ;; CHECK-NEXT:  (call $bar
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
@@ -613,11 +613,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig2 (func))
+    ;; CHECK-NEXT:  (type $sig2 (sub (func)))
 
-    ;; CHECK:       (type $sig1 (func))
-    (type $sig1 (func_subtype (param i32) func))
-    (type $sig2 (func_subtype (param f64) func))
+    ;; CHECK:       (type $sig1 (sub (func)))
+    (type $sig1 (sub (func (param i32))))
+    (type $sig2 (sub (func (param f64))))
   )
 
   ;; CHECK:      (func $foo1 (type $sig1)
@@ -638,11 +638,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param i32)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param i32))))
 
-    ;; CHECK:       (type $sig-foo (func))
-    (type $sig-foo (func_subtype (param i32) func))
-    (type $sig-bar (func_subtype (param i32) func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
+    (type $sig-foo (sub (func (param i32))))
+    (type $sig-bar (sub (func (param i32))))
   )
 
   (memory 1 1)
@@ -706,11 +706,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param funcref)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param funcref))))
 
-    ;; CHECK:       (type $sig-foo (func))
-    (type $sig-foo (func_subtype (param funcref) func))
-    (type $sig-bar (func_subtype (param funcref) func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
+    (type $sig-foo (sub (func (param funcref))))
+    (type $sig-bar (sub (func (param funcref))))
   )
 
   (memory 1 1)
@@ -762,11 +762,11 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $sig-bar (func (param anyref)))
+    ;; CHECK-NEXT:  (type $sig-bar (sub (func (param anyref))))
 
-    ;; CHECK:       (type $sig-foo (func))
-    (type $sig-foo (func_subtype (param anyref) func))
-    (type $sig-bar (func_subtype (param anyref) func))
+    ;; CHECK:       (type $sig-foo (sub (func)))
+    (type $sig-foo (sub (func (param anyref))))
+    (type $sig-bar (sub (func (param anyref))))
   )
 
   (memory 1 1)
@@ -797,7 +797,7 @@
   ;; CHECK-NEXT:   (local.get $anyref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $bar
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -808,16 +808,16 @@
   (func $bar (type $sig-bar) (param $anyref anyref)
     (drop (local.get $anyref))
     ;; Mixing a null with something else prevents optimization, of course.
-    (call $bar (i31.new (i32.const 0)))
+    (call $bar (ref.i31 (i32.const 0)))
     (call $bar (ref.null none))
   )
 )
 
 (module
   (type $A (struct))
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $0 (type $none_=>_none)
+  ;; CHECK:      (func $0 (type $0)
   ;; CHECK-NEXT:  (local $0 f32)
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
@@ -833,7 +833,7 @@
     ;; we do need to handle it in the optimization as well as print it (note how
     ;; type $A is declared in the output here - it would be a bug if it were
     ;; not, which this is a regression test for).
-    (ref.cast null $A
+    (ref.cast (ref null $A)
       (unreachable)
     )
   )
@@ -841,18 +841,18 @@
 
 ;; Do not prune signatures used in the call.without.effects intrinsic.
 (module
-  ;; CHECK:      (type $i32_funcref_=>_i32 (func (param i32 funcref) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32 funcref) (result i32)))
 
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $i32_funcref_=>_i32) (param i32 funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $0) (param i32 funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param i32 funcref) (result i32)))
 
   ;; CHECK:      (elem declare func $func)
 
-  ;; CHECK:      (func $func (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $func (type $1) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $func (param i32) (result i32)
@@ -861,7 +861,7 @@
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $caller (type $2) (result i32)
   ;; CHECK-NEXT:  (call $cwe
   ;; CHECK-NEXT:   (i32.const 41)
   ;; CHECK-NEXT:   (ref.func $func)
@@ -882,21 +882,21 @@
 ;; relationship. Atm we do not prune such "cycles" so we do not optimize here.
 ;; TODO
 (module
-  ;; CHECK:      (type $struct.A (struct (field i32)))
-  (type $struct.A (struct (field i32)))
-  ;; CHECK:      (type $array.A (array (ref $struct.A)))
+  ;; CHECK:      (type $struct.A (sub (struct (field i32))))
+  (type $struct.A (sub (struct (field i32))))
+  ;; CHECK:      (type $array.A (sub (array (ref $struct.A))))
 
   ;; CHECK:      (type $struct.B (sub $struct.A (struct (field i32) (field i64))))
-  (type $struct.B (struct_subtype (field i32) (field i64) $struct.A))
+  (type $struct.B (sub $struct.A (struct (field i32) (field i64))))
 
-  (type $array.A (array (ref $struct.A)))
+  (type $array.A (sub (array (ref $struct.A))))
   ;; CHECK:      (type $array.B (sub $array.A (array (ref $struct.B))))
-  (type $array.B (array_subtype (ref $struct.B) $array.A))
+  (type $array.B (sub $array.A (array (ref $struct.B))))
 
-  ;; CHECK:      (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
-  (type $func.A (func (param (ref $array.B)) (result (ref $array.A))))
+  ;; CHECK:      (type $func.A (sub (func (param (ref $array.B)) (result (ref $array.A)))))
+  (type $func.A (sub (func (param (ref $array.B)) (result (ref $array.A)))))
   ;; CHECK:      (type $func.B (sub $func.A (func (param (ref $array.A)) (result (ref $array.B)))))
-  (type $func.B (func_subtype (param (ref $array.A)) (result (ref $array.B)) $func.A))
+  (type $func.B (sub $func.A (func (param (ref $array.A)) (result (ref $array.B)))))
 
   ;; CHECK:      (func $func.A (type $func.A) (param $0 (ref $array.B)) (result (ref $array.A))
   ;; CHECK-NEXT:  (unreachable)

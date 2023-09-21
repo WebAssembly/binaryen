@@ -87,6 +87,13 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
+  if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
+    // We have a tuple of locals to get, but we will only end up using one of
+    // them, so we can just emit that one.
+    o << int8_t(BinaryConsts::LocalGet)
+      << U32LEB(mappedLocals[std::make_pair(curr->index, it->second)]);
+    return;
+  }
   size_t numValues = func->getLocalType(curr->index).size();
   for (Index i = 0; i < numValues; ++i) {
     o << int8_t(BinaryConsts::LocalGet)
@@ -96,14 +103,28 @@ void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
 
 void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
   size_t numValues = func->getLocalType(curr->index).size();
+  // If this is a tuple, set all the elements with nonzero index.
   for (Index i = numValues - 1; i >= 1; --i) {
     o << int8_t(BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, i)]);
   }
   if (!curr->isTee()) {
+    // This is not a tee, so just finish setting the values.
     o << int8_t(BinaryConsts::LocalSet)
       << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+  } else if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
+    // We only need to get the single extracted value.
+    if (it->second == 0) {
+      o << int8_t(BinaryConsts::LocalTee)
+        << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+    } else {
+      o << int8_t(BinaryConsts::LocalSet)
+        << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
+      o << int8_t(BinaryConsts::LocalGet)
+        << U32LEB(mappedLocals[std::make_pair(curr->index, it->second)]);
+    }
   } else {
+    // We need to get all the values.
     o << int8_t(BinaryConsts::LocalTee)
       << U32LEB(mappedLocals[std::make_pair(curr->index, 0)]);
     for (Index i = 1; i < numValues; ++i) {
@@ -114,8 +135,14 @@ void BinaryInstWriter::visitLocalSet(LocalSet* curr) {
 }
 
 void BinaryInstWriter::visitGlobalGet(GlobalGet* curr) {
-  // Emit a global.get for each element if this is a tuple global
   Index index = parent.getGlobalIndex(curr->name);
+  if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
+    // We have a tuple of globals to get, but we will only end up using one of
+    // them, so we can just emit that one.
+    o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + it->second);
+    return;
+  }
+  // Emit a global.get for each element if this is a tuple global
   size_t numValues = curr->type.size();
   for (Index i = 0; i < numValues; ++i) {
     o << int8_t(BinaryConsts::GlobalGet) << U32LEB(index + i);
@@ -1909,6 +1936,11 @@ void BinaryInstWriter::visitTableGrow(TableGrow* curr) {
   o << U32LEB(parent.getTableIndex(curr->table));
 }
 
+void BinaryInstWriter::visitTableFill(TableFill* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableFill);
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
@@ -1970,6 +2002,10 @@ void BinaryInstWriter::visitTupleMake(TupleMake* curr) {
 }
 
 void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
+  if (extractedGets.count(curr->tuple)) {
+    // We already have just the extracted value on the stack.
+    return;
+  }
   size_t numVals = curr->tuple->type.size();
   // Drop all values after the one we want
   for (size_t i = curr->index + 1; i < numVals; ++i) {
@@ -1989,8 +2025,8 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
   o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratch);
 }
 
-void BinaryInstWriter::visitI31New(I31New* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::I31New);
+void BinaryInstWriter::visitRefI31(RefI31* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefI31);
 }
 
 void BinaryInstWriter::visitI31Get(I31Get* curr) {
@@ -2021,17 +2057,12 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix);
-  if (curr->safety == RefCast::Unsafe) {
-    o << U32LEB(BinaryConsts::RefCastNop);
-    parent.writeHeapType(curr->type.getHeapType());
+  if (curr->type.isNullable()) {
+    o << U32LEB(BinaryConsts::RefCastNull);
   } else {
-    if (curr->type.isNullable()) {
-      o << U32LEB(BinaryConsts::RefCastNull);
-    } else {
-      o << U32LEB(BinaryConsts::RefCast);
-    }
-    parent.writeHeapType(curr->type.getHeapType());
+    o << U32LEB(BinaryConsts::RefCast);
   }
+  parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOn(BrOn* curr) {
@@ -2053,6 +2084,7 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
         o << U32LEB(BinaryConsts::BrOnCastFail);
       }
       assert(curr->ref->type.isRef());
+      assert(Type::isSubType(curr->castType, curr->ref->type));
       uint8_t flags = (curr->ref->type.isNullable() ? 1 : 0) |
                       (curr->castType.isNullable() ? 2 : 0);
       o << flags;
@@ -2510,6 +2542,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
   }
   setScratchLocals();
+
   o << U32LEB(numLocalsByType.size());
   for (auto& localType : localTypes) {
     o << U32LEB(numLocalsByType.at(localType));
@@ -2535,6 +2568,15 @@ void BinaryInstWriter::countScratchLocals() {
   }
   for (auto& [type, _] : scratchLocals) {
     noteLocalType(type);
+  }
+  // While we have all the tuple.extracts, also find extracts of local.gets,
+  // local.tees, and global.gets that we can optimize.
+  for (auto* extract : extracts.list) {
+    auto* tuple = extract->tuple;
+    if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
+        tuple->is<GlobalGet>()) {
+      extractedGets.insert({tuple, extract->index});
+    }
   }
 }
 

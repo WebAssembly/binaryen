@@ -13,7 +13,7 @@
   ;; CHECK:      (tag $tagA (param (ref $A)))
   (tag $tagA (param (ref $A)))
 
-  ;; CHECK:      (func $foo (type $none_=>_ref?|$A|) (result (ref null $A))
+  ;; CHECK:      (func $foo (type $2) (result (ref null $A))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)

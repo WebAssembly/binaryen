@@ -1,21 +1,21 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i64_=>_none (func (param i64)))
- (type $i32_i64_=>_none (func (param i32 i64)))
- (type $eqref_=>_none (func (param eqref)))
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i64)))
+ (type $3 (func (param i32 i64)))
+ (type $4 (func (param eqref)))
  (tag $e-i32 (param i32))
  (tag $e-i64 (param i64))
  (tag $e-i32-i64 (param i32 i64))
  (tag $e-eqref (param eqref))
  (tag $e-empty (param))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (nop)
  )
- (func $bar (type $none_=>_none)
+ (func $bar (type $0)
   (nop)
  )
- (func $eh-test (type $none_=>_none)
+ (func $eh-test (type $0)
   (local $x (i32 i64))
   (try $try
    (do
@@ -180,7 +180,7 @@
    )
   )
  )
- (func $delegate-test (type $none_=>_none)
+ (func $delegate-test (type $0)
   (try $l0
    (do
     (try $try
@@ -245,7 +245,7 @@
    )
   )
  )
- (func $rethrow-test (type $none_=>_none)
+ (func $rethrow-test (type $0)
   (try $l0
    (do
     (call $foo)
@@ -353,7 +353,7 @@
    )
   )
  )
- (func $pop-test (type $none_=>_none)
+ (func $pop-test (type $0)
   (try $try
    (do
     (nop)
@@ -379,7 +379,7 @@
    )
   )
  )
- (func $catchless-try-with-inner-delegate (type $none_=>_none)
+ (func $catchless-try-with-inner-delegate (type $0)
   (try $label$0
    (do
     (try $try
@@ -393,7 +393,7 @@
    )
   )
  )
- (func $nested-block-and-try (type $none_=>_none)
+ (func $nested-block-and-try (type $0)
   (block $l0
    (block $l1
    )

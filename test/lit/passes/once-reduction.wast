@@ -2,12 +2,12 @@
 ;; RUN: foreach %s %t wasm-opt --once-reduction -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -25,7 +25,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -38,12 +38,12 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -65,7 +65,7 @@
     (drop (i32.const 100))
   )
 
-  ;; CHECK:      (func $caller-if-1 (type $none_=>_none)
+  ;; CHECK:      (func $caller-if-1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (block
@@ -93,7 +93,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $caller-if-2 (type $none_=>_none)
+  ;; CHECK:      (func $caller-if-2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (call $once)
@@ -120,7 +120,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $caller-loop-1 (type $none_=>_none)
+  ;; CHECK:      (func $caller-loop-1 (type $0)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
@@ -150,7 +150,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $caller-loop-2 (type $none_=>_none)
+  ;; CHECK:      (func $caller-loop-2 (type $0)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
@@ -176,7 +176,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $caller-single (type $none_=>_none)
+  ;; CHECK:      (func $caller-single (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller-single
@@ -184,7 +184,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $caller-empty (type $none_=>_none)
+  ;; CHECK:      (func $caller-empty (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $caller-empty
@@ -197,15 +197,15 @@
 ;; though in fact the function will never execute the payload call of foo(),
 ;; which in theory we could further optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $0)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
   (global $once (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -224,7 +224,7 @@
     (call $foo)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -237,15 +237,15 @@
 ;; Corner case: function is not quite once, there is code before the if, so no
 ;; optimization will happen.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $0)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
   (global $once (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
@@ -266,7 +266,7 @@
     (call $foo)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -278,15 +278,15 @@
 
 ;; Corner case: a nop after the if.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $0)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
   (global $once (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -307,7 +307,7 @@
     (call $foo)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -319,15 +319,15 @@
 
 ;; Corner case: The if has an else.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (import "env" "foo" (func $foo (type $none_=>_none)))
+  ;; CHECK:      (import "env" "foo" (func $foo (type $0)))
   (import "env" "foo" (func $foo))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 42))
   (global $once (mut i32) (i32.const 42))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -348,7 +348,7 @@
     (call $foo)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -360,14 +360,14 @@
 
 ;; Corner case: different global names in the get and set
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
   (global $once1 (mut i32) (i32.const 0))
   ;; CHECK:      (global $once2 (mut i32) (i32.const 0))
   (global $once2 (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once1)
   ;; CHECK-NEXT:   (return)
@@ -384,7 +384,7 @@
     (global.set $once2 (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -396,12 +396,12 @@
 
 ;; Corner case: The global is written a zero.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -418,7 +418,7 @@
     (global.set $once (i32.const 0))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -430,12 +430,12 @@
 
 ;; Corner case: The global is written a zero elsewhere.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -452,7 +452,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (global.set $once
@@ -470,12 +470,12 @@
 ;; optimize, and in fact we can write a value different than 1 both there and
 ;; in the "once" function, and we can still optimize.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -492,7 +492,7 @@
     (global.set $once (i32.const 42))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
@@ -503,7 +503,7 @@
     (global.set $once (i32.const 1337))
   )
 
-  ;; CHECK:      (func $caller-2 (type $none_=>_none)
+  ;; CHECK:      (func $caller-2 (type $0)
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1337)
   ;; CHECK-NEXT:  )
@@ -521,12 +521,12 @@
 ;; It is ok to call the "once" function inside itself - as that call appears
 ;; behind a set of the global, the call is redundant and we optimize it away.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -548,12 +548,12 @@
 
 ;; Corner case: Non-integer global, which we ignore.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut f64) (f64.const 0))
   (global $once (mut f64) (f64.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.trunc_f64_s
   ;; CHECK-NEXT:    (global.get $once)
@@ -575,7 +575,7 @@
     (global.set $once (f64.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -590,7 +590,7 @@
 ;; not then it will never be written to, and the "once" function will never run
 ;; at all, which is fine too)
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "env" "glob" (global $import i32))
   (import "env" "glob" (global $import i32))
@@ -598,7 +598,7 @@
   ;; CHECK:      (global $once (mut i32) (global.get $import))
   (global $once (mut i32) (global.get $import))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -615,7 +615,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -627,12 +627,12 @@
 
 ;; Corner case: Non-constant later value.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -653,7 +653,7 @@
     (global.set $once (i32.eqz (i32.eqz (i32.const 1))))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -665,14 +665,14 @@
 
 ;; Corner case: "Once" function has a param.
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $once (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -689,7 +689,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (call $once
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -705,14 +705,14 @@
 
 ;; Corner case: "Once" function has a result.
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $once (type $0) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return
@@ -733,7 +733,7 @@
     (i32.const 3)
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $once)
   ;; CHECK-NEXT:  )
@@ -749,12 +749,12 @@
 
 ;; Corner case: "Once" function body is not a block.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $once)
@@ -775,7 +775,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -787,12 +787,12 @@
 
 ;; Corner case: Once body is too short.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -805,7 +805,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -817,12 +817,12 @@
 
 ;; Corner case: Additional reads of the global.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -839,7 +839,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (drop
@@ -855,12 +855,12 @@
 
 ;; Corner case: Additional reads of the global in the "once" func.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -881,7 +881,7 @@
     (drop (global.get $once))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -894,12 +894,12 @@
 ;; Corner case: Optimization opportunties in unreachable code (which we can
 ;; ignore, but should not error on).
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -916,7 +916,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (unreachable)
@@ -934,12 +934,12 @@
 
 ;; Add a very long chain of control flow.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -956,7 +956,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (call $once)
@@ -1069,9 +1069,9 @@
 ;; A test with a try-catch. This verifies that we emit their contents properly
 ;; in reverse postorder and do not hit any assertions.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
 
@@ -1080,7 +1080,7 @@
 
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -1097,7 +1097,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $try-catch (type $none_=>_none)
+  ;; CHECK:      (func $try-catch (type $0)
   ;; CHECK-NEXT:  (try $label$5
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (if
@@ -1133,7 +1133,7 @@
   ;; Test a module with more than one global that we can optimize, and more than
   ;; one that we cannot.
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
   (global $once1 (mut i32) (i32.const 0))
@@ -1144,7 +1144,7 @@
   ;; CHECK:      (global $many2 (mut i32) (i32.const 0))
   (global $many2 (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once1 (type $none_=>_none)
+  ;; CHECK:      (func $once1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once1)
   ;; CHECK-NEXT:   (return)
@@ -1177,7 +1177,7 @@
     (call $many2)
   )
 
-  ;; CHECK:      (func $many1 (type $none_=>_none)
+  ;; CHECK:      (func $many1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $many1)
   ;; CHECK-NEXT:   (return)
@@ -1210,7 +1210,7 @@
     (call $once2)
   )
 
-  ;; CHECK:      (func $once2 (type $none_=>_none)
+  ;; CHECK:      (func $once2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once2)
   ;; CHECK-NEXT:   (return)
@@ -1243,7 +1243,7 @@
     (call $many1)
   )
 
-  ;; CHECK:      (func $many2 (type $none_=>_none)
+  ;; CHECK:      (func $many2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $many2)
   ;; CHECK-NEXT:   (return)
@@ -1281,12 +1281,12 @@
 ;; and D calls some "once" functions, then A can infer that it's call to B does
 ;; so.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -1303,7 +1303,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $A (type $none_=>_none)
+  ;; CHECK:      (func $A (type $0)
   ;; CHECK-NEXT:  (call $B)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -1314,21 +1314,21 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $B (type $none_=>_none)
+  ;; CHECK:      (func $B (type $0)
   ;; CHECK-NEXT:  (call $C)
   ;; CHECK-NEXT: )
   (func $B
     (call $C)
   )
 
-  ;; CHECK:      (func $C (type $none_=>_none)
+  ;; CHECK:      (func $C (type $0)
   ;; CHECK-NEXT:  (call $D)
   ;; CHECK-NEXT: )
   (func $C
     (call $D)
   )
 
-  ;; CHECK:      (func $D (type $none_=>_none)
+  ;; CHECK:      (func $D (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -1337,7 +1337,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $bad-A (type $none_=>_none)
+  ;; CHECK:      (func $bad-A (type $0)
   ;; CHECK-NEXT:  (call $bad-B)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -1348,7 +1348,7 @@
     (call $once)
   )
 
-  ;; CHECK:      (func $bad-B (type $none_=>_none)
+  ;; CHECK:      (func $bad-B (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $bad-B
@@ -1358,12 +1358,12 @@
 ;; Corner case: Imported mutable global. We cannot optimize it, since the
 ;; outside may read and write it.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "env" "glob" (global $once (mut i32)))
   (import "env" "glob" (global $once (mut i32)))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -1380,7 +1380,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
@@ -1393,7 +1393,7 @@
 ;; Corner case: Exported mutable global. We cannot optimize it, since the
 ;; outside may read and write it.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
@@ -1401,7 +1401,7 @@
   ;; CHECK:      (export "once-global" (global $once))
   (export "once-global" (global $once))
 
-  ;; CHECK:      (func $once (type $none_=>_none)
+  ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
   ;; CHECK-NEXT:   (return)
@@ -1418,7 +1418,7 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )

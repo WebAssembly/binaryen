@@ -15,12 +15,12 @@
 
  (type $array (array (mut i32)))
 
- ;; CHECK:      (func $br_on_to_drop (type $none_=>_none)
+ ;; CHECK:      (func $br_on_to_drop (type $5)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$1 (result i31ref)
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_i31 $label$1
+ ;; CHECK-NEXT:     (br_on_cast $label$1 nullref (ref none)
  ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -34,7 +34,7 @@
    (block $label$1 (result (ref null i31)) ;; this block type must stay, we
                                            ;; cannot remove it due to the br_on
     (drop
-     (br_on_i31 $label$1
+     (br_on_cast $label$1 anyref (ref i31)
       (ref.null any)
      )
     )
@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      (func $struct.set (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+ ;; CHECK:      (func $struct.set (type $4) (param $struct (ref null $struct))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1234)
@@ -68,7 +68,7 @@
   )
  )
 
- ;; CHECK:      (func $struct.get (type $ref?|$struct|_=>_none) (param $struct (ref null $struct))
+ ;; CHECK:      (func $struct.get (type $4) (param $struct (ref null $struct))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1234)
@@ -95,7 +95,7 @@
   )
  )
 
- ;; CHECK:      (func $array.set (type $ref|$array|_=>_none) (param $foo (ref $array))
+ ;; CHECK:      (func $array.set (type $3) (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar (ref null $array))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
@@ -126,7 +126,7 @@
   )
  )
 
- ;; CHECK:      (func $array.set-no-1 (type $ref|$array|_=>_none) (param $foo (ref $array))
+ ;; CHECK:      (func $array.set-no-1 (type $3) (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
@@ -156,7 +156,7 @@
   )
  )
 
- ;; CHECK:      (func $array.set-no-2 (type $ref|$array|_=>_none) (param $foo (ref $array))
+ ;; CHECK:      (func $array.set-no-2 (type $3) (param $foo (ref $array))
  ;; CHECK-NEXT:  (local $bar i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)
@@ -186,7 +186,7 @@
   )
  )
 
- ;; CHECK:      (func $if-condition (type $none_=>_i32) (result i32)
+ ;; CHECK:      (func $if-condition (type $6) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -224,7 +224,7 @@
   )
  )
 
- ;; CHECK:      (func $subsequent-children (type $i32_i32_i32_=>_i32) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK:      (func $subsequent-children (type $1) (param $x i32) (param $y i32) (param $z i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $helper
  ;; CHECK-NEXT:    (i32.const 0)
@@ -259,7 +259,7 @@
   )
  )
 
- ;; CHECK:      (func $subsequent-children-1 (type $i32_i32_i32_=>_i32) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK:      (func $subsequent-children-1 (type $1) (param $x i32) (param $y i32) (param $z i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $helper
  ;; CHECK-NEXT:    (i32.const 0)
@@ -296,7 +296,7 @@
   )
  )
 
- ;; CHECK:      (func $subsequent-children-2 (type $i32_i32_i32_=>_i32) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK:      (func $subsequent-children-2 (type $1) (param $x i32) (param $y i32) (param $z i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $helper
  ;; CHECK-NEXT:    (i32.const 0)
@@ -334,7 +334,7 @@
   )
  )
 
- ;; CHECK:      (func $subsequent-children-3 (type $i32_i32_i32_=>_i32) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK:      (func $subsequent-children-3 (type $1) (param $x i32) (param $y i32) (param $z i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -369,7 +369,7 @@
   )
  )
 
- ;; CHECK:      (func $subsequent-children-4 (type $i32_i32_i32_=>_i32) (param $x i32) (param $y i32) (param $z i32) (result i32)
+ ;; CHECK:      (func $subsequent-children-4 (type $1) (param $x i32) (param $y i32) (param $z i32) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -400,7 +400,7 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $i32_=>_i32) (param $x i32) (result i32)
+ ;; CHECK:      (func $helper (type $7) (param $x i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param $x i32) (result i32)

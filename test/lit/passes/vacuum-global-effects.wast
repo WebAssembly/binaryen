@@ -2,14 +2,14 @@
 ;; RUN: wasm-opt %s --generate-global-effects --vacuum -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $nop (type $i32_=>_none) (param $0 i32)
+ ;; CHECK:      (func $nop (type $0) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $nop (param $0 i32)
   (nop)
  )
 
- ;; CHECK:      (func $test (type $none_=>_none)
+ ;; CHECK:      (func $test (type $1)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )

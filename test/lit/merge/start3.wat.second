@@ -2,6 +2,12 @@
   (start $start)
 
   (func $start (export "start")
+    ;; Test that locals are handled properly. This function has an i32 local,
+    ;; and the other start has an f64 with the same name.
+    (local $x i32)
+    (drop
+      (local.get $x)
+    )
     (drop
       (i32.const 1)
     )

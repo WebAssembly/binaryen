@@ -59,3 +59,14 @@
   (func $helper)
 )
 
+;; CHECK: non-nullable local's sets must dominate gets
+(module
+  (func $tuple
+    ;; Since this tuple local has a non-nullable element, it is subject to the
+    ;; non-nullability rules.
+    (local $x (i32 (ref any) i64))
+    (drop
+      (local.get $x)
+    )
+  )
+)

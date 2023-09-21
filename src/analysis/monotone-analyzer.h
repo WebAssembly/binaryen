@@ -7,7 +7,6 @@
 
 #include "cfg.h"
 #include "lattice.h"
-#include "wasm-traversal.h"
 
 namespace wasm::analysis {
 
@@ -67,19 +66,18 @@ constexpr bool has_enqueueWorklist =
                       CFG&,
                       std::queue<const BasicBlock*>&>::value;
 
-// <iterable> getDependents(const BasicBlock* currBlock);
+// BasicBlock::BasicBlockIterable getDependents(const BasicBlock* currBlock);
 
 // Returns an iterable to the CFG BasicBlocks which depend on currBlock for
 // information (e.g. predecessors in a backward analysis). Used to select which
-// blocks to propagate to after applying the transfer function to a block. At
-// present, we allow this function to return any iterable, so we only assert
-// that the method exists with the following parameters.
+// blocks to propagate to after applying the transfer function to a block.
 
 template<typename TransferFunction>
 constexpr bool has_getDependents =
-  std::is_invocable<decltype(&TransferFunction::getDependents),
-                    TransferFunction,
-                    const BasicBlock*>::value;
+  std::is_invocable_r<BasicBlock::BasicBlockIterable,
+                      decltype(&TransferFunction::getDependents),
+                      TransferFunction,
+                      const BasicBlock*>::value;
 
 // Combined TransferFunction assertions.
 template<typename TransferFunction, typename Lattice>
@@ -104,8 +102,30 @@ public:
                       TransferFunction& transferFunction,
                       CFG& cfg);
 
-  // Runs the worklist algorithm to compute the states for the BlockList graph.
+  // Runs the worklist algorithm to compute the states for the BlockState graph.
   void evaluate();
+
+  // This modifies the state of the CFG's entry block, with function
+  // information. This cannot be done otherwise in a forward analysis, as the
+  // entry block depends on no other blocks, and hence cannot be changed by
+  // them.
+  void evaluateFunctionEntry(Function* func);
+
+  // Iterates over all of the BlockStates after evaluate() is completed for the
+  // transfer function to collect the finalized intermediate states from each
+  // block. For instance, the reaching definitions analysis transfer functions
+  // will take the final states and use it to populate a map of local.get's to
+  // sets of local.set's which affect it.
+  void collectResults();
+
+  // The analyzer is run in two distinct phases. First evaluate() runs the
+  // worklist algorithm to obtain a solution. Then collectResults() iterates
+  // over the vector of BlockState's, allowing the transfer function to access
+  // the final states to and turn them into some result.
+  void evaluateAndCollectResults() {
+    evaluate();
+    collectResults();
+  }
 
   // Prints out all BlockStates in this analyzer.
   void print(std::ostream& os);

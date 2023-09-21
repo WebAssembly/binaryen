@@ -446,6 +446,14 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
 private:
+  // We limit the size of memory to some reasonable amount. We handle memory in
+  // a linear/dense manner, so when we see a write to address X we allocate X
+  // memory to represent that, and so very high addresses can lead to OOM. In
+  // practice, ctor-eval should only run on low addresses anyhow, since static
+  // memory tends to be reasonably-sized and mallocs start at the start of the
+  // heap, so it's simpler to add an arbitrary limit here to avoid OOMs for now.
+  const size_t MaximumMemory = 100 * 1024 * 1024;
+
   // TODO: handle unaligned too, see shell-interface
   template<typename T> T* getMemory(Address address, Name memoryName) {
     auto it = memories.find(memoryName);
@@ -454,6 +462,9 @@ private:
     // resize the memory buffer as needed.
     auto max = address + sizeof(T);
     if (max > memory.size()) {
+      if (max > MaximumMemory) {
+        throw FailToEvalException("excessively high memory address accessed");
+      }
       memory.resize(max);
     }
     return (T*)(&memory[address]);

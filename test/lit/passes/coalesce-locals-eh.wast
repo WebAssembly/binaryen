@@ -4,7 +4,7 @@
 (module
   ;; CHECK:      (tag $e (param))
 
-  ;; CHECK:      (func $bar (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $bar (type $1) (result i32)
   ;; CHECK-NEXT:  (i32.const 1984)
   ;; CHECK-NEXT: )
   (func $bar (result i32)
@@ -12,7 +12,7 @@
   )
 
  (tag $e)
-  ;; CHECK:      (func $bug-cfg-traversal (type $i32_=>_i32) (param $0 i32) (result i32)
+  ;; CHECK:      (func $bug-cfg-traversal (type $2) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $0

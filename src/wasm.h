@@ -698,12 +698,13 @@ public:
     TableSetId,
     TableSizeId,
     TableGrowId,
+    TableFillId,
     TryId,
     ThrowId,
     RethrowId,
     TupleMakeId,
     TupleExtractId,
-    I31NewId,
+    RefI31Id,
     I31GetId,
     CallRefId,
     RefTestId,
@@ -1347,6 +1348,7 @@ public:
 
 class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
 public:
+  RefIsNull() = default;
   RefIsNull(MixedArena& allocator) {}
 
   Expression* value;
@@ -1366,6 +1368,7 @@ public:
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
 public:
+  RefEq() = default;
   RefEq(MixedArena& allocator) {}
 
   Expression* left;
@@ -1415,6 +1418,19 @@ public:
   Name table;
   Expression* value;
   Expression* delta;
+
+  void finalize();
+};
+
+class TableFill : public SpecificExpression<Expression::TableFillId> {
+public:
+  TableFill() = default;
+  TableFill(MixedArena& allocator) : TableFill() {}
+
+  Name table;
+  Expression* dest;
+  Expression* value;
+  Expression* size;
 
   void finalize();
 };
@@ -1476,9 +1492,10 @@ public:
   void finalize();
 };
 
-class I31New : public SpecificExpression<Expression::I31NewId> {
+class RefI31 : public SpecificExpression<Expression::RefI31Id> {
 public:
-  I31New(MixedArena& allocator) {}
+  RefI31() = default;
+  RefI31(MixedArena& allocator) {}
 
   Expression* value;
 
@@ -1487,6 +1504,7 @@ public:
 
 class I31Get : public SpecificExpression<Expression::I31GetId> {
 public:
+  I31Get() = default;
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
@@ -1503,7 +1521,6 @@ public:
   bool isReturn = false;
 
   void finalize();
-  void finalize(Type type_);
 };
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
@@ -1524,11 +1541,6 @@ public:
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
-
-  // Support the unsafe `ref.cast_nop_static` to enable precise cast overhead
-  // measurements.
-  enum Safety { Safe, Unsafe };
-  Safety safety = Safe;
 
   void finalize();
 
@@ -1568,6 +1580,7 @@ public:
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
+  StructGet() = default;
   StructGet(MixedArena& allocator) {}
 
   Index index;
@@ -1580,6 +1593,7 @@ public:
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
+  StructSet() = default;
   StructSet(MixedArena& allocator) {}
 
   Index index;
@@ -1591,6 +1605,7 @@ public:
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
+  ArrayNew() = default;
   ArrayNew(MixedArena& allocator) {}
 
   // If set, then the initial value is assigned to all entries in the array. If
@@ -1606,6 +1621,7 @@ public:
 
 class ArrayNewData : public SpecificExpression<Expression::ArrayNewDataId> {
 public:
+  ArrayNewData() = default;
   ArrayNewData(MixedArena& allocator) {}
 
   Name segment;
@@ -1617,6 +1633,7 @@ public:
 
 class ArrayNewElem : public SpecificExpression<Expression::ArrayNewElemId> {
 public:
+  ArrayNewElem() = default;
   ArrayNewElem(MixedArena& allocator) {}
 
   Name segment;
@@ -1637,6 +1654,7 @@ public:
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
+  ArrayGet() = default;
   ArrayGet(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1649,6 +1667,7 @@ public:
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
+  ArraySet() = default;
   ArraySet(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1660,6 +1679,7 @@ public:
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
+  ArrayLen() = default;
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1669,6 +1689,7 @@ public:
 
 class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
 public:
+  ArrayCopy() = default;
   ArrayCopy(MixedArena& allocator) {}
 
   Expression* destRef;
@@ -1682,6 +1703,7 @@ public:
 
 class ArrayFill : public SpecificExpression<Expression::ArrayFillId> {
 public:
+  ArrayFill() = default;
   ArrayFill(MixedArena& allocator) {}
 
   Expression* ref;
@@ -2330,6 +2352,7 @@ template<> struct hash<wasm::Address> {
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);

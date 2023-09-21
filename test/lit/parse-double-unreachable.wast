@@ -11,7 +11,7 @@
  (type $array (array i8))
  (type $func (func (result i32)))
 
- ;; CHECK:      (func $double-unreachable (type $ref|$array|_=>_i32) (param $x (ref $array)) (result i32)
+ ;; CHECK:      (func $double-unreachable (type $1) (param $x (ref $array)) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.null nofunc)
  ;; CHECK-NEXT:  )

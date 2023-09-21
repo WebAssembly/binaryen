@@ -14,11 +14,11 @@
  (type $2 (func (result i32)))
  ;; CHECK:      (type $3 (func (param i32) (result i32)))
  (type $3 (func (param i32) (result i32)))
- ;; CHECK:      (type $none_=>_f32 (func (result f32)))
-
- ;; CHECK:      (type $4 (func (param i64 i64) (result i64)))
+ ;; CHECK:      (type $4 (func (result f32)))
  (type $4 (func (param i64 i64) (result i64)))
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+ ;; CHECK:      (type $4 (func (param i64 i64) (result i64)))
+
+ ;; CHECK:      (type $6 (func (result anyref)))
 
  ;; CHECK:      (global $x (mut i32) (i32.const 0))
  (global $x (mut i32) (i32.const 0))
@@ -809,7 +809,7 @@
    (i32.const 0)
   )
  )
- ;; CHECK:      (func $a17 (type $none_=>_f32) (result f32)
+ ;; CHECK:      (func $a17 (type $4) (result f32)
  ;; CHECK-NEXT:  (local $var$0 f32)
  ;; CHECK-NEXT:  (local $1 f32)
  ;; CHECK-NEXT:  (local $2 f32)
@@ -897,7 +897,7 @@
    )
   )
  )
- ;; CHECK:      (func $a19 (type $none_=>_f32) (result f32)
+ ;; CHECK:      (func $a19 (type $4) (result f32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$1
  ;; CHECK-NEXT:    (unreachable)
@@ -3415,7 +3415,7 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  ;; CHECK:      (func $subtype (type $none_=>_anyref) (result anyref)
+  ;; CHECK:      (func $subtype (type $6) (result anyref)
   ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 nullref)
@@ -3477,13 +3477,13 @@
   )
 )
 (module
- ;; CHECK:      (type $i64_f32_=>_none (func (param i64 f32)))
+ ;; CHECK:      (type $0 (func (param i64 f32)))
 
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (type $1 (func (result i32)))
 
  ;; CHECK:      (export "test" (func $1))
 
- ;; CHECK:      (func $0 (type $i64_f32_=>_none) (param $0 i64) (param $1 f32)
+ ;; CHECK:      (func $0 (type $0) (param $0 i64) (param $1 f32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $0 (param $0 i64) (param $1 f32)
@@ -3501,7 +3501,7 @@
 )
 ;; non-nullable temp vars we add must be handled properly, as non-nullable
 ;; locals are not allowed
-;; CHECK:      (func $1 (type $none_=>_i32) (result i32)
+;; CHECK:      (func $1 (type $1) (result i32)
 ;; CHECK-NEXT:  (unreachable)
 ;; CHECK-NEXT:  (return
 ;; CHECK-NEXT:   (i32.const -111)
@@ -3514,9 +3514,9 @@
 ;; CHECK-NEXT: )
 (module
  (type $none_=>_none (func))
- ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+ ;; CHECK:      (type $0 (func (result funcref)))
 
- ;; CHECK:      (func $0 (type $none_=>_funcref) (result funcref)
+ ;; CHECK:      (func $0 (type $0) (result funcref)
  ;; CHECK-NEXT:  (local $0 (ref nofunc))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (ref.as_non_null

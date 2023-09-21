@@ -146,6 +146,9 @@
 ;; CHECK-NEXT:                                                 content can actually appear in
 ;; CHECK-NEXT:                                                 each location
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --gufa-cast-all                               GUFA plus add casts for all
+;; CHECK-NEXT:                                                 inferences
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gufa-optimizing                             GUFA plus local optimizations in
 ;; CHECK-NEXT:                                                 functions we modified
 ;; CHECK-NEXT:
@@ -432,6 +435,10 @@
 ;; CHECK-NEXT:   --trap-mode-js                                replace trapping operations with
 ;; CHECK-NEXT:                                                 js semantics
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --tuple-optimization                          optimize trivial tuples away
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-finalizing                             mark all leaf types as final
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-merging                                merge types to their supertypes
 ;; CHECK-NEXT:                                                 where possible
 ;; CHECK-NEXT:
@@ -440,6 +447,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-ssa                                    create new nominal types to help
 ;; CHECK-NEXT:                                                 other optimizations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
+;; CHECK-NEXT:                                                 (open)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets
@@ -608,10 +618,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-memory64                            Disable memory64
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-gc-nn-locals                         Enable GC non-null locals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-gc-nn-locals                        Disable GC non-null locals
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-relaxed-simd                         Enable relaxed SIMD
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-relaxed-simd                        Disable relaxed SIMD
@@ -626,9 +632,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-strings                             Disable strings
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --enable-multi-memories                       Enable multi-memories
+;; CHECK-NEXT:   --enable-multimemory                          Enable multimemory
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --disable-multi-memories                      Disable multi-memories
+;; CHECK-NEXT:   --disable-multimemory                         Disable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

@@ -759,6 +759,18 @@ public:
     ret->finalize();
     return ret;
   }
+  TableFill* makeTableFill(Name table,
+                           Expression* dest,
+                           Expression* value,
+                           Expression* size) {
+    auto* ret = wasm.allocator.alloc<TableFill>();
+    ret->table = table;
+    ret->dest = dest;
+    ret->value = value;
+    ret->size = size;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,
@@ -856,8 +868,8 @@ public:
     ret->finalize();
     return ret;
   }
-  I31New* makeI31New(Expression* value) {
-    auto* ret = wasm.allocator.alloc<I31New>();
+  RefI31* makeRefI31(Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefI31>();
     ret->value = value;
     ret->finalize();
     return ret;
@@ -876,11 +888,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefCast* makeRefCast(Expression* ref, Type type, RefCast::Safety safety) {
+  RefCast* makeRefCast(Expression* ref, Type type) {
     auto* ret = wasm.allocator.alloc<RefCast>();
     ret->ref = ref;
     ret->type = type;
-    ret->safety = safety;
     ret->finalize();
     return ret;
   }
@@ -891,6 +902,21 @@ public:
     ret->name = name;
     ret->ref = ref;
     ret->castType = castType;
+    ret->finalize();
+    return ret;
+  }
+  StructNew* makeStructNew(HeapType type,
+                           std::initializer_list<Expression*> args) {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    ret->operands.set(args);
+    ret->type = Type(type, NonNullable);
+    ret->finalize();
+    return ret;
+  }
+  StructNew* makeStructNew(HeapType type, ExpressionList&& args) {
+    auto* ret = wasm.allocator.alloc<StructNew>();
+    ret->operands = std::move(args);
+    ret->type = Type(type, NonNullable);
     ret->finalize();
     return ret;
   }
@@ -1195,7 +1221,7 @@ public:
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
     if (type.isRef() && type.getHeapType() == HeapType::i31) {
-      return makeI31New(makeConst(value.geti31()));
+      return makeRefI31(makeConst(value.geti31()));
     }
     if (type.isString()) {
       // TODO: more than ascii support
@@ -1345,7 +1371,7 @@ public:
       return ExpressionManipulator::refNull(curr, curr->type);
     }
     if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
-      Expression* ret = makeI31New(makeConst(0));
+      Expression* ret = makeRefI31(makeConst(0));
       if (curr->type.isNullable()) {
         // To keep the type identical, wrap it in a block that adds nullability.
         ret = makeBlock({ret}, curr->type);

@@ -50,7 +50,7 @@ const char* Memory64Feature = "memory64";
 const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
-const char* MultiMemoriesFeature = "multi-memories";
+const char* MultiMemoryFeature = "multimemory";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -855,6 +855,15 @@ void TableGrow::finalize() {
   }
 }
 
+void TableFill::finalize() {
+  if (dest->type == Type::unreachable || value->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.
@@ -903,7 +912,7 @@ void TupleExtract::finalize() {
   }
 }
 
-void I31New::finalize() {
+void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
@@ -920,18 +929,23 @@ void I31Get::finalize() {
 }
 
 void CallRef::finalize() {
-  handleUnreachableOperands(this);
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
   if (isReturn) {
     type = Type::unreachable;
+    return;
   }
   if (target->type == Type::unreachable) {
     type = Type::unreachable;
+    return;
   }
-}
-
-void CallRef::finalize(Type type_) {
-  type = type_;
-  finalize();
+  assert(target->type.isRef());
+  if (target->type.getHeapType().isBottom()) {
+    return;
+  }
+  assert(target->type.getHeapType().isSignature());
+  type = target->type.getHeapType().getSignature().results;
 }
 
 void RefTest::finalize() {
@@ -948,29 +962,31 @@ void RefCast::finalize() {
     return;
   }
 
-  // Do not unnecessarily lose non-nullability info. We could leave this for
-  // optimizations, but doing it here as part of finalization/refinalization
-  // ensures that type information flows through in an optimal manner and can be
-  // used as soon as possible.
-  if (ref->type.isNonNullable() && type.isNullable()) {
-    type = Type(type.getHeapType(), NonNullable);
+  // We reach this before validation, so the input type might be totally wrong.
+  // Return early in this case to avoid doing the wrong thing below.
+  if (!ref->type.isRef()) {
+    return;
   }
 
-  // Do not unnecessarily lose heap type info, as above for nullability. Note
-  // that we must check if the ref has a heap type, as we reach this before
-  // validation, which will error if the ref does not in fact have a heap type.
-  // (This is a downside of propagating type information here, as opposed to
-  // leaving it for an optimization pass.)
-  if (ref->type.isRef() &&
-      HeapType::isSubType(ref->type.getHeapType(), type.getHeapType())) {
-    type = Type(ref->type.getHeapType(), type.getNullability());
-  }
+  // Do not unnecessarily lose type information. We could leave this for
+  // optimizations (and indeed we do a more powerful version of this in
+  // OptimizeInstructions), but doing it here as part of
+  // finalization/refinalization ensures that type information flows through in
+  // an optimal manner and can be used as soon as possible.
+  type = Type::getGreatestLowerBound(type, ref->type);
 }
 
 void BrOn::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
     return;
+  }
+  if (op == BrOnCast || op == BrOnCastFail) {
+    // The cast type must be a subtype of the input type. If we've refined the
+    // input type so that this is no longer true, we can fix it by similarly
+    // refining the cast type in a way that will not change the cast behavior.
+    castType = Type::getGreatestLowerBound(castType, ref->type);
+    assert(castType.isRef());
   }
   switch (op) {
     case BrOnNull:

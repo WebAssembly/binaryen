@@ -33,8 +33,12 @@ namespace wasm {
 struct LocalGraph {
   // main API
 
-  // the constructor computes getSetses, the sets affecting each get
-  LocalGraph(Function* func);
+  // The constructor computes getSetses, the sets affecting each get.
+  //
+  // If a module is passed in, it is used to find which features are needed in
+  // the computation (for example, if exception handling is disabled, then we
+  // can generate a simpler CFG, as calls cannot throw).
+  LocalGraph(Function* func, Module* module = nullptr);
 
   // The local.sets relevant for an index or a get. The most common case is to
   // have a single set; after that, to be a phi of 2 items, so we use a small

@@ -2,16 +2,16 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (type $f32_funcref_=>_i64) (param f32 funcref) (result i64)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (type $3) (param f32 funcref) (result i64)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-fj (param f32) (param funcref) (result i64)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (type $funcref_=>_ref|any|) (param funcref) (result (ref any))))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (type $4) (param funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects-ref (param funcref) (result (ref any))))
 
-  ;; CHECK:      (func $used (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $used (type $1) (result i32)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (call $call.without.effects
@@ -29,7 +29,7 @@
     (local.get $i32)
   )
 
-  ;; CHECK:      (func $unused (type $none_=>_none)
+  ;; CHECK:      (func $unused (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused
@@ -39,7 +39,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fj (type $none_=>_none)
+  ;; CHECK:      (func $unused-fj (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-fj
@@ -49,7 +49,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fj-side-effects (type $none_=>_f32) (result f32)
+  ;; CHECK:      (func $unused-fj-side-effects (type $5) (result f32)
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  (local.set $f32
   ;; CHECK-NEXT:   (f32.const 2.718280076980591)
@@ -71,7 +71,7 @@
     (local.get $f32)
   )
 
-  ;; CHECK:      (func $unused-unreachable (type $none_=>_none)
+  ;; CHECK:      (func $unused-unreachable (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $call.without.effects-fj
   ;; CHECK-NEXT:    (unreachable)
@@ -87,7 +87,7 @@
     )
   )
 
-  ;; CHECK:      (func $used-fallthrough (type $none_=>_none)
+  ;; CHECK:      (func $used-fallthrough (type $0)
   ;; CHECK-NEXT:  (local $i32 i32)
   ;; CHECK-NEXT:  (local.set $i32
   ;; CHECK-NEXT:   (if (result i32)
@@ -136,7 +136,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fallthrough (type $none_=>_none)
+  ;; CHECK:      (func $unused-fallthrough (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (block $condition (result i32)
@@ -177,7 +177,7 @@
     )
   )
 
-  ;; CHECK:      (func $unused-fallthrough-bad-type (type $none_=>_none)
+  ;; CHECK:      (func $unused-fallthrough-bad-type (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref any))
   ;; CHECK-NEXT:    (call $i)
@@ -202,7 +202,7 @@
     )
   )
 
-  ;; CHECK:      (func $i (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $i (type $1) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $i (result i32)
@@ -210,7 +210,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $fj (type $f32_=>_i64) (param $0 f32) (result i64)
+  ;; CHECK:      (func $fj (type $6) (param $0 f32) (result i64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $fj (param f32) (result i64)
@@ -218,7 +218,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $ref (type $none_=>_ref|any|) (result (ref any))
+  ;; CHECK:      (func $ref (type $7) (result (ref any))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $ref (result (ref any))
@@ -227,7 +227,7 @@
   )
 
 
-  ;; CHECK:      (func $nop (type $none_=>_none)
+  ;; CHECK:      (func $nop (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $nop

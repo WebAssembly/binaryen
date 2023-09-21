@@ -265,13 +265,11 @@ void WasmBinaryWriter::writeTypes() {
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
     auto super = type.getSuperType();
-    // TODO: Use the binary shorthand for final types once we parse MVP
-    // signatures as final.
-    if (type.isFinal() || super || hasSubtypes[i]) {
-      if (type.isFinal()) {
-        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
-      } else {
+    if (super || type.isOpen()) {
+      if (type.isOpen()) {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
       }
       if (super) {
         o << U32LEB(1);
@@ -1186,12 +1184,16 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       *sourceMap << ",";
     }
     writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
-    writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
-    writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
-    writeBase64VLQ(*sourceMap,
-                   int32_t(loc->columnNumber - lastLoc.columnNumber));
-    lastLoc = *loc;
     lastOffset = offset;
+    if (loc) {
+      // There is debug information for this location, so emit the next 3
+      // fields and update lastLoc.
+      writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
+      writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
+      writeBase64VLQ(*sourceMap,
+                     int32_t(loc->columnNumber - lastLoc.columnNumber));
+      lastLoc = *loc;
+    }
   }
   *sourceMap << "\"}";
 }
@@ -1252,8 +1254,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::ExtendedConstFeature;
       case FeatureSet::Strings:
         return BinaryConsts::CustomSections::StringsFeature;
-      case FeatureSet::MultiMemories:
-        return BinaryConsts::CustomSections::MultiMemoriesFeature;
+      case FeatureSet::MultiMemory:
+        return BinaryConsts::CustomSections::MultiMemoryFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1340,7 +1342,28 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
     auto& debugLocations = func->debugLocations;
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
+      // There is debug information here, write it out.
       writeDebugLocation(iter->second);
+    } else {
+      // This expression has no debug location. We need to emit an indication
+      // of that (so that we do not get "smeared" with debug info from anything
+      // before or after us).
+      //
+      // We don't need to write repeated "no debug info" indications, as a
+      // single one is enough to make it clear that the debug information before
+      // us is valid no longer. We also don't need to write one if there is
+      // nothing before us.
+      if (!sourceMapLocations.empty() &&
+          sourceMapLocations.back().second != nullptr) {
+        sourceMapLocations.emplace_back(o.size(), nullptr);
+
+        // Initialize the state of debug info to indicate there is no current
+        // debug info relevant. This sets |lastDebugLocation| to a dummy value,
+        // so that later places with debug info can see that they differ from
+        // it (without this, if we had some debug info, then a nullptr for none,
+        // and then the same debug info, we could get confused).
+        initializeDebugInfo();
+      }
     }
   }
   // If this is an instruction in a function, and if the original wasm had
@@ -1519,14 +1542,20 @@ void WasmBinaryWriter::writeType(Type type) {
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
   // ref.null always has a bottom heap type in Binaryen IR, but those types are
-  // only actually valid with GC enabled. When GC is not enabled, emit the
-  // corresponding valid top types instead.
+  // only actually valid with GC. Otherwise, emit the corresponding valid top
+  // types instead.
   if (!wasm->features.hasGC()) {
     if (HeapType::isSubType(type, HeapType::func)) {
       type = HeapType::func;
-    } else {
-      assert(HeapType::isSubType(type, HeapType::ext));
+    } else if (HeapType::isSubType(type, HeapType::ext)) {
       type = HeapType::ext;
+    } else if (wasm->features.hasStrings()) {
+      // Strings are enabled, and this isn't a func or an ext, so it must be a
+      // string type (string or stringview), which we'll emit below, or a bottom
+      // type (which we must allow, because we wouldn't know whether to emit a
+      // string or stringview for it).
+    } else {
+      WASM_UNREACHABLE("invalid type without GC");
     }
   }
 
@@ -1607,8 +1636,9 @@ void WasmBinaryWriter::writeField(const Field& field) {
 WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
-  : wasm(wasm), allocator(wasm.allocator), input(input),
-    sourceMap(nullptr), nextDebugLocation{0, 0, {0, 0, 0}}, debugLocation() {
+  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
+    nextDebugPos(0), nextDebugLocation{0, 0, 0},
+    nextDebugLocationHasDebugInfo(false), debugLocation() {
   wasm.features = features;
 }
 
@@ -2007,7 +2037,11 @@ Type WasmBinaryReader::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
   if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSignatureByTypeIndex(initial).results;
+    auto sig = getSignatureByTypeIndex(initial);
+    if (sig.params != Type::none) {
+      throwError("control flow inputs are not supported yet");
+    }
+    return sig.results;
   }
   Type type;
   if (getBasicType(initial, type)) {
@@ -2058,7 +2092,7 @@ HeapType WasmBinaryReader::getIndexedHeapType() {
 Type WasmBinaryReader::getConcreteType() {
   auto type = getType();
   if (!type.isConcrete()) {
-    throw ParseException("non-concrete type when one expected");
+    throwError("non-concrete type when one expected");
   }
   return type;
 }
@@ -2236,9 +2270,8 @@ void WasmBinaryReader::readTypes() {
     std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
         form == BinaryConsts::EncodedType::SubFinal) {
-      if (form == BinaryConsts::EncodedType::SubFinal) {
-        // TODO: Interpret type definitions without any `sub` as final as well.
-        builder[i].setFinal();
+      if (form == BinaryConsts::EncodedType::Sub) {
+        builder[i].setOpen();
       }
       uint32_t supers = getU32LEB();
       if (supers > 0) {
@@ -2250,48 +2283,14 @@ void WasmBinaryReader::readTypes() {
       }
       form = getS32LEB();
     }
-    if (form == BinaryConsts::EncodedType::Func ||
-        form == BinaryConsts::EncodedType::FuncSubtype) {
+    if (form == BinaryConsts::EncodedType::Func) {
       builder[i] = readSignatureDef();
-    } else if (form == BinaryConsts::EncodedType::Struct ||
-               form == BinaryConsts::EncodedType::StructSubtype) {
+    } else if (form == BinaryConsts::EncodedType::Struct) {
       builder[i] = readStructDef();
-    } else if (form == BinaryConsts::EncodedType::Array ||
-               form == BinaryConsts::EncodedType::ArraySubtype) {
+    } else if (form == BinaryConsts::EncodedType::Array) {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("Bad type form " + std::to_string(form));
-    }
-    if (form == BinaryConsts::EncodedType::FuncSubtype ||
-        form == BinaryConsts::EncodedType::StructSubtype ||
-        form == BinaryConsts::EncodedType::ArraySubtype) {
-      int64_t super = getS64LEB(); // TODO: Actually s33
-      if (super >= 0) {
-        superIndex = (uint32_t)super;
-      } else {
-        // Validate but otherwise ignore trivial supertypes.
-        HeapType basicSuper;
-        if (!getBasicHeapType(super, basicSuper)) {
-          throwError("Unrecognized supertype " + std::to_string(super));
-        }
-        if (form == BinaryConsts::EncodedType::FuncSubtype) {
-          if (basicSuper != HeapType::func) {
-            throwError(
-              "The only allowed trivial supertype for functions is func");
-          }
-        } else {
-          // Check for "struct" here even if we are parsing an array definition.
-          // This is the old nonstandard "struct_subtype" or "array_subtype"
-          // form of type definitions that used the old "data" type as the
-          // supertype placeholder when there was no nontrivial supertype.
-          // "data" no longer exists, but "struct" has the same encoding it used
-          // to have.
-          if (basicSuper != HeapType::struct_) {
-            throwError("The only allowed trivial supertype for structs and "
-                       "arrays is data");
-          }
-        }
-      }
     }
     if (superIndex) {
       if (*superIndex > builder.size()) {
@@ -2629,9 +2628,7 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
-    if (!wasm.features.hasGCNNLocals()) {
-      TypeUpdating::handleNonDefaultableLocals(func, wasm);
-    }
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
@@ -2800,17 +2797,22 @@ void WasmBinaryReader::readSourceMapHeader() {
 
   mustReadChar('\"');
   if (maybeReadChar('\"')) { // empty mappings
-    nextDebugLocation.availablePos = 0;
+    nextDebugPos = 0;
     return;
   }
   // read first debug location
+  // TODO: Handle the case where the very first one has only a position but not
+  //       debug info. In practice that does not happen, which needs
+  //       investigation (if it does, it will assert in readBase64VLQ, so it
+  //       would not be a silent error at least).
   uint32_t position = readBase64VLQ(*sourceMap);
   uint32_t fileIndex = readBase64VLQ(*sourceMap);
   uint32_t lineNumber =
     readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
   uint32_t columnNumber = readBase64VLQ(*sourceMap);
-  nextDebugLocation = {
-    position, position, {fileIndex, lineNumber, columnNumber}};
+  nextDebugPos = position;
+  nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+  nextDebugLocationHasDebugInfo = true;
 }
 
 void WasmBinaryReader::readNextDebugLocation() {
@@ -2818,26 +2820,27 @@ void WasmBinaryReader::readNextDebugLocation() {
     return;
   }
 
-  if (nextDebugLocation.availablePos == 0 &&
-      nextDebugLocation.previousPos <= pos) {
-    // if source map file had already reached the end and cache position also
-    // cannot cover the pos clear the debug location
+  if (nextDebugPos == 0) {
+    // We reached the end of the source map; nothing left to read.
     debugLocation.clear();
     return;
   }
 
-  while (nextDebugLocation.availablePos &&
-         nextDebugLocation.availablePos <= pos) {
+  while (nextDebugPos && nextDebugPos <= pos) {
     debugLocation.clear();
     // use debugLocation only for function expressions
     if (currFunction) {
-      debugLocation.insert(nextDebugLocation.next);
+      if (nextDebugLocationHasDebugInfo) {
+        debugLocation.insert(nextDebugLocation);
+      } else {
+        debugLocation.clear();
+      }
     }
 
     char ch;
     *sourceMap >> ch;
     if (ch == '\"') { // end of records
-      nextDebugLocation.availablePos = 0;
+      nextDebugPos = 0;
       break;
     }
     if (ch != ',') {
@@ -2845,18 +2848,26 @@ void WasmBinaryReader::readNextDebugLocation() {
     }
 
     int32_t positionDelta = readBase64VLQ(*sourceMap);
-    uint32_t position = nextDebugLocation.availablePos + positionDelta;
-    int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
-    uint32_t fileIndex = nextDebugLocation.next.fileIndex + fileIndexDelta;
-    int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t lineNumber = nextDebugLocation.next.lineNumber + lineNumberDelta;
-    int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
-    uint32_t columnNumber =
-      nextDebugLocation.next.columnNumber + columnNumberDelta;
+    uint32_t position = nextDebugPos + positionDelta;
 
-    nextDebugLocation = {position,
-                         nextDebugLocation.availablePos,
-                         {fileIndex, lineNumber, columnNumber}};
+    nextDebugPos = position;
+
+    auto peek = sourceMap->peek();
+    if (peek == ',' || peek == '\"') {
+      // This is a 1-length entry, so the next location has no debug info.
+      nextDebugLocationHasDebugInfo = false;
+      break;
+    }
+
+    int32_t fileIndexDelta = readBase64VLQ(*sourceMap);
+    uint32_t fileIndex = nextDebugLocation.fileIndex + fileIndexDelta;
+    int32_t lineNumberDelta = readBase64VLQ(*sourceMap);
+    uint32_t lineNumber = nextDebugLocation.lineNumber + lineNumberDelta;
+    int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
+    uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
+
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+    nextDebugLocationHasDebugInfo = true;
   }
 }
 
@@ -2989,32 +3000,14 @@ void WasmBinaryReader::skipUnreachableCode() {
 void WasmBinaryReader::pushExpression(Expression* curr) {
   auto type = curr->type;
   if (type.isTuple()) {
-    // Store tuple to local and push individual extracted values
+    // Store tuple to local and push individual extracted values.
     Builder builder(wasm);
-    // Non-nullable types require special handling as they cannot be stored to
-    // a local, so we may need to use a different local type than the original.
-    auto localType = type;
-    if (!wasm.features.hasGCNNLocals()) {
-      std::vector<Type> finalTypes;
-      for (auto t : type) {
-        if (t.isNonNullable()) {
-          t = Type(t.getHeapType(), Nullable);
-        }
-        finalTypes.push_back(t);
-      }
-      localType = Type(Tuple(finalTypes));
-    }
     requireFunctionContext("pushExpression-tuple");
-    Index tuple = builder.addVar(currFunction, localType);
+    Index tuple = builder.addVar(currFunction, type);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
-    for (Index i = 0; i < localType.size(); ++i) {
-      Expression* value =
-        builder.makeTupleExtract(builder.makeLocalGet(tuple, localType), i);
-      if (localType[i] != type[i]) {
-        // We modified this to be nullable; undo that.
-        value = builder.makeRefAs(RefAsNonNull, value);
-      }
-      expressionStack.push_back(value);
+    for (Index i = 0; i < type.size(); ++i) {
+      expressionStack.push_back(
+        builder.makeTupleExtract(builder.makeLocalGet(tuple, type), i));
     }
   } else {
     expressionStack.push_back(curr);
@@ -3713,8 +3706,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::ExtendedConst;
     } else if (name == BinaryConsts::CustomSections::StringsFeature) {
       feature = FeatureSet::Strings;
-    } else if (name == BinaryConsts::CustomSections::MultiMemoriesFeature) {
-      feature = FeatureSet::MultiMemories;
+    } else if (name == BinaryConsts::CustomSections::MultiMemoryFeature) {
+      feature = FeatureSet::MultiMemory;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
@@ -4023,6 +4016,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitTableGrow(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableFill(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
       break;
     }
@@ -4066,7 +4062,7 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     }
     case BinaryConsts::GCPrefix: {
       auto opcode = getU32LEB();
-      if (maybeVisitI31New(curr, opcode)) {
+      if (maybeVisitRefI31(curr, opcode)) {
         break;
       }
       if (maybeVisitI31Get(curr, opcode)) {
@@ -4154,12 +4150,6 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitStringSliceIter(curr, opcode)) {
-        break;
-      }
-      if (opcode == BinaryConsts::RefAsFunc ||
-          opcode == BinaryConsts::RefAsI31) {
-        visitRefAsCast((curr = allocator.alloc<RefCast>())->cast<RefCast>(),
-                       opcode);
         break;
       }
       if (opcode == BinaryConsts::ExternInternalize ||
@@ -5383,6 +5373,23 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableFill) {
+    return false;
+  }
+  Index tableIdx = getU32LEB();
+  if (tableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  auto* size = popNonVoidExpression();
+  auto* value = popNonVoidExpression();
+  auto* dest = popNonVoidExpression();
+  auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
+  tableRefs[tableIdx].push_back(&ret->table);
+  out = ret;
   return true;
 }
 
@@ -6970,14 +6977,17 @@ void WasmBinaryReader::visitCallRef(CallRef* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  curr->finalize(sig.results);
+  // If the target has bottom type, we won't be able to infer the correct type
+  // from it, so set the type manually to be safe.
+  curr->type = sig.results;
+  curr->finalize();
 }
 
-bool WasmBinaryReader::maybeVisitI31New(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::I31New) {
+bool WasmBinaryReader::maybeVisitRefI31(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::RefI31) {
     return false;
   }
-  auto* curr = allocator.alloc<I31New>();
+  auto* curr = allocator.alloc<RefI31>();
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -7005,10 +7015,8 @@ bool WasmBinaryReader::maybeVisitI31Get(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryReader::maybeVisitRefTest(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefTestStatic || code == BinaryConsts::RefTest ||
-      code == BinaryConsts::RefTestNull) {
-    bool legacy = code == BinaryConsts::RefTestStatic;
-    auto castType = legacy ? getIndexedHeapType() : getHeapType();
+  if (code == BinaryConsts::RefTest || code == BinaryConsts::RefTestNull) {
+    auto castType = getHeapType();
     auto nullability =
       (code == BinaryConsts::RefTestNull) ? Nullable : NonNullable;
     auto* ref = popNonVoidExpression();
@@ -7018,40 +7026,13 @@ bool WasmBinaryReader::maybeVisitRefTest(Expression*& out, uint32_t code) {
   return false;
 }
 
-void WasmBinaryReader::visitRefAsCast(RefCast* curr, uint32_t code) {
-  // TODO: These instructions are deprecated. Remove them.
-  switch (code) {
-    case BinaryConsts::RefAsFunc:
-      curr->type = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::RefAsI31:
-      curr->type = Type(HeapType::i31, NonNullable);
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected ref.as*");
-  }
-  curr->ref = popNonVoidExpression();
-  curr->safety = RefCast::Safe;
-  curr->finalize();
-}
-
 bool WasmBinaryReader::maybeVisitRefCast(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::RefCastStatic || code == BinaryConsts::RefCast ||
-      code == BinaryConsts::RefCastNull || code == BinaryConsts::RefCastNop) {
-    bool legacy = code == BinaryConsts::RefCastStatic;
-    auto heapType = legacy ? getIndexedHeapType() : getHeapType();
-    auto* ref = popNonVoidExpression();
-    Nullability nullability;
-    if (legacy) {
-      // Legacy polymorphic behavior.
-      nullability = ref->type.getNullability();
-    } else {
-      nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
-    }
-    auto safety =
-      code == BinaryConsts::RefCastNop ? RefCast::Unsafe : RefCast::Safe;
+  if (code == BinaryConsts::RefCast || code == BinaryConsts::RefCastNull) {
+    auto heapType = getHeapType();
+    auto nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
     auto type = Type(heapType, nullability);
-    out = Builder(wasm).makeRefCast(ref, type, safety);
+    auto* ref = popNonVoidExpression();
+    out = Builder(wasm).makeRefCast(ref, type);
     return true;
   }
   return false;
@@ -7068,63 +7049,35 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
       op = BrOnNonNull;
       break;
     case BinaryConsts::BrOnCast:
-    case BinaryConsts::BrOnCastLegacy:
-    case BinaryConsts::BrOnCastNullLegacy:
       op = BrOnCast;
       break;
     case BinaryConsts::BrOnCastFail:
-    case BinaryConsts::BrOnCastFailLegacy:
-    case BinaryConsts::BrOnCastFailNullLegacy:
       op = BrOnCastFail;
-      break;
-    case BinaryConsts::BrOnFunc:
-      op = BrOnCast;
-      castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::BrOnNonFunc:
-      op = BrOnCastFail;
-      castType = Type(HeapType::func, NonNullable);
-      break;
-    case BinaryConsts::BrOnI31:
-      op = BrOnCast;
-      castType = Type(HeapType::i31, NonNullable);
-      break;
-    case BinaryConsts::BrOnNonI31:
-      op = BrOnCastFail;
-      castType = Type(HeapType::i31, NonNullable);
       break;
     default:
       return false;
   }
-  bool hasInputAnnotation =
+  bool isCast =
     code == BinaryConsts::BrOnCast || code == BinaryConsts::BrOnCastFail;
   uint8_t flags = 0;
-  if (hasInputAnnotation) {
+  if (isCast) {
     flags = getInt8();
   }
   auto name = getBreakTarget(getU32LEB()).name;
   auto* ref = popNonVoidExpression();
-  if (op == BrOnCast || op == BrOnCastFail) {
-    Nullability inputNullability, castNullability;
-    HeapType inputHeapType, castHeapType;
-    if (hasInputAnnotation) {
-      inputNullability = (flags & 1) ? Nullable : NonNullable;
-      castNullability = (flags & 2) ? Nullable : NonNullable;
-      inputHeapType = getHeapType();
-    } else {
-      castNullability = (code == BinaryConsts::BrOnCastNullLegacy ||
-                         code == BinaryConsts::BrOnCastFailNullLegacy)
-                          ? Nullable
-                          : NonNullable;
-    }
-    castHeapType = getHeapType();
+  if (isCast) {
+    auto inputNullability = (flags & 1) ? Nullable : NonNullable;
+    auto castNullability = (flags & 2) ? Nullable : NonNullable;
+    auto inputHeapType = getHeapType();
+    auto castHeapType = getHeapType();
     castType = Type(castHeapType, castNullability);
-    if (hasInputAnnotation) {
-      auto inputType = Type(inputHeapType, inputNullability);
-      if (!Type::isSubType(ref->type, inputType)) {
-        throwError(std::string("Invalid reference type for ") +
-                   ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
-      }
+    auto inputType = Type(inputHeapType, inputNullability);
+    if (!Type::isSubType(castType, inputType)) {
+      throwError("br_on_cast* cast type must be subtype of input type");
+    }
+    if (!Type::isSubType(ref->type, inputType)) {
+      throwError(std::string("Invalid reference type for ") +
+                 ((op == BrOnCast) ? "br_on_cast" : "br_on_cast_fail"));
     }
   }
   out = Builder(wasm).makeBrOn(op, name, ref, castType);
@@ -7282,10 +7235,7 @@ bool WasmBinaryReader::maybeVisitArraySet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryReader::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code == BinaryConsts::ArrayLenAnnotated) {
-    // Ignore the type annotation and don't bother validating it.
-    getU32LEB();
-  } else if (code != BinaryConsts::ArrayLen) {
+  if (code != BinaryConsts::ArrayLen) {
     return false;
   }
   auto* ref = popNonVoidExpression();

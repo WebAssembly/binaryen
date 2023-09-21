@@ -15,7 +15,7 @@
 
 
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (export "forward" (func $forward))
 
@@ -29,7 +29,7 @@
 
   ;; CHECK:      (export "reverse_5" (func $reverse_12))
 
-  ;; CHECK:      (func $forward (type $none_=>_none)
+  ;; CHECK:      (func $forward (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -42,7 +42,7 @@
     (call $second.forward)
   )
 
-  ;; CHECK:      (func $reverse (type $none_=>_none)
+  ;; CHECK:      (func $reverse (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const -1)
   ;; CHECK-NEXT:  )
@@ -55,28 +55,28 @@
     (call $third.reverse)
   )
 )
-;; CHECK:      (func $forward_6 (type $none_=>_none)
+;; CHECK:      (func $forward_6 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $forward_12)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $reverse_6 (type $none_=>_none)
+;; CHECK:      (func $reverse_6 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const -2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $reverse)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $forward_12 (type $none_=>_none)
+;; CHECK:      (func $forward_12 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 3)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (call $forward)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $reverse_12 (type $none_=>_none)
+;; CHECK:      (func $reverse_12 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const -3)
 ;; CHECK-NEXT:  )

@@ -2,7 +2,7 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (type $[i8] (array i8))
  (type $[i8] (array i8))
@@ -28,7 +28,7 @@
 )
 ;; CHECK:      (export "test" (func $0))
 
-;; CHECK:      (func $0 (type $none_=>_none)
+;; CHECK:      (func $0 (type $0)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (array.new_data $[i8] $1
 ;; CHECK-NEXT:    (i32.const 16)

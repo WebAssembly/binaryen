@@ -176,9 +176,8 @@ public:
   }
 
   // Removes anything not in |other| from this object, so that it ends up with
-  // only their intersection. Currently this only handles an intersection with a
-  // full cone.
-  void intersectWithFullCone(const PossibleContents& other);
+  // only their intersection.
+  void intersect(const PossibleContents& other);
 
   bool isNone() const { return std::get_if<None>(&value); }
   bool isLiteral() const { return std::get_if<Literal>(&value); }
@@ -635,11 +634,15 @@ namespace wasm {
 // here.
 class ContentOracle {
   Module& wasm;
+  const PassOptions& options;
 
   void analyze();
 
 public:
-  ContentOracle(Module& wasm) : wasm(wasm) { analyze(); }
+  ContentOracle(Module& wasm, const PassOptions& options)
+    : wasm(wasm), options(options) {
+    analyze();
+  }
 
   // Get the contents possible at a location.
   PossibleContents getContents(Location location) {

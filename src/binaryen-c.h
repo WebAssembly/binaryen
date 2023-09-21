@@ -230,7 +230,7 @@ BINARYEN_API BinaryenFeatures BinaryenFeatureMemory64(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureRelaxedSIMD(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureExtendedConst(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureStrings(void);
-BINARYEN_API BinaryenFeatures BinaryenFeatureMultiMemories(void);
+BINARYEN_API BinaryenFeatures BinaryenFeatureMultiMemory(void);
 BINARYEN_API BinaryenFeatures BinaryenFeatureAll(void);
 
 // Modules
@@ -1028,7 +1028,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenTupleExtract(
   BinaryenModuleRef module, BinaryenExpressionRef tuple, BinaryenIndex index);
 BINARYEN_API BinaryenExpressionRef BinaryenPop(BinaryenModuleRef module,
                                                BinaryenType type);
-BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
+BINARYEN_API BinaryenExpressionRef BinaryenRefI31(BinaryenModuleRef module,
                                                   BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
@@ -2306,13 +2306,13 @@ BinaryenTupleExtractGetIndex(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenTupleExtractSetIndex(BinaryenExpressionRef expr,
                                                BinaryenIndex index);
 
-// I31New
+// RefI31
 
-// Gets the value expression of an `i31.new` expression.
+// Gets the value expression of a `ref.i31` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenI31NewGetValue(BinaryenExpressionRef expr);
-// Sets the value expression of an `i31.new` expression.
-BINARYEN_API void BinaryenI31NewSetValue(BinaryenExpressionRef expr,
+BinaryenRefI31GetValue(BinaryenExpressionRef expr);
+// Sets the value expression of a `ref.i31` expression.
+BINARYEN_API void BinaryenRefI31SetValue(BinaryenExpressionRef expr,
                                          BinaryenExpressionRef valueExpr);
 
 // I31Get
@@ -2723,6 +2723,15 @@ BinaryenAddFunction(BinaryenModuleRef module,
                     BinaryenType* varTypes,
                     BinaryenIndex numVarTypes,
                     BinaryenExpressionRef body);
+// As BinaryenAddFunction, but takes a HeapType rather than params and results.
+// This lets you set the specific type of the function.
+BINARYEN_API BinaryenFunctionRef
+BinaryenAddFunctionWithHeapType(BinaryenModuleRef module,
+                                const char* name,
+                                BinaryenHeapType type,
+                                BinaryenType* varTypes,
+                                BinaryenIndex numVarTypes,
+                                BinaryenExpressionRef body);
 // Gets a function reference by name. Returns NULL if the function does not
 // exist.
 BINARYEN_API BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
@@ -3563,6 +3572,9 @@ BINARYEN_API BinaryenType TypeBuilderGetTempRefType(TypeBuilderRef builder,
 BINARYEN_API void TypeBuilderSetSubType(TypeBuilderRef builder,
                                         BinaryenIndex index,
                                         BinaryenHeapType superType);
+// Sets the type at `index` to be open (i.e. non-final).
+BINARYEN_API void TypeBuilderSetOpen(TypeBuilderRef builder,
+                                     BinaryenIndex index);
 // Creates a new recursion group in the range `index` inclusive to `index +
 // length` exclusive. Recursion groups must not overlap.
 BINARYEN_API void TypeBuilderCreateRecGroup(TypeBuilderRef builder,

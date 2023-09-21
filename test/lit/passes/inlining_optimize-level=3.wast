@@ -4,11 +4,11 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (table $0 1 1 funcref)
 
@@ -436,7 +436,7 @@
    )
   )
  )
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (block $__inlined_func$bar_0
@@ -455,7 +455,7 @@
 ;; Similar to the above, but now the name collision happens due to a break in
 ;; one of the call's params. We must emit a different, non-colliding name.
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (local $0 i32)
@@ -503,9 +503,9 @@
 ;; (That avoids possible validation problems, and maximizes DCE.) To keep it
 ;; unreachable we'll add an unreachable instruction after the inlined code.
 (module
- ;; CHECK:      (type $f32_=>_none (func (param f32)))
+ ;; CHECK:      (type $0 (func (param f32)))
 
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $1 (func))
 
  ;; CHECK:      (func $A (param $0 f32)
  ;; CHECK-NEXT:  (local $1 f32)

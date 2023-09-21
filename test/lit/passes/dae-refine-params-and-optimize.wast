@@ -4,9 +4,9 @@
 
 ;; The br_on_cast_fail is optimized away thanks to the refined type. The output still has some unoptimized code (an additional --dce pass would get rid of the drop-return pattern here), but that is not directly relevant to this test.
 (module
- ;; CHECK:      (type $ref|array|_=>_i32 (func (param (ref array)) (result i32)))
+ ;; CHECK:      (type $0 (func (param (ref array)) (result i32)))
 
- ;; CHECK:      (func $len (type $ref|array|_=>_i32) (param $0 (ref array)) (result i32)
+ ;; CHECK:      (func $len (type $0) (param $0 (ref array)) (result i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (return
  ;; CHECK-NEXT:    (array.len
@@ -29,7 +29,7 @@
   )
   (i32.const -1)
  )
- ;; CHECK:      (func $optimize-after-refinement (type $ref|array|_=>_i32) (param $0 (ref array)) (result i32)
+ ;; CHECK:      (func $optimize-after-refinement (type $0) (param $0 (ref array)) (result i32)
  ;; CHECK-NEXT:  (call $len
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )

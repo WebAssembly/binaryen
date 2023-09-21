@@ -2321,7 +2321,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         return builder.makeRefNull(HeapType::none);
       }
       auto nullability = getSubType(type.getNullability());
-      // i31.new is not allowed in initializer expressions.
+      // ref.i31 is not allowed in initializer expressions.
       HeapType subtype;
       switch (upTo(3)) {
         case 0:
@@ -2341,7 +2341,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       if (type.isNullable() && oneIn(4)) {
         return builder.makeRefNull(HeapType::none);
       }
-      return builder.makeI31New(makeConst(Type::i32));
+      return builder.makeRefI31(makeConst(Type::i32));
     }
     case HeapType::struct_: {
       assert(wasm.features.hasGC());
@@ -3394,8 +3394,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       // This unreachable avoids a warning on refType being possibly undefined.
       WASM_UNREACHABLE("bad case");
   }
-  // TODO: Fuzz unsafe casts?
-  return builder.makeRefCast(make(refType), type, RefCast::Safe);
+  return builder.makeRefCast(make(refType), type);
 }
 
 Expression* TranslateToFuzzReader::makeStructGet(Type type) {

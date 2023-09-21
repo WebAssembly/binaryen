@@ -50,22 +50,17 @@
 
 namespace wasm {
 
-enum class ModuleElementKind {
-  Function,
-  Global,
-  Tag,
-  Memory,
-  Table,
-  DataSegment,
-  ElementSegment,
-};
+// TODO: remove this alias
+using ModuleElementKind = ModuleItemKind;
 
 // An element in the module that we track: a kind (function, global, etc.) + the
 // name of the particular element.
 using ModuleElement = std::pair<ModuleElementKind, Name>;
 
 // Visit or walk an expression to find what things are referenced.
-struct ReferenceFinder : public PostWalker<ReferenceFinder> {
+struct ReferenceFinder
+  : public PostWalker<ReferenceFinder,
+                      UnifiedExpressionVisitor<ReferenceFinder>> {
   // Our findings are placed in these data structures, which the user of this
   // code can then process.
   std::vector<ModuleElement> elements;
@@ -79,7 +74,38 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
   void noteRefFunc(Name refFunc) { refFuncs.push_back(refFunc); }
   void note(StructField structField) { structFields.push_back(structField); }
 
-  // Visitors
+  // Generic visitor
+
+  void visitExpression(Expression* curr) {
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (cast->field.is()) {                                                      \
+    note({kind, cast->field});                                                 \
+  }
+
+#include "wasm-delegations-fields.def"
+  }
+
+  // Specific visitors
 
   void visitCall(Call* curr) {
     note({ModuleElementKind::Function, curr->target});
@@ -126,95 +152,14 @@ struct ReferenceFinder : public PostWalker<ReferenceFinder> {
     noteCallRef(curr->target->type.getHeapType());
   }
 
-  void visitGlobalGet(GlobalGet* curr) {
-    note({ModuleElementKind::Global, curr->name});
-  }
-  void visitGlobalSet(GlobalSet* curr) {
-    note({ModuleElementKind::Global, curr->name});
-  }
-
-  void visitLoad(Load* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitStore(Store* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitAtomicWait(AtomicWait* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitAtomicNotify(AtomicNotify* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitSIMDLoad(SIMDLoad* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitMemoryInit(MemoryInit* curr) {
-    note({ModuleElementKind::DataSegment, curr->segment});
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitDataDrop(DataDrop* curr) {
-    note({ModuleElementKind::DataSegment, curr->segment});
-  }
-  void visitMemoryCopy(MemoryCopy* curr) {
-    note({ModuleElementKind::Memory, curr->destMemory});
-    note({ModuleElementKind::Memory, curr->sourceMemory});
-  }
-  void visitMemoryFill(MemoryFill* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitMemorySize(MemorySize* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
-  void visitMemoryGrow(MemoryGrow* curr) {
-    note({ModuleElementKind::Memory, curr->memory});
-  }
   void visitRefFunc(RefFunc* curr) { noteRefFunc(curr->func); }
-  void visitTableGet(TableGet* curr) {
-    note({ModuleElementKind::Table, curr->table});
-  }
-  void visitTableSet(TableSet* curr) {
-    note({ModuleElementKind::Table, curr->table});
-  }
-  void visitTableSize(TableSize* curr) {
-    note({ModuleElementKind::Table, curr->table});
-  }
-  void visitTableGrow(TableGrow* curr) {
-    note({ModuleElementKind::Table, curr->table});
-  }
-  void visitThrow(Throw* curr) { note({ModuleElementKind::Tag, curr->tag}); }
-  void visitTry(Try* curr) {
-    for (auto tag : curr->catchTags) {
-      note({ModuleElementKind::Tag, tag});
-    }
-  }
+
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable || curr->ref->type.isNull()) {
       return;
     }
     auto type = curr->ref->type.getHeapType();
     note(StructField{type, curr->index});
-  }
-  // TODO: use delegations-fields
-  void visitArrayNewData(ArrayNewData* curr) {
-    note({ModuleElementKind::DataSegment, curr->segment});
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    note({ModuleElementKind::ElementSegment, curr->segment});
-  }
-  void visitArrayInitData(ArrayInitData* curr) {
-    note({ModuleElementKind::DataSegment, curr->segment});
-  }
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    note({ModuleElementKind::ElementSegment, curr->segment});
   }
 };
 
@@ -492,6 +437,9 @@ struct Analyzer {
             use(expr);
           }
           break;
+        }
+        default: {
+          WASM_UNREACHABLE("invalid kind");
         }
       }
     }

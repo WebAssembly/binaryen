@@ -9,7 +9,7 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (func $foo (type $none_=>_anyref) (result anyref)
+  ;; CHECK:      (func $foo (type $0) (result anyref)
   ;; CHECK-NEXT:  (select (result (ref null $struct))
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.null none)

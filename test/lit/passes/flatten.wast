@@ -4,7 +4,7 @@
 (module
  ;; CHECK:      (type $simplefunc (func))
  (type $simplefunc (func))
- ;; CHECK:      (func $0 (type $ref|$simplefunc|_=>_ref|$simplefunc|) (param $0 (ref $simplefunc)) (result (ref $simplefunc))
+ ;; CHECK:      (func $0 (type $1) (param $0 (ref $simplefunc)) (result (ref $simplefunc))
  ;; CHECK-NEXT:  (local $1 (ref $simplefunc))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (local.get $0)

@@ -91,7 +91,7 @@ def port_test(args, test):
                 continue
             os.remove(f)
             if args.git_add:
-                subprocess.rcheck_call(['git', 'add', f])
+                subprocess.check_call(['git', 'add', f])
 
     if args.git_add:
         subprocess.check_call(['git', 'add', dest])

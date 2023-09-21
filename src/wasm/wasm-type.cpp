@@ -85,7 +85,7 @@ struct HeapTypeInfo {
   // Used in assertions to ensure that temporary types don't leak into the
   // global store.
   bool isTemp = false;
-  bool isFinal = false;
+  bool isOpen = false;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -155,7 +155,8 @@ struct TypePrinter {
   std::ostream& print(const Tuple& tuple);
   std::ostream& print(const Field& field);
   std::ostream& print(const Signature& sig);
-  std::ostream& print(const Struct& struct_);
+  std::ostream& print(const Struct& struct_,
+                      const std::unordered_map<Index, Name>& fieldNames);
   std::ostream& print(const Array& array);
 };
 
@@ -1035,6 +1036,31 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   WASM_UNREACHABLE("unexpected type");
 }
 
+Type Type::getGreatestLowerBound(Type a, Type b) {
+  if (a == b) {
+    return a;
+  }
+  if (!a.isRef() || !b.isRef()) {
+    return Type::unreachable;
+  }
+  auto heapA = a.getHeapType();
+  auto heapB = b.getHeapType();
+  if (heapA.getBottom() != heapB.getBottom()) {
+    return Type::unreachable;
+  }
+  auto nullability =
+    (a.isNonNullable() || b.isNonNullable()) ? NonNullable : Nullable;
+  HeapType heapType;
+  if (HeapType::isSubType(heapA, heapB)) {
+    heapType = heapA;
+  } else if (HeapType::isSubType(heapB, heapA)) {
+    heapType = heapB;
+  } else {
+    heapType = heapA.getBottom();
+  }
+  return Type(heapType, nullability);
+}
+
 size_t Type::size() const {
   if (isTuple()) {
     return getTypeInfo(*this)->tuple.size();
@@ -1154,11 +1180,11 @@ bool HeapType::isBottom() const {
   return false;
 }
 
-bool HeapType::isFinal() const {
+bool HeapType::isOpen() const {
   if (isBasic()) {
     return false;
   } else {
-    return getHeapTypeInfo(*this)->isFinal;
+    return getHeapTypeInfo(*this)->isOpen;
   }
 }
 
@@ -1621,6 +1647,9 @@ void TypePrinter::printHeapTypeName(HeapType type) {
     return;
   }
   os << '$' << generator(type).name;
+#if TRACE_CANONICALIZATION
+  os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
+#endif
 }
 
 std::ostream& TypePrinter::print(Type type) {
@@ -1643,12 +1672,12 @@ std::ostream& TypePrinter::print(Type type) {
     }
   }
 
-  if (isTemp(type)) {
-    os << "(; temp ;) ";
-  }
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
+  if (isTemp(type)) {
+    os << "(; temp ;) ";
+  }
   if (type.isTuple()) {
     print(type.getTuple());
   } else if (type.isRef()) {
@@ -1734,25 +1763,20 @@ std::ostream& TypePrinter::print(HeapType type) {
     }
   }
 
-  os << "(type ";
-  printHeapTypeName(type);
-  os << " ";
+  auto names = generator(type);
+
+  os << "(type $" << names.name << ' ';
 
   if (isTemp(type)) {
     os << "(; temp ;) ";
   }
 
-#if TRACE_CANONICALIZATION
-  os << "(;" << ((type.getID() >> 4) % 1000) << ";)";
-#endif
-
-  // TODO: Use shorthand for final types once we parse MVP signatures as final.
   bool useSub = false;
   auto super = type.getSuperType();
-  if (super || type.isFinal()) {
+  if (super || type.isOpen()) {
     useSub = true;
     os << "(sub ";
-    if (type.isFinal()) {
+    if (!type.isOpen()) {
       os << "final ";
     }
     if (super) {
@@ -1763,7 +1787,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (type.isSignature()) {
     print(type.getSignature());
   } else if (type.isStruct()) {
-    print(type.getStruct());
+    print(type.getStruct(), names.fieldNames);
   } else if (type.isArray()) {
     print(type.getArray());
   } else {
@@ -1830,19 +1854,24 @@ std::ostream& TypePrinter::print(const Signature& sig) {
   return os << ')';
 }
 
-std::ostream& TypePrinter::print(const Struct& struct_) {
+std::ostream&
+TypePrinter::print(const Struct& struct_,
+                   const std::unordered_map<Index, Name>& fieldNames) {
   os << "(struct";
-  if (struct_.fields.size()) {
-    os << " (field";
-  }
-  for (const Field& field : struct_.fields) {
-    os << ' ';
-    print(field);
-  }
-  if (struct_.fields.size()) {
+  for (Index i = 0; i < struct_.fields.size(); ++i) {
+    // TODO: move this to the function for printing fields.
+    os << " (field ";
+    if (auto it = fieldNames.find(i); it != fieldNames.end()) {
+      os << '$' << it->second << ' ';
+    }
+    print(struct_.fields[i]);
     os << ')';
   }
-  return os << ')';
+  // TODO: Remove this extra space kept to minimize test diffs.
+  if (struct_.fields.size() == 0) {
+    os << ' ';
+  }
+  return os << ")";
 }
 
 std::ostream& TypePrinter::print(const Array& array) {
@@ -1916,7 +1945,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   if (info.supertype) {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
-  wasm::rehash(digest, info.isFinal);
+  wasm::rehash(digest, info.isOpen);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2039,7 +2068,7 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
       return false;
     }
   }
-  if (a.isFinal != b.isFinal) {
+  if (a.isOpen != b.isOpen) {
     return false;
   }
   if (a.kind != b.kind) {
@@ -2295,15 +2324,15 @@ void TypeBuilder::createRecGroup(size_t index, size_t length) {
     {RecGroup(uintptr_t(groupInfo.get())), std::move(groupInfo)});
 }
 
-void TypeBuilder::setFinal(size_t i, bool final) {
+void TypeBuilder::setOpen(size_t i, bool open) {
   assert(i < size() && "index out of bounds");
-  impl->entries[i].info->isFinal = final;
+  impl->entries[i].info->isOpen = open;
 }
 
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
-  if (super.isFinal) {
+  if (!super.isOpen) {
     return false;
   }
   if (sub.kind != super.kind) {
@@ -2522,8 +2551,36 @@ TypeBuilder::BuildResult TypeBuilder::build() {
 
   return {results};
 }
+  
+void TypeBuilder::dump() {
+  std::vector<HeapType> types;
+  for (size_t i = 0; i < size(); ++i) {
+    types.push_back((*this)[i]);
+  }
+  IndexedTypeNameGenerator<DefaultTypeNameGenerator> print(types);
 
-std::unordered_set<HeapType> getIgnorablePublicTypes() {
+  std::optional<RecGroup> currGroup;
+  for (auto type : types) {
+    if (auto newGroup = type.getRecGroup(); newGroup != currGroup) {
+      if (currGroup && currGroup->size() > 1) {
+        std::cerr << ")\n";
+      }
+      if (newGroup.size() > 1) {
+        std::cerr << "(rec\n";
+      }
+      currGroup = newGroup;
+    }
+    if (currGroup->size() > 1) {
+      std::cerr << "  ";
+    }
+    std::cerr << print(type) << "\n";
+  }
+  if (currGroup && currGroup->size() > 1) {
+    std::cerr << ")\n";
+  }
+}
+
+  std::unordered_set<HeapType> getIgnorablePublicTypes() {
   auto array8 = Array(Field(Field::i8, Mutable));
   auto array16 = Array(Field(Field::i16, Mutable));
   TypeBuilder builder(4);

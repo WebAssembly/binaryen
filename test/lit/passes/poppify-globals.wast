@@ -3,9 +3,9 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
+  ;; CHECK:      (type $0 (func (result i32 i64 f32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $foo (mut i32) (i32.const 0))
   (global $foo (mut i32) (i32.const 0))
@@ -31,7 +31,7 @@
 
   ;; CHECK:      (global $other-tuple$0 i32 (global.get $tuple$0))
 
-  ;; CHECK:      (func $global-get-tuple (type $none_=>_i32_i64_f32) (result i32 i64 f32)
+  ;; CHECK:      (func $global-get-tuple (type $0) (result i32 i64 f32)
   ;; CHECK-NEXT:  (global.get $tuple$0)
   ;; CHECK-NEXT:  (global.get $tuple$1_4)
   ;; CHECK-NEXT:  (global.get $tuple$2)
@@ -40,7 +40,7 @@
     (global.get $tuple)
   )
 
-  ;; CHECK:      (func $global-set-tuple (type $none_=>_none)
+  ;; CHECK:      (func $global-set-tuple (type $1)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (i64.const 1)
   ;; CHECK-NEXT:  (f32.const 2)

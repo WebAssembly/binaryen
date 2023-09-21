@@ -471,7 +471,7 @@ void test_core() {
   funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
   BinaryenExpressionRef i31refExpr =
-    BinaryenI31New(module, makeInt32(module, 1));
+    BinaryenRefI31(module, makeInt32(module, 1));
 
   // Tags
   BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
@@ -1101,9 +1101,9 @@ void test_core() {
     BinaryenMemorySize(module, "0", false),
     BinaryenMemoryGrow(module, makeInt32(module, 0), "0", false),
     // GC
-    BinaryenI31New(module, makeInt32(module, 0)),
+    BinaryenRefI31(module, makeInt32(module, 0)),
     BinaryenI31Get(module, i31refExpr, 1),
-    BinaryenI31Get(module, BinaryenI31New(module, makeInt32(module, 2)), 0),
+    BinaryenI31Get(module, BinaryenRefI31(module, makeInt32(module, 2)), 0),
     BinaryenRefTest(
       module, BinaryenGlobalGet(module, "i8Array-global", i8Array), i8Array),
     BinaryenRefCast(
@@ -2160,6 +2160,7 @@ void test_typebuilder() {
                           tempArrayType,
                           BinaryenPackedTypeNotPacked(),
                           true);
+  TypeBuilderSetOpen(builder, tempArrayIndex);
 
   // Create a recursive struct with a field of its own type
   const BinaryenIndex tempStructIndex = 1;
@@ -2173,6 +2174,7 @@ void test_typebuilder() {
     bool fieldMutables[] = {true};
     TypeBuilderSetStructType(
       builder, tempStructIndex, fieldTypes, fieldPackedTypes, fieldMutables, 1);
+    TypeBuilderSetOpen(builder, tempStructIndex);
   }
 
   // Create a recursive signature with parameter and result including its own
@@ -2189,6 +2191,7 @@ void test_typebuilder() {
       tempSignatureIndex,
       TypeBuilderGetTempTupleType(builder, (BinaryenType*)&paramTypes, 2),
       tempSignatureType);
+    TypeBuilderSetOpen(builder, tempSignatureIndex);
   }
 
   // Create a subtype (with an additional immutable packed field)
@@ -2209,10 +2212,9 @@ void test_typebuilder() {
                              fieldPackedTypes,
                              fieldMutables,
                              2);
+    TypeBuilderSetOpen(builder, tempSubStructIndex);
   }
   TypeBuilderSetSubType(builder, tempSubStructIndex, tempStructHeapType);
-
-  // TODO: Rtts (post-MVP?)
 
   // Build the type hierarchy and dispose the builder
   BinaryenHeapType heapTypes[4];
@@ -2309,6 +2311,9 @@ void test_typebuilder() {
                         varTypes,
                         4,
                         BinaryenNop(module));
+    // Also test adding a function using the HeapType-using API.
+    BinaryenAddFunctionWithHeapType(
+      module, "test2", signatureHeapType, NULL, 0, BinaryenUnreachable(module));
   }
   bool didValidate = BinaryenModuleValidate(module);
   assert(didValidate);

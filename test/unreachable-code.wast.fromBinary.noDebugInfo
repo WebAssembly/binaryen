@@ -1,32 +1,32 @@
 (module
- (type $none_=>_none (func))
- (func $0 (type $none_=>_none)
+ (type $0 (func))
+ (func $0 (type $0)
   (if
    (i32.const 1)
    (unreachable)
   )
  )
- (func $1 (type $none_=>_none)
-  (if
-   (i32.const 1)
-   (unreachable)
-   (unreachable)
-  )
- )
- (func $2 (type $none_=>_none)
-  (if
-   (i32.const 1)
-   (unreachable)
-  )
- )
- (func $3 (type $none_=>_none)
+ (func $1 (type $0)
   (if
    (i32.const 1)
    (unreachable)
    (unreachable)
   )
  )
- (func $4 (type $none_=>_none)
+ (func $2 (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+ )
+ (func $3 (type $0)
+  (if
+   (i32.const 1)
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $4 (type $0)
   (nop)
   (if
    (i32.const 1)
@@ -34,7 +34,7 @@
   )
   (nop)
  )
- (func $5 (type $none_=>_none)
+ (func $5 (type $0)
   (nop)
   (if
    (i32.const 1)
@@ -42,7 +42,7 @@
    (unreachable)
   )
  )
- (func $6 (type $none_=>_none)
+ (func $6 (type $0)
   (nop)
   (if
    (i32.const 1)
@@ -50,7 +50,7 @@
   )
   (nop)
  )
- (func $7 (type $none_=>_none)
+ (func $7 (type $0)
   (nop)
   (if
    (i32.const 1)
@@ -58,7 +58,7 @@
    (unreachable)
   )
  )
- (func $8 (type $none_=>_none)
+ (func $8 (type $0)
   (nop)
   (block $label$1
    (nop)
@@ -66,7 +66,7 @@
   )
   (nop)
  )
- (func $9 (type $none_=>_none)
+ (func $9 (type $0)
   (block $label$1
    (nop)
    (block $label$2

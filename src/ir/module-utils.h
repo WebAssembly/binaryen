@@ -17,10 +17,6 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
-#include "ir/element-utils.h"
-#include "ir/find_all.h"
-#include "ir/manipulation.h"
-#include "ir/properties.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
@@ -29,157 +25,27 @@ namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
-inline Function*
-copyFunction(Function* func, Module& out, Name newName = Name()) {
-  auto ret = std::make_unique<Function>();
-  ret->name = newName.is() ? newName : func->name;
-  ret->type = func->type;
-  ret->vars = func->vars;
-  ret->localNames = func->localNames;
-  ret->localIndices = func->localIndices;
-  ret->debugLocations = func->debugLocations;
-  ret->body = ExpressionManipulator::copy(func->body, out);
-  ret->module = func->module;
-  ret->base = func->base;
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
-  return out.addFunction(std::move(ret));
-}
+Function* copyFunction(Function* func, Module& out, Name newName = Name());
 
-inline Global* copyGlobal(Global* global, Module& out) {
-  auto* ret = new Global();
-  ret->name = global->name;
-  ret->type = global->type;
-  ret->mutable_ = global->mutable_;
-  ret->module = global->module;
-  ret->base = global->base;
-  if (global->imported()) {
-    ret->init = nullptr;
-  } else {
-    ret->init = ExpressionManipulator::copy(global->init, out);
-  }
-  out.addGlobal(ret);
-  return ret;
-}
+Global* copyGlobal(Global* global, Module& out);
 
-inline Tag* copyTag(Tag* tag, Module& out) {
-  auto* ret = new Tag();
-  ret->name = tag->name;
-  ret->sig = tag->sig;
-  ret->module = tag->module;
-  ret->base = tag->base;
-  out.addTag(ret);
-  return ret;
-}
+Tag* copyTag(Tag* tag, Module& out);
 
-inline ElementSegment* copyElementSegment(const ElementSegment* segment,
-                                          Module& out) {
-  auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
-    ret->name = segment->name;
-    ret->hasExplicitName = segment->hasExplicitName;
-    ret->type = segment->type;
-    ret->data.reserve(segment->data.size());
-    for (auto* item : segment->data) {
-      ret->data.push_back(ExpressionManipulator::copy(item, out));
-    }
+ElementSegment* copyElementSegment(const ElementSegment* segment, Module& out);
 
-    return out.addElementSegment(std::move(ret));
-  };
+Table* copyTable(const Table* table, Module& out);
 
-  if (segment->table.isNull()) {
-    return copy(std::make_unique<ElementSegment>());
-  } else {
-    auto offset = ExpressionManipulator::copy(segment->offset, out);
-    return copy(std::make_unique<ElementSegment>(segment->table, offset));
-  }
-}
+Memory* copyMemory(const Memory* memory, Module& out);
 
-inline Table* copyTable(const Table* table, Module& out) {
-  auto ret = std::make_unique<Table>();
-  ret->name = table->name;
-  ret->hasExplicitName = table->hasExplicitName;
-  ret->type = table->type;
-  ret->module = table->module;
-  ret->base = table->base;
-
-  ret->initial = table->initial;
-  ret->max = table->max;
-
-  return out.addTable(std::move(ret));
-}
-
-inline Memory* copyMemory(const Memory* memory, Module& out) {
-  auto ret = Builder::makeMemory(memory->name);
-  ret->hasExplicitName = memory->hasExplicitName;
-  ret->initial = memory->initial;
-  ret->max = memory->max;
-  ret->shared = memory->shared;
-  ret->indexType = memory->indexType;
-  ret->module = memory->module;
-  ret->base = memory->base;
-
-  return out.addMemory(std::move(ret));
-}
-
-inline DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
-  auto ret = Builder::makeDataSegment();
-  ret->name = segment->name;
-  ret->hasExplicitName = segment->hasExplicitName;
-  ret->memory = segment->memory;
-  ret->isPassive = segment->isPassive;
-  if (!segment->isPassive) {
-    auto offset = ExpressionManipulator::copy(segment->offset, out);
-    ret->offset = offset;
-  }
-  ret->data = segment->data;
-
-  return out.addDataSegment(std::move(ret));
-}
+DataSegment* copyDataSegment(const DataSegment* segment, Module& out);
 
 // Copies named toplevel module items (things of kind ModuleItemKind). See
 // copyModule() for something that also copies exports, the start function, etc.
-inline void copyModuleItems(const Module& in, Module& out) {
-  for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out);
-  }
-  for (auto& curr : in.globals) {
-    copyGlobal(curr.get(), out);
-  }
-  for (auto& curr : in.tags) {
-    copyTag(curr.get(), out);
-  }
-  for (auto& curr : in.elementSegments) {
-    copyElementSegment(curr.get(), out);
-  }
-  for (auto& curr : in.tables) {
-    copyTable(curr.get(), out);
-  }
-  for (auto& curr : in.memories) {
-    copyMemory(curr.get(), out);
-  }
-  for (auto& curr : in.dataSegments) {
-    copyDataSegment(curr.get(), out);
-  }
-}
+void copyModuleItems(const Module& in, Module& out);
 
-inline void copyModule(const Module& in, Module& out) {
-  // we use names throughout, not raw pointers, so simple copying is fine
-  // for everything *but* expressions
-  for (auto& curr : in.exports) {
-    out.addExport(std::make_unique<Export>(*curr));
-  }
-  copyModuleItems(in, out);
-  out.start = in.start;
-  out.customSections = in.customSections;
-  out.debugInfoFileNames = in.debugInfoFileNames;
-  out.features = in.features;
-  out.typeNames = in.typeNames;
-}
+void copyModule(const Module& in, Module& out);
 
-inline void clearModule(Module& wasm) {
-  wasm.~Module();
-  new (&wasm) Module;
-}
+void clearModule(Module& wasm);
 
 // Renaming
 
@@ -187,51 +53,9 @@ inline void clearModule(Module& wasm) {
 // Note that for this to work the functions themselves don't necessarily need
 // to exist.  For example, it is possible to remove a given function and then
 // call this to redirect all of its uses.
-template<typename T> inline void renameFunctions(Module& wasm, T& map) {
-  // Update the function itself.
-  for (auto& [oldName, newName] : map) {
-    if (Function* func = wasm.getFunctionOrNull(oldName)) {
-      assert(!wasm.getFunctionOrNull(newName) || func->name == newName);
-      func->name = newName;
-    }
-  }
-  wasm.updateMaps();
+template<typename T> void renameFunctions(Module& wasm, T& map);
 
-  // Update all references to it.
-  struct Updater : public WalkerPass<PostWalker<Updater>> {
-    bool isFunctionParallel() override { return true; }
-
-    T& map;
-
-    void maybeUpdate(Name& name) {
-      if (auto iter = map.find(name); iter != map.end()) {
-        name = iter->second;
-      }
-    }
-
-    Updater(T& map) : map(map) {}
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<Updater>(map);
-    }
-
-    void visitCall(Call* curr) { maybeUpdate(curr->target); }
-
-    void visitRefFunc(RefFunc* curr) { maybeUpdate(curr->func); }
-  };
-
-  Updater updater(map);
-  updater.maybeUpdate(wasm.start);
-  PassRunner runner(&wasm);
-  updater.run(&runner, &wasm);
-  updater.runOnModuleCode(&runner, &wasm);
-}
-
-inline void renameFunction(Module& wasm, Name oldName, Name newName) {
-  std::map<Name, Name> map;
-  map[oldName] = newName;
-  renameFunctions(wasm, map);
-}
+void renameFunction(Module& wasm, Name oldName, Name newName);
 
 // Convenient iteration over imported/non-imported module elements
 
@@ -414,12 +238,21 @@ struct ParallelFunctionAnalysis {
   using Func = std::function<void(Function*, T&)>;
 
   ParallelFunctionAnalysis(Module& wasm, Func work) : wasm(wasm) {
-    // Fill in map, as we operate on it in parallel (each function to its own
+    // Fill in the map as we operate on it in parallel (each function to its own
     // entry).
     for (auto& func : wasm.functions) {
       map[func.get()];
     }
 
+    doAnalysis(work);
+  }
+
+  // Perform an analysis by operating on each function, in parallel.
+  //
+  // This is called from the constructor (with the work function given there),
+  // and can also be called later as well if the user has additional operations
+  // to perform.
+  void doAnalysis(Func work) {
     // Run on the imports first. TODO: parallelize this too
     for (auto& func : wasm.functions) {
       if (func->imported()) {

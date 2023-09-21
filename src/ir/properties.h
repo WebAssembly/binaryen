@@ -117,7 +117,7 @@ inline Literal getLiteral(const Expression* curr) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
     return Literal(r->func, r->type.getHeapType());
-  } else if (auto* i = curr->dynCast<I31New>()) {
+  } else if (auto* i = curr->dynCast<RefI31>()) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
     }
@@ -359,6 +359,74 @@ inline Expression* getFallthrough(
       return curr;
     }
     curr = next;
+  }
+}
+
+// Look at all the intermediate fallthrough expressions and return the most
+// precise type we know this value will have.
+inline Type getFallthroughType(Expression* curr,
+                               const PassOptions& passOptions,
+                               Module& module) {
+  Type type = curr->type;
+  if (!type.isRef()) {
+    // Only reference types can be improved (excepting improvements to
+    // unreachable, which we leave to refinalization).
+    // TODO: Handle tuples if that ever becomes important.
+    return type;
+  }
+  while (1) {
+    auto* next = getImmediateFallthrough(curr, passOptions, module);
+    if (next == curr) {
+      return type;
+    }
+    type = Type::getGreatestLowerBound(type, next->type);
+    if (type == Type::unreachable) {
+      return type;
+    }
+    curr = next;
+  }
+}
+
+// Find the best fallthrough value ordered by refinement of heaptype, refinement
+// of nullability, and closeness to the current expression. The type of the
+// expression this function returns may be nullable even if `getFallthroughType`
+// is non-nullable, but the heap type will definitely match.
+inline Expression** getMostRefinedFallthrough(Expression** currp,
+                                              const PassOptions& passOptions,
+                                              Module& module) {
+  Expression* curr = *currp;
+  if (!curr->type.isRef()) {
+    return currp;
+  }
+  auto bestType = curr->type.getHeapType();
+  auto bestNullability = curr->type.getNullability();
+  auto** bestp = currp;
+  while (1) {
+    curr = *currp;
+    auto** nextp =
+      Properties::getImmediateFallthroughPtr(currp, passOptions, module);
+    auto* next = *nextp;
+    if (next == curr || next->type == Type::unreachable) {
+      return bestp;
+    }
+    assert(next->type.isRef());
+    auto nextType = next->type.getHeapType();
+    auto nextNullability = next->type.getNullability();
+    if (nextType == bestType) {
+      // Heap types match: refine nullability if possible.
+      if (bestNullability == Nullable && nextNullability == NonNullable) {
+        bestp = nextp;
+        bestNullability = NonNullable;
+      }
+    } else {
+      // Refine heap type if possible, resetting nullability.
+      if (HeapType::isSubType(nextType, bestType)) {
+        bestp = nextp;
+        bestNullability = nextNullability;
+        bestType = nextType;
+      }
+    }
+    currp = nextp;
   }
 }
 

@@ -321,6 +321,10 @@ Advanced optimization techniques in the Binaryen optimizer include
 [Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
 [Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
 
+See the
+[Optimizer Cookbook wiki page](https://github.com/WebAssembly/binaryen/wiki/Optimizer-Cookbook)
+for more on how to use the optimizer effectively.
+
 Binaryen also contains various passes that do other things than optimizations,
 like
 [legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LegalizeJSInterface.cpp),
@@ -813,6 +817,98 @@ a possible bug. See [the wiki page](https://github.com/WebAssembly/binaryen/wiki
    carefully track memory of individual nodes. Instead, we allocate all elements
    of a module in an arena, and the entire arena can be freed when the module is
    no longer needed.
+
+## Debug Info Support
+
+### Source Maps
+
+Binaryen can read and write source maps (see the `-ism` and `-osm` flags to
+`wasm-opt`). It can also read and read source map annotations in the text
+format, that is,
+
+```wat
+;;@ src.cpp:100:33
+(i32.const 42)
+```
+
+That 42 constant is annotated as appearing in a file called `src.cpp` at line
+`100` and column `33`. Source maps and text format annotations are
+interchangeable, that is, they both lead to the same IR representation, so you
+can start with an annotated wat and have Binaryen write that to a binary + a
+source map file, or read a binary + source map file and print text which will
+contain those annotations.
+
+The IR representation of source map info is simple: in each function we have a
+map of expressions to their locations. Optimization passes should update the
+map as relevant. Often this "just works" because the optimizer tries to reuse
+nodes when possible, so they keep the same debug info.
+
+#### Shorthand notation
+
+The text format annotations support a shorthand in which repeated annotations
+are not necessary. For example, children are tagged with the debug info of the
+parent, if they have no annotation of their own:
+
+```wat
+;;@ src.cpp:100:33
+(i32.add
+  (i32.const 41)      ;; This receives an annotation of src.cpp:100:33
+  ;;@ src.cpp:111:44
+  (i32.const 1)
+)
+```
+
+The first const will have debug info identical to the parent, because it has
+none specified, and generally such nesting indicates a "bundle" of instructions
+that all implement the same source code.
+
+Note that text printing will not emit such repeated annotations, which can be
+confusing. To print out all the annotations, set `BINARYEN_PRINT_FULL=1` in the
+environment. That will print this for the above `add`:
+
+```wat
+[i32] ;;@ src.cpp:100:33
+(i32.add
+ [i32] ;;@ src.cpp:100:33
+ (i32.const 41)
+ [i32] ;;@ src.cpp:111:44
+ (i32.const 1)
+)
+```
+
+(full print mode also adds a `[type]` for each expression, right before the
+debug location).
+
+There is no shorthand in the binary format. That is, roundtripping (writing and
+reading) through a binary + source map should not change which expressions have
+debug info on them or the contents of that info.
+
+#### Implementation Details
+
+The [source maps format](https://sourcemaps.info/spec.html) defines a mapping
+using *segments*, that is, if a segment starts at binary offset 10 then it
+applies to all instructions at that offset and until another segment begins (or
+the end of the input is reached). Binaryen's IR represents a mapping from
+expressions to locations, as mentioned, so we need to map to and from the
+segment-based format when writing and reading source maps.
+
+That is mostly straightforward, but one thing we need to do is to handle the
+lack of debug info in between things that have it. If we have `A B C` where `B`
+lacks debug info, then just emitting a segment for `A` and `C` would lead `A`'s
+segment to also cover `B`, since in source maps segments do not have a size -
+rather they end when a new segment begins. To avoid `B` getting smeared in this
+manner, we emit a source maps entry to `B` of size 1, which just marks the
+binary offset it has, and without the later 3 fields of the source file, line
+number, and column. (This appears to be the intent of the source maps spec, and
+works in browsers and tools.)
+
+### DWARF
+
+Binaryen also has optional support for DWARF. This primarily just tracks the
+locations of expressions and rewrites the DWARF's locations accordingly; it does
+not handle things like re-indexing of locals, and so passes that might break
+DWARF are disabled by default. As a result, this mode is not suitable for a
+fully optimized release build, but it can be useful for local debugging.
 
 ## FAQ
 

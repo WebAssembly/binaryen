@@ -1,11 +1,11 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_none (func))
- (import "import" "import" (func $import (type $i32_i32_=>_none) (param i32 i32)))
+ (type $0 (func (param i32 i32)))
+ (type $1 (func))
+ (import "import" "import" (func $import (type $0) (param i32 i32)))
  (memory $0 256 256)
  (data $0 (i32.const 10) "__s______________")
  (export "test1" (func $test1_2))
- (func $test1_2 (type $none_=>_none)
+ (func $test1_2 (type $1)
   (call $import
    (i32.const 1)
    (i32.const 50)

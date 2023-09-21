@@ -24,9 +24,12 @@
 #include <pass.h>
 #include <pretty_printing.h>
 #include <wasm-stack.h>
+#include <wasm-type-printing.h>
 #include <wasm.h>
 
 namespace wasm {
+
+struct PrintSExpression;
 
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
@@ -37,8 +40,7 @@ static std::ostream& printExpression(Expression* expression,
 static std::ostream&
 printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
 
-static std::ostream&
-printStackIR(StackIR* ir, std::ostream& o, Function* func = nullptr);
+static std::ostream& printStackIR(StackIR* ir, PrintSExpression&);
 
 namespace {
 
@@ -81,314 +83,6 @@ std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
     name = Name::fromInt(index);
   }
   return printName(name, o);
-}
-
-bool maybePrintRefShorthand(std::ostream& o, Type type) {
-  if (!type.isRef()) {
-    return false;
-  }
-  auto heapType = type.getHeapType();
-  if (heapType.isBasic() && type.isNullable()) {
-    switch (heapType.getBasic()) {
-      case HeapType::ext:
-        o << "externref";
-        return true;
-      case HeapType::func:
-        o << "funcref";
-        return true;
-      case HeapType::any:
-        o << "anyref";
-        return true;
-      case HeapType::eq:
-        o << "eqref";
-        return true;
-      case HeapType::i31:
-        o << "i31ref";
-        return true;
-      case HeapType::struct_:
-        o << "structref";
-        return true;
-      case HeapType::array:
-        o << "arrayref";
-        return true;
-      case HeapType::string:
-        o << "stringref";
-        return true;
-      case HeapType::stringview_wtf8:
-        o << "stringview_wtf8";
-        return true;
-      case HeapType::stringview_wtf16:
-        o << "stringview_wtf16";
-        return true;
-      case HeapType::stringview_iter:
-        o << "stringview_iter";
-        return true;
-      case HeapType::none:
-        o << "nullref";
-        return true;
-      case HeapType::noext:
-        o << "nullexternref";
-        return true;
-      case HeapType::nofunc:
-        o << "nullfuncref";
-        return true;
-    }
-  }
-  return false;
-}
-
-// Helper for printing the name of a type. This output is guaranteed to not
-// contain spaces.
-struct TypeNamePrinter {
-  // Optional. If present, the module's HeapType names will be used.
-  Module* wasm;
-
-  // Keep track of the first depth at which we see each HeapType so if we see it
-  // again, we can unambiguously refer to it without infinitely recursing.
-  size_t currHeapTypeDepth = 0;
-  std::unordered_map<HeapType, size_t> heapTypeDepths;
-
-  // The stream we are printing to.
-  std::ostream& os;
-
-  TypeNamePrinter(std::ostream& os, Module* wasm = nullptr)
-    : wasm(wasm), os(os) {}
-
-  void print(Type type);
-  void print(HeapType heapType);
-  void print(const Tuple& tuple);
-  void print(const Field& field);
-  void print(const Signature& sig);
-  void print(const Struct& struct_);
-  void print(const Array& array);
-
-  // FIXME: This hard limit on how many times we call print() avoids extremely
-  //        large outputs, which can be inconveniently large in some cases, but
-  //        we should have a better mechanism for this.
-  static const size_t MaxPrints = 100;
-
-  size_t prints = 0;
-
-  bool exceededLimit() {
-    if (prints >= MaxPrints) {
-      os << "?";
-      return true;
-    }
-    prints++;
-    return false;
-  }
-};
-
-void TypeNamePrinter::print(Type type) {
-  if (exceededLimit()) {
-    return;
-  }
-  if (type.isBasic()) {
-    os << type;
-  } else if (type.isTuple()) {
-    print(type.getTuple());
-  } else if (type.isRef()) {
-    if (!maybePrintRefShorthand(os, type)) {
-      os << "ref";
-      if (type.isNullable()) {
-        os << "?";
-      }
-      os << '|';
-      print(type.getHeapType());
-      os << '|';
-    }
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-}
-
-void TypeNamePrinter::print(HeapType type) {
-  if (exceededLimit()) {
-    return;
-  }
-  if (type.isBasic()) {
-    os << type;
-    return;
-  }
-  // If there is a name for this type in this module, use it.
-  // FIXME: in theory there could be two types, one with a name, and one
-  // without, and the one without gets an automatic name that matches the
-  // other's. To check for that, if (first) we could assert at the very end of
-  // this function that the automatic name is not present in the given names.
-  if (wasm && wasm->typeNames.count(type)) {
-    os << '$' << wasm->typeNames[type].name;
-    return;
-  }
-  // If we have seen this HeapType before, just print its relative depth instead
-  // of infinitely recursing.
-  auto it = heapTypeDepths.find(type);
-  if (it != heapTypeDepths.end()) {
-    assert(it->second <= currHeapTypeDepth);
-    size_t relativeDepth = currHeapTypeDepth - it->second;
-    os << "..." << relativeDepth;
-    return;
-  }
-
-  // If this is the top-level heap type, add a $
-  if (currHeapTypeDepth == 0) {
-    os << "$";
-  }
-
-  // Update the context for the current HeapType before recursing.
-  heapTypeDepths[type] = ++currHeapTypeDepth;
-
-  if (type.isSignature()) {
-    print(type.getSignature());
-  } else if (type.isStruct()) {
-    print(type.getStruct());
-  } else if (type.isArray()) {
-    print(type.getArray());
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-
-  // Restore the previous context after the recursion.
-  heapTypeDepths.erase(type);
-  --currHeapTypeDepth;
-}
-
-void TypeNamePrinter::print(const Tuple& tuple) {
-  auto sep = "";
-  for (auto type : tuple) {
-    os << sep;
-    sep = "_";
-    print(type);
-  }
-}
-
-void TypeNamePrinter::print(const Field& field) {
-  if (field.mutable_) {
-    os << "mut:";
-  }
-  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
-    if (field.packedType == Field::i8) {
-      os << "i8";
-    } else if (field.packedType == Field::i16) {
-      os << "i16";
-    } else {
-      WASM_UNREACHABLE("invalid packed type");
-    }
-  } else {
-    print(field.type);
-  }
-}
-
-void TypeNamePrinter::print(const Signature& sig) {
-  // TODO: Switch to using an unambiguous delimiter rather than differentiating
-  // only the top level with a different arrow.
-  print(sig.params);
-  if (currHeapTypeDepth == 1) {
-    os << "_=>_";
-  } else {
-    os << "_->_";
-  }
-  print(sig.results);
-}
-
-void TypeNamePrinter::print(const Struct& struct_) {
-  os << '{';
-  auto sep = "";
-  for (const auto& field : struct_.fields) {
-    os << sep;
-    sep = "_";
-    print(field);
-  }
-  os << '}';
-}
-
-void TypeNamePrinter::print(const Array& array) {
-  os << '[';
-  print(array.element);
-  os << ']';
-}
-
-std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
-  if (type.isBasic()) {
-    o << type;
-  } else if (type.isTuple()) {
-    o << '(';
-    auto sep = "";
-    for (const auto& t : type) {
-      o << sep;
-      printType(o, t, wasm);
-      sep = " ";
-    }
-    o << ')';
-  } else if (type.isRef()) {
-    if (!maybePrintRefShorthand(o, type)) {
-      o << "(ref ";
-      if (type.isNullable()) {
-        o << "null ";
-      }
-      TypeNamePrinter(o, wasm).print(type.getHeapType());
-      o << ')';
-    }
-  } else {
-    WASM_UNREACHABLE("unexpected type");
-  }
-  return o;
-}
-
-std::ostream& printHeapType(std::ostream& o, HeapType type, Module* wasm) {
-  TypeNamePrinter(o, wasm).print(type);
-  return o;
-}
-
-std::ostream& printPrefixedTypes(std::ostream& o,
-                                 const char* prefix,
-                                 Type type,
-                                 Module* wasm) {
-  o << '(' << prefix;
-  if (type == Type::none) {
-    return o << ')';
-  }
-  if (type.isTuple()) {
-    // Tuple types are not printed in parens, we can just emit them one after
-    // the other in the same list as the "result".
-    for (auto t : type) {
-      o << ' ';
-      printType(o, t, wasm);
-    }
-  } else {
-    o << ' ';
-    printType(o, type, wasm);
-  }
-  o << ')';
-  return o;
-}
-
-std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
-  return printPrefixedTypes(o, "result", type, wasm);
-}
-
-std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
-  return printPrefixedTypes(o, "param", type, wasm);
-}
-
-// Generic processing of a struct's field, given an optional module. Calls func
-// with the field name, if it is present, or with a null Name if not.
-template<typename T>
-void processFieldName(Module* wasm, HeapType type, Index index, T func) {
-  if (wasm) {
-    auto it = wasm->typeNames.find(type);
-    if (it != wasm->typeNames.end()) {
-      auto& fieldNames = it->second.fieldNames;
-      auto it = fieldNames.find(index);
-      if (it != fieldNames.end()) {
-        auto name = it->second;
-        if (name.is()) {
-          func(it->second);
-          return;
-        }
-      }
-    }
-  }
-  func(Name());
 }
 
 std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
@@ -452,20 +146,229 @@ static Type forceConcrete(Type type) {
   return type.isConcrete() ? type : Type::i32;
 }
 
+struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
+  std::ostream& o;
+  unsigned indent = 0;
+
+  bool minify;
+  const char* maybeSpace;
+  const char* maybeNewLine;
+
+  bool full = false;    // whether to not elide nodes in output when possible
+                        // (like implicit blocks) and to emit types
+  bool stackIR = false; // whether to print stack IR if it is present
+                        // (if false, and Stack IR is there, we just
+                        // note it exists)
+
+  Module* currModule = nullptr;
+  Function* currFunction = nullptr;
+  Function::DebugLocation lastPrintedLocation;
+  bool debugInfo;
+
+  // Used to print delegate's depth argument when it throws to the caller
+  int controlFlowDepth = 0;
+
+  std::vector<HeapType> heapTypes;
+
+  // Track the print indent so that we can see when it changes. That affects how
+  // we print debug annotations. In particular, we don't want to print repeated
+  // debug locations for children, like this:
+  //
+  //  ;;@ file.cpp:20:4
+  //  (block
+  //    ;; no need to annotate here; children have the parent's location by
+  //    ;; default anyhow
+  //    (nop)
+  //
+  // But we do want to print an annotation even if it repeats if it is not a
+  // child:
+  //
+  //  ;;@ file.cpp:20:4
+  //  (block)
+  //  ;;@ file.cpp:20:4 - this is clearer to annotate, to avoid confusion with
+  //                      the case where there is no debug info on the nop
+  //  (nop)
+  //
+  unsigned lastPrintIndent = 0;
+
+  // Print type names by saved name or index if we have a module, or otherwise
+  // by generating minimalist names. TODO: Handle conflicts between
+  // user-provided names and the fallback indexed names.
+  struct TypePrinter : TypeNameGeneratorBase<TypePrinter> {
+    PrintSExpression& parent;
+    IndexedTypeNameGenerator<> fallback;
+
+    TypePrinter(PrintSExpression& parent, const std::vector<HeapType>& types)
+      : parent(parent), fallback(types) {}
+
+    TypeNames getNames(HeapType type) {
+      if (parent.currModule) {
+        if (auto it = parent.currModule->typeNames.find(type);
+            it != parent.currModule->typeNames.end()) {
+          return it->second;
+        }
+      }
+      return fallback.getNames(type);
+    }
+
+    Name getName(HeapType type) { return getNames(type).name; }
+  } typePrinter;
+
+  PrintSExpression(std::ostream& o) : o(o), typePrinter(*this, heapTypes) {
+    setMinify(false);
+    if (!full) {
+      full = isFullForced();
+    }
+  }
+
+  void setModule(Module* module);
+
+  std::ostream& printType(Type type) { return o << typePrinter(type); }
+
+  std::ostream& printHeapType(HeapType type) {
+    if (type.isBasic()) {
+      return o << type;
+    }
+    return o << '$' << typePrinter.getNames(type).name;
+  }
+
+  std::ostream& printPrefixedTypes(const char* prefix, Type type);
+
+  std::ostream& printResultType(Type type) {
+    return printPrefixedTypes("result", type);
+  }
+
+  std::ostream& printParamType(Type type) {
+    return printPrefixedTypes("param", type);
+  }
+
+  void printDebugLocation(const Function::DebugLocation& location);
+  void printDebugLocation(Expression* curr);
+
+  // Prints debug info for a delimiter in an expression.
+  void printDebugDelimiterLocation(Expression* curr, Index i);
+
+  void printExpressionContents(Expression* curr);
+
+  void visit(Expression* curr) {
+    printDebugLocation(curr);
+    UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
+  }
+
+  void setMinify(bool minify_) {
+    minify = minify_;
+    maybeSpace = minify ? "" : " ";
+    maybeNewLine = minify ? "" : "\n";
+  }
+
+  void setFull(bool full_) { full = full_; }
+
+  void setStackIR(bool stackIR_) { stackIR = stackIR_; }
+
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
+
+  void incIndent();
+  void decIndent();
+  void printFullLine(Expression* expression);
+
+  // loop, if, and try can contain implicit blocks. But they are not needed to
+  // be printed in some cases.
+  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts);
+
+  // Generic visitor, overridden only when necessary.
+  void visitExpression(Expression* curr);
+
+  void visitBlock(Block* curr);
+  void visitIf(If* curr);
+  void visitLoop(Loop* curr);
+  void visitTry(Try* curr);
+  void maybePrintUnreachableReplacement(Expression* curr, Type type);
+  void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
+  void visitCallRef(CallRef* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->target->type);
+  }
+  void visitRefCast(RefCast* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitStructNew(StructNew* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitStructSet(StructSet* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  void visitStructGet(StructGet* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  void visitArrayNew(ArrayNew* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewData(ArrayNewData* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    maybePrintUnreachableReplacement(curr, curr->type);
+  }
+  void visitArraySet(ArraySet* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  void visitArrayGet(ArrayGet* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  // Module-level visitors
+  void handleSignature(HeapType curr, Name name = Name());
+  void visitExport(Export* curr);
+  void emitImportHeader(Importable* curr);
+  void visitGlobal(Global* curr);
+  void emitGlobalType(Global* curr);
+  void visitImportedGlobal(Global* curr);
+  void visitDefinedGlobal(Global* curr);
+  void visitFunction(Function* curr);
+  void visitImportedFunction(Function* curr);
+  void visitDefinedFunction(Function* curr);
+  void visitTag(Tag* curr);
+  void visitImportedTag(Tag* curr);
+  void visitDefinedTag(Tag* curr);
+  void printTableHeader(Table* curr);
+  void visitTable(Table* curr);
+  void visitElementSegment(ElementSegment* curr);
+  void printMemoryHeader(Memory* curr);
+  void visitMemory(Memory* curr);
+  void visitDataSegment(DataSegment* curr);
+  void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection);
+  void visitModule(Module* curr);
+};
+
 // Prints the internal contents of an expression: everything but
 // the children.
 struct PrintExpressionContents
   : public OverriddenVisitor<PrintExpressionContents> {
+  PrintSExpression& parent;
   Module* wasm = nullptr;
   Function* currFunction = nullptr;
   std::ostream& o;
   FeatureSet features;
 
-  PrintExpressionContents(Module* wasm, Function* currFunction, std::ostream& o)
-    : wasm(wasm), currFunction(currFunction), o(o), features(wasm->features) {}
+  PrintExpressionContents(PrintSExpression& parent)
+    : parent(parent), wasm(parent.currModule),
+      currFunction(parent.currFunction), o(parent.o),
+      features(wasm ? wasm->features : FeatureSet::All) {}
 
-  PrintExpressionContents(Function* currFunction, std::ostream& o)
-    : currFunction(currFunction), o(o), features(FeatureSet::All) {}
+  std::ostream& printType(Type type) { return parent.printType(type); }
+
+  std::ostream& printHeapType(HeapType type) {
+    return parent.printHeapType(type);
+  }
+
+  std::ostream& printResultType(Type type) {
+    return parent.printResultType(type);
+  }
+
+  std::ostream& printParamType(Type type) {
+    return parent.printParamType(type);
+  }
 
   void visitBlock(Block* curr) {
     printMedium(o, "block");
@@ -475,14 +378,14 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      printResultType(curr->type);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      printResultType(curr->type);
     }
   }
   void visitLoop(Loop* curr) {
@@ -493,7 +396,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      printResultType(curr->type);
     }
   }
   void visitBreak(Break* curr) {
@@ -536,7 +439,7 @@ struct PrintExpressionContents
     o << '(';
     printMinor(o, "type ");
 
-    TypeNamePrinter(o, wasm).print(curr->heapType);
+    printHeapType(curr->heapType);
 
     o << ')';
   }
@@ -1983,7 +1886,7 @@ struct PrintExpressionContents
     restoreNormalColor(o);
     if (curr->type.isRef()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      printResultType(curr->type);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
@@ -1998,7 +1901,7 @@ struct PrintExpressionContents
   }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    printHeapType(o, curr->type.getHeapType(), wasm);
+    printHeapType(curr->type.getHeapType());
   }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
@@ -2022,6 +1925,10 @@ struct PrintExpressionContents
     printMedium(o, "table.grow ");
     printName(curr->table, o);
   }
+  void visitTableFill(TableFill* curr) {
+    printMedium(o, "table.fill ");
+    printName(curr->table, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -2030,7 +1937,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(o, curr->type, wasm);
+      printResultType(curr->type);
     }
   }
   void visitThrow(Throw* curr) {
@@ -2047,7 +1954,7 @@ struct PrintExpressionContents
     prepareColor(o) << "pop";
     for (auto type : curr->type) {
       o << ' ';
-      printType(o, type, wasm);
+      printType(type);
     }
     restoreNormalColor(o);
   }
@@ -2056,7 +1963,7 @@ struct PrintExpressionContents
     printMedium(o, "tuple.extract ");
     o << curr->index;
   }
-  void visitI31New(I31New* curr) { printMedium(o, "i31.new"); }
+  void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
@@ -2089,57 +1996,18 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, curr->isReturn ? "return_call_ref " : "call_ref ");
-    printHeapType(o, curr->target->type.getHeapType(), wasm);
+    printHeapType(curr->target->type.getHeapType());
   }
   void visitRefTest(RefTest* curr) {
-    // TODO: These instructions are deprecated. Remove them.
-    if (auto type = curr->castType.getHeapType();
-        curr->castType.isNonNullable() && type.isBasic()) {
-      switch (type.getBasic()) {
-        case HeapType::func:
-          printMedium(o, "ref.is_func");
-          return;
-        case HeapType::i31:
-          printMedium(o, "ref.is_i31");
-          return;
-        default:
-          break;
-      }
-    }
     printMedium(o, "ref.test ");
-    if (curr->castType.isNullable()) {
-      printMedium(o, "null ");
-    }
-    printHeapType(o, curr->castType.getHeapType(), wasm);
+    printType(curr->castType);
   }
   void visitRefCast(RefCast* curr) {
     if (printUnreachableReplacement(curr)) {
       return;
     }
-    if (curr->safety == RefCast::Unsafe) {
-      printMedium(o, "ref.cast_nop ");
-    } else {
-      // TODO: These instructions are deprecated. Remove them.
-      if (auto type = curr->type.getHeapType();
-          type.isBasic() && curr->type.isNonNullable()) {
-        switch (type.getBasic()) {
-          case HeapType::func:
-            printMedium(o, "ref.as_func");
-            return;
-          case HeapType::i31:
-            printMedium(o, "ref.as_i31");
-            return;
-          default:
-            break;
-        }
-      }
-      if (curr->type.isNullable()) {
-        printMedium(o, "ref.cast null ");
-      } else {
-        printMedium(o, "ref.cast ");
-      }
-    }
-    printHeapType(o, curr->type.getHeapType(), wasm);
+    printMedium(o, "ref.cast ");
+    printType(curr->type);
   }
 
   void visitBrOn(BrOn* curr) {
@@ -2153,52 +2021,20 @@ struct PrintExpressionContents
         printName(curr->name, o);
         return;
       case BrOnCast:
-        // TODO: These instructions are deprecated, so stop emitting them.
-        if (auto type = curr->castType.getHeapType();
-            type.isBasic() && curr->castType.isNonNullable()) {
-          switch (type.getBasic()) {
-            case HeapType::func:
-              printMedium(o, "br_on_func ");
-              printName(curr->name, o);
-              return;
-            case HeapType::i31:
-              printMedium(o, "br_on_i31 ");
-              printName(curr->name, o);
-              return;
-            default:
-              break;
-          }
-        }
         printMedium(o, "br_on_cast ");
         printName(curr->name, o);
         o << ' ';
-        printType(o, curr->ref->type, wasm);
+        printType(curr->ref->type);
         o << ' ';
-        printType(o, curr->castType, wasm);
+        printType(curr->castType);
         return;
       case BrOnCastFail:
-        // TODO: These instructions are deprecated, so stop emitting them.
-        if (auto type = curr->castType.getHeapType();
-            type.isBasic() && curr->castType.isNonNullable()) {
-          switch (type.getBasic()) {
-            case HeapType::func:
-              printMedium(o, "br_on_non_func ");
-              printName(curr->name, o);
-              return;
-            case HeapType::i31:
-              printMedium(o, "br_on_non_i31 ");
-              printName(curr->name, o);
-              return;
-            default:
-              break;
-          }
-        }
         printMedium(o, "br_on_cast_fail ");
         printName(curr->name, o);
         o << ' ';
-        printType(o, curr->ref->type, wasm);
+        printType(curr->ref->type);
         o << ' ';
-        printType(o, curr->castType, wasm);
+        printType(curr->castType);
         return;
     }
     WASM_UNREACHABLE("Unexpected br_on* op");
@@ -2212,16 +2048,15 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(curr->type.getHeapType());
   }
   void printFieldName(HeapType type, Index index) {
-    processFieldName(wasm, type, index, [&](Name name) {
-      if (name.is()) {
-        o << '$' << name;
-      } else {
-        o << index;
-      }
-    });
+    auto names = parent.typePrinter.getNames(type).fieldNames;
+    if (auto it = names.find(index); it != names.end()) {
+      o << '$' << it->second;
+    } else {
+      o << index;
+    }
   }
   void visitStructGet(StructGet* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
@@ -2238,7 +2073,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.get ");
     }
-    TypeNamePrinter(o, wasm).print(heapType);
+    printHeapType(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2248,7 +2083,7 @@ struct PrintExpressionContents
     }
     printMedium(o, "struct.set ");
     auto heapType = curr->ref->type.getHeapType();
-    TypeNamePrinter(o, wasm).print(heapType);
+    printHeapType(heapType);
     o << ' ';
     printFieldName(heapType, curr->index);
   }
@@ -2261,7 +2096,7 @@ struct PrintExpressionContents
       printMedium(o, "_default");
     }
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(curr->type.getHeapType());
   }
   void visitArrayNewData(ArrayNewData* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2269,7 +2104,7 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.new_data");
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(curr->type.getHeapType());
     o << " $" << curr->segment;
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
@@ -2278,7 +2113,7 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.new_elem");
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(curr->type.getHeapType());
     o << " $" << curr->segment;
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
@@ -2287,7 +2122,9 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.new_fixed");
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->type.getHeapType());
+    printHeapType(curr->type.getHeapType());
+    o << ' ';
+    o << curr->values.size();
   }
   void visitArrayGet(ArrayGet* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
@@ -2303,14 +2140,14 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "array.get ");
     }
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    printHeapType(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.set ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
@@ -2319,23 +2156,23 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "array.copy ");
-    TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    printHeapType(curr->destRef->type.getHeapType());
     o << ' ';
-    TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
+    printHeapType(curr->srcRef->type.getHeapType());
   }
   void visitArrayFill(ArrayFill* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.fill ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayInitData(ArrayInitData* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.init_data ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    printHeapType(curr->ref->type.getHeapType());
     o << " $" << curr->segment;
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
@@ -2343,7 +2180,7 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "array.init_elem ");
-    TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+    printHeapType(curr->ref->type.getHeapType());
     o << " $" << curr->segment;
   }
   void visitRefAs(RefAs* curr) {
@@ -2365,32 +2202,32 @@ struct PrintExpressionContents
     switch (curr->op) {
       case StringNewUTF8:
         if (!curr->try_) {
-          printMedium(o, "string.new_wtf8 utf8");
+          printMedium(o, "string.new_utf8");
         } else {
           printMedium(o, "string.new_utf8_try");
         }
         break;
       case StringNewWTF8:
-        printMedium(o, "string.new_wtf8 wtf8");
+        printMedium(o, "string.new_wtf8");
         break;
       case StringNewLossyUTF8:
-        printMedium(o, "string.new_wtf8 replace");
+        printMedium(o, "string.new_lossy_utf8");
         break;
       case StringNewWTF16:
         printMedium(o, "string.new_wtf16");
         break;
       case StringNewUTF8Array:
         if (!curr->try_) {
-          printMedium(o, "string.new_wtf8_array utf8");
+          printMedium(o, "string.new_utf8_array");
         } else {
           printMedium(o, "string.new_utf8_array_try");
         }
         break;
       case StringNewWTF8Array:
-        printMedium(o, "string.new_wtf8_array wtf8");
+        printMedium(o, "string.new_wtf8_array");
         break;
       case StringNewLossyUTF8Array:
-        printMedium(o, "string.new_wtf8_array replace");
+        printMedium(o, "string.new_lossy_utf8_array");
         break;
       case StringNewWTF16Array:
         printMedium(o, "string.new_wtf16_array");
@@ -2409,10 +2246,10 @@ struct PrintExpressionContents
   void visitStringMeasure(StringMeasure* curr) {
     switch (curr->op) {
       case StringMeasureUTF8:
-        printMedium(o, "string.measure_wtf8 utf8");
+        printMedium(o, "string.measure_utf8");
         break;
       case StringMeasureWTF8:
-        printMedium(o, "string.measure_wtf8 wtf8");
+        printMedium(o, "string.measure_wtf8");
         break;
       case StringMeasureWTF16:
         printMedium(o, "string.measure_wtf16");
@@ -2433,25 +2270,25 @@ struct PrintExpressionContents
   void visitStringEncode(StringEncode* curr) {
     switch (curr->op) {
       case StringEncodeUTF8:
-        printMedium(o, "string.encode_wtf8 utf8");
+        printMedium(o, "string.encode_utf8");
         break;
       case StringEncodeLossyUTF8:
-        printMedium(o, "string.encode_wtf8 replace");
+        printMedium(o, "string.encode_lossy_utf8");
         break;
       case StringEncodeWTF8:
-        printMedium(o, "string.encode_wtf8 wtf8");
+        printMedium(o, "string.encode_wtf8");
         break;
       case StringEncodeWTF16:
         printMedium(o, "string.encode_wtf16");
         break;
       case StringEncodeUTF8Array:
-        printMedium(o, "string.encode_wtf8_array utf8");
+        printMedium(o, "string.encode_utf8_array");
         break;
       case StringEncodeLossyUTF8Array:
-        printMedium(o, "string.encode_wtf8_array replace");
+        printMedium(o, "string.encode_lossy_utf8_array");
         break;
       case StringEncodeWTF8Array:
-        printMedium(o, "string.encode_wtf8_array wtf8");
+        printMedium(o, "string.encode_wtf8_array");
         break;
       case StringEncodeWTF16Array:
         printMedium(o, "string.encode_wtf16_array");
@@ -2528,980 +2365,872 @@ struct PrintExpressionContents
   }
 };
 
-// Prints an expression in s-expr format, including both the
-// internal contents and the nested children.
-struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
-  std::ostream& o;
-  unsigned indent = 0;
-
-  bool minify;
-  const char* maybeSpace;
-  const char* maybeNewLine;
-
-  bool full = false;    // whether to not elide nodes in output when possible
-                        // (like implicit blocks) and to emit types
-  bool stackIR = false; // whether to print stack IR if it is present
-                        // (if false, and Stack IR is there, we just
-                        // note it exists)
-
-  Module* currModule = nullptr;
-  Function* currFunction = nullptr;
-  Function::DebugLocation lastPrintedLocation;
-  bool debugInfo;
-
-  // Used to print delegate's depth argument when it throws to the caller
-  int controlFlowDepth = 0;
-
-  PrintSExpression(std::ostream& o) : o(o) {
-    setMinify(false);
-    if (!full) {
-      full = isFullForced();
-    }
+void PrintSExpression::setModule(Module* module) {
+  currModule = module;
+  if (module) {
+    heapTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*module).types;
+  } else {
+    heapTypes = {};
   }
+  // Reset the type printer for this module's types (or absence thereof).
+  typePrinter.~TypePrinter();
+  new (&typePrinter) TypePrinter(*this, heapTypes);
+}
 
-  void printDebugLocation(const Function::DebugLocation& location) {
-    if (lastPrintedLocation == location) {
-      return;
-    }
-    lastPrintedLocation = location;
-    auto fileName = currModule->debugInfoFileNames[location.fileIndex];
-    o << ";;@ " << fileName << ":" << location.lineNumber << ":"
-      << location.columnNumber << '\n';
-    doIndent(o, indent);
+std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
+                                                   Type type) {
+  o << '(' << prefix;
+  if (type == Type::none) {
+    return o << ')';
   }
-
-  void printDebugLocation(Expression* curr) {
-    if (currFunction) {
-      // show an annotation, if there is one
-      auto& debugLocations = currFunction->debugLocations;
-      auto iter = debugLocations.find(curr);
-      if (iter != debugLocations.end()) {
-        printDebugLocation(iter->second);
-      }
-      // show a binary position, if there is one
-      if (debugInfo) {
-        auto iter = currFunction->expressionLocations.find(curr);
-        if (iter != currFunction->expressionLocations.end()) {
-          Colors::grey(o);
-          o << ";; code offset: 0x" << std::hex << iter->second.start
-            << std::dec << '\n';
-          restoreNormalColor(o);
-          doIndent(o, indent);
-        }
-      }
+  if (type.isTuple()) {
+    // Tuple types are not printed in parens, we can just emit them one after
+    // the other in the same list as the "result".
+    for (auto t : type) {
+      o << ' ';
+      printType(t);
     }
+  } else {
+    o << ' ';
+    printType(type);
   }
+  o << ')';
+  return o;
+}
 
-  // Prints debug info for a delimiter in an expression.
-  void printDebugDelimiterLocation(Expression* curr, Index i) {
-    if (currFunction && debugInfo) {
-      auto iter = currFunction->delimiterLocations.find(curr);
-      if (iter != currFunction->delimiterLocations.end()) {
-        auto& locations = iter->second;
+void PrintSExpression::printDebugLocation(
+  const Function::DebugLocation& location) {
+  // Do not skip repeated debug info in full mode, for less-confusing debugging:
+  // full mode prints out everything in the most verbose manner.
+  if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
+    return;
+  }
+  lastPrintedLocation = location;
+  lastPrintIndent = indent;
+  auto fileName = currModule->debugInfoFileNames[location.fileIndex];
+  o << ";;@ " << fileName << ":" << location.lineNumber << ":"
+    << location.columnNumber << '\n';
+  doIndent(o, indent);
+}
+
+void PrintSExpression::printDebugLocation(Expression* curr) {
+  if (currFunction) {
+    // show an annotation, if there is one
+    auto& debugLocations = currFunction->debugLocations;
+    auto iter = debugLocations.find(curr);
+    if (iter != debugLocations.end()) {
+      printDebugLocation(iter->second);
+    }
+    // show a binary position, if there is one
+    if (debugInfo) {
+      auto iter = currFunction->expressionLocations.find(curr);
+      if (iter != currFunction->expressionLocations.end()) {
         Colors::grey(o);
-        o << ";; code offset: 0x" << std::hex << locations[i] << std::dec
+        o << ";; code offset: 0x" << std::hex << iter->second.start << std::dec
           << '\n';
         restoreNormalColor(o);
         doIndent(o, indent);
       }
     }
   }
+}
 
-  void printExpressionContents(Expression* curr) {
-    if (currModule) {
-      PrintExpressionContents(currModule, currFunction, o).visit(curr);
-    } else {
-      PrintExpressionContents(currFunction, o).visit(curr);
-    }
-  }
-
-  void visit(Expression* curr) {
-    printDebugLocation(curr);
-    UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
-  }
-
-  void setMinify(bool minify_) {
-    minify = minify_;
-    maybeSpace = minify ? "" : " ";
-    maybeNewLine = minify ? "" : "\n";
-  }
-
-  void setFull(bool full_) { full = full_; }
-
-  void setStackIR(bool stackIR_) { stackIR = stackIR_; }
-
-  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
-
-  void incIndent() {
-    if (minify) {
-      return;
-    }
-    o << '\n';
-    indent++;
-  }
-  void decIndent() {
-    if (!minify) {
-      assert(indent > 0);
-      indent--;
+void PrintSExpression::printDebugDelimiterLocation(Expression* curr, Index i) {
+  if (currFunction && debugInfo) {
+    auto iter = currFunction->delimiterLocations.find(curr);
+    if (iter != currFunction->delimiterLocations.end()) {
+      auto& locations = iter->second;
+      Colors::grey(o);
+      o << ";; code offset: 0x" << std::hex << locations[i] << std::dec << '\n';
+      restoreNormalColor(o);
       doIndent(o, indent);
     }
+  }
+}
+
+void PrintSExpression::printExpressionContents(Expression* curr) {
+  PrintExpressionContents(*this).visit(curr);
+}
+
+void PrintSExpression::incIndent() {
+  if (minify) {
+    return;
+  }
+  o << '\n';
+  indent++;
+}
+
+void PrintSExpression::decIndent() {
+  if (!minify) {
+    assert(indent > 0);
+    indent--;
+    doIndent(o, indent);
+  }
+  o << ')';
+}
+
+void PrintSExpression::printFullLine(Expression* expression) {
+  if (!minify) {
+    doIndent(o, indent);
+  }
+  if (full) {
+    o << "[";
+    printTypeOrName(expression->type, o, currModule);
+    o << "] ";
+  }
+  visit(expression);
+  o << maybeNewLine;
+}
+
+void PrintSExpression::maybePrintImplicitBlock(Expression* curr,
+                                               bool allowMultipleInsts) {
+  auto block = curr->dynCast<Block>();
+  if (!full && block && block->name.isNull() &&
+      (allowMultipleInsts || block->list.size() == 1)) {
+    for (auto expression : block->list) {
+      printFullLine(expression);
+    }
+  } else {
+    printFullLine(curr);
+  }
+}
+
+void PrintSExpression::visitExpression(Expression* curr) {
+  o << '(';
+  printExpressionContents(curr);
+  auto it = ChildIterator(curr);
+  if (!it.children.empty()) {
+    incIndent();
+    for (auto* child : it) {
+      printFullLine(child);
+    }
+    decIndent();
+  } else {
     o << ')';
   }
-  void printFullLine(Expression* expression) {
-    if (!minify) {
+}
+
+void PrintSExpression::visitBlock(Block* curr) {
+  // special-case Block, because Block nesting (in their first element) can be
+  // incredibly deep
+  std::vector<Block*> stack;
+  while (1) {
+    if (stack.size() > 0) {
       doIndent(o, indent);
+      printDebugLocation(curr);
     }
+    stack.push_back(curr);
     if (full) {
       o << "[";
-      printTypeOrName(expression->type, o, currModule);
-      o << "] ";
+      printTypeOrName(curr->type, o, currModule);
+      o << "]";
     }
-    visit(expression);
-    o << maybeNewLine;
-  }
-
-  // loop, if, and try can contain implicit blocks. But they are not needed to
-  // be printed in some cases.
-  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts) {
-    auto block = curr->dynCast<Block>();
-    if (!full && block && block->name.isNull() &&
-        (allowMultipleInsts || block->list.size() == 1)) {
-      for (auto expression : block->list) {
-        printFullLine(expression);
-      }
-    } else {
-      printFullLine(curr);
-    }
-  }
-
-  // Generic visitor, overridden only when necessary.
-  void visitExpression(Expression* curr) {
     o << '(';
     printExpressionContents(curr);
-    auto it = ChildIterator(curr);
-    if (!it.children.empty()) {
-      incIndent();
-      for (auto* child : it) {
-        printFullLine(child);
-      }
-      decIndent();
+    incIndent();
+    if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
+      // recurse into the first element
+      curr = curr->list[0]->cast<Block>();
+      continue;
     } else {
-      o << ')';
+      break; // that's all we can recurse, start to unwind
     }
   }
 
-  void visitBlock(Block* curr) {
-    // special-case Block, because Block nesting (in their first element) can be
-    // incredibly deep
-    std::vector<Block*> stack;
-    while (1) {
-      if (stack.size() > 0) {
-        doIndent(o, indent);
-        printDebugLocation(curr);
-      }
-      stack.push_back(curr);
-      if (full) {
-        o << "[";
-        printTypeOrName(curr->type, o, currModule);
-        o << "]";
-      }
-      o << '(';
-      printExpressionContents(curr);
-      incIndent();
-      if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
-        // recurse into the first element
-        curr = curr->list[0]->cast<Block>();
-        continue;
-      } else {
-        break; // that's all we can recurse, start to unwind
-      }
-    }
-
-    controlFlowDepth += stack.size();
-    auto* top = stack.back();
-    while (stack.size() > 0) {
-      curr = stack.back();
-      stack.pop_back();
-      auto& list = curr->list;
-      for (size_t i = 0; i < list.size(); i++) {
-        if (curr != top && i == 0) {
-          // one of the block recursions we already handled
-          decIndent();
-          if (full) {
-            o << " ;; end block";
-            auto* child = list[0]->cast<Block>();
-            if (child->name.is()) {
-              o << ' ' << child->name;
-            }
+  controlFlowDepth += stack.size();
+  auto* top = stack.back();
+  while (stack.size() > 0) {
+    curr = stack.back();
+    stack.pop_back();
+    auto& list = curr->list;
+    for (size_t i = 0; i < list.size(); i++) {
+      if (curr != top && i == 0) {
+        // one of the block recursions we already handled
+        decIndent();
+        if (full) {
+          o << " ;; end block";
+          auto* child = list[0]->cast<Block>();
+          if (child->name.is()) {
+            o << ' ' << child->name;
           }
-          o << '\n';
-          continue;
         }
-        printFullLine(list[i]);
+        o << '\n';
+        continue;
       }
-      controlFlowDepth--;
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end block";
-      if (curr->name.is()) {
-        o << ' ' << curr->name;
-      }
-    }
-  }
-  void visitIf(If* curr) {
-    controlFlowDepth++;
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->condition);
-    maybePrintImplicitBlock(curr->ifTrue, false);
-    if (curr->ifFalse) {
-      // Note: debug info here is not used as LLVM does not emit ifs, and since
-      // LLVM is the main source of DWARF, effectively we never encounter ifs
-      // with DWARF.
-      printDebugDelimiterLocation(curr, BinaryLocations::Else);
-      maybePrintImplicitBlock(curr->ifFalse, false);
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end if";
+      printFullLine(list[i]);
     }
     controlFlowDepth--;
   }
-  void visitLoop(Loop* curr) {
-    controlFlowDepth++;
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    maybePrintImplicitBlock(curr->body, true);
-    decIndent();
-    if (full) {
-      o << " ;; end loop";
-      if (curr->name.is()) {
-        o << ' ' << curr->name;
-      }
+  decIndent();
+  if (full) {
+    o << " ;; end block";
+    if (curr->name.is()) {
+      o << ' ' << curr->name;
     }
-    controlFlowDepth--;
   }
-  // try-catch-end is written in the folded wat format as
-  // (try
-  //  (do
-  //   ...
-  //  )
-  //  (catch $e
-  //    ...
-  //  )
-  //  ...
-  //  (catch_all
-  //    ...
-  //  )
-  // )
-  // The parenthesis wrapping do/catch/catch_all is just a syntax and does not
-  // affect nested depths of instructions within.
-  //
-  // try-delegate is written in the forded format as
-  // (try
-  //  (do
-  //    ...
-  //  )
-  //  (delegate $label)
-  // )
-  // When the 'delegate' delegates to the caller, we write the argument as an
-  // immediate.
-  void visitTry(Try* curr) {
-    controlFlowDepth++;
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
+}
+
+void PrintSExpression::visitIf(If* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  incIndent();
+  printFullLine(curr->condition);
+  maybePrintImplicitBlock(curr->ifTrue, false);
+  if (curr->ifFalse) {
+    // Note: debug info here is not used as LLVM does not emit ifs, and since
+    // LLVM is the main source of DWARF, effectively we never encounter ifs
+    // with DWARF.
+    printDebugDelimiterLocation(curr, BinaryLocations::Else);
+    maybePrintImplicitBlock(curr->ifFalse, false);
+  }
+  decIndent();
+  if (full) {
+    o << " ;; end if";
+  }
+  controlFlowDepth--;
+}
+
+void PrintSExpression::visitLoop(Loop* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  incIndent();
+  maybePrintImplicitBlock(curr->body, true);
+  decIndent();
+  if (full) {
+    o << " ;; end loop";
+    if (curr->name.is()) {
+      o << ' ' << curr->name;
+    }
+  }
+  controlFlowDepth--;
+}
+
+// try-catch-end is written in the folded wat format as
+// (try
+//  (do
+//   ...
+//  )
+//  (catch $e
+//    ...
+//  )
+//  ...
+//  (catch_all
+//    ...
+//  )
+// )
+// The parenthesis wrapping do/catch/catch_all is just a syntax and does not
+// affect nested depths of instructions within.
+//
+// try-delegate is written in the forded format as
+// (try
+//  (do
+//    ...
+//  )
+//  (delegate $label)
+// )
+// When the 'delegate' delegates to the caller, we write the argument as an
+// immediate.
+void PrintSExpression::visitTry(Try* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  incIndent();
+  doIndent(o, indent);
+  o << '(';
+  printMedium(o, "do");
+  incIndent();
+  maybePrintImplicitBlock(curr->body, true);
+  decIndent();
+  o << "\n";
+  for (size_t i = 0; i < curr->catchTags.size(); i++) {
     doIndent(o, indent);
+    printDebugDelimiterLocation(curr, i);
     o << '(';
-    printMedium(o, "do");
+    printMedium(o, "catch ");
+    printName(curr->catchTags[i], o);
     incIndent();
-    maybePrintImplicitBlock(curr->body, true);
+    maybePrintImplicitBlock(curr->catchBodies[i], true);
     decIndent();
     o << "\n";
-    for (size_t i = 0; i < curr->catchTags.size(); i++) {
-      doIndent(o, indent);
-      printDebugDelimiterLocation(curr, i);
-      o << '(';
-      printMedium(o, "catch ");
-      printName(curr->catchTags[i], o);
-      incIndent();
-      maybePrintImplicitBlock(curr->catchBodies[i], true);
-      decIndent();
-      o << "\n";
-    }
-    if (curr->hasCatchAll()) {
-      doIndent(o, indent);
-      printDebugDelimiterLocation(curr, curr->catchTags.size());
-      o << '(';
-      printMedium(o, "catch_all");
-      incIndent();
-      maybePrintImplicitBlock(curr->catchBodies.back(), true);
-      decIndent();
-      o << "\n";
-    }
-    controlFlowDepth--;
-
-    if (curr->isDelegate()) {
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "delegate ");
-      if (curr->delegateTarget == DELEGATE_CALLER_TARGET) {
-        o << controlFlowDepth;
-      } else {
-        printName(curr->delegateTarget, o);
-      }
-      o << ")\n";
-    }
-    decIndent();
-    if (full) {
-      o << " ;; end try";
-    }
   }
-  void maybePrintUnreachableReplacement(Expression* curr, Type type) {
-    // See the parallel function
-    // PrintExpressionContents::printUnreachableReplacement for background. That
-    // one handles the header, and this one the body. For convenience, this one
-    // also gets a parameter of the type to check for unreachability, to avoid
-    // boilerplate in the callers; if the type is not unreachable, it does the
-    // normal behavior.
-    //
-    // Note that the list of instructions using that function must match those
-    // using this one, so we print the header and body properly together.
-
-    if (type != Type::unreachable) {
-      visitExpression(curr);
-      return;
-    }
-
-    // Emit a block with drops of the children.
-    o << "(block";
-    if (!minify) {
-      o << " ;; (replaces something unreachable we can't emit)";
-    }
+  if (curr->hasCatchAll()) {
+    doIndent(o, indent);
+    printDebugDelimiterLocation(curr, curr->catchTags.size());
+    o << '(';
+    printMedium(o, "catch_all");
     incIndent();
-    for (auto* child : ChildIterator(curr)) {
-      Drop drop;
-      drop.value = child;
-      printFullLine(&drop);
-    }
-    Unreachable unreachable;
-    printFullLine(&unreachable);
+    maybePrintImplicitBlock(curr->catchBodies.back(), true);
     decIndent();
+    o << "\n";
   }
-  // This must be used for the same Expressions that use
-  // PrintExpressionContents::printUnreachableOrNullReplacement.
-  void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type) {
-    if (type.isNull()) {
-      type = Type::unreachable;
-    }
-    maybePrintUnreachableReplacement(curr, type);
-  }
-  void visitCallRef(CallRef* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->target->type);
-  }
-  void visitRefCast(RefCast* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitStructNew(StructNew* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitStructSet(StructSet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
-  }
-  void visitStructGet(StructGet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitArrayNewData(ArrayNewData* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
-  }
-  void visitArraySet(ArraySet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
-  }
-  // Module-level visitors
-  void printSupertypeOr(HeapType curr, std::string noSuper) {
-    if (auto super = curr.getSuperType()) {
-      TypeNamePrinter(o, currModule).print(*super);
+  controlFlowDepth--;
+
+  if (curr->isDelegate()) {
+    doIndent(o, indent);
+    o << '(';
+    printMedium(o, "delegate ");
+    if (curr->delegateTarget == DELEGATE_CALLER_TARGET) {
+      o << controlFlowDepth;
     } else {
-      o << noSuper;
+      printName(curr->delegateTarget, o);
     }
+    o << ")\n";
+  }
+  decIndent();
+  if (full) {
+    o << " ;; end try";
+  }
+}
+
+void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
+                                                        Type type) {
+  // See the parallel function
+  // PrintExpressionContents::printUnreachableReplacement for background. That
+  // one handles the header, and this one the body. For convenience, this one
+  // also gets a parameter of the type to check for unreachability, to avoid
+  // boilerplate in the callers; if the type is not unreachable, it does the
+  // normal behavior.
+  //
+  // Note that the list of instructions using that function must match those
+  // using this one, so we print the header and body properly together.
+
+  if (type != Type::unreachable) {
+    visitExpression(curr);
+    return;
   }
 
-  void handleSignature(HeapType curr, Name name = Name()) {
-    Signature sig = curr.getSignature();
-    o << "(func";
-    if (name.is()) {
-      o << " $" << name;
-      if (currModule && currModule->features.hasGC()) {
-        o << " (type ";
-        printHeapType(o, curr, currModule) << ')';
-      }
-    }
-    if (sig.params.size() > 0) {
-      o << maybeSpace;
-      o << "(param ";
-      auto sep = "";
-      for (auto type : sig.params) {
-        o << sep;
-        printType(o, type, currModule);
-        sep = " ";
-      }
-      o << ')';
-    }
-    if (sig.results.size() > 0) {
-      o << maybeSpace;
-      o << "(result ";
-      auto sep = "";
-      for (auto type : sig.results) {
-        o << sep;
-        printType(o, type, currModule);
-        sep = " ";
-      }
-      o << ')';
-    }
-    o << ")";
+  // Emit a block with drops of the children.
+  o << "(block";
+  if (!minify) {
+    o << " ;; (replaces something unreachable we can't emit)";
   }
-  void handleFieldBody(const Field& field) {
-    if (field.mutable_) {
-      o << "(mut ";
-    }
-    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
-      if (field.packedType == Field::i8) {
-        o << "i8";
-      } else if (field.packedType == Field::i16) {
-        o << "i16";
-      } else {
-        WASM_UNREACHABLE("invalid packed type");
-      }
-    } else {
-      printType(o, field.type, currModule);
-    }
-    if (field.mutable_) {
-      o << ')';
+  incIndent();
+  for (auto* child : ChildIterator(curr)) {
+    Drop drop;
+    drop.value = child;
+    printFullLine(&drop);
+  }
+  Unreachable unreachable;
+  printFullLine(&unreachable);
+  decIndent();
+}
+
+// This must be used for the same Expressions that use
+// PrintExpressionContents::printUnreachableOrNullReplacement.
+void PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
+                                                              Type type) {
+  if (type.isNull()) {
+    type = Type::unreachable;
+  }
+  maybePrintUnreachableReplacement(curr, type);
+}
+
+void PrintSExpression::handleSignature(HeapType curr, Name name) {
+  Signature sig = curr.getSignature();
+  o << "(func";
+  if (name.is()) {
+    o << " $" << name;
+    if (currModule && currModule->features.hasGC()) {
+      o << " (type ";
+      printHeapType(curr) << ')';
     }
   }
-  void handleArray(HeapType curr) {
-    o << "(array ";
-    handleFieldBody(curr.getArray().element);
-    o << ')';
-  }
-  void handleStruct(HeapType curr) {
-    const auto& fields = curr.getStruct().fields;
-    o << "(struct ";
+  if (sig.params.size() > 0) {
+    o << maybeSpace;
+    o << "(param ";
     auto sep = "";
-    for (Index i = 0; i < fields.size(); i++) {
-      o << sep << "(field ";
-      processFieldName(currModule, curr, i, [&](Name name) {
-        if (name.is()) {
-          o << '$' << name << ' ';
-        }
-      });
-      handleFieldBody(fields[i]);
-      o << ')';
+    for (auto type : sig.params) {
+      o << sep;
+      printType(type);
       sep = " ";
     }
     o << ')';
   }
-  void handleHeapType(HeapType type) {
-    auto super = type.getSuperType();
-    bool useSub = false;
-    // TODO: Once we parse MVP signature types as final, use the MVP shorthand
-    // for final types without supertypes.
-    if (super || type.isFinal()) {
-      useSub = true;
-      o << "(sub ";
-      if (type.isFinal()) {
-        o << "final ";
-      }
-      if (super) {
-        TypeNamePrinter(o, currModule).print(*super);
-        o << ' ';
-      }
+  if (sig.results.size() > 0) {
+    o << maybeSpace;
+    o << "(result ";
+    auto sep = "";
+    for (auto type : sig.results) {
+      o << sep;
+      printType(type);
+      sep = " ";
     }
-    if (type.isSignature()) {
-      handleSignature(type);
-    } else if (type.isArray()) {
-      handleArray(type);
-    } else if (type.isStruct()) {
-      handleStruct(type);
-    } else {
-      o << type;
-    }
-    if (useSub) {
-      o << ')';
-    }
-  }
-  void visitExport(Export* curr) {
-    o << '(';
-    printMedium(o, "export ");
-    // TODO: Escape the string properly.
-    printText(o, curr->name.str.data()) << " (";
-    switch (curr->kind) {
-      case ExternalKind::Function:
-        o << "func";
-        break;
-      case ExternalKind::Table:
-        o << "table";
-        break;
-      case ExternalKind::Memory:
-        o << "memory";
-        break;
-      case ExternalKind::Global:
-        o << "global";
-        break;
-      case ExternalKind::Tag:
-        o << "tag";
-        break;
-      case ExternalKind::Invalid:
-        WASM_UNREACHABLE("invalid ExternalKind");
-    }
-    o << ' ';
-    printName(curr->value, o) << "))";
-  }
-  void emitImportHeader(Importable* curr) {
-    printMedium(o, "import ");
-    // TODO: Escape the strings properly and use std::string_view.
-    printText(o, curr->module.str.data()) << ' ';
-    printText(o, curr->base.str.data()) << ' ';
-  }
-  void visitGlobal(Global* curr) {
-    if (curr->imported()) {
-      visitImportedGlobal(curr);
-    } else {
-      visitDefinedGlobal(curr);
-    }
-  }
-  void emitGlobalType(Global* curr) {
-    if (curr->mutable_) {
-      o << "(mut ";
-      printType(o, curr->type, currModule) << ')';
-    } else {
-      printType(o, curr->type, currModule);
-    }
-  }
-  void visitImportedGlobal(Global* curr) {
-    doIndent(o, indent);
-    o << '(';
-    emitImportHeader(curr);
-    o << "(global ";
-    printName(curr->name, o) << ' ';
-    emitGlobalType(curr);
-    o << "))" << maybeNewLine;
-  }
-  void visitDefinedGlobal(Global* curr) {
-    doIndent(o, indent);
-    o << '(';
-    printMedium(o, "global ");
-    printName(curr->name, o) << ' ';
-    emitGlobalType(curr);
-    o << ' ';
-    visit(curr->init);
     o << ')';
-    o << maybeNewLine;
   }
-  void visitFunction(Function* curr) {
-    if (curr->imported()) {
-      visitImportedFunction(curr);
-    } else {
-      visitDefinedFunction(curr);
-    }
+  o << ")";
+}
+
+void PrintSExpression::visitExport(Export* curr) {
+  o << '(';
+  printMedium(o, "export ");
+  // TODO: Escape the string properly.
+  printText(o, curr->name.str.data()) << " (";
+  switch (curr->kind) {
+    case ExternalKind::Function:
+      o << "func";
+      break;
+    case ExternalKind::Table:
+      o << "table";
+      break;
+    case ExternalKind::Memory:
+      o << "memory";
+      break;
+    case ExternalKind::Global:
+      o << "global";
+      break;
+    case ExternalKind::Tag:
+      o << "tag";
+      break;
+    case ExternalKind::Invalid:
+      WASM_UNREACHABLE("invalid ExternalKind");
   }
-  void visitImportedFunction(Function* curr) {
-    doIndent(o, indent);
-    currFunction = curr;
-    lastPrintedLocation = {0, 0, 0};
-    o << '(';
-    emitImportHeader(curr);
-    handleSignature(curr->getSig(), curr->name);
-    o << ')';
-    o << maybeNewLine;
+  o << ' ';
+  printName(curr->value, o) << "))";
+}
+
+void PrintSExpression::emitImportHeader(Importable* curr) {
+  printMedium(o, "import ");
+  // TODO: Escape the strings properly and use std::string_view.
+  printText(o, curr->module.str.data()) << ' ';
+  printText(o, curr->base.str.data()) << ' ';
+}
+
+void PrintSExpression::visitGlobal(Global* curr) {
+  if (curr->imported()) {
+    visitImportedGlobal(curr);
+  } else {
+    visitDefinedGlobal(curr);
   }
-  void visitDefinedFunction(Function* curr) {
-    doIndent(o, indent);
-    currFunction = curr;
-    lastPrintedLocation = {0, 0, 0};
-    if (currFunction->prologLocation.size()) {
-      printDebugLocation(*currFunction->prologLocation.begin());
-    }
-    o << '(';
-    printMajor(o, "func ");
-    printName(curr->name, o);
-    if (currModule && currModule->features.hasGC()) {
-      o << " (type ";
-      printHeapType(o, curr->type, currModule) << ')';
-    }
-    if (!stackIR && curr->stackIR && !minify) {
-      o << " (; has Stack IR ;)";
-    }
-    if (curr->getParams().size() > 0) {
-      Index i = 0;
-      for (const auto& param : curr->getParams()) {
-        o << maybeSpace;
-        o << '(';
-        printMinor(o, "param ");
-        printLocal(i, currFunction, o);
-        o << ' ';
-        printType(o, param, currModule) << ')';
-        ++i;
-      }
-    }
-    if (curr->getResults() != Type::none) {
+}
+
+void PrintSExpression::emitGlobalType(Global* curr) {
+  if (curr->mutable_) {
+    o << "(mut ";
+    printType(curr->type) << ')';
+  } else {
+    printType(curr->type);
+  }
+}
+
+void PrintSExpression::visitImportedGlobal(Global* curr) {
+  doIndent(o, indent);
+  o << '(';
+  emitImportHeader(curr);
+  o << "(global ";
+  printName(curr->name, o) << ' ';
+  emitGlobalType(curr);
+  o << "))" << maybeNewLine;
+}
+
+void PrintSExpression::visitDefinedGlobal(Global* curr) {
+  doIndent(o, indent);
+  o << '(';
+  printMedium(o, "global ");
+  printName(curr->name, o) << ' ';
+  emitGlobalType(curr);
+  o << ' ';
+  visit(curr->init);
+  o << ')';
+  o << maybeNewLine;
+}
+
+void PrintSExpression::visitFunction(Function* curr) {
+  if (curr->imported()) {
+    visitImportedFunction(curr);
+  } else {
+    visitDefinedFunction(curr);
+  }
+}
+
+void PrintSExpression::visitImportedFunction(Function* curr) {
+  doIndent(o, indent);
+  currFunction = curr;
+  lastPrintedLocation = {0, 0, 0};
+  o << '(';
+  emitImportHeader(curr);
+  handleSignature(curr->type, curr->name);
+  o << ')';
+  o << maybeNewLine;
+}
+
+void PrintSExpression::visitDefinedFunction(Function* curr) {
+  doIndent(o, indent);
+  currFunction = curr;
+  lastPrintedLocation = {0, 0, 0};
+  if (currFunction->prologLocation.size()) {
+    printDebugLocation(*currFunction->prologLocation.begin());
+  }
+  o << '(';
+  printMajor(o, "func ");
+  printName(curr->name, o);
+  if (currModule && currModule->features.hasGC()) {
+    o << " (type ";
+    printHeapType(curr->type) << ')';
+  }
+  if (!stackIR && curr->stackIR && !minify) {
+    o << " (; has Stack IR ;)";
+  }
+  if (curr->getParams().size() > 0) {
+    Index i = 0;
+    for (const auto& param : curr->getParams()) {
       o << maybeSpace;
-      printResultType(o, curr->getResults(), currModule);
-    }
-    incIndent();
-    for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
-      doIndent(o, indent);
       o << '(';
-      printMinor(o, "local ");
-      printLocal(i, currFunction, o) << ' ';
-      printType(o, curr->getLocalType(i), currModule) << ')';
-      o << maybeNewLine;
+      printMinor(o, "param ");
+      printLocal(i, currFunction, o);
+      o << ' ';
+      printType(param) << ')';
+      ++i;
     }
-    // Print the body.
-    if (!stackIR || !curr->stackIR) {
-      // It is ok to emit a block here, as a function can directly contain a
-      // list, even if our ast avoids that for simplicity. We can just do that
-      // optimization here..
-      if (!full && curr->body->is<Block>() &&
-          curr->body->cast<Block>()->name.isNull()) {
-        Block* block = curr->body->cast<Block>();
-        for (auto item : block->list) {
-          printFullLine(item);
-        }
-      } else {
-        printFullLine(curr->body);
-      }
-      assert(controlFlowDepth == 0);
-    } else {
-      // Print the stack IR.
-      printStackIR(curr->stackIR.get(), o, curr);
-    }
-    if (currFunction->epilogLocation.size() &&
-        lastPrintedLocation != *currFunction->epilogLocation.begin()) {
-      // Print last debug location: mix of decIndent and printDebugLocation
-      // logic.
-      doIndent(o, indent);
-      if (!minify) {
-        indent--;
-      }
-      printDebugLocation(*currFunction->epilogLocation.begin());
-      o << ')';
-    } else {
-      decIndent();
-    }
+  }
+  if (curr->getResults() != Type::none) {
+    o << maybeSpace;
+    printResultType(curr->getResults());
+  }
+  incIndent();
+  for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
+    doIndent(o, indent);
+    o << '(';
+    printMinor(o, "local ");
+    printLocal(i, currFunction, o) << ' ';
+    printType(curr->getLocalType(i)) << ')';
     o << maybeNewLine;
   }
-  void visitTag(Tag* curr) {
-    if (curr->imported()) {
-      visitImportedTag(curr);
+  // Print the body.
+  if (!stackIR || !curr->stackIR) {
+    // It is ok to emit a block here, as a function can directly contain a
+    // list, even if our ast avoids that for simplicity. We can just do that
+    // optimization here..
+    if (!full && curr->body->is<Block>() &&
+        curr->body->cast<Block>()->name.isNull()) {
+      Block* block = curr->body->cast<Block>();
+      for (auto item : block->list) {
+        printFullLine(item);
+      }
     } else {
-      visitDefinedTag(curr);
+      printFullLine(curr->body);
     }
+    assert(controlFlowDepth == 0);
+  } else {
+    // Print the stack IR.
+    printStackIR(curr->stackIR.get(), *this);
   }
-  void visitImportedTag(Tag* curr) {
+  if (currFunction->epilogLocation.size() &&
+      lastPrintedLocation != *currFunction->epilogLocation.begin()) {
+    // Print last debug location: mix of decIndent and printDebugLocation
+    // logic.
+    doIndent(o, indent);
+    if (!minify) {
+      indent--;
+    }
+    printDebugLocation(*currFunction->epilogLocation.begin());
+    o << ')';
+  } else {
+    decIndent();
+  }
+  o << maybeNewLine;
+}
+
+void PrintSExpression::visitTag(Tag* curr) {
+  if (curr->imported()) {
+    visitImportedTag(curr);
+  } else {
+    visitDefinedTag(curr);
+  }
+}
+
+void PrintSExpression::visitImportedTag(Tag* curr) {
+  doIndent(o, indent);
+  o << '(';
+  emitImportHeader(curr);
+  o << "(tag ";
+  printName(curr->name, o);
+  o << maybeSpace;
+  printParamType(curr->sig.params);
+  o << "))";
+  o << maybeNewLine;
+}
+
+void PrintSExpression::visitDefinedTag(Tag* curr) {
+  doIndent(o, indent);
+  o << '(';
+  printMedium(o, "tag ");
+  printName(curr->name, o);
+  o << maybeSpace;
+  printParamType(curr->sig.params);
+  o << ")" << maybeNewLine;
+}
+
+void PrintSExpression::printTableHeader(Table* curr) {
+  o << '(';
+  printMedium(o, "table") << ' ';
+  printName(curr->name, o) << ' ';
+  o << curr->initial;
+  if (curr->hasMax()) {
+    o << ' ' << curr->max;
+  }
+  o << ' ';
+  printType(curr->type) << ')';
+}
+
+void PrintSExpression::visitTable(Table* curr) {
+  if (curr->imported()) {
     doIndent(o, indent);
     o << '(';
     emitImportHeader(curr);
-    o << "(tag ";
-    printName(curr->name, o);
-    o << maybeSpace;
-    printParamType(o, curr->sig.params, currModule);
-    o << "))";
+    printTableHeader(curr);
+    o << ')' << maybeNewLine;
+  } else {
+    doIndent(o, indent);
+    printTableHeader(curr);
     o << maybeNewLine;
   }
-  void visitDefinedTag(Tag* curr) {
-    doIndent(o, indent);
-    o << '(';
-    printMedium(o, "tag ");
-    printName(curr->name, o);
-    o << maybeSpace;
-    printParamType(o, curr->sig.params, currModule);
-    o << ")" << maybeNewLine;
-  }
-  void printTableHeader(Table* curr) {
-    o << '(';
-    printMedium(o, "table") << ' ';
-    printName(curr->name, o) << ' ';
-    o << curr->initial;
-    if (curr->hasMax()) {
-      o << ' ' << curr->max;
+}
+
+void PrintSExpression::visitElementSegment(ElementSegment* curr) {
+  bool usesExpressions = TableUtils::usesExpressions(curr, currModule);
+  auto printElemType = [&]() {
+    if (!usesExpressions) {
+      o << "func";
+    } else {
+      printType(curr->type);
     }
+  };
+
+  doIndent(o, indent);
+  o << '(';
+  printMedium(o, "elem ");
+  printName(curr->name, o);
+
+  if (curr->table.is()) {
+    if (usesExpressions || currModule->tables.size() > 1) {
+      // tableuse
+      o << " (table ";
+      printName(curr->table, o);
+      o << ")";
+    }
+
     o << ' ';
-    printType(o, curr->type, currModule) << ')';
-  }
-  void visitTable(Table* curr) {
-    if (curr->imported()) {
-      doIndent(o, indent);
-      o << '(';
-      emitImportHeader(curr);
-      printTableHeader(curr);
-      o << ')' << maybeNewLine;
-    } else {
-      doIndent(o, indent);
-      printTableHeader(curr);
-      o << maybeNewLine;
-    }
-  }
-  void visitElementSegment(ElementSegment* curr) {
-    bool usesExpressions = TableUtils::usesExpressions(curr, currModule);
-    auto printElemType = [&]() {
-      if (!usesExpressions) {
-        o << "func";
-      } else {
-        printType(o, curr->type, currModule);
-      }
-    };
+    visit(curr->offset);
 
-    doIndent(o, indent);
-    o << '(';
-    printMedium(o, "elem ");
-    printName(curr->name, o);
-
-    if (curr->table.is()) {
-      if (usesExpressions || currModule->tables.size() > 1) {
-        // tableuse
-        o << " (table ";
-        printName(curr->table, o);
-        o << ")";
-      }
-
-      o << ' ';
-      visit(curr->offset);
-
-      if (usesExpressions || currModule->tables.size() > 1) {
-        o << ' ';
-        printElemType();
-      }
-    } else {
+    if (usesExpressions || currModule->tables.size() > 1) {
       o << ' ';
       printElemType();
     }
-
-    if (!usesExpressions) {
-      for (auto* entry : curr->data) {
-        auto* refFunc = entry->cast<RefFunc>();
-        o << ' ';
-        printName(refFunc->func, o);
-      }
-    } else {
-      for (auto* entry : curr->data) {
-        o << ' ';
-        visit(entry);
-      }
-    }
-    o << ')' << maybeNewLine;
+  } else {
+    o << ' ';
+    printElemType();
   }
-  void printMemoryHeader(Memory* curr) {
+
+  if (!usesExpressions) {
+    for (auto* entry : curr->data) {
+      auto* refFunc = entry->cast<RefFunc>();
+      o << ' ';
+      printName(refFunc->func, o);
+    }
+  } else {
+    for (auto* entry : curr->data) {
+      o << ' ';
+      visit(entry);
+    }
+  }
+  o << ')' << maybeNewLine;
+}
+
+void PrintSExpression::printMemoryHeader(Memory* curr) {
+  o << '(';
+  printMedium(o, "memory") << ' ';
+  printName(curr->name, o) << ' ';
+  if (curr->shared) {
     o << '(';
-    printMedium(o, "memory") << ' ';
-    printName(curr->name, o) << ' ';
-    if (curr->shared) {
-      o << '(';
-      printMedium(o, "shared ");
-    }
-    if (curr->is64()) {
-      o << "i64 ";
-    }
-    o << curr->initial;
-    if (curr->hasMax()) {
-      o << ' ' << curr->max;
-    }
-    if (curr->shared) {
-      o << ")";
-    }
+    printMedium(o, "shared ");
+  }
+  if (curr->is64()) {
+    o << "i64 ";
+  }
+  o << curr->initial;
+  if (curr->hasMax()) {
+    o << ' ' << curr->max;
+  }
+  if (curr->shared) {
     o << ")";
   }
-  void visitMemory(Memory* curr) {
-    if (curr->imported()) {
-      doIndent(o, indent);
-      o << '(';
-      emitImportHeader(curr);
-      printMemoryHeader(curr);
-      o << ')' << maybeNewLine;
-    } else {
-      doIndent(o, indent);
-      printMemoryHeader(curr);
-      o << '\n';
-    }
-  }
-  void visitDataSegment(DataSegment* curr) {
+  o << ")";
+}
+
+void PrintSExpression::visitMemory(Memory* curr) {
+  if (curr->imported()) {
     doIndent(o, indent);
     o << '(';
-    printMajor(o, "data ");
-    printName(curr->name, o);
-    o << ' ';
-    if (!curr->isPassive) {
-      assert(!currModule || currModule->memories.size() > 0);
-      if (!currModule || curr->memory != currModule->memories[0]->name) {
-        o << "(memory $" << curr->memory << ") ";
-      }
-      visit(curr->offset);
-      o << ' ';
+    emitImportHeader(curr);
+    printMemoryHeader(curr);
+    o << ')' << maybeNewLine;
+  } else {
+    doIndent(o, indent);
+    printMemoryHeader(curr);
+    o << '\n';
+  }
+}
+
+void PrintSExpression::visitDataSegment(DataSegment* curr) {
+  doIndent(o, indent);
+  o << '(';
+  printMajor(o, "data ");
+  printName(curr->name, o);
+  o << ' ';
+  if (!curr->isPassive) {
+    assert(!currModule || currModule->memories.size() > 0);
+    if (!currModule || curr->memory != currModule->memories[0]->name) {
+      o << "(memory $" << curr->memory << ") ";
     }
-    printEscapedString(o, {curr->data.data(), curr->data.size()});
+    visit(curr->offset);
+    o << ' ';
+  }
+  printEscapedString(o, {curr->data.data(), curr->data.size()});
+  o << ')' << maybeNewLine;
+}
+
+void PrintSExpression::printDylinkSection(
+  const std::unique_ptr<DylinkSection>& dylinkSection) {
+  doIndent(o, indent) << ";; dylink section\n";
+  doIndent(o, indent) << ";;   memorysize: " << dylinkSection->memorySize
+                      << '\n';
+  doIndent(o, indent) << ";;   memoryalignment: "
+                      << dylinkSection->memoryAlignment << '\n';
+  doIndent(o, indent) << ";;   tablesize: " << dylinkSection->tableSize << '\n';
+  doIndent(o, indent) << ";;   tablealignment: "
+                      << dylinkSection->tableAlignment << '\n';
+  for (auto& neededDynlib : dylinkSection->neededDynlibs) {
+    doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
+  }
+  if (dylinkSection->tail.size()) {
+    doIndent(o, indent) << ";;   extra dylink data, size "
+                        << dylinkSection->tail.size() << "\n";
+  }
+}
+
+void PrintSExpression::visitModule(Module* curr) {
+  setModule(curr);
+  o << '(';
+  printMajor(o, "module");
+  if (curr->name.is()) {
+    o << ' ';
+    printName(curr->name, o);
+  }
+  incIndent();
+
+  // Use the same type order as the binary output would even though there is
+  // no code size benefit in the text format.
+  std::optional<RecGroup> currGroup;
+  bool nontrivialGroup = false;
+  auto finishGroup = [&]() {
+    if (nontrivialGroup) {
+      decIndent();
+      o << maybeNewLine;
+    }
+  };
+  for (auto type : heapTypes) {
+    RecGroup newGroup = type.getRecGroup();
+    if (!currGroup || *currGroup != newGroup) {
+      if (currGroup) {
+        finishGroup();
+      }
+      currGroup = newGroup;
+      nontrivialGroup = currGroup->size() > 1;
+      if (nontrivialGroup) {
+        doIndent(o, indent);
+        o << "(rec";
+        incIndent();
+      }
+    }
+    doIndent(o, indent);
+    o << typePrinter(type) << maybeNewLine;
+  }
+  finishGroup();
+
+  ModuleUtils::iterImportedMemories(
+    *curr, [&](Memory* memory) { visitMemory(memory); });
+  ModuleUtils::iterImportedTables(*curr,
+                                  [&](Table* table) { visitTable(table); });
+  ModuleUtils::iterImportedGlobals(
+    *curr, [&](Global* global) { visitGlobal(global); });
+  ModuleUtils::iterImportedFunctions(
+    *curr, [&](Function* func) { visitFunction(func); });
+  ModuleUtils::iterImportedTags(*curr, [&](Tag* tag) { visitTag(tag); });
+  ModuleUtils::iterDefinedGlobals(*curr,
+                                  [&](Global* global) { visitGlobal(global); });
+  ModuleUtils::iterDefinedMemories(
+    *curr, [&](Memory* memory) { visitMemory(memory); });
+  for (auto& segment : curr->dataSegments) {
+    visitDataSegment(segment.get());
+  }
+  ModuleUtils::iterDefinedTables(*curr,
+                                 [&](Table* table) { visitTable(table); });
+  for (auto& segment : curr->elementSegments) {
+    visitElementSegment(segment.get());
+  }
+  auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
+  if (!elemDeclareNames.empty()) {
+    doIndent(o, indent);
+    printMedium(o, "(elem");
+    o << " declare func";
+    for (auto name : elemDeclareNames) {
+      o << " $" << name;
+    }
     o << ')' << maybeNewLine;
   }
-  void printDylinkSection(const std::unique_ptr<DylinkSection>& dylinkSection) {
-    doIndent(o, indent) << ";; dylink section\n";
-    doIndent(o, indent) << ";;   memorysize: " << dylinkSection->memorySize
-                        << '\n';
-    doIndent(o, indent) << ";;   memoryalignment: "
-                        << dylinkSection->memoryAlignment << '\n';
-    doIndent(o, indent) << ";;   tablesize: " << dylinkSection->tableSize
-                        << '\n';
-    doIndent(o, indent) << ";;   tablealignment: "
-                        << dylinkSection->tableAlignment << '\n';
-    for (auto& neededDynlib : dylinkSection->neededDynlibs) {
-      doIndent(o, indent) << ";;   needed dynlib: " << neededDynlib << '\n';
-    }
-    if (dylinkSection->tail.size()) {
-      doIndent(o, indent) << ";;   extra dylink data, size "
-                          << dylinkSection->tail.size() << "\n";
-    }
-  }
-  void visitModule(Module* curr) {
-    currModule = curr;
-    o << '(';
-    printMajor(o, "module");
-    if (curr->name.is()) {
-      o << ' ';
-      printName(curr->name, o);
-    }
-    incIndent();
-
-    // Use the same type order as the binary output would even though there is
-    // no code size benefit in the text format.
-    auto indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*curr);
-    std::optional<RecGroup> currGroup;
-    bool nontrivialGroup = false;
-    auto finishGroup = [&]() {
-      if (nontrivialGroup) {
-        decIndent();
-        o << maybeNewLine;
-      }
-    };
-    for (auto type : indexedTypes.types) {
-      RecGroup newGroup = type.getRecGroup();
-      if (!currGroup || *currGroup != newGroup) {
-        if (currGroup) {
-          finishGroup();
-        }
-        currGroup = newGroup;
-        nontrivialGroup = currGroup->size() > 1;
-        if (nontrivialGroup) {
-          doIndent(o, indent);
-          o << "(rec";
-          incIndent();
-        }
-      }
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "type") << ' ';
-      TypeNamePrinter(o, curr).print(type);
-      o << ' ';
-      handleHeapType(type);
-      o << ")" << maybeNewLine;
-    }
-    finishGroup();
-
-    ModuleUtils::iterImportedMemories(
-      *curr, [&](Memory* memory) { visitMemory(memory); });
-    ModuleUtils::iterImportedTables(*curr,
-                                    [&](Table* table) { visitTable(table); });
-    ModuleUtils::iterImportedGlobals(
-      *curr, [&](Global* global) { visitGlobal(global); });
-    ModuleUtils::iterImportedFunctions(
-      *curr, [&](Function* func) { visitFunction(func); });
-    ModuleUtils::iterImportedTags(*curr, [&](Tag* tag) { visitTag(tag); });
-    ModuleUtils::iterDefinedGlobals(
-      *curr, [&](Global* global) { visitGlobal(global); });
-    ModuleUtils::iterDefinedMemories(
-      *curr, [&](Memory* memory) { visitMemory(memory); });
-    for (auto& segment : curr->dataSegments) {
-      visitDataSegment(segment.get());
-    }
-    ModuleUtils::iterDefinedTables(*curr,
-                                   [&](Table* table) { visitTable(table); });
-    for (auto& segment : curr->elementSegments) {
-      visitElementSegment(segment.get());
-    }
-    auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
-    if (!elemDeclareNames.empty()) {
-      doIndent(o, indent);
-      printMedium(o, "(elem");
-      o << " declare func";
-      for (auto name : elemDeclareNames) {
-        o << " $" << name;
-      }
-      o << ')' << maybeNewLine;
-    }
-    ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
-    for (auto& child : curr->exports) {
-      doIndent(o, indent);
-      visitExport(child.get());
-      o << maybeNewLine;
-    }
-    if (curr->start.is()) {
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "start") << ' ';
-      printName(curr->start, o) << ')';
-      o << maybeNewLine;
-    }
-    ModuleUtils::iterDefinedFunctions(
-      *curr, [&](Function* func) { visitFunction(func); });
-    if (curr->dylinkSection) {
-      printDylinkSection(curr->dylinkSection);
-    }
-    for (auto& section : curr->customSections) {
-      doIndent(o, indent);
-      o << ";; custom section \"" << section.name << "\", size "
-        << section.data.size();
-      bool isPrintable = true;
-      for (auto c : section.data) {
-        if (!isprint(static_cast<unsigned char>(c))) {
-          isPrintable = false;
-          break;
-        }
-      }
-      if (isPrintable) {
-        o << ", contents: ";
-        // std::quoted is not available in all the supported compilers yet.
-        o << '"';
-        for (auto c : section.data) {
-          if (c == '\\' || c == '"') {
-            o << '\\';
-          }
-          o << c;
-        }
-        o << '"';
-      }
-      o << maybeNewLine;
-    }
-    if (curr->hasFeaturesSection) {
-      doIndent(o, indent);
-      o << ";; features section: " << curr->features.toString() << '\n';
-    }
-    decIndent();
+  ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
+  for (auto& child : curr->exports) {
+    doIndent(o, indent);
+    visitExport(child.get());
     o << maybeNewLine;
-    currModule = nullptr;
   }
-};
+  if (curr->start.is()) {
+    doIndent(o, indent);
+    o << '(';
+    printMedium(o, "start") << ' ';
+    printName(curr->start, o) << ')';
+    o << maybeNewLine;
+  }
+  ModuleUtils::iterDefinedFunctions(
+    *curr, [&](Function* func) { visitFunction(func); });
+  if (curr->dylinkSection) {
+    printDylinkSection(curr->dylinkSection);
+  }
+  for (auto& section : curr->customSections) {
+    doIndent(o, indent);
+    o << ";; custom section \"" << section.name << "\", size "
+      << section.data.size();
+    bool isPrintable = true;
+    for (auto c : section.data) {
+      if (!isprint(static_cast<unsigned char>(c))) {
+        isPrintable = false;
+        break;
+      }
+    }
+    if (isPrintable) {
+      o << ", contents: ";
+      // std::quoted is not available in all the supported compilers yet.
+      o << '"';
+      for (auto c : section.data) {
+        if (c == '\\' || c == '"') {
+          o << '\\';
+        }
+        o << c;
+      }
+      o << '"';
+    }
+    o << maybeNewLine;
+  }
+  if (curr->hasFeaturesSection) {
+    doIndent(o, indent);
+    o << ";; features section: " << curr->features.toString() << '\n';
+  }
+  decIndent();
+  o << maybeNewLine;
+  setModule(nullptr);
+}
 
 // Prints out a module
 class Printer : public Pass {
@@ -3600,13 +3329,14 @@ static std::ostream& printExpression(Expression* expression,
 
 static std::ostream&
 printStackInst(StackInst* inst, std::ostream& o, Function* func) {
+  PrintSExpression printer(o);
   switch (inst->op) {
     case StackInst::Basic:
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
     case StackInst::LoopBegin:
     case StackInst::TryBegin: {
-      PrintExpressionContents(func, o).visit(inst->origin);
+      PrintExpressionContents(printer).visit(inst->origin);
       break;
     }
     case StackInst::BlockEnd:
@@ -3615,7 +3345,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     case StackInst::TryEnd: {
       printMedium(o, "end");
       o << " ;; type: ";
-      TypeNamePrinter(o).print(inst->type);
+      printer.printType(inst->type);
       break;
     }
     case StackInst::IfElse: {
@@ -3643,9 +3373,9 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
   return o;
 }
 
-static std::ostream&
-printStackIR(StackIR* ir, std::ostream& o, Function* func) {
-  size_t indent = func ? 2 : 0;
+static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
+  std::ostream& o = printer.o;
+  size_t indent = printer.currFunction ? 2 : 0;
   auto doIndent = [&]() { o << std::string(indent, ' '); };
 
   int controlFlowDepth = 0;
@@ -3665,7 +3395,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
           break;
         }
 
-        PrintExpressionContents(func, o).visit(inst->origin);
+        PrintExpressionContents(printer).visit(inst->origin);
         break;
       }
       case StackInst::TryBegin:
@@ -3676,7 +3406,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       case StackInst::LoopBegin: {
         controlFlowDepth++;
         doIndent();
-        PrintExpressionContents(func, o).visit(inst->origin);
+        PrintExpressionContents(printer).visit(inst->origin);
         indent++;
         break;
       }
@@ -3763,6 +3493,14 @@ std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
   return o;
 }
 
+std::ostream& operator<<(std::ostream& o, wasm::Function& func) {
+  wasm::PrintSExpression print(o);
+  print.setMinify(false);
+  print.setDebugInfo(false);
+  print.visitFunction(&func);
+  return o;
+}
+
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
   return wasm::printExpression(&expression, o);
 }
@@ -3776,13 +3514,9 @@ std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
-  if (expression.module) {
-    wasm::PrintExpressionContents printer(expression.module, nullptr, o);
-    printer.visit(expression.expr);
-  } else {
-    wasm::PrintExpressionContents printer(nullptr, o);
-    printer.visit(expression.expr);
-  }
+  wasm::PrintSExpression printer(o);
+  printer.setModule(expression.module);
+  wasm::PrintExpressionContents(printer).visit(expression.expr);
   return o;
 }
 
@@ -3791,7 +3525,8 @@ std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir) {
-  return wasm::printStackIR(&ir, o);
+  wasm::PrintSExpression printer(o);
+  return wasm::printStackIR(&ir, printer);
 }
 
 } // namespace std

@@ -567,6 +567,15 @@ switch (DELEGATE_ID) {
     DELEGATE_END(TableGrow);
     break;
   }
+  case Expression::Id::TableFillId: {
+    DELEGATE_START(TableFill);
+    DELEGATE_FIELD_CHILD(TableFill, size);
+    DELEGATE_FIELD_CHILD(TableFill, value);
+    DELEGATE_FIELD_CHILD(TableFill, dest);
+    DELEGATE_FIELD_NAME_KIND(TableFill, table, ModuleItemKind::Table);
+    DELEGATE_END(TableFill);
+    break;
+  }
   case Expression::Id::TryId: {
     DELEGATE_START(Try);
     DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget);
@@ -618,10 +627,10 @@ switch (DELEGATE_ID) {
     DELEGATE_END(TupleExtract);
     break;
   }
-  case Expression::Id::I31NewId: {
-    DELEGATE_START(I31New);
-    DELEGATE_FIELD_CHILD(I31New, value);
-    DELEGATE_END(I31New);
+  case Expression::Id::RefI31Id: {
+    DELEGATE_START(RefI31);
+    DELEGATE_FIELD_CHILD(RefI31, value);
+    DELEGATE_END(RefI31);
     break;
   }
   case Expression::Id::I31GetId: {
@@ -648,7 +657,6 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
-    DELEGATE_FIELD_INT(RefCast, safety);
     DELEGATE_FIELD_CHILD(RefCast, ref);
     DELEGATE_END(RefCast);
     break;

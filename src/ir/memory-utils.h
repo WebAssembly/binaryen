@@ -30,7 +30,7 @@ namespace wasm::MemoryUtils {
 // Flattens memory into a single data segment, or no segment. If there is
 // a segment, it starts at 0.
 // Returns true if successful (e.g. relocatable segments cannot be flattened).
-// Does not yet support multi-memories
+// Does not yet support multimemory
 bool flatten(Module& wasm);
 
 // Ensures that a memory exists (of minimal size).
@@ -44,7 +44,7 @@ inline void ensureExists(Module* wasm) {
 
 // Try to merge segments until they fit into web limitations.
 // Return true if successful.
-// Does not yet support multi-memories
+// Does not yet support multimemory
 inline bool ensureLimitedSegments(Module& module) {
   if (module.memories.size() > 1) {
     return false;

@@ -254,7 +254,8 @@ def init_important_initial_contents():
             return False
 
     if not is_git_repo() and shared.options.auto_initial_contents:
-        print('Warning: The current directory is not a git repository, so you cannot use "--auto-initial-contents". Using the manually selected contents.\n')
+        print('Warning: The current directory is not a git repository, ' +
+              'so not automatically selecting initial contents.')
         shared.options.auto_initial_contents = False
 
     print('- Perenially-important initial contents:')
@@ -273,14 +274,6 @@ def init_important_initial_contents():
     for test in recent_contents:
         print('  ' + test)
     print()
-
-    # We prompt the user only when there is no seed given. This fuzz_opt.py is
-    # often used with seed in a script called from wasm-reduce, in which case we
-    # should not pause for a user input.
-    if given_seed is None:
-        ret = input('Do you want to proceed with these initial contents? (Y/n) ').lower()
-        if ret != 'y' and ret != '':
-            sys.exit(1)
 
     initial_contents = FIXED_IMPORTANT_INITIAL_CONTENTS + recent_contents
     global IMPORTANT_INITIAL_CONTENTS
@@ -306,7 +299,7 @@ INITIAL_CONTENTS_IGNORE = [
     'fib2_emptylocspan_dwarf.wasm',
     'fannkuch3_dwarf.wasm',
     'multi_unit_abbrev_noprint.wasm',
-    # TODO fuzzer support for multi-memories
+    # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
     'multi-memories-basics.wast',
     'multi-memories-simd.wast',
@@ -918,7 +911,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'multivalue', 'multi-memories'])
+        return all_disallowed(['simd', 'multivalue', 'multimemory'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -1062,7 +1055,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multi-memories'])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
 class Asyncify(TestCaseHandler):
@@ -1132,7 +1125,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multi-memories'])
+        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
 # given a wasm and a list of exports we want to keep, remove all other exports.
@@ -1510,6 +1503,7 @@ opt_choices = [
     ("--gsi",),
     ("--gto",),
     ("--gufa",),
+    ("--gufa-cast-all",),
     ("--gufa-optimizing",),
     ("--local-cse",),
     ("--heap2local",),
@@ -1551,9 +1545,12 @@ opt_choices = [
     ("--simplify-locals-notee",),
     ("--simplify-locals-notee-nostructure",),
     ("--ssa",),
+    ("--tuple-optimization",),
+    ("--type-finalizing",),
     ("--type-refining",),
     ("--type-merging",),
     ("--type-ssa",),
+    ("--type-unfinalizing",),
     ("--vacuum",),
 ]
 
@@ -1771,8 +1768,8 @@ on valid wasm files.)
                 shutil.copyfile('a.wasm', original_wasm)
                 # write out a useful reduce.sh
                 auto_init = ''
-                if shared.options.auto_initial_contents:
-                    auto_init = '--auto-initial-contents'
+                if not shared.options.auto_initial_contents:
+                    auto_init = '--no-auto-initial-contents'
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file

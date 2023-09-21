@@ -18,10 +18,10 @@
 
   (type $struct (struct (field (mut i32))))
 
-  ;; YESTNH:      (func $drop (type $i32_anyref_=>_none) (param $x i32) (param $y anyref)
+  ;; YESTNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $drop (type $i32_anyref_=>_none) (param $x i32) (param $y anyref)
+  ;; NO_TNH:      (func $drop (type $4) (param $x i32) (param $y anyref)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (i32.load
   ;; NO_TNH-NEXT:    (local.get $x)
@@ -33,7 +33,7 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (ref.as_i31
+  ;; NO_TNH-NEXT:   (ref.cast i31ref
   ;; NO_TNH-NEXT:    (local.get $y)
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
@@ -55,9 +55,9 @@
       )
     )
 
-    ;; Other ref.as* as well.
+    ;; Other casts as well.
     (drop
-      (ref.as_i31
+      (ref.cast i31ref
         (local.get $y)
       )
     )
@@ -69,7 +69,7 @@
   )
 
   ;; Other side effects prevent us making any changes.
-  ;; YESTNH:      (func $other-side-effects (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; YESTNH:      (func $other-side-effects (type $3) (param $x i32) (result i32)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (call $other-side-effects
   ;; YESTNH-NEXT:    (i32.const 1)
@@ -80,7 +80,7 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (i32.const 1)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $other-side-effects (type $i32_=>_i32) (param $x i32) (result i32)
+  ;; NO_TNH:      (func $other-side-effects (type $3) (param $x i32) (result i32)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (call $other-side-effects
   ;; NO_TNH-NEXT:    (i32.const 1)
@@ -117,15 +117,15 @@
   )
 
   ;; A helper function for the above, that returns nothing.
-  ;; YESTNH:      (func $return-nothing (type $none_=>_none)
+  ;; YESTNH:      (func $return-nothing (type $1)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $return-nothing (type $none_=>_none)
+  ;; NO_TNH:      (func $return-nothing (type $1)
   ;; NO_TNH-NEXT:  (nop)
   ;; NO_TNH-NEXT: )
   (func $return-nothing)
 
-  ;; YESTNH:      (func $partial (type $ref|$struct|_=>_ref?|$struct|) (param $x (ref $struct)) (result (ref null $struct))
+  ;; YESTNH:      (func $partial (type $5) (param $x (ref $struct)) (result (ref null $struct))
   ;; YESTNH-NEXT:  (local $y (ref null $struct))
   ;; YESTNH-NEXT:  (local.set $y
   ;; YESTNH-NEXT:   (local.get $x)
@@ -135,7 +135,7 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (local.get $y)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $partial (type $ref|$struct|_=>_ref?|$struct|) (param $x (ref $struct)) (result (ref null $struct))
+  ;; NO_TNH:      (func $partial (type $5) (param $x (ref $struct)) (result (ref null $struct))
   ;; NO_TNH-NEXT:  (local $y (ref null $struct))
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (struct.get $struct 0
@@ -179,10 +179,10 @@
     (local.get $y)
   )
 
-  ;; YESTNH:      (func $toplevel (type $none_=>_none)
+  ;; YESTNH:      (func $toplevel (type $1)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $toplevel (type $none_=>_none)
+  ;; NO_TNH:      (func $toplevel (type $1)
   ;; NO_TNH-NEXT:  (unreachable)
   ;; NO_TNH-NEXT: )
   (func $toplevel
@@ -191,7 +191,7 @@
     (unreachable)
   )
 
-  ;; YESTNH:      (func $drop-loop (type $none_=>_none)
+  ;; YESTNH:      (func $drop-loop (type $1)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (loop $loop (result i32)
   ;; YESTNH-NEXT:    (br_if $loop
@@ -201,7 +201,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $drop-loop (type $none_=>_none)
+  ;; NO_TNH:      (func $drop-loop (type $1)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (loop $loop (result i32)
   ;; NO_TNH-NEXT:    (br_if $loop
@@ -224,7 +224,7 @@
     )
   )
 
-  ;; YESTNH:      (func $loop-effects (type $none_=>_none)
+  ;; YESTNH:      (func $loop-effects (type $1)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (loop $loop (result i32)
   ;; YESTNH-NEXT:    (drop
@@ -239,7 +239,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $loop-effects (type $none_=>_none)
+  ;; NO_TNH:      (func $loop-effects (type $1)
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (loop $loop (result i32)
   ;; NO_TNH-NEXT:    (drop
@@ -272,7 +272,7 @@
     )
   )
 
-  ;; YESTNH:      (func $if-unreachable (type $i32_=>_none) (param $p i32)
+  ;; YESTNH:      (func $if-unreachable (type $0) (param $p i32)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:  )
@@ -290,7 +290,7 @@
   ;; YESTNH-NEXT:   (unreachable)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $if-unreachable (type $i32_=>_none) (param $p i32)
+  ;; NO_TNH:      (func $if-unreachable (type $0) (param $p i32)
   ;; NO_TNH-NEXT:  (if
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (unreachable)
@@ -330,13 +330,13 @@
     )
   )
 
-  ;; YESTNH:      (func $if-unreachable-value (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; YESTNH:      (func $if-unreachable-value (type $3) (param $p i32) (result i32)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (i32.const 1)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $if-unreachable-value (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; NO_TNH:      (func $if-unreachable-value (type $3) (param $p i32) (result i32)
   ;; NO_TNH-NEXT:  (if (result i32)
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (unreachable)
@@ -353,13 +353,13 @@
     )
   )
 
-  ;; YESTNH:      (func $if-unreachable-value-2 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; YESTNH:      (func $if-unreachable-value-2 (type $3) (param $p i32) (result i32)
   ;; YESTNH-NEXT:  (drop
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (i32.const 1)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $if-unreachable-value-2 (type $i32_=>_i32) (param $p i32) (result i32)
+  ;; NO_TNH:      (func $if-unreachable-value-2 (type $3) (param $p i32) (result i32)
   ;; NO_TNH-NEXT:  (if (result i32)
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (i32.const 1)
@@ -375,7 +375,7 @@
     )
   )
 
-  ;; YESTNH:      (func $block-unreachable (type $i32_=>_none) (param $p i32)
+  ;; YESTNH:      (func $block-unreachable (type $0) (param $p i32)
   ;; YESTNH-NEXT:  (if
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:   (block
@@ -391,7 +391,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $block-unreachable (type $i32_=>_none) (param $p i32)
+  ;; NO_TNH:      (func $block-unreachable (type $0) (param $p i32)
   ;; NO_TNH-NEXT:  (if
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (block
@@ -434,7 +434,7 @@
     )
   )
 
-  ;; YESTNH:      (func $block-unreachable-named (type $i32_=>_none) (param $p i32)
+  ;; YESTNH:      (func $block-unreachable-named (type $0) (param $p i32)
   ;; YESTNH-NEXT:  (if
   ;; YESTNH-NEXT:   (local.get $p)
   ;; YESTNH-NEXT:   (block $named
@@ -449,7 +449,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $block-unreachable-named (type $i32_=>_none) (param $p i32)
+  ;; NO_TNH:      (func $block-unreachable-named (type $0) (param $p i32)
   ;; NO_TNH-NEXT:  (if
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (block $named
@@ -490,10 +490,10 @@
     )
   )
 
-  ;; YESTNH:      (func $block-unreachable-all (type $i32_=>_none) (param $p i32)
+  ;; YESTNH:      (func $block-unreachable-all (type $0) (param $p i32)
   ;; YESTNH-NEXT:  (nop)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $block-unreachable-all (type $i32_=>_none) (param $p i32)
+  ;; NO_TNH:      (func $block-unreachable-all (type $0) (param $p i32)
   ;; NO_TNH-NEXT:  (if
   ;; NO_TNH-NEXT:   (local.get $p)
   ;; NO_TNH-NEXT:   (block
@@ -528,7 +528,7 @@
     )
   )
 
-  ;; YESTNH:      (func $block-unreachable-but-call (type $none_=>_none)
+  ;; YESTNH:      (func $block-unreachable-but-call (type $1)
   ;; YESTNH-NEXT:  (i32.store
   ;; YESTNH-NEXT:   (i32.const 0)
   ;; YESTNH-NEXT:   (i32.const 1)
@@ -536,7 +536,7 @@
   ;; YESTNH-NEXT:  (call $block-unreachable-but-call)
   ;; YESTNH-NEXT:  (unreachable)
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $block-unreachable-but-call (type $none_=>_none)
+  ;; NO_TNH:      (func $block-unreachable-but-call (type $1)
   ;; NO_TNH-NEXT:  (i32.store
   ;; NO_TNH-NEXT:   (i32.const 0)
   ;; NO_TNH-NEXT:   (i32.const 1)
@@ -564,7 +564,7 @@
     (unreachable)
   )
 
-  ;; YESTNH:      (func $catch-pop (type $none_=>_none)
+  ;; YESTNH:      (func $catch-pop (type $1)
   ;; YESTNH-NEXT:  (try $try
   ;; YESTNH-NEXT:   (do
   ;; YESTNH-NEXT:    (call $catch-pop)
@@ -577,7 +577,7 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $catch-pop (type $none_=>_none)
+  ;; NO_TNH:      (func $catch-pop (type $1)
   ;; NO_TNH-NEXT:  (try $try
   ;; NO_TNH-NEXT:   (do
   ;; NO_TNH-NEXT:    (call $catch-pop)
@@ -617,7 +617,7 @@
     )
   )
 
-  ;; YESTNH:      (func $loop-unreachable (type $i32_=>_none) (param $p i32)
+  ;; YESTNH:      (func $loop-unreachable (type $0) (param $p i32)
   ;; YESTNH-NEXT:  (loop $loop
   ;; YESTNH-NEXT:   (i32.store
   ;; YESTNH-NEXT:    (i32.const 0)
@@ -630,7 +630,7 @@
   ;; YESTNH-NEXT:   (unreachable)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (func $loop-unreachable (type $i32_=>_none) (param $p i32)
+  ;; NO_TNH:      (func $loop-unreachable (type $0) (param $p i32)
   ;; NO_TNH-NEXT:  (loop $loop
   ;; NO_TNH-NEXT:   (i32.store
   ;; NO_TNH-NEXT:    (i32.const 0)

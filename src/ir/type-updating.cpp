@@ -28,7 +28,9 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() {
+void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
+
+GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
@@ -56,7 +58,7 @@ void GlobalTypeRewriter::update() {
   }
 
   if (typeIndices.size() == 0) {
-    return;
+    return {};
   }
   typeBuilder.grow(typeIndices.size());
 
@@ -70,7 +72,7 @@ void GlobalTypeRewriter::update() {
   // Create the temporary heap types.
   i = 0;
   for (auto [type, _] : typeIndices) {
-    typeBuilder[i].setFinal(type.isFinal());
+    typeBuilder[i].setOpen(type.isOpen());
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;
@@ -113,6 +115,9 @@ void GlobalTypeRewriter::update() {
         typeBuilder[i].subTypeOf(*super);
       }
     }
+
+    modifyTypeBuilderEntry(typeBuilder, i, type);
+
     i++;
   }
 
@@ -139,7 +144,7 @@ void GlobalTypeRewriter::update() {
     }
   }
 
-  mapTypes(oldToNewTypes);
+  return oldToNewTypes;
 }
 
 void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
@@ -300,25 +305,22 @@ Type GlobalTypeRewriter::getTempTupleType(Tuple tuple) {
 namespace TypeUpdating {
 
 bool canHandleAsLocal(Type type) {
-  // Defaultable types are always ok. For non-nullable types, we can handle them
-  // using defaultable ones + ref.as_non_nulls.
-  return type.isDefaultable() || type.isRef();
+  // TODO: Inline this into its callers.
+  return type.isConcrete();
 }
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
-  if (wasm.features.hasGCNNLocals()) {
-    // We have nothing to fix up: all locals are allowed.
-    return;
-  }
   if (!wasm.features.hasReferenceTypes()) {
     // No references, so no non-nullable ones at all.
     return;
   }
   bool hasNonNullable = false;
-  for (auto type : func->vars) {
-    if (type.isNonNullable()) {
-      hasNonNullable = true;
-      break;
+  for (auto varType : func->vars) {
+    for (auto type : varType) {
+      if (type.isNonNullable()) {
+        hasNonNullable = true;
+        break;
+      }
     }
   }
   if (!hasNonNullable) {
@@ -338,7 +340,8 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     // LocalStructuralDominance should have only looked at non-nullable indexes
     // since we told it to ignore nullable ones. Also, params always dominate
     // and should not appear here.
-    assert(func->getLocalType(index).isNonNullable());
+    assert(func->getLocalType(index).isNonNullable() ||
+           func->getLocalType(index).isTuple());
     assert(!func->isParam(index));
   }
   if (badIndexes.empty()) {
@@ -369,8 +372,24 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     }
     if (badIndexes.count(set->index)) {
       auto type = func->getLocalType(set->index);
-      set->type = Type(type.getHeapType(), Nullable);
-      *setp = builder.makeRefAs(RefAsNonNull, set);
+      auto validType = getValidLocalType(type, wasm.features);
+      if (type.isRef()) {
+        set->type = validType;
+        *setp = builder.makeRefAs(RefAsNonNull, set);
+      } else {
+        assert(type.isTuple());
+        set->makeSet();
+        std::vector<Expression*> elems(type.size());
+        for (size_t i = 0, size = type.size(); i < size; ++i) {
+          elems[i] = builder.makeTupleExtract(
+            builder.makeLocalGet(set->index, validType), i);
+          if (type[i].isNonNullable()) {
+            elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
+          }
+        }
+        *setp =
+          builder.makeSequence(set, builder.makeTupleMake(std::move(elems)));
+      }
     }
   }
 
@@ -383,20 +402,41 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
 }
 
 Type getValidLocalType(Type type, FeatureSet features) {
-  // TODO: this should handle tuples with a non-nullable item
-  assert(canHandleAsLocal(type));
-  if (type.isNonNullable() && !features.hasGCNNLocals()) {
-    type = Type(type.getHeapType(), Nullable);
+  assert(type.isConcrete());
+  if (type.isNonNullable()) {
+    return Type(type.getHeapType(), Nullable);
+  }
+  if (type.isTuple()) {
+    std::vector<Type> elems(type.size());
+    for (size_t i = 0, size = type.size(); i < size; ++i) {
+      elems[i] = getValidLocalType(type[i], features);
+    }
+    return Type(std::move(elems));
   }
   return type;
 }
 
 Expression* fixLocalGet(LocalGet* get, Module& wasm) {
-  if (get->type.isNonNullable() && !wasm.features.hasGCNNLocals()) {
+  if (get->type.isNonNullable()) {
     // The get should now return a nullable value, and a ref.as_non_null
     // fixes that up.
     get->type = getValidLocalType(get->type, wasm.features);
     return Builder(wasm).makeRefAs(RefAsNonNull, get);
+  }
+  if (get->type.isTuple()) {
+    auto type = get->type;
+    get->type = getValidLocalType(type, wasm.features);
+    std::vector<Expression*> elems(type.size());
+    Builder builder(wasm);
+    for (Index i = 0, size = type.size(); i < size; ++i) {
+      auto* elemGet =
+        i == 0 ? get : builder.makeLocalGet(get->index, get->type);
+      elems[i] = builder.makeTupleExtract(elemGet, i);
+      if (type[i].isNonNullable()) {
+        elems[i] = builder.makeRefAs(RefAsNonNull, elems[i]);
+      }
+    }
+    return builder.makeTupleMake(std::move(elems));
   }
   return get;
 }

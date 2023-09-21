@@ -100,6 +100,39 @@ template<typename T> void test(size_t N) {
     t.clear();
     assert(t.empty());
   }
+  {
+    // Test iteration.
+    T t = {0, 1, 2};
+
+    // Pre-and-postfix ++.
+    auto iter = t.begin();
+    assert(*iter == 0);
+    iter++;
+    assert(*iter == 1);
+    ++iter;
+    assert(*iter == 2);
+
+    // Subtraction.
+    assert(t.begin() - t.begin() == 0);
+    assert(t.end() - t.begin() == 3);
+    iter = t.begin();
+    iter++;
+    assert(iter - t.begin() == 1);
+
+    // Comparison.
+    assert(t.begin() != t.end());
+    assert(iter != t.end());
+    iter++;
+    iter++;
+    assert(iter == t.end());
+
+    // Erasing at the end.
+    iter = t.begin();
+    iter++;
+    t.erase(iter, t.end());
+    assert(t.size() == 1);
+    assert(t[0] == 0);
+  }
 }
 
 int main() {
@@ -108,5 +141,6 @@ int main() {
   test<SmallVector<int, 2>>(2);
   test<SmallVector<int, 3>>(3);
   test<SmallVector<int, 10>>(10);
+
   std::cout << "ok.\n";
 }

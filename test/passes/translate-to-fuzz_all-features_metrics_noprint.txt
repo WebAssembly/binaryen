@@ -24,7 +24,6 @@ total
  GlobalGet      : 28      
  GlobalSet      : 28      
  I31Get         : 1       
- I31New         : 3       
  If             : 24      
  Load           : 20      
  LocalGet       : 33      
@@ -33,6 +32,7 @@ total
  MemoryFill     : 2       
  Nop            : 7       
  RefFunc        : 6       
+ RefI31         : 3       
  RefIsNull      : 1       
  RefNull        : 7       
  RefTest        : 1       

@@ -440,6 +440,7 @@ public:
   void visitTableSet(TableSet* curr);
   void visitTableSize(TableSize* curr);
   void visitTableGrow(TableGrow* curr);
+  void visitTableFill(TableFill* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -448,7 +449,7 @@ public:
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
-  void visitI31New(I31New* curr);
+  void visitRefI31(RefI31* curr);
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
@@ -2294,6 +2295,23 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
   }
 }
 
+void FunctionValidator::visitTableFill(TableFill* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.fill requires bulk-memory [--enable-bulk-memory]");
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!table, curr, "table.fill table must exist")) {
+    shouldBeSubType(curr->value->type,
+                    table->type,
+                    curr,
+                    "table.fill value must have right type");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,
@@ -2502,13 +2520,13 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
   }
 }
 
-void FunctionValidator::visitI31New(I31New* curr) {
+void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
-    getModule()->features.hasGC(), curr, "i31.new requires gc [--enable-gc]");
+    getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
   shouldBeSubType(curr->value->type,
                   Type::i32,
                   curr->value,
-                  "i31.new's argument should be i32");
+                  "ref.i31's argument should be i32");
 }
 
 void FunctionValidator::visitI31Get(I31Get* curr) {
@@ -2583,6 +2601,11 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
       curr->ref->type.getHeapType().getBottom(),
       curr,
       "br_on_cast* target type and ref type must have a common supertype");
+    shouldBeSubType(
+      curr->castType,
+      curr->ref->type,
+      curr,
+      "br_on_cast* target type must be a subtype of its input type");
   } else {
     shouldBeEqual(curr->castType,
                   Type(Type::none),
@@ -3190,42 +3213,13 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   if (getModule()->features.hasGC()) {
     // If we have non-nullable locals, verify that local.get are valid.
-    if (!getModule()->features.hasGCNNLocals()) {
-      // Without the special GCNNLocals feature, we implement the spec rules,
-      // that is, a set allows gets until the end of the block.
-      LocalStructuralDominance info(curr, *getModule());
-      for (auto index : info.nonDominatingIndices) {
-        shouldBeTrue(!curr->getLocalType(index).isNonNullable(),
+    LocalStructuralDominance info(curr, *getModule());
+    for (auto index : info.nonDominatingIndices) {
+      auto localType = curr->getLocalType(index);
+      for (auto type : localType) {
+        shouldBeTrue(!type.isNonNullable(),
                      index,
                      "non-nullable local's sets must dominate gets");
-      }
-    } else {
-      // With the special GCNNLocals feature, we allow gets anywhere, so long as
-      // we can prove they cannot read the null value. (TODO: remove this once
-      // the spec is stable).
-      //
-      // This is slow, so only do it if we find such locals exist at all.
-      bool hasNNLocals = false;
-      for (const auto& var : curr->vars) {
-        if (!var.isDefaultable()) {
-          hasNNLocals = true;
-          break;
-        }
-      }
-      if (hasNNLocals) {
-        LocalGraph graph(curr);
-        for (auto& [get, sets] : graph.getSetses) {
-          auto index = get->index;
-          // It is always ok to read nullable locals, and it is always ok to
-          // read params even if they are non-nullable.
-          if (curr->getLocalType(index).isDefaultable() ||
-              curr->isParam(index)) {
-            continue;
-          }
-          for (auto* set : sets) {
-            shouldBeTrue(!!set, index, "non-nullable local must not read null");
-          }
-        }
       }
     }
   }
@@ -3480,9 +3474,9 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
 static void validateMemories(Module& module, ValidationInfo& info) {
   if (module.memories.size() > 1) {
     info.shouldBeTrue(
-      module.features.hasMultiMemories(),
+      module.features.hasMultiMemory(),
       "memory",
-      "multiple memories require multi-memories [--enable-multi-memories]");
+      "multiple memories require multimemory [--enable-multimemory]");
   }
   for (auto& memory : module.memories) {
     if (memory->hasMax()) {

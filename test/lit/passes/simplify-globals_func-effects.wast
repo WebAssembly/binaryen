@@ -7,7 +7,7 @@
 ;; whose effects we've computed to include some sets to globals.
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (global $A (mut i32) (i32.const 10))
  (global $A (mut i32) (i32.const 10))

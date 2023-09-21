@@ -1,9 +1,9 @@
 (module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_f64_=>_none (func (param i32 f64)))
- (func $basic (type $i32_f64_=>_none) (param $x i32) (param $y f64)
+ (type $0 (func))
+ (type $1 (func (param i32)))
+ (type $2 (func (param i32 i32)))
+ (type $3 (func (param i32 f64)))
+ (func $basic (type $3) (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)
   (local.set $x
@@ -19,7 +19,7 @@
    (i64.const 0)
   )
  )
- (func $later-param-use (type $i32_=>_none) (param $x i32)
+ (func $later-param-use (type $1) (param $x i32)
   (local.set $x
    (i32.const 0)
   )
@@ -27,7 +27,7 @@
    (i32.const 0)
   )
  )
- (func $diff-value (type $i32_=>_none) (param $x i32)
+ (func $diff-value (type $1) (param $x i32)
   (local $a i32)
   (local.set $x
    (i32.const 0)
@@ -48,7 +48,7 @@
    (i32.const 0)
   )
  )
- (func $tuple-value (type $none_=>_none)
+ (func $tuple-value (type $0)
   (local $x (i32 i64))
   (local.set $x
    (tuple.make
@@ -63,7 +63,7 @@
    )
   )
  )
- (func $unreach (type $none_=>_none)
+ (func $unreach (type $0)
   (local $a i32)
   (block $x
    (drop
@@ -87,7 +87,7 @@
    )
   )
  )
- (func $loop (type $none_=>_none)
+ (func $loop (type $0)
   (local $a i32)
   (local $b i32)
   (loop $x
@@ -114,7 +114,7 @@
    (i32.const 1)
   )
  )
- (func $if (type $none_=>_none)
+ (func $if (type $0)
   (local $x i32)
   (if
    (i32.const 0)
@@ -129,7 +129,7 @@
    (i32.const 1)
   )
  )
- (func $if2 (type $none_=>_none)
+ (func $if2 (type $0)
   (local $x i32)
   (if
    (local.tee $x
@@ -146,7 +146,7 @@
    (i32.const 1)
   )
  )
- (func $if3 (type $none_=>_none)
+ (func $if3 (type $0)
   (local $x i32)
   (if
    (local.tee $x
@@ -163,7 +163,7 @@
    (i32.const 1)
   )
  )
- (func $copy (type $none_=>_none)
+ (func $copy (type $0)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -207,7 +207,7 @@
    (local.get $x)
   )
  )
- (func $param-unique (type $i32_=>_none) (param $x i32)
+ (func $param-unique (type $1) (param $x i32)
   (local $a i32)
   (local.set $a
    (local.get $x)
@@ -227,7 +227,7 @@
    (local.get $x)
   )
  )
- (func $set-unique (type $none_=>_none)
+ (func $set-unique (type $0)
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -285,7 +285,7 @@
    (local.get $x)
   )
  )
- (func $identical_complex (type $i32_=>_none) (param $x i32)
+ (func $identical_complex (type $1) (param $x i32)
   (local $y i32)
   (local.set $y
    (local.get $x)
@@ -306,7 +306,7 @@
    (local.get $y)
   )
  )
- (func $merge (type $none_=>_none)
+ (func $merge (type $0)
   (local $x i32)
   (if
    (i32.const 1)
@@ -341,7 +341,7 @@
    (i32.const 2)
   )
  )
- (func $one-arm (type $i32_i32_=>_none) (param $1 i32) (param $3 i32)
+ (func $one-arm (type $2) (param $1 i32) (param $3 i32)
   (local.set $1
    (local.get $3)
   )
@@ -353,7 +353,7 @@
    )
   )
  )
- (func $one-arm2 (type $i32_i32_=>_none) (param $1 i32) (param $3 i32)
+ (func $one-arm2 (type $2) (param $1 i32) (param $3 i32)
   (local.set $1
    (local.get $3)
   )
@@ -364,7 +364,7 @@
    )
   )
  )
- (func $many-merges (type $none_=>_none)
+ (func $many-merges (type $0)
   (local $0 i32)
   (local $1 i32)
   (block $block
@@ -393,7 +393,7 @@
    )
   )
  )
- (func $fuzz (type $none_=>_none)
+ (func $fuzz (type $0)
   (local $x i32)
   (loop $label$4
    (block $label$5
@@ -422,7 +422,7 @@
    )
   )
  )
- (func $fuzz2 (type $none_=>_none)
+ (func $fuzz2 (type $0)
   (local $var$1 i32)
   (if
    (i32.const 0)
@@ -445,7 +445,7 @@
    )
   )
  )
- (func $fuzz-nan (type $none_=>_none)
+ (func $fuzz-nan (type $0)
   (local $0 f64)
   (local $1 f64)
   (block $block

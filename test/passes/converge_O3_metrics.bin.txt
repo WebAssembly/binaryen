@@ -26,11 +26,11 @@ total
  RefFunc        : 429     
  Store          : 5       
 (module
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func (param i32 i32) (result i32)))
+ (type $2 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $3 (func (param i32) (result i32)))
+ (type $4 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "table" (table $timport$0 478 478 funcref))
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
@@ -94,7 +94,7 @@ total
    )
    (block $label$2
     (br_if $label$2
-     (call_indirect (type $i32_i32_i32_=>_i32)
+     (call_indirect (type $0)
       (local.get $1)
       (i32.const 10888)
       (local.get $0)
@@ -134,7 +134,7 @@ total
       )
      )
      (i32.const 0)
-     (call_indirect (type $i32_i32_=>_i32)
+     (call_indirect (type $1)
       (local.get $0)
       (i32.const 10)
       (i32.add
@@ -187,7 +187,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -208,7 +208,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)
@@ -252,11 +252,11 @@ total
  RefFunc        : 429     
  Store          : 5       
 (module
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func (param i32 i32) (result i32)))
+ (type $2 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $3 (func (param i32) (result i32)))
+ (type $4 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "table" (table $timport$0 478 478 funcref))
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
@@ -319,7 +319,7 @@ total
    )
    (block $label$2
     (br_if $label$2
-     (call_indirect (type $i32_i32_i32_=>_i32)
+     (call_indirect (type $0)
       (local.get $1)
       (i32.const 10888)
       (local.get $0)
@@ -359,7 +359,7 @@ total
       )
      )
      (i32.const 0)
-     (call_indirect (type $i32_i32_=>_i32)
+     (call_indirect (type $1)
       (local.get $0)
       (i32.const 10)
       (i32.add
@@ -407,7 +407,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -428,7 +428,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)
@@ -472,11 +472,11 @@ total
  RefFunc        : 429     
  Store          : 5       
 (module
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (param i32 i32 i32) (result i32)))
+ (type $1 (func (param i32 i32) (result i32)))
+ (type $2 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $3 (func (param i32) (result i32)))
+ (type $4 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "table" (table $timport$0 478 478 funcref))
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
@@ -539,7 +539,7 @@ total
    )
    (block $label$2
     (br_if $label$2
-     (call_indirect (type $i32_i32_i32_=>_i32)
+     (call_indirect (type $0)
       (local.get $1)
       (i32.const 10888)
       (local.get $0)
@@ -579,7 +579,7 @@ total
       )
      )
      (i32.const 0)
-     (call_indirect (type $i32_i32_=>_i32)
+     (call_indirect (type $1)
       (local.get $0)
       (i32.const 10)
       (i32.add
@@ -627,7 +627,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -648,7 +648,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $0)
     (i32.const 0)
     (local.get $1)
     (local.get $2)

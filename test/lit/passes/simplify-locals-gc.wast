@@ -4,7 +4,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (struct (field structref)))
+  ;; CHECK:      (type $A (sub (struct (field structref))))
 
   ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
 
@@ -14,14 +14,14 @@
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  (type $A (struct_subtype (field (ref null struct)) data))
+  (type $A (sub (struct (field (ref null struct)))))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
-  (type $B (struct_subtype (field (ref struct)) $A))
+  (type $B (sub $A (struct (field (ref struct)))))
 
   ;; Writes to heap objects cannot be reordered with reads.
-  ;; CHECK:      (func $no-reorder-past-write (type $ref|$struct|_=>_i32) (param $x (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-reorder-past-write (type $4) (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -48,7 +48,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $reorder-past-write-if-immutable (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK:      (func $reorder-past-write-if-immutable (type $6) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.set $struct 0
@@ -73,7 +73,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $unreachable-struct.get (type $ref|$struct|_ref|$struct-immutable|_=>_i32) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
+  ;; CHECK:      (func $unreachable-struct.get (type $6) (param $x (ref $struct)) (param $y (ref $struct-immutable)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.tee $temp
   ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
@@ -107,7 +107,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $no-block-values-if-br_on (type $none_=>_none)
+  ;; CHECK:      (func $no-block-values-if-br_on (type $3)
   ;; CHECK-NEXT:  (local $temp anyref)
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
@@ -162,7 +162,7 @@
    )
   )
 
-  ;; CHECK:      (func $if-nnl (type $none_=>_none)
+  ;; CHECK:      (func $if-nnl (type $3)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
@@ -212,7 +212,7 @@
    )
   )
 
-  ;; CHECK:      (func $if-nnl-previous-set (type $none_=>_none)
+  ;; CHECK:      (func $if-nnl-previous-set (type $3)
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $if-nnl)
@@ -255,13 +255,13 @@
    )
   )
 
-  ;; CHECK:      (func $helper (type $ref|func|_=>_none) (param $ref (ref func))
+  ;; CHECK:      (func $helper (type $8) (param $ref (ref func))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper (param $ref (ref func))
   )
 
-  ;; CHECK:      (func $needs-refinalize (type $ref|$B|_=>_anyref) (param $b (ref $B)) (result anyref)
+  ;; CHECK:      (func $needs-refinalize (type $9) (param $b (ref $B)) (result anyref)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (struct.get $B 0
@@ -281,7 +281,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-vs-mutable-read (type $ref|$struct|_=>_i32) (param $0 (ref $struct)) (result i32)
+  ;; CHECK:      (func $call-vs-mutable-read (type $4) (param $0 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $side-effect)
@@ -310,7 +310,7 @@
     (local.get $temp)
   )
 
-  ;; CHECK:      (func $side-effect (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $side-effect (type $10) (result i32)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $side-effect (result i32)
@@ -318,7 +318,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $pick-refined (type $ref|any|_=>_anyref) (param $nn-any (ref any)) (result anyref)
+  ;; CHECK:      (func $pick-refined (type $11) (param $nn-any (ref any)) (result anyref)
   ;; CHECK-NEXT:  (local $any anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $use-any
@@ -352,7 +352,7 @@
     (local.get $any)
   )
 
-  ;; CHECK:      (func $pick-casted (type $anyref_=>_anyref) (param $any anyref) (result anyref)
+  ;; CHECK:      (func $pick-casted (type $12) (param $any anyref) (result anyref)
   ;; CHECK-NEXT:  (local $nn-any (ref any))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $use-any
@@ -390,7 +390,7 @@
     (local.get $any)
   )
 
-  ;; CHECK:      (func $pick-fallthrough (type $i32_=>_none) (param $x i32)
+  ;; CHECK:      (func $pick-fallthrough (type $13) (param $x i32)
   ;; CHECK-NEXT:  (local $t i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -422,7 +422,7 @@
     )
   )
 
-  ;; CHECK:      (func $ignore-unrefined (type $ref|$A|_=>_none) (param $A (ref $A))
+  ;; CHECK:      (func $ignore-unrefined (type $14) (param $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref null $B))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
@@ -433,7 +433,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $B 0
   ;; CHECK-NEXT:    (local.tee $B
-  ;; CHECK-NEXT:     (ref.cast $B
+  ;; CHECK-NEXT:     (ref.cast (ref $B)
   ;; CHECK-NEXT:      (local.get $A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -456,7 +456,7 @@
     ;; nullability but not the heap type.
     (local $B (ref null $B))
     (local.set $B
-      (ref.cast $B
+      (ref.cast (ref $B)
         (local.get $A)
       )
     )
@@ -484,21 +484,21 @@
     )
   )
 
-  ;; CHECK:      (func $use-nn-any (type $ref|any|_=>_none) (param $nn-any (ref any))
+  ;; CHECK:      (func $use-nn-any (type $15) (param $nn-any (ref any))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-nn-any (param $nn-any (ref any))
     ;; Helper function for the above.
   )
 
-  ;; CHECK:      (func $use-any (type $anyref_=>_none) (param $any anyref)
+  ;; CHECK:      (func $use-any (type $7) (param $any anyref)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $use-any (param $any anyref)
     ;; Helper function for the above.
   )
 
-  ;; CHECK:      (func $remove-tee-refinalize (type $ref?|$A|_ref?|$B|_=>_structref) (param $a (ref null $A)) (param $b (ref null $B)) (result structref)
+  ;; CHECK:      (func $remove-tee-refinalize (type $16) (param $a (ref null $A)) (param $b (ref null $B)) (result structref)
   ;; CHECK-NEXT:  (struct.get $B 0
   ;; CHECK-NEXT:   (local.get $b)
   ;; CHECK-NEXT:  )
@@ -516,5 +516,92 @@
         (local.get $b)
       )
     )
+  )
+
+  ;; CHECK:      (func $redundant-tee-finalize (type $7) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast (ref any)
+  ;; CHECK-NEXT:    (ref.cast (ref any)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-tee-finalize (param $x anyref)
+    ;; The tee in the middle will be removed, as it copies a local to itself.
+    ;; After doing so, the outer cast should become non-nullable as we
+    ;; refinalize.
+    (drop
+      (ref.cast anyref
+        (local.tee $x
+          (ref.cast (ref any)
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $equivalent-set-removal-branching (type $17) (param $0 i32) (param $any anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_null $block
+  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $block)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $equivalent-set-removal-branching (param $0 i32) (param $any anyref)
+    (local $1 i32)
+    (block $block
+      (local.set $1 (local.get $0))
+      (br_if $block
+        (local.get $0)
+      )
+      (drop
+        (br_on_null $block
+          (local.get $any)
+        )
+      )
+      ;; We can optimize these to both use the same local index, as they must
+      ;; contain the same value, even past the br_if and br_on_null.
+      (drop (local.get $0))
+      (drop (local.get $1))
+      (br $block)
+      ;; But we do not optimize these as they are after an unconditional br
+      ;; (so they are unreachable code).
+      (drop (local.get $0))
+      (drop (local.get $1))
+    )
+    ;; Past the end of the block we do not optimize. The local.set actually does
+    ;; dominate these, but currently we do not realize that in this pass. TODO
+    (drop (local.get $0))
+    (drop (local.get $1))
   )
 )

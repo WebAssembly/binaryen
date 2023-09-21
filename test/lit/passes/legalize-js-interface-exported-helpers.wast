@@ -6,11 +6,11 @@
 ;; RUN: wasm-opt %s --legalize-js-interface --pass-arg=legalize-js-interface-exported-helpers -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $1 (func (result i64)))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $2 (func (param i32)))
 
   ;; CHECK:      (import "env" "imported" (func $legalimport$imported (result i32)))
 

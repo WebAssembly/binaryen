@@ -16,7 +16,7 @@
 
  ;; CHECK:      (type $FUNCSIG$i (func (result i32)))
 
- ;; CHECK:      (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ ;; CHECK:      (type $5 (func (param i32 i32 i32 i32) (result i32)))
 
  ;; CHECK:      (type $FUNCSIG$vii (func (param i32 i32)))
 
@@ -25,13 +25,13 @@
  (type $FUNCSIG$i (func (result i32)))
  (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
  (type $FUNCSIG$vii (func (param i32 i32)))
- ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32) (result i32)))
+ ;; CHECK:      (type $8 (func (param i32 i32 i32 i32 i32) (result i32)))
 
- ;; CHECK:      (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
+ ;; CHECK:      (type $9 (func (param f64 i32) (result f64)))
 
- ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ ;; CHECK:      (type $10 (func (param i32 i32 i32)))
 
- ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+ ;; CHECK:      (type $11 (func (param i32 i32 i32 i32 i32)))
 
  ;; CHECK:      (import "env" "memory" (memory $0 256 256))
  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
@@ -1342,13 +1342,13 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (i32.load
- ;; CHECK-NEXT:       (i32.const 12)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (call $_fflush
+ ;; CHECK-NEXT:      (local.tee $0
  ;; CHECK-NEXT:       (i32.load
  ;; CHECK-NEXT:        (i32.const 12)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (call $_fflush
+ ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
@@ -6818,7 +6818,7 @@
  ;; CHECK-NEXT:                               (i32.mul
  ;; CHECK-NEXT:                                (i32.shr_s
  ;; CHECK-NEXT:                                 (i32.sub
- ;; CHECK-NEXT:                                  (local.get $20)
+ ;; CHECK-NEXT:                                  (local.get $8)
  ;; CHECK-NEXT:                                  (local.get $5)
  ;; CHECK-NEXT:                                 )
  ;; CHECK-NEXT:                                 (i32.const 2)
@@ -8423,9 +8423,7 @@
  ;; CHECK-NEXT:                        (i32.and
  ;; CHECK-NEXT:                         (local.tee $9
  ;; CHECK-NEXT:                          (i32.ne
- ;; CHECK-NEXT:                           (local.tee $7
- ;; CHECK-NEXT:                            (local.get $6)
- ;; CHECK-NEXT:                           )
+ ;; CHECK-NEXT:                           (local.get $6)
  ;; CHECK-NEXT:                           (i32.const 0)
  ;; CHECK-NEXT:                          )
  ;; CHECK-NEXT:                         )
@@ -8438,6 +8436,9 @@
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                        )
  ;; CHECK-NEXT:                        (block
+ ;; CHECK-NEXT:                         (local.set $7
+ ;; CHECK-NEXT:                          (local.get $6)
+ ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                         (local.set $8
  ;; CHECK-NEXT:                          (local.get $5)
  ;; CHECK-NEXT:                         )
@@ -8478,8 +8479,13 @@
  ;; CHECK-NEXT:                          )
  ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                        )
- ;; CHECK-NEXT:                        (local.set $8
- ;; CHECK-NEXT:                         (local.get $5)
+ ;; CHECK-NEXT:                        (block
+ ;; CHECK-NEXT:                         (local.set $7
+ ;; CHECK-NEXT:                          (local.get $6)
+ ;; CHECK-NEXT:                         )
+ ;; CHECK-NEXT:                         (local.set $8
+ ;; CHECK-NEXT:                          (local.get $5)
+ ;; CHECK-NEXT:                         )
  ;; CHECK-NEXT:                        )
  ;; CHECK-NEXT:                       )
  ;; CHECK-NEXT:                       (br_if $__rjti$20
@@ -8502,7 +8508,7 @@
  ;; CHECK-NEXT:                         (block $__rjti$07
  ;; CHECK-NEXT:                          (br_if $__rjti$07
  ;; CHECK-NEXT:                           (i32.le_u
- ;; CHECK-NEXT:                            (local.get $9)
+ ;; CHECK-NEXT:                            (local.get $7)
  ;; CHECK-NEXT:                            (i32.const 3)
  ;; CHECK-NEXT:                           )
  ;; CHECK-NEXT:                          )

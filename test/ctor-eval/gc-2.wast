@@ -1,5 +1,5 @@
 (module
-  (type $struct (struct_subtype (field i32) data))
+  (type $struct (sub (struct (field i32))))
 
   (import "import" "import" (func $import (param anyref)))
 
@@ -38,7 +38,7 @@
   (func "keepalive" (result i32)
     (select
       (struct.get $struct 0
-        (ref.cast $struct
+        (ref.cast (ref $struct)
           (global.get $global1)
         )
       )

@@ -50,7 +50,9 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "ir/subtypes.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -220,6 +222,8 @@ struct GlobalStructInference : public Pass {
 
       FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
 
+      bool refinalize = false;
+
       void visitStructGet(StructGet* curr) {
         auto type = curr->ref->type;
         if (type == Type::unreachable) {
@@ -261,9 +265,16 @@ struct GlobalStructInference : public Pass {
           // will unlock those other optimizations. Note we must trap if the ref
           // is null, so add RefAsNonNull here.
           auto global = globals[0];
+          auto globalType = wasm.getGlobal(global)->type;
+          if (globalType != curr->ref->type) {
+            // The struct.get will now read from something of the type of the
+            // global, which is different, so the field being read might be
+            // refined, which could change the struct.get's type.
+            refinalize = true;
+          }
           curr->ref = builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeGlobalGet(global, wasm.getGlobal(globals[0])->type));
+            builder.makeGlobalGet(global, globalType));
           return;
         }
 
@@ -364,6 +375,12 @@ struct GlobalStructInference : public Pass {
                               checkGlobal, wasm.getGlobal(checkGlobal)->type)),
           builder.makeConstantExpression(values[0]),
           builder.makeConstantExpression(values[1])));
+      }
+
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
       }
 
     private:

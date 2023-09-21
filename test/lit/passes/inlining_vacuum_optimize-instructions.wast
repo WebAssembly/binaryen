@@ -11,13 +11,13 @@
 ;; which is temporarily inconsistent. We must be careful to avoid confusion
 ;; there.
 (module
- ;; CHECK:      (type $B (struct ))
- (type $B (struct_subtype  data))
- ;; CHECK:      (type $A (struct (field (ref null $B))))
- (type $A (struct_subtype (field (ref null $B)) data))
- ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+ ;; CHECK:      (type $B (sub (struct )))
+ (type $B (sub (struct )))
+ ;; CHECK:      (type $A (sub (struct (field (ref null $B)))))
+ (type $A (sub (struct (field (ref null $B)))))
+ ;; CHECK:      (type $2 (func (param (ref null $A))))
 
- ;; CHECK:      (func $target (type $ref?|$A|_=>_none) (param $0 (ref null $A))
+ ;; CHECK:      (func $target (type $2) (param $0 (ref null $A))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:    (drop
@@ -30,7 +30,7 @@
  ;; CHECK-NEXT: )
  (func $target (param $0 (ref null $A))
   (drop
-   (ref.cast null $B
+   (ref.cast (ref null $B)
     (struct.get $A 0
      (call $get-null)
     )

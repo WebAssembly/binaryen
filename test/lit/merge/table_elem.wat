@@ -11,7 +11,7 @@
   ;; CHECK:      (type $vec (array funcref))
   (type $vec (array funcref))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (table $foo 1 funcref)
   (table $foo 1 funcref)
@@ -63,7 +63,7 @@
 
 ;; CHECK:      (export "keepalive2_1" (func $0_1))
 
-;; CHECK:      (func $0 (type $none_=>_none)
+;; CHECK:      (func $0 (type $1)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (table.get $foo
 ;; CHECK-NEXT:    (i32.const 1)
@@ -88,7 +88,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0_1 (type $none_=>_none)
+;; CHECK:      (func $0_1 (type $1)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (table.get $foo_2
 ;; CHECK-NEXT:    (i32.const 1)

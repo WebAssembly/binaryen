@@ -11,9 +11,9 @@
     ;; CHECK:      (type $type$0 (func (param (ref null $type$0)) (result (ref null $type$0))))
 
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $f3 (func (param (ref null $type$2)) (result (ref null $f3))))
-    (type $f3 (func (param (ref null 4)) (result (ref null 3))))
-    (type (func_subtype (param (ref null 3)) (result (ref null 4)) $f3))
+    ;; CHECK-NEXT:  (type $f3 (sub (func (param (ref null $type$2)) (result (ref null $f3)))))
+    (type $f3 (sub (func (param (ref null 4)) (result (ref null 3)))))
+    (type (sub $f3 (func (param (ref null 3)) (result (ref null 4)))))
   )
 
   ;; CHECK:       (type $type$2 (sub $f3 (func (param (ref null $f3)) (result (ref null $type$2)))))

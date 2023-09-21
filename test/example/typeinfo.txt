@@ -12,7 +12,7 @@ i31
 i31ref
 (ref i31)
 (func)
-(type $struct.0 (struct))
+(type $struct.0 (struct ))
 (type $array.0 (array i32))
 
 ;; Signature
@@ -24,10 +24,10 @@ i31ref
 (ref null $func.0)
 
 ;; Struct
-(struct)
+(type $struct.0 (struct ))
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field i32 i64 (mut f32) (mut f64)))
+(type $struct.0 (struct (field i32) (field i64) (field (mut f32)) (field (mut f64))))
 (ref $struct.0)
 (ref null $struct.0)
 
@@ -52,16 +52,16 @@ none
 (func (param (ref null $struct.0) (ref $array.0)) (result (ref $struct.0) (ref null $array.1)))
 
 ;; Struct of references
-(struct (field (ref $func.0) (mut (ref $func.0)) (ref null $func.0) (mut (ref null $func.0))))
+(type $struct.0 (struct (field (ref $func.0)) (field (mut (ref $func.0))) (field (ref null $func.0)) (field (mut (ref null $func.0)))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field (ref $struct.0) (mut (ref $struct.0)) (ref null $struct.0) (mut (ref null $struct.0))))
+(type $struct.0 (struct (field (ref $struct.1)) (field (mut (ref $struct.1))) (field (ref null $struct.1)) (field (mut (ref null $struct.1)))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field (ref $array.0) (mut (ref $array.0)) (ref null $array.0) (mut (ref null $array.0))))
+(type $struct.0 (struct (field (ref $array.0)) (field (mut (ref $array.0))) (field (ref null $array.0)) (field (mut (ref null $array.0)))))
 (ref $struct.0)
 (ref null $struct.0)
-(struct (field (mut i32) (mut (ref null $func.0)) (mut (ref null $struct.0)) (mut (ref null $array.0))))
+(type $struct.0 (struct (field (mut i32)) (field (mut (ref null $func.0))) (field (mut (ref null $struct.1))) (field (mut (ref null $array.0)))))
 (ref $struct.0)
 (ref null $struct.0)
 

@@ -45,10 +45,9 @@ struct BasicBlock {
   reverse_iterator rend() const { return insts.rend(); }
 
   // Iterables for predecessor and successor blocks.
-  struct Predecessors;
-  struct Successors;
-  Predecessors preds() const;
-  Successors succs() const;
+  struct BasicBlockIterable;
+  BasicBlockIterable preds() const;
+  BasicBlockIterable succs() const;
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
@@ -59,6 +58,7 @@ private:
   std::vector<Expression*> insts;
   std::vector<BasicBlock*> predecessors;
   std::vector<BasicBlock*> successors;
+
   friend CFG;
 };
 
@@ -79,7 +79,30 @@ struct CFG {
 
 private:
   std::vector<BasicBlock> blocks;
+
   friend BasicBlock;
+};
+
+// A helper class that computes block indexes for a CFG and allows querying of
+// them.
+struct CFGBlockIndexes {
+  CFGBlockIndexes(const CFG& cfg);
+
+  // Gets the index of the basic block in which the instruction resides.
+  Index get(Expression* expr) const {
+    auto iter = map.find(expr);
+    if (iter == map.end()) {
+      // There is no entry for this, which can be the case for control flow
+      // structures, or for unreachable code.
+      return InvalidBlock;
+    }
+    return iter->second;
+  }
+
+  enum { InvalidBlock = Index(-1) };
+
+private:
+  std::unordered_map<Expression*, Index> map;
 };
 
 } // namespace wasm::analysis

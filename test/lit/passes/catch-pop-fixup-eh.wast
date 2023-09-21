@@ -17,7 +17,7 @@
   ;; CHECK:      (tag $e-struct.A (param (ref $struct.A)))
   (tag $e-struct.A (param (ref $struct.A)))
 
-  ;; CHECK:      (func $pop-within-block1 (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-block1 (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -49,7 +49,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-block2 (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-block2 (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -97,7 +97,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-block3 (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $pop-within-block3 (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try (result i32)
   ;; CHECK-NEXT:   (do
@@ -138,11 +138,11 @@
     )
   )
 
-  ;; CHECK:      (func $helper (type $none_=>_none)
+  ;; CHECK:      (func $helper (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $helper)
-  ;; CHECK:      (func $pop-within-implicit-block1 (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-implicit-block1 (type $0)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -171,7 +171,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-implicit-block2 (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-implicit-block2 (type $0)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -202,7 +202,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-try (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $pop-within-try (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try (result i32)
   ;; CHECK-NEXT:   (do
@@ -242,7 +242,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-if-condition (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $pop-within-if-condition (type $1) (result i32)
   ;; CHECK-NEXT:  (try $try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (i32.const 0)
@@ -273,7 +273,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-within-block-within-if-condition (type $none_=>_none)
+  ;; CHECK:      (func $pop-within-block-within-if-condition (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -317,7 +317,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-tuple-within-block (type $none_=>_none)
+  ;; CHECK:      (func $pop-tuple-within-block (type $0)
   ;; CHECK-NEXT:  (local $x (i32 f32))
   ;; CHECK-NEXT:  (local $1 (i32 f32))
   ;; CHECK-NEXT:  (try $try
@@ -354,7 +354,7 @@
     )
   )
 
-  ;; CHECK:      (func $pop-non-defaultable-type-within-block (type $none_=>_none)
+  ;; CHECK:      (func $pop-non-defaultable-type-within-block (type $0)
   ;; CHECK-NEXT:  (local $0 (ref $struct.A))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do

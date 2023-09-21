@@ -4,19 +4,19 @@
 ;; ref.cast does not inhibit merging if traps never happen.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
-  (type $B (struct_subtype $A))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
+  (type $B (sub $A (struct)))
 
-  ;; CHECK:       (type $ref|$A|_=>_ref|$A| (func (param (ref $A)) (result (ref $A))))
+  ;; CHECK:       (type $1 (func (param (ref $A)) (result (ref $A))))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$A|) (param $a (ref $A)) (result (ref $A))
-  ;; CHECK-NEXT:  (ref.cast $A
+  ;; CHECK:      (func $test (type $1) (param $a (ref $A)) (result (ref $A))
+  ;; CHECK-NEXT:  (ref.cast (ref $A)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result (ref $B))
-    (ref.cast $B
+    (ref.cast (ref $B)
       (local.get $a)
     )
   )
@@ -25,20 +25,20 @@
 ;; Check that a ref.test still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
-  ;; CHECK:       (type $ref|$A|_=>_i32 (func (param (ref $A)) (result i32)))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_i32) (param $a (ref $A)) (result i32)
-  ;; CHECK-NEXT:  (ref.test $B
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result i32)
+  ;; CHECK-NEXT:  (ref.test (ref $B)
   ;; CHECK-NEXT:   (local.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result i32)
-    (ref.test $B
+    (ref.test (ref $B)
       (local.get $a)
     )
   )
@@ -47,14 +47,14 @@
 ;; Check that a br_on_cast still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  (type $A (sub (struct)))
   ;; CHECK:       (type $B (sub $A (struct )))
-  (type $B (struct_subtype $A))
+  (type $B (sub $A (struct)))
 
-  ;; CHECK:       (type $ref|$A|_=>_ref|$B| (func (param (ref $A)) (result (ref $B))))
+  ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))
 
-  ;; CHECK:      (func $test (type $ref|$A|_=>_ref|$B|) (param $a (ref $A)) (result (ref $B))
+  ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
   ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)
@@ -93,9 +93,9 @@
 
 ;; call_indirect should not inhibit merging if traps never happen.
 (module
-  ;; CHECK:      (type $A (func))
-  (type $A (func))
-  (type $B (func_subtype $A))
+  ;; CHECK:      (type $A (sub (func)))
+  (type $A (sub (func)))
+  (type $B (sub $A (func)))
 
   (table 1 1 (ref null $A))
 

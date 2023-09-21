@@ -1,8 +1,8 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (drop
    (global.get $g1)
   )
@@ -12,12 +12,12 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
  (global $g3 i32 (global.get $g2))
  (global $g4 i32 (global.get $g3))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (drop
    (global.get $g1)
   )
@@ -37,10 +37,10 @@
  (global $g2 i32 (global.get $g1))
 )
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (unreachable)
  )
 )
@@ -50,7 +50,7 @@
  (export "global-2" (global $g2))
 )
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (global $g1 i32 (i32.const 1))
  (global $g2 i32 (i32.const 1))
  (global $g3 f64 (f64.const -3.4))
@@ -63,17 +63,17 @@
  (global $ga (mut i32) (i32.const 4))
  (global $gb i32 (i32.const 5))
  (global $gc i32 (i32.const 5))
- (func $foo (type $none_=>_none)
+ (func $foo (type $0)
   (global.set $ga
    (i32.const 6)
   )
  )
 )
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $f (type $i32_=>_i32) (param $0 i32) (result i32)
+ (func $f (type $0) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -110,10 +110,10 @@
  )
 )
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 (mut i32) (i32.const 1))
- (func $f (type $i32_=>_i32) (param $0 i32) (result i32)
+ (func $f (type $0) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -127,10 +127,10 @@
  )
 )
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $0 (func (param i32) (result i32)))
  (global $g1 (mut i32) (i32.const 1))
  (global $g2 i32 (i32.const 1))
- (func $no (type $i32_=>_i32) (param $x i32) (result i32)
+ (func $no (type $0) (param $x i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -141,7 +141,7 @@
   )
   (global.get $g1)
  )
- (func $no2 (type $i32_=>_i32) (param $x i32) (result i32)
+ (func $no2 (type $0) (param $x i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -150,7 +150,7 @@
   )
   (global.get $g1)
  )
- (func $yes (type $i32_=>_i32) (param $0 i32) (result i32)
+ (func $yes (type $0) (param $0 i32) (result i32)
   (global.set $g1
    (i32.const 100)
   )
@@ -158,11 +158,11 @@
  )
 )
 (module
- (type $none_=>_f64 (func (result f64)))
+ (type $0 (func (result f64)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 0))
  (export "func_9" (func $0))
- (func $0 (type $none_=>_f64) (result f64)
+ (func $0 (type $0) (result f64)
   (drop
    (unreachable)
   )

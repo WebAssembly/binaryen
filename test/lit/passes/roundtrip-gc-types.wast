@@ -9,8 +9,8 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (struct (field (ref $C))))
-  (type $A (struct (field (ref $C))))
+  ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $C)))))
+  (type $A (sub (struct (field (ref $C)))))
 
   ;; CHECK:       (type $B (func (param (ref $A)) (result (ref $B))))
   (type $B (func (param (ref $A)) (result (ref $B))))
@@ -19,10 +19,10 @@
   (type $C (struct (field (mut (ref $B)))))
 
   ;; CHECK:       (type $D (sub $A (struct (field (ref $C)) (field (ref $A)))))
-  (type $D (struct_subtype (field (ref $C)) (field (ref $A)) $A))
+  (type $D (sub $A (struct (field (ref $C)) (field (ref $A)))))
  )
 
- ;; CHECK:      (func $use-types (type $ref|$A|_ref|$D|_=>_none) (param $0 (ref $A)) (param $1 (ref $D))
+ ;; CHECK:      (func $use-types (type $4) (param $0 (ref $A)) (param $1 (ref $D))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types (param (ref $A) (ref $D))

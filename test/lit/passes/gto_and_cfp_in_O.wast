@@ -8,12 +8,12 @@
 ;; open world we do not run them.
 
 (module
-  ;; OPEN_WORLD:      (type $struct (struct (field (mut funcref)) (field (mut i32))))
-  (type $struct (struct_subtype (field (mut funcref)) (field (mut i32)) data))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
+  (type $struct (sub (struct (field (mut funcref)) (field (mut i32)))))
 
-  ;; OPEN_WORLD:      (type $none_=>_none (func))
+  ;; OPEN_WORLD:      (type $1 (func))
 
-  ;; OPEN_WORLD:      (type $none_=>_i32 (func (result i32)))
+  ;; OPEN_WORLD:      (type $2 (func (result i32)))
 
   ;; OPEN_WORLD:      (global $glob (ref $struct) (struct.new $struct
   ;; OPEN_WORLD-NEXT:  (ref.func $by-ref)
@@ -26,7 +26,7 @@
 
   ;; OPEN_WORLD:      (export "main" (func $main))
 
-  ;; OPEN_WORLD:      (func $by-ref (type $none_=>_none) (; has Stack IR ;)
+  ;; OPEN_WORLD:      (func $by-ref (type $1) (; has Stack IR ;)
   ;; OPEN_WORLD-NEXT:  (struct.set $struct 1
   ;; OPEN_WORLD-NEXT:   (global.get $glob)
   ;; OPEN_WORLD-NEXT:   (i32.const 200)
@@ -45,14 +45,14 @@
     )
   )
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
   ;; CHECK:      (export "main" (func $main))
 
-  ;; CHECK:      (func $main (type $none_=>_i32) (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $main (type $0) (; has Stack IR ;) (result i32)
   ;; CHECK-NEXT:  (i32.const 100)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $main (type $none_=>_i32) (; has Stack IR ;) (result i32)
+  ;; OPEN_WORLD:      (func $main (type $2) (; has Stack IR ;) (result i32)
   ;; OPEN_WORLD-NEXT:  (struct.get $struct 1
   ;; OPEN_WORLD-NEXT:   (global.get $glob)
   ;; OPEN_WORLD-NEXT:  )

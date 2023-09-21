@@ -9,31 +9,31 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A-super (func))
+    ;; CHECK-NEXT:  (type $A-super (sub (func)))
     ;; OPEN_WORLD:      (rec
-    ;; OPEN_WORLD-NEXT:  (type $A-super (func))
-    (type $A-super (func))
+    ;; OPEN_WORLD-NEXT:  (type $A-super (sub (func)))
+    (type $A-super (sub (func)))
 
     ;; CHECK:       (type $A (sub $A-super (func)))
     ;; OPEN_WORLD:       (type $A (sub $A-super (func)))
-    (type $A (func_subtype $A-super))
+    (type $A (sub $A-super (func)))
 
     ;; CHECK:       (type $A-sub (sub $A (func)))
     ;; OPEN_WORLD:       (type $A-sub (sub $A (func)))
-    (type $A-sub (func_subtype $A))
+    (type $A-sub (sub $A (func)))
 
     ;; CHECK:       (type $B (func))
     ;; OPEN_WORLD:       (type $B (func))
     (type $B (func))
   )
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $4 (func))
 
   ;; CHECK:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
 
   ;; CHECK:      (export "foo" (func $foo))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $4)
   ;; CHECK-NEXT:  (local $A (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.func $target-A)
@@ -57,13 +57,13 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (type $none_=>_none (func))
+  ;; OPEN_WORLD:      (type $4 (func))
 
   ;; OPEN_WORLD:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
-  ;; OPEN_WORLD:      (func $foo (type $none_=>_none)
+  ;; OPEN_WORLD:      (func $foo (type $4)
   ;; OPEN_WORLD-NEXT:  (local $A (ref null $A))
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (ref.func $target-A)
@@ -469,17 +469,17 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $1 (func (param funcref)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
-  ;; OPEN_WORLD:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
+  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
 
@@ -546,17 +546,17 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (type $1 (func (param funcref)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
-  ;; OPEN_WORLD:      (type $funcref_=>_none (func (param funcref)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $funcref_=>_none) (param funcref)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $funcref_=>_none) (param funcref)))
+  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
 
@@ -634,9 +634,9 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $a)
@@ -754,13 +754,13 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
-  ;; CHECK:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
-  ;; OPEN_WORLD:      (type $struct (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable))))
-  (type $struct (struct_subtype (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) data))
+  ;; CHECK:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
+  (type $struct (sub (struct (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)) (field (ref $vtable)))))
 
   ;; CHECK:      (global $vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $a)
@@ -1070,9 +1070,9 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  ;; OPEN_WORLD:      (type $vtable (struct (field (ref $void)) (field (ref $void))))
-  (type $vtable (struct_subtype (field (ref $void)) (field (ref $void)) data))
+  ;; CHECK:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
+  (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
   ;; CHECK:      (elem declare func $a $b $void)
 
@@ -1174,18 +1174,18 @@
     ;; OPEN_WORLD:      (rec
     ;; OPEN_WORLD-NEXT:  (type $vtable-func (func (param (ref $vtable))))
     (type $vtable-func (func (param (ref $vtable))))
-    ;; CHECK:       (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
-    ;; OPEN_WORLD:       (type $vtable (struct (field (ref $vtable-func)) (field (ref $vtable-func))))
-    (type $vtable (struct_subtype (field (ref $vtable-func)) (field (ref $vtable-func)) data))
+    ;; CHECK:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
+    ;; OPEN_WORLD:       (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
+    (type $vtable (sub (struct (field (ref $vtable-func)) (field (ref $vtable-func)))))
   )
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (elem declare func $a $b $c $d)
 
   ;; CHECK:      (export "func" (func $func))
 
-  ;; CHECK:      (func $func (type $none_=>_none)
+  ;; CHECK:      (func $func (type $2)
   ;; CHECK-NEXT:  (call_ref $vtable-func
   ;; CHECK-NEXT:   (struct.new $vtable
   ;; CHECK-NEXT:    (ref.func $a)
@@ -1207,13 +1207,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (type $none_=>_none (func))
+  ;; OPEN_WORLD:      (type $2 (func))
 
   ;; OPEN_WORLD:      (elem declare func $a $b $c $d)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
-  ;; OPEN_WORLD:      (func $func (type $none_=>_none)
+  ;; OPEN_WORLD:      (func $func (type $2)
   ;; OPEN_WORLD-NEXT:  (call_ref $vtable-func
   ;; OPEN_WORLD-NEXT:   (struct.new $vtable
   ;; OPEN_WORLD-NEXT:    (ref.func $a)
@@ -1368,17 +1368,17 @@
   ;; OPEN_WORLD:      (type $void (func))
   (type $void (func))
 
-  ;; CHECK:      (type $struct (struct (field funcref)))
-  ;; OPEN_WORLD:      (type $struct (struct (field funcref)))
-  (type $struct (struct (field funcref)))
+  ;; CHECK:      (type $struct (sub (struct (field funcref))))
+  ;; OPEN_WORLD:      (type $struct (sub (struct (field funcref))))
+  (type $struct (sub (struct (field funcref))))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field funcref))))
   ;; OPEN_WORLD:      (type $substruct (sub $struct (struct (field funcref))))
-  (type $substruct (struct_subtype (field funcref) $struct))
+  (type $substruct (sub $struct (struct (field funcref))))
 
   ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field funcref))))
   ;; OPEN_WORLD:      (type $subsubstruct (sub $substruct (struct (field funcref))))
-  (type $subsubstruct (struct_subtype (field funcref) $substruct))
+  (type $subsubstruct (sub $substruct (struct (field funcref))))
 
   ;; CHECK:      (global $g (ref $struct) (struct.new $struct
   ;; CHECK-NEXT:  (ref.func $f)
@@ -1856,31 +1856,31 @@
 ;; We do still need to consider the target as being called, however, even if it
 ;; is in a struct field.
 (module
-  ;; CHECK:      (type $funcref_=>_i32 (func (param funcref) (result i32)))
+  ;; CHECK:      (type $0 (func (param funcref) (result i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $A (struct (field i32)))
-  ;; OPEN_WORLD:      (type $funcref_=>_i32 (func (param funcref) (result i32)))
+  ;; OPEN_WORLD:      (type $0 (func (param funcref) (result i32)))
 
-  ;; OPEN_WORLD:      (type $none_=>_none (func))
+  ;; OPEN_WORLD:      (type $1 (func))
 
   ;; OPEN_WORLD:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
-  ;; OPEN_WORLD:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
+  ;; OPEN_WORLD:      (type $3 (func (result i32)))
 
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $funcref_=>_i32) (param funcref) (result i32)))
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
   ;; CHECK:      (elem declare func $getter)
 
   ;; CHECK:      (export "main" (func $main))
 
-  ;; CHECK:      (func $main (type $none_=>_none)
+  ;; CHECK:      (func $main (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (call $call.without.effects
@@ -1893,7 +1893,7 @@
 
   ;; OPEN_WORLD:      (export "main" (func $main))
 
-  ;; OPEN_WORLD:      (func $main (type $none_=>_none)
+  ;; OPEN_WORLD:      (func $main (type $1)
   ;; OPEN_WORLD-NEXT:  (drop
   ;; OPEN_WORLD-NEXT:   (struct.new $A
   ;; OPEN_WORLD-NEXT:    (call $call.without.effects
@@ -1912,10 +1912,10 @@
     )
   )
 
-  ;; CHECK:      (func $getter (type $none_=>_i32) (result i32)
+  ;; CHECK:      (func $getter (type $3) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (func $getter (type $none_=>_i32) (result i32)
+  ;; OPEN_WORLD:      (func $getter (type $3) (result i32)
   ;; OPEN_WORLD-NEXT:  (i32.const 42)
   ;; OPEN_WORLD-NEXT: )
   (func $getter (result i32)

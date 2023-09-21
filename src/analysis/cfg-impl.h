@@ -118,21 +118,17 @@ template<typename T> struct _indirect_ptr_vec {
   iterator end() const { return {&vec.data()[vec.size()]}; }
 };
 
-struct BasicBlock::Predecessors : _indirect_ptr_vec<BasicBlock> {
-  Predecessors(const BasicBlock& block)
-    : _indirect_ptr_vec(block.predecessors) {}
+struct BasicBlock::BasicBlockIterable : _indirect_ptr_vec<BasicBlock> {
+  BasicBlockIterable(const std::vector<BasicBlock*>& blocks)
+    : _indirect_ptr_vec(blocks) {}
 };
 
-struct BasicBlock::Successors : _indirect_ptr_vec<BasicBlock> {
-  Successors(const BasicBlock& block) : _indirect_ptr_vec(block.successors) {}
-};
-
-inline BasicBlock::Predecessors BasicBlock::preds() const {
-  return Predecessors(*this);
+inline BasicBlock::BasicBlockIterable BasicBlock::preds() const {
+  return BasicBlockIterable(predecessors);
 }
 
-inline BasicBlock::Successors BasicBlock::succs() const {
-  return Successors(*this);
+inline BasicBlock::BasicBlockIterable BasicBlock::succs() const {
+  return BasicBlockIterable(successors);
 }
 
 } // namespace wasm::analysis

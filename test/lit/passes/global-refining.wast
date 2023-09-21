@@ -67,20 +67,20 @@
   ;; Globals with later assignments of something non-null. Both can be refined,
   ;; and the one with a non-null initial value can even become non-nullable.
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null nofunc))
-  ;; CLOSD:      (type $none_=>_none (func))
+  ;; CHECK:      (global $func-null-init (mut (ref null $0)) (ref.null nofunc))
+  ;; CLOSD:      (type $0 (func))
 
-  ;; CLOSD:      (global $func-null-init (mut (ref null $none_=>_none)) (ref.null nofunc))
+  ;; CLOSD:      (global $func-null-init (mut (ref null $0)) (ref.null nofunc))
   (global $func-null-init (mut funcref) (ref.null func))
-  ;; CHECK:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
-  ;; CLOSD:      (global $func-func-init (mut (ref $none_=>_none)) (ref.func $foo))
+  ;; CHECK:      (global $func-func-init (mut (ref $0)) (ref.func $foo))
+  ;; CLOSD:      (global $func-func-init (mut (ref $0)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (global.set $func-null-init
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
@@ -90,7 +90,7 @@
   ;; CHECK-NEXT: )
   ;; CLOSD:      (elem declare func $foo)
 
-  ;; CLOSD:      (func $foo (type $none_=>_none)
+  ;; CLOSD:      (func $foo (type $0)
   ;; CLOSD-NEXT:  (global.set $func-null-init
   ;; CLOSD-NEXT:   (ref.func $foo)
   ;; CLOSD-NEXT:  )
@@ -108,10 +108,10 @@
   ;; A global with multiple later assignments. The refined type is more
   ;; specific than the original, but less than each of the non-null values.
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $struct (struct ))
-  ;; CLOSD:      (type $none_=>_none (func))
+  ;; CLOSD:      (type $0 (func))
 
   ;; CLOSD:      (type $struct (struct ))
   (type $struct (struct))
@@ -121,9 +121,9 @@
   ;; CLOSD:      (global $global (mut eqref) (ref.null none))
   (global $global (mut anyref) (ref.null any))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (global.set $global
-  ;; CHECK-NEXT:   (i31.new
+  ;; CHECK-NEXT:   (ref.i31
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -140,9 +140,9 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; CLOSD:      (func $foo (type $none_=>_none)
+  ;; CLOSD:      (func $foo (type $0)
   ;; CLOSD-NEXT:  (global.set $global
-  ;; CLOSD-NEXT:   (i31.new
+  ;; CLOSD-NEXT:   (ref.i31
   ;; CLOSD-NEXT:    (i32.const 0)
   ;; CLOSD-NEXT:   )
   ;; CLOSD-NEXT:  )
@@ -160,7 +160,7 @@
   ;; CLOSD-NEXT:  )
   ;; CLOSD-NEXT: )
   (func $foo
-   (global.set $global (i31.new (i32.const 0)))
+   (global.set $global (ref.i31 (i32.const 0)))
    (global.set $global (struct.new_default $struct))
    (global.set $global (ref.null eq))
    ;; These nulls will be updated.
@@ -171,10 +171,10 @@
 
 ;; We can refine here, but as it is an export we only do so in open world.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $func-init (mut (ref $none_=>_none)) (ref.func $foo))
-  ;; CLOSD:      (type $none_=>_none (func))
+  ;; CHECK:      (global $func-init (mut (ref $0)) (ref.func $foo))
+  ;; CLOSD:      (type $0 (func))
 
   ;; CLOSD:      (global $func-init (mut funcref) (ref.func $foo))
   (global $func-init (mut funcref) (ref.func $foo))
@@ -183,10 +183,10 @@
   ;; CLOSD:      (export "global" (global $func-init))
   (export "global" (global $func-init))
 
-  ;; CHECK:      (func $foo (type $none_=>_none)
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; CLOSD:      (func $foo (type $none_=>_none)
+  ;; CLOSD:      (func $foo (type $0)
   ;; CLOSD-NEXT:  (nop)
   ;; CLOSD-NEXT: )
   (func $foo

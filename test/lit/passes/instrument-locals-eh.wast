@@ -5,7 +5,7 @@
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 
-  ;; CHECK:      (func $test (type $none_=>_none)
+  ;; CHECK:      (func $test (type $8)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do

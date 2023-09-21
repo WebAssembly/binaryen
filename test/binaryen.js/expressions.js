@@ -348,7 +348,7 @@ console.log("# CallIndirect");
   assert(
     theCallIndirect.toText()
     ==
-    "(call_indirect $0 (type $i32_i32_=>_i32)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
+    "(call_indirect $0 (type $func.0)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
   );
 
   module.dispose();
@@ -1771,28 +1771,28 @@ console.log("# TupleExtract");
   module.dispose();
 })();
 
-console.log("# I31New");
-(function testI31New() {
+console.log("# RefI31");
+(function testRefI31() {
   const module = new binaryen.Module();
 
   var value = module.local.get(1, binaryen.i32);
-  const theI31New = binaryen.I31New(module.i31.new(value));
-  assert(theI31New instanceof binaryen.I31New);
-  assert(theI31New instanceof binaryen.Expression);
-  assert(theI31New.value === value);
-  // assert(theI31New.type === binaryen.?); // TODO: (ref i31)
+  const theRefI31 = binaryen.RefI31(module.ref.i31(value));
+  assert(theRefI31 instanceof binaryen.RefI31);
+  assert(theRefI31 instanceof binaryen.Expression);
+  assert(theRefI31.value === value);
+  // assert(theRefI31.type === binaryen.?); // TODO: (ref i31)
 
-  theI31New.value = value = module.local.get(2, binaryen.i32);
-  assert(theI31New.value === value);
-  theI31New.type = binaryen.f64;
-  theI31New.finalize();
-  // assert(theI31New.type === binaryen.?); // TODO: (ref i31)
+  theRefI31.value = value = module.local.get(2, binaryen.i32);
+  assert(theRefI31.value === value);
+  theRefI31.type = binaryen.f64;
+  theRefI31.finalize();
+  // assert(theRefI31.type === binaryen.?); // TODO: (ref i31)
 
-  console.log(theI31New.toText());
+  console.log(theRefI31.toText());
   assert(
-    theI31New.toText()
+    theRefI31.toText()
     ==
-    "(i31.new\n (local.get $2)\n)\n"
+    "(ref.i31\n (local.get $2)\n)\n"
   );
 
   module.dispose();

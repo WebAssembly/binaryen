@@ -3,14 +3,14 @@
 ;; RUN: foreach %s %t wasm-opt --dae --all-features -tnh -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct (struct_subtype (field i32) data))
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct (field i32))))
 
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $target (type $none_=>_none)
+  ;; CHECK:      (func $target (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -18,7 +18,7 @@
     (nop)
   )
 
-  ;; CHECK:      (func $caller (type $ref?|$struct|_=>_none) (param $ref (ref null $struct))
+  ;; CHECK:      (func $caller (type $2) (param $ref (ref null $struct))
   ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller (param $ref (ref null $struct))
@@ -34,11 +34,11 @@
 )
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $target
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -52,7 +52,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
@@ -62,9 +62,9 @@
 ;; As above, but use a return_call. We can optimize that, since return_calls
 ;; have type unreachable anyhow, and the optimization would not change the type.
 (module
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (return_call $target)
   ;; CHECK-NEXT: )
   (func $caller
@@ -73,7 +73,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $none_=>_none)
+  ;; CHECK:      (func $target (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -82,11 +82,11 @@
 )
 
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (func $target (type $i32_=>_none) (param $0 i32)
+  ;; CHECK:      (func $target (type $0) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local.set $1
   ;; CHECK-NEXT:   (f64.const 4.2)
@@ -102,7 +102,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $none_=>_none)
+  ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (call $target
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )

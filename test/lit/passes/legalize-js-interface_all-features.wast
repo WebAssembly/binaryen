@@ -4,27 +4,27 @@
 ;; RUN: foreach %s %t wasm-opt --legalize-js-interface --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+  ;; CHECK:      (type $1 (func (result i64)))
 
-  ;; CHECK:      (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+  ;; CHECK:      (type $2 (func (param i32 i32 i32 i32 i32)))
 
-  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+  ;; CHECK:      (type $4 (func (param i32)))
 
-  ;; CHECK:      (type $i32_i64_i64_=>_none (func (param i32 i64 i64)))
+  ;; CHECK:      (type $5 (func (param i32 i64 i64)))
 
-  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $i32_=>_none) (param i32)))
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $4) (param i32)))
   (import "env" "imported" (func $imported (result i64)))
-  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $0) (result i32)))
   (import "env" "other" (func $other (param i32) (param i64) (param i64)))
-  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "env" "imported" (func $legalimport$imported (type $0) (result i32)))
   (import "env" "ref-func-arg" (func $ref-func-arg (result i64)))
-  ;; CHECK:      (import "env" "other" (func $legalimport$other (type $i32_i32_i32_i32_i32_=>_none) (param i32 i32 i32 i32 i32)))
+  ;; CHECK:      (import "env" "other" (func $legalimport$other (type $2) (param i32 i32 i32 i32 i32)))
 
-  ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (type $none_=>_i32) (result i32)))
+  ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (type $0) (result i32)))
 
   ;; CHECK:      (elem declare func $legalfunc$ref-func-arg)
 
@@ -38,7 +38,7 @@
   (export "imported_again" (func $imported))
   ;; CHECK:      (export "other" (func $legalstub$other))
   (export "other" (func $other))
-  ;; CHECK:      (func $func (type $none_=>_i64) (result i64)
+  ;; CHECK:      (func $func (type $1) (result i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported)
   ;; CHECK-NEXT:  )
@@ -60,7 +60,7 @@
   )
 
   ;; ref.func must also be updated.
-  ;; CHECK:      (func $ref-func-test (type $none_=>_none)
+  ;; CHECK:      (func $ref-func-test (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$ref-func-arg)
   ;; CHECK-NEXT:  )
@@ -77,7 +77,7 @@
     )
   )
 )
-;; CHECK:      (func $legalstub$func (type $none_=>_i32) (result i32)
+;; CHECK:      (func $legalstub$func (type $0) (result i32)
 ;; CHECK-NEXT:  (local $0 i64)
 ;; CHECK-NEXT:  (local.set $0
 ;; CHECK-NEXT:   (call $func)
@@ -95,7 +95,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $legalstub$imported (type $none_=>_i32) (result i32)
+;; CHECK:      (func $legalstub$imported (type $0) (result i32)
 ;; CHECK-NEXT:  (local $0 i64)
 ;; CHECK-NEXT:  (local.set $0
 ;; CHECK-NEXT:   (call $legalfunc$imported)
@@ -113,7 +113,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $legalstub$other (type $i32_i32_i32_i32_i32_=>_none) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+;; CHECK:      (func $legalstub$other (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
 ;; CHECK-NEXT:  (call $legalfunc$other
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (i64.or
@@ -141,7 +141,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $legalfunc$imported (type $none_=>_i64) (result i64)
+;; CHECK:      (func $legalfunc$imported (type $1) (result i64)
 ;; CHECK-NEXT:  (i64.or
 ;; CHECK-NEXT:   (i64.extend_i32_u
 ;; CHECK-NEXT:    (call $legalimport$imported)
@@ -155,7 +155,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $legalfunc$other (type $i32_i64_i64_=>_none) (param $0 i32) (param $1 i64) (param $2 i64)
+;; CHECK:      (func $legalfunc$other (type $5) (param $0 i32) (param $1 i64) (param $2 i64)
 ;; CHECK-NEXT:  (call $legalimport$other
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:   (i32.wrap_i64
@@ -179,7 +179,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $legalfunc$ref-func-arg (type $none_=>_i64) (result i64)
+;; CHECK:      (func $legalfunc$ref-func-arg (type $1) (result i64)
 ;; CHECK-NEXT:  (i64.or
 ;; CHECK-NEXT:   (i64.extend_i32_u
 ;; CHECK-NEXT:    (call $legalimport$ref-func-arg)
