@@ -51,6 +51,7 @@ public:
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
+  [[nodiscard]] Result<> visitFunctionStart(Function* func);
   [[nodiscard]] Result<> visitBlockStart(Block* block);
   [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
   [[nodiscard]] Result<> visitElse();
@@ -170,8 +171,6 @@ public:
   // [[nodiscard]] Result<> makeStringSliceWTF();
   // [[nodiscard]] Result<> makeStringSliceIter();
 
-  void setFunction(Function* func) { this->func = func; }
-
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
   [[nodiscard]] Result<> visitBlock(Block*);
@@ -189,6 +188,9 @@ private:
   // to have.
   struct ScopeCtx {
     struct NoScope {};
+    struct FuncScope {
+      Function* func;
+    };
     struct BlockScope {
       Block* block;
     };
@@ -203,8 +205,8 @@ private:
     struct LoopScope {
       Loop* loop;
     };
-    using Scope =
-      std::variant<NoScope, BlockScope, IfScope, ElseScope, LoopScope>;
+    using Scope = std::
+      variant<NoScope, FuncScope, BlockScope, IfScope, ElseScope, LoopScope>;
 
     // The control flow structure we are building expressions for.
     Scope scope;
@@ -217,6 +219,9 @@ private:
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
 
+    static ScopeCtx makeFunc(Function* func) {
+      return ScopeCtx(FuncScope{func});
+    }
     static ScopeCtx makeBlock(Block* block) {
       return ScopeCtx(BlockScope{block});
     }
@@ -229,6 +234,12 @@ private:
     static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
 
     bool isNone() { return std::get_if<NoScope>(&scope); }
+    Function* getFunction() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        return funcScope->func;
+      }
+      return nullptr;
+    }
     Block* getBlock() {
       if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
         return blockScope->block;
@@ -254,6 +265,9 @@ private:
       return nullptr;
     }
     Type getResultType() {
+      if (auto* func = getFunction()) {
+        return func->type.getSignature().results;
+      }
       if (auto* block = getBlock()) {
         return block->type;
       }
