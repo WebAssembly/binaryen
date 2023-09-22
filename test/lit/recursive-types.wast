@@ -8,47 +8,47 @@
   (type (func (param (ref null 1)) (result (ref null 1))))
   (type (func (param (ref null 0)) (result (ref null 1))))
   (rec
-    ;; CHECK:      (type $type$0 (func (param (ref null $type$0)) (result (ref null $type$0))))
+    ;; CHECK:      (type $type (func (param (ref null $type)) (result (ref null $type))))
 
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $f3 (sub (func (param (ref null $type$2)) (result (ref null $f3)))))
+    ;; CHECK-NEXT:  (type $f3 (sub (func (param (ref null $type_2)) (result (ref null $f3)))))
     (type $f3 (sub (func (param (ref null 4)) (result (ref null 3)))))
     (type (sub $f3 (func (param (ref null 3)) (result (ref null 4)))))
   )
 
-  ;; CHECK:       (type $type$2 (sub $f3 (func (param (ref null $f3)) (result (ref null $type$2)))))
+  ;; CHECK:       (type $type_2 (sub $f3 (func (param (ref null $f3)) (result (ref null $type_2)))))
 
-  ;; CHECK:      (type $type$1 (func (param (ref null $type$0)) (result (ref null $type$0))))
+  ;; CHECK:      (type $type_1 (func (param (ref null $type)) (result (ref null $type))))
 
-  ;; CHECK:      (func $foo (type $type$0) (param $0 (ref null $type$0)) (result (ref null $type$0))
+  ;; CHECK:      (func $foo (type $type) (param $0 (ref null $type)) (result (ref null $type))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $foo (type 0)
     (unreachable)
   )
 
-  ;; CHECK:      (func $bar (type $type$0) (param $0 (ref null $type$0)) (result (ref null $type$0))
+  ;; CHECK:      (func $bar (type $type) (param $0 (ref null $type)) (result (ref null $type))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $bar (type 1)
     (unreachable)
   )
 
-  ;; CHECK:      (func $baz (type $type$1) (param $0 (ref null $type$0)) (result (ref null $type$0))
+  ;; CHECK:      (func $baz (type $type_1) (param $0 (ref null $type)) (result (ref null $type))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $baz (type 2)
     (unreachable)
   )
 
-  ;; CHECK:      (func $qux (type $f3) (param $0 (ref null $type$2)) (result (ref null $f3))
+  ;; CHECK:      (func $qux (type $f3) (param $0 (ref null $type_2)) (result (ref null $f3))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $qux (type 3)
     (unreachable)
   )
 
-  ;; CHECK:      (func $quux (type $type$2) (param $0 (ref null $f3)) (result (ref null $type$2))
+  ;; CHECK:      (func $quux (type $type_2) (param $0 (ref null $f3)) (result (ref null $type_2))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $quux (type 4)

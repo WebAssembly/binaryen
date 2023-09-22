@@ -22,9 +22,9 @@
   ;; NOP:      (type $2 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $2) (result i32)))
-  ;; YES:       (type $A$2 (sub $A (struct )))
+  ;; YES:       (type $A_2 (sub $A (struct )))
 
-  ;; YES:       (type $A$1 (sub $A (struct )))
+  ;; YES:       (type $A_1 (sub $A (struct )))
 
   ;; YES:      (import "a" "b" (func $import (type $0) (result i32)))
   (import "a" "b" (func $import (result i32)))
