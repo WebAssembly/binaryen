@@ -234,7 +234,12 @@ struct StructScanner
 // if we changed something.
 template<typename T> class TypeHierarchyPropagator {
 public:
+  // Constructor that gets a module and computes subtypes.
   TypeHierarchyPropagator(Module& wasm) : subTypes(wasm) {}
+
+  // Constructor that gets subtypes and uses them, avoiding a scan of a
+  // module. TODO: avoid a copy here?
+  TypeHierarchyPropagator(const SubTypes& subTypes) : subTypes(subTypes) {}
 
   SubTypes subTypes;
 

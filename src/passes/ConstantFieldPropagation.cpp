@@ -222,6 +222,8 @@ struct ConstantFieldPropagation : public Pass {
     BoolStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
 
+    SubTypes subTypes(*module);
+
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
     // that instruction. That is, if we do a struct.set to type T, the value was
@@ -267,8 +269,7 @@ struct ConstantFieldPropagation : public Pass {
     //
     // To handle that, copied fields are treated like struct.set ones (by
     // copying the struct.new data to struct.set).
-    StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(
-      *module);
+    StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(subTypes);
     boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
@@ -279,7 +280,7 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
-      *module);
+      subTypes);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 
