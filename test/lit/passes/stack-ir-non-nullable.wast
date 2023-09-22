@@ -11,15 +11,15 @@
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
@@ -59,15 +59,15 @@
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $param
@@ -104,15 +104,15 @@
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $param
@@ -154,15 +154,15 @@
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $param
@@ -204,15 +204,15 @@
  ;; CHECK-NEXT:  (local $temp (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $param
@@ -254,15 +254,15 @@
  ;; CHECK:      (func $if-param (type $2) (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
@@ -298,15 +298,15 @@
  ;; CHECK-NEXT:  (local $temp eqref)
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i31.new
+ ;; CHECK-NEXT:   ref.i31
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
@@ -795,7 +795,7 @@
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
  ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  i31.new
+ ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
  ;; CHECK-NEXT:  if
  ;; CHECK-NEXT:   local.get $param
