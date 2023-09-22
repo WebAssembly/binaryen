@@ -3726,8 +3726,12 @@ static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
     }
   }
 
+  // Ignorable public types are public, but we can ignore them for purposes of
+  // erroring here: It is always ok that they are public.
+  auto ignorable = getIgnorablePublicTypes();
+
   for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
-    if (!publicFuncTypes.count(type)) {
+    if (!publicFuncTypes.count(type) && !ignorable.count(type)) {
       auto name = type.toString();
       if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
         name = it->second.name.toString();

@@ -712,6 +712,9 @@ def instruction_parser(new_parser=False):
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:
+        if new_parser and inst in {"then", "else"}:
+            # These are not real instructions! skip them.
+            continue
         inst_length = max(inst_length, len(inst))
         trie.insert(inst, expr)
 
@@ -732,9 +735,8 @@ def instruction_parser(new_parser=False):
             expr = expr.replace("(s", "(ctx, pos")
             printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
             with printer.indent():
-                printer.print_line("auto ret = {expr};".format(expr=expr))
-                printer.print_line("CHECK_ERR(ret);")
-                printer.print_line("return *ret;")
+                printer.print_line("CHECK_ERR({expr});".format(expr=expr))
+                printer.print_line("return Ok{};")
             printer.print_line("}")
         else:
             printer.print_line("if (op == \"{inst}\"sv) {{ return {expr}; }}"

@@ -2037,7 +2037,11 @@ Type WasmBinaryReader::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
   if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSignatureByTypeIndex(initial).results;
+    auto sig = getSignatureByTypeIndex(initial);
+    if (sig.params != Type::none) {
+      throwError("control flow inputs are not supported yet");
+    }
+    return sig.results;
   }
   Type type;
   if (getBasicType(initial, type)) {
@@ -2088,7 +2092,7 @@ HeapType WasmBinaryReader::getIndexedHeapType() {
 Type WasmBinaryReader::getConcreteType() {
   auto type = getType();
   if (!type.isConcrete()) {
-    throw ParseException("non-concrete type when one expected");
+    throwError("non-concrete type when one expected");
   }
   return type;
 }

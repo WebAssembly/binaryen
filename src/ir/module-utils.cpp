@@ -506,6 +506,11 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
     WASM_UNREACHABLE("unexpected export kind");
   }
 
+  // Ignorable public types are public.
+  for (auto type : getIgnorablePublicTypes()) {
+    notePublic(type);
+  }
+
   // Find all the other public types reachable from directly publicized types.
   std::vector<HeapType> workList(publicTypes.begin(), publicTypes.end());
   while (workList.size()) {

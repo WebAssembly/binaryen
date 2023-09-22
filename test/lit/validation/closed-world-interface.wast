@@ -9,7 +9,7 @@
 
 ;; This is pulled in by a global.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $array, on
-;; CHECK-NEXT: (array (mut i8))
+;; CHECK-NEXT: (array (mut i32))
 
 ;; This is pulled in only by a global, so it is disallowed even though it is a function type.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $private, on
@@ -21,7 +21,7 @@
 
 (module
   (type $struct (struct))
-  (type $array (array (mut i8)))
+  (type $array (array (mut i32)))
 
   (type $void (func))
   (type $abstract (func (param anyref)))

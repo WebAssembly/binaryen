@@ -172,7 +172,7 @@ Result<Expression*> IRBuilder::build() {
   if (scopeStack.empty()) {
     return builder.makeNop();
   }
-  if (scopeStack.size() > 1 || scopeStack.back().block != nullptr) {
+  if (scopeStack.size() > 1 || !scopeStack.back().isNone()) {
     return Err{"unfinished block context"};
   }
   if (scopeStack.back().exprStack.size() > 1) {
@@ -281,19 +281,41 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitBlockStart(Block* curr) {
-  scopeStack.push_back({{}, curr});
+Result<> IRBuilder::visitFunctionStart(Function* func) {
+  if (!scopeStack.empty()) {
+    return Err{"unexpected start of function"};
+  }
+  scopeStack.push_back(ScopeCtx::makeFunc(func));
+  this->func = func;
   return Ok{};
 }
 
-Result<> IRBuilder::visitEnd() {
-  if (scopeStack.empty() || !scopeStack.back().block) {
-    return Err{"unexpected end"};
+Result<> IRBuilder::visitBlockStart(Block* curr) {
+  scopeStack.push_back(ScopeCtx::makeBlock(curr));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitIfStart(If* iff, Name label) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  iff->condition = *cond;
+  scopeStack.push_back(ScopeCtx::makeIf(iff, label));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitLoopStart(Loop* loop) {
+  scopeStack.push_back(ScopeCtx::makeLoop(loop));
+  return Ok{};
+}
+
+Result<Expression*> IRBuilder::finishScope(Block* block) {
+  if (scopeStack.empty() || scopeStack.back().isNone()) {
+    return Err{"unexpected end of scope"};
   }
 
   auto& scope = scopeStack.back();
-  Block* block = scope.block;
-  if (block->type.isTuple()) {
+  auto type = scope.getResultType();
+  if (type.isTuple()) {
     if (scope.unreachable) {
       // We may not have enough concrete values on the stack to construct the
       // full tuple, and if we tried to fill out the beginning of a tuple.make
@@ -314,12 +336,12 @@ Result<> IRBuilder::visitEnd() {
       auto hoisted = hoistLastValue();
       CHECK_ERR(hoisted);
       auto hoistedType = scope.exprStack.back()->type;
-      if (hoistedType.size() != block->type.size()) {
+      if (hoistedType.size() != type.size()) {
         // We cannot propagate the hoisted value directly because it does not
         // have the correct number of elements. Break it up if necessary and
         // construct our returned tuple from parts.
         CHECK_ERR(packageHoistedValue(*hoisted));
-        std::vector<Expression*> elems(block->type.size());
+        std::vector<Expression*> elems(type.size());
         for (size_t i = 0; i < elems.size(); ++i) {
           auto elem = pop();
           CHECK_ERR(elem);
@@ -328,18 +350,100 @@ Result<> IRBuilder::visitEnd() {
         scope.exprStack.push_back(builder.makeTupleMake(std::move(elems)));
       }
     }
-  } else if (block->type.isConcrete()) {
+  } else if (type.isConcrete()) {
     // If the value is buried in none-typed expressions, we have to bring it to
     // the top.
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
   }
-  block->list.set(scope.exprStack);
-  // TODO: Track branches so we can know whether this block is a target and
-  // finalize more efficiently.
-  block->finalize(block->type);
+  Expression* ret = nullptr;
+  if (scope.exprStack.size() == 0) {
+    // No expressions for this scope, but we need something. If we were given a
+    // block, we can empty it out and return it, but otherwise we need a nop.
+    if (block) {
+      block->list.clear();
+      ret = block;
+    } else {
+      ret = builder.makeNop();
+    }
+  } else if (scope.exprStack.size() == 1) {
+    // We can put our single expression directly into the surrounding scope.
+    if (block) {
+      block->list.resize(1);
+      block->list[0] = scope.exprStack.back();
+      ret = block;
+    } else {
+      ret = scope.exprStack.back();
+    }
+  } else {
+    // More than one expression, so we need a block. Allocate one if we weren't
+    // already given one.
+    if (block) {
+      block->list.set(scope.exprStack);
+    } else {
+      block = builder.makeBlock(scope.exprStack, type);
+    }
+    ret = block;
+  }
   scopeStack.pop_back();
-  push(block);
+  return ret;
+}
+
+Result<> IRBuilder::visitElse() {
+  auto& scope = getScope();
+  auto* iff = scope.getIf();
+  if (!iff) {
+    return Err{"unexpected else"};
+  }
+  auto label = scope.getLabel();
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  iff->ifTrue = *expr;
+  scopeStack.push_back(ScopeCtx::makeElse(iff, label));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitEnd() {
+  auto scope = getScope();
+  if (scope.isNone()) {
+    return Err{"unexpected end"};
+  }
+  auto expr = finishScope(scope.getBlock());
+  CHECK_ERR(expr);
+
+  // If the scope expression cannot be directly labeled, we may need to wrap it
+  // in a block.
+  auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
+    if (auto label = scope.getLabel()) {
+      return builder.makeBlock(label, {curr}, curr->type);
+    }
+    return curr;
+  };
+
+  if (auto* func = scope.getFunction()) {
+    func->body = *expr;
+  } else if (auto* block = scope.getBlock()) {
+    assert(*expr == block);
+    // TODO: Track branches so we can know whether this block is a target and
+    // finalize more efficiently.
+    block->finalize(block->type);
+    push(block);
+  } else if (auto* loop = scope.getLoop()) {
+    loop->body = *expr;
+    loop->finalize(loop->type);
+    push(loop);
+  } else if (auto* iff = scope.getIf()) {
+    iff->ifTrue = *expr;
+    iff->ifFalse = nullptr;
+    iff->finalize(iff->type);
+    push(maybeWrapForLabel(iff));
+  } else if (auto* iff = scope.getElse()) {
+    iff->ifFalse = *expr;
+    iff->finalize(iff->type);
+    push(maybeWrapForLabel(iff));
+  } else {
+    WASM_UNREACHABLE("unexpected scope kind");
+  }
   return Ok{};
 }
 
@@ -352,13 +456,21 @@ Result<> IRBuilder::makeBlock(Name label, Type type) {
   auto* block = wasm.allocator.alloc<Block>();
   block->name = label;
   block->type = type;
-  CHECK_ERR(visitBlockStart(block));
-  return Ok{};
+  return visitBlockStart(block);
 }
 
-// Result<> IRBuilder::makeIf() {}
+Result<> IRBuilder::makeIf(Name label, Type type) {
+  auto* iff = wasm.allocator.alloc<If>();
+  iff->type = type;
+  return visitIfStart(iff, label);
+}
 
-// Result<> IRBuilder::makeLoop() {}
+Result<> IRBuilder::makeLoop(Name label, Type type) {
+  auto* loop = wasm.allocator.alloc<Loop>();
+  loop->name = label;
+  loop->type = type;
+  return visitLoopStart(loop);
+}
 
 // Result<> IRBuilder::makeBreak() {}
 

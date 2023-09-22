@@ -661,6 +661,20 @@ struct TypeBuilder {
   void dump();
 };
 
+// We consider certain specific types to always be public, to allow closed-
+// world to operate even if they escape. Specifically, "plain old data" types
+// like array of i8 and i16, which are used to represent strings, may cross
+// the boundary in Web environments.
+//
+// These are "ignorable as public", because we do not error on them being
+// public. That is, we
+//
+//  1. Consider them public, so that passes that do not operate on public types
+//     do not in fact operate on them, and
+//  2. Are ok with them being public in the validator.
+//
+std::unordered_set<HeapType> getIgnorablePublicTypes();
+
 std::ostream& operator<<(std::ostream&, Type);
 std::ostream& operator<<(std::ostream&, Type::Printed);
 std::ostream& operator<<(std::ostream&, HeapType);
