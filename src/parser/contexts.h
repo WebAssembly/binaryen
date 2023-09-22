@@ -816,9 +816,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   IRBuilder irBuilder;
 
-  void setFunction(Function* func) {
+  Result<> visitFunctionStart(Function* func) {
     this->func = func;
-    irBuilder.setFunction(func);
+    CHECK_ERR(irBuilder.visitFunctionStart(func));
+    return Ok{};
   }
 
   ParseDefsCtx(std::string_view in,

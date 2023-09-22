@@ -281,6 +281,15 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitFunctionStart(Function* func) {
+  if (!scopeStack.empty()) {
+    return Err{"unexpected start of function"};
+  }
+  scopeStack.push_back(ScopeCtx::makeFunc(func));
+  this->func = func;
+  return Ok{};
+}
+
 Result<> IRBuilder::visitBlockStart(Block* curr) {
   scopeStack.push_back(ScopeCtx::makeBlock(curr));
   return Ok{};
@@ -327,12 +336,12 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
       auto hoisted = hoistLastValue();
       CHECK_ERR(hoisted);
       auto hoistedType = scope.exprStack.back()->type;
-      if (hoistedType.size() != block->type.size()) {
+      if (hoistedType.size() != type.size()) {
         // We cannot propagate the hoisted value directly because it does not
         // have the correct number of elements. Break it up if necessary and
         // construct our returned tuple from parts.
         CHECK_ERR(packageHoistedValue(*hoisted));
-        std::vector<Expression*> elems(block->type.size());
+        std::vector<Expression*> elems(type.size());
         for (size_t i = 0; i < elems.size(); ++i) {
           auto elem = pop();
           CHECK_ERR(elem);
@@ -369,11 +378,11 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
   } else {
     // More than one expression, so we need a block. Allocate one if we weren't
     // already given one.
-    if (!block) {
-      block = wasm.allocator.alloc<Block>();
-      block->type = type;
+    if (block) {
+      block->list.set(scope.exprStack);
+    } else {
+      block = builder.makeBlock(scope.exprStack, type);
     }
-    block->list.set(scope.exprStack);
     ret = block;
   }
   scopeStack.pop_back();
@@ -395,50 +404,45 @@ Result<> IRBuilder::visitElse() {
 }
 
 Result<> IRBuilder::visitEnd() {
-  auto& scope = getScope();
+  auto scope = getScope();
   if (scope.isNone()) {
     return Err{"unexpected end"};
   }
-  if (auto* block = scope.getBlock()) {
-    auto expr = finishScope(block);
-    CHECK_ERR(expr);
+  auto expr = finishScope(scope.getBlock());
+  CHECK_ERR(expr);
+
+  // If the scope expression cannot be directly labeled, we may need to wrap it
+  // in a block.
+  auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
+    if (auto label = scope.getLabel()) {
+      return builder.makeBlock(label, {curr}, curr->type);
+    }
+    return curr;
+  };
+
+  if (auto* func = scope.getFunction()) {
+    func->body = *expr;
+  } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
     // TODO: Track branches so we can know whether this block is a target and
     // finalize more efficiently.
     block->finalize(block->type);
     push(block);
-    return Ok{};
   } else if (auto* loop = scope.getLoop()) {
-    auto expr = finishScope();
-    CHECK_ERR(expr);
     loop->body = *expr;
     loop->finalize(loop->type);
     push(loop);
-    return Ok{};
-  }
-  auto label = scope.getLabel();
-  Expression* scopeExpr = nullptr;
-  if (auto* iff = scope.getIf()) {
-    auto expr = finishScope();
-    CHECK_ERR(expr);
+  } else if (auto* iff = scope.getIf()) {
     iff->ifTrue = *expr;
     iff->ifFalse = nullptr;
     iff->finalize(iff->type);
-    scopeExpr = iff;
+    push(maybeWrapForLabel(iff));
   } else if (auto* iff = scope.getElse()) {
-    auto expr = finishScope();
-    CHECK_ERR(expr);
     iff->ifFalse = *expr;
     iff->finalize(iff->type);
-    scopeExpr = iff;
-  }
-  assert(scopeExpr && "unexpected scope kind");
-  if (label) {
-    // We cannot directly name an If in Binaryen IR, so we need to wrap it in
-    // a block.
-    push(builder.makeBlock(label, {scopeExpr}, scopeExpr->type));
+    push(maybeWrapForLabel(iff));
   } else {
-    push(scopeExpr);
+    WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
 }

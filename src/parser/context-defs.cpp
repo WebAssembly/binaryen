@@ -57,9 +57,6 @@ Result<> ParseDefsCtx::addFunc(Name,
                                std::optional<LocalsT>,
                                Index pos) {
   CHECK_ERR(withLoc(pos, irBuilder.visitEnd()));
-  auto body = irBuilder.build();
-  CHECK_ERR(withLoc(pos, body));
-  wasm.functions[index]->body = *body;
   return Ok{};
 }
 
