@@ -119,7 +119,9 @@ struct FunctionStructValuesMap
 //   void noteDefault(Type fieldType, HeapType type, Index index, T& info);
 //
 // * Note a copied value (read from this field and written to the same, possibly
-//   in another object).
+//   in another object). Note that we require that the two types (the one read
+//   from, and written to) are identical; allowing subtyping is possible, but
+//   would add complexity amid diminishing returns.
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //

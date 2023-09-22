@@ -56,7 +56,10 @@ struct Bool {
 
   operator bool() const { return value; }
 
-  void combine(bool other) { value = value || other; }
+  bool combine(bool other) {
+    value = value || other;
+    return value;
+  }
 };
 
 using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
@@ -185,10 +188,6 @@ struct PCVScanner
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
     functionCopyInfos[getFunction()][type][index] = true;
-
-    // TODO: This may be extensible to a copy from a subtype, and not just the
-    //       exact type (but this is already entering the realm of diminishing
-    //       returns).
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
@@ -268,6 +267,9 @@ struct ConstantFieldPropagation : public Pass {
     //
     // To handle that, copied fields are treated like struct.set ones (by
     // copying the struct.new data to struct.set).
+    StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(
+      *module);
+    boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
         if (copied[i]) {

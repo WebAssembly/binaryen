@@ -2337,13 +2337,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $B1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   (struct.get $B1 0
+  ;; CHECK-NEXT:    (local.get $B1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
