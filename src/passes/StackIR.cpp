@@ -216,7 +216,10 @@ private:
                 auto& sets = localGraph.getSetses[get];
                 if (sets.size() == 1 && *sets.begin() == set) {
                   auto& setInfluences = localGraph.setInfluences[set];
-                  if (setInfluences.size() == 1) {
+                  // If this has the proper value of 1, also do the potentially-
+                  // expensive check of whether we can remove this pair at all.
+                  if (setInfluences.size() == 1 &&
+                      canRemoveSetGetPair(index, i)) {
                     assert(*setInfluences.begin() == get);
                     // Do it! The set and the get can go away, the proper
                     // value is on the stack.
@@ -353,6 +356,120 @@ private:
     }
     // Otherwise, for basic instructions, just count the expression children.
     return ChildIterator(inst->origin).children.size();
+  }
+
+  // Given a pair of a local.set and local.get, see if we can remove them
+  // without breaking validation. Specifically, we must keep sets of non-
+  // nullable locals that dominate a get until the end of the block, such as
+  // here:
+  //
+  //  local.set 0    ;; Can we remove
+  //  local.get 0    ;; this pair?
+  //  if
+  //    local.set 0
+  //  else
+  //    local.set 0
+  //  end
+  //  local.get 0    ;; This get poses a problem.
+  //
+  // Logically the 2nd&3rd sets ensure a value is applied to the local before we
+  // read it, but the validation rules only track each set until the end of its
+  // scope, so the 1st set (before the if, in the pair) is necessary.
+  //
+  // The logic below is related to LocalStructuralDominance, but sharing code
+  // with it is difficult as this uses StackIR and not BinaryenIR, and it checks
+  // a particular set/get pair.
+  //
+  // We are given the indexes of the set and get instructions in |insts|.
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex) {
+    // The set must be before the get.
+    assert(setIndex < getIndex);
+
+    auto* set = insts[setIndex]->origin->cast<LocalSet>();
+    if (func->isParam(set->index) ||
+        !func->getLocalType(set->index).isNonNullable()) {
+      // This local cannot pose a problem for validation (params are always
+      // initialized, and nullable locals may be uninitialized).
+      return true;
+    }
+
+    // Track the depth (in block/if/loop/etc. scopes) relative to our starting
+    // point. Anything less deep than that is not interesting, as we can only
+    // help things at our depth or deeper to validate.
+    Index currDepth = 0;
+
+    // Look for a different get than the one in getIndex (since that one is
+    // being removed) which would stop validating without the set. While doing
+    // so, note other sets that ensure validation even if our set is removed. We
+    // track those in this stack of booleans, one for each scope, which is true
+    // if another sets covers us and ours is not needed.
+    //
+    // We begin in the current scope and with no other set covering us.
+    std::vector<bool> coverStack = {false};
+
+    // Track the total number of covers as well, for quick checking below.
+    Index covers = 0;
+
+    // TODO: We could look before us as well, but then we might end up scanning
+    //       much of the function every time.
+    for (Index i = setIndex + 1; i < insts.size(); i++) {
+      auto* inst = insts[i];
+      if (!inst) {
+        continue;
+      }
+      if (isControlFlowBegin(inst)) {
+        // A new scope begins.
+        currDepth++;
+        coverStack.push_back(false);
+      } else if (isControlFlowEnd(inst)) {
+        if (currDepth == 0) {
+          // Less deep than the start, so we found no problem.
+          return true;
+        }
+        currDepth--;
+
+        if (coverStack.back()) {
+          // A cover existed in the scope which ended.
+          covers--;
+        }
+        coverStack.pop_back();
+      } else if (isControlFlowBarrier(inst)) {
+        // A barrier, like the else in an if-else, not only ends a scope but
+        // opens a new one.
+        if (currDepth == 0) {
+          // Another scope with the same depth begins, but ours ended, so stop.
+          return true;
+        }
+
+        if (coverStack.back()) {
+          // A cover existed in the scope which ended.
+          covers--;
+        }
+        coverStack.back() = false;
+      } else if (auto* otherSet = inst->origin->dynCast<LocalSet>()) {
+        // We are covered in this scope henceforth.
+        if (otherSet->index == set->index) {
+          if (!coverStack.back()) {
+            covers++;
+            if (currDepth == 0) {
+              // We have a cover at depth 0, so everything from here on out
+              // will be covered.
+              return true;
+            }
+            coverStack.back() = true;
+          }
+        }
+      } else if (auto* otherGet = inst->origin->dynCast<LocalGet>()) {
+        if (otherGet->index == set->index && i != getIndex && !covers) {
+          // We found a get that might be a problem: it uses the same index, but
+          // is not the get we were told about, and no other set covers us.
+          return false;
+        }
+      }
+    }
+
+    // No problem.
+    return true;
   }
 };
 
