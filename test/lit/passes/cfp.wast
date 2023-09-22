@@ -2292,3 +2292,110 @@
     )
   )
 )
+
+;; A type with type subtypes. A copy on the parent can affect either child.
+(module
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $A (sub (struct (field (mut i32)))))
+   (type $A (sub (struct (field (mut i32)))))
+
+   ;; CHECK:       (type $B1 (sub $A (struct (field (mut i32)))))
+   (type $B1 (sub $A (struct (field (mut i32)))))
+
+   ;; CHECK:       (type $B2 (sub $A (struct (field (mut i32)))))
+   (type $B2 (sub $A (struct (field (mut i32)))))
+  )
+
+  ;; CHECK:      (type $3 (func (param (ref null $A) (ref null $B1) (ref null $B2))))
+
+  ;; CHECK:      (func $test (type $3) (param $A (ref null $A)) (param $B1 (ref null $B1)) (param $B2 (ref null $B2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B1
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B2
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $A)
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $B1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B2 0
+  ;; CHECK-NEXT:    (local.get $B2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $A (ref null $A)) (param $B1 (ref null $B1)) (param $B2 (ref null $B2))
+    ;; A and B1 agree on their value in their construction.
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B1
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $B2
+        (i32.const 20) ;; this value is different from the others
+      )
+    )
+
+    ;; Copy on $A
+    (struct.set $A 0
+      (local.get $A)
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+
+    ;; $A might read either child, so we can't infer.
+    (drop
+      (struct.get $A 0
+        (local.get $A)
+      )
+    )
+    ;; $B1 should be only able to read 10, but the copy opens the possibility
+    ;; of 20, so we can't optimize.
+    (drop
+      (struct.get $B1 0
+        (local.get $B1)
+      )
+    )
+    ;; As with $B1, the copy stops us.
+    (drop
+      (struct.get $B2 0
+        (local.get $B2)
+      )
+    )
+  )
+)
