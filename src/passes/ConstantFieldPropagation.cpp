@@ -265,10 +265,15 @@ struct ConstantFieldPropagation : public Pass {
     //   ..
     //   A1->f0 = A2->f0; // Either of these might refer to an A, B, or C.
     //   ..
-    //   foo(C->f0);      // This can contain 20, if the copy involved a C.
+    //   foo(A->f0);      // These can contain 20,
+    //   foo(C->f0);      // if the copy read from B.
     //
     // To handle that, copied fields are treated like struct.set ones (by
-    // copying the struct.new data to struct.set).
+    // copying the struct.new data to struct.set). Note that we must propagate
+    // copying to subtypes first, as in the example above the struct.new values
+    // of subtypes must be taken into account (that is, A or a subtype is being
+    // copied, so we want to do the same thing for B and C as well as A, since
+    // a copy of A means it could be a copy of B or C).
     StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(subTypes);
     boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
