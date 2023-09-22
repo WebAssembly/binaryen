@@ -2293,7 +2293,7 @@
   )
 )
 
-;; A type with type subtypes. A copy on the parent can affect either child.
+;; A type with two subtypes. A copy on the parent can affect either child.
 (module
   (rec
    ;; CHECK:      (rec
@@ -2498,7 +2498,7 @@
         (local.get $B1)
       )
     )
-    ;; The copy can't refer to a $B2, so we can optimize here.
+    ;; The copy can't refer to a $B2, so we can optimize here. TODO
     (drop
       (struct.get $B2 0
         (local.get $B2)
