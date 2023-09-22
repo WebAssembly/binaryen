@@ -2491,8 +2491,7 @@
         (local.get $A)
       )
     )
-    ;; The copy can't refer to a $B2, so we can optimize here, as a copy
-    ;; between $A and $B1 is not a problem (their values agree).
+    ;; The copy can only refer to $B1, so we can optimize here.
     (drop
       (struct.get $B1 0
         (local.get $B1)
