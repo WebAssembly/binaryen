@@ -169,9 +169,17 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'o':
-        if (op == "cont.new"sv) { return makeContNew(s); }
-        goto parse_error;
+      case 'o': {
+        switch (buf[5]) {
+          case 'b':
+            if (op == "cont.bind"sv) { return makeContBind(s); }
+            goto parse_error;
+          case 'n':
+            if (op == "cont.new"sv) { return makeContNew(s); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
@@ -3842,12 +3850,23 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'o':
-        if (op == "cont.new"sv) {
-          CHECK_ERR(makeContNew(ctx, pos));
-          return Ok{};
+      case 'o': {
+        switch (buf[5]) {
+          case 'b':
+            if (op == "cont.bind"sv) {
+              CHECK_ERR(makeContBind(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'n':
+            if (op == "cont.new"sv) {
+              CHECK_ERR(makeContNew(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
         }
-        goto parse_error;
+      }
       default: goto parse_error;
     }
   }

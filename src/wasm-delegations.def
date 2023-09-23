@@ -102,6 +102,7 @@ DELEGATE(StringIterNext);
 DELEGATE(StringIterMove);
 DELEGATE(StringSliceWTF);
 DELEGATE(StringSliceIter);
+DELEGATE(ContBind);
 DELEGATE(ContNew);
 DELEGATE(Resume);
 

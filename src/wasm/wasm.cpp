@@ -1310,6 +1310,8 @@ void StringSliceIter::finalize() {
   }
 }
 
+void ContBind::finalize() { type = Type(this->contTypeAfter, NonNullable); }
+
 void ContNew::finalize() {
   if (!(this->contType.isContinuation() &&
         this->contType.getContinuation().ht.isSignature())) {

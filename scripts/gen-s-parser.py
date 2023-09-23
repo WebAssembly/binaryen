@@ -566,6 +566,7 @@ instructions = [
     ("return_call_ref",      "makeCallRef(s, /*isReturn=*/true)"),
     # Typed continuations instructions
     ("cont.new",             "makeContNew(s)"),
+    ("cont.bind",            "makeContBind(s)"),
     ("resume",               "makeResume(s)"),
     # GC
     ("i31.new",              "makeRefI31(s)"),  # deprecated

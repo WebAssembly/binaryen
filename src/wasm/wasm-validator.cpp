@@ -483,6 +483,7 @@ public:
   void visitStringIterMove(StringIterMove* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
   void visitStringSliceIter(StringSliceIter* curr);
+  void visitContBind(ContBind* curr);
   void visitContNew(ContNew* curr);
   void visitResume(Resume* curr);
 
@@ -3174,6 +3175,14 @@ void FunctionValidator::visitStringSliceIter(StringSliceIter* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
+}
+
+void FunctionValidator::visitContBind(ContBind* curr) {
+  // FIXME(frank-emrich) implement actual type-checking
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasTypedContinuations(),
+    curr,
+    "cont.bind requires typed-continuatons [--enable-typed-continuations]");
 }
 
 void FunctionValidator::visitContNew(ContNew* curr) {

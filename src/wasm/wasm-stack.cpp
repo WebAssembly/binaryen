@@ -2456,6 +2456,12 @@ void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
     << U32LEB(BinaryConsts::StringViewIterSlice);
 }
 
+void BinaryInstWriter::visitContBind(ContBind* curr) {
+  o << int8_t(BinaryConsts::ContBind);
+  parent.writeIndexedHeapType(curr->contTypeBefore);
+  parent.writeIndexedHeapType(curr->contTypeAfter);
+}
+
 void BinaryInstWriter::visitContNew(ContNew* curr) {
   o << int8_t(BinaryConsts::ContNew);
   parent.writeIndexedHeapType(curr->contType);

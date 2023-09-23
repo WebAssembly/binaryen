@@ -3997,6 +3997,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       visitCallRef(call);
       break;
     }
+    case BinaryConsts::ContBind: {
+      auto contBind = allocator.alloc<ContBind>();
+      curr = contBind;
+      visitContBind(contBind);
+      break;
+    }
     case BinaryConsts::ContNew: {
       auto contNew = allocator.alloc<ContNew>();
       curr = contNew;
@@ -7642,6 +7648,36 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
   if (!curr->value->type.isRef() && curr->value->type != Type::unreachable) {
     throwError("bad input type for ref.as: " + curr->value->type.toString());
   }
+  curr->finalize();
+}
+
+void WasmBinaryReader::visitContBind(ContBind* curr) {
+  BYN_TRACE("zz node: ContBind\n");
+
+  auto contTypeBeforeIndex = getU32LEB();
+  curr->contTypeBefore = getTypeByIndex(contTypeBeforeIndex);
+
+  auto contTypeAfterIndex = getU32LEB();
+  curr->contTypeAfter = getTypeByIndex(contTypeAfterIndex);
+
+  for (auto& ct : {curr->contTypeBefore, curr->contTypeAfter}) {
+    if (!ct.isContinuation())
+      throwError("non-continuation type in cont.bind instruction " +
+                 ct.toString());
+  }
+
+  curr->cont = popNonVoidExpression();
+
+  size_t paramsBefore =
+    curr->contTypeBefore.getContinuation().ht.getSignature().params.size();
+  size_t paramsAfter =
+    curr->contTypeAfter.getContinuation().ht.getSignature().params.size();
+  size_t argsNum = paramsBefore - paramsAfter;
+  curr->args.resize(argsNum);
+  for (size_t i = 0; i < argsNum; i++) {
+    curr->args[argsNum - i - 1] = popNonVoidExpression();
+  }
+
   curr->finalize();
 }
 

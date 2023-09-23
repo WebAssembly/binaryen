@@ -2342,6 +2342,7 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
+  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 
@@ -3858,6 +3859,7 @@ public:
     multiValues.pop_back();
     return ret;
   }
+  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 

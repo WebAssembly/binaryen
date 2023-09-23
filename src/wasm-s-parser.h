@@ -325,6 +325,7 @@ private:
   Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
   Expression* makeStringSliceWTF(Element& s, StringSliceWTFOp op);
   Expression* makeStringSliceIter(Element& s);
+  Expression* makeContBind(Element& s);
   Expression* makeContNew(Element& s);
   Expression* makeResume(Element& s);
 

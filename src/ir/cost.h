@@ -718,6 +718,15 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 8 + visit(curr->ref) + visit(curr->num);
   }
 
+  CostType visitContBind(ContBind* curr) {
+    // FIXME(frank-emrich) Think about proper constant
+    CostType ret = 10;
+    ret += visit(curr->cont);
+    for (auto* arg : curr->args) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
   CostType visitContNew(ContNew* curr) {
     // Some arbitrary "high" value, reflecting that this may allocate a stack
     return 10 + visit(curr->func);
