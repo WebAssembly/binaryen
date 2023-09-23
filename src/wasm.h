@@ -743,6 +743,7 @@ public:
     StringIterMoveId,
     StringSliceWTFId,
     StringSliceIterId,
+    ContNewId,
     ResumeId,
     NumExpressionIds
   };
@@ -1993,6 +1994,16 @@ public:
 
   Expression* ref;
   Expression* num;
+
+  void finalize();
+};
+
+class ContNew : public SpecificExpression<Expression::ContNewId> {
+public:
+  ContNew(MixedArena& allocator) {}
+
+  HeapType contType;
+  Expression* func;
 
   void finalize();
 };

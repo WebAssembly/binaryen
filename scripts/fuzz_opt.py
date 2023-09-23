@@ -307,6 +307,7 @@ INITIAL_CONTENTS_IGNORE = [
     # the fuzzer does not support typed continuations
     'typed_continuations.wast',
     'typed_continuations_resume.wast',
+    'typed_continuations_contnew.wast',
     # New EH implementation is in progress
     'exception-handling.wast',
     'translate-eh-old-to-new.wast',

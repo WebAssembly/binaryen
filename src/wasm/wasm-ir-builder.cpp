@@ -576,6 +576,14 @@ Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
   WASM_UNREACHABLE("unexpected op");
 }
 
+Result<> IRBuilder::visitContNew(ContNew* curr) {
+  auto func = pop();
+  CHECK_ERR(func);
+  curr->func = *func;
+
+  return Ok{};
+}
+
 Result<> IRBuilder::visitResume(Resume* curr) {
   auto cont = pop();
   CHECK_ERR(cont);
@@ -1780,6 +1788,18 @@ Result<> IRBuilder::makeStringSliceIter() {
   StringSliceIter curr;
   CHECK_ERR(visitStringSliceIter(&curr));
   push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeContNew(HeapType ct) {
+  if (!ct.isContinuation()) {
+    return Err{"expected continuation type"};
+  }
+  ContNew curr(wasm.allocator);
+  curr.contType = ct;
+  CHECK_ERR(visitContNew(&curr));
+
+  push(builder.makeContNew(ct, curr.func));
   return Ok{};
 }
 

@@ -2379,6 +2379,11 @@ struct PrintExpressionContents
     printMedium(o, "stringview_iter.slice");
   }
 
+  void visitContNew(ContNew* curr) {
+    printMedium(o, "cont.new ");
+    printHeapType(curr->contType);
+  }
+
   void visitResume(Resume* curr) {
     printMedium(o, "resume");
 

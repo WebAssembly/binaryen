@@ -1352,6 +1352,8 @@ void StringSliceIter::finalize() {
   }
 }
 
+void ContNew::finalize() { type = Type(this->contType, NonNullable); }
+
 static void populateResumeSentTypes(Resume* curr, Module* wasm) {
   if (!wasm) {
     return;
