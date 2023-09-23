@@ -1,0 +1,21 @@
+(module
+ (type $ft (func (param i32) (result i32)))
+ (type $ct (cont $ft))
+ (type $2 (func (param (ref $ct))))
+ (type $3 (func))
+ (elem declare func $g)
+ (func $f (type $2) (param $x (ref $ct))
+  (nop)
+ )
+ (func $g (type $ft) (param $0 i32) (result i32)
+  (i32.const 123)
+ )
+ (func $h (type $3)
+  (drop
+   (cont.new $ct
+    (ref.func $g)
+   )
+  )
+ )
+)
+

@@ -1310,6 +1310,14 @@ void StringSliceIter::finalize() {
   }
 }
 
+void ContNew::finalize() {
+  if (!(this->contType.isContinuation() &&
+        this->contType.getContinuation().ht.isSignature())) {
+    Fatal() << "ill-formed cont.new expression";
+  }
+  type = Type(this->contType, NonNullable);
+}
+
 void Resume::finalize() {
   if (!(this->contType.isContinuation() &&
         this->contType.getContinuation().ht.isSignature())) {

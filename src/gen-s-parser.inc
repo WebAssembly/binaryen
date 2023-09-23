@@ -149,21 +149,29 @@ switch (buf[0]) {
     }
   }
   case 'c': {
-    switch (buf[4]) {
-      case '\0':
-        if (op == "call"sv) { return makeCall(s, /*isReturn=*/false); }
-        goto parse_error;
-      case '_': {
-        switch (buf[5]) {
-          case 'i':
-            if (op == "call_indirect"sv) { return makeCallIndirect(s, /*isReturn=*/false); }
+    switch (buf[1]) {
+      case 'a': {
+        switch (buf[4]) {
+          case '\0':
+            if (op == "call"sv) { return makeCall(s, /*isReturn=*/false); }
             goto parse_error;
-          case 'r':
-            if (op == "call_ref"sv) { return makeCallRef(s, /*isReturn=*/false); }
-            goto parse_error;
+          case '_': {
+            switch (buf[5]) {
+              case 'i':
+                if (op == "call_indirect"sv) { return makeCallIndirect(s, /*isReturn=*/false); }
+                goto parse_error;
+              case 'r':
+                if (op == "call_ref"sv) { return makeCallRef(s, /*isReturn=*/false); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           default: goto parse_error;
         }
       }
+      case 'o':
+        if (op == "cont.new"sv) { return makeContNew(s); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -3805,30 +3813,41 @@ switch (buf[0]) {
     }
   }
   case 'c': {
-    switch (buf[4]) {
-      case '\0':
-        if (op == "call"sv) {
-          CHECK_ERR(makeCall(ctx, pos, /*isReturn=*/false));
-          return Ok{};
-        }
-        goto parse_error;
-      case '_': {
-        switch (buf[5]) {
-          case 'i':
-            if (op == "call_indirect"sv) {
-              CHECK_ERR(makeCallIndirect(ctx, pos, /*isReturn=*/false));
+    switch (buf[1]) {
+      case 'a': {
+        switch (buf[4]) {
+          case '\0':
+            if (op == "call"sv) {
+              CHECK_ERR(makeCall(ctx, pos, /*isReturn=*/false));
               return Ok{};
             }
             goto parse_error;
-          case 'r':
-            if (op == "call_ref"sv) {
-              CHECK_ERR(makeCallRef(ctx, pos, /*isReturn=*/false));
-              return Ok{};
+          case '_': {
+            switch (buf[5]) {
+              case 'i':
+                if (op == "call_indirect"sv) {
+                  CHECK_ERR(makeCallIndirect(ctx, pos, /*isReturn=*/false));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'r':
+                if (op == "call_ref"sv) {
+                  CHECK_ERR(makeCallRef(ctx, pos, /*isReturn=*/false));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           default: goto parse_error;
         }
       }
+      case 'o':
+        if (op == "cont.new"sv) {
+          CHECK_ERR(makeContNew(ctx, pos));
+          return Ok{};
+        }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -8115,9 +8134,8 @@ switch (buf[0]) {
       }
       case 's':
         if (op == "resume"sv) {
-          auto ret = makeResume(ctx, pos);
-          CHECK_ERR(ret);
-          return *ret;
+          CHECK_ERR(makeResume(ctx, pos));
+          return Ok{};
         }
         goto parse_error;
       case 't': {

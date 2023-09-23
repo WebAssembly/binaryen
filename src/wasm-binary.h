@@ -1272,6 +1272,7 @@ enum ASTNodes {
   StringNewUTF8ArrayTry = 0xb8,
 
   // typed continuation opcodes
+  ContNew = 0xe0,
   Resume = 0xe3,
 
 };
@@ -1895,6 +1896,7 @@ public:
   void visitCallRef(CallRef* curr);
   void visitRefAsCast(RefCast* curr, uint32_t code);
   void visitRefAs(RefAs* curr, uint8_t code);
+  void visitContNew(ContNew* curr);
   void visitResume(Resume* curr);
 
   [[noreturn]] void throwError(std::string text);

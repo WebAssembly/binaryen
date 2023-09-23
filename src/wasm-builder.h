@@ -1198,6 +1198,13 @@ public:
     return ret;
   }
 
+  ContNew* makeContNew(HeapType contType, Expression* func) {
+    auto* ret = wasm.allocator.alloc<ContNew>();
+    ret->contType = contType;
+    ret->func = func;
+    ret->finalize();
+    return ret;
+  }
   Resume* makeResume(HeapType contType,
                      const std::vector<Name>& handlerTags,
                      const std::vector<Name>& handlerBlocks,
