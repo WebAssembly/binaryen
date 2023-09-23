@@ -2378,7 +2378,12 @@ struct PrintExpressionContents
   void visitStringSliceIter(StringSliceIter* curr) {
     printMedium(o, "stringview_iter.slice");
   }
-
+  void visitContBind(ContBind* curr) {
+    printMedium(o, "cont.bind ");
+    printHeapType(curr->contTypeBefore);
+    o << ' ';
+    printHeapType(curr->contTypeAfter);
+  }
   void visitContNew(ContNew* curr) {
     printMedium(o, "cont.new ");
     printHeapType(curr->contType);

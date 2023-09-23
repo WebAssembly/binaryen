@@ -1200,6 +1200,10 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
+  void visitContBind(ContBind* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitContNew(ContNew* curr) {
     // TODO: optimize when possible
     addRoot(curr);

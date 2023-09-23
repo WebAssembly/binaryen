@@ -327,6 +327,7 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations.wast',
     'typed_continuations_resume.wast',
     'typed_continuations_contnew.wast',
+    'typed_continuations_contbind.wast',
     # New EH implementation is in progress
     'exception-handling.wast',
     'translate-eh-old-to-new.wast',

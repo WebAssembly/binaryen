@@ -210,6 +210,8 @@ public:
   [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
   [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
   [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
+                                      HeapType contTypeAfter);
   [[nodiscard]] Result<> makeContNew(HeapType ct);
   [[nodiscard]] Result<> makeResume(HeapType ct,
                                     const std::vector<Name>& tags,
@@ -252,6 +254,7 @@ public:
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
+  [[nodiscard]] Result<> visitContBind(ContBind*);
   [[nodiscard]] Result<> visitResume(Resume*);
   [[nodiscard]] Result<> visitTupleMake(TupleMake*);
   [[nodiscard]] Result<>

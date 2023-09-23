@@ -2401,6 +2401,7 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
+  Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("unimplemented"); }
   Flow visitContNew(ContNew* curr) { WASM_UNREACHABLE("unimplemented"); }
   Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
 
@@ -3976,6 +3977,7 @@ public:
     multiValues.pop_back();
     return ret;
   }
+  Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 

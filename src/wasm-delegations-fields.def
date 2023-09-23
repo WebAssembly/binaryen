@@ -946,6 +946,15 @@ switch (DELEGATE_ID) {
     break;
   }
 
+   case Expression::Id::ContBindId: {
+    DELEGATE_START(ContBind);
+    DELEGATE_FIELD_CHILD(ContBind, cont);
+    DELEGATE_FIELD_CHILD_VECTOR(ContBind, operands);
+    DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeAfter);
+    DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeBefore);
+    DELEGATE_END(ContBind);
+    break;
+  }
   case Expression::Id::ContNewId: {
     DELEGATE_START(ContNew);
     DELEGATE_FIELD_CHILD(ContNew, func);

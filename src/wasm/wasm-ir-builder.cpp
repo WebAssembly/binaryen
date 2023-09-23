@@ -619,6 +619,26 @@ Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
   WASM_UNREACHABLE("unexpected op");
 }
 
+Result<> IRBuilder::visitContBind(ContBind* curr) {
+  auto cont = pop();
+  CHECK_ERR(cont);
+  curr->cont = *cont;
+
+  size_t paramsBefore =
+    curr->contTypeBefore.getContinuation().type.getSignature().params.size();
+  size_t paramsAfter =
+    curr->contTypeAfter.getContinuation().type.getSignature().params.size();
+  size_t numArgs = paramsBefore - paramsAfter;
+
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    curr->operands[numArgs - i - 1] = *val;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitResume(Resume* curr) {
   auto cont = pop();
   CHECK_ERR(cont);
@@ -1830,6 +1850,22 @@ Result<> IRBuilder::makeStringSliceIter() {
   StringSliceIter curr;
   CHECK_ERR(visitStringSliceIter(&curr));
   push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeContBind(HeapType contTypeBefore,
+                                 HeapType contTypeAfter) {
+  if (!contTypeBefore.isContinuation() || !contTypeAfter.isContinuation()) {
+    return Err{"expected continuation types"};
+  }
+  ContBind curr(wasm.allocator);
+  curr.contTypeBefore = contTypeBefore;
+  curr.contTypeAfter = contTypeAfter;
+  CHECK_ERR(visitContBind(&curr));
+
+  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
+  push(
+    builder.makeContBind(contTypeBefore, contTypeAfter, operands, curr.cont));
   return Ok{};
 }
 
