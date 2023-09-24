@@ -1,0 +1,10 @@
+(module
+ (type $0 (func (param i32) (result i64)))
+ (type $1 (func (result i64)))
+ (tag $t (param i32) (result i64))
+ (func $f (type $1) (result i64)
+  (suspend $t
+   (i32.const 123)
+  )
+ )
+)

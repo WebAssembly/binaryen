@@ -2391,6 +2391,13 @@ Memory* WasmBinaryReader::getMemory(Index index) {
   throwError("Memory index out of range.");
 }
 
+Signature WasmBinaryReader::getTagSignature(Index index) {
+  if (index >= wasm.tags.size()) {
+    throwError("invalid tag index");
+  }
+  return wasm.tags[index]->sig;
+}
+
 void WasmBinaryReader::getResizableLimits(Address& initial,
                                           Address& max,
                                           bool& shared,
@@ -4013,6 +4020,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       auto resume = allocator.alloc<Resume>();
       curr = resume;
       visitResume(resume);
+      break;
+    }
+    case BinaryConsts::Suspend: {
+      auto suspend = allocator.alloc<Suspend>();
+      curr = suspend;
+      visitSuspend(suspend);
       break;
     }
     case BinaryConsts::AtomicPrefix: {
@@ -7738,6 +7751,23 @@ void WasmBinaryReader::visitResume(Resume* curr) {
   }
 
   curr->finalize();
+}
+
+void WasmBinaryReader::visitSuspend(Suspend* curr) {
+  BYN_TRACE("zz node: Suspend\n");
+
+  auto tagIndex = getU32LEB();
+  curr->tag = getTagName(tagIndex);
+  tagRefs[tagIndex].push_back(&curr->tag);
+
+  auto sig = getTagSignature(tagIndex);
+  auto argsNum = sig.params.size();
+  curr->args.resize(argsNum);
+  for (size_t i = 0; i < argsNum; i++) {
+    curr->args[argsNum - i - 1] = popNonVoidExpression();
+  }
+
+  curr->finalize(&wasm);
 }
 
 void WasmBinaryReader::throwError(std::string text) {

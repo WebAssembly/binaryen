@@ -2910,6 +2910,20 @@ Expression* SExpressionWasmBuilder::makeResume(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeSuspend(Element& s) {
+  auto ret = allocator.alloc<Suspend>();
+
+  ret->tag = getTagName(*s[1]);
+
+  Index i = 2;
+  while (i < s.size()) {
+    ret->args.push_back(parseExpression(s[i++]));
+  }
+
+  ret->finalize(&wasm);
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeRefI31(Element& s) {
   auto ret = allocator.alloc<RefI31>();
   ret->value = parseExpression(s[1]);

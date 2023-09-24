@@ -1329,6 +1329,15 @@ void Resume::finalize() {
   type = sig.results;
 }
 
+void Suspend::finalize(Module* mod) {
+  auto tag = mod->getTag(this->tag);
+  type = tag->sig.results;
+}
+void Suspend::finalize() {
+  // No-op. We assume that the full proper type has been set previously using
+  // the override above.
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

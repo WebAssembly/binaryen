@@ -2375,6 +2375,10 @@ struct PrintExpressionContents
     printHeapType(curr->contType);
   }
   void visitResume(Resume* curr) { printMedium(o, "resume"); }
+  void visitSuspend(Suspend* curr) {
+    printMedium(o, "suspend ");
+    printName(curr->tag, o);
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {

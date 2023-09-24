@@ -2479,6 +2479,10 @@ void BinaryInstWriter::visitResume(Resume* curr) {
   }
 }
 
+void BinaryInstWriter::visitSuspend(Suspend* curr) {
+  o << int8_t(BinaryConsts::Suspend) << U32LEB(parent.getTagIndex(curr->tag));
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

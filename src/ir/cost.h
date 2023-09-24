@@ -735,6 +735,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // Inspired by indirect calls, but twice the cost.
     return 12 + visit(curr->cont);
   }
+  CostType visitSuspend(Suspend* curr) {
+    // FIXME(frank-emrich) Think about proper constant
+    CostType ret = 10;
+    for (auto* arg : curr->args) {
+      ret += visit(arg);
+    }
+    return ret;
+  }
 
 private:
   CostType nullCheckCost(Expression* ref) {

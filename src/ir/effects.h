@@ -977,6 +977,16 @@ private:
         parent.throws_ = true;
       }
     }
+    void visitSuspend(Suspend* curr) {
+      // This acts as a kitchen sink effect
+      parent.calls = true;
+
+      // FIXME(frank-emrich) Should we set parent.trap or parent.implicitTrap?
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
   };
 
 public:

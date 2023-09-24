@@ -42,6 +42,8 @@
 
 namespace wasm {
 
+class Module;
+
 // An index in a wasm module
 using Index = uint32_t;
 
@@ -741,6 +743,7 @@ public:
     ContBindId,
     ContNewId,
     ResumeId,
+    SuspendId,
     NumExpressionIds
   };
   Id _id;
@@ -1957,6 +1960,21 @@ public:
   ExpressionList args;
   Expression* cont;
 
+  void finalize();
+};
+
+class Suspend : public SpecificExpression<Expression::SuspendId> {
+public:
+  Suspend(MixedArena& allocator) : args(allocator) {}
+
+  Name tag;
+  ExpressionList args;
+
+  // We need access to the module to obtain the signature of the tag,
+  // which determines this node's type.
+  void finalize(Module* mod);
+
+  // Noop, required for visitors.
   void finalize();
 };
 
