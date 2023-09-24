@@ -1231,6 +1231,13 @@ public:
     ret->finalize(&wasm);
     return ret;
   }
+  Suspend* makeSuspend(Name tag, const std::vector<Expression*>& args) {
+    auto* ret = wasm.allocator.alloc<Suspend>();
+    ret->tag = tag;
+    ret->operands.set(args);
+    ret->finalize(&wasm);
+    return ret;
+  }
 
   // Additional helpers
 

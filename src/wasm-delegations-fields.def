@@ -973,6 +973,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(Resume);
     break;
   }
+  case Expression::Id::SuspendId: {
+    DELEGATE_START(Suspend);
+    DELEGATE_FIELD_CHILD_VECTOR(Suspend, operands);
+    DELEGATE_FIELD_NAME_KIND(Suspend, tag, ModuleItemKind::Tag);
+    DELEGATE_END(Suspend);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

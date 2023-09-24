@@ -1413,6 +1413,13 @@ void Resume::finalize(Module* wasm) {
   populateResumeSentTypes(this, wasm);
 }
 
+void Suspend::finalize(Module* wasm) {
+  if (wasm) {
+    auto tag = wasm->getTag(this->tag);
+    type = tag->sig.results;
+  }
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

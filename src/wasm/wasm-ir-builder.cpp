@@ -658,6 +658,19 @@ Result<> IRBuilder::visitResume(Resume* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitSuspend(Suspend* curr) {
+  auto tag = wasm.getTag(curr->tag);
+  auto sig = tag->sig;
+  auto size = sig.params.size();
+  curr->operands.resize(size);
+  for (size_t i = 0; i < size; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    curr->operands[size - i - 1] = *val;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitTupleMake(TupleMake* curr) {
   assert(curr->operands.size() >= 2);
   for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
@@ -1927,6 +1940,16 @@ Result<> IRBuilder::makeResume(HeapType ct,
   }
   std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
   push(builder.makeResume(ct, tags, labelNames, operands, curr.cont));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeSuspend(Name tag) {
+  Suspend curr(wasm.allocator);
+  curr.tag = tag;
+  CHECK_ERR(visitSuspend(&curr));
+
+  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
+  push(builder.makeSuspend(tag, operands));
   return Ok{};
 }
 

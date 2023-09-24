@@ -878,6 +878,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
   void visitContNew(ContNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

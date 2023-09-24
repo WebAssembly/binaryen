@@ -3369,6 +3369,9 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
+      case 'u':
+        if (op == "suspend"sv) { return makeSuspend(s); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -8653,6 +8656,12 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
+      case 'u':
+        if (op == "suspend"sv) {
+          CHECK_ERR(makeSuspend(ctx, pos, annotations));
+          return Ok{};
+        }
+        goto parse_error;
       default: goto parse_error;
     }
   }

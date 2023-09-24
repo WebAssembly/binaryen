@@ -490,6 +490,7 @@ public:
   void visitContBind(ContBind* curr);
   void visitContNew(ContNew* curr);
   void visitResume(Resume* curr);
+  void visitSuspend(Suspend* curr);
 
   void visitFunction(Function* curr);
 
@@ -3343,6 +3344,14 @@ void FunctionValidator::visitResume(Resume* curr) {
                 curr->contType.getContinuation().type.isSignature()),
                curr,
                "invalid type in Resume expression");
+}
+
+void FunctionValidator::visitSuspend(Suspend* curr) {
+  // TODO implement actual type-checking
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasTypedContinuations(),
+    curr,
+    "suspend requires typed-continuations [--enable-typed-continuations]");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

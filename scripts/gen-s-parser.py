@@ -570,6 +570,7 @@ instructions = [
     ("cont.new",             "makeContNew(s)"),
     ("cont.bind",            "makeContBind(s)"),
     ("resume",               "makeResume(s)"),
+    ("suspend",              "makeSuspend(s)"),
     # GC
     ("i31.new",              "makeRefI31(s)"),  # deprecated
     ("ref.i31",              "makeRefI31(s)"),

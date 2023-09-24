@@ -331,6 +331,7 @@ private:
   Expression* makeContBind(Element& s);
   Expression* makeContNew(Element& s);
   Expression* makeResume(Element& s);
+  Expression* makeSuspend(Element& s);
 
   // Helper functions
   Type parseBlockType(Element& s, Index& i);
