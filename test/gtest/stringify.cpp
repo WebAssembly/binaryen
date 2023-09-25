@@ -1,3 +1,4 @@
+#include "ir/utils.h"
 #include "passes/stringify-walker.h"
 #include "print-test.h"
 #include "support/suffix_tree.h"
