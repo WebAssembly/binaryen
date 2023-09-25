@@ -148,15 +148,15 @@ private:
 #ifdef STACK_OPT_DEBUG
     std::cout << "func: " << func->name << '\n' << insts << '\n';
 #endif
-    for (Index i = 0; i < insts.size(); i++) {
-      auto* inst = insts[i];
+    for (Index instIndex = 0; instIndex < insts.size(); instIndex++) {
+      auto* inst = insts[instIndex];
       if (!inst) {
         continue;
       }
       // First, consume values from the stack as required.
       auto consumed = getNumConsumedValues(inst);
 #ifdef STACK_OPT_DEBUG
-      std::cout << "  " << i << " : " << *inst << ", " << values.size()
+      std::cout << "  " << instIndex << " : " << *inst << ", " << values.size()
                 << " on stack, will consume " << consumed << "\n    ";
       for (auto s : values)
         std::cout << s << ' ';
@@ -199,17 +199,20 @@ private:
         // optimization would intefere with that one.
         if (auto* get = inst->origin->dynCast<LocalGet>();
             get && inst->type.isSingle()) {
+          // Use another local to clarify what instIndex means in this scope.
+          auto getIndex = instIndex;
+
           // This is a potential optimization opportunity! See if we
           // can reach the set.
           if (values.size() > 0) {
             Index j = values.size() - 1;
             while (1) {
               // If there's an actual value in the way, we've failed.
-              auto index = values[j];
-              if (index == null) {
+              auto setIndex = values[j];
+              if (setIndex == null) {
                 break;
               }
-              auto* set = insts[index]->origin->cast<LocalSet>();
+              auto* set = insts[setIndex]->origin->cast<LocalSet>();
               if (set->index == get->index) {
                 // This might be a proper set-get pair, where the set is
                 // used by this get and nothing else, check that.
@@ -219,15 +222,15 @@ private:
                   // If this has the proper value of 1, also do the potentially-
                   // expensive check of whether we can remove this pair at all.
                   if (setInfluences.size() == 1 &&
-                      canRemoveSetGetPair(index, i)) {
+                      canRemoveSetGetPair(setIndex, getIndex)) {
                     assert(*setInfluences.begin() == get);
                     // Do it! The set and the get can go away, the proper
                     // value is on the stack.
 #ifdef STACK_OPT_DEBUG
                     std::cout << "  stackify the get\n";
 #endif
-                    insts[index] = nullptr;
-                    insts[i] = nullptr;
+                    insts[setIndex] = nullptr;
+                    insts[getIndex] = nullptr;
                     // Continuing on from here, replace this on the stack
                     // with a null, representing a regular value. We
                     // keep possible values above us active - they may
@@ -253,7 +256,7 @@ private:
         }
       } else if (inst->origin->is<LocalSet>() && inst->type == Type::none) {
         // This set is potentially optimizable later, add to stack.
-        values.push_back(i);
+        values.push_back(instIndex);
       }
     }
   }
