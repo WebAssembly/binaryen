@@ -1,4 +1,3 @@
-#include "ir/utils.h"
 #include "passes/stringify-walker.h"
 #include "print-test.h"
 #include "support/suffix_tree.h"
@@ -163,14 +162,18 @@ static auto dupModuleText = R"wasm(
    )
   )wasm";
 
+std::vector<uint32_t> hashStringifyModule(Module *wasm) {
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(wasm);
+  return std::move(stringify.hashString);
+}
+
 TEST_F(StringifyTest, Stringify) {
   Module wasm;
   parseWast(wasm, dupModuleText);
+  auto hashString = hashStringifyModule(&wasm);
 
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  EXPECT_EQ(stringify.hashString,
+  EXPECT_EQ(hashString,
             (std::vector<uint32_t>{
               0,             // function block evaluated as a whole
               (uint32_t)-1,  // separate function block from function contents
@@ -220,15 +223,9 @@ TEST_F(StringifyTest, Stringify) {
             }));
 }
 
-TEST_F(StringifyTest, Substrings) {
-  Module wasm;
-  parseWast(wasm, dupModuleText);
-
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  SuffixTree st(stringify.hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+std::vector<SuffixTree::RepeatedSubstring> repeatSubstrings(std::vector<uint32_t> hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings = std::vector(st.begin(), st.end());
   std::sort(
     substrings.begin(),
     substrings.end(),
@@ -240,6 +237,14 @@ TEST_F(StringifyTest, Substrings) {
       }
       return aWeight > bWeight;
     });
+  return substrings;
+}
+
+TEST_F(StringifyTest, Substrings) {
+  Module wasm;
+  parseWast(wasm, dupModuleText);
+  auto hashString = hashStringifyModule(&wasm);
+  auto substrings = repeatSubstrings(hashString);
 
   EXPECT_EQ(
     substrings,
@@ -259,47 +264,13 @@ TEST_F(StringifyTest, Substrings) {
 TEST_F(StringifyTest, DedupeSubstrings) {
   Module wasm;
   parseWast(wasm, dupModuleText);
+  auto hashString = hashStringifyModule(&wasm);
+  std::vector<SuffixTree::RepeatedSubstring> substrings = repeatSubstrings(hashString);
 
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  SuffixTree st(stringify.hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
-  std::sort(
-    substrings.begin(),
-    substrings.end(),
-    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
-      size_t aWeight = a.Length * a.StartIndices.size();
-      size_t bWeight = b.Length * b.StartIndices.size();
-      if (aWeight == bWeight) {
-        return a.StartIndices[0] < b.StartIndices[0];
-      }
-      return aWeight > bWeight;
-    });
-
-  // dedupe
-  std::set<uint32_t> seen;
-  std::vector<SuffixTree::RepeatedSubstring> dedupedSubstrings;
-  for (auto substring : substrings) {
-    bool seenEndIdx = false;
-    for (auto startIdx : substring.StartIndices) {
-      // We are tracking the endIdx in this manner because LLVM's SuffixTree
-      // duplicates substrings of substrings with the same endIdx
-      uint32_t endIdx = substring.Length + startIdx;
-      if (auto result = seen.find(endIdx); result != seen.end()) {
-        seenEndIdx = true;
-      }
-    }
-    if (!seenEndIdx) {
-      for (auto startIdx : substring.StartIndices) {
-        seen.insert(startIdx + substring.Length);
-      }
-      dedupedSubstrings.push_back(substring);
-    }
-  }
+  auto result = StringifyProcessor::dedupe(substrings);
 
   EXPECT_EQ(
-    dedupedSubstrings,
+    result,
     (std::vector<SuffixTree::RepeatedSubstring>{
       // 5, 6, 7, 6 appears at idx 9 and again at 22
       SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
@@ -307,76 +278,3 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
 }
 
-TEST_F(StringifyTest, ArbitraryWasm) {
-  Module wasm;
-  ModuleReader reader;
-
-  try {
-    reader.read("bin/binaryen_wasm.wasm", wasm);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    std::cerr << '\n';
-    Fatal() << "error parsing wasm";
-  } catch (std::bad_alloc&) {
-    Fatal() << "error building module, std::bad_alloc (possibly invalid "
-               "request for silly amounts of memory)";
-  }
-
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  SuffixTree st(stringify.hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
-  std::sort(
-    substrings.begin(),
-    substrings.end(),
-    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
-      size_t aWeight = a.Length * a.StartIndices.size();
-      size_t bWeight = b.Length * b.StartIndices.size();
-      if (aWeight == bWeight) {
-        return a.StartIndices[0] < b.StartIndices[0];
-      }
-      return aWeight > bWeight;
-    });
-
-  // dedupe
-  std::set<uint32_t> seen;
-  std::vector<SuffixTree::RepeatedSubstring> dedupedSubstrings;
-  for (auto substring : substrings) {
-    bool seenEndIdx = false;
-    for (auto startIdx : substring.StartIndices) {
-      // We are tracking the endIdx in this manner because LLVM's SuffixTree
-      // duplicates substrings of substrings with the same endIdx
-      uint32_t endIdx = substring.Length + startIdx;
-      if (auto result = seen.find(endIdx); result != seen.end()) {
-        seenEndIdx = true;
-      }
-    }
-    if (!seenEndIdx) {
-      for (auto startIdx : substring.StartIndices) {
-        seen.insert(startIdx + substring.Length);
-      }
-      dedupedSubstrings.push_back(substring);
-    }
-  }
-
-  std::cout << substrings.size() << " substrings found" << std::endl;
-
-  for (SuffixTree::RepeatedSubstring& rs : dedupedSubstrings) {
-    size_t startIndex = rs.StartIndices[0];
-    std::cout << rs.StartIndices.size() << ": ";
-    for (size_t i = startIndex; i < startIndex + rs.Length; i++) {
-      std::cout << stringify.hashString[i] << " ("
-                << ShallowExpression{stringify.exprs[i], &wasm} << "), ";
-    }
-    std::cout << std::endl;
-  }
-
-  EXPECT_EQ(
-    dedupedSubstrings,
-    (std::vector<SuffixTree::RepeatedSubstring>{
-      // 5, 6, 7, 6 appears at idx 9 and again at 22
-      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
-      // 10, 11, 6 appears at idx 18 and again at 27
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
-}

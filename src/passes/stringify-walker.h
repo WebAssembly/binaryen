@@ -22,6 +22,7 @@
 #include "ir/utils.h"
 #include "wasm-traversal.h"
 #include <queue>
+#include "support/suffix_tree.h"
 
 namespace wasm {
 
@@ -131,6 +132,10 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 
   void addUniqueSymbol();
   void visitExpression(Expression* curr);
+};
+
+struct StringifyProcessor {
+  static std::vector<SuffixTree::RepeatedSubstring> dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
 };
 
 } // namespace wasm
