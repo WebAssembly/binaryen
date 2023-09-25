@@ -1,8 +1,6 @@
 #include "passes/stringify-walker.h"
 #include "print-test.h"
 #include "support/suffix_tree.h"
-#include "wasm-io.h"
-#include <iostream>
 
 using namespace wasm;
 
