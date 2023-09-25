@@ -67,4 +67,5 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
     nextVal++;
   }
 }
+
 } // namespace wasm
