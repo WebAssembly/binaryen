@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "support/result.h"
+#include "ir/names.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
@@ -58,14 +59,20 @@ public:
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitEnd();
 
-  // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
-  // is generally safer than calling `visit` because the function signatures
-  // ensure that there are no missing fields.
+  // Binaryen IR uses names to refer to branch targets, but in general there may
+  // be branches to constructs that do not yet have names, so in IRBuilder we
+  // use indices to refer to branch targets instead, just as the binary format
+  // does. This function converts a branch target name to the correct index.
+  [[nodiscard]] Result<Index> getLabelIndex(Name label);
+
+  // Instead of calling visit, call makeXYZ to have the IRBuilder allocate the
+  // nodes. This is generally safer than calling `visit` because the function
+  // signatures ensure that there are no missing fields.
   [[nodiscard]] Result<> makeNop();
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
-  // [[nodiscard]] Result<> makeBreak();
+  [[nodiscard]] Result<> makeBreak(Index label);
   // [[nodiscard]] Result<> makeSwitch();
   // [[nodiscard]] Result<> makeCall();
   // [[nodiscard]] Result<> makeCallIndirect();
@@ -177,6 +184,7 @@ public:
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
+  [[nodiscard]] Result<> visitBreak(Break*, std::optional<Index> label = std::nullopt);
 
 private:
   Module& wasm;
@@ -196,11 +204,11 @@ private:
     };
     struct IfScope {
       If* iff;
-      Name label;
+      Name originalLabel;
     };
     struct ElseScope {
       If* iff;
-      Name label;
+      Name originalLabel;
     };
     struct LoopScope {
       Loop* loop;
@@ -211,6 +219,9 @@ private:
     // The control flow structure we are building expressions for.
     Scope scope;
 
+    // The branch label name for this scope. Always fresh, never shadowed.
+    Name label;
+
     std::vector<Expression*> exprStack;
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
@@ -218,6 +229,7 @@ private:
 
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
+    ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func});
@@ -225,11 +237,11 @@ private:
     static ScopeCtx makeBlock(Block* block) {
       return ScopeCtx(BlockScope{block});
     }
-    static ScopeCtx makeIf(If* iff, Name label = {}) {
-      return ScopeCtx(IfScope{iff, label});
+    static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
+      return ScopeCtx(IfScope{iff, originalLabel});
     }
-    static ScopeCtx makeElse(If* iff, Name label = {}) {
-      return ScopeCtx(ElseScope{iff, label});
+    static ScopeCtx makeElse(If* iff, Name originalLabel, Name label) {
+      return ScopeCtx(ElseScope{iff, originalLabel}, label);
     }
     static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
 
@@ -282,15 +294,18 @@ private:
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
-    Name getLabel() {
+    Name getOriginalLabel() {
+      if (getFunction()) {
+        return Name{};
+      }
       if (auto* block = getBlock()) {
         return block->name;
       }
       if (auto* ifScope = std::get_if<IfScope>(&scope)) {
-        return ifScope->label;
+        return ifScope->originalLabel;
       }
       if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
-        return elseScope->label;
+        return elseScope->originalLabel;
       }
       if (auto* loop = getLoop()) {
         return loop->name;
@@ -302,6 +317,29 @@ private:
   // The stack of block contexts currently being parsed.
   std::vector<ScopeCtx> scopeStack;
 
+  // Map label names to stacks of label depths at which they appear. The
+  // relative index of a label name is the current depth minus the top depth on
+  // its stack.
+  std::unordered_map<Name, std::vector<Index>> labelDepths;
+
+  Name makeFresh(Name label) {
+    return Names::getValidName(label, [&](Name candidate) {
+      return labelDepths.insert({candidate, {}}).second;
+    });
+  }
+
+  void pushScope(ScopeCtx scope) {
+    if (auto label = scope.getOriginalLabel()) {
+      // Assign a fresh label to the scope, if necessary.
+      if (!scope.label) {
+        scope.label = makeFresh(label);
+      }
+      // Record the original label to handle references to it correctly.
+      labelDepths[label].push_back(scopeStack.size() + 1);
+    }
+    scopeStack.push_back(scope);
+  }
+
   ScopeCtx& getScope() {
     if (scopeStack.empty()) {
       // We are not in a block context, so push a dummy scope.
@@ -310,12 +348,24 @@ private:
     return scopeStack.back();
   }
 
+  Result<ScopeCtx*> getScope(Index label) {
+    Index numLabels = scopeStack.size();
+    if (!scopeStack.empty() && scopeStack[0].isNone()) {
+      --numLabels;
+    }
+    if (label >= numLabels) {
+      return Err{"label index out of bounds"};
+    }
+    return &scopeStack[scopeStack.size() - 1 - label];
+  }
+
   // Collect the current scope into a single expression. If it has multiple
   // top-level expressions, this requires collecting them into a block. If we
   // are in a block context, we can collect them directly into the destination
   // `block`, but otherwise we will have to allocate a new block.
   Result<Expression*> finishScope(Block* block = nullptr);
 
+  [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
   void push(Expression*);

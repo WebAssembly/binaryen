@@ -651,8 +651,11 @@ void FunctionValidator::visitBlock(Block* curr) {
     auto iter = breakTypes.find(curr->name);
     assert(iter != breakTypes.end()); // we set it ourselves
     for (Type breakType : iter->second) {
-      // none or unreachable means a poison value that we should ignore - if
-      // consumed, it will error
+      if (breakType == Type::none && curr->type == Type::unreachable) {
+        // We allow empty breaks to unreachable blocks.
+        continue;
+      }
+
       shouldBeSubType(breakType,
                       curr->type,
                       curr,

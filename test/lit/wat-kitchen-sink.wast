@@ -1425,6 +1425,116 @@
   )
  )
 
+ ;; CHECK:      (func $label-siblings (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (br $l)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $l_0
+ ;; CHECK-NEXT:   (br $l_0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $l_1
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (br $l_1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $label-siblings
+  block $l
+   br $l
+  end
+  loop $l
+   br $l
+  end
+  i32.const 0
+  if $l
+   br $l
+  end
+ )
+
+ ;; CHECK:      (func $label-shadowed (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (br $l)
+ ;; CHECK-NEXT:   (loop $l_0
+ ;; CHECK-NEXT:    (br $l_0)
+ ;; CHECK-NEXT:    (block $l_1
+ ;; CHECK-NEXT:     (if
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (br $l_1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $l_0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $l)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $label-shadowed
+  block $l
+   br $l
+   loop $l
+    br $l
+    i32.const 0
+    if $l
+     br $l
+    end
+    br $l
+   end
+   br $l
+  end
+ )
+
+ ;; CHECK:      (func $label-index (type $void)
+ ;; CHECK-NEXT:  (block $label_1
+ ;; CHECK-NEXT:   (block $label
+ ;; CHECK-NEXT:    (block $label_0
+ ;; CHECK-NEXT:     (block $l
+ ;; CHECK-NEXT:      (br $label)
+ ;; CHECK-NEXT:      (br $label_0)
+ ;; CHECK-NEXT:      (br $l)
+ ;; CHECK-NEXT:      (br $label_1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $label-index
+  block
+   block
+    block
+     block $l
+      br 2
+      br 1
+      br 0
+      br 3
+     end
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $label-func (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (br $label)
+ ;; CHECK-NEXT:    (block $a
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:     (block $b
+ ;; CHECK-NEXT:      (br $label)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $label-func
+  br 0
+  block $a
+   br 1
+   block $b
+    br 2
+   end
+  end
+ )
+
  ;; CHECK:      (func $binary (type $14) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add

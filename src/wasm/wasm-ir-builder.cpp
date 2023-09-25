@@ -181,6 +181,7 @@ Result<Expression*> IRBuilder::build() {
   assert(scopeStack.back().exprStack.size() == 1);
   auto* expr = scopeStack.back().exprStack.back();
   scopeStack.clear();
+  labelDepths.clear();
   return expr;
 }
 
@@ -206,6 +207,10 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
   auto field = pop();                                                          \
   CHECK_ERR(field);                                                            \
   expr->field = *field;
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                               \
+  if (labelDepths.count(expr->field)) {                                        \
+    return Err{"repeated label"};                                              \
+  }
 #define DELEGATE_END(id)
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
@@ -214,15 +219,18 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   WASM_UNREACHABLE("should have called visit" #id " because " #id              \
                    " has child vector " #field);
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
+  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
+                   " has scope name use " #field);
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
+  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
+                   " has scope name use vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -281,6 +289,30 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  if (!label) {
+    auto index = getLabelIndex(curr->name);
+    CHECK_ERR(index);
+    label = *index;
+  }
+  auto scope = getScope(*label);
+  CHECK_ERR(scope);
+  std::vector<Expression*> values;
+  for (size_t i = 0, size = (*scope)->getResultType().size(); i < size; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    values.push_back(*val);
+  }
+  if (values.size() == 0) {
+    curr->value = nullptr;
+  } else if (values.size() == 1) {
+    curr->value = values[0];
+  } else {
+    curr->value = builder.makeTupleMake(values);
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -291,7 +323,7 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
 }
 
 Result<> IRBuilder::visitBlockStart(Block* curr) {
-  scopeStack.push_back(ScopeCtx::makeBlock(curr));
+  pushScope(ScopeCtx::makeBlock(curr));
   return Ok{};
 }
 
@@ -299,12 +331,12 @@ Result<> IRBuilder::visitIfStart(If* iff, Name label) {
   auto cond = pop();
   CHECK_ERR(cond);
   iff->condition = *cond;
-  scopeStack.push_back(ScopeCtx::makeIf(iff, label));
+  pushScope(ScopeCtx::makeIf(iff, label));
   return Ok{};
 }
 
 Result<> IRBuilder::visitLoopStart(Loop* loop) {
-  scopeStack.push_back(ScopeCtx::makeLoop(loop));
+  pushScope(ScopeCtx::makeLoop(loop));
   return Ok{};
 }
 
@@ -356,6 +388,7 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
   }
+
   Expression* ret = nullptr;
   if (scope.exprStack.size() == 0) {
     // No expressions for this scope, but we need something. If we were given a
@@ -385,6 +418,12 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     }
     ret = block;
   }
+
+  // If this scope had a label, remove it from the context.
+  if (auto label = scope.getOriginalLabel()) {
+    labelDepths.at(label).pop_back();
+  }
+
   scopeStack.pop_back();
   return ret;
 }
@@ -395,11 +434,12 @@ Result<> IRBuilder::visitElse() {
   if (!iff) {
     return Err{"unexpected else"};
   }
-  auto label = scope.getLabel();
+  auto originalLabel = scope.getOriginalLabel();
+  auto label = scope.label;
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
-  scopeStack.push_back(ScopeCtx::makeElse(iff, label));
+  pushScope(ScopeCtx::makeElse(iff, originalLabel, label));
   return Ok{};
 }
 
@@ -414,22 +454,25 @@ Result<> IRBuilder::visitEnd() {
   // If the scope expression cannot be directly labeled, we may need to wrap it
   // in a block.
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
-    if (auto label = scope.getLabel()) {
-      return builder.makeBlock(label, {curr}, curr->type);
+    if (scope.label) {
+      return builder.makeBlock(scope.label, {curr}, scope.getResultType());
     }
     return curr;
   };
 
   if (auto* func = scope.getFunction()) {
-    func->body = *expr;
+    func->body = maybeWrapForLabel(*expr);
+    labelDepths.clear();
   } else if (auto* block = scope.getBlock()) {
     assert(*expr == block);
+    block->name = scope.label;
     // TODO: Track branches so we can know whether this block is a target and
     // finalize more efficiently.
     block->finalize(block->type);
     push(block);
   } else if (auto* loop = scope.getLoop()) {
     loop->body = *expr;
+    loop->name = scope.label;
     loop->finalize(loop->type);
     push(loop);
   } else if (auto* iff = scope.getIf()) {
@@ -445,6 +488,25 @@ Result<> IRBuilder::visitEnd() {
     WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
+}
+
+Result<Index> IRBuilder::getLabelIndex(Name label) {
+  auto it = labelDepths.find(label);
+  if (it == labelDepths.end() || it->second.empty()) {
+    return Err{"unexpected label '"s + label.toString()};
+  }
+  return scopeStack.size() - it->second.back();
+}
+
+Result<Name> IRBuilder::getLabelName(Index label) {
+  auto scope = getScope(label);
+  CHECK_ERR(scope);
+  auto& scopeLabel = (*scope)->label;
+  if (!scopeLabel) {
+    // The scope does not already have a name, so we need to create one.
+    scopeLabel = makeFresh("label");
+  }
+  return scopeLabel;
 }
 
 Result<> IRBuilder::makeNop() {
@@ -472,7 +534,15 @@ Result<> IRBuilder::makeLoop(Name label, Type type) {
   return visitLoopStart(loop);
 }
 
-// Result<> IRBuilder::makeBreak() {}
+Result<> IRBuilder::makeBreak(Index label) {
+  auto name = getLabelName(label);
+  CHECK_ERR(name);
+  Break curr;
+  curr.name = *name;
+  CHECK_ERR(visitBreak(&curr, label));
+  push(builder.makeBreak(curr.name, curr.value));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeSwitch() {}
 
