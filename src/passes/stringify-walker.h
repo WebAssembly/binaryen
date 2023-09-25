@@ -20,9 +20,9 @@
 #include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "support/suffix_tree.h"
 #include "wasm-traversal.h"
 #include <queue>
-#include "support/suffix_tree.h"
 
 namespace wasm {
 
@@ -135,7 +135,8 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 };
 
 struct StringifyProcessor {
-  static std::vector<SuffixTree::RepeatedSubstring> dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
 };
 
 } // namespace wasm

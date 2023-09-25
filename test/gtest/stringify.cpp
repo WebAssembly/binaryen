@@ -267,7 +267,8 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   Module wasm;
   parseWast(wasm, dupModuleText);
   auto hashString = hashStringifyModule(&wasm);
-  std::vector<SuffixTree::RepeatedSubstring> substrings = repeatSubstrings(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    repeatSubstrings(hashString);
 
   auto result = StringifyProcessor::dedupe(substrings);
 
@@ -279,4 +280,3 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       // 10, 11, 6 appears at idx 18 and again at 27
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
 }
-
