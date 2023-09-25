@@ -162,7 +162,7 @@ static auto dupModuleText = R"wasm(
    )
   )wasm";
 
-std::vector<uint32_t> hashStringifyModule(Module *wasm) {
+std::vector<uint32_t> hashStringifyModule(Module* wasm) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(wasm);
   return std::move(stringify.hashString);
@@ -223,9 +223,11 @@ TEST_F(StringifyTest, Stringify) {
             }));
 }
 
-std::vector<SuffixTree::RepeatedSubstring> repeatSubstrings(std::vector<uint32_t> hashString) {
+std::vector<SuffixTree::RepeatedSubstring>
+repeatSubstrings(std::vector<uint32_t> hashString) {
   SuffixTree st(hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings = std::vector(st.begin(), st.end());
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    std::vector(st.begin(), st.end());
   std::sort(
     substrings.begin(),
     substrings.end(),
@@ -265,7 +267,8 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   Module wasm;
   parseWast(wasm, dupModuleText);
   auto hashString = hashStringifyModule(&wasm);
-  std::vector<SuffixTree::RepeatedSubstring> substrings = repeatSubstrings(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    repeatSubstrings(hashString);
 
   auto result = StringifyProcessor::dedupe(substrings);
 
@@ -277,4 +280,3 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       // 10, 11, 6 appears at idx 18 and again at 27
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
 }
-
