@@ -67,34 +67,4 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
     nextVal++;
   }
 }
-
-std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
-  const std::vector<SuffixTree::RepeatedSubstring> substrings) {
-  std::set<uint32_t> seen;
-  std::vector<SuffixTree::RepeatedSubstring> result;
-  for (auto substring : substrings) {
-    std::vector<uint32_t> idxToInsert;
-    bool seenEndIdx = false;
-    for (auto startIdx : substring.StartIndices) {
-      // We are using the end index to ensure that each repeated substring
-      // reported by the SuffixTree is unique. This is because LLVM's SuffixTree
-      // reports back repeat sequences that are substrings of longer repeat
-      // sequences with the same endIdx, and we generally prefer to outline
-      // longer repeat sequences.
-      uint32_t endIdx = substring.Length + startIdx;
-      if (auto found = seen.find(endIdx); found != seen.end()) {
-        seenEndIdx = true;
-        continue;
-      }
-      idxToInsert.push_back(endIdx);
-    }
-    if (!seenEndIdx) {
-      seen.insert(idxToInsert.begin(), idxToInsert.end());
-      result.push_back(substring);
-    }
-  }
-
-  return result;
-}
-
 } // namespace wasm
