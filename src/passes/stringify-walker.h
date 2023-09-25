@@ -134,11 +134,6 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   void visitExpression(Expression* curr);
 };
 
-struct StringifyProcessor {
-  static std::vector<SuffixTree::RepeatedSubstring>
-  dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
-};
-
 } // namespace wasm
 
 #endif // wasm_passes_stringify_walker_h
