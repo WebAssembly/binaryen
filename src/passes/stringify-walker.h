@@ -20,6 +20,7 @@
 #include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "support/suffix_tree.h"
 #include "wasm-traversal.h"
 #include <queue>
 
@@ -131,6 +132,12 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 
   void addUniqueSymbol();
   void visitExpression(Expression* curr);
+};
+
+// Functions that filter vectors of SuffixTree::RepeatedSubstring
+struct StringifyProcessor {
+  static std::vector<SuffixTree::RepeatedSubstring>
+  dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
 };
 
 } // namespace wasm

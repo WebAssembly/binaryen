@@ -11,7 +11,13 @@ string(APPEND WASM_INTRINSICS_EMBED "0x00")
 
 configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
-FILE(GLOB passes_HEADERS *.h)
+set(passes_HEADERS
+  call-utils.h
+  intrinsics-module.h
+  opt-utils.h
+  param-utils.h
+  passes.h
+)
 set(passes_SOURCES
   param-utils.cpp
   pass.cpp
@@ -43,7 +49,6 @@ set(passes_SOURCES
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
   GUFA.cpp
-  hash-stringify-walker.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -120,4 +125,17 @@ set(passes_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   ${passes_HEADERS}
 )
-add_library(passes OBJECT ${passes_SOURCES})
+# The below condition is intended for removal once the suffix_tree and
+# suffix_tree_node source files no longer depend on LLVM code in the
+# third_party folder
+if(EMSCRIPTEN)
+  add_library(passes OBJECT ${passes_SOURCES})
+else()
+  set(passes_with_suffix_tree_SOURCES
+    stringify-walker.h
+    stringify-walker-impl.h
+  	hash-stringify-walker.cpp
+	${passes_SOURCES}
+  )
+  add_library(passes OBJECT ${passes_with_suffix_tree_SOURCES})
+endif()
