@@ -161,14 +161,18 @@ static auto dupModuleText = R"wasm(
    )
   )wasm";
 
+std::vector<uint32_t> hashStringifyModule(Module* wasm) {
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(wasm);
+  return std::move(stringify.hashString);
+}
+
 TEST_F(StringifyTest, Stringify) {
   Module wasm;
   parseWast(wasm, dupModuleText);
+  auto hashString = hashStringifyModule(&wasm);
 
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  EXPECT_EQ(stringify.hashString,
+  EXPECT_EQ(hashString,
             (std::vector<uint32_t>{
               0,             // function block evaluated as a whole
               (uint32_t)-1,  // separate function block from function contents
@@ -218,15 +222,11 @@ TEST_F(StringifyTest, Stringify) {
             }));
 }
 
-TEST_F(StringifyTest, Substrings) {
-  Module wasm;
-  parseWast(wasm, dupModuleText);
-
-  HashStringifyWalker stringify = HashStringifyWalker();
-  stringify.walkModule(&wasm);
-
-  SuffixTree st(stringify.hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+std::vector<SuffixTree::RepeatedSubstring>
+repeatSubstrings(std::vector<uint32_t> hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    std::vector(st.begin(), st.end());
   std::sort(
     substrings.begin(),
     substrings.end(),
@@ -238,6 +238,14 @@ TEST_F(StringifyTest, Substrings) {
       }
       return aWeight > bWeight;
     });
+  return substrings;
+}
+
+TEST_F(StringifyTest, Substrings) {
+  Module wasm;
+  parseWast(wasm, dupModuleText);
+  auto hashString = hashStringifyModule(&wasm);
+  auto substrings = repeatSubstrings(hashString);
 
   EXPECT_EQ(
     substrings,
