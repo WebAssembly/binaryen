@@ -940,9 +940,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return name;
   }
 
-  Result<Index> getLabelFromIdx(uint32_t idx) {
-    return idx;
-  }
+  Result<Index> getLabelFromIdx(uint32_t idx) { return idx; }
 
   Result<Index> getLabelFromName(Name name) {
     return irBuilder.getLabelIndex(name);

@@ -19,8 +19,8 @@
 
 #include <vector>
 
-#include "support/result.h"
 #include "ir/names.h"
+#include "support/result.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
@@ -184,7 +184,8 @@ public:
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
-  [[nodiscard]] Result<> visitBreak(Break*, std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<> visitBreak(Break*,
+                                    std::optional<Index> label = std::nullopt);
 
 private:
   Module& wasm;
