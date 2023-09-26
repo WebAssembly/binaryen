@@ -56,9 +56,7 @@ struct Bool {
 
   operator bool() const { return value; }
 
-  bool combine(bool other) {
-    return value = value || other;
-  }
+  bool combine(bool other) { return value = value || other; }
 };
 
 using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
