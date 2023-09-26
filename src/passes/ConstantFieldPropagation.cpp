@@ -57,8 +57,7 @@ struct Bool {
   operator bool() const { return value; }
 
   bool combine(bool other) {
-    value = value || other;
-    return value;
+    return value = value || other;
   }
 };
 
