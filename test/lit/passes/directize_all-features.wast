@@ -1451,3 +1451,98 @@
   )
  )
 )
+
+;; A table.fill prevents optimization.
+(module
+ ;; CHECK:      (type $i32 (func (result i32)))
+ ;; IMMUT:      (type $i32 (func (result i32)))
+ (type $i32 (func (result i32)))
+
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (table $table 111 funcref)
+ ;; IMMUT:      (type $1 (func))
+
+ ;; IMMUT:      (table $table 111 funcref)
+ (table $table 111 funcref)
+ (elem (i32.const 0) $func-A)
+
+ ;; CHECK:      (elem $0 (i32.const 0) $func-A)
+
+ ;; CHECK:      (elem declare func $func-B)
+
+ ;; CHECK:      (export "a" (func $fill))
+ ;; IMMUT:      (elem $0 (i32.const 0) $func-A)
+
+ ;; IMMUT:      (elem declare func $func-B)
+
+ ;; IMMUT:      (export "a" (func $fill))
+ (export "a" (func $fill))
+ ;; CHECK:      (export "b" (func $call))
+ ;; IMMUT:      (export "b" (func $call))
+ (export "b" (func $call))
+
+ ;; CHECK:      (func $func-A (type $i32) (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $func-A (type $i32) (result i32)
+ ;; IMMUT-NEXT:  (i32.const 0)
+ ;; IMMUT-NEXT: )
+ (func $func-A (result i32)
+  (i32.const 0)
+ )
+
+ ;; CHECK:      (func $func-B (type $i32) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $func-B (type $i32) (result i32)
+ ;; IMMUT-NEXT:  (unreachable)
+ ;; IMMUT-NEXT: )
+ (func $func-B (result i32)
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $fill (type $1)
+ ;; CHECK-NEXT:  (table.fill $table
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (ref.func $func-B)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $fill (type $1)
+ ;; IMMUT-NEXT:  (table.fill $table
+ ;; IMMUT-NEXT:   (i32.const 0)
+ ;; IMMUT-NEXT:   (ref.func $func-B)
+ ;; IMMUT-NEXT:   (i32.const 1)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $fill
+  (table.fill $table
+   (i32.const 0)
+   (ref.func $func-B)
+   (i32.const 1)
+  )
+ )
+
+ ;; CHECK:      (func $call (type $1)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_indirect $table (type $i32)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (func $call (type $1)
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (call $func-A)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $call
+  (drop
+   ;; This cannot be turned into a direct call due to the table.fill, unless we
+   ;; assume initial contents are immutable.
+   (call_indirect (type $i32)
+    (i32.const 0)
+   )
+  )
+ )
+)
