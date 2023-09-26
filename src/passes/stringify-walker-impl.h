@@ -31,26 +31,15 @@ inline void StringifyWalker<SubType>::doWalkModule(Module* module) {
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::doWalkFunction(Function* func) {
+  addUniqueSymbol(SeparatorCtx::makeFuncStart(func));
   walk(func->body);
-  /*
-   * We add a unique symbol after walking the function body to separate the
-   * string generated from visiting the function body as a single unit from the
-   * subsequent strings that will be generated from visiting the sub-expressions
-   * of the function body. If we did not add this unique symbol and a program
-   * had two functions with the same instructions, we would incorrectly create a
-   * new function with the instructions repeated twice.
-   *
-   * It might be helpful to think of the function body as a block that needs to
-   * be separated from subsequent instructions.
-   */
-  addUniqueSymbol();
 }
 
 template<typename SubType>
 inline void StringifyWalker<SubType>::walk(Expression* curr) {
   Super::walk(curr);
+  addUniqueSymbol(SeparatorCtx::makeFuncEnd(this->getFunction()));
   do {
-    addUniqueSymbol();
     dequeueControlFlow();
   } while (!controlFlowQueue.empty());
 }
@@ -88,32 +77,31 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   switch (curr->_id) {
     case Expression::Id::BlockId: {
       auto* block = curr->cast<Block>();
+      addUniqueSymbol(SeparatorCtx::makeBlockStart(block));
       for (auto& child : block->list) {
         Super::walk(child);
       }
+      addUniqueSymbol(SeparatorCtx::makeEnd(block));
       break;
     }
     case Expression::Id::IfId: {
       auto* iff = curr->cast<If>();
+      addUniqueSymbol(SeparatorCtx::makeIfStart(iff));
       Super::walk(iff->ifTrue);
+      addUniqueSymbol(SeparatorCtx::makeEnd(iff));
       if (iff->ifFalse) {
-        addUniqueSymbol();
+        addUniqueSymbol(SeparatorCtx::makeElseStart(iff));
         Super::walk(iff->ifFalse);
+        addUniqueSymbol(SeparatorCtx::makeEnd(iff));
       }
       break;
     }
-    case Expression::Id::TryId: {
-      auto* tryy = curr->cast<Try>();
-      Super::walk(tryy->body);
-      for (auto& child : tryy->catchBodies) {
-        addUniqueSymbol();
-        Super::walk(child);
-      }
-      break;
-    }
+    // TODO: Support exception handling control flow
     case Expression::Id::LoopId: {
       auto* loop = curr->cast<Loop>();
+      addUniqueSymbol(SeparatorCtx::makeLoopStart(loop));
       Super::walk(loop->body);
+      addUniqueSymbol(SeparatorCtx::makeEnd(loop));
       break;
     }
     default: {
@@ -131,13 +119,13 @@ void StringifyWalker<SubType>::doVisitExpression(SubType* self,
 }
 
 template<typename SubType>
-inline void StringifyWalker<SubType>::addUniqueSymbol() {
+inline void StringifyWalker<SubType>::addUniqueSymbol(SeparatorCtx ctx) {
   // TODO: Add the following static_assert when the compilers running our GitHub
   // actions are updated enough to know that this is a constant condition:
   // static_assert(&StringifyWalker<SubType>::addUniqueSymbol !=
   // &SubType::addUniqueSymbol);
   auto self = static_cast<SubType*>(this);
-  self->addUniqueSymbol();
+  self->addUniqueSymbol(ctx);
 }
 
 } // namespace wasm

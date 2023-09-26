@@ -66,6 +66,97 @@ struct StringifyWalker
 
   using Super = PostWalker<SubType, UnifiedExpressionVisitor<SubType>>;
 
+  struct SeparatorCtx {
+    struct FuncStart {
+      Function* func;
+    };
+
+    struct FuncEnd {
+      Function* func;
+    };
+
+    struct BlockStart {
+      Block* curr;
+    };
+
+    struct IfStart {
+      If* iff;
+    };
+
+    struct ElseStart {
+      If* iff;
+    };
+
+    struct LoopStart {
+      Loop* loop;
+    };
+
+    struct End {
+      Expression* curr;
+    };
+    using Separator = std::variant<FuncStart,
+                                   FuncEnd,
+                                   BlockStart,
+                                   IfStart,
+                                   ElseStart,
+                                   LoopStart,
+                                   End>;
+
+    Separator ctx;
+
+    SeparatorCtx(Separator ctx) : ctx(ctx) {}
+
+    static SeparatorCtx makeFuncStart(Function* func) {
+      return SeparatorCtx(FuncStart{func});
+    }
+    static SeparatorCtx makeFuncEnd(Function* func) {
+      return SeparatorCtx(FuncEnd{func});
+    }
+    static SeparatorCtx makeBlockStart(Block* block) {
+      return SeparatorCtx(BlockStart{block});
+    }
+    static SeparatorCtx makeIfStart(If* iff) {
+      return SeparatorCtx(IfStart{iff});
+    }
+    static SeparatorCtx makeElseStart(If* iff) {
+      return SeparatorCtx(ElseStart{iff});
+    }
+    static SeparatorCtx makeLoopStart(Loop* loop) {
+      return SeparatorCtx(LoopStart{loop});
+    }
+    static SeparatorCtx makeEnd(Expression* curr) {
+      return SeparatorCtx(End{curr});
+    }
+    bool isFuncStart() { return std::get_if<FuncStart>(&ctx); }
+    bool isFuncEnd() { return std::get_if<FuncEnd>(&ctx); }
+    bool isBlockStart() { return std::get_if<BlockStart>(&ctx); }
+    bool isIfStart() { return std::get_if<IfStart>(&ctx); }
+    bool isElseStart() { return std::get_if<ElseStart>(&ctx); }
+    bool isLoopStart() { return std::get_if<LoopStart>(&ctx); }
+    bool isEnd() { return std::get_if<End>(&ctx); }
+  };
+
+  friend std::ostream& operator<<(std::ostream& o,
+                                  typename StringifyWalker::SeparatorCtx ctx) {
+    if (ctx.isFuncStart()) {
+      return o << "Func Start";
+    } else if (ctx.isFuncEnd()) {
+      return o << "Func End";
+    } else if (ctx.isBlockStart()) {
+      return o << "Block Start";
+    } else if (ctx.isIfStart()) {
+      return o << "If Start";
+    } else if (ctx.isElseStart()) {
+      return o << "Else Start";
+    } else if (ctx.isLoopStart()) {
+      return o << "Loop Start";
+    } else if (ctx.isEnd()) {
+      return o << "End";
+    }
+
+    return o << "~~~Undefined in operator<< overload~~~";
+  }
+
   std::queue<Expression**> controlFlowQueue;
 
   /*
@@ -77,7 +168,7 @@ struct StringifyWalker
    * appropriate points during the walk and should be implemented by subclasses.
    */
   void visitExpression(Expression* curr);
-  void addUniqueSymbol();
+  void addUniqueSymbol(SeparatorCtx reason);
 
   void doWalkModule(Module* module);
   void doWalkFunction(Function* func);
@@ -130,7 +221,7 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
-  void addUniqueSymbol();
+  void addUniqueSymbol(SeparatorCtx reason);
   void visitExpression(Expression* curr);
 };
 

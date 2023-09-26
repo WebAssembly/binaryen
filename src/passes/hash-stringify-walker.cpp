@@ -52,7 +52,7 @@ bool StringifyEquator::operator()(Expression* lhs, Expression* rhs) const {
   return ExpressionAnalyzer::shallowEqual(lhs, rhs);
 }
 
-void HashStringifyWalker::addUniqueSymbol() {
+void HashStringifyWalker::addUniqueSymbol(SeparatorCtx ctx) {
   // Use a negative value to distinguish symbols for separators from symbols
   // for Expressions
   assert((uint32_t)nextSeparatorVal >= nextVal);
