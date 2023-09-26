@@ -297,11 +297,11 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
   }
   auto scope = getScope(*label);
   CHECK_ERR(scope);
-  std::vector<Expression*> values;
-  for (size_t i = 0, size = (*scope)->getResultType().size(); i < size; ++i) {
+  std::vector<Expression*> values((*scope)->getResultType().size());
+  for (size_t i = 0, size = values.size(); i < size; ++i) {
     auto val = pop();
     CHECK_ERR(val);
-    values.push_back(*val);
+    values[size - 1 - i] = *val;
   }
   if (values.size() == 0) {
     curr->value = nullptr;
