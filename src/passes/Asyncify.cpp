@@ -684,7 +684,7 @@ public:
         for (auto& func : module.functions) {
           if (addList.match(func->name) && removeList.match(func->name)) {
             Fatal() << func->name
-                    << " is found in the add-list and in the remove-list\n";
+                    << " is found in the add-list and in the remove-list";
           }
 
           if (!func->imported() && addList.match(func->name)) {
