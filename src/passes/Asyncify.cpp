@@ -679,10 +679,7 @@ public:
       module.removeFunction(name);
     }
 
-    // When propagateAddList is enabled, we should check a add-list before
-    // scannerpropagateBack so that callers of functions in add-list should also
-    // be instrumented.
-    if (propagateAddList) {
+    auto handleAddList = [&](ModuleAnalyzer::Map& map) {
       if (!addListInput.empty()) {
         for (auto& func : module.functions) {
           if (addList.match(func->name) && removeList.match(func->name)) {
@@ -691,7 +688,7 @@ public:
           }
 
           if (!func->imported() && addList.match(func->name)) {
-            auto& info = scanner.map[func.get()];
+            auto& info = map[func.get()];
             if (verbose && !info.canChangeState) {
               std::cout << "[asyncify] " << func->name
                         << " is in the add-list, add\n";
@@ -701,6 +698,13 @@ public:
           }
         }
       }
+    };
+
+    // When propagateAddList is enabled, we should check a add-list before
+    // scannerpropagateBack so that callers of functions in add-list should also
+    // be instrumented.
+    if (propagateAddList) {
+      handleAddList(scanner.map);
     }
 
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
@@ -742,19 +746,7 @@ public:
     // When propagateAddList is disabled, which is default behavior,
     // functions in add-list are just prepended to instrumented functions.
     if (!propagateAddList) {
-      if (!addListInput.empty()) {
-        for (auto& func : module.functions) {
-          if (!func->imported() && addList.match(func->name)) {
-            auto& info = map[func.get()];
-            if (verbose && !info.canChangeState) {
-              std::cout << "[asyncify] " << func->name
-                        << " is in the add-list, add\n";
-            }
-            info.canChangeState = true;
-            info.addedFromList = true;
-          }
-        }
-      }
+      handleAddList(map);
     }
 
     removeList.checkPatternsMatches();
