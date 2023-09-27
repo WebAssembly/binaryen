@@ -45,15 +45,14 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
     : HeapTypeOrdering::SupertypesFirstBase<SupertypesFirst> {
     GlobalTypeRewriter& parent;
 
-    SupertypesFirst(GlobalTypeRewriter& parent,
-                    const std::vector<HeapType>& types)
-      : SupertypesFirstBase(types), parent(parent) {}
+    SupertypesFirst(GlobalTypeRewriter& parent) : parent(parent) {}
     std::optional<HeapType> getSuperType(HeapType type) {
       return parent.getSuperType(type);
     }
   };
 
-  for (auto type : SupertypesFirst(*this, privateTypes)) {
+  SupertypesFirst sortedTypes(*this);
+  for (auto type : sortedTypes.sort(privateTypes)) {
     typeIndices[type] = i++;
   }
 
