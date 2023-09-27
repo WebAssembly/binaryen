@@ -58,11 +58,13 @@ void HashStringifyWalker::addUniqueSymbol(SeparatorCtx ctx) {
   assert((uint32_t)nextSeparatorVal >= nextVal);
   hashString.push_back((uint32_t)nextSeparatorVal);
   nextSeparatorVal--;
+  exprs.push_back(nullptr);
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
   auto [it, inserted] = exprToCounter.insert({curr, nextVal});
   hashString.push_back(it->second);
+  exprs.push_back(curr);
   if (inserted) {
     nextVal++;
   }
@@ -90,6 +92,51 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
     }
     if (!seenEndIdx) {
       seen.insert(idxToInsert.begin(), idxToInsert.end());
+      result.push_back(substring);
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
+  const std::vector<SuffixTree::RepeatedSubstring> substrings,
+  std::vector<Expression*> exprs) {
+  struct LocalSetStringifyWalker
+    : public StringifyWalker<LocalSetStringifyWalker> {
+    bool containsLocalSet = false;
+
+    void addUniqueSymbol(SeparatorCtx ctx) {}
+
+    void visitExpression(Expression* curr) {
+      if (curr->is<LocalSet>()) {
+        containsLocalSet = true;
+      }
+    }
+  };
+
+  LocalSetStringifyWalker walker = LocalSetStringifyWalker();
+
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    walker.containsLocalSet = false;
+    bool seenLocalSet = false;
+    for (auto startIdx : substring.StartIndices) {
+      uint32_t endIdx = substring.Length + startIdx;
+      for (auto exprIdx = startIdx; exprIdx < endIdx; exprIdx++) {
+        Expression* curr = exprs[exprIdx];
+        if (curr->is<LocalSet>()) {
+          seenLocalSet = true;
+        } else if (Properties::isControlFlowStructure(curr)) {
+          walker.walk(curr);
+          if (walker.containsLocalSet) {
+            seenLocalSet = true;
+          }
+        }
+      }
+    }
+
+    if (!seenLocalSet) {
       result.push_back(substring);
     }
   }

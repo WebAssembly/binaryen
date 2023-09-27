@@ -220,6 +220,7 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // when evaluating if expressions.
   std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
+  std::vector<Expression*> exprs;
 
   void addUniqueSymbol(SeparatorCtx reason);
   void visitExpression(Expression* curr);
@@ -229,6 +230,9 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 struct StringifyProcessor {
   static std::vector<SuffixTree::RepeatedSubstring>
   dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filterLocalSets(const std::vector<SuffixTree::RepeatedSubstring>,
+                  std::vector<Expression*>);
 };
 
 } // namespace wasm
