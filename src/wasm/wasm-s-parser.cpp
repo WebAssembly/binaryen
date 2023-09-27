@@ -511,7 +511,7 @@ Name SExpressionWasmBuilder::getTableName(Element& s) {
     size_t offset = parseIndex(s);
     if (offset >= tableNames.size()) {
       throw ParseException(
-        "unknown table in getTableName"s + s.toString(), s.line, s.col);
+        "unknown table in getTableName: "s + s.toString(), s.line, s.col);
     }
     return tableNames[offset];
   }
@@ -525,7 +525,7 @@ Name SExpressionWasmBuilder::getElemSegmentName(Element& s) {
     size_t offset = parseIndex(s);
     if (offset >= elemSegmentNames.size()) {
       throw ParseException(
-        "unknown elem segment"s + s.toString(), s.line, s.col);
+        "unknown elem segment: "s + s.toString(), s.line, s.col);
     }
     return elemSegmentNames[offset];
   }
