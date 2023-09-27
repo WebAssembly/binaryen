@@ -163,6 +163,7 @@ public:
   bool isNonNullable() const;
   // Whether this type is only inhabited by null values.
   bool isNull() const;
+  bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
   bool isString() const;

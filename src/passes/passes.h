@@ -159,6 +159,7 @@ Pass* createTypeFinalizingPass();
 Pass* createTypeMergingPass();
 Pass* createTypeSSAPass();
 Pass* createTypeUnFinalizingPass();
+Pass* createUnsubtypingPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
 

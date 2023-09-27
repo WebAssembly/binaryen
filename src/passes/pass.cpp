@@ -495,6 +495,9 @@ void PassRegistry::registerPasses() {
   registerPass("type-unfinalizing",
                "mark all types as non-final (open)",
                createTypeUnFinalizingPass);
+  registerPass("unsubtyping",
+               "removes unnecessary subtyping relationships",
+               createUnsubtypingPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);

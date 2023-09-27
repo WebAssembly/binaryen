@@ -778,6 +778,10 @@ bool Type::isNonNullable() const {
   }
 }
 
+bool Type::isSignature() const {
+  return isRef() && getHeapType().isSignature();
+}
+
 bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
