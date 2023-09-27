@@ -296,3 +296,43 @@ TEST_F(StringifyTest, FilterLocalSets) {
       // 10, 11, 6 appears at idx 18 and again at 27
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
 }
+
+TEST_F(StringifyTest, FilterBranches) {
+  static auto branchesModuleText = R"wasm(
+  (module
+  (func $a (result i32)
+    (block $top (result i32)
+      (br $top)
+    )
+    (i32.const 7)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+  )
+  (func $b (result i32)
+    (block $top (result i32)
+      (br $top)
+    )
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+  )
+  )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, branchesModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::filterBranches(substrings, stringify.exprs);
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // 5, 6, 7, 6 appears at idx 9 and again at 22
+      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
+      // 10, 11, 6 appears at idx 18 and again at 27
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
+}

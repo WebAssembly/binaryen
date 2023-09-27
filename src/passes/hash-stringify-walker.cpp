@@ -144,4 +144,47 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
   return result;
 }
 
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
+  const std::vector<SuffixTree::RepeatedSubstring> substrings,
+  std::vector<Expression*> exprs) {
+  struct BranchStringifyWalker : public StringifyWalker<BranchStringifyWalker> {
+    bool containsBranch = false;
+
+    void addUniqueSymbol(SeparatorCtx ctx) {}
+
+    void visitExpression(Expression* curr) {
+      if (Properties::isBranch(curr) || curr->is<Return>()) {
+        containsBranch = true;
+      }
+    }
+  };
+
+  BranchStringifyWalker walker = BranchStringifyWalker();
+
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    walker.containsBranch = false;
+    bool seenBranch = false;
+    for (auto startIdx : substring.StartIndices) {
+      uint32_t endIdx = substring.Length + startIdx;
+      for (auto exprIdx = startIdx; exprIdx < endIdx; exprIdx++) {
+        Expression* curr = exprs[exprIdx];
+        if (Properties::isBranch(curr) || curr->is<Return>()) {
+          seenBranch = true;
+        } else if (Properties::isControlFlowStructure(curr)) {
+          walker.walk(curr);
+          if (walker.containsBranch) {
+            seenBranch = true;
+          }
+        }
+      }
+    }
+
+    if (!seenBranch) {
+      result.push_back(substring);
+    }
+  }
+
+  return result;
+}
 } // namespace wasm

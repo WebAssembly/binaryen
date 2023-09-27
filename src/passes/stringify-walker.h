@@ -233,6 +233,9 @@ struct StringifyProcessor {
   static std::vector<SuffixTree::RepeatedSubstring>
   filterLocalSets(const std::vector<SuffixTree::RepeatedSubstring>,
                   std::vector<Expression*>);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filterBranches(const std::vector<SuffixTree::RepeatedSubstring>,
+                 std::vector<Expression*>);
 };
 
 } // namespace wasm
