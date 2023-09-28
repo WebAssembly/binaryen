@@ -55,12 +55,12 @@ namespace wasm {
 struct SParseException : public ParseException {
   // Receive an element and report its contents, line and column.
   SParseException(std::string text, const Element& s) :
-    ParseException(text + ": " + s.toString(), s.line, s.col) {}
+    ParseException(text + ": " + s.forceString(), s.line, s.col) {}
 
   // Receive a parent and child element. We print out the full parent for
   // context, but report the child line and column inside it.
   SParseException(std::string text, const Element& parent, const Element& child) :
-    ParseException(text + ": " + parent.toString(), child.line, child.col) {}
+    ParseException(text + ": " + parent.forceString(), child.line, child.col) {}
 };
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), REC("rec"),
@@ -111,6 +111,13 @@ IString Element::str() const {
 }
 
 std::string Element::toString() const {
+  if (!isStr()) {
+    throw SParseException("expected string", *this);
+  }
+  return str_.toString();
+}
+
+std::string Element::forceString() const {
   std::stringstream ss;
   ss << *this;
   return ss.str();

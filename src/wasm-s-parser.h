@@ -73,7 +73,10 @@ public:
 
   // string methods
   IString str() const;
+  // convert a string to a string
   std::string toString() const;
+  // convert anything to a string
+  std::string forceString() const;
   Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
