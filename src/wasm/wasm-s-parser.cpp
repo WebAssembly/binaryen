@@ -105,10 +105,9 @@ IString Element::str() const {
 }
 
 std::string Element::toString() const {
-  if (!isStr()) {
-    throw SParseException("expected string", *this);
-  }
-  return str_.toString();
+  std::stringstream ss;
+  ss << *this;
+  return ss.str();
 }
 
 Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
@@ -127,7 +126,7 @@ Element::setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_) {
   return this;
 }
 
-std::ostream& operator<<(std::ostream& o, Element& e) {
+std::ostream& operator<<(std::ostream& o, const Element& e) {
   if (e.isList_) {
     o << '(';
     for (auto item : e.list_) {
@@ -977,7 +976,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     if (super) {
       auto it = typeIndices.find(super->toString());
       if (!super->dollared() || it == typeIndices.end()) {
-        throw SParseException("unknown supertype", *super);
+        throw SParseException("unknown supertype", elem);
       }
       builder[index].subTypeOf(builder[it->second]);
     }
@@ -991,7 +990,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     msg << "Invalid type: " << err->reason;
     for (auto& [name, index] : typeIndices) {
       if (index == err->index) {
-        Fatal() << msg.str() << " at type $" << name;
+        Fatal() << msg.str() << " at type " << name;
       }
     }
     // No name, just report the index.
