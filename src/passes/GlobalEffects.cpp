@@ -145,6 +145,8 @@ struct GenerateGlobalEffects : public Pass {
       }
     }
 
+    // TODO: cycles are effects too
+
     // Generate the final data structure, starting from a blank slate where
     // nothing is known.
     auto& funcEffectsMap = getPassOptions().funcEffectsMap;

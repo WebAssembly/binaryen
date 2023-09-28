@@ -14,6 +14,8 @@
 
   ;; WITHOUT:      (type $2 (func (param i32)))
 
+  ;; WITHOUT:      (import "a" "b" (func $import (type $0)))
+
   ;; WITHOUT:      (tag $tag (param))
   ;; INCLUDE:      (type $0 (func))
 
@@ -21,12 +23,16 @@
 
   ;; INCLUDE:      (type $2 (func (param i32)))
 
+  ;; INCLUDE:      (import "a" "b" (func $import (type $0)))
+
   ;; INCLUDE:      (tag $tag (param))
   ;; DISCARD:      (type $0 (func))
 
   ;; DISCARD:      (type $1 (func (result i32)))
 
   ;; DISCARD:      (type $2 (func (param i32)))
+
+  ;; DISCARD:      (import "a" "b" (func $import (type $0)))
 
   ;; DISCARD:      (tag $tag (param))
   (tag $tag)
@@ -41,11 +47,14 @@
   ;; WITHOUT-NEXT:  (drop
   ;; WITHOUT-NEXT:   (call $unimportant-effects)
   ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (call $throw)
+  ;; WITHOUT-NEXT:  (call $throw-and-import)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $main (type $0)
   ;; INCLUDE-NEXT:  (call $unreachable)
-  ;; INCLUDE-NEXT:  (call $call-nop)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
+  ;; INCLUDE-NEXT:  (call $throw)
+  ;; INCLUDE-NEXT:  (call $throw-and-import)
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $main (type $0)
   ;; DISCARD-NEXT:  (call $nop)
@@ -55,6 +64,8 @@
   ;; DISCARD-NEXT:  (drop
   ;; DISCARD-NEXT:   (call $unimportant-effects)
   ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT:  (call $throw)
+  ;; DISCARD-NEXT:  (call $throw-and-import)
   ;; DISCARD-NEXT: )
   (func $main
     ;; Calling a function with no effects can be optimized away in INCLUDE (but
@@ -83,7 +94,7 @@
   ;; WITHOUT-NEXT:  (call $cycle)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $cycle (type $0)
-  ;; INCLUDE-NEXT:  (call $cycle)
+  ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $cycle (type $0)
   ;; DISCARD-NEXT:  (call $cycle)
@@ -196,14 +207,37 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (try $try0
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $throw-and-import)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-and-catch (type $0)
-  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT:  (try $try0
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (call $throw-and-import)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $call-throw-and-catch (type $0)
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT:  (try $try0
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (call $throw-and-import)
   ;; DISCARD-NEXT:   )
   ;; DISCARD-NEXT:   (catch_all
   ;; DISCARD-NEXT:    (nop)
@@ -217,6 +251,11 @@
         ;; entire try-catch can be, since the call's only effect is to throw,
         ;; and the catch_all catches that.
         (call $throw)
+      )
+      (catch_all)
+    )
+    (try
+      (do
         ;; This call both throws and calls an import, and cannot be removed.
         (call $throw-and-import)
       )
@@ -327,5 +366,22 @@
   ;; DISCARD-NEXT: )
   (func $throw
     (throw $tag)
+  )
+
+  ;; WITHOUT:      (func $throw-and-import (type $0)
+  ;; WITHOUT-NEXT:  (throw $tag)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $throw-and-import (type $0)
+  ;; INCLUDE-NEXT:  (throw $tag)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $throw-and-import (type $0)
+  ;; DISCARD-NEXT:  (throw $tag)
+  ;; DISCARD-NEXT: )
+  (func $throw-and-import
+    (if
+      (i32.const 1)
+      (throw $tag)
+      (call $import)
+    )
   )
 )
