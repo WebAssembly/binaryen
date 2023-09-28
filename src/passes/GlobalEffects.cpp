@@ -157,7 +157,7 @@ struct GenerateGlobalEffects : public Pass {
 
         if (!funcEffects) {
           // Nothing is known for the called function, which means nothing is
-          // known for the caller now either.
+          // known for the caller either.
           callerEffects.reset();
           continue;
         }
