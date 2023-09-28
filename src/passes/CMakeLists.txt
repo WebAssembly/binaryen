@@ -45,6 +45,7 @@ set(passes_SOURCES
   GlobalTypeOptimization.cpp
   GUFA.cpp
   hash-stringify-walker.cpp
+  outlining.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp

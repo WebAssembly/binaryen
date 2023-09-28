@@ -70,6 +70,25 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
   }
 }
 
+std::vector<SuffixTree::RepeatedSubstring>
+StringifyProcessor::repeatSubstrings(const std::vector<uint32_t>& hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    std::vector(st.begin(), st.end());
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
+    });
+  return substrings;
+}
+
 // Deduplicate substrings by iterating through the list of substrings, keeping
 // only those whose list of end indices is disjoint from the set of end indices
 // for all substrings kept so far. Substrings that are contained within other
@@ -112,7 +131,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs,
+  const std::vector<Expression*>& exprs,
   std::function<bool(const Expression*)> condition) {
 
   struct FilterStringifyWalker : public StringifyWalker<FilterStringifyWalker> {
@@ -168,7 +187,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs) {
+  const std::vector<Expression*>& exprs) {
   return StringifyProcessor::filter(
     substrings, exprs, [](const Expression* curr) {
       return curr->is<LocalSet>();
@@ -177,10 +196,11 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs) {
+  const std::vector<Expression*>& exprs) {
   return StringifyProcessor::filter(
     substrings, exprs, [](const Expression* curr) {
       return Properties::isBranch(curr) || curr->is<Return>();
     });
 }
+
 } // namespace wasm
