@@ -531,14 +531,16 @@ Name SExpressionWasmBuilder::getElemSegmentName(Element& s) {
 bool SExpressionWasmBuilder::isMemory64(Name memoryName) {
   auto* memory = wasm.getMemoryOrNull(memoryName);
   if (!memory) {
-    throw ParseException("invalid memory name in isMemory64");
+    throw ParseException("invalid memory name in isMemory64: "s +
+                         memoryName.toString());
   }
   return memory->is64();
 }
 
 Name SExpressionWasmBuilder::getMemoryNameAtIdx(Index i) {
   if (i >= memoryNames.size()) {
-    throw ParseException("unknown memory in getMemoryName");
+    throw ParseException("unknown memory in getMemoryName: "s +
+                         std::to_string(i));
   }
   return memoryNames[i];
 }
@@ -1718,7 +1720,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
     if (positive[0] == 'n' && positive[1] == 'a' && positive[2] == 'n') {
       const char* modifier = positive[3] == ':' ? positive + 4 : nullptr;
       if (!(modifier ? positive[4] == '0' && positive[5] == 'x' : 1)) {
-        throw ParseException("bad nan input");
+        throw ParseException("bad nan input: "s + str);
       }
       switch (type.getBasic()) {
         case Type::f32: {
@@ -1727,7 +1729,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
             if (istr.fail()) {
-              throw ParseException("invalid f32 format");
+              throw ParseException("invalid f32 format: "s + str);
             }
             pattern |= 0x7f800000U;
           } else {
@@ -1748,7 +1750,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
             std::istringstream istr(modifier);
             istr >> std::hex >> pattern;
             if (istr.fail()) {
-              throw ParseException("invalid f64 format");
+              throw ParseException("invalid f64 format: "s + str);
             }
             pattern |= 0x7ff0000000000000ULL;
           } else {
@@ -1796,7 +1798,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         uint32_t temp;
         istr >> std::hex >> temp;
         if (istr.fail()) {
-          throw ParseException("invalid i32 format");
+          throw ParseException("invalid i32 format: "s + str);
         }
         ret->value = Literal(negative ? -temp : temp);
       } else {
@@ -1804,7 +1806,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         uint32_t temp;
         istr >> temp;
         if (istr.fail()) {
-          throw ParseException("invalid i32 format");
+          throw ParseException("invalid i32 format: "s + str);
         }
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
@@ -1821,7 +1823,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         uint64_t temp;
         istr >> std::hex >> temp;
         if (istr.fail()) {
-          throw ParseException("invalid i64 format");
+          throw ParseException("invalid i64 format: "s + str);
         }
         ret->value = Literal(negative ? -temp : temp);
       } else {
@@ -1829,7 +1831,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
         uint64_t temp;
         istr >> temp;
         if (istr.fail()) {
-          throw ParseException("invalid i64 format");
+          throw ParseException("invalid i64 format: "s + str);
         }
         ret->value = Literal(str[0] == '-' ? -temp : temp);
       }
@@ -1853,7 +1855,7 @@ static Expression* parseConst(IString s, Type type, MixedArena& allocator) {
     }
   }
   if (ret->value.type != type) {
-    throw ParseException("parsed type does not match expected type");
+    throw ParseException("parsed type does not match expected type: "s + str);
   }
   return ret;
 }
