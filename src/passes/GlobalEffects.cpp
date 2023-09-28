@@ -63,14 +63,14 @@ struct GenerateGlobalEffects : public Pass {
             CallScanner(Module& wasm, PassOptions& options, FuncInfo& funcInfo) : wasm(wasm), options(options), funcInfo(funcInfo) {}
 
             void visitExpression(Expression* curr) {
-              ShallowEffectAnalyzer effects(passOptions, wasm, curr);
+              ShallowEffectAnalyzer effects(options, wasm, curr);
               if (!effects.calls) {
                 // Nothing to interest us here.
                 return;
               }
 
               if (auto* call = curr->dynCast<Call>()) {
-                funcInfo.calledFunctions.push_back(call->target);
+                funcInfo.calledFunctions.insert(call->target);
               } else {
                 // This is an indirect call of some sort, so we must assume the
                 // worst. To do so, clear the effects, which indicates nothing
@@ -94,15 +94,15 @@ struct GenerateGlobalEffects : public Pass {
       for (auto& called : info.calledFunctions) {
         calledBy[called].push_back(func->name);
       }
-      work.insert(func->name);
+      work.push(func->name);
     }
 
     while (!work.empty()) {
-      auto* func = work.pop();
-      auto& funcEffects = analysis.map[func].effects;
+      auto func = work.pop();
+      auto& funcEffects = analysis.map[module->getFunction(func)].effects;
 
       for (auto& caller : calledBy[func]) {
-        auto& callerEffects = analysis.map[caller].effects;
+        auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
         if (!callerEffects) {
           // Nothing is known for the caller, which is already the worst case.
           continue;
@@ -114,7 +114,7 @@ struct GenerateGlobalEffects : public Pass {
         if (!funcEffects) {
           // Nothing is known for the called function, which means nothing is
           // known for the caller now either.
-          callerEffects.clear();
+          callerEffects.reset();
           work.push(caller);
           continue;
         }

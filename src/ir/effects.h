@@ -354,6 +354,35 @@ public:
     }
   }
 
+  bool operator==(const EffectAnalyzer& other) {
+    return branchesOut == other.branchesOut &&
+    calls == other.calls &&
+    readsMemory == other.readsMemory &&
+    writesMemory == other.writesMemory &&
+    readsTable == other.readsTable &&
+    writesTable == other.writesTable &&
+    readsMutableStruct == other.readsMutableStruct &&
+    writesStruct == other.writesStruct &&
+    readsArray == other.readsArray &&
+    writesArray == other.writesArray &&
+    trap == other.trap &&
+    implicitTrap == other.implicitTrap &&
+    trapsNeverHappen == other.trapsNeverHappen &&
+    isAtomic == other.isAtomic &&
+    throws_ == other.throws_ &&
+    danglingPop == other.danglingPop &&
+    localsRead == other.localsRead &&
+    localsWritten == other.localsWritten &&
+    mutableGlobalsRead == other.mutableGlobalsRead &&
+    globalsWritten == other.globalsWritten &&
+    breakTargets == other.breakTargets &&
+    delegateTargets == other.delegateTargets;
+  }
+
+  bool operator!=(const EffectAnalyzer& other) {
+    return !(*this == other);
+  }
+
   // the checks above happen after the node's children were processed, in the
   // order of execution we must also check for control flow that happens before
   // the children, i.e., loops
