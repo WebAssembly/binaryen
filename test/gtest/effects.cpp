@@ -42,5 +42,7 @@ TEST_F(EffectsTest, TestEquality) {
   {
     auto b = a;
     EXPECT_EQ(b, a);
+    b.branchesOut = false;
+    EXPECT_NE(b, a);
   }
 }
