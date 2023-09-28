@@ -41,7 +41,16 @@
 
   ;; CHECK:      (func $calls-import (; has Stack IR ;)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (call $import)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (block $__asyncify_unwind (result i32)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (br $__asyncify_unwind
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.load
   ;; CHECK-NEXT:    (global.get $__asyncify_data)

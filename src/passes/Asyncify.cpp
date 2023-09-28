@@ -530,10 +530,9 @@ public:
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
                  const String::Split& onlyListInput,
-                 bool asserts,
                  bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
-      fakeGlobals(module), asserts(asserts), verbose(verbose) {
+      fakeGlobals(module), verbose(verbose) {
 
     PatternMatcher removeList("remove", module, removeListInput);
     PatternMatcher addList("add", module, addListInput);
@@ -784,7 +783,6 @@ public:
   }
 
   FakeGlobalHelper fakeGlobals;
-  bool asserts;
   bool verbose;
 };
 
@@ -840,11 +838,6 @@ public:
     return makeBinary(EqInt32,
                       makeGlobalGet(ASYNCIFY_STATE, Type::i32),
                       makeConst(Literal(int32_t(value))));
-  }
-
-  Expression* makeNegatedStateCheck(State value) {
-    return makeUnary(Abstract::getUnary(pointerType, Abstract::EqZ),
-                     makeStateCheck(value));
   }
 };
 
@@ -1180,9 +1173,9 @@ private:
     // TODO: we can read the next call index once in each function (but should
     //       avoid saving/restoring that local later)
     curr = builder->makeIf(
-      builder->makeIf(builder->makeStateCheck(State::Normal),
-                      builder->makeConst(int32_t(1)),
-                      makeCallIndexPeek(index)),
+      builder->makeBinary(OrInt32,
+                          builder->makeStateCheck(State::Normal),
+                          makeCallIndexPeek(index)),
       builder->makeSequence(curr, makePossibleUnwind(index, set)));
     return curr;
   }
@@ -1347,11 +1340,10 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                                                 Type::i32,
                                                 asyncifyMemory))));
     } else if (curr->target == ASYNCIFY_CHECK_CALL_INDEX) {
-      replaceCurrent(builder->makeBinary(
-        EqInt32,
-        builder->makeLocalGet(rewindIndex, Type::i32),
-        builder->makeConst(
-          Literal(int32_t(curr->operands[0]->cast<Const>()->value.geti32())))));
+      replaceCurrent(
+        builder->makeBinary(EqInt32,
+                            builder->makeLocalGet(rewindIndex, Type::i32),
+                            curr->operands[0]));
     }
   }
 
@@ -1688,7 +1680,6 @@ struct Asyncify : public Pass {
                             removeList,
                             addList,
                             onlyList,
-                            asserts,
                             verbose);
 
     // Add necessary globals before we emit code to use them.
