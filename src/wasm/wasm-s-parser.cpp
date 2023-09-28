@@ -54,13 +54,14 @@ namespace wasm {
 // Similar to ParseException but built from an Element.
 struct SParseException : public ParseException {
   // Receive an element and report its contents, line and column.
-  SParseException(std::string text, const Element& s) :
-    ParseException(text + ": " + s.forceString(), s.line, s.col) {}
+  SParseException(std::string text, const Element& s)
+    : ParseException(text + ": " + s.forceString(), s.line, s.col) {}
 
   // Receive a parent and child element. We print out the full parent for
   // context, but report the child line and column inside it.
-  SParseException(std::string text, const Element& parent, const Element& child) :
-    ParseException(text + ": " + parent.forceString(), child.line, child.col) {}
+  SParseException(std::string text, const Element& parent, const Element& child)
+    : ParseException(
+        text + ": " + parent.forceString(), child.line, child.col) {}
 };
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), REC("rec"),
@@ -436,8 +437,7 @@ void SExpressionWasmBuilder::preParseImports(Element& curr) {
     } else if (id == TAG) {
       parseTag(curr, true /* preParseImport */);
     } else {
-      throw SParseException(
-        "fancy import we don't support yet", curr);
+      throw SParseException("fancy import we don't support yet", curr);
     }
   }
 }
@@ -509,8 +509,7 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
     // index
     size_t offset = parseIndex(s);
     if (offset >= functionNames.size()) {
-      throw SParseException(
-        "unknown function in getFunctionName", s);
+      throw SParseException("unknown function in getFunctionName", s);
     }
     return functionNames[offset];
   }
@@ -652,8 +651,7 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     Type type;
     type = elementToType(*s[i]);
     if (elementStartsWith(s, PARAM) && type.isTuple()) {
-      throw SParseException(
-        "params may not have tuple types", *s[i]);
+      throw SParseException("params may not have tuple types", *s[i]);
     }
     namedParams.emplace_back(name, type);
   }
@@ -737,8 +735,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   } else if (paramsOrResultsExist) {
     // verify that (type) and (params)/(result) match
     if (inlineSig != functionType.getSignature()) {
-      throw SParseException("type and param/result don't match",
-                            *s[paramPos]);
+      throw SParseException("type and param/result don't match", *s[paramPos]);
     }
   }
 
@@ -961,8 +958,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
         throw SParseException("invalid 'sub' form", kind);
       }
       if (!subtype.isList() || subtype.size() < 1) {
-        throw SParseException(
-          "invalid subtype definition", subtype);
+        throw SParseException("invalid subtype definition", subtype);
       }
       Element& subtypeKind = *subtype[0];
       if (subtypeKind == FUNC) {
@@ -972,8 +968,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       } else if (subtypeKind == ARRAY) {
         builder[index] = parseArrayDef(subtype);
       } else {
-        throw SParseException(
-          "unknown subtype kind", subtypeKind);
+        throw SParseException("unknown subtype kind", subtypeKind);
       }
     } else {
       if (kind == FUNC) {
@@ -1345,12 +1340,10 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     // and also $name can be the expanded structure of the type and not a name,
     // so something like (ref (func (result i32))), etc.
     if (size != 2 && size != 3) {
-      throw SParseException(
-        std::string("invalid reference type size"), s);
+      throw SParseException(std::string("invalid reference type size"), s);
     }
     if (size == 3 && *list[1] != NULL_) {
-      throw SParseException(
-        std::string("invalid reference type qualifier"), s);
+      throw SParseException(std::string("invalid reference type qualifier"), s);
     }
     Nullability nullable = NonNullable;
     size_t i = 1;
@@ -1393,8 +1386,7 @@ Type SExpressionWasmBuilder::stringToLaneType(const char* str) {
 HeapType SExpressionWasmBuilder::getFunctionType(Name name, Element& s) {
   auto iter = functionTypes.find(name);
   if (iter == functionTypes.end()) {
-    throw SParseException(
-      "invalid call target: " + std::string(name.str), s);
+    throw SParseException("invalid call target: " + std::string(name.str), s);
   }
   return iter->second;
 }
@@ -1575,8 +1567,7 @@ Expression* SExpressionWasmBuilder::makeGlobalSet(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
   if (!currFunction) {
-    throw SParseException(
-      "block is unallowed outside of functions", s);
+    throw SParseException("block is unallowed outside of functions", s);
   }
   // special-case Block, because Block nesting (in their first element) can be
   // incredibly deep
@@ -1882,8 +1873,7 @@ static Literal makeLanes(Element& s, MixedArena& allocator, Type lane_t) {
     if (lane) {
       lanes[i] = lane->cast<Const>()->value;
     } else {
-      throw SParseException(
-        "Could not parse v128 lane", s, *s[i + 2]);
+      throw SParseException("Could not parse v128 lane", s, *s[i + 2]);
     }
   }
   return Literal(lanes);
@@ -1904,39 +1894,34 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   switch (lanes) {
     case 2: {
       if (lane_t != Type::i64 && lane_t != Type::f64) {
-        throw SParseException(
-          "Unexpected v128 literal lane type", s);
+        throw SParseException("Unexpected v128 literal lane type", s);
       }
       ret->value = makeLanes<2>(s, allocator, lane_t);
       break;
     }
     case 4: {
       if (lane_t != Type::i32 && lane_t != Type::f32) {
-        throw SParseException(
-          "Unexpected v128 literal lane type", s);
+        throw SParseException("Unexpected v128 literal lane type", s);
       }
       ret->value = makeLanes<4>(s, allocator, lane_t);
       break;
     }
     case 8: {
       if (lane_t != Type::i32) {
-        throw SParseException(
-          "Unexpected v128 literal lane type", s);
+        throw SParseException("Unexpected v128 literal lane type", s);
       }
       ret->value = makeLanes<8>(s, allocator, lane_t);
       break;
     }
     case 16: {
       if (lane_t != Type::i32) {
-        throw SParseException(
-          "Unexpected v128 literal lane type", s);
+        throw SParseException("Unexpected v128 literal lane type", s);
       }
       ret->value = makeLanes<16>(s, allocator, lane_t);
       break;
     }
     default:
-      throw SParseException(
-        "Unexpected number of lanes in v128 literal", s);
+      throw SParseException("Unexpected number of lanes in v128 literal", s);
   }
   ret->finalize();
   return ret;
@@ -1955,19 +1940,16 @@ static size_t parseMemAttributes(size_t i,
     }
     const char* eq = strchr(str, '=');
     if (!eq) {
-      throw SParseException(
-        "missing = in memory attribute", s);
+      throw SParseException("missing = in memory attribute", s);
     }
     eq++;
     if (*eq == 0) {
-      throw SParseException(
-        "missing value in memory attribute", s);
+      throw SParseException("missing value in memory attribute", s);
     }
     char* endptr;
     uint64_t value = strtoll(eq, &endptr, 10);
     if (*endptr != 0) {
-      throw SParseException(
-        "bad memory attribute immediate", s);
+      throw SParseException("bad memory attribute immediate", s);
     }
     if (str[0] == 'a') {
       if (value > std::numeric_limits<uint32_t>::max()) {
@@ -2100,8 +2082,7 @@ Expression* SExpressionWasmBuilder::makeAtomicCmpxchg(Element& s,
   Address align = ret->bytes;
   i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != ret->bytes) {
-    throw SParseException(
-      "Align of Atomic Cmpxchg must match size", s);
+    throw SParseException("Align of Atomic Cmpxchg must match size", s);
   }
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i + 1]);
@@ -2129,8 +2110,7 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   Address align = expectedAlign;
   i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != expectedAlign) {
-    throw SParseException(
-      "Align of memory.atomic.wait must match size", s);
+    throw SParseException("Align of memory.atomic.wait must match size", s);
   }
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i + 1]);
@@ -2156,8 +2136,7 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   Address align = 4;
   i = parseMemAttributes(i, s, ret->offset, align, isMemory64(memory));
   if (align != 4) {
-    throw SParseException(
-      "Align of memory.atomic.notify must be 4", s);
+    throw SParseException("Align of memory.atomic.notify must be 4", s);
   }
   ret->ptr = parseExpression(s[i]);
   ret->notifyCount = parseExpression(s[i + 1]);
@@ -2713,8 +2692,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   Type type = parseOptionalResultType(s, i); // signature
 
   if (!elementStartsWith(*s[i], "do")) {
-    throw SParseException(
-      "try body should start with 'do'", s, *s[i]);
+    throw SParseException("try body should start with 'do'", s, *s[i]);
   }
   ret->body = makeMaybeBlock(*s[i++], 1, type);
 
@@ -2875,13 +2853,12 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s, bool onFail) {
   auto castType = elementToType(*s[i++]);
   if (!Type::isSubType(castType, inputType)) {
     throw SParseException(
-      "br_on_cast* cast type must be a subtype of its input type",
-      s);
+      "br_on_cast* cast type must be a subtype of its input type", s);
   }
   auto* ref = parseExpression(*s[i]);
   if (!Type::isSubType(ref->type, inputType)) {
-    throw SParseException(
-      "br_on_cast* ref type does not match expected type", s);
+    throw SParseException("br_on_cast* ref type does not match expected type",
+                          s);
   }
   auto op = onFail ? BrOnCastFail : BrOnCast;
   return Builder(wasm).makeBrOn(op, name, ref, castType);
@@ -3330,8 +3307,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(
     auto maxElem = s[i++];
     memory->max = getAddress(maxElem);
     if (!memory->is64() && memory->max > Memory::kMaxSize32) {
-      throw SParseException(
-        "total memory must be <= 4GB", s, *maxElem);
+      throw SParseException("total memory must be <= 4GB", s, *maxElem);
     }
   }
   return i;
@@ -3581,8 +3557,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   }
   auto base = s[i]->str();
   if (!module.size() || !base.size()) {
-    throw SParseException(
-      "imports must have module and base", s, *s[i]);
+    throw SParseException("imports must have module and base", s, *s[i]);
   }
   i++;
   // parse internals
@@ -3637,8 +3612,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     if (inner[j]->isList()) {
       auto& limits = *inner[j];
       if (!elementStartsWith(limits, SHARED)) {
-        throw SParseException(
-          "bad memory limit declaration", inner, *inner[j]);
+        throw SParseException("bad memory limit declaration", inner, *inner[j]);
       }
       memory->shared = true;
       j = parseMemoryLimits(limits, 1, memory);
@@ -3991,12 +3965,10 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
       throw SParseException("invalid import", importElem);
     }
     if (!importElem[1]->isStr() || importElem[1]->dollared()) {
-      throw SParseException(
-        "invalid import module name", importElem);
+      throw SParseException("invalid import module name", importElem);
     }
     if (!importElem[2]->isStr() || importElem[2]->dollared()) {
-      throw SParseException(
-        "invalid import base name", importElem);
+      throw SParseException("invalid import base name", importElem);
     }
     tag->module = importElem[1]->str();
     tag->base = importElem[2]->str();
@@ -4013,14 +3985,12 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
       throw SParseException("invalid export", exportElem);
     }
     if (!exportElem[1]->isStr() || exportElem[1]->dollared()) {
-      throw SParseException(
-        "invalid export name", exportElem);
+      throw SParseException("invalid export name", exportElem);
     }
     auto ex = std::make_unique<Export>();
     ex->name = exportElem[1]->str();
     if (wasm.getExportOrNull(ex->name)) {
-      throw SParseException(
-        "duplicate export", exportElem);
+      throw SParseException("duplicate export", exportElem);
     }
     ex->value = tag->name;
     ex->kind = ExternalKind::Tag;
@@ -4049,7 +4019,7 @@ void SExpressionWasmBuilder::validateHeapTypeUsingChild(Expression* child,
   if (!child->type.isRef() ||
       !HeapType::isSubType(child->type.getHeapType(), heapType)) {
     throw SParseException("bad heap type: expected " + heapType.toString() +
-                           " but found " + child->type.toString(),
+                            " but found " + child->type.toString(),
                           s);
   }
 }
