@@ -336,7 +336,6 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one tag\n");
     writeImportHeader(tag);
     o << U32LEB(int32_t(ExternalKind::Tag));
-    o << uint8_t(0); // Reserved 'attribute' field. Always 0.
     o << U32LEB(getTypeIndex(tag->sig));
   });
   ModuleUtils::iterImportedMemories(*wasm, [&](Memory* memory) {
@@ -2508,7 +2507,6 @@ void WasmBinaryReader::readImports() {
       }
       case ExternalKind::Tag: {
         Name name(std::string("eimport$") + std::to_string(tagCounter++));
-        getInt8(); // Reserved 'attribute' field
         auto index = getU32LEB();
         auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
         curr->module = module;
