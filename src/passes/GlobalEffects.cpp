@@ -22,26 +22,27 @@
 #include "ir/effects.h"
 #include "ir/module-utils.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
 
 struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
-    // TODO: Full transitive closure of effects. For now, we just look at each
-    //       function by itself.
+    // First, we do a scan of each function to see what effects they have,
+    // including which functions they call directly (so that we can compute
+    // transitive effects later.
 
-    auto& funcEffectsMap = getPassOptions().funcEffectsMap;
+    struct FuncInfo {
+      // Effects in this function.
+      std::unique_ptr<EffectAnalyzer> effects;
 
-    // First, clear any previous effects.
-    funcEffectsMap.reset();
+      // Directly-called function from this function.
+      std::unordered_set<Name> calledFunctions;
+    };
 
-    // When we find useful effects, we'll save them. If we can't find anything,
-    // the final map we emit will not have an entry there at all.
-    using PossibleEffects = std::unique_ptr<EffectAnalyzer>;
-
-    ModuleUtils::ParallelFunctionAnalysis<PossibleEffects> analysis(
-      *module, [&](Function* func, PossibleEffects& storedEffects) {
+    ModuleUtils::ParallelFunctionAnalysis<FuncInfo> analysis(
+      *module, [&](Function* func, FuncInfo& funcInfo) {
         if (func->imported()) {
           // Imports can do anything, so we need to assume the worst anyhow,
           // which is the same as not specifying any effects for them in the
@@ -50,32 +51,100 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Gather the effects.
-        auto effects =
-          std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
+        funcInfo.effects = std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
 
-        // If the body has a call, give up - that means we can't infer a more
-        // specific set of effects than the pessimistic case of just assuming
-        // any call to here is an arbitrary call. (See the TODO above for
-        // improvements.)
-        if (effects->calls) {
-          return;
+        if (funcInfo.effects->calls) {
+          // There are calls in this function, which we must analyze.
+          struct CallScanner : public PostWalker<CallScanner, UnifiedExpressionVisitor<CallScanner>> {
+            Module& wasm;
+            PassOptions& options;
+            FuncInfo& funcInfo;
+
+            CallScanner(Module& wasm, PassOptions& options, FuncInfo& funcInfo) : wasm(wasm), options(options), funcInfo(funcInfo) {}
+
+            void visitExpression(Expression* curr) {
+              ShallowEffectAnalyzer effects(passOptions, wasm, curr);
+              if (!effects.calls) {
+                // Nothing to interest us here.
+                return;
+              }
+
+              if (auto* call = curr->dynCast<Call>()) {
+                funcInfo.calledFunctions.push_back(call->target);
+              } else {
+                // This is an indirect call of some sort, so we must assume the
+                // worst. To do so, clear the effects, which indicates nothing
+                // is known (so anything is possible).
+                // TODO: We could group effects by function type etc.
+                funcInfo.effects.reset();
+              }
+            }
+          };
+          CallScanner scanner(*module, getPassOptions(), funcInfo);
+          scanner.walkFunction(func);
         }
-
-        // Save the useful effects we found.
-        storedEffects = std::move(effects);
       });
 
-    // Generate the final data structure.
-    for (auto& [func, possibleEffects] : analysis.map) {
-      if (possibleEffects) {
-        // Only allocate a new funcEffectsMap if we actually have data for it
-        // (which might make later effect computation slightly faster, to
-        // quickly skip the funcEffectsMap code path).
-        if (!funcEffectsMap) {
-          funcEffectsMap = std::make_shared<FuncEffectsMap>();
-        }
-        funcEffectsMap->emplace(func->name, *possibleEffects);
+    // Compute the transitive closure of effects. To do so, first construct for
+    // each function a list of the other functions that it is called by (so we
+    // need to propogate its effects to them.
+    std::unordered_map<Name, std::vector<Name>> calledBy;
+    UniqueDeferredQueue<Name> work;
+    for (auto& [func, info] : analysis.map) {
+      for (auto& called : info.calledFunctions) {
+        calledBy[called].push_back(func->name);
       }
+      work.insert(func->name);
+    }
+
+    while (!work.empty()) {
+      auto* func = work.pop();
+      auto& funcEffects = analysis.map[func].effects;
+
+      for (auto& caller : calledBy[func]) {
+        auto& callerEffects = analysis.map[caller].effects;
+        if (!callerEffects) {
+          // Nothing is known for the caller, which is already the worst case.
+          continue;
+        }
+
+        // Add func's effects to the caller, and queue more work if we changed
+        // anything.
+
+        if (!funcEffects) {
+          // Nothing is known for the called function, which means nothing is
+          // known for the caller now either.
+          callerEffects.clear();
+          work.push(caller);
+          continue;
+        }
+
+        auto oldEffects = *callerEffects;
+        callerEffects->mergeIn(*funcEffects);
+        if (*callerEffects != oldEffects) {
+          work.push(caller);
+        }
+      }
+    }
+
+    // Generate the final data structure, starting from a blank slate where
+    // nothing is known.
+    auto& funcEffectsMap = getPassOptions().funcEffectsMap;
+    funcEffectsMap.reset();
+
+    for (auto& [func, info] : analysis.map) {
+      if (!info.effects) {
+        // Add no entry to funcEffectsMap, since nothing is known.
+        continue;
+      }
+
+      // Only allocate a new funcEffectsMap here when we actually have data for
+      // it (which might make later effect computation slightly faster, to
+      // quickly skip the funcEffectsMap code path).
+      if (!funcEffectsMap) {
+        funcEffectsMap = std::make_shared<FuncEffectsMap>();
+      }
+      funcEffectsMap->emplace(func->name, *info.effects);
     }
   }
 };
