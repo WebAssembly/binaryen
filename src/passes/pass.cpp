@@ -311,6 +311,9 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
+  registerPass("outlining-eval",
+               "evaluate outlining feasibility",
+               createOutliningEvalPass);
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);

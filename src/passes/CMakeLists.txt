@@ -135,6 +135,7 @@ else()
     stringify-walker.h
     stringify-walker-impl.h
   	hash-stringify-walker.cpp
+	outlining.cpp
 	${passes_SOURCES}
   )
   add_library(passes OBJECT ${passes_with_suffix_tree_SOURCES})

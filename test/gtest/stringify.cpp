@@ -203,30 +203,11 @@ TEST_F(StringifyTest, Stringify) {
             }));
 }
 
-std::vector<SuffixTree::RepeatedSubstring>
-repeatSubstrings(std::vector<uint32_t> hashString) {
-  SuffixTree st(hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings =
-    std::vector(st.begin(), st.end());
-  std::sort(
-    substrings.begin(),
-    substrings.end(),
-    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
-      size_t aWeight = a.Length * a.StartIndices.size();
-      size_t bWeight = b.Length * b.StartIndices.size();
-      if (aWeight == bWeight) {
-        return a.StartIndices[0] < b.StartIndices[0];
-      }
-      return aWeight > bWeight;
-    });
-  return substrings;
-}
-
 TEST_F(StringifyTest, Substrings) {
   Module wasm;
   parseWast(wasm, dupModuleText);
   auto hashString = hashStringifyModule(&wasm);
-  auto substrings = repeatSubstrings(hashString);
+  auto substrings = StringifyProcessor::repeatSubstrings(hashString);
 
   EXPECT_EQ(
     substrings,
@@ -248,7 +229,7 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   parseWast(wasm, dupModuleText);
   auto hashString = hashStringifyModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
-    repeatSubstrings(hashString);
+    StringifyProcessor::repeatSubstrings(hashString);
   auto result = StringifyProcessor::dedupe(substrings);
 
   EXPECT_EQ(
@@ -284,7 +265,7 @@ TEST_F(StringifyTest, FilterLocalSets) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
-    repeatSubstrings(stringify.hashString);
+    StringifyProcessor::repeatSubstrings(stringify.hashString);
   auto result =
     StringifyProcessor::filterLocalSets(substrings, stringify.exprs);
 
@@ -325,7 +306,7 @@ TEST_F(StringifyTest, FilterBranches) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
-    repeatSubstrings(stringify.hashString);
+    StringifyProcessor::repeatSubstrings(stringify.hashString);
   auto result = StringifyProcessor::filterBranches(substrings, stringify.exprs);
 
   EXPECT_EQ(

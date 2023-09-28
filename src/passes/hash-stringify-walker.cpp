@@ -187,4 +187,24 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
 
   return result;
 }
+
+std::vector<SuffixTree::RepeatedSubstring>
+StringifyProcessor::repeatSubstrings(std::vector<uint32_t> hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings =
+    std::vector(st.begin(), st.end());
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
+    });
+  return substrings;
+}
+
 } // namespace wasm
