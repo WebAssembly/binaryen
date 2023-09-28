@@ -60,6 +60,11 @@ struct GenerateGlobalEffects : public Pass {
           // sorts below.
           funcInfo.effects->calls = false;
 
+          // Clear throws as well, as we are "forgetting" calls right now, and
+          // want to forget their throwing effect as well. If we see something
+          // else that throws, below, then we'll note that.
+          funcInfo.effects->throws_ = false;
+
           struct CallScanner
             : public PostWalker<CallScanner,
                                 UnifiedExpressionVisitor<CallScanner>> {
@@ -73,7 +78,12 @@ struct GenerateGlobalEffects : public Pass {
             void visitExpression(Expression* curr) {
               ShallowEffectAnalyzer effects(options, wasm, curr);
               if (!effects.calls) {
-                // Nothing to interest us here.
+                // No call here, but update throwing if we see it. (Only do so,
+                // however, if we have effects; if we cleared it - see below -
+                // then we assume the worst anyhow, and have nothing to update.)
+                if (effects.throws_ && funcInfo.effects) {
+                  funcInfo.effects->throws_ = true;
+                }
                 return;
               }
 

@@ -31,6 +31,8 @@
   ;; DISCARD:      (tag $tag (param))
   (tag $tag)
 
+  (import "a" "b" (func $import))
+
   ;; WITHOUT:      (func $main (type $0)
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT:  (call $unreachable)
@@ -71,6 +73,10 @@
     (drop
       (call $unimportant-effects)
     )
+    ;; A throwing function cannot be removed.
+    (call $throw)
+    ;; A function that throws and calls an import definitely cannot be removed.
+    (call $throw-and-import)
   )
 
   ;; WITHOUT:      (func $cycle (type $0)
@@ -211,6 +217,8 @@
         ;; entire try-catch can be, since the call's only effect is to throw,
         ;; and the catch_all catches that.
         (call $throw)
+        ;; This call both throws and calls an import, and cannot be removed.
+        (call $throw-and-import)
       )
       (catch_all)
     )
