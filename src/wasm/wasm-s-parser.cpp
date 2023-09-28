@@ -1883,7 +1883,7 @@ static Literal makeLanes(Element& s, MixedArena& allocator, Type lane_t) {
       lanes[i] = lane->cast<Const>()->value;
     } else {
       throw SParseException(
-        "Could not parse v128 lane", s);
+        "Could not parse v128 lane", s, *s[i + 2]);
     }
   }
   return Literal(lanes);
@@ -1893,7 +1893,7 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   if (type != Type::v128) {
     auto ret = parseConst(s[1]->str(), type, allocator);
     if (!ret) {
-      throw SParseException("bad const", s);
+      throw SParseException("bad const", s, *s[1]);
     }
     return ret;
   }
@@ -2714,18 +2714,18 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
 
   if (!elementStartsWith(*s[i], "do")) {
     throw SParseException(
-      "try body should start with 'do'", *s[i]);
+      "try body should start with 'do'", s, *s[i]);
   }
   ret->body = makeMaybeBlock(*s[i++], 1, type);
 
   while (i < s.size() && elementStartsWith(*s[i], "catch")) {
     Element& inner = *s[i++];
     if (inner.size() < 2) {
-      throw SParseException("invalid catch block", inner);
+      throw SParseException("invalid catch block", s, inner);
     }
     Name tag = getTagName(*inner[1]);
     if (!wasm.getTagOrNull(tag)) {
-      throw SParseException("bad tag name", inner);
+      throw SParseException("bad tag name", s, inner);
     }
     ret->catchTags.push_back(getTagName(*inner[1]));
     ret->catchBodies.push_back(makeMaybeBlock(inner, 2, type));
@@ -2741,7 +2741,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   if (i < s.size() && elementStartsWith(*s[i], "delegate")) {
     Element& inner = *s[i++];
     if (inner.size() != 2) {
-      throw SParseException("invalid delegate", inner);
+      throw SParseException("invalid delegate", s, inner);
     }
     ret->delegateTarget = getLabel(*inner[1], LabelType::Exception);
   }
@@ -2776,7 +2776,7 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
 
   ret->tag = getTagName(*s[i++]);
   if (!wasm.getTagOrNull(ret->tag)) {
-    throw SParseException("bad tag name", s);
+    throw SParseException("bad tag name", s, *s[i]);
   }
   for (; i < s.size(); i++) {
     ret->operands.push_back(parseExpression(s[i]));
@@ -3331,7 +3331,7 @@ Index SExpressionWasmBuilder::parseMemoryLimits(
     memory->max = getAddress(maxElem);
     if (!memory->is64() && memory->max > Memory::kMaxSize32) {
       throw SParseException(
-        "total memory must be <= 4GB", *maxElem);
+        "total memory must be <= 4GB", s, *maxElem);
     }
   }
   return i;
@@ -3577,12 +3577,12 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   }
   auto module = s[i++]->str();
   if (!s[i]->isStr()) {
-    throw SParseException("no name for import", *s[i]);
+    throw SParseException("no name for import", s, *s[i]);
   }
   auto base = s[i]->str();
   if (!module.size() || !base.size()) {
     throw SParseException(
-      "imports must have module and base", *s[i]);
+      "imports must have module and base", s, *s[i]);
   }
   i++;
   // parse internals
@@ -3638,7 +3638,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       auto& limits = *inner[j];
       if (!elementStartsWith(limits, SHARED)) {
         throw SParseException(
-          "bad memory limit declaration", *inner[j]);
+          "bad memory limit declaration", inner, *inner[j]);
       }
       memory->shared = true;
       j = parseMemoryLimits(limits, 1, memory);
@@ -3659,7 +3659,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   }
   // If there are more elements, they are invalid
   if (j < inner.size()) {
-    throw SParseException("invalid element", *inner[j]);
+    throw SParseException("invalid element", inner, *inner[j]);
   }
 }
 
@@ -3867,7 +3867,7 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     if (elementStartsWith(inner, OFFSET)) {
       if (inner.size() > 2) {
         throw SParseException(
-          "Invalid offset for an element segment.", s);
+          "Invalid offset for an element segment.", s, *s[i]);
       }
       segment->offset = parseExpression(inner[1]);
     } else {
