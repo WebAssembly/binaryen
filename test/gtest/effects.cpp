@@ -41,11 +41,12 @@ TEST_F(EffectsTest, TestEquality) {
 
   // Test that a change to a field causes us to compare not equal.
 
-  #define TEST_CHANGE(FIELD, VALUE) { \
-    auto b = a; \
-    EXPECT_EQ(b, a); \
-    b.FIELD = VALUE; \
-    EXPECT_NE(b, a); \
+#define TEST_CHANGE(FIELD, VALUE)                                              \
+  {                                                                            \
+    auto b = a;                                                                \
+    EXPECT_EQ(b, a);                                                           \
+    b.FIELD = VALUE;                                                           \
+    EXPECT_NE(b, a);                                                           \
   }
 
   TEST_CHANGE(branchesOut, false);

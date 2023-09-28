@@ -135,7 +135,8 @@ struct GenerateGlobalEffects : public Pass {
           if (callers[func].insert(callerOfCaller).second) {
             // We found a new caller, which means more work: everything that
             // |func| calls must be recomputed, as more things might call them.
-            for (auto& called : analysis.map[module->getFunction(func)].calledFunctions) {
+            for (auto& called :
+                 analysis.map[module->getFunction(func)].calledFunctions) {
               work.push(called);
             }
           }

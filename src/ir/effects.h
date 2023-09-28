@@ -373,7 +373,9 @@ public:
            delegateTargets == other.delegateTargets;
   }
 
-  bool operator!=(const EffectAnalyzer& other) const { return !(*this == other); }
+  bool operator!=(const EffectAnalyzer& other) const {
+    return !(*this == other);
+  }
 
   // the checks above happen after the node's children were processed, in the
   // order of execution we must also check for control flow that happens before
