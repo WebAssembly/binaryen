@@ -94,7 +94,7 @@
   ;; WITHOUT-NEXT:  (call $cycle)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $cycle (type $0)
-  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT:  (call $cycle)
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $cycle (type $0)
   ;; DISCARD-NEXT:  (call $cycle)

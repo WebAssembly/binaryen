@@ -144,7 +144,17 @@ struct GenerateGlobalEffects : public Pass {
     }
 
     // Now that we have transitively propagated all static calls, apply that
-    // information.
+    // information. First, apply infinite recursion: if a function can call
+    // itself then it might recurse infinitely, which we consider an effect (a
+    // trap).
+    for (auto& [func, info] : analysis.map) {
+      if (callers[func->name].count(func->name)) {
+        // Remove all effect info, indicating we know nothing.
+        info.effects.reset();
+      }
+    }
+
+    // Next, apply function effects to their callers.
     for (auto& [func, info] : analysis.map) {
       auto& funcEffects = analysis.map[func].effects;
 
