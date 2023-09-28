@@ -37,6 +37,10 @@ TEST_F(EffectsTest, TestEquality) {
   a.breakTargets = {"block"};
   a.delegateTargets = {"delegate"};
 
-  EXPECT_TRUE(a == a);
   EXPECT_EQ(a, a);
+
+  {
+    auto b = a;
+    EXPECT_EQ(b, a);
+  }
 }
