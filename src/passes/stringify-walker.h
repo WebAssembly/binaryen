@@ -238,6 +238,13 @@ struct StringifyProcessor {
                  std::vector<Expression*> exprs);
   static std::vector<SuffixTree::RepeatedSubstring>
   repeatSubstrings(std::vector<uint32_t> hashString);
+  static uint32_t savings(SuffixTree::RepeatedSubstring substring,
+                          std::vector<Expression*> exprs);
+  static uint32_t cost(SuffixTree::RepeatedSubstring substring,
+                       std::vector<Expression*> exprs);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filterExpensive(const std::vector<SuffixTree::RepeatedSubstring> substrings,
+                  std::vector<Expression*> exprs);
 };
 
 } // namespace wasm

@@ -15,25 +15,30 @@ struct OutliningEval : public Pass {
     auto result = StringifyProcessor::dedupe(substrings);
     result = StringifyProcessor::filterBranches(result, stringify.exprs);
     result = StringifyProcessor::filterLocalSets(result, stringify.exprs);
+    result = StringifyProcessor::filterExpensive(result, stringify.exprs);
     printStats(substrings, result, &stringify);
   }
 
   void printStats(std::vector<SuffixTree::RepeatedSubstring> substrings,
                   std::vector<SuffixTree::RepeatedSubstring> result,
                   HashStringifyWalker* stringify) {
-    std::cout << substrings.size() << " substrings found, ";
+    std::cout << substrings.size() << " repeat sequences found, ";
     std::cout << "reduced to " << result.size() << std::endl;
+    std::cout << "sequences: " << std::endl;
+    uint32_t totalSavings = 0;
     for (auto rs : result) {
       size_t startIndex = rs.StartIndices[0];
-      std::cout << rs.StartIndices.size() << "x, ~"
-                << rs.StartIndices.size() * rs.Length * Measurer::BytesPerExpr
-                << " size:";
+      uint32_t sizeSaved = StringifyProcessor::savings(rs, stringify->exprs) -
+                           StringifyProcessor::cost(rs, stringify->exprs);
+      totalSavings += sizeSaved;
+      std::cout << "length " << rs.Length << " repeats "
+                << rs.StartIndices.size() << "x, ~" << sizeSaved << " bytes:";
       for (size_t i = startIndex; i < startIndex + rs.Length; i++) {
-        std::cout << stringify->hashString[i] << " ("
-                  << ShallowExpression{stringify->exprs[i]} << "), ";
+        std::cout << " (" << ShallowExpression{stringify->exprs[i]} << "),";
       }
       std::cout << std::endl;
     }
+    std::cout << "Total Savings: ~" << totalSavings << " bytes" << std::endl;
   }
 };
 

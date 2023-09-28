@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ir/stack-utils.h"
 #include "stringify-walker.h"
 
 namespace wasm {
@@ -205,6 +206,66 @@ StringifyProcessor::repeatSubstrings(std::vector<uint32_t> hashString) {
       return aWeight > bWeight;
     });
   return substrings;
+}
+
+uint32_t StringifyProcessor::savings(SuffixTree::RepeatedSubstring substring,
+                                     std::vector<Expression*> exprs) {
+  struct MeasureStringifyWalker
+    : public StringifyWalker<MeasureStringifyWalker> {
+    uint32_t exprSize = 0;
+
+    void addUniqueSymbol(SeparatorCtx ctx) {}
+
+    void visitExpression(Expression* curr) {
+      if (Properties::isControlFlowStructure(curr)) {
+        exprSize += Measurer::measure(curr);
+      } else {
+        exprSize += Measurer::BytesPerExpr;
+      }
+    }
+  };
+
+  uint32_t exprSize = 0;
+  for (uint32_t idx = substring.StartIndices[0];
+       idx < substring.StartIndices[0] + substring.Length;
+       idx++) {
+    Expression* curr = exprs[idx];
+    if (Properties::isControlFlowStructure(curr)) {
+      exprSize += Measurer::measure(curr);
+    } else {
+      exprSize += 1;
+    }
+  }
+
+  return exprSize * Measurer::BytesPerExpr * substring.StartIndices.size();
+}
+
+uint32_t StringifyProcessor::cost(SuffixTree::RepeatedSubstring substring,
+                                  std::vector<Expression*> exprs) {
+  StackSignature blockSig;
+  for (uint32_t idx = substring.StartIndices[0];
+       idx < substring.StartIndices[0] + substring.Length;
+       idx++) {
+    Expression* curr = exprs[idx];
+    StackSignature sig(curr);
+    blockSig += sig;
+  }
+
+  return (substring.StartIndices.size() * 3) + 8 + (blockSig.params.size() * 2);
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterExpensive(
+  const std::vector<SuffixTree::RepeatedSubstring> substrings,
+  std::vector<Expression*> exprs) {
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    int32_t total = StringifyProcessor::savings(substring, exprs) -
+                    StringifyProcessor::cost(substring, exprs);
+    if (total > 0) {
+      result.push_back(substring);
+    }
+  }
+  return result;
 }
 
 } // namespace wasm
