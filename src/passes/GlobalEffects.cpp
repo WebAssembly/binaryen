@@ -104,44 +104,66 @@ struct GenerateGlobalEffects : public Pass {
       });
 
     // Compute the transitive closure of effects. To do so, first construct for
-    // each function a list of the other functions that it is called by (so we
-    // need to propogate its effects to them.
-    std::unordered_map<Name, std::vector<Name>> calledBy;
+    // each function a list of the functions that it is called by (so we need to
+    // propogate its effects to them).
+    std::unordered_map<Name, std::unordered_set<Name>> callers;
     UniqueDeferredQueue<Name> work;
     for (auto& [func, info] : analysis.map) {
       for (auto& called : info.calledFunctions) {
-        calledBy[called].push_back(func->name);
+        callers[called].insert(func->name);
       }
       work.push(func->name);
     }
 
+    // Compute the transitive closure of the call graph, that is, fill out
+    // |callers| so that it contains the list of all callers - even through a
+    // chain - of each function.
     while (!work.empty()) {
       auto func = work.pop();
-      auto& funcEffects = analysis.map[module->getFunction(func)].effects;
 
-      for (auto& caller : calledBy[func]) {
+      // Iterate over a copy to avoid iterator invalidation.
+      auto callersOfFunc = callers[func];
+      for (auto& caller : callersOfFunc) {
+        // We know |caller| calls |func|, and therefore each call of |caller|
+        // also calls func:
+        //
+        //   |caller of caller| => |caller| => |func|
+        //
+
+        auto callersOfCaller = callers[caller];
+        for (auto& callerOfCaller : callersOfCaller) {
+          if (callers[func].insert(callerOfCaller).second) {
+            // We found a new caller, which means more work: everything that
+            // |func| calls must be recomputed, as more things might call them.
+            for (auto& called : analysis.map[module->getFunction(func)].calledFunctions) {
+              work.push(called);
+            }
+          }
+        }
+      }
+    }
+
+    // Now that we have transitively propagated all static calls, apply that
+    // information.
+    for (auto& [func, info] : analysis.map) {
+      auto& funcEffects = analysis.map[func].effects;
+
+      for (auto& caller : callers[func->name]) {
         auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
         if (!callerEffects) {
           // Nothing is known for the caller, which is already the worst case.
           continue;
         }
 
-        // Add func's effects to the caller, and queue more work if we changed
-        // anything.
-
         if (!funcEffects) {
           // Nothing is known for the called function, which means nothing is
           // known for the caller now either.
           callerEffects.reset();
-          work.push(caller);
           continue;
         }
 
-        auto oldEffects = *callerEffects;
-        callerEffects->mergeIn(*funcEffects);
-        if (*callerEffects != oldEffects) {
-          work.push(caller);
-        }
+        // Add func's effects to the caller.
+        callerEffects->mergeIn(*funcEffects); // TODO: remove ==
       }
     }
 
