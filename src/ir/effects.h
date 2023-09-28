@@ -354,7 +354,7 @@ public:
     }
   }
 
-  bool operator==(const EffectAnalyzer& other) {
+  bool operator==(const EffectAnalyzer& other) const {
     return branchesOut == other.branchesOut &&
     calls == other.calls &&
     readsMemory == other.readsMemory &&
