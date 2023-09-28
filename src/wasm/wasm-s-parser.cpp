@@ -27,6 +27,8 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 
+using namespace std::string_literals;
+
 #define abort_on(str)                                                          \
   { throw ParseException(std::string("abort_on ") + str); }
 #define element_assert(condition)                                              \
@@ -3507,7 +3509,7 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     ex->kind = ExternalKind::Function;
   }
   if (wasm.getExportOrNull(ex->name)) {
-    throw SParseException("duplicate export", s;
+    throw SParseException("duplicate export", s);
   }
   wasm.addExport(ex.release());
 }
