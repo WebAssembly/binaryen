@@ -51,16 +51,20 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Gather the effects.
-        funcInfo.effects = std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
+        funcInfo.effects =
+          std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
 
         if (funcInfo.effects->calls) {
           // There are calls in this function, which we must analyze.
-          struct CallScanner : public PostWalker<CallScanner, UnifiedExpressionVisitor<CallScanner>> {
+          struct CallScanner
+            : public PostWalker<CallScanner,
+                                UnifiedExpressionVisitor<CallScanner>> {
             Module& wasm;
             PassOptions& options;
             FuncInfo& funcInfo;
 
-            CallScanner(Module& wasm, PassOptions& options, FuncInfo& funcInfo) : wasm(wasm), options(options), funcInfo(funcInfo) {}
+            CallScanner(Module& wasm, PassOptions& options, FuncInfo& funcInfo)
+              : wasm(wasm), options(options), funcInfo(funcInfo) {}
 
             void visitExpression(Expression* curr) {
               ShallowEffectAnalyzer effects(options, wasm, curr);

@@ -6,8 +6,7 @@
 
 using namespace wasm;
 
-class EffectsTest : public testing::Test {
-};
+class EffectsTest : public testing::Test {};
 
 TEST_F(EffectsTest, TestEquality) {
   PassOptions options;
@@ -31,12 +30,12 @@ TEST_F(EffectsTest, TestEquality) {
   a.isAtomic = true;
   a.throws_ = true;
   a.danglingPop = true;
-  a.localsRead = { 42 };
-  a.localsWritten = { 99 };
-  a.mutableGlobalsRead = { "glob" };
-  a.globalsWritten = { "other" };
-  a.breakTargets = { "block" };
-  a.delegateTargets = { "delegate" };
+  a.localsRead = {42};
+  a.localsWritten = {99};
+  a.mutableGlobalsRead = {"glob"};
+  a.globalsWritten = {"other"};
+  a.breakTargets = {"block"};
+  a.delegateTargets = {"delegate"};
 
   EXPECT_TRUE(a == a);
   EXPECT_EQ(a, a);
