@@ -55,7 +55,11 @@ struct GenerateGlobalEffects : public Pass {
           std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
 
         if (funcInfo.effects->calls) {
-          // There are calls in this function, which we must analyze.
+          // There are calls in this function, which we will analyze in detail.
+          // Clear the |calls| field regardless, as we'll handle calls of all
+          // sorts below.
+          funcInfo.effects->calls = false;
+
           struct CallScanner
             : public PostWalker<CallScanner,
                                 UnifiedExpressionVisitor<CallScanner>> {
