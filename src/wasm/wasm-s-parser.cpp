@@ -53,8 +53,14 @@ namespace wasm {
 
 // Similar to ParseException but built from an Element.
 struct SParseException : public ParseException {
+  // Receive an element and report its contents, line and column.
   SParseException(std::string text, const Element& s) :
     ParseException(text + ": " + s.toString(), s.line, s.col) {}
+
+  // Receive a parent and child element. We print out the full parent for
+  // context, but report the child line and column inside it.
+  SParseException(std::string text, const Element& parent, const Element& child) :
+    ParseException(text + ": " + parent.toString(), child.line, child.col) {}
 };
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), REC("rec"),
@@ -976,7 +982,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     if (super) {
       auto it = typeIndices.find(super->toString());
       if (!super->dollared() || it == typeIndices.end()) {
-        throw SParseException("unknown supertype", elem);
+        throw SParseException("unknown supertype", elem, *super);
       }
       builder[index].subTypeOf(builder[it->second]);
     }
@@ -990,7 +996,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     msg << "Invalid type: " << err->reason;
     for (auto& [name, index] : typeIndices) {
       if (index == err->index) {
-        Fatal() << msg.str() << " at type " << name;
+        Fatal() << msg.str() << " at type $" << name;
       }
     }
     // No name, just report the index.
@@ -2792,7 +2798,7 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   ret->tuple = parseExpression(s[2]);
   if (ret->tuple->type != Type::unreachable &&
       ret->index >= ret->tuple->type.size()) {
-    throw SParseException("Bad index on tuple.extract", s);
+    throw SParseException("Bad index on tuple.extract", s, *s[1]);
   }
   ret->finalize();
   return ret;
