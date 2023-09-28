@@ -121,7 +121,8 @@ std::string Element::toString() const {
 std::string Element::forceString() const {
   std::stringstream ss;
   ss << *this;
-  return ss.str();
+  // Limit the size to something reasonable for printing out.
+  return ss.str().substr(0, 80);
 }
 
 Element* Element::setString(IString str__, bool dollared__, bool quoted__) {
