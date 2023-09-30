@@ -163,20 +163,20 @@
 //    calls, so that you know when to start an asynchronous operation and
 //    when to propagate results back.
 //
-// These four functions are exported so that you can call them from the
+// These five functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
 // around that, you can create imports to asyncify.start_unwind,
-// asyncify.stop_unwind, asyncify.start_rewind, and asyncify.stop_rewind;
-// if those exist when this pass runs then it will turn those into direct
-// calls to the functions that it creates. Note that when doing everything
-// in wasm like this, Asyncify must not instrument your "runtime" support
-// code, that is, the code that initiates unwinds and rewinds and stops them.
-// If it did, the unwind would not stop until you left the wasm module
-// entirely, etc. Therefore we do not instrument a function if it has
-// a call to the four asyncify_* methods. Note that you may need to disable
-// inlining if that would cause code that does need to be instrumented
-// show up in that runtime code.
+// asyncify.stop_unwind, asyncify.start_rewind, asyncify.stop_rewind, and
+// asyncify.get_state; if those exist when this pass runs then it will turn
+// those into direct calls to the functions that it creates. Note that when
+// doing everything in wasm like this, Asyncify must not instrument your
+// "runtime" support code, that is, the code that initiates unwinds and
+// rewinds and stops them. If it did, the unwind would not stop until you
+// left the wasm module entirely, etc. Therefore we do not instrument a
+// function if it has a call to the five asyncify_* methods. Note that you
+// may need to disable inlining if that would cause code that does need to
+// be instrumented show up in that runtime code.
 //
 // To use this API, call asyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
@@ -336,6 +336,7 @@ static const Name START_UNWIND = "start_unwind";
 static const Name STOP_UNWIND = "stop_unwind";
 static const Name START_REWIND = "start_rewind";
 static const Name STOP_REWIND = "stop_rewind";
+static const Name GET_STATE = "get_state";
 static const Name ASYNCIFY_GET_CALL_INDEX = "__asyncify_get_call_index";
 static const Name ASYNCIFY_CHECK_CALL_INDEX = "__asyncify_check_call_index";
 
@@ -553,6 +554,8 @@ public:
           renamings[func->name] = ASYNCIFY_START_REWIND;
         } else if (func->base == STOP_REWIND) {
           renamings[func->name] = ASYNCIFY_STOP_REWIND;
+        } else if (func->base == GET_STATE) {
+          renamings[func->name] = ASYNCIFY_GET_STATE;
         } else {
           Fatal() << "call to unidenfied asyncify import: " << func->base;
         }
