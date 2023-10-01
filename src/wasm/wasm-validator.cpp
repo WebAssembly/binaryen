@@ -2549,6 +2549,10 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
         curr->ref->type.isRef(), curr, "ref.test ref must have ref type")) {
     return;
   }
+  if (!shouldBeTrue(
+        curr->castType.isRef(), curr, "ref.test target must have ref type")) {
+    return;
+  }
   shouldBeEqual(
     curr->castType.getHeapType().getBottom(),
     curr->ref->type.getHeapType().getBottom(),
