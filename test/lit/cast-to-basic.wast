@@ -5,14 +5,14 @@
 ;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK:      (func $test (type $1) (param $x structref) (result i32)
   ;; CHECK-NEXT:  (ref.test (ref struct)
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test (result i32)
+  (func $test (param $x (ref null struct)) (result i32)
     (ref.test (ref struct)
-      (ref.null none)
+      (local.get $x)
     )
   )
 
