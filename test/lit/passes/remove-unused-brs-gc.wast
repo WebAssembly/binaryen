@@ -639,7 +639,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.test (ref $struct)
+ ;; CHECK-NEXT:    (ref.test (ref none)
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 0)

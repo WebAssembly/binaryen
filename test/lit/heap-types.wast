@@ -8,12 +8,11 @@
 ;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref $struct.A)
+  ;; CHECK-NEXT:   (ref.test (ref none)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
