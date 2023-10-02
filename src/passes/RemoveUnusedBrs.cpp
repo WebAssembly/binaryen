@@ -86,20 +86,29 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 // See:
 //  * https://github.com/WebAssembly/binaryen/pull/4228
 //  * https://github.com/WebAssembly/binaryen/issues/5983
-const Index TooCostlyToRunUnconditionally = 8;
+const Index TooCostlyToRunUnconditionally = 6;
+
+// A small amount that we are always willing to run unconditionally.
+const Index AlwaysAcceptableUnconditionally = 1;
 
 static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
               "We never run code unconditionally if it has unacceptable cost");
 
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
                                           Index cost) {
-  if (passOptions.shrinkLevel <= 1) {
+  if (passOptions.shrinkLevel == 0) {
+    // We are focused on speed. Any extra cost is risky, but allow a small
+    // amount.
+    return cost > TooCostlyToRunUnconditionally / 2;
+  } else if (passOptions.shrinkLevel == 1) {
+    // We are optimizing for size in a balanced manner. Allow some extra
+    // overhead here.
     return cost >= TooCostlyToRunUnconditionally;
+  } else {
+    // We should have already decided what to do if shrink_level=2 and not
+    // gotten here, and other values are invalid.
+    WASM_UNREACHABLE("bad shrink level");
   }
-
-  // We should have already decided what to do if shrink_level=2 and not
-  // gotten here, and other values are invalid.
-  WASM_UNREACHABLE("bad shrink level");
 }
 
 // As above, but a single expression that we are considering moving to a place
