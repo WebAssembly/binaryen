@@ -88,9 +88,6 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 //  * https://github.com/WebAssembly/binaryen/issues/5983
 const Index TooCostlyToRunUnconditionally = 6;
 
-// A small amount that we are always willing to run unconditionally.
-const Index AlwaysAcceptableUnconditionally = 1;
-
 static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
               "We never run code unconditionally if it has unacceptable cost");
 
