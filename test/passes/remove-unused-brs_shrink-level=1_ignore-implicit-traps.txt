@@ -24,13 +24,13 @@
    )
   )
   (drop
-   (if (result i32)
-    (i32.const 1)
+   (select
     (i32.rem_s
      (i32.const 11)
      (i32.const 12)
     )
     (i32.const 27)
+    (i32.const 1)
    )
   )
   (drop
