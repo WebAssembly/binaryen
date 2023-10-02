@@ -86,7 +86,7 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 // See:
 //  * https://github.com/WebAssembly/binaryen/pull/4228
 //  * https://github.com/WebAssembly/binaryen/issues/5983
-const Index TooCostlyToRunUnconditionally = 9;
+const Index TooCostlyToRunUnconditionally = 8;
 
 // A small amount that we are always willing to run unconditionally.
 const Index AlwaysAcceptableUnconditionally = 1;

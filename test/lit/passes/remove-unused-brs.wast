@@ -27,7 +27,14 @@
   )
 
   ;; CHECK:      (func $selectify-simple (type $0) (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (i32.lt_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 48)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.lt_u
   ;; CHECK-NEXT:    (i32.sub
@@ -38,13 +45,6 @@
   ;; CHECK-NEXT:     (i32.const 97)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 6)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.lt_u
-  ;; CHECK-NEXT:    (i32.sub
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (i32.const 48)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
