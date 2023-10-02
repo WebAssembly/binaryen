@@ -11,13 +11,8 @@ string(APPEND WASM_INTRINSICS_EMBED "0x00")
 
 configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
-set(passes_HEADERS
-  call-utils.h
-  intrinsics-module.h
-  opt-utils.h
-  param-utils.h
-  passes.h
-)
+FILE(GLOB passes_HEADERS *.h)
+
 set(passes_SOURCES
   param-utils.cpp
   pass.cpp
@@ -49,6 +44,7 @@ set(passes_SOURCES
   GlobalStructInference.cpp
   GlobalTypeOptimization.cpp
   GUFA.cpp
+  hash-stringify-walker.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -129,13 +125,8 @@ set(passes_SOURCES
 # suffix_tree_node source files no longer depend on LLVM code in the
 # third_party folder
 if(EMSCRIPTEN)
-  add_library(passes OBJECT ${passes_SOURCES})
-else()
-  set(passes_with_suffix_tree_SOURCES
-    stringify-walker.h
-    stringify-walker-impl.h
-  	hash-stringify-walker.cpp
-	${passes_SOURCES}
-  )
-  add_library(passes OBJECT ${passes_with_suffix_tree_SOURCES})
+  list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker.h)
+  list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker-impl.h)
+  list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
 endif()
+add_library(passes OBJECT ${passes_SOURCES})

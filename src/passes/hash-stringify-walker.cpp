@@ -68,9 +68,20 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
   }
 }
 
+// Deduplicate substrings by iterating through the list of substrings, keeping
+// only those whose list of end indices is disjoint from the set of end indices
+// for all substrings kept so far. Substrings that are contained within other
+// substrings will always share an end index with those other substrings. Note
+// that this deduplication may be over-aggressive, since it will remove
+// substrings that are contained within any previous substring, even if they
+// have many other occurrences that are not inside other substrings. Part of the
+// reason dedupe can be so aggressive is an assumption 1) that the input
+// substrings have been sorted so that the longest substrings with the most
+// repeats come first and 2) these are more worthwhile to keep than subsequent
+// substrings of substrings, even if they appear more times.
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
   const std::vector<SuffixTree::RepeatedSubstring> substrings) {
-  std::set<uint32_t> seen;
+  std::unordered_set<uint32_t> seen;
   std::vector<SuffixTree::RepeatedSubstring> result;
   for (auto substring : substrings) {
     std::vector<uint32_t> idxToInsert;
@@ -82,9 +93,9 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
       // sequences with the same endIdx, and we generally prefer to outline
       // longer repeat sequences.
       uint32_t endIdx = substring.Length + startIdx;
-      if (auto found = seen.find(endIdx); found != seen.end()) {
+      if (seen.count(endIdx)) {
         seenEndIdx = true;
-        continue;
+        break;
       }
       idxToInsert.push_back(endIdx);
     }
