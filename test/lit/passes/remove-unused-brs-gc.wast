@@ -655,22 +655,20 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result (ref null $struct))
- ;; CHECK-NEXT:    (block (result (ref null $struct))
- ;; CHECK-NEXT:     (block $something (result (ref null $struct))
- ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (block (result nullref)
- ;; CHECK-NEXT:        (br_on_non_null $something
- ;; CHECK-NEXT:         (local.get $struct)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (ref.null none)
+ ;; CHECK-NEXT:   (if (result (ref null $struct))
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (block $something (result (ref null $struct))
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (block (result nullref)
+ ;; CHECK-NEXT:       (br_on_non_null $something
+ ;; CHECK-NEXT:        (local.get $struct)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
