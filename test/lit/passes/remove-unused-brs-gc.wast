@@ -714,6 +714,8 @@
     )
    )
   )
+  ;; We do not selectify here because the amount of work in the if is
+  ;; significant (there is a cast and a branch).
   (drop
    (if (result anyref)
     (local.get $x)
