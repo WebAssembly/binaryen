@@ -706,12 +706,22 @@ private:
         parent.delegateTargets.insert(curr->delegateTarget);
       }
     }
+    void visitTryTable(TryTable* curr) {
+      for (auto name : curr->catchDests) {
+        parent.breakTargets.insert(name);
+      }
+    }
     void visitThrow(Throw* curr) {
       if (parent.tryDepth == 0) {
         parent.throws_ = true;
       }
     }
     void visitRethrow(Rethrow* curr) {
+      if (parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
+    void visitThrowRef(ThrowRef* curr) {
       if (parent.tryDepth == 0) {
         parent.throws_ = true;
       }

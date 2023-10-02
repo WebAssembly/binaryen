@@ -900,6 +900,47 @@ void Throw::finalize() { type = Type::unreachable; }
 
 void Rethrow::finalize() { type = Type::unreachable; }
 
+void ThrowRef::finalize() { type = Type::unreachable; }
+
+bool TryTable::hasCatchAll() const {
+  return std::any_of(
+    catchRefs.begin(), catchRefs.end(), [](bool v) { return v; });
+}
+
+static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
+  if (!wasm) {
+    return;
+  }
+  curr->sentTypes.clear();
+  Type exnref = Type(HeapType::exn, Nullable);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    auto tagName = curr->catchTags[i];
+    std::vector<Type> sentType;
+    if (tagName) {
+      for (auto t : wasm->getTag(tagName)->sig.params) {
+        sentType.push_back(t);
+      }
+    }
+    if (curr->catchRefs[i]) {
+      sentType.push_back(exnref);
+    }
+    curr->sentTypes.push_back(sentType.empty() ? Type::none : Type(sentType));
+  }
+}
+
+void TryTable::finalize(Module* wasm) {
+  type = body->type;
+  populateTryTableSentTypes(this, wasm);
+}
+
+void TryTable::finalize(Type type_, Module* wasm) {
+  type = type_;
+  if (type == Type::none && body->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  populateTryTableSentTypes(this, wasm);
+}
+
 void TupleMake::finalize() {
   std::vector<Type> types;
   types.reserve(operands.size());

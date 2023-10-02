@@ -59,7 +59,7 @@ inline bool isSymmetric(Binary* binary) {
 
 inline bool isControlFlowStructure(Expression* curr) {
   return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
-         curr->is<Try>();
+         curr->is<Try>() || curr->is<TryTable>();
 }
 
 // Check if an expression is a control flow construct with a name, which implies
@@ -478,8 +478,8 @@ inline bool isResultFallthrough(Expression* curr) {
   // unreachable, for example, but then there is no meaningful answer to give
   // anyhow.
   return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
-         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
-         curr->is<Break>();
+         curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>() ||
+         curr->is<Select>() || curr->is<Break>();
 }
 
 inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {

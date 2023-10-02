@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "wasm-binary.h"
 #include "wasm-debug.h"
 
 namespace wasm {
@@ -1953,11 +1954,32 @@ void BinaryInstWriter::visitTry(Try* curr) {
   emitResultType(curr->type);
 }
 
+void BinaryInstWriter::visitTryTable(TryTable* curr) {
+  // the binary format requires this; we have a block if we need one
+  o << int8_t(BinaryConsts::TryTable);
+  emitResultType(curr->type);
+  o << U32LEB(curr->catchTags.size());
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    if (curr->catchTags[i]) {
+      o << (curr->catchRefs[i] ? int8_t(BinaryConsts::CatchRef)
+                               : int8_t(BinaryConsts::Catch));
+      o << U32LEB(parent.getTagIndex(curr->catchTags[i]));
+    } else {
+      o << (curr->catchRefs[i] ? int8_t(BinaryConsts::CatchAllRef)
+                               : int8_t(BinaryConsts::CatchAll));
+    }
+    o << U32LEB(getBreakIndex(curr->catchDests[i]));
+  }
+  // catch_*** clauses should refer to block labels without entering the try
+  // scope. So we do this at the end.
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+}
+
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
-  o << int8_t(BinaryConsts::Catch)
+  o << int8_t(BinaryConsts::Catch_P3)
     << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
@@ -1965,7 +1987,7 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
-  o << int8_t(BinaryConsts::CatchAll);
+  o << int8_t(BinaryConsts::CatchAll_P3);
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {
@@ -1984,6 +2006,10 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
   o << int8_t(BinaryConsts::Rethrow) << U32LEB(getBreakIndex(curr->target));
+}
+
+void BinaryInstWriter::visitThrowRef(ThrowRef* curr) {
+  o << int8_t(BinaryConsts::ThrowRef);
 }
 
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }

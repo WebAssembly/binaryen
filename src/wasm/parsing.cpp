@@ -84,10 +84,11 @@ Name UniqueNameMapper::sourceToUnique(Name sName) {
     return DELEGATE_CALLER_TARGET;
   }
   if (labelMappings.find(sName) == labelMappings.end()) {
-    throw ParseException("bad label in sourceToUnique");
+    throw ParseException("bad label in sourceToUnique: " + sName.toString());
   }
   if (labelMappings[sName].empty()) {
-    throw ParseException("use of popped label in sourceToUnique");
+    throw ParseException("use of popped label in sourceToUnique: " +
+                         sName.toString());
   }
   return labelMappings[sName].back();
 }

@@ -3010,7 +3010,7 @@ void WasmBinaryReader::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll ||
+          peek == BinaryConsts::Catch_P3 || peek == BinaryConsts::CatchAll_P3 ||
           peek == BinaryConsts::Delegate) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
@@ -3955,8 +3955,8 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       }
       break;
     case BinaryConsts::Else:
-    case BinaryConsts::Catch:
-    case BinaryConsts::CatchAll: {
+    case BinaryConsts::Catch_P3:
+    case BinaryConsts::CatchAll_P3: {
       curr = nullptr;
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
@@ -4014,11 +4014,17 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
+    case BinaryConsts::TryTable:
+      visitTryTable((curr = allocator.alloc<TryTable>())->cast<TryTable>());
+      break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
       break;
     case BinaryConsts::Rethrow:
       visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
+      break;
+    case BinaryConsts::ThrowRef:
+      visitThrowRef((curr = allocator.alloc<ThrowRef>())->cast<ThrowRef>());
       break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
@@ -6917,9 +6923,9 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   // here, then do that later.
   std::vector<Index> tagIndexes;
 
-  while (lastSeparator == BinaryConsts::Catch ||
-         lastSeparator == BinaryConsts::CatchAll) {
-    if (lastSeparator == BinaryConsts::Catch) {
+  while (lastSeparator == BinaryConsts::Catch_P3 ||
+         lastSeparator == BinaryConsts::CatchAll_P3) {
+    if (lastSeparator == BinaryConsts::Catch_P3) {
       auto index = getU32LEB();
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");
@@ -7030,6 +7036,51 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   breakTargetNames.erase(catchLabel);
 }
 
+void WasmBinaryReader::visitTryTable(TryTable* curr) {
+  BYN_TRACE("zz node: TryTable\n");
+
+  // For simplicity of implementation, like if scopes, we create a hidden block
+  // within each try-body, and let branches target those inner blocks instead.
+  curr->type = getType();
+  auto numCatches = getU32LEB();
+  // We cannot immediately update tagRefs in the loop below, as catchTags is
+  // being grown, an so references would get invalidated. Store the indexes
+  // here, then do that later.
+  std::vector<Index> tagIndexes;
+
+  for (size_t i = 0; i < numCatches; i++) {
+    uint8_t code = getInt8();
+    if (code == BinaryConsts::Catch || code == BinaryConsts::CatchRef) {
+      auto index = getU32LEB();
+      if (index >= wasm.tags.size()) {
+        throwError("bad tag index");
+      }
+      tagIndexes.push_back(index);
+      auto* tag = wasm.tags[index].get();
+      curr->catchTags.push_back(tag->name);
+    } else {
+      tagIndexes.push_back(-1); // unused
+      curr->catchTags.push_back(Name());
+    }
+    curr->catchDests.push_back(getBreakTarget(getU32LEB()).name);
+    curr->catchRefs.push_back(code == BinaryConsts::CatchRef ||
+                              code == BinaryConsts::CatchAllRef);
+  }
+
+  for (Index i = 0; i < tagIndexes.size(); i++) {
+    if (curr->catchTags[i]) {
+      // We don't know the final name yet.
+      tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
+    }
+  }
+
+  // catch_*** clauses should refer to block labels without entering the try
+  // scope. So we do this after reading catch clauses.
+  startControlFlow(curr);
+  curr->body = getBlockOrSingleton(curr->type);
+  curr->finalize(curr->type, &wasm);
+}
+
 void WasmBinaryReader::visitThrow(Throw* curr) {
   BYN_TRACE("zz node: Throw\n");
   auto index = getU32LEB();
@@ -7055,6 +7106,12 @@ void WasmBinaryReader::visitRethrow(Rethrow* curr) {
     throwError(std::string("rethrow target cannot use internal name ") +
                DELEGATE_CALLER_TARGET.toString());
   }
+  curr->finalize();
+}
+
+void WasmBinaryReader::visitThrowRef(ThrowRef* curr) {
+  BYN_TRACE("zz node: ThrowRef\n");
+  curr->exnref = popNonVoidExpression();
   curr->finalize();
 }
 

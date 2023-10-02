@@ -1152,6 +1152,10 @@ struct InfoCollector
 #endif
     }
   }
+  void visitTryTable(TryTable* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
     if (!isRelevant(operands)) {
@@ -1165,6 +1169,10 @@ struct InfoCollector
     }
   }
   void visitRethrow(Rethrow* curr) {}
+  void visitThrowRef(ThrowRef* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
 
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {

@@ -78,6 +78,13 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getSentType());
+    } else if (auto* tt = expr->dynCast<TryTable>()) {
+      for (Index i = 0; i < tt->catchTags.size(); i++) {
+        auto dest = tt->catchDests[i];
+        if (dest == name) {
+          func(name, tt->sentTypes[i]);
+        }
+      }
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -97,6 +104,10 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
+    } else if (auto* tt = expr->dynCast<TryTable>()) {
+      // The values are supplied by throwing instructions, so we are unable to
+      // know what they will be here.
+      func(name, nullptr);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }

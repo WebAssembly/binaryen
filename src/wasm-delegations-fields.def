@@ -596,6 +596,14 @@ switch (DELEGATE_ID) {
     DELEGATE_END(Try);
     break;
   }
+  case Expression::Id::TryTableId: {
+    DELEGATE_START(TryTable);
+    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(TryTable, catchDests);
+    DELEGATE_FIELD_NAME_KIND_VECTOR(TryTable, catchTags, ModuleItemKind::Tag);
+    DELEGATE_FIELD_CHILD(TryTable, body);
+    DELEGATE_END(TryTable);
+    break;
+  }
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
@@ -607,6 +615,12 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Rethrow);
     DELEGATE_FIELD_SCOPE_NAME_USE(Rethrow, target);
     DELEGATE_END(Rethrow);
+    break;
+  }
+  case Expression::Id::ThrowRefId: {
+    DELEGATE_START(ThrowRef);
+    DELEGATE_FIELD_CHILD(ThrowRef, exnref);
+    DELEGATE_END(ThrowRef);
     break;
   }
   case Expression::Id::NopId: {

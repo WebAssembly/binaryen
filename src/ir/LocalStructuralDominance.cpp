@@ -207,6 +207,14 @@ LocalStructuralDominance::LocalStructuralDominance(Function* func,
             currp = &curr->cast<Try>()->body;
             continue;
           }
+          case Expression::Id::TryTableId: {
+            self->pushTask(Scanner::doEndScope, currp);
+            // Just call the task immediately.
+            doBeginScope(self, currp);
+            // Immediately continue in the try_table.
+            currp = &curr->cast<TryTable>()->body;
+            continue;
+          }
 
           default: {
             // Control flow structures have been handled. This is an expression,

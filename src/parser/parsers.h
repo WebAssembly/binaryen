@@ -117,6 +117,7 @@ template<typename Ctx> Result<> makeTableFill(Ctx&, Index);
 template<typename Ctx> Result<> makeTableCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeThrow(Ctx&, Index);
 template<typename Ctx> Result<> makeRethrow(Ctx&, Index);
+template<typename Ctx> Result<> makeThrowRef(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleMake(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleExtract(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleDrop(Ctx&, Index);
@@ -1509,6 +1510,10 @@ template<typename Ctx> Result<> makeRethrow(Ctx& ctx, Index pos) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
   return ctx.makeRethrow(pos, *label);
+}
+
+template<typename Ctx> Result<> makeThrowRef(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {

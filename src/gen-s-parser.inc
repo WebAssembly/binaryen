@@ -3393,15 +3393,31 @@ switch (buf[0]) {
           case 'e':
             if (op == "then"sv) { return makeThenOrElse(s); }
             goto parse_error;
-          case 'r':
-            if (op == "throw"sv) { return makeThrow(s); }
+          case 'r': {
+            switch (buf[5]) {
+              case '\0':
+                if (op == "throw"sv) { return makeThrow(s); }
+                goto parse_error;
+              case '_':
+                if (op == "throw_ref"sv) { return makeThrowRef(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          default: goto parse_error;
+        }
+      }
+      case 'r': {
+        switch (buf[3]) {
+          case '\0':
+            if (op == "try"sv) { return makeTry(s); }
+            goto parse_error;
+          case '_':
+            if (op == "try_table"sv) { return makeTryTable(s); }
             goto parse_error;
           default: goto parse_error;
         }
       }
-      case 'r':
-        if (op == "try"sv) { return makeTry(s); }
-        goto parse_error;
       case 'u': {
         switch (buf[6]) {
           case 'd':
@@ -8646,12 +8662,23 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'h':
-        if (op == "throw"sv) {
-          CHECK_ERR(makeThrow(ctx, pos));
-          return Ok{};
+      case 'h': {
+        switch (buf[5]) {
+          case '\0':
+            if (op == "throw"sv) {
+              CHECK_ERR(makeThrow(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          case '_':
+            if (op == "throw_ref"sv) {
+              CHECK_ERR(makeThrowRef(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
         }
-        goto parse_error;
+      }
       case 'u': {
         switch (buf[6]) {
           case 'd':

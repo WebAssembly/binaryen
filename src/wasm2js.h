@@ -2263,11 +2263,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitTryTable(TryTable* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitThrow(Throw* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
     Ref visitRethrow(Rethrow* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitThrowRef(ThrowRef* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
