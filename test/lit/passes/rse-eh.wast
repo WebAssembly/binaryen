@@ -4,7 +4,7 @@
 (module
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
-  ;; CHECK:      (tag $e2 (param))
+  ;; CHECK:      (tag $e2)
   (tag $e2)
 
   ;; CHECK:      (func $try1 (type $0)

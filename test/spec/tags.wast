@@ -15,11 +15,6 @@
 )
 
 (assert_invalid
-  (module (tag $e (param i32) (result i32)))
-  "Tag type's result type should be none"
-)
-
-(assert_invalid
   (module (tag $e (attr 1) (param i32)))
   "Currently only attribute 0 is supported"
 )
