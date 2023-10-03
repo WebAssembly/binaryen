@@ -51,6 +51,12 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-gc',
                            ['--enable-reference-types'])
 
+    def check_typed_continuations(self, module, error):
+        # Typed continuations implies function references (which is provided by
+        # gc in binaryen, and implies reference types) and exceptions
+        self.check_feature(module, error, '--enable-typed-continuations',
+                           ['--enable-gc', '--enable-reference-types', '--enable-exception-handling'])
+
     def test_v128_signature(self):
         module = '''
         (module
@@ -277,6 +283,16 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_gc(module, 'all used types should be allowed')
+
+    def test_tag_results(self):
+        module = '''
+        (module
+         (tag $foo (result i32))
+        )
+        '''
+        self.check_typed_continuations(module,
+                                       'Tags with result types require typed '
+                                       'continuations feature [--enable-typed-continuations]')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):

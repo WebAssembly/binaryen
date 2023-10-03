@@ -1903,7 +1903,7 @@
   ;; CHECK:      (tag $something (param anyref))
   (tag $something (param (ref null any)))
 
-  ;; CHECK:      (tag $empty (param))
+  ;; CHECK:      (tag $empty)
   (tag $empty (param))
 
   ;; CHECK:      (func $func (type $0)

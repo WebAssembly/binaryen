@@ -2374,6 +2374,12 @@ void FunctionValidator::visitTry(Try* curr) {
       getStream() << "tag name is invalid: " << tagName << "\n";
     }
 
+    if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      getStream()
+        << "catch's tag (" << tagName
+        << ") has result values, which is not allowed for exception handling";
+    }
+
     auto* catchBody = curr->catchBodies[i];
     auto pops = EHUtils::findPops(catchBody);
     if (tag->sig.params == Type::none) {
@@ -2432,6 +2438,11 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!shouldBeTrue(!!tag, curr, "throw's tag must exist")) {
     return;
   }
+  shouldBeEqual(
+    tag->sig.results,
+    Type(Type::none),
+    curr,
+    "tags with result types must not be used for exception handling");
   if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
                     curr,
                     "tag's param numbers must match")) {
@@ -3674,10 +3685,14 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    info.shouldBeEqual(curr->sig.results,
-                       Type(Type::none),
-                       curr->name,
-                       "Tag type's result type should be none");
+    // FIXME(frank-emrich) When validating exception instructions, check that
+    // they only use result-less tags
+    if (curr->sig.results != Type(Type::none)) {
+      info.shouldBeTrue(module.features.hasTypedContinuations(),
+                        curr->name,
+                        "Tags with result types require typed continuations "
+                        "feature [--enable-typed-continuations]");
+    }
     if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(
         module.features.hasMultivalue(),
