@@ -109,44 +109,40 @@ struct GenerateGlobalEffects : public Pass {
     // callers[foo] = [func that calls foo, another func that calls foo, ..]
     //
     std::unordered_map<Name, std::unordered_set<Name>> callers;
-    UniqueDeferredQueue<Name> work;
+
+    // Our work queue contains info about a new call pair: a call from a caller
+    // to a called function, that is information we then apply and propagate.
+    using CallPair = std::pair<Name, Name>; // { caller, called }
+    UniqueDeferredQueue<CallPair> work;
     for (auto& [func, info] : analysis.map) {
       for (auto& called : info.calledFunctions) {
-        callers[called].insert(func->name);
+        work.push({func->name, called});
       }
-      work.push(func->name);
     }
 
     // Compute the transitive closure of the call graph, that is, fill out
     // |callers| so that it contains the list of all callers - even through a
     // chain - of each function.
     while (!work.empty()) {
-      auto func = work.pop();
+      auto [caller, called] = work.pop();
 
-      // Iterate over a copy to avoid iterator invalidation.
-      auto callersOfFunc = callers[func];
-      for (auto& caller : callersOfFunc) {
-        // We know |caller| calls |func|, and therefore each caller of |caller|
-        // also calls func:
-        //
-        //   |caller of caller| => |caller| => |func|
-        //
-        auto callersOfCaller = callers[caller];
-        for (auto& callerOfCaller : callersOfCaller) {
-          if (callers[func].insert(callerOfCaller).second) {
-            // We found a new caller, which means more work: everything that
-            // |func| calls must be recomputed, as more things might call them.
-            for (auto& called :
-                 analysis.map[module->getFunction(func)].calledFunctions) {
-              if (!callers[called].count(callerOfCaller)) {
-                work.push(called);
-              }
-              // Thjis or something else iloops, XX no, just slows...
-              /*
-              azakai@azakai:~/Dev/2-binaryen$ BINARYEN_PASS_DEBUG=1 bin/wasm-opt ../binaryen/calc_export_j2wasm.wasm -all -tnh --closed-world --metrics --generate-global-effects -O3 --generate-global-effects  --gufa --generate-global-effects -O3 --metrics -o c.wasm --no-validation
-              */
-            }
-          }
+      // We must not already have an entry for this call (that would imply we
+      // are doing wasted work).
+      assert(!callers[called].count(caller));
+
+      // Apply the new call information.
+      callers[called].insert(caller);
+
+      // We just learned that |caller| calls |called|. It also calls
+      // transitively, which we need to propagate to all places unaware of that
+      // information yet.
+      //
+      //   caller => called => called by called
+      //
+      auto& calledInfo = analysis.map[module->getFunction(called)];
+      for (auto calledByCalled : calledInfo.calledFunctions) {
+        if (!callers[calledByCalled].count(caller)) {
+          work.push({caller, calledByCalled});
         }
       }
     }
