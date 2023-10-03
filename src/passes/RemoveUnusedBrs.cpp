@@ -80,13 +80,46 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
   return !EffectAnalyzer(options, wasm, ifCondition).invalidates(value);
 }
 
-// This leads to similar choices as LLVM does.
-// See https://github.com/WebAssembly/binaryen/pull/4228
-// It can be tuned more later.
-const Index TooCostlyToRunUnconditionally = 9;
+// This leads to similar choices as LLVM does in some cases, by balancing the
+// extra work of code that is run unconditionally with the speedup from not
+// branching to decide whether to run it or not.
+// See:
+//  * https://github.com/WebAssembly/binaryen/pull/4228
+//  * https://github.com/WebAssembly/binaryen/issues/5983
+const Index TooCostlyToRunUnconditionally = 8;
 
 static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
               "We never run code unconditionally if it has unacceptable cost");
+
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Index cost) {
+  if (passOptions.shrinkLevel == 0) {
+    // We are focused on speed. Any extra cost is risky, but allow a small
+    // amount.
+    return cost > TooCostlyToRunUnconditionally / 2;
+  } else if (passOptions.shrinkLevel == 1) {
+    // We are optimizing for size in a balanced manner. Allow some extra
+    // overhead here.
+    return cost >= TooCostlyToRunUnconditionally;
+  } else {
+    // We should have already decided what to do if shrink_level=2 and not
+    // gotten here, and other values are invalid.
+    WASM_UNREACHABLE("bad shrink level");
+  }
+}
+
+// As above, but a single expression that we are considering moving to a place
+// where it executes unconditionally.
+static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
+                                          Expression* curr) {
+  // If we care entirely about code size, just do it for that reason (early
+  // exit to avoid work).
+  if (passOptions.shrinkLevel >= 2) {
+    return false;
+  }
+  auto cost = CostAnalyzer(curr).cost;
+  return tooCostlyToRunUnconditionally(passOptions, cost);
+}
 
 // Check if it is not worth it to run code unconditionally. This
 // assumes we are trying to run two expressions where previously
@@ -95,23 +128,16 @@ static_assert(TooCostlyToRunUnconditionally < CostAnalyzer::Unacceptable,
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
                                           Expression* one,
                                           Expression* two) {
-  // If we care mostly about code size, just do it for that reason.
-  if (passOptions.shrinkLevel) {
+  // If we care entirely about code size, just do it for that reason (early
+  // exit to avoid work).
+  if (passOptions.shrinkLevel >= 2) {
     return false;
   }
-  // Consider the cost of executing all the code unconditionally.
-  auto total = CostAnalyzer(one).cost + CostAnalyzer(two).cost;
-  return total >= TooCostlyToRunUnconditionally;
-}
 
-// As above, but a single expression that we are considering moving to a place
-// where it executes unconditionally.
-static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
-                                          Expression* curr) {
-  if (passOptions.shrinkLevel) {
-    return false;
-  }
-  return CostAnalyzer(curr).cost >= TooCostlyToRunUnconditionally;
+  // Consider the cost of executing all the code unconditionally, which adds
+  // either the cost of running one or two, so the maximum is the worst case.
+  auto max = std::max(CostAnalyzer(one).cost, CostAnalyzer(two).cost);
+  return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {

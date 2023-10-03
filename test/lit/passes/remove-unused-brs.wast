@@ -31,10 +31,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.lt_u
   ;; CHECK-NEXT:    (i32.sub
-  ;; CHECK-NEXT:     (i32.or
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (i32.const 32)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 97)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 6)
@@ -60,10 +57,7 @@
       (i32.const 1)
       (i32.lt_u
         (i32.sub
-          (i32.or
-            (local.get $0)
-            (i32.const 32)
-          )
+          (local.get $0)
           (i32.const 97)
         )
         (i32.const 6)
