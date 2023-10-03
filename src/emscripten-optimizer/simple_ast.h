@@ -287,7 +287,7 @@ struct Value {
     return *this;
   }
 
-  bool operator==(const Value& other) {
+  bool operator==(const Value& other) const {
     if (type != other.type) {
       return false;
     }
