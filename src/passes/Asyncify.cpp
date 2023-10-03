@@ -49,13 +49,13 @@
 //    for obvious reasons, while Emterpreter-Async proved it is tolerable to
 //    have *some* overhead, if the transform can be applied selectively.
 //
-// The specific transform implemented here is nicknamed "Bysyncify" (as it is
-// in BinarYen, and "B" comes after "A"). It is simpler than old Asyncify but
-// has low overhead when properly optimized. Old Asyncify worked at the CFG
-// level and added branches there; new Asyncify on the other hand works on the
-// structured control flow of wasm and simply "skips over" code when rewinding
-// the stack, and jumps out when unwinding. The transformed code looks
+// This new Asyncify transformation implemented here is simpler than old
+// Asyncify but has low overhead when properly optimized. Old Asyncify worked at
+// the CFG level and added branches there; new Asyncify on the other hand works
+// on the structured control flow of wasm and simply "skips over" code when
+// rewinding the stack, and jumps out when unwinding. The transformed code looks
 // conceptually like this:
+// (We have three phases: normal, unwinding, and rewinding)
 //
 //   void foo(int x) {
 //     // new prelude
@@ -63,13 +63,13 @@
 //       loadLocals();
 //     }
 //     // main body starts here
-//     if (!rewinding) {
+//     if (normal) {
 //       // some code we must skip while rewinding
 //       x = x + 1;
 //       x = x / 2;
 //     }
 //     // If rewinding, do this call only if it is the right one.
-//     if (!rewinding or nextCall == 0) {
+//     if (normal or check_call_index(0)) { // 0 is index of this bar() call
 //       bar(x);
 //       if (unwinding) {
 //         noteUnWound(0);
@@ -77,7 +77,7 @@
 //         return;
 //       }
 //     }
-//     if (!rewinding) {
+//     if (normal) {
 //       // more code we must skip while rewinding
 //       while (x & 7) {
 //         x = x + 1;
@@ -123,11 +123,12 @@
 // indexes of calls. In the example above, we saw index "0" for calling "bar"
 // from "foo". When unwinding, the indexes are added to the stack; when
 // rewinding, they are popped off; the current asyncify stack location is
-// undated while doing both operations. The asyncify stack is also used to
+// updated while doing both operations. The asyncify stack is also used to
 // save locals. Note that the stack end location is provided, which is for
 // error detection.
 //
-// Note: all pointers are assumed to be 4-byte aligned.
+// Note: all pointers are assumed to be 4-byte (wasm32) / 8-byte (wasm64)
+// aligned.
 //
 // When you start an unwinding operation, you must set the initial fields
 // of the data structure, that is, set the current stack location to the
@@ -163,28 +164,28 @@
 //    calls, so that you know when to start an asynchronous operation and
 //    when to propagate results back.
 //
-// These four functions are exported so that you can call them from the
+// These five functions are exported so that you can call them from the
 // outside. If you want to manage things from inside the wasm, then you
 // couldn't have called them before they were created by this pass. To work
 // around that, you can create imports to asyncify.start_unwind,
-// asyncify.stop_unwind, asyncify.start_rewind, and asyncify.stop_rewind;
-// if those exist when this pass runs then it will turn those into direct
-// calls to the functions that it creates. Note that when doing everything
-// in wasm like this, Asyncify must not instrument your "runtime" support
-// code, that is, the code that initiates unwinds and rewinds and stops them.
-// If it did, the unwind would not stop until you left the wasm module
-// entirely, etc. Therefore we do not instrument a function if it has
-// a call to the four asyncify_* methods. Note that you may need to disable
-// inlining if that would cause code that does need to be instrumented
-// show up in that runtime code.
+// asyncify.stop_unwind, asyncify.start_rewind, asyncify.stop_rewind, and
+// asyncify.get_state; if those exist when this pass runs then it will turn
+// those into direct calls to the functions that it creates. Note that when
+// doing everything in wasm like this, Asyncify must not instrument your
+// "runtime" support code, that is, the code that initiates unwinds and rewinds
+// and stops them. If it did, the unwind would not stop until you left the wasm
+// module entirely, etc. Therefore we do not instrument a function if it has a
+// call to the four asyncify_* methods. Note that you may need to disable
+// inlining if that would cause code that does need to be instrumented show up
+// in that runtime code.
 //
 // To use this API, call asyncify_start_unwind when you want to. The call
 // stack will then be unwound, and so execution will resume in the JS or
 // other host environment on the outside that called into wasm. When you
 // return there after unwinding, call asyncify_stop_unwind. Then when
 // you want to rewind, call asyncify_start_rewind, and then call the same
-// initial function you called before, so that unwinding can begin. The
-// unwinding will reach the same function from which you started, since
+// initial function you called before, so that rewinding can begin. The
+// rewinding will reach the same function from which you started, since
 // we are recreating the call stack. At that point you should call
 // asyncify_stop_rewind and then execution can resume normally.
 //
@@ -221,13 +222,13 @@
 //
 //   --pass-arg=asyncify-ignore-imports
 //
-//      Ignore all imports (except for bynsyncify.*), that is, assume none of
-//      them can start an unwind/rewind. (This is effectively the same as
-//      providing asyncify-imports with a list of non-existent imports.)
+//      Ignore all imports (except for asyncify.*), that is, assume none of them
+//      can start an unwind/rewind. (This is effectively the same as providing
+//      asyncify-imports with a list of non-existent imports.)
 //
 //   --pass-arg=asyncify-ignore-indirect
 //
-//      Ignore all indirect calls. This implies that you know an call stack
+//      Ignore all indirect calls. This implies that you know the call stack
 //      will never need to be unwound with an indirect call somewhere in it.
 //      If that is true for your codebase, then this can be extremely useful
 //      as otherwise it looks like any indirect call can go to a lot of places.
@@ -503,7 +504,10 @@ class ModuleAnalyzer {
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // The function name.
     Name name;
-    // If this function can start an unwind/rewind.
+    // If this function can start an unwind/rewind. We only set this in cases
+    // where we need to know that fact and also that we need to instrument code
+    // to handle it (as a result, we do not set it for the bottommost runtime,
+    // which needs no instrumentation).
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
     // and starts a rewinding. If so, we do not instrument it, see above.
@@ -955,21 +959,27 @@ private:
     // reach the right part when rewinding, which is done by always skipping
     // forward. For example, for an if we do this:
     //
-    //    if (condition()) {
+    //    if (cond) { // cond is either a const or a local.get in a flat IR
     //      side1();
     //    } else {
     //      side2();
     //    }
     // =>
-    //    if (!rewinding) {
-    //      temp = condition();
+    //    if (rewinding || cond) {
+    //      new_side1();
     //    }
-    //    if (rewinding || temp) {
-    //      side1();
+    //    if (rewinding || !cond) {
+    //      new_side2();
     //    }
-    //    if (rewinding || !temp) {
-    //      side2();
-    //    }
+    // where new_sideN is
+    // if (normal || check_call_index(callIndex)) {
+    //   sideN();
+    // }
+    // when sideN can change the state, and
+    // if (normal) {
+    //   sideN();
+    // }
+    // when it does not. (See makeCallSupport() for details.)
     //
     // This way we will linearly get through all the code in the function,
     // if we are rewinding. In a similar way we skip over breaks, etc.; just
@@ -983,7 +993,8 @@ private:
     // node in two phases as follows:
     //
     //  1. The "Scan" phase finds children we need to process (ones that may
-    //     change the state), and adds Scan tasks for them to the work stack.
+    //     change the state), adds Scan tasks for them to the work stack, and
+    //     process call instructions.
     //  2. The "Finish" phase runs after all children have been Scanned and
     //     Finished. It pops the children's results from the results stack (if
     //     there were relevant children), and then it pushes its own result.
@@ -1125,6 +1136,8 @@ private:
         results.push_back(loop);
         continue;
       } else if (doesCall(curr)) {
+        // We reach here only in Scan phase, but we in effect "Finish" calls
+        // here as well.
         results.push_back(makeCallSupport(curr));
         continue;
       }
@@ -1697,7 +1710,7 @@ struct Asyncify : public Pass {
       // unreachable code here.
       runner.add("dce");
       if (optimize) {
-        // Optimizing before BsyncifyFlow is crucial, especially coalescing,
+        // Optimizing before AsyncifyFlow is crucial, especially coalescing,
         // because the flow changes add many branches, break up if-elses, etc.,
         // all of which extend the live ranges of locals. In other words, it is
         // not possible to coalesce well afterwards.
@@ -1869,7 +1882,7 @@ struct ModAsyncify
     this->walk(func->body);
   }
 
-  // Note that we don't just implement GetGlobal as we may know the value is
+  // Note that we don't just implement GlobalGet as we may know the value is
   // *not* 0, 1, or 2, but not know the actual value. So what we can say depends
   // on the comparison being done on it, and so we implement Binary and
   // Select.
@@ -1918,7 +1931,7 @@ struct ModAsyncify
     if (!get || get->name != asyncifyStateName) {
       return;
     }
-    // This is a comparison of the state to zero, which means we are checking
+    // This is a comparison of the normal state, which means we are checking
     // "if running normally, run this code, but if rewinding, ignore it". If
     // we know we'll never rewind, we can optimize this.
     if (neverRewind) {
