@@ -294,6 +294,18 @@ class FeatureValidationTest(utils.BinaryenTestCase):
                                        'Tags with result types require typed '
                                        'continuations feature [--enable-typed-continuations]')
 
+    def test_cont_type(self):
+        module = '''
+        (module
+         (type $ft (func (param i32) (result i32)))
+         (type $ct (cont $ft))
+         (func $foo
+          (local $0 (ref $ct))
+         )
+        )
+        '''
+        self.check_typed_continuations(module, 'all used types should be allowed')
+
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_atomics(self):
