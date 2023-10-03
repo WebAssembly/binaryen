@@ -953,6 +953,8 @@ void RefTest::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::i32;
+    // Do not unnecessarily lose type information.
+    castType = Type::getGreatestLowerBound(castType, ref->type);
   }
 }
 

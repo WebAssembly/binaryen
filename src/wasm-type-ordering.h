@@ -35,13 +35,15 @@ struct SupertypesFirstBase
   // track membership in the input collection.
   InsertOrderedMap<HeapType, bool> typeSet;
 
-  template<typename T> SupertypesFirstBase(const T& types) {
+  SupertypeProvider& self() { return *static_cast<SupertypeProvider*>(this); }
+
+  template<typename T> SupertypeProvider& sort(const T& types) {
     for (auto type : types) {
       typeSet[type] = false;
     }
     // Find the supertypes that are in the collection.
     for (auto [type, _] : typeSet) {
-      if (auto super = type.getSuperType()) {
+      if (auto super = self().getSuperType(type)) {
         if (auto it = typeSet.find(*super); it != typeSet.end()) {
           it->second = true;
         }
@@ -53,11 +55,12 @@ struct SupertypesFirstBase
         this->push(type);
       }
     }
+    return self();
   }
 
   void pushPredecessors(HeapType type) {
     // Do not visit types that weren't in the input collection.
-    if (auto super = static_cast<SupertypeProvider*>(this)->getSuperType(type);
+    if (auto super = self().getSuperType(type);
         super && typeSet.count(*super)) {
       this->push(*super);
     }

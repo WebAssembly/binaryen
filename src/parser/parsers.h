@@ -177,6 +177,7 @@ template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
@@ -1195,7 +1196,9 @@ Result<> makeCallIndirect(Ctx& ctx, Index pos, bool isReturn) {
 }
 
 template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeBreak(pos, *label);
 }
 
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {
@@ -1567,6 +1570,18 @@ template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
     return ctx.getLocalFromName(*id);
   }
   return ctx.in.err("expected local index or identifier");
+}
+
+// labelidx ::= x:u32 => x
+//            | v:id => x (if labels[x] = v)
+template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getLabelFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getLabelFromName(*id);
+  }
+  return ctx.in.err("expected label index or identifier");
 }
 
 // typeuse ::= '(' 'type' x:typeidx ')'                                => x, []

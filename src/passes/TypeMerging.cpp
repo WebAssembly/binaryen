@@ -167,9 +167,7 @@ struct MergeableSupertypesFirst
   : HeapTypeOrdering::SupertypesFirstBase<MergeableSupertypesFirst> {
   TypeMerging& merging;
 
-  template<typename T>
-  MergeableSupertypesFirst(TypeMerging& merging, const T& types)
-    : SupertypesFirstBase(types), merging(merging) {}
+  MergeableSupertypesFirst(TypeMerging& merging) : merging(merging) {}
 
   std::optional<HeapType> getSuperType(HeapType type) {
     if (auto super = type.getSuperType()) {
@@ -307,7 +305,8 @@ bool TypeMerging::merge(MergeKind kind) {
 
   // For each type, either create a new partition or add to its supertype's
   // partition.
-  for (auto type : MergeableSupertypesFirst(*this, mergeable)) {
+  MergeableSupertypesFirst sortedTypes(*this);
+  for (auto type : sortedTypes.sort(mergeable)) {
     // We need partitions for any public children of this type since those
     // children will participate in the DFA we're creating.
     for (auto child : getPublicChildren(type)) {
@@ -415,7 +414,7 @@ bool TypeMerging::merge(MergeKind kind) {
   std::vector<HeapType> newMergeable;
   bool merged = false;
   for (const auto& partition : refinedPartitions) {
-    auto target = *MergeableSupertypesFirst(*this, partition).begin();
+    auto target = *MergeableSupertypesFirst(*this).sort(partition).begin();
     newMergeable.push_back(target);
     for (auto type : partition) {
       if (type != target) {
@@ -453,7 +452,8 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   std::unordered_set<HeapType> includedTypes(types.begin(), types.end());
   std::vector<std::vector<HeapType>> partitions;
   std::unordered_map<HeapType, Index> partitionIndices;
-  for (auto type : MergeableSupertypesFirst(*this, types)) {
+  MergeableSupertypesFirst sortedTypes(*this);
+  for (auto type : sortedTypes.sort(types)) {
     auto super = type.getSuperType();
     if (super && includedTypes.count(*super)) {
       // We must already have a partition for the supertype we can add to.

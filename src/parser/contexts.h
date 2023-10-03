@@ -279,6 +279,7 @@ struct NullInstrParserCtx {
   using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
   using DataIdxT = Ok;
+  using LabelIdxT = Ok;
 
   using MemargT = Ok;
 
@@ -298,6 +299,8 @@ struct NullInstrParserCtx {
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
   DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
   DataIdxT getDataFromName(Name) { return Ok{}; }
+  LabelIdxT getLabelFromIdx(uint32_t) { return Ok{}; }
+  LabelIdxT getLabelFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
@@ -370,7 +373,7 @@ struct NullInstrParserCtx {
 
   Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
-
+  Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
   Result<> makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
     return Ok{};
@@ -793,6 +796,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   using FieldIdxT = Index;
   using LocalIdxT = Index;
+  using LabelIdxT = Index;
   using GlobalIdxT = Name;
   using MemoryIdxT = Name;
   using DataIdxT = Name;
@@ -934,6 +938,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return in.err("data $" + name.toString() + " does not exist");
     }
     return name;
+  }
+
+  Result<Index> getLabelFromIdx(uint32_t idx) { return idx; }
+
+  Result<Index> getLabelFromName(Name name) {
+    return irBuilder.getLabelIndex(name);
   }
 
   Result<TypeUseT> makeTypeUse(Index pos,
@@ -1201,6 +1211,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
+  }
+
+  Result<> makeBreak(Index pos, Index label) {
+    return withLoc(pos, irBuilder.makeBreak(label));
   }
 
   Result<> makeReturn(Index pos) {
