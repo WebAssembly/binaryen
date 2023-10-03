@@ -105,6 +105,33 @@
     (call $cycle)
   )
 
+  ;; WITHOUT:      (func $cycle-1 (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-2)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-1 (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-2)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-1 (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-2)
+  ;; DISCARD-NEXT: )
+  (func $cycle-1
+    ;; $cycle-1 and -2 form a cycle together, in which no call can be removed.
+    (call $cycle-2)
+  )
+
+  ;; WITHOUT:      (func $cycle-2 (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-1)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-2 (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-1)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-2 (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-1)
+  ;; DISCARD-NEXT: )
+  (func $cycle-2
+    (call $cycle-1)
+  )
+
   ;; WITHOUT:      (func $nop (type $0)
   ;; WITHOUT-NEXT:  (nop)
   ;; WITHOUT-NEXT: )
