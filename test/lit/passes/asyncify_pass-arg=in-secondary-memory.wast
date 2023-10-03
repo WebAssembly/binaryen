@@ -138,12 +138,11 @@
   ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:       (if
-  ;; CHECK-NEXT:        (if (result i32)
+  ;; CHECK-NEXT:        (i32.or
   ;; CHECK-NEXT:         (i32.eq
   ;; CHECK-NEXT:          (global.get $__asyncify_state)
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.const 1)
   ;; CHECK-NEXT:         (i32.eq
   ;; CHECK-NEXT:          (local.get $9)
   ;; CHECK-NEXT:          (i32.const 0)
@@ -347,12 +346,11 @@
   ;; SIZE-NEXT:       (nop)
   ;; SIZE-NEXT:       (nop)
   ;; SIZE-NEXT:       (if
-  ;; SIZE-NEXT:        (if (result i32)
+  ;; SIZE-NEXT:        (i32.or
   ;; SIZE-NEXT:         (i32.eq
   ;; SIZE-NEXT:          (global.get $__asyncify_state)
   ;; SIZE-NEXT:          (i32.const 0)
   ;; SIZE-NEXT:         )
-  ;; SIZE-NEXT:         (i32.const 1)
   ;; SIZE-NEXT:         (i32.eq
   ;; SIZE-NEXT:          (local.get $9)
   ;; SIZE-NEXT:          (i32.const 0)
