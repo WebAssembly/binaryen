@@ -93,6 +93,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::ExtendedConst, "extended const expressions")
       .addFeature(FeatureSet::Strings, "strings")
       .addFeature(FeatureSet::MultiMemory, "multimemory")
+      .addFeature(FeatureSet::TypedContinuations, "typed continuations")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

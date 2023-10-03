@@ -33,7 +33,7 @@ Features.RelaxedSIMD: 4096
 Features.ExtendedConst: 8192
 Features.Strings: 16384
 Features.MultiMemory: 32768
-Features.All: 65535
+Features.All: 131071
 InvalidId: 0
 BlockId: 1
 IfId: 2
