@@ -1927,6 +1927,24 @@ struct ModAsyncify
     }
   }
 
+  void visitUnary(Unary* curr) {
+    if (curr->op != EqZInt32) {
+      return;
+    }
+    auto* get = curr->value->dynCast<GlobalGet>();
+    if (!get || get->name != asyncifyStateName) {
+      return;
+    }
+    // This is a comparison of the state to zero, which means we are checking
+    // "if running normally, run this code, but if rewinding, ignore it". If
+    // we know we'll never rewind, we can optimize this.
+    if (neverRewind) {
+      Builder builder(*this->getModule());
+      // The whole expression will be 1 because it is (i32.eqz (i32.const 0))
+      this->replaceCurrent(builder.makeConst(int32_t(1)));
+    }
+  }
+
   void visitCall(Call* curr) {
     unsetUnwinding();
     if (!importsAlwaysUnwind) {
