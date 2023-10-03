@@ -1,0 +1,21 @@
+(module
+ (type $ft (func (param i32) (result i32)))
+ (type $ct (cont $ft))
+ (type $2 (func (result i32)))
+ (type $3 (func (param (ref $ct)) (result i32)))
+ (tag $t (result i32))
+ (func $go (type $3) (param $x (ref $ct)) (result i32)
+  (drop
+   (block $handler (result (ref $ct))
+    (return
+     (resume $ct
+      (tag $t $handler)
+      (i32.const 123)
+      (local.get $x)
+     )
+    )
+   )
+  )
+  (i32.const 123)
+ )
+)

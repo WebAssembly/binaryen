@@ -2342,6 +2342,7 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
+  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
@@ -3856,6 +3857,7 @@ public:
     multiValues.pop_back();
     return ret;
   }
+  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { externalInterface->trap(why); }
 

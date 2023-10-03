@@ -318,6 +318,8 @@ struct CodeScanner
       counts.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
+    } else if (auto* resume = curr->dynCast<Resume>()) {
+      counts.note(resume->contType);
     } else if (Properties::isControlFlowStructure(curr)) {
       if (curr->type.isTuple()) {
         // TODO: Allow control flow to have input types as well

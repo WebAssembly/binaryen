@@ -78,6 +78,10 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getSentType());
+    } else if (auto* res = expr->dynCast<Resume>()) {
+      // FIXME(frank-emrich) Could actually determine sent types here, but Try
+      // doesn't seem to be doing it
+      func(name, Type::none);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -97,6 +101,10 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
+    } else if (auto* res = expr->dynCast<Resume>()) {
+      // FIXME(frank-emrich) We can't really determine the values being sent
+      // here (as they come from suspend instructions elsewhere). Try doesn't
+      // seem to be doing it, either.
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }

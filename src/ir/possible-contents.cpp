@@ -1193,6 +1193,11 @@ struct InfoCollector
 
   void visitReturn(Return* curr) { addResult(curr->value); }
 
+  void visitResume(Resume* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
+
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.
     addResult(func->body);

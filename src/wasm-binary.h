@@ -1270,6 +1270,10 @@ enum ASTNodes {
   StringEncodeLossyUTF8Array = 0xb6,
   StringEncodeWTF8Array = 0xb7,
   StringNewUTF8ArrayTry = 0xb8,
+
+  // typed continuation opcodes
+  Resume = 0xe3,
+
 };
 
 enum MemoryAccess {
@@ -1891,6 +1895,7 @@ public:
   void visitCallRef(CallRef* curr);
   void visitRefAsCast(RefCast* curr, uint32_t code);
   void visitRefAs(RefAs* curr, uint8_t code);
+  void visitResume(Resume* curr);
 
   [[noreturn]] void throwError(std::string text);
 

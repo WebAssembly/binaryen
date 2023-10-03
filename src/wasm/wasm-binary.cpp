@@ -3997,6 +3997,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       visitCallRef(call);
       break;
     }
+    case BinaryConsts::Resume: {
+      auto resume = allocator.alloc<Resume>();
+      curr = resume;
+      visitResume(resume);
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -7630,6 +7636,52 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
   if (!curr->value->type.isRef() && curr->value->type != Type::unreachable) {
     throwError("bad input type for ref.as: " + curr->value->type.toString());
   }
+  curr->finalize();
+}
+
+void WasmBinaryReader::visitResume(Resume* curr) {
+  BYN_TRACE("zz node: Resume\n");
+
+  auto contTypeIndex = getU32LEB();
+  curr->contType = getTypeByIndex(contTypeIndex);
+  if (!curr->contType.isContinuation())
+    throwError("non-continuation type in resume instruction " +
+               curr->contType.toString());
+
+  auto handlerNum = getU32LEB();
+
+  // We *must* bring the handlerTags vector to an appropriate size to ensure
+  // that we do not invalidate the pointers we add to tagRefs. They need to stay
+  // valid until processNames ran.
+  curr->handlerTags.resize(handlerNum);
+  curr->handlerBlocks.resize(handlerNum);
+
+  BYN_TRACE("handler num: " << handlerNum << std::endl);
+  for (size_t i = 0; i < handlerNum; i++) {
+    BYN_TRACE("read one tag handler pair \n");
+    auto tagIndex = getU32LEB();
+    auto tag = getTagName(tagIndex);
+
+    auto handlerIndex = getU32LEB();
+    auto handler = getBreakTarget(handlerIndex).name;
+
+    curr->handlerTags[i] = tag;
+    curr->handlerBlocks[i] = handler;
+
+    tagRefs[tagIndex].push_back(
+      &curr->handlerTags[i]); // we don't know the final name yet
+  }
+
+  curr->cont = popNonVoidExpression();
+
+  auto argsNum =
+    curr->contType.getContinuation().ht.getSignature().params.size();
+  curr->args.resize(argsNum);
+  BYN_TRACE("will pop " << argsNum << " arguments for resume" << std::endl);
+  for (size_t i = 0; i < argsNum; i++) {
+    curr->args[argsNum - i - 1] = popNonVoidExpression();
+  }
+
   curr->finalize();
 }
 
