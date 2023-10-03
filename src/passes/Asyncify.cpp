@@ -504,7 +504,7 @@ class ModuleAnalyzer {
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // The function name.
     Name name;
-    // If this function can start an unwind/rewind and not the bottommost
+    // If this function can start an unwind/rewind and is not the bottommost
     // runtime.
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
@@ -977,11 +977,13 @@ private:
     //      new_side2();
     //    }
     // where new_sideN is
-    // if (normal || check_call_index(callIndex))
+    // if (normal || check_call_index(callIndex)) {
     //   sideN();
+    // }
     // when sideN can change the state, and
-    // if (normal)
+    // if (normal) {
     //   sideN();
+    // }
     // when it does not. (See makeCallSupport() for details.)
     //
     // This way we will linearly get through all the code in the function,
