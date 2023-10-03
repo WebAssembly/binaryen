@@ -162,7 +162,7 @@ struct GenerateGlobalEffects : public Pass {
 
     // Next, apply function effects to their callers.
     for (auto& [func, info] : analysis.map) {
-      auto& funcEffects = analysis.map[func].effects;
+      auto& funcEffects = info.effects;
 
       for (auto& caller : callers[func->name]) {
         auto& callerEffects = analysis.map[module->getFunction(caller)].effects;
@@ -182,8 +182,6 @@ struct GenerateGlobalEffects : public Pass {
         callerEffects->mergeIn(*funcEffects); // TODO: remove ==
       }
     }
-
-    // TODO: cycles are effects too
 
     // Generate the final data structure, starting from a blank slate where
     // nothing is known.
