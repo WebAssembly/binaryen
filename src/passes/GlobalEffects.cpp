@@ -31,7 +31,7 @@ struct GenerateGlobalEffects : public Pass {
   void run(Module* module) override {
     // First, we do a scan of each function to see what effects they have,
     // including which functions they call directly (so that we can compute
-    // transitive effects later.
+    // transitive effects later).
 
     struct FuncInfo {
       // Effects in this function.
@@ -77,24 +77,22 @@ struct GenerateGlobalEffects : public Pass {
 
             void visitExpression(Expression* curr) {
               ShallowEffectAnalyzer effects(options, wasm, curr);
-              if (!effects.calls) {
-                // No call here, but update throwing if we see it. (Only do so,
-                // however, if we have effects; if we cleared it - see below -
-                // then we assume the worst anyhow, and have nothing to update.)
-                if (effects.throws_ && funcInfo.effects) {
-                  funcInfo.effects->throws_ = true;
-                }
-                return;
-              }
-
               if (auto* call = curr->dynCast<Call>()) {
+                // Note the direct call.
                 funcInfo.calledFunctions.insert(call->target);
-              } else {
+              } else if (effects.calls) {
                 // This is an indirect call of some sort, so we must assume the
                 // worst. To do so, clear the effects, which indicates nothing
                 // is known (so anything is possible).
                 // TODO: We could group effects by function type etc.
                 funcInfo.effects.reset();
+              } else {
+                // No call here, but update throwing if we see it. (Only do so,
+                // however, if we have effects; if we cleared it - see before -
+                // then we assume the worst anyhow, and have nothing to update.)
+                if (effects.throws_ && funcInfo.effects) {
+                  funcInfo.effects->throws_ = true;
+                }
               }
             }
           };
@@ -105,7 +103,11 @@ struct GenerateGlobalEffects : public Pass {
 
     // Compute the transitive closure of effects. To do so, first construct for
     // each function a list of the functions that it is called by (so we need to
-    // propogate its effects to them).
+    // propogate its effects to them), and then we'll construct the closure of
+    // that.
+    //
+    // callers[foo] = [func that calls foo, another func that calls foo, ..]
+    //
     std::unordered_map<Name, std::unordered_set<Name>> callers;
     UniqueDeferredQueue<Name> work;
     for (auto& [func, info] : analysis.map) {
@@ -124,12 +126,11 @@ struct GenerateGlobalEffects : public Pass {
       // Iterate over a copy to avoid iterator invalidation.
       auto callersOfFunc = callers[func];
       for (auto& caller : callersOfFunc) {
-        // We know |caller| calls |func|, and therefore each call of |caller|
+        // We know |caller| calls |func|, and therefore each caller of |caller|
         // also calls func:
         //
         //   |caller of caller| => |caller| => |func|
         //
-
         auto callersOfCaller = callers[caller];
         for (auto& callerOfCaller : callersOfCaller) {
           if (callers[func].insert(callerOfCaller).second) {
