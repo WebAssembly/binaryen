@@ -817,23 +817,33 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   });
   finishGroup();
 
+  auto parseHeapType = [&](Element& elem) -> HeapType {
+    auto name = elem.toString();
+    if (elem.dollared()) {
+      auto it = typeIndices.find(name);
+      if (it == typeIndices.end()) {
+        throw SParseException("invalid type name", elem);
+      } else {
+        return builder[it->second];
+      }
+    } else if (String::isNumber(name)) {
+      size_t index = parseIndex(elem);
+      if (index >= numTypes) {
+        throw SParseException("invalid type index", elem);
+      }
+      return builder[index];
+    } else {
+      return stringToHeapType(elem.str());
+    }
+  };
+
   auto parseRefType = [&](Element& elem) -> Type {
     // '(' 'ref' 'null'? ht ')'
     auto nullable =
       elem[1]->isStr() && *elem[1] == NULL_ ? Nullable : NonNullable;
     auto& referent = nullable ? *elem[2] : *elem[1];
-    auto name = referent.toString();
-    if (referent.dollared()) {
-      return builder.getTempRefType(builder[typeIndices[name]], nullable);
-    } else if (String::isNumber(name)) {
-      size_t index = parseIndex(referent);
-      if (index >= numTypes) {
-        throw SParseException("invalid type index", elem);
-      }
-      return builder.getTempRefType(builder[index], nullable);
-    } else {
-      return Type(stringToHeapType(referent.str()), nullable);
-    }
+    auto ht = parseHeapType(referent);
+    return builder.getTempRefType(ht, nullable);
   };
 
   auto parseValType = [&](Element& elem) {
@@ -884,6 +894,18 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     }
     return Signature(builder.getTempTupleType(params),
                      builder.getTempTupleType(results));
+  };
+
+  auto parseContinuationDef = [&](Element& elem) {
+    // '(' 'cont' index ')' | '(' 'cont' name ')'
+
+    HeapType ft = parseHeapType(*elem[1]);
+    if (!ft.isSignature()) {
+      // FIXME(frank-emrich) Should we use isFunction and allow (cont func)?
+      throw ParseException(
+        "cont type must be created from func type", elem.line, elem.col);
+    }
+    return Continuation(ft);
   };
 
   // Parses a field, and notes the name if one is found.
@@ -964,6 +986,11 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       Element& subtypeKind = *subtype[0];
       if (subtypeKind == FUNC) {
         builder[index] = parseSignatureDef(subtype, 0);
+      } else if (kind == CONT) {
+        // FIXME(frank-emrich) Should we support this?
+        throw ParseException("continuation type in subtype definition",
+                             subtypeKind.line,
+                             subtypeKind.col);
       } else if (subtypeKind == STRUCT) {
         builder[index] = parseStructDef(subtype, index, 0);
       } else if (subtypeKind == ARRAY) {
@@ -974,6 +1001,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     } else {
       if (kind == FUNC) {
         builder[index] = parseSignatureDef(def, 0);
+      } else if (kind == CONT) {
+        builder[index] = parseContinuationDef(def);
       } else if (kind == STRUCT) {
         builder[index] = parseStructDef(def, index, 0);
       } else if (kind == ARRAY) {

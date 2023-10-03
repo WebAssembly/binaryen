@@ -424,6 +424,7 @@ enum EncodedType {
   stringview_iter = -0x1f,  // 0x61
   // type forms
   Func = -0x20,   // 0x60
+  Cont = -0x23,   // FIXME(frank-emrich) what do these comments mean?
   Struct = -0x21, // 0x5f
   Array = -0x22,  // 0x5e
   Sub = -0x30,    // 0x50

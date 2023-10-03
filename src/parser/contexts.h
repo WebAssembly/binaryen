@@ -83,6 +83,7 @@ struct NullTypeParserCtx {
   using ResultsT = size_t;
   using BlockTypeT = Ok;
   using SignatureT = Ok;
+  using ContinuationT = Ok;
   using StorageT = Ok;
   using FieldT = Ok;
   using FieldsT = Ok;
@@ -122,6 +123,7 @@ struct NullTypeParserCtx {
   size_t getResultsSize(size_t results) { return results; }
 
   SignatureT makeFuncType(ParamsT*, ResultsT*) { return Ok{}; }
+  ContinuationT makeContType(HeapTypeT) { return Ok{}; }
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
@@ -162,6 +164,7 @@ template<typename Ctx> struct TypeParserCtx {
   using ResultsT = std::vector<Type>;
   using BlockTypeT = HeapType;
   using SignatureT = Signature;
+  using ContinuationT = Continuation;
   using StorageT = Field;
   using FieldT = Field;
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
@@ -215,6 +218,8 @@ template<typename Ctx> struct TypeParserCtx {
     return Signature(self().makeTupleType(paramTypes),
                      self().makeTupleType(resultTypes));
   }
+
+  ContinuationT makeContType(HeapTypeT ft) { return Continuation(ft); }
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
@@ -469,6 +474,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
+  void addContType(ContinuationT) {}
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
   void setOpen() {}
@@ -577,6 +583,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   }
 
   void addFuncType(SignatureT& type) { builder[index] = type; }
+  void addContType(ContinuationT& type) { builder[index] = type; }
 
   void addStructType(StructT& type) {
     auto& [fieldNames, str] = type;

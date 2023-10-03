@@ -391,6 +391,25 @@ MaybeResult<typename Ctx::SignatureT> functype(Ctx& ctx) {
   return ctx.makeFuncType(parsedParams.getPtr(), parsedResults.getPtr());
 }
 
+// conttype ::= '(' 'cont'  x:typeidx ')' => cont x
+template<typename Ctx>
+MaybeResult<typename Ctx::ContinuationT> conttype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("cont"sv)) {
+
+    return {};
+  }
+
+  auto x = typeidx(ctx);
+  CHECK_ERR(x);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of cont type");
+  }
+
+  return ctx.makeContType(*x);
+}
+
+
 // storagetype ::= valtype | packedtype
 // packedtype  ::= i8 | i16
 template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
@@ -1650,12 +1669,18 @@ Result<std::vector<Name>> inlineExports(ParseInput& in) {
 }
 
 // strtype ::= ft:functype   => ft
+//           | ct:conttype   => ct
 //           | st:structtype => st
 //           | at:arraytype  => at
 template<typename Ctx> Result<> strtype(Ctx& ctx) {
   if (auto type = functype(ctx)) {
     CHECK_ERR(type);
     ctx.addFuncType(*type);
+    return Ok{};
+  }
+  if (auto type = conttype(ctx)) {
+    CHECK_ERR(type);
+    ctx.addContType(*type);
     return Ok{};
   }
   if (auto type = structtype(ctx)) {

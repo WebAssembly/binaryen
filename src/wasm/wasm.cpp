@@ -60,6 +60,7 @@ Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");
 Name FUNC("func");
+Name CONT("cont");
 Name PARAM("param");
 Name RESULT("result");
 Name MEMORY("memory");

@@ -1,0 +1,9 @@
+(module
+ (type $ft (func (param i32) (result i32)))
+ (type $ct (cont $ft))
+ (type $2 (func (param (ref $ct)) (result (ref $ct))))
+ (func $id (type $2) (param $x (ref $ct)) (result (ref $ct))
+  (local.get $x)
+ )
+)
+
