@@ -138,8 +138,10 @@ struct GenerateGlobalEffects : public Pass {
             // |func| calls must be recomputed, as more things might call them.
             for (auto& called :
                  analysis.map[module->getFunction(func)].calledFunctions) {
-              work.push(called);
-              // Thjis or something else iloops,
+              if (!callers[called].count(callerOfCaller)) {
+                work.push(called);
+              }
+              // Thjis or something else iloops, XX no, just slows...
               /*
               azakai@azakai:~/Dev/2-binaryen$ BINARYEN_PASS_DEBUG=1 bin/wasm-opt ../binaryen/calc_export_j2wasm.wasm -all -tnh --closed-world --metrics --generate-global-effects -O3 --generate-global-effects  --gufa --generate-global-effects -O3 --metrics -o c.wasm --no-validation
               */
