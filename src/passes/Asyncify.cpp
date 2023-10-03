@@ -504,8 +504,10 @@ class ModuleAnalyzer {
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
     // The function name.
     Name name;
-    // If this function can start an unwind/rewind and is not the bottommost
-    // runtime.
+    // If this function can start an unwind/rewind. We only set this in cases
+    // where we need to know that fact and also that we need to instrument code
+    // to handle it (as a result, we do not set it for the bottommost runtime,
+    // which needs no instrumentation).
     bool canChangeState = false;
     // If this function is part of the runtime that receives an unwinding
     // and starts a rewinding. If so, we do not instrument it, see above.
