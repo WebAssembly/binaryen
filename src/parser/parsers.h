@@ -166,6 +166,7 @@ Result<> makeStringIterMove(Ctx&, Index, StringIterMoveOp op);
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx&, Index, StringSliceWTFOp op);
 template<typename Ctx> Result<> makeStringSliceIter(Ctx&, Index);
+template<typename Ctx> Result<> makeResume(Ctx&, Index);
 
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
@@ -1474,6 +1475,10 @@ Result<> makeStringSliceWTF(Ctx& ctx, Index pos, StringSliceWTFOp op) {
 }
 
 template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<> makeResume(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

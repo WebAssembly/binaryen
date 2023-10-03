@@ -570,6 +570,12 @@ struct Unsubtyping
   void visitStringIterMove(StringIterMove* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
   void visitStringSliceIter(StringSliceIter* curr) {}
+
+  void visitResume(Resume* curr) {
+    // TODO Implement this by exposing the subtyping relations that the
+    // validator expects to hold, once validation of resume is implemented
+    WASM_UNREACHABLE("not implemented");
+  }
 };
 
 } // anonymous namespace

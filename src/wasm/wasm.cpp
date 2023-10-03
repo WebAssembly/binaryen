@@ -1310,6 +1310,15 @@ void StringSliceIter::finalize() {
   }
 }
 
+void Resume::finalize() {
+  if (!(this->contType.isContinuation() &&
+        this->contType.getContinuation().type.isSignature())) {
+    Fatal() << "ill-formed Resume expression";
+  }
+  const Signature& sig = this->contType.getContinuation().type.getSignature();
+  type = sig.results;
+}
+
 size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }

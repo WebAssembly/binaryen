@@ -1198,6 +1198,21 @@ public:
     return ret;
   }
 
+  Resume* makeResume(HeapType contType,
+                     const std::vector<Name>& handlerTags,
+                     const std::vector<Name>& handlerBlocks,
+                     const std::vector<Expression*>& operands,
+                     Expression* cont) {
+    auto* ret = wasm.allocator.alloc<Resume>();
+    ret->contType = contType;
+    ret->handlerTags.set(handlerTags);
+    ret->handlerBlocks.set(handlerBlocks);
+    ret->operands.set(operands);
+    ret->cont = cont;
+    ret->finalize();
+    return ret;
+  }
+
   // Additional helpers
 
   Drop* makeDrop(Expression* value) {

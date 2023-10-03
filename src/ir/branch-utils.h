@@ -78,6 +78,24 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getSentType());
+    } else if (auto* res = expr->dynCast<Resume>()) {
+      // FIXME(frank-emrich) For each of the (tag $t $b) entries for the resume
+      // instruction, we could determine the types of the values passed to block
+      // $b by looking up the signature of tag $t in the module, plus taking the
+      // type of the resumed continuation into account (the latter type is
+      // stored in the Resume node directly).
+      //
+      // However, we do not have access to that information at this point. We
+      // could get it from the Module (to look up the tag), but this would
+      // require additional plumbing at all the use sites of this function, such
+      // as users of BranchSeeker, which is in turn used by functions such as
+      // Block::finalize(). Plumbing the module through to that point would
+      // require chancing the re-finalisation code, for example.
+      //
+      // We could also store this information in the Resume node itself, but
+      // that would mean storing the signature of all the Tags that we have a
+      // handle clause for.
+      func(name, Type::none);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -97,6 +115,10 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
+    } else if (auto* res = expr->dynCast<Resume>()) {
+      // FIXME(frank-emrich) We can't really determine the values being sent
+      // here because they come from suspend instructions elsewhere. Is that a
+      // problem?
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }

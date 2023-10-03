@@ -718,6 +718,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return 8 + visit(curr->ref) + visit(curr->num);
   }
 
+  CostType visitResume(Resume* curr) {
+    // Inspired by indirect calls, but twice the cost.
+    return 12 + visit(curr->cont);
+  }
+
 private:
   CostType nullCheckCost(Expression* ref) {
     // A nullable type requires a bounds check in most VMs.

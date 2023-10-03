@@ -738,6 +738,7 @@ public:
     StringIterMoveId,
     StringSliceWTFId,
     StringSliceIterId,
+    ResumeId,
     NumExpressionIds
   };
   Id _id;
@@ -1916,6 +1917,21 @@ public:
 
   Expression* ref;
   Expression* num;
+
+  void finalize();
+};
+
+class Resume : public SpecificExpression<Expression::ResumeId> {
+public:
+  Resume(MixedArena& allocator)
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator) {}
+
+  HeapType contType;
+  ArenaVector<Name> handlerTags;
+  ArenaVector<Name> handlerBlocks;
+
+  ExpressionList operands;
+  Expression* cont;
 
   void finalize();
 };

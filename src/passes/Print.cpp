@@ -299,6 +299,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
+  void visitResume(Resume* curr);
   void maybePrintUnreachableReplacement(Expression* curr, Type type);
   void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
   void visitCallRef(CallRef* curr) {
@@ -2384,6 +2385,7 @@ struct PrintExpressionContents
   void visitStringSliceIter(StringSliceIter* curr) {
     printMedium(o, "stringview_iter.slice");
   }
+  void visitResume(Resume* curr) { printMedium(o, "resume"); }
 };
 
 void PrintSExpression::setModule(Module* module) {
@@ -2709,6 +2711,35 @@ void PrintSExpression::visitTry(Try* curr) {
   if (full) {
     o << " ;; end try";
   }
+}
+
+void PrintSExpression::visitResume(Resume* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  o << ' ';
+  printHeapType(curr->contType);
+  incIndent();
+
+  for (size_t i = 0; i < curr->handlerTags.size(); i++) {
+    doIndent(o, indent);
+
+    o << '(';
+    printMedium(o, "tag ");
+    printName(curr->handlerTags[i], o);
+    o << " ";
+    printName(curr->handlerBlocks[i], o);
+    o << ")\n";
+  }
+
+  for (size_t i = 0; i < curr->operands.size(); i++) {
+    printFullLine(curr->operands[i]);
+  }
+
+  printFullLine(curr->cont);
+
+  controlFlowDepth--;
+  decIndent();
 }
 
 void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
