@@ -29,6 +29,29 @@ TEST_F(StringifyTest, Print) {
           (i32.const 30)
         ))
       )
+      (block $block_d
+        (try $try_a
+          (do
+            (nop)
+          )
+          (catch $catch_a
+            (drop (i32.const 8))
+          )
+          (catch $catch_b
+            (drop (i32.const 15))
+          )
+        )
+      )
+      (block $block_e
+        (try $try_b
+          (do
+            (nop)
+          )
+          (catch $catch_c
+            (drop (i32.const 33))
+          )
+        )
+      )
     )
    )
   )wasm";
@@ -40,6 +63,8 @@ adding unique symbol for Block Start
 in visitExpression for block $block_a
 in visitExpression for block $block_b
 in visitExpression for block $block_c
+in visitExpression for block $block_d
+in visitExpression for block $block_e
 adding unique symbol for End
 adding unique symbol for Block Start
 in visitExpression for i32.const 20
@@ -57,6 +82,12 @@ in visitExpression for i32.const 1
 in visitExpression for if
 in visitExpression for drop
 adding unique symbol for End
+adding unique symbol for Block Start
+in visitExpression for try $try_a
+adding unique symbol for End
+adding unique symbol for Block Start
+in visitExpression for try $try_b
+adding unique symbol for End
 adding unique symbol for If Start
 in visitExpression for i32.const 40
 adding unique symbol for Else Start
@@ -64,6 +95,24 @@ in visitExpression for i32.const 5
 adding unique symbol for End
 adding unique symbol for If Start
 in visitExpression for i32.const 30
+adding unique symbol for End
+adding unique symbol for Try Body Start
+in visitExpression for nop
+adding unique symbol for End
+adding unique symbol for Try Catch Start
+in visitExpression for i32.const 8
+in visitExpression for drop
+adding unique symbol for End
+adding unique symbol for Try Catch Start
+in visitExpression for i32.const 15
+in visitExpression for drop
+adding unique symbol for End
+adding unique symbol for Try Body Start
+in visitExpression for nop
+adding unique symbol for End
+adding unique symbol for Try Catch Start
+in visitExpression for i32.const 33
+in visitExpression for drop
 adding unique symbol for End
 )stringify";
 
@@ -252,8 +301,8 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   EXPECT_EQ(
     result,
     (std::vector<SuffixTree::RepeatedSubstring>{
-      // 5, 6, 7, 6 appears at idx 9 and again at 22
-      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
-      // 10, 11, 6 appears at idx 18 and again at 27
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
+      // 5, 6, 7, 6 appears at idx 12 and again at 28
+      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{12, 28})},
+      // 10, 11, 6 appears at idx 23 and again at 34
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})}}));
 }
