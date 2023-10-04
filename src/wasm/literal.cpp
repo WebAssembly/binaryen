@@ -1526,6 +1526,8 @@ Literal Literal::min(const Literal& other) const {
       if (std::isnan(r)) {
         return standardizeNaN(Literal(r));
       }
+      // This code is written in a form that avoids a gcc 13 bug, see
+      // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111694
       if (l == r && l == 0) {
         auto lSigned = std::signbit(l);
         auto rSigned = std::signbit(r);
