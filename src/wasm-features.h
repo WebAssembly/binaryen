@@ -44,7 +44,6 @@ struct FeatureSet {
     ExtendedConst = 1 << 13,
     Strings = 1 << 14,
     MultiMemory = 1 << 15,
-    // FIXME(frank-emrich) Model dependencies on ref types and exceptions?
     TypedContinuations = 1 << 16,
     MVP = None,
     // Keep in sync with llvm default features:
