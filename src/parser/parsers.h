@@ -413,7 +413,6 @@ MaybeResult<typename Ctx::ContinuationT> conttype(Ctx& ctx) {
   return ctx.makeContType(*x);
 }
 
-
 // storagetype ::= valtype | packedtype
 // packedtype  ::= i8 | i16
 template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx& ctx) {
@@ -1483,30 +1482,25 @@ template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<> makeContBind(Ctx& ctx, Index pos) {
+template<typename Ctx> Result<> makeContBind(Ctx& ctx, Index pos) {
   // FIXME(frank-emrich) ??
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<> makeContNew(Ctx& ctx, Index pos) {
+template<typename Ctx> Result<> makeContNew(Ctx& ctx, Index pos) {
   // FIXME(frank-emrich) ??
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<> makeResume(Ctx& ctx, Index pos) {
+template<typename Ctx> Result<> makeResume(Ctx& ctx, Index pos) {
   // FIXME(frank-emrich) ??
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx>
-Result<> makeSuspend(Ctx& ctx, Index pos) {
+template<typename Ctx> Result<> makeSuspend(Ctx& ctx, Index pos) {
   // FIXME(frank-emrich) ??
   return ctx.in.err("unimplemented instruction");
 }
-
 
 // =======
 // Modules
