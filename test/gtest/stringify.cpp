@@ -56,50 +56,64 @@ TEST_F(StringifyTest, Print) {
    )
   )wasm";
 
-  auto stringifyText = R"stringify(in visitExpression for block
-adding unique symbol
+  auto stringifyText = R"stringify(adding unique symbol for Func Start
+in visitExpression for block
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for block $block_a
 in visitExpression for block $block_b
 in visitExpression for block $block_c
 in visitExpression for block $block_d
 in visitExpression for block $block_e
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for i32.const 20
 in visitExpression for drop
 in visitExpression for i32.const 10
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for i32.const 0
 in visitExpression for if
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for i32.const 1
 in visitExpression for if
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for try $try_a
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Block Start
 in visitExpression for try $try_b
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for If Start
 in visitExpression for i32.const 40
-adding unique symbol
+adding unique symbol for Else Start
 in visitExpression for i32.const 5
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for If Start
 in visitExpression for i32.const 30
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Try Body Start
 in visitExpression for nop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Try Catch Start
 in visitExpression for i32.const 8
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Try Catch Start
 in visitExpression for i32.const 15
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Try Body Start
 in visitExpression for nop
-adding unique symbol
+adding unique symbol for End
+adding unique symbol for Try Catch Start
 in visitExpression for i32.const 33
 in visitExpression for drop
-adding unique symbol
+adding unique symbol for End
 )stringify";
 
   struct TestStringifyWalker : public StringifyWalker<TestStringifyWalker> {
@@ -107,7 +121,9 @@ adding unique symbol
 
     TestStringifyWalker(std::ostream& os) : os(os){};
 
-    void addUniqueSymbol() { os << "adding unique symbol\n"; }
+    void addUniqueSymbol(SeparatorReason reason) {
+      os << "adding unique symbol for " << reason << "\n";
+    }
 
     void visitExpression(Expression* curr) {
       os << "in visitExpression for " << ShallowExpression{curr, getModule()}
@@ -174,51 +190,63 @@ TEST_F(StringifyTest, Stringify) {
 
   EXPECT_EQ(hashString,
             (std::vector<uint32_t>{
+              (uint32_t)-1,  // function start
               0,             // function block evaluated as a whole
-              (uint32_t)-1,  // separate function block from function contents
+              (uint32_t)-2,  // end
+              (uint32_t)-3,  // block start
               1,             // block_a evaluated as a whole
               2,             // block_b evaluated as a whole
               3,             // block_c evaluated as a whole
               1,             // block_d has the same contents as block_a
               3,             // block_e has the same contents as block_c
               4,             // block_f evaluated as a whole
-              (uint32_t)-2,  // separate blocks from block contents
+              (uint32_t)-4,  // end
+              (uint32_t)-5,  // block start for block_a
               5,             // i32.const 20
               6,             // drop, all drops will be the same symbol
               7,             // i32.const 10
               6,             // drop
-              (uint32_t)-3,  // separate block_a contents
+              (uint32_t)-6,  // end
+              (uint32_t)-7,  // block start for block_b
               8,             // i32.const 0, if condition
               9,             // block_b's if evaluated as a whole
               6,             // drop
-              (uint32_t)-4,  // separate block_b contents
+              (uint32_t)-8,  // end
+              (uint32_t)-9,  // block start for block_c
               10,            // i32.const 1, if condition
               11,            // block_c's if evaluated as a whole
               6,             // drop
-              (uint32_t)-5,  // separate block_c contents
+              (uint32_t)-10, // end
+              (uint32_t)-11, // block start for block_d
               5,             // i32.const 20
               6,             // drop
               7,             // i32.const 10
               6,             // drop
-              (uint32_t)-6,  // separate block_d contents
+              (uint32_t)-12, // end
+              (uint32_t)-13, // block start for block_e
               10,            // i32.const 1, if condition
               11,            // block_e if evaluated as a whole
               6,             // drop
-              (uint32_t)-7,  // separate block_e contents
+              (uint32_t)-14, // end
+              (uint32_t)-15, // block start for block_f
               8,             // i32.const 0, if condition
               11,            // block_f's if evaluated as a whole
               6,             // drop
-              (uint32_t)-8,  // separate block_f contents
+              (uint32_t)-16, // end
+              (uint32_t)-17, // if start in block_b
               12,            // i32.const 40
-              (uint32_t)-9,  // separate block_b if-true
+              (uint32_t)-18, // else start in block_b
               13,            // i32.const 5
-              (uint32_t)-10, // separate block_b if-false
+              (uint32_t)-19, // end
+              (uint32_t)-20, // if start in block_c
               14,            // i32.const 30
-              (uint32_t)-11, // separate block_c if-true
+              (uint32_t)-21, // end
+              (uint32_t)-22, // if start in block_e
               14,            // i32.const 30
-              (uint32_t)-12, // separate block_e if-true
+              (uint32_t)-23, // end
+              (uint32_t)-24, // if start in block_f
               14,            // i32.const 30
-              (uint32_t)-13  // separate block_f if-true
+              (uint32_t)-25, // end
             }));
 }
 
@@ -251,15 +279,15 @@ TEST_F(StringifyTest, Substrings) {
     substrings,
     (std::vector<SuffixTree::RepeatedSubstring>{
       // 5, 6, 7, 6 appears at idx 9 and again at 22
-      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
+      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{12, 28})},
       // 6, 7, 6 appears at idx 10 and again at 23
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{10, 23})},
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{13, 29})},
       // 10, 11, 6 appears at idx 18 and again at 27
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})},
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})},
       // 11, 6 appears at idx 32, 19 and again at 28
-      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{32, 19, 28})},
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{40, 24, 35})},
       // 7, 6 appears at idx 11 and again at 24
-      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{11, 24})}}));
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{14, 30})}}));
 }
 
 TEST_F(StringifyTest, DedupeSubstrings) {
@@ -273,8 +301,8 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   EXPECT_EQ(
     result,
     (std::vector<SuffixTree::RepeatedSubstring>{
-      // 5, 6, 7, 6 appears at idx 9 and again at 22
-      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{9, 22})},
-      // 10, 11, 6 appears at idx 18 and again at 27
-      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{18, 27})}}));
+      // 5, 6, 7, 6 appears at idx 12 and again at 28
+      SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{12, 28})},
+      // 10, 11, 6 appears at idx 23 and again at 34
+      SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})}}));
 }
