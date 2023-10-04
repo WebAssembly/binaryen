@@ -1526,8 +1526,12 @@ Literal Literal::min(const Literal& other) const {
       if (std::isnan(r)) {
         return standardizeNaN(Literal(r));
       }
+      // This code is written in a form that avoids a gcc 13 bug, see
+      // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111694
       if (l == r && l == 0) {
-        return Literal(std::signbit(l) ? l : r);
+        auto lSigned = std::signbit(l);
+        auto rSigned = std::signbit(r);
+        return Literal(lSigned || rSigned ? -0.0f : 0.0f);
       }
       return Literal(std::min(l, r));
     }
@@ -1540,7 +1544,9 @@ Literal Literal::min(const Literal& other) const {
         return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
-        return Literal(std::signbit(l) ? l : r);
+        auto lSigned = std::signbit(l);
+        auto rSigned = std::signbit(r);
+        return Literal(lSigned || rSigned ? -0.0 : 0.0);
       }
       return Literal(std::min(l, r));
     }
@@ -1560,7 +1566,9 @@ Literal Literal::max(const Literal& other) const {
         return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
-        return Literal(std::signbit(l) ? r : l);
+        auto lSigned = std::signbit(l);
+        auto rSigned = std::signbit(r);
+        return Literal(lSigned && rSigned ? -0.0f : 0.0f);
       }
       return Literal(std::max(l, r));
     }
@@ -1573,7 +1581,9 @@ Literal Literal::max(const Literal& other) const {
         return standardizeNaN(Literal(r));
       }
       if (l == r && l == 0) {
-        return Literal(std::signbit(l) ? r : l);
+        auto lSigned = std::signbit(l);
+        auto rSigned = std::signbit(r);
+        return Literal(lSigned && rSigned ? -0.0 : 0.0);
       }
       return Literal(std::max(l, r));
     }
