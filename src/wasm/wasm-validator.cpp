@@ -3721,8 +3721,6 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    // FIXME(frank-emrich) When validating exception instructions, check that
-    // they only use result-less tags
     if (curr->sig.results != Type(Type::none)) {
       info.shouldBeTrue(module.features.hasTypedContinuations(),
                         curr->name,
