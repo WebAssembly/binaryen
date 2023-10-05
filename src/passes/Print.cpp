@@ -2946,8 +2946,14 @@ void PrintSExpression::visitImportedTag(Tag* curr) {
   emitImportHeader(curr);
   o << "(tag ";
   printName(curr->name, o);
-  o << maybeSpace;
-  printParamType(curr->sig.params);
+  if (curr->sig.params != Type::none) {
+    o << maybeSpace;
+    printParamType(curr->sig.params);
+  }
+  if (curr->sig.results != Type::none) {
+    o << maybeSpace;
+    printResultType(curr->sig.results);
+  }
   o << "))";
   o << maybeNewLine;
 }
@@ -2957,8 +2963,14 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
   o << '(';
   printMedium(o, "tag ");
   printName(curr->name, o);
-  o << maybeSpace;
-  printParamType(curr->sig.params);
+  if (curr->sig.params != Type::none) {
+    o << maybeSpace;
+    printParamType(curr->sig.params);
+  }
+  if (curr->sig.results != Type::none) {
+    o << maybeSpace;
+    printResultType(curr->sig.results);
+  }
   o << ")" << maybeNewLine;
 }
 

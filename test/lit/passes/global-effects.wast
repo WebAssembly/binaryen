@@ -14,21 +14,21 @@
 
   ;; WITHOUT:      (type $2 (func (param i32)))
 
-  ;; WITHOUT:      (tag $tag (param))
+  ;; WITHOUT:      (tag $tag)
   ;; INCLUDE:      (type $0 (func))
 
   ;; INCLUDE:      (type $1 (func (result i32)))
 
   ;; INCLUDE:      (type $2 (func (param i32)))
 
-  ;; INCLUDE:      (tag $tag (param))
+  ;; INCLUDE:      (tag $tag)
   ;; DISCARD:      (type $0 (func))
 
   ;; DISCARD:      (type $1 (func (result i32)))
 
   ;; DISCARD:      (type $2 (func (param i32)))
 
-  ;; DISCARD:      (tag $tag (param))
+  ;; DISCARD:      (tag $tag)
   (tag $tag)
 
   ;; WITHOUT:      (func $main (type $0)

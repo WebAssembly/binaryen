@@ -8,7 +8,7 @@
  (tag $tag$1 (param i64))
  (tag $tag$2 (param i32 i64))
  (tag $tag$3 (param eqref))
- (tag $tag$4 (param))
+ (tag $tag$4)
  (func $0 (type $0)
   (nop)
  )
