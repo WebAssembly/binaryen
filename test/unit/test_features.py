@@ -396,4 +396,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-extended-const',
             '--enable-strings',
             '--enable-multimemory',
+            '--enable-typed-continuations',
         ], p2.stdout.splitlines())

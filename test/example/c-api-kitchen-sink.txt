@@ -53,7 +53,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 65535
+BinaryenFeatureAll: 131071
 (f32.neg
  (f32.const -33.61199951171875)
 )
