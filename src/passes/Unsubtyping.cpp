@@ -96,7 +96,8 @@
 // Starting with the initial subtype relation determined by walking the IR,
 // repeatedly search for new subtypings by analyzing type definitions and casts
 // in lock step until we reach a fixed point. This is the minimal subtype
-// relation that preserves module validity and behavior.
+// relation that preserves module validity and behavior that can be found
+// without a more precise analysis of types that might flow into each cast.
 
 namespace wasm {
 
@@ -104,8 +105,8 @@ namespace {
 
 struct Unsubtyping
   : WalkerPass<PostWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
-
-  // The original type depths, as computed by SubTypes.
+  // The original type depths, as computed by SubTypes, i.e. the max length of
+  // the subtype chains up to each type.
   std::unordered_map<HeapType, Index> typeDepths;
 
   // The new set of supertype relations.
@@ -205,10 +206,11 @@ struct Unsubtyping
   }
 
   void analyzeTransitiveDependencies() {
-    // Subtype relationships that we are keeping might depend on other subtype
-    // relationships that we are not yet planning to keep. Transitively find all
-    // the relationships we need to keep all our type definitions valid.
+    // While we have found new subtypings and have not reached a fixed point...
     while (!worklist.empty()) {
+      // Subtype relationships that we are keeping might depend on other subtype
+      // relationships that we are not yet planning to keep. Transitively find
+      // all the relationships we need to keep all our type definitions valid.
       while (!worklist.empty()) {
         auto it = worklist.begin();
         auto type = *it;
@@ -240,6 +242,7 @@ struct Unsubtyping
         }
       }
 
+      // Analyze all casts at once.
       // TODO: This is expensive. Analyze casts incrementally after we
       // initially analyze them.
       analyzeCasts();
