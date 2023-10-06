@@ -153,7 +153,6 @@ struct GenerateGlobalEffects : public Pass {
     // trap).
     for (auto& [func, info] : analysis.map) {
       if (callers[func->name].count(func->name)) {
-        // Remove all effect info, indicating we know nothing.
         if (info.effects) {
           info.effects->trap = true;
         }
