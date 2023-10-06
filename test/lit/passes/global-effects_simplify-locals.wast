@@ -2,40 +2,40 @@
 
 ;; Test that global effects let us optimize more in a pass like simplify-locals.
 
-;; RUN: foreach %s %t wasm-opt                           --simplify-locals -S -o - | filecheck %s --check-prefix NORMAL
-;; RUN: foreach %s %t wasm-opt --generate-global-effects --simplify-locals -S -o - | filecheck %s --check-prefix GLOBAL
+;; RUN: foreach %s %t wasm-opt                           --simplify-locals -S -o - | filecheck %s --check-prefix NORMAL_EFFECTS
+;; RUN: foreach %s %t wasm-opt --generate-global-effects --simplify-locals -S -o - | filecheck %s --check-prefix GLOBAL_EFFECTS
 
 (module
-  ;; NORMAL:      (type $0 (func))
+  ;; NORMAL_EFFECTS:      (type $0 (func))
 
-  ;; NORMAL:      (global $global (mut i32) (i32.const 0))
-  ;; GLOBAL:      (type $0 (func))
+  ;; NORMAL_EFFECTS:      (global $global (mut i32) (i32.const 0))
+  ;; GLOBAL_EFFECTS:      (type $0 (func))
 
-  ;; GLOBAL:      (global $global (mut i32) (i32.const 0))
+  ;; GLOBAL_EFFECTS:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
 
-  ;; NORMAL:      (func $past-get
-  ;; NORMAL-NEXT:  (local $x i32)
-  ;; NORMAL-NEXT:  (local.set $x
-  ;; NORMAL-NEXT:   (global.get $global)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT:  (call $get-global)
-  ;; NORMAL-NEXT:  (drop
-  ;; NORMAL-NEXT:   (local.get $x)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT: )
-  ;; GLOBAL:      (func $past-get
-  ;; GLOBAL-NEXT:  (local $x i32)
-  ;; GLOBAL-NEXT:  (nop)
-  ;; GLOBAL-NEXT:  (call $get-global)
-  ;; GLOBAL-NEXT:  (drop
-  ;; GLOBAL-NEXT:   (global.get $global)
-  ;; GLOBAL-NEXT:  )
-  ;; GLOBAL-NEXT: )
+  ;; NORMAL_EFFECTS:      (func $past-get
+  ;; NORMAL_EFFECTS-NEXT:  (local $x i32)
+  ;; NORMAL_EFFECTS-NEXT:  (local.set $x
+  ;; NORMAL_EFFECTS-NEXT:   (global.get $global)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT:  (call $get-global)
+  ;; NORMAL_EFFECTS-NEXT:  (drop
+  ;; NORMAL_EFFECTS-NEXT:   (local.get $x)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT: )
+  ;; GLOBAL_EFFECTS:      (func $past-get
+  ;; GLOBAL_EFFECTS-NEXT:  (local $x i32)
+  ;; GLOBAL_EFFECTS-NEXT:  (nop)
+  ;; GLOBAL_EFFECTS-NEXT:  (call $get-global)
+  ;; GLOBAL_EFFECTS-NEXT:  (drop
+  ;; GLOBAL_EFFECTS-NEXT:   (global.get $global)
+  ;; GLOBAL_EFFECTS-NEXT:  )
+  ;; GLOBAL_EFFECTS-NEXT: )
   (func $past-get
     (local $x i32)
-    ;; We can move this set past the call, since the call only reads the
-    ;; global.
+    ;; We can move this set past the call (when we have global effects), since
+    ;; the call only reads the global.
     (local.set $x
       (global.get $global)
     )
@@ -45,26 +45,26 @@
     )
   )
 
-  ;; NORMAL:      (func $past-set
-  ;; NORMAL-NEXT:  (local $x i32)
-  ;; NORMAL-NEXT:  (local.set $x
-  ;; NORMAL-NEXT:   (global.get $global)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT:  (call $set-global)
-  ;; NORMAL-NEXT:  (drop
-  ;; NORMAL-NEXT:   (local.get $x)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT: )
-  ;; GLOBAL:      (func $past-set
-  ;; GLOBAL-NEXT:  (local $x i32)
-  ;; GLOBAL-NEXT:  (local.set $x
-  ;; GLOBAL-NEXT:   (global.get $global)
-  ;; GLOBAL-NEXT:  )
-  ;; GLOBAL-NEXT:  (call $set-global)
-  ;; GLOBAL-NEXT:  (drop
-  ;; GLOBAL-NEXT:   (local.get $x)
-  ;; GLOBAL-NEXT:  )
-  ;; GLOBAL-NEXT: )
+  ;; NORMAL_EFFECTS:      (func $past-set
+  ;; NORMAL_EFFECTS-NEXT:  (local $x i32)
+  ;; NORMAL_EFFECTS-NEXT:  (local.set $x
+  ;; NORMAL_EFFECTS-NEXT:   (global.get $global)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT:  (call $set-global)
+  ;; NORMAL_EFFECTS-NEXT:  (drop
+  ;; NORMAL_EFFECTS-NEXT:   (local.get $x)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT: )
+  ;; GLOBAL_EFFECTS:      (func $past-set
+  ;; GLOBAL_EFFECTS-NEXT:  (local $x i32)
+  ;; GLOBAL_EFFECTS-NEXT:  (local.set $x
+  ;; GLOBAL_EFFECTS-NEXT:   (global.get $global)
+  ;; GLOBAL_EFFECTS-NEXT:  )
+  ;; GLOBAL_EFFECTS-NEXT:  (call $set-global)
+  ;; GLOBAL_EFFECTS-NEXT:  (drop
+  ;; GLOBAL_EFFECTS-NEXT:   (local.get $x)
+  ;; GLOBAL_EFFECTS-NEXT:  )
+  ;; GLOBAL_EFFECTS-NEXT: )
   (func $past-set
     (local $x i32)
     ;; We cannot move this set past the call, since the call writes the global.
@@ -77,33 +77,35 @@
     )
   )
 
-  ;; NORMAL:      (func $set-global
-  ;; NORMAL-NEXT:  (global.set $global
-  ;; NORMAL-NEXT:   (i32.const 1)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT: )
-  ;; GLOBAL:      (func $set-global
-  ;; GLOBAL-NEXT:  (global.set $global
-  ;; GLOBAL-NEXT:   (i32.const 1)
-  ;; GLOBAL-NEXT:  )
-  ;; GLOBAL-NEXT: )
+  ;; NORMAL_EFFECTS:      (func $set-global
+  ;; NORMAL_EFFECTS-NEXT:  (global.set $global
+  ;; NORMAL_EFFECTS-NEXT:   (i32.const 1)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT: )
+  ;; GLOBAL_EFFECTS:      (func $set-global
+  ;; GLOBAL_EFFECTS-NEXT:  (global.set $global
+  ;; GLOBAL_EFFECTS-NEXT:   (i32.const 1)
+  ;; GLOBAL_EFFECTS-NEXT:  )
+  ;; GLOBAL_EFFECTS-NEXT: )
   (func $set-global
+    ;; Helper function.
     (global.set $global
       (i32.const 1)
     )
   )
 
-  ;; NORMAL:      (func $get-global
-  ;; NORMAL-NEXT:  (drop
-  ;; NORMAL-NEXT:   (global.get $global)
-  ;; NORMAL-NEXT:  )
-  ;; NORMAL-NEXT: )
-  ;; GLOBAL:      (func $get-global
-  ;; GLOBAL-NEXT:  (drop
-  ;; GLOBAL-NEXT:   (global.get $global)
-  ;; GLOBAL-NEXT:  )
-  ;; GLOBAL-NEXT: )
+  ;; NORMAL_EFFECTS:      (func $get-global
+  ;; NORMAL_EFFECTS-NEXT:  (drop
+  ;; NORMAL_EFFECTS-NEXT:   (global.get $global)
+  ;; NORMAL_EFFECTS-NEXT:  )
+  ;; NORMAL_EFFECTS-NEXT: )
+  ;; GLOBAL_EFFECTS:      (func $get-global
+  ;; GLOBAL_EFFECTS-NEXT:  (drop
+  ;; GLOBAL_EFFECTS-NEXT:   (global.get $global)
+  ;; GLOBAL_EFFECTS-NEXT:  )
+  ;; GLOBAL_EFFECTS-NEXT: )
   (func $get-global
+    ;; Helper function.
     (drop
       (global.get $global)
     )
