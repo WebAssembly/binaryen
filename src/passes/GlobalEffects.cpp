@@ -178,7 +178,7 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Add func's effects to the caller.
-        callerEffects->mergeIn(*funcEffects); // TODO: remove ==
+        callerEffects->mergeIn(*funcEffects);
       }
     }
 
