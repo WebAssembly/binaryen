@@ -35,7 +35,7 @@ struct GenerateGlobalEffects : public Pass {
 
     struct FuncInfo {
       // Effects in this function.
-      std::unique_ptr<EffectAnalyzer> effects;
+      std::optional<EffectAnalyzer> effects;
 
       // Directly-called functions from this function.
       std::unordered_set<Name> calledFunctions;
@@ -51,8 +51,7 @@ struct GenerateGlobalEffects : public Pass {
         }
 
         // Gather the effects.
-        funcInfo.effects =
-          std::make_unique<EffectAnalyzer>(getPassOptions(), *module, func);
+        funcInfo.effects.emplace(getPassOptions(), *module, func);
 
         if (funcInfo.effects->calls) {
           // There are calls in this function, which we will analyze in detail.
