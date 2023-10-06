@@ -8,6 +8,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix DISCARD
 
 (module
+
   ;; WITHOUT:      (type $0 (func))
 
   ;; WITHOUT:      (type $1 (func (result i32)))
@@ -16,7 +17,7 @@
 
   ;; WITHOUT:      (import "a" "b" (func $import (type $0)))
 
-  ;; WITHOUT:      (tag $tag (param))
+  ;; WITHOUT:      (tag $tag)
   ;; INCLUDE:      (type $0 (func))
 
   ;; INCLUDE:      (type $1 (func (result i32)))
@@ -25,7 +26,7 @@
 
   ;; INCLUDE:      (import "a" "b" (func $import (type $0)))
 
-  ;; INCLUDE:      (tag $tag (param))
+  ;; INCLUDE:      (tag $tag)
   ;; DISCARD:      (type $0 (func))
 
   ;; DISCARD:      (type $1 (func (result i32)))
@@ -34,7 +35,7 @@
 
   ;; DISCARD:      (import "a" "b" (func $import (type $0)))
 
-  ;; DISCARD:      (tag $tag (param))
+  ;; DISCARD:      (tag $tag)
   (tag $tag)
 
   (import "a" "b" (func $import))
@@ -74,8 +75,7 @@
     ;; Calling a function with effects cannot.
     (call $unreachable)
     ;; Calling something that calls something with no effects can be optimized
-    ;; away in principle, but atm we don't look that far, so this is not
-    ;; optimized.
+    ;; away, since we compute transitive effects
     (call $call-nop)
     ;; Calling something that calls something with effects cannot.
     (call $call-unreachable)

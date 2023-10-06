@@ -82,12 +82,11 @@
   ;; CHECK-NEXT:        (call $nothing)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (if
-  ;; CHECK-NEXT:        (if (result i32)
+  ;; CHECK-NEXT:        (i32.or
   ;; CHECK-NEXT:         (i32.eq
   ;; CHECK-NEXT:          (global.get $__asyncify_state)
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.const 1)
   ;; CHECK-NEXT:         (i32.eq
   ;; CHECK-NEXT:          (local.get $1)
   ;; CHECK-NEXT:          (i32.const 0)

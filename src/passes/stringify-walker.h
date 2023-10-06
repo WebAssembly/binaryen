@@ -20,6 +20,7 @@
 #include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "support/suffix_tree.h"
 #include "wasm-traversal.h"
 #include <queue>
 
@@ -65,6 +66,103 @@ struct StringifyWalker
 
   using Super = PostWalker<SubType, UnifiedExpressionVisitor<SubType>>;
 
+  struct SeparatorReason {
+    struct FuncStart {
+      Function* func;
+    };
+
+    struct BlockStart {
+      Block* curr;
+    };
+
+    struct IfStart {
+      If* iff;
+    };
+
+    struct ElseStart {
+      If* iff;
+    };
+
+    struct LoopStart {
+      Loop* loop;
+    };
+
+    struct TryBodyStart {};
+
+    struct TryCatchStart {};
+
+    struct End {
+      Expression* curr;
+    };
+    using Separator = std::variant<FuncStart,
+                                   BlockStart,
+                                   IfStart,
+                                   ElseStart,
+                                   LoopStart,
+                                   TryBodyStart,
+                                   TryCatchStart,
+                                   End>;
+
+    Separator reason;
+
+    SeparatorReason(Separator reason) : reason(reason) {}
+
+    static SeparatorReason makeFuncStart(Function* func) {
+      return SeparatorReason(FuncStart{func});
+    }
+    static SeparatorReason makeBlockStart(Block* block) {
+      return SeparatorReason(BlockStart{block});
+    }
+    static SeparatorReason makeIfStart(If* iff) {
+      return SeparatorReason(IfStart{iff});
+    }
+    static SeparatorReason makeElseStart(If* iff) {
+      return SeparatorReason(ElseStart{iff});
+    }
+    static SeparatorReason makeLoopStart(Loop* loop) {
+      return SeparatorReason(LoopStart{loop});
+    }
+    static SeparatorReason makeTryCatchStart() {
+      return SeparatorReason(TryCatchStart{});
+    }
+    static SeparatorReason makeTryBodyStart() {
+      return SeparatorReason(TryBodyStart{});
+    }
+    static SeparatorReason makeEnd() { return SeparatorReason(End{}); }
+    bool isFuncStart() { return std::get_if<FuncStart>(&reason); }
+    bool isBlockStart() { return std::get_if<BlockStart>(&reason); }
+    bool isIfStart() { return std::get_if<IfStart>(&reason); }
+    bool isElseStart() { return std::get_if<ElseStart>(&reason); }
+    bool isLoopStart() { return std::get_if<LoopStart>(&reason); }
+    bool isTryBodyStart() { return std::get_if<TryBodyStart>(&reason); }
+    bool isTryCatchStart() { return std::get_if<TryCatchStart>(&reason); }
+    bool isEnd() { return std::get_if<End>(&reason); }
+  };
+
+  friend std::ostream&
+  operator<<(std::ostream& o,
+             typename StringifyWalker::SeparatorReason reason) {
+    if (reason.isFuncStart()) {
+      return o << "Func Start";
+    } else if (reason.isBlockStart()) {
+      return o << "Block Start";
+    } else if (reason.isIfStart()) {
+      return o << "If Start";
+    } else if (reason.isElseStart()) {
+      return o << "Else Start";
+    } else if (reason.isLoopStart()) {
+      return o << "Loop Start";
+    } else if (reason.isTryBodyStart()) {
+      return o << "Try Body Start";
+    } else if (reason.isTryCatchStart()) {
+      return o << "Try Catch Start";
+    } else if (reason.isEnd()) {
+      return o << "End";
+    }
+
+    return o << "~~~Undefined in operator<< overload~~~";
+  }
+
   std::queue<Expression**> controlFlowQueue;
 
   /*
@@ -76,7 +174,7 @@ struct StringifyWalker
    * appropriate points during the walk and should be implemented by subclasses.
    */
   void visitExpression(Expression* curr);
-  void addUniqueSymbol();
+  void addUniqueSymbol(SeparatorReason reason);
 
   void doWalkModule(Module* module);
   void doWalkFunction(Function* func);
@@ -129,8 +227,14 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
 
-  void addUniqueSymbol();
+  void addUniqueSymbol(SeparatorReason reason);
   void visitExpression(Expression* curr);
+};
+
+// Functions that filter vectors of SuffixTree::RepeatedSubstring
+struct StringifyProcessor {
+  static std::vector<SuffixTree::RepeatedSubstring>
+  dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
 };
 
 } // namespace wasm

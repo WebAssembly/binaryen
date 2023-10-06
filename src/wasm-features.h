@@ -44,11 +44,12 @@ struct FeatureSet {
     ExtendedConst = 1 << 13,
     Strings = 1 << 14,
     MultiMemory = 1 << 15,
+    TypedContinuations = 1 << 16,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 16) - 1,
+    All = (1 << 17) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -85,6 +86,8 @@ struct FeatureSet {
         return "strings";
       case MultiMemory:
         return "multimemory";
+      case TypedContinuations:
+        return "typed-continuations";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -129,6 +132,9 @@ struct FeatureSet {
   bool hasExtendedConst() const { return (features & ExtendedConst) != 0; }
   bool hasStrings() const { return (features & Strings) != 0; }
   bool hasMultiMemory() const { return (features & MultiMemory) != 0; }
+  bool hasTypedContinuations() const {
+    return (features & TypedContinuations) != 0;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -150,6 +156,7 @@ struct FeatureSet {
   void setExtendedConst(bool v = true) { set(ExtendedConst, v); }
   void setStrings(bool v = true) { set(Strings, v); }
   void setMultiMemory(bool v = true) { set(MultiMemory, v); }
+  void setTypedContinuations(bool v = true) { set(TypedContinuations, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 

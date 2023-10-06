@@ -655,7 +655,7 @@ struct SimplifyGlobals : public Pass {
   }
 
   // Constant propagation part 2: apply the values of immutable globals
-  // with constant values to to global.gets in the code.
+  // with constant values to global.gets in the code.
   void propagateConstantsToCode() {
     NameSet constantGlobals;
     for (auto& global : module->globals) {

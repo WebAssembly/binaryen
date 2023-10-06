@@ -12,6 +12,7 @@ string(APPEND WASM_INTRINSICS_EMBED "0x00")
 configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
 FILE(GLOB passes_HEADERS *.h)
+
 set(passes_SOURCES
   param-utils.cpp
   pass.cpp
@@ -120,4 +121,12 @@ set(passes_SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   ${passes_HEADERS}
 )
+# The below condition is intended for removal once the suffix_tree and
+# suffix_tree_node source files no longer depend on LLVM code in the
+# third_party folder
+if(EMSCRIPTEN)
+  list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker.h)
+  list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker-impl.h)
+  list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
+endif()
 add_library(passes OBJECT ${passes_SOURCES})
