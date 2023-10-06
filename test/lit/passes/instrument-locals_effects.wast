@@ -45,20 +45,20 @@
   (global $global (mut i32) (i32.const 0))
 
   ;; INSTRUMENT:      (func $past-get
-  ;; INSTRUMENT-NEXT:  (nop)
+  ;; INSTRUMENT-NEXT:  (call $use-local)
+  ;; INSTRUMENT-NEXT:  (call $nop)
   ;; INSTRUMENT-NEXT: )
   ;; NO_INSTRMT:      (func $past-get
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
   (func $past-get
     ;; The called function only sets a local, so we can vacuum it away using
-    ;; global effects. But, if we instrumented it, then it has an import call,
+    ;; global effects. But, if we instrumented it, then it gets an import call,
     ;; which we should not remove.
     (call $use-local)
-    ;; If we instrument then we discard all global effects, even of a non-
+    ;; If we instrument, then we discard all global effects, even of a non-
     ;; instrumented function (we don't track individual functions), so we'll
-    ;; lose the ability to vacuum this function away as well, when we
-    ;; instrument.
+    ;; lose the ability to vacuum this function away as well in that case.
     (call $nop)
   )
 
@@ -73,7 +73,7 @@
   ;; INSTRUMENT-NEXT:  )
   ;; INSTRUMENT-NEXT: )
   ;; NO_INSTRMT:      (func $use-local
-  ;; NO_INSTRMT-NEXT:  (local $x i32)
+  ;; NO_INSTRMT-NEXT:  (local $0 i32)
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
   (func $use-local
