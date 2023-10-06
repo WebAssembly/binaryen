@@ -54,6 +54,9 @@ static Name GET_TEMP_RET_IMPORT("getTempRet0");
 static Name SET_TEMP_RET_IMPORT("setTempRet0");
 
 struct LegalizeJSInterface : public Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
   bool full;
 
   LegalizeJSInterface(bool full) : full(full) {}

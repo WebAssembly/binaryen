@@ -1056,6 +1056,11 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
   if (pass->requiresNonNullableLocalFixups()) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
   }
+
+  if (options.funcEffectsMap && pass->addsEffects()) {
+    // Effects were added, so discard any computed effects for this function.
+    options.funcEffectsMap->erase(func->name);
+  }
 }
 
 int PassRunner::getPassDebug() {

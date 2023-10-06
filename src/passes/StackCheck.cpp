@@ -126,6 +126,9 @@ private:
 };
 
 struct StackCheck : public Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
     if (!stackPointer) {

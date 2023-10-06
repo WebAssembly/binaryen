@@ -39,6 +39,9 @@ namespace wasm {
 Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
   void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
 
   void visitReturn(Return* curr) { replaceCurrent(makeLogCall(curr)); }
