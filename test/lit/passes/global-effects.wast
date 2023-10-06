@@ -8,11 +8,14 @@
 ;; RUN: foreach %s %t wasm-opt -all --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix DISCARD
 
 (module
+
   ;; WITHOUT:      (type $0 (func))
 
   ;; WITHOUT:      (type $1 (func (result i32)))
 
   ;; WITHOUT:      (type $2 (func (param i32)))
+
+  ;; WITHOUT:      (import "a" "b" (func $import (type $0)))
 
   ;; WITHOUT:      (tag $tag)
   ;; INCLUDE:      (type $0 (func))
@@ -21,6 +24,8 @@
 
   ;; INCLUDE:      (type $2 (func (param i32)))
 
+  ;; INCLUDE:      (import "a" "b" (func $import (type $0)))
+
   ;; INCLUDE:      (tag $tag)
   ;; DISCARD:      (type $0 (func))
 
@@ -28,8 +33,12 @@
 
   ;; DISCARD:      (type $2 (func (param i32)))
 
+  ;; DISCARD:      (import "a" "b" (func $import (type $0)))
+
   ;; DISCARD:      (tag $tag)
   (tag $tag)
+
+  (import "a" "b" (func $import))
 
   ;; WITHOUT:      (func $main (type $0)
   ;; WITHOUT-NEXT:  (call $nop)
@@ -39,11 +48,14 @@
   ;; WITHOUT-NEXT:  (drop
   ;; WITHOUT-NEXT:   (call $unimportant-effects)
   ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (call $throw)
+  ;; WITHOUT-NEXT:  (call $throw-and-import)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $main (type $0)
   ;; INCLUDE-NEXT:  (call $unreachable)
-  ;; INCLUDE-NEXT:  (call $call-nop)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
+  ;; INCLUDE-NEXT:  (call $throw)
+  ;; INCLUDE-NEXT:  (call $throw-and-import)
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $main (type $0)
   ;; DISCARD-NEXT:  (call $nop)
@@ -53,6 +65,8 @@
   ;; DISCARD-NEXT:  (drop
   ;; DISCARD-NEXT:   (call $unimportant-effects)
   ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT:  (call $throw)
+  ;; DISCARD-NEXT:  (call $throw-and-import)
   ;; DISCARD-NEXT: )
   (func $main
     ;; Calling a function with no effects can be optimized away in INCLUDE (but
@@ -61,8 +75,7 @@
     ;; Calling a function with effects cannot.
     (call $unreachable)
     ;; Calling something that calls something with no effects can be optimized
-    ;; away in principle, but atm we don't look that far, so this is not
-    ;; optimized.
+    ;; away, since we compute transitive effects
     (call $call-nop)
     ;; Calling something that calls something with effects cannot.
     (call $call-unreachable)
@@ -71,6 +84,10 @@
     (drop
       (call $unimportant-effects)
     )
+    ;; A throwing function cannot be removed.
+    (call $throw)
+    ;; A function that throws and calls an import definitely cannot be removed.
+    (call $throw-and-import)
   )
 
   ;; WITHOUT:      (func $cycle (type $0)
@@ -86,6 +103,33 @@
     ;; Calling a function with no effects in a cycle cannot be optimized out -
     ;; this must keep hanging forever.
     (call $cycle)
+  )
+
+  ;; WITHOUT:      (func $cycle-1 (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-2)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-1 (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-2)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-1 (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-2)
+  ;; DISCARD-NEXT: )
+  (func $cycle-1
+    ;; $cycle-1 and -2 form a cycle together, in which no call can be removed.
+    (call $cycle-2)
+  )
+
+  ;; WITHOUT:      (func $cycle-2 (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-1)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-2 (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-1)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-2 (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-1)
+  ;; DISCARD-NEXT: )
+  (func $cycle-2
+    (call $cycle-1)
   )
 
   ;; WITHOUT:      (func $nop (type $0)
@@ -190,14 +234,37 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (try $try0
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $throw-and-import)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-and-catch (type $0)
-  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT:  (try $try0
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (call $throw-and-import)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $call-throw-and-catch (type $0)
   ;; DISCARD-NEXT:  (try $try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT:  (try $try0
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (call $throw-and-import)
   ;; DISCARD-NEXT:   )
   ;; DISCARD-NEXT:   (catch_all
   ;; DISCARD-NEXT:    (nop)
@@ -211,6 +278,13 @@
         ;; entire try-catch can be, since the call's only effect is to throw,
         ;; and the catch_all catches that.
         (call $throw)
+      )
+      (catch_all)
+    )
+    (try
+      (do
+        ;; This call both throws and calls an import, and cannot be removed.
+        (call $throw-and-import)
       )
       (catch_all)
     )
@@ -319,5 +393,44 @@
   ;; DISCARD-NEXT: )
   (func $throw
     (throw $tag)
+  )
+
+  ;; WITHOUT:      (func $throw-and-import (type $0)
+  ;; WITHOUT-NEXT:  (throw $tag)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $throw-and-import (type $0)
+  ;; INCLUDE-NEXT:  (throw $tag)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $throw-and-import (type $0)
+  ;; DISCARD-NEXT:  (throw $tag)
+  ;; DISCARD-NEXT: )
+  (func $throw-and-import
+    (if
+      (i32.const 1)
+      (throw $tag)
+      (call $import)
+    )
+  )
+
+  ;; WITHOUT:      (func $cycle-with-unknown-call (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-with-unknown-call)
+  ;; WITHOUT-NEXT:  (call $import)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-with-unknown-call (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-with-unknown-call)
+  ;; INCLUDE-NEXT:  (call $import)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-with-unknown-call (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-with-unknown-call)
+  ;; DISCARD-NEXT:  (call $import)
+  ;; DISCARD-NEXT: )
+  (func $cycle-with-unknown-call
+    ;; This function can not only call itself recursively, but also calls an
+    ;; import. We should not remove anything here, and not error during the
+    ;; analysis (this guards against a bug where the import would make us toss
+    ;; away the effects object, and the infinite loop makes us set a property on
+    ;; that object, so it must check the object still exists).
+    (call $cycle-with-unknown-call)
+    (call $import)
   )
 )
