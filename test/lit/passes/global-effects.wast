@@ -411,4 +411,26 @@
       (call $import)
     )
   )
+
+  ;; WITHOUT:      (func $cycle-with-unknown-call (type $0)
+  ;; WITHOUT-NEXT:  (call $cycle-with-unknown-call)
+  ;; WITHOUT-NEXT:  (call $import)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $cycle-with-unknown-call (type $0)
+  ;; INCLUDE-NEXT:  (call $cycle-with-unknown-call)
+  ;; INCLUDE-NEXT:  (call $import)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $cycle-with-unknown-call (type $0)
+  ;; DISCARD-NEXT:  (call $cycle-with-unknown-call)
+  ;; DISCARD-NEXT:  (call $import)
+  ;; DISCARD-NEXT: )
+  (func $cycle-with-unknown-call
+    ;; This function can not only call itself recursively, but also calls an
+    ;; import. We should not remove anything here, and not error during the
+    ;; analysis (this guards against a bug where the import would make us toss
+    ;; away the effects object, and the infinite loop makes us set a property on
+    ;; that object, so it must check the object still exists).
+    (call $cycle-with-unknown-call)
+    (call $import)
+  )
 )
