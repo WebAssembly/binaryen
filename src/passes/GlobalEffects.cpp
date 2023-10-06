@@ -37,7 +37,7 @@ struct GenerateGlobalEffects : public Pass {
       // Effects in this function.
       std::unique_ptr<EffectAnalyzer> effects;
 
-      // Directly-called function from this function.
+      // Directly-called functions from this function.
       std::unordered_set<Name> calledFunctions;
     };
 
@@ -46,7 +46,7 @@ struct GenerateGlobalEffects : public Pass {
         if (func->imported()) {
           // Imports can do anything, so we need to assume the worst anyhow,
           // which is the same as not specifying any effects for them in the
-          // map.
+          // map (which we do by not setting funcInfo.effects).
           return;
         }
 
@@ -56,13 +56,13 @@ struct GenerateGlobalEffects : public Pass {
 
         if (funcInfo.effects->calls) {
           // There are calls in this function, which we will analyze in detail.
-          // Clear the |calls| field regardless, as we'll handle calls of all
-          // sorts below.
+          // Clear the |calls| field first, and we'll handle calls of all sorts
+          // below.
           funcInfo.effects->calls = false;
 
           // Clear throws as well, as we are "forgetting" calls right now, and
           // want to forget their throwing effect as well. If we see something
-          // else that throws, below, then we'll note that.
+          // else that throws, below, then we'll note that there.
           funcInfo.effects->throws_ = false;
 
           struct CallScanner
