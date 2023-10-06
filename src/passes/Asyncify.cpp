@@ -870,6 +870,8 @@ struct InstrumentedProxy : public Pass {
 
   bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
 
+  bool addsEffects() override { return pass->addsEffects(); }
+
   bool requiresNonNullableLocalFixups() override {
     return pass->requiresNonNullableLocalFixups();
   }
@@ -1610,6 +1612,9 @@ static std::string getFullImportName(Name module, Name base) {
 }
 
 struct Asyncify : public Pass {
+  // Adds calls.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     auto& options = getPassOptions();
     bool optimize = options.optimizeLevel > 0;

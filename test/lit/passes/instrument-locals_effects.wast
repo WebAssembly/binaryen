@@ -4,9 +4,12 @@
 ;; Test that this instrumentation pass discards global effects, which it must do
 ;; as it adds calls to imports. We can optimize below when we do not instrument,
 ;; and cannot when we do.
+;;
+;; In NO_INSTRMT below we run another pass, just to prove that not every pass
+;; causes global effects to be discarded.
 
 ;; RUN: foreach %s %t wasm-opt --generate-global-effects --instrument-locals --vacuum -S -o - | filecheck %s --check-prefix INSTRUMENT
-;; RUN: foreach %s %t wasm-opt --generate-global-effects                     --vacuum -S -o - | filecheck %s --check-prefix NO_INSTRMT
+;; RUN: foreach %s %t wasm-opt --generate-global-effects --coalesce-locals   --vacuum -S -o - | filecheck %s --check-prefix NO_INSTRMT
 
 (module
   ;; INSTRUMENT:      (type $0 (func))

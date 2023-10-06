@@ -37,6 +37,9 @@ struct SpillPointers
   : public WalkerPass<LivenessWalker<SpillPointers, Visitor<SpillPointers>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Adds writes to memory.
+  bool addsEffects() override { return true; }
+
   std::unique_ptr<Pass> create() override {
     return std::make_unique<SpillPointers>();
   }

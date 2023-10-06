@@ -463,8 +463,6 @@ public:
   // that validation, this must return true. In that case the pass runner will
   // automatically run the necessary fixups afterwards.
   //
-  // Such a pass must also set |modifiesBinaryenIR|.
-  //
   // For more details see the LocalStructuralDominance class.
   virtual bool requiresNonNullableLocalFixups() { return true; }
 
@@ -473,8 +471,6 @@ public:
   // effects must mark themselves as such, so that we know to discard global
   // effects after running them. For example, a logging pass that adds new calls
   // to imports must override this to return true.
-  //
-  // Such a pass must also set |modifiesBinaryenIR|.
   virtual bool addsEffects() { return false; }
 
   std::string name;
