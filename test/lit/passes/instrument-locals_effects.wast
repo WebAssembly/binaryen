@@ -38,16 +38,12 @@
 
   ;; INSTRUMENT:      (import "env" "set_f64" (func $set_f64 (param i32 i32 f64) (result f64)))
 
-  ;; INSTRUMENT:      (global $global (mut i32) (i32.const 0))
-  ;; NO_INSTRMT:      (type $0 (func))
-
-  ;; NO_INSTRMT:      (global $global (mut i32) (i32.const 0))
-  (global $global (mut i32) (i32.const 0))
-
   ;; INSTRUMENT:      (func $past-get
   ;; INSTRUMENT-NEXT:  (call $use-local)
   ;; INSTRUMENT-NEXT:  (call $nop)
   ;; INSTRUMENT-NEXT: )
+  ;; NO_INSTRMT:      (type $0 (func))
+
   ;; NO_INSTRMT:      (func $past-get
   ;; NO_INSTRMT-NEXT:  (nop)
   ;; NO_INSTRMT-NEXT: )
