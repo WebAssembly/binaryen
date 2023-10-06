@@ -1111,7 +1111,7 @@ HeapType::HeapType(Signature sig) {
 }
 
 HeapType::HeapType(Continuation continuation) {
-  assert(!isTemp(continuation.ht) && "Leaking temporary type!");
+  assert(!isTemp(continuation.type) && "Leaking temporary type!");
   new (this) HeapType(
     globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(continuation)));
 }
@@ -1721,7 +1721,7 @@ bool SubTyper::isSubType(const Signature& a, const Signature& b) {
 }
 
 bool SubTyper::isSubType(const Continuation& a, const Continuation& b) {
-  return isSubType(a.ht, b.ht);
+  return isSubType(a.type, b.type);
 }
 
 bool SubTyper::isSubType(const Struct& a, const Struct& b) {
@@ -1958,7 +1958,7 @@ std::ostream& TypePrinter::print(const Signature& sig) {
 
 std::ostream& TypePrinter::print(const Continuation& continuation) {
   os << "(cont ";
-  printHeapTypeName(continuation.ht);
+  printHeapTypeName(continuation.type);
   return os << ')';
 }
 
@@ -2096,7 +2096,7 @@ size_t RecGroupHasher::hash(const Signature& sig) const {
 size_t RecGroupHasher::hash(const Continuation& continuation) const {
   // We throw in a magic constant to distinguish (cont $foo) from $foo
   size_t magic = 0xc0117;
-  size_t digest = hash(continuation.ht);
+  size_t digest = hash(continuation.type);
   rehash(digest, magic);
   return digest;
 }
@@ -2223,7 +2223,7 @@ bool RecGroupEquator::eq(const Signature& a, const Signature& b) const {
 }
 
 bool RecGroupEquator::eq(const Continuation& a, const Continuation& b) const {
-  return eq(a.ht, b.ht);
+  return eq(a.type, b.type);
 }
 
 bool RecGroupEquator::eq(const Struct& a, const Struct& b) const {
@@ -2313,7 +2313,7 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
       taskList.push_back(Task::scan(&info->signature.params));
       break;
     case HeapTypeInfo::ContinuationKind:
-      taskList.push_back(Task::scan(&info->continuation.ht));
+      taskList.push_back(Task::scan(&info->continuation.type));
       break;
     case HeapTypeInfo::StructKind: {
       auto& fields = info->struct_.fields;
@@ -2786,7 +2786,7 @@ size_t
 hash<wasm::Continuation>::operator()(const wasm::Continuation& cont) const {
   // We throw in a magic constant to distinguish (cont $foo) from $foo
   auto magic = 0xc0117;
-  auto digest = wasm::hash(cont.ht);
+  auto digest = wasm::hash(cont.type);
   wasm::rehash(digest, magic);
   return digest;
 }

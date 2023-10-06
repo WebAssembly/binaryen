@@ -294,7 +294,7 @@ void WasmBinaryWriter::writeTypes() {
       }
     } else if (type.isContinuation()) {
       o << S32LEB(BinaryConsts::EncodedType::Cont);
-      writeHeapType(type.getContinuation().ht);
+      writeHeapType(type.getContinuation().type);
     } else if (type.isStruct()) {
       o << S32LEB(BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
