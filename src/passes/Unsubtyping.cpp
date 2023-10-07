@@ -105,10 +105,6 @@ namespace {
 
 struct Unsubtyping
   : WalkerPass<PostWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
-  // The original type depths, as computed by SubTypes, i.e. the max length of
-  // the subtype chains up to each type.
-  std::unordered_map<HeapType, Index> typeDepths;
-
   // The new set of supertype relations.
   std::unordered_map<HeapType, HeapType> supertypes;
 
@@ -124,7 +120,6 @@ struct Unsubtyping
     if (!wasm->features.hasGC()) {
       return;
     }
-    typeDepths = SubTypes(*wasm).getMaxDepths();
     analyzePublicTypes(*wasm);
     walkModule(wasm);
     analyzeTransitiveDependencies();
@@ -153,7 +148,7 @@ struct Unsubtyping
     if (super == oldSuper) {
       return;
     }
-    if (typeDepths[super] < typeDepths[oldSuper]) {
+    if (HeapType::isSubType(super, oldSuper)) {
       // sub <: super <: oldSuper
       it->second = super;
       worklist.insert(sub);
@@ -258,8 +253,9 @@ struct Unsubtyping
     //
     // For every type, walk up its new supertype chain to find cast sources and
     // compare against their associated cast destinations.
-    for (auto& [type, _] : typeDepths) {
-      for (auto superIt = supertypes.find(type); superIt != supertypes.end();
+    for (auto it = supertypes.begin(); it != supertypes.end(); ++it) {
+      auto type = it->first;
+      for (auto superIt = it; superIt != supertypes.end();
            superIt = supertypes.find(superIt->second)) {
         auto super = superIt->second;
         auto destsIt = castTypes.find(super);
