@@ -348,9 +348,7 @@ struct Unsubtyping
       noteSubtype(curr->ifFalse->type, curr->type);
     }
   }
-  void visitLoop(Loop* curr) {
-    noteSubtype(curr->body->type, curr->type);
-  }
+  void visitLoop(Loop* curr) { noteSubtype(curr->body->type, curr->type); }
   void visitBreak(Break* curr) {
     if (curr->value) {
       noteSubtype(curr->value->type, findBreakTarget(curr->name)->type);
