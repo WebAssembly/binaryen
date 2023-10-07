@@ -291,6 +291,36 @@ struct Unsubtyping
     Rewriter(*this, wasm).update();
   }
 
+  void doWalkModule(Module* wasm) {
+    // Visit the functions in parallel.
+    ModuleUtils::ParallelFunctionAnalysis<Unsubtyping> analysis(
+      *wasm, [&](Function* func, Unsubtyping& unsubtyping) {
+        if (!func->imported()) {
+          unsubtyping.walkFunctionInModule(func, wasm);
+        }
+      });
+    // Collect the results from the functions.
+    for (auto& [_, unsubtyping] : analysis.map) {
+      for (auto [sub, super] : unsubtyping.supertypes) {
+        noteSubtype(sub, super);
+      }
+      for (auto& [src, dests] : unsubtyping.castTypes) {
+        for (auto dest : dests) {
+          noteCast(src, dest);
+        }
+      }
+    }
+    // Collect constraints from top-level items.
+    for (auto& global : wasm->globals) {
+      visitGlobal(global.get());
+    }
+    for (auto& seg : wasm->elementSegments) {
+      visitElementSegment(seg.get());
+    }
+    // Visit the rest of the code that is not in functions.
+    walkModuleCode(wasm);
+  }
+
   void visitFunction(Function* func) {
     if (func->body) {
       noteSubtype(func->body->type, func->getResults());
