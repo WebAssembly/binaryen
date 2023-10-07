@@ -505,7 +505,7 @@ public:
     return static_cast<DerivedTy &>(*this);
   }
 
-  bool operator==(const DerivedTy &RHS) const { return Ptr == RHS.Ptr; }
+  bool operator==(const StringMapIterBase &RHS) const { return Ptr == RHS.Ptr; }
 
   DerivedTy &operator++() { // Preincrement
     ++Ptr;

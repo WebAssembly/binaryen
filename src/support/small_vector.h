@@ -141,10 +141,6 @@ public:
     return flexible == other.flexible;
   }
 
-  bool operator!=(const SmallVector<T, N>& other) const {
-    return !(*this == other);
-  }
-
   // iteration
 
   template<typename Parent, typename Iterator> struct IteratorBase {
@@ -160,10 +156,6 @@ public:
     size_t index;
 
     IteratorBase(Parent* parent, size_t index) : parent(parent), index(index) {}
-
-    bool operator!=(const Iterator& other) const {
-      return index != other.index || parent != other.parent;
-    }
 
     Iterator& operator++() {
       Iterator& self = *static_cast<Iterator*>(this);
@@ -189,7 +181,7 @@ public:
       return index - other.index;
     }
 
-    bool operator==(const Iterator& other) const {
+    bool operator==(const IteratorBase& other) const {
       return parent == other.parent && index == other.index;
     }
   };

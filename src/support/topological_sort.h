@@ -93,8 +93,9 @@ public:
     TopologicalSort<T, Subtype>* parent;
 
     bool isEnd() const { return !parent || parent->workStack.empty(); }
-    bool operator==(Iterator& other) const { return isEnd() == other.isEnd(); }
-    bool operator!=(Iterator& other) const { return !(*this == other); }
+    bool operator==(const Iterator& other) const {
+      return isEnd() == other.isEnd();
+    }
     T operator*() { return parent->workStack.back(); }
     void operator++(int) {
       parent->finishCurr();
@@ -110,7 +111,7 @@ public:
     stepToNext();
     return {this};
   }
-  Iterator end() { return {nullptr}; }
+  Iterator end() const { return {nullptr}; }
 };
 
 } // namespace wasm

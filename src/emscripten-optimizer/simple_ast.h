@@ -65,9 +65,7 @@ struct Ref {
   // special conveniences
   bool
   operator==(std::string_view str); // comparison to string, which is by value
-  bool operator!=(std::string_view str);
   bool operator==(const IString& str);
-  bool operator!=(const IString& str);
   // prevent Ref == number, which is potentially ambiguous; use ->getNumber() ==
   // number
   bool operator==(double d) {
