@@ -325,6 +325,90 @@
  ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $loop (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $super (result (ref $sub))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block $sub (result (ref $sub))
+ ;; CHECK-NEXT:      (br_table $super $sub
+ ;; CHECK-NEXT:       (struct.new_default $sub)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop
+  (drop
+   (block $super (result (ref $super))
+    (drop
+     (block $sub (result (ref $sub))
+      ;; This requires $sub <: $super.
+      (br_table $super $sub
+       (struct.new $sub)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $br-table (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $super (result (ref $sub))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block $sub (result (ref $sub))
+ ;; CHECK-NEXT:      (br_table $sub $super
+ ;; CHECK-NEXT:       (struct.new_default $sub)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table
+  (drop
+   (block $super (result (ref $super))
+    (drop
+     (block $sub (result (ref $sub))
+      ;; Same as above with labels reversed. This requires $sub <: $super.
+      (br_table $sub $super
+       (struct.new $sub)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
  ;; CHECK:       (type $2 (func (param (ref $super))))
 
  ;; CHECK:      (func $call (type $2) (param $0 (ref $super))
@@ -881,6 +965,64 @@
  ;; CHECK-NEXT: )
  (func $callee (result (ref $sub))
   (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $br-on-cast (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
+ ;; CHECK-NEXT:    (br_on_cast $l (ref $super) (ref $sub)
+ ;; CHECK-NEXT:     (struct.new_default $super)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast
+  (drop
+   (block $l (result (ref $super))
+    (br_on_cast $l anyref (ref $sub)
+     (struct.new $super)
+    )
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $br-on-cast-fail (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $l (result (ref $sub))
+ ;; CHECK-NEXT:    (br_on_cast_fail $l (ref $sub) (ref none)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-fail
+  (drop
+   (block $l (result (ref $super))
+    (br_on_cast_fail $l anyref (ref none)
+     (struct.new $sub)
+    )
+   )
+  )
  )
 )
 

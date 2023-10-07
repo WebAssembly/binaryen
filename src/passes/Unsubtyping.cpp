@@ -104,17 +104,17 @@ namespace wasm {
 namespace {
 
 struct Unsubtyping
-  : WalkerPass<PostWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
+  : WalkerPass<ControlFlowWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
   // The new set of supertype relations.
   std::unordered_map<HeapType, HeapType> supertypes;
+
+  // Map from cast source types to their destinations.
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> castTypes;
 
   // The set of subtypes that need to have their type definitions analyzed to
   // transitively find other subtype relations they depend on. We add to it
   // every time we find a new subtype relationship we need to keep.
   std::unordered_set<HeapType> worklist;
-
-  // Map from cast source types to their destinations.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> castTypes;
 
   void run(Module* wasm) override {
     if (!wasm->features.hasGC()) {
@@ -193,6 +193,7 @@ struct Unsubtyping
   }
 
   void analyzePublicTypes(Module& wasm) {
+    // We cannot change supertypes for anything public.
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
       if (auto super = type.getSuperType()) {
         noteSubtype(type, *super);
@@ -337,14 +338,6 @@ struct Unsubtyping
   }
   void visitNop(Nop* curr) {}
   void visitBlock(Block* curr) {
-    if (curr->name) {
-      BranchUtils::BranchSeeker seeker(curr->name);
-      Expression* expr = curr;
-      seeker.walk(expr);
-      for (auto type : seeker.types) {
-        noteSubtype(type, curr->type);
-      }
-    }
     if (!curr->list.empty()) {
       noteSubtype(curr->list.back()->type, curr->type);
     }
@@ -356,15 +349,20 @@ struct Unsubtyping
     }
   }
   void visitLoop(Loop* curr) {
-    // TODO: Once we support value-carrying branches to loops, consider those
-    // branches here.
     noteSubtype(curr->body->type, curr->type);
   }
   void visitBreak(Break* curr) {
-    // Accounted for at the branch target.
+    if (curr->value) {
+      noteSubtype(curr->value->type, findBreakTarget(curr->name)->type);
+    }
   }
   void visitSwitch(Switch* curr) {
-    // Accounted for at the branch target.
+    if (curr->value) {
+      noteSubtype(curr->value->type, findBreakTarget(curr->default_)->type);
+      for (auto name : curr->targets) {
+        noteSubtype(curr->value->type, findBreakTarget(name)->type);
+      }
+    }
   }
   template<typename T> void handleCall(T* curr, Signature sig) {
     assert(curr->operands.size() == sig.params.size());
@@ -480,9 +478,9 @@ struct Unsubtyping
   }
   void visitRefCast(RefCast* curr) { noteCast(curr->ref->type, curr->type); }
   void visitBrOn(BrOn* curr) {
-    // Subtyping accounted for at the branch target.
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       noteCast(curr->ref->type, curr->castType);
+      noteSubtype(curr->getSentType(), findBreakTarget(curr->name)->type);
     }
   }
   void visitStructNew(StructNew* curr) {
