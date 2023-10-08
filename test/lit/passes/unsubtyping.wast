@@ -1203,7 +1203,7 @@
 
  (type $array (sub (array (ref null $super))))
 
- ;; CHECK:      (elem $e func)
+ ;; CHECK:      (elem $e (ref null $sub))
  (elem $e (ref null $sub))
 
  ;; CHECK:      (func $array-new-elem (type $1)
@@ -1480,7 +1480,7 @@
 
  (type $array (sub (array (mut (ref null $super)))))
 
- ;; CHECK:      (elem $e func)
+ ;; CHECK:      (elem $e (ref null $sub))
  (elem $e (ref null $sub))
 
  ;; CHECK:      (func $array-init-elem (type $1)
