@@ -485,7 +485,8 @@ public:
 
 protected:
   Pass() = default;
-  Pass(Pass&) = default;
+  Pass(const Pass&) = default;
+  Pass(Pass&&) = default;
   Pass& operator=(const Pass&) = delete;
 };
 
@@ -500,10 +501,6 @@ protected:
   using super = WalkerPass<WalkerType>;
 
 public:
-  WalkerPass() = default;
-  WalkerPass(const WalkerPass<WalkerType>&) = default;
-  WalkerPass(WalkerPass<WalkerType>&&) = default;
-
   void run(Module* module) override {
     assert(getPassRunner());
     // Parallel pass running is implemented in the PassRunner.
