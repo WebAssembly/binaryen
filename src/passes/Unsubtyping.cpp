@@ -297,11 +297,11 @@ struct Unsubtyping
         }
       });
     // Collect the results from the functions.
-    for (auto& [_, unsubtyping] : analysis.map) {
+    for (const auto& [_, unsubtyping] : analysis.map) {
       for (auto [sub, super] : unsubtyping.supertypes) {
         noteSubtype(sub, super);
       }
-      for (auto& [src, dests] : unsubtyping.castTypes) {
+      for (const auto& [src, dests] : unsubtyping.castTypes) {
         for (auto dest : dests) {
           noteCast(src, dest);
         }
