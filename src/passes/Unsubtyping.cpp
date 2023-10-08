@@ -105,6 +105,11 @@ namespace {
 
 struct Unsubtyping
   : WalkerPass<ControlFlowWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
+
+  Unsubtyping() = default;
+  Unsubtyping(const Unsubtyping&) = default;
+  Unsubtyping(Unsubtyping&&) = default;
+
   // The new set of supertype relations.
   std::unordered_map<HeapType, HeapType> supertypes;
 
