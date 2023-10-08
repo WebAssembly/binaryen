@@ -406,8 +406,6 @@ using ExpressionStack = SmallVector<Expression*, 10>;
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
-  ControlFlowWalker() = default;
-
   ExpressionStack controlFlowStack; // contains blocks, loops, and ifs
 
   // Uses the control flow stack to find the target of a break to a name
