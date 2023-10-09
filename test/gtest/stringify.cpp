@@ -305,3 +305,44 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       // 10, 11, 6 appears at idx 23 and again at 34
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})}}));
 }
+
+TEST_F(StringifyTest, FilterLocalSets) {
+  static auto localSetModuleText = R"wasm(
+  (module
+  (func $a (result i32)
+      (local $x i32)
+      (local.set $x
+        (i32.const 1)
+      )
+    (i32.const 0)
+    (i32.const 1)
+  )
+  (func $b (result i32)
+      (local $x i32)
+      (local.set $x
+        (i32.const 1)
+      )
+    (i32.const 5)
+    (i32.const 0)
+    (i32.const 1)
+  )
+  )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, localSetModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  auto substrings = repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::dedupe(substrings);
+
+  result = StringifyProcessor::filter(
+    substrings, stringify.exprs, [](const Expression& curr) {
+      return curr.is<LocalSet>();
+    });
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // sequence i32.const 0, i32.const 1 appears at idx 6 and again at 16
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 16})}}));
+}

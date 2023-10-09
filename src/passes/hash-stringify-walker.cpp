@@ -58,11 +58,13 @@ void HashStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
   assert((uint32_t)nextSeparatorVal >= nextVal);
   hashString.push_back((uint32_t)nextSeparatorVal);
   nextSeparatorVal--;
+  exprs.push_back(nullptr);
 }
 
 void HashStringifyWalker::visitExpression(Expression* curr) {
   auto [it, inserted] = exprToCounter.insert({curr, nextVal});
   hashString.push_back(it->second);
+  exprs.push_back(curr);
   if (inserted) {
     nextVal++;
   }
@@ -101,6 +103,62 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
     }
     if (!seenEndIdx) {
       seen.insert(idxToInsert.begin(), idxToInsert.end());
+      result.push_back(substring);
+    }
+  }
+
+  return result;
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
+  const std::vector<SuffixTree::RepeatedSubstring> substrings,
+  const std::vector<Expression*> exprs,
+  std::function<bool(const Expression&)> condition) {
+
+  struct FilterStringifyWalker : public StringifyWalker<FilterStringifyWalker> {
+    bool hasFilterValue = false;
+    std::function<bool(const Expression&)> condition;
+
+    FilterStringifyWalker(std::function<bool(const Expression&)> condition)
+      : condition(condition){};
+
+    void walk(Expression* curr) {
+      hasFilterValue = false;
+      Super::walk(curr);
+    }
+
+    void addUniqueSymbol(SeparatorReason reason) {}
+
+    void visitExpression(Expression* curr) {
+      if (condition(*curr)) {
+        hasFilterValue = true;
+      }
+    }
+  };
+
+  FilterStringifyWalker walker = FilterStringifyWalker(condition);
+
+  std::vector<SuffixTree::RepeatedSubstring> result;
+  for (auto substring : substrings) {
+    bool hasFilterValue = false;
+    for (auto idx = substring.StartIndices[0],
+              endIdx = substring.StartIndices[0] + substring.Length;
+         idx < endIdx;
+         idx++) {
+      Expression* curr = exprs[idx];
+      if (Properties::isControlFlowStructure(curr)) {
+        walker.walk(curr);
+        if (walker.hasFilterValue) {
+          hasFilterValue = true;
+          break;
+        }
+      }
+      if (curr->is<LocalSet>()) {
+        hasFilterValue = true;
+        break;
+      }
+    }
+    if (!hasFilterValue) {
       result.push_back(substring);
     }
   }
