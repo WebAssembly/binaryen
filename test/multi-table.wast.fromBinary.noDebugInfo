@@ -11,7 +11,7 @@
  (elem $1 (table $0) (i32.const 0) func $0)
  (elem $2 (table $0) (i32.const 1) func $0 $1)
  (elem $3 (table $1) (global.get $global$1) funcref (ref.func $0) (ref.null nofunc))
- (elem $4 (table $1) (i32.const 2) func $0 $1)
+ (elem $4 (table $1) (i32.const 2) (ref null $0) (ref.func $0) (ref.func $1))
  (elem $5 func $0 $1)
  (elem $6 funcref (ref.func $0) (ref.func $1) (ref.null nofunc))
  (elem $7 (ref null $0) (ref.func $0) (ref.func $1) (ref.null nofunc) (global.get $global$0))
