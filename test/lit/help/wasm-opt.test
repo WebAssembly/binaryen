@@ -492,6 +492,9 @@
 ;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
 ;; CHECK-NEXT:                                                 (open)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --unsubtyping                                 removes unnecessary subtyping
+;; CHECK-NEXT:                                                 relationships
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets
 ;; CHECK-NEXT:

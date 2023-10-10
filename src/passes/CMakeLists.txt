@@ -116,6 +116,7 @@ set(passes_SOURCES
   SSAify.cpp
   TupleOptimization.cpp
   TypeFinalizing.cpp
+  Unsubtyping.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
