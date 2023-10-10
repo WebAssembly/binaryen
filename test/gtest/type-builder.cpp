@@ -1118,15 +1118,15 @@ TEST_F(TypeTest, TestSupertypes) {
   // Non-basic types.
   HeapType struct1, struct2, array1, array2, sig1, sig2;
   {
-    TypeBuilder builder(4);
+    TypeBuilder builder(6);
     builder[0].setOpen() = Struct();
-    builder[1].setOpen().subTypeOf(builder[1]) = Struct();
+    builder[1].setOpen().subTypeOf(builder[0]) = Struct();
     auto array = Array(Field(Type::i32, Immutable));
     builder[2].setOpen() = array;
-    builder[3].setOpen().subTypeOf(builder[3]) = array;
+    builder[3].setOpen().subTypeOf(builder[2]) = array;
     auto sig = Signature(Type::none, Type::none);
     builder[4].setOpen() = sig;
-    builder[5].setOpen().subTypeOf(builder[5]) = sig;
+    builder[5].setOpen().subTypeOf(builder[4]) = sig;
     auto result = builder.build();
     ASSERT_TRUE(result);
     auto built = *result;
