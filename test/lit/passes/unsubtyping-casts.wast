@@ -281,7 +281,7 @@
 
  ;; CHECK:       (type $3 (func))
 
- ;; CHECK:      (func $cast-optmizable (type $3)
+ ;; CHECK:      (func $cast-optimizable (type $3)
  ;; CHECK-NEXT:  (local $l (ref null $mid))
  ;; CHECK-NEXT:  (local.set $l
  ;; CHECK-NEXT:   (struct.new_default $bot)
@@ -292,7 +292,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $cast-optmizable
+ (func $cast-optimizable
   (local $l (ref null $mid))
   (local.set $l
    ;; This time we require $bot <: $mid.

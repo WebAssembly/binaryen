@@ -989,6 +989,7 @@
  (func $br-on-cast
   (drop
    (block $l (result (ref $super))
+    ;; This requires $sub <: $super.
     (br_on_cast $l anyref (ref $sub)
      (struct.new $super)
     )
@@ -1018,6 +1019,7 @@
  (func $br-on-cast-fail
   (drop
    (block $l (result (ref $super))
+    ;; This requires $sub <: $super.
     (br_on_cast_fail $l anyref (ref none)
      (struct.new $sub)
     )

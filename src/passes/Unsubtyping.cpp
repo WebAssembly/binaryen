@@ -28,11 +28,11 @@
 // Compute and use the minimal subtype relation required to maintain module
 // validity and behavior. This minimal relation will be a subset of the original
 // subtype relation. Start by walking the IR and collecting pairs of types that
-// need to be in the subtype relation for each expresion to validate. For
+// need to be in the subtype relation for each expression to validate. For
 // example, a local.set requires that the type of its operand be a subtype of
-// the local's type. Casts do not generate subtypings at the point because it is
-// not necessary for the cast target to be a subtype of the cast source for the
-// cast to validate.
+// the local's type. Casts do not generate subtypings at this point because it
+// is not necessary for the cast target to be a subtype of the cast source for
+// the cast to validate.
 //
 // From that initial subtype relation, we then start finding new subtypings that
 // are required by the subtypings we have found already. These transitively
@@ -114,7 +114,7 @@ struct Unsubtyping
   // The set of subtypes that need to have their type definitions analyzed to
   // transitively find other subtype relations they depend on. We add to it
   // every time we find a new subtype relationship we need to keep.
-  std::unordered_set<HeapType> worklist;
+  std::unordered_set<HeapType> work;
 
   void run(Module* wasm) override {
     if (!wasm->features.hasGC()) {
@@ -130,6 +130,7 @@ struct Unsubtyping
     ReFinalize().run(getPassRunner(), wasm);
   }
 
+  // Note that sub must remain a subtype of super.
   void noteSubtype(HeapType sub, HeapType super) {
     if (sub == super || sub.isBottom() || super.isBottom()) {
       return;
@@ -137,7 +138,7 @@ struct Unsubtyping
 
     auto [it, inserted] = supertypes.insert({sub, super});
     if (inserted) {
-      worklist.insert(sub);
+      work.insert(sub);
       // TODO: Incrementally check all subtypes (inclusive) of sub against super
       // and all its supertypes if we have already analyzed casts.
       return;
@@ -148,10 +149,14 @@ struct Unsubtyping
     if (super == oldSuper) {
       return;
     }
+    // There are two different supertypes, but each type can only have a single
+    // direct subtype so the supertype chain cannot fork and one of the
+    // supertypes must be a supertype of the other. Recursively record that
+    // relationship as well.
     if (HeapType::isSubType(super, oldSuper)) {
       // sub <: super <: oldSuper
       it->second = super;
-      worklist.insert(sub);
+      work.insert(sub);
       // TODO: Incrementally check all subtypes (inclusive) of sub against super
       // if we have already analyzed casts.
       noteSubtype(super, oldSuper);
@@ -203,14 +208,14 @@ struct Unsubtyping
 
   void analyzeTransitiveDependencies() {
     // While we have found new subtypings and have not reached a fixed point...
-    while (!worklist.empty()) {
+    while (!work.empty()) {
       // Subtype relationships that we are keeping might depend on other subtype
       // relationships that we are not yet planning to keep. Transitively find
       // all the relationships we need to keep all our type definitions valid.
-      while (!worklist.empty()) {
-        auto it = worklist.begin();
+      while (!work.empty()) {
+        auto it = work.begin();
         auto type = *it;
-        worklist.erase(it);
+        work.erase(it);
         auto super = supertypes.at(type);
         if (super.isBasic()) {
           continue;
@@ -220,15 +225,11 @@ struct Unsubtyping
           const auto& fields = type.getStruct().fields;
           const auto& superFields = super.getStruct().fields;
           for (size_t i = 0, size = superFields.size(); i < size; ++i) {
-            if (fields[i].mutable_ == Immutable) {
-              noteSubtype(fields[i].type, superFields[i].type);
-            }
+            noteSubtype(fields[i].type, superFields[i].type);
           }
         } else if (type.isArray()) {
           auto elem = type.getArray().element;
-          if (elem.mutable_ == Immutable) {
-            noteSubtype(elem.type, super.getArray().element.type);
-          }
+          noteSubtype(elem.type, super.getArray().element.type);
         } else {
           assert(type.isSignature());
           auto sig = type.getSignature();
@@ -256,10 +257,10 @@ struct Unsubtyping
     // compare against their associated cast destinations.
     for (auto it = supertypes.begin(); it != supertypes.end(); ++it) {
       auto type = it->first;
-      for (auto superIt = it; superIt != supertypes.end();
-           superIt = supertypes.find(superIt->second)) {
-        auto super = superIt->second;
-        auto destsIt = castTypes.find(super);
+      for (auto srcIt = it; srcIt != supertypes.end();
+           srcIt = supertypes.find(srcIt->second)) {
+        auto src = srcIt->second;
+        auto destsIt = castTypes.find(src);
         if (destsIt == castTypes.end()) {
           continue;
         }
@@ -289,7 +290,8 @@ struct Unsubtyping
   }
 
   void doWalkModule(Module* wasm) {
-    // Visit the functions in parallel.
+    // Visit the functions in parallel, filling in `supertypes` and `castTypes`
+    // on separate instances which will later be merged.
     ModuleUtils::ParallelFunctionAnalysis<Unsubtyping> analysis(
       *wasm, [&](Function* func, Unsubtyping& unsubtyping) {
         if (!func->imported()) {
@@ -385,7 +387,7 @@ struct Unsubtyping
       // keep the types related.
       noteSubtype(tableType, curr->heapType);
     } else if (HeapType::isSubType(curr->heapType, tableType)) {
-      noteCast(table->type.getHeapType(), curr->heapType);
+      noteCast(tableType, curr->heapType);
     } else {
       // The types are unrelated and the cast will fail. We can keep the types
       // unrelated.
