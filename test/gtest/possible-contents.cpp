@@ -552,20 +552,6 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   auto C = types[2];
   auto D = types[3];
   auto E = types[4];
-
-  // Verify all supertype relations work as expected.
-  ASSERT_FALSE(HeapType(HeapType::any).getGeneralSuperType());
-  ASSERT_EQ(HeapType(HeapType::eq).getGeneralSuperType(), HeapType::any);
-  ASSERT_EQ(HeapType(HeapType::struct_).getGeneralSuperType(), HeapType::eq);
-  ASSERT_EQ(A.getGeneralSuperType(), HeapType::struct_);
-  ASSERT_EQ(B.getGeneralSuperType(), A);
-  ASSERT_EQ(C.getGeneralSuperType(), A);
-  ASSERT_EQ(D.getGeneralSuperType(), C);
-
-  // Verify that getSuperType (not 'general' only returns non-basic types).
-  ASSERT_FALSE(HeapType(HeapType::any).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::eq).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::struct_).getSuperType());
   ASSERT_FALSE(A.getSuperType());
   ASSERT_EQ(B.getSuperType(), A);
   ASSERT_EQ(C.getSuperType(), A);

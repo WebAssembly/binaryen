@@ -1080,3 +1080,76 @@ TEST_F(TypeTest, TestIterSubTypes) {
   EXPECT_EQ(getSubTypes(C, 1), TypeDepths({{C, 0}, {D, 1}}));
   EXPECT_EQ(getSubTypes(C, 2), TypeDepths({{C, 0}, {D, 1}}));
 }
+
+// Test supertypes
+TEST_F(TypeTest, TestSupertypes) {
+  // Basic types: getSuperType always returns nothing.
+  ASSERT_FALSE(HeapType(HeapType::ext).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::func).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::any).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::eq).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::i31).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::struct_).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::array).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::string).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_wtf8).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_wtf16).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_iter).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::none).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::noext).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::nofunc).getSuperType());
+
+  // Basic types: getGeneralSuperType does return a super, when there is one.
+  ASSERT_FALSE(HeapType(HeapType::ext).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::func).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::any).getGeneralSuperType());
+  ASSERT_EQ(HeapType(HeapType::eq).getGeneralSuperType(), HeapType::any);
+  ASSERT_EQ(HeapType(HeapType::i31).getGeneralSuperType(), HeapType::eq);
+  ASSERT_EQ(HeapType(HeapType::struct_).getGeneralSuperType(), HeapType::eq);
+  ASSERT_EQ(HeapType(HeapType::array).getGeneralSuperType(), HeapType::eq);
+  ASSERT_FALSE(HeapType(HeapType::string).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_wtf8).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_wtf16).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::stringview_iter).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::none).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::noext).getGeneralSuperType());
+  ASSERT_FALSE(HeapType(HeapType::nofunc).getGeneralSuperType());
+
+  // Non-basic types.
+  HeapType struct1, struct2, array1, array2, sig1, sig2;
+  {
+    TypeBuilder builder(4);
+    builder[0].setOpen() = Struct();
+    builder[1].setOpen().subTypeOf(builder[1]) = Struct();
+    auto array = Array(Field(Type::i32, Immutable));
+    builder[2].setOpen() = array;
+    builder[3].setOpen().subTypeOf(builder[3]) = array;
+    auto sig = Signature(Type::none, Type::none);
+    builder[4].setOpen() = sig;
+    builder[5].setOpen().subTypeOf(builder[5]) = sig;
+    auto result = builder.build();
+    ASSERT_TRUE(result);
+    auto built = *result;
+    struct1 = built[0];
+    struct2 = built[1];
+    array1 = built[2];
+    array2 = built[3];
+    sig1 = built[4];
+    sig2 = built[5];
+  }
+
+  ASSERT_EQ(struct1.getGeneralSuperType(), HeapType::struct_);
+  ASSERT_EQ(struct2.getGeneralSuperType(), struct1);
+  ASSERT_EQ(array1.getGeneralSuperType(), HeapType::array);
+  ASSERT_EQ(array2.getGeneralSuperType(), array1);
+  ASSERT_EQ(sig1.getGeneralSuperType(), HeapType::func);
+  ASSERT_EQ(sig2.getGeneralSuperType(), sig1);
+
+  // Without |General|, we don't get basic types.
+  ASSERT_FALSE(struct1.getSuperType());
+  ASSERT_EQ(struct2.getSuperType(), struct1);
+  ASSERT_FALSE(array1.getSuperType());
+  ASSERT_EQ(array2.getSuperType(), array1);
+  ASSERT_FALSE(sig1.getSuperType());
+  ASSERT_EQ(sig2.getSuperType(), sig1);
+}
