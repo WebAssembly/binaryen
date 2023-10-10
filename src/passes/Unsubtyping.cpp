@@ -21,6 +21,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -114,7 +115,7 @@ struct Unsubtyping
   // The set of subtypes that need to have their type definitions analyzed to
   // transitively find other subtype relations they depend on. We add to it
   // every time we find a new subtype relationship we need to keep.
-  std::unordered_set<HeapType> work;
+  UniqueDeferredQueue<HeapType> work;
 
   void run(Module* wasm) override {
     if (!wasm->features.hasGC()) {
@@ -138,7 +139,7 @@ struct Unsubtyping
 
     auto [it, inserted] = supertypes.insert({sub, super});
     if (inserted) {
-      work.insert(sub);
+      work.push(sub);
       // TODO: Incrementally check all subtypes (inclusive) of sub against super
       // and all its supertypes if we have already analyzed casts.
       return;
@@ -156,7 +157,7 @@ struct Unsubtyping
     if (HeapType::isSubType(super, oldSuper)) {
       // sub <: super <: oldSuper
       it->second = super;
-      work.insert(sub);
+      work.push(sub);
       // TODO: Incrementally check all subtypes (inclusive) of sub against super
       // if we have already analyzed casts.
       noteSubtype(super, oldSuper);
@@ -213,14 +214,11 @@ struct Unsubtyping
       // relationships that we are not yet planning to keep. Transitively find
       // all the relationships we need to keep all our type definitions valid.
       while (!work.empty()) {
-        auto it = work.begin();
-        auto type = *it;
-        work.erase(it);
+        auto type = work.pop();
         auto super = supertypes.at(type);
         if (super.isBasic()) {
           continue;
         }
-
         if (type.isStruct()) {
           const auto& fields = type.getStruct().fields;
           const auto& superFields = super.getStruct().fields;
