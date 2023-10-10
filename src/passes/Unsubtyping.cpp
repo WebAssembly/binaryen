@@ -480,8 +480,8 @@ struct Unsubtyping
   void visitBrOn(BrOn* curr) {
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       noteCast(curr->ref->type, curr->castType);
-      noteSubtype(curr->getSentType(), findBreakTarget(curr->name)->type);
     }
+    noteSubtype(curr->getSentType(), findBreakTarget(curr->name)->type);
   }
   void visitStructNew(StructNew* curr) {
     if (!curr->type.isStruct() || curr->isWithDefault()) {

@@ -977,6 +977,38 @@
 
  ;; CHECK:       (type $2 (func))
 
+ ;; CHECK:      (func $br-on-non-null (type $2)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
+ ;; CHECK-NEXT:    (br_on_non_null $l
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (struct.new_default $super)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-non-null
+  (drop
+   (block $l (result (ref $super))
+    ;; This requires $sub <: $super.
+    (br_on_non_null $l
+     (struct.new $sub)
+    )
+    (struct.new $super)
+   )
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:       (type $2 (func))
+
  ;; CHECK:      (func $br-on-cast (type $2)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $l (result (ref $super))
