@@ -358,8 +358,7 @@ struct Unsubtyping
   }
   void visitSwitch(Switch* curr) {
     if (curr->value) {
-      noteSubtype(curr->value->type, findBreakTarget(curr->default_)->type);
-      for (auto name : curr->targets) {
+      for (auto name : BranchUtils::getUniqueTargets(curr)) {
         noteSubtype(curr->value->type, findBreakTarget(name)->type);
       }
     }
