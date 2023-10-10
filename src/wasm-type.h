@@ -372,6 +372,11 @@ public:
   // else an empty optional.
   std::optional<HeapType> getSuperType() const;
 
+  // As getSuperType, but also handles basic types (i.e., the other function
+  // returns an empty optional if there is a basic supertype, but this does
+  // not).
+  std::optional<HeapType> getGeneralSuperType() const;
+
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.
   size_t getDepth() const;

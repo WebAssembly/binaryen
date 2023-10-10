@@ -765,8 +765,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
 
       while (1) {
         ret.push_back(Type(heapType, nullability));
-        // TODO: handle basic supertypes too
-        auto super = heapType.getSuperType();
+        auto super = heapType.getGeneralSuperType();
         if (!super) {
           break;
         }
