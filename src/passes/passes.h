@@ -162,6 +162,8 @@ Pass* createTypeUnFinalizingPass();
 Pass* createUnteePass();
 Pass* createVacuumPass();
 
+Pass* createAddThrowsPass();
+
 // Test passes:
 Pass* createCatchPopFixupPass();
 

@@ -118,6 +118,7 @@ set(passes_SOURCES
   TypeFinalizing.cpp
   Untee.cpp
   Vacuum.cpp
+  AddThrows.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   ${passes_HEADERS}
 )
