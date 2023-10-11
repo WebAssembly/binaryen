@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -559,15 +560,35 @@ void TranslateToFuzzReader::addHashMemorySupport() {
 }
 
 TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
+  // We must ensure non-nullable locals validate. First, see if there are non-
+  // nullable locals with non-validating reads.
+  // TODO: We could be more precise and use a LocalGraph here, at the cost of
+  //       doing more work.
+  LocalStructuralDominance info(func, parent.wasm, LocalStructuralDominance::NonNullableOnly);
+  for (auto index : info.nonDominatingIndices) {
+    // Do not always do this, but with high probability, to reduce the amount of
+    // traps.
+    if (!parent.oneIn(4)) {
+      // Ensure a non-nullable value by writing one in the entry to the
+      // function.
+      auto* value = parent.makeTrivial(func->getLocalType(index));
+      func->body = parent.builder.makeSequence(
+        parent.builder.makeLocalSet(index, value),
+        func->body
+      );
+    }
+  }
+
+  // Then, fix up locals by making them non-nullable + ref.as_non_null as needed
+  // so that the function is valid.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
+
   if (HANG_LIMIT > 0) {
     parent.addHangLimitChecks(func);
   }
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
-
-  // We must ensure non-nullable locals validate.
-  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
@@ -621,11 +642,6 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
-    if (!type.isDefaultable()) {
-      // We can't use a nondefaultable type as a var, as those must be
-      // initialized to some default value.
-      continue;
-    }
     funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
     func->vars.push_back(type);
   }
@@ -1252,7 +1268,10 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
   } nester(*this);
 
   if (type.isConcrete()) {
-    if (oneIn(2) && funcContext) {
+    // If we have a function context, use a local half the time. Use a local
+    // much less often if the local is non-nullable, however, as then we might
+    // be using it before it was set, which would trap.
+    if (funcContext && oneIn(type.isNonNullable() ? 20 : 2)) {
       return makeLocalGet(type);
     } else {
       return makeConst(type);
