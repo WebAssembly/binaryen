@@ -630,7 +630,6 @@ and then its name. The merged output is this:
 
 ```wat
 (module
-  (import "second" "bar" (func $second.bar))
   (import "outside" "log" (func $log (param i32)))
 
   (export "main" (func $func))
