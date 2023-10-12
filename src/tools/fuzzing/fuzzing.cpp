@@ -2518,7 +2518,7 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   // of reads and writes to the same objects.
   //
   // Note that makeLocalGet will add a local if necessary, and even tee that
-  // value so it us usable later as well.
+  // value so it is usable later as well.
   return makeLocalGet(nonNull);
 }
 
