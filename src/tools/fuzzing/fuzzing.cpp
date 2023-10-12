@@ -1622,10 +1622,35 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
 
 Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   auto& locals = funcContext->typeLocals[type];
-  if (locals.empty()) {
+  if (!locals.empty()) {
+    return builder.makeLocalGet(pick(locals), type);
+  }
+  // No existing local. When we want something trivial, just give up and emit a
+  // constant.
+  if (trivialNesting) {
     return makeConst(type);
   }
-  return builder.makeLocalGet(pick(locals), type);
+
+  // Otherwise, we have 3 cases: a const, as above (we do this randomly some of
+  // the time), or emit a local.get of a new local, or emit a local.tee of a new
+  // local.
+  auto choice = upTo(3);
+  if (choice == 0) {
+    return makeConst(type);
+  }
+  // Otherwise, add a new local. If the type is not non-nullable then we may
+  // just emit a get for it (which, as this is a brand-new local, will read the
+  // default value, unless we are in a loop; for that reason for a non-
+  // nullable local we prefer a tee later down.).
+  auto index = builder.addVar(funcContext->func, type);
+  LocalSet* tee == nullptr;
+  if (choice == 1 || type.isNonNullable()) {
+    // Create the tee here before adding the local to typeLocals (or else we
+    // might end up using it prematurely inside the make() call).
+    tee = builder.makeLocalTee(index, make(type), type);
+  }
+  funcContext->typeLocals[type].push_back(index);
+  return tee ? tee : builder.makeLocalGet(index, type);
 }
 
 Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
@@ -2475,8 +2500,8 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   if (percent < 70 || !funcContext) {
     return make(nonNull);
   }
-  // With significant probability, try to use an existing value. it is better to
-  // have patterns like this:
+  // With significant probability, try to use an existing value, that is, to
+  // get a value using local.get, as it is better to have patterns like this:
   //
   //  (local.set $ref (struct.new $..
   //  (struct.get (local.get $ref))
@@ -2488,17 +2513,10 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   //
   // By using local values more, we get more coverage of interesting sequences
   // of reads and writes to the same objects.
-  auto& typeLocals = funcContext->typeLocals[nonNull];
-  if (!typeLocals.empty()) {
-    return builder.makeLocalGet(pick(typeLocals), nonNull);
-  }
-  // Add a new local and tee it, so later operations can use it.
-  auto index = builder.addVar(funcContext->func, nonNull);
-  // Note we must create the child ref here before adding the local to
-  // typeLocals (or else we might end up using it prematurely).
-  auto* tee = builder.makeLocalTee(index, make(nonNull), nonNull);
-  funcContext->typeLocals[nonNull].push_back(index);
-  return tee;
+  //
+  // Note that makeLocalGet will add a local if necessary, and even tee that
+  // value so it us usable later as well.
+  return makeLocalGet(nonNull);
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
