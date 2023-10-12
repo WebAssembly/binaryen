@@ -1643,7 +1643,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // default value, unless we are in a loop; for that reason for a non-
   // nullable local we prefer a tee later down.).
   auto index = builder.addVar(funcContext->func, type);
-  LocalSet* tee == nullptr;
+  LocalSet* tee = nullptr;
   if (choice == 1 || type.isNonNullable()) {
     // Create the tee here before adding the local to typeLocals (or else we
     // might end up using it prematurely inside the make() call).
