@@ -1650,7 +1650,10 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
     tee = builder.makeLocalTee(index, make(type), type);
   }
   funcContext->typeLocals[type].push_back(index);
-  return tee ? tee : builder.makeLocalGet(index, type);
+  if (tee) {
+    return tee;
+  }
+  return builder.makeLocalGet(index, type);
 }
 
 Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
