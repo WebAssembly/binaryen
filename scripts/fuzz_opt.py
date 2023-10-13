@@ -727,6 +727,11 @@ class CompareVMs(TestCaseHandler):
                         # simply trapped, and was not very useful, so mark it
                         # as ignored. Ideally the fuzzer testcases would be
                         # improved to reduce this number.
+                        #
+                        # Note that we don't change output=IGNORE as there may
+                        # still be useful testing here (up to 50%), so we only
+                        # note that this is a mostly-ignored run, but we do not
+                        # ignore the parts that are useful.
                         note_ignored_vm_run(f'(testcase mostly ignored: {calls} calls, {errors} errors)')
                 return output
 
