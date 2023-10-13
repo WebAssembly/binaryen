@@ -346,7 +346,7 @@ After that you can build with CMake:
 cmake . && make
 ```
 
-A C++17 compiler is required. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
+A C++17 compiler is required. On macOS, you need to install `cmake`, for example, via `brew install cmake`. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
 
 To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
