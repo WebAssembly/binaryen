@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include "analysis/bits-bounds-lattice.h"
+#include "analysis/bits-bounds-transfer-function.h"
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
 #include "analysis/liveness-transfer-function.h"
@@ -676,4 +678,38 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
 
   EXPECT_EQ(stackLattice.compare(thirdStack, expectedStack),
             LatticeComparison::EQUAL);
+}
+
+// TODO: Add more thorough test cases for max bits analysis.
+TEST_F(CFGTest, MaxBitsAnalysis) {
+  auto moduleText = R"wasm(
+    (module
+      (func $bar (param $x (i32))
+        (local.set $x (i32.mul (i32.const 1234) (i32.const 432)))
+        (local.set $x (i32.add (i32.const 64) (i32.const 32)))
+        (local.set $x (i32.xor (i32.const 123) (i32.const 47)))
+      )
+    )
+  )wasm";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  Function* func = wasm.getFunction("bar");
+  CFG cfg = CFG::fromFunction(func);
+
+  MaxBitsLattice maxBitsLattice;
+  StackLattice<MaxBitsLattice> lattice(maxBitsLattice);
+
+  MaxBitsTransferFunction transferFunction(maxBitsLattice);
+  MonotoneCFGAnalyzer<StackLattice<MaxBitsLattice>, MaxBitsTransferFunction>
+    analyzer(lattice, transferFunction, cfg);
+  analyzer.evaluateAndCollectResults();
+
+  for (auto cfgBlock = cfg.begin(); cfgBlock != cfg.end(); ++cfgBlock) {
+    for (auto expr = cfgBlock->begin(); expr != cfgBlock->end(); ++expr) {
+      std::cout << ShallowExpression{*expr} << " "
+                << transferFunction.exprMaxBounds[*expr] << std::endl;
+    }
+  }
 }

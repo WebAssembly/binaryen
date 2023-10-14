@@ -15,7 +15,7 @@ enum class AnalysisDirection { Forward, Backward };
 // analysis. Forward analysis is chosen by default unless the template parameter
 // Backward is true.
 template<typename SubType, typename Lattice, AnalysisDirection Direction>
-struct VisitorTransferFunc : public Visitor<SubType> {
+struct VisitorTransferFunc : public UnifiedExpressionVisitor<SubType> {
 protected:
   typename Lattice::Element* currState = nullptr;
 
