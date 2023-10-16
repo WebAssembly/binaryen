@@ -444,7 +444,7 @@ struct Heap2LocalOptimizer {
       // We need to refinalize after this, as while we know the cast is not
       // logically needed - the value flowing through will not be used - we do
       // need validation to succeed even before other optimizations remove the
-      // code that might not validation. For example:
+      // code. For example:
       //
       //  (block (result $B)
       //   (ref.cast $B
