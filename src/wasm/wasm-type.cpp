@@ -906,7 +906,8 @@ FeatureSet Type::getFeatures() const {
           }
 
           if (heapType->isStruct() || heapType->isArray() ||
-              heapType->getRecGroup().size() > 1 || heapType->getDeclaredSuperType()) {
+              heapType->getRecGroup().size() > 1 ||
+              heapType->getDeclaredSuperType()) {
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
           } else if (heapType->isSignature()) {
             // This is a function reference, which requires reference types and
@@ -1221,7 +1222,8 @@ std::optional<HeapType> HeapType::getDeclaredSuperType() const {
 size_t HeapType::getDepth() const {
   size_t depth = 0;
   std::optional<HeapType> super;
-  for (auto curr = *this; (super = curr.getDeclaredSuperType()); curr = *super) {
+  for (auto curr = *this; (super = curr.getDeclaredSuperType());
+       curr = *super) {
     ++depth;
   }
   // In addition to the explicit supertypes we just traversed over, there is
