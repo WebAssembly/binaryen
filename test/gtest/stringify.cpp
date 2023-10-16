@@ -254,7 +254,7 @@ std::vector<SuffixTree::RepeatedSubstring>
 repeatSubstrings(std::vector<uint32_t> hashString) {
   SuffixTree st(hashString);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
-    std::vector(st.begin(), st.end());
+    std::vector<SuffixTree::RepeatedSubstring>(st.begin(), st.end());
   std::sort(
     substrings.begin(),
     substrings.end(),
