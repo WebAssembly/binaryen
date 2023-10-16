@@ -5768,7 +5768,7 @@
             ;; This cast can be refined since we know the input is $A. After we
             ;; do that, we must refinalize, as the br_on_cast's types must be
             ;; valid - specifically, we can't end up with the input type being
-            ;; $A and the output type still being (ref struct), as the input
+            ;; $A and the output type still being (ref struct), as the output
             ;; type must be a subtype. After refinalizing, both will become $A.
             (ref.cast anyref
               (local.get $temp)
