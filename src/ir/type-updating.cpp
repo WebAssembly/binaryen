@@ -46,8 +46,8 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
     GlobalTypeRewriter& parent;
 
     SupertypesFirst(GlobalTypeRewriter& parent) : parent(parent) {}
-    std::optional<HeapType> getSuperType(HeapType type) {
-      return parent.getSuperType(type);
+    std::optional<HeapType> getDeclaredSuperType(HeapType type) {
+      return parent.getDeclaredSuperType(type);
     }
   };
 
@@ -106,7 +106,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
     }
 
     // Apply a super, if there is one
-    if (auto super = getSuperType(type)) {
+    if (auto super = getDeclaredSuperType(type)) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
         assert(it->second < i);
         typeBuilder[i].subTypeOf(typeBuilder[it->second]);

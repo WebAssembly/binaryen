@@ -406,7 +406,7 @@ Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
       }
     }
 
-    if (auto super = ht.getSuperType()) {
+    if (auto super = ht.getDeclaredSuperType()) {
       if (!counts.count(*super)) {
         newTypes.insert(*super);
         // We should unconditionally count supertypes, but while the type system

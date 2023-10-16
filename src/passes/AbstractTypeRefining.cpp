@@ -269,14 +269,14 @@ struct AbstractTypeRefining : public Pass {
       AbstractTypeRefiningTypeMapper(Module& wasm, const TypeUpdates& mapping)
         : TypeMapper(wasm, mapping) {}
 
-      std::optional<HeapType> getSuperType(HeapType oldType) override {
-        auto super = oldType.getSuperType();
+      std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
+        auto super = oldType.getDeclaredSuperType();
 
         // Go up the chain of supertypes, skipping things we are mapping away,
         // as those things will not appear in the output. This skips B in the
         // example above.
         while (super && mapping.count(*super)) {
-          super = super->getSuperType();
+          super = super->getDeclaredSuperType();
         }
         return super;
       }

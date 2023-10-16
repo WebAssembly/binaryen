@@ -269,7 +269,7 @@ private:
 
       if (toSuperTypes) {
         // Propagate shared fields to the supertype.
-        if (auto superType = type.getSuperType()) {
+        if (auto superType = type.getDeclaredSuperType()) {
           auto& superInfos = combinedInfos[*superType];
           auto& superFields = superType->getStruct().fields;
           for (Index i = 0; i < superFields.size(); i++) {
