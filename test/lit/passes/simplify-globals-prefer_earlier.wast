@@ -4,25 +4,36 @@
 ;; RUN: foreach %s %t wasm-opt -all --simplify-globals -S -o - | filecheck %s
 
 ;; When a global is copied into another, prefer the earlier one in later gets.
+;;
+;; The global.gets in the definitions of $global2,3,4 should all point to
+;; $global1, as should the gets in the function below.
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $global1 i32 (i32.const 42))
+  ;; CHECK:      (import "a" "b" (global $global1 i32))
   (import "a" "b" (global $global1 i32))
-  ;; CHECK:      (global $global2 i32 (i32.const 42))
+
+  ;; CHECK:      (global $global2 i32 (global.get $global1))
   (global $global2 i32 (global.get $global1))
-  ;; CHECK:      (global $global3 i32 (i32.const 42))
+
+  ;; CHECK:      (global $global3 i32 (global.get $global1))
   (global $global3 i32 (global.get $global2))
+
+  ;; CHECK:      (global $global4 i32 (global.get $global1))
+  (global $global4 i32 (global.get $global3))
 
   ;; CHECK:      (func $simple (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (global.get $global1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (global.get $global1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:   (global.get $global1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $global1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple
@@ -34,6 +45,9 @@
     )
     (drop
       (global.get $global3)
+    )
+    (drop
+      (global.get $global4)
     )
   )
 )
