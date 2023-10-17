@@ -1051,6 +1051,8 @@ BINARYEN_API BinaryenExpressionRef BinaryenBrOn(BinaryenModuleRef module,
                                                 const char* name,
                                                 BinaryenExpressionRef ref,
                                                 BinaryenType castType);
+// Passing in null for |operands| (and 0 for |numOperands|) implies this is
+// struct.new_default.
 BINARYEN_API BinaryenExpressionRef
 BinaryenStructNew(BinaryenModuleRef module,
                   BinaryenExpressionRef* operands,
