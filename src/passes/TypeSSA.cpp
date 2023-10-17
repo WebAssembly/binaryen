@@ -107,7 +107,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
           assert(type.isArray());
           builder[i] = type.getArray();
         }
-        if (auto super = type.getSuperType()) {
+        if (auto super = type.getDeclaredSuperType()) {
           builder[i].subTypeOf(*super);
         }
         builder[i].setOpen(type.isOpen());

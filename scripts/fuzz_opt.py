@@ -592,9 +592,9 @@ def fix_spec_output(out):
 ignored_vm_runs = 0
 
 
-def note_ignored_vm_run():
+def note_ignored_vm_run(text='(ignore VM run)'):
     global ignored_vm_runs
-    print('(ignore VM run)')
+    print(text)
     ignored_vm_runs += 1
 
 
@@ -718,7 +718,22 @@ class CompareVMs(TestCaseHandler):
             name = 'binaryen interpreter'
 
             def run(self, wasm):
-                return run_bynterp(wasm, ['--fuzz-exec-before'])
+                output = run_bynterp(wasm, ['--fuzz-exec-before'])
+                if output != IGNORE:
+                    calls = output.count(FUZZ_EXEC_CALL_PREFIX)
+                    errors = output.count(TRAP_PREFIX) + output.count(HOST_LIMIT_PREFIX)
+                    if errors > calls / 2:
+                        # A significant amount of execution on this testcase
+                        # simply trapped, and was not very useful, so mark it
+                        # as ignored. Ideally the fuzzer testcases would be
+                        # improved to reduce this number.
+                        #
+                        # Note that we don't change output=IGNORE as there may
+                        # still be useful testing here (up to 50%), so we only
+                        # note that this is a mostly-ignored run, but we do not
+                        # ignore the parts that are useful.
+                        note_ignored_vm_run(f'(testcase mostly ignored: {calls} calls, {errors} errors)')
+                return output
 
             def can_run(self, wasm):
                 return True

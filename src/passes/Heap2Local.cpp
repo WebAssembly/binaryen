@@ -440,6 +440,20 @@ struct Heap2LocalOptimizer {
       // the allocation is a subtype of the type of the cast, and so
       // cannot trap.
       replaceCurrent(curr->ref);
+
+      // We need to refinalize after this, as while we know the cast is not
+      // logically needed - the value flowing through will not be used - we do
+      // need validation to succeed even before other optimizations remove the
+      // code. For example:
+      //
+      //  (block (result $B)
+      //   (ref.cast $B
+      //    (block (result $A)
+      //
+      // Without the cast this does not validate, so we need to refinalize
+      // (which will fix this, as we replace the unused value with a null, so
+      // that type will propagate out).
+      refinalize = true;
     }
 
     void visitStructSet(StructSet* curr) {

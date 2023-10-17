@@ -43,7 +43,7 @@ struct SupertypesFirstBase
     }
     // Find the supertypes that are in the collection.
     for (auto [type, _] : typeSet) {
-      if (auto super = self().getSuperType(type)) {
+      if (auto super = self().getDeclaredSuperType(type)) {
         if (auto it = typeSet.find(*super); it != typeSet.end()) {
           it->second = true;
         }
@@ -60,7 +60,7 @@ struct SupertypesFirstBase
 
   void pushPredecessors(HeapType type) {
     // Do not visit types that weren't in the input collection.
-    if (auto super = self().getSuperType(type);
+    if (auto super = self().getDeclaredSuperType(type);
         super && typeSet.count(*super)) {
       this->push(*super);
     }
@@ -71,8 +71,8 @@ struct SupertypesFirst : SupertypesFirstBase<SupertypesFirst> {
   template<typename T>
   SupertypesFirst(const T& types) : SupertypesFirstBase(types) {}
 
-  std::optional<HeapType> getSuperType(HeapType type) {
-    return type.getSuperType();
+  std::optional<HeapType> getDeclaredSuperType(HeapType type) {
+    return type.getDeclaredSuperType();
   }
 };
 

@@ -657,7 +657,7 @@ void Inhabitator::markNullable(FieldPos field) {
       // Mark the field null in all supertypes. If the supertype field is
       // already nullable or does not exist, that's ok and this will have no
       // effect.
-      while (auto super = curr.getSuperType()) {
+      while (auto super = curr.getDeclaredSuperType()) {
         nullables.insert({*super, idx});
         curr = *super;
       }
@@ -666,12 +666,12 @@ void Inhabitator::markNullable(FieldPos field) {
       // Find the top type for which this field exists and mark the field
       // nullable in all of its subtypes.
       if (curr.isArray()) {
-        while (auto super = curr.getSuperType()) {
+        while (auto super = curr.getDeclaredSuperType()) {
           curr = *super;
         }
       } else {
         assert(curr.isStruct());
-        while (auto super = curr.getSuperType()) {
+        while (auto super = curr.getDeclaredSuperType()) {
           if (super->getStruct().fields.size() <= idx) {
             break;
           }
@@ -885,7 +885,7 @@ std::vector<HeapType> Inhabitator::build() {
 
   // Establish supertypes and finality.
   for (size_t i = 0; i < types.size(); ++i) {
-    if (auto super = types[i].getSuperType()) {
+    if (auto super = types[i].getDeclaredSuperType()) {
       if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
         builder[i].subTypeOf(builder[it->second]);
       } else {

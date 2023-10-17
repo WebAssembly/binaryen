@@ -170,7 +170,7 @@ struct GlobalStructInference : public Pass {
         // empty, below.
         typeGlobals.erase(type);
 
-        auto super = type.getSuperType();
+        auto super = type.getDeclaredSuperType();
         if (!super) {
           break;
         }
@@ -184,7 +184,7 @@ struct GlobalStructInference : public Pass {
     for (auto& [type, globals] : typeGlobalsCopy) {
       auto curr = type;
       while (1) {
-        auto super = curr.getSuperType();
+        auto super = curr.getDeclaredSuperType();
         if (!super) {
           break;
         }

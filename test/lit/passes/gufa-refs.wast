@@ -5730,3 +5730,53 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $A (struct ))
+  (type $A (struct))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $label (result (ref null $A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_on_cast $label (ref $A) (ref $A)
+  ;; CHECK-NEXT:      (ref.cast (ref $A)
+  ;; CHECK-NEXT:       (local.get $temp)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (local $temp anyref)
+    ;; Write an $A into the anyref local.
+    (local.set $temp
+      (struct.new $A)
+    )
+    (drop
+      (block $label (result anyref)
+        (drop
+          (br_on_cast $label anyref (ref struct)
+            ;; This cast can be refined since we know the input is $A. After we
+            ;; do that, we must refinalize, as the br_on_cast's types must be
+            ;; valid - specifically, we can't end up with the input type being
+            ;; $A and the output type still being (ref struct), as the output
+            ;; type must be a subtype. After refinalizing, both will become $A.
+            (ref.cast anyref
+              (local.get $temp)
+            )
+          )
+        )
+        (ref.null none)
+      )
+    )
+  )
+)

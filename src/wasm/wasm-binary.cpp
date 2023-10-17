@@ -244,7 +244,7 @@ void WasmBinaryWriter::writeTypes() {
   // be safe to treat as final, i.e. types without subtypes.
   std::vector<bool> hasSubtypes(indexedTypes.types.size());
   for (auto type : indexedTypes.types) {
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       hasSubtypes[indexedTypes.indices[*super]] = true;
     }
   }
@@ -264,7 +264,7 @@ void WasmBinaryWriter::writeTypes() {
     lastGroup = currGroup;
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
-    auto super = type.getSuperType();
+    auto super = type.getDeclaredSuperType();
     if (super || type.isOpen()) {
       if (type.isOpen()) {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
