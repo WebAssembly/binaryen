@@ -15,12 +15,62 @@
     )
   ))
 
-  ;; CHECK:      (import "unused" "unused" (global $global anyref))
+  ;; CHECK:      (import "unused" "unused" (global $single-use anyref))
 
-  ;; CHECK:      (global $global2 anyref (struct.new $A
+  ;; CHECK:      (global $other anyref (struct.new $A
   ;; CHECK-NEXT:  (ref.i31
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $other anyref (global.get $single-use))
+)
+
+;; As above, but now there is a second use, so we do nothing.
+(module
+  ;; CHECK:      (type $A (struct (field anyref)))
+  (type $A (struct (field anyref)))
+
+  ;; CHECK:      (global $single-use anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $single-use anyref (struct.new $A
+    (i31.new
+      (i32.const 42)
+    )
+  ))
+
+  ;; CHECK:      (global $other anyref (global.get $single-use))
+  (global $other anyref (global.get $single-use))
+
+  ;; CHECK:      (global $other2 anyref (global.get $single-use))
+  (global $other2 anyref (global.get $single-use))
+)
+
+;; As the first testcase, but now there is a second use in function code, so
+;; again we do nothing.
+(module
+  ;; CHECK:      (type $A (struct (field anyref)))
+  (type $A (struct (field anyref)))
+
+  ;; CHECK:      (global $single-use anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $single-use anyref (struct.new $A
+    (i31.new
+      (i32.const 42)
+    )
+  ))
+
+  ;; CHECK:      (global $other anyref (global.get $single-use))
+  (global $other anyref (global.get $single-use))
+
+  (func $user
+    (drop
+      (global.get $single-use)
+    )
+  )
 )
