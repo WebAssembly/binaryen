@@ -651,8 +651,11 @@ void FunctionValidator::visitBlock(Block* curr) {
     auto iter = breakTypes.find(curr->name);
     assert(iter != breakTypes.end()); // we set it ourselves
     for (Type breakType : iter->second) {
-      // none or unreachable means a poison value that we should ignore - if
-      // consumed, it will error
+      if (breakType == Type::none && curr->type == Type::unreachable) {
+        // We allow empty breaks to unreachable blocks.
+        continue;
+      }
+
       shouldBeSubType(breakType,
                       curr->type,
                       curr,
@@ -2371,6 +2374,12 @@ void FunctionValidator::visitTry(Try* curr) {
       getStream() << "tag name is invalid: " << tagName << "\n";
     }
 
+    if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      getStream()
+        << "catch's tag (" << tagName
+        << ") has result values, which is not allowed for exception handling";
+    }
+
     auto* catchBody = curr->catchBodies[i];
     auto pops = EHUtils::findPops(catchBody);
     if (tag->sig.params == Type::none) {
@@ -2429,6 +2438,11 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!shouldBeTrue(!!tag, curr, "throw's tag must exist")) {
     return;
   }
+  shouldBeEqual(
+    tag->sig.results,
+    Type(Type::none),
+    curr,
+    "tags with result types must not be used for exception handling");
   if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
                     curr,
                     "tag's param numbers must match")) {
@@ -2547,6 +2561,10 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
   }
   if (!shouldBeTrue(
         curr->ref->type.isRef(), curr, "ref.test ref must have ref type")) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->castType.isRef(), curr, "ref.test target must have ref type")) {
     return;
   }
   shouldBeEqual(
@@ -3667,10 +3685,12 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    info.shouldBeEqual(curr->sig.results,
-                       Type(Type::none),
-                       curr->name,
-                       "Tag type's result type should be none");
+    if (curr->sig.results != Type(Type::none)) {
+      info.shouldBeTrue(module.features.hasTypedContinuations(),
+                        curr->name,
+                        "Tags with result types require typed continuations "
+                        "feature [--enable-typed-continuations]");
+    }
     if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(
         module.features.hasMultivalue(),

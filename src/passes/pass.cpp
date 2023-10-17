@@ -495,6 +495,9 @@ void PassRegistry::registerPasses() {
   registerPass("type-unfinalizing",
                "mark all types as non-final (open)",
                createTypeUnFinalizingPass);
+  registerPass("unsubtyping",
+               "removes unnecessary subtyping relationships",
+               createUnsubtypingPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -1055,6 +1058,11 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
 
   if (pass->requiresNonNullableLocalFixups()) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
+  }
+
+  if (options.funcEffectsMap && pass->addsEffects()) {
+    // Effects were added, so discard any computed effects for this function.
+    options.funcEffectsMap->erase(func->name);
   }
 }
 

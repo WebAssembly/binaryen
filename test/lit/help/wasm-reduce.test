@@ -17,9 +17,9 @@
 ;; CHECK-NEXT:                                        (TODO: stderr), and we reduce while
 ;; CHECK-NEXT:                                        keeping those unchanged.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --test,-t                            Test file (this will be written to to
-;; CHECK-NEXT:                                        test, the given command should read it
-;; CHECK-NEXT:                                        when we call it)
+;; CHECK-NEXT:   --test,-t                            Test file (this will be written to test,
+;; CHECK-NEXT:                                        the given command should read it when we
+;; CHECK-NEXT:                                        call it)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --working,-w                         Working file (this will contain the
 ;; CHECK-NEXT:                                        current good state while doing temporary
@@ -132,6 +132,10 @@
 ;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-continuations         Enable typed continuations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-continuations        Disable typed continuations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

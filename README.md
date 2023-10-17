@@ -19,7 +19,7 @@ effective**:
  * **Effective**: Binaryen's optimizer has many passes (see an overview later
    down) that can improve code size and speed. These optimizations aim to make
    Binaryen powerful enough to be used as a [compiler backend][backend] by
-   itself.  One specific area of focus is on WebAssembly-specific optimizations
+   itself. One specific area of focus is on WebAssembly-specific optimizations
    (that general-purpose compilers might not do), which you can think of as
    wasm [minification], similar to minification for JavaScript, CSS, etc., all
    of which are language-specific.
@@ -182,11 +182,11 @@ user may have a pipeline of multiple optimization steps, or may be doing local
 experimentation, or fuzzing/reducing, etc. Only the user knows when the final
 optimization happens before the wasm is "final" and ready to be shipped. Note
 that, in general, some additional optimizations may be possible after the final
-lowering, and so a useful pattern is to  optimize once normally with intrinsics,
+lowering, and so a useful pattern is to optimize once normally with intrinsics,
 then lower them away, then optimize after that, e.g.:
 
-```
-wasm-opt input.wasm -o output.wasm  -O --intrinsic-lowering -O
+```bash
+wasm-opt input.wasm -o output.wasm -O --intrinsic-lowering -O
 ```
 
 Each intrinsic defines its semantics, which includes what the optimizer is
@@ -202,31 +202,31 @@ for the detailed definitions. A quick summary appears here:
 
 ## Tools
 
-This repository contains code that builds the following tools in `bin/`:
+This repository contains code that builds the following tools in `bin/` (see the [building instructions](#building)):
 
- * **wasm-opt**: Loads WebAssembly and runs Binaryen IR passes on it.
- * **wasm-as**: Assembles WebAssembly in text format (currently S-Expression
+ * **`wasm-opt`**: Loads WebAssembly and runs Binaryen IR passes on it.
+ * **`wasm-as`**: Assembles WebAssembly in text format (currently S-Expression
    format) into binary format (going through Binaryen IR).
- * **wasm-dis**: Un-assembles WebAssembly in binary format into text format
+ * **`wasm-dis`**: Un-assembles WebAssembly in binary format into text format
    (going through Binaryen IR).
- * **wasm2js**: A WebAssembly-to-JS compiler. This is used by Emscripten to
+ * **`wasm2js`**: A WebAssembly-to-JS compiler. This is used by Emscripten to
    generate JavaScript as an alternative to WebAssembly.
- * **wasm-reduce**: A testcase reducer for WebAssembly files. Given a wasm file
+ * **`wasm-reduce`**: A testcase reducer for WebAssembly files. Given a wasm file
    that is interesting for some reason (say, it crashes a specific VM),
    wasm-reduce can find a smaller wasm file that has the same property, which is
    often easier to debug. See the
    [docs](https://github.com/WebAssembly/binaryen/wiki/Fuzzing#reducing)
    for more details.
- * **wasm-shell**: A shell that can load and interpret WebAssembly code. It can
+ * **`wasm-shell`**: A shell that can load and interpret WebAssembly code. It can
    also run the spec test suite.
- * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
+ * **`wasm-emscripten-finalize`**: Takes a wasm binary produced by llvm+lld and
    performs emscripten-specific passes over it.
- * **wasm-ctor-eval**: A tool that can execute functions (or parts of functions)
+ * **`wasm-ctor-eval`**: A tool that can execute functions (or parts of functions)
    at compile time.
- * **wasm-merge**: Merges multiple wasm files into a single file, connecting
+ * **`wasm-merge`**: Merges multiple wasm files into a single file, connecting
    corresponding imports to exports as it does so. Like a bundler for JS, but
    for wasm.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
+ * **`binaryen.js`**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [GitHub](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js) or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
 All of the Binaryen tools are deterministic, that is, given the same inputs you should always get the same outputs. (If you see a case that behaves otherwise, please file an issue.)
 
@@ -251,12 +251,12 @@ using ``wasm-opt``, but also they can be run while using other tools, like
 See each optimization pass for details of what it does, but here is a quick
 overview of some of the relevant ones:
 
-* **CoalesceLocals** - Key “register allocation” pass. Does a live range
+* **CoalesceLocals** - Key "register allocation" pass. Does a live range
   analysis and then reuses locals in order to minimize their number, as well as
   to remove copies between them.
 * **CodeFolding** - Avoids duplicate code by merging it (e.g. if two `if` arms
   have some shared instructions at their end).
-* **CodePushing** - “Pushes” code forward past branch operations, potentially
+* **CodePushing** - "Pushes" code forward past branch operations, potentially
   allowing the code to not be run if the branch is taken.
 * **DeadArgumentElimination** - LTO pass to remove arguments to a function if it
   is always called with the same constants.
@@ -274,7 +274,7 @@ overview of some of the relevant ones:
 * **MergeLocals** - When two locals have the same value in part of their
   overlap, pick in a way to help CoalesceLocals do better later (split off from
   CoalesceLocals to keep the latter simple).
-* **MinifyImportsAndExports** - Minifies them to “a”, “b”, etc.
+* **MinifyImportsAndExports** - Minifies them to "a", "b", etc.
 * **OptimizeAddedConstants** - Optimize a load/store with an added constant into
   a constant offset.
 * **OptimizeInstructions** - Key peephole optimization pass with a constantly
@@ -291,10 +291,10 @@ overview of some of the relevant ones:
   present in a local. (Overlaps with CoalesceLocals; this achieves the specific
   operation just mentioned without all the other work CoalesceLocals does, and
   therefore is useful in other places in the optimization pipeline.)
-* **RemoveUnsedBrs** - Key “minor control flow optimizations” pass, including
+* **RemoveUnsedBrs** - Key "minor control flow optimizations" pass, including
   jump threading and various transforms that can get rid of a `br` or `br_table`
   (like turning a `block` with a `br` in the middle into an `if` when possible).
-* **RemoveUnusedModuleElements** - “Global DCE”, an LTO pass that removes
+* **RemoveUnusedModuleElements** - "Global DCE", an LTO pass that removes
   imports, functions, globals, etc., when they are not used.
 * **ReorderFunctions** - Put more-called functions first, potentially allowing
   the LEB emitted to call them to be smaller (in a very large program).
@@ -304,16 +304,16 @@ overview of some of the relevant ones:
 * **SimplifyGlobals** - Optimizes globals in various ways, for example,
   coalescing them, removing mutability from a global never modified, applying a
   constant value from an immutable global, etc.
-* **SimplifyLocals** - Key “`local.get/set/tee`” optimization pass, doing things
+* **SimplifyLocals** - Key "`local.get/set/tee`" optimization pass, doing things
   like replacing a set and a get with moving the set’s value to the get (and
   creating a tee) where possible. Also creates `block/if/loop` return values
   instead of using a local to pass the value.
-* **Vacuum** - Key “remove silly unneeded code” pass, doing things like removing
+* **Vacuum** - Key "remove silly unneeded code" pass, doing things like removing
   an `if` arm that has no contents, a drop of a constant value with no side
   effects, a `block` with a single child, etc.
 
-“LTO” in the above means an optimization is Link Time Optimization-like in that
-it works across multiple functions, but in a sense Binaryen is always “LTO” as
+"LTO" in the above means an optimization is Link Time Optimization-like in that
+it works across multiple functions, but in a sense Binaryen is always "LTO" as
 it usually is run on the final linked wasm.
 
 Advanced optimization techniques in the Binaryen optimizer include
@@ -335,24 +335,24 @@ etc.
 
 Binaryen uses git submodules (at time of writing just for gtest), so before you build you will have to initialize the submodules:
 
-```
+```bash
 git submodule init
 git submodule update
 ```
 
 After that you can build with CMake:
 
-```
+```bash
 cmake . && make
 ```
 
-A C++17 compiler is required. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
+A C++17 compiler is required. On macOS, you need to install `cmake`, for example, via `brew install cmake`. Note that you can also use `ninja` as your generator: `cmake -G Ninja . && ninja`.
 
 To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
 Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
-```
+```bash
 emcmake cmake . && emmake make binaryen_js
 ```
 
@@ -362,7 +362,7 @@ emcmake cmake . && emmake make binaryen_js
 
 1. Generate the projects:
 
-   ```
+   ```bash
    mkdir build
    cd build
    "%VISUAL_STUDIO_ROOT%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" ..
@@ -374,7 +374,7 @@ emcmake cmake . && emmake make binaryen_js
 
 1. From the Developer Command Prompt, build the desired projects:
 
-   ```
+   ```bash
    msbuild binaryen.vcxproj
    ```
 
@@ -386,24 +386,24 @@ emcmake cmake . && emmake make binaryen_js
 
 Run
 
-````
+```bash
 bin/wasm-opt [.wasm or .wat file] [options] [passes, see --help] [--help]
-````
+```
 
 The wasm optimizer receives WebAssembly as input, and can run transformation
 passes on it, as well as print it (before and/or after the transformations). For
 example, try
 
-````
+```bash
 bin/wasm-opt test/lit/passes/name-types.wast -all -S -o -
-````
+```
 
 That will output one of the test cases in the test suite. To run a
 transformation pass on it, try
 
-````
+```bash
 bin/wasm-opt test/lit/passes/name-types.wast --name-types -all -S -o -
-````
+```
 
 The `name-types` pass ensures each type has a name and renames exceptionally long type names. You can see
 the change the transformation causes by comparing the output of the two commands.
@@ -415,17 +415,17 @@ the [`name-types` pass](https://github.com/WebAssembly/binaryen/blob/main/src/pa
 Some more notes:
 
  * See `bin/wasm-opt --help` for the full list of options and passes.
- * Passing `--debug` will emit some debugging info.  Individual debug channels
+ * Passing `--debug` will emit some debugging info. Individual debug channels
    (defined in the source code via `#define DEBUG_TYPE xxx`) can be enabled by
-   passing them as list of comma-separated strings.  For example: `bin/wasm-opt
-   --debug=binary`.  These debug channels can also be enabled via the
+   passing them as list of comma-separated strings. For example: `bin/wasm-opt
+   --debug=binary`. These debug channels can also be enabled via the
    `BINARYEN_DEBUG` environment variable.
 
 ### wasm2js
 
 Run
 
-```
+```bash
 bin/wasm2js [input.wasm file]
 ```
 
@@ -433,13 +433,13 @@ This will print out JavaScript to the console.
 
 For example, try
 
-```
+```bash
 bin/wasm2js test/hello_world.wat
 ```
 
 That output contains
 
-```
+```js
  function add(x, y) {
   x = x | 0;
   y = y | 0;
@@ -449,7 +449,7 @@ That output contains
 
 as a translation of
 
-```
+```wat
  (func $add (; 0 ;) (type $0) (param $x i32) (param $y i32) (result i32)
   (i32.add
    (local.get $x)
@@ -463,7 +463,7 @@ module into an ES6 module (to run on older browsers and Node.js versions
 you can use Babel etc. to convert it to ES5). Let's look at a full example
 of calling that hello world wat; first, create the main JS file:
 
-```javascript
+```js
 // main.mjs
 import { add } from "./hello_world.mjs";
 console.log('the sum of 1 and 2 is:', add(1, 2));
@@ -472,7 +472,7 @@ console.log('the sum of 1 and 2 is:', add(1, 2));
 The run this (note that you need a new enough Node.js with ES6 module
 support):
 
-```shell
+```bash
 $ bin/wasm2js test/hello_world.wat -o hello_world.mjs
 $ node --experimental-modules main.mjs
 the sum of 1 and 2 is: 3
@@ -527,7 +527,7 @@ For example, consider this small program:
 
 We can evaluate part of it at compile time like this:
 
-```
+```bash
 wasm-ctor-eval input.wat --ctors=main -S -o -
 ```
 
@@ -536,7 +536,7 @@ is short for "global constructor", a name that comes from code that is executed
 before a program's entry point) and then to print it as text to `stdout`. The
 result is this:
 
-```wat
+```bash
 trying to eval main
   ...partial evalling successful, but stopping since could not eval: call import: import.import
   ...stopping
@@ -621,7 +621,7 @@ as `"second"`. That is, we want the first module's import of `"second.bar"` to
 call the function `$func` in the second module. Here is a wasm-merge command for
 that:
 
-```
+```bash
 wasm-merge a.wasm first b.wasm second -o output.wasm
 ```
 
@@ -630,7 +630,6 @@ and then its name. The merged output is this:
 
 ```wat
 (module
-  (import "second" "bar" (func $second.bar))
   (import "outside" "log" (func $log (param i32)))
 
   (export "main" (func $func))
@@ -749,7 +748,7 @@ single one.)
 
 ## Testing
 
-```
+```bash
 ./check.py
 ```
 
@@ -757,7 +756,7 @@ single one.)
 
 The `check.py` script supports some options:
 
-```
+```bash
 ./check.py [--interpreter=/path/to/interpreter] [TEST1] [TEST2]..
 ```
 
@@ -771,21 +770,21 @@ The `check.py` script supports some options:
    `./check.py` should update those.
 
 Note that we are trying to gradually port the legacy wasm-opt tests to use `lit`
-and `filecheck` as we modify them.  For `passes` tests that output wast, this
+and `filecheck` as we modify them. For `passes` tests that output wast, this
 can be done automatically with `scripts/port_passes_tests_to_lit.py` and for
 non-`passes` tests that output wast, see
 https://github.com/WebAssembly/binaryen/pull/4779 for an example of how to do a
 simple manual port.
 
 For lit tests the test expectations (the CHECK lines) can often be automatically
-updated as changes are made to binaryen.  See `scripts/update_lit_checks.py`.
+updated as changes are made to binaryen. See `scripts/update_lit_checks.py`.
 
-Non-lit tests can also be automatically updated in most cases.  See
+Non-lit tests can also be automatically updated in most cases. See
 `scripts/auto_update_tests.py`.
 
 ### Setting up dependencies
 
-```
+```bash
 ./third_party/setup.py [mozjs|v8|wabt|all]
 ```
 
@@ -798,7 +797,7 @@ tests. Note that you need to have the location `pip` installs to in your `$PATH`
 
 ### Fuzzing
 
-```
+```bash
 ./scripts/fuzz_opt.py [--binaryen-bin=build/bin]
 ```
 
@@ -923,7 +922,7 @@ Emscripten's WebAssembly processing library (`wasm-emscripten`).
 
 * Does it compile under Windows and/or Visual Studio?
 
-Yes, it does. Here's a step-by-step [tutorial][win32]  on how to compile it
+Yes, it does. Here's a step-by-step [tutorial][win32] on how to compile it
 under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**.
 However, Visual Studio 2017 may now be required. Help would be appreciated on
 Windows and OS X as most of the core devs are on Linux.

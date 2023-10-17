@@ -163,6 +163,7 @@ public:
   bool isNonNullable() const;
   // Whether this type is only inhabited by null values.
   bool isNull() const;
+  bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
   bool isString() const;
@@ -367,9 +368,9 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional.
-  std::optional<HeapType> getSuperType() const;
+  // If there is a nontrivial (i.e. non-basic, one that was declared by the
+  // module) nominal supertype, return it, else an empty optional.
+  std::optional<HeapType> getDeclaredSuperType() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
   // number of supertypes in its supertype chain.

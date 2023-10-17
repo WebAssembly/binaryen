@@ -68,6 +68,9 @@ Name set_funcref("set_funcref");
 Name set_externref("set_externref");
 
 struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
+
   void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;

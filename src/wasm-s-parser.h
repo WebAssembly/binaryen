@@ -73,7 +73,10 @@ public:
 
   // string methods
   IString str() const;
+  // convert a string to a string
   std::string toString() const;
+  // convert anything to a string
+  std::string forceString() const;
   Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
@@ -83,7 +86,7 @@ public:
   template<typename T> bool operator!=(T t) { return !(*this == t); }
 
   // printing
-  friend std::ostream& operator<<(std::ostream& o, Element& e);
+  friend std::ostream& operator<<(std::ostream& o, const Element& e);
   void dump();
 };
 

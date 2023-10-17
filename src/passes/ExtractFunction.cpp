@@ -58,6 +58,9 @@ static void extract(PassRunner* runner, Module* module, Name name) {
 }
 
 struct ExtractFunction : public Pass {
+  // Turns functions into imported functions.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     Name name = getPassOptions().getArgument(
       "extract-function",
@@ -67,6 +70,9 @@ struct ExtractFunction : public Pass {
 };
 
 struct ExtractFunctionIndex : public Pass {
+  // See above.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     std::string index =
       getPassOptions().getArgument("extract-function-index",

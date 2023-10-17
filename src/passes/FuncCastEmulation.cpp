@@ -151,6 +151,11 @@ private:
 };
 
 struct FuncCastEmulation : public Pass {
+  // Changes the ABI, which alters which indirect calls will trap (normally,
+  // this should prevent traps, but it depends on code this is linked to at
+  // runtime in the case of dynamic linking etc.).
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     Index numParams = std::stoul(
       getPassOptions().getArgumentOrDefault("max-func-params", "16"));

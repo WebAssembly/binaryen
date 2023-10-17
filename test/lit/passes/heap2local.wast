@@ -2035,3 +2035,46 @@
     )
   )
 )
+
+(module
+  (type $A (sub (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; We can replace the allocation with a local for the i32. While doing so we
+    ;; must be careful to still validate, and so when we remove the cast we must
+    ;; also ensure the blocks around it have types that still validate (using
+    ;; refinalize, which will make them all nullref, since the unused value
+    ;; flowing through them will be replaced with a null).
+    (drop
+      (block (result (ref $B))
+        (ref.cast (ref $B)
+          (block (result (ref $A))
+            (struct.new $B
+              (i32.const 0)
+            )
+          )
+        )
+      )
+    )
+  )
+)

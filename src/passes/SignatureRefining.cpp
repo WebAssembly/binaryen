@@ -148,7 +148,7 @@ struct SignatureRefining : public Pass {
     for (auto& [type, info] : allInfo) {
       if (!subTypes.getImmediateSubTypes(type).empty()) {
         info.canModify = false;
-      } else if (type.getSuperType()) {
+      } else if (type.getDeclaredSuperType()) {
         // Also avoid modifying types with supertypes, as we do not handle
         // contravariance here. That is, when we refine parameters we look for
         // a more refined type, but the type must be *less* refined than the

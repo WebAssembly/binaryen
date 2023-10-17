@@ -244,7 +244,7 @@ void WasmBinaryWriter::writeTypes() {
   // be safe to treat as final, i.e. types without subtypes.
   std::vector<bool> hasSubtypes(indexedTypes.types.size());
   for (auto type : indexedTypes.types) {
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       hasSubtypes[indexedTypes.indices[*super]] = true;
     }
   }
@@ -264,7 +264,7 @@ void WasmBinaryWriter::writeTypes() {
     lastGroup = currGroup;
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
-    auto super = type.getSuperType();
+    auto super = type.getDeclaredSuperType();
     if (super || type.isOpen()) {
       if (type.isOpen()) {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
@@ -1256,6 +1256,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::StringsFeature;
       case FeatureSet::MultiMemory:
         return BinaryConsts::CustomSections::MultiMemoryFeature;
+      case FeatureSet::TypedContinuations:
+        return BinaryConsts::CustomSections::TypedContinuationsFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -3708,6 +3710,9 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::Strings;
     } else if (name == BinaryConsts::CustomSections::MultiMemoryFeature) {
       feature = FeatureSet::MultiMemory;
+    } else if (name ==
+               BinaryConsts::CustomSections::TypedContinuationsFeature) {
+      feature = FeatureSet::TypedContinuations;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

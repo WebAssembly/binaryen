@@ -1213,7 +1213,7 @@ int main(int argc, const char* argv[]) {
          [&](Options* o, const std::string& argument) { command = argument; })
     .add("--test",
          "-t",
-         "Test file (this will be written to to test, the given command should "
+         "Test file (this will be written to test, the given command should "
          "read it when we call it)",
          WasmReduceOption,
          Options::Arguments::One,

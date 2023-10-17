@@ -2,17 +2,17 @@
 
 ;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
-;; CHECK: [parse exception: unknown supertype (at 2:24)]
+;; CHECK: [parse exception: unknown supertype: ( type $bad-func ( sub $bad ( func ) ) ) (at 2:24)]
 (module
   (type $bad-func (sub $bad (func)))
 )
 
-;; CHECK: [parse exception: unknown supertype (at 2:26)]
+;; CHECK: [parse exception: unknown supertype: ( type $bad-struct ( sub $bad ( struct ) ) ) (at 2:26)]
 (module
   (type $bad-struct (sub $bad (struct)))
 )
 
-;; CHECK: [parse exception: unknown supertype (at 2:25)]
+;; CHECK: [parse exception: unknown supertype: ( type $bad-array ( sub $bad ( array i32 ) ) ) (at 2:25)]
 (module
   (type $bad-array (sub $bad (array i32)))
 )

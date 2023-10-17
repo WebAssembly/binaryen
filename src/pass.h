@@ -466,6 +466,13 @@ public:
   // For more details see the LocalStructuralDominance class.
   virtual bool requiresNonNullableLocalFixups() { return true; }
 
+  // Many passes can remove effects, for example, by finding some path is not
+  // reached and removing a throw or a call there. The few passes that *add*
+  // effects must mark themselves as such, so that we know to discard global
+  // effects after running them. For example, a logging pass that adds new calls
+  // to imports must override this to return true.
+  virtual bool addsEffects() { return false; }
+
   std::string name;
 
   PassRunner* getPassRunner() { return runner; }
@@ -478,7 +485,8 @@ public:
 
 protected:
   Pass() = default;
-  Pass(Pass&) = default;
+  Pass(const Pass&) = default;
+  Pass(Pass&&) = default;
   Pass& operator=(const Pass&) = delete;
 };
 

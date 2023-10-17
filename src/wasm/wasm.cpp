@@ -51,6 +51,7 @@ const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
+const char* TypedContinuationsFeature = "typed-continuations";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -953,6 +954,8 @@ void RefTest::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::i32;
+    // Do not unnecessarily lose type information.
+    castType = Type::getGreatestLowerBound(castType, ref->type);
   }
 }
 

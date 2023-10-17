@@ -451,6 +451,9 @@
 ;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
 ;; CHECK-NEXT:                                                 (open)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --unsubtyping                                 removes unnecessary subtyping
+;; CHECK-NEXT:                                                 relationships
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets
 ;; CHECK-NEXT:
@@ -635,6 +638,10 @@
 ;; CHECK-NEXT:   --enable-multimemory                          Enable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-multimemory                         Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-continuations                  Enable typed continuations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-continuations                 Disable typed continuations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

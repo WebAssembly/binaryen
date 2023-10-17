@@ -8,7 +8,7 @@
  (tag $e-i64 (param i64))
  (tag $e-i32-i64 (param i32 i64))
  (tag $e-eqref (param eqref))
- (tag $e-empty (param))
+ (tag $e-empty)
  (func $foo (type $0)
   (nop)
  )
