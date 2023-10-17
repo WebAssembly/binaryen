@@ -295,7 +295,7 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   auto hashString = hashStringifyModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
     repeatSubstrings(hashString);
-  auto result = StringifyProcessor::dedupe(substrings);
+  auto result = StringifyProcessor::dedupe(std::move(substrings));
 
   EXPECT_EQ(
     result,
@@ -333,11 +333,11 @@ TEST_F(StringifyTest, FilterLocalSets) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
   auto substrings = repeatSubstrings(stringify.hashString);
-  auto result = StringifyProcessor::dedupe(substrings);
+  auto result = StringifyProcessor::dedupe(std::move(substrings));
 
   result = StringifyProcessor::filter(
-    substrings, stringify.exprs, [](const Expression& curr) {
-      return curr.is<LocalSet>();
+    std::move(substrings), stringify.exprs, [](const Expression* curr) {
+      return curr->is<LocalSet>();
     });
 
   EXPECT_EQ(

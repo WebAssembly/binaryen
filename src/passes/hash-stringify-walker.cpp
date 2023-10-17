@@ -82,7 +82,7 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
 // repeats come first and 2) these are more worthwhile to keep than subsequent
 // substrings of substrings, even if they appear more times.
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
-  const std::vector<SuffixTree::RepeatedSubstring> substrings) {
+  const std::vector<SuffixTree::RepeatedSubstring>&& substrings) {
   std::unordered_set<uint32_t> seen;
   std::vector<SuffixTree::RepeatedSubstring> result;
   for (auto substring : substrings) {
@@ -111,15 +111,15 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 }
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
-  const std::vector<SuffixTree::RepeatedSubstring> substrings,
+  const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
   const std::vector<Expression*> exprs,
-  std::function<bool(const Expression&)> condition) {
+  std::function<bool(const Expression*)> condition) {
 
   struct FilterStringifyWalker : public StringifyWalker<FilterStringifyWalker> {
     bool hasFilterValue = false;
-    std::function<bool(const Expression&)> condition;
+    std::function<bool(const Expression*)> condition;
 
-    FilterStringifyWalker(std::function<bool(const Expression&)> condition)
+    FilterStringifyWalker(std::function<bool(const Expression*)> condition)
       : condition(condition){};
 
     void walk(Expression* curr) {
@@ -130,13 +130,13 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
     void addUniqueSymbol(SeparatorReason reason) {}
 
     void visitExpression(Expression* curr) {
-      if (condition(*curr)) {
+      if (condition(curr)) {
         hasFilterValue = true;
       }
     }
   };
 
-  FilterStringifyWalker walker = FilterStringifyWalker(condition);
+  FilterStringifyWalker walker(condition);
 
   std::vector<SuffixTree::RepeatedSubstring> result;
   for (auto substring : substrings) {
@@ -153,7 +153,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
           break;
         }
       }
-      if (curr->is<LocalSet>()) {
+      if (condition(curr)) {
         hasFilterValue = true;
         break;
       }
