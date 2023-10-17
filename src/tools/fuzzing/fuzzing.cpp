@@ -561,14 +561,15 @@ void TranslateToFuzzReader::addHashMemorySupport() {
 
 TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // We must ensure non-nullable locals validate. First, see if there are non-
-  // nullable locals with non-validating reads.
+  // nullable locals with non-validating reads, and fix those up with high
+  // probability, to avoid frequent traps.
   // TODO: We could be more precise and use a LocalGraph here, at the cost of
   //       doing more work.
   LocalStructuralDominance info(func, parent.wasm, LocalStructuralDominance::NonNullableOnly);
   for (auto index : info.nonDominatingIndices) {
     // Do not always do this, but with high probability, to reduce the amount of
     // traps.
-    if (!parent.oneIn(4)) {
+    if (!parent.oneIn(5)) {
       // Ensure a non-nullable value by writing one in the entry to the
       // function.
       auto* value = parent.makeTrivial(func->getLocalType(index));
@@ -579,8 +580,8 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
     }
   }
 
-  // Then, fix up locals by making them non-nullable + ref.as_non_null as needed
-  // so that the function is valid.
+  // Then, to handle exceptional cases we did not just fix up, do a general
+  // fixup to ensure we validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 
   if (HANG_LIMIT > 0) {
@@ -1270,7 +1271,7 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
     // If we have a function context, use a local half the time. Use a local
     // less often if the local is non-nullable, however, as then we might be
     // using it before it was set, which would trap.
-    if (funcContext && oneIn(type.isNonNullable() ? 4 : 2)) {
+    if (funcContext && oneIn(type.isNonNullable() ? 10 : 2)) {
       return makeLocalGet(type);
     } else {
       return makeConst(type);
