@@ -151,7 +151,7 @@
   ))
 )
 
-;; Test multiple optimizations in one module.
+;; Test multiple separate optimizations in one module.
 (module
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
@@ -201,4 +201,3 @@
   ;; CHECK-NEXT: ))
   (global $other3 anyref (global.get $single-use3))
 )
-
