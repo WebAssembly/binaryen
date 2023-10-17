@@ -487,6 +487,8 @@ struct SimplifyGlobals : public Pass {
 
     propagateConstantsToCode();
 
+    foldSingleUses();
+
     return more;
   }
 
@@ -672,6 +674,57 @@ struct SimplifyGlobals : public Pass {
     }
     ConstantGlobalApplier(&constantGlobals, optimize)
       .run(getPassRunner(), module);
+    // Note that we don't need to run on module code here, since we already
+    // handle applying constants in globals in propagateConstantsToGlobals (and
+    // in a more sophisticated manner, which takes into account that no sets of
+    // globals are possible during global instantiation).
+  }
+
+  // If we have a global that has a single use in the entire program, we can
+  // fold it into that use, if it is global. For example:
+  //
+  //  var x = { foo: 5 };
+  //  var y = { bar: x };
+  //
+  // This can become:
+  //
+  //  var y = { bar: { foo: 5 } };
+  //
+  // If there is more than one use, or the use is in a function (where it might
+  // execute more than once) then we can't do this.
+  void foldSingleUses() {
+    struct Folder : public PostWalker<Folder> {
+      Module& wasm;
+      GlobalInfoMap& infos;
+
+      Folder(Module& wasm, GlobalInfoMap& infos) : wasm(wasm), infos(infos) {}
+
+      void visitGlobalGet(GlobalGet* curr) {
+        // If this is a get of a global with a single get and no sets, then we
+        // can fold that code into here.
+        auto name = curr->name;
+        auto& info = infos[name];
+        if (info.written == 0 && info.read == 1) {
+          auto* global = wasm.getGlobal(name);
+          if (global->init) {
+            // Steal that global's code. To keep that global valid, make it an
+            // import (which does not have an initializer, and which will be
+            // removed by other passes as now it has no uses).
+            replaceCurrent(global->init);
+            global->init = nullptr;
+            global->module = global->base = "unused";
+          }
+        }
+      }
+    };
+
+    Folder folder(*module, map);
+
+    for (auto& global : module->globals) {
+      if (global->init) {
+        folder.walk(global->init);
+      }
+    }
   }
 };
 
