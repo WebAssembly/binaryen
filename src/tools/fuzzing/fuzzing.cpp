@@ -1247,8 +1247,8 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
 
   if (type.isConcrete()) {
     // If we have a function context, use a local half the time. Use a local
-    // much less often if the local is non-nullable, however, as then we might
-    // be using it before it was set, which would trap.
+    // less often if the local is non-nullable, however, as then we might be
+    // using it before it was set, which would trap.
     if (funcContext && oneIn(type.isNonNullable() ? 4 : 2)) {
       return makeLocalGet(type);
     } else {
