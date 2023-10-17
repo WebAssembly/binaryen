@@ -766,7 +766,7 @@ void TranslateToFuzzReader::recombine(Function* func) {
       while (1) {
         ret.push_back(Type(heapType, nullability));
         // TODO: handle basic supertypes too
-        auto super = heapType.getSuperType();
+        auto super = heapType.getDeclaredSuperType();
         if (!super) {
           break;
         }
@@ -3885,7 +3885,7 @@ HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
   std::vector<HeapType> supers;
   while (1) {
     supers.push_back(type);
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       type = *super;
     } else {
       break;

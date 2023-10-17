@@ -148,7 +148,7 @@ struct TypeRefining : public Pass {
     auto& subTypes = propagator.subTypes;
     UniqueDeferredQueue<HeapType> work;
     for (auto type : subTypes.types) {
-      if (type.isStruct() && !type.getSuperType()) {
+      if (type.isStruct() && !type.getDeclaredSuperType()) {
         work.push(type);
       }
     }
@@ -170,7 +170,7 @@ struct TypeRefining : public Pass {
       }
 
       // Next ensure proper subtyping of this struct's fields versus its super.
-      if (auto super = type.getSuperType()) {
+      if (auto super = type.getDeclaredSuperType()) {
         auto& superFields = super->getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
           auto newSuperType = finalInfos[*super][i].getLUB();

@@ -184,7 +184,7 @@ struct SignaturePruning : public Pass {
       if (!subTypes.getImmediateSubTypes(type).empty()) {
         continue;
       }
-      if (auto super = type.getSuperType()) {
+      if (auto super = type.getDeclaredSuperType()) {
         if (super->isSignature()) {
           continue;
         }

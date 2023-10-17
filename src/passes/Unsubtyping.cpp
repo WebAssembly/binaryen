@@ -201,7 +201,7 @@ struct Unsubtyping
   void analyzePublicTypes(Module& wasm) {
     // We cannot change supertypes for anything public.
     for (auto type : ModuleUtils::getPublicHeapTypes(wasm)) {
-      if (auto super = type.getSuperType()) {
+      if (auto super = type.getDeclaredSuperType()) {
         noteSubtype(type, *super);
       }
     }
@@ -276,7 +276,7 @@ struct Unsubtyping
       Unsubtyping& parent;
       Rewriter(Unsubtyping& parent, Module& wasm)
         : GlobalTypeRewriter(wasm), parent(parent) {}
-      std::optional<HeapType> getSuperType(HeapType type) override {
+      std::optional<HeapType> getDeclaredSuperType(HeapType type) override {
         if (auto it = parent.supertypes.find(type);
             it != parent.supertypes.end() && !it->second.isBasic()) {
           return it->second;
