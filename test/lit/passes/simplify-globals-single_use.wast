@@ -151,3 +151,54 @@
   ))
 )
 
+;; Test multiple optimizations in one module.
+(module
+  ;; CHECK:      (type $A (struct (field anyref)))
+  (type $A (struct (field anyref)))
+
+  (global $single-use1 anyref (struct.new $A
+    (i31.new
+      (i32.const 42)
+    )
+  ))
+
+  (global $single-use2 anyref (struct.new $A
+    (i31.new
+      (i32.const 1337)
+    )
+  ))
+
+  ;; CHECK:      (import "unused" "unused" (global $single-use1 anyref))
+
+  ;; CHECK:      (import "unused" "unused" (global $single-use2 anyref))
+
+  ;; CHECK:      (import "unused" "unused" (global $single-use3 anyref))
+
+  ;; CHECK:      (global $other1 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $other1 anyref (global.get $single-use1))
+
+  (global $single-use3 anyref (struct.new $A
+    (i31.new
+      (i32.const 99999)
+    )
+  ))
+
+  ;; CHECK:      (global $other2 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $other2 anyref (global.get $single-use2))
+
+  ;; CHECK:      (global $other3 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 99999)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $other3 anyref (global.get $single-use3))
+)
+
