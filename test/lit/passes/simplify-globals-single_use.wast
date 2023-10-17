@@ -124,3 +124,30 @@
     )
   )
 )
+
+;; As the first testcase, but now the single use is nested in other code. We
+;; can still optimize.
+(module
+  ;; CHECK:      (type $A (struct (field anyref)))
+  (type $A (struct (field anyref)))
+
+  (global $single-use anyref (struct.new $A
+    (i31.new
+      (i32.const 42)
+    )
+  ))
+
+  ;; CHECK:      (import "unused" "unused" (global $single-use anyref))
+
+  ;; CHECK:      (global $other anyref (struct.new $A
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.i31
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $other anyref (struct.new $A
+    (global.get $single-use)
+  ))
+)
+
