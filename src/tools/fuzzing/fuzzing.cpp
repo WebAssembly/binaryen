@@ -565,7 +565,8 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
   // probability, to avoid frequent traps.
   // TODO: We could be more precise and use a LocalGraph here, at the cost of
   //       doing more work.
-  LocalStructuralDominance info(func, parent.wasm, LocalStructuralDominance::NonNullableOnly);
+  LocalStructuralDominance info(
+    func, parent.wasm, LocalStructuralDominance::NonNullableOnly);
   for (auto index : info.nonDominatingIndices) {
     // Do not always do this, but with high probability, to reduce the amount of
     // traps.
@@ -574,9 +575,7 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
       // function.
       auto* value = parent.makeTrivial(func->getLocalType(index));
       func->body = parent.builder.makeSequence(
-        parent.builder.makeLocalSet(index, value),
-        func->body
-      );
+        parent.builder.makeLocalSet(index, value), func->body);
     }
   }
 
