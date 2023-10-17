@@ -1219,6 +1219,47 @@ std::optional<HeapType> HeapType::getDeclaredSuperType() const {
   return {};
 }
 
+std::optional<HeapType> HeapType::getSuperType() const {
+  auto ret = getDeclaredSuperType();
+  if (ret) {
+    return ret;
+  }
+
+  // There may be a basic supertype.
+  if (isBasic()) {
+    switch (getBasic()) {
+      case ext:
+      case noext:
+      case func:
+      case nofunc:
+      case any:
+      case none:
+      case string:
+      case stringview_wtf8:
+      case stringview_wtf16:
+      case stringview_iter:
+        return {};
+      case eq:
+        return any;
+      case i31:
+      case struct_:
+      case array:
+        return eq;
+    }
+  }
+
+  auto* info = getHeapTypeInfo(*this);
+  switch (info->kind) {
+    case HeapTypeInfo::SignatureKind:
+      return func;
+    case HeapTypeInfo::StructKind:
+      return struct_;
+    case HeapTypeInfo::ArrayKind:
+      return array;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
 size_t HeapType::getDepth() const {
   size_t depth = 0;
   std::optional<HeapType> super;

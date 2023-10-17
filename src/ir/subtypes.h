@@ -122,7 +122,6 @@ struct SubTypes {
     }
 
     // Add the max depths of basic types.
-    // TODO: update when we get structtype
     for (auto type : types) {
       HeapType basic;
       if (type.isStruct()) {

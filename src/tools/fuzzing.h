@@ -25,8 +25,6 @@ high chance for set at start of loop
     high chance of a tee in that case => loop var
 */
 
-// TODO Generate exception handling instructions
-
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/struct-utils.h"
@@ -399,8 +397,3 @@ private:
 };
 
 } // namespace wasm
-
-// XXX Switch class has a condition?! is it real? should the node type be the
-// value type if it exists?!
-
-// TODO copy an existing function and replace just one node in it
