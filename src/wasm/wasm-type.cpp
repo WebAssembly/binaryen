@@ -1219,7 +1219,7 @@ std::optional<HeapType> HeapType::getDeclaredSuperType() const {
   return {};
 }
 
-std::optional<HeapType> HeapType::getGeneralSuperType() const {
+std::optional<HeapType> HeapType::getSuperType() const {
   auto ret = getSuperType();
   if (ret) {
     return ret;
