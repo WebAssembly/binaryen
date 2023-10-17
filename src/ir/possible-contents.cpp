@@ -1559,7 +1559,7 @@ void TNHOracle::infer() {
       }
       while (1) {
         typeFunctions[type].push_back(func.get());
-        if (auto super = type.getSuperType()) {
+        if (auto super = type.getDeclaredSuperType()) {
           type = *super;
         } else {
           break;

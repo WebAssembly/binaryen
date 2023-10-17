@@ -86,7 +86,7 @@ struct SubTypes {
       SubTypesFirstSort(const SubTypes& parent) : parent(parent) {
         for (auto type : parent.types) {
           // The roots are types with no supertype.
-          if (!type.getSuperType()) {
+          if (!type.getDeclaredSuperType()) {
             push(type);
           }
         }
@@ -122,7 +122,6 @@ struct SubTypes {
     }
 
     // Add the max depths of basic types.
-    // TODO: update when we get structtype
     for (auto type : types) {
       HeapType basic;
       if (type.isStruct()) {
@@ -198,7 +197,7 @@ struct SubTypes {
 private:
   // Add a type to the graph.
   void note(HeapType type) {
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       typeSubTypes[*super].push_back(type);
     }
   }

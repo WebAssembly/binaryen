@@ -169,8 +169,8 @@ struct MergeableSupertypesFirst
 
   MergeableSupertypesFirst(TypeMerging& merging) : merging(merging) {}
 
-  std::optional<HeapType> getSuperType(HeapType type) {
-    if (auto super = type.getSuperType()) {
+  std::optional<HeapType> getDeclaredSuperType(HeapType type) {
+    if (auto super = type.getDeclaredSuperType()) {
       return merging.getMerged(*super);
     }
     return std::nullopt;
@@ -291,7 +291,7 @@ bool TypeMerging::merge(MergeKind kind) {
   // Similar to the above, but look up or create a partition associated with the
   // type's supertype and top-level shape rather than its identity.
   auto ensureShapePartition = [&](HeapType type) -> Partitions::iterator {
-    auto super = type.getSuperType();
+    auto super = type.getDeclaredSuperType();
     if (super) {
       super = getMerged(*super);
     }
@@ -321,7 +321,7 @@ bool TypeMerging::merge(MergeKind kind) {
 
     switch (kind) {
       case Supertypes: {
-        auto super = type.getSuperType();
+        auto super = type.getDeclaredSuperType();
         if (super && shapeEq(type, *super)) {
           // The current type and its supertype have the same top-level
           // structure and are not distinguished, so add the current type to its
@@ -454,7 +454,7 @@ TypeMerging::splitSupertypePartition(const std::vector<HeapType>& types) {
   std::unordered_map<HeapType, Index> partitionIndices;
   MergeableSupertypesFirst sortedTypes(*this);
   for (auto type : sortedTypes.sort(types)) {
-    auto super = type.getSuperType();
+    auto super = type.getDeclaredSuperType();
     if (super && includedTypes.count(*super)) {
       // We must already have a partition for the supertype we can add to.
       auto index = partitionIndices.at(*super);

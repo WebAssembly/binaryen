@@ -284,6 +284,7 @@ struct GUFAOptimizer
       // a cast. However, to be careful with code size, we only refine existing
       // here. See addNewCasts() for where we add entirely new casts.
       curr->type = inferredType;
+      optimized = true;
     }
 
     // Apply the usual optimizations as well, such as potentially replacing this

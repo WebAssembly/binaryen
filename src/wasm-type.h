@@ -368,8 +368,13 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional.
+  // If there is a nontrivial (i.e. non-basic, one that was declared by the
+  // module) nominal supertype, return it, else an empty optional.
+  std::optional<HeapType> getDeclaredSuperType() const;
+
+  // As |getDeclaredSuperType|, but also handles basic types, that is, if the
+  // super is a basic type, then we return it here. Declared types are returned
+  // as well, just like |getDeclaredSuperType|.
   std::optional<HeapType> getSuperType() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
