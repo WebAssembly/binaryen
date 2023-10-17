@@ -8,7 +8,7 @@
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $global1 i32 (i32.const 42))
-  (global $global1 i32 (i32.const 42))
+  (import "a" "b" (global $global1 i32))
   ;; CHECK:      (global $global2 i32 (i32.const 42))
   (global $global2 i32 (global.get $global1))
   ;; CHECK:      (global $global3 i32 (i32.const 42))
