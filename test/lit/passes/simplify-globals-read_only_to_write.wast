@@ -803,3 +803,33 @@
     )
   )
 )
+
+;; This global is read only to be written in function code, but there is a
+;; read in global code as well, which prevents the read-only-to-write
+;; optimization.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $global (mut i32) (i32.const 0))
+  (global $global (mut i32) (i32.const 0))
+
+  (global $global-reader (mut i32) (global.get $global))
+
+  ;; CHECK:      (func $additional-read
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $global)
+  ;; CHECK-NEXT:   (global.set $global
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $global)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    (if
+      (global.get $global)
+      (global.set $global (i32.const 1))
+    )
+  )
+)
