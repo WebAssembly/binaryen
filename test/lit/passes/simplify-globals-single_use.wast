@@ -54,6 +54,8 @@
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
 
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (global $single-use anyref (struct.new $A
   ;; CHECK-NEXT:  (ref.i31
   ;; CHECK-NEXT:   (i32.const 42)
@@ -68,9 +70,26 @@
   ;; CHECK:      (global $other anyref (global.get $single-use))
   (global $other anyref (global.get $single-use))
 
+  ;; CHECK:      (func $user (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $single-use)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $user
     (drop
       (global.get $single-use)
     )
   )
+)
+
+;; As the first testcase, but now $single-use is imported, so there is no code
+;; to fold.
+(module
+  (type $A (struct (field anyref)))
+
+  ;; CHECK:      (import "a" "b" (global $single-use anyref))
+  (import "a" "b" (global $single-use anyref))
+
+  ;; CHECK:      (global $other anyref (global.get $single-use))
+  (global $other anyref (global.get $single-use))
 )
