@@ -560,9 +560,13 @@ void TranslateToFuzzReader::addHashMemorySupport() {
 }
 
 TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
-  // We must ensure non-nullable locals validate. First, see if there are non-
-  // nullable locals with non-validating reads, and fix those up with high
-  // probability, to avoid frequent traps.
+  // We must ensure non-nullable locals validate. Later down we'll run
+  // TypeUpdating::handleNonDefaultableLocals which will make them validate by
+  // turning them nullable + add ref.as_non_null to fix up types. That has the
+  // downside of making them trap at runtime, however, and also we lose the non-
+  // nullability in the type, so we prefer to do a manual fixup that avoids a
+  // trap, which we do by writing a non-nullable value into the local at the
+  // function entry.
   // TODO: We could be more precise and use a LocalGraph here, at the cost of
   //       doing more work.
   LocalStructuralDominance info(
@@ -571,15 +575,13 @@ TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
     // Do not always do this, but with high probability, to reduce the amount of
     // traps.
     if (!parent.oneIn(5)) {
-      // Ensure a non-nullable value by writing one in the entry to the
-      // function.
       auto* value = parent.makeTrivial(func->getLocalType(index));
       func->body = parent.builder.makeSequence(
         parent.builder.makeLocalSet(index, value), func->body);
     }
   }
 
-  // Then, to handle exceptional cases we did not just fix up, do a general
+  // Then, to handle remaining cases we did not just fix up, do the general
   // fixup to ensure we validate.
   TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 
