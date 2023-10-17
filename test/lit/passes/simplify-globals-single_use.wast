@@ -93,3 +93,34 @@
   ;; CHECK:      (global $other anyref (global.get $single-use))
   (global $other anyref (global.get $single-use))
 )
+
+;; As the first testcase, but now there the single use is in function code, so
+;; we do nothing (as it could be executed more than once).
+(module
+  ;; CHECK:      (type $A (struct (field anyref)))
+  (type $A (struct (field anyref)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $single-use anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
+  (global $single-use anyref (struct.new $A
+    (i31.new
+      (i32.const 42)
+    )
+  ))
+
+  ;; CHECK:      (func $user (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $single-use)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $user
+    (drop
+      (global.get $single-use)
+    )
+  )
+)
