@@ -114,7 +114,7 @@
   (global $other anyref (global.get $single-use))
 )
 
-;; As the first testcase, but now there the single use is in function code, so
+;; As the first testcase, but here the single use is in function code, so
 ;; we do nothing (as it could be executed more than once).
 (module
   ;; CHECK:      (type $A (struct (field anyref)))
