@@ -905,10 +905,14 @@
   )
 
   ;; CHECK:      (func $middle-noncall (type $0) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $middle-noncall (param $x i32)
     ;; Not even a call here.
-    (nop)
+    (drop
+      (i32.const 1)
+    )
   )
 )
