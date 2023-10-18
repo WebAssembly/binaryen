@@ -909,5 +909,6 @@
   ;; CHECK-NEXT: )
   (func $middle-noncall (param $x i32)
     ;; Not even a call here.
+    (nop)
   )
 )
