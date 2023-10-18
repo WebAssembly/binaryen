@@ -477,6 +477,11 @@ struct SimplifyGlobals : public Pass {
   bool iteration() {
     analyze();
 
+    // Fold single uses first, as it is simple to update the info from analyze()
+    // in this code (and harder to do in the things we do later, which is why we
+    // call analyze from scratch in each iteration).
+    foldSingleUses();
+
     // Removing unneeded writes can in some cases lead to more optimizations
     // that we need an entire additional iteration to perform, see below.
     bool more = removeUnneededWrites();
@@ -672,6 +677,62 @@ struct SimplifyGlobals : public Pass {
     }
     ConstantGlobalApplier(&constantGlobals, optimize)
       .run(getPassRunner(), module);
+    // Note that we don't need to run on module code here, since we already
+    // handle applying constants in globals in propagateConstantsToGlobals (and
+    // in a more sophisticated manner, which takes into account that no sets of
+    // globals are possible during global instantiation).
+  }
+
+  // If we have a global that has a single use in the entire program, we can
+  // fold it into that use, if it is global. For example:
+  //
+  //  var x = { foo: 5 };
+  //  var y = { bar: x };
+  //
+  // This can become:
+  //
+  //  var y = { bar: { foo: 5 } };
+  //
+  // If there is more than one use, or the use is in a function (where it might
+  // execute more than once) then we can't do this.
+  void foldSingleUses() {
+    struct Folder : public PostWalker<Folder> {
+      Module& wasm;
+      GlobalInfoMap& infos;
+
+      Folder(Module& wasm, GlobalInfoMap& infos) : wasm(wasm), infos(infos) {}
+
+      void visitGlobalGet(GlobalGet* curr) {
+        // If this is a get of a global with a single get and no sets, then we
+        // can fold that code into here.
+        auto name = curr->name;
+        auto& info = infos[name];
+        if (info.written == 0 && info.read == 1) {
+          auto* global = wasm.getGlobal(name);
+          if (global->init) {
+            // Copy that global's code. For simplicity we copy it as we have to
+            // keep that global valid for the operations that happen after us,
+            // even though that global will be removed later (we could remove it
+            // here, but it would add more complexity than seems worth it).
+            replaceCurrent(ExpressionManipulator::copy(global->init, wasm));
+
+            // Update info for later parts of this pass: we are removing a
+            // global.get, which is a read, so now there are 0 reads (we also
+            // have 0 writes, so no other work is needed here, but update to
+            // avoid confusion when debugging, and for possible future changes).
+            info.read = 0;
+          }
+        }
+      }
+    };
+
+    Folder folder(*module, map);
+
+    for (auto& global : module->globals) {
+      if (global->init) {
+        folder.walk(global->init);
+      }
+    }
   }
 };
 
