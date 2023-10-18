@@ -15,14 +15,34 @@
     )
   ))
 
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (import "unused" "unused" (global $single-use anyref))
 
-  ;; CHECK:      (global $other anyref (struct.new $A
+  ;; CHECK:      (global $other (mut anyref) (struct.new $A
   ;; CHECK-NEXT:  (ref.i31
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
-  (global $other anyref (global.get $single-use))
+  (global $other (mut anyref) (global.get $single-use))
+
+  ;; CHECK:      (func $user (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $other
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $user
+    ;; Uses of $other do not affect optimization
+    (drop
+      (global.get $other)
+    )
+    (global.set $other
+      (ref.null any)
+    )
+  )
 )
 
 ;; As above, but now there is a second use, so we do nothing.
