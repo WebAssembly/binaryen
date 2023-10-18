@@ -166,4 +166,21 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
   return result;
 }
 
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSet(
+  const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
+  const std::vector<Expression*> exprs) {
+  return StringifyProcessor::filter(
+    std::move(substrings), exprs, [](const Expression* curr) {
+      return curr->is<LocalSet>();
+    });
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranch(
+  const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
+  const std::vector<Expression*> exprs) {
+  return StringifyProcessor::filter(
+    std::move(substrings), exprs, [](const Expression* curr) {
+      return Properties::isBranch(curr) || curr->is<Return>();
+    });
+}
 } // namespace wasm

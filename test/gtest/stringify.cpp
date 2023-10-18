@@ -335,10 +335,8 @@ TEST_F(StringifyTest, FilterLocalSets) {
   auto substrings = repeatSubstrings(stringify.hashString);
   auto result = StringifyProcessor::dedupe(std::move(substrings));
 
-  result = StringifyProcessor::filter(
-    std::move(substrings), stringify.exprs, [](const Expression* curr) {
-      return curr->is<LocalSet>();
-    });
+  result =
+    StringifyProcessor::filterLocalSet(std::move(substrings), stringify.exprs);
 
   EXPECT_EQ(
     result,
@@ -380,10 +378,8 @@ TEST_F(StringifyTest, FilterBranches) {
   stringify.walkModule(&wasm);
 
   auto substrings = repeatSubstrings(stringify.hashString);
-  auto result = StringifyProcessor::filter(
-    std::move(substrings), stringify.exprs, [](const Expression* curr) {
-      return Properties::isBranch(curr) || curr->is<Return>();
-    });
+  auto result =
+    StringifyProcessor::filterBranch(std::move(substrings), stringify.exprs);
 
   EXPECT_EQ(
     result,
