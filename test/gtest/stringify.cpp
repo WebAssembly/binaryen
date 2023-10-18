@@ -346,3 +346,48 @@ TEST_F(StringifyTest, FilterLocalSets) {
       // sequence i32.const 0, i32.const 1 appears at idx 6 and again at 16
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 16})}}));
 }
+
+TEST_F(StringifyTest, FilterBranches) {
+  static auto branchesModuleText = R"wasm(
+  (module
+  (func $a (result i32)
+    (block $top (result i32)
+      (br $top)
+    )
+    (i32.const 7)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 4)
+    (i32.const 3)
+    (return)
+  )
+  (func $b (result i32)
+    (block $top (result i32)
+      (br $top)
+    )
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 5)
+    (i32.const 3)
+    (return)
+  )
+  )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, branchesModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+
+  auto substrings = repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::filter(
+    std::move(substrings), stringify.exprs, [](const Expression* curr) {
+      return Properties::isBranch(curr) || curr->is<Return>();
+    });
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // sequence i32.const 1, i32.const 2 is at idx 6 and 21
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 21})}}));
+}
