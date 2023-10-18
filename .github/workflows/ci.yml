@@ -340,7 +340,7 @@ jobs:
         gcov: true
 
   # Duplicates build-asan.  Please keep in sync
-  build-c++20:
+  build-cxx20:
     name: c++20
     runs-on: ubuntu-latest
     env:
