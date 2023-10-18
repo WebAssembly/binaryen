@@ -9,7 +9,7 @@ using StringifyTest = PrintTest;
 
 TEST_F(StringifyTest, Print) {
   auto moduleText = R"wasm(
-    (module
+  (module
     (tag $catch_a (param i32))
     (tag $catch_b (param i32))
     (tag $catch_c (param i32))
@@ -53,7 +53,7 @@ TEST_F(StringifyTest, Print) {
         )
       )
     )
-   )
+  )
   )wasm";
 
   auto stringifyText = R"stringify(adding unique symbol for Func Start
@@ -143,44 +143,44 @@ adding unique symbol for End
 
 static auto dupModuleText = R"wasm(
     (module
-    (func $a
-      (block $block_a
-        (drop (i32.const 20))
-        (drop (i32.const 10))
-      )
-      (block $block_b
-        (drop (if (i32.const 0)
-          (i32.const 40)
-          (i32.const 5)
-        ))
-      )
-      (block $block_c
-        (drop (if (i32.const 1)
-          (i32.const 30)
-        ))
-      )
-      (block $block_d
-        (drop (i32.const 20))
-        (drop (i32.const 10))
-      )
-      (block $block_e
-        (drop (if (i32.const 1)
-          (i32.const 30)
-        ))
-      )
-      (block $block_f
-        (drop (if (i32.const 0)
-          (i32.const 30)
-        ))
+      (func $a
+        (block $block_a
+          (drop (i32.const 20))
+          (drop (i32.const 10))
+        )
+        (block $block_b
+          (drop (if (i32.const 0)
+            (i32.const 40)
+            (i32.const 5)
+          ))
+        )
+        (block $block_c
+          (drop (if (i32.const 1)
+            (i32.const 30)
+          ))
+        )
+        (block $block_d
+          (drop (i32.const 20))
+          (drop (i32.const 10))
+        )
+        (block $block_e
+          (drop (if (i32.const 1)
+            (i32.const 30)
+          ))
+        )
+        (block $block_f
+          (drop (if (i32.const 0)
+            (i32.const 30)
+          ))
+        )
       )
     )
-   )
   )wasm";
 
 std::vector<uint32_t> hashStringifyModule(Module* wasm) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(wasm);
-  return std::move(stringify.hashString);
+  return stringify.hashString;
 }
 
 TEST_F(StringifyTest, Stringify) {
@@ -295,7 +295,7 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   auto hashString = hashStringifyModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
     repeatSubstrings(hashString);
-  auto result = StringifyProcessor::dedupe(std::move(substrings));
+  auto result = StringifyProcessor::dedupe(substrings);
 
   EXPECT_EQ(
     result,
@@ -309,23 +309,23 @@ TEST_F(StringifyTest, DedupeSubstrings) {
 TEST_F(StringifyTest, FilterLocalSets) {
   static auto localSetModuleText = R"wasm(
   (module
-  (func $a (result i32)
-      (local $x i32)
-      (local.set $x
-        (i32.const 1)
-      )
-    (i32.const 0)
-    (i32.const 1)
-  )
-  (func $b (result i32)
-      (local $x i32)
-      (local.set $x
-        (i32.const 1)
-      )
-    (i32.const 5)
-    (i32.const 0)
-    (i32.const 1)
-  )
+    (func $a (result i32)
+        (local $x i32)
+        (local.set $x
+          (i32.const 1)
+        )
+      (i32.const 0)
+      (i32.const 1)
+    )
+    (func $b (result i32)
+        (local $x i32)
+        (local.set $x
+          (i32.const 1)
+        )
+      (i32.const 5)
+      (i32.const 0)
+      (i32.const 1)
+    )
   )
   )wasm";
   Module wasm;
@@ -333,16 +333,55 @@ TEST_F(StringifyTest, FilterLocalSets) {
   HashStringifyWalker stringify = HashStringifyWalker();
   stringify.walkModule(&wasm);
   auto substrings = repeatSubstrings(stringify.hashString);
-  auto result = StringifyProcessor::dedupe(std::move(substrings));
+  auto result = StringifyProcessor::dedupe(substrings);
 
-  result = StringifyProcessor::filter(
-    std::move(substrings), stringify.exprs, [](const Expression* curr) {
-      return curr->is<LocalSet>();
-    });
+  result = StringifyProcessor::filterLocalSets(substrings, stringify.exprs);
 
   EXPECT_EQ(
     result,
     (std::vector<SuffixTree::RepeatedSubstring>{
       // sequence i32.const 0, i32.const 1 appears at idx 6 and again at 16
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 16})}}));
+}
+
+TEST_F(StringifyTest, FilterBranches) {
+  static auto branchesModuleText = R"wasm(
+  (module
+    (func $a (result i32)
+      (block $top (result i32)
+        (br $top)
+      )
+      (i32.const 7)
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 4)
+      (i32.const 3)
+      (return)
+    )
+    (func $b (result i32)
+      (block $top (result i32)
+        (br $top)
+      )
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+      (i32.const 5)
+      (i32.const 3)
+      (return)
+    )
+  )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, branchesModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+
+  auto substrings = repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::filterBranches(substrings, stringify.exprs);
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // sequence i32.const 1, i32.const 2 is at idx 6 and 21
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 21})}}));
 }
