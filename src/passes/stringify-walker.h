@@ -178,7 +178,6 @@ struct StringifyWalker
 
   void doWalkModule(Module* module);
   void doWalkFunction(Function* func);
-  void walk(Expression* curr);
   static void scan(SubType* self, Expression** currp);
   static void doVisitExpression(SubType* self, Expression** currp);
 
@@ -226,6 +225,7 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // when evaluating if expressions.
   std::unordered_map<Expression*, uint32_t, StringifyHasher, StringifyEquator>
     exprToCounter;
+  std::vector<Expression*> exprs;
 
   void addUniqueSymbol(SeparatorReason reason);
   void visitExpression(Expression* curr);
@@ -234,7 +234,11 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 // Functions that filter vectors of SuffixTree::RepeatedSubstring
 struct StringifyProcessor {
   static std::vector<SuffixTree::RepeatedSubstring>
-  dedupe(const std::vector<SuffixTree::RepeatedSubstring>);
+  dedupe(const std::vector<SuffixTree::RepeatedSubstring>&& substrings);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filter(const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
+         const std::vector<Expression*> exprs,
+         std::function<bool(const Expression*)> condition);
 };
 
 } // namespace wasm
