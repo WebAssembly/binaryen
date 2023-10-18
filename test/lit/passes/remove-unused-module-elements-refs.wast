@@ -656,24 +656,18 @@
     (ref.func $d)
   ))
 
-  ;; CHECK:      (export "export" (func $export))
-
-  ;; CHECK:      (func $export (type $void)
-  ;; CHECK-NEXT:  (call $b)
-  ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (export "export" (func $export))
-
-  ;; OPEN_WORLD:      (func $export (type $void)
-  ;; OPEN_WORLD-NEXT:  (call $b)
-  ;; OPEN_WORLD-NEXT: )
   (func $export (export "export")
     ;; Call $b but not $a or $c
     (call $b)
   )
 
+  ;; CHECK:      (export "export" (func $b))
+
   ;; CHECK:      (func $a (type $void)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (export "export" (func $b))
+
   ;; OPEN_WORLD:      (func $a (type $void)
   ;; OPEN_WORLD-NEXT:  (call_ref $void
   ;; OPEN_WORLD-NEXT:   (struct.get $vtable 0
