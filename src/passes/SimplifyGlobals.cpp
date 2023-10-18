@@ -710,18 +710,16 @@ struct SimplifyGlobals : public Pass {
         if (info.written == 0 && info.read == 1) {
           auto* global = wasm.getGlobal(name);
           if (global->init) {
-            // Steal that global's code. To keep that global valid, make it an
-            // import (which does not have an initializer, and which will be
-            // removed by other passes as now it has no uses).
-            replaceCurrent(global->init);
-            global->init = nullptr;
-            global->module = global->base = "unused";
-          }
+            // Steal that global's code. For simplicity, copy it, as we have to
+            // keep that global valid for the operations that happen after us.
+            replaceCurrent(ExpressionManipulator::copy(global->init, wasm));
 
-          // Update info for later parts of this pass (we will have 0 reads and
-          // writes, however, so they will do nothing; but update to avoid
-          // confusion when debugging, and for possible future changes).
-          info.read = 0;
+            // Update info for later parts of this pass: we are removing a
+            // global.get, which is a read, so now there are 0 reads (we also
+            // have 0 writes, so no other work is needed here, but update to
+            // avoid confusion when debugging, and for possible future changes).
+            info.read = 0;
+          }
         }
       }
     };

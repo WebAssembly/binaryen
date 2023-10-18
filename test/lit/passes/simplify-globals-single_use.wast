@@ -3,21 +3,24 @@
 
 ;; RUN: foreach %s %t wasm-opt -all --simplify-globals -S -o - | filecheck %s
 
-;; $single-use has a single use, and we can fold that code into its use. That
-;; global then becomes an unused import.
+;; $single-use has a single use, and we can fold a copy of that code into its
+;; use. That global then becomes unused.
 (module
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
 
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $single-use anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
     (i31.new
       (i32.const 42)
     )
   ))
-
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use anyref))
 
   ;; CHECK:      (global $other (mut anyref) (struct.new $A
   ;; CHECK-NEXT:  (ref.i31
@@ -151,13 +154,16 @@
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
 
+  ;; CHECK:      (global $single-use anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
     (i31.new
       (i32.const 42)
     )
   ))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use anyref))
 
   ;; CHECK:      (global $other anyref (struct.new $A
   ;; CHECK-NEXT:  (struct.new $A
@@ -176,23 +182,27 @@
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
 
+  ;; CHECK:      (global $single-use1 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use1 anyref (struct.new $A
     (i31.new
       (i32.const 42)
     )
   ))
 
+  ;; CHECK:      (global $single-use2 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use2 anyref (struct.new $A
     (i31.new
       (i32.const 1337)
     )
   ))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use1 anyref))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use2 anyref))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use3 anyref))
 
   ;; CHECK:      (global $other1 anyref (struct.new $A
   ;; CHECK-NEXT:  (ref.i31
@@ -201,6 +211,11 @@
   ;; CHECK-NEXT: ))
   (global $other1 anyref (global.get $single-use1))
 
+  ;; CHECK:      (global $single-use3 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 99999)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use3 anyref (struct.new $A
     (i31.new
       (i32.const 99999)
@@ -228,6 +243,12 @@
   ;; CHECK:      (type $A (struct (field anyref) (field anyref)))
   (type $A (struct (field anyref) (field anyref)))
 
+  ;; CHECK:      (global $single-use1 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT: ))
   (global $single-use1 anyref (struct.new $A
     (i31.new
       (i32.const 42)
@@ -235,16 +256,18 @@
     (ref.null any)
   ))
 
+  ;; CHECK:      (global $single-use2 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.null none)
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $single-use2 anyref (struct.new $A
     (ref.null any)
     (i31.new
       (i32.const 1337)
     )
   ))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use1 anyref))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use2 anyref))
 
   ;; CHECK:      (global $other anyref (struct.new $A
   ;; CHECK-NEXT:  (struct.new $A
@@ -271,23 +294,32 @@
   ;; CHECK:      (type $A (struct (field anyref)))
   (type $A (struct (field anyref)))
 
+  ;; CHECK:      (global $single-use1 anyref (ref.i31
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
   (global $single-use1 anyref (i31.new
     (i32.const 42)
   ))
 
+  ;; CHECK:      (global $other1 anyref (struct.new $A
+  ;; CHECK-NEXT:  (ref.i31
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $other1 anyref (struct.new $A
     (global.get $single-use1)
   ))
 
+  ;; CHECK:      (global $other2 anyref (struct.new $A
+  ;; CHECK-NEXT:  (struct.new $A
+  ;; CHECK-NEXT:   (ref.i31
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: ))
   (global $other2 anyref (struct.new $A
     (global.get $other1)
   ))
-
-  ;; CHECK:      (import "unused" "unused" (global $single-use1 anyref))
-
-  ;; CHECK:      (import "unused" "unused" (global $other1 anyref))
-
-  ;; CHECK:      (import "unused" "unused" (global $other2 anyref))
 
   ;; CHECK:      (global $other3 anyref (struct.new $A
   ;; CHECK-NEXT:  (struct.new $A
