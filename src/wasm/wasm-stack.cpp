@@ -26,7 +26,7 @@ void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     parent.writeType(Type::none);
   } else if (type.isTuple()) {
-    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+    o << S32LEB(parent.getSignatureIndex(Signature(Type::none, type)));
   } else {
     parent.writeType(type);
   }

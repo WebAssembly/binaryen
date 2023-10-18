@@ -738,7 +738,7 @@
  ;; CHECK:      (func $block-folded (type $void)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result i32 i32)
+ ;; CHECK-NEXT:   (block $l (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (unreachable)
@@ -766,7 +766,7 @@
  ;; CHECK-NEXT:     (local.set $scratch_2
  ;; CHECK-NEXT:      (block (result i32)
  ;; CHECK-NEXT:       (local.set $scratch_1
- ;; CHECK-NEXT:        (block $1 (result i32 i32)
+ ;; CHECK-NEXT:        (block $1 (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:         (tuple.make
  ;; CHECK-NEXT:          (block $2 (result i32)
  ;; CHECK-NEXT:           (local.set $scratch
@@ -819,8 +819,8 @@
  ;; CHECK-NEXT:  (local $scratch (i32 i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (local.set $scratch
- ;; CHECK-NEXT:   (block (result i32 i32)
- ;; CHECK-NEXT:    (block (result i32 i32)
+ ;; CHECK-NEXT:   (block (type $ret2) (result i32 i32)
+ ;; CHECK-NEXT:    (block (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:     (tuple.make
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (i32.const 1)
@@ -1566,7 +1566,7 @@
  )
 
  ;; CHECK:      (func $br-multivalue (type $7) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $7) (result i32 i64)
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (i32.const 0)
@@ -1582,8 +1582,8 @@
  )
 
  ;; CHECK:      (func $br-multivalue-drop (type $7) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (result i32 i64)
- ;; CHECK-NEXT:   (block (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $7) (result i32 i64)
+ ;; CHECK-NEXT:   (block (type $7) (result i32 i64)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (f32.const 0)
  ;; CHECK-NEXT:    )

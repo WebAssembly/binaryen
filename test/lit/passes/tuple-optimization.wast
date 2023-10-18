@@ -546,7 +546,7 @@
   ;; CHECK:      (func $set-of-block (type $0)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
-  ;; CHECK-NEXT:   (block (result i32 i32)
+  ;; CHECK-NEXT:   (block (type $1) (result i32 i32)
   ;; CHECK-NEXT:    (tuple.make
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)

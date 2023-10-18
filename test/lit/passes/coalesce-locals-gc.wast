@@ -79,7 +79,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead (type $2)
+ ;; CHECK:      (func $nn-dead (type $3)
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -118,7 +118,7 @@
   )
  )
 
- ;; CHECK:      (func $nn-dead-nameless (type $2)
+ ;; CHECK:      (func $nn-dead-nameless (type $3)
  ;; CHECK-NEXT:  (local $0 (ref func))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $nn-dead)
@@ -149,7 +149,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-get-null (type $2)
+ ;; CHECK:      (func $unreachable-get-null (type $3)
  ;; CHECK-NEXT:  (local $0 anyref)
  ;; CHECK-NEXT:  (local $1 i31ref)
  ;; CHECK-NEXT:  (unreachable)
@@ -307,9 +307,9 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $nn-tuple-global
- ;; CHECK-NEXT:   (block (result (ref any) i32)
+ ;; CHECK-NEXT:   (block (type $1) (result (ref any) i32)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (if (result (ref any) i32)
+ ;; CHECK-NEXT:     (if (type $1) (result (ref any) i32)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (tuple.make
  ;; CHECK-NEXT:       (ref.as_non_null

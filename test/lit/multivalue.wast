@@ -320,7 +320,7 @@
  ;; CHECK-NEXT:  (local $0 (i32 i64))
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (block $label$1 (result i32 i64)
+ ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:     (i64.const 42)
@@ -394,7 +394,7 @@
  ;; CHECK:      (func $mv-block-break (type $0) (result i32 i64)
  ;; CHECK-NEXT:  (local $0 (i32 i64))
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (block $label$1 (result i32 i64)
+ ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (br $label$1
  ;; CHECK-NEXT:     (tuple.make
  ;; CHECK-NEXT:      (i32.const 42)
@@ -427,7 +427,7 @@
  ;; CHECK-NEXT:  (local $0 (i32 i64))
  ;; CHECK-NEXT:  (local $1 (i32 i64))
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (block $label$1 (result i32 i64)
+ ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (br_if $label$1
  ;; CHECK-NEXT:      (tuple.make
@@ -471,7 +471,7 @@
  ;; CHECK:      (func $mv-if (type $2) (result i32 i64 externref)
  ;; CHECK-NEXT:  (local $0 (i32 i64 externref))
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (if (result i32 i64 externref)
+ ;; CHECK-NEXT:   (if (type $2) (result i32 i64 externref)
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (i32.const 42)
@@ -516,7 +516,7 @@
  ;; CHECK:      (func $mv-loop (type $0) (result i32 i64)
  ;; CHECK-NEXT:  (local $0 (i32 i64))
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (loop $label$1 (result i32 i64)
+ ;; CHECK-NEXT:   (loop $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:     (i64.const 42)
@@ -545,9 +545,9 @@
  ;; CHECK-NEXT:  (local $0 (i32 i64))
  ;; CHECK-NEXT:  (local $1 (i32 i64))
  ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (block $label$1 (result i32 i64)
+ ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (block $label$2 (result i32 i64)
+ ;; CHECK-NEXT:     (block $label$2 (type $0) (result i32 i64)
  ;; CHECK-NEXT:      (br_table $label$1 $label$2
  ;; CHECK-NEXT:       (tuple.make
  ;; CHECK-NEXT:        (i32.const 42)

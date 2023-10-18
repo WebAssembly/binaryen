@@ -1422,6 +1422,7 @@ public:
   uint32_t getDataSegmentIndex(Name name) const;
   uint32_t getElementSegmentIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
+  uint32_t getSignatureIndex(Signature sig) const;
   uint32_t getStringIndex(Name string) const;
 
   void writeTableDeclarations();
@@ -1476,6 +1477,7 @@ private:
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
   ModuleUtils::IndexedHeapTypes indexedTypes;
+  std::unordered_map<Signature, uint32_t> signatureIndexes;
 
   bool debugInfo = true;
 

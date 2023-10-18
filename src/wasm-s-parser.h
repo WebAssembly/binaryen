@@ -327,7 +327,7 @@ private:
   Expression* makeStringSliceIter(Element& s);
 
   // Helper functions
-  Type parseOptionalResultType(Element& s, Index& i);
+  Type parseBlockType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryForInstruction(const std::string& instrName,
