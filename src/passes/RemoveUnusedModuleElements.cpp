@@ -752,9 +752,9 @@ struct RemoveUnusedModuleElements : public Pass {
         continue;
       }
 
-      auto* calledFunc = module->getFunction(call->target);
       // Don't do this if the type is different, as then we might be
       // changing the external interface to the module.
+      auto* calledFunc = module->getFunction(call->target);
       if (calledFunc->type != func->type) {
         continue;
       }

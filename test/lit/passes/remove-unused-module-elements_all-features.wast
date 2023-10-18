@@ -738,9 +738,6 @@
  )
 )
 
-;; When we export a function that calls another, we can export the called
-;; function, skipping the one in the middle. The exports of $middle and
-;; $other-middle can be changed to their targets here.
 ;; CHECK:      (export "func" (func $0))
 
 ;; CHECK:      (func $0 (type $0)
@@ -757,6 +754,10 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
+  ;; When we export a function that calls another, we can export the called
+  ;; function, skipping the one in the middle. The exports of $middle and
+  ;; $other-middle can be changed to their targets here.
+
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "a" "b" (func $import (type $0)))
