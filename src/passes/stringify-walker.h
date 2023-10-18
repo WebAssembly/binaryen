@@ -234,11 +234,20 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
 // Functions that filter vectors of SuffixTree::RepeatedSubstring
 struct StringifyProcessor {
   static std::vector<SuffixTree::RepeatedSubstring>
-  dedupe(const std::vector<SuffixTree::RepeatedSubstring>&& substrings);
+  dedupe(const std::vector<SuffixTree::RepeatedSubstring>& substrings);
+  // Filter is the general purpose function backing subsequent filter functions.
+  // It can be used directly, but generally prefer a wrapper function
+  // to encapsulate your condition and make it available for tests
   static std::vector<SuffixTree::RepeatedSubstring>
-  filter(const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
+  filter(const std::vector<SuffixTree::RepeatedSubstring>& substrings,
          const std::vector<Expression*> exprs,
          std::function<bool(const Expression*)> condition);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filterLocalSets(const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+                  const std::vector<Expression*> exprs);
+  static std::vector<SuffixTree::RepeatedSubstring>
+  filterBranches(const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+                 const std::vector<Expression*> exprs);
 };
 
 } // namespace wasm

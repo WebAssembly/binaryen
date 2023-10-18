@@ -82,7 +82,7 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
 // repeats come first and 2) these are more worthwhile to keep than subsequent
 // substrings of substrings, even if they appear more times.
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
-  const std::vector<SuffixTree::RepeatedSubstring>&& substrings) {
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
   std::unordered_set<uint32_t> seen;
   std::vector<SuffixTree::RepeatedSubstring> result;
   for (auto substring : substrings) {
@@ -111,7 +111,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 }
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
-  const std::vector<SuffixTree::RepeatedSubstring>&& substrings,
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
   const std::vector<Expression*> exprs,
   std::function<bool(const Expression*)> condition) {
 
@@ -166,4 +166,21 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
   return result;
 }
 
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*> exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return curr->is<LocalSet>();
+    });
+}
+
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*> exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return Properties::isBranch(curr) || curr->is<Return>();
+    });
+}
 } // namespace wasm
