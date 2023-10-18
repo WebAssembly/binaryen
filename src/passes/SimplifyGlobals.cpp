@@ -477,6 +477,11 @@ struct SimplifyGlobals : public Pass {
   bool iteration() {
     analyze();
 
+    // Fold single uses first, as it is simple to update the info from analyze()
+    // in this code (and harder to do in the things we do later, which is why we
+    // call analyze from scratch in each iteration).
+    foldSingleUses();
+
     // Removing unneeded writes can in some cases lead to more optimizations
     // that we need an entire additional iteration to perform, see below.
     bool more = removeUnneededWrites();
@@ -486,8 +491,6 @@ struct SimplifyGlobals : public Pass {
     propagateConstantsToGlobals();
 
     propagateConstantsToCode();
-
-    foldSingleUses();
 
     return more;
   }
@@ -714,6 +717,11 @@ struct SimplifyGlobals : public Pass {
             global->init = nullptr;
             global->module = global->base = "unused";
           }
+
+          // Update info for later parts of this pass (we will have 0 reads and
+          // writes, however, so they will do nothing; but update to avoid
+          // confusion when debugging, and for possible future changes).
+          info.read = 0;
         }
       }
     };
