@@ -11,17 +11,16 @@
 namespace wasm::analysis {
 
 // A node which contains all the lattice states for a given CFG node.
-template<typename Lattice> struct BlockState {
-  static_assert(is_lattice<Lattice>);
+template<Lattice L> struct BlockState {
 
   // CFG node corresponding to this state block.
   const BasicBlock* cfgBlock;
   // State at which the analysis flow starts for a CFG. For instance, the ending
   // state for backward analysis, or the beginning state for forward analysis.
-  typename Lattice::Element inputState;
+  typename L::Element inputState;
 
   // All states are set to the bottom lattice element in this constructor.
-  BlockState(const BasicBlock* underlyingBlock, Lattice& lattice);
+  BlockState(const BasicBlock* underlyingBlock, L& lattice);
 
   // Prints out BlockState information, but not any intermediate states.
   void print(std::ostream& os);
@@ -42,13 +41,13 @@ template<typename Lattice> struct BlockState {
 // propagated to dependents of the CFG BasicBlock by the worklist algorithm in
 // MonotoneCFGAnalyzer.
 
-template<typename TransferFunction, typename Lattice>
+template<typename TransferFunction, Lattice L>
 constexpr bool has_transfer =
   std::is_invocable_r<void,
                       decltype(&TransferFunction::transfer),
                       TransferFunction,
                       const BasicBlock*,
-                      typename Lattice::Element&>::value;
+                      typename L::Element&>::value;
 
 // void enqueueWorklist(CFG&, std::queue<const BasicBlock*>& value);
 
@@ -58,7 +57,7 @@ constexpr bool has_transfer =
 // state propagations, and therefore better performance. The opposite is true
 // for a forward analysis.
 
-template<typename TransferFunction, typename Lattice>
+template<typename TransferFunction, Lattice L>
 constexpr bool has_enqueueWorklist =
   std::is_invocable_r<void,
                       decltype(&TransferFunction::enqueueWorklist),
@@ -80,27 +79,23 @@ constexpr bool has_getDependents =
                       const BasicBlock*>::value;
 
 // Combined TransferFunction assertions.
-template<typename TransferFunction, typename Lattice>
-constexpr bool is_TransferFunction = has_transfer<TransferFunction, Lattice>&&
-  has_enqueueWorklist<TransferFunction, Lattice>&&
-    has_getDependents<TransferFunction>;
+template<typename TransferFunction, Lattice L>
+constexpr bool is_TransferFunction = has_transfer<TransferFunction, L> &&
+                                     has_enqueueWorklist<TransferFunction, L> &&
+                                     has_getDependents<TransferFunction>;
 
-template<typename Lattice, typename TransferFunction>
-class MonotoneCFGAnalyzer {
-  static_assert(is_lattice<Lattice>);
-  static_assert(is_TransferFunction<TransferFunction, Lattice>);
+template<Lattice L, typename TransferFunction> class MonotoneCFGAnalyzer {
+  static_assert(is_TransferFunction<TransferFunction, L>);
 
-  Lattice& lattice;
+  L& lattice;
   TransferFunction& transferFunction;
   CFG& cfg;
-  std::vector<BlockState<Lattice>> stateBlocks;
+  std::vector<BlockState<L>> stateBlocks;
 
 public:
   // Will constuct BlockState objects corresponding to BasicBlocks from the
   // given CFG.
-  MonotoneCFGAnalyzer(Lattice& lattice,
-                      TransferFunction& transferFunction,
-                      CFG& cfg);
+  MonotoneCFGAnalyzer(L& lattice, TransferFunction& transferFunction, CFG& cfg);
 
   // Runs the worklist algorithm to compute the states for the BlockState graph.
   void evaluate();

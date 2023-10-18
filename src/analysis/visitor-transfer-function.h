@@ -14,10 +14,10 @@ enum class AnalysisDirection { Forward, Backward };
 // Utility for visitor-based transfer functions for forward and backward
 // analysis. Forward analysis is chosen by default unless the template parameter
 // Backward is true.
-template<typename SubType, typename Lattice, AnalysisDirection Direction>
+template<typename SubType, Lattice L, AnalysisDirection Direction>
 struct VisitorTransferFunc : public Visitor<SubType> {
 protected:
-  typename Lattice::Element* currState = nullptr;
+  typename L::Element* currState = nullptr;
 
   // There are two distinct phases in the execution of the analyzer. First,
   // the worklist algorithm will be run to obtain a solution, calling
@@ -46,8 +46,7 @@ public:
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node, starting with the node's input state, and changes the input state
   // to the final output state of the node in place.
-  void transfer(const BasicBlock* cfgBlock,
-                typename Lattice::Element& inputState) {
+  void transfer(const BasicBlock* cfgBlock, typename L::Element& inputState) {
     // If the block is empty, we propagate the state by inputState =
     // outputState.
 
@@ -87,7 +86,7 @@ public:
   // This is for collecting results after solving an analysis. Implemented in
   // the same way as transfer(), but we also set the collectingResults flag.
   void collectResults(const BasicBlock* cfgBlock,
-                      typename Lattice::Element& inputState) {
+                      typename L::Element& inputState) {
     collectingResults = true;
     currState = &inputState;
     if constexpr (Direction == AnalysisDirection::Backward) {

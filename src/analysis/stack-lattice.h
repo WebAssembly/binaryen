@@ -65,8 +65,7 @@ namespace wasm::analysis {
 // produce a stack [b, LUB(a, a')], where LUB(a, a') takes the maximum
 // of the two maximum bit values.
 
-template<typename StackElementLattice> class StackLattice {
-  static_assert(is_lattice<StackElementLattice>);
+template<Lattice StackElementLattice> class StackLattice {
   StackElementLattice& stackElementLattice;
 
 public:
@@ -127,7 +126,7 @@ public:
     // fits with the conception of the stack starting at the top and having
     // an infinite bottom, which allows stacks of different height and scope
     // to be easily joined.
-    bool makeLeastUpperBound(const Element& other) {
+    bool makeLeastUpperBound(const Element& other) noexcept {
       // Top element cases, since top elements don't actually have the stack
       // value.
       if (isTop()) {
@@ -185,7 +184,8 @@ public:
   // >= right top or if the left stack is higher and the right top > left top or
   // they are unrelated, then there is no relation. Same applies for the reverse
   // relationship.
-  LatticeComparison compare(const Element& left, const Element& right) {
+  LatticeComparison compare(const Element& left,
+                            const Element& right) const noexcept {
     // Handle cases where there are top elements.
     if (left.isTop()) {
       if (right.isTop()) {
@@ -246,7 +246,7 @@ public:
     }
   }
 
-  Element getBottom() { return Element{}; }
+  Element getBottom() const noexcept { return Element{}; }
 };
 
 } // namespace wasm::analysis
