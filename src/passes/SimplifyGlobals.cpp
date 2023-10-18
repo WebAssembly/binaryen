@@ -505,7 +505,11 @@ struct SimplifyGlobals : public Pass {
         map[ex->value].exported = true;
       }
     }
-    GlobalUseScanner(&map).run(getPassRunner(), module);
+
+    GlobalUseScanner scanner(&map);
+    scanner.run(getPassRunner(), module);
+    scanner.runOnModuleCode(getPassRunner(), module);
+
     // We now know which are immutable in practice.
     for (auto& global : module->globals) {
       auto& info = map[global->name];
@@ -601,8 +605,8 @@ struct SimplifyGlobals : public Pass {
   }
 
   void preferEarlierImports() {
-    // Optimize uses of immutable globals, prefer the earlier import when
-    // there is a copy.
+    // Optimize uses of immutable globals, prefer the earlier one when there is
+    // a copy.
     NameNameMap copiedParentMap;
     for (auto& global : module->globals) {
       auto child = global->name;
@@ -626,7 +630,9 @@ struct SimplifyGlobals : public Pass {
         }
       }
       // Apply to the gets.
-      GlobalUseModifier(&copiedParentMap).run(getPassRunner(), module);
+      GlobalUseModifier modifier(&copiedParentMap);
+      modifier.run(getPassRunner(), module);
+      modifier.runOnModuleCode(getPassRunner(), module);
     }
   }
 
