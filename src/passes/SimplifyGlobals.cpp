@@ -710,8 +710,10 @@ struct SimplifyGlobals : public Pass {
         if (info.written == 0 && info.read == 1) {
           auto* global = wasm.getGlobal(name);
           if (global->init) {
-            // Steal that global's code. For simplicity, copy it, as we have to
-            // keep that global valid for the operations that happen after us.
+            // Copy that global's code. For simplicity we copy it as we have to
+            // keep that global valid for the operations that happen after us,
+            // even though that global will be removed later (we could remove it
+            // here, but it would add more complexity than seems worth it).
             replaceCurrent(ExpressionManipulator::copy(global->init, wasm));
 
             // Update info for later parts of this pass: we are removing a
