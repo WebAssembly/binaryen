@@ -845,3 +845,68 @@
     (call $import-B)
   )
 )
+
+;; As above, but checking for parameters: It's ok to pass values through, but
+;; not to do anything else.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0) (param i32)))
+  (import "a" "b" (func $import (param i32)))
+
+  ;; CHECK:      (export "export-import" (func $import))
+  (export "export-import" (func $import))
+
+  ;; CHECK:      (export "export-middle" (func $import))
+  (export "export-middle" (func $middle))
+
+  ;; CHECK:      (export "export-middle-local" (func $middle-local))
+  (export "export-middle-local" (func $middle-local))
+
+  ;; CHECK:      (export "export-middle-other" (func $middle-other))
+  (export "export-middle-other" (func $middle-other))
+
+  ;; CHECK:      (export "export-middle-noncall" (func $middle-noncall))
+  (export "export-middle-noncall" (func $middle-noncall))
+
+  (func $middle (param $x i32)
+    ;; This extra local is not a problem.
+    (local $y i32)
+    (call $import
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $middle-local (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-local (param $x i32)
+    (local $y i32)
+    (call $import
+      ;; Now we get the local instead of the param, so we cannot optimize.
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $middle-other (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-other (param $x i32)
+    (call $import
+      ;; Something other than local.get, so we cannot optimize.
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $middle-noncall (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $middle-noncall (param $x i32)
+    ;; Not even a call here.
+  )
+)

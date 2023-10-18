@@ -747,13 +747,29 @@ struct RemoveUnusedModuleElements : public Pass {
         continue;
       }
 
-      if (auto* call = func->body->dynCast<Call>()) {
-        auto* calledFunc = module->getFunction(call->target);
-        // Don't do this if the type is different, as then we might be
-        // changing the external interface to the module.
-        if (calledFunc->type == func->type) {
-          exp->value = calledFunc->name;
+      auto* call = func->body->dynCast<Call>();
+      if (!call) {
+        continue;
+      }
+
+      auto* calledFunc = module->getFunction(call->target);
+      // Don't do this if the type is different, as then we might be
+      // changing the external interface to the module.
+      if (calledFunc->type != func->type) {
+        continue;
+      }
+
+      // Finally, all the params must simply be forwarded.
+      auto ok = true;
+      for (Index i = 0; i < call->operands.size(); i++) {
+        auto* get = call->operands[i]->dynCast<LocalGet>();
+        if (!get || get->index != i) {
+          ok = false;
+          break;
         }
+      }
+      if (ok) {
+        exp->value = calledFunc->name;
       }
     }
   }
