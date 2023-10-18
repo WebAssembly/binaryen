@@ -253,8 +253,7 @@ TEST_F(StringifyTest, Stringify) {
 std::vector<SuffixTree::RepeatedSubstring>
 repeatSubstrings(std::vector<uint32_t> hashString) {
   SuffixTree st(hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings =
-    std::vector(st.begin(), st.end());
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
   std::sort(
     substrings.begin(),
     substrings.end(),
@@ -296,7 +295,7 @@ TEST_F(StringifyTest, DedupeSubstrings) {
   auto hashString = hashStringifyModule(&wasm);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
     repeatSubstrings(hashString);
-  auto result = StringifyProcessor::dedupe(substrings);
+  auto result = StringifyProcessor::dedupe(std::move(substrings));
 
   EXPECT_EQ(
     result,
@@ -305,4 +304,45 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       SuffixTree::RepeatedSubstring{4u, (std::vector<unsigned>{12, 28})},
       // 10, 11, 6 appears at idx 23 and again at 34
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})}}));
+}
+
+TEST_F(StringifyTest, FilterLocalSets) {
+  static auto localSetModuleText = R"wasm(
+  (module
+  (func $a (result i32)
+      (local $x i32)
+      (local.set $x
+        (i32.const 1)
+      )
+    (i32.const 0)
+    (i32.const 1)
+  )
+  (func $b (result i32)
+      (local $x i32)
+      (local.set $x
+        (i32.const 1)
+      )
+    (i32.const 5)
+    (i32.const 0)
+    (i32.const 1)
+  )
+  )
+  )wasm";
+  Module wasm;
+  parseWast(wasm, localSetModuleText);
+  HashStringifyWalker stringify = HashStringifyWalker();
+  stringify.walkModule(&wasm);
+  auto substrings = repeatSubstrings(stringify.hashString);
+  auto result = StringifyProcessor::dedupe(std::move(substrings));
+
+  result = StringifyProcessor::filter(
+    std::move(substrings), stringify.exprs, [](const Expression* curr) {
+      return curr->is<LocalSet>();
+    });
+
+  EXPECT_EQ(
+    result,
+    (std::vector<SuffixTree::RepeatedSubstring>{
+      // sequence i32.const 0, i32.const 1 appears at idx 6 and again at 16
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{6, 16})}}));
 }

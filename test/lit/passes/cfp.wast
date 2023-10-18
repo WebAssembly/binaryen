@@ -2497,7 +2497,8 @@
         (local.get $B1)
       )
     )
-    ;; The copy can't refer to a $B2, so we can optimize here. TODO
+    ;; The copy can't refer to a $B2, so we can optimize here. TODO (but GUFA
+    ;; can do this)
     (drop
       (struct.get $B2 0
         (local.get $B2)
@@ -2602,7 +2603,8 @@
         (local.get $A)
       )
     )
-    ;; The copy can't refer to a $B1, so we can optimize here. TODO
+    ;; The copy can't refer to a $B1, so we can optimize here. TODO (but GUFA
+    ;; can do this)
     (drop
       (struct.get $B1 0
         (local.get $B1)
