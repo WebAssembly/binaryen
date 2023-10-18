@@ -1554,6 +1554,8 @@ opt_choices = [
     ("--rse",),
     ("--signature-pruning",),
     ("--signature-refining",),
+    ("--simplify-globals",),
+    ("--simplify-globals-optimizing",),
     ("--simplify-locals",),
     ("--simplify-locals-nonesting",),
     ("--simplify-locals-nostructure",),
