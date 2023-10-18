@@ -1,27 +1,55 @@
 total
- [exports]      : 2       
- [funcs]        : 2       
+ [exports]      : 3       
+ [funcs]        : 6       
  [globals]      : 1       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 0       
+ [table-data]   : 1       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 174     
- [vars]         : 24      
- ArrayNewFixed  : 1       
- Binary         : 49      
- Block          : 5       
- Call           : 1       
- Const          : 42      
- GlobalGet      : 2       
- GlobalSet      : 2       
- If             : 1       
- Load           : 16      
- LocalGet       : 34      
- LocalSet       : 17      
- Return         : 1       
- StructNew      : 1       
- Unary          : 1       
- Unreachable    : 1       
+ [total]        : 643     
+ [vars]         : 36      
+ ArrayCopy      : 1       
+ ArrayFill      : 1       
+ ArrayGet       : 1       
+ ArrayLen       : 5       
+ ArrayNew       : 7       
+ ArraySet       : 1       
+ AtomicNotify   : 1       
+ AtomicRMW      : 1       
+ Binary         : 84      
+ Block          : 58      
+ Break          : 9       
+ Call           : 22      
+ CallRef        : 2       
+ Const          : 144     
+ Drop           : 2       
+ GlobalGet      : 16      
+ GlobalSet      : 16      
+ I31Get         : 2       
+ If             : 20      
+ Load           : 20      
+ LocalGet       : 75      
+ LocalSet       : 48      
+ Loop           : 4       
+ MemoryInit     : 1       
+ Nop            : 4       
+ Pop            : 4       
+ RefAs          : 4       
+ RefFunc        : 6       
+ RefI31         : 3       
+ RefNull        : 11      
+ RefTest        : 1       
+ Return         : 7       
+ SIMDExtract    : 1       
+ Select         : 5       
+ Store          : 3       
+ StructGet      : 3       
+ StructNew      : 7       
+ StructSet      : 1       
+ Try            : 3       
+ TupleExtract   : 7       
+ TupleMake      : 10      
+ Unary          : 14      
+ Unreachable    : 8       
