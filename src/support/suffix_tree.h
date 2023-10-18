@@ -38,6 +38,7 @@
 #include "llvm/Support/Allocator.h"
 #include <cassert>
 #include <cstddef>
+#include <ostream>
 #include <vector>
 
 #include "support/suffix_tree_node.h"
@@ -63,6 +64,19 @@ public:
       return Length == other.Length && StartIndices == other.StartIndices;
     }
   };
+
+  friend std::ostream& operator<<(std::ostream& os,
+                                  RepeatedSubstring substring) {
+    os << "SuffixTree::RepeatedSubstring{" << substring.Length
+       << "u, (std::vector<unsigned>{";
+    for (unsigned idx = 0; idx < substring.StartIndices.size(); idx++) {
+      os << substring.StartIndices[idx];
+      if (idx != substring.StartIndices.size() - 1) {
+        os << ", ";
+      }
+    }
+    return os << "})}";
+  }
 
 private:
   /// Maintains internal nodes in the tree.
