@@ -35,6 +35,11 @@ void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
   indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*wasm);
+  for (Index i = 0, size = indexedTypes.types.size(); i < size; ++i) {
+    if (indexedTypes.types[i].isSignature()) {
+      signatureIndexes.insert({indexedTypes.types[i].getSignature(), i});
+    }
+  }
   importInfo = std::make_unique<ImportInfo>(*wasm);
 }
 
@@ -680,6 +685,17 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
 #ifndef NDEBUG
   if (it == indexedTypes.indices.end()) {
     std::cout << "Missing type: " << type << '\n';
+    assert(0);
+  }
+#endif
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getSignatureIndex(Signature sig) const {
+  auto it = signatureIndexes.find(sig);
+#ifndef NDEBUG
+  if (it == signatureIndexes.end()) {
+    std::cout << "Missing signature: " << sig << '\n';
     assert(0);
   }
 #endif

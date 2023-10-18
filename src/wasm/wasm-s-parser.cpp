@@ -1445,7 +1445,7 @@ Expression* SExpressionWasmBuilder::makeUnary(Element& s, UnaryOp op) {
 Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   auto ret = allocator.alloc<Select>();
   Index i = 1;
-  Type type = parseOptionalResultType(s, i);
+  Type type = parseBlockType(s, i);
   ret->ifTrue = parseExpression(s[i++]);
   ret->ifFalse = parseExpression(s[i++]);
   ret->condition = parseExpression(s[i]);
@@ -1603,7 +1603,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     stack.emplace_back(Info{sp, curr, hadName});
     curr->name = nameMapper.pushLabelName(sName);
     // block signature
-    curr->type = parseOptionalResultType(s, i);
+    curr->type = parseBlockType(s, i);
     if (i >= s.size()) {
       break; // empty block
     }
@@ -1630,7 +1630,8 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
       while (i < s.size() && s[i]->isStr()) {
         i++;
       }
-      if (i < s.size() && elementStartsWith(*s[i], RESULT)) {
+      while (i < s.size() && (elementStartsWith(*s[i], RESULT) ||
+                              elementStartsWith(*s[i], TYPE))) {
         i++;
       }
       if (t < int(stack.size()) - 1) {
@@ -2370,7 +2371,7 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   }
   auto label = nameMapper.pushLabelName(sName);
   // if signature
-  Type type = parseOptionalResultType(s, i);
+  Type type = parseBlockType(s, i);
   ret->condition = parseExpression(s[i++]);
   ret->ifTrue = parseExpression(*s[i++]);
   if (i < s.size()) {
@@ -2409,7 +2410,7 @@ SExpressionWasmBuilder::makeMaybeBlock(Element& s, size_t i, Type type) {
   return ret;
 }
 
-Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
+Type SExpressionWasmBuilder::parseBlockType(Element& s, Index& i) {
   if (s.size() == i) {
     return Type::none;
   }
@@ -2420,11 +2421,34 @@ Type SExpressionWasmBuilder::parseOptionalResultType(Element& s, Index& i) {
     return stringToType(s[i++]->str());
   }
 
-  Element& results = *s[i];
-  IString id = results[0]->str();
+  Element* results = s[i];
+  IString id = (*results)[0]->str();
+  std::optional<Signature> usedType;
+  if (id == TYPE) {
+    auto type = parseHeapType(*(*results)[1]);
+    if (!type.isSignature()) {
+      throw SParseException("unexpected non-function type", s);
+    }
+    usedType = type.getSignature();
+    if (usedType->params != Type::none) {
+      throw SParseException("block input values are not yet supported", s);
+    }
+    i++;
+    results = s[i];
+    id = (*results)[0]->str();
+  }
+
   if (id == RESULT) {
     i++;
-    return Type(parseResults(results));
+    auto type = Type(parseResults(*results));
+    if (usedType && usedType->results != type) {
+      throw SParseException("results do not match type", s);
+    }
+    return type;
+  }
+
+  if (usedType && usedType->results != Type::none) {
+    throw SParseException("results do not match type", s);
   }
   return Type::none;
 }
@@ -2439,7 +2463,7 @@ Expression* SExpressionWasmBuilder::makeLoop(Element& s) {
     sName = "loop-in";
   }
   ret->name = nameMapper.pushLabelName(sName);
-  ret->type = parseOptionalResultType(s, i);
+  ret->type = parseBlockType(s, i);
   ret->body = makeMaybeBlock(s, i, ret->type);
   nameMapper.popLabelName(ret->name);
   ret->finalize(ret->type);
@@ -2690,7 +2714,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     sName = "try";
   }
   ret->name = nameMapper.pushLabelName(sName);
-  Type type = parseOptionalResultType(s, i); // signature
+  Type type = parseBlockType(s, i); // signature
 
   if (!elementStartsWith(*s[i], "do")) {
     throw SParseException("try body should start with 'do'", s, *s[i]);
