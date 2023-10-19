@@ -1,4 +1,4 @@
-file(GLOB analysis_HEADERS *.h)
+file(GLOB analysis_HEADERS *.h lattices/*.h)
 set(analysis_SOURCES
   cfg.cpp
   sign-lattice.cpp
