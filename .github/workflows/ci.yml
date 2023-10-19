@@ -32,7 +32,7 @@ jobs:
         wget https://apt.llvm.org/llvm.sh
         sudo chmod +x llvm.sh
         sudo ./llvm.sh ${LLVM_VERSION}
-        sudo apt-get install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
+        sudo apt-get install clang-format clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION}
     - run: flake8
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
