@@ -16,6 +16,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     env:
+      # Keep this in sync with clang-format-diff.sh
       LLVM_VERSION: 17
     steps:
     - uses: actions/setup-python@v1
