@@ -269,6 +269,7 @@ else()
   endif()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
+  add_compile_flag("-Wno-dangling-pointer") # false positive in gcc
   add_compile_flag("-fno-omit-frame-pointer")
   add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two

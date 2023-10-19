@@ -7,7 +7,7 @@ namespace wasm::analysis {
 
 inline LatticeComparison FiniteIntPowersetLattice::compare(
   const FiniteIntPowersetLattice::Element& left,
-  const FiniteIntPowersetLattice::Element& right) {
+  const FiniteIntPowersetLattice::Element& right) const noexcept {
   // Both must be from the powerset lattice of the same set.
   assert(left.bitvector.size() == right.bitvector.size());
 
@@ -41,7 +41,8 @@ inline LatticeComparison FiniteIntPowersetLattice::compare(
   return NO_RELATION;
 }
 
-inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
+inline FiniteIntPowersetLattice::Element
+FiniteIntPowersetLattice::getBottom() const noexcept {
   FiniteIntPowersetLattice::Element result(setSize);
   return result;
 }
@@ -60,7 +61,7 @@ inline size_t FiniteIntPowersetLattice::Element::count() const {
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
 inline bool FiniteIntPowersetLattice::Element::makeLeastUpperBound(
-  const FiniteIntPowersetLattice::Element& other) {
+  const FiniteIntPowersetLattice::Element& other) noexcept {
   // Both must be from powerset lattice of the same set.
   assert(other.bitvector.size() == bitvector.size());
 

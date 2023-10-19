@@ -23,35 +23,33 @@ inline LatticeComparison reverseComparison(LatticeComparison comparison) {
   }
 }
 
-template<typename Lattice>
-constexpr bool has_getBottom =
-  std::is_invocable_r<typename Lattice::Element,
-                      decltype(&Lattice::getBottom),
-                      Lattice>::value;
-template<typename Lattice>
-constexpr bool has_compare =
-  std::is_invocable_r<LatticeComparison,
-                      decltype(&Lattice::compare),
-                      Lattice,
-                      const typename Lattice::Element&,
-                      const typename Lattice::Element&>::value;
-template<typename Element>
-constexpr bool has_makeLeastUpperBound =
-  std::is_invocable_r<void,
-                      decltype(&Element::makeLeastUpperBound),
-                      Element,
-                      const Element&>::value;
-template<typename Element>
-constexpr bool has_isTop =
-  std::is_invocable_r<bool, decltype(&Element::isTop), const Element>::value;
-template<typename Element>
-constexpr bool has_isBottom =
-  std::is_invocable_r<bool, decltype(&Element::isBottom), const Element>::value;
+#if __cplusplus >= 202002L
 
-template<typename Lattice>
-constexpr bool is_lattice = has_getBottom<Lattice>&& has_compare<Lattice>&&
-  has_makeLeastUpperBound<typename Lattice::Element>&& has_isTop<
-    typename Lattice::Element>&& has_isBottom<typename Lattice::Element>;
+#include <concepts>
+
+template<typename L>
+concept Lattice = requires(const L& lattice,
+                           const typename L::Element& constElem,
+                           typename L::Element& elem) {
+  // Lattices must have elements.
+  typename L::Element;
+  // We need to be able to get the bottom element.
+  { lattice.getBottom() } noexcept -> std::same_as<typename L::Element>;
+  // Elements should be comparable. TODO: use <=> and std::three_way_comparable
+  // once we support C++20 everywhere.
+  {
+    lattice.compare(constElem, constElem)
+  } noexcept -> std::same_as<LatticeComparison>;
+  // We need to be able to get the least upper bound of two elements and know
+  // whether any change was made.
+  { elem.makeLeastUpperBound(constElem) } noexcept -> std::same_as<bool>;
+};
+
+#else
+
+#define Lattice typename
+
+#endif // __cplusplus >= 202002L
 
 // Represents a powerset lattice constructed from a finite set of consecutive
 // integers from 0 to n which can be represented by a bitvector. Set elements
@@ -101,7 +99,7 @@ public:
     // Calculates the LUB of this element with some other element and sets
     // this element to the LUB in place. Returns true if this element before
     // this method call was different than the LUB.
-    bool makeLeastUpperBound(const Element& other);
+    bool makeLeastUpperBound(const Element& other) noexcept;
 
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
@@ -111,10 +109,11 @@ public:
 
   // Compares two lattice elements and returns a result indicating the
   // left element's relation to the right element.
-  LatticeComparison compare(const Element& left, const Element& right);
+  LatticeComparison compare(const Element& left,
+                            const Element& right) const noexcept;
 
   // Returns an instance of the bottom lattice element.
-  Element getBottom();
+  Element getBottom() const noexcept;
 };
 
 // A layer of abstraction over FiniteIntPowersetLattice which maps
@@ -169,11 +168,12 @@ public:
   }
 
   // We use implementations from FiniteIntPowersetLattice here.
-  LatticeComparison compare(const Element& left, const Element& right) {
+  LatticeComparison compare(const Element& left,
+                            const Element& right) const noexcept {
     return intLattice.compare(left, right);
   }
 
-  Element getBottom() { return intLattice.getBottom(); }
+  Element getBottom() const noexcept { return intLattice.getBottom(); }
 };
 
 } // namespace wasm::analysis

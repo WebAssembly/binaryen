@@ -44,15 +44,15 @@ uint64_t getSeed() {
 
 // Utility class which provides methods to check properties of the transfer
 // function and lattice of an analysis.
-template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
-  Lattice& lattice;
+template<Lattice L, typename TransferFunction> struct AnalysisChecker {
+  L& lattice;
   TransferFunction& transferFunction;
   std::string latticeName;
   std::string transferFunctionName;
   uint64_t latticeElementSeed;
   Name funcName;
 
-  AnalysisChecker(Lattice& lattice,
+  AnalysisChecker(L& lattice,
                   TransferFunction& transferFunction,
                   std::string latticeName,
                   std::string transferFunctionName,
@@ -71,9 +71,9 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
   // Prints information about a particular test case consisting of a randomly
   // generated function and triple of randomly generate lattice elements.
   void printVerboseFunctionCase(std::ostream& os,
-                                typename Lattice::Element& x,
-                                typename Lattice::Element& y,
-                                typename Lattice::Element& z) {
+                                typename L::Element& x,
+                                typename L::Element& y,
+                                typename L::Element& z) {
     os << "Using lattice element seed " << latticeElementSeed << "\nGenerated "
        << latticeName << " elements:\n";
     x.print(os);
@@ -86,7 +86,7 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
   }
 
   // Checks reflexivity of a lattice element, i.e. x = x.
-  void checkReflexivity(typename Lattice::Element& element) {
+  void checkReflexivity(typename L::Element& element) {
     LatticeComparison result = lattice.compare(element, element);
     if (result != LatticeComparison::EQUAL) {
       std::stringstream ss;
@@ -106,8 +106,7 @@ template<typename Lattice, typename TransferFunction> struct AnalysisChecker {
   //
   // Instead, we check for a related concept that x < y implies y > x, and
   // vice versa in this checkAntiSymmetry function.
-  void checkAntiSymmetry(typename Lattice::Element& x,
-                         typename Lattice::Element& y) {
+  void checkAntiSymmetry(typename L::Element& x, typename L::Element& y) {
     LatticeComparison result = lattice.compare(x, y);
     LatticeComparison reverseResult = lattice.compare(y, x);
 
@@ -127,9 +126,9 @@ private:
   // Prints the error message when a triple of lattice elements violates
   // transitivity.
   void printTransitivityError(std::ostream& os,
-                              typename Lattice::Element& a,
-                              typename Lattice::Element& b,
-                              typename Lattice::Element& c,
+                              typename L::Element& a,
+                              typename L::Element& b,
+                              typename L::Element& c,
                               LatticeComparison ab,
                               LatticeComparison bc,
                               LatticeComparison ac) {
@@ -163,9 +162,9 @@ private:
 public:
   // Given three lattice elements x, y, and z, checks if transitivity holds
   // between them.
-  void checkTransitivity(typename Lattice::Element& x,
-                         typename Lattice::Element& y,
-                         typename Lattice::Element& z) {
+  void checkTransitivity(typename L::Element& x,
+                         typename L::Element& y,
+                         typename L::Element& z) {
     LatticeComparison xy = lattice.compare(x, y);
     LatticeComparison yz = lattice.compare(y, z);
     LatticeComparison xz = lattice.compare(x, z);
@@ -194,10 +193,10 @@ public:
   // the CFG block input which caused the transfer function to exhibit
   // non-monotonic behavior.
   void checkMonotonicity(const BasicBlock* cfgBlock,
-                         typename Lattice::Element& first,
-                         typename Lattice::Element& second,
-                         typename Lattice::Element& firstResult,
-                         typename Lattice::Element& secondResult) {
+                         typename L::Element& first,
+                         typename L::Element& second,
+                         typename L::Element& firstResult,
+                         typename L::Element& secondResult) {
     LatticeComparison beforeCmp = lattice.compare(first, second);
     LatticeComparison afterCmp = lattice.compare(firstResult, secondResult);
 
@@ -241,9 +240,9 @@ public:
   }
 
   // Checks lattice-only properties for a triple of lattices.
-  void checkLatticeElements(typename Lattice::Element x,
-                            typename Lattice::Element y,
-                            typename Lattice::Element z) {
+  void checkLatticeElements(typename L::Element x,
+                            typename L::Element y,
+                            typename L::Element z) {
     checkReflexivity(x);
     checkReflexivity(y);
     checkReflexivity(z);
@@ -258,16 +257,16 @@ public:
   // using the same three input states each time and then checking properties on
   // the inputs and outputs.
   void checkTransferFunction(CFG& cfg,
-                             typename Lattice::Element x,
-                             typename Lattice::Element y,
-                             typename Lattice::Element z) {
+                             typename L::Element x,
+                             typename L::Element y,
+                             typename L::Element z) {
     for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
       // Apply transfer function on each lattice element.
-      typename Lattice::Element xResult = x;
+      typename L::Element xResult = x;
       transferFunction.transfer(&(*cfgIter), xResult);
-      typename Lattice::Element yResult = y;
+      typename L::Element yResult = y;
       transferFunction.transfer(&(*cfgIter), yResult);
-      typename Lattice::Element zResult = z;
+      typename L::Element zResult = z;
       transferFunction.transfer(&(*cfgIter), zResult);
 
       // Check monotonicity for every pair of transfer function outputs.
