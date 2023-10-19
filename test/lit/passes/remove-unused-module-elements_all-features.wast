@@ -916,3 +916,19 @@
     )
   )
 )
+
+(module
+  ;; As above, but with a return_call. We can optimize it like a call.
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
+
+  ;; CHECK:      (export "export-middle" (func $import))
+  (export "export-middle" (func $middle))
+
+  (func $middle
+    (return_call $import)
+  )
+)
