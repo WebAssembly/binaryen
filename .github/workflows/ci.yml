@@ -25,6 +25,8 @@ jobs:
     - name: install tools
       run: |
         sudo pip3 install -r requirements-dev.txt
+        apt install lsb-release wget software-properties-common gnupg
+        bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
         sudo apt-get install clang-format clang-tidy
     - run: flake8
     - run: ./scripts/clang-format-diff.sh
