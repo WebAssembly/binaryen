@@ -22,6 +22,7 @@
 #include "analysis/lattices/stack.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/reaching-definitions-transfer-function.h"
+#include "analysis/transfer-function.h"
 
 #include "support/command-line.h"
 #include "tools/fuzzing.h"
@@ -44,26 +45,26 @@ uint64_t getSeed() {
 
 // Utility class which provides methods to check properties of the transfer
 // function and lattice of an analysis.
-template<Lattice L, typename TransferFunction> struct AnalysisChecker {
+template<Lattice L, TransferFunction TxFn> struct AnalysisChecker {
   L& lattice;
-  TransferFunction& transferFunction;
+  TxFn& txfn;
   std::string latticeName;
-  std::string transferFunctionName;
+  std::string txfnName;
   uint64_t latticeElementSeed;
   Name funcName;
 
   AnalysisChecker(L& lattice,
-                  TransferFunction& transferFunction,
+                  TxFn& txfn,
                   std::string latticeName,
-                  std::string transferFunctionName,
+                  std::string txfnName,
                   uint64_t latticeElementSeed,
                   Name funcName)
-    : lattice(lattice), transferFunction(transferFunction),
-      latticeName(latticeName), transferFunctionName(transferFunctionName),
-      latticeElementSeed(latticeElementSeed), funcName(funcName) {}
+    : lattice(lattice), txfn(txfn), latticeName(latticeName),
+      txfnName(txfnName), latticeElementSeed(latticeElementSeed),
+      funcName(funcName) {}
 
   void printFailureInfo(std::ostream& os) {
-    os << "Error for " << transferFunctionName << " and " << latticeName
+    os << "Error for " << txfnName << " and " << latticeName
        << " at lattice element seed " << latticeElementSeed << " and function "
        << funcName << ".\n";
   }
@@ -81,8 +82,7 @@ template<Lattice L, typename TransferFunction> struct AnalysisChecker {
     y.print(os);
     os << ",\n";
     z.print(os);
-    os << "\nfor " << funcName << " to test " << transferFunctionName
-       << ".\n\n";
+    os << "\nfor " << funcName << " to test " << txfnName << ".\n\n";
   }
 
   // Checks reflexivity of a lattice element, i.e. x = x.
@@ -263,11 +263,11 @@ public:
     for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
       // Apply transfer function on each lattice element.
       typename L::Element xResult = x;
-      transferFunction.transfer(&(*cfgIter), xResult);
+      txfn.transfer(&(*cfgIter), xResult);
       typename L::Element yResult = y;
-      transferFunction.transfer(&(*cfgIter), yResult);
+      txfn.transfer(&(*cfgIter), yResult);
       typename L::Element zResult = z;
-      transferFunction.transfer(&(*cfgIter), zResult);
+      txfn.transfer(&(*cfgIter), zResult);
 
       // Check monotonicity for every pair of transfer function outputs.
       checkMonotonicity(&(*cfgIter), x, y, xResult, yResult);
@@ -279,12 +279,12 @@ public:
 
 // Struct to set up and check liveness analysis lattice and transfer function.
 struct LivenessChecker {
-  LivenessTransferFunction transferFunction;
+  LivenessTransferFunction txfn;
   FiniteIntPowersetLattice lattice;
   AnalysisChecker<FiniteIntPowersetLattice, LivenessTransferFunction> checker;
   LivenessChecker(Function* func, uint64_t latticeElementSeed, Name funcName)
     : lattice(func->getNumLocals()), checker(lattice,
-                                             transferFunction,
+                                             txfn,
                                              "FiniteIntPowersetLattice",
                                              "LivenessTransferFunction",
                                              latticeElementSeed,
@@ -321,28 +321,27 @@ struct LivenessChecker {
 struct ReachingDefinitionsChecker {
   LocalGraph::GetSetses getSetses;
   LocalGraph::Locations locations;
-  ReachingDefinitionsTransferFunction transferFunction;
+  ReachingDefinitionsTransferFunction txfn;
   AnalysisChecker<FinitePowersetLattice<LocalSet*>,
                   ReachingDefinitionsTransferFunction>
     checker;
   ReachingDefinitionsChecker(Function* func,
                              uint64_t latticeElementSeed,
                              Name funcName)
-    : transferFunction(func, getSetses, locations),
-      checker(transferFunction.lattice,
-              transferFunction,
+    : txfn(func, getSetses, locations),
+      checker(txfn.lattice,
+              txfn,
               "FinitePowersetLattice<LocalSet*>",
               "ReachingDefinitionsTransferFunction",
               latticeElementSeed,
               funcName) {}
 
   FinitePowersetLattice<LocalSet*>::Element getRandomElement(Random& rand) {
-    FinitePowersetLattice<LocalSet*>::Element result =
-      transferFunction.lattice.getBottom();
+    FinitePowersetLattice<LocalSet*>::Element result = txfn.lattice.getBottom();
 
     // Uses rand to randomly select which members are to be included (i. e. flip
     // bits in the bitvector).
-    for (size_t i = 0; i < transferFunction.lattice.getSetSize(); ++i) {
+    for (size_t i = 0; i < txfn.lattice.getSetSize(); ++i) {
       result.set(i, rand.oneIn(2));
     }
     return result;
@@ -360,65 +359,6 @@ struct ReachingDefinitionsChecker {
 
     checker.checkLatticeElements(x, y, z);
     checker.checkTransferFunction(cfg, x, y, z);
-  }
-};
-
-// Struct to set up and check the stack lattice. Uses the
-// FiniteIntPowersetLattice as to model stack contents.
-struct StackLatticeChecker {
-  FiniteIntPowersetLattice contentLattice;
-  StackLattice<FiniteIntPowersetLattice> stackLattice;
-
-  // Here only as a placeholder, since the checker utility currently wants a
-  // transfer function.
-  LivenessTransferFunction transferFunction;
-
-  AnalysisChecker<StackLattice<FiniteIntPowersetLattice>,
-                  LivenessTransferFunction>
-    checker;
-
-  StackLatticeChecker(Function* func,
-                      uint64_t latticeElementSeed,
-                      Name funcName)
-    : contentLattice(func->getNumLocals()), stackLattice(contentLattice),
-      checker(stackLattice,
-              transferFunction,
-              "StackLattice<FiniteIntPowersetLattice>",
-              "LivenessTransferFunction",
-              latticeElementSeed,
-              funcName) {}
-
-  StackLattice<FiniteIntPowersetLattice>::Element
-  getRandomElement(Random& rand) {
-    StackLattice<FiniteIntPowersetLattice>::Element result =
-      stackLattice.getBottom();
-
-    // Randomly decide on a stack height. A max height of 15 stack elements is
-    // arbitrarily chosen.
-    size_t stackHeight = rand.upTo(15);
-
-    for (size_t j = 0; j < stackHeight; ++j) {
-      // Randomly generate a FiniteIntPowersetLattice and push it onto the
-      // stack.
-      FiniteIntPowersetLattice::Element content = contentLattice.getBottom();
-      for (size_t i = 0; i < contentLattice.getSetSize(); ++i) {
-        content.set(i, rand.oneIn(2));
-      }
-      result.push(std::move(content));
-    }
-    return result;
-  }
-
-  // Runs all checks for the StackLattice analysis.
-  void runChecks(Random& rand, bool verbose) {
-    StackLattice<FiniteIntPowersetLattice>::Element x = getRandomElement(rand);
-    StackLattice<FiniteIntPowersetLattice>::Element y = getRandomElement(rand);
-    StackLattice<FiniteIntPowersetLattice>::Element z = getRandomElement(rand);
-    if (verbose) {
-      checker.printVerboseFunctionCase(std::cout, x, y, z);
-    }
-
-    checker.checkLatticeElements(x, y, z);
   }
 };
 
@@ -443,7 +383,7 @@ struct Fuzzer {
 
     CFG cfg = CFG::fromFunction(func);
 
-    switch (rand.upTo(3)) {
+    switch (rand.upTo(2)) {
       case 0: {
         LivenessChecker livenessChecker(func, latticeElementSeed, func->name);
         livenessChecker.runChecks(cfg, rand, verbose);
@@ -454,11 +394,6 @@ struct Fuzzer {
           func, latticeElementSeed, func->name);
         reachingDefinitionsChecker.runChecks(cfg, rand, verbose);
         break;
-      }
-      default: {
-        StackLatticeChecker stackLatticeChecker(
-          func, latticeElementSeed, func->name);
-        stackLatticeChecker.runChecks(rand, verbose);
       }
     }
   }

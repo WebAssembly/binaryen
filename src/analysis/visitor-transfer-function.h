@@ -35,7 +35,8 @@ protected:
 public:
   // Returns an iterable to all the BasicBlocks which depend on currBlock for
   // information.
-  BasicBlock::BasicBlockIterable getDependents(const BasicBlock* currBlock) {
+  BasicBlock::BasicBlockIterable
+  getDependents(const BasicBlock* currBlock) noexcept {
     if constexpr (Direction == AnalysisDirection::Backward) {
       return currBlock->preds();
     } else {
@@ -46,7 +47,8 @@ public:
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node, starting with the node's input state, and changes the input state
   // to the final output state of the node in place.
-  void transfer(const BasicBlock* cfgBlock, typename L::Element& inputState) {
+  void transfer(const BasicBlock* cfgBlock,
+                typename L::Element& inputState) noexcept {
     // If the block is empty, we propagate the state by inputState =
     // outputState.
 
@@ -71,7 +73,8 @@ public:
   // analysis, we push all the blocks in order, while for backward analysis, we
   // push them in reverse order, so that later blocks are evaluated before
   // earlier ones.
-  void enqueueWorklist(CFG& cfg, std::queue<const BasicBlock*>& worklist) {
+  void enqueueWorklist(const CFG& cfg,
+                       std::queue<const BasicBlock*>& worklist) noexcept {
     if constexpr (Direction == AnalysisDirection::Backward) {
       for (auto it = cfg.rbegin(); it != cfg.rend(); ++it) {
         worklist.push(&(*it));

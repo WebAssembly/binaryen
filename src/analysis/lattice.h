@@ -17,6 +17,10 @@
 #ifndef wasm_analysis_lattice_h
 #define wasm_analysis_lattice_h
 
+#if __cplusplus >= 202002L
+#include <concepts>
+#endif
+
 namespace wasm::analysis {
 
 enum LatticeComparison { NO_RELATION, EQUAL, LESS, GREATER };
@@ -34,8 +38,6 @@ inline LatticeComparison reverseComparison(LatticeComparison comparison) {
 }
 
 #if __cplusplus >= 202002L
-
-#include <concepts>
 
 template<typename L>
 concept Lattice = requires(const L& lattice,

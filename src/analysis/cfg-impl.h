@@ -27,7 +27,7 @@ namespace wasm::analysis {
 template<typename T> struct _indirect_ptr_iterator {
   using iterator_category = std::random_access_iterator_tag;
   using value_type = T;
-  using different_type = off_t;
+  using difference_type = off_t;
   using reference = const T&;
   using pointer = const T*;
 
@@ -75,6 +75,10 @@ template<typename T> struct _indirect_ptr_iterator {
     return it;
   }
 
+  off_t operator-(const _indirect_ptr_iterator& other) const {
+    return ptr - other.ptr;
+  }
+
   bool operator==(const _indirect_ptr_iterator& other) const {
     return ptr == other.ptr;
   }
@@ -98,7 +102,16 @@ template<typename T> struct _indirect_ptr_iterator {
   bool operator>=(const _indirect_ptr_iterator& other) const {
     return ptr >= other.ptr;
   }
+
+  friend _indirect_ptr_iterator operator+(off_t n,
+                                          const _indirect_ptr_iterator& it) {
+    return it + n;
+  }
 };
+
+#if __cplusplus >= 202002L
+static_assert(std::random_access_iterator<_indirect_ptr_iterator<int>>);
+#endif
 
 template<typename T>
 _indirect_ptr_iterator<T> operator+(int n,
