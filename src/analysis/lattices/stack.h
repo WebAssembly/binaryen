@@ -17,6 +17,7 @@
 #define wasm_analysis_lattices_stack_h
 
 #include <deque>
+#include <iostream>
 #include <optional>
 
 #include "../lattice.h"
