@@ -2372,38 +2372,36 @@ void FunctionValidator::visitTry(Try* curr) {
     auto* tag = getModule()->getTagOrNull(tagName);
     if (!shouldBeTrue(tag != nullptr, curr, "")) {
       getStream() << "tag name is invalid: " << tagName << "\n";
-    }
-
-    if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
       getStream()
         << "catch's tag (" << tagName
         << ") has result values, which is not allowed for exception handling";
-    }
-
-    auto* catchBody = curr->catchBodies[i];
-    auto pops = EHUtils::findPops(catchBody);
-    if (tag->sig.params == Type::none) {
-      if (!shouldBeTrue(pops.empty(), curr, "")) {
-        getStream() << "catch's tag (" << tagName
-                    << ") doesn't have any params, but there are pops";
-      }
     } else {
-      if (shouldBeTrue(pops.size() == 1, curr, "")) {
-        auto* pop = *pops.begin();
-        if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
-          getStream()
-            << "catch's tag (" << tagName
-            << ")'s pop doesn't have the same type as the tag's params";
-        }
-        if (!shouldBeTrue(
-              EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
-          getStream() << "catch's body (" << tagName
-                      << ")'s pop's location is not valid";
+      auto* catchBody = curr->catchBodies[i];
+      auto pops = EHUtils::findPops(catchBody);
+      if (tag->sig.params == Type::none) {
+        if (!shouldBeTrue(pops.empty(), curr, "")) {
+          getStream() << "catch's tag (" << tagName
+                      << ") doesn't have any params, but there are pops";
         }
       } else {
-        getStream() << "catch's tag (" << tagName
-                    << ") has params, so there should be a single pop within "
-                       "the catch body";
+        if (shouldBeTrue(pops.size() == 1, curr, "")) {
+          auto* pop = *pops.begin();
+          if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
+            getStream()
+              << "catch's tag (" << tagName
+              << ")'s pop doesn't have the same type as the tag's params";
+          }
+          if (!shouldBeTrue(
+                EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
+            getStream() << "catch's body (" << tagName
+                        << ")'s pop's location is not valid";
+          }
+        } else {
+          getStream() << "catch's tag (" << tagName
+                      << ") has params, so there should be a single pop within "
+                         "the catch body";
+        }
       }
     }
   }
