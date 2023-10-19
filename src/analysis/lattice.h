@@ -27,14 +27,14 @@ inline LatticeComparison reverseComparison(LatticeComparison comparison) {
 
 #include <concepts>
 
-template<typename T>
-concept Lattice = requires(const T& lattice,
-                           const typename T::Element& constElem,
-                           typename T::Element& elem) {
+template<typename L>
+concept Lattice = requires(const L& lattice,
+                           const typename L::Element& constElem,
+                           typename L::Element& elem) {
   // Lattices must have elements.
-  typename T::Element;
+  typename L::Element;
   // We need to be able to get the bottom element.
-  { lattice.getBottom() } noexcept -> std::same_as<typename T::Element>;
+  { lattice.getBottom() } noexcept -> std::same_as<typename L::Element>;
   // Elements should be comparable. TODO: use <=> and std::three_way_comparable
   // once we support C++20 everywhere.
   {
