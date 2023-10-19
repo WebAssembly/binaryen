@@ -917,6 +917,44 @@
   )
 )
 
+;; Function with two parameters: we can only optimize when the arguments are in
+;; the right order.
+;;
+;; Also test with a return value.
+(module
+  ;; CHECK:      (type $0 (func (param i32 i32) (result f64)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0) (param i32 i32) (result f64)))
+  (import "a" "b" (func $import (param i32) (param i32) (result f64)))
+
+  ;; CHECK:      (export "export-middle-right" (func $import))
+  (export "export-middle-right" (func $middle-right))
+
+  ;; CHECK:      (export "export-middle-wrong" (func $middle-wrong))
+  (export "export-middle-wrong" (func $middle-wrong))
+
+  (func $middle-right (param $x i32) (param $y i32) (result f64)
+    (call $import
+      (local.get $x)
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $middle-wrong (type $0) (param $x i32) (param $y i32) (result f64)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-wrong (param $x i32) (param $y i32) (result f64)
+    ;; The local.gets are reversed here, so we cannot optimize.
+    (call $import
+      (local.get $y)
+      (local.get $x)
+    )
+  )
+)
+
 (module
   ;; As above, but with a return_call. We can optimize it like a call.
 
