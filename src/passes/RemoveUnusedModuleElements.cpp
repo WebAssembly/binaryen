@@ -601,6 +601,8 @@ struct RemoveUnusedModuleElements : public Pass {
     : rootAllFunctions(rootAllFunctions) {}
 
   void run(Module* module) override {
+    prepare(module);
+
     std::vector<ModuleElement> roots;
     // Module start is a root.
     if (module->start.is()) {
@@ -711,6 +713,65 @@ struct RemoveUnusedModuleElements : public Pass {
     //       should continue to work. (For example, after removing a reference
     //       to a function from an element segment, we may be able to remove
     //       that function, etc.)
+  }
+
+  // Do simple work that prepares the module to be efficiently optimized.
+  void prepare(Module* module) {
+    // If a function export is a function that just calls another function, we
+    // can export that one directly. Doing so might make the function in the
+    // middle unused:
+    //
+    //  (export "export" (func $middle))
+    //  (func $middle
+    //    (call $real)
+    //  )
+    //
+    // =>
+    //
+    //  (export "export" (func $real))  ;; this changed
+    //  (func $middle
+    //    (call $real)
+    //  )
+    //
+    // (Normally this is not needed, as inlining will end up removing such
+    // silly trampoline functions, but the case of an import being exported does
+    // not have any code for inlining to work with, so we need to handle it
+    // directly.)
+    for (auto& exp : module->exports) {
+      if (exp->kind != ExternalKind::Function) {
+        continue;
+      }
+
+      auto* func = module->getFunction(exp->value);
+      if (!func->body) {
+        continue;
+      }
+
+      auto* call = func->body->dynCast<Call>();
+      if (!call) {
+        continue;
+      }
+
+      // Don't do this if the type is different, as then we might be
+      // changing the external interface to the module.
+      auto* calledFunc = module->getFunction(call->target);
+      if (calledFunc->type != func->type) {
+        continue;
+      }
+
+      // Finally, all the params must simply be forwarded.
+      auto ok = true;
+      for (Index i = 0; i < call->operands.size(); i++) {
+        auto* get = call->operands[i]->dynCast<LocalGet>();
+        if (!get || get->index != i) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        exp->value = calledFunc->name;
+      }
+    }
   }
 };
 

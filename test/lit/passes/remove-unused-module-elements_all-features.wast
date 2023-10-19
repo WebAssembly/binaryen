@@ -19,7 +19,7 @@
 
   ;; CHECK:      (export "memory" (memory $0))
 
-  ;; CHECK:      (export "exported" (func $exported))
+  ;; CHECK:      (export "exported" (func $called2))
 
   ;; CHECK:      (export "other1" (func $other1))
 
@@ -64,9 +64,6 @@
   (func $called_indirect (type $0)
     (nop)
   )
-  ;; CHECK:      (func $exported (type $0)
-  ;; CHECK-NEXT:  (call $called2)
-  ;; CHECK-NEXT: )
   (func $exported (type $0-dupe)
     (call $called2)
   )
@@ -459,15 +456,15 @@
   (func $waka) ;; used in table
 )
 (module ;; one is exported, and one->two->int global, whose init->imported
-  ;; CHECK:      (type $0 (func (result i32)))
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (type $2 (func (param i32) (result i32)))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (import "env" "imported" (global $imported i32))
   (import "env" "imported" (global $imported i32))
-  ;; CHECK:      (import "env" "_puts" (func $_puts (type $2) (param i32) (result i32)))
+  ;; CHECK:      (import "env" "_puts" (func $_puts (type $0) (param i32) (result i32)))
   (import "env" "forgetme" (global $forgetme i32))
   (import "env" "_puts" (func $_puts (param i32) (result i32)))
   (import "env" "forget_puts" (func $forget_puts (param i32) (result i32)))
@@ -478,32 +475,26 @@
   (global $forglobal.get (mut i32) (i32.const 500))
   ;; CHECK:      (global $exp_glob i32 (i32.const 600))
   (global $exp_glob i32 (i32.const 600))
-  ;; CHECK:      (export "one" (func $one))
+  ;; CHECK:      (export "one" (func $two))
   (export "one" (func $one))
-  ;; CHECK:      (export "three" (func $three))
+  ;; CHECK:      (export "three" (func $four))
   (export "three" (func $three))
   ;; CHECK:      (export "exp_glob" (global $exp_glob))
   (export "exp_glob" (global $exp_glob))
   (start $starter)
-  ;; CHECK:      (func $one (type $0) (result i32)
-  ;; CHECK-NEXT:  (call $two)
-  ;; CHECK-NEXT: )
   (func $one (result i32)
     (call $two)
   )
-  ;; CHECK:      (func $two (type $0) (result i32)
+  ;; CHECK:      (func $two (type $1) (result i32)
   ;; CHECK-NEXT:  (global.get $int)
   ;; CHECK-NEXT: )
   (func $two (result i32)
     (global.get $int)
   )
-  ;; CHECK:      (func $three (type $1)
-  ;; CHECK-NEXT:  (call $four)
-  ;; CHECK-NEXT: )
   (func $three
     (call $four)
   )
-  ;; CHECK:      (func $four (type $1)
+  ;; CHECK:      (func $four (type $2)
   ;; CHECK-NEXT:  (global.set $set
   ;; CHECK-NEXT:   (i32.const 200)
   ;; CHECK-NEXT:  )
@@ -746,6 +737,7 @@
   )
  )
 )
+
 ;; CHECK:      (export "func" (func $0))
 
 ;; CHECK:      (func $0 (type $0)
@@ -761,3 +753,220 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+(module
+  ;; When we export a function that calls another, we can export the called
+  ;; function, skipping the one in the middle. The exports of $middle and
+  ;; $other-middle can be changed to their targets here.
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
+
+  ;; CHECK:      (export "export-import" (func $import))
+  (export "export-import" (func $import))
+
+  ;; CHECK:      (export "export-middle" (func $import))
+  (export "export-middle" (func $middle))
+
+  ;; CHECK:      (export "export-other-middle" (func $internal))
+  (export "export-other-middle" (func $other-middle))
+
+  ;; CHECK:      (export "export-internal" (func $internal))
+  (export "export-internal" (func $internal))
+
+  (func $middle
+    (call $import)
+  )
+
+  (func $other-middle
+    (call $internal)
+  )
+
+  ;; CHECK:      (func $internal (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $internal
+  )
+)
+
+;; As above, but we do not do that optimization when it would change the
+;; exported type.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (func))
+    (type $A (func))
+    ;; CHECK:       (type $B (func))
+    (type $B (func))
+  )
+
+  ;; CHECK:      (import "a" "a" (func $import-A (type $A)))
+  (import "a" "a" (func $import-A (type $A)))
+  ;; CHECK:      (import "b" "b" (func $import-B (type $B)))
+  (import "b" "b" (func $import-B (type $B)))
+
+  ;; CHECK:      (export "export-import-A" (func $import-A))
+  (export "export-import-A" (func $import-A))
+
+  ;; CHECK:      (export "export-import-B" (func $import-B))
+  (export "export-import-B" (func $import-B))
+
+  ;; CHECK:      (export "export-middle-A-A" (func $import-A))
+  (export "export-middle-A-A" (func $middle-A-A))
+
+  ;; CHECK:      (export "export-middle-A-B" (func $middle-A-B))
+  (export "export-middle-A-B" (func $middle-A-B))
+
+  ;; CHECK:      (export "export-middle-B-A" (func $middle-B-A))
+  (export "export-middle-B-A" (func $middle-B-A))
+
+  ;; CHECK:      (export "export-middle-B-B" (func $import-B))
+  (export "export-middle-B-B" (func $middle-B-B))
+
+  (func $middle-A-A (type $A)
+    (call $import-A)
+  )
+
+  ;; CHECK:      (func $middle-A-B (type $A)
+  ;; CHECK-NEXT:  (call $import-B)
+  ;; CHECK-NEXT: )
+  (func $middle-A-B (type $A)
+    (call $import-B)
+  )
+
+  ;; CHECK:      (func $middle-B-A (type $B)
+  ;; CHECK-NEXT:  (call $import-A)
+  ;; CHECK-NEXT: )
+  (func $middle-B-A (type $B)
+    (call $import-A)
+  )
+
+  (func $middle-B-B (type $B)
+    (call $import-B)
+  )
+)
+
+;; As above, but checking for parameters: It's ok to pass values through, but
+;; not to do anything else.
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0) (param i32)))
+  (import "a" "b" (func $import (param i32)))
+
+  ;; CHECK:      (export "export-import" (func $import))
+  (export "export-import" (func $import))
+
+  ;; CHECK:      (export "export-middle" (func $import))
+  (export "export-middle" (func $middle))
+
+  ;; CHECK:      (export "export-middle-local" (func $middle-local))
+  (export "export-middle-local" (func $middle-local))
+
+  ;; CHECK:      (export "export-middle-other" (func $middle-other))
+  (export "export-middle-other" (func $middle-other))
+
+  ;; CHECK:      (export "export-middle-noncall" (func $middle-noncall))
+  (export "export-middle-noncall" (func $middle-noncall))
+
+  (func $middle (param $x i32)
+    ;; This extra local is not a problem.
+    (local $y i32)
+    (call $import
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $middle-local (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-local (param $x i32)
+    (local $y i32)
+    (call $import
+      ;; Now we get the local instead of the param, so we cannot optimize.
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $middle-other (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-other (param $x i32)
+    (call $import
+      ;; Something other than local.get, so we cannot optimize.
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $middle-noncall (type $0) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-noncall (param $x i32)
+    ;; Not even a call here.
+    (drop
+      (i32.const 1)
+    )
+  )
+)
+
+;; Function with two parameters: we can only optimize when the arguments are in
+;; the right order.
+;;
+;; Also test with a return value.
+(module
+  ;; CHECK:      (type $0 (func (param i32 i32) (result f64)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0) (param i32 i32) (result f64)))
+  (import "a" "b" (func $import (param i32) (param i32) (result f64)))
+
+  ;; CHECK:      (export "export-middle-right" (func $import))
+  (export "export-middle-right" (func $middle-right))
+
+  ;; CHECK:      (export "export-middle-wrong" (func $middle-wrong))
+  (export "export-middle-wrong" (func $middle-wrong))
+
+  (func $middle-right (param $x i32) (param $y i32) (result f64)
+    (call $import
+      (local.get $x)
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $middle-wrong (type $0) (param $x i32) (param $y i32) (result f64)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $middle-wrong (param $x i32) (param $y i32) (result f64)
+    ;; The local.gets are reversed here, so we cannot optimize.
+    (call $import
+      (local.get $y)
+      (local.get $x)
+    )
+  )
+)
+
+(module
+  ;; As above, but with a return_call. We can optimize it like a call.
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
+
+  ;; CHECK:      (export "export-middle" (func $import))
+  (export "export-middle" (func $middle))
+
+  (func $middle
+    (return_call $import)
+  )
+)

@@ -5,15 +5,6 @@
 ;; RUN: foreach %s %t wasm-opt --extract-function-index --pass-arg=extract-function-index@0 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (import "env" "bar" (func $bar))
-
-  ;; CHECK:      (export "foo" (func $foo))
-
-  ;; CHECK:      (func $foo
-  ;; CHECK-NEXT:  (call $bar)
-  ;; CHECK-NEXT: )
   (func $foo
     (call $bar)
   )
@@ -27,6 +18,11 @@
   )
 )
 
+;; CHECK:      (type $0 (func))
+
+;; CHECK:      (import "env" "bar" (func $bar))
+
+;; CHECK:      (export "foo" (func $bar))
 (module
   ;; Use another function in the table, but the table is not used in the
   ;; extracted function
