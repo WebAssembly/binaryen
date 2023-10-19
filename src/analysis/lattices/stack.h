@@ -1,34 +1,49 @@
-#ifndef wasm_analysis_stack_lattice_h
-#define wasm_analysis_stack_lattice_h
+/*
+ * Copyright 2023 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef wasm_analysis_lattices_stack_h
+#define wasm_analysis_lattices_stack_h
 
 #include <deque>
 #include <optional>
 
-#include "lattice.h"
+#include "../lattice.h"
 
 namespace wasm::analysis {
 
 // Note that in comments, bottom is left and top is right.
 
-// This lattice models the behavior of a stack of values. The lattice
-// is templated on StackElementLattice, which is a lattice which can
-// model some abstract property of a value on the stack. The StackLattice
-// itself can push or pop abstract values and access the top of stack.
+// This lattice models the behavior of a stack of values. The lattice is
+// templated on L, which is a lattice which can model some abstract property of
+// a value on the stack. The StackLattice itself can push or pop abstract values
+// and access the top of stack.
 //
 // The goal here is not to operate directly on the stacks. Rather, the
-// StackLattice organizes the StackElementLattice elements in an efficient
-// and natural way which reflects the behavior of the wasm value stack.
-// Transfer functions will operate on stack elements individually. The
-// stack itself is an intermediate structure.
+// StackLattice organizes the L elements in an efficient and natural way which
+// reflects the behavior of the wasm value stack. Transfer functions will
+// operate on stack elements individually. The stack itself is an intermediate
+// structure.
 //
-// Comparisons are done elementwise, starting from the top of the stack.
-// For instance, to compare the stacks [c,b,a], [b',a'], we first compare
-// a with a', then b with b'. Then we make note of the fact that the first
-// stack is higher, with an extra c element at the bottom.
+// Comparisons are done elementwise, starting from the top of the stack. For
+// instance, to compare the stacks [c,b,a], [b',a'], we first compare a with a',
+// then b with b'. Then we make note of the fact that the first stack is higher,
+// with an extra c element at the bottom.
 //
-// Similarly, Least Upper Bounds are done elementwise starting from the top.
-// For instance LUB([b, a], [b', a']) = [LUB(b, b'), LUB(a, a')], while
-// LUB([c, b, a], [b', a']) = [c, LUB(b, b'), LUB(a, a')].
+// Similarly, least upper bounds are done elementwise starting from the top. For
+// instance LUB([b, a], [b', a']) = [LUB(b, b'), LUB(a, a')], while LUB([c, b,
+// a], [b', a']) = [c, LUB(b, b'), LUB(a, a')].
 //
 // These are done from the top of the stack because this addresses the problem
 // of scopes. For instance, if we have the following program
@@ -43,10 +58,10 @@ namespace wasm::analysis {
 // i32.add
 //
 // Before the if-else control flow, we have [] -> [i32], and after the if-else
-// control flow we have [i32, i32] -> [i32]. However, inside each of the if
-// and else conditions, we have [] -> [i32], because they cannot see the
-// stack elements pushed by the enclosing scope. In effect in the if and else,
-// we have a stack [i32 | i32], where we can't "see" left of the |.
+// control flow we have [i32, i32] -> [i32]. However, inside each of the if and
+// else conditions, we have [] -> [i32], because they cannot see the stack
+// elements pushed by the enclosing scope. In effect in the if and else, we have
+// a stack [i32 | i32], where we can't "see" left of the |.
 //
 // Conceptually, we can also imagine each stack [b, a] as being implicitly an
 // infinite stack of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). This
@@ -54,30 +69,29 @@ namespace wasm::analysis {
 // different. Stacks in more "inner" scopes simply have more bottom elements in
 // the bottom portion.
 //
-// A common application for this lattice is modeling the Wasm value stack.
-// For instance, one could use this to analyze the maximum bit size of
-// values on the Wasm value stack. When new actual values are pushed
-// or popped off the Wasm value stack by instructions, the same is done
-// to abstract lattice elements in the StackLattice.
+// A common application for this lattice is modeling the Wasm value stack. For
+// instance, one could use this to analyze the maximum bit size of values on the
+// Wasm value stack. When new actual values are pushed or popped off the Wasm
+// value stack by instructions, the same is done to abstract lattice elements in
+// the StackLattice.
 //
-// When two control flows are joined together, one with stack [b, a] and
-// another with stack [b, a'], we can take the least upper bound to
-// produce a stack [b, LUB(a, a')], where LUB(a, a') takes the maximum
-// of the two maximum bit values.
+// When two control flows are joined together, one with stack [b, a] and another
+// with stack [b, a'], we can take the least upper bound to produce a stack [b,
+// LUB(a, a')], where LUB(a, a') takes the maximum of the two maximum bit
+// values.
 
-template<Lattice StackElementLattice> class StackLattice {
-  StackElementLattice& stackElementLattice;
+template<Lattice L> class StackLattice {
+  L& lattice;
 
 public:
-  StackLattice(StackElementLattice& stackElementLattice)
-    : stackElementLattice(stackElementLattice) {}
+  StackLattice(L& lattice) : lattice(lattice) {}
 
   class Element {
     // The top lattice can be imagined as an infinitely high stack of top
     // elements, which is unreachable in most cases. In practice, we make the
     // stack an optional, and we represent top with the absence of a stack.
-    std::optional<std::deque<typename StackElementLattice::Element>>
-      stackValue = std::deque<typename StackElementLattice::Element>();
+    std::optional<std::deque<typename L::Element>> stackValue =
+      std::deque<typename L::Element>();
 
   public:
     bool isTop() const { return !stackValue.has_value(); }
@@ -86,11 +100,9 @@ public:
     }
     void setToTop() { stackValue.reset(); }
 
-    typename StackElementLattice::Element& stackTop() {
-      return stackValue->back();
-    }
+    typename L::Element& stackTop() { return stackValue->back(); }
 
-    void push(typename StackElementLattice::Element&& element) {
+    void push(typename L::Element&& element) {
       // We can imagine each stack [b, a] as being implicitly an infinite stack
       // of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). In that case,
       // adding a bottom element to an empty stack changes nothing, so we don't
@@ -101,15 +113,15 @@ public:
       }
     }
 
-    void push(const typename StackElementLattice::Element& element) {
+    void push(const typename L::Element& element) {
       if (stackValue.has_value() &&
           (!stackValue->empty() || !element.isBottom())) {
         stackValue->push_back(std::move(element));
       }
     }
 
-    typename StackElementLattice::Element pop() {
-      typename StackElementLattice::Element value = stackValue->back();
+    typename L::Element pop() {
+      typename L::Element value = stackValue->back();
       stackValue->pop_back();
       return value;
     }
@@ -141,18 +153,18 @@ public:
       // Merge the shorter height stack with the top of the longer height
       // stack. We do this by taking the LUB of each pair of matching elements
       // from both stacks.
-      auto otherIterator = other.stackValue->crbegin();
-      auto thisIterator = stackValue->rbegin();
-      for (; thisIterator != stackValue->rend() &&
-             otherIterator != other.stackValue->crend();
-           ++thisIterator, ++otherIterator) {
-        modified |= thisIterator->makeLeastUpperBound(*otherIterator);
+      auto otherIt = other.stackValue->crbegin();
+      auto thisIt = stackValue->rbegin();
+      for (;
+           thisIt != stackValue->rend() && otherIt != other.stackValue->crend();
+           ++thisIt, ++otherIt) {
+        modified |= thisIt->makeLeastUpperBound(*otherIt);
       }
 
       // If the other stack is higher, append the bottom of it to our current
       // stack.
-      for (; otherIterator != other.stackValue->crend(); ++otherIterator) {
-        stackValue->push_front(*otherIterator);
+      for (; otherIt != other.stackValue->crend(); ++otherIt) {
+        stackValue->push_front(*otherIt);
         modified = true;
       }
 
@@ -203,13 +215,12 @@ public:
     // Check the tops of both stacks which match (i.e. are within the heights
     // of both stacks). If there is a pair which is not related, the stacks
     // cannot be related.
-    for (auto leftIterator = left.stackValue->crbegin(),
-              rightIterator = right.stackValue->crbegin();
-         leftIterator != left.stackValue->crend() &&
-         rightIterator != right.stackValue->crend();
-         ++leftIterator, ++rightIterator) {
-      LatticeComparison currComparison =
-        stackElementLattice.compare(*leftIterator, *rightIterator);
+    for (auto leftIt = left.stackValue->crbegin(),
+              rightIt = right.stackValue->crbegin();
+         leftIt != left.stackValue->crend() &&
+         rightIt != right.stackValue->crend();
+         ++leftIt, ++rightIt) {
+      LatticeComparison currComparison = lattice.compare(*leftIt, *rightIt);
       switch (currComparison) {
         case LatticeComparison::NO_RELATION:
           return LatticeComparison::NO_RELATION;
@@ -251,4 +262,4 @@ public:
 
 } // namespace wasm::analysis
 
-#endif // wasm_analysis_stack_lattice_h
+#endif // wasm_analysis_lattices_stack_h
