@@ -27,23 +27,21 @@ struct LivenessTransferFunction
   // to be passed in, where the temp copy is modified in place to produce the
   // intermediate states.
   void print(std::ostream& os,
-             const BasicBlock* cfgBlock,
+             const BasicBlock& bb,
              FiniteIntPowersetLattice::Element& inputState) {
     os << "Intermediate States (reverse order): " << std::endl;
     currState = &inputState;
     currState->print(os);
     os << std::endl;
-    auto cfgIter = cfgBlock->rbegin();
 
     // Since we don't store the intermediate states, we need to re-run the
     // transfer function on all the CFG node expressions to reconstruct
     // the intermediate states here.
-    while (cfgIter != cfgBlock->rend()) {
-      os << ShallowExpression{*cfgIter} << std::endl;
-      visit(*cfgIter);
+    for (auto it = bb.rbegin(); it != bb.rend(); ++it) {
+      os << ShallowExpression{*it} << "\n";
+      visit(*it);
       currState->print(os);
-      os << std::endl;
-      ++cfgIter;
+      os << "\n";
     }
     currState = nullptr;
   }

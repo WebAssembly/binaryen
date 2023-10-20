@@ -73,6 +73,8 @@ struct CFG {
   reverse_iterator rbegin() const { return blocks.rbegin(); }
   reverse_iterator rend() const { return blocks.rend(); }
 
+  const BasicBlock& operator[](size_t i) const { return *(begin() + i); }
+
   static CFG fromFunction(Function* func);
 
   void print(std::ostream& os, Module* wasm = nullptr) const;

@@ -19,7 +19,7 @@
 
 #if __cplusplus >= 202002L
 #include <concepts>
-#endif
+#endif // __cplusplus >= 202002L
 
 namespace wasm::analysis {
 
@@ -45,6 +45,7 @@ concept Lattice = requires(const L& lattice,
                            typename L::Element& elem) {
   // Lattices must have elements.
   typename L::Element;
+  requires std::copyable<typename L::Element>;
   // We need to be able to get the bottom element.
   { lattice.getBottom() } noexcept -> std::same_as<typename L::Element>;
   // Elements should be comparable. TODO: use <=> and std::three_way_comparable
@@ -57,7 +58,7 @@ concept Lattice = requires(const L& lattice,
   { elem.makeLeastUpperBound(constElem) } noexcept -> std::same_as<bool>;
 };
 
-#else
+#else // __cplusplus >= 202002L
 
 #define Lattice typename
 

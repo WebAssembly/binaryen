@@ -192,7 +192,7 @@ public:
   // the transfer function is monotonic. If this is violated, then we print out
   // the CFG block input which caused the transfer function to exhibit
   // non-monotonic behavior.
-  void checkMonotonicity(const BasicBlock* cfgBlock,
+  void checkMonotonicity(const BasicBlock& bb,
                          typename L::Element& first,
                          typename L::Element& second,
                          typename L::Element& firstResult,
@@ -233,7 +233,7 @@ public:
     secondResult.print(ss);
     ss << "\n show that the transfer function is not monotone when given the "
           "input:\n";
-    cfgBlock->print(ss);
+    bb.print(ss);
     ss << "\n";
 
     Fatal() << ss.str();
@@ -260,19 +260,19 @@ public:
                              typename L::Element x,
                              typename L::Element y,
                              typename L::Element z) {
-    for (auto cfgIter = cfg.begin(); cfgIter != cfg.end(); ++cfgIter) {
+    for (const auto& bb : cfg) {
       // Apply transfer function on each lattice element.
-      typename L::Element xResult = x;
-      txfn.transfer(&(*cfgIter), xResult);
-      typename L::Element yResult = y;
-      txfn.transfer(&(*cfgIter), yResult);
-      typename L::Element zResult = z;
-      txfn.transfer(&(*cfgIter), zResult);
+      auto xResult = x;
+      txfn.transfer(bb, xResult);
+      auto yResult = y;
+      txfn.transfer(bb, yResult);
+      auto zResult = z;
+      txfn.transfer(bb, zResult);
 
       // Check monotonicity for every pair of transfer function outputs.
-      checkMonotonicity(&(*cfgIter), x, y, xResult, yResult);
-      checkMonotonicity(&(*cfgIter), x, z, xResult, zResult);
-      checkMonotonicity(&(*cfgIter), y, z, yResult, zResult);
+      checkMonotonicity(bb, x, y, xResult, yResult);
+      checkMonotonicity(bb, x, z, xResult, zResult);
+      checkMonotonicity(bb, y, z, yResult, zResult);
     }
   }
 };
