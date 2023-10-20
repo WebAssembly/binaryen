@@ -18,15 +18,14 @@
 #include <string>
 #include <vector>
 
-#include "wasm-validator.h"
 #include "shared-constants.h"
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-validator.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
-
 
 // Check that the validator does not crash on missing tags in catch statements
 // (invalid parse, so cannot be reproduced with Python test suite)
@@ -45,6 +44,7 @@ TEST(ValidatorTest, MissingCatchTag) {
   tryExp->catchBodies.push_back(catchBodyExp);
   Function function = Function();
   function.body = tryExp;
-  WasmValidator::Flags flags = WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
+  WasmValidator::Flags flags =
+    WasmValidator::FlagValues::Globally | WasmValidator::FlagValues::Quiet;
   EXPECT_FALSE(validator.validate(&function, module, flags));
 }
