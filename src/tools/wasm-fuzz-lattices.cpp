@@ -19,9 +19,9 @@
 #include <string>
 
 #include "analysis/lattice.h"
+#include "analysis/lattices/stack.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/reaching-definitions-transfer-function.h"
-#include "analysis/lattices/stack.h"
 
 #include "support/command-line.h"
 #include "tools/fuzzing.h"

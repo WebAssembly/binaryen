@@ -2,10 +2,10 @@
 
 #include "analysis/cfg.h"
 #include "analysis/lattice.h"
+#include "analysis/lattices/stack.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/monotone-analyzer.h"
 #include "analysis/reaching-definitions-transfer-function.h"
-#include "analysis/lattices/stack.h"
 #include "ir/find_all.h"
 #include "print-test.h"
 #include "wasm.h"
