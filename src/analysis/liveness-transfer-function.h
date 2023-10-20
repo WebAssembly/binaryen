@@ -1,6 +1,7 @@
 #ifndef wasm_analysis_liveness_transfer_function_h
 #define wasm_analysis_liveness_transfer_function_h
 
+#include "lattices/powerset.h"
 #include "visitor-transfer-function.h"
 
 namespace wasm::analysis {
