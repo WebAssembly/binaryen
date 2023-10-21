@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "monotone-analyzer.h"
+#include "support/unique_deferring_queue.h"
 
 namespace wasm::analysis {
 
