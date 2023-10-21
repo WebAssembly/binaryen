@@ -59,9 +59,25 @@ concept Lattice = requires(const L& lattice,
   { lattice.join(elem, constElem) } noexcept -> std::same_as<bool>;
 };
 
+// The analysis framework only uses bottom elements and least upper bounds (i.e.
+// joins) directly, so lattices do not necessarily need to implement top
+// elements and greatest lower bounds (i.e. meets) to be useable, even though
+// they are required for mathematical lattices. Implementing top elements and
+// meets does have the benefit of making a lattice generically invertable,
+// though. See lattices/inverted.h.
+template<typename L>
+concept FullLattice =
+  Lattice<L> && requires(const L& lattice,
+                         const typename L::Element& constElem,
+                         typename L::Element& elem) {
+    { lattice.getTop() } noexcept -> std::same_as<typename L::Element>;
+    { lattice.meet(elem, constElem) } noexcept -> std::same_as<bool>;
+  };
+
 #else // __cplusplus >= 202002L
 
 #define Lattice typename
+#define FullLattice typename
 
 #endif // __cplusplus >= 202002L
 

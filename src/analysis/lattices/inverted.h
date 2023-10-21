@@ -14,42 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef wasm_analysis_lattices_bool_h
-#define wasm_analysis_lattices_bool_h
+#ifndef wasm_analysis_lattices_inverted_h
+#define wasm_analysis_lattices_inverted_h
+
+#include <utility>
 
 #include "../lattice.h"
 
 namespace wasm::analysis {
 
-// A lattice with two elements: the top element is `true` and the bottom element
-// is `false`.
-struct Bool {
-  using Element = bool;
-  Element getBottom() const noexcept { return false; }
-  Element getTop() const noexcept { return true; }
+template<FullLattice L> struct Inverted {
+  using Element = typename L::Element;
+
+  L lattice;
+  Inverted(L&& lattice) : lattice(std::move(lattice)) {}
+
+  Element getBottom() const noexcept { return lattice.getTop(); }
+  Element getTop() const noexcept { return lattice.getBottom(); }
   LatticeComparison compare(Element a, Element b) const noexcept {
-    return a > b ? GREATER : a == b ? EQUAL : LESS;
+    return reverseComparison(lattice.compare(a, b));
   }
   bool join(Element& self, Element other) const noexcept {
-    if (!self && other) {
-      self = other;
-      return true;
-    }
-    return false;
+    return lattice.meet(self, other);
   }
   bool meet(Element& self, Element other) const noexcept {
-    if (self && !other) {
-      self = other;
-      return true;
-    }
-    return false;
+    return lattice.join(self, other);
   }
 };
 
-#if __cplusplus >= 202002L
-static_assert(Lattice<Bool>);
-#endif // __cplusplus >= 202002L
-
 } // namespace wasm::analysis
 
-#endif // wasm_analysis_lattices_bool_h
+#endif // wasm_analysis_lattices_inverted_h
