@@ -18,6 +18,7 @@
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
+#include "analysis/lattices/lift.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -296,4 +297,80 @@ TEST(FlatLattice, Join) {
   // top u top = top
   EXPECT_FALSE(flat.join(elem, flat.getTop()));
   EXPECT_TRUE(elem.isTop());
+}
+
+TEST(LiftLattice, GetBottom) {
+  analysis::Lift lift{analysis::Bool{}};
+  EXPECT_TRUE(lift.getBottom().isBottom());
+  EXPECT_FALSE(lift.getBottom().has_value());
+}
+
+TEST(LiftLattice, GetVal) {
+  analysis::Lift lift{analysis::Bool{}};
+  EXPECT_FALSE(lift.get(false).isBottom());
+  EXPECT_FALSE(lift.get(true).isBottom());
+  EXPECT_FALSE(*lift.get(false));
+  EXPECT_TRUE(*lift.get(true));
+
+  analysis::Lift liftInt{analysis::Int32{}};
+  EXPECT_FALSE(liftInt.get(10).isBottom());
+  EXPECT_EQ(*liftInt.get(0), 0);
+  EXPECT_EQ(*liftInt.get(10), 10);
+}
+
+TEST(LiftLattice, Compare) {
+  analysis::Lift lift{analysis::Flat<bool>{}};
+  auto& liftee = lift.getLattice();
+  auto bot = lift.getBottom();
+  auto lifteeBot = lift.get(liftee.getBottom());
+  auto a = lift.get(liftee.get(false));
+  auto b = lift.get(liftee.get(true));
+  auto top = lift.get(liftee.getTop());
+
+  EXPECT_EQ(lift.compare(bot, bot), analysis::EQUAL);
+  EXPECT_EQ(lift.compare(bot, lifteeBot), analysis::LESS);
+  EXPECT_EQ(lift.compare(bot, a), analysis::LESS);
+  EXPECT_EQ(lift.compare(bot, b), analysis::LESS);
+  EXPECT_EQ(lift.compare(bot, top), analysis::LESS);
+
+  EXPECT_EQ(lift.compare(lifteeBot, bot), analysis::GREATER);
+  EXPECT_EQ(lift.compare(a, bot), analysis::GREATER);
+  EXPECT_EQ(lift.compare(b, bot), analysis::GREATER);
+  EXPECT_EQ(lift.compare(top, bot), analysis::GREATER);
+
+  EXPECT_EQ(lift.compare(a, b), analysis::NO_RELATION);
+  EXPECT_EQ(lift.compare(a, top), analysis::LESS);
+  EXPECT_EQ(lift.compare(a, lifteeBot), analysis::GREATER);
+}
+
+TEST(LiftLattice, Join) {
+  analysis::Lift lift{analysis::Bool{}};
+  auto bot = lift.getBottom();
+  auto lifteeBot = lift.get(false);
+  auto top = lift.get(true);
+
+  // bot u bot = bot
+  auto elem = bot;
+  EXPECT_FALSE(lift.join(elem, bot));
+  EXPECT_EQ(elem, bot);
+
+  // bot u lifteeBot = lifteeBot
+  EXPECT_TRUE(lift.join(elem, lifteeBot));
+  EXPECT_EQ(elem, lifteeBot);
+
+  // lifteeBot u bot = lifteeBot
+  EXPECT_FALSE(lift.join(elem, bot));
+  EXPECT_EQ(elem, lifteeBot);
+
+  // lifteeBot u lifteeBot = lifteeBot
+  EXPECT_FALSE(lift.join(elem, lifteeBot));
+  EXPECT_EQ(elem, lifteeBot);
+
+  // lifteeBot u top = top
+  EXPECT_TRUE(lift.join(elem, top));
+  EXPECT_EQ(elem, top);
+
+  // top u bot = top
+  EXPECT_FALSE(lift.join(elem, bot));
+  EXPECT_EQ(elem, top);
 }
