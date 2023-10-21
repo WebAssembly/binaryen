@@ -189,8 +189,8 @@ TEST(InvertedLattice, Meet) {
 }
 
 TEST(InvertedLattice, DoubleInverted) {
-  analysis::Inverted<analysis::Inverted<analysis::Bool>> identity(
-    analysis::Inverted{analysis::Bool{}});
+  using DoubleInverted = analysis::Inverted<analysis::Inverted<analysis::Bool>>;
+  DoubleInverted identity(analysis::Inverted<analysis::Bool>{analysis::Bool{}});
   EXPECT_FALSE(identity.getBottom());
   EXPECT_TRUE(identity.getTop());
 }
