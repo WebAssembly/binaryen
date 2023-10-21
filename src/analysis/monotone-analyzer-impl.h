@@ -44,7 +44,7 @@ inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {
     for (auto& dep : txfn.getDependents(cfg[i])) {
       // If the input state for the dependent block changes, we need to
       // re-analyze it.
-      if (states[i].makeLeastUpperBound(state)) {
+      if (states[dep.getIndex()].makeLeastUpperBound(state)) {
         worklist.push(dep.getIndex());
       }
     }
