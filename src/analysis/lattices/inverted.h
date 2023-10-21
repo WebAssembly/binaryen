@@ -31,7 +31,7 @@ template<FullLattice L> struct Inverted {
 
   Element getBottom() const noexcept { return lattice.getTop(); }
   Element getTop() const noexcept { return lattice.getBottom(); }
-  LatticeComparison compare(Element a, Element b) const noexcept {
+  LatticeComparison compare(const Element& a, const Element& b) const noexcept {
     return reverseComparison(lattice.compare(a, b));
   }
   bool join(Element& self, Element other) const noexcept {
