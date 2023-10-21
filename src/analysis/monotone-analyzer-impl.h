@@ -30,10 +30,11 @@ template<Lattice L> inline void BlockState<L>::print(std::ostream& os) {
   os << std::endl;
 }
 
-template<Lattice L, typename TransferFunction>
-inline MonotoneCFGAnalyzer<L, TransferFunction>::MonotoneCFGAnalyzer(
-  L& lattice, TransferFunction& transferFunction, CFG& cfg)
-  : lattice(lattice), transferFunction(transferFunction), cfg(cfg) {
+template<Lattice L, TransferFunction TxFn>
+inline MonotoneCFGAnalyzer<L, TxFn>::MonotoneCFGAnalyzer(L& lattice,
+                                                         TxFn& txfn,
+                                                         CFG& cfg)
+  : lattice(lattice), txfn(txfn), cfg(cfg) {
 
   // Construct BlockStates for each BasicBlock.
   for (auto it = cfg.begin(); it != cfg.end(); it++) {
@@ -41,18 +42,18 @@ inline MonotoneCFGAnalyzer<L, TransferFunction>::MonotoneCFGAnalyzer(
   }
 }
 
-template<Lattice L, typename TransferFunction>
-inline void MonotoneCFGAnalyzer<L, TransferFunction>::evaluateFunctionEntry(
-  Function* func) {
-  transferFunction.evaluateFunctionEntry(func, stateBlocks[0].inputState);
+template<Lattice L, TransferFunction TxFn>
+inline void
+MonotoneCFGAnalyzer<L, TxFn>::evaluateFunctionEntry(Function* func) {
+  txfn.evaluateFunctionEntry(func, stateBlocks[0].inputState);
 }
 
-template<Lattice L, typename TransferFunction>
-inline void MonotoneCFGAnalyzer<L, TransferFunction>::evaluate() {
+template<Lattice L, TransferFunction TxFn>
+inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {
   std::queue<const BasicBlock*> worklist;
 
   // Transfer function enqueues the work in some order which is efficient.
-  transferFunction.enqueueWorklist(cfg, worklist);
+  txfn.enqueueWorklist(cfg, worklist);
 
   while (!worklist.empty()) {
     BlockState<L>& currBlockState = stateBlocks[worklist.front()->getIndex()];
@@ -63,10 +64,10 @@ inline void MonotoneCFGAnalyzer<L, TransferFunction>::evaluate() {
     // to arrive at the expression's state. The beginning and end states of the
     // CFG block will be updated.
     typename L::Element outputState = currBlockState.inputState;
-    transferFunction.transfer(currBlockState.cfgBlock, outputState);
+    txfn.transfer(currBlockState.cfgBlock, outputState);
 
     // Propagate state to dependents of currBlockState.
-    for (auto& dep : transferFunction.getDependents(currBlockState.cfgBlock)) {
+    for (auto& dep : txfn.getDependents(currBlockState.cfgBlock)) {
       // If we need to change the input state of a dependent, we need
       // to enqueue the dependent to recalculate it.
       if (stateBlocks[dep.getIndex()].inputState.makeLeastUpperBound(
@@ -77,8 +78,8 @@ inline void MonotoneCFGAnalyzer<L, TransferFunction>::evaluate() {
   }
 }
 
-template<Lattice L, typename TransferFunction>
-inline void MonotoneCFGAnalyzer<L, TransferFunction>::collectResults() {
+template<Lattice L, TransferFunction TxFn>
+inline void MonotoneCFGAnalyzer<L, TxFn>::collectResults() {
   for (BlockState currBlockState : stateBlocks) {
     typename L::Element inputStateCopy = currBlockState.inputState;
 
@@ -86,19 +87,19 @@ inline void MonotoneCFGAnalyzer<L, TransferFunction>::collectResults() {
     // produce useful information. For example, in reaching definitions
     // analysis, these final states are used to populate a mapping of
     // local.get's to a set of local.set's that affect its value.
-    transferFunction.collectResults(currBlockState.cfgBlock, inputStateCopy);
+    txfn.collectResults(currBlockState.cfgBlock, inputStateCopy);
   }
 }
 
 // Currently prints both the basic information and intermediate states of each
 // BlockState.
-template<Lattice L, typename TransferFunction>
-inline void MonotoneCFGAnalyzer<L, TransferFunction>::print(std::ostream& os) {
+template<Lattice L, TransferFunction TxFn>
+inline void MonotoneCFGAnalyzer<L, TxFn>::print(std::ostream& os) {
   os << "CFG Analyzer" << std::endl;
   for (auto state : stateBlocks) {
     state.print(os);
     typename L::Element temp = state.inputState;
-    transferFunction.print(os, state.cfgBlock, temp);
+    txfn.print(os, state.cfgBlock, temp);
   }
   os << "End" << std::endl;
 }
