@@ -71,11 +71,6 @@ public:
     bool isTop() const { return count() == bitvector.size(); }
     bool isBottom() const { return count() == 0; }
 
-    // Calculates the LUB of this element with some other element and sets
-    // this element to the LUB in place. Returns true if this element before
-    // this method call was different than the LUB.
-    bool makeLeastUpperBound(const Element& other) noexcept;
-
     // Prints out the bits in the bitvector for a lattice element.
     void print(std::ostream& os);
 
@@ -89,6 +84,11 @@ public:
 
   // Returns an instance of the bottom lattice element.
   Element getBottom() const noexcept;
+
+  // Calculates the LUB of this element with some other element and sets
+  // this element to the LUB in place. Returns true if this element before
+  // this method call was different than the LUB.
+  bool join(Element& self, const Element& other) const noexcept;
 };
 
 // A layer of abstraction over FiniteIntPowersetLattice which maps
@@ -149,6 +149,10 @@ public:
   }
 
   Element getBottom() const noexcept { return intLattice.getBottom(); }
+
+  bool join(Element& self, const Element& other) const noexcept {
+    return intLattice.join(self, other);
+  }
 };
 
 } // namespace wasm::analysis

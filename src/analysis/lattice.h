@@ -55,7 +55,7 @@ concept Lattice = requires(const L& lattice,
   } noexcept -> std::same_as<LatticeComparison>;
   // We need to be able to get the least upper bound of two elements and know
   // whether any change was made.
-  { elem.makeLeastUpperBound(constElem) } noexcept -> std::same_as<bool>;
+  { lattice.join(elem, constElem) } noexcept -> std::same_as<bool>;
 };
 
 #else // __cplusplus >= 202002L

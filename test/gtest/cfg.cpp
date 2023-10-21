@@ -164,7 +164,7 @@ TEST_F(CFGTest, FinitePowersetLatticeFunctioning) {
   element2.print(ss);
   EXPECT_EQ(ss.str(), "100101");
   ss.str(std::string());
-  element2.makeLeastUpperBound(element1);
+  lattice.join(element2, element1);
   element2.print(ss);
   EXPECT_EQ(ss.str(), "101101");
 }
@@ -496,7 +496,7 @@ TEST_F(CFGTest, StackLatticeFunctioning) {
   EXPECT_EQ(stackLattice.compare(thirdStack, expectedStack),
             LatticeComparison::EQUAL);
 
-  EXPECT_EQ(thirdStack.makeLeastUpperBound(secondStack), true);
+  EXPECT_TRUE(stackLattice.join(thirdStack, secondStack));
 
   {
     expectedStack.stackTop().set(0, true);

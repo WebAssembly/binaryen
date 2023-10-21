@@ -78,17 +78,18 @@ inline size_t FiniteIntPowersetLattice::Element::count() const {
 // Least upper bound is implemented as a logical OR between the bitvectors on
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
-inline bool FiniteIntPowersetLattice::Element::makeLeastUpperBound(
-  const FiniteIntPowersetLattice::Element& other) noexcept {
+inline bool
+FiniteIntPowersetLattice::join(Element& self,
+                               const Element& other) const noexcept {
   // Both must be from powerset lattice of the same set.
-  assert(other.bitvector.size() == bitvector.size());
+  assert(other.bitvector.size() == self.bitvector.size());
 
   bool modified = false;
-  for (size_t i = 0; i < bitvector.size(); ++i) {
+  for (size_t i = 0; i < self.bitvector.size(); ++i) {
     // Bit is flipped on self only if self is false and other is true when self
     // and other are OR'ed together.
-    modified |= (!bitvector[i] && other.bitvector[i]);
-    bitvector[i] = bitvector[i] || other.bitvector[i];
+    modified |= (!self.bitvector[i] && other.bitvector[i]);
+    self.bitvector[i] = self.bitvector[i] || other.bitvector[i];
   }
 
   return modified;
