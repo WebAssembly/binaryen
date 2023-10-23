@@ -1288,6 +1288,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
       return func;
+    case HeapTypeInfo::ContinuationKind:
+      return any;
     case HeapTypeInfo::StructKind:
       return struct_;
     case HeapTypeInfo::ArrayKind:
