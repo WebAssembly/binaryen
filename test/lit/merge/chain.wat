@@ -13,8 +13,12 @@
 
 ;; CHECK:      (export "g" (func $0))
 
-;; CHECK:      (export "h" (func $0))
+;; CHECK:      (export "h" (func $0_2))
 
 ;; CHECK:      (func $0 (type $0)
 ;; CHECK-NEXT:  (nop)
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0_2 (type $0)
+;; CHECK-NEXT:  (call $0)
 ;; CHECK-NEXT: )

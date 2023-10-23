@@ -13,8 +13,12 @@ function asmFunc(imports) {
  var Math_sqrt = Math.sqrt;
  var mod_ule = imports["mod.ule"];
  var base = mod_ule["ba.se"];
+ function $0() {
+  base();
+ }
+ 
  return {
-  "exported": base
+  "exported": $0
  };
 }
 

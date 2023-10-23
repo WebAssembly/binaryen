@@ -61,6 +61,10 @@ function asmFunc(imports) {
   exported(1 | 0) | 0;
  }
  
+ function other() {
+  main();
+ }
+ 
  function foo() {
   wasm2js_trap();
  }
@@ -218,7 +222,7 @@ function asmFunc(imports) {
  
  return {
   "main": main, 
-  "other": main, 
+  "other": other, 
   "__growWasmMemory": __growWasmMemory, 
   "exported": exported, 
   "sub_zero": sub_zero, 

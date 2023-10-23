@@ -27,11 +27,16 @@ function asmFunc(imports) {
   return a - 2 | 0 | 0;
  }
  
+ function $6($0) {
+  $0 = $0 | 0;
+  print($0 | 0);
+ }
+ 
  return {
   "one": $3, 
   "two": $4, 
   "three": $5, 
-  "four": print
+  "four": $6
  };
 }
 

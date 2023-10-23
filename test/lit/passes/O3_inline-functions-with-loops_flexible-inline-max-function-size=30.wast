@@ -18,7 +18,7 @@
 
   ;; CHECK:      (export "t1" (func $t1))
 
-  ;; CHECK:      (export "t2" (func $fib))
+  ;; CHECK:      (export "t2" (func $t2))
 
   ;; CHECK:      (export "t3" (func $t3))
 
@@ -155,6 +155,11 @@
       )
     )
   )
+  ;; CHECK:      (func $t2 (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (call $fib
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $t2 (export "t2") (type $t0) (param $p0 i32) (result i32)
     (call $fib
       (local.get $p0)
