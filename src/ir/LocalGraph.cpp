@@ -104,8 +104,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     };
 
     auto numLocals = func->getNumLocals();
-    std::vector<std::vector<LocalGet*>> allGets;
-    allGets.resize(numLocals);
     std::vector<FlowBlock*> work;
 
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
@@ -157,9 +155,13 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         std::cout << "  last set " << val.second << '\n';
       }
 #endif
+      std::vector<std::vector<LocalGet*>> allGets;
+      allGets.resize(numLocals);
+
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
       auto& actions = block.actions;
+
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto* action = actions[i];
