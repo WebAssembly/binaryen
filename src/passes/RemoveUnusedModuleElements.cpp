@@ -717,6 +717,11 @@ struct RemoveUnusedModuleElements : public Pass {
 
   // Do simple work that prepares the module to be efficiently optimized.
   void prepare(Module* module) {
+    // FIXME Disable these optimizations for now, as they uncovered bugs in
+    //       both LLVM and Binaryen,
+    //       https://github.com/WebAssembly/binaryen/pull/6026#issuecomment-1775674882
+    return;
+
     // If a function export is a function that just calls another function, we
     // can export that one directly. Doing so might make the function in the
     // middle unused:
