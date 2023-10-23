@@ -1024,9 +1024,12 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
   auto* func = wasm.getFunction(funcName);
   if (func->imported()) {
     // We cannot evaluate an import.
-    throw FailToEvalException(std::string("call exported import: ") +
-                              func->module.toString() + "." +
-                              func->base.toString());
+    if (!quiet) {
+      std::cout << "  ...stopping since could not eval: call import: "
+                << func->module.toString() << "." <<
+                  func->base.toString() << '\n';
+    }
+    return EvalCtorOutcome();
   }
 
   // We don't know the values of parameters, so give up if there are any, unless
