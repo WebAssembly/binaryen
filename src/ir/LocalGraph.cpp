@@ -155,8 +155,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         std::cout << "  last set " << val.second << '\n';
       }
 #endif
-      std::vector<std::vector<LocalGet*>> allGets;
-      allGets.resize(numLocals);
+
+      // Track all gets in this block, by index.
+      std::vector<std::vector<LocalGet*>> allGets(numLocals);
 
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
@@ -224,7 +225,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           }
         }
-        gets.clear();
         currentIteration++;
       }
     }
