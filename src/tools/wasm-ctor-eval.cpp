@@ -1026,8 +1026,8 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
     // We cannot evaluate an import.
     if (!quiet) {
       std::cout << "  ...stopping since could not eval: call import: "
-                << func->module.toString() << "." <<
-                  func->base.toString() << '\n';
+                << func->module.toString() << "." << func->base.toString()
+                << '\n';
     }
     return EvalCtorOutcome();
   }
