@@ -10,6 +10,7 @@ set(unittest_SOURCES
   suffix_tree.cpp
   type-builder.cpp
   wat-lexer.cpp
+  validator.cpp
 )
 
 # suffix_tree.cpp includes LLVM header using std::iterator (deprecated in C++17)
