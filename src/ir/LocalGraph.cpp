@@ -108,6 +108,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     allGets.resize(numLocals);
     std::vector<FlowBlock*> work;
 
+    // Track if we have unreachable code anywhere, as if we do that may inhibit
+    // certain optimizations below.
+    bool hasUnreachable = false;
+
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
     // improve memory access.
     std::vector<FlowBlock> flowBlocks;
@@ -116,7 +120,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     // Init mapping between basicblocks and flowBlocks
     std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-      basicToFlowMap[basicBlocks[i].get()] = &flowBlocks[i];
+      auto* block = basicBlocks[i].get();
+      basicToFlowMap[block] = &flowBlocks[i];
+      if (block->in.empty()) {
+        hasUnreachable = true;
+      }
     }
 
     // We note which local indexes have local.sets, as that can help us
@@ -187,10 +195,19 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         if (gets.empty()) {
           continue;
         }
-        if (!hasSet.count(index)) {
+        if (!hasUnreachable && !hasSet.count(index)) {
           // This local index has no sets, so we know all gets will end up
           // reaching the entry block. Do that here as an optimization to avoid
           // flowing through the (potentially very many) blocks in the function.
+          //
+          // Note that we must check for unreachable code in this function, as
+          // if there is any then we would not be precise: in that case, the
+          // gets may either have the entry value, or no value at all. It would
+          // be safe to mark the entry value in that case anyhow (as it only
+          // matters in unreachable code), but to keep the IR consistent and to
+          // avoid confusion when debugging, simply do not optimize if
+          // there is anything unreachable (which will not happen normally, as
+          // DCE should run before passes that use this utility).
           for (auto* get : gets) {
             getSetses[get].insert(nullptr);
           }

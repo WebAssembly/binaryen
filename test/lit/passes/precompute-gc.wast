@@ -229,7 +229,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $ref-comparisons (type $8) (param $x (ref null $struct)) (param $y (ref null $struct))
+ ;; CHECK:      (func $ref-comparisons (type $9) (param $x (ref null $struct)) (param $y (ref null $struct))
  ;; CHECK-NEXT:  (local $z (ref null $struct))
  ;; CHECK-NEXT:  (local $w (ref null $struct))
  ;; CHECK-NEXT:  (call $log
@@ -407,7 +407,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-different-params (type $9) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-different-params (type $10) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -723,7 +723,7 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $10) (param $0 i32) (result i32)
+ ;; CHECK:      (func $helper (type $11) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param i32) (result i32)
@@ -801,14 +801,14 @@
   )
  )
 
- ;; CHECK:      (func $receive-f64 (type $11) (param $0 f64)
+ ;; CHECK:      (func $receive-f64 (type $12) (param $0 f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $receive-f64 (param f64)
   (unreachable)
  )
 
- ;; CHECK:      (func $odd-cast-and-get-non-null (type $12) (param $temp (ref $func-return-i32))
+ ;; CHECK:      (func $odd-cast-and-get-non-null (type $13) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.cast (ref nofunc)
  ;; CHECK-NEXT:    (ref.func $receive-f64)
@@ -836,7 +836,7 @@
   )
  )
 
- ;; CHECK:      (func $new_block_unreachable (type $13) (result anyref)
+ ;; CHECK:      (func $new_block_unreachable (type $8) (result anyref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -1032,5 +1032,38 @@
     (i32.const 0x12345678)
    )
   )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable (type $8) (result anyref)
+ ;; CHECK-NEXT:  (local $x (ref any))
+ ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable (result anyref)
+  (local $x (ref any))
+  ;; We cannot read a non-nullable local without setting it first, but it is ok
+  ;; to do so here because we are in unreachable code. We should also not error
+  ;; about this get seeming to read the default value from the function entry
+  ;; (because it does not, as the entry is not reachable from it). Nothing is
+  ;; expected to be optimized here.
+
+  ;; This unreachable set is needed for the later get to validate.
+  (local.set $x
+   (unreachable)
+  )
+  ;; This if is needed so we have an interesting enough CFG that a possible
+  ;; assertion can be hit about reading the default value from the entry in a
+  ;; later block.
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (local.get $x)
  )
 )
