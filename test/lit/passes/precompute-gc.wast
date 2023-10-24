@@ -229,7 +229,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $ref-comparisons (type $9) (param $x (ref null $struct)) (param $y (ref null $struct))
+ ;; CHECK:      (func $ref-comparisons (type $10) (param $x (ref null $struct)) (param $y (ref null $struct))
  ;; CHECK-NEXT:  (local $z (ref null $struct))
  ;; CHECK-NEXT:  (local $w (ref null $struct))
  ;; CHECK-NEXT:  (call $log
@@ -407,7 +407,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-different-params (type $10) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-different-params (type $11) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -723,7 +723,7 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $11) (param $0 i32) (result i32)
+ ;; CHECK:      (func $helper (type $12) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param i32) (result i32)
@@ -801,14 +801,14 @@
   )
  )
 
- ;; CHECK:      (func $receive-f64 (type $12) (param $0 f64)
+ ;; CHECK:      (func $receive-f64 (type $13) (param $0 f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $receive-f64 (param f64)
   (unreachable)
  )
 
- ;; CHECK:      (func $odd-cast-and-get-non-null (type $13) (param $temp (ref $func-return-i32))
+ ;; CHECK:      (func $odd-cast-and-get-non-null (type $14) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.cast (ref nofunc)
  ;; CHECK-NEXT:    (ref.func $receive-f64)
@@ -857,7 +857,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-on-creation (type $14) (result (ref $empty))
+ ;; CHECK:      (func $br_on_cast-on-creation (type $15) (result (ref $empty))
  ;; CHECK-NEXT:  (block $label (result (ref $empty))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br_on_cast $label (ref $empty) (ref $empty)
@@ -952,7 +952,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-set (type $15) (result (ref func))
+ ;; CHECK:      (func $remove-set (type $16) (result (ref func))
  ;; CHECK-NEXT:  (local $nn funcref)
  ;; CHECK-NEXT:  (local $i i32)
  ;; CHECK-NEXT:  (loop $loop
@@ -995,7 +995,7 @@
   )
  )
 
- ;; CHECK:      (func $strings (type $16) (param $param (ref string))
+ ;; CHECK:      (func $strings (type $17) (param $param (ref string))
  ;; CHECK-NEXT:  (local $s (ref string))
  ;; CHECK-NEXT:  (local.set $s
  ;; CHECK-NEXT:   (string.const "hello, world")
@@ -1065,5 +1065,80 @@
    (unreachable)
   )
   (local.get $x)
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-entry (type $9) (param $x i32) (param $y (ref any))
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-entry (param $x i32) (param $y (ref any))
+  (local $0 (ref any))
+  ;; As above, but now the first basic block is unreachable, and we need to
+  ;; detect that specifically, as the block after it *does* have entries even
+  ;; though it is unreachable (it is a loop, and has itself as an entry).
+  (unreachable)
+  (local.set $0
+   (local.get $y)
+  )
+  (loop $loop
+   (br_if $loop
+    (local.get $x)
+   )
+   (drop
+    (local.get $0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-later-loop (type $9) (param $x i32) (param $y (ref any))
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-later-loop (param $x i32) (param $y (ref any))
+  (local $0 (ref any))
+  ;; This |if| is added, which means the loop is later in the function.
+  ;; Otherwise this is the same as before.
+  (if
+   (local.get $x)
+   (nop)
+  )
+  (unreachable)
+  (local.set $0
+   (local.get $y)
+  )
+  (loop $loop
+   (br_if $loop
+    (local.get $x)
+   )
+   (drop
+    (local.get $0)
+   )
+  )
  )
 )
