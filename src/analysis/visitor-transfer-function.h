@@ -59,8 +59,8 @@ public:
         static_cast<SubType*>(this)->visit(*cfgIter);
       }
     } else {
-      for (auto cfgIter = bb.begin(); cfgIter != bb.end(); ++cfgIter) {
-        static_cast<SubType*>(this)->visit(*cfgIter);
+      for (auto* inst : bb) {
+        static_cast<SubType*>(this)->visit(inst);
       }
     }
     currState = nullptr;
