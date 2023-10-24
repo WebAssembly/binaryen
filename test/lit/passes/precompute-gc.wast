@@ -1066,4 +1066,38 @@
   )
   (local.get $x)
  )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-entry (type $17) (param $x i32) (param $y (ref any))
+ ;; CHECK-NEXT:  (local $0 (ref any))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (br_if $loop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-entry (param $x i32) (param $y (ref any))
+  (local $0 (ref any))
+  ;; As above, but now the first basic block is unreachable, and we need to
+  ;; detect that specifically, as the block after it *does* have entries even
+  ;; though it is unreachable (it is a loop, and has itself as an entry).
+  (unreachable)
+  (local.set $0
+   (local.get $y)
+  )
+  (loop $loop
+   (br_if $loop
+    (local.get $x)
+   )
+   (drop
+    (local.get $0)
+   )
+  )
+ )
 )

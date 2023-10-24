@@ -31,6 +31,10 @@ struct Info {
   std::vector<Expression*> actions;
   // for each index, the last local.set for it
   std::unordered_map<Index, LocalSet*> lastSets;
+
+  void dump(Function* func) {
+    std::cout << "    info: " << actions.size() << " actions\n";
+  }
 };
 
 // flow helper class. flows the gets to their sets
@@ -120,9 +124,21 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       auto* block = basicBlocks[i].get();
       basicToFlowMap[block] = &flowBlocks[i];
-      // Check for unreachable code. Note we ignore the entry block (index 0) as
-      // that is always reached when we are called.
+
+      // Check for unreachable code.
       if (i != 0 && block->in.empty()) {
+        // This is not the entry block, and nothing reaches it, so it is
+        // unreachable.
+        hasUnreachable = true;
+      } else if (i == 0 && block->out.empty() && basicBlocks.size() > 1) {
+        // This is the entry block, and nothing leaves it, so anything after it
+        // is unreachable (and there are blocks after it). We need to handle
+        // this case because the former case skips the entry (since the entry
+        // always as zero incoming paths anyhow), but it is possible that the
+        // entry block is unreachable while later blocks *do* have incoming
+        // paths even though they *are* unreachable, for example, if the entry
+        // has no outgoing paths and the block after it is a loop (so it has an
+        // incoming path from itself).
         hasUnreachable = true;
       }
     }
