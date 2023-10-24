@@ -110,11 +110,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto numLocals = func->getNumLocals();
     std::vector<FlowBlock*> work;
 
-    // Track if we have unreachable code anywhere, as if we do that may inhibit
-    // certain optimizations below. If there are fewer live blocks than the set
-    // of all blocks, then some are dead.
-    bool hasUnreachable = findLiveBlocks().size() < basicBlocks.size();
-
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
     // improve memory access.
     std::vector<FlowBlock> flowBlocks;
@@ -200,19 +195,16 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         if (gets.empty()) {
           continue;
         }
-        if (!hasUnreachable && !hasSet[index]) {
+        if (!hasSet[index]) {
           // This local index has no sets, so we know all gets will end up
           // reaching the entry block. Do that here as an optimization to avoid
           // flowing through the (potentially very many) blocks in the function.
           //
-          // Note that we must check for unreachable code in this function, as
-          // if there is any then we would not be precise: in that case, the
-          // gets may either have the entry value, or no value at all. It would
-          // be safe to mark the entry value in that case anyhow (as it only
-          // matters in unreachable code), but to keep the IR consistent and to
-          // avoid confusion when debugging, simply do not optimize if
-          // there is anything unreachable (which will not happen normally, as
-          // DCE should run before passes that use this utility).
+          // Note that we may be in unreachable code, and if so, we might add
+          // the entry values when they are not actually relevant. That is, we
+          // are not precise in the case of unreachable code. This can be
+          // confusing when debugging, but it does not have any downside for
+          // optimization (since unreachable code should be removed anyhow).
           for (auto* get : gets) {
             getSetses[get].insert(nullptr);
           }
