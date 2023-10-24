@@ -24,6 +24,8 @@
 
 namespace wasm::analysis {
 
+// The lattice of integers of the given type `T`, ordered by <. The min integer
+// is the bottom element and the max integer is the top element.
 #if __cplusplus >= 202002L
 template<std::integral T>
 #else
