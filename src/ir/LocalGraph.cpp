@@ -106,6 +106,10 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     auto numLocals = func->getNumLocals();
     std::vector<FlowBlock*> work;
 
+    // Track if we have unreachable code anywhere, as if we do that may inhibit
+    // certain optimizations below.
+    bool hasUnreachable = false;
+
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
     // improve memory access.
     std::vector<FlowBlock> flowBlocks;
@@ -114,8 +118,18 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     // Init mapping between basicblocks and flowBlocks
     std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-      basicToFlowMap[basicBlocks[i].get()] = &flowBlocks[i];
+      auto* block = basicBlocks[i].get();
+      basicToFlowMap[block] = &flowBlocks[i];
+      // Check for unreachable code. Note we ignore the entry block (index 0) as
+      // that is always reached when we are called.
+      if (i != 0 && block->in.empty()) {
+        hasUnreachable = true;
+      }
     }
+
+    // We note which local indexes have local.sets, as that can help us
+    // optimize later (if there are none at all).
+    std::vector<bool> hasSet(numLocals, false);
 
     const size_t NULL_ITERATION = -1;
 
@@ -140,6 +154,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       flowBlock.lastSets.reserve(block->contents.lastSets.size());
       for (auto set : block->contents.lastSets) {
         flowBlock.lastSets.emplace_back(set);
+        hasSet[set.first] = true;
       }
     }
     assert(entryFlowBlock != nullptr);
@@ -183,6 +198,24 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
         if (gets.empty()) {
+          continue;
+        }
+        if (!hasUnreachable && !hasSet[index]) {
+          // This local index has no sets, so we know all gets will end up
+          // reaching the entry block. Do that here as an optimization to avoid
+          // flowing through the (potentially very many) blocks in the function.
+          //
+          // Note that we must check for unreachable code in this function, as
+          // if there is any then we would not be precise: in that case, the
+          // gets may either have the entry value, or no value at all. It would
+          // be safe to mark the entry value in that case anyhow (as it only
+          // matters in unreachable code), but to keep the IR consistent and to
+          // avoid confusion when debugging, simply do not optimize if
+          // there is anything unreachable (which will not happen normally, as
+          // DCE should run before passes that use this utility).
+          for (auto* get : gets) {
+            getSetses[get].insert(nullptr);
+          }
           continue;
         }
         work.push_back(&block);
