@@ -227,7 +227,7 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, Literals& arguments) override {
+  Literals callImport(Function* import, const Literals& arguments) override {
     Name WASI("wasi_snapshot_preview1");
 
     if (ignoreExternalInput) {
@@ -1022,6 +1022,15 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
                          Name exportName) {
   auto& wasm = instance.wasm;
   auto* func = wasm.getFunction(funcName);
+  if (func->imported()) {
+    // We cannot evaluate an import.
+    if (!quiet) {
+      std::cout << "  ...stopping since could not eval: call import: "
+                << func->module.toString() << "." << func->base.toString()
+                << '\n';
+    }
+    return EvalCtorOutcome();
+  }
 
   // We don't know the values of parameters, so give up if there are any, unless
   // we are ignoring them.

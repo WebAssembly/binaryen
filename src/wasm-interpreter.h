@@ -2382,7 +2382,8 @@ public:
     virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalValueSet& globals, Module& wasm) = 0;
-    virtual Literals callImport(Function* import, Literals& arguments) = 0;
+    virtual Literals callImport(Function* import,
+                                const Literals& arguments) = 0;
     virtual Literals callTable(Name tableName,
                                Index index,
                                HeapType sig,
@@ -3907,6 +3908,11 @@ public:
 
   // Call a function, starting an invocation.
   Literals callFunction(Name name, const Literals& arguments) {
+    auto* func = wasm.getFunction(name);
+    if (func->imported()) {
+      return externalInterface->callImport(func, arguments);
+    }
+
     // if the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
