@@ -122,7 +122,9 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       auto* block = basicBlocks[i].get();
       basicToFlowMap[block] = &flowBlocks[i];
-      if (block->in.empty()) {
+      // Check for unreachable code. Note we ignore the entry block (index 0) as
+      // that is always reached when we are called.
+      if (i != 0 && block->in.empty()) {
         hasUnreachable = true;
       }
     }
