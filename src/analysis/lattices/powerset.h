@@ -85,9 +85,9 @@ public:
   // Returns an instance of the bottom lattice element.
   Element getBottom() const noexcept;
 
-  // Calculates the LUB of this element with some other element and sets
-  // this element to the LUB in place. Returns true if this element before
-  // this method call was different than the LUB.
+  // Modifies `self` to be the join (aka least upper bound) of `self` and
+  // `other`. Returns true if `self` was modified, i.e. if it was not already an
+  // upper bound of `other`.
   bool join(Element& self, const Element& other) const noexcept;
 };
 

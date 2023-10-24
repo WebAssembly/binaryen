@@ -46,15 +46,16 @@ concept Lattice = requires(const L& lattice,
   // Lattices must have elements.
   typename L::Element;
   requires std::copyable<typename L::Element>;
-  // We need to be able to get the bottom element.
+  // Get the bottom element of this lattice.
   { lattice.getBottom() } noexcept -> std::same_as<typename L::Element>;
-  // Elements should be comparable. TODO: use <=> and std::three_way_comparable
-  // once we support C++20 everywhere.
+  // Compare two elements of this lattice. TODO: use <=> and
+  // std::three_way_comparable once we support C++20 everywhere.
   {
     lattice.compare(constElem, constElem)
   } noexcept -> std::same_as<LatticeComparison>;
-  // We need to be able to get the least upper bound of two elements and know
-  // whether any change was made.
+  // Modify `elem` in-place to be the join (aka least upper bound) of `elem` and
+  // `constElem`, returning true iff `elem` was modified, i.e. if it was not
+  // already an upper bound of `constElem`.
   { lattice.join(elem, constElem) } noexcept -> std::same_as<bool>;
 };
 
