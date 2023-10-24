@@ -20,7 +20,6 @@ template<Lattice L, TransferFunction TxFn> class MonotoneCFGAnalyzer {
 
   // The lattice element representing the program state before each block.
   std::vector<Element> states;
-  // std::vector<BlockState<L>> stateBlocks;
 
 public:
   // Will constuct BlockState objects corresponding to BasicBlocks from the
