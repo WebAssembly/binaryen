@@ -320,7 +320,7 @@ TEST(LiftLattice, GetVal) {
 
 TEST(LiftLattice, Compare) {
   analysis::Lift lift{analysis::Flat<bool>{}};
-  auto& liftee = lift.getLattice();
+  auto& liftee = lift.lattice;
   auto bot = lift.getBottom();
   auto lifteeBot = lift.get(liftee.getBottom());
   auto a = lift.get(liftee.get(false));

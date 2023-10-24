@@ -25,7 +25,12 @@
 
 namespace wasm::analysis {
 
+// A lattice created by "lifting" another lattice by inserting a new bottom
+// element that is less than all elements in the lifted lattice.
 template<Lattice L> struct Lift {
+  // Represent the bottom element as an empty optional and any element of the
+  // lifted lattice as a non-empty optional. This representation is
+  // intentionally part of the public API.
   struct Element : std::optional<typename L::Element> {
     bool isBottom() const noexcept { return !this->has_value(); }
     bool operator==(const Element& other) const noexcept {
@@ -66,8 +71,6 @@ template<Lattice L> struct Lift {
       return lattice.join(*self, *other);
     }
   }
-
-  L& getLattice() noexcept { return lattice; }
 };
 
 #if __cplusplus >= 202002L
