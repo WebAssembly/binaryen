@@ -21,6 +21,8 @@
 
 namespace wasm::analysis {
 
+// A lattice with two elements: the top element is `true` and the bottom element
+// is `false`.
 struct Bool {
   using Element = bool;
   Element getBottom() const noexcept { return false; }
