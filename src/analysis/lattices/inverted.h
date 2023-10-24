@@ -23,6 +23,8 @@
 
 namespace wasm::analysis {
 
+// Reverses the order of an arbitrary full lattice. For example,
+// `Inverted<UInt32>` would order uint32_t values by > rather than by <.
 template<FullLattice L> struct Inverted {
   using Element = typename L::Element;
 
