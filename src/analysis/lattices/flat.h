@@ -33,6 +33,9 @@ namespace wasm::analysis {
 template<typename T>
 concept Flattenable = std::copyable<T> && std::equality_comparable<T>;
 
+// Given a type T, Flat<T> is the lattice where none of the values of T are
+// comparable except with themselves, but they are all greater than a common
+// bottom element not in T and less than a common top element also not in T.
 template<Flattenable T>
 #else
 template<typename T>
