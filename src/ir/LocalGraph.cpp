@@ -131,7 +131,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
     // We note which local indexes have local.sets, as that can help us
     // optimize later (if there are none at all).
-    std::unordered_set<Index> hasSet;
+    std::vector<bool> hasSet(numLocals, false);
 
     const size_t NULL_ITERATION = -1;
 
@@ -156,7 +156,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       flowBlock.lastSets.reserve(block->contents.lastSets.size());
       for (auto set : block->contents.lastSets) {
         flowBlock.lastSets.emplace_back(set);
-        hasSet.insert(set.first);
+        hasSet[set.first] = true;
       }
     }
     assert(entryFlowBlock != nullptr);
@@ -197,7 +197,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         if (gets.empty()) {
           continue;
         }
-        if (!hasUnreachable && !hasSet.count(index)) {
+        if (!hasUnreachable && !hasSet[index]) {
           // This local index has no sets, so we know all gets will end up
           // reaching the entry block. Do that here as an optimization to avoid
           // flowing through the (potentially very many) blocks in the function.
