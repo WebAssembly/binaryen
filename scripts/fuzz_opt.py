@@ -313,6 +313,8 @@ INITIAL_CONTENTS_IGNORE = [
     # the fuzzer does not support imported memories
     'multi-memory-lowering-import.wast',
     'multi-memory-lowering-import-error.wast',
+    # the fuzzer does not support typed continuations
+    'typed_continuations.wast',
 ]
 
 
