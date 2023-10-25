@@ -1427,3 +1427,54 @@
     (call $once)
   )
 )
+
+(module
+  (global $once (mut i32) (i32.const 0))
+
+  (global $once.1 (mut i32) (i32.const 0))
+
+  (func $once
+    ;; A minimal "once" function, which calls another.
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    (call $once.1)
+  )
+
+  (func $once.1
+    ;; Another minimal "once" function, which calls the first, forming a loop.
+    (if
+      (global.get $once.1)
+      (return)
+    )
+    (global.set $once.1 (i32.const 1))
+    (call $once)
+  )
+
+  (func $caller
+    ;; Call a once function more than once. The second call will become a nop.
+    (call $once)
+    (call $once)
+  )
+
+  (func $caller$1
+    ;; Two calls to the second function. Again, the second becomes a nop.
+    (call $once.1)
+    (call $once.1)
+  )
+
+  (func $caller$2
+    ;; A mix of calls. We can still remove the second, because we know the first
+    ;; will call it.
+    (call $once)
+    (call $once.1)
+  )
+
+  (func $caller$3
+    ;; Reverse of the above; again, we can nop the second.
+    (call $once.1)
+    (call $once)
+  )
+)
