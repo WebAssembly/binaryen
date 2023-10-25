@@ -50,8 +50,9 @@ uint64_t getSeed() {
 
 // Actually a pointer to `L::ElementImpl`, but we erase the type to avoid
 // getting into a situation where `L` satisfying `Lattice` or `FullLattice`
-// circularly requires that `L` satisfies `Lattice` or `FullLattice`. Also make
-// the pointer copyable to satisfy that constraint on lattice elements.
+// circularly requires that `L` satisfies `Lattice` or `FullLattice`. C++ does
+// not allow concepts to depend on themselves. Also make the pointer copyable to
+// satisfy that constraint on lattice elements.
 template<typename L>
 struct RandomElement : std::unique_ptr<void, void (*)(void*)> {
   RandomElement() = default;
@@ -91,6 +92,9 @@ struct RandomElement : std::unique_ptr<void, void (*)(void*)> {
 };
 
 struct RandomFullLattice {
+  // The inner lattice and lattice element types. These must be defined later
+  // because they depend on `RandomFullLattice` satisfying `FullLattice`, but
+  // that requires the type to be complete.
   struct L;
   struct ElementImpl;
   using Element = RandomElement<RandomFullLattice>;
@@ -104,6 +108,7 @@ struct RandomFullLattice {
                     size_t depth = 0,
                     std::optional<uint32_t> maybePick = std::nullopt);
 
+  // Make a random element of this lattice.
   Element makeElement() const noexcept;
 
   Element getBottom() const noexcept;
@@ -114,6 +119,9 @@ struct RandomFullLattice {
 };
 
 struct RandomLattice {
+  // The inner lattice and lattice element types. These must be defined later
+  // because they depend on `RandomLattice` satisfying `Lattice`, but that
+  // requires the type to be complete.
   struct L;
   struct ElementImpl;
   using Element = RandomElement<RandomLattice>;
@@ -125,6 +133,7 @@ struct RandomLattice {
 
   RandomLattice(Random& rand, size_t depth = 0);
 
+  // Make a random element of this lattice.
   Element makeElement() const noexcept;
 
   Element getBottom() const noexcept;
@@ -157,7 +166,7 @@ RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
                                      std::optional<uint32_t> maybePick)
   : rand(rand) {
-  // TODO: Limit the depth.
+  // TODO: Limit the depth once we get lattices with more fan-out.
   uint32_t pick = maybePick ? *maybePick : rand.upTo(3);
   switch (pick) {
     case 0:
@@ -175,7 +184,7 @@ RandomFullLattice::RandomFullLattice(Random& rand,
 }
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
-  // TODO: Limit the depth.
+  // TODO: Limit the depth once we get lattices with more fan-out.
   uint32_t pick = rand.upTo(5);
   switch (pick) {
     case 0:
@@ -393,12 +402,12 @@ void checkLatticeProperties(Random& rand) {
           << join;
       }
     }
-    for (int j = i; j < 3; ++j) {
+    for (int j = 0; j < 3; ++j) {
       // Commutativity: x u y = y u x
       auto ij = elems[i];
-      lattice.join(ij, elems[j]);
+      bool ijModified = lattice.join(ij, elems[j]);
       auto ji = elems[j];
-      lattice.join(ji, elems[i]);
+      bool jiModified = lattice.join(ji, elems[i]);
       if (lattice.compare(ij, ji) != EQUAL) {
         Fatal() << "Join is not commutative:\nFirst element:\n\n"
                 << elems[i] << "\nSecond element:\n\n"
@@ -408,19 +417,26 @@ void checkLatticeProperties(Random& rand) {
       }
 
       // Identity: x < y implies x u y = y
-      if (relation[i][j] == LESS && lattice.compare(ij, elems[j]) != EQUAL) {
-        Fatal() << "Join is not equal to greater element:\nLesser element:\n\n"
-                << elems[i] << "\nGreater element:\n\n"
-                << elems[j] << "\nJoin:\n\n"
-                << ij;
-      }
-
-      // Identity: x > y implies x u y = x
-      if (relation[i][j] == GREATER && lattice.compare(ij, elems[i]) != EQUAL) {
-        Fatal() << "Join is not equal to greater element:\nLesser element:\n\n"
-                << elems[j] << "\nGreater element:\n\n"
-                << elems[i] << "\nJoin:\n\n"
-                << ij;
+      if (relation[i][j] == LESS) {
+        if (lattice.compare(ij, elems[j]) != EQUAL) {
+          Fatal()
+            << "Join is not equal to greater element:\nLesser element:\n\n"
+            << elems[i] << "\nGreater element:\n\n"
+            << elems[j] << "\nJoin:\n\n"
+            << ij;
+        }
+        if (jiModified) {
+          Fatal()
+            << "Join incorrectly reported modification:\nLesser element:\n\n"
+            << elems[i] << "\nGreater element:\n\n"
+            << elems[j];
+        }
+        if (!ijModified) {
+          Fatal()
+            << "Join should have reported modification:\nLesser element:\n\n"
+            << elems[i] << "\nGreater element:\n\n"
+            << elems[j];
+        }
       }
 
       for (int k = 0; k < 3; ++k) {
