@@ -3738,8 +3738,9 @@ static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
   // groups that are used, as if a type if public then all types in its rec
   // group are as well.
   std::unordered_set<RecGroup> publicRecGroups;
-  ModuleUtils::iterImportedFunctions(
-    module, [&](Function* func) { publicRecGroups.insert(func->type.getRecGroup()); });
+  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
+    publicRecGroups.insert(func->type.getRecGroup());
+  });
   for (auto& ex : module.exports) {
     if (ex->kind == ExternalKind::Function) {
       publicRecGroups.insert(module.getFunction(ex->value)->type.getRecGroup());
