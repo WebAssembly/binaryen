@@ -30,16 +30,16 @@ struct Bool {
   LatticeComparison compare(Element a, Element b) const noexcept {
     return a > b ? GREATER : a == b ? EQUAL : LESS;
   }
-  bool join(Element& self, Element other) const noexcept {
-    if (!self && other) {
-      self = other;
+  bool join(Element& joinee, Element joiner) const noexcept {
+    if (!joinee && joiner) {
+      joinee = joiner;
       return true;
     }
     return false;
   }
-  bool meet(Element& self, Element other) const noexcept {
-    if (self && !other) {
-      self = other;
+  bool meet(Element& meetee, Element meeter) const noexcept {
+    if (meetee && !meeter) {
+      meetee = meeter;
       return true;
     }
     return false;

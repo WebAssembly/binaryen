@@ -37,11 +37,11 @@ template<FullLattice L> struct Inverted {
   LatticeComparison compare(const Element& a, const Element& b) const noexcept {
     return lattice.compare(b, a);
   }
-  bool join(Element& self, Element other) const noexcept {
-    return lattice.meet(self, other);
+  bool join(Element& joinee, Element joiner) const noexcept {
+    return lattice.meet(joinee, joiner);
   }
-  bool meet(Element& self, Element other) const noexcept {
-    return lattice.join(self, other);
+  bool meet(Element& meetee, Element meeter) const noexcept {
+    return lattice.join(meetee, meeter);
   }
 };
 
