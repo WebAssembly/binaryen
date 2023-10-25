@@ -1429,10 +1429,24 @@
 )
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
   (global $once (mut i32) (i32.const 0))
 
+  ;; CHECK:      (global $once.1 (mut i32) (i32.const 0))
   (global $once.1 (mut i32) (i32.const 0))
 
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT: )
   (func $once
     ;; A minimal "once" function, which calls another.
     (if
@@ -1443,6 +1457,16 @@
     (call $once.1)
   )
 
+  ;; CHECK:      (func $once.1 (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once.1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once.1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
   (func $once.1
     ;; Another minimal "once" function, which calls the first, forming a loop.
     (if
@@ -1453,18 +1477,30 @@
     (call $once)
   )
 
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $caller
     ;; Call a once function more than once. The second call will become a nop.
     (call $once)
     (call $once)
   )
 
+  ;; CHECK:      (func $caller$1 (type $0)
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $caller$1
     ;; Two calls to the second function. Again, the second becomes a nop.
     (call $once.1)
     (call $once.1)
   )
 
+  ;; CHECK:      (func $caller$2 (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $caller$2
     ;; A mix of calls. We can still remove the second, because we know the first
     ;; will call it.
@@ -1472,9 +1508,24 @@
     (call $once.1)
   )
 
+  ;; CHECK:      (func $caller$3 (type $0)
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $caller$3
     ;; Reverse of the above; again, we can nop the second.
     (call $once.1)
     (call $once)
+  )
+
+  ;; CHECK:      (func $caller$4 (type $0)
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (call $caller$4)
+  ;; CHECK-NEXT: )
+  (func $caller$4
+    ;; Here we cannot optimize, since the second function is not a "once"
+    ;; function.
+    (call $once.1)
+    (call $caller$4)
   )
 )
