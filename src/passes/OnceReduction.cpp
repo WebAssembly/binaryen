@@ -204,8 +204,8 @@ struct BlockInfo {
   // writes to "once" globals.
   std::vector<Expression*> exprs;
 
-  // Whether this basic block has a branch to return to the caller.
-  bool mayReturn = false;
+  // Whether this basic block may exit back to the caller.
+  bool mayExit = false;
 };
 
 // Performs optimization in all functions. This reads onceGlobalsSetInFuncs in
@@ -235,9 +235,9 @@ struct Optimizer
     if (currBasicBlock) {
       ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
       if (effects.branchesOut || effects.throws()) {
-        // This returns to the caller, either by branching out (return or
+        // This may exit to the caller, either by branching out (return or
         // call_return, etc.) or by throwing.
-        currBasicBlock->contents.mayReturn = true;
+        currBasicBlock->contents.mayExit = true;
       }
     }
   }
@@ -399,7 +399,7 @@ struct Optimizer
       // We need to consider all exits here: Those that may return due to an
       // instruction (like return or call_return) and also the exit block, which
       // returns implicitly at the end of the function.
-      if (block->contents.mayReturn || block == exit) {
+      if (block->contents.mayExit || block == exit) {
         intersect(onceGlobalsWrittenVec[i]);
       }
     }
