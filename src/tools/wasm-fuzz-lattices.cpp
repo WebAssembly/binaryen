@@ -17,6 +17,7 @@
 #include <optional>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <variant>
 
 #include "analysis/lattice.h"
@@ -170,14 +171,14 @@ RandomFullLattice::RandomFullLattice(Random& rand,
   uint32_t pick = maybePick ? *maybePick : rand.upTo(3);
   switch (pick) {
     case 0:
-      lattice = std::make_unique<L>(Bool{});
+      lattice = std::make_unique<L>(L{Bool{}});
       return;
     case 1:
-      lattice = std::make_unique<L>(UInt32{});
+      lattice = std::make_unique<L>(L{UInt32{}});
       return;
     case 2:
       lattice =
-        std::make_unique<L>(Inverted{RandomFullLattice{rand, depth + 1}});
+        std::make_unique<L>(L{Inverted{RandomFullLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -190,13 +191,13 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
     case 0:
     case 1:
     case 2:
-      lattice = std::make_unique<L>(RandomFullLattice{rand, depth, pick});
+      lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
       return;
     case 3:
-      lattice = std::make_unique<L>(Flat<uint32_t>{});
+      lattice = std::make_unique<L>(L{Flat<uint32_t>{}});
       return;
     case 4:
-      lattice = std::make_unique<L>(Lift{RandomLattice{rand, depth + 1}});
+      lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -670,15 +671,18 @@ RandomFullLattice::Element RandomFullLattice::getTop() const noexcept {
                     *lattice);
 }
 
+// TODO: use std::remove_cvref_t from C++20 instead.
+template<typename T> using bare = std::remove_cv_t<std::remove_reference_t<T>>;
+
 LatticeComparison RandomFullLattice::compare(const Element& a,
                                              const Element& b) const noexcept {
   return std::visit(
     [](const auto& l,
        const auto& elemA,
        const auto& elemB) -> LatticeComparison {
-      using ElemT = typename std::remove_cvref_t<decltype(l)>::Element;
-      using A = std::remove_cvref_t<decltype(elemA)>;
-      using B = std::remove_cvref_t<decltype(elemB)>;
+      using ElemT = typename bare<decltype(l)>::Element;
+      using A = bare<decltype(elemA)>;
+      using B = bare<decltype(elemB)>;
       if constexpr (std::is_same_v<ElemT, A> && std::is_same_v<ElemT, B>) {
         return l.compare(elemA, elemB);
       }
@@ -692,9 +696,9 @@ LatticeComparison RandomFullLattice::compare(const Element& a,
 bool RandomFullLattice::join(Element& a, const Element& b) const noexcept {
   return std::visit(
     [](const auto& l, auto& elemA, const auto& elemB) -> bool {
-      using ElemT = typename std::remove_cvref_t<decltype(l)>::Element;
-      using A = std::remove_cvref_t<decltype(elemA)>;
-      using B = std::remove_cvref_t<decltype(elemB)>;
+      using ElemT = typename bare<decltype(l)>::Element;
+      using A = bare<decltype(elemA)>;
+      using B = bare<decltype(elemB)>;
       if constexpr (std::is_same_v<ElemT, A> && std::is_same_v<ElemT, B>) {
         return l.join(elemA, elemB);
       }
@@ -708,9 +712,9 @@ bool RandomFullLattice::join(Element& a, const Element& b) const noexcept {
 bool RandomFullLattice::meet(Element& a, const Element& b) const noexcept {
   return std::visit(
     [](const auto& l, auto& elemA, const auto& elemB) -> bool {
-      using ElemT = typename std::remove_cvref_t<decltype(l)>::Element;
-      using A = std::remove_cvref_t<decltype(elemA)>;
-      using B = std::remove_cvref_t<decltype(elemB)>;
+      using ElemT = typename bare<decltype(l)>::Element;
+      using A = bare<decltype(elemA)>;
+      using B = bare<decltype(elemB)>;
       if constexpr (std::is_same_v<ElemT, A> && std::is_same_v<ElemT, B>) {
         return l.meet(elemA, elemB);
       }
@@ -732,9 +736,9 @@ LatticeComparison RandomLattice::compare(const Element& a,
     [](const auto& l,
        const auto& elemA,
        const auto& elemB) -> LatticeComparison {
-      using ElemT = typename std::remove_cvref_t<decltype(l)>::Element;
-      using A = std::remove_cvref_t<decltype(elemA)>;
-      using B = std::remove_cvref_t<decltype(elemB)>;
+      using ElemT = typename bare<decltype(l)>::Element;
+      using A = bare<decltype(elemA)>;
+      using B = bare<decltype(elemB)>;
       if constexpr (std::is_same_v<ElemT, A> && std::is_same_v<ElemT, B>) {
         return l.compare(elemA, elemB);
       }
@@ -748,9 +752,9 @@ LatticeComparison RandomLattice::compare(const Element& a,
 bool RandomLattice::join(Element& a, const Element& b) const noexcept {
   return std::visit(
     [](const auto& l, auto& elemA, const auto& elemB) -> bool {
-      using ElemT = typename std::remove_cvref_t<decltype(l)>::Element;
-      using A = std::remove_cvref_t<decltype(elemA)>;
-      using B = std::remove_cvref_t<decltype(elemB)>;
+      using ElemT = typename bare<decltype(l)>::Element;
+      using A = bare<decltype(elemA)>;
+      using B = bare<decltype(elemB)>;
       if constexpr (std::is_same_v<ElemT, A> && std::is_same_v<ElemT, B>) {
         return l.join(elemA, elemB);
       }
