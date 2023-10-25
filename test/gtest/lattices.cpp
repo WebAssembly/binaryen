@@ -15,6 +15,7 @@
  */
 
 #include "analysis/lattices/bool.h"
+#include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "gtest/gtest.h"
@@ -193,4 +194,106 @@ TEST(InvertedLattice, DoubleInverted) {
   DoubleInverted identity(analysis::Inverted<analysis::Bool>{analysis::Bool{}});
   EXPECT_FALSE(identity.getBottom());
   EXPECT_TRUE(identity.getTop());
+}
+
+TEST(FlatLattice, GetBottom) {
+  analysis::Flat<int> flat;
+  EXPECT_TRUE(flat.getBottom().isBottom());
+  EXPECT_FALSE(flat.getBottom().getVal());
+  EXPECT_FALSE(flat.getBottom().isTop());
+}
+
+TEST(FlatLattice, GetVal) {
+  analysis::Flat<int> flat;
+  EXPECT_FALSE(flat.get(10).isBottom());
+  ASSERT_TRUE(flat.get(10).getVal());
+  EXPECT_FALSE(flat.get(10).isTop());
+
+  auto val = flat.get(10);
+  EXPECT_EQ(*val.getVal(), 10);
+}
+
+TEST(FlatLattice, GetTop) {
+  analysis::Flat<int> flat;
+  EXPECT_FALSE(flat.getTop().isBottom());
+  EXPECT_FALSE(flat.getTop().getVal());
+  EXPECT_TRUE(flat.getTop().isTop());
+}
+
+TEST(FlatLattice, Compare) {
+  analysis::Flat<int> flat;
+  auto bot = flat.getBottom();
+  auto a = flat.get(0);
+  auto b = flat.get(1);
+  auto top = flat.getTop();
+
+  EXPECT_EQ(flat.compare(bot, bot), analysis::EQUAL);
+  EXPECT_EQ(flat.compare(bot, a), analysis::LESS);
+  EXPECT_EQ(flat.compare(bot, b), analysis::LESS);
+  EXPECT_EQ(flat.compare(bot, top), analysis::LESS);
+
+  EXPECT_EQ(flat.compare(a, bot), analysis::GREATER);
+  EXPECT_EQ(flat.compare(a, a), analysis::EQUAL);
+  EXPECT_EQ(flat.compare(a, b), analysis::NO_RELATION);
+  EXPECT_EQ(flat.compare(a, top), analysis::LESS);
+
+  EXPECT_EQ(flat.compare(b, bot), analysis::GREATER);
+  EXPECT_EQ(flat.compare(b, a), analysis::NO_RELATION);
+  EXPECT_EQ(flat.compare(b, b), analysis::EQUAL);
+  EXPECT_EQ(flat.compare(b, top), analysis::LESS);
+
+  EXPECT_EQ(flat.compare(top, bot), analysis::GREATER);
+  EXPECT_EQ(flat.compare(top, a), analysis::GREATER);
+  EXPECT_EQ(flat.compare(top, b), analysis::GREATER);
+  EXPECT_EQ(flat.compare(top, top), analysis::EQUAL);
+}
+
+TEST(FlatLattice, Join) {
+  analysis::Flat<int> flat;
+  auto elem = flat.getBottom();
+
+  // bot u bot = bot
+  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
+  EXPECT_TRUE(elem.isBottom());
+
+  // bot u top = top
+  EXPECT_TRUE(flat.join(elem, flat.getTop()));
+  EXPECT_TRUE(elem.isTop());
+
+  // bot u 10 = 10
+  elem = flat.getBottom();
+  EXPECT_TRUE(flat.join(elem, flat.get(10)));
+  ASSERT_TRUE(elem.getVal());
+  EXPECT_EQ(*elem.getVal(), 10);
+
+  // 10 u bot = 10
+  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
+  ASSERT_TRUE(elem.getVal());
+  EXPECT_EQ(*elem.getVal(), 10);
+
+  // 10 u 10 = 10
+  EXPECT_FALSE(flat.join(elem, flat.get(10)));
+  ASSERT_TRUE(elem.getVal());
+  EXPECT_EQ(*elem.getVal(), 10);
+
+  // 10 u 999 = top
+  EXPECT_TRUE(flat.join(elem, flat.get(999)));
+  ASSERT_TRUE(elem.isTop());
+
+  // 10 u top = top
+  elem = flat.get(10);
+  EXPECT_TRUE(flat.join(elem, flat.getTop()));
+  ASSERT_TRUE(elem.isTop());
+
+  // top u bot = top
+  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
+  EXPECT_TRUE(elem.isTop());
+
+  // top u 10 = top
+  EXPECT_FALSE(flat.join(elem, flat.get(10)));
+  EXPECT_TRUE(elem.isTop());
+
+  // top u top = top
+  EXPECT_FALSE(flat.join(elem, flat.getTop()));
+  EXPECT_TRUE(elem.isTop());
 }
