@@ -441,8 +441,8 @@ private:
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
               auto localType = getFunction()->getLocalType(get->index);
-              if (localType.isNonNullable()) {
-                // This is a non-nullable local that seems to read the default
+              if (!localType.isDefaultable()) {
+                // This is a nondefaultable local that seems to read the default
                 // value at the function entry. This is either an internal error
                 // or a case of unreachable code; the latter is possible as
                 // LocalGraph is not precise in unreachable code.
