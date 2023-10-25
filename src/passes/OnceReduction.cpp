@@ -44,6 +44,7 @@
 #include <atomic>
 
 #include "cfg/domtree.h"
+#include "ir/effects.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -197,10 +198,14 @@ private:
   OptInfo& optInfo;
 };
 
-// Information in a basic block. We track relevant expressions, which are calls
-// calls to "once" functions, and writes to "once" globals.
+// Information in a basic block.
 struct BlockInfo {
+  // We track relevant expressions, which are call to "once" functions, and
+  // writes to "once" globals.
   std::vector<Expression*> exprs;
+
+  // Whether this basic block has a branch to return to the caller.
+  bool mayReturn = false;
 };
 
 // Performs optimization in all functions. This reads onceGlobalsSetInFuncs in
@@ -216,13 +221,24 @@ struct BlockInfo {
 // optimization, but that would require more code - it might be more efficient,
 // though).
 struct Optimizer
-  : public WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
+  : public WalkerPass<CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<Optimizer>(optInfo);
+  }
+
+  void visitExpression(Expression* curr) {
+    if (currBasicBlock) {
+      ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
+      if (effects.branchesOut || effects.throws()) {
+        // This returns to the caller, either by branching out (return or
+        // call_return, etc.) or by throwing.
+        currBasicBlock->contents.mayReturn = true;
+      }
+    }
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -235,11 +251,16 @@ struct Optimizer
     if (currBasicBlock) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
+
+    // This may be a call_return, which is handled in a general way in the
+    // generic code path.
+    visitExpression(curr);
   }
 
   void doWalkFunction(Function* func) {
+std::cout << "dWF " << func->name << '\n';
     using Parent =
-      WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
+      WalkerPass<CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>>;
 
     // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
@@ -267,6 +288,7 @@ struct Optimizer
       // Note that we take a reference here, which is how the data we accumulate
       // ends up stored. The blocks we dominate will see it later.
       auto& onceGlobalsWritten = onceGlobalsWrittenVec[i];
+std::cout << "  in block " << i << "\n";
 
       // Note information from our immediate dominator.
       // TODO: we could also intersect information from all of our preds.
@@ -292,6 +314,7 @@ struct Optimizer
         auto optimizeOnce = [&](Name globalName) {
           assert(optInfo.onceGlobals.at(globalName));
           auto res = onceGlobalsWritten.emplace(globalName);
+std::cout << "    set global as set " << globalName << '\n';
           if (!res.second) {
             // This global has already been written, so this expr is not needed,
             // regardless of whether it is a global.set or a call.
@@ -312,33 +335,94 @@ struct Optimizer
             optimizeOnce(set->name);
           }
         } else if (auto* call = expr->dynCast<Call>()) {
-          if (optInfo.onceFuncs.at(call->target).is()) {
+std::cout << "    see call to " << call->target << "\n";
+          auto target = call->target;
+          if (optInfo.onceFuncs.at(target).is()) {
             // The global used by the "once" func is written.
             assert(call->operands.empty());
-            optimizeOnce(optInfo.onceFuncs.at(call->target));
-            continue;
+            optimizeOnce(optInfo.onceFuncs.at(target));
+            // Fall through to the code below to apply other things we know
+            // about the caller.
           }
 
-          // This is not a call to a "once" func. However, we may have inferred
-          // that it definitely sets some "once" globals before it returns, and
-          // we can use that information.
+          // Note as written all globals the called function is known to write.
           for (auto globalName :
-               optInfo.onceGlobalsSetInFuncs.at(call->target)) {
+               optInfo.onceGlobalsSetInFuncs.at(target)) {
+std::cout << "    also noting " << globalName << '\n';
             onceGlobalsWritten.insert(globalName);
           }
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
       }
+
+std::cout << "end of bb " << i << "\n";
+for (auto g : onceGlobalsWrittenVec[i]) std::cout << "  " << g << '\n';
+
     }
 
-    // As a result of the above optimization, we know which "once" globals are
-    // definitely written in this function. Regardless of whether this is a
-    // "once" function itself, that set of globals can be used in further
-    // optimizations, as any call to this function must set those.
-    // TODO: Aside from the entry block, we could intersect all the exit blocks.
-    optInfo.newOnceGlobalsSetInFuncs[func->name] =
-      std::move(onceGlobalsWrittenVec[0]);
+    // As a result of the above optimization, we can now figure out which "once"
+    // globals are definitely written in this function before it exits, which is
+    // the intersection of globals set in all exit paths.
+    std::optional<std::unordered_set<Name>> intersection;
+    auto intersect = [&](std::unordered_set<Name>& globals) {
+std::cout << "intersect\n";
+for (auto g : globals) std::cout << "  " << g << '\n';
+      if (!intersection) {
+        // This is the first thing to intersect. Just copy the values (we can
+        // move them as nothing else will read |onceGlobalsWrittenVec| once we
+        // are done).
+        intersection = std::move(globals);
+      } else {
+        // This is a later thing.
+        auto iter = intersection->begin();
+        while (iter != intersection->end()) {
+          auto global = *iter;
+          auto next = iter;
+          next++;
+          if (!globals.count(global)) {
+            intersection->erase(iter);
+          }
+          iter = next;
+        }
+      }
+    };
+    for (Index i = 0; i < basicBlocks.size(); i++) {
+std::cout << "bb " << i << "\n";
+for (auto g : onceGlobalsWrittenVec[i]) std::cout << "  " << g << '\n';
+      auto* block = basicBlocks[i].get();
+      if (i == 1 && optInfo.onceFuncs.at(func->name).is()) {
+        // This is the second basic block in a "once" function, that is, it is
+        // the body of the if in the pattern:
+        //
+        //  function foo() {
+        //    if (foo$once) return;
+        //
+        // We can ignore this basic block entirely because of what we know about
+        // "once" functions: the first time the function is reached we do not
+        // return early, but rather we continue onwards; and the second time the
+        // function is reached we exit early but only because we have still set
+        // whatever globals we set later down. That is, a "once" function will
+        // definitely execute the code after the return, either in the current
+        // call or in a previous call, and that is enough to ensure that any
+        // "once" globals set later down are definitely set in later calls.
+        continue;
+      }
+
+      // We need to consider all exits here: Those that may return due to an
+      // instruction (like return or call_return) and also the exit block, which
+      // returns implicitly at the end of the function.
+      if (block->contents.mayReturn || block == exit) {
+        intersect(onceGlobalsWrittenVec[i]);
+      }
+    }
+    if (exit) {
+      // There is also an exit block (that flows out of the function, without an
+      // explicit return), which we must handle.
+    }
+    if (intersection) {
+      optInfo.newOnceGlobalsSetInFuncs[func->name] = std::move(*intersection);
+    }
   }
 
 private:
@@ -417,6 +501,7 @@ struct OnceReduction : public Pass {
     }
 
     while (1) {
+std::cout << "iter\n";
       // Initialize all the items in the new data structure that will be
       // populated.
       for (auto& func : module->functions) {
