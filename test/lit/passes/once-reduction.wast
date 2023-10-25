@@ -1529,3 +1529,47 @@
     (call $caller$4)
   )
 )
+
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    ;; A minimal "once" function.
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+  )
+
+  ;; CHECK:      (func $do-once (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $do-once
+    ;; Call the once function.
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; The first proves the second is not needed, and can be nopped.
+    (call $do-once)
+    (call $once)
+  )
+)
+
