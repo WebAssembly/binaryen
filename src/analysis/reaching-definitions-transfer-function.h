@@ -3,6 +3,8 @@
 
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "lattice.h"
+#include "lattices/powerset.h"
 #include "visitor-transfer-function.h"
 
 namespace wasm::analysis {
