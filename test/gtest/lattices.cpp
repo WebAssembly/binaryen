@@ -16,6 +16,7 @@
 
 #include "analysis/lattices/bool.h"
 #include "analysis/lattices/int.h"
+#include "analysis/lattices/inverted.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -23,6 +24,11 @@ using namespace wasm;
 TEST(BoolLattice, GetBottom) {
   analysis::Bool lattice;
   EXPECT_FALSE(lattice.getBottom());
+}
+
+TEST(BoolLattice, GetTop) {
+  analysis::Bool lattice;
+  EXPECT_TRUE(lattice.getTop());
 }
 
 TEST(BoolLattice, Compare) {
@@ -50,18 +56,49 @@ TEST(BoolLattice, Join) {
   ASSERT_TRUE(elem);
 }
 
+TEST(BoolLattice, Meet) {
+  analysis::Bool lattice;
+  bool elem = true;
+
+  EXPECT_FALSE(lattice.meet(elem, true));
+  ASSERT_TRUE(elem);
+
+  EXPECT_TRUE(lattice.meet(elem, false));
+  ASSERT_FALSE(elem);
+
+  EXPECT_FALSE(lattice.meet(elem, true));
+  ASSERT_FALSE(elem);
+
+  EXPECT_FALSE(lattice.meet(elem, false));
+  ASSERT_FALSE(elem);
+}
+
 TEST(IntLattice, GetBottom) {
   analysis::Int32 int32;
-  EXPECT_EQ(int32.getBottom(), (int32_t)(1ll << 31));
+  EXPECT_EQ(int32.getBottom(), (int32_t)(1ull << 31));
 
   analysis::Int64 int64;
-  EXPECT_EQ(int64.getBottom(), (int64_t)(1ll << 63));
+  EXPECT_EQ(int64.getBottom(), (int64_t)(1ull << 63));
 
   analysis::UInt32 uint32;
   EXPECT_EQ(uint32.getBottom(), (uint32_t)0);
 
   analysis::UInt64 uint64;
-  EXPECT_EQ(uint64.getBottom(), (uint32_t)0);
+  EXPECT_EQ(uint64.getBottom(), (uint64_t)0);
+}
+
+TEST(IntLattice, GetTop) {
+  analysis::Int32 int32;
+  EXPECT_EQ(int32.getTop(), (int32_t)((1ull << 31) - 1));
+
+  analysis::Int64 int64;
+  EXPECT_EQ(int64.getTop(), (int64_t)((1ull << 63) - 1));
+
+  analysis::UInt32 uint32;
+  EXPECT_EQ(uint32.getTop(), (uint32_t)-1ull);
+
+  analysis::UInt64 uint64;
+  EXPECT_EQ(uint64.getTop(), (uint64_t)-1ull);
 }
 
 TEST(IntLattice, Compare) {
@@ -83,4 +120,77 @@ TEST(IntLattice, Join) {
 
   EXPECT_TRUE(int32.join(elem, 100));
   ASSERT_EQ(elem, 100);
+}
+
+TEST(IntLattice, Meet) {
+  analysis::Int32 int32;
+  int elem = 0;
+
+  EXPECT_FALSE(int32.meet(elem, 10));
+  ASSERT_EQ(elem, 0);
+
+  EXPECT_FALSE(int32.meet(elem, 0));
+  ASSERT_EQ(elem, 0);
+
+  EXPECT_TRUE(int32.meet(elem, -100));
+  ASSERT_EQ(elem, -100);
+}
+
+TEST(InvertedLattice, GetBottom) {
+  analysis::Inverted inverted(analysis::Bool{});
+  EXPECT_TRUE(inverted.getBottom());
+}
+
+TEST(InvertedLattice, GetTop) {
+  analysis::Inverted inverted(analysis::Bool{});
+  EXPECT_FALSE(inverted.getTop());
+}
+
+TEST(InvertedLattice, Compare) {
+  analysis::Inverted inverted(analysis::Bool{});
+  EXPECT_EQ(inverted.compare(false, false), analysis::EQUAL);
+  EXPECT_EQ(inverted.compare(false, true), analysis::GREATER);
+  EXPECT_EQ(inverted.compare(true, false), analysis::LESS);
+  EXPECT_EQ(inverted.compare(true, true), analysis::EQUAL);
+}
+
+TEST(InvertedLattice, Join) {
+  analysis::Inverted inverted(analysis::Bool{});
+  bool elem = true;
+
+  EXPECT_FALSE(inverted.join(elem, true));
+  ASSERT_TRUE(elem);
+
+  EXPECT_TRUE(inverted.join(elem, false));
+  ASSERT_FALSE(elem);
+
+  EXPECT_FALSE(inverted.join(elem, true));
+  ASSERT_FALSE(elem);
+
+  EXPECT_FALSE(inverted.join(elem, false));
+  ASSERT_FALSE(elem);
+}
+
+TEST(InvertedLattice, Meet) {
+  analysis::Inverted inverted(analysis::Bool{});
+  bool elem = false;
+
+  EXPECT_FALSE(inverted.meet(elem, false));
+  ASSERT_FALSE(elem);
+
+  EXPECT_TRUE(inverted.meet(elem, true));
+  ASSERT_TRUE(elem);
+
+  EXPECT_FALSE(inverted.meet(elem, false));
+  ASSERT_TRUE(elem);
+
+  EXPECT_FALSE(inverted.meet(elem, true));
+  ASSERT_TRUE(elem);
+}
+
+TEST(InvertedLattice, DoubleInverted) {
+  using DoubleInverted = analysis::Inverted<analysis::Inverted<analysis::Bool>>;
+  DoubleInverted identity(analysis::Inverted<analysis::Bool>{analysis::Bool{}});
+  EXPECT_FALSE(identity.getBottom());
+  EXPECT_TRUE(identity.getTop());
 }

@@ -34,11 +34,19 @@ template<typename T>
 struct Integer {
   using Element = T;
   Element getBottom() const noexcept { return std::numeric_limits<T>::min(); }
+  Element getTop() const noexcept { return std::numeric_limits<T>::max(); }
   LatticeComparison compare(Element a, Element b) const noexcept {
     return a > b ? GREATER : a == b ? EQUAL : LESS;
   }
   bool join(Element& self, Element other) const noexcept {
     if (self < other) {
+      self = other;
+      return true;
+    }
+    return false;
+  }
+  bool meet(Element& self, Element other) const noexcept {
+    if (self > other) {
       self = other;
       return true;
     }
@@ -52,10 +60,10 @@ using Int64 = Integer<int64_t>;
 using UInt64 = Integer<uint64_t>;
 
 #if __cplusplus >= 202002L
-static_assert(Lattice<Int32>);
-static_assert(Lattice<Int64>);
-static_assert(Lattice<UInt32>);
-static_assert(Lattice<UInt64>);
+static_assert(FullLattice<Int32>);
+static_assert(FullLattice<Int64>);
+static_assert(FullLattice<UInt32>);
+static_assert(FullLattice<UInt64>);
 #endif // __cplusplus >= 202002L
 
 } // namespace wasm::analysis
