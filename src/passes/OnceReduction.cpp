@@ -258,7 +258,6 @@ struct Optimizer
   }
 
   void doWalkFunction(Function* func) {
-std::cout << "dWF " << func->name << '\n';
     using Parent =
       WalkerPass<CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>>;
 
@@ -288,7 +287,6 @@ std::cout << "dWF " << func->name << '\n';
       // Note that we take a reference here, which is how the data we accumulate
       // ends up stored. The blocks we dominate will see it later.
       auto& onceGlobalsWritten = onceGlobalsWrittenVec[i];
-std::cout << "  in block " << i << "\n";
 
       // Note information from our immediate dominator.
       // TODO: we could also intersect information from all of our preds.
@@ -314,7 +312,6 @@ std::cout << "  in block " << i << "\n";
         auto optimizeOnce = [&](Name globalName) {
           assert(optInfo.onceGlobals.at(globalName));
           auto res = onceGlobalsWritten.emplace(globalName);
-std::cout << "    set global as set " << globalName << '\n';
           if (!res.second) {
             // This global has already been written, so this expr is not needed,
             // regardless of whether it is a global.set or a call.
@@ -335,7 +332,6 @@ std::cout << "    set global as set " << globalName << '\n';
             optimizeOnce(set->name);
           }
         } else if (auto* call = expr->dynCast<Call>()) {
-std::cout << "    see call to " << call->target << "\n";
           auto target = call->target;
           if (optInfo.onceFuncs.at(target).is()) {
             // The global used by the "once" func is written.
@@ -348,17 +344,12 @@ std::cout << "    see call to " << call->target << "\n";
           // Note as written all globals the called function is known to write.
           for (auto globalName :
                optInfo.onceGlobalsSetInFuncs.at(target)) {
-std::cout << "    also noting " << globalName << '\n';
             onceGlobalsWritten.insert(globalName);
           }
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
       }
-
-std::cout << "end of bb " << i << "\n";
-for (auto g : onceGlobalsWrittenVec[i]) std::cout << "  " << g << '\n';
-
     }
 
     // As a result of the above optimization, we can now figure out which "once"
@@ -366,8 +357,6 @@ for (auto g : onceGlobalsWrittenVec[i]) std::cout << "  " << g << '\n';
     // the intersection of globals set in all exit paths.
     std::optional<std::unordered_set<Name>> intersection;
     auto intersect = [&](std::unordered_set<Name>& globals) {
-std::cout << "intersect\n";
-for (auto g : globals) std::cout << "  " << g << '\n';
       if (!intersection) {
         // This is the first thing to intersect. Just copy the values (we can
         // move them as nothing else will read |onceGlobalsWrittenVec| once we
@@ -388,8 +377,6 @@ for (auto g : globals) std::cout << "  " << g << '\n';
       }
     };
     for (Index i = 0; i < basicBlocks.size(); i++) {
-std::cout << "bb " << i << "\n";
-for (auto g : onceGlobalsWrittenVec[i]) std::cout << "  " << g << '\n';
       auto* block = basicBlocks[i].get();
       if (i == 1 && optInfo.onceFuncs.at(func->name).is()) {
         // This is the second basic block in a "once" function, that is, it is
@@ -501,7 +488,6 @@ struct OnceReduction : public Pass {
     }
 
     while (1) {
-std::cout << "iter\n";
       // Initialize all the items in the new data structure that will be
       // populated.
       for (auto& func : module->functions) {
