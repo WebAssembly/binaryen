@@ -127,51 +127,6 @@ public:
       return value;
     }
 
-    // When taking the LUB, we take the LUBs of the elements of each stack
-    // starting from the top of the stack. So, LUB([b, a], [b', a']) is
-    // [LUB(b, b'), LUB(a, a')]. If one stack is higher than the other,
-    // the bottom of the higher stack will be kept, while the LUB of the
-    // corresponding tops of each stack will be taken. For instance,
-    // LUB([d, c, b, a], [b', a']) is [d, c, LUB(b, b'), LUB(a, a')].
-    //
-    // We start at the top because it makes taking the LUB of stacks with
-    // different scope easier, as mentioned at the top of the file. It also
-    // fits with the conception of the stack starting at the top and having
-    // an infinite bottom, which allows stacks of different height and scope
-    // to be easily joined.
-    bool makeLeastUpperBound(const Element& other) noexcept {
-      // Top element cases, since top elements don't actually have the stack
-      // value.
-      if (isTop()) {
-        return false;
-      } else if (other.isTop()) {
-        stackValue.reset();
-        return true;
-      }
-
-      bool modified = false;
-
-      // Merge the shorter height stack with the top of the longer height
-      // stack. We do this by taking the LUB of each pair of matching elements
-      // from both stacks.
-      auto otherIt = other.stackValue->crbegin();
-      auto thisIt = stackValue->rbegin();
-      for (;
-           thisIt != stackValue->rend() && otherIt != other.stackValue->crend();
-           ++thisIt, ++otherIt) {
-        modified |= thisIt->makeLeastUpperBound(*otherIt);
-      }
-
-      // If the other stack is higher, append the bottom of it to our current
-      // stack.
-      for (; otherIt != other.stackValue->crend(); ++otherIt) {
-        stackValue->push_front(*otherIt);
-        modified = true;
-      }
-
-      return modified;
-    }
-
     void print(std::ostream& os) {
       if (isTop()) {
         os << "TOP STACK" << std::endl;
@@ -187,6 +142,8 @@ public:
 
     friend StackLattice;
   };
+
+  Element getBottom() const noexcept { return Element{}; }
 
   // Like in computing the LUB, we compare the tops of the two stacks, as it
   // handles the case of stacks of different scopes. Comparisons are done by
@@ -258,7 +215,50 @@ public:
     }
   }
 
-  Element getBottom() const noexcept { return Element{}; }
+  // When taking the LUB, we take the LUBs of the elements of each stack
+  // starting from the top of the stack. So, LUB([b, a], [b', a']) is
+  // [LUB(b, b'), LUB(a, a')]. If one stack is higher than the other,
+  // the bottom of the higher stack will be kept, while the LUB of the
+  // corresponding tops of each stack will be taken. For instance,
+  // LUB([d, c, b, a], [b', a']) is [d, c, LUB(b, b'), LUB(a, a')].
+  //
+  // We start at the top because it makes taking the LUB of stacks with
+  // different scope easier, as mentioned at the top of the file. It also
+  // fits with the conception of the stack starting at the top and having
+  // an infinite bottom, which allows stacks of different height and scope
+  // to be easily joined.
+  bool join(Element& self, const Element& other) const noexcept {
+    // Top element cases, since top elements don't actually have the stack
+    // value.
+    if (self.isTop()) {
+      return false;
+    } else if (other.isTop()) {
+      self.stackValue.reset();
+      return true;
+    }
+
+    bool modified = false;
+
+    // Merge the shorter height stack with the top of the longer height
+    // stack. We do this by taking the LUB of each pair of matching elements
+    // from both stacks.
+    auto selfIt = self.stackValue->rbegin();
+    auto otherIt = other.stackValue->crbegin();
+    for (; selfIt != self.stackValue->rend() &&
+           otherIt != other.stackValue->crend();
+         ++selfIt, ++otherIt) {
+      modified |= lattice.join(*selfIt, *otherIt);
+    }
+
+    // If the other stack is higher, append the bottom of it to our current
+    // stack.
+    for (; otherIt != other.stackValue->crend(); ++otherIt) {
+      self.stackValue->push_front(*otherIt);
+      modified = true;
+    }
+
+    return modified;
+  }
 };
 
 } // namespace wasm::analysis
