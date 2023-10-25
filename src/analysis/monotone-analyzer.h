@@ -11,27 +11,15 @@
 
 namespace wasm::analysis {
 
-// A node which contains all the lattice states for a given CFG node.
-template<Lattice L> struct BlockState {
-
-  // CFG node corresponding to this state block.
-  const BasicBlock* cfgBlock;
-  // State at which the analysis flow starts for a CFG. For instance, the ending
-  // state for backward analysis, or the beginning state for forward analysis.
-  typename L::Element inputState;
-
-  // All states are set to the bottom lattice element in this constructor.
-  BlockState(const BasicBlock* underlyingBlock, L& lattice);
-
-  // Prints out BlockState information, but not any intermediate states.
-  void print(std::ostream& os);
-};
-
 template<Lattice L, TransferFunction TxFn> class MonotoneCFGAnalyzer {
+  using Element = typename L::Element;
+
   L& lattice;
   TxFn& txfn;
   CFG& cfg;
-  std::vector<BlockState<L>> stateBlocks;
+
+  // The lattice element representing the program state before each block.
+  std::vector<Element> states;
 
 public:
   // Will constuct BlockState objects corresponding to BasicBlocks from the

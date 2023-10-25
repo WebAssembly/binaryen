@@ -18,19 +18,16 @@
 #define wasm_analysis_transfer_function_h
 
 #if __cplusplus >= 202002L
+
 #include <concepts>
 #include <iterator>
 #include <ranges>
-#endif
-
-#include <queue>
 
 #include "cfg.h"
 #include "lattice.h"
+#include "support/unique_deferring_queue.h"
 
 namespace wasm::analysis {
-
-#if __cplusplus >= 202002L
 
 template<typename T>
 concept BasicBlockInputRange =
@@ -38,30 +35,23 @@ concept BasicBlockInputRange =
   std::is_same<std::ranges::range_value_t<T>, BasicBlock>::value;
 
 template<typename TxFn, typename L>
-concept TransferFunctionImpl = requires(TxFn& txfn,
-                                        const CFG& cfg,
-                                        BasicBlock* bb,
-                                        typename L::Element& elem,
-                                        std::queue<const BasicBlock*>& bbq) {
+concept TransferFunctionImpl = requires(
+  TxFn& txfn, const CFG& cfg, const BasicBlock& bb, typename L::Element& elem) {
   // Apply the transfer function to update a lattice element with information
   // from a basic block.
   { txfn.transfer(bb, elem) } noexcept -> std::same_as<void>;
-  // Initializes the worklist of basic blocks, which can affect performance
-  // depending on the direction of the analysis. TODO: Unlock performance
-  // benefits while exposing fewer implementation details.
-  { txfn.enqueueWorklist(cfg, bbq) } noexcept -> std::same_as<void>;
   // Get a range over the basic blocks that depend on the given block.
   { txfn.getDependents(bb) } noexcept -> BasicBlockInputRange;
 };
 
 #define TransferFunction TransferFunctionImpl<L>
 
-#else
+} // namespace wasm::analysis
+
+#else // __cplusplus >= 202002L
 
 #define TransferFunction typename
 
 #endif // __cplusplus >= 202002L
-
-} // namespace wasm::analysis
 
 #endif // wasm_analysis_transfer_function_h

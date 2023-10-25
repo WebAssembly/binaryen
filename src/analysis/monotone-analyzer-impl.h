@@ -5,74 +5,48 @@
 #include <unordered_map>
 
 #include "monotone-analyzer.h"
+#include "support/unique_deferring_queue.h"
 
 namespace wasm::analysis {
-
-// All states are set to the bottom lattice element using the lattice in this
-// constructor.
-template<Lattice L>
-inline BlockState<L>::BlockState(const BasicBlock* underlyingBlock, L& lattice)
-  : cfgBlock(underlyingBlock), inputState(lattice.getBottom()) {}
-
-// Prints out inforamtion about a CFG node's state, but not intermediate states.
-template<Lattice L> inline void BlockState<L>::print(std::ostream& os) {
-  os << "CFG Block: " << cfgBlock->getIndex() << std::endl;
-  os << "Input State: ";
-  inputState.print(os);
-  os << std::endl << "Predecessors:";
-  for (auto pred : cfgBlock->preds()) {
-    os << " " << pred.getIndex();
-  }
-  os << std::endl << "Successors:";
-  for (auto succ : cfgBlock->succs()) {
-    os << " " << succ.getIndex();
-  }
-  os << std::endl;
-}
 
 template<Lattice L, TransferFunction TxFn>
 inline MonotoneCFGAnalyzer<L, TxFn>::MonotoneCFGAnalyzer(L& lattice,
                                                          TxFn& txfn,
                                                          CFG& cfg)
-  : lattice(lattice), txfn(txfn), cfg(cfg) {
-
-  // Construct BlockStates for each BasicBlock.
-  for (auto it = cfg.begin(); it != cfg.end(); it++) {
-    stateBlocks.emplace_back(&(*it), lattice);
-  }
-}
+  : lattice(lattice), txfn(txfn), cfg(cfg),
+    states(cfg.size(), lattice.getBottom()) {}
 
 template<Lattice L, TransferFunction TxFn>
 inline void
 MonotoneCFGAnalyzer<L, TxFn>::evaluateFunctionEntry(Function* func) {
-  txfn.evaluateFunctionEntry(func, stateBlocks[0].inputState);
+  txfn.evaluateFunctionEntry(func, states[0]);
 }
 
 template<Lattice L, TransferFunction TxFn>
 inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {
-  std::queue<const BasicBlock*> worklist;
+  UniqueDeferredQueue<Index> worklist;
 
-  // Transfer function enqueues the work in some order which is efficient.
-  txfn.enqueueWorklist(cfg, worklist);
+  // Start with all blocks on the work list. TODO: optimize the iteration order
+  // using e.g. strongly-connected components.
+  for (Index i = 0; i < cfg.size(); ++i) {
+    worklist.push(i);
+  }
 
   while (!worklist.empty()) {
-    BlockState<L>& currBlockState = stateBlocks[worklist.front()->getIndex()];
-    worklist.pop();
+    // The index of the block we will analyze.
+    Index i = worklist.pop();
 
-    // For each expression, applies the transfer function, using the expression,
-    // on the state of the expression it depends upon (here the next expression)
-    // to arrive at the expression's state. The beginning and end states of the
-    // CFG block will be updated.
-    typename L::Element outputState = currBlockState.inputState;
-    txfn.transfer(currBlockState.cfgBlock, outputState);
+    // Apply the transfer function to the input state to compute the output
+    // state for the block.
+    auto state = states[i];
+    txfn.transfer(cfg[i], state);
 
-    // Propagate state to dependents of currBlockState.
-    for (auto& dep : txfn.getDependents(currBlockState.cfgBlock)) {
-      // If we need to change the input state of a dependent, we need
-      // to enqueue the dependent to recalculate it.
-      if (stateBlocks[dep.getIndex()].inputState.makeLeastUpperBound(
-            outputState)) {
-        worklist.push(&dep);
+    // Propagate state to the dependent blocks.
+    for (auto& dep : txfn.getDependents(cfg[i])) {
+      // If the input state for the dependent block changes, we need to
+      // re-analyze it.
+      if (states[dep.getIndex()].makeLeastUpperBound(state)) {
+        worklist.push(dep.getIndex());
       }
     }
   }
@@ -80,14 +54,12 @@ inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {
 
 template<Lattice L, TransferFunction TxFn>
 inline void MonotoneCFGAnalyzer<L, TxFn>::collectResults() {
-  for (BlockState currBlockState : stateBlocks) {
-    typename L::Element inputStateCopy = currBlockState.inputState;
-
+  for (Index i = 0, size = cfg.size(); i < size; ++i) {
     // The transfer function generates the final set of states and uses it to
     // produce useful information. For example, in reaching definitions
     // analysis, these final states are used to populate a mapping of
     // local.get's to a set of local.set's that affect its value.
-    txfn.collectResults(currBlockState.cfgBlock, inputStateCopy);
+    txfn.collectResults(cfg[i], states[i]);
   }
 }
 
@@ -96,12 +68,21 @@ inline void MonotoneCFGAnalyzer<L, TxFn>::collectResults() {
 template<Lattice L, TransferFunction TxFn>
 inline void MonotoneCFGAnalyzer<L, TxFn>::print(std::ostream& os) {
   os << "CFG Analyzer" << std::endl;
-  for (auto state : stateBlocks) {
-    state.print(os);
-    typename L::Element temp = state.inputState;
-    txfn.print(os, state.cfgBlock, temp);
+  for (Index i = 0, size = cfg.size(); i < size; ++i) {
+    os << "CFG Block: " << cfg[i].getIndex() << std::endl;
+    os << "Input State: ";
+    states[i].print(os);
+    for (auto& pred : cfg[i].preds()) {
+      os << " " << pred.getIndex();
+    }
+    os << std::endl << "Successors:";
+    for (auto& succ : cfg[i].succs()) {
+      os << " " << succ.getIndex();
+    }
+    os << "\n";
+    txfn.print(os, cfg[i], states[i]);
   }
-  os << "End" << std::endl;
+  os << "End\n";
 }
 
 } // namespace wasm::analysis
