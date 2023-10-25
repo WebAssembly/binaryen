@@ -1571,5 +1571,16 @@
     (call $do-once)
     (call $once)
   )
-)
 
+  ;; CHECK:      (func $caller2 (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT: )
+  (func $caller2
+    ;; Reverse order of the above. We cannot optimize here: $do-once does
+    ;; nothing aside from call $once, but all we know is that it is not a "once"
+    ;; function itself, and we only remove calls to "once" functions.
+    (call $once)
+    (call $do-once)
+  )
+)
