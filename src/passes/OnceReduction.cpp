@@ -221,7 +221,8 @@ struct BlockInfo {
 // optimization, but that would require more code - it might be more efficient,
 // though).
 struct Optimizer
-  : public WalkerPass<CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>> {
+  : public WalkerPass<
+      CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
@@ -258,8 +259,8 @@ struct Optimizer
   }
 
   void doWalkFunction(Function* func) {
-    using Parent =
-      WalkerPass<CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>>;
+    using Parent = WalkerPass<
+      CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>>;
 
     // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
@@ -342,8 +343,7 @@ struct Optimizer
           }
 
           // Note as written all globals the called function is known to write.
-          for (auto globalName :
-               optInfo.onceGlobalsSetInFuncs.at(target)) {
+          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(target)) {
             onceGlobalsWritten.insert(globalName);
           }
         } else {
