@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
@@ -373,4 +374,112 @@ TEST(LiftLattice, Join) {
   // top u bot = top
   EXPECT_FALSE(lift.join(elem, bot));
   EXPECT_EQ(elem, top);
+}
+
+TEST(ArrayLattice, GetBottom) {
+  analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
+  EXPECT_EQ(array.getBottom(), (std::array<bool, 2>{false, false}));
+}
+
+TEST(ArrayLattice, GetTop) {
+  analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
+  EXPECT_EQ(array.getTop(), (std::array<bool, 2>{true, true}));
+}
+
+TEST(ArrayLattice, Compare) {
+  analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
+  std::array<bool, 2> ff{false, false};
+  std::array<bool, 2> ft{false, true};
+  std::array<bool, 2> tf{true, false};
+  std::array<bool, 2> tt{true, true};
+
+  EXPECT_EQ(array.compare(ff, ff), analysis::EQUAL);
+  EXPECT_EQ(array.compare(ff, ft), analysis::LESS);
+  EXPECT_EQ(array.compare(ff, tf), analysis::LESS);
+  EXPECT_EQ(array.compare(ff, tt), analysis::LESS);
+
+  EXPECT_EQ(array.compare(ft, ff), analysis::GREATER);
+  EXPECT_EQ(array.compare(ft, ft), analysis::EQUAL);
+  EXPECT_EQ(array.compare(ft, tf), analysis::NO_RELATION);
+  EXPECT_EQ(array.compare(ft, tt), analysis::LESS);
+
+  EXPECT_EQ(array.compare(tf, ff), analysis::GREATER);
+  EXPECT_EQ(array.compare(tf, ft), analysis::NO_RELATION);
+  EXPECT_EQ(array.compare(tf, tf), analysis::EQUAL);
+  EXPECT_EQ(array.compare(tf, tt), analysis::LESS);
+
+  EXPECT_EQ(array.compare(tt, ff), analysis::GREATER);
+  EXPECT_EQ(array.compare(tt, ft), analysis::GREATER);
+  EXPECT_EQ(array.compare(tt, tf), analysis::GREATER);
+  EXPECT_EQ(array.compare(tt, tt), analysis::EQUAL);
+}
+
+TEST(ArrayLattice, Join) {
+  analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
+  auto ff = []() { return std::array<bool, 2>{false, false}; };
+  auto ft = []() { return std::array<bool, 2>{false, true}; };
+  auto tf = []() { return std::array<bool, 2>{true, false}; };
+  auto tt = []() { return std::array<bool, 2>{true, true}; };
+
+  auto test =
+    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
+      auto joinee = makeJoinee();
+      EXPECT_EQ(array.join(joinee, makeJoiner()), modified);
+      EXPECT_EQ(joinee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, true, ft);
+  test(ff, tf, true, tf);
+  test(ff, tt, true, tt);
+
+  test(ft, ff, false, ft);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, tt);
+  test(ft, tt, true, tt);
+
+  test(tf, ff, false, tf);
+  test(tf, ft, true, tt);
+  test(tf, tf, false, tf);
+  test(tf, tt, true, tt);
+
+  test(tt, ff, false, tt);
+  test(tt, ft, false, tt);
+  test(tt, tf, false, tt);
+  test(tt, tt, false, tt);
+}
+
+TEST(ArrayLattice, Meet) {
+  analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
+  auto ff = []() { return std::array<bool, 2>{false, false}; };
+  auto ft = []() { return std::array<bool, 2>{false, true}; };
+  auto tf = []() { return std::array<bool, 2>{true, false}; };
+  auto tt = []() { return std::array<bool, 2>{true, true}; };
+
+  auto test =
+    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
+      auto meetee = makeMeetee();
+      EXPECT_EQ(array.meet(meetee, makeMeeter()), modified);
+      EXPECT_EQ(meetee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, false, ff);
+  test(ff, tf, false, ff);
+  test(ff, tt, false, ff);
+
+  test(ft, ff, true, ff);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, ff);
+  test(ft, tt, false, ft);
+
+  test(tf, ff, true, ff);
+  test(tf, ft, true, ff);
+  test(tf, tf, false, tf);
+  test(tf, tt, false, tf);
+
+  test(tt, ff, true, ff);
+  test(tt, ft, true, ft);
+  test(tt, tf, true, tf);
+  test(tt, tt, false, tt);
 }
