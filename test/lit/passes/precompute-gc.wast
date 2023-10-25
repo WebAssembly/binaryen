@@ -229,7 +229,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $ref-comparisons (type $10) (param $x (ref null $struct)) (param $y (ref null $struct))
+ ;; CHECK:      (func $ref-comparisons (type $11) (param $x (ref null $struct)) (param $y (ref null $struct))
  ;; CHECK-NEXT:  (local $z (ref null $struct))
  ;; CHECK-NEXT:  (local $w (ref null $struct))
  ;; CHECK-NEXT:  (call $log
@@ -407,7 +407,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-different-params (type $11) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-different-params (type $12) (param $input1 (ref $empty)) (param $input2 (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -723,7 +723,7 @@
   )
  )
 
- ;; CHECK:      (func $helper (type $12) (param $0 i32) (result i32)
+ ;; CHECK:      (func $helper (type $13) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $helper (param i32) (result i32)
@@ -801,14 +801,14 @@
   )
  )
 
- ;; CHECK:      (func $receive-f64 (type $13) (param $0 f64)
+ ;; CHECK:      (func $receive-f64 (type $14) (param $0 f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $receive-f64 (param f64)
   (unreachable)
  )
 
- ;; CHECK:      (func $odd-cast-and-get-non-null (type $14) (param $temp (ref $func-return-i32))
+ ;; CHECK:      (func $odd-cast-and-get-non-null (type $15) (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.cast (ref nofunc)
  ;; CHECK-NEXT:    (ref.func $receive-f64)
@@ -857,7 +857,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-on-creation (type $15) (result (ref $empty))
+ ;; CHECK:      (func $br_on_cast-on-creation (type $16) (result (ref $empty))
  ;; CHECK-NEXT:  (block $label (result (ref $empty))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br_on_cast $label (ref $empty) (ref $empty)
@@ -952,7 +952,7 @@
   )
  )
 
- ;; CHECK:      (func $remove-set (type $16) (result (ref func))
+ ;; CHECK:      (func $remove-set (type $17) (result (ref func))
  ;; CHECK-NEXT:  (local $nn funcref)
  ;; CHECK-NEXT:  (local $i i32)
  ;; CHECK-NEXT:  (loop $loop
@@ -995,7 +995,7 @@
   )
  )
 
- ;; CHECK:      (func $strings (type $17) (param $param (ref string))
+ ;; CHECK:      (func $strings (type $18) (param $param (ref string))
  ;; CHECK-NEXT:  (local $s (ref string))
  ;; CHECK-NEXT:  (local.set $s
  ;; CHECK-NEXT:   (string.const "hello, world")
@@ -1140,5 +1140,30 @@
     (local.get $0)
    )
   )
+ )
+
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-tuple (type $19) (result anyref i32)
+ ;; CHECK-NEXT:  (local $x ((ref any) i32))
+ ;; CHECK-NEXT:  (local.tee $x
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $get-nonnullable-in-unreachable-tuple (result anyref i32)
+  ;; As $get-nonnullable-in-unreachable but the local is a tuple (so we need to
+  ;; check isDefaultable, and not just isNullable).
+  (local $x ((ref any) i32))
+  (local.set $x
+   (unreachable)
+  )
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (local.get $x)
  )
 )
