@@ -3,10 +3,6 @@
 ;; RUN: not wasm-opt -all --closed-world %s 2>&1 | filecheck %s
 
 
-;; This is pulled in because it is part of a rec group with $partial-pair-0.
-;; CHECK:      publicly exposed type disallowed with a closed world: $partial-pair-1, on
-;; CHECK-NEXT: (func)
-
 ;; This is pulled in by a global.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $array, on
 ;; CHECK-NEXT: (array (mut i32))
@@ -61,7 +57,7 @@
   ;; Ok even though it is an import instead of an export.
   (func $5 (import "env" "test5") (type $exported-pair-1))
 
-  ;; Not ok because another type in the group is not on the boundary.
+  ;; Ok, and we also allow the other type in the group.
   (func $6 (export "test6") (type $partial-pair-0)
     (unreachable)
   )
