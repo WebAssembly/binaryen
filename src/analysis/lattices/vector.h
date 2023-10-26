@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef wasm_analysis_lattices_array_h
-#define wasm_analysis_lattices_array_h
+#ifndef wasm_analysis_lattices_vector_h
+#define wasm_analysis_lattices_vector_h
 
-#include <array>
-#include <utility>
+#include <vector>
 
 #include "../lattice.h"
 #include "bool.h"
@@ -27,30 +26,17 @@
 namespace wasm::analysis {
 
 // A lattice whose elements are N-tuples of elements of L. Also written as L^N.
-// N is supplied at compile time rather than run time like it is for Vector.
-template<Lattice L, size_t N> struct Array {
-  using Element = std::array<typename L::Element, N>;
+// N is supplied at run time rather than compile time like it is for Array.
+template<Lattice L> struct Vector {
+  using Element = std::vector<typename L::Element>;
 
   L lattice;
+  const size_t size;
 
-  Array(L&& lattice) : lattice(std::move(lattice)) {}
+  Vector(L&& lattice, size_t size) : lattice(std::move(lattice)), size(size) {}
 
-private:
-  // Use a template parameter pack to generate N copies of
-  // `lattice.getBottom()`. TODO: Use C++20 lambda template parameters instead
-  // of a separate helper function.
-  template<size_t... I>
-  Element getBottomImpl(std::index_sequence<I...>) const noexcept {
-    return {((void)I, lattice.getBottom())...};
-  }
-  template<size_t... I>
-  Element getTopImpl(std::index_sequence<I...>) const noexcept {
-    return {((void)I, lattice.getTop())...};
-  }
-
-public:
   Element getBottom() const noexcept {
-    return getBottomImpl(std::make_index_sequence<N>());
+    return Element(size, lattice.getBottom());
   }
 
   Element getTop() const noexcept
@@ -58,14 +44,15 @@ public:
     requires FullLattice<L>
 #endif
   {
-    return getTopImpl(std::make_index_sequence<N>());
+    return Element(size, lattice.getTop());
   }
 
-  // `a` <= `b` if all their elements are pairwise <=, etc. Unless we determine
-  // that there is no relation, we must check all the elements.
+  // `a` <= `b` if their elements are pairwise <=, etc.
   LatticeComparison compare(const Element& a, const Element& b) const noexcept {
+    assert(a.size() == size);
+    assert(b.size() == size);
     auto result = EQUAL;
-    for (size_t i = 0; i < N; ++i) {
+    for (size_t i = 0; i < size; ++i) {
       switch (lattice.compare(a[i], b[i])) {
         case NO_RELATION:
           return NO_RELATION;
@@ -92,10 +79,24 @@ public:
 
   // Pairwise join on the elements.
   bool join(Element& joinee, const Element& joiner) const noexcept {
+    assert(joinee.size() == size);
+    assert(joiner.size() == size);
     bool result = false;
-    for (size_t i = 0; i < N; ++i) {
-      result |= lattice.join(joinee[i], joiner[i]);
+    for (size_t i = 0; i < size; ++i) {
+      if constexpr (std::is_same_v<typename L::Element, bool>) {
+        // The vector<bool> specialization does not expose references to the
+        // individual bools because they might be in a bitmap, so we need a
+        // workaround.
+        bool e = joinee[i];
+        if (lattice.join(e, joiner[i])) {
+          joinee[i] = e;
+          result = true;
+        }
+      } else {
+        result |= lattice.join(joinee[i], joiner[i]);
+      }
     }
+
     return result;
   }
 
@@ -105,19 +106,32 @@ public:
     requires FullLattice<L>
 #endif
   {
+    assert(meetee.size() == size);
+    assert(meeter.size() == size);
     bool result = false;
-    for (size_t i = 0; i < N; ++i) {
-      result |= lattice.meet(meetee[i], meeter[i]);
+    for (size_t i = 0; i < size; ++i) {
+      if constexpr (std::is_same_v<typename L::Element, bool>) {
+        // The vector<bool> specialization does not expose references to the
+        // individual bools because they might be in a bitmap, so we need a
+        // workaround.
+        bool e = meetee[i];
+        if (lattice.meet(e, meeter[i])) {
+          meetee[i] = e;
+          result = true;
+        }
+      } else {
+        result |= lattice.meet(meetee[i], meeter[i]);
+      }
     }
     return result;
   }
 };
 
 #if __cplusplus >= 202002L
-static_assert(FullLattice<Array<Bool, 1>>);
-static_assert(Lattice<Array<Flat<bool>, 1>>);
+static_assert(FullLattice<Vector<Bool>>);
+static_assert(Lattice<Vector<Flat<bool>>>);
 #endif
 
 } // namespace wasm::analysis
 
-#endif // wasm_analysis_lattices_array_h
+#endif // wasm_analysis_lattices_vector_h

@@ -28,6 +28,7 @@
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
 #include "analysis/lattices/stack.h"
+#include "analysis/lattices/vector.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/reaching-definitions-transfer-function.h"
 #include "analysis/transfer-function.h"
@@ -151,33 +152,38 @@ static_assert(Lattice<RandomLattice>);
 using ArrayFullLattice = analysis::Array<RandomFullLattice, 2>;
 using ArrayLattice = analysis::Array<RandomLattice, 2>;
 
-struct RandomFullLattice::L
-  : std::variant<Bool, UInt32, Inverted<RandomFullLattice>, ArrayFullLattice> {
-};
+struct RandomFullLattice::L : std::variant<Bool,
+                                           UInt32,
+                                           Inverted<RandomFullLattice>,
+                                           ArrayFullLattice,
+                                           Vector<RandomFullLattice>> {};
 
 struct RandomFullLattice::ElementImpl
   : std::variant<typename Bool::Element,
                  typename UInt32::Element,
                  typename Inverted<RandomFullLattice>::Element,
-                 typename ArrayFullLattice::Element> {};
+                 typename ArrayFullLattice::Element,
+                 typename Vector<RandomFullLattice>::Element> {};
 
 struct RandomLattice::L : std::variant<RandomFullLattice,
                                        Flat<uint32_t>,
                                        Lift<RandomLattice>,
-                                       ArrayLattice> {};
+                                       ArrayLattice,
+                                       Vector<RandomLattice>> {};
 
 struct RandomLattice::ElementImpl
   : std::variant<typename RandomFullLattice::Element,
                  typename Flat<uint32_t>::Element,
                  typename Lift<RandomLattice>::Element,
-                 typename ArrayLattice::Element> {};
+                 typename ArrayLattice::Element,
+                 typename Vector<RandomLattice>::Element> {};
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
                                      std::optional<uint32_t> maybePick)
   : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = maybePick ? *maybePick : rand.upTo(4);
+  uint32_t pick = maybePick ? *maybePick : rand.upTo(5);
   switch (pick) {
     case 0:
       lattice = std::make_unique<L>(L{Bool{}});
@@ -193,29 +199,38 @@ RandomFullLattice::RandomFullLattice(Random& rand,
       lattice = std::make_unique<L>(
         L{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
       return;
+    case 4:
+      lattice = std::make_unique<L>(
+        L{Vector{RandomFullLattice{rand, depth + 1}, rand.upTo(4)}});
+      return;
   }
   WASM_UNREACHABLE("unexpected pick");
 }
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(7);
+  uint32_t pick = rand.upTo(9);
   switch (pick) {
     case 0:
     case 1:
     case 2:
     case 3:
+    case 4:
       lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
       return;
-    case 4:
+    case 5:
       lattice = std::make_unique<L>(L{Flat<uint32_t>{}});
       return;
-    case 5:
+    case 6:
       lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
       return;
-    case 6:
+    case 7:
       lattice =
         std::make_unique<L>(L{ArrayLattice{RandomLattice{rand, depth + 1}}});
+      return;
+    case 8:
+      lattice = std::make_unique<L>(
+        L{Vector{RandomLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -234,6 +249,14 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   if (const auto* l = std::get_if<ArrayFullLattice>(lattice.get())) {
     return ElementImpl{typename ArrayFullLattice::Element{
       l->lattice.makeElement(), l->lattice.makeElement()}};
+  }
+  if (const auto* l = std::get_if<Vector<RandomFullLattice>>(lattice.get())) {
+    std::vector<typename RandomFullLattice::Element> elem;
+    elem.reserve(l->size);
+    for (size_t i = 0; i < l->size; ++i) {
+      elem.push_back(l->lattice.makeElement());
+    }
+    return ElementImpl{std::move(elem)};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -260,6 +283,14 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
   if (const auto* l = std::get_if<ArrayLattice>(lattice.get())) {
     return ElementImpl{typename ArrayLattice::Element{
       l->lattice.makeElement(), l->lattice.makeElement()}};
+  }
+  if (const auto* l = std::get_if<Vector<RandomLattice>>(lattice.get())) {
+    std::vector<typename RandomLattice::Element> elem;
+    elem.reserve(l->size);
+    for (size_t i = 0; i < l->size; ++i) {
+      elem.push_back(l->lattice.makeElement());
+    }
+    return ElementImpl{std::move(elem)};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -293,6 +324,17 @@ void printFullElement(std::ostream& os,
     printFullElement(os, e->back(), depth + 1);
     indent(os, depth);
     os << "]\n";
+  } else if (const auto* vec =
+               std::get_if<typename Vector<RandomFullLattice>::Element>(
+                 &*elem)) {
+    os << "Vector[\n";
+    for (const auto& e : *vec) {
+      printFullElement(os, e, depth + 1);
+    }
+    indent(os, depth);
+    os << "]\n";
+  } else {
+    WASM_UNREACHABLE("unexpected element");
   }
 }
 
@@ -332,6 +374,16 @@ void printElement(std::ostream& os,
     printElement(os, e->back(), depth + 1);
     indent(os, depth);
     os << ")\n";
+  } else if (const auto* vec =
+               std::get_if<typename Vector<RandomLattice>::Element>(&*elem)) {
+    os << "Vector[\n";
+    for (const auto& e : *vec) {
+      printElement(os, e, depth + 1);
+    }
+    indent(os, depth);
+    os << "]\n";
+  } else {
+    WASM_UNREACHABLE("unexpected element");
   }
 }
 
