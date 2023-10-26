@@ -44,7 +44,6 @@
 #include <atomic>
 
 #include "cfg/domtree.h"
-#include "ir/effects.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -203,9 +202,6 @@ struct BlockInfo {
   // We track relevant expressions, which are call to "once" functions, and
   // writes to "once" globals.
   std::vector<Expression*> exprs;
-
-  // Whether this basic block may exit back to the caller.
-  bool mayExit = false;
 };
 
 // Performs optimization in all functions. This reads onceGlobalsSetInFuncs in
@@ -222,24 +218,13 @@ struct BlockInfo {
 // though).
 struct Optimizer
   : public WalkerPass<
-      CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>> {
+      CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<Optimizer>(optInfo);
-  }
-
-  void visitExpression(Expression* curr) {
-    if (currBasicBlock) {
-      ShallowEffectAnalyzer effects(getPassOptions(), *getModule(), curr);
-      if (effects.branchesOut || effects.throws()) {
-        // This may exit to the caller, either by branching out (return or
-        // call_return, etc.) or by throwing.
-        currBasicBlock->contents.mayExit = true;
-      }
-    }
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -252,15 +237,11 @@ struct Optimizer
     if (currBasicBlock) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
-
-    // This may be a call_return, which is handled in a general way in the
-    // generic code path.
-    visitExpression(curr);
   }
 
   void doWalkFunction(Function* func) {
     using Parent = WalkerPass<
-      CFGWalker<Optimizer, UnifiedExpressionVisitor<Optimizer>, BlockInfo>>;
+      CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
 
     // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
@@ -352,64 +333,30 @@ struct Optimizer
       }
     }
 
-    // As a result of the above optimization, we can now figure out which "once"
-    // globals are definitely written in this function before it exits, which is
-    // the intersection of globals set in all exit paths.
-    std::optional<std::unordered_set<Name>> intersection;
-    auto intersect = [&](std::unordered_set<Name>& globals) {
-      if (!intersection) {
-        // This is the first thing to intersect. Just copy the values (we can
-        // move them as nothing else will read |onceGlobalsWrittenVec| once we
-        // are done).
-        intersection = std::move(globals);
-      } else {
-        // This is a later thing.
-        auto iter = intersection->begin();
-        while (iter != intersection->end()) {
-          auto global = *iter;
-          auto next = iter;
-          next++;
-          if (!globals.count(global)) {
-            intersection->erase(iter);
-          }
-          iter = next;
-        }
-      }
-    };
-    for (Index i = 0; i < basicBlocks.size(); i++) {
-      auto* block = basicBlocks[i].get();
-      if (i == 1 && optInfo.onceFuncs.at(func->name).is()) {
-        // This is the second basic block in a "once" function, that is, it is
-        // the body of the if in the pattern:
-        //
-        //  function foo() {
-        //    if (foo$once) return;
-        //
-        // We can ignore this basic block entirely because of what we know about
-        // "once" functions: the first time the function is reached we do not
-        // return early, but rather we continue onwards; and the second time the
-        // function is reached we exit early but only because we have still set
-        // whatever globals we set later down. That is, a "once" function will
-        // definitely execute the code after the return, either in the current
-        // call or in a previous call, and that is enough to ensure that any
-        // "once" globals set later down are definitely set in later calls.
-        continue;
-      }
-
-      // We need to consider all exits here: Those that may return due to an
-      // instruction (like return or call_return) and also the exit block, which
-      // returns implicitly at the end of the function.
-      if (block->contents.mayExit || block == exit) {
-        intersect(onceGlobalsWrittenVec[i]);
-      }
+    // As a result of the above optimization, we know which "once" globals are
+    // definitely written in this function. Regardless of whether this is a
+    // "once" function itself, that set of globals can be used in further
+    // optimizations, as any call to this function must set those.
+    // TODO: Aside from the entry block, we could intersect all the exit blocks.
+    Index entryBlockIndex = 0;
+    if (optInfo.onceFuncs.at(func->name).is()) {
+      // This is a "once" function, that is, it has this shape:
+      //
+      //  function foo() {
+      //    if (foo$once) return;
+      //    CODE
+      //  }
+      //
+      // The effective entry block here is "CODE", because we know that CODE
+      // will have executed before foo() returns: either this is the first time
+      // this "once" function is called, so we get to CODE, or it is a later
+      // call, in which case CODE was executed before; either way, the semantics
+      // of a "once" function is that CODE will have executed when the function
+      // exits.
+      entryBlockIndex = 2;
     }
-    if (exit) {
-      // There is also an exit block (that flows out of the function, without an
-      // explicit return), which we must handle.
-    }
-    if (intersection) {
-      optInfo.newOnceGlobalsSetInFuncs[func->name] = std::move(*intersection);
-    }
+    optInfo.newOnceGlobalsSetInFuncs[func->name] =
+      std::move(onceGlobalsWrittenVec[entryBlockIndex]);
   }
 
 private:
