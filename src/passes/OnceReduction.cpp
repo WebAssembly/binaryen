@@ -217,8 +217,7 @@ struct BlockInfo {
 // optimization, but that would require more code - it might be more efficient,
 // though).
 struct Optimizer
-  : public WalkerPass<
-      CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
+  : public WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
@@ -240,8 +239,8 @@ struct Optimizer
   }
 
   void doWalkFunction(Function* func) {
-    using Parent = WalkerPass<
-      CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
+    using Parent =
+      WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
 
     // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
