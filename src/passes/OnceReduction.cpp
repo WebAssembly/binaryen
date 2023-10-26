@@ -337,26 +337,50 @@ struct Optimizer
     // "once" function itself, that set of globals can be used in further
     // optimizations, as any call to this function must set those.
     // TODO: Aside from the entry block, we could intersect all the exit blocks.
-    Index entryBlockIndex = 0;
+    optInfo.newOnceGlobalsSetInFuncs[func->name] =
+      std::move(onceGlobalsWrittenVec[0]);
+
     if (optInfo.onceFuncs.at(func->name).is()) {
       // This is a "once" function, that is, it has this shape:
       //
       //  function foo() {
       //    if (foo$once) return;
+      //    foo$once = 1;
       //    CODE
       //  }
       //
-      // The effective entry block here is "CODE", because we know that CODE
-      // will have executed before foo() returns: either this is the first time
-      // this "once" function is called, so we get to CODE, or it is a later
-      // call, in which case CODE was executed before; either way, the semantics
-      // of a "once" function is that CODE will have executed when the function
-      // exits.
-      entryBlockIndex = 2;
+      // If in addition CODE = bar() then we can optimize further here: this
+      // function does nothing but set the global and forward the call onwards,
+      // which is simple to reason about. To see why, consider that it is very
+      // different from this situation:
+      //
+      //  function foo() {
+      //    if (foo$once) return;
+      //    foo$once = 1;
+      //    bar();
+      //    baz();
+      //  }
+      //
+      // Now there are two functions there, but we cannot assume that both have
+      // been called by the time that foo exits: imagine that we called bar
+      // which calls foo, that is, bar is on the stack when we get to foo; then
+      // if bar is an "only" function as well, it will early-exit (since it set
+      // its global), and any setting of baz in its body has not yet been
+      // reached.
+      //
+      // In comparison, when there is just one call at the end, then we know
+      // that if it is "once" function then its global will be set - we can't
+      // tell about anything in its body, but at least the global is known
+      // (since the global is set right at the top of such a function).
+      auto& list = func->body->cast<Block>()->list;
+      if (list.size() == 3) {
+        if (auto* call = list[2]->dynCast<Call>()) {
+          if (optInfo.onceFuncs.at(call->target).is()) {
+            optInfo.newOnceGlobalsSetInFuncs[func->name].insert(call->target);
+          }
+        }
+      }
     }
-    assert(entryBlockIndex < onceGlobalsWrittenVec.size());
-    optInfo.newOnceGlobalsSetInFuncs[func->name] =
-      std::move(onceGlobalsWrittenVec[entryBlockIndex]);
   }
 
 private:

@@ -1701,6 +1701,7 @@
     )
     (global.set $once.1 (i32.const 1))
     (call $once)
+    ;; As above, by symmetry, we cannot remove this second call.
     (call $once.2)
     (call $import
       (i32.const 1)
@@ -1716,7 +1717,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $once)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT:  (call $import
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
@@ -1728,6 +1729,7 @@
     )
     (global.set $once.2 (i32.const 1))
     (call $once)
+    ;; As above, by symmetry, we cannot remove this second call.
     (call $once.1)
     (call $import
       (i32.const 2)
