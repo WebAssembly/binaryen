@@ -6,10 +6,10 @@
 
 ;; Create profiles
 
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.bar.prof bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.both.prof foo bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.none.prof
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.bar.prof bar
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.both.prof foo bar
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.none.prof
 
 ;; Create profile-guided splits
 
@@ -33,10 +33,10 @@
 
 ;; Create profiles
 
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.bar.prof bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.both.prof foo bar
-;; RUN: node --experimental-wasm-threads %S/call_exports.mjs %t.instrumented.wasm %t.none.prof
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.foo.prof foo
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.bar.prof bar
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.both.prof foo bar
+;; RUN: node %S/call_exports.mjs %t.instrumented.wasm %t.none.prof
 
 ;; Create profile-guided splits
 
