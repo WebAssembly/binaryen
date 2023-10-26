@@ -1620,6 +1620,121 @@
   )
 )
 
+;; Test a dangerous triple loop.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (import "env" "foo" (func $import (type $1) (param i32)))
+  (import "env" "foo" (func $import (param i32)))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $once.1 (mut i32) (i32.const 0))
+  (global $once.1 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $once.2 (mut i32) (i32.const 0))
+  (global $once.2 (mut i32) (i32.const 0))
+
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (call $once.2)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    (call $once.1)
+    ;; We cannot remove this second call. While $once.1 calls $once.2, we may
+    ;; be in this situation: a call started at $once.1, which calls $once
+    ;; (here) which then calls $once.1 which immediately exits (as the global
+    ;; has been set for it), and then we call $once.2 from here, which calls
+    ;; the other two that immediately exit as well, and then we call the import
+    ;; from there with value 2. Then we call it from here with value 0, and
+    ;; then we return to the caller, $once.1, which calls with 1, so we have
+    ;; 2, 0, 1. If we remove the call here to $once.2 then the order would be
+    ;; 0, 2, 1.
+    ;;
+    ;; The problem is that the setting of the global happens at the very start
+    ;; of the once function, but that does not mean we have executed the body
+    ;; yet, and without executing it, we cannot infer anything about other
+    ;; globals.
+    (call $once.2)
+    (call $import
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $once.1 (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once.1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once.1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once.2)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once.1
+    (if
+      (global.get $once.1)
+      (return)
+    )
+    (global.set $once.1 (i32.const 1))
+    (call $once)
+    (call $once.2)
+    (call $import
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $once.2 (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once.2)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once.2
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $import
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once.2
+    (if
+      (global.get $once.2)
+      (return)
+    )
+    (global.set $once.2 (i32.const 1))
+    (call $once)
+    (call $once.1)
+    (call $import
+      (i32.const 2)
+    )
+  )
+)
+
 ;; Test a self-loop.
 (module
   ;; CHECK:      (type $0 (func))
