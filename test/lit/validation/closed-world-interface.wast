@@ -34,7 +34,7 @@
     ;; entire rec group is allowed due to the first.
     (type $partial-pair-1 (func))
     ;; Test a non-function type.
-    (type $partial-pair-1 (struct))
+    (type $partial-pair-2 (struct))
   )
 
   (type $private (func (param v128)))
