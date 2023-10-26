@@ -1584,3 +1584,66 @@
     (call $do-once)
   )
 )
+
+;; As above, but now $do-once has some internal structure.
+(module
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (import "a" "b" (func $import (type $1) (result i32)))
+  (import "a" "b" (func $import (result i32)))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+  )
+
+  ;; CHECK:      (func $do-once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $do-once
+    ;; $once is called in all places we exit from the function, so when we
+    ;; exit we know it has been called, and we can optimize in $caller.
+    (if
+      (call $import)
+      (block
+        (call $once)
+        (return)
+      )
+    )
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $do-once)
+    (call $once) ;; XXX debug
+  )
+)
