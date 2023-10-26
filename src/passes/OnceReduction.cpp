@@ -355,6 +355,7 @@ struct Optimizer
       // exits.
       entryBlockIndex = 2;
     }
+    assert(entryBlockIndex < onceGlobalsWrittenVec.size());
     optInfo.newOnceGlobalsSetInFuncs[func->name] =
       std::move(onceGlobalsWrittenVec[entryBlockIndex]);
   }
