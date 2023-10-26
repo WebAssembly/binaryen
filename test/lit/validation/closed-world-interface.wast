@@ -28,8 +28,13 @@
     (type $exported-pair-1 (func (param (ref $exported-pair-0))))
   )
   (rec
+    ;; This is on an exported function.
     (type $partial-pair-0 (func))
+    ;; The latter type types are not public, but allowed to be because the
+    ;; entire rec group is allowed due to the first.
     (type $partial-pair-1 (func))
+    ;; Test a non-function type.
+    (type $partial-pair-1 (struct))
   )
 
   (type $private (func (param v128)))
