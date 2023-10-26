@@ -68,6 +68,7 @@ public:
       return EQUAL;
     }
   }
+
   bool join(Element& self, const Element& other) const noexcept {
     switch (compare(self, other)) {
       case LESS:

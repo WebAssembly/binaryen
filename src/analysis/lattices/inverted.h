@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "../lattice.h"
+#include "bool.h"
 
 namespace wasm::analysis {
 
@@ -43,6 +44,10 @@ template<FullLattice L> struct Inverted {
     return lattice.join(self, other);
   }
 };
+
+#if __cplusplus >= 202002L
+static_assert(Lattice<Inverted<Bool>>);
+#endif
 
 } // namespace wasm::analysis
 
