@@ -1466,16 +1466,14 @@
   ;; CHECK-NEXT:  (global.set $once.1
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $once.1
-    ;; Another minimal "once" function, which calls the first, forming a loop.
+    ;; Another minimal "once" function.
     (if
       (global.get $once.1)
       (return)
     )
     (global.set $once.1 (i32.const 1))
-    (call $once)
   )
 
   ;; CHECK:      (func $caller (type $0)
@@ -1511,10 +1509,11 @@
 
   ;; CHECK:      (func $caller$3 (type $0)
   ;; CHECK-NEXT:  (call $once.1)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller$3
-    ;; Reverse of the above; again, we can nop the second.
+    ;; Reverse of the above; now we cannot optimize, as $once.1 does not call
+    ;; $once.
     (call $once.1)
     (call $once)
   )
@@ -1531,6 +1530,97 @@
   )
 )
 
+;; Test loops between "once" functions.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $once.1 (mut i32) (i32.const 0))
+  (global $once.1 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    (call $once.1)
+  )
+
+  ;; CHECK:      (func $once.1 (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once.1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once.1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $once.1
+    (if
+      (global.get $once.1)
+      (return)
+    )
+    (global.set $once.1 (i32.const 1))
+    (call $once) ;; This call was added.
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; The second call will become a nop.
+    (call $once)
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller$1 (type $0)
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller$1
+    ;; Again, the second becomes a nop.
+    (call $once.1)
+    (call $once.1)
+  )
+
+  ;; CHECK:      (func $caller$2 (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller$2
+    ;; Again, the second becomes a nop.
+    (call $once)
+    (call $once.1)
+  )
+
+  ;; CHECK:      (func $caller$3 (type $0)
+  ;; CHECK-NEXT:  (call $once.1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller$3
+    ;; An improvement compared to the previous module, now we can optimize the
+    ;; second one.
+    (call $once.1)
+    (call $once)
+  )
+)
+
+;; Calls from non-"once" functions to "once" functions.
 (module
   ;; CHECK:      (type $0 (func))
 
