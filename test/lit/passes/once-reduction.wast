@@ -1620,7 +1620,7 @@
   )
 )
 
-;; Test a self-loop. Nothing new can be optimized here, but we should not error.
+;; Test a self-loop.
 (module
   ;; CHECK:      (type $0 (func))
 
