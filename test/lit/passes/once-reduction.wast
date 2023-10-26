@@ -1620,6 +1620,47 @@
   )
 )
 
+;; Test a self-loop. Nothing new can be optimized here, but we should not error.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    ;; A recursive call. This of course does not recurse infinitely since the
+    ;; next call early exits, as the global is set, and for that reason we can
+    ;; optimize this to a nop.
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; The second call will become a nop.
+    (call $once)
+    (call $once)
+  )
+)
+
 ;; Calls from non-"once" functions to "once" functions.
 (module
   ;; CHECK:      (type $0 (func))
