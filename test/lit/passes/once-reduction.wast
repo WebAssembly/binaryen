@@ -1778,3 +1778,48 @@
     (call $do-once)
   )
 )
+
+;; Calls from "once" functions to non-"once" functions.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $once
+    ;; We should not remove this early-exit logic.
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    ;; A call to a non-"once" function.
+    (call $other)
+  )
+
+  (func $other
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; There is nothing to optimize here.
+    (call $other)
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller2 (type $0)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT: )
+  (func $caller2
+    ;; Reverse order of the above. Also nothing to do.
+    (call $once)
+    (call $other)
+  )
+)
