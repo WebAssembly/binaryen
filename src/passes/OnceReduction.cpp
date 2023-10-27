@@ -344,38 +344,70 @@ struct Optimizer
       // This is a "once" function, that is, it has this shape:
       //
       //  function foo() {
-      //    if (foo$once) return;
+      //    if (!foo$once) return;
       //    foo$once = 1;
       //    CODE
       //  }
       //
-      // If in addition CODE = bar() then we can optimize further here: this
-      // function does nothing but set the global and forward the call onwards,
-      // which is simple to reason about. To see why, consider that it is very
-      // different from this situation:
+      // If in addition CODE = bar() (a call to another function, and nothing
+      // else) then we can potentially optimize further here. We know that this
+      // function has either been called before, in which case it exits, or it
+      // has not, in which case it sets the global and calls bar. We can
+      // therefore assume that bar has been entered before foo exits, because
+      // there are only two cases:
       //
-      //  function foo() {
-      //    if (foo$once) return;
-      //    foo$once = 1;
-      //    bar();
-      //    baz();
+      //  1. bar is on the stack, that is, bar called foo. Then bar has already
+      //     been entered even before we are reached.
+      //  2. bar is not on the stack. In this case, if foo exits immediately
+      //     then we executed the call to bar before; and if not, then we enter
+      //     bar from here.
+      //
+      // Note that we cannot assume bar will have *fully executed* before we do;
+      // only that it was entered. That is because of the first case, where bar
+      // is on the stack. Imagine that bar is also a "once" function, then this
+      // happens:
+      //
+      //  a. bar is called.
+      //  b. bar sets its global to 1.
+      //  c. bar calls foo
+      //  d. foo calls bar, which immediately exits (since bar's global is 1).
+      //
+      // When foo exits after step (d) we are in a situation where foo has
+      // exited and bar has only been entered; it also early-exited, but it did
+      // not execute its body. The distinction between whether it was only
+      // entered or whether it executed fully can matter in situations like
+      // this:
+      //
+      //  function A() {
+      //    if (!A$once) return;
+      //    A$once = 1;
+      //    B(); // this calls A and C
+      //    C(); // can this be removed?
       //  }
       //
-      // Now there are two functions there, but we cannot assume that both have
-      // been called by the time that any call to foo exits: imagine that we called bar
-      // which calls foo, that is, bar is on the stack when we get to foo; then
-      // if bar is an "only" function as well, it will early-exit (since it set
-      // its global), and any setting of baz in its body has not yet been
-      // reached.
+      // Imagine that we called B which calls A. Inside A, the call to B will
+      // exit immediately (as shown in steps a-d above), and back in A we will
+      // continue to call C. Naively, we might think that we have a call to B
+      // here, and B calls C, so we can assume C has been called, and can remove
+      // the call to C from A, but that is false: B has been entered, and then
+      // early-exited, but it has not had a chance to fully execute yet, so its
+      // call to C has not happened. If we removed the call to C here, we could
+      // end up with a noticeable change to runtime execution, as then C would
+      // end up called from B after A returns to its caller.
       //
-      // In comparison, when there is just one call at the end, then we know
-      // that if it is "once" function then its global will be set - we can't
-      // tell about anything in its body, but at least the global is known
-      // (since the global is set right at the top of such a function).
+      // More cases are optimizable here than what we handle, which is just a
+      // "once" function that calls another and does nothing else at all, but
+      // this is a common case in Java-style code, and anything more would add
+      // significant complexity, as the paragraphs above show.
       auto& list = func->body->cast<Block>()->list;
       if (list.size() == 3) {
         if (auto* call = list[2]->dynCast<Call>()) {
           if (optInfo.onceFuncs.at(call->target).is()) {
+            // This other "once" global will be entered before we exit, so we
+            // can assume it will be set. Due to the concerns above we cannot
+            // assume anything about that function fully executing, only that it
+            // was entered (and if it is entered, the global will be set, at
+            // least).
             optInfo.newOnceGlobalsSetInFuncs[func->name].insert(call->target);
           }
         }
