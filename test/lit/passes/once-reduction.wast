@@ -1503,18 +1503,25 @@
   )
 
   ;; CHECK:      (func $once.1 (type $0)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once.1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once.1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $once.1
+    ;; This early-exit logic looks removable, since we call another "once"
+    ;; function. However, we remove that function's early-exit logic, so we
+    ;; cannot do so here (it would risk an infinite loop).
     (if
       (global.get $once.1)
       (return)
     )
     (global.set $once.1 (i32.const 1))
     (call $once) ;; This call was added.
-    ;; XXX infinite recursion!!1
   )
 
   ;; CHECK:      (func $caller (type $0)

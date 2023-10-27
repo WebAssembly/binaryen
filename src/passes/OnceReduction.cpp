@@ -523,8 +523,15 @@ struct OnceReduction : public Pass {
   }
 
   void optimizeOnceBodies(const OptInfo& optInfo, Module* module) {
-    for (const auto& [func, global] : optInfo.onceFuncs) {
-      if (!global.is()) {
+    // Track which "once" functions we remove the exit logic from, as we cannot
+    // create loops without exit logic, see below.
+    std::unordered_set<Name> removedExitLogic;
+
+    // Iterate deterministically on functions, as the order matters (since we
+    // make decisions based on previous actions; see below).
+    for (auto& func : module->functions) {
+      if (!optInfo.onceFuncs.at(func->name).is()) {
+        // This is not a "once" function.
         continue;
       }
 
@@ -538,7 +545,7 @@ struct OnceReduction : public Pass {
       //  }
       //
       // And PAYLOAD is simple.
-      auto* body = module->getFunction(func)->body;
+      auto* body = func->body;
       auto& list = body->cast<Block>()->list;
       if (list.size() == 2) {
         // No payload at all; we don't need the early-exit code then.
@@ -582,8 +589,19 @@ struct OnceReduction : public Pass {
           //
           // Thus, the behavior is the same, and we can remove the early-exit
           // lines.
-          ExpressionManipulator::nop(list[0]);
-          ExpressionManipulator::nop(list[1]);
+          //
+          // We must be careful of loops, however: If A calls B and B calls A,
+          // then at least one must keep the early-exit logic, or else they
+          // would infinitely loop if one is called. To avoid that, we track
+          // which functions we remove the early-exit logic from, and never
+          // remove the logic if we are calling such a function. (As a result,
+          // the order of iteration matters here, and so the outer loop in this
+          // function must be deterministic.)
+          if (!removedExitLogic.count(call->target)) {
+            ExpressionManipulator::nop(list[0]);
+            ExpressionManipulator::nop(list[1]);
+            removedExitLogic.insert(func->name);
+          }
         }
       }
     }
