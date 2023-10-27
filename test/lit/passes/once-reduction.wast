@@ -8,13 +8,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     ;; A minimal "once" function.
@@ -476,13 +470,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -599,13 +587,7 @@
   (global $once (mut i32) (global.get $import))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -900,13 +882,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -940,13 +916,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -1081,13 +1051,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -1287,13 +1251,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -1439,13 +1397,8 @@
   (global $once.1 (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $once
@@ -1459,13 +1412,7 @@
   )
 
   ;; CHECK:      (func $once.1 (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once.1)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once.1
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once.1
     ;; Another minimal "once" function.
@@ -1541,13 +1488,8 @@
   (global $once.1 (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $once
@@ -1560,13 +1502,8 @@
   )
 
   ;; CHECK:      (func $once.1 (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once.1)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once.1
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $once.1
@@ -1786,13 +1723,7 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
     ;; A minimal "once" function.

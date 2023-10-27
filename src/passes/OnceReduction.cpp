@@ -513,7 +513,79 @@ struct OnceReduction : public Pass {
         lastOnceGlobalsSet = currOnceGlobalsSet;
         continue;
       }
-      return;
+      break;
+    }
+
+    // Finally, apply some optimizations to "once" functions themselves. We do
+    // this at the end to not modify them as we go, which could confuse the main
+    // part of this pass right before us.
+    optimizeOnceBodies(optInfo, module);
+  }
+
+  void optimizeOnceBodies(const OptInfo& optInfo, Module* module) {
+    for (const auto& [func, global] : optInfo.onceFuncs) {
+      if (!global.is()) {
+        continue;
+      }
+
+      // We optimize the case where the payload is trivial, that is where we
+      // have this:
+      //
+      //  function foo() {
+      //    if (!foo$once) return;   //  two lines of
+      //    foo$once = 1;            // early-exit code
+      //    PAYLOAD
+      //  }
+      //
+      // And PAYLOAD is simple.
+      auto* body = module->getFunction(func)->body;
+      auto& list = body->cast<Block>()->list;
+      if (list.size() == 2) {
+        // No payload at all; we don't need the early-exit code then.
+        ExpressionManipulator::nop(body);
+        continue;
+      }
+      if (list.size() != 3) {
+        // Something non-trivial; too many items for us to consider.
+        continue;
+      }
+      auto* payload = list[2];
+      if (auto* call = payload->dynCast<Call>()) {
+        if (optInfo.onceFuncs.at(call->target).is()) {
+          // All this "once" function does is call another. We do not need the
+          // early-exit logic in this one, then, because of the following logic.
+          // We are comparing these forms:
+          //
+          //  // BEFORE
+          //  function foo() {
+          //    if (!foo$once) return;   //  two lines of
+          //    foo$once = 1;            // early-exit code
+          //    bar();
+          //  }
+          //
+          // to
+          //
+          //  // AFTER
+          //  function foo() {
+          //    bar();
+          //  }
+          //
+          // The question is whether different behavior can be observed between
+          // those two. There are two cases, when we enter foo:
+          //
+          //  1. foo has been called before. Then we early-exit in BEFORE, and
+          //     in AFTER we call bar which will early-exit (since foo was
+          //     called, which means bar was at least entered, which set its
+          //     global).
+          //  2. foo has never been called before. In this case in BEFORE we set
+          //     the global and call bar, and in AFTER we also call bar.
+          //
+          // Thus, the behavior is the same, and we can remove the early-exit
+          // lines.
+          ExpressionManipulator::nop(list[0]);
+          ExpressionManipulator::nop(list[1]);
+        }
+      }
     }
   }
 };
