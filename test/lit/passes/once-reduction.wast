@@ -11,7 +11,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once
-    ;; A minimal "once" function.
+    ;; A minimal "once" function. It is so trivial we can remove its body.
     (if
       (global.get $once)
       (return)
@@ -1402,7 +1402,8 @@
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $once
-    ;; A minimal "once" function, which calls another.
+    ;; A minimal "once" function, which calls another. We can remove the first
+    ;; two lines here (the early-exit logic).
     (if
       (global.get $once)
       (return)
@@ -1513,6 +1514,7 @@
     )
     (global.set $once.1 (i32.const 1))
     (call $once) ;; This call was added.
+    ;; XXX infinite recursion!!1
   )
 
   ;; CHECK:      (func $caller (type $0)
