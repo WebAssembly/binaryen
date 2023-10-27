@@ -520,7 +520,7 @@ struct OnceReduction : public Pass {
           //     global; bar might be on the stack, if it called foo, so it has
           //     not necessarily fully executed - this is a tricky situation to
           //     handle in general, like recursive imports of modules in various
-          //     languages - but we do not bar has been *entered*, which means
+          //     languages - but we do know bar has been *entered*, which means
           //     the global was set).
           //  2. foo has never been called before. In this case in BEFORE we set
           //     the global and call bar, and in AFTER we also call bar.
