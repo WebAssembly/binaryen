@@ -1416,7 +1416,8 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $once.1
-    ;; Another minimal "once" function.
+    ;; Another minimal "once" function. It has no payload and we can empty it
+    ;; out.
     (if
       (global.get $once.1)
       (return)
@@ -1449,8 +1450,10 @@
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $caller$2
-    ;; A mix of calls. We can still remove the second, because we know the first
-    ;; will call it.
+    ;; A mix of calls. We can remove the second in principle, because we know
+    ;; the first will call it, but we leave that for later optimizations
+    ;; ($once turns into a call to $once.1 that inlining will remove, and then
+    ;; we'll have two identical calls here).
     (call $once)
     (call $once.1)
   )
@@ -1460,8 +1463,8 @@
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller$3
-    ;; Reverse of the above; now we cannot optimize, as $once.1 does not call
-    ;; $once.
+    ;; Reverse of the above; again we cannot optimize (as $once.1 does not call
+    ;; $once).
     (call $once.1)
     (call $once)
   )
@@ -1494,6 +1497,8 @@
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $once
+    ;; This "once" function calls another, and so we can remove the early-exit
+    ;; logic.
     (if
       (global.get $once)
       (return)
@@ -1549,7 +1554,8 @@
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $caller$2
-    ;; Again, the second becomes a nop.
+    ;; The second could become a nop, but we leave that for later optimizations
+    ;; (after inlining the call to $once becomes a call to $once.1).
     (call $once)
     (call $once.1)
   )
@@ -1559,8 +1565,7 @@
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller$3
-    ;; An improvement compared to the previous module, now we can optimize the
-    ;; second one.
+    ;; Reverse order, same result (no optimization).
     (call $once.1)
     (call $once)
   )
