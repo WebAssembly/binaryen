@@ -3734,13 +3734,23 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
 
 static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
   // Error if there are any publicly exposed heap types beyond the types of
-  // publicly exposed functions.
-  std::unordered_set<HeapType> publicFuncTypes;
-  ModuleUtils::iterImportedFunctions(
-    module, [&](Function* func) { publicFuncTypes.insert(func->type); });
+  // publicly exposed functions. Note that we must include all types in the rec
+  // groups that are used, as if a type if public then all types in its rec
+  // group are as well.
+  std::unordered_set<RecGroup> publicRecGroups;
+  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
+    publicRecGroups.insert(func->type.getRecGroup());
+  });
   for (auto& ex : module.exports) {
     if (ex->kind == ExternalKind::Function) {
-      publicFuncTypes.insert(module.getFunction(ex->value)->type);
+      publicRecGroups.insert(module.getFunction(ex->value)->type.getRecGroup());
+    }
+  }
+
+  std::unordered_set<HeapType> publicTypes;
+  for (auto& group : publicRecGroups) {
+    for (auto type : group) {
+      publicTypes.insert(type);
     }
   }
 
@@ -3749,7 +3759,7 @@ static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
   auto ignorable = getIgnorablePublicTypes();
 
   for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
-    if (!publicFuncTypes.count(type) && !ignorable.count(type)) {
+    if (!publicTypes.count(type) && !ignorable.count(type)) {
       auto name = type.toString();
       if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
         name = it->second.name.toString();
