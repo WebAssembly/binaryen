@@ -494,8 +494,8 @@ struct OnceReduction : public Pass {
       if (auto* call = payload->dynCast<Call>()) {
         if (optInfo.onceFuncs.at(call->target).is()) {
           // All this "once" function does is call another. We do not need the
-          // early-exit logic in this one, then, because of the following logic.
-          // We are comparing these forms:
+          // early-exit logic in this one, then, because of the following
+          // reasoning. We are comparing these forms:
           //
           //  // BEFORE
           //  function foo() {
@@ -517,7 +517,11 @@ struct OnceReduction : public Pass {
           //  1. foo has been called before. Then we early-exit in BEFORE, and
           //     in AFTER we call bar which will early-exit (since foo was
           //     called, which means bar was at least entered, which set its
-          //     global).
+          //     global; bar might be on the stack, if it called up, so it has
+          //     not necessarily fully executed - this is a tricky situation to
+          //     handle in general, like recursive imports of modules in various
+          //     languages - but we do not bar has been *entered*, which means
+          //     the global was set).
           //  2. foo has never been called before. In this case in BEFORE we set
           //     the global and call bar, and in AFTER we also call bar.
           //
