@@ -362,7 +362,7 @@ struct Optimizer
       //  }
       //
       // Now there are two functions there, but we cannot assume that both have
-      // been called by the time that foo exits: imagine that we called bar
+      // been called by the time that any call to foo exits: imagine that we called bar
       // which calls foo, that is, bar is on the stack when we get to foo; then
       // if bar is an "only" function as well, it will early-exit (since it set
       // its global), and any setting of baz in its body has not yet been
