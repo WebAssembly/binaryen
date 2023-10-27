@@ -474,6 +474,15 @@ struct OnceReduction : public Pass {
       auto& list = body->cast<Block>()->list;
       if (list.size() == 2) {
         // No payload at all; we don't need the early-exit code then.
+        //
+        // Note that this overlaps with SimplifyGlobals' optimization on
+        // "read-only-to-write" globals: with no payload, this global is really
+        // only read in order to write itself, and nothing more, so there is no
+        // observable behavior we need to preserve, and the global can be
+        // removed. We might as well handle this case here as well since we've
+        // done all the work up to here, and it is just one line to implement
+        // the nopping out. (And doing so here can accelerate the optimization
+        // pipeline by not needing to wait until the next SimplifyGlobals.)
         ExpressionManipulator::nop(body);
         continue;
       }
