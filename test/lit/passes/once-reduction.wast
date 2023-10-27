@@ -1446,7 +1446,7 @@
 
   ;; CHECK:      (func $caller$2 (type $0)
   ;; CHECK-NEXT:  (call $once)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $caller$2
     ;; A mix of calls. We can still remove the second, because we know the first
@@ -1546,7 +1546,7 @@
 
   ;; CHECK:      (func $caller$2 (type $0)
   ;; CHECK-NEXT:  (call $once)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT: )
   (func $caller$2
     ;; Again, the second becomes a nop.
@@ -1556,7 +1556,7 @@
 
   ;; CHECK:      (func $caller$3 (type $0)
   ;; CHECK-NEXT:  (call $once.1)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller$3
     ;; An improvement compared to the previous module, now we can optimize the
