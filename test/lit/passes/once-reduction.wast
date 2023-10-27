@@ -1787,7 +1787,14 @@
   (global $once (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $other)
   ;; CHECK-NEXT: )
   (func $once
     ;; We should not remove this early-exit logic.
@@ -1800,12 +1807,15 @@
     (call $other)
   )
 
+  ;; CHECK:      (func $other (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $other
   )
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (call $do-once)
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $other)
+  ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT: )
   (func $caller
     ;; There is nothing to optimize here.
@@ -1815,7 +1825,7 @@
 
   ;; CHECK:      (func $caller2 (type $0)
   ;; CHECK-NEXT:  (call $once)
-  ;; CHECK-NEXT:  (call $do-once)
+  ;; CHECK-NEXT:  (call $other)
   ;; CHECK-NEXT: )
   (func $caller2
     ;; Reverse order of the above. Also nothing to do.
