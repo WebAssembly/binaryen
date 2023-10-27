@@ -517,7 +517,7 @@ struct OnceReduction : public Pass {
           //  1. foo has been called before. Then we early-exit in BEFORE, and
           //     in AFTER we call bar which will early-exit (since foo was
           //     called, which means bar was at least entered, which set its
-          //     global; bar might be on the stack, if it called up, so it has
+          //     global; bar might be on the stack, if it called foo, so it has
           //     not necessarily fully executed - this is a tricky situation to
           //     handle in general, like recursive imports of modules in various
           //     languages - but we do not bar has been *entered*, which means
