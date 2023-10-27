@@ -40,6 +40,7 @@ template<Lattice L> struct Lift {
   };
 
   L lattice;
+
   Lift(L&& lattice) : lattice(std::move(lattice)) {}
 
   Element getBottom() const noexcept { return {std::nullopt}; }
