@@ -47,7 +47,8 @@ template<Lattice L> struct Vector {
     return Element(size, lattice.getTop());
   }
 
-  // `a` <= `b` if their elements are pairwise <=, etc.
+  // `a` <= `b` if their elements are pairwise <=, etc. Unless we determine
+  // that there is no relation, we must check all the elements.
   LatticeComparison compare(const Element& a, const Element& b) const noexcept {
     assert(a.size() == size);
     assert(b.size() == size);
