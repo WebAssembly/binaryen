@@ -126,8 +126,8 @@ public:
   BitSet& operator=(const BitSet&) = default;
   BitSet& operator=(BitSet&&) = default;
 
-  iterator begin() const noexcept { return iterator({this}); }
-  iterator end() const noexcept { return iterator({this, vec().size()}); }
+  iterator begin() const noexcept { return iterator{this}; }
+  iterator end() const noexcept { return iterator{this, vec().size()}; }
 
   bool empty() const noexcept { return begin() == end(); }
 
