@@ -2,6 +2,7 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-blacklist@foo,bar -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-blacklist@@%S/asyncify-foo,bar-nl.txt -S -o - | filecheck %s
 
 (module
   (memory 1 2)

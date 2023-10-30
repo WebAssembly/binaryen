@@ -31,10 +31,14 @@ namespace wasm::String {
 
 // Creates a vector of the split parts of a string, by a delimiter.
 class Split : public std::vector<std::string> {
-public:
-  Split() = default;
+private:
+  // If we split on newlines then we do not need to handle bracketing at all.
+  // Otherwise, splitting on say "," does require us to understanding the
+  // scoping of brackets, e.g., "foo(x, y),bar" should be split as "foo(x, y)",
+  // "bar".
+  bool needToHandleBracketingOperations = true;
 
-  Split(const std::string& input, const std::string& delim) {
+  void split(const std::string& input, const std::string& delim) {
     size_t lastEnd = 0;
     while (lastEnd < input.size()) {
       auto nextDelim = input.find(delim, lastEnd);
@@ -44,6 +48,31 @@ public:
       (*this).push_back(input.substr(lastEnd, nextDelim - lastEnd));
       lastEnd = nextDelim + delim.size();
     }
+    needToHandleBracketingOperations = delim != "\n";
+  }
+  friend String::Split handleBracketingOperators(String::Split split);
+
+public:
+  // This can be used when we want to split on newlines if there are any, and if
+  // there are not, then using the given delimiter.
+  struct NewLineOr {
+    const std::string delim;
+    explicit NewLineOr(const std::string& delim) : delim(delim) {}
+  };
+
+  Split() = default;
+
+  Split(const std::string& input, const NewLineOr& newLineOrDelim) {
+    auto first = input.find("\n", 0);
+    if (first != std::string::npos && first != input.length() - 1) {
+      split(input, "\n");
+    } else {
+      split(input, newLineOrDelim.delim);
+    }
+  }
+
+  Split(const std::string& input, const std::string& delim) {
+    split(input, delim);
   }
 };
 
@@ -53,6 +82,10 @@ public:
 // must be kept together because of the "(". Likewise, "{", "<", "[" are
 // handled.
 inline String::Split handleBracketingOperators(String::Split split) {
+  if (!split.needToHandleBracketingOperations) {
+    return split;
+  }
+
   String::Split ret;
   std::string last;
   int nesting = 0;

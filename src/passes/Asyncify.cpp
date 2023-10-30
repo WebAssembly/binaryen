@@ -1626,7 +1626,8 @@ struct Asyncify : public Pass {
       options.getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
-    String::Split listedImports(stateChangingImports, ",");
+    String::Split listedImports(stateChangingImports,
+                                String::Split::NewLineOr(","));
     // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
     // to false.
     auto canIndirectChangeState =
@@ -1638,11 +1639,12 @@ struct Asyncify : public Pass {
       removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
-      String::trim(read_possible_response_file(removeListInput)), ",");
+      String::trim(read_possible_response_file(removeListInput)),
+      String::Split::NewLineOr(","));
     String::Split addList(
       String::trim(read_possible_response_file(
         options.getArgumentOrDefault("asyncify-addlist", ""))),
-      ",");
+      String::Split::NewLineOr(","));
     std::string onlyListInput =
       options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
@@ -1650,7 +1652,8 @@ struct Asyncify : public Pass {
       onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
-      String::trim(read_possible_response_file(onlyListInput)), ",");
+      String::trim(read_possible_response_file(onlyListInput)),
+      String::Split::NewLineOr(","));
     auto asserts = options.hasArgument("asyncify-asserts");
     auto verbose = options.hasArgument("asyncify-verbose");
     auto relocatable = options.hasArgument("asyncify-relocatable");
