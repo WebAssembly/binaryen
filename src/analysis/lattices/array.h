@@ -60,7 +60,8 @@ public:
     return getTopImpl(std::make_index_sequence<N>());
   }
 
-  // `a` <= `b` if their elements are pairwise <=, etc.
+  // `a` <= `b` if all their elements are pairwise <=, etc. Unless we determine
+  // that there is no relation, we must check all the elements.
   LatticeComparison compare(const Element& a, const Element& b) const noexcept {
     auto result = EQUAL;
     for (size_t i = 0; i < N; ++i) {
