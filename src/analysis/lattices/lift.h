@@ -60,16 +60,16 @@ template<Lattice L> struct Lift {
     }
   }
 
-  bool join(Element& self, const Element& other) const noexcept {
-    if (self.isBottom() && other.isBottom()) {
+  bool join(Element& joinee, const Element& joiner) const noexcept {
+    if (joinee.isBottom() && joiner.isBottom()) {
       return false;
-    } else if (self.isBottom()) {
-      self = other;
+    } else if (joinee.isBottom()) {
+      joinee = joiner;
       return true;
-    } else if (other.isBottom()) {
+    } else if (joiner.isBottom()) {
       return false;
     } else {
-      return lattice.join(*self, *other);
+      return lattice.join(*joinee, *joiner);
     }
   }
 };

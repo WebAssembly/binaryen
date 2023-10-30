@@ -215,25 +215,25 @@ public:
     }
   }
 
-  // When taking the LUB, we take the LUBs of the elements of each stack
-  // starting from the top of the stack. So, LUB([b, a], [b', a']) is
-  // [LUB(b, b'), LUB(a, a')]. If one stack is higher than the other,
-  // the bottom of the higher stack will be kept, while the LUB of the
-  // corresponding tops of each stack will be taken. For instance,
-  // LUB([d, c, b, a], [b', a']) is [d, c, LUB(b, b'), LUB(a, a')].
+  // When taking the join, we take the joins of the elements of each stack
+  // starting from the top of the stack. So, join([b, a], [b', a']) is [join(b,
+  // b'), join(a, a')]. If one stack is higher than the other, the bottom of the
+  // higher stack will be kept, while the join of the corresponding tops of each
+  // stack will be taken. For instance, join([d, c, b, a], [b', a']) is [d, c,
+  // join(b, b'), join(a, a')].
   //
-  // We start at the top because it makes taking the LUB of stacks with
-  // different scope easier, as mentioned at the top of the file. It also
-  // fits with the conception of the stack starting at the top and having
-  // an infinite bottom, which allows stacks of different height and scope
-  // to be easily joined.
-  bool join(Element& self, const Element& other) const noexcept {
+  // We start at the top because it makes taking the join of stacks with
+  // different scope easier, as mentioned at the top of the file. It also fits
+  // with the conception of the stack starting at the top and having an infinite
+  // bottom, which allows stacks of different height and scope to be easily
+  // joined.
+  bool join(Element& joinee, const Element& joiner) const noexcept {
     // Top element cases, since top elements don't actually have the stack
     // value.
-    if (self.isTop()) {
+    if (joinee.isTop()) {
       return false;
-    } else if (other.isTop()) {
-      self.stackValue.reset();
+    } else if (joiner.isTop()) {
+      joinee.stackValue.reset();
       return true;
     }
 
@@ -242,18 +242,18 @@ public:
     // Merge the shorter height stack with the top of the longer height
     // stack. We do this by taking the LUB of each pair of matching elements
     // from both stacks.
-    auto selfIt = self.stackValue->rbegin();
-    auto otherIt = other.stackValue->crbegin();
-    for (; selfIt != self.stackValue->rend() &&
-           otherIt != other.stackValue->crend();
-         ++selfIt, ++otherIt) {
-      modified |= lattice.join(*selfIt, *otherIt);
+    auto joineeIt = joinee.stackValue->rbegin();
+    auto joinerIt = joiner.stackValue->crbegin();
+    for (; joineeIt != joinee.stackValue->rend() &&
+           joinerIt != joiner.stackValue->crend();
+         ++joineeIt, ++joinerIt) {
+      modified |= lattice.join(*joineeIt, *joinerIt);
     }
 
-    // If the other stack is higher, append the bottom of it to our current
+    // If the joiner stack is higher, append the bottom of it to our current
     // stack.
-    for (; otherIt != other.stackValue->crend(); ++otherIt) {
-      self.stackValue->push_front(*otherIt);
+    for (; joinerIt != joiner.stackValue->crend(); ++joinerIt) {
+      joinee.stackValue->push_front(*joinerIt);
       modified = true;
     }
 

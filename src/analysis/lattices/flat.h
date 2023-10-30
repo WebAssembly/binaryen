@@ -69,13 +69,13 @@ public:
     }
   }
 
-  bool join(Element& self, const Element& other) const noexcept {
-    switch (compare(self, other)) {
+  bool join(Element& joinee, const Element& joiner) const noexcept {
+    switch (compare(joinee, joiner)) {
       case LESS:
-        self = other;
+        joinee = joiner;
         return true;
       case NO_RELATION:
-        self = Element{Top{}};
+        joinee = Element{Top{}};
         return true;
       case GREATER:
       case EQUAL:

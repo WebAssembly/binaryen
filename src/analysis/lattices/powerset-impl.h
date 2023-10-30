@@ -79,17 +79,17 @@ inline size_t FiniteIntPowersetLattice::Element::count() const {
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
 inline bool
-FiniteIntPowersetLattice::join(Element& self,
-                               const Element& other) const noexcept {
+FiniteIntPowersetLattice::join(Element& joinee,
+                               const Element& joiner) const noexcept {
   // Both must be from powerset lattice of the same set.
-  assert(other.bitvector.size() == self.bitvector.size());
+  assert(joiner.bitvector.size() == joinee.bitvector.size());
 
   bool modified = false;
-  for (size_t i = 0; i < self.bitvector.size(); ++i) {
-    // Bit is flipped on self only if self is false and other is true when self
-    // and other are OR'ed together.
-    modified |= (!self.bitvector[i] && other.bitvector[i]);
-    self.bitvector[i] = self.bitvector[i] || other.bitvector[i];
+  for (size_t i = 0; i < joinee.bitvector.size(); ++i) {
+    // Bit is flipped on joinee only if joinee is false and joiner is true when
+    // joinee and joiner are OR'ed together.
+    modified |= (!joinee.bitvector[i] && joiner.bitvector[i]);
+    joinee.bitvector[i] = joinee.bitvector[i] || joiner.bitvector[i];
   }
 
   return modified;
