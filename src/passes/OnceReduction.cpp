@@ -526,7 +526,13 @@ struct OnceReduction : public Pass {
           //     the global and call bar, and in AFTER we also call bar.
           //
           // Thus, the behavior is the same, and we can remove the early-exit
-          // lines.
+          // lines. Note that things would be quite different if we had any code
+          // after the call to bar(), as then that code would no longer be
+          // guarded by an early-exit (and could end up called more than once).
+          // That is, this optimization depends on the fact that bar's call from
+          // foo is being guarded by two sets of early-exits, one in foo and one
+          // in bar, and therefore we only really need one; if foo did anything
+          // more than just call bar, that would be incorrect.
           //
           // We must be careful of loops, however: If A calls B and B calls A,
           // then at least one must keep the early-exit logic, or else they
