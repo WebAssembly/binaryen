@@ -20,6 +20,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/shared.h"
 #include "analysis/lattices/tuple.h"
 #include "analysis/lattices/valtype.h"
 #include "analysis/lattices/vector.h"
@@ -545,4 +546,80 @@ TEST(ValTypeLattice, Meet) {
                   Type(HeapType::struct_, NonNullable),
                   Type(HeapType::array, Nullable),
                   Type(HeapType::eq, Nullable));
+}
+
+TEST(SharedLattice, GetBottom) {
+  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+  EXPECT_EQ(*shared.getBottom(), 0u);
+}
+
+TEST(SharedLattice, Compare) {
+  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+
+  auto zero = shared.getBottom();
+
+  auto one = zero;
+  shared.join(one, 1);
+
+  auto uno = one;
+  shared.join(uno, 1);
+
+  auto two = one;
+  shared.join(two, 2);
+
+  EXPECT_EQ(shared.compare(zero, zero), analysis::EQUAL);
+  EXPECT_EQ(shared.compare(zero, one), analysis::LESS);
+  EXPECT_EQ(shared.compare(zero, uno), analysis::LESS);
+  EXPECT_EQ(shared.compare(zero, two), analysis::LESS);
+
+  EXPECT_EQ(shared.compare(one, zero), analysis::GREATER);
+  EXPECT_EQ(shared.compare(one, one), analysis::EQUAL);
+  EXPECT_EQ(shared.compare(one, uno), analysis::EQUAL);
+  EXPECT_EQ(shared.compare(one, two), analysis::LESS);
+
+  EXPECT_EQ(shared.compare(two, zero), analysis::GREATER);
+  EXPECT_EQ(shared.compare(two, one), analysis::GREATER);
+  EXPECT_EQ(shared.compare(two, uno), analysis::GREATER);
+  EXPECT_EQ(shared.compare(two, two), analysis::EQUAL);
+
+  EXPECT_EQ(*zero, 2u);
+  EXPECT_EQ(*one, 2u);
+  EXPECT_EQ(*uno, 2u);
+  EXPECT_EQ(*two, 2u);
+}
+
+TEST(SharedLattice, Join) {
+  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+
+  auto zero = shared.getBottom();
+
+  auto one = zero;
+  shared.join(one, 1);
+
+  auto two = one;
+  shared.join(two, 2);
+
+  {
+    auto elem = zero;
+    EXPECT_FALSE(shared.join(elem, zero));
+    EXPECT_EQ(elem, zero);
+  }
+
+  {
+    auto elem = zero;
+    EXPECT_TRUE(shared.join(elem, one));
+    EXPECT_EQ(elem, one);
+  }
+
+  {
+    auto elem = one;
+    EXPECT_FALSE(shared.join(elem, zero));
+    EXPECT_EQ(elem, one);
+  }
+
+  {
+    auto elem = one;
+    EXPECT_FALSE(shared.join(elem, one));
+    EXPECT_EQ(elem, one);
+  }
 }
