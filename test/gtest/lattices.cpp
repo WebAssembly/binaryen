@@ -20,6 +20,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/tuple.h"
 #include "analysis/lattices/vector.h"
 #include "gtest/gtest.h"
 
@@ -569,6 +570,122 @@ TEST(VectorLattice, Meet) {
     [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
       auto meetee = makeMeetee();
       EXPECT_EQ(vector.meet(meetee, makeMeeter()), modified);
+      EXPECT_EQ(meetee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, false, ff);
+  test(ff, tf, false, ff);
+  test(ff, tt, false, ff);
+
+  test(ft, ff, true, ff);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, ff);
+  test(ft, tt, false, ft);
+
+  test(tf, ff, true, ff);
+  test(tf, ft, true, ff);
+  test(tf, tf, false, tf);
+  test(tf, tt, false, tf);
+
+  test(tt, ff, true, ff);
+  test(tt, ft, true, ft);
+  test(tt, tf, true, tf);
+  test(tt, tt, false, tt);
+}
+
+TEST(TupleLattice, GetBottom) {
+  analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
+                                                          analysis::UInt32{}};
+  EXPECT_EQ(tuple.getBottom(), (std::tuple{false, 0}));
+}
+
+TEST(TupleLattice, GetTop) {
+  analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
+                                                          analysis::UInt32{}};
+  EXPECT_EQ(tuple.getTop(), (std::tuple{true, uint32_t(-1)}));
+}
+
+TEST(TupleLattice, Compare) {
+  analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
+                                                          analysis::UInt32{}};
+
+  std::tuple<bool, uint32_t> ff{false, 0};
+  std::tuple<bool, uint32_t> ft{false, 1};
+  std::tuple<bool, uint32_t> tf{true, 0};
+  std::tuple<bool, uint32_t> tt{true, 1};
+
+  EXPECT_EQ(tuple.compare(ff, ff), analysis::EQUAL);
+  EXPECT_EQ(tuple.compare(ff, ft), analysis::LESS);
+  EXPECT_EQ(tuple.compare(ff, tf), analysis::LESS);
+  EXPECT_EQ(tuple.compare(ff, tt), analysis::LESS);
+
+  EXPECT_EQ(tuple.compare(ft, ff), analysis::GREATER);
+  EXPECT_EQ(tuple.compare(ft, ft), analysis::EQUAL);
+  EXPECT_EQ(tuple.compare(ft, tf), analysis::NO_RELATION);
+  EXPECT_EQ(tuple.compare(ft, tt), analysis::LESS);
+
+  EXPECT_EQ(tuple.compare(tf, ff), analysis::GREATER);
+  EXPECT_EQ(tuple.compare(tf, ft), analysis::NO_RELATION);
+  EXPECT_EQ(tuple.compare(tf, tf), analysis::EQUAL);
+  EXPECT_EQ(tuple.compare(tf, tt), analysis::LESS);
+
+  EXPECT_EQ(tuple.compare(tt, ff), analysis::GREATER);
+  EXPECT_EQ(tuple.compare(tt, ft), analysis::GREATER);
+  EXPECT_EQ(tuple.compare(tt, tf), analysis::GREATER);
+  EXPECT_EQ(tuple.compare(tt, tt), analysis::EQUAL);
+}
+
+TEST(TupleLattice, Join) {
+  analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
+                                                          analysis::UInt32{}};
+
+  auto ff = []() { return std::tuple<bool, uint32_t>{false, 0}; };
+  auto ft = []() { return std::tuple<bool, uint32_t>{false, 1}; };
+  auto tf = []() { return std::tuple<bool, uint32_t>{true, 0}; };
+  auto tt = []() { return std::tuple<bool, uint32_t>{true, 1}; };
+
+  auto test =
+    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
+      auto joinee = makeJoinee();
+      EXPECT_EQ(tuple.join(joinee, makeJoiner()), modified);
+      EXPECT_EQ(joinee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, true, ft);
+  test(ff, tf, true, tf);
+  test(ff, tt, true, tt);
+
+  test(ft, ff, false, ft);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, tt);
+  test(ft, tt, true, tt);
+
+  test(tf, ff, false, tf);
+  test(tf, ft, true, tt);
+  test(tf, tf, false, tf);
+  test(tf, tt, true, tt);
+
+  test(tt, ff, false, tt);
+  test(tt, ft, false, tt);
+  test(tt, tf, false, tt);
+  test(tt, tt, false, tt);
+}
+
+TEST(TupleLattice, Meet) {
+  analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
+                                                          analysis::UInt32{}};
+
+  auto ff = []() { return std::tuple<bool, uint32_t>{false, 0}; };
+  auto ft = []() { return std::tuple<bool, uint32_t>{false, 1}; };
+  auto tf = []() { return std::tuple<bool, uint32_t>{true, 0}; };
+  auto tt = []() { return std::tuple<bool, uint32_t>{true, 1}; };
+
+  auto test =
+    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
+      auto meetee = makeMeetee();
+      EXPECT_EQ(tuple.meet(meetee, makeMeeter()), modified);
       EXPECT_EQ(meetee, makeExpected());
     };
 
