@@ -17,7 +17,7 @@
 #ifndef wasm_analysis_lattices_shared_h
 #define wasm_analysis_lattices_shared_h
 
-#include <cstddef>
+#include <cstdint>
 
 #include "../lattice.h"
 #include "bool.h"
