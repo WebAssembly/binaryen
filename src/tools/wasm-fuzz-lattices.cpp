@@ -21,6 +21,7 @@
 #include <variant>
 
 #include "analysis/lattice.h"
+#include "analysis/lattices/array.h"
 #include "analysis/lattices/bool.h"
 #include "analysis/lattices/flat.h"
 #include "analysis/lattices/int.h"
@@ -147,28 +148,36 @@ static_assert(FullLattice<RandomFullLattice>);
 static_assert(Lattice<RandomLattice>);
 #endif
 
+using ArrayFullLattice = analysis::Array<RandomFullLattice, 2>;
+using ArrayLattice = analysis::Array<RandomLattice, 2>;
+
 struct RandomFullLattice::L
-  : std::variant<Bool, UInt32, Inverted<RandomFullLattice>> {};
+  : std::variant<Bool, UInt32, Inverted<RandomFullLattice>, ArrayFullLattice> {
+};
 
 struct RandomFullLattice::ElementImpl
   : std::variant<typename Bool::Element,
                  typename UInt32::Element,
-                 typename Inverted<RandomFullLattice>::Element> {};
+                 typename Inverted<RandomFullLattice>::Element,
+                 typename ArrayFullLattice::Element> {};
 
-struct RandomLattice::L
-  : std::variant<RandomFullLattice, Flat<uint32_t>, Lift<RandomLattice>> {};
+struct RandomLattice::L : std::variant<RandomFullLattice,
+                                       Flat<uint32_t>,
+                                       Lift<RandomLattice>,
+                                       ArrayLattice> {};
 
 struct RandomLattice::ElementImpl
   : std::variant<typename RandomFullLattice::Element,
                  typename Flat<uint32_t>::Element,
-                 typename Lift<RandomLattice>::Element> {};
+                 typename Lift<RandomLattice>::Element,
+                 typename ArrayLattice::Element> {};
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
                                      std::optional<uint32_t> maybePick)
   : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = maybePick ? *maybePick : rand.upTo(3);
+  uint32_t pick = maybePick ? *maybePick : rand.upTo(4);
   switch (pick) {
     case 0:
       lattice = std::make_unique<L>(L{Bool{}});
@@ -180,24 +189,33 @@ RandomFullLattice::RandomFullLattice(Random& rand,
       lattice =
         std::make_unique<L>(L{Inverted{RandomFullLattice{rand, depth + 1}}});
       return;
+    case 3:
+      lattice = std::make_unique<L>(
+        L{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
+      return;
   }
   WASM_UNREACHABLE("unexpected pick");
 }
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(5);
+  uint32_t pick = rand.upTo(7);
   switch (pick) {
     case 0:
     case 1:
     case 2:
+    case 3:
       lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
       return;
-    case 3:
+    case 4:
       lattice = std::make_unique<L>(L{Flat<uint32_t>{}});
       return;
-    case 4:
+    case 5:
       lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
+      return;
+    case 6:
+      lattice =
+        std::make_unique<L>(L{ArrayLattice{RandomLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -212,6 +230,10 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   }
   if (const auto* l = std::get_if<Inverted<RandomFullLattice>>(lattice.get())) {
     return ElementImpl{l->lattice.makeElement()};
+  }
+  if (const auto* l = std::get_if<ArrayFullLattice>(lattice.get())) {
+    return ElementImpl{typename ArrayFullLattice::Element{
+      l->lattice.makeElement(), l->lattice.makeElement()}};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -234,6 +256,10 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
   if (const auto* l = std::get_if<Lift<RandomLattice>>(lattice.get())) {
     return ElementImpl{rand.oneIn(4) ? l->getBottom()
                                      : l->get(l->lattice.makeElement())};
+  }
+  if (const auto* l = std::get_if<ArrayLattice>(lattice.get())) {
+    return ElementImpl{typename ArrayLattice::Element{
+      l->lattice.makeElement(), l->lattice.makeElement()}};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -260,6 +286,13 @@ void printFullElement(std::ostream& os,
     printFullElement(os, *e, depth + 1);
     indent(os, depth);
     os << ")\n";
+  } else if (const auto* e =
+               std::get_if<typename ArrayFullLattice::Element>(&*elem)) {
+    os << "Array[\n";
+    printFullElement(os, e->front(), depth + 1);
+    printFullElement(os, e->back(), depth + 1);
+    indent(os, depth);
+    os << "]\n";
   }
 }
 
@@ -292,6 +325,13 @@ void printElement(std::ostream& os,
       indent(os, depth);
       os << ")\n";
     }
+  } else if (const auto* e =
+               std::get_if<typename ArrayLattice::Element>(&*elem)) {
+    os << "Array[\n";
+    printElement(os, e->front(), depth + 1);
+    printElement(os, e->back(), depth + 1);
+    indent(os, depth);
+    os << ")\n";
   }
 }
 
