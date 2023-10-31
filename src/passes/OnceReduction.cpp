@@ -197,9 +197,10 @@ private:
   OptInfo& optInfo;
 };
 
-// Information in a basic block. We track relevant expressions, which are calls
-// calls to "once" functions, and writes to "once" globals.
+// Information in a basic block.
 struct BlockInfo {
+  // We track relevant expressions, which are call to "once" functions, and
+  // writes to "once" globals.
   std::vector<Expression*> exprs;
 };
 
@@ -312,18 +313,16 @@ struct Optimizer
             optimizeOnce(set->name);
           }
         } else if (auto* call = expr->dynCast<Call>()) {
-          if (optInfo.onceFuncs.at(call->target).is()) {
+          auto target = call->target;
+          if (optInfo.onceFuncs.at(target).is()) {
             // The global used by the "once" func is written.
             assert(call->operands.empty());
-            optimizeOnce(optInfo.onceFuncs.at(call->target));
+            optimizeOnce(optInfo.onceFuncs.at(target));
             continue;
           }
 
-          // This is not a call to a "once" func. However, we may have inferred
-          // that it definitely sets some "once" globals before it returns, and
-          // we can use that information.
-          for (auto globalName :
-               optInfo.onceGlobalsSetInFuncs.at(call->target)) {
+          // Note as written all globals the called function is known to write.
+          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(target)) {
             onceGlobalsWritten.insert(globalName);
           }
         } else {
@@ -439,7 +438,110 @@ struct OnceReduction : public Pass {
         lastOnceGlobalsSet = currOnceGlobalsSet;
         continue;
       }
-      return;
+      break;
+    }
+
+    // Finally, apply some optimizations to "once" functions themselves. We do
+    // this at the end to not modify them as we go, which could confuse the main
+    // part of this pass right before us.
+    optimizeOnceBodies(optInfo, module);
+  }
+
+  void optimizeOnceBodies(const OptInfo& optInfo, Module* module) {
+    // Track which "once" functions we remove the exit logic from, as we cannot
+    // create loops without exit logic, see below.
+    std::unordered_set<Name> removedExitLogic;
+
+    // Iterate deterministically on functions, as the order matters (since we
+    // make decisions based on previous actions; see below).
+    for (auto& func : module->functions) {
+      if (!optInfo.onceFuncs.at(func->name).is()) {
+        // This is not a "once" function.
+        continue;
+      }
+
+      // We optimize the case where the payload is trivial, that is where we
+      // have this:
+      //
+      //  function foo() {
+      //    if (!foo$once) return;   //  two lines of
+      //    foo$once = 1;            // early-exit code
+      //    PAYLOAD
+      //  }
+      //
+      // And PAYLOAD is simple.
+      auto* body = func->body;
+      auto& list = body->cast<Block>()->list;
+      if (list.size() == 2) {
+        // No payload at all; we don't need the early-exit code then.
+        //
+        // Note that this overlaps with SimplifyGlobals' optimization on
+        // "read-only-to-write" globals: with no payload, this global is really
+        // only read in order to write itself, and nothing more, so there is no
+        // observable behavior we need to preserve, and the global can be
+        // removed. We might as well handle this case here as well since we've
+        // done all the work up to here, and it is just one line to implement
+        // the nopping out. (And doing so here can accelerate the optimization
+        // pipeline by not needing to wait until the next SimplifyGlobals.)
+        ExpressionManipulator::nop(body);
+        continue;
+      }
+      if (list.size() != 3) {
+        // Something non-trivial; too many items for us to consider.
+        continue;
+      }
+      auto* payload = list[2];
+      if (auto* call = payload->dynCast<Call>()) {
+        if (optInfo.onceFuncs.at(call->target).is()) {
+          // All this "once" function does is call another. We do not need the
+          // early-exit logic in this one, then, because of the following
+          // reasoning. We are comparing these forms:
+          //
+          //  // BEFORE
+          //  function foo() {
+          //    if (!foo$once) return;   //  two lines of
+          //    foo$once = 1;            // early-exit code
+          //    bar();
+          //  }
+          //
+          // to
+          //
+          //  // AFTER
+          //  function foo() {
+          //    bar();
+          //  }
+          //
+          // The question is whether different behavior can be observed between
+          // those two. There are two cases, when we enter foo:
+          //
+          //  1. foo has been called before. Then we early-exit in BEFORE, and
+          //     in AFTER we call bar which will early-exit (since foo was
+          //     called, which means bar was at least entered, which set its
+          //     global; bar might be on the stack, if it called foo, so it has
+          //     not necessarily fully executed - this is a tricky situation to
+          //     handle in general, like recursive imports of modules in various
+          //     languages - but we do know bar has been *entered*, which means
+          //     the global was set).
+          //  2. foo has never been called before. In this case in BEFORE we set
+          //     the global and call bar, and in AFTER we also call bar.
+          //
+          // Thus, the behavior is the same, and we can remove the early-exit
+          // lines.
+          //
+          // We must be careful of loops, however: If A calls B and B calls A,
+          // then at least one must keep the early-exit logic, or else they
+          // would infinitely loop if one is called. To avoid that, we track
+          // which functions we remove the early-exit logic from, and never
+          // remove the logic if we are calling such a function. (As a result,
+          // the order of iteration matters here, and so the outer loop in this
+          // function must be deterministic.)
+          if (!removedExitLogic.count(call->target)) {
+            ExpressionManipulator::nop(list[0]);
+            ExpressionManipulator::nop(list[1]);
+            removedExitLogic.insert(func->name);
+          }
+        }
+      }
     }
   }
 };
