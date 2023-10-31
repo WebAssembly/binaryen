@@ -20,6 +20,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/vector.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -460,6 +461,114 @@ TEST(ArrayLattice, Meet) {
     [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
       auto meetee = makeMeetee();
       EXPECT_EQ(array.meet(meetee, makeMeeter()), modified);
+      EXPECT_EQ(meetee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, false, ff);
+  test(ff, tf, false, ff);
+  test(ff, tt, false, ff);
+
+  test(ft, ff, true, ff);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, ff);
+  test(ft, tt, false, ft);
+
+  test(tf, ff, true, ff);
+  test(tf, ft, true, ff);
+  test(tf, tf, false, tf);
+  test(tf, tt, false, tf);
+
+  test(tt, ff, true, ff);
+  test(tt, ft, true, ft);
+  test(tt, tf, true, tf);
+  test(tt, tt, false, tt);
+}
+
+TEST(VectorLattice, GetBottom) {
+  analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
+  EXPECT_EQ(vector.getBottom(), (std::vector<bool>{false, false}));
+}
+
+TEST(VectorLattice, GetTop) {
+  analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
+  EXPECT_EQ(vector.getTop(), (std::vector<bool>{true, true}));
+}
+
+TEST(VectorLattice, Compare) {
+  analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
+  std::vector<bool> ff{false, false};
+  std::vector<bool> ft{false, true};
+  std::vector<bool> tf{true, false};
+  std::vector<bool> tt{true, true};
+
+  EXPECT_EQ(vector.compare(ff, ff), analysis::EQUAL);
+  EXPECT_EQ(vector.compare(ff, ft), analysis::LESS);
+  EXPECT_EQ(vector.compare(ff, tf), analysis::LESS);
+  EXPECT_EQ(vector.compare(ff, tt), analysis::LESS);
+
+  EXPECT_EQ(vector.compare(ft, ff), analysis::GREATER);
+  EXPECT_EQ(vector.compare(ft, ft), analysis::EQUAL);
+  EXPECT_EQ(vector.compare(ft, tf), analysis::NO_RELATION);
+  EXPECT_EQ(vector.compare(ft, tt), analysis::LESS);
+
+  EXPECT_EQ(vector.compare(tf, ff), analysis::GREATER);
+  EXPECT_EQ(vector.compare(tf, ft), analysis::NO_RELATION);
+  EXPECT_EQ(vector.compare(tf, tf), analysis::EQUAL);
+  EXPECT_EQ(vector.compare(tf, tt), analysis::LESS);
+
+  EXPECT_EQ(vector.compare(tt, ff), analysis::GREATER);
+  EXPECT_EQ(vector.compare(tt, ft), analysis::GREATER);
+  EXPECT_EQ(vector.compare(tt, tf), analysis::GREATER);
+  EXPECT_EQ(vector.compare(tt, tt), analysis::EQUAL);
+}
+
+TEST(VectorLattice, Join) {
+  analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
+  auto ff = []() { return std::vector<bool>{false, false}; };
+  auto ft = []() { return std::vector<bool>{false, true}; };
+  auto tf = []() { return std::vector<bool>{true, false}; };
+  auto tt = []() { return std::vector<bool>{true, true}; };
+
+  auto test =
+    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
+      auto joinee = makeJoinee();
+      EXPECT_EQ(vector.join(joinee, makeJoiner()), modified);
+      EXPECT_EQ(joinee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, true, ft);
+  test(ff, tf, true, tf);
+  test(ff, tt, true, tt);
+
+  test(ft, ff, false, ft);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, tt);
+  test(ft, tt, true, tt);
+
+  test(tf, ff, false, tf);
+  test(tf, ft, true, tt);
+  test(tf, tf, false, tf);
+  test(tf, tt, true, tt);
+
+  test(tt, ff, false, tt);
+  test(tt, ft, false, tt);
+  test(tt, tf, false, tt);
+  test(tt, tt, false, tt);
+}
+
+TEST(VectorLattice, Meet) {
+  analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
+  auto ff = []() { return std::vector<bool>{false, false}; };
+  auto ft = []() { return std::vector<bool>{false, true}; };
+  auto tf = []() { return std::vector<bool>{true, false}; };
+  auto tt = []() { return std::vector<bool>{true, true}; };
+
+  auto test =
+    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
+      auto meetee = makeMeetee();
+      EXPECT_EQ(vector.meet(meetee, makeMeeter()), modified);
       EXPECT_EQ(meetee, makeExpected());
     };
 
