@@ -1591,13 +1591,8 @@
 
 
   ;; CHECK:      (func $once (type $0)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $once
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $once.1)
   ;; CHECK-NEXT:  (call $once.2)
   ;; CHECK-NEXT:  (call $import
@@ -1610,6 +1605,9 @@
       (return)
     )
     (global.set $once (i32.const 1))
+    ;; We immediately call another "once" function, so we can remove the early-
+    ;; exit logic before us. (Note that $once.1 and $once.2 call us, but there
+    ;; we cannot remove anything because of the risk of infinite looping.)
     (call $once.1)
     ;; We cannot remove this second call. While $once.1 calls $once.2, we may
     ;; be in this situation: a call started at $once.1, which calls $once

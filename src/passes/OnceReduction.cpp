@@ -486,14 +486,16 @@ struct OnceReduction : public Pass {
         ExpressionManipulator::nop(body);
         continue;
       }
-      if (list.size() != 3) {
-        // Something non-trivial; too many items for us to consider.
-        continue;
-      }
-      auto* payload = list[2];
-      if (auto* call = payload->dynCast<Call>()) {
+      // The early-exit logic is the first item, followed by the global setting,
+      // and we've ruled out the case of there being nothing else after those,
+      // so there are at least 3 items.
+      assert(list.size() >= 3);
+      // We consider the first item in the payload. Anything further would be
+      // much more difficult to analyze.
+      auto* payloadStart = list[2];
+      if (auto* call = payloadStart->dynCast<Call>()) {
         if (optInfo.onceFuncs.at(call->target).is()) {
-          // All this "once" function does is call another. We do not need the
+          // This "once" function immediately calls another. We do not need the
           // early-exit logic in this one, then, because of the following
           // reasoning. We are comparing these forms:
           //
@@ -502,6 +504,7 @@ struct OnceReduction : public Pass {
           //    if (!foo$once) return;   //  two lines of
           //    foo$once = 1;            // early-exit code
           //    bar();
+          //    ..
           //  }
           //
           // to
@@ -509,12 +512,13 @@ struct OnceReduction : public Pass {
           //  // AFTER
           //  function foo() {
           //    bar();
+          //    ..
           //  }
           //
           // The question is whether different behavior can be observed between
           // those two. There are two cases, when we enter foo:
           //
-          //  1. foo has been called before. Then we early-exit in BEFORE, and
+          //  1. foo has been entered before. Then we early-exit in BEFORE, and
           //     in AFTER we call bar which will early-exit (since foo was
           //     called, which means bar was at least entered, which set its
           //     global; bar might be on the stack, if it called foo, so it has
@@ -522,7 +526,7 @@ struct OnceReduction : public Pass {
           //     handle in general, like recursive imports of modules in various
           //     languages - but we do know bar has been *entered*, which means
           //     the global was set).
-          //  2. foo has never been called before. In this case in BEFORE we set
+          //  2. foo has never been entered before. In this case in BEFORE we set
           //     the global and call bar, and in AFTER we also call bar.
           //
           // Thus, the behavior is the same, and we can remove the early-exit
