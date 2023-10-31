@@ -2525,6 +2525,9 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::func: {
       return makeRefFuncConst(type);
     }
+    case HeapType::cont: {
+      WASM_UNREACHABLE("not implemented");
+    }
     case HeapType::any: {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
@@ -2652,6 +2655,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
+    case HeapType::nocont:
     case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
@@ -4076,6 +4080,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::func)
                       .add(FeatureSet::GC, HeapType::nofunc));
+      case HeapType::cont:
+        return pick(HeapType::cont, HeapType::nocont);
       case HeapType::ext:
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
@@ -4116,6 +4122,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noexn:
         break;
     }

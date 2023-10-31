@@ -472,6 +472,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   switch (a) {
     case HeapType::ext:
     case HeapType::func:
+    case HeapType::cont:
     case HeapType::exn:
       return std::nullopt;
     case HeapType::any:
@@ -503,6 +504,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
+    case HeapType::nocont:
     case HeapType::noexn:
       // Bottom types already handled.
       break;
@@ -930,6 +932,10 @@ FeatureSet Type::getFeatures() const {
                 feats |=
                   FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
                 return;
+              case HeapType::cont:
+              case HeapType::nocont:
+                feats |= FeatureSet::TypedContinuations;
+                return;
             }
           }
 
@@ -1163,6 +1169,14 @@ bool HeapType::isFunction() const {
   }
 }
 
+bool HeapType::isContinuation() const {
+  if (isBasic()) {
+    return id == cont;
+  } else {
+    return getHeapTypeInfo(*this)->isContinuation();
+  }
+}
+
 bool HeapType::isData() const {
   if (isBasic()) {
     return id == struct_ || id == array || id == string ||
@@ -1213,6 +1227,7 @@ bool HeapType::isBottom() const {
     switch (getBasic()) {
       case ext:
       case func:
+      case cont:
       case any:
       case eq:
       case i31:
@@ -1227,6 +1242,7 @@ bool HeapType::isBottom() const {
       case none:
       case noext:
       case nofunc:
+      case nocont:
       case noexn:
         return true;
     }
@@ -1286,6 +1302,8 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case noext:
       case func:
       case nofunc:
+      case cont:
+      case nocont:
       case any:
       case none:
       case exn:
@@ -1309,7 +1327,7 @@ std::optional<HeapType> HeapType::getSuperType() const {
     case HeapTypeInfo::SignatureKind:
       return func;
     case HeapTypeInfo::ContinuationKind:
-      return any;
+      return cont;
     case HeapTypeInfo::StructKind:
       return struct_;
     case HeapTypeInfo::ArrayKind:
@@ -1329,10 +1347,8 @@ size_t HeapType::getDepth() const {
   // implicit supertyping wrt basic types. A signature type always has one more
   // super, HeapType::func, etc.
   if (!isBasic()) {
-    if (isFunction()) {
+    if (isFunction() || isCompositeContinuation()) {
       depth++;
-    } else if (isCompositeContinuation()) {
-      // cont types <: any, thus nothing to add
     } else if (isStruct()) {
       // specific struct types <: struct <: eq <: any
       depth += 3;
@@ -1345,6 +1361,7 @@ size_t HeapType::getDepth() const {
     switch (getBasic()) {
       case HeapType::ext:
       case HeapType::func:
+      case HeapType::cont:
       case HeapType::any:
       case HeapType::exn:
         break;
@@ -1362,6 +1379,7 @@ size_t HeapType::getDepth() const {
         break;
       case HeapType::none:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noext:
       case HeapType::noexn:
         // Bottom types are infinitely deep.
@@ -1378,6 +1396,8 @@ HeapType::BasicHeapType HeapType::getBottom() const {
         return noext;
       case func:
         return nofunc;
+      case cont:
+        return nocont;
       case exn:
         return noexn;
       case any:
@@ -1395,6 +1415,8 @@ HeapType::BasicHeapType HeapType::getBottom() const {
         return noext;
       case nofunc:
         return nofunc;
+      case nocont:
+        return nocont;
       case noexn:
         return noexn;
     }
@@ -1404,7 +1426,7 @@ HeapType::BasicHeapType HeapType::getBottom() const {
     case HeapTypeInfo::SignatureKind:
       return nofunc;
     case HeapTypeInfo::ContinuationKind:
-      return none;
+      return nocont;
     case HeapTypeInfo::StructKind:
     case HeapTypeInfo::ArrayKind:
       return none;
@@ -1426,12 +1448,15 @@ HeapType::BasicHeapType HeapType::getTop() const {
       return any;
     case nofunc:
       return func;
+    case nocont:
+      return cont;
     case noext:
       return ext;
     case noexn:
       return exn;
     case ext:
     case func:
+    case cont:
     case any:
     case eq:
     case i31:
@@ -1719,6 +1744,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
         return a.getTop() == HeapType::ext;
       case HeapType::func:
         return a.getTop() == HeapType::func;
+      case HeapType::cont:
+        return a.getTop() == HeapType::cont;
       case HeapType::exn:
         return a.getTop() == HeapType::exn;
       case HeapType::any:
@@ -1741,6 +1768,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noexn:
         return false;
     }
@@ -1856,6 +1884,8 @@ std::ostream& TypePrinter::print(Type type) {
             return os << "externref";
           case HeapType::func:
             return os << "funcref";
+          case HeapType::cont:
+            return os << "contref";
           case HeapType::any:
             return os << "anyref";
           case HeapType::eq:
@@ -1882,6 +1912,8 @@ std::ostream& TypePrinter::print(Type type) {
             return os << "nullexternref";
           case HeapType::nofunc:
             return os << "nullfuncref";
+          case HeapType::nocont:
+            return os << "nullcontref";
           case HeapType::noexn:
             return os << "nullexnref";
         }
@@ -1906,6 +1938,8 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "extern";
       case HeapType::func:
         return os << "func";
+      case HeapType::cont:
+        return os << "cont";
       case HeapType::any:
         return os << "any";
       case HeapType::eq:
@@ -1932,6 +1966,8 @@ std::ostream& TypePrinter::print(HeapType type) {
         return os << "noextern";
       case HeapType::nofunc:
         return os << "nofunc";
+      case HeapType::nocont:
+        return os << "nocont";
       case HeapType::noexn:
         return os << "noexn";
     }

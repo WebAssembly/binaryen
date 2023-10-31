@@ -1257,6 +1257,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 7) == "funcref" && (prefix || str.size() == 7)) {
     return Type(HeapType::func, Nullable);
   }
+  if (str.substr(0, 7) == "contref" && (prefix || str.size() == 7)) {
+    return Type(HeapType::cont, Nullable);
+  }
   if (str.substr(0, 9) == "externref" && (prefix || str.size() == 9)) {
     return Type(HeapType::ext, Nullable);
   }
@@ -1302,6 +1305,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 10) == "nullexnref" && (prefix || str.size() == 10)) {
     return Type(HeapType::noexn, Nullable);
   }
+  if (str.substr(0, 11) == "nullcontref" && (prefix || str.size() == 11)) {
+    return Type(HeapType::nocont, Nullable);
+  }
   if (allowError) {
     return Type::none;
   }
@@ -1313,6 +1319,9 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
                                                   bool prefix) {
   if (str.substr(0, 4) == "func" && (prefix || str.size() == 4)) {
     return HeapType::func;
+  }
+  if (str.substr(0, 4) == "cont" && (prefix || str.size() == 4)) {
+    return HeapType::cont;
   }
   if (str.substr(0, 2) == "eq" && (prefix || str.size() == 2)) {
     return HeapType::eq;
@@ -1361,6 +1370,9 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   }
   if (str.substr(0, 5) == "noexn" && (prefix || str.size() == 5)) {
     return HeapType::noexn;
+  }
+  if (str.substr(0, 6) == "nocont" && (prefix || str.size() == 6)) {
+    return HeapType::nocont;
   }
   throw ParseException(std::string("invalid wasm heap type: ") +
                        std::string(str.data(), str.size()));

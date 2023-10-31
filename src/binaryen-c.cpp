@@ -86,6 +86,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::any:
       case HeapType::eq:
       case HeapType::func:
+      case HeapType::cont:
       case HeapType::struct_:
       case HeapType::array:
       case HeapType::exn:
@@ -98,6 +99,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noexn:
         // Null.
         return ret;
@@ -141,6 +143,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
         WASM_UNREACHABLE("TODO: extern literals");
       case HeapType::eq:
       case HeapType::func:
+      case HeapType::cont:
       case HeapType::struct_:
       case HeapType::array:
       case HeapType::exn:
@@ -153,6 +156,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::nocont:
       case HeapType::noexn:
         assert(type.isNullable());
         return Literal::makeNull(heapType);
