@@ -27,6 +27,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/powerset2.h"
 #include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
 #include "analysis/lattices/vector.h"
@@ -34,6 +35,7 @@
 #include "analysis/reaching-definitions-transfer-function.h"
 #include "analysis/transfer-function.h"
 
+#include "support/bitset.h"
 #include "support/command-line.h"
 #include "tools/fuzzing.h"
 #include "tools/fuzzing/random.h"
@@ -158,6 +160,7 @@ using TupleLattice = analysis::Tuple<RandomLattice, RandomLattice>;
 
 struct RandomFullLattice::L : std::variant<Bool,
                                            UInt32,
+                                           FinitePowerset2<BitSet>,
                                            Inverted<RandomFullLattice>,
                                            ArrayFullLattice,
                                            Vector<RandomFullLattice>,
@@ -166,6 +169,7 @@ struct RandomFullLattice::L : std::variant<Bool,
 struct RandomFullLattice::ElementImpl
   : std::variant<typename Bool::Element,
                  typename UInt32::Element,
+                 typename FinitePowerset2<BitSet>::Element,
                  typename Inverted<RandomFullLattice>::Element,
                  typename ArrayFullLattice::Element,
                  typename Vector<RandomFullLattice>::Element,
@@ -173,6 +177,7 @@ struct RandomFullLattice::ElementImpl
 
 struct RandomLattice::L : std::variant<RandomFullLattice,
                                        Flat<uint32_t>,
+                                       Powerset2<BitSet>,
                                        Lift<RandomLattice>,
                                        ArrayLattice,
                                        Vector<RandomLattice>,
@@ -181,12 +186,13 @@ struct RandomLattice::L : std::variant<RandomFullLattice,
 struct RandomLattice::ElementImpl
   : std::variant<typename RandomFullLattice::Element,
                  typename Flat<uint32_t>::Element,
+                 typename Powerset2<BitSet>::Element,
                  typename Lift<RandomLattice>::Element,
                  typename ArrayLattice::Element,
                  typename Vector<RandomLattice>::Element,
                  typename TupleLattice::Element> {};
 
-constexpr int FullLatticePicks = 6;
+constexpr int FullLatticePicks = 7;
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
@@ -202,18 +208,21 @@ RandomFullLattice::RandomFullLattice(Random& rand,
       lattice = std::make_unique<L>(L{UInt32{}});
       return;
     case 2:
+      lattice = std::make_unique<L>(L{FinitePowerset2<BitSet>{0, 1, 2}});
+      return;
+    case 3:
       lattice =
         std::make_unique<L>(L{Inverted{RandomFullLattice{rand, depth + 1}}});
       return;
-    case 3:
+    case 4:
       lattice = std::make_unique<L>(
         L{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
       return;
-    case 4:
+    case 5:
       lattice = std::make_unique<L>(
         L{Vector{RandomFullLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
-    case 5:
+    case 6:
       lattice = std::make_unique<L>(
         L{TupleFullLattice{RandomFullLattice{rand, depth + 1},
                            RandomFullLattice{rand, depth + 1}}});
@@ -224,7 +233,7 @@ RandomFullLattice::RandomFullLattice(Random& rand,
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(FullLatticePicks + 5);
+  uint32_t pick = rand.upTo(FullLatticePicks + 6);
 
   if (pick < FullLatticePicks) {
     lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
@@ -236,17 +245,20 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
       lattice = std::make_unique<L>(L{Flat<uint32_t>{}});
       return;
     case FullLatticePicks + 1:
-      lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
+      lattice = std::make_unique<L>(L{Powerset2<BitSet>{}});
       return;
     case FullLatticePicks + 2:
+      lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
+      return;
+    case FullLatticePicks + 3:
       lattice =
         std::make_unique<L>(L{ArrayLattice{RandomLattice{rand, depth + 1}}});
       return;
-    case FullLatticePicks + 3:
+    case FullLatticePicks + 4:
       lattice = std::make_unique<L>(
         L{Vector{RandomLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
-    case FullLatticePicks + 4:
+    case FullLatticePicks + 5:
       lattice = std::make_unique<L>(L{TupleLattice{
         RandomLattice{rand, depth + 1}, RandomLattice{rand, depth + 1}}});
       return;
@@ -260,6 +272,15 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   }
   if (std::get_if<UInt32>(lattice.get())) {
     return ElementImpl{rand.upToSquared(33)};
+  }
+  if (std::get_if<FinitePowerset2<BitSet>>(lattice.get())) {
+    BitSet set;
+    for (int i = 0; i < 3; ++i) {
+      if (rand.oneIn(2)) {
+        set.insert(i);
+      }
+    }
+    return ElementImpl{std::move(set)};
   }
   if (const auto* l = std::get_if<Inverted<RandomFullLattice>>(lattice.get())) {
     return ElementImpl{l->lattice.makeElement()};
@@ -298,6 +319,15 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
       default:
         return ElementImpl{l->get(std::move(pick))};
     }
+  }
+  if (std::get_if<Powerset2<BitSet>>(lattice.get())) {
+    BitSet set;
+    for (int i = 0; i < 3; ++i) {
+      if (rand.oneIn(2)) {
+        set.insert(i);
+      }
+    }
+    return ElementImpl{std::move(set)};
   }
   if (const auto* l = std::get_if<Lift<RandomLattice>>(lattice.get())) {
     return ElementImpl{rand.oneIn(4) ? l->getBottom()
@@ -338,6 +368,18 @@ void printFullElement(std::ostream& os,
     os << (*e ? "true" : "false") << "\n";
   } else if (const auto* e = std::get_if<typename UInt32::Element>(&*elem)) {
     os << *e << "\n";
+  } else if (const auto* e =
+               std::get_if<typename FinitePowerset2<BitSet>::Element>(&*elem)) {
+    os << "FiniteSet {";
+    bool needComma = false;
+    for (auto i : *e) {
+      if (needComma) {
+        os << ", ";
+      }
+      os << i;
+      needComma = true;
+    }
+    os << "}\n";
   } else if (const auto* e =
                std::get_if<typename Inverted<RandomFullLattice>::Element>(
                  &*elem)) {
@@ -394,6 +436,18 @@ void printElement(std::ostream& os,
       os << "flat " << *e->getVal() << "\n";
     }
   } else if (const auto* e =
+               std::get_if<typename FinitePowerset2<BitSet>::Element>(&*elem)) {
+    os << "Set {";
+    bool needComma = false;
+    for (auto i : *e) {
+      if (needComma) {
+        os << ", ";
+      }
+      os << i;
+      needComma = true;
+    }
+    os << "}\n";
+  } else if (const auto* e =
                std::get_if<typename Lift<RandomLattice>::Element>(&*elem)) {
     if (e->isBottom()) {
       os << "lift bot\n";
@@ -439,12 +493,19 @@ std::ostream& operator<<(std::ostream& os,
 
 // Check that random lattices have the correct mathematical properties by
 // checking the relationships between random elements.
-void checkLatticeProperties(Random& rand) {
+void checkLatticeProperties(Random& rand, bool verbose) {
   RandomLattice lattice(rand);
 
   // Generate the lattice elements we will perform checks on.
   typename RandomLattice::Element elems[3] = {
     lattice.makeElement(), lattice.makeElement(), lattice.makeElement()};
+
+  if (verbose) {
+    std::cout << "Random lattice elements:\n"
+              << elems[0] << "\n"
+              << elems[1] << "\n"
+              << elems[2];
+  }
 
   // Calculate the relations between the generated elements.
   LatticeComparison relation[3][3];
@@ -920,7 +981,7 @@ struct Fuzzer {
     }
 
     Random rand(std::move(funcBytes));
-    checkLatticeProperties(rand);
+    checkLatticeProperties(rand, verbose);
 
     CFG cfg = CFG::fromFunction(func);
 

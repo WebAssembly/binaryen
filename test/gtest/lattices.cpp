@@ -21,7 +21,9 @@
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
 #include "analysis/lattices/tuple.h"
+#include "analysis/lattices/powerset2.h"
 #include "analysis/lattices/vector.h"
+#include "support/bitset.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;
@@ -709,3 +711,138 @@ TEST(TupleLattice, Meet) {
   test(tt, tf, true, tf);
   test(tt, tt, false, tt);
 }
+
+template<typename Set> void testPowersetGetBottom() {
+  analysis::Powerset2<Set> powerset;
+  auto bot = powerset.getBottom();
+  EXPECT_EQ(bot, Set{});
+  EXPECT_TRUE(bot.empty());
+}
+
+template<typename Set> void testPowersetGetTop() {
+  analysis::FinitePowerset2<Set> powerset{0, 1};
+  auto top = powerset.getTop();
+  EXPECT_EQ(top, (Set{0, 1}));
+}
+
+template<typename Set> void testPowersetCompare() {
+  analysis::Powerset2<Set> powerset;
+  Set ff{};
+  Set ft{0};
+  Set tf{1};
+  Set tt{0, 1};
+
+  EXPECT_EQ(powerset.compare(ff, ff), analysis::EQUAL);
+  EXPECT_EQ(powerset.compare(ff, ft), analysis::LESS);
+  EXPECT_EQ(powerset.compare(ff, tf), analysis::LESS);
+  EXPECT_EQ(powerset.compare(ff, tt), analysis::LESS);
+
+  EXPECT_EQ(powerset.compare(ft, ff), analysis::GREATER);
+  EXPECT_EQ(powerset.compare(ft, ft), analysis::EQUAL);
+  EXPECT_EQ(powerset.compare(ft, tf), analysis::NO_RELATION);
+  EXPECT_EQ(powerset.compare(ft, tt), analysis::LESS);
+
+  EXPECT_EQ(powerset.compare(tf, ff), analysis::GREATER);
+  EXPECT_EQ(powerset.compare(tf, ft), analysis::NO_RELATION);
+  EXPECT_EQ(powerset.compare(tf, tf), analysis::EQUAL);
+  EXPECT_EQ(powerset.compare(tf, tt), analysis::LESS);
+
+  EXPECT_EQ(powerset.compare(tt, ff), analysis::GREATER);
+  EXPECT_EQ(powerset.compare(tt, ft), analysis::GREATER);
+  EXPECT_EQ(powerset.compare(tt, tf), analysis::GREATER);
+  EXPECT_EQ(powerset.compare(tt, tt), analysis::EQUAL);
+}
+
+template<typename Set> void testPowersetJoin() {
+  analysis::Powerset2<Set> powerset;
+  auto ff = []() { return Set{}; };
+  auto ft = []() { return Set{0}; };
+  auto tf = []() { return Set{1}; };
+  auto tt = []() { return Set{0, 1}; };
+
+  auto test =
+    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
+      auto joinee = makeJoinee();
+      EXPECT_EQ(powerset.join(joinee, makeJoiner()), modified);
+      EXPECT_EQ(joinee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, true, ft);
+  test(ff, tf, true, tf);
+  test(ff, tt, true, tt);
+
+  test(ft, ff, false, ft);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, tt);
+  test(ft, tt, true, tt);
+
+  test(tf, ff, false, tf);
+  test(tf, ft, true, tt);
+  test(tf, tf, false, tf);
+  test(tf, tt, true, tt);
+
+  test(tt, ff, false, tt);
+  test(tt, ft, false, tt);
+  test(tt, tf, false, tt);
+  test(tt, tt, false, tt);
+}
+
+template<typename Set> void testPowersetMeet() {
+  analysis::FinitePowerset2<Set> powerset{0, 1};
+  auto ff = []() { return Set{}; };
+  auto ft = []() { return Set{0}; };
+  auto tf = []() { return Set{1}; };
+  auto tt = []() { return Set{0, 1}; };
+
+  auto test =
+    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
+      auto meetee = makeMeetee();
+      EXPECT_EQ(powerset.meet(meetee, makeMeeter()), modified);
+      EXPECT_EQ(meetee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, false, ff);
+  test(ff, tf, false, ff);
+  test(ff, tt, false, ff);
+
+  test(ft, ff, true, ff);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, ff);
+  test(ft, tt, false, ft);
+
+  test(tf, ff, true, ff);
+  test(tf, ft, true, ff);
+  test(tf, tf, false, tf);
+  test(tf, tt, false, tf);
+
+  test(tt, ff, true, ff);
+  test(tt, ft, true, ft);
+  test(tt, tf, true, tf);
+  test(tt, tt, false, tt);
+}
+
+TEST(PowersetLattice, GetBottom) {
+  testPowersetGetBottom<std::unordered_set<int>>();
+}
+
+TEST(PowersetLattice, GetTop) { testPowersetGetTop<std::unordered_set<int>>(); }
+
+TEST(PowersetLattice, Compare) {
+  testPowersetCompare<std::unordered_set<int>>();
+}
+
+TEST(PowersetLattice, Join) { testPowersetJoin<std::unordered_set<int>>(); }
+
+TEST(PowersetLattice, Meet) { testPowersetMeet<std::unordered_set<int>>(); }
+
+TEST(PowersetBitLattice, GetBottom) { testPowersetGetBottom<BitSet>(); }
+
+TEST(PowersetBitLattice, GetTop) { testPowersetGetTop<BitSet>(); }
+
+TEST(PowersetBitLattice, Compare) { testPowersetCompare<BitSet>(); }
+
+TEST(PowersetBitLattice, Join) { testPowersetJoin<BitSet>(); }
+
+TEST(PowersetBitLattice, Meet) { testPowersetMeet<BitSet>(); }
