@@ -79,17 +79,17 @@ private:
     WASM_UNREACHABLE("unexpected comparison");
   }
 
-  bool joinImpl(Element& joinee,
-                const Element& joiner,
-                std::index_sequence<>) const noexcept {
+  int joinImpl(Element& joinee,
+               const Element& joiner,
+               std::index_sequence<>) const noexcept {
     // Base case: there is nothing left to join.
     return false;
   }
 
   template<size_t I, size_t... Is>
-  bool joinImpl(Element& joinee,
-                const Element& joiner,
-                std::index_sequence<I, Is...>) const noexcept {
+  int joinImpl(Element& joinee,
+               const Element& joiner,
+               std::index_sequence<I, Is...>) const noexcept {
     // Recursive case: join the current element and recurse to the next
     // elements.
     return std::get<I>(lattices).join(std::get<I>(joinee),
@@ -97,21 +97,21 @@ private:
            joinImpl(joinee, joiner, std::index_sequence<Is...>{});
   }
 
-  bool meetImpl(Element& meetee,
-                const Element& meeter,
-                std::index_sequence<>) const noexcept {
+  int meetImpl(Element& meetee,
+               const Element& meeter,
+               std::index_sequence<>) const noexcept {
     // Base case: there is nothing left to mee.
     return false;
   }
 
   template<size_t I, size_t... Is>
-  bool meetImpl(Element& meetee,
-                const Element& meeter,
-                std::index_sequence<I, Is...>) const noexcept {
+  int meetImpl(Element& meetee,
+               const Element& meeter,
+               std::index_sequence<I, Is...>) const noexcept {
     // Recursive case: meet the current element and recurse to the next
     // elements.
-    return std::get<I>(lattices).meet(std::get<I>(meetee),
-                                      std::get<I>(meeter)) |
+    return (std::get<I>(lattices).meet(std::get<I>(meetee),
+                                       std::get<I>(meeter))) |
            meetImpl(meetee, meeter, std::index_sequence<Is...>{});
   }
 
