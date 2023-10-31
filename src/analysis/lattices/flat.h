@@ -51,6 +51,13 @@ public:
     bool isTop() const noexcept { return std::get_if<Top>(this); }
     const T* getVal() const noexcept { return std::get_if<T>(this); }
     T* getVal() noexcept { return std::get_if<T>(this); }
+    bool operator==(const Element& other) const noexcept {
+      return ((isBottom() && other.isBottom()) || (isTop() && other.isTop()) ||
+              (getVal() && other.getVal() && *getVal() == *other.getVal()));
+    }
+    bool operator!=(const Element& other) const noexcept {
+      return !(*this == other);
+    }
   };
 
   Element getBottom() const noexcept { return Element{Bot{}}; }
