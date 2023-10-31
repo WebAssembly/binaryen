@@ -526,8 +526,8 @@ struct OnceReduction : public Pass {
           //     handle in general, like recursive imports of modules in various
           //     languages - but we do know bar has been *entered*, which means
           //     the global was set).
-          //  2. foo has never been entered before. In this case in BEFORE we set
-          //     the global and call bar, and in AFTER we also call bar.
+          //  2. foo has never been entered before. In this case in BEFORE we
+          //     set the global and call bar, and in AFTER we also call bar.
           //
           // Thus, the behavior is the same, and we can remove the early-exit
           // lines.
