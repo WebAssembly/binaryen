@@ -1386,6 +1386,20 @@ HeapType::BasicHeapType HeapType::getBottom() const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+HeapType::BasicHeapType HeapType::getTop() const {
+  switch (getBottom()) {
+    case none:
+      return any;
+    case nofunc:
+      return func;
+    case noext:
+      return ext;
+    default:
+      break;
+  }
+  WASM_UNREACHABLE("unexpected type");
+}
+
 bool HeapType::isSubType(HeapType left, HeapType right) {
   // As an optimization, in the common case do not even construct a SubTyper.
   if (left == right) {
