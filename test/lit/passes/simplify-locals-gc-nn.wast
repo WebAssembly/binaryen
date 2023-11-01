@@ -150,15 +150,24 @@
     )
   )
 
+  ;; CHECK:      (func $if-return-tuple-nn (type $0)
+  ;; CHECK-NEXT:  (local $temp ((ref func) nullref))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-return-tuple-nn
     (local $temp ((ref func) (ref null none)))
     ;; We should not emit a return value for this if, as the tuple has a non-
     ;; nullable element, so it is nondefaultable.
+    ;;
+    ;; Instead, we can remove the local.set entirely, as it has no gets.
     (if
       (i32.const 0)
       (local.set $temp
         (tuple.make
-          (ref.func $func)
+          (ref.func $if-return-tuple-nn)
           (ref.null none)
         )
       )
