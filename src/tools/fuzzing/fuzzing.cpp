@@ -387,7 +387,6 @@ void TranslateToFuzzReader::setupGlobals() {
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
   if (!wasm.globals.empty()) {
-abort();
     auto percent = upTo(100);
     for (auto& global : wasm.globals) {
       if (upTo(100) < percent) {
@@ -412,11 +411,15 @@ abort();
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
-    globalsByType[type].push_back(global->name);
-    if (mutability == Builder::Mutable) {
-      mutableGlobalsByType[type].push_back(global->name);
-    }
     wasm.addGlobal(std::move(global));
+  }
+
+  // Set up data structures for picking globals later for get/set operations.
+  for (auto& global : wasm.globals) {
+    globalsByType[global->type].push_back(global->name);
+    if (global->mutable_) {
+      mutableGlobalsByType[global->type].push_back(global->name);
+    }
   }
 }
 
