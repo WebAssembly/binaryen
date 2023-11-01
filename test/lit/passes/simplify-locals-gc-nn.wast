@@ -149,4 +149,19 @@
       )
     )
   )
+
+  (func $if-return-tuple-nn
+    (local $temp ((ref func) (ref null none)))
+    ;; We should not emit a return value for this if, as the tuple has a non-
+    ;; nullable element, so it is nondefaultable.
+    (if
+      (i32.const 0)
+      (local.set $temp
+        (tuple.make
+          (ref.func $func)
+          (ref.null none)
+        )
+      )
+    )
+  )
 )

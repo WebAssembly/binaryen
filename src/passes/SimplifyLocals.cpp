@@ -799,7 +799,7 @@ struct SimplifyLocals
     // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
-    if (localType.isNonNullable()) {
+    if (!localType.isDefaultable()) {
       return;
     }
 
