@@ -794,12 +794,14 @@ struct SimplifyLocals
     // In other words, local.get is not necessarily free of effects if the local
     // is non-nullable - it must have been set already. We could check that
     // here, but running that linear-time check may not be worth it as this
-    // optimization is fairly minor, so just skip the non-nullable case.
+    // optimization is fairly minor, so just skip the non-nullable case (and in
+    // general, the non-defaultable case, of say a tuple with a non-nullable
+    // element).
     //
     // TODO investigate more
     Index goodIndex = sinkables.begin()->first;
     auto localType = this->getFunction()->getLocalType(goodIndex);
-    if (localType.isNonNullable()) {
+    if (!localType.isDefaultable()) {
       return;
     }
 
