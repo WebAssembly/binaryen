@@ -416,11 +416,6 @@ void TranslateToFuzzReader::setupGlobals() {
   for (Index i = 0; i < wasm.globals.size(); i++) {
     auto& global = wasm.globals[i];
 
-    // We don't want random fuzz code to use the hang limit global.
-    if (global->name == HANG_LIMIT_GLOBAL) {
-      continue;
-    }
-
     // Apply the chance for initial globals to be ignored, see above
     if (i < numInitialGlobals && upTo(100) < percentInvalidInitialGlobals) {
       continue;
@@ -431,6 +426,9 @@ void TranslateToFuzzReader::setupGlobals() {
     if (global->mutable_) {
       mutableGlobalsByType[global->type].push_back(global->name);
     }
+
+    // We don't want random fuzz code to use the hang limit global.
+    assert(global->name != HANG_LIMIT_GLOBAL);
   }
 }
 
