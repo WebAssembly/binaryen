@@ -323,10 +323,21 @@ def pick_initial_contents():
     # fuzzing, then that filename, or None if we start entirely from scratch
     global INITIAL_CONTENTS
 
-    INITIAL_CONTENTS = None
-    # half the time don't use any initial contents
-    if random.random() < 0.5:
-        return
+    r = random.random()
+    if r < 0.333:
+        # 1/3 of the time use no initial contents
+        contents = None
+    elif r < 0.666:
+        # 1/3 of the time use initial contents from the test suite
+        contents = pick_initial_contents_from_test_suite()
+    else:
+        # 1/3 of the time generate artisinal initial contents
+        contents = generate_artisinal_initial_contents()
+
+    INITIAL_CONTENTS = contents
+
+
+def pick_initial_contents_from_test_suite():
     # some of the time use initial contents that are known to be especially
     # important
     if random.random() < 0.5:
@@ -434,8 +445,58 @@ def pick_initial_contents():
         print('(initial contents not valid for features, ignoring)')
         return
 
-    INITIAL_CONTENTS = test_name
+    return test_name
 
+
+# Generate interesting initial contents here in the fuzz harness. This creates
+# entire patterns in a holistic manner, as opposed to the C++ fuzzer which adds
+# random content and mutates existing content as it goes in an online manner.
+# For comparison, the "once" pattern in one in which there is coordination
+# between a global and a function, and calls between such functions matter a
+# lot; the C++ fuzzer is too low-level to conveniently create such things, and a
+# set of fixed testcases in the test suite would offer some coverage of that
+# pattern, but very little compared to the entire space, which this function can
+# provide coverage for.
+def generate_artisinal_initial_contents():
+    # For now this focuses on the "once" pattern. We could refactor this into
+    # a sub-function when we add more patterns here.
+
+    wat = []
+    wat.append('(module')
+    # Add a logging function so we can have side effects to find differences in
+    # execution, and keep a counter of which logged value to next emit, so they
+    # are all unique.
+    wat.append(' (import "fuzzing-support" "log" (func $log (param i32)))')
+    log_value = 0
+    num_onces = random.randint(0, 8)
+    for i in range(num_onces):
+      # All "once" globals begin at 0.
+      wat.append(f' (global $once${i} (mut i32) (i32.const 0))')
+    for i in range(num_onces):
+      export = '' if random.random() < 0.5 else f'(export "once_{i}")'
+      wat.append(f' (func $once${i} {export}')
+      # If the global for this function is not zero, we've been here before,
+      # and early-exit.
+      wat.append(f'  (if (i32.eqz (global.get $once${i})) (return))')
+      # This is the first time we are here; set the global and run the payload.
+      wat.append(f'  (global.set $once${i} (i32.const 1))')
+      payload_size = random.randint(0, 5)
+      for i in range(payload_size):
+        # Each payload item is either a call to another function, or a logging.
+        if random.random() < 0.5:
+          j = random.randint(0, num_onces - 1)
+          wat.append(f'  (call $once${j})')
+        else:
+          wat.append(f'  (call $log (i32.const {log_value}))')
+          log_value += 1
+      wat.append(f' )')
+    wat.append(')')
+    wat = '\n'.join(wat)
+
+    test_name = 'artisinal.wat'
+    with open(test_name, 'w') as f:
+        f.write(wat)
+    return test_name
 
 # Test outputs we want to ignore are marked this way.
 IGNORE = '[binaryen-fuzzer-ignore]'
