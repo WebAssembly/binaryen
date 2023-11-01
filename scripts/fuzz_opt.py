@@ -332,6 +332,8 @@ def pick_initial_contents():
         contents = pick_initial_contents_from_test_suite()
     else:
         # 1/3 of the time generate artisinal initial contents
+        # TODO: reduce this, after it has been fuzzed for a while? test suite
+        #       contents may matter more
         contents = generate_artisinal_initial_contents()
 
     INITIAL_CONTENTS = contents
