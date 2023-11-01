@@ -29,6 +29,7 @@
 #include "analysis/lattices/lift.h"
 #include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
+#include "analysis/lattices/valtype.h"
 #include "analysis/lattices/vector.h"
 #include "analysis/liveness-transfer-function.h"
 #include "analysis/reaching-definitions-transfer-function.h"
@@ -158,6 +159,7 @@ using TupleLattice = analysis::Tuple<RandomLattice, RandomLattice>;
 
 struct RandomFullLattice::L : std::variant<Bool,
                                            UInt32,
+                                           ValType,
                                            Inverted<RandomFullLattice>,
                                            ArrayFullLattice,
                                            Vector<RandomFullLattice>,
@@ -166,6 +168,7 @@ struct RandomFullLattice::L : std::variant<Bool,
 struct RandomFullLattice::ElementImpl
   : std::variant<typename Bool::Element,
                  typename UInt32::Element,
+                 typename ValType::Element,
                  typename Inverted<RandomFullLattice>::Element,
                  typename ArrayFullLattice::Element,
                  typename Vector<RandomFullLattice>::Element,
@@ -186,7 +189,7 @@ struct RandomLattice::ElementImpl
                  typename Vector<RandomLattice>::Element,
                  typename TupleLattice::Element> {};
 
-constexpr int FullLatticePicks = 6;
+constexpr int FullLatticePicks = 7;
 
 RandomFullLattice::RandomFullLattice(Random& rand,
                                      size_t depth,
@@ -202,18 +205,21 @@ RandomFullLattice::RandomFullLattice(Random& rand,
       lattice = std::make_unique<L>(L{UInt32{}});
       return;
     case 2:
+      lattice = std::make_unique<L>(L{ValType{}});
+      return;
+    case 3:
       lattice =
         std::make_unique<L>(L{Inverted{RandomFullLattice{rand, depth + 1}}});
       return;
-    case 3:
+    case 4:
       lattice = std::make_unique<L>(
         L{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
       return;
-    case 4:
+    case 5:
       lattice = std::make_unique<L>(
         L{Vector{RandomFullLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
-    case 5:
+    case 6:
       lattice = std::make_unique<L>(
         L{TupleFullLattice{RandomFullLattice{rand, depth + 1},
                            RandomFullLattice{rand, depth + 1}}});
@@ -260,6 +266,38 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   }
   if (std::get_if<UInt32>(lattice.get())) {
     return ElementImpl{rand.upToSquared(33)};
+  }
+  if (std::get_if<ValType>(lattice.get())) {
+    Type type;
+    // Choose a random type. No need to make all possible types available as
+    // long as we cover all the kinds of relationships between types.
+    switch (rand.upTo(8)) {
+      case 0:
+        type = Type::unreachable;
+        break;
+      case 1:
+        type = Type::none;
+        break;
+      case 2:
+        type = Type::i32;
+        break;
+      case 3:
+        type = Type::f32;
+        break;
+      case 4:
+        type = Type(HeapType::any, rand.oneIn(2) ? Nullable : NonNullable);
+        break;
+      case 5:
+        type = Type(HeapType::none, rand.oneIn(2) ? Nullable : NonNullable);
+        break;
+      case 6:
+        type = Type(HeapType::struct_, rand.oneIn(2) ? Nullable : NonNullable);
+        break;
+      case 7:
+        type = Type(HeapType::array, rand.oneIn(2) ? Nullable : NonNullable);
+        break;
+    }
+    return ElementImpl{type};
   }
   if (const auto* l = std::get_if<Inverted<RandomFullLattice>>(lattice.get())) {
     return ElementImpl{l->lattice.makeElement()};
@@ -337,6 +375,8 @@ void printFullElement(std::ostream& os,
   if (const auto* e = std::get_if<typename Bool::Element>(&*elem)) {
     os << (*e ? "true" : "false") << "\n";
   } else if (const auto* e = std::get_if<typename UInt32::Element>(&*elem)) {
+    os << *e << "\n";
+  } else if (const auto* e = std::get_if<typename ValType::Element>(&*elem)) {
     os << *e << "\n";
   } else if (const auto* e =
                std::get_if<typename Inverted<RandomFullLattice>::Element>(
@@ -439,12 +479,19 @@ std::ostream& operator<<(std::ostream& os,
 
 // Check that random lattices have the correct mathematical properties by
 // checking the relationships between random elements.
-void checkLatticeProperties(Random& rand) {
+void checkLatticeProperties(Random& rand, bool verbose) {
   RandomLattice lattice(rand);
 
   // Generate the lattice elements we will perform checks on.
   typename RandomLattice::Element elems[3] = {
     lattice.makeElement(), lattice.makeElement(), lattice.makeElement()};
+
+  if (verbose) {
+    std::cout << "Random lattice elements:\n"
+              << elems[0] << "\n"
+              << elems[1] << "\n"
+              << elems[2];
+  }
 
   // Calculate the relations between the generated elements.
   LatticeComparison relation[3][3];
@@ -920,7 +967,7 @@ struct Fuzzer {
     }
 
     Random rand(std::move(funcBytes));
-    checkLatticeProperties(rand);
+    checkLatticeProperties(rand, verbose);
 
     CFG cfg = CFG::fromFunction(func);
 

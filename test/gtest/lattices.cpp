@@ -21,6 +21,7 @@
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
 #include "analysis/lattices/tuple.h"
+#include "analysis/lattices/valtype.h"
 #include "analysis/lattices/vector.h"
 #include "gtest/gtest.h"
 
@@ -686,6 +687,117 @@ TEST(TupleLattice, Meet) {
     [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
       auto meetee = makeMeetee();
       EXPECT_EQ(tuple.meet(meetee, makeMeeter()), modified);
+      EXPECT_EQ(meetee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, false, ff);
+  test(ff, tf, false, ff);
+  test(ff, tt, false, ff);
+
+  test(ft, ff, true, ff);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, ff);
+  test(ft, tt, false, ft);
+
+  test(tf, ff, true, ff);
+  test(tf, ft, true, ff);
+  test(tf, tf, false, tf);
+  test(tf, tt, false, tf);
+
+  test(tt, ff, true, ff);
+  test(tt, ft, true, ft);
+  test(tt, tf, true, tf);
+  test(tt, tt, false, tt);
+}
+
+TEST(ValTypeLattice, GetBottom) {
+  analysis::ValType valtype;
+  EXPECT_EQ(valtype.getBottom(), Type::unreachable);
+}
+
+TEST(ValTypeLattice, GetTop) {
+  analysis::ValType valtype;
+  EXPECT_EQ(valtype.getTop(), Type::none);
+}
+
+TEST(ValTypeLattice, Compare) {
+  analysis::ValType valtype;
+
+  Type ff = Type::unreachable;
+  Type ft = Type::i32;
+  Type tf = Type::f32;
+  Type tt = Type::none;
+
+  EXPECT_EQ(valtype.compare(ff, ff), analysis::EQUAL);
+  EXPECT_EQ(valtype.compare(ff, ft), analysis::LESS);
+  EXPECT_EQ(valtype.compare(ff, tf), analysis::LESS);
+  EXPECT_EQ(valtype.compare(ff, tt), analysis::LESS);
+
+  EXPECT_EQ(valtype.compare(ft, ff), analysis::GREATER);
+  EXPECT_EQ(valtype.compare(ft, ft), analysis::EQUAL);
+  EXPECT_EQ(valtype.compare(ft, tf), analysis::NO_RELATION);
+  EXPECT_EQ(valtype.compare(ft, tt), analysis::LESS);
+
+  EXPECT_EQ(valtype.compare(tf, ff), analysis::GREATER);
+  EXPECT_EQ(valtype.compare(tf, ft), analysis::NO_RELATION);
+  EXPECT_EQ(valtype.compare(tf, tf), analysis::EQUAL);
+  EXPECT_EQ(valtype.compare(tf, tt), analysis::LESS);
+
+  EXPECT_EQ(valtype.compare(tt, ff), analysis::GREATER);
+  EXPECT_EQ(valtype.compare(tt, ft), analysis::GREATER);
+  EXPECT_EQ(valtype.compare(tt, tf), analysis::GREATER);
+  EXPECT_EQ(valtype.compare(tt, tt), analysis::EQUAL);
+}
+
+TEST(ValTypeLattice, Join) {
+  analysis::ValType valtype;
+
+  auto ff = []() -> Type { return Type::unreachable; };
+  auto ft = []() -> Type { return Type::i32; };
+  auto tf = []() -> Type { return Type::f32; };
+  auto tt = []() -> Type { return Type::none; };
+
+  auto test =
+    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
+      auto joinee = makeJoinee();
+      EXPECT_EQ(valtype.join(joinee, makeJoiner()), modified);
+      EXPECT_EQ(joinee, makeExpected());
+    };
+
+  test(ff, ff, false, ff);
+  test(ff, ft, true, ft);
+  test(ff, tf, true, tf);
+  test(ff, tt, true, tt);
+
+  test(ft, ff, false, ft);
+  test(ft, ft, false, ft);
+  test(ft, tf, true, tt);
+  test(ft, tt, true, tt);
+
+  test(tf, ff, false, tf);
+  test(tf, ft, true, tt);
+  test(tf, tf, false, tf);
+  test(tf, tt, true, tt);
+
+  test(tt, ff, false, tt);
+  test(tt, ft, false, tt);
+  test(tt, tf, false, tt);
+  test(tt, tt, false, tt);
+}
+
+TEST(ValTypeLattice, Meet) {
+  analysis::ValType valtype;
+
+  auto ff = []() -> Type { return Type::unreachable; };
+  auto ft = []() -> Type { return Type::i32; };
+  auto tf = []() -> Type { return Type::f32; };
+  auto tt = []() -> Type { return Type::none; };
+
+  auto test =
+    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
+      auto meetee = makeMeetee();
+      EXPECT_EQ(valtype.meet(meetee, makeMeeter()), modified);
       EXPECT_EQ(meetee, makeExpected());
     };
 
