@@ -429,9 +429,6 @@ void TranslateToFuzzReader::setupGlobals() {
     if (global->mutable_) {
       mutableGlobalsByType[global->type].push_back(global->name);
     }
-
-    // We don't want random fuzz code to use the hang limit global.
-    assert(global->name != HANG_LIMIT_GLOBAL);
   }
 }
 
@@ -1734,7 +1731,11 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   if (it == globalsByType.end() || it->second.empty()) {
     return makeTrivial(type);
   }
-  return builder.makeGlobalGet(pick(it->second), type);
+  
+  auto name = pick(it->second);
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalGet(name, type);
 }
 
 Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
@@ -1744,7 +1745,11 @@ Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
   if (it == mutableGlobalsByType.end() || it->second.empty()) {
     return makeTrivial(Type::none);
   }
-  return builder.makeGlobalSet(pick(it->second), make(type));
+
+  auto name = pick(it->second);
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalSet(name, make(type));
 }
 
 Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
