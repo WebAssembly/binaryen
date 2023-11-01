@@ -30,6 +30,13 @@ namespace wasm::analysis {
 template<Lattice L> struct Vector {
   using Element = std::vector<typename L::Element>;
 
+  // Represent a vector in which all but one of the elements are bottom without
+  // materializing the full vector.
+  struct SingletonElement : std::pair<size_t, typename L::Element> {
+    SingletonElement(size_t i, typename L::Element&& elem)
+      : std::pair<size_t, typename L::Element>{i, std::move(elem)} {}
+  };
+
   L lattice;
   const size_t size;
 
@@ -39,13 +46,7 @@ template<Lattice L> struct Vector {
     return Element(size, lattice.getBottom());
   }
 
-  Element getTop() const noexcept
-#if __cplusplus >= 202002L
-    requires FullLattice<L>
-#endif
-  {
-    return Element(size, lattice.getTop());
-  }
+  Element getTop() const noexcept { return Element(size, lattice.getTop()); }
 
   // `a` <= `b` if their elements are pairwise <=, etc. Unless we determine
   // that there is no relation, we must check all the elements.
@@ -84,47 +85,69 @@ template<Lattice L> struct Vector {
     assert(joiner.size() == size);
     bool result = false;
     for (size_t i = 0; i < size; ++i) {
-      if constexpr (std::is_same_v<typename L::Element, bool>) {
-        // The vector<bool> specialization does not expose references to the
-        // individual bools because they might be in a bitmap, so we need a
-        // workaround.
-        bool e = joinee[i];
-        if (lattice.join(e, joiner[i])) {
-          joinee[i] = e;
-          result = true;
-        }
-      } else {
-        result |= lattice.join(joinee[i], joiner[i]);
-      }
+      result |= joinAtIndex(joinee, i, joiner[i]);
     }
-
     return result;
   }
 
+  bool join(Element& joinee, const SingletonElement& joiner) const noexcept {
+    const auto& [index, elem] = joiner;
+    assert(index < joinee.size());
+    return joinAtIndex(joinee, index, elem);
+  }
+
   // Pairwise meet on the elements.
-  bool meet(Element& meetee, const Element& meeter) const noexcept
-#if __cplusplus >= 202002L
-    requires FullLattice<L>
-#endif
-  {
+  bool meet(Element& meetee, const Element& meeter) const noexcept {
     assert(meetee.size() == size);
     assert(meeter.size() == size);
     bool result = false;
     for (size_t i = 0; i < size; ++i) {
-      if constexpr (std::is_same_v<typename L::Element, bool>) {
-        // The vector<bool> specialization does not expose references to the
-        // individual bools because they might be in a bitmap, so we need a
-        // workaround.
-        bool e = meetee[i];
-        if (lattice.meet(e, meeter[i])) {
-          meetee[i] = e;
-          result = true;
-        }
-      } else {
-        result |= lattice.meet(meetee[i], meeter[i]);
-      }
+      result |= meetAtIndex(meetee, i, meeter[i]);
     }
     return result;
+  }
+
+  bool meet(Element& meetee, const SingletonElement& meeter) const noexcept {
+    const auto& [index, elem] = meeter;
+    assert(index < meetee.size());
+    return meetAtIndex(meetee, index, elem);
+  }
+
+private:
+  bool joinAtIndex(Element& joinee,
+                   size_t i,
+                   const typename L::Element& elem) const noexcept {
+    if constexpr (std::is_same_v<typename L::Element, bool>) {
+      // The vector<bool> specialization does not expose references to the
+      // individual bools because they might be in a bitmap, so we need a
+      // workaround.
+      bool e = joinee[i];
+      if (lattice.join(e, elem)) {
+        joinee[i] = e;
+        return true;
+      }
+      return false;
+    } else {
+      return lattice.join(joinee[i], elem);
+    }
+  }
+
+  bool meetAtIndex(Element& meetee,
+                   size_t i,
+                   const typename L::Element& elem) const noexcept {
+    if constexpr (std::is_same_v<typename L::Element, bool>) {
+      // The vector<bool> specialization does not expose references to the
+      // individual bools because they might be in a bitmap, so we need a
+      // workaround.
+      bool e = meetee[i];
+      if (lattice.meet(e, elem)) {
+        meetee[i] = e;
+        return true;
+      }
+      return false;
+    } else {
+      return lattice.meet(meetee[i], elem);
+    }
   }
 };
 

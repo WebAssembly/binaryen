@@ -106,7 +106,8 @@ template<Lattice L> struct Shared {
     return false;
   }
 
-  bool join(Element& joinee, const typename L::Element& joiner) const noexcept {
+  template<typename Elem>
+  bool join(Element& joinee, const Elem& joiner) const noexcept {
     if (lattice.join(val, joiner)) {
       // We have moved to the next value in our ascending chain. Assign it a new
       // sequence number and update joinee with that sequence number.
