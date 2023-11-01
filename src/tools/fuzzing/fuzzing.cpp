@@ -386,10 +386,13 @@ void TranslateToFuzzReader::setupGlobals() {
   // which a global is used in one function only. (If we randomly emitted gets
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
-  auto percent = upTo(100);
-  for (auto& global : wasm.globals) {
-    if (upTo(100) < percent) {
-      invalidGlobals.insert(global->name);
+  if (!wasm.globals.empty()) {
+abort();
+    auto percent = upTo(100);
+    for (auto& global : wasm.globals) {
+      if (upTo(100) < percent) {
+        invalidGlobals.insert(global->name);
+      }
     }
   }
 
