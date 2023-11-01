@@ -380,17 +380,20 @@ void TranslateToFuzzReader::setupGlobals() {
     }
   }
 
-  // Randomly assign some globals from initial content to be invalid for the
+  // Randomly assign some globals from initial content to be ignored for the
   // fuzzer to use. Such globals will only be used from initial content. This is
   // important to preserve some real-world patterns, like the "once" pattern in
   // which a global is used in one function only. (If we randomly emitted gets
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
+  //
+  // Pick a percentage of initial globals to ignore later down when we decide
+  // which to allow uses from.
   auto numInitialGlobals = wasm.globals.size();
-  unsigned percentInvalidInitialGlobals = 0;
+  unsigned percentIgnoredInitialGlobals = 0;
   if (numInitialGlobals) {
     // Only generate this random number if it will be used.
-    percentInvalidInitialGlobals = upTo(100);
+    percentIgnoredInitialGlobals = upTo(100);
   }
 
   // Create new random globals.
@@ -417,7 +420,7 @@ void TranslateToFuzzReader::setupGlobals() {
     auto& global = wasm.globals[i];
 
     // Apply the chance for initial globals to be ignored, see above
-    if (i < numInitialGlobals && upTo(100) < percentInvalidInitialGlobals) {
+    if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
       continue;
     }
 
