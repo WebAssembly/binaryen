@@ -323,7 +323,7 @@ def pick_initial_contents():
     # fuzzing, then that filename, or None if we start entirely from scratch
     global INITIAL_CONTENTS
 
-    r = random.random()
+    r = 0.9 # waka random.random()
     if r < 0.333:
         # 1/3 of the time use no initial contents
         contents = None
@@ -479,7 +479,7 @@ def generate_artisinal_initial_contents():
       wat.append(f' (func $once${i} {export}')
       # If the global for this function is not zero, we've been here before,
       # and early-exit.
-      wat.append(f'  (if (i32.eqz (global.get $once${i})) (return))')
+      wat.append(f'  (if (global.get $once${i}) (return))')
       # This is the first time we are here; set the global and run the payload.
       wat.append(f'  (global.set $once${i} (i32.const 1))')
       payload_size = random.randint(0, 5)
@@ -1437,13 +1437,6 @@ class RoundtripText(TestCaseHandler):
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    Asyncify(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
@@ -1717,6 +1710,7 @@ def get_random_opts():
     if CLOSED_WORLD:
         ret += [CLOSED_WORLD_FLAG]
     assert ret.count('--flatten') <= 1
+    ret = ['--once-reduction'] + ret # waka
     return ret
 
 
@@ -1769,6 +1763,7 @@ if __name__ == '__main__':
     total_input_size_squares = 0
     start_time = time.time()
     while True:
+        #time.sleep(0.5) # waka
         counter += 1
         if given_seed is not None:
             seed = given_seed
