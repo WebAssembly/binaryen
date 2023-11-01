@@ -289,10 +289,6 @@ private:
   Expression* makeCallRef(Type type);
   Expression* makeLocalGet(Type type);
   Expression* makeLocalSet(Type type);
-  // Some globals are for internal use, and should not be modified by random
-  // fuzz code.
-  bool isValidGlobal(Name name);
-
   Expression* makeGlobalGet(Type type);
   Expression* makeGlobalSet(Type type);
   Expression* makeTupleMake(Type type);

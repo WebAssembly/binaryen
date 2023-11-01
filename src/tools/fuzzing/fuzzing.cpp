@@ -379,6 +379,24 @@ void TranslateToFuzzReader::setupGlobals() {
       }
     }
   }
+
+  // Randomly assign some globals from initial content to be ignored for the
+  // fuzzer to use. Such globals will only be used from initial content. This is
+  // important to preserve some real-world patterns, like the "once" pattern in
+  // which a global is used in one function only. (If we randomly emitted gets
+  // and sets of such globals, we'd with very high probability end up breaking
+  // that pattern, and not fuzzing it at all.)
+  //
+  // Pick a percentage of initial globals to ignore later down when we decide
+  // which to allow uses from.
+  auto numInitialGlobals = wasm.globals.size();
+  unsigned percentIgnoredInitialGlobals = 0;
+  if (numInitialGlobals) {
+    // Only generate this random number if it will be used.
+    percentIgnoredInitialGlobals = upTo(100);
+  }
+
+  // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
     auto* init = makeConst(type);
@@ -394,11 +412,23 @@ void TranslateToFuzzReader::setupGlobals() {
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
-    globalsByType[type].push_back(global->name);
-    if (mutability == Builder::Mutable) {
-      mutableGlobalsByType[type].push_back(global->name);
-    }
     wasm.addGlobal(std::move(global));
+  }
+
+  // Set up data structures for picking globals later for get/set operations.
+  for (Index i = 0; i < wasm.globals.size(); i++) {
+    auto& global = wasm.globals[i];
+
+    // Apply the chance for initial globals to be ignored, see above.
+    if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
+      continue;
+    }
+
+    // This is a global we can use later, note it.
+    globalsByType[global->type].push_back(global->name);
+    if (global->mutable_) {
+      mutableGlobalsByType[global->type].push_back(global->name);
+    }
   }
 }
 
@@ -1696,21 +1726,16 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
   }
 }
 
-bool TranslateToFuzzReader::isValidGlobal(Name name) {
-  return name != HANG_LIMIT_GLOBAL;
-}
-
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   auto it = globalsByType.find(type);
   if (it == globalsByType.end() || it->second.empty()) {
-    return makeConst(type);
-  }
-  auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalGet(name, type);
-  } else {
     return makeTrivial(type);
   }
+
+  auto name = pick(it->second);
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalGet(name, type);
 }
 
 Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
@@ -1720,12 +1745,11 @@ Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
   if (it == mutableGlobalsByType.end() || it->second.empty()) {
     return makeTrivial(Type::none);
   }
+
   auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalSet(name, make(type));
-  } else {
-    return makeTrivial(Type::none);
-  }
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalSet(name, make(type));
 }
 
 Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
