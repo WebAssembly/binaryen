@@ -269,6 +269,8 @@ RandomFullLattice::Element RandomFullLattice::makeElement() const noexcept {
   }
   if (std::get_if<ValType>(lattice.get())) {
     Type type;
+    // Choose a random type. No need to make all possible types available as
+    // long as we cover all the kinds of relationships between types.
     switch (rand.upTo(8)) {
       case 0:
         type = Type::unreachable;
