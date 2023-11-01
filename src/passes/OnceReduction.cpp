@@ -488,7 +488,7 @@ struct OnceReduction : public Pass {
       }
       if (list.size() != 3) {
         // Something non-trivial; too many items for us to consider.
-        continue;
+        // XXX continue;
       }
       auto* payload = list[2];
       if (auto* call = payload->dynCast<Call>()) {
