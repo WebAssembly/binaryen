@@ -27,6 +27,113 @@
 
 using namespace wasm;
 
+// Exhaustively test comparison on a subset of a lattice that is arranged like a
+// diamond:
+//
+//   Top
+//  /   \.
+// A     B
+//  \   /
+//   Bot
+//
+template<typename L>
+void testDiamondCompare(const L& lattice,
+                        const typename L::Element& bot,
+                        const typename L::Element& a,
+                        const typename L::Element& b,
+                        const typename L::Element& top) {
+  EXPECT_EQ(lattice.compare(bot, bot), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(bot, a), analysis::LESS);
+  EXPECT_EQ(lattice.compare(bot, b), analysis::LESS);
+  EXPECT_EQ(lattice.compare(bot, top), analysis::LESS);
+
+  EXPECT_EQ(lattice.compare(a, bot), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(a, a), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(a, b), analysis::NO_RELATION);
+  EXPECT_EQ(lattice.compare(a, top), analysis::LESS);
+
+  EXPECT_EQ(lattice.compare(b, bot), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(b, a), analysis::NO_RELATION);
+  EXPECT_EQ(lattice.compare(b, b), analysis::EQUAL);
+  EXPECT_EQ(lattice.compare(b, top), analysis::LESS);
+
+  EXPECT_EQ(lattice.compare(top, bot), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(top, a), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(top, b), analysis::GREATER);
+  EXPECT_EQ(lattice.compare(top, top), analysis::EQUAL);
+}
+
+// Same as above but for join.
+template<typename L>
+void testDiamondJoin(const L& lattice,
+                     const typename L::Element& bot,
+                     const typename L::Element& a,
+                     const typename L::Element& b,
+                     const typename L::Element& top) {
+
+  auto test =
+    [&](const auto& joinee, const auto& joiner, const auto& expected) {
+      auto copy = joinee;
+      EXPECT_EQ(lattice.join(copy, joiner), joinee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  test(bot, bot, bot);
+  test(bot, a, a);
+  test(bot, b, b);
+  test(bot, top, top);
+
+  test(a, bot, a);
+  test(a, a, a);
+  test(a, b, top);
+  test(a, top, top);
+
+  test(b, bot, b);
+  test(b, a, top);
+  test(b, b, b);
+  test(b, top, top);
+
+  test(top, bot, top);
+  test(top, a, top);
+  test(top, b, top);
+  test(top, top, top);
+}
+
+// Same as above but for meet.
+template<typename L>
+void testDiamondMeet(const L& lattice,
+                     const typename L::Element& bot,
+                     const typename L::Element& a,
+                     const typename L::Element& b,
+                     const typename L::Element& top) {
+  auto test =
+    [&](const auto& meetee, const auto& meeter, const auto& expected) {
+      auto copy = meetee;
+      EXPECT_EQ(lattice.meet(copy, meeter), meetee != expected);
+      EXPECT_EQ(copy, expected);
+    };
+
+  test(bot, bot, bot);
+  test(bot, a, bot);
+  test(bot, b, bot);
+  test(bot, top, bot);
+
+  test(a, bot, bot);
+  test(a, a, a);
+  test(a, b, bot);
+  test(a, top, a);
+
+  test(b, bot, bot);
+  test(b, a, bot);
+  test(b, b, b);
+  test(b, top, b);
+
+  test(top, bot, bot);
+  test(top, a, a);
+  test(top, b, b);
+  test(top, top, top);
+}
+
 TEST(BoolLattice, GetBottom) {
   analysis::Bool lattice;
   EXPECT_FALSE(lattice.getBottom());
@@ -227,80 +334,14 @@ TEST(FlatLattice, GetTop) {
 
 TEST(FlatLattice, Compare) {
   analysis::Flat<int> flat;
-  auto bot = flat.getBottom();
-  auto a = flat.get(0);
-  auto b = flat.get(1);
-  auto top = flat.getTop();
-
-  EXPECT_EQ(flat.compare(bot, bot), analysis::EQUAL);
-  EXPECT_EQ(flat.compare(bot, a), analysis::LESS);
-  EXPECT_EQ(flat.compare(bot, b), analysis::LESS);
-  EXPECT_EQ(flat.compare(bot, top), analysis::LESS);
-
-  EXPECT_EQ(flat.compare(a, bot), analysis::GREATER);
-  EXPECT_EQ(flat.compare(a, a), analysis::EQUAL);
-  EXPECT_EQ(flat.compare(a, b), analysis::NO_RELATION);
-  EXPECT_EQ(flat.compare(a, top), analysis::LESS);
-
-  EXPECT_EQ(flat.compare(b, bot), analysis::GREATER);
-  EXPECT_EQ(flat.compare(b, a), analysis::NO_RELATION);
-  EXPECT_EQ(flat.compare(b, b), analysis::EQUAL);
-  EXPECT_EQ(flat.compare(b, top), analysis::LESS);
-
-  EXPECT_EQ(flat.compare(top, bot), analysis::GREATER);
-  EXPECT_EQ(flat.compare(top, a), analysis::GREATER);
-  EXPECT_EQ(flat.compare(top, b), analysis::GREATER);
-  EXPECT_EQ(flat.compare(top, top), analysis::EQUAL);
+  testDiamondCompare(
+    flat, flat.getBottom(), flat.get(0), flat.get(1), flat.getTop());
 }
 
 TEST(FlatLattice, Join) {
   analysis::Flat<int> flat;
-  auto elem = flat.getBottom();
-
-  // bot u bot = bot
-  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
-  EXPECT_TRUE(elem.isBottom());
-
-  // bot u top = top
-  EXPECT_TRUE(flat.join(elem, flat.getTop()));
-  EXPECT_TRUE(elem.isTop());
-
-  // bot u 10 = 10
-  elem = flat.getBottom();
-  EXPECT_TRUE(flat.join(elem, flat.get(10)));
-  ASSERT_TRUE(elem.getVal());
-  EXPECT_EQ(*elem.getVal(), 10);
-
-  // 10 u bot = 10
-  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
-  ASSERT_TRUE(elem.getVal());
-  EXPECT_EQ(*elem.getVal(), 10);
-
-  // 10 u 10 = 10
-  EXPECT_FALSE(flat.join(elem, flat.get(10)));
-  ASSERT_TRUE(elem.getVal());
-  EXPECT_EQ(*elem.getVal(), 10);
-
-  // 10 u 999 = top
-  EXPECT_TRUE(flat.join(elem, flat.get(999)));
-  ASSERT_TRUE(elem.isTop());
-
-  // 10 u top = top
-  elem = flat.get(10);
-  EXPECT_TRUE(flat.join(elem, flat.getTop()));
-  ASSERT_TRUE(elem.isTop());
-
-  // top u bot = top
-  EXPECT_FALSE(flat.join(elem, flat.getBottom()));
-  EXPECT_TRUE(elem.isTop());
-
-  // top u 10 = top
-  EXPECT_FALSE(flat.join(elem, flat.get(10)));
-  EXPECT_TRUE(elem.isTop());
-
-  // top u top = top
-  EXPECT_FALSE(flat.join(elem, flat.getTop()));
-  EXPECT_TRUE(elem.isTop());
+  testDiamondJoin(
+    flat, flat.getBottom(), flat.get(0), flat.get(1), flat.getTop());
 }
 
 TEST(LiftLattice, GetBottom) {
@@ -391,100 +432,20 @@ TEST(ArrayLattice, GetTop) {
 
 TEST(ArrayLattice, Compare) {
   analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
-  std::array<bool, 2> ff{false, false};
-  std::array<bool, 2> ft{false, true};
-  std::array<bool, 2> tf{true, false};
-  std::array<bool, 2> tt{true, true};
-
-  EXPECT_EQ(array.compare(ff, ff), analysis::EQUAL);
-  EXPECT_EQ(array.compare(ff, ft), analysis::LESS);
-  EXPECT_EQ(array.compare(ff, tf), analysis::LESS);
-  EXPECT_EQ(array.compare(ff, tt), analysis::LESS);
-
-  EXPECT_EQ(array.compare(ft, ff), analysis::GREATER);
-  EXPECT_EQ(array.compare(ft, ft), analysis::EQUAL);
-  EXPECT_EQ(array.compare(ft, tf), analysis::NO_RELATION);
-  EXPECT_EQ(array.compare(ft, tt), analysis::LESS);
-
-  EXPECT_EQ(array.compare(tf, ff), analysis::GREATER);
-  EXPECT_EQ(array.compare(tf, ft), analysis::NO_RELATION);
-  EXPECT_EQ(array.compare(tf, tf), analysis::EQUAL);
-  EXPECT_EQ(array.compare(tf, tt), analysis::LESS);
-
-  EXPECT_EQ(array.compare(tt, ff), analysis::GREATER);
-  EXPECT_EQ(array.compare(tt, ft), analysis::GREATER);
-  EXPECT_EQ(array.compare(tt, tf), analysis::GREATER);
-  EXPECT_EQ(array.compare(tt, tt), analysis::EQUAL);
+  testDiamondCompare(
+    array, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(ArrayLattice, Join) {
   analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
-  auto ff = []() { return std::array<bool, 2>{false, false}; };
-  auto ft = []() { return std::array<bool, 2>{false, true}; };
-  auto tf = []() { return std::array<bool, 2>{true, false}; };
-  auto tt = []() { return std::array<bool, 2>{true, true}; };
-
-  auto test =
-    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
-      auto joinee = makeJoinee();
-      EXPECT_EQ(array.join(joinee, makeJoiner()), modified);
-      EXPECT_EQ(joinee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, true, ft);
-  test(ff, tf, true, tf);
-  test(ff, tt, true, tt);
-
-  test(ft, ff, false, ft);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, tt);
-  test(ft, tt, true, tt);
-
-  test(tf, ff, false, tf);
-  test(tf, ft, true, tt);
-  test(tf, tf, false, tf);
-  test(tf, tt, true, tt);
-
-  test(tt, ff, false, tt);
-  test(tt, ft, false, tt);
-  test(tt, tf, false, tt);
-  test(tt, tt, false, tt);
+  testDiamondJoin(
+    array, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(ArrayLattice, Meet) {
   analysis::Array<analysis::Bool, 2> array{analysis::Bool{}};
-  auto ff = []() { return std::array<bool, 2>{false, false}; };
-  auto ft = []() { return std::array<bool, 2>{false, true}; };
-  auto tf = []() { return std::array<bool, 2>{true, false}; };
-  auto tt = []() { return std::array<bool, 2>{true, true}; };
-
-  auto test =
-    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
-      auto meetee = makeMeetee();
-      EXPECT_EQ(array.meet(meetee, makeMeeter()), modified);
-      EXPECT_EQ(meetee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, false, ff);
-  test(ff, tf, false, ff);
-  test(ff, tt, false, ff);
-
-  test(ft, ff, true, ff);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, ff);
-  test(ft, tt, false, ft);
-
-  test(tf, ff, true, ff);
-  test(tf, ft, true, ff);
-  test(tf, tf, false, tf);
-  test(tf, tt, false, tf);
-
-  test(tt, ff, true, ff);
-  test(tt, ft, true, ft);
-  test(tt, tf, true, tf);
-  test(tt, tt, false, tt);
+  testDiamondMeet(
+    array, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(VectorLattice, GetBottom) {
@@ -499,100 +460,20 @@ TEST(VectorLattice, GetTop) {
 
 TEST(VectorLattice, Compare) {
   analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
-  std::vector<bool> ff{false, false};
-  std::vector<bool> ft{false, true};
-  std::vector<bool> tf{true, false};
-  std::vector<bool> tt{true, true};
-
-  EXPECT_EQ(vector.compare(ff, ff), analysis::EQUAL);
-  EXPECT_EQ(vector.compare(ff, ft), analysis::LESS);
-  EXPECT_EQ(vector.compare(ff, tf), analysis::LESS);
-  EXPECT_EQ(vector.compare(ff, tt), analysis::LESS);
-
-  EXPECT_EQ(vector.compare(ft, ff), analysis::GREATER);
-  EXPECT_EQ(vector.compare(ft, ft), analysis::EQUAL);
-  EXPECT_EQ(vector.compare(ft, tf), analysis::NO_RELATION);
-  EXPECT_EQ(vector.compare(ft, tt), analysis::LESS);
-
-  EXPECT_EQ(vector.compare(tf, ff), analysis::GREATER);
-  EXPECT_EQ(vector.compare(tf, ft), analysis::NO_RELATION);
-  EXPECT_EQ(vector.compare(tf, tf), analysis::EQUAL);
-  EXPECT_EQ(vector.compare(tf, tt), analysis::LESS);
-
-  EXPECT_EQ(vector.compare(tt, ff), analysis::GREATER);
-  EXPECT_EQ(vector.compare(tt, ft), analysis::GREATER);
-  EXPECT_EQ(vector.compare(tt, tf), analysis::GREATER);
-  EXPECT_EQ(vector.compare(tt, tt), analysis::EQUAL);
+  testDiamondCompare(
+    vector, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(VectorLattice, Join) {
   analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
-  auto ff = []() { return std::vector<bool>{false, false}; };
-  auto ft = []() { return std::vector<bool>{false, true}; };
-  auto tf = []() { return std::vector<bool>{true, false}; };
-  auto tt = []() { return std::vector<bool>{true, true}; };
-
-  auto test =
-    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
-      auto joinee = makeJoinee();
-      EXPECT_EQ(vector.join(joinee, makeJoiner()), modified);
-      EXPECT_EQ(joinee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, true, ft);
-  test(ff, tf, true, tf);
-  test(ff, tt, true, tt);
-
-  test(ft, ff, false, ft);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, tt);
-  test(ft, tt, true, tt);
-
-  test(tf, ff, false, tf);
-  test(tf, ft, true, tt);
-  test(tf, tf, false, tf);
-  test(tf, tt, true, tt);
-
-  test(tt, ff, false, tt);
-  test(tt, ft, false, tt);
-  test(tt, tf, false, tt);
-  test(tt, tt, false, tt);
+  testDiamondJoin(
+    vector, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(VectorLattice, Meet) {
   analysis::Vector<analysis::Bool> vector{analysis::Bool{}, 2};
-  auto ff = []() { return std::vector<bool>{false, false}; };
-  auto ft = []() { return std::vector<bool>{false, true}; };
-  auto tf = []() { return std::vector<bool>{true, false}; };
-  auto tt = []() { return std::vector<bool>{true, true}; };
-
-  auto test =
-    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
-      auto meetee = makeMeetee();
-      EXPECT_EQ(vector.meet(meetee, makeMeeter()), modified);
-      EXPECT_EQ(meetee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, false, ff);
-  test(ff, tf, false, ff);
-  test(ff, tt, false, ff);
-
-  test(ft, ff, true, ff);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, ff);
-  test(ft, tt, false, ft);
-
-  test(tf, ff, true, ff);
-  test(tf, ft, true, ff);
-  test(tf, tf, false, tf);
-  test(tf, tt, false, tf);
-
-  test(tt, ff, true, ff);
-  test(tt, ft, true, ft);
-  test(tt, tf, true, tf);
-  test(tt, tt, false, tt);
+  testDiamondMeet(
+    vector, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
 TEST(TupleLattice, GetBottom) {
@@ -610,105 +491,19 @@ TEST(TupleLattice, GetTop) {
 TEST(TupleLattice, Compare) {
   analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
                                                           analysis::UInt32{}};
-
-  std::tuple<bool, uint32_t> ff{false, 0};
-  std::tuple<bool, uint32_t> ft{false, 1};
-  std::tuple<bool, uint32_t> tf{true, 0};
-  std::tuple<bool, uint32_t> tt{true, 1};
-
-  EXPECT_EQ(tuple.compare(ff, ff), analysis::EQUAL);
-  EXPECT_EQ(tuple.compare(ff, ft), analysis::LESS);
-  EXPECT_EQ(tuple.compare(ff, tf), analysis::LESS);
-  EXPECT_EQ(tuple.compare(ff, tt), analysis::LESS);
-
-  EXPECT_EQ(tuple.compare(ft, ff), analysis::GREATER);
-  EXPECT_EQ(tuple.compare(ft, ft), analysis::EQUAL);
-  EXPECT_EQ(tuple.compare(ft, tf), analysis::NO_RELATION);
-  EXPECT_EQ(tuple.compare(ft, tt), analysis::LESS);
-
-  EXPECT_EQ(tuple.compare(tf, ff), analysis::GREATER);
-  EXPECT_EQ(tuple.compare(tf, ft), analysis::NO_RELATION);
-  EXPECT_EQ(tuple.compare(tf, tf), analysis::EQUAL);
-  EXPECT_EQ(tuple.compare(tf, tt), analysis::LESS);
-
-  EXPECT_EQ(tuple.compare(tt, ff), analysis::GREATER);
-  EXPECT_EQ(tuple.compare(tt, ft), analysis::GREATER);
-  EXPECT_EQ(tuple.compare(tt, tf), analysis::GREATER);
-  EXPECT_EQ(tuple.compare(tt, tt), analysis::EQUAL);
+  testDiamondCompare(tuple, {false, 0}, {false, 1}, {true, 0}, {true, 1});
 }
 
 TEST(TupleLattice, Join) {
   analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
                                                           analysis::UInt32{}};
-
-  auto ff = []() { return std::tuple<bool, uint32_t>{false, 0}; };
-  auto ft = []() { return std::tuple<bool, uint32_t>{false, 1}; };
-  auto tf = []() { return std::tuple<bool, uint32_t>{true, 0}; };
-  auto tt = []() { return std::tuple<bool, uint32_t>{true, 1}; };
-
-  auto test =
-    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
-      auto joinee = makeJoinee();
-      EXPECT_EQ(tuple.join(joinee, makeJoiner()), modified);
-      EXPECT_EQ(joinee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, true, ft);
-  test(ff, tf, true, tf);
-  test(ff, tt, true, tt);
-
-  test(ft, ff, false, ft);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, tt);
-  test(ft, tt, true, tt);
-
-  test(tf, ff, false, tf);
-  test(tf, ft, true, tt);
-  test(tf, tf, false, tf);
-  test(tf, tt, true, tt);
-
-  test(tt, ff, false, tt);
-  test(tt, ft, false, tt);
-  test(tt, tf, false, tt);
-  test(tt, tt, false, tt);
+  testDiamondJoin(tuple, {false, 0}, {false, 1}, {true, 0}, {true, 1});
 }
 
 TEST(TupleLattice, Meet) {
   analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
                                                           analysis::UInt32{}};
-
-  auto ff = []() { return std::tuple<bool, uint32_t>{false, 0}; };
-  auto ft = []() { return std::tuple<bool, uint32_t>{false, 1}; };
-  auto tf = []() { return std::tuple<bool, uint32_t>{true, 0}; };
-  auto tt = []() { return std::tuple<bool, uint32_t>{true, 1}; };
-
-  auto test =
-    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
-      auto meetee = makeMeetee();
-      EXPECT_EQ(tuple.meet(meetee, makeMeeter()), modified);
-      EXPECT_EQ(meetee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, false, ff);
-  test(ff, tf, false, ff);
-  test(ff, tt, false, ff);
-
-  test(ft, ff, true, ff);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, ff);
-  test(ft, tt, false, ft);
-
-  test(tf, ff, true, ff);
-  test(tf, ft, true, ff);
-  test(tf, tf, false, tf);
-  test(tf, tt, false, tf);
-
-  test(tt, ff, true, ff);
-  test(tt, ft, true, ft);
-  test(tt, tf, true, tf);
-  test(tt, tt, false, tt);
+  testDiamondMeet(tuple, {false, 0}, {false, 1}, {true, 0}, {true, 1});
 }
 
 TEST(ValTypeLattice, GetBottom) {
@@ -723,101 +518,31 @@ TEST(ValTypeLattice, GetTop) {
 
 TEST(ValTypeLattice, Compare) {
   analysis::ValType valtype;
-
-  Type ff = Type::unreachable;
-  Type ft = Type::i32;
-  Type tf = Type::f32;
-  Type tt = Type::none;
-
-  EXPECT_EQ(valtype.compare(ff, ff), analysis::EQUAL);
-  EXPECT_EQ(valtype.compare(ff, ft), analysis::LESS);
-  EXPECT_EQ(valtype.compare(ff, tf), analysis::LESS);
-  EXPECT_EQ(valtype.compare(ff, tt), analysis::LESS);
-
-  EXPECT_EQ(valtype.compare(ft, ff), analysis::GREATER);
-  EXPECT_EQ(valtype.compare(ft, ft), analysis::EQUAL);
-  EXPECT_EQ(valtype.compare(ft, tf), analysis::NO_RELATION);
-  EXPECT_EQ(valtype.compare(ft, tt), analysis::LESS);
-
-  EXPECT_EQ(valtype.compare(tf, ff), analysis::GREATER);
-  EXPECT_EQ(valtype.compare(tf, ft), analysis::NO_RELATION);
-  EXPECT_EQ(valtype.compare(tf, tf), analysis::EQUAL);
-  EXPECT_EQ(valtype.compare(tf, tt), analysis::LESS);
-
-  EXPECT_EQ(valtype.compare(tt, ff), analysis::GREATER);
-  EXPECT_EQ(valtype.compare(tt, ft), analysis::GREATER);
-  EXPECT_EQ(valtype.compare(tt, tf), analysis::GREATER);
-  EXPECT_EQ(valtype.compare(tt, tt), analysis::EQUAL);
+  testDiamondCompare(
+    valtype, Type::unreachable, Type::i32, Type::f32, Type::none);
+  testDiamondCompare(valtype,
+                     Type(HeapType::none, NonNullable),
+                     Type(HeapType::struct_, NonNullable),
+                     Type(HeapType::array, Nullable),
+                     Type(HeapType::eq, Nullable));
 }
 
 TEST(ValTypeLattice, Join) {
   analysis::ValType valtype;
-
-  auto ff = []() -> Type { return Type::unreachable; };
-  auto ft = []() -> Type { return Type::i32; };
-  auto tf = []() -> Type { return Type::f32; };
-  auto tt = []() -> Type { return Type::none; };
-
-  auto test =
-    [&](auto& makeJoinee, auto& makeJoiner, bool modified, auto& makeExpected) {
-      auto joinee = makeJoinee();
-      EXPECT_EQ(valtype.join(joinee, makeJoiner()), modified);
-      EXPECT_EQ(joinee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, true, ft);
-  test(ff, tf, true, tf);
-  test(ff, tt, true, tt);
-
-  test(ft, ff, false, ft);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, tt);
-  test(ft, tt, true, tt);
-
-  test(tf, ff, false, tf);
-  test(tf, ft, true, tt);
-  test(tf, tf, false, tf);
-  test(tf, tt, true, tt);
-
-  test(tt, ff, false, tt);
-  test(tt, ft, false, tt);
-  test(tt, tf, false, tt);
-  test(tt, tt, false, tt);
+  testDiamondJoin(valtype, Type::unreachable, Type::i32, Type::f32, Type::none);
+  testDiamondJoin(valtype,
+                  Type(HeapType::none, NonNullable),
+                  Type(HeapType::struct_, NonNullable),
+                  Type(HeapType::array, Nullable),
+                  Type(HeapType::eq, Nullable));
 }
 
 TEST(ValTypeLattice, Meet) {
   analysis::ValType valtype;
-
-  auto ff = []() -> Type { return Type::unreachable; };
-  auto ft = []() -> Type { return Type::i32; };
-  auto tf = []() -> Type { return Type::f32; };
-  auto tt = []() -> Type { return Type::none; };
-
-  auto test =
-    [&](auto& makeMeetee, auto& makeMeeter, bool modified, auto& makeExpected) {
-      auto meetee = makeMeetee();
-      EXPECT_EQ(valtype.meet(meetee, makeMeeter()), modified);
-      EXPECT_EQ(meetee, makeExpected());
-    };
-
-  test(ff, ff, false, ff);
-  test(ff, ft, false, ff);
-  test(ff, tf, false, ff);
-  test(ff, tt, false, ff);
-
-  test(ft, ff, true, ff);
-  test(ft, ft, false, ft);
-  test(ft, tf, true, ff);
-  test(ft, tt, false, ft);
-
-  test(tf, ff, true, ff);
-  test(tf, ft, true, ff);
-  test(tf, tf, false, tf);
-  test(tf, tt, false, tf);
-
-  test(tt, ff, true, ff);
-  test(tt, ft, true, ft);
-  test(tt, tf, true, tf);
-  test(tt, tt, false, tt);
+  testDiamondMeet(valtype, Type::unreachable, Type::i32, Type::f32, Type::none);
+  testDiamondMeet(valtype,
+                  Type(HeapType::none, NonNullable),
+                  Type(HeapType::struct_, NonNullable),
+                  Type(HeapType::array, Nullable),
+                  Type(HeapType::eq, Nullable));
 }
