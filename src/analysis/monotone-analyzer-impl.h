@@ -37,16 +37,13 @@ inline void MonotoneCFGAnalyzer<L, TxFn>::evaluate() {
     Index i = worklist.pop();
 
     // Apply the transfer function to the input state to compute the output
-    // state for the block.
+    // state, then propagate the output state to the dependent blocks.
     auto state = states[i];
-    txfn.transfer(cfg[i], state);
-
-    // Propagate state to the dependent blocks.
-    for (auto& dep : txfn.getDependents(cfg[i])) {
+    for (const auto* dep : txfn.transfer(cfg[i], state)) {
       // If the input state for the dependent block changes, we need to
       // re-analyze it.
-      if (lattice.join(states[dep.getIndex()], state)) {
-        worklist.push(dep.getIndex());
+      if (lattice.join(states[dep->getIndex()], state)) {
+        worklist.push(dep->getIndex());
       }
     }
   }
@@ -73,11 +70,11 @@ inline void MonotoneCFGAnalyzer<L, TxFn>::print(std::ostream& os) {
     os << "Input State: ";
     states[i].print(os);
     for (auto& pred : cfg[i].preds()) {
-      os << " " << pred.getIndex();
+      os << " " << pred->getIndex();
     }
     os << std::endl << "Successors:";
     for (auto& succ : cfg[i].succs()) {
-      os << " " << succ.getIndex();
+      os << " " << succ->getIndex();
     }
     os << "\n";
     txfn.print(os, cfg[i], states[i]);

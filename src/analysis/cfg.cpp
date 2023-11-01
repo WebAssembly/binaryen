@@ -80,19 +80,19 @@ void CFG::print(std::ostream& os, Module* wasm) const {
 
 void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
   os << ";; preds: [";
-  for (auto& pred : preds()) {
-    if (&pred != &*preds().begin()) {
+  for (const auto* pred : preds()) {
+    if (pred != *preds().begin()) {
       os << ", ";
     }
-    os << pred.index;
+    os << pred->index;
   }
   os << "], succs: [";
 
-  for (auto& succ : succs()) {
-    if (&succ != &*succs().begin()) {
+  for (const auto* succ : succs()) {
+    if (succ != *succs().begin()) {
       os << ", ";
     }
-    os << succ.index;
+    os << succ->index;
   }
   os << "]\n";
 
