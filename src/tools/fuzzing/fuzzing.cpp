@@ -419,7 +419,7 @@ void TranslateToFuzzReader::setupGlobals() {
   for (Index i = 0; i < wasm.globals.size(); i++) {
     auto& global = wasm.globals[i];
 
-    // Apply the chance for initial globals to be ignored, see above
+    // Apply the chance for initial globals to be ignored, see above.
     if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
       continue;
     }
