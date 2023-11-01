@@ -1731,7 +1731,7 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   if (it == globalsByType.end() || it->second.empty()) {
     return makeTrivial(type);
   }
-  
+
   auto name = pick(it->second);
   // We don't want random fuzz code to use the hang limit global.
   assert(name != HANG_LIMIT_GLOBAL);
