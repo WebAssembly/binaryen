@@ -386,13 +386,11 @@ void TranslateToFuzzReader::setupGlobals() {
   // which a global is used in one function only. (If we randomly emitted gets
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
-  if (!wasm.globals.empty()) {
-    auto percent = upTo(100);
-    for (auto& global : wasm.globals) {
-      if (upTo(100) < percent) {
-        invalidGlobals.insert(global->name);
-      }
-    }
+  auto numInitialGlobals = wasm.globals.size();
+  unsigned percentInvalidInitialGlobals = 0;
+  if (numInitialGlobals) {
+    // Only generate this random number if it will be used.
+    percentInvalidInitialGlobals = upTo(100);
   }
 
   // Create new random globals.
@@ -415,7 +413,20 @@ void TranslateToFuzzReader::setupGlobals() {
   }
 
   // Set up data structures for picking globals later for get/set operations.
-  for (auto& global : wasm.globals) {
+  for (Index i = 0; i < wasm.globals.size(); i++) {
+    auto& global = wasm.globals[i];
+
+    // We don't want random fuzz code to use the hang limit global.
+    if (global->name == HANG_LIMIT_GLOBAL) {
+      continue;
+    }
+
+    // Apply the chance for initial globals to be ignored, see above
+    if (i < numInitialGlobals && upTo(100) < percentInvalidInitialGlobals) {
+      continue;
+    }
+
+    // This is a global we can use later, note it.
     globalsByType[global->type].push_back(global->name);
     if (global->mutable_) {
       mutableGlobalsByType[global->type].push_back(global->name);
@@ -512,9 +523,6 @@ void TranslateToFuzzReader::finalizeTable() {
 
 void TranslateToFuzzReader::prepareHangLimitSupport() {
   HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
-
-  // We don't want random fuzz code to use the hang limit global.
-  invalidGlobals.insert(HANG_LIMIT_GLOBAL);
 }
 
 void TranslateToFuzzReader::addHangLimitSupport() {
@@ -1720,21 +1728,12 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
   }
 }
 
-bool TranslateToFuzzReader::isValidGlobal(Name name) {
-  return !invalidGlobals.count(name);
-}
-
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   auto it = globalsByType.find(type);
   if (it == globalsByType.end() || it->second.empty()) {
-    return makeConst(type);
-  }
-  auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalGet(name, type);
-  } else {
     return makeTrivial(type);
   }
+  return builder.makeGlobalGet(pick(it->second), type);
 }
 
 Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
@@ -1744,12 +1743,7 @@ Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
   if (it == mutableGlobalsByType.end() || it->second.empty()) {
     return makeTrivial(Type::none);
   }
-  auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalSet(name, make(type));
-  } else {
-    return makeTrivial(Type::none);
-  }
+  return builder.makeGlobalSet(pick(it->second), make(type));
 }
 
 Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
