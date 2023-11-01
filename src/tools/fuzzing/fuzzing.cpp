@@ -379,6 +379,21 @@ void TranslateToFuzzReader::setupGlobals() {
       }
     }
   }
+
+  // Randomly assign some globals from initial content to be invalid for the
+  // fuzzer to use. Such globals will only be used from initial content. This is
+  // important to preserve some real-world patterns, like the "once" pattern in
+  // which a global is used in one function only. (If we randomly emitted gets
+  // and sets of such globals, we'd with very high probability end up breaking
+  // that pattern, and not fuzzing it at all.)
+  auto percent = upTo(100);
+  for (auto& global : wasm.globals) {
+    if (upTo(100) < percent) {
+      invalidGlobals.insert(global->name);
+    }
+  }
+
+  // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
     auto* init = makeConst(type);
@@ -491,6 +506,9 @@ void TranslateToFuzzReader::finalizeTable() {
 
 void TranslateToFuzzReader::prepareHangLimitSupport() {
   HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
+
+  // We don't want random fuzz code to use the hang limit global.
+  invalidGlobals.insert(HANG_LIMIT_GLOBAL);
 }
 
 void TranslateToFuzzReader::addHangLimitSupport() {
@@ -1697,7 +1715,7 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
 }
 
 bool TranslateToFuzzReader::isValidGlobal(Name name) {
-  return name != HANG_LIMIT_GLOBAL;
+  return !invalidGlobals.count(name);
 }
 
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
