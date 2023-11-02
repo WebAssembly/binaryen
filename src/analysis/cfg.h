@@ -51,8 +51,13 @@ struct BasicBlock {
 
   Index getIndex() const { return index; }
 
+  bool isEntry() const { return entry; }
+  bool isExit() const { return exit; }
+
 private:
   Index index;
+  bool entry = false;
+  bool exit = false;
   std::vector<Expression*> insts;
   std::vector<const BasicBlock*> predecessors;
   std::vector<const BasicBlock*> successors;

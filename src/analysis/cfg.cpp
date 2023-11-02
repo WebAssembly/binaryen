@@ -62,6 +62,12 @@ CFG CFG::fromFunction(Function* func) {
     }
   }
 
+  assert(!cfg.blocks.empty());
+  cfg.blocks[0].entry = true;
+  if (builder.exit) {
+    oldToNewBlocks.at(builder.exit)->exit = true;
+  }
+
   // Move-construct a new CFG to get mandatory copy elision, preserving basic
   // block addresses through the return.
   return CFG(std::move(cfg));
@@ -95,6 +101,14 @@ void BasicBlock::print(std::ostream& os, Module* wasm, size_t start) const {
     os << succ->index;
   }
   os << "]\n";
+
+  if (isEntry()) {
+    os << ";; entry\n";
+  }
+
+  if (isExit()) {
+    os << ";; exit\n";
+  }
 
   os << index << ":\n";
   size_t instIndex = start;
