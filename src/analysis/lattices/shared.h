@@ -29,12 +29,23 @@ namespace wasm::analysis {
 // Internally, there is only ever a single monotonically increasing element of L
 // materialized. Dereferencing any element of the Shared lattice will produce
 // the current value of that single element of L, which is generally safe
-// because the current value always overapproximates the value at the time of
-// the Shared element's construction.
+// because the current value always overapproximates (i.e. is higher in the
+// lattice than) the value at the time of the Shared element's construction.
+//
+// Each element of this lattice maintains a sequence number that corresponds to
+// a value the shared underlying element has had at some point in time. Higher
+// sequence numbers correspond to greater values of the underlying element.
+// Elements of this lattice are compared and joined using these sequence
+// numbers, so blocks will correctly be re-analyzed if the value has increased
+// since the last time they were analyzed.
 template<Lattice L> struct Shared {
+  // If we ever have extremely long-running analyses, this may need to be
+  // changed to uint64_t.
+  using Seq = uint32_t;
+
   class Element {
     const typename L::Element* val;
-    uint32_t seq = 0;
+    Seq seq = 0;
 
     Element(const typename L::Element* val) : val(val) {}
 
@@ -66,11 +77,18 @@ template<Lattice L> struct Shared {
 
   // The current value that all elements point to and the current maximum
   // sequence number. The sequence numbers monotonically increase along with
-  // `val` and serve to provide ordering between elements of this lattice.
+  // `val` and serve to provide ordering between elements of this lattice. These
+  // are mutable because they are logically not part of the lattice itself, but
+  // rather of its elements. They are only stored inside the lattice because it
+  // is simpler and more efficient than using shared pointers.
   mutable typename L::Element val;
-  mutable uint32_t seq = 0;
+  mutable Seq seq = 0;
 
   Shared(L&& l) : lattice(std::move(l)), val(lattice.getBottom()) {}
+
+  // TODO: Delete the move constructor and the move assignment operator. This
+  // requires fixing the lattice fuzzer first, since it depends on lattices
+  // being moveable.
 
   Element getBottom() const noexcept { return Element{&val}; }
 

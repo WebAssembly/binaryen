@@ -558,13 +558,14 @@ TEST(SharedLattice, Compare) {
 
   auto zero = shared.getBottom();
 
-  auto one = zero;
+  auto one = shared.getBottom();
   shared.join(one, 1);
 
+  // This join will not change the value.
   auto uno = one;
   shared.join(uno, 1);
 
-  auto two = one;
+  auto two = shared.getBottom();
   shared.join(two, 2);
 
   EXPECT_EQ(shared.compare(zero, zero), analysis::EQUAL);
@@ -593,10 +594,10 @@ TEST(SharedLattice, Join) {
 
   auto zero = shared.getBottom();
 
-  auto one = zero;
+  auto one = shared.getBottom();
   shared.join(one, 1);
 
-  auto two = one;
+  auto two = shared.getBottom();
   shared.join(two, 2);
 
   {
@@ -612,6 +613,12 @@ TEST(SharedLattice, Join) {
   }
 
   {
+    auto elem = zero;
+    EXPECT_TRUE(shared.join(elem, two));
+    EXPECT_EQ(elem, two);
+  }
+
+  {
     auto elem = one;
     EXPECT_FALSE(shared.join(elem, zero));
     EXPECT_EQ(elem, one);
@@ -621,5 +628,29 @@ TEST(SharedLattice, Join) {
     auto elem = one;
     EXPECT_FALSE(shared.join(elem, one));
     EXPECT_EQ(elem, one);
+  }
+
+  {
+    auto elem = one;
+    EXPECT_TRUE(shared.join(elem, two));
+    EXPECT_EQ(elem, two);
+  }
+
+  {
+    auto elem = two;
+    EXPECT_FALSE(shared.join(elem, zero));
+    EXPECT_EQ(elem, two);
+  }
+
+  {
+    auto elem = two;
+    EXPECT_FALSE(shared.join(elem, one));
+    EXPECT_EQ(elem, two);
+  }
+
+  {
+    auto elem = two;
+    EXPECT_FALSE(shared.join(elem, two));
+    EXPECT_EQ(elem, two);
   }
 }
