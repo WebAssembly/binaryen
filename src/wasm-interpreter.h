@@ -3053,10 +3053,10 @@ public:
     Address sourceVal(source.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    auto destInfo = getTableInstanceInfo(curr->destTable);
-    auto sourceInfo = getTableInstanceInfo(curr->sourceTable);
-    auto destTableSize = destInfo.instance->getTableSize(destInfo.name);
-    auto sourceTableSize = sourceInfo.instance->getTableSize(sourceInfo.name);
+    auto destInfo = getTableInterfaceInfo(curr->destTable);
+    auto sourceInfo = getTableInterfaceInfo(curr->sourceTable);
+    auto destTableSize = destInfo.interface->tableSize(destInfo.name);
+    auto sourceTableSize = sourceInfo.interface->tableSize(sourceInfo.name);
     if (sourceVal + sizeVal > sourceTableSize ||
         destVal + sizeVal > destTableSize ||
         // FIXME: better/cheaper way to detect wrapping?
@@ -3075,10 +3075,10 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.instance->externalInterface->tableStore(
+      destInfo.interface->externalInterface->tableStore(
         destInfo.name,
         destVal + i,
-        sourceInfo.instance->externalInterface->tableLoad(sourceInfo.name,
+        sourceInfo.interface->externalInterface->tableLoad(sourceInfo.name,
                                                           sourceVal + i),
         destInfo.name);
     }

@@ -2706,7 +2706,7 @@ Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
   return Builder(wasm).makeTableFill(tableName, dest, value, size);
 }
 
-Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
+Expression* SExpressionWasmBuilder::makeTableCopy(Element& s) {
   auto destTableName = s[1]->str();
   auto* destTable = wasm.getTableOrNull(destTableName);
   if (!destTable) {
