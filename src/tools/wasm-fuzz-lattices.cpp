@@ -27,6 +27,7 @@
 #include "analysis/lattices/int.h"
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
+#include "analysis/lattices/shared.h"
 #include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
 #include "analysis/lattices/valtype.h"
@@ -179,7 +180,8 @@ struct RandomLattice::L : std::variant<RandomFullLattice,
                                        Lift<RandomLattice>,
                                        ArrayLattice,
                                        Vector<RandomLattice>,
-                                       TupleLattice> {};
+                                       TupleLattice,
+                                       Shared<RandomLattice>> {};
 
 struct RandomLattice::ElementImpl
   : std::variant<typename RandomFullLattice::Element,
@@ -187,7 +189,8 @@ struct RandomLattice::ElementImpl
                  typename Lift<RandomLattice>::Element,
                  typename ArrayLattice::Element,
                  typename Vector<RandomLattice>::Element,
-                 typename TupleLattice::Element> {};
+                 typename TupleLattice::Element,
+                 typename Shared<RandomLattice>::Element> {};
 
 constexpr int FullLatticePicks = 7;
 
@@ -230,7 +233,7 @@ RandomFullLattice::RandomFullLattice(Random& rand,
 
 RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   // TODO: Limit the depth once we get lattices with more fan-out.
-  uint32_t pick = rand.upTo(FullLatticePicks + 5);
+  uint32_t pick = rand.upTo(FullLatticePicks + 6);
 
   if (pick < FullLatticePicks) {
     lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
@@ -255,6 +258,9 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
     case FullLatticePicks + 4:
       lattice = std::make_unique<L>(L{TupleLattice{
         RandomLattice{rand, depth + 1}, RandomLattice{rand, depth + 1}}});
+      return;
+    case FullLatticePicks + 5:
+      lattice = std::make_unique<L>(L{Shared{RandomLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -357,6 +363,11 @@ RandomLattice::Element RandomLattice::makeElement() const noexcept {
     return ElementImpl{
       typename TupleLattice::Element{std::get<0>(l->lattices).makeElement(),
                                      std::get<1>(l->lattices).makeElement()}};
+  }
+  if (const auto* l = std::get_if<Shared<RandomLattice>>(lattice.get())) {
+    auto elem = l->getBottom();
+    l->join(elem, l->lattice.makeElement());
+    return ElementImpl{elem};
   }
   WASM_UNREACHABLE("unexpected lattice");
 }
@@ -464,6 +475,12 @@ void printElement(std::ostream& os,
     const auto& [first, second] = *e;
     printElement(os, first, depth + 1);
     printElement(os, second, depth + 1);
+    indent(os, depth);
+    os << ")\n";
+  } else if (const auto* e =
+               std::get_if<typename Shared<RandomLattice>::Element>(&*elem)) {
+    os << "Shared(\n";
+    printElement(os, **e, depth + 1);
     indent(os, depth);
     os << ")\n";
   } else {
