@@ -44,10 +44,8 @@ struct BasicBlock {
   reverse_iterator rbegin() const { return insts.rbegin(); }
   reverse_iterator rend() const { return insts.rend(); }
 
-  // Iterables for predecessor and successor blocks.
-  struct BasicBlockIterable;
-  BasicBlockIterable preds() const;
-  BasicBlockIterable succs() const;
+  const std::vector<const BasicBlock*>& preds() const { return predecessors; }
+  const std::vector<const BasicBlock*>& succs() const { return successors; }
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
@@ -56,8 +54,8 @@ struct BasicBlock {
 private:
   Index index;
   std::vector<Expression*> insts;
-  std::vector<BasicBlock*> predecessors;
-  std::vector<BasicBlock*> successors;
+  std::vector<const BasicBlock*> predecessors;
+  std::vector<const BasicBlock*> successors;
 
   friend CFG;
 };
@@ -108,7 +106,5 @@ private:
 };
 
 } // namespace wasm::analysis
-
-#include "cfg-impl.h"
 
 #endif // wasm_analysis_cfg_h

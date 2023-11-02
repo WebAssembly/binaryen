@@ -34,22 +34,11 @@ protected:
   bool collectingResults = false;
 
 public:
-  // Returns an iterable to all the BasicBlocks which depend on currBlock for
-  // information.
-  BasicBlock::BasicBlockIterable
-  getDependents(const BasicBlock& currBlock) noexcept {
-    if constexpr (Direction == AnalysisDirection::Backward) {
-      return currBlock.preds();
-    } else {
-      return currBlock.succs();
-    }
-  }
-
   // Executes the transfer function on all the expressions of the corresponding
   // CFG node, starting with the node's input state, and changes the input state
   // to the final output state of the node in place.
-  void transfer(const BasicBlock& bb,
-                typename L::Element& inputState) noexcept {
+  const std::vector<const BasicBlock*>&
+  transfer(const BasicBlock& bb, typename L::Element& inputState) noexcept {
     // If the block is empty, we propagate the state by inputState =
     // outputState.
 
@@ -64,6 +53,12 @@ public:
       }
     }
     currState = nullptr;
+
+    if constexpr (Direction == AnalysisDirection::Backward) {
+      return bb.preds();
+    } else {
+      return bb.succs();
+    }
   }
 
   // This is for collecting results after solving an analysis. Implemented in

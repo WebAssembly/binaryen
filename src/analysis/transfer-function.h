@@ -32,16 +32,15 @@ namespace wasm::analysis {
 template<typename T>
 concept BasicBlockInputRange =
   std::ranges::input_range<T> &&
-  std::is_same<std::ranges::range_value_t<T>, BasicBlock>::value;
+  std::is_same<std::ranges::range_value_t<T>, const BasicBlock*>::value;
 
 template<typename TxFn, typename L>
 concept TransferFunctionImpl = requires(
   TxFn& txfn, const CFG& cfg, const BasicBlock& bb, typename L::Element& elem) {
   // Apply the transfer function to update a lattice element with information
-  // from a basic block.
-  { txfn.transfer(bb, elem) } noexcept -> std::same_as<void>;
-  // Get a range over the basic blocks that depend on the given block.
-  { txfn.getDependents(bb) } noexcept -> BasicBlockInputRange;
+  // from a basic block. Return an object that can be iterated over to get the
+  // basic blocks that may need to be re-analyzed.
+  { txfn.transfer(bb, elem) } noexcept -> BasicBlockInputRange;
 };
 
 #define TransferFunction TransferFunctionImpl<L>
