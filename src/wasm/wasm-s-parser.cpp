@@ -2720,7 +2720,7 @@ Expression* SExpressionWasmBuilder::makeTableCopy(Element& s) {
   auto* dest = parseExpression(s[3]);
   auto* source = parseExpression(s[4]);
   auto* size = parseExpression(s[5]);
-  return Builder(wasm).makeTableFill(
+  return Builder(wasm).makeTableCopy(
     dest, source, size, destTableName, sourceTableName);
 }
 
