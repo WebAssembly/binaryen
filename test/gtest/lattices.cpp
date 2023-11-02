@@ -478,6 +478,30 @@ TEST(VectorLattice, Meet) {
     vector, {false, false}, {false, true}, {true, false}, {true, true});
 }
 
+TEST(VectorLattice, JoinSingleton) {
+  using Vec = analysis::Vector<analysis::Bool>;
+  Vec vector{analysis::Bool{}, 2};
+  auto elem = vector.getBottom();
+
+  EXPECT_FALSE(vector.join(elem, Vec::SingletonElement(0, false)));
+  EXPECT_EQ(elem, (std::vector{false, false}));
+
+  EXPECT_TRUE(vector.join(elem, Vec::SingletonElement(1, true)));
+  EXPECT_EQ(elem, (std::vector{false, true}));
+}
+
+TEST(VectorLattice, MeetSingleton) {
+  using Vec = analysis::Vector<analysis::Bool>;
+  Vec vector{analysis::Bool{}, 2};
+  auto elem = vector.getTop();
+
+  EXPECT_FALSE(vector.meet(elem, Vec::SingletonElement(1, true)));
+  EXPECT_EQ(elem, (std::vector{true, true}));
+
+  EXPECT_TRUE(vector.meet(elem, Vec::SingletonElement(0, false)));
+  EXPECT_EQ(elem, (std::vector{false, true}));
+}
+
 TEST(TupleLattice, GetBottom) {
   analysis::Tuple<analysis::Bool, analysis::UInt32> tuple{analysis::Bool{},
                                                           analysis::UInt32{}};
@@ -654,6 +678,25 @@ TEST(SharedLattice, Join) {
     EXPECT_FALSE(shared.join(elem, two));
     EXPECT_EQ(elem, two);
   }
+}
+
+TEST(SharedLattice, JoinVecSingleton) {
+  using Vec = analysis::Vector<analysis::Bool>;
+  analysis::Shared<Vec> shared{analysis::Vector{analysis::Bool{}, 2}};
+
+  auto elem = shared.getBottom();
+  EXPECT_TRUE(shared.join(elem, Vec::SingletonElement(1, true)));
+  EXPECT_EQ(*elem, (std::vector{false, true}));
+}
+
+TEST(SharedLattice, JoinInvertedVecSingleton) {
+  using Vec = analysis::Vector<analysis::Bool>;
+  analysis::Shared<analysis::Inverted<Vec>> shared{
+    analysis::Inverted{analysis::Vector{analysis::Bool{}, 2}}};
+
+  auto elem = shared.getBottom();
+  EXPECT_TRUE(shared.join(elem, Vec::SingletonElement(1, false)));
+  EXPECT_EQ(*elem, (std::vector{true, false}));
 }
 
 TEST(StackLattice, GetBottom) {
