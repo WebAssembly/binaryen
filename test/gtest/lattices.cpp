@@ -21,6 +21,7 @@
 #include "analysis/lattices/inverted.h"
 #include "analysis/lattices/lift.h"
 #include "analysis/lattices/shared.h"
+#include "analysis/lattices/stack.h"
 #include "analysis/lattices/tuple.h"
 #include "analysis/lattices/valtype.h"
 #include "analysis/lattices/vector.h"
@@ -653,4 +654,29 @@ TEST(SharedLattice, Join) {
     EXPECT_FALSE(shared.join(elem, two));
     EXPECT_EQ(elem, two);
   }
+}
+
+TEST(StackLattice, GetBottom) {
+  analysis::Stack stack{analysis::Flat<uint32_t>{}};
+  EXPECT_EQ(stack.getBottom().size(), 0u);
+}
+
+TEST(StackLattice, Compare) {
+  analysis::Stack stack{analysis::Flat<uint32_t>{}};
+  auto& flat = stack.lattice;
+  testDiamondCompare(stack,
+                     {},
+                     {flat.get(0)},
+                     {flat.get(0), flat.get(1)},
+                     {flat.get(0), flat.getTop()});
+}
+
+TEST(StackLattice, Join) {
+  analysis::Stack stack{analysis::Flat<uint32_t>{}};
+  auto& flat = stack.lattice;
+  testDiamondJoin(stack,
+                  {},
+                  {flat.get(0)},
+                  {flat.get(0), flat.get(1)},
+                  {flat.get(0), flat.getTop()});
 }

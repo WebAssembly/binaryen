@@ -16,11 +16,11 @@
 #ifndef wasm_analysis_lattices_stack_h
 #define wasm_analysis_lattices_stack_h
 
-#include <deque>
-#include <iostream>
 #include <optional>
+#include <vector>
 
 #include "../lattice.h"
+#include "bool.h"
 
 namespace wasm::analysis {
 
@@ -28,12 +28,12 @@ namespace wasm::analysis {
 
 // This lattice models the behavior of a stack of values. The lattice is
 // templated on L, which is a lattice which can model some abstract property of
-// a value on the stack. The StackLattice itself can push or pop abstract values
+// a value on the stack. The Stack itself can push or pop abstract values
 // and access the top of stack.
 //
 // The goal here is not to operate directly on the stacks. Rather, the
-// StackLattice organizes the L elements in an efficient and natural way which
-// reflects the behavior of the wasm value stack. Transfer functions will
+// Stack organizes the L elements in an efficient and natural way which
+// reflects the behavior of the Wasm value stack. Transfer functions will
 // operate on stack elements individually. The stack itself is an intermediate
 // structure.
 //
@@ -74,192 +74,114 @@ namespace wasm::analysis {
 // instance, one could use this to analyze the maximum bit size of values on the
 // Wasm value stack. When new actual values are pushed or popped off the Wasm
 // value stack by instructions, the same is done to abstract lattice elements in
-// the StackLattice.
+// the Stack.
 //
 // When two control flows are joined together, one with stack [b, a] and another
 // with stack [b, a'], we can take the least upper bound to produce a stack [b,
 // LUB(a, a')], where LUB(a, a') takes the maximum of the two maximum bit
 // values.
+template<Lattice L> struct Stack {
+  // The materialized stack of values. The infinite items underneath these
+  // materialized values are bottom. The element at the base of the materialized
+  // stack must not be bottom.
+  using Element = std::vector<typename L::Element>;
 
-template<Lattice L> class StackLattice {
-  L& lattice;
+  L lattice;
 
-public:
-  StackLattice(L& lattice) : lattice(lattice) {}
+  Stack(L&& lattice) : lattice(std::move(lattice)) {}
 
-  class Element {
-    // The top lattice can be imagined as an infinitely high stack of top
-    // elements, which is unreachable in most cases. In practice, we make the
-    // stack an optional, and we represent top with the absence of a stack.
-    std::optional<std::deque<typename L::Element>> stackValue =
-      std::deque<typename L::Element>();
-
-  public:
-    bool isTop() const { return !stackValue.has_value(); }
-    bool isBottom() const {
-      return stackValue.has_value() && stackValue->empty();
+  void push(Element& elem, typename L::Element&& element) const noexcept {
+    if (elem.empty() && element == lattice.getBottom()) {
+      // no-op, the stack is already entirely made of bottoms.
+      return;
     }
-    void setToTop() { stackValue.reset(); }
+    elem.emplace_back(std::move(element));
+  }
 
-    typename L::Element& stackTop() { return stackValue->back(); }
-
-    void push(typename L::Element&& element) {
-      // We can imagine each stack [b, a] as being implicitly an infinite stack
-      // of the form (bottom) [... BOTTOM, BOTTOM, b, a] (top). In that case,
-      // adding a bottom element to an empty stack changes nothing, so we don't
-      // actually add a bottom.
-      if (stackValue.has_value() &&
-          (!stackValue->empty() || !element.isBottom())) {
-        stackValue->push_back(std::move(element));
-      }
+  typename L::Element pop(Element& elem) const noexcept {
+    if (elem.empty()) {
+      // "Pop" and return one of the infinite bottom elements.
+      return lattice.getBottom();
     }
-
-    void push(const typename L::Element& element) {
-      if (stackValue.has_value() &&
-          (!stackValue->empty() || !element.isBottom())) {
-        stackValue->push_back(std::move(element));
-      }
-    }
-
-    typename L::Element pop() {
-      typename L::Element value = stackValue->back();
-      stackValue->pop_back();
-      return value;
-    }
-
-    void print(std::ostream& os) {
-      if (isTop()) {
-        os << "TOP STACK" << std::endl;
-        return;
-      }
-
-      for (auto iter = stackValue->rbegin(); iter != stackValue->rend();
-           ++iter) {
-        iter->print(os);
-        os << std::endl;
-      }
-    }
-
-    friend StackLattice;
-  };
+    auto popped = elem.back();
+    elem.pop_back();
+    return popped;
+  }
 
   Element getBottom() const noexcept { return Element{}; }
 
-  // Like in computing the LUB, we compare the tops of the two stacks, as it
-  // handles the case of stacks of different scopes. Comparisons are done by
-  // element starting from the top.
-  //
-  // If the left stack is higher, and left top >= right top, then we say
-  // that left stack > right stack. If the left stack is lower and the left top
-  // >= right top or if the left stack is higher and the right top > left top or
-  // they are unrelated, then there is no relation. Same applies for the reverse
-  // relationship.
-  LatticeComparison compare(const Element& left,
-                            const Element& right) const noexcept {
-    // Handle cases where there are top elements.
-    if (left.isTop()) {
-      if (right.isTop()) {
-        return LatticeComparison::EQUAL;
-      } else {
-        return LatticeComparison::GREATER;
+  LatticeComparison compare(const Element& a, const Element& b) const noexcept {
+    auto result = EQUAL;
+    // Iterate starting from the end of the vectors to match up the tops of
+    // stacks with different sizes.
+    for (auto itA = a.rbegin(), itB = b.rbegin();
+         itA != a.rend() || itB != b.rend();
+         ++itA, ++itB) {
+      if (itA == a.rend()) {
+        // The rest of A's elements are bottom, but B has a non-bottom element
+        // because of our invariant that the base of the materialized stack must
+        // not be bottom.
+        return LESS;
       }
-    } else if (right.isTop()) {
-      return LatticeComparison::LESS;
-    }
-
-    bool hasLess = false;
-    bool hasGreater = false;
-
-    // Check the tops of both stacks which match (i.e. are within the heights
-    // of both stacks). If there is a pair which is not related, the stacks
-    // cannot be related.
-    for (auto leftIt = left.stackValue->crbegin(),
-              rightIt = right.stackValue->crbegin();
-         leftIt != left.stackValue->crend() &&
-         rightIt != right.stackValue->crend();
-         ++leftIt, ++rightIt) {
-      LatticeComparison currComparison = lattice.compare(*leftIt, *rightIt);
-      switch (currComparison) {
-        case LatticeComparison::NO_RELATION:
-          return LatticeComparison::NO_RELATION;
-        case LatticeComparison::LESS:
-          hasLess = true;
-          break;
-        case LatticeComparison::GREATER:
-          hasGreater = true;
-          break;
-        default:
-          break;
+      if (itB == b.rend()) {
+        // The rest of B's elements are bottom, but A has a non-bottom element.
+        return GREATER;
+      }
+      switch (lattice.compare(*itA, *itB)) {
+        case NO_RELATION:
+          return NO_RELATION;
+        case EQUAL:
+          continue;
+        case LESS:
+          if (result == GREATER) {
+            // Cannot be both less and greater.
+            return NO_RELATION;
+          }
+          result = LESS;
+          continue;
+        case GREATER:
+          if (result == LESS) {
+            // Cannot be both greater and less.
+            return NO_RELATION;
+          }
+          result = GREATER;
+          continue;
       }
     }
-
-    // Check cases for when the stacks have unequal. As a rule, if a stack
-    // is higher, it is greater than the other stack, but if and only if
-    // when comparing their matching top portions the top portion of the
-    // higher stack is also >= the top portion of the shorter stack.
-    if (left.stackValue->size() > right.stackValue->size()) {
-      hasGreater = true;
-    } else if (right.stackValue->size() > left.stackValue->size()) {
-      hasLess = true;
-    }
-
-    if (hasLess && !hasGreater) {
-      return LatticeComparison::LESS;
-    } else if (hasGreater && !hasLess) {
-      return LatticeComparison::GREATER;
-    } else if (hasLess && hasGreater) {
-      // Contradiction, and therefore must be unrelated.
-      return LatticeComparison::NO_RELATION;
-    } else {
-      return LatticeComparison::EQUAL;
-    }
+    return result;
   }
 
-  // When taking the join, we take the joins of the elements of each stack
-  // starting from the top of the stack. So, join([b, a], [b', a']) is [join(b,
-  // b'), join(a, a')]. If one stack is higher than the other, the bottom of the
-  // higher stack will be kept, while the join of the corresponding tops of each
-  // stack will be taken. For instance, join([d, c, b, a], [b', a']) is [d, c,
-  // join(b, b'), join(a, a')].
-  //
-  // We start at the top because it makes taking the join of stacks with
-  // different scope easier, as mentioned at the top of the file. It also fits
-  // with the conception of the stack starting at the top and having an infinite
-  // bottom, which allows stacks of different height and scope to be easily
-  // joined.
   bool join(Element& joinee, const Element& joiner) const noexcept {
-    // Top element cases, since top elements don't actually have the stack
-    // value.
-    if (joinee.isTop()) {
-      return false;
-    } else if (joiner.isTop()) {
-      joinee.stackValue.reset();
-      return true;
+    // If joiner is deeper than joinee, prepend those extra elements to joinee
+    // first. They don't need to be explicitly joined with anything because they
+    // would be joined with bottom, which wouldn't change them.
+    bool result = false;
+    size_t extraSize = 0;
+    if (joiner.size() > joinee.size()) {
+      extraSize = joiner.size() - joinee.size();
+      auto extraBegin = joiner.begin();
+      auto extraEnd = joiner.begin() + extraSize;
+      joinee.insert(joinee.begin(), extraBegin, extraEnd);
+      result = true;
     }
-
-    bool modified = false;
-
-    // Merge the shorter height stack with the top of the longer height
-    // stack. We do this by taking the LUB of each pair of matching elements
-    // from both stacks.
-    auto joineeIt = joinee.stackValue->rbegin();
-    auto joinerIt = joiner.stackValue->crbegin();
-    for (; joineeIt != joinee.stackValue->rend() &&
-           joinerIt != joiner.stackValue->crend();
+    // Join all the elements present in both materialized stacks, starting from
+    // the end so the stack tops match up. Stop the iteration when we've
+    // processed all of joinee, excluding any extra elements from joiner we just
+    // prepended to it, or when we've processed all of joiner.
+    auto joineeIt = joinee.rbegin();
+    auto joinerIt = joiner.rbegin();
+    auto joineeEnd = joinee.rend() - extraSize;
+    for (; joineeIt != joineeEnd && joinerIt != joiner.rend();
          ++joineeIt, ++joinerIt) {
-      modified |= lattice.join(*joineeIt, *joinerIt);
+      result |= lattice.join(*joineeIt, *joinerIt);
     }
-
-    // If the joiner stack is higher, append the bottom of it to our current
-    // stack.
-    for (; joinerIt != joiner.stackValue->crend(); ++joinerIt) {
-      joinee.stackValue->push_front(*joinerIt);
-      modified = true;
-    }
-
-    return modified;
+    return result;
   }
 };
+
+#if __cplusplus >= 202002L
+static_assert(Lattice<Stack<Bool>>);
+#endif
 
 } // namespace wasm::analysis
 
