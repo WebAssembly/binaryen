@@ -1952,7 +1952,8 @@ struct PrintExpressionContents
   }
   void visitTableCopy(TableCopy* curr) {
     printMedium(o, "table.fill ");
-    printName(curr->table, o);
+    printName(curr->destTable, o);
+    printName(curr->sourceTable, o);
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
