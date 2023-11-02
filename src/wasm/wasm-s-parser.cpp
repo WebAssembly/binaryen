@@ -2721,7 +2721,7 @@ Expression* SExpressionWasmBuilder::makeTableCopy(Element& s) {
   auto* source = parseExpression(s[4]);
   auto* size = parseExpression(s[5]);
   return Builder(wasm).makeTableFill(
-    destTableName, sourceTableName, dest, source, size);
+    dest, source, size, destTableName, sourceTableName);
 }
 
 // try can be either in the form of try-catch or try-delegate.

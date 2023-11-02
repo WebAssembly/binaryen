@@ -5454,7 +5454,7 @@ bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   auto* size = popNonVoidExpression();
   auto* source = popNonVoidExpression();
   auto* dest = popNonVoidExpression();
-  auto* ret = Builder(wasm).makeTableCopy(Name(), Name(), dest, source, size);
+  auto* ret = Builder(wasm).makeTableCopy(dest, source, size, Name(), Name());
   tableRefs[destTableIdx].push_back(&ret->destTable);
   tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
   out = ret;
