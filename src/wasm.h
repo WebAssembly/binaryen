@@ -699,6 +699,7 @@ public:
     TableSizeId,
     TableGrowId,
     TableFillId,
+    TableCopyId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1431,6 +1432,20 @@ public:
   Expression* dest;
   Expression* value;
   Expression* size;
+
+  void finalize();
+};
+
+class TableCopy : public SpecificExpression<Expression::TableCopyId> {
+public:
+  TableCopy() = default;
+  TableCopy(MixedArena& allocator) : TableCopy() {}
+
+  Expression* dest;
+  Expression* source;
+  Expression* size;
+  Name destTable;
+  Name sourceTable;
 
   void finalize();
 };

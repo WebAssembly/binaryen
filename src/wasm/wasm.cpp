@@ -866,6 +866,14 @@ void TableFill::finalize() {
   }
 }
 
+void TableCopy::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.

@@ -1950,6 +1950,10 @@ struct PrintExpressionContents
     printMedium(o, "table.fill ");
     printName(curr->table, o);
   }
+  void visitTableCopy(TableCopy* curr) {
+    printMedium(o, "table.fill ");
+    printName(curr->table, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
