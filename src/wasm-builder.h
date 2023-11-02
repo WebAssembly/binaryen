@@ -780,8 +780,8 @@ public:
     ret->dest = dest;
     ret->source = source;
     ret->size = size;
-    ret->destMemory = destTable;
-    ret->sourceMemory = sourceTable;
+    ret->destTable = destTable;
+    ret->sourceTable = sourceTable;
     ret->finalize();
     return ret;
   }
