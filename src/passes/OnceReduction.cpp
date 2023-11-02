@@ -486,6 +486,8 @@ struct OnceReduction : public Pass {
         ExpressionManipulator::nop(body);
         continue;
       }
+        ExpressionManipulator::nop(body);
+        continue;
       if (list.size() != 3) {
         // Something non-trivial; too many items for us to consider.
         // XXX continue;

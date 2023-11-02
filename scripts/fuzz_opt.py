@@ -495,6 +495,8 @@ def generate_artisinal_initial_contents():
     wat.append(')')
     wat = '\n'.join(wat)
 
+    # :( hang limit addition is blocking us from being fuzzed...
+    # need a clever way to avoid instrumenting us and funcs like us...
     test_name = 'artisinal.wat'
     with open(test_name, 'w') as f:
         f.write(wat)
