@@ -3076,9 +3076,10 @@ public:
     }
     for (int64_t i = start; i != end; i += step) {
       destInfo.instance->externalInterface->tableStore(
-        destInfo.name, destVal + i,
-        sourceInfo.instance->externalInterface->tableLoad(
-          sourceInfo.name, sourceVal + i),
+        destInfo.name,
+        destVal + i,
+        sourceInfo.instance->externalInterface->tableLoad(sourceInfo.name,
+                                                          sourceVal + i),
         destInfo.name);
     }
     return {};

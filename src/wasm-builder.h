@@ -772,10 +772,10 @@ public:
     return ret;
   }
   TableCopy* makeTableCopy(Expression* dest,
-                             Expression* source,
-                             Expression* size,
-                             Name destTable,
-                             Name sourceTable) {
+                           Expression* source,
+                           Expression* size,
+                           Name destTable,
+                           Name sourceTable) {
     auto* ret = wasm.allocator.alloc<TableCopy>();
     ret->dest = dest;
     ret->source = source;

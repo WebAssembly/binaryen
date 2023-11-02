@@ -2720,7 +2720,8 @@ Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
   auto* dest = parseExpression(s[3]);
   auto* source = parseExpression(s[4]);
   auto* size = parseExpression(s[5]);
-  return Builder(wasm).makeTableFill(destTableName, sourceTableName, dest, source, size);
+  return Builder(wasm).makeTableFill(
+    destTableName, sourceTableName, dest, source, size);
 }
 
 // try can be either in the form of try-catch or try-delegate.
