@@ -101,8 +101,8 @@ struct State : StateLattice {
     return getLocals(elem)[i];
   }
 
-  void updateLocal(Element& elem, Index i, Type type) const noexcept {
-    localsLattice().join(
+  bool updateLocal(Element& elem, Index i, Type type) const noexcept {
+    return localsLattice().join(
       locals(elem),
       Vector<TypeRequirement>::SingletonElement(i, std::move(type)));
   }
@@ -151,17 +151,43 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   State lattice;
   typename State::Element* state = nullptr;
 
-  TransferFn(Module& wasm, Function* func)
-    : wasm(wasm), func(func), lattice(func) {}
+  // For each local, the set of blocks we may need to re-analyze when we update
+  // the constraint on the local.
+  std::vector<std::vector<const BasicBlock*>> localDependents;
+
+  // The set of basic blocks that may depend on the result of the current
+  // transfer.
+  std::unordered_set<const BasicBlock*> currDependents;
+
+  TransferFn(Module& wasm, Function* func, CFG& cfg)
+    : wasm(wasm), func(func), lattice(func),
+      localDependents(func->getNumLocals()) {
+    // Initialize `localDependents`. Any block containing a `local.set l` may
+    // need to be re-analyzed whenever the constraint on `l` is updated.
+    auto numLocals = func->getNumLocals();
+    std::vector<std::unordered_set<const BasicBlock*>> dependentSets(numLocals);
+    for (const auto& bb : cfg) {
+      for (const auto* inst : bb) {
+        if (auto set = inst->dynCast<LocalSet>()) {
+          dependentSets[set->index].insert(&bb);
+        }
+      }
+    }
+    for (size_t i = 0, n = dependentSets.size(); i < n; ++i) {
+      localDependents[i] = std::vector<const BasicBlock*>(
+        dependentSets[i].begin(), dependentSets[i].end());
+    }
+  }
 
   Type pop() noexcept { return lattice.pop(*state); }
   void push(Type type) noexcept { lattice.push(*state, type); }
   void clearStack() noexcept { lattice.clearStack(*state); }
   Type getLocal(Index i) noexcept { return lattice.getLocal(*state, i); }
   void updateLocal(Index i, Type type) noexcept {
-    // TODO: Collect possible successor blocks that might depend on an updated
-    // local requirement here.
-    return lattice.updateLocal(*state, i, type);
+    if (lattice.updateLocal(*state, i, type)) {
+      currDependents.insert(localDependents[i].begin(),
+                            localDependents[i].end());
+    }
   }
 
   void dumpState() {
@@ -185,12 +211,18 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 #endif // TYPE_GENERALIZING_DEBUG
   }
 
-  std::vector<const BasicBlock*>
+  std::unordered_set<const BasicBlock*>
   transfer(const BasicBlock& bb, typename State::Element& elem) noexcept {
     DBG(std::cerr << "transferring bb " << bb.getIndex() << "\n");
     state = &elem;
+
     // This is a backward analysis: The constraints on a type depend on how it
-    // will be used in the future. Traverse the basic block in reverse.
+    // will be used in the future. Traverse the basic block in reverse and
+    // return the predecessors as the dependent blocks.
+    assert(currDependents.empty());
+    const auto& preds = bb.preds();
+    currDependents.insert(preds.begin(), preds.end());
+
     dumpState();
     if (bb.isExit()) {
       DBG(std::cerr << "visiting exit\n");
@@ -207,11 +239,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     state = nullptr;
 
     // Return the blocks that may need to be re-analyzed.
-    const auto& preds = bb.preds();
-    std::vector<const BasicBlock*> dependents;
-    dependents.reserve(preds.size());
-    dependents.insert(dependents.end(), preds.begin(), preds.end());
-    return dependents;
+    return std::move(currDependents);
   }
 
   void visitFunctionExit() {
@@ -395,9 +423,9 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   }
 
   void runOnFunction(Module* wasm, Function* func) override {
-    TransferFn txfn(*wasm, func);
     auto cfg = CFG::fromFunction(func);
     DBG(cfg.print(std::cerr));
+    TransferFn txfn(*wasm, func, cfg);
     MonotoneCFGAnalyzer analyzer(txfn.lattice, txfn, cfg);
     analyzer.evaluate();
 
