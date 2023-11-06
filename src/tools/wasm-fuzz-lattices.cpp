@@ -862,13 +862,14 @@ struct ReachingDefinitionsChecker {
 // Uninteresting implementation details for RandomFullLattice and RandomLattice.
 
 RandomFullLattice::Element RandomFullLattice::getBottom() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getBottom()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getBottom()}; },
+    *lattice);
 }
 
 RandomFullLattice::Element RandomFullLattice::getTop() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getTop()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getTop()}; }, *lattice);
 }
 
 // TODO: use std::remove_cvref_t from C++20 instead.
@@ -926,8 +927,9 @@ bool RandomFullLattice::meet(Element& a, const Element& b) const noexcept {
 }
 
 RandomLattice::Element RandomLattice::getBottom() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getBottom()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getBottom()}; },
+    *lattice);
 }
 
 LatticeComparison RandomLattice::compare(const Element& a,
