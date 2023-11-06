@@ -53,7 +53,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // The exit block for the function: either the single block that returns or
   // flows values out of the function, or an empty synthetic block that is a
   // successor of all such blocks. This block may not exist if a function
-  // traps or infinitely loops and therefore never exits.
+  // traps, infinitely loops, throws, or otherwise never exits normally.
   //
   // Analyses that care about reaching the end of the function can just look at
   // this block instead of all the individual returns.
