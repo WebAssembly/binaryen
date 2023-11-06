@@ -44,6 +44,7 @@ TEST_F(CFGTest, Print) {
   )wasm";
 
   auto cfgText = R"cfg(;; preds: [], succs: [1, 5]
+;; entry
 0:
   0: i32.const 0
   1: drop
@@ -66,15 +67,19 @@ TEST_F(CFGTest, Print) {
   6: i32.const 3
   7: block
 
-;; preds: [0], succs: []
+;; preds: [0], succs: [7]
 5:
   8: i32.const 4
   9: return
 
-;; preds: [4], succs: []
+;; preds: [4], succs: [7]
 6:
   10: drop
   11: block
+
+;; preds: [5, 6], succs: []
+;; exit
+7:
 )cfg";
 
   Module wasm;
@@ -110,16 +115,66 @@ TEST_F(CFGTest, CallBlock) {
   )wasm";
 
   auto cfgText = R"cfg(;; preds: [], succs: [1]
+;; entry
 0:
   0: i32.const 0
   1: drop
   2: call $bar
 
 ;; preds: [0], succs: []
+;; exit
 1:
   3: i32.const 1
   4: drop
   5: block
+)cfg";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"));
+
+  std::stringstream ss;
+  cfg.print(ss);
+
+  EXPECT_EQ(ss.str(), cfgText);
+}
+
+TEST_F(CFGTest, Empty) {
+  // Check that we create a correct CFG for an empty function.
+  auto moduleText = R"wasm(
+    (module (func $foo))
+  )wasm";
+
+  auto cfgText = R"cfg(;; preds: [], succs: []
+;; entry
+;; exit
+0:
+  0: nop
+)cfg";
+
+  Module wasm;
+  parseWast(wasm, moduleText);
+
+  CFG cfg = CFG::fromFunction(wasm.getFunction("foo"));
+
+  std::stringstream ss;
+  cfg.print(ss);
+
+  EXPECT_EQ(ss.str(), cfgText);
+}
+
+TEST_F(CFGTest, Unreachable) {
+  // Check that we create a correct CFG for a function that does not return. In
+  // particular, it should not have an exit block.
+  auto moduleText = R"wasm(
+    (module (func $foo (unreachable)))
+  )wasm";
+
+  auto cfgText = R"cfg(;; preds: [], succs: []
+;; entry
+0:
+  0: unreachable
 )cfg";
 
   Module wasm;

@@ -46,22 +46,18 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     std::vector<BasicBlock*> out, in;
   };
 
-  // The entry block at the function's start. This always exists.
-  BasicBlock* entry;
+  // The entry block at the function's start. This always exists, although it
+  // might be empty if the function is empty.
+  BasicBlock* entry = nullptr;
 
-  // The exit block at the end, where control flow reaches the end of the
-  // function. If the function has a control flow path that flows out (that is,
-  // exits the function without a return or an unreachable or such), then that
-  // control flow path ends in this block. In particular, if the function flows
-  // out a value (as opposed to only returning values using an explicit return)
-  // then that value would be at the end of this block.
-  // Put another way, this block has a control flow edge out of the function,
-  // and that edge is not because of a return. (Hence an analysis that cares
-  // about reaching the end of the function must not only look for returns, but
-  // also the end of this block.)
-  // Note: It is possible for this block to not exist, if the function ends in
-  // a return or an unreachable.
-  BasicBlock* exit;
+  // The exit block for the function: either the single block that returns or
+  // flows values out of the function, or an empty synthetic block that is a
+  // successor of all such blocks. This block may not exist if a function
+  // traps, infinitely loops, throws, or otherwise never exits normally.
+  //
+  // Analyses that care about reaching the end of the function can just look at
+  // this block instead of all the individual returns.
+  BasicBlock* exit = nullptr;
 
   // override this with code to create a BasicBlock if necessary
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -159,6 +155,32 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       self->link(origin, self->currBasicBlock);
     }
     self->branches.erase(curr->name);
+  }
+
+  // Whether we have created a synthetic, empty exit block for multiple other
+  // exit blocks to flow to.
+  bool hasSyntheticExit = false;
+
+  static void doEndReturn(SubType* self, Expression** currp) {
+    auto* last = self->currBasicBlock;
+    self->startUnreachableBlock();
+    if (!self->exit) {
+      // This is our first exit block and may be our only exit block, so just
+      // set it.
+      self->exit = last;
+    } else if (!self->hasSyntheticExit) {
+      // We now have multiple exit blocks, so we need to create a synthetic one.
+      // It will be added to the list of basic blocks at the end of the
+      // function.
+      auto* lastExit = self->exit;
+      self->exit = self->makeBasicBlock();
+      self->link(lastExit, self->exit);
+      self->link(last, self->exit);
+      self->hasSyntheticExit = true;
+    } else {
+      // We already have a synthetic exit block. Just link it up.
+      self->link(last, self->exit);
+    }
   }
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
@@ -387,6 +409,19 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     self->startUnreachableBlock();
   }
 
+  static bool isReturnCall(Expression* curr) {
+    switch (curr->_id) {
+      case Expression::Id::CallId:
+        return curr->cast<Call>()->isReturn;
+      case Expression::Id::CallIndirectId:
+        return curr->cast<CallIndirect>()->isReturn;
+      case Expression::Id::CallRefId:
+        return curr->cast<CallRef>()->isReturn;
+      default:
+        WASM_UNREACHABLE("not a call");
+    }
+  }
+
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
@@ -414,13 +449,20 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId:
       case Expression::Id::CallRefId: {
-        auto* module = self->getModule();
-        if (!module || module->features.hasExceptionHandling()) {
-          // This call might throw, so run the code to handle that.
-          self->pushTask(SubType::doEndCall, currp);
+        if (isReturnCall(curr)) {
+          self->pushTask(SubType::doEndReturn, currp);
+        } else {
+          auto* module = self->getModule();
+          if (!module || module->features.hasExceptionHandling()) {
+            // This call might throw, so run the code to handle that.
+            self->pushTask(SubType::doEndCall, currp);
+          }
         }
         break;
       }
+      case Expression::Id::ReturnId:
+        self->pushTask(SubType::doEndReturn, currp);
+        break;
       case Expression::Id::TryId: {
         self->pushTask(SubType::doEndTry, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
@@ -466,7 +508,18 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     startBasicBlock();
     entry = currBasicBlock;
     PostWalker<SubType, VisitorType>::doWalkFunction(func);
-    exit = currBasicBlock;
+
+    // The last block, if it exists, implicitly returns.
+    if (currBasicBlock) {
+      auto* self = static_cast<SubType*>(this);
+      self->doEndReturn(self, nullptr);
+    }
+
+    // If we have a synthetic exit block, add it to the list of basic blocks
+    // here so it always comes at the end.
+    if (hasSyntheticExit) {
+      basicBlocks.push_back(std::unique_ptr<BasicBlock>(exit));
+    }
 
     assert(branches.size() == 0);
     assert(ifStack.size() == 0);
