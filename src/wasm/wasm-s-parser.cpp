@@ -2706,6 +2706,24 @@ Expression* SExpressionWasmBuilder::makeTableFill(Element& s) {
   return Builder(wasm).makeTableFill(tableName, dest, value, size);
 }
 
+Expression* SExpressionWasmBuilder::makeTableCopy(Element& s) {
+  auto destTableName = s[1]->str();
+  auto* destTable = wasm.getTableOrNull(destTableName);
+  if (!destTable) {
+    throw SParseException("invalid dest table name in table.copy", s);
+  }
+  auto sourceTableName = s[2]->str();
+  auto* sourceTable = wasm.getTableOrNull(sourceTableName);
+  if (!sourceTable) {
+    throw SParseException("invalid source table name in table.copy", s);
+  }
+  auto* dest = parseExpression(s[3]);
+  auto* source = parseExpression(s[4]);
+  auto* size = parseExpression(s[5]);
+  return Builder(wasm).makeTableCopy(
+    dest, source, size, destTableName, sourceTableName);
+}
+
 // try can be either in the form of try-catch or try-delegate.
 // try-catch is written in the folded wast format as
 // (try

@@ -1392,6 +1392,7 @@ public:
   Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
@@ -2210,6 +2211,10 @@ public:
     NOTE_ENTER("TableFill");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableCopy(TableCopy* curr) {
+    NOTE_ENTER("TableCopy");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -3025,6 +3030,57 @@ public:
       info.interface->tableStore(info.name, dest + i, value);
     }
     return Flow();
+  }
+
+  Flow visitTableCopy(TableCopy* curr) {
+    NOTE_ENTER("TableCopy");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow source = self()->visit(curr->source);
+    if (source.breaking()) {
+      return source;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(source);
+    NOTE_EVAL1(size);
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address sourceVal(source.getSingleValue().getUnsigned());
+    Address sizeVal(size.getSingleValue().getUnsigned());
+
+    auto destInfo = getTableInterfaceInfo(curr->destTable);
+    auto sourceInfo = getTableInterfaceInfo(curr->sourceTable);
+    auto destTableSize = destInfo.interface->tableSize(destInfo.name);
+    auto sourceTableSize = sourceInfo.interface->tableSize(sourceInfo.name);
+    if (sourceVal + sizeVal > sourceTableSize ||
+        destVal + sizeVal > destTableSize ||
+        // FIXME: better/cheaper way to detect wrapping?
+        sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
+        destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
+      trap("out of bounds segment access in table.copy");
+    }
+
+    int64_t start = 0;
+    int64_t end = sizeVal;
+    int step = 1;
+    // Reverse direction if source is below dest
+    if (sourceVal < destVal) {
+      start = int64_t(sizeVal) - 1;
+      end = -1;
+      step = -1;
+    }
+    for (int64_t i = start; i != end; i += step) {
+      destInfo.interface->tableStore(
+        destInfo.name,
+        destVal + i,
+        sourceInfo.interface->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
   }
 
   Flow visitLocalGet(LocalGet* curr) {

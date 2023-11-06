@@ -662,6 +662,7 @@ struct InfoCollector
   void visitTableSize(TableSize* curr) { addRoot(curr); }
   void visitTableGrow(TableGrow* curr) { addRoot(curr); }
   void visitTableFill(TableFill* curr) { addRoot(curr); }
+  void visitTableCopy(TableCopy* curr) { addRoot(curr); }
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}

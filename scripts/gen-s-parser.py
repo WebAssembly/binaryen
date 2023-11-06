@@ -548,10 +548,9 @@ instructions = [
     ("table.size",           "makeTableSize(s)"),
     ("table.grow",           "makeTableGrow(s)"),
     ("table.fill",           "makeTableFill(s)"),
+    ("table.copy",           "makeTableCopy(s)"),
     # TODO:
     # table.init
-    # table.fill
-    # table.copy
     #
     # exception handling instructions
     ("try",                  "makeTry(s)"),

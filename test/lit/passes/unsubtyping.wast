@@ -761,18 +761,50 @@
  ;; CHECK:      (table $t 0 (ref null $super))
  (table $t (ref null $super) 1 1)
 
- ;; CHECK:      (func $table-set (type $2)
+ ;; CHECK:      (func $table-fill (type $2)
  ;; CHECK-NEXT:  (table.fill $t
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $table-set
+ (func $table-fill
   ;; This requires $sub <: $super.
   (table.fill $t
    (i32.const 0)
    (struct.new $sub)
+   (i32.const 0)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $0 (func))
+
+ ;; CHECK:       (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:      (table $super 0 (ref null $super))
+ (table $super (ref null $super) 1 1)
+
+ ;; CHECK:      (table $sub 0 (ref null $sub))
+ (table $sub (ref null $sub) 1 1)
+
+ ;; CHECK:      (func $table-copy (type $0)
+ ;; CHECK-NEXT:  (table.copy $super $sub
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-copy
+  ;; This requires $sub <: $super.
+  (table.copy $super $sub
+   (i32.const 0)
+   (i32.const 0)
    (i32.const 0)
   )
  )

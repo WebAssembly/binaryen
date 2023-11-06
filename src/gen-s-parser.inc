@@ -3357,6 +3357,9 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'c':
+            if (op == "table.copy"sv) { return makeTableCopy(s); }
+            goto parse_error;
           case 'f':
             if (op == "table.fill"sv) { return makeTableFill(s); }
             goto parse_error;
@@ -8619,6 +8622,12 @@ switch (buf[0]) {
     switch (buf[1]) {
       case 'a': {
         switch (buf[6]) {
+          case 'c':
+            if (op == "table.copy"sv) {
+              CHECK_ERR(makeTableCopy(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
           case 'f':
             if (op == "table.fill"sv) {
               CHECK_ERR(makeTableFill(ctx, pos));

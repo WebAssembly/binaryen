@@ -118,6 +118,7 @@ template<typename Ctx> Result<> makeTableSet(Ctx&, Index);
 template<typename Ctx> Result<> makeTableSize(Ctx&, Index);
 template<typename Ctx> Result<> makeTableGrow(Ctx&, Index);
 template<typename Ctx> Result<> makeTableFill(Ctx&, Index);
+template<typename Ctx> Result<> makeTableCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeTry(Ctx&, Index);
 template<typename Ctx>
 Result<> makeTryOrCatchBody(Ctx&, Index, Type type, bool isTry);
@@ -1261,6 +1262,10 @@ template<typename Ctx> Result<> makeTableGrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTableFill(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<> makeTableCopy(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

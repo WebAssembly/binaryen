@@ -135,6 +135,7 @@ public:
   // [[nodiscard]] Result<> makeTableSize();
   // [[nodiscard]] Result<> makeTableGrow();
   // [[nodiscard]] Result<> makeTableFill();
+  // [[nodiscard]] Result<> makeTableCopy();
   // [[nodiscard]] Result<> makeTry();
   // [[nodiscard]] Result<> makeThrow();
   // [[nodiscard]] Result<> makeRethrow();

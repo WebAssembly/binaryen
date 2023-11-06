@@ -446,6 +446,10 @@ struct Unsubtyping
   void visitTableFill(TableFill* curr) {
     noteSubtype(curr->value->type, getModule()->getTable(curr->table)->type);
   }
+  void visitTableCopy(TableCopy* curr) {
+    noteSubtype(getModule()->getTable(curr->sourceTable)->type,
+                getModule()->getTable(curr->destTable)->type);
+  }
   void visitTry(Try* curr) {
     noteSubtype(curr->body->type, curr->type);
     for (auto* body : curr->catchBodies) {
