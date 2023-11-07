@@ -28,7 +28,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#define TYPE_GENERALIZING_DEBUG 1
+#define TYPE_GENERALIZING_DEBUG 0
 
 #if TYPE_GENERALIZING_DEBUG
 #define DBG(statement) statement
@@ -248,8 +248,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitFunctionExit() {
-    // We cannot change the types of results. Push requirements that
-    // the stack end up with the correct type.
+    // We cannot change the types of results. Push a requirement that the stack
+    // end up with the correct type.
     if (auto result = func->getResults(); result.isRef()) {
       push(result);
     }
@@ -379,7 +379,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefI31(RefI31* curr) { pop(); }
   void visitI31Get(I31Get* curr) {
-    // Do not allow relaxing to nullable if the input is already non-nullable.
+    // Do not allow relaxing to nullable if the input is already non-nullable to
+    // avoid the engine having to do a null check it would not otherwise have
+    // had to do. This could prevent us from optimizing out a previous explicit
+    // null check in principle, but should not affect heap type casts.
     if (curr->i31->type.isNonNullable()) {
       push(Type(HeapType::i31, NonNullable));
     } else {
