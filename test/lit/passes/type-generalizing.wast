@@ -6,17 +6,19 @@
 
  ;; CHECK:      (type $0 (func (result eqref)))
 
- ;; CHECK:      (type $1 (func))
+ ;; CHECK:      (type $1 (func (param eqref)))
 
- ;; CHECK:      (type $2 (func (param anyref)))
+ ;; CHECK:      (type $2 (func))
 
- ;; CHECK:      (type $3 (func (param i31ref)))
+ ;; CHECK:      (type $3 (func (param anyref)))
 
- ;; CHECK:      (type $4 (func (param anyref eqref)))
+ ;; CHECK:      (type $4 (func (param i31ref)))
 
- ;; CHECK:      (type $5 (func (param eqref)))
+ ;; CHECK:      (type $5 (func (param anyref eqref)))
 
- ;; CHECK:      (func $unconstrained (type $1)
+ ;; CHECK:      (table $t 0 0 funcref)
+ (table $t 0 0 funcref)
+ ;; CHECK:      (func $unconstrained (type $2)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
  ;; CHECK-NEXT:  (local $z (anyref i32))
@@ -75,7 +77,7 @@
   )
  )
 
- ;; CHECK:      (func $local-set (type $1)
+ ;; CHECK:      (func $local-set (type $2)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (ref.i31
@@ -94,7 +96,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set (type $2) (param $dest anyref)
+ ;; CHECK:      (func $local-get-set (type $3) (param $dest anyref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $dest
  ;; CHECK-NEXT:   (local.get $var)
@@ -109,7 +111,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-unreachable (type $3) (param $dest i31ref)
+ ;; CHECK:      (func $local-get-set-unreachable (type $4) (param $dest i31ref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
@@ -126,7 +128,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-join (type $4) (param $dest1 anyref) (param $dest2 eqref)
+ ;; CHECK:      (func $local-get-set-join (type $5) (param $dest1 anyref) (param $dest2 eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.set $dest1
  ;; CHECK-NEXT:   (local.get $var)
@@ -205,7 +207,7 @@
   (local.get $c)
  )
 
- ;; CHECK:      (func $local-tee (type $5) (param $dest eqref)
+ ;; CHECK:      (func $local-tee (type $1) (param $dest eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $dest
@@ -231,7 +233,7 @@
   )
  )
 
- ;; CHECK:      (func $i31-get (type $1)
+ ;; CHECK:      (func $i31-get (type $2)
  ;; CHECK-NEXT:  (local $nullable i31ref)
  ;; CHECK-NEXT:  (local $nonnullable i31ref)
  ;; CHECK-NEXT:  (local.set $nonnullable
@@ -272,6 +274,38 @@
    (i31.get_u
     (local.get $nonnullable)
    )
+  )
+ )
+
+ ;; CHECK:      (func $call (type $1) (param $x eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (call $call
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call (param $x eqref)
+  ;; This will be optimized to eqref.
+  (local $var i31ref)
+  ;; Requires typeof($var) <: eqref.
+  (call $call
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $call_indirect (type $1) (param $x eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (call_indirect $t (type $1)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call_indirect (param $x eqref)
+  ;; This will be optimized to eqref.
+  (local $var i31ref)
+  ;; Requires typeof($var) <: eqref.
+  (call_indirect (param eqref)
+   (local.get $var)
+   (i32.const 0)
   )
  )
 )

@@ -293,14 +293,24 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     WASM_UNREACHABLE("TODO");
   }
 
+  template<typename T> void handleCall(T* curr, Type params) {
+    if (curr->type.isRef()) {
+      pop();
+    }
+    for (auto param : params) {
+      // Cannot generalize beyond param types without interprocedural analysis.
+      if (param.isRef()) {
+        push(param);
+      }
+    }
+  }
+
   void visitCall(Call* curr) {
-    // TODO: pop ref types from results, push ref types from params
-    WASM_UNREACHABLE("TODO");
+    handleCall(curr, wasm.getFunction(curr->target)->getParams());
   }
 
   void visitCallIndirect(CallIndirect* curr) {
-    // TODO: pop ref types from results, push ref types from params
-    WASM_UNREACHABLE("TODO");
+    handleCall(curr, curr->heapType.getSignature().params);
   }
 
   void visitLocalGet(LocalGet* curr) {
