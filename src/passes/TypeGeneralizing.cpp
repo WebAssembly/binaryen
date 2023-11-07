@@ -435,6 +435,13 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   }
 
   void runOnFunction(Module* wasm, Function* func) override {
+    // First, remove unreachable code. If we didn't, the unreachable code could
+    // become invalid after this optimization because we do not materialize or
+    // analyze unreachable blocks.
+    PassRunner runner(getPassRunner());
+    runner.add("dce");
+    runner.runOnFunction(func);
+
     auto cfg = CFG::fromFunction(func);
     DBG(cfg.print(std::cerr));
     TransferFn txfn(*wasm, func, cfg);
