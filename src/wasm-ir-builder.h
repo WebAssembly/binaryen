@@ -74,6 +74,7 @@ public:
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
   [[nodiscard]] Result<> makeBreak(Index label);
   // [[nodiscard]] Result<> makeSwitch();
+  // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
   // [[nodiscard]] Result<> makeCallIndirect();
   [[nodiscard]] Result<> makeLocalGet(Index local);
