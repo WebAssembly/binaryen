@@ -430,7 +430,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   bool refinalize = false;
 
   bool isFunctionParallel() override { return true; }
-  std::unique_ptr<Pass> create() {
+  std::unique_ptr<Pass> create() override {
     return std::make_unique<TypeGeneralizing>();
   }
 
