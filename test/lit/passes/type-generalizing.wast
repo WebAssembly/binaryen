@@ -42,7 +42,7 @@
  )
 
  ;; CHECK:      (func $implicit-return-unreachable (type $0) (result eqref)
- ;; CHECK-NEXT:  (local $var none)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $implicit-return-unreachable (result eqref)
@@ -109,7 +109,7 @@
  )
 
  ;; CHECK:      (func $local-get-set-unreachable (type $3) (param $dest i31ref)
- ;; CHECK-NEXT:  (local $var none)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $local-get-set-unreachable (param $dest i31ref)
