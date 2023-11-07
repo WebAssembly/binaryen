@@ -349,7 +349,8 @@ jobs:
   # Duplicates build-asan.  Please keep in sync
   build-cxx20:
     name: c++20
-    runs-on: ubuntu-latest
+    # Make sure we can still build on older Ubuntu
+    runs-on: ubuntu-20.04
     env:
       CC: "gcc"
       CXX: "g++"
