@@ -28,7 +28,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#define TYPE_GENERALIZING_DEBUG 0
+#define TYPE_GENERALIZING_DEBUG 1
 
 #if TYPE_GENERALIZING_DEBUG
 #define DBG(statement) statement
@@ -202,6 +202,11 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       visit(*it);
       dumpState();
     }
+    if (bb.isEntry()) {
+      DBG(std::cerr << "visiting entry\n");
+      visitFunctionEntry();
+      dumpState();
+    }
     DBG(std::cerr << "\n");
 
     state = nullptr;
@@ -215,6 +220,14 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitFunctionExit() {
+    // We cannot change the types of results. Push requirements that
+    // the stack end up with the correct type.
+    if (auto result = func->getResults(); result.isRef()) {
+      push(result);
+    }
+  }
+
+  void visitFunctionEntry() {
     // We cannot change the types of parameters, so require that they have their
     // original types.
     Index i = 0;
@@ -225,7 +238,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
     // We also cannot change the types of any other non-ref locals. For
     // reference-typed locals, we cannot generalize beyond their top type.
-    for (; i < numLocals; ++i) {
+    for (Index i = numParams; i < numLocals; ++i) {
       auto type = func->getLocalType(i);
       // TODO: Support optimizing tuple locals.
       if (type.isRef()) {
@@ -233,11 +246,6 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       } else {
         updateLocal(i, type);
       }
-    }
-    // We similarly cannot change the types of results. Push requirements that
-    // the stack end up with the correct type.
-    if (auto result = func->getResults(); result.isRef()) {
-      push(result);
     }
   }
 
@@ -335,6 +343,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitTableSize(TableSize* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableFill(TableFill* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("TODO"); }
