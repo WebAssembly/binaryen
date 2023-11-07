@@ -313,6 +313,17 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitCall(Call* curr) {
+  auto numArgs = wasm.getFunction(curr->target)->getNumParams();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -546,7 +557,14 @@ Result<> IRBuilder::makeBreak(Index label) {
 
 // Result<> IRBuilder::makeSwitch() {}
 
-// Result<> IRBuilder::makeCall() {}
+Result<> IRBuilder::makeCall(Name func, bool isReturn) {
+  Call curr(wasm.allocator);
+  curr.target = func;
+  CHECK_ERR(visitCall(&curr));
+  auto type = wasm.getFunction(func)->getResults();
+  push(builder.makeCall(curr.target, curr.operands, type, isReturn));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeCallIndirect() {}
 

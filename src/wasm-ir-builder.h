@@ -74,7 +74,7 @@ public:
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
   [[nodiscard]] Result<> makeBreak(Index label);
   // [[nodiscard]] Result<> makeSwitch();
-  // [[nodiscard]] Result<> makeCall();
+  [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
   // [[nodiscard]] Result<> makeCallIndirect();
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
@@ -187,6 +187,7 @@ public:
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<> visitCall(Call*);
 
 private:
   Module& wasm;

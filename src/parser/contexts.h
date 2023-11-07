@@ -280,6 +280,7 @@ struct NullInstrParserCtx {
   using ExprT = Ok;
 
   using FieldIdxT = Ok;
+  using FuncIdxT = Ok;
   using LocalIdxT = Ok;
   using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
@@ -296,6 +297,8 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> FieldIdxT getFieldFromName(HeapTypeT, Name) {
     return Ok{};
   }
+  FuncIdxT getFuncFromIdx(uint32_t) { return Ok{}; }
+  FuncIdxT getFuncFromName(Name) { return Ok{}; }
   LocalIdxT getLocalFromIdx(uint32_t) { return Ok{}; }
   LocalIdxT getLocalFromName(Name) { return Ok{}; }
   GlobalIdxT getGlobalFromIdx(uint32_t) { return Ok{}; }
@@ -378,6 +381,7 @@ struct NullInstrParserCtx {
 
   Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
   Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
   Result<> makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
@@ -802,6 +806,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using ExprT = Expression*;
 
   using FieldIdxT = Index;
+  using FuncIdxT = Name;
   using LocalIdxT = Index;
   using LabelIdxT = Index;
   using GlobalIdxT = Name;
@@ -893,6 +898,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return in.err("local index out of bounds");
     }
     return idx;
+  }
+
+  Result<Name> getFuncFromIdx(uint32_t idx) {
+    if (idx >= wasm.functions.size()) {
+      return in.err("function index out of bounds");
+    }
+    return wasm.functions[idx]->name;
+  }
+
+  Result<Name> getFuncFromName(Name name) {
+    if (!wasm.getFunctionOrNull(name)) {
+      return in.err("function $" + name.toString() + " does not exist");
+    }
+    return name;
   }
 
   Result<Index> getLocalFromName(Name name) {
@@ -1218,6 +1237,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
+  }
+
+  Result<> makeCall(Index pos, Name func, bool isReturn) {
+    return withLoc(pos, irBuilder.makeCall(func, isReturn));
   }
 
   Result<> makeBreak(Index pos, Index label) {
