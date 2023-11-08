@@ -354,6 +354,9 @@
 ;; CHECK-NEXT:   --safe-heap                                   instrument loads and stores to
 ;; CHECK-NEXT:                                                 check for invalid behavior
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --separate-data-segments                      write data segments to a file
+;; CHECK-NEXT:                                                 and strip them from the module
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
 ;; CHECK-NEXT:

@@ -407,6 +407,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("separate-data-segments",
+               "write data segments to a file and strip them from the module",
+               createSeparateDataSegmentsPass);
   registerPass("signature-pruning",
                "remove params from function signature types where possible",
                createSignaturePruningPass);
