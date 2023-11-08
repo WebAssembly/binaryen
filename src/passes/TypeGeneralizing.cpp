@@ -347,51 +347,57 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
-  void visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStore(Store* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitAtomicNotify(AtomicNotify* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitAtomicFence(AtomicFence* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDExtract(SIMDExtract* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDReplace(SIMDReplace* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDShuffle(SIMDShuffle* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDTernary(SIMDTernary* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDShift(SIMDShift* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDLoad(SIMDLoad* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    WASM_UNREACHABLE("TODO");
-  }
-  void visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitLoad(Load* curr) {}
+  void visitStore(Store* curr) {}
+  void visitAtomicRMW(AtomicRMW* curr) {}
+  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {}
+  void visitAtomicWait(AtomicWait* curr) {}
+  void visitAtomicNotify(AtomicNotify* curr) {}
+  void visitAtomicFence(AtomicFence* curr) {}
+  void visitSIMDExtract(SIMDExtract* curr) {}
+  void visitSIMDReplace(SIMDReplace* curr) {}
+  void visitSIMDShuffle(SIMDShuffle* curr) {}
+  void visitSIMDTernary(SIMDTernary* curr) {}
+  void visitSIMDShift(SIMDShift* curr) {}
+  void visitSIMDLoad(SIMDLoad* curr) {}
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {}
+  void visitMemoryInit(MemoryInit* curr) {}
+  void visitDataDrop(DataDrop* curr) {}
+  void visitMemoryCopy(MemoryCopy* curr) {}
+  void visitMemoryFill(MemoryFill* curr) {}
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
+
   void visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitDrop(Drop* curr) {
     if (curr->type.isRef()) {
       pop();
     }
   }
-  void visitReturn(Return* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitMemorySize(MemorySize* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitMemoryGrow(MemoryGrow* curr) { WASM_UNREACHABLE("TODO"); }
+
+  // This is handled by propagating the stack backward from the exit block.
+  void visitReturn(Return* curr) {}
+
+  void visitMemorySize(MemorySize* curr) {}
+  void visitMemoryGrow(MemoryGrow* curr) {}
+
   void visitUnreachable(Unreachable* curr) {
     // Require nothing about values flowing into an unreachable.
     clearStack();
   }
+
   void visitPop(Pop* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitRefNull(RefNull* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefIsNull(RefIsNull* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefFunc(RefFunc* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefEq(RefEq* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTableSize(TableSize* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitTableSize(TableSize* curr) {}
+  void visitTableGrow(TableGrow* curr) {}
   void visitTableFill(TableFill* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
@@ -399,8 +405,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("TODO"); }
+
   void visitRefI31(RefI31* curr) { pop(); }
   void visitI31Get(I31Get* curr) { push(Type(HeapType::i31, Nullable)); }
+
   void visitCallRef(CallRef* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO"); }
