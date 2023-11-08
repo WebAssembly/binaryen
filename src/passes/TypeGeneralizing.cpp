@@ -369,7 +369,14 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
 
-  void visitSelect(Select* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitSelect(Select* curr) {
+    if (curr->type.isRef()) {
+      // The inputs may be as general as the output.
+      auto type = pop();
+      push(type);
+      push(type);
+    }
+  }
 
   void visitDrop(Drop* curr) {
     if (curr->type.isRef()) {
