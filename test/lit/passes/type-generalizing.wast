@@ -10,11 +10,15 @@
 
  ;; CHECK:      (type $2 (func (param eqref)))
 
- ;; CHECK:      (type $3 (func (param anyref)))
+ ;; CHECK:      (type $3 (func (param eqref anyref)))
 
- ;; CHECK:      (type $4 (func (param i31ref)))
+ ;; CHECK:      (type $4 (func (param anyref)))
 
- ;; CHECK:      (type $5 (func (param anyref eqref)))
+ ;; CHECK:      (type $5 (func (param i31ref)))
+
+ ;; CHECK:      (type $6 (func (param anyref eqref)))
+
+ ;; CHECK:      (type $7 (func (param anyref anyref)))
 
  ;; CHECK:      (global $global-eq (mut eqref) (ref.null none))
  (global $global-eq (mut eqref) (ref.null none))
@@ -72,7 +76,7 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $if (result (eqref))
+ (func $if (result eqref)
   (local $x i31ref)
   (local $y i31ref)
   (if (result i31ref)
@@ -81,6 +85,142 @@
    (local.get $x)
    ;; Require that typeof($y) <: eqref.
    (local.get $y)
+  )
+ )
+
+ ;; CHECK:      (func $loop (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (loop $loop-in (result eqref)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $loop (result eqref)
+  (local $var i31ref)
+  ;; Require that typeof($var) <: eqref.
+  (loop (result i31ref)
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $br-sent (type $0) (result eqref)
+ ;; CHECK-NEXT:  (local $var1 anyref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (block $l (result eqref)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $var1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (local.get $var2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-sent (result eqref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  (block $l (result i31ref)
+   (call $helper-any_any
+    ;; No requirements on $var1
+    (local.get $var1)
+    ;; Require that typeof($var2) <: eqref.
+    (br $l
+     (local.get $var2)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br-no-sent (type $1)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $var)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $l)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-no-sent
+  (local $var i31ref)
+  (block $l
+   (call $helper-any_any
+    ;; No requirements on $var
+    (local.get $var)
+    (br $l)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_table-sent (type $3) (param $eq eqref) (param $any anyref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local.set $eq
+ ;; CHECK-NEXT:   (block $l1 (result eqref)
+ ;; CHECK-NEXT:    (local.set $any
+ ;; CHECK-NEXT:     (block $l2 (result eqref)
+ ;; CHECK-NEXT:      (br_table $l1 $l2
+ ;; CHECK-NEXT:       (local.get $var)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_table-sent (param $eq eqref) (param $any anyref)
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (local.set $eq
+   (block $l1 (result i31ref)
+    ;; Require typeof($var) <: anyref.
+    (local.set $any
+     (block $l2 (result i31ref)
+      (br_table $l1 $l2
+       (local.get $var)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_table-sent-reversed (type $3) (param $eq eqref) (param $any anyref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local.set $any
+ ;; CHECK-NEXT:   (block $l1 (result eqref)
+ ;; CHECK-NEXT:    (local.set $eq
+ ;; CHECK-NEXT:     (block $l2 (result eqref)
+ ;; CHECK-NEXT:      (br_table $l1 $l2
+ ;; CHECK-NEXT:       (local.get $var)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_table-sent-reversed (param $eq eqref) (param $any anyref)
+  ;; Same as above, but with the sources of requirements flipped.
+  (local $var i31ref)
+  ;; Require typeof($var) <: anyref.
+  (local.set $any
+   (block $l1 (result i31ref)
+    ;; Require typeof($var) <: eqref.
+    (local.set $eq
+     (block $l2 (result i31ref)
+      (br_table $l1 $l2
+       (local.get $var)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
   )
  )
 
@@ -103,7 +243,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set (type $3) (param $dest anyref)
+ ;; CHECK:      (func $local-get-set (type $4) (param $dest anyref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $dest
  ;; CHECK-NEXT:   (local.get $var)
@@ -118,7 +258,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-unreachable (type $4) (param $dest i31ref)
+ ;; CHECK:      (func $local-get-set-unreachable (type $5) (param $dest i31ref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
@@ -135,7 +275,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-join (type $5) (param $dest1 anyref) (param $dest2 eqref)
+ ;; CHECK:      (func $local-get-set-join (type $6) (param $dest1 anyref) (param $dest2 eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.set $dest1
  ;; CHECK-NEXT:   (local.get $var)
@@ -381,5 +521,12 @@
    (local.get $var2)
    (i32.const 0)
   )
+ )
+
+ ;; CHECK:      (func $helper-any_any (type $7) (param $0 anyref) (param $1 anyref)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $helper-any_any (param anyref anyref)
+  (unreachable)
  )
 )

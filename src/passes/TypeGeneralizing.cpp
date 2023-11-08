@@ -282,15 +282,74 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {}
   void visitBreak(Break* curr) {
-    // TODO: pop extra elements off stack, keeping only those at the top that
-    // will be sent along.
-    WASM_UNREACHABLE("TODO");
+    if (curr->condition) {
+      // `br_if` pops everything but the sent value off the stack if the branch
+      // is taken, but if the branch is not taken, it only pops the condition.
+      // We must therefore propagate all requirements from the fallthrough
+      // successor but only the requirements for the sent value, if any, from
+      // the branch successor. We don't have any way to differentiate between
+      // requirements received from the two successors, however, so we cannot
+      // yet do anything correct here!
+      //
+      // Here is a sample program that would break if we tried to conservatively
+      // preserve the join of the requirements from both successors:
+      //
+      // (module
+      //  (func $func_any (param funcref anyref)
+      //   (unreachable)
+      //  )
+      //
+      //  (func $extern_any-any (param externref anyref) (result anyref)
+      //   (unreachable)
+      //  )
+      //
+      //  (func $br-if-bad
+      //   (local $bang externref)
+      //   (call $func_any ;; 2. Requires [func, any]
+      //    (ref.null nofunc)
+      //    (block $l (result anyref)
+      //     (call $extern_any-any ;; 1. Requires [extern, any]
+      //      (local.get $bang)
+      //      (br_if $l ;; 3. After join, requires [unreachable, any]
+      //       (ref.null none)
+      //       (i32.const 0)
+      //      )
+      //     )
+      //    )
+      //   )
+      //  )
+      // )
+      //
+      // To fix this, we need to insert an extra basic block encompassing the
+      // liminal space between where the br_if determines it should take the
+      // branch and when control arrives at the branch target. This is when the
+      // extra values are popped off the stack.
+      WASM_UNREACHABLE("TODO");
+    } else {
+      // `br` pops everything but the sent value off the stack, so do not
+      // require anything of values on the stack except for that sent value, if
+      // it exists.
+      if (curr->value && curr->value->type.isRef()) {
+        auto type = pop();
+        clearStack();
+        push(type);
+      } else {
+        // No sent value. Do not require anything.
+        clearStack();
+      }
+    }
   }
 
   void visitSwitch(Switch* curr) {
-    // TODO: pop extra elements off stack, keeping only those at the top that
-    // will be sent along.
-    WASM_UNREACHABLE("TODO");
+    // Just like `br`, do not require anything of the values on the stack except
+    // for the sent value, if it exists.
+    if (curr->value && curr->value->type.isRef()) {
+      auto type = pop();
+      clearStack();
+      push(type);
+    } else {
+      clearStack();
+    }
   }
 
   template<typename T> void handleCall(T* curr, Type params) {
@@ -397,7 +456,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
 
   void visitPop(Pop* curr) { WASM_UNREACHABLE("TODO"); }
 
-  void visitRefNull(RefNull* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitRefNull(RefNull* curr) { pop(); }
   void visitRefIsNull(RefIsNull* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefFunc(RefFunc* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefEq(RefEq* curr) { WASM_UNREACHABLE("TODO"); }
