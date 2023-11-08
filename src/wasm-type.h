@@ -390,6 +390,9 @@ public:
   // Get the bottom heap type for this heap type's hierarchy.
   BasicHeapType getBottom() const;
 
+  // Get the top heap type for this heap type's hierarchy.
+  BasicHeapType getTop() const;
+
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
   size_t getRecGroupIndex() const;
