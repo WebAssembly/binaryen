@@ -281,6 +281,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitBlock(Block* curr) {}
   void visitIf(If* curr) {}
   void visitLoop(Loop* curr) {}
+
   void visitBreak(Break* curr) {
     if (curr->condition) {
       // `br_if` pops everything but the sent value off the stack if the branch
@@ -457,9 +458,22 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitPop(Pop* curr) { WASM_UNREACHABLE("TODO"); }
 
   void visitRefNull(RefNull* curr) { pop(); }
-  void visitRefIsNull(RefIsNull* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitRefFunc(RefFunc* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitRefEq(RefEq* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    // ref.is_null works on any reference type, so do not impose any
+    // constraints. We still need to push something, so push bottom.
+    push(Type::none);
+  }
+
+  void visitRefFunc(RefFunc* curr) { pop(); }
+
+  void visitRefEq(RefEq* curr) {
+    // Both operands must be eqref.
+    auto eqref = Type(HeapType::eq, Nullable);
+    push(eqref);
+    push(eqref);
+  }
+
   void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTableSize(TableSize* curr) {}

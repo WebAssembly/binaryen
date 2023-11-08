@@ -4,9 +4,10 @@
 
 (module
 
- ;; CHECK:      (type $0 (func (result eqref)))
+ ;; CHECK:      (type $void (func))
+ (type $void (func))
 
- ;; CHECK:      (type $1 (func))
+ ;; CHECK:      (type $1 (func (result eqref)))
 
  ;; CHECK:      (type $2 (func (param eqref)))
 
@@ -29,7 +30,9 @@
  ;; CHECK:      (table $t 0 0 funcref)
  (table $t 0 0 funcref)
 
- ;; CHECK:      (func $unconstrained (type $1)
+ ;; CHECK:      (elem declare func $ref-func)
+
+ ;; CHECK:      (func $unconstrained (type $void)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
  ;; CHECK-NEXT:  (local $z (anyref i32))
@@ -44,7 +47,7 @@
   (local $z (anyref i32))
  )
 
- ;; CHECK:      (func $implicit-return (type $0) (result eqref)
+ ;; CHECK:      (func $implicit-return (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.get $var)
  ;; CHECK-NEXT: )
@@ -55,7 +58,7 @@
   (local.get $var)
  )
 
- ;; CHECK:      (func $implicit-return-unreachable (type $0) (result eqref)
+ ;; CHECK:      (func $implicit-return-unreachable (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
@@ -67,7 +70,7 @@
   (local.get $var)
  )
 
- ;; CHECK:      (func $if (type $0) (result eqref)
+ ;; CHECK:      (func $if (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $x eqref)
  ;; CHECK-NEXT:  (local $y eqref)
  ;; CHECK-NEXT:  (if (result eqref)
@@ -88,7 +91,7 @@
   )
  )
 
- ;; CHECK:      (func $loop (type $0) (result eqref)
+ ;; CHECK:      (func $loop (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (loop $loop-in (result eqref)
  ;; CHECK-NEXT:   (local.get $var)
@@ -102,7 +105,7 @@
   )
  )
 
- ;; CHECK:      (func $br-sent (type $0) (result eqref)
+ ;; CHECK:      (func $br-sent (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var1 anyref)
  ;; CHECK-NEXT:  (local $var2 eqref)
  ;; CHECK-NEXT:  (block $l (result eqref)
@@ -131,7 +134,7 @@
   )
  )
 
- ;; CHECK:      (func $br-no-sent (type $1)
+ ;; CHECK:      (func $br-no-sent (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (block
@@ -224,7 +227,7 @@
   )
  )
 
- ;; CHECK:      (func $local-set (type $1)
+ ;; CHECK:      (func $local-set (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (ref.i31
@@ -297,7 +300,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-chain (type $0) (result eqref)
+ ;; CHECK:      (func $local-get-set-chain (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $a eqref)
  ;; CHECK-NEXT:  (local $b eqref)
  ;; CHECK-NEXT:  (local $c eqref)
@@ -325,7 +328,7 @@
   (local.get $c)
  )
 
- ;; CHECK:      (func $local-get-set-chain-out-of-order (type $0) (result eqref)
+ ;; CHECK:      (func $local-get-set-chain-out-of-order (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $a eqref)
  ;; CHECK-NEXT:  (local $b eqref)
  ;; CHECK-NEXT:  (local $c eqref)
@@ -380,7 +383,7 @@
   )
  )
 
- ;; CHECK:      (func $i31-get (type $1)
+ ;; CHECK:      (func $i31-get (type $void)
  ;; CHECK-NEXT:  (local $nullable i31ref)
  ;; CHECK-NEXT:  (local $nonnullable i31ref)
  ;; CHECK-NEXT:  (local.set $nonnullable
@@ -456,7 +459,7 @@
   )
  )
 
- ;; CHECK:      (func $global-get (type $1)
+ ;; CHECK:      (func $global-get (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local $i32 i32)
  ;; CHECK-NEXT:  (local.set $var
@@ -479,7 +482,7 @@
   )
  )
 
- ;; CHECK:      (func $global-set (type $1)
+ ;; CHECK:      (func $global-set (type $void)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local $i32 i32)
  ;; CHECK-NEXT:  (global.set $global-eq
@@ -502,7 +505,7 @@
   )
  )
 
- ;; CHECK:      (func $select (type $0) (result eqref)
+ ;; CHECK:      (func $select (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var1 eqref)
  ;; CHECK-NEXT:  (local $var2 eqref)
  ;; CHECK-NEXT:  (select (result eqref)
@@ -520,6 +523,74 @@
    (local.get $var1)
    (local.get $var2)
    (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $ref-null (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-null
+  (local $var i31ref)
+  ;; No constraints on $var.
+  (local.set $var
+   (ref.null none)
+  )
+ )
+
+ ;; CHECK:      (func $ref-is-null (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_null
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-is-null
+  (local $var i31ref)
+  (drop
+   ;; No constraints on $var.
+   (ref.is_null
+    (local.get $var)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref-func (type $void)
+ ;; CHECK-NEXT:  (local $var funcref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-func
+  (local $var (ref null $void))
+  ;; No constraints on $var.
+  (local.set $var
+   (ref.func $ref-func)
+  )
+ )
+
+ ;; CHECK:      (func $ref-eq (type $void)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $var1)
+ ;; CHECK-NEXT:    (local.get $var2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-eq
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  (drop
+   ;; Require that typeof($var1) <: eqref and that typeof($var2) <: eqref.
+   (ref.eq
+    (local.get $var1)
+    (local.get $var2)
+   )
   )
  )
 
