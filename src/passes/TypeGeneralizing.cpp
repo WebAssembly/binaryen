@@ -333,8 +333,20 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(getLocal(curr->index));
   }
 
-  void visitGlobalGet(GlobalGet* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitGlobalSet(GlobalSet* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitGlobalGet(GlobalGet* curr) {
+    if (curr->type.isRef()) {
+      // Cannot generalize globals without interprocedural analysis.
+      pop();
+    }
+  }
+
+  void visitGlobalSet(GlobalSet* curr) {
+    if (auto type = wasm.getGlobal(curr->name)->type; type.isRef()) {
+      // Cannot generalize globals without interprocedural analysis.
+      push(type);
+    }
+  }
+
   void visitLoad(Load* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStore(Store* curr) { WASM_UNREACHABLE("TODO"); }
   void visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("TODO"); }
