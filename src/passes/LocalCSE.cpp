@@ -334,13 +334,16 @@ struct Scanner
     // and so adding one set+one get and removing one of the items itself
     // is not detrimental, and may be beneficial.
     // TODO: investigate size 2
-    if (options.shrinkLevel > 0 && Measurer::measure(curr) >= 3) {
+    auto size = Measurer::measure(curr);
+    if (options.shrinkLevel > 0 && size >= 3) {
       return true;
     }
 
     // If we focus on speed, any reduction in cost is beneficial, as the
-    // cost of a get is essentially free.
-    if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0) {
+    // cost of a get is essentially free. However, we need to balance that with
+    // the fact that the VM will also do CSE/GVN itself, so minor improvements
+    // are not worthwhile, so skip things of size 1 (like a global.get).
+    if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0 && size >= 2) {
       return true;
     }
 
