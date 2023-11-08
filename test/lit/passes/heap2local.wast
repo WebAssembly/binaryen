@@ -2112,7 +2112,7 @@
     ;; reference does not escape from the function, so we can optimize it into
     ;; locals, while the value read from the local is written to the heap, so it
     ;; does escape. However, we can optimize it after we optimize the first
-    ;; allocation way, which would happen if we ran another pass of heap2local
+    ;; allocation away, which would happen if we ran another pass of heap2local
     ;; (but we do not here).
     (struct.set $struct 0
       (struct.new_default $struct)
