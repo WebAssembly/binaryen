@@ -541,6 +541,19 @@ struct Heap2LocalOptimizer {
       auto* child = flow.first;
       auto* parent = flow.second;
 
+      auto interaction = getParentChildInteraction(allocation, parent, child);
+      if (interaction == ParentChildInteraction::Escapes ||
+          interaction == ParentChildInteraction::Mixes) {
+        // If the parent may let us escape, or the parent mixes other values
+        // up with us, give up.
+        return;
+      }
+
+      // The parent either fully consumes us, or flows us onwards; either way,
+      // we can proceed here, hopefully.
+      assert(interaction == ParentChildInteraction::FullyConsumes ||
+             interaction == ParentChildInteraction::Flows);
+
       // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
       // Note that we use a nonrepeating queue here, so we already do not visit
@@ -548,31 +561,30 @@ struct Heap2LocalOptimizer {
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
+      //
+      // Note that we do this after the check for Escapes/Mixes above: it is
+      // possible for a parent to receive two children and handle them
+      // differently:
+      //
+      //  (struct.set
+      //    (local.get $ref)
+      //    (local.get $value)
+      //  )
+      //
+      // The value escapes, but the ref does not, and might be optimized. If we
+      // added the parent to |seen| for both children, the reference would get
+      // blocked from being optimized.
       if (!seen.emplace(parent).second) {
         return;
       }
 
-      switch (getParentChildInteraction(allocation, parent, child)) {
-        case ParentChildInteraction::Escapes: {
-          // If the parent may let us escape then we are done.
-          return;
-        }
-        case ParentChildInteraction::FullyConsumes: {
-          // If the parent consumes us without letting us escape then all is
-          // well (and there is nothing flowing from the parent to check).
-          break;
-        }
-        case ParentChildInteraction::Flows: {
-          // The value flows through the parent; we need to look further at the
-          // grandparent.
-          flows.push({parent, parents.getParent(parent)});
-          break;
-        }
-        case ParentChildInteraction::Mixes: {
-          // Our allocation is not used exclusively via the parent, as other
-          // values are mixed with it. Give up.
-          return;
-        }
+      // We can proceed, as the parent interacts with us properly, and we are
+      // the only allocation to get here.
+
+      if (interaction == ParentChildInteraction::Flows) {
+        // The value flows through the parent; we need to look further at the
+        // grandparent.
+        flows.push({parent, parents.getParent(parent)});
       }
 
       if (auto* set = parent->dynCast<LocalSet>()) {
