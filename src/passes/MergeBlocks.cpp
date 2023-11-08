@@ -254,7 +254,7 @@ static void optimizeBlock(Block* curr,
                 drop->finalize();
                 childBlock->list.back() = drop;
               }
-              childBlock->finalize();
+              childBlock->finalize(module);
               child = list[i] = childBlock;
               more = true;
               changed = true;
@@ -362,7 +362,7 @@ static void optimizeBlock(Block* curr,
         // Update the child.
         childList.swap(filtered);
         // We may have removed unreachable items.
-        childBlock->finalize();
+        childBlock->finalize(module);
         if (loop) {
           loop->finalize();
         }

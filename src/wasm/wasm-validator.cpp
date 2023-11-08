@@ -3309,18 +3309,20 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
   struct BinaryenIRValidator
     : public PostWalker<BinaryenIRValidator,
                         UnifiedExpressionVisitor<BinaryenIRValidator>> {
+    Module& wasm;
     ValidationInfo& info;
 
     std::unordered_set<Expression*> seen;
 
-    BinaryenIRValidator(ValidationInfo& info) : info(info) {}
+    BinaryenIRValidator(Module& wasm, ValidationInfo& info)
+      : wasm(wasm), info(info) {}
 
     void visitExpression(Expression* curr) {
       auto scope = getFunction() ? getFunction()->name : Name("(global scope)");
       // check if a node type is 'stale', i.e., we forgot to finalize() the
       // node.
       auto oldType = curr->type;
-      ReFinalizeNode().visit(curr);
+      ReFinalizeNode(wasm).visit(curr);
       auto newType = curr->type;
       if (newType != oldType) {
         // We accept concrete => undefined on control flow structures:
@@ -3357,7 +3359,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       }
     }
   };
-  BinaryenIRValidator binaryenIRValidator(info);
+  BinaryenIRValidator binaryenIRValidator(wasm, info);
   binaryenIRValidator.walkModule(&wasm);
 }
 

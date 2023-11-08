@@ -212,7 +212,7 @@ private:
       resultsType = Type::i32;
       block->list.push_back(builder.makeConst(0));
     }
-    block->finalize();
+    block->finalize(module);
     auto wrapperFunc =
       Builder::makeFunction(wrapperName,
                             std::move(namedWrapperParams),
@@ -273,7 +273,7 @@ private:
       block->list.push_back(
         builder.makeLocalGet(*returnIndex, stub->getResults()));
     }
-    block->finalize();
+    block->finalize(module);
     call->type = im->getResults();
     stub->body = block;
     wrapperIm->type = Signature(Type(params), call->type);

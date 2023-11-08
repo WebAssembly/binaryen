@@ -175,6 +175,10 @@ handleUnreachable(Block* block,
 }
 
 void Block::finalize() {
+  // FIXME(frank-emrich) Anything to do here?
+}
+
+void Block::finalize(Module* wasm) {
   if (list.size() == 0) {
     type = Type::none;
     return;
@@ -189,7 +193,7 @@ void Block::finalize() {
   }
 
   // The default type is according to the value that flows out.
-  BranchUtils::BranchSeeker seeker(this->name);
+  BranchUtils::BranchTypeSeeker seeker(*wasm, this->name);
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {

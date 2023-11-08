@@ -170,7 +170,7 @@ struct SpillPointers
       auto temp = builder.addVar(func, operand->type);
       auto* set = builder.makeLocalSet(temp, operand);
       block->list.push_back(set);
-      block->finalize();
+      block->finalize(module);
       if (actualPointers.count(&operand) > 0) {
         // this is something we track, and it's moving - update
         actualPointers[&operand] = &set->value;
@@ -202,7 +202,7 @@ struct SpillPointers
     }
     // add the (modified) call
     block->list.push_back(call);
-    block->finalize();
+    block->finalize(module);
     *origin = block;
   }
 };

@@ -192,7 +192,7 @@ Result<> IRBuilder::visit(Expression* curr) {
   } else {
     // TODO: Call more efficient versions of finalize() that take the known type
     // for other kinds of nodes as well, as done above.
-    ReFinalizeNode{}.visit(curr);
+    ReFinalizeNode{wasm}.visit(curr);
   }
   push(curr);
   return Ok{};

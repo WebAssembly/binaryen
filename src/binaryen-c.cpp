@@ -1093,7 +1093,7 @@ BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
   if (type != BinaryenTypeAuto()) {
     ret->finalize(Type(type));
   } else {
-    ret->finalize();
+    ret->finalize((Module*)module);
   }
   return static_cast<Expression*>(ret);
 }
@@ -1985,8 +1985,9 @@ void BinaryenExpressionSetType(BinaryenExpressionRef expr, BinaryenType type) {
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
   std::cout << *(Expression*)expr << '\n';
 }
-void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
-  ReFinalizeNode().visit((Expression*)expr);
+void BinaryenExpressionFinalize(BinaryenExpressionRef expr,
+                                BinaryenModuleRef module) {
+  ReFinalizeNode(*(Module*)module).visit((Expression*)expr);
 }
 
 BinaryenExpressionRef BinaryenExpressionCopy(BinaryenExpressionRef expr,

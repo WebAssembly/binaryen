@@ -40,6 +40,8 @@ class Builder {
 public:
   Builder(Module& wasm) : wasm(wasm) {}
 
+  Module& getModule() { return wasm; }
+
   // make* functions create an expression instance.
 
   static std::unique_ptr<Function> makeFunction(Name name,
@@ -172,14 +174,14 @@ public:
     auto* ret = wasm.allocator.alloc<Block>();
     if (first) {
       ret->list.push_back(first);
-      ret->finalize();
+      ret->finalize(&wasm);
     }
     return ret;
   }
   Block* makeBlock(Name name, Expression* first = nullptr) {
     auto* ret = makeBlock(first);
     ret->name = name;
-    ret->finalize();
+    ret->finalize(&wasm);
     return ret;
   }
 
@@ -192,7 +194,7 @@ public:
   Block* makeBlock(const T& items) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->list.set(items);
-    ret->finalize();
+    ret->finalize(&wasm);
     return ret;
   }
 
@@ -1316,7 +1318,7 @@ public:
     }
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(&wasm);
     }
     return block;
   }
@@ -1341,7 +1343,7 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(&wasm);
     }
     return block;
   }
@@ -1351,7 +1353,7 @@ public:
   Block* makeSequence(Expression* left, Expression* right) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
-    block->finalize();
+    block->finalize(&wasm);
     return block;
   }
 

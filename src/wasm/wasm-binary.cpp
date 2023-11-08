@@ -3106,7 +3106,7 @@ Expression* WasmBinaryReader::popNonVoidExpression() {
     assert(type == Type::unreachable);
     // nothing to do here - unreachable anyhow
   }
-  block->finalize();
+  block->finalize(&wasm);
   return block;
 }
 

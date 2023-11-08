@@ -278,7 +278,7 @@ private:
                          {I64Utilities::getI64High(builder, index)},
                          Type::none));
       block->list.push_back(I64Utilities::getI64Low(builder, index));
-      block->finalize();
+      block->finalize(module);
       legal->body = block;
     } else {
       legal->body = call;

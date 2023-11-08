@@ -64,10 +64,11 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret,
     }
     for (auto& [Id, Body] : Multiple->InnerMap) {
       Curr->name = Builder.getBlockBreakName(Id);
-      Curr->finalize(); // it may now be reachable, via a break
+      Curr->finalize(
+        &Builder.getModule()); // it may now be reachable, via a break
       auto* Outer = Builder.makeBlock(Curr);
       Outer->list.push_back(Body->Render(Builder, InLoop));
-      Outer->finalize(); // TODO: not really necessary
+      Outer->finalize(&Builder.getModule()); // TODO: not really necessary
       Curr = Outer;
     }
     Parent->Next = Parent->Next->Next;
@@ -91,15 +92,15 @@ static wasm::Expression* HandleFollowupMultiples(wasm::Expression* Ret,
       } else {
         for (auto* Entry : Loop->Entries) {
           Curr->name = Builder.getBlockBreakName(Entry->Id);
-          Curr->finalize();
+          Curr->finalize(&Builder.getModule());
           auto* Outer = Builder.makeBlock(Curr);
-          Outer->finalize(); // TODO: not really necessary
+          Outer->finalize(&Builder.getModule()); // TODO: not really necessary
           Curr = Outer;
         }
       }
     }
   }
-  Curr->finalize();
+  Curr->finalize(&Builder.getModule());
   return Curr;
 }
 
@@ -132,7 +133,7 @@ Branch::Render(RelooperBuilder& Builder, Block* Target, bool SetLabel) {
     assert(Ancestor);
     Ret->list.push_back(Builder.makeShapeContinue(Ancestor->Id));
   }
-  Ret->finalize();
+  Ret->finalize(&Builder.getModule());
   return Ret;
 }
 
@@ -170,7 +171,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   }
 
   if (!ProcessedBranchesOut.size()) {
-    Ret->finalize();
+    Ret->finalize(&Builder.getModule());
     return Ret;
   }
 
@@ -407,7 +408,7 @@ wasm::Expression* Block::Render(RelooperBuilder& Builder, bool InLoop) {
   if (Root) {
     Ret->list.push_back(Root);
   }
-  Ret->finalize();
+  Ret->finalize(&Builder.getModule());
 
   return Ret;
 }

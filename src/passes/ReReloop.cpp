@@ -53,7 +53,7 @@ struct ReReloop final : public Pass {
 
   CFG::Block* setCurrCFGBlock(CFG::Block* curr) {
     if (currCFGBlock) {
-      finishBlock();
+      finishBlock(*curr->relooper->Module);
     }
     return currCFGBlock = curr;
   }
@@ -64,7 +64,7 @@ struct ReReloop final : public Pass {
 
   Block* getCurrBlock() { return currCFGBlock->Code->cast<Block>(); }
 
-  void finishBlock() { getCurrBlock()->finalize(); }
+  void finishBlock(Module& wasm) { getCurrBlock()->finalize(&wasm); }
 
   // break handling
 
@@ -310,7 +310,7 @@ struct ReReloop final : public Pass {
       curr->run();
     }
     // finish the current block
-    finishBlock();
+    finishBlock(*module);
     // blocks that do not have any exits are dead ends in the relooper. we need
     // to make sure that are in fact dead ends, and do not flow control
     // anywhere. add a return as needed
@@ -320,7 +320,7 @@ struct ReReloop final : public Pass {
         block->list.push_back(function->getResults() == Type::none
                                 ? (Expression*)builder->makeReturn()
                                 : (Expression*)builder->makeUnreachable());
-        block->finalize();
+        block->finalize(module);
       }
     }
 #ifdef RERELOOP_DEBUG

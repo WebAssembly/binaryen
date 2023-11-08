@@ -1169,7 +1169,8 @@ BINARYEN_API void BinaryenExpressionSetType(BinaryenExpressionRef expr,
 // Prints text format of the given expression to stdout.
 BINARYEN_API void BinaryenExpressionPrint(BinaryenExpressionRef expr);
 // Re-finalizes an expression after it has been modified.
-BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenExpressionFinalize(BinaryenExpressionRef expr,
+                                             BinaryenModuleRef module);
 // Makes a deep copy of the given expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenExpressionCopy(BinaryenExpressionRef expr, BinaryenModuleRef module);

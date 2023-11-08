@@ -68,7 +68,9 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
-void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+void operateOnScopeNameUsesAndSentTypes(Module& wasm,
+                                        Expression* expr,
+                                        T func) {
   operateOnScopeNameUses(expr, [&](Name& name) {
     // There isn't a delegate mechanism for getting a sent value, so do a direct
     // if-else chain. This will need to be updated with new br variants.
@@ -281,19 +283,20 @@ struct BranchSeeker
 
   Index found = 0;
 
-  std::unordered_set<Type> types;
-
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Type newType) {
-    found++;
-    types.insert(newType);
-  }
+  void noteFound() { found++; }
 
   void visitExpression(Expression* curr) {
-    operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
+    if (curr->is<Try>() || curr->is<Rethrow>()) {
+      // Keep the ignored types of users in sync with
+      // operateOnScopeNameUsesAndSentTypes and
+      // operateOnScopeNameUsesAndSentValues
+      return;
+    }
+    operateOnScopeNameUses(curr, [&](Name& name) {
       if (name == target) {
-        noteFound(type);
+        noteFound();
       }
     });
   }
@@ -314,6 +317,33 @@ struct BranchSeeker
     BranchSeeker seeker(target);
     seeker.walk(tree);
     return seeker.found;
+  }
+};
+
+// Like BranchSeeker, but accumulates the types sent to the block in question.
+struct BranchTypeSeeker
+  : public PostWalker<BranchTypeSeeker,
+                      UnifiedExpressionVisitor<BranchTypeSeeker>> {
+  Name target;
+  Module& wasm;
+
+  Index found = 0;
+
+  std::unordered_set<Type> types;
+
+  BranchTypeSeeker(Module& wasm, Name target) : target(target), wasm(wasm) {}
+
+  void noteFound(Type newType) {
+    found++;
+    types.insert(newType);
+  }
+
+  void visitExpression(Expression* curr) {
+    operateOnScopeNameUsesAndSentTypes(wasm, curr, [&](Name& name, Type type) {
+      if (name == target) {
+        noteFound(type);
+      }
+    });
   }
 };
 

@@ -367,7 +367,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // we may be able to remove this, if there are no brs
           bool canPop = true;
           if (block->name.is()) {
-            BranchUtils::BranchSeeker seeker(block->name);
+            BranchUtils::BranchTypeSeeker seeker(*getModule(), block->name);
             Expression* temp = block;
             seeker.walk(temp);
             if (seeker.found && Type::hasLeastUpperBound(seeker.types)) {

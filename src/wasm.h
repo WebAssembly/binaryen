@@ -42,6 +42,8 @@
 
 namespace wasm {
 
+class Module;
+
 // An index in a wasm module
 using Index = uint32_t;
 
@@ -824,9 +826,11 @@ public:
   Name name;
   ExpressionList list;
 
+  void finalize();
+
   // set the type purely based on its contents. this scans the block, so it is
   // not fast.
-  void finalize();
+  void finalize(Module* wasm);
 
   // set the type given you know its type, which is the case when parsing
   // s-expression or binary, as explicit types are given. the only additional

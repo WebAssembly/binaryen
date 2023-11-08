@@ -159,7 +159,7 @@ private:
 template<typename SubType>
 class BinaryenIRWriter : public Visitor<BinaryenIRWriter<SubType>> {
 public:
-  BinaryenIRWriter(Function* func) : func(func) {}
+  BinaryenIRWriter(Module& wasm, Function* func) : wasm(wasm), func(func) {}
 
   void write();
 
@@ -172,6 +172,7 @@ public:
   void visitTry(Try* curr);
 
 protected:
+  Module& wasm;
   Function* func = nullptr;
 
 private:
@@ -413,8 +414,9 @@ public:
                            Function* func = nullptr,
                            bool sourceMap = false,
                            bool DWARF = false)
-    : BinaryenIRWriter<BinaryenIRToBinaryWriter>(func), parent(parent),
-      writer(parent, o, func, sourceMap, DWARF), sourceMap(sourceMap) {}
+    : BinaryenIRWriter<BinaryenIRToBinaryWriter>(*parent.getModule(), func),
+      parent(parent), writer(parent, o, func, sourceMap, DWARF),
+      sourceMap(sourceMap) {}
 
   void emit(Expression* curr) { writer.visit(curr); }
   void emitHeader() {
@@ -454,7 +456,7 @@ private:
 class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
 public:
   StackIRGenerator(Module& module, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
+    : BinaryenIRWriter<StackIRGenerator>(module, func), module(module) {}
 
   void emit(Expression* curr);
   void emitScopeEnd(Expression* curr);

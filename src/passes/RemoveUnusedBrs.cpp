@@ -46,7 +46,7 @@ stealSlice(Builder& builder, Block* input, Index from, Index to) {
     for (Index i = from; i < to; i++) {
       block->list.push_back(input->list[i]);
     }
-    block->finalize();
+    block->finalize(&builder.getModule());
     ret = block;
   }
   if (to == input->list.size()) {
@@ -537,7 +537,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           if (iff->ifTrue->type == Type::unreachable) {
             iff->ifFalse = stealSlice(builder, block, i + 1, list.size());
             iff->finalize();
-            block->finalize();
+            block->finalize(getModule());
             return true;
           }
         } else {
@@ -574,7 +574,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 block->list.push_back(item);
               }
             }
-            block->finalize();
+            block->finalize(getModule());
             return block;
           };
 
@@ -582,13 +582,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             iff->ifFalse = blockifyMerge(
               iff->ifFalse, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
-            block->finalize();
+            block->finalize(getModule());
             return true;
           } else if (iff->ifFalse->type == Type::unreachable) {
             iff->ifTrue = blockifyMerge(
               iff->ifTrue, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
-            block->finalize();
+            block->finalize(getModule());
             return true;
           }
         }
@@ -622,7 +622,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
                                stealSlice(builder, block, i + 1, list.size()));
-              block->finalize();
+              block->finalize(getModule());
               return true;
             }
           }
@@ -643,7 +643,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
   bool sinkBlocks(Function* func) {
     struct Sinker : public PostWalker<Sinker> {
+      Module& wasm;
       bool worked = false;
+
+      Sinker(Module& wasm) : wasm(wasm) {}
 
       void visitBlock(Block* curr) {
         // If the block has a single child which is a loop, and the block is
@@ -695,7 +698,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 // The block used to contain the if, and may have changed type
                 // from unreachable to none, for example, if the if has an
                 // unreachable condition but the arm is not unreachable.
-                curr->finalize();
+                curr->finalize(&wasm);
                 iff->finalize();
                 replaceCurrent(iff);
                 worked = true;
@@ -707,7 +710,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
         }
       }
-    } sinker;
+    };
+
+    Sinker sinker(*getModule());
 
     sinker.doWalkFunction(func);
     if (sinker.worked) {

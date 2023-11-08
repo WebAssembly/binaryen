@@ -144,7 +144,8 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
 };
 
 Poppifier::Poppifier(Function* func, Module* module)
-  : BinaryenIRWriter<Poppifier>(func), module(module), builder(*module) {
+  : BinaryenIRWriter<Poppifier>(*module, func), module(module),
+    builder(*module) {
   // Start with a scope to emit top-level instructions into
   scopeStack.emplace_back(Scope::Func);
 

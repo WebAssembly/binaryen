@@ -484,7 +484,11 @@ private:
     auto oldType = curr->type;
     // NB: we template-specialize so that this calls the proper finalizer for
     //     the type
-    curr->finalize();
+    if (Block* currBlock = curr->template dynCast<Block>()) {
+      currBlock->finalize(getModule());
+    } else {
+      curr->finalize();
+    }
     // ensure the replacement has the same type, so the outside is not surprised
     block->finalize(oldType);
     replaceCurrent(block);
@@ -726,7 +730,7 @@ private:
         // change)
         auto* toplevel = old->dynCast<Block>();
         if (toplevel) {
-          toplevel->finalize();
+          toplevel->finalize(getModule());
         }
         if (old->type != Type::unreachable) {
           inner->list.push_back(builder.makeReturn(old));
@@ -735,7 +739,7 @@ private:
         }
       }
     }
-    inner->finalize();
+    inner->finalize(getModule());
     auto* outer = builder.makeBlock();
     outer->list.push_back(inner);
     while (!mergeable.empty()) {

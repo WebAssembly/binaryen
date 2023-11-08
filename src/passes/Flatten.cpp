@@ -169,7 +169,7 @@ struct Flatten
         }
         iff->finalize();
         if (prelude) {
-          ReFinalizeNode().visit(prelude);
+          ReFinalizeNode(*getModule()).visit(prelude);
           ourPreludes.push_back(prelude);
         }
         replaceCurrent(rep);
@@ -332,7 +332,7 @@ struct Flatten
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
     // we have changed children
-    ReFinalizeNode().visit(curr);
+    ReFinalizeNode(*getModule()).visit(curr);
     if (curr->type == Type::unreachable) {
       ourPreludes.push_back(curr);
       replaceCurrent(builder.makeUnreachable());
@@ -393,7 +393,7 @@ private:
     auto* ret = Builder(*getModule()).makeBlock(thePreludes);
     thePreludes.clear();
     ret->list.push_back(after);
-    ret->finalize();
+    ret->finalize(getModule());
     return ret;
   }
 

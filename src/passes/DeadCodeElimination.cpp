@@ -53,7 +53,16 @@ struct DeadCodeElimination
   }
 
   // as we remove code, we must keep the types of other nodes valid
-  TypeUpdater typeUpdater;
+  // lazily initialized because it requires access to the module
+  std::optional<TypeUpdater> tu;
+
+  TypeUpdater& typeUpdater() {
+    if (!tu) {
+      assert(getModule());
+      tu.emplace(*getModule());
+    }
+    return *tu;
+  }
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
@@ -62,12 +71,12 @@ struct DeadCodeElimination
     }
     super::replaceCurrent(expression);
     // also update the type updater
-    typeUpdater.noteReplacement(old, expression);
+    typeUpdater().noteReplacement(old, expression);
     return expression;
   }
 
   void doWalkFunction(Function* func) {
-    typeUpdater.walk(func->body);
+    typeUpdater().walk(func->body);
     walk(func->body);
   }
 
@@ -91,7 +100,7 @@ struct DeadCodeElimination
           bool afterUnreachable = false;
           for (auto* child : ChildIterator(curr)) {
             if (afterUnreachable) {
-              typeUpdater.noteRecursiveRemoval(child);
+              typeUpdater().noteRecursiveRemoval(child);
               continue;
             }
             if (child->type == Type::unreachable) {
@@ -125,7 +134,7 @@ struct DeadCodeElimination
       }
       if (removeFromHere != 0) {
         for (Index i = removeFromHere; i < list.size(); i++) {
-          typeUpdater.noteRecursiveRemoval(list[i]);
+          typeUpdater().noteRecursiveRemoval(list[i]);
         }
         list.resize(removeFromHere);
         if (list.size() == 1 && list[0]->is<Unreachable>()) {
@@ -138,14 +147,14 @@ struct DeadCodeElimination
       // have a concrete value flowing out) then remove it, which may allow
       // more reduction.
       if (block->type.isConcrete() && list.back()->type == Type::unreachable &&
-          !typeUpdater.hasBreaks(block)) {
-        typeUpdater.changeType(block, Type::unreachable);
+          !typeUpdater().hasBreaks(block)) {
+        typeUpdater().changeType(block, Type::unreachable);
       }
     } else if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
-        typeUpdater.noteRecursiveRemoval(iff->ifTrue);
+        typeUpdater().noteRecursiveRemoval(iff->ifTrue);
         if (iff->ifFalse) {
-          typeUpdater.noteRecursiveRemoval(iff->ifFalse);
+          typeUpdater().noteRecursiveRemoval(iff->ifFalse);
         }
         replaceCurrent(iff->condition);
         return;
@@ -155,7 +164,7 @@ struct DeadCodeElimination
       if (iff->type != Type::unreachable && iff->ifFalse &&
           iff->ifTrue->type == Type::unreachable &&
           iff->ifFalse->type == Type::unreachable) {
-        typeUpdater.changeType(iff, Type::unreachable);
+        typeUpdater().changeType(iff, Type::unreachable);
       }
     } else if (auto* loop = curr->dynCast<Loop>()) {
       // The loop body may have unreachable type if it branches back to the
@@ -173,7 +182,7 @@ struct DeadCodeElimination
       }
       if (tryy->type != Type::unreachable &&
           tryy->body->type == Type::unreachable && allCatchesUnreachable) {
-        typeUpdater.changeType(tryy, Type::unreachable);
+        typeUpdater().changeType(tryy, Type::unreachable);
       }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");

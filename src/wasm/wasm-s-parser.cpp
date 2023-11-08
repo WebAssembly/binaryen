@@ -1697,7 +1697,7 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   for (; i < s.size(); i++) {
     ret->list.push_back(parseExpression(s[i]));
   }
-  ret->finalize();
+  ret->finalize(&wasm);
   return ret;
 }
 

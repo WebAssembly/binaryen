@@ -235,7 +235,7 @@ struct AlignmentLowering : public WalkerPass<PostWalker<AlignmentLowering>> {
     } else {
       WASM_UNREACHABLE("invalid size");
     }
-    block->finalize();
+    block->finalize(getModule());
     return block;
   }
 

@@ -84,7 +84,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
       block->list.push_back(makeStackRestore());
       block->list.push_back(
         builder.makeReturn(builder.makeLocalGet(temp, ret->value->type)));
-      block->finalize();
+      block->finalize(&wasm);
       *ptr = block;
     } else {
       // restore, then return
@@ -105,7 +105,7 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
     block->list.push_back(makeStackRestore());
     block->list.push_back(builder.makeLocalGet(temp, func->getResults()));
   }
-  block->finalize();
+  block->finalize(&wasm);
   func->body = block;
 }
 

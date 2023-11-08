@@ -935,7 +935,7 @@ struct AsyncifyFlow : public Pass {
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
     }
-    block->finalize();
+    block->finalize(module);
     func->body = block;
     // Making things like returns conditional may alter types.
     ReFinalize().walkFunctionInModule(func, module);
@@ -1062,7 +1062,7 @@ private:
               for (auto j = begin; j <= i; j++) {
                 block->list.push_back(list[j]);
               }
-              block->finalize();
+              block->finalize(module);
               list[begin] = makeMaybeSkip(block);
               for (auto j = begin + 1; j <= i; j++) {
                 list[j] = builder->makeNop();
@@ -1536,7 +1536,7 @@ private:
       }
       block->list.push_back(builder->makeLocalSet(i, load));
     }
-    block->finalize();
+    block->finalize(getModule());
     return block;
   }
 
@@ -1578,7 +1578,7 @@ private:
       }
     }
     block->list.push_back(builder->makeIncStackPos(offset));
-    block->finalize();
+    block->finalize(getModule());
     return block;
   }
 
@@ -1831,7 +1831,7 @@ private:
         builder.makeBinary(
           Abstract::getBinary(pointerType, Abstract::GtU), stackPos, stackEnd),
         builder.makeUnreachable()));
-      body->finalize();
+      body->finalize(module);
       auto func = builder.makeFunction(
         name, Signature(Type(params), Type::none), {}, body);
       module->addFunction(std::move(func));

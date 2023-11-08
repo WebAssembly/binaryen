@@ -158,8 +158,16 @@ private:
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
 struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
+
+  ReFinalizeNode(Module& wasm) : wasm(wasm) {}
+
+  template<typename T> void static finalize(Module& wasm, T* curr) {
+    curr->finalize();
+  }
+  void static finalize(Module& wasm, Block* curr) { curr->finalize(&wasm); }
+
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { finalize(wasm, curr); }
 
 #include "wasm-delegations.def"
 
@@ -173,12 +181,15 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
   // given a stack of nested expressions, update them all from child to parent
-  static void updateStack(ExpressionStack& expressionStack) {
+  static void updateStack(Module& wasm, ExpressionStack& expressionStack) {
     for (int i = int(expressionStack.size()) - 1; i >= 0; i--) {
       auto* curr = expressionStack[i];
-      ReFinalizeNode().visit(curr);
+      ReFinalizeNode(wasm).visit(curr);
     }
   }
+
+private:
+  Module& wasm;
 };
 
 // Adds drop() operations where necessary. This lets you not worry about adding
@@ -209,7 +220,9 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     return acted;
   }
 
-  void reFinalize() { ReFinalizeNode::updateStack(expressionStack); }
+  void reFinalize() {
+    ReFinalizeNode::updateStack(*getModule(), expressionStack);
+  }
 
   void visitBlock(Block* curr) {
     if (curr->list.size() == 0) {

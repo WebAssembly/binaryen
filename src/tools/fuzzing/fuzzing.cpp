@@ -1351,7 +1351,7 @@ Expression* TranslateToFuzzReader::makeBlock(Type type) {
   if (type.isConcrete()) {
     ret->finalize(type);
   } else {
-    ret->finalize();
+    ret->finalize(&builder.getModule());
   }
   if (ret->type != type) {
     // e.g. we might want an unreachable block, but a child breaks to it

@@ -51,6 +51,11 @@ namespace wasm {
 struct TypeUpdater
   : public ExpressionStackWalker<TypeUpdater,
                                  UnifiedExpressionVisitor<TypeUpdater>> {
+
+  Module& wasm;
+
+  TypeUpdater(Module& wasm) : wasm(wasm) {}
+
   // Part 1: Scanning
 
   // track names to their blocks, so that when we remove a break to
@@ -172,8 +177,9 @@ struct TypeUpdater
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
     BranchUtils::operateOnScopeNameUsesAndSentTypes(
-      curr,
-      [&](Name& name, Type type) { noteBreakChange(name, change, type); });
+      wasm, curr, [&](Name& name, Type type) {
+        noteBreakChange(name, change, type);
+      });
     // TODO: it may be faster to accumulate all changes to a set first, then
     // call noteBreakChange on the unique values, as a switch can be quite
     // large and have lots of repeated targets.

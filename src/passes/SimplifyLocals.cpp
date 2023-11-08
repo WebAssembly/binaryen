@@ -490,7 +490,7 @@ struct SimplifyLocals
     auto* set = (*item)->template cast<LocalSet>();
     block->list[block->list.size() - 1] = set->value;
     *item = builder.makeNop();
-    block->finalize();
+    block->finalize(this->getModule());
     assert(block->type != Type::none);
     loop->finalize();
     set->value = loop;
@@ -626,7 +626,7 @@ struct SimplifyLocals
     this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
-    block->finalize();
+    block->finalize(this->getModule());
   }
 
   // optimize local.sets from both sides of an if into a return value
@@ -710,7 +710,7 @@ struct SimplifyLocals
       ifTrueBlock->list[ifTrueBlock->list.size() - 1] =
         (*ifTrueItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifTrueItem);
-      ifTrueBlock->finalize();
+      ifTrueBlock->finalize(this->getModule());
       assert(ifTrueBlock->type != Type::none);
     }
     if (iff->ifFalse->type != Type::unreachable) {
@@ -718,7 +718,7 @@ struct SimplifyLocals
       ifFalseBlock->list[ifFalseBlock->list.size() - 1] =
         (*ifFalseItem)->template cast<LocalSet>()->value;
       ExpressionManipulator::nop(*ifFalseItem);
-      ifFalseBlock->finalize();
+      ifFalseBlock->finalize(this->getModule());
       assert(ifFalseBlock->type != Type::none);
     }
     iff->finalize(); // update type
@@ -822,7 +822,7 @@ struct SimplifyLocals
     auto* set = (*item)->template cast<LocalSet>();
     ifTrueBlock->list[ifTrueBlock->list.size() - 1] = set->value;
     *item = builder.makeNop();
-    ifTrueBlock->finalize();
+    ifTrueBlock->finalize(this->getModule());
     assert(ifTrueBlock->type != Type::none);
     // Update the ifFalse side.
     iff->ifFalse = builder.makeLocalGet(set->index, localType);
