@@ -233,7 +233,7 @@
 
  ;; CHECK:      (func $i31-get (type $1)
  ;; CHECK-NEXT:  (local $nullable i31ref)
- ;; CHECK-NEXT:  (local $nonnullable (ref i31))
+ ;; CHECK-NEXT:  (local $nonnullable i31ref)
  ;; CHECK-NEXT:  (local.set $nonnullable
  ;; CHECK-NEXT:   (ref.i31
  ;; CHECK-NEXT:    (i32.const 0)
@@ -253,7 +253,7 @@
  (func $i31-get
   ;; This must stay an i31ref.
   (local $nullable i31ref)
-  ;; This one could be relaxed to be nullable in principle, but we keep it non-nullable.
+  ;; We relax this one to be nullable i31ref as well.
   (local $nonnullable (ref i31))
   ;; Initialize the non-nullable local for validation purposes.
   (local.set $nonnullable

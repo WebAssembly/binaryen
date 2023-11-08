@@ -378,17 +378,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefI31(RefI31* curr) { pop(); }
-  void visitI31Get(I31Get* curr) {
-    // Do not allow relaxing to nullable if the input is already non-nullable to
-    // avoid the engine having to do a null check it would not otherwise have
-    // had to do. This could prevent us from optimizing out a previous explicit
-    // null check in principle, but should not affect heap type casts.
-    if (curr->i31->type.isNonNullable()) {
-      push(Type(HeapType::i31, NonNullable));
-    } else {
-      push(Type(HeapType::i31, Nullable));
-    }
-  }
+  void visitI31Get(I31Get* curr) { push(Type(HeapType::i31, Nullable)); }
   void visitCallRef(CallRef* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO"); }
