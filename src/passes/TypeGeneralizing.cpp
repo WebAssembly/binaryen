@@ -474,12 +474,28 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(eqref);
   }
 
-  void visitTableGet(TableGet* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTableSet(TableSet* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitTableGet(TableGet* curr) {
+    // Cannot generalize table types yet.
+    pop();
+  }
+
+  void visitTableSet(TableSet* curr) {
+    // Cannot generalize table types yet.
+    push(wasm.getTable(curr->table)->type);
+  }
+
   void visitTableSize(TableSize* curr) {}
   void visitTableGrow(TableGrow* curr) {}
-  void visitTableFill(TableFill* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitTableFill(TableFill* curr) {
+    // Cannot generalize table types yet.
+    push(wasm.getTable(curr->table)->type);
+  }
+
+  void visitTableCopy(TableCopy* curr) {
+    // Cannot generalize table types yet.
+  }
+
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("TODO"); }

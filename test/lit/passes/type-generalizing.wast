@@ -27,8 +27,11 @@
  ;; CHECK:      (global $global-i32 (mut i32) (i32.const 0))
  (global $global-i32 (mut i32) (i32.const 0))
 
- ;; CHECK:      (table $t 0 0 funcref)
- (table $t 0 0 funcref)
+ ;; CHECK:      (table $func-table 0 0 funcref)
+ (table $func-table 0 0 funcref)
+
+ ;; CHECK:      (table $eq-table 0 0 eqref)
+ (table $eq-table 0 0 eqref)
 
  ;; CHECK:      (elem declare func $ref-func)
 
@@ -444,7 +447,7 @@
 
  ;; CHECK:      (func $call_indirect (type $2) (param $x eqref)
  ;; CHECK-NEXT:  (local $var eqref)
- ;; CHECK-NEXT:  (call_indirect $t (type $2)
+ ;; CHECK-NEXT:  (call_indirect $func-table (type $2)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -591,6 +594,58 @@
     (local.get $var1)
     (local.get $var2)
    )
+  )
+ )
+
+ ;; CHECK:      (func $table-get (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (table.get $eq-table
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-get
+  (local $var eqref)
+  ;; No constraints on $var.
+  (local.set $var
+   (table.get $eq-table
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $table-set (type $void)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (table.set $eq-table
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-set
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (table.set $eq-table
+   (i32.const 0)
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $table-fill (type $void)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (table.fill $eq-table
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-fill
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (table.fill $eq-table
+   (i32.const 0)
+   (local.get $var)
+   (i32.const 0)
   )
  )
 
