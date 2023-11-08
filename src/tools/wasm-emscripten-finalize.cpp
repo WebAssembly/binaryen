@@ -294,16 +294,15 @@ int main(int argc, const char* argv[]) {
     passRunner.add("strip-dwarf");
   }
 
-  passRunner.run();
-
   // Finally, separate out data segments if relevant
   if (!dataSegmentFile.empty()) {
-    Output memInitFile(dataSegmentFile, Flags::Binary);
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
-    generator.separateDataSegments(&memInitFile, globalBase);
+    passRunner.options.arguments["separate-data-segments"] = dataSegmentFile;
+    passRunner.options.arguments["separate-data-segments-global-base"] =
+      std::to_string(globalBase);
+    passRunner.add("separate-data-segments");
   }
+
+  passRunner.run();
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');

@@ -129,6 +129,7 @@ Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
+Pass* createSeparateDataSegmentsPass();
 Pass* createSignaturePruningPass();
 Pass* createSignatureRefiningPass();
 Pass* createSignExtLoweringPass();

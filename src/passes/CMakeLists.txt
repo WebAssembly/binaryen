@@ -107,6 +107,7 @@ set(passes_SOURCES
   TypeMerging.cpp
   TypeSSA.cpp
   SafeHeap.cpp
+  SeparateDataSegments.cpp
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
