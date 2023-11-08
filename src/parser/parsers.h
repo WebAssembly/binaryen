@@ -173,6 +173,7 @@ template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
+template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
@@ -1205,7 +1206,9 @@ template<typename Ctx> Result<> makeLoop(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+  return ctx.makeCall(pos, *func, isReturn);
 }
 
 template<typename Ctx>
@@ -1509,8 +1512,8 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   return ctx.in.err("expected type index or identifier");
 }
 
-// fieldidx_t ::= x:u32 => x
-//              | v:id  => x (if t.fields[x] = v)
+// fieldidx ::= x:u32 => x
+//            | v:id  => x (if t.fields[x] = v)
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
                                          typename Ctx::HeapTypeT type) {
@@ -1521,6 +1524,18 @@ Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
     return ctx.getFieldFromName(type, *id);
   }
   return ctx.in.err("expected field index or identifier");
+}
+
+// funcidx ::= x:u32 => x
+//           | v:id => x (if t.funcs[x] = v)
+template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getFuncFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getFuncFromName(*id);
+  }
+  return ctx.in.err("expected function index or identifier");
 }
 
 // memidx ::= x:u32 => x
