@@ -505,7 +505,72 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitRefI31(RefI31* curr) { pop(); }
   void visitI31Get(I31Get* curr) { push(Type(HeapType::i31, Nullable)); }
 
-  void visitCallRef(CallRef* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitCallRef(CallRef* curr) {
+    auto sigType = curr->target->type.getHeapType();
+    if (sigType.isBottom()) {
+      // This will be emitted as an unreachable, so impose no requirements on
+      // the arguments, but do require that the target continue to have bottom
+      // type.
+      clearStack();
+      push(Type(HeapType::nofunc, Nullable));
+      return;
+    }
+
+    auto sig = sigType.getSignature();
+    auto numParams = sig.params.size();
+    std::optional<Type> resultReq;
+    if (sig.results.isRef()) {
+      resultReq = pop();
+    }
+
+    // We have a choice here: We can either try to generalize the type of the
+    // incoming function reference or the type of the incoming function
+    // arguments. Because function parameters are contravariant, generalizing
+    // the function type inhibits generalizing the arguments and vice versa.
+    // Attempt to split the difference by generalizing the function type only as
+    // much as we can without imposing stronger requirements on the arguments.
+    auto targetReq = sigType;
+    while (true) {
+      auto candidateReq = targetReq.getDeclaredSuperType();
+      if (!candidateReq) {
+        // There is no more general type we can require.
+        break;
+      }
+
+      auto candidateSig = candidateReq->getSignature();
+
+      if (resultReq && *resultReq != candidateSig.results &&
+          Type::isSubType(*resultReq, candidateSig.results)) {
+        // Generalizing further would violate the requirement on the result
+        // type.
+        break;
+      }
+
+      for (size_t i = 0; i < numParams; ++i) {
+        if (candidateSig.params[i] != sig.params[i]) {
+          // Generalizing further would restrict how much we could generalize
+          // this argument, so we choose not to generalize futher.
+          // TODO: Experiment with making the opposite choice.
+          goto done;
+        }
+      }
+
+      // We can generalize.
+      targetReq = *candidateReq;
+    }
+  done:
+
+    // Push the new requirements for the parameters.
+    auto targetSig = targetReq.getSignature();
+    for (auto param : targetSig.params) {
+      if (param.isRef()) {
+        push(param);
+      }
+    }
+    // The the new requirement for the call target.
+    push(Type(targetReq, Nullable));
+  }
+
   void visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO"); }
   void visitBrOn(BrOn* curr) { WASM_UNREACHABLE("TODO"); }

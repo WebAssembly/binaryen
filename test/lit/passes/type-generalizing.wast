@@ -656,3 +656,79 @@
   (unreachable)
  )
 )
+
+(module
+ ;; CHECK:      (type $top (sub (func (param i31ref) (result anyref))))
+ (type $top (sub (func (param i31ref) (result anyref))))
+ ;; CHECK:      (type $mid (sub $top (func (param eqref) (result anyref))))
+ (type $mid (sub $top (func (param eqref) (result anyref))))
+ ;; CHECK:      (type $bot (sub $mid (func (param eqref) (result eqref))))
+ (type $bot (sub $mid (func (param eqref) (result eqref))))
+
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $4 (func (result eqref)))
+
+ ;; CHECK:      (func $call-ref-params-limited (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $mid))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (call_ref $mid
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-params-limited (result anyref)
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Require that typeof($f) <: $mid and that typeof($arg) <: eqref. In
+  ;; principle we could generalize $f up to $top, but then we wouldn't be able
+  ;; to generalize $arg at all.
+  (call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-results-limited (type $4) (result eqref)
+ ;; CHECK-NEXT:  (local $f (ref null $bot))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (call_ref $bot
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-results-limited (result eqref)
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Require that typeof($f) <: $bot because anything better would require a
+  ;; cast on the output. Also require that typeof($arg) <: eqref.
+  (call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $top (sub (func (result anyref))))
+ (type $top (sub (func (result anyref))))
+ (type $mid (sub $top (func (result eqref))))
+ (type $bot (sub $mid (func (result i31ref))))
+
+ ;; CHECK:      (type $1 (func (result anyref)))
+
+ ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $top))
+ ;; CHECK-NEXT:  (call_ref $top
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-no-limit (result anyref)
+  (local $f (ref null $bot))
+  ;; Require that typeof($f) <: $top because that does not limit us in any way
+  ;; and we cannot possibly do better.
+  (call_ref $bot
+   (local.get $f)
+  )
+ )
+)
