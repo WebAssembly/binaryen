@@ -791,23 +791,26 @@
  )
 
  ;; CHECK:      (func $call-ref-impossible (type $2) (result eqref)
+ ;; CHECK-NEXT:  (local $f nullfuncref)
  ;; CHECK-NEXT:  (local $arg anyref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $arg)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:    (local.get $f)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-ref-impossible (result eqref)
+  (local $f nullfuncref)
   (local $arg i31ref)
-  ;; No constraint on $arg because the call_ref will not be reached.
+  ;; Require that typeof($f) <: nullref, but do not constrain $arg because the
+  ;; call_ref will not be reached.
   (call_ref $bot
    (local.get $arg)
-   (ref.null nofunc)
+   (local.get $f)
   )
  )
 )
@@ -837,21 +840,27 @@
 )
 
 (module
+
  ;; CHECK:      (type $0 (func (result anyref)))
 
- ;; CHECK:      (type $top (sub (struct (field eqref))))
- (type $top (sub (struct (field eqref))))
- ;; CHECK:      (type $mid (sub $top (struct (field eqref) (field anyref))))
- (type $mid (sub $top (struct (field eqref) (field anyref))))
- ;; CHECK:      (type $bot (sub $mid (struct (field i31ref) (field eqref))))
- (type $bot (sub $mid (struct (field i31ref) (field eqref))))
+ ;; CHECK:      (type $top (sub (struct (field (mut eqref)) (field eqref))))
+ (type $top (sub      (struct (field (mut eqref)) (field eqref))))
+ ;; CHECK:      (type $mid (sub $top (struct (field (mut eqref)) (field eqref) (field (mut eqref)))))
+ (type $mid (sub $top (struct (field (mut eqref)) (field eqref)  (field (mut eqref)))))
+ ;; CHECK:      (type $3 (func))
 
- ;; CHECK:      (type $4 (func (result i31ref)))
+ ;; CHECK:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+ (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+
+ ;; CHECK:      (type $struct (struct (field eqref) (field anyref)))
+ (type $struct (struct (field eqref) (field anyref)))
+
+ ;; CHECK:      (type $6 (func (result i31ref)))
 
  ;; CHECK:      (func $struct-new (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var1 eqref)
  ;; CHECK-NEXT:  (local $var2 anyref)
- ;; CHECK-NEXT:  (struct.new $mid
+ ;; CHECK-NEXT:  (struct.new $struct
  ;; CHECK-NEXT:   (local.get $var1)
  ;; CHECK-NEXT:   (local.get $var2)
  ;; CHECK-NEXT:  )
@@ -860,7 +869,7 @@
   (local $var1 i31ref)
   (local $var2 i31ref)
   ;; Require that typeof($var1) <: eqref and that typeof($var2) <: anyref.
-  (struct.new $mid
+  (struct.new $struct
    (local.get $var1)
    (local.get $var2)
   )
@@ -868,22 +877,22 @@
 
  ;; CHECK:      (func $struct-get (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var (ref null $top))
- ;; CHECK-NEXT:  (struct.get $top 0
+ ;; CHECK-NEXT:  (struct.get $top 1
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $struct-get (result anyref)
   (local $var (ref null $bot))
   ;; Require that typeof($var) <: (ref null $top) because it has a field of the
-  ;; right type at index 0.
-  (struct.get $bot 0
+  ;; right type at index 1.
+  (struct.get $bot 1
    (local.get $var)
   )
  )
 
- ;; CHECK:      (func $struct-get-type (type $4) (result i31ref)
+ ;; CHECK:      (func $struct-get-type (type $6) (result i31ref)
  ;; CHECK-NEXT:  (local $var (ref null $bot))
- ;; CHECK-NEXT:  (struct.get $bot 0
+ ;; CHECK-NEXT:  (struct.get $bot 1
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -891,23 +900,102 @@
   (local $var (ref null $bot))
   ;; Require that typeof($var) <: (ref null $bot) because further supertypes do
   ;; not satisfy the requirement on the result type.
-  (struct.get $bot 0
+  (struct.get $bot 1
    (local.get $var)
   )
  )
 
  ;; CHECK:      (func $struct-get-index (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var (ref null $mid))
- ;; CHECK-NEXT:  (struct.get $mid 1
+ ;; CHECK-NEXT:  (struct.get $mid 2
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $struct-get-index (result anyref)
   (local $var (ref null $bot))
   ;; Require that typeof($var) <: (ref null $mid) because further supertypes do
-  ;; not have a field at index 1.
-  (struct.get $bot 1
+  ;; not have a field at index 2.
+  (struct.get $bot 2
    (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-impossible (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var nullref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-impossible (result anyref)
+  (local $var nullref)
+  (struct.get $bot 0
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set (type $3)
+ ;; CHECK-NEXT:  (local $ref (ref null $top))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (struct.set $top 0
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-set
+  (local $ref (ref null $bot))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $top) because it has a field at
+  ;; index 0 and require that typeof($val) <: eqref because that is the type of
+  ;; the field.
+  (struct.set $bot 0
+   (local.get $ref)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set-index (type $3)
+ ;; CHECK-NEXT:  (local $ref (ref null $mid))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (struct.set $mid 2
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-set-index
+  (local $ref (ref null $bot))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $mid) because further supertypes do
+  ;; not have a field at index 2 and require that typeof($val) <: eqref because
+  ;; that is the type of the field.
+  (struct.set $bot 2
+   (local.get $ref)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set-impossible (type $3)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $val)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-set-impossible
+  (local $ref nullref)
+  (local $val nullref)
+  ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  (struct.set $bot 0
+   (local.get $ref)
+   (local.get $val)
   )
  )
 )

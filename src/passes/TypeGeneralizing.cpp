@@ -616,21 +616,13 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
-  void visitStructGet(StructGet* curr) {
-    auto type = curr->ref->type.getHeapType();
-    if (type.isBottom()) {
-      // This will be emitted as unreachable. Do not require anything of the
-      // input.
-      clearStack();
-      return;
-    }
-    // Find the most general struct type for which this get could be valid, i.e.
-    // the most general supertype that still has a field at the given index
-    // where the field is a subtype of the required type.
-    std::optional<Type> reqFieldType;
-    if (curr->type.isRef()) {
-      reqFieldType = pop();
-    }
+  HeapType
+  generalizeStructType(HeapType type,
+                       Index index,
+                       std::optional<Type> reqFieldType = std::nullopt) {
+    // Find the most general struct type for which this access could be valid,
+    // i.e. the most general supertype that still has a field at the given index
+    // where the field is a subtype of the required type, if any.
     while (true) {
       auto candidateType = type.getDeclaredSuperType();
       if (!candidateType) {
@@ -638,23 +630,56 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
         break;
       }
       const auto& candidateFields = candidateType->getStruct().fields;
-      if (candidateFields.size() <= curr->index) {
+      if (candidateFields.size() <= index) {
         // Cannot get any more general and still have a field at the necessary
         // index.
         break;
       }
-      auto candidateFieldType = candidateFields[curr->index].type;
-      if (reqFieldType && candidateFieldType != *reqFieldType &&
-          Type::isSubType(*reqFieldType, candidateFieldType)) {
-        // Cannot generalize without violating the requirements on the result.
-        break;
+      if (reqFieldType) {
+        auto candidateFieldType = candidateFields[index].type;
+        if (candidateFieldType != *reqFieldType &&
+            Type::isSubType(*reqFieldType, candidateFieldType)) {
+          // Cannot generalize without violating the requirements on the field.
+          break;
+        }
       }
       type = *candidateType;
     }
-    push(Type(type, Nullable));
+    return type;
   }
 
-  void visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input, except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      return;
+    }
+    std::optional<Type> reqFieldType;
+    if (curr->type.isRef()) {
+      reqFieldType = pop();
+    }
+    auto generalized = generalizeStructType(type, curr->index, reqFieldType);
+    push(Type(generalized, Nullable));
+  }
+
+  void visitStructSet(StructSet* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      push(Type::none);
+      return;
+    }
+    auto generalized = generalizeStructType(type, curr->index);
+    push(Type(generalized, Nullable));
+    push(generalized.getStruct().fields[curr->index].type);
+  }
+
   void visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("TODO"); }
