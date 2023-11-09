@@ -3727,77 +3727,66 @@ switch (buf[0]) {
     }
   }
   case 'b': {
-    switch (buf[1]) {
-      case 'l':
-        if (op == "block"sv) {
-          CHECK_ERR(makeBlock(ctx, pos));
+    switch (buf[2]) {
+      case '\0':
+        if (op == "br"sv) {
+          CHECK_ERR(makeBreak(ctx, pos));
           return Ok{};
         }
         goto parse_error;
-      case 'r': {
-        switch (buf[2]) {
-          case '\0':
-            if (op == "br"sv) {
+      case '_': {
+        switch (buf[3]) {
+          case 'i':
+            if (op == "br_if"sv) {
               CHECK_ERR(makeBreak(ctx, pos));
               return Ok{};
             }
             goto parse_error;
-          case '_': {
-            switch (buf[3]) {
-              case 'i':
-                if (op == "br_if"sv) {
-                  CHECK_ERR(makeBreak(ctx, pos));
-                  return Ok{};
-                }
-                goto parse_error;
-              case 'o': {
-                switch (buf[6]) {
-                  case 'c': {
-                    switch (buf[10]) {
-                      case '\0':
-                        if (op == "br_on_cast"sv) {
-                          CHECK_ERR(makeBrOnCast(ctx, pos));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case '_':
-                        if (op == "br_on_cast_fail"sv) {
-                          CHECK_ERR(makeBrOnCast(ctx, pos, true));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
+          case 'o': {
+            switch (buf[6]) {
+              case 'c': {
+                switch (buf[10]) {
+                  case '\0':
+                    if (op == "br_on_cast"sv) {
+                      CHECK_ERR(makeBrOnCast(ctx, pos));
+                      return Ok{};
                     }
-                  }
-                  case 'n': {
-                    switch (buf[7]) {
-                      case 'o':
-                        if (op == "br_on_non_null"sv) {
-                          CHECK_ERR(makeBrOnNull(ctx, pos, true));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case 'u':
-                        if (op == "br_on_null"sv) {
-                          CHECK_ERR(makeBrOnNull(ctx, pos));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
+                    goto parse_error;
+                  case '_':
+                    if (op == "br_on_cast_fail"sv) {
+                      CHECK_ERR(makeBrOnCast(ctx, pos, true));
+                      return Ok{};
                     }
-                  }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }
-              case 't':
-                if (op == "br_table"sv) {
-                  CHECK_ERR(makeBreakTable(ctx, pos));
-                  return Ok{};
+              case 'n': {
+                switch (buf[7]) {
+                  case 'o':
+                    if (op == "br_on_non_null"sv) {
+                      CHECK_ERR(makeBrOnNull(ctx, pos, true));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'u':
+                    if (op == "br_on_null"sv) {
+                      CHECK_ERR(makeBrOnNull(ctx, pos));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
                 }
-                goto parse_error;
+              }
               default: goto parse_error;
             }
           }
+          case 't':
+            if (op == "br_table"sv) {
+              CHECK_ERR(makeBreakTable(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
           default: goto parse_error;
         }
       }
@@ -7935,43 +7924,26 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'f':
-        if (op == "if"sv) {
-          CHECK_ERR(makeIf(ctx, pos));
-          return Ok{};
-        }
-        goto parse_error;
       default: goto parse_error;
     }
   }
   case 'l': {
-    switch (buf[2]) {
-      case 'c': {
-        switch (buf[6]) {
-          case 'g':
-            if (op == "local.get"sv) {
-              CHECK_ERR(makeLocalGet(ctx, pos));
-              return Ok{};
-            }
-            goto parse_error;
-          case 's':
-            if (op == "local.set"sv) {
-              CHECK_ERR(makeLocalSet(ctx, pos));
-              return Ok{};
-            }
-            goto parse_error;
-          case 't':
-            if (op == "local.tee"sv) {
-              CHECK_ERR(makeLocalTee(ctx, pos));
-              return Ok{};
-            }
-            goto parse_error;
-          default: goto parse_error;
+    switch (buf[6]) {
+      case 'g':
+        if (op == "local.get"sv) {
+          CHECK_ERR(makeLocalGet(ctx, pos));
+          return Ok{};
         }
-      }
-      case 'o':
-        if (op == "loop"sv) {
-          CHECK_ERR(makeLoop(ctx, pos));
+        goto parse_error;
+      case 's':
+        if (op == "local.set"sv) {
+          CHECK_ERR(makeLocalSet(ctx, pos));
+          return Ok{};
+        }
+        goto parse_error;
+      case 't':
+        if (op == "local.tee"sv) {
+          CHECK_ERR(makeLocalTee(ctx, pos));
           return Ok{};
         }
         goto parse_error;
