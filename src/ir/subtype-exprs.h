@@ -28,13 +28,32 @@ namespace wasm {
 //  * noteSubType(A, B) indicating A must be a subtype of B
 //  * noteCast(A, B) indicating A is cast to B
 //
-// There must be 4 versions of each of those, supporting A and B being either a
-// Type, which indicates a fixed type requirement, or an Expression*, indicating
-// a flexible requirement that depends on the type of that expression. For
-// example, noteSubType(callExpr, Type::i32) indicates that a particular call
-// expression's type must be a subtype of i32. (If a pass does not care about
-// the different between the type cases, it can just implement thunks that
-// read the ->type off of the given expressions.)
+// There must be multiple versions of each of those, supporting A and B being
+// either a Type, which indicates a fixed type requirement, or an Expression*,
+// indicating a flexible requirement that depends on the type of that
+// expression. Specifically:
+//
+//  * noteSubType(Type, Type) - A constraint not involving expressions at all,
+//                              for example, an element segment's type must be
+//                              a subtype of the corresponding table's.
+//  * noteSubType(Type, Expression) - A fixed type must be a subtype of an
+//  * noteSubType(Expression, Type) - An expression's type must be a subtype of
+//                                    a fixed type, for example, a Call operand
+//                                    must be a subtype of the signature's
+//                                    param.
+//  * noteSubType(Expression, Expression) - An expression's type must be a
+//                                          subtype of anothers, for example,
+//                                          a block and its last child.
+//
+//  * noteCast(Type, Type) - A fixed type is cast to another, for example,
+//                           in a CallIndirect.
+//  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
+//                                 for example, in RefTest.
+//  * noteCast(Expression, Expression) - An expression's type is cast to
+//                                       another, for example, in RefCast.
+//
+// Note that noteCast(Type, Expression) never occurs and does not need to be
+// implemented.
 //
 
 template<typename Parent>
@@ -48,7 +67,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   }
   void visitGlobal(Global* global) {
     if (global->init) {
-      self()->noteSubtype(global->init->type, global->type);
+      self()->noteSubtype(global->init, global->type);
     }
   }
   void visitElementSegment(ElementSegment* seg) {
