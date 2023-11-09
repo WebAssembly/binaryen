@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_subtypes_h
-#define wasm_ir_subtypes_h
+#ifndef wasm_ir_subtype_exprs_h
+#define wasm_ir_subtype_exprs_h
 
 #include "wasm.h"
 
@@ -72,20 +72,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
       self()->noteSubtype(curr->ifFalse, curr);
     }
   }
-  void visitLoop(Loop* curr) {
-    self()->noteSubtype(curr->body, curr);
-  }
+  void visitLoop(Loop* curr) { self()->noteSubtype(curr->body, curr); }
   void visitBreak(Break* curr) {
     if (curr->value) {
-      self()->noteSubtype(curr->value,
-                          self()->findBreakTarget(curr->name));
+      self()->noteSubtype(curr->value, self()->findBreakTarget(curr->name));
     }
   }
   void visitSwitch(Switch* curr) {
     if (curr->value) {
       for (auto name : BranchUtils::getUniqueTargets(curr)) {
-        self()->noteSubtype(curr->value,
-                            self()->findBreakTarget(name));
+        self()->noteSubtype(curr->value, self()->findBreakTarget(name));
       }
     }
   }
@@ -156,8 +152,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitDrop(Drop* curr) {}
   void visitReturn(Return* curr) {
     if (curr->value) {
-      self()->noteSubtype(curr->value,
-                          self()->getFunction()->getResults());
+      self()->noteSubtype(curr->value, self()->getFunction()->getResults());
     }
   }
   void visitMemorySize(MemorySize* curr) {}
@@ -210,9 +205,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitRefTest(RefTest* curr) {
     self()->noteCast(curr->ref, curr->castType);
   }
-  void visitRefCast(RefCast* curr) {
-    self()->noteCast(curr->ref, curr);
-  }
+  void visitRefCast(RefCast* curr) { self()->noteCast(curr->ref, curr); }
   void visitBrOn(BrOn* curr) {
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       self()->noteCast(curr->ref, curr->castType);
@@ -312,3 +305,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitStringSliceIter(StringSliceIter* curr) {}
 };
 
+} // namespace wasm
+
+#endif // #define wasm_ir_subtype_exprs_h
