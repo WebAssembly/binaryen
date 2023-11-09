@@ -567,12 +567,31 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
         push(param);
       }
     }
-    // The the new requirement for the call target.
+    // The new requirement for the call target.
     push(Type(targetReq, Nullable));
   }
 
-  void visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitRefTest(RefTest* curr) {
+    // Do not require anything of the input.
+    push(Type::none);
+  }
+
+  void visitRefCast(RefCast* curr) {
+    // In principle, we do not have to require anything of the input. However,
+    // if our goal is to eliminate casts, then we want the input to be a subtype
+    // of the output, so we don't want the input to be generalized too much.
+    // Propagate the requirement on our output to our input if we can, and
+    // otherwise keep the input type unchanged. Unfortunately we cannot fall
+    // back to requiring nothing of our input because that would not be
+    // monotonic.
+    auto req = pop();
+    if (req == Type::none) {
+      push(Type::none);
+    } else {
+      push(Type::getLeastUpperBound(curr->ref->type, req));
+    }
+  }
+
   void visitBrOn(BrOn* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO"); }
