@@ -672,7 +672,9 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       // input except that the ref remain bottom.
       clearStack();
       push(Type(HeapType::none, Nullable));
-      push(Type::none);
+      if (curr->value->type.isRef()) {
+        push(Type::none);
+      }
       return;
     }
     auto generalized = generalizeStructType(type, curr->index);
@@ -680,12 +682,90 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(generalized.getStruct().fields[curr->index].type);
   }
 
-  void visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitArrayNew(ArrayNew* curr) {
+    // We cannot yet generalize allocations. Push a requirement for the
+    // reference type needed to initialize the array, if any.
+    pop();
+    if (!curr->isWithDefault()) {
+      auto type = curr->type.getHeapType();
+      if (auto fieldType = type.getArray().element.type; fieldType.isRef()) {
+        push(fieldType);
+      }
+    }
+  }
+
   void visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayNewFixed(ArrayNewFixed* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayGet(ArrayGet* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArraySet(ArraySet* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    // We cannot yet generalize allocations. Push a requirements for the
+    // reference type needed to initialize the array, if any.
+    pop();
+    auto type = curr->type.getHeapType();
+    if (auto fieldType = type.getArray().element.type; fieldType.isRef()) {
+      for (size_t i = 0, n = curr->values.size(); i < n; ++i) {
+        push(fieldType);
+      }
+    }
+  }
+
+  HeapType
+  generalizeArrayType(HeapType type,
+                      std::optional<Type> reqFieldType = std::nullopt) {
+    // Find the most general array type for which this access could be valid.
+    while (true) {
+      auto candidateType = type.getDeclaredSuperType();
+      if (!candidateType) {
+        // Cannot get any more general.
+        break;
+      }
+      if (reqFieldType) {
+        auto candidateFieldType = candidateType->getArray().element.type;
+        if (candidateFieldType != *reqFieldType &&
+            Type::isSubType(*reqFieldType, candidateFieldType)) {
+          // Cannot generalize without violating requirements on the field.
+          break;
+        }
+      }
+      type = *candidateType;
+    }
+    return type;
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input, except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      return;
+    }
+    std::optional<Type> reqFieldType;
+    if (curr->type.isRef()) {
+      reqFieldType = pop();
+    }
+    auto generalized = generalizeArrayType(type, reqFieldType);
+    push(Type(generalized, Nullable));
+  }
+
+  void visitArraySet(ArraySet* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input, except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      if (curr->value->type.isRef()) {
+        push(Type::none);
+      }
+      return;
+    }
+    auto generalized = generalizeArrayType(type);
+    push(Type(generalized, Nullable));
+    push(generalized.getArray().element.type);
+  }
+
   void visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayCopy(ArrayCopy* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayFill(ArrayFill* curr) { WASM_UNREACHABLE("TODO"); }
