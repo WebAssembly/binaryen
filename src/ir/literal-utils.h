@@ -30,17 +30,7 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 }
 
 inline bool canMakeZero(Type type) {
-  if (type.isNonNullable()) {
-    return false;
-  }
-  if (type.isTuple()) {
-    for (auto t : type) {
-      if (t.isNonNullable()) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return type.isDefaultable();
 }
 
 inline Expression* makeZero(Type type, Module& wasm) {
