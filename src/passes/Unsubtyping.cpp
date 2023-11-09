@@ -110,7 +110,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
 
   void visitFunction(Function* func) {
     if (func->body) {
-      self()->noteSubtype(func->body->type, func->getResults());
+      self()->noteSubtype(func->body, func->getResults());
     }
   }
   void visitGlobal(Global* global) {
@@ -130,36 +130,36 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitNop(Nop* curr) {}
   void visitBlock(Block* curr) {
     if (!curr->list.empty()) {
-      self()->noteSubtype(curr->list.back()->type, curr->type);
+      self()->noteSubtype(curr->list.back(), curr);
     }
   }
   void visitIf(If* curr) {
     if (curr->ifFalse) {
-      self()->noteSubtype(curr->ifTrue->type, curr->type);
-      self()->noteSubtype(curr->ifFalse->type, curr->type);
+      self()->noteSubtype(curr->ifTrue, curr);
+      self()->noteSubtype(curr->ifFalse, curr);
     }
   }
   void visitLoop(Loop* curr) {
-    self()->noteSubtype(curr->body->type, curr->type);
+    self()->noteSubtype(curr->body, curr);
   }
   void visitBreak(Break* curr) {
     if (curr->value) {
-      self()->noteSubtype(curr->value->type,
-                          self()->findBreakTarget(curr->name)->type);
+      self()->noteSubtype(curr->value,
+                          self()->findBreakTarget(curr->name));
     }
   }
   void visitSwitch(Switch* curr) {
     if (curr->value) {
       for (auto name : BranchUtils::getUniqueTargets(curr)) {
-        self()->noteSubtype(curr->value->type,
-                            self()->findBreakTarget(name)->type);
+        self()->noteSubtype(curr->value,
+                            self()->findBreakTarget(name));
       }
     }
   }
   template<typename T> void handleCall(T* curr, Signature sig) {
     assert(curr->operands.size() == sig.params.size());
     for (size_t i = 0, size = sig.params.size(); i < size; ++i) {
-      self()->noteSubtype(curr->operands[i]->type, sig.params[i]);
+      self()->noteSubtype(curr->operands[i], sig.params[i]);
     }
     if (curr->isReturn) {
       self()->noteSubtype(sig.results, self()->getFunction()->getResults());
@@ -187,12 +187,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   }
   void visitLocalGet(LocalGet* curr) {}
   void visitLocalSet(LocalSet* curr) {
-    self()->noteSubtype(curr->value->type,
+    self()->noteSubtype(curr->value,
                         self()->getFunction()->getLocalType(curr->index));
   }
   void visitGlobalGet(GlobalGet* curr) {}
   void visitGlobalSet(GlobalSet* curr) {
-    self()->noteSubtype(curr->value->type,
+    self()->noteSubtype(curr->value,
                         self()->getModule()->getGlobal(curr->name)->type);
   }
   void visitLoad(Load* curr) {}
@@ -217,13 +217,13 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitUnary(Unary* curr) {}
   void visitBinary(Binary* curr) {}
   void visitSelect(Select* curr) {
-    self()->noteSubtype(curr->ifTrue->type, curr->type);
-    self()->noteSubtype(curr->ifFalse->type, curr->type);
+    self()->noteSubtype(curr->ifTrue, curr);
+    self()->noteSubtype(curr->ifFalse, curr);
   }
   void visitDrop(Drop* curr) {}
   void visitReturn(Return* curr) {
     if (curr->value) {
-      self()->noteSubtype(curr->value->type,
+      self()->noteSubtype(curr->value,
                           self()->getFunction()->getResults());
     }
   }
@@ -237,13 +237,13 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitRefEq(RefEq* curr) {}
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {
-    self()->noteSubtype(curr->value->type,
+    self()->noteSubtype(curr->value,
                         self()->getModule()->getTable(curr->table)->type);
   }
   void visitTableSize(TableSize* curr) {}
   void visitTableGrow(TableGrow* curr) {}
   void visitTableFill(TableFill* curr) {
-    self()->noteSubtype(curr->value->type,
+    self()->noteSubtype(curr->value,
                         self()->getModule()->getTable(curr->table)->type);
   }
   void visitTableCopy(TableCopy* curr) {
@@ -251,16 +251,16 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
                         self()->getModule()->getTable(curr->destTable)->type);
   }
   void visitTry(Try* curr) {
-    self()->noteSubtype(curr->body->type, curr->type);
+    self()->noteSubtype(curr->body, curr);
     for (auto* body : curr->catchBodies) {
-      self()->noteSubtype(body->type, curr->type);
+      self()->noteSubtype(body, curr);
     }
   }
   void visitThrow(Throw* curr) {
     Type params = self()->getModule()->getTag(curr->tag)->sig.params;
     assert(params.size() == curr->operands.size());
     for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
-      self()->noteSubtype(curr->operands[i]->type, params[i]);
+      self()->noteSubtype(curr->operands[i], params[i]);
     }
   }
   void visitRethrow(Rethrow* curr) {}
@@ -275,17 +275,17 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
     handleCall(curr, curr->target->type.getHeapType().getSignature());
   }
   void visitRefTest(RefTest* curr) {
-    self()->noteCast(curr->ref->type, curr->castType);
+    self()->noteCast(curr->ref, curr->castType);
   }
   void visitRefCast(RefCast* curr) {
-    self()->noteCast(curr->ref->type, curr->type);
+    self()->noteCast(curr->ref, curr);
   }
   void visitBrOn(BrOn* curr) {
     if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      self()->noteCast(curr->ref->type, curr->castType);
+      self()->noteCast(curr->ref, curr->castType);
     }
     self()->noteSubtype(curr->getSentType(),
-                        self()->findBreakTarget(curr->name)->type);
+                        self()->findBreakTarget(curr->name));
   }
   void visitStructNew(StructNew* curr) {
     if (!curr->type.isStruct() || curr->isWithDefault()) {
@@ -294,7 +294,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
     const auto& fields = curr->type.getHeapType().getStruct().fields;
     assert(fields.size() == curr->operands.size());
     for (size_t i = 0, size = fields.size(); i < size; ++i) {
-      self()->noteSubtype(curr->operands[i]->type, fields[i].type);
+      self()->noteSubtype(curr->operands[i], fields[i].type);
     }
   }
   void visitStructGet(StructGet* curr) {}
@@ -303,14 +303,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
       return;
     }
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    self()->noteSubtype(curr->value->type, fields[curr->index].type);
+    self()->noteSubtype(curr->value, fields[curr->index].type);
   }
   void visitArrayNew(ArrayNew* curr) {
     if (!curr->type.isArray() || curr->isWithDefault()) {
       return;
     }
     auto array = curr->type.getHeapType().getArray();
-    self()->noteSubtype(curr->init->type, array.element.type);
+    self()->noteSubtype(curr->init, array.element.type);
   }
   void visitArrayNewData(ArrayNewData* curr) {}
   void visitArrayNewElem(ArrayNewElem* curr) {
@@ -327,7 +327,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
     }
     auto array = curr->type.getHeapType().getArray();
     for (auto* value : curr->values) {
-      self()->noteSubtype(value->type, array.element.type);
+      self()->noteSubtype(value, array.element.type);
     }
   }
   void visitArrayGet(ArrayGet* curr) {}
@@ -457,6 +457,17 @@ struct Unsubtyping
     noteSubtype(sub.getHeapType(), super.getHeapType());
   }
 
+  // Note a subtyping where one or both sides are expressions.
+  void noteSubtype(Expression* sub, Type super) {
+    noteSubtype(sub->type, super);
+  }
+  void noteSubtype(Type sub, Expression* super) {
+    noteSubtype(sub, super->type);
+  }
+  void noteSubtype(Expression* sub, Expression* super) {
+    noteSubtype(sub->type, super->type);
+  }
+
   void noteCast(HeapType src, HeapType dest) {
     if (src == dest || dest.isBottom()) {
       return;
@@ -472,6 +483,17 @@ struct Unsubtyping
     }
     assert(src.isRef() && dest.isRef());
     noteCast(src.getHeapType(), dest.getHeapType());
+  }
+
+  // Note a cast where one or both sides are expressions.
+  void noteCast(Expression* src, Type dest) {
+    noteCast(src->type, dest);
+  }
+  void noteCast(Type src, Expression* dest) {
+    noteCast(src, dest->type);
+  }
+  void noteCast(Expression* src, Expression* dest) {
+    noteCast(src->type, dest->type);
   }
 
   void analyzePublicTypes(Module& wasm) {
