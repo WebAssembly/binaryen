@@ -616,7 +616,44 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
-  void visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input.
+      clearStack();
+      return;
+    }
+    // Find the most general struct type for which this get could be valid, i.e.
+    // the most general supertype that still has a field at the given index
+    // where the field is a subtype of the required type.
+    std::optional<Type> reqFieldType;
+    if (curr->type.isRef()) {
+      reqFieldType = pop();
+    }
+    while (true) {
+      auto candidateType = type.getDeclaredSuperType();
+      if (!candidateType) {
+        // Cannot get any more general.
+        break;
+      }
+      const auto& candidateFields = candidateType->getStruct().fields;
+      if (candidateFields.size() <= curr->index) {
+        // Cannot get any more general and still have a field at the necessary
+        // index.
+        break;
+      }
+      auto candidateFieldType = candidateFields[curr->index].type;
+      if (reqFieldType && candidateFieldType != *reqFieldType &&
+          Type::isSubType(*reqFieldType, candidateFieldType)) {
+        // Cannot generalize without violating the requirements on the result.
+        break;
+      }
+      type = *candidateType;
+    }
+    push(Type(type, Nullable));
+  }
+
   void visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("TODO"); }

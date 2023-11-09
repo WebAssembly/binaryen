@@ -839,13 +839,19 @@
 (module
  ;; CHECK:      (type $0 (func (result anyref)))
 
- ;; CHECK:      (type $struct (struct (field anyref) (field eqref)))
- (type $struct (struct (field anyref) (field eqref)))
+ ;; CHECK:      (type $top (sub (struct (field eqref))))
+ (type $top (sub (struct (field eqref))))
+ ;; CHECK:      (type $mid (sub $top (struct (field eqref) (field anyref))))
+ (type $mid (sub $top (struct (field eqref) (field anyref))))
+ ;; CHECK:      (type $bot (sub $mid (struct (field i31ref) (field eqref))))
+ (type $bot (sub $mid (struct (field i31ref) (field eqref))))
+
+ ;; CHECK:      (type $4 (func (result i31ref)))
 
  ;; CHECK:      (func $struct-new (type $0) (result anyref)
- ;; CHECK-NEXT:  (local $var1 anyref)
- ;; CHECK-NEXT:  (local $var2 eqref)
- ;; CHECK-NEXT:  (struct.new $struct
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 anyref)
+ ;; CHECK-NEXT:  (struct.new $mid
  ;; CHECK-NEXT:   (local.get $var1)
  ;; CHECK-NEXT:   (local.get $var2)
  ;; CHECK-NEXT:  )
@@ -853,10 +859,55 @@
  (func $struct-new (result anyref)
   (local $var1 i31ref)
   (local $var2 i31ref)
-  ;; Require that typeof($var1) <: anyref and that typeof($var2) <: eqref.
-  (struct.new $struct
+  ;; Require that typeof($var1) <: eqref and that typeof($var2) <: anyref.
+  (struct.new $mid
    (local.get $var1)
    (local.get $var2)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $top))
+ ;; CHECK-NEXT:  (struct.get $top 0
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get (result anyref)
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $top) because it has a field of the
+  ;; right type at index 0.
+  (struct.get $bot 0
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-type (type $4) (result i31ref)
+ ;; CHECK-NEXT:  (local $var (ref null $bot))
+ ;; CHECK-NEXT:  (struct.get $bot 0
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-type (result i31ref)
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $bot) because further supertypes do
+  ;; not satisfy the requirement on the result type.
+  (struct.get $bot 0
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-index (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $mid))
+ ;; CHECK-NEXT:  (struct.get $mid 1
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-get-index (result anyref)
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $mid) because further supertypes do
+  ;; not have a field at index 1.
+  (struct.get $bot 1
+   (local.get $var)
   )
  )
 )
