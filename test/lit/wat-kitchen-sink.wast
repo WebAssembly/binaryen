@@ -214,6 +214,8 @@
 
  ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
 
+ ;; CHECK:      (elem declare func $ref-func)
+
  ;; CHECK:      (export "g1" (global $g1))
 
  ;; CHECK:      (export "g1.1" (global $g1))
@@ -2203,6 +2205,21 @@
  (func $ref-is-null (param anyref) (result i32)
   local.get 0
   ref.is_null
+ )
+
+ ;; CHECK:      (func $ref-func (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-func
+  ref.func $ref-func
+  drop
+  ref.func 102
+  drop
  )
 
  ;; CHECK:      (func $ref-eq (type $28) (param $0 eqref) (param $1 eqref) (result i32)

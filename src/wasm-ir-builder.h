@@ -129,7 +129,7 @@ public:
   // [[nodiscard]] Result<> makePop();
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
-  // [[nodiscard]] Result<> makeRefFunc();
+  [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
   // [[nodiscard]] Result<> makeTableGet();
   // [[nodiscard]] Result<> makeTableSet();

@@ -1218,7 +1218,9 @@ template<typename Ctx> Result<> makeRefIsNull(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefFunc(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+  return ctx.makeRefFunc(pos, *func);
 }
 
 template<typename Ctx> Result<> makeRefEq(Ctx& ctx, Index pos) {

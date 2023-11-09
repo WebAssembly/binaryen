@@ -388,9 +388,8 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   Result<> makeRefIsNull(Index) { return Ok{}; }
-
+  Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
   Result<> makeRefEq(Index) { return Ok{}; }
-
   Result<> makeRefI31(Index) { return Ok{}; }
   Result<> makeI31Get(Index, bool) { return Ok{}; }
 
@@ -1257,6 +1256,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefIsNull(Index pos) {
     return withLoc(pos, irBuilder.makeRefIsNull());
+  }
+
+  Result<> makeRefFunc(Index pos, Name func) {
+    return withLoc(pos, irBuilder.makeRefFunc(func));
   }
 
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
