@@ -126,7 +126,6 @@ struct ModuleTypeNameGenerator
 };
 
 // Deduction guide.
-template<typename T>
 ModuleTypeNameGenerator(const Module&) -> ModuleTypeNameGenerator<>;
 
 } // namespace wasm
