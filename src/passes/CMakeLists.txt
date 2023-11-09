@@ -104,6 +104,7 @@ set(passes_SOURCES
   ReReloop.cpp
   TrapMode.cpp
   TypeGeneralizing.cpp
+  TypeGeneralizing2.cpp
   TypeRefining.cpp
   TypeMerging.cpp
   TypeSSA.cpp
