@@ -389,10 +389,14 @@ private:
     assert(setIndex < getIndex);
 
     auto* set = insts[setIndex]->origin->cast<LocalSet>();
-    if (func->isParam(set->index) ||
-        !func->getLocalType(set->index).isNonNullable()) {
+    auto localType = func->getLocalType(set->index);
+    // Note we do not need to handle tuples here, as the parent ignores them
+    // anyhow (hence we can check non-nullability instead of non-
+    // defaultability).
+    assert(localType.isSingle());
+    if (func->isParam(set->index) || !localType.isNonNullable()) {
       // This local cannot pose a problem for validation (params are always
-      // initialized, and nullable locals may be uninitialized).
+      // initialized, and it is ok if nullable locals are uninitialized).
       return true;
     }
 
