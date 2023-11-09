@@ -268,6 +268,7 @@ else()
     add_compile_flag("-Werror")
   endif()
   add_compile_flag("-Wextra")
+  add_compile_flag("-Wctad-maybe-unsupported")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-Wno-dangling-pointer") # false positive in gcc
   add_compile_flag("-fno-omit-frame-pointer")

@@ -95,6 +95,9 @@ struct IndexedTypeNameGenerator
   }
 };
 
+// Deduction guide.
+template<typename T> IndexedTypeNameGenerator(T&) -> IndexedTypeNameGenerator<>;
+
 // Prints heap types stored in a module, falling back to the given
 // FallbackGenerator if the module does not have a name for type type.
 template<typename FallbackGenerator = DefaultTypeNameGenerator>
@@ -121,6 +124,10 @@ struct ModuleTypeNameGenerator
     return fallback.getNames(type);
   }
 };
+
+// Deduction guide.
+template<typename T>
+ModuleTypeNameGenerator(const Module&) -> ModuleTypeNameGenerator<>;
 
 } // namespace wasm
 
