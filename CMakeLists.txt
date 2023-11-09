@@ -268,7 +268,6 @@ else()
     add_compile_flag("-Werror")
   endif()
   add_compile_flag("-Wextra")
-  add_compile_flag("-Wctad-maybe-unsupported")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-Wno-dangling-pointer") # false positive in gcc
   add_compile_flag("-fno-omit-frame-pointer")
@@ -280,6 +279,11 @@ else()
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   add_compile_flag("-Wimplicit-fallthrough")
   add_compile_flag("-Wnon-virtual-dtor")
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Google style requires this, so make sure we compile cleanly with it.
+    add_compile_flag("-Wctad-maybe-unsupported")
+  endif()
 
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
