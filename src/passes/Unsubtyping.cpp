@@ -213,7 +213,6 @@ struct Unsubtyping
 
   // Note a cast where one or both sides are expressions.
   void noteCast(Expression* src, Type dest) { noteCast(src->type, dest); }
-  void noteCast(Type src, Expression* dest) { noteCast(src, dest->type); }
   void noteCast(Expression* src, Expression* dest) {
     noteCast(src->type, dest->type);
   }

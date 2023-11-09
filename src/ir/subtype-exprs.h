@@ -37,6 +37,9 @@ namespace wasm {
 //                              for example, an element segment's type must be
 //                              a subtype of the corresponding table's.
 //  * noteSubType(Type, Expression) - A fixed type must be a subtype of an
+//                                    expression's type, for example, in BrOn
+//                                    (the declared sent type must be a subtype
+//                                    of the block we branch to).
 //  * noteSubType(Expression, Type) - An expression's type must be a subtype of
 //                                    a fixed type, for example, a Call operand
 //                                    must be a subtype of the signature's
