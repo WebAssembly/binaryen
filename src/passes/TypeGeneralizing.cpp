@@ -592,8 +592,30 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
-  void visitBrOn(BrOn* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitBrOn(BrOn* curr) {
+    // Like br_if, these instructions do different things to the stack depending
+    // on whether the branch is taken or not. For branches that drop the tested
+    // value, we need to push a requirement for that value, but for branches
+    // that propagate the tested value, we need to propagate the existing
+    // requirement instead. Like br_if, these instructions will require extra
+    // basic blocks on the branches that drop values.
+    WASM_UNREACHABLE("TODO");
+  }
+
+  void visitStructNew(StructNew* curr) {
+    // We cannot yet generalize allocations. Push requirements for the types
+    // needed to initialize the struct.
+    pop();
+    if (!curr->isWithDefault()) {
+      auto type = curr->type.getHeapType();
+      for (const auto& field : type.getStruct().fields) {
+        if (field.type.isRef()) {
+          push(field.type);
+        }
+      }
+    }
+  }
+
   void visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO"); }

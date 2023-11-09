@@ -744,14 +744,14 @@
  (type $top (sub (func (param i31ref) (result anyref))))
  ;; CHECK:      (type $mid (sub $top (func (param eqref) (result anyref))))
  (type $mid (sub $top (func (param eqref) (result anyref))))
+ ;; CHECK:      (type $2 (func (result eqref)))
+
  ;; CHECK:      (type $bot (sub $mid (func (param eqref) (result eqref))))
  (type $bot (sub $mid (func (param eqref) (result eqref))))
 
- ;; CHECK:      (type $3 (func (result anyref)))
+ ;; CHECK:      (type $4 (func (result anyref)))
 
- ;; CHECK:      (type $4 (func (result eqref)))
-
- ;; CHECK:      (func $call-ref-params-limited (type $3) (result anyref)
+ ;; CHECK:      (func $call-ref-params-limited (type $4) (result anyref)
  ;; CHECK-NEXT:  (local $f (ref null $mid))
  ;; CHECK-NEXT:  (local $arg eqref)
  ;; CHECK-NEXT:  (call_ref $mid
@@ -771,7 +771,7 @@
   )
  )
 
- ;; CHECK:      (func $call-ref-results-limited (type $4) (result eqref)
+ ;; CHECK:      (func $call-ref-results-limited (type $2) (result eqref)
  ;; CHECK-NEXT:  (local $f (ref null $bot))
  ;; CHECK-NEXT:  (local $arg eqref)
  ;; CHECK-NEXT:  (call_ref $bot
@@ -787,6 +787,27 @@
   (call_ref $bot
    (local.get $arg)
    (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-impossible (type $2) (result eqref)
+ ;; CHECK-NEXT:  (local $arg anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $arg)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-ref-impossible (result eqref)
+  (local $arg i31ref)
+  ;; No constraint on $arg because the call_ref will not be reached.
+  (call_ref $bot
+   (local.get $arg)
+   (ref.null nofunc)
   )
  )
 )
@@ -811,6 +832,31 @@
   ;; and we cannot possibly do better.
   (call_ref $bot
    (local.get $f)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func (result anyref)))
+
+ ;; CHECK:      (type $struct (struct (field anyref) (field eqref)))
+ (type $struct (struct (field anyref) (field eqref)))
+
+ ;; CHECK:      (func $struct-new (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var1 anyref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (struct.new $struct
+ ;; CHECK-NEXT:   (local.get $var1)
+ ;; CHECK-NEXT:   (local.get $var2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $struct-new (result anyref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  ;; Require that typeof($var1) <: anyref and that typeof($var2) <: eqref.
+  (struct.new $struct
+   (local.get $var1)
+   (local.get $var2)
   )
  )
 )
