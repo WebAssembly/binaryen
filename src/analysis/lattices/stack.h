@@ -179,6 +179,9 @@ template<Lattice L> struct Stack {
   }
 };
 
+// Deduction guide.
+template<typename L> Stack(L&&) -> Stack<L>;
+
 #if __cplusplus >= 202002L
 static_assert(Lattice<Stack<Bool>>);
 #endif

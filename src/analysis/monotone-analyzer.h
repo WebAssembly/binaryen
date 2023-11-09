@@ -55,6 +55,10 @@ public:
   void print(std::ostream& os);
 };
 
+// Deduction guide.
+template<typename L, typename TxFn>
+MonotoneCFGAnalyzer(L&, TxFn&, CFG&) -> MonotoneCFGAnalyzer<L, TxFn>;
+
 } // namespace wasm::analysis
 
 #include "monotone-analyzer-impl.h"
