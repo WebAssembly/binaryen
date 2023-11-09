@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-//#include "ir/subtype-exprs.h"
+#include "ir/subtype-exprs.h"
 #include "pass.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
-
-#if 0
 
 namespace {
 
@@ -35,8 +33,8 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   void runOnFunction(Module* wasm, Function* func) override {
     // Discover subtyping relationships in this function. This fills the graph,
     // that is, it sets up roots and links.
-    SubtypingDiscoverer<TypeGeneralizing> discoverer(*this);
-    discoverer.walkFunction(func);
+    //SubtypingDiscoverer<TypeGeneralizing> discoverer(*this);
+    //discoverer.walkFunction(func);
 
     // Process the graph and apply the results.
     process();
@@ -79,9 +77,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
 
 } // anonymous namespace
 
-#endif
-
-Pass* createTypeGeneralizing2Pass() { abort(); } // return new TypeGeneralizing; }
+Pass* createTypeGeneralizing2Pass() { return new TypeGeneralizing; }
 
 } // namespace wasm
 

@@ -16,7 +16,6 @@
 
 #include <unordered_map>
 
-#include "ir/branch-utils.h"
 #include "ir/subtype-exprs.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"

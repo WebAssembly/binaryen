@@ -17,6 +17,8 @@
 #ifndef wasm_ir_subtype_exprs_h
 #define wasm_ir_subtype_exprs_h
 
+#include "ir/branch-utils.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {
