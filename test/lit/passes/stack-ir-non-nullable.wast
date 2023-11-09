@@ -339,6 +339,74 @@
   (local.get $temp)
  )
 
+ ;; CHECK:      (func $if-nondefaultable (type $1) (param $param (ref eq)) (result (ref eq))
+ ;; CHECK-NEXT:  (local $temp (i32 (ref eq)))
+ ;; CHECK-NEXT:  i32.const 0
+ ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  tuple.make
+ ;; CHECK-NEXT:  local.set $temp
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  i32.const 1
+ ;; CHECK-NEXT:  ref.i31
+ ;; CHECK-NEXT:  ref.eq
+ ;; CHECK-NEXT:  if
+ ;; CHECK-NEXT:   i32.const 2
+ ;; CHECK-NEXT:   i32.const 3
+ ;; CHECK-NEXT:   ref.i31
+ ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  else
+ ;; CHECK-NEXT:   i32.const 4
+ ;; CHECK-NEXT:   i32.const 5
+ ;; CHECK-NEXT:   ref.i31
+ ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   local.set $temp
+ ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT: )
+ (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
+  (local $temp (i32 (ref eq)))
+  ;; As the original testcase, but now $temp is a nondefaultable tuple rather
+  ;; than a non-nullable reference by itself. We cannot remove the first set.
+  (local.set $temp
+   (tuple.make
+    (i32.const 0)
+    (local.get $param)
+   )
+  )
+  (if
+   (ref.eq
+    (tuple.extract 1
+     (local.get $temp)
+    )
+    (i31.new
+     (i32.const 1)
+    )
+   )
+   (local.set $temp
+    (tuple.make
+     (i32.const 2)
+     (i31.new
+      (i32.const 3)
+     )
+    )
+   )
+   (local.set $temp
+    (tuple.make
+     (i32.const 4)
+     (i31.new
+      (i32.const 5)
+     )
+    )
+   )
+  )
+  (tuple.extract 1
+   (local.get $temp)
+  )
+ )
+
  ;; CHECK:      (func $if-non-ref (type $4) (param $param i32) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  local.get $param

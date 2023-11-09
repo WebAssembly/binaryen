@@ -390,9 +390,9 @@ private:
 
     auto* set = insts[setIndex]->origin->cast<LocalSet>();
     if (func->isParam(set->index) ||
-        !func->getLocalType(set->index).isNonNullable()) {
+        func->getLocalType(set->index).isDefaultable()) {
       // This local cannot pose a problem for validation (params are always
-      // initialized, and nullable locals may be uninitialized).
+      // initialized, and defaultable locals may be uninitialized).
       return true;
     }
 
