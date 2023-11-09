@@ -29,9 +29,7 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   return ret;
 }
 
-inline bool canMakeZero(Type type) {
-  return type.isDefaultable();
-}
+inline bool canMakeZero(Type type) { return type.isDefaultable(); }
 
 inline Expression* makeZero(Type type, Module& wasm) {
   assert(canMakeZero(type));
