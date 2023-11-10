@@ -39,12 +39,12 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   // optimize them later.
 
   void visitLocalGet(LocalGet* curr) {
-    Super::visitLocalGet(curr);
+    // Purposefully do not visit the super, as we handle locals ourselves.
     gets.push_back(curr);
   }
 
   void visitLocalSet(LocalSet* curr) {
-    Super::visitLocalSet(curr);
+    // Purposefully do not visit the super, as we handle locals ourselves.
     setsByIndex[curr->index].push_back(curr);
   }
 
@@ -150,6 +150,16 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // these are the final types.
     std::unordered_map<Location, Type> locTypes;
 
+    // Start each local with the top type. If we see nothing else, that is what
+    // will remain.
+    auto numLocals = func->getNumLocals();
+    for (Index i = 0; i < numLocals; i++) {
+      auto type = func->getLocalType(i);
+      if (type.isRef()) {
+        locTypes[LocalLocation{func, i}] = Type(type.getHeapType().getTop(), Nullable);
+      }
+    }
+
     // A work item is an expression and a type that we have learned it must be a
     // subtype of. XXX better to not put type in here. less efficient now since
     // we might update with (X, T1), (X, T2) which differ. apply type first!
@@ -165,6 +175,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         return;
       }
 
+//std::cout << " raw update "; dump(loc); std::cout << " to " << newType << '\n';
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
           // This is a local.get. The type reaching here actually reaches the
@@ -180,7 +191,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
           loc = LocalLocation{func, set->index};
         }
       }
-//std::cout << "  update "; dump(loc); std::cout << " to " << newType << '\n';
+//std::cout << " update "; dump(loc); std::cout << " to " << newType << '\n';
 
       auto& locType = locTypes[loc];
       auto old = locType;
@@ -191,15 +202,17 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         // This is an update to the GLB.
         locType = Type::getGreatestLowerBound(locType, newType);
       }
-//std::cout << "combine " << old << " and " << newType << " to get " << locType << '\n';
+//std::cout << "  combine " << old << " and " << newType << " to get " << locType << '\n';
       if (locType != old) {
         // Something changed; flow from here.
         if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
           // This is a local location. Changes here flow to the local.sets.
+//std::cout << "   send update to sets of " << localLoc->index << '\n';
           for (auto* set : setsByIndex[localLoc->index]) {
             work.push({getLocation(set->value), locType});
           }
         } else {
+//std::cout << "   send update to deps\n";
           // Flow using the graph generically.
           for (auto dep : dependents[loc]) {
             work.push({dep, locType});
@@ -212,16 +225,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     for (auto& [loc, super] : roots) {
 //std::cout << "root " << super << " to "; dump(loc);
       update(loc, super);
-    }
-
-    // Start each local with the top type. If we see nothing else, that is what
-    // will remain.
-    auto numLocals = func->getNumLocals();
-    for (Index i = 0; i < numLocals; i++) {
-      auto type = func->getLocalType(i);
-      if (type.isRef()) {
-        update(LocalLocation{func, i}, Type(type.getHeapType().getTop(), Nullable));
-      }
     }
 
     // Perform the flow.
