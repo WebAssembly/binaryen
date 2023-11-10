@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import subprocess
 
 from . import shared
 from . import support
@@ -90,7 +91,7 @@ def test_wasm2js_output():
                 cmd += ['--allow-asserts']
                 js = support.run_command(cmd)
                 # also verify it passes pass-debug verifications
-                shared.with_pass_debug(lambda: support.run_command(cmd))
+                shared.with_pass_debug(lambda: support.run_command(cmd, stderr=subprocess.PIPE))
 
                 open('a.2asm.asserts.mjs', 'w').write(js)
 
