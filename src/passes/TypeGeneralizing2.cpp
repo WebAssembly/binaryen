@@ -65,7 +65,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   }
   void noteSubtype(Expression* sub, Type super) {
     // This expression's type must be a subtype of a fixed type.
-//std::cout << "noteSubtype " << *sub << " is sub of " << super << '\n';
     addRoot(sub, super);
   }
   void noteSubtype(Type sub, Expression* super) {
@@ -151,8 +150,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
-//std::cout << "flow1\n";
-
     // The types of locations as we discover them. When the flow is complete,
     // these are the final types.
     std::unordered_map<Location, Type> locTypes;
@@ -187,7 +184,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         return;
       }
 
-//std::cout << " raw update "; dump(loc); std::cout << " to " << newType << '\n';
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
           // This is a local.get. The type reaching here actually reaches the
@@ -203,7 +199,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
           loc = LocalLocation{func, set->index};
         }
       }
-//std::cout << " update "; dump(loc); std::cout << " to " << newType << '\n';
 
       auto& locType = locTypes[loc];
       auto old = locType;
@@ -214,17 +209,15 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         // This is an update to the GLB.
         locType = Type::getGreatestLowerBound(locType, newType);
       }
-//std::cout << "  combine " << old << " and " << newType << " to get " << locType << '\n';
+
       if (locType != old) {
         // Something changed; flow from here.
         if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
           // This is a local location. Changes here flow to the local.sets.
-//std::cout << "   send update to sets of " << localLoc->index << '\n';
           for (auto* set : setsByIndex[localLoc->index]) {
             work.push({getLocation(set->value), locType});
           }
         } else {
-//std::cout << "   send update to deps\n";
           // Flow using the graph generically.
           for (auto dep : dependents[loc]) {
             work.push({dep, locType});
@@ -235,14 +228,12 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
     // The initial work is the set of roots we found as we walked the code.
     for (auto& [loc, super] : roots) {
-//std::cout << "root " << super << " to "; dump(loc);
       update(loc, super);
     }
 
     // Perform the flow.
     while (!work.empty()) {
       auto [loc, type] = work.pop();
-//std::cout << "work iter " << type << " to "; dump(loc);
       update(loc, type);
     }
 
