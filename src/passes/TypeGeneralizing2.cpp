@@ -204,7 +204,7 @@ struct TypeGeneralizing
 
       auto& locType = locTypes[loc];
       auto old = locType;
-      if (old == Type::none) { // XXX needed? what is GLB(none, X)?
+      if (old == Type::none) {
         // This is the first time we see this location.
         locType = newType;
       } else {
