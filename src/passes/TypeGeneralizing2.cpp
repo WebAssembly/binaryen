@@ -16,6 +16,7 @@
 
 #include "ir/subtype-exprs.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -24,6 +25,8 @@ namespace wasm {
 namespace {
 
 struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>> {
+  using Super = WalkerPass<ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>>;
+
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -37,6 +40,19 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
     // Process the graph and apply the results.
     process();
+  }
+
+  // Visitors during the walk. We track local operations so that we can
+  // optimize them later.
+
+  void visitLocalGet(LocalGet* curr) {
+    Super::visitLocalGet(curr);
+    gets.push_back(curr);
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    Super::visitLocalSet(curr);
+    sets.push_back(curr);
   }
 
   // Hooks that are called by SubtypingDiscoverer.
@@ -88,8 +104,55 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     roots[sub] = super;
   }
 
-  // Main processing code on the graph.
+  // Can these be in subtype-exprs?
+  std::vector<LocalGet*> gets;
+  std::vector<LocalSet*> sets;
+
+  // Main processing code on the graph. We do a straightforward flow of
+  // constraints from the roots, until we know all the effects of the roots. For
+  // example, imagine we have this code:
+  //
+  //   (func $foo (result (ref $X))
+  //     (local $temp (ref $Y))
+  //     (local.set $temp
+  //       (call $get-something)
+  //     )
+  //     (local.get $temp)
+  //   )
+  //
+  // The final line in the function body forces that local.get to be a subtype
+  // of the results, which is our root. We flow from the root to the local.get,
+  // at which point we apply that to the local index as a whole. Separately, we
+  // know from the local.set that the call must be a subtype of the local, but
+  // that is not a constraint that we are in danger of breaking (since we only
+  // generalize the types of locals and expressoins), so we do nothing with it.
+  // (However, if the local.set's value was something else, then we could have
+  // more to flow here.)
   void process() {
+    // A work item is an expression and a type that we have learned it must be a
+    // subtype of.
+    using WorkItem = std::pair<Expression*, Type>;
+
+    // The initial work are the roots.
+    UniqueDeferredQueue<Expression*> work;
+    for (auto& [expr, super] : roots) {
+      work.push({expr, super});
+    }
+
+    while (!work.empty()) {
+      auto [expr, type] = work.pop();
+
+      // We use |roots| as we go, that is, as we learn more we add more roots,
+      // and we refine the types there. (The more we refine, the worst we can
+      // generalize.)
+      auto& entry = roots[expr];
+      if (entry != Type::none && Type::isSubType(type, entry)) {
+        // This is either the first type for this expression, or it is more
+        // refined, so there is more work to do: update the entry, and flow
+        // onwards.
+        entry = type;
+      }
+    }
   }
 };
 
