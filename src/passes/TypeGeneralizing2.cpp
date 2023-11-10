@@ -22,6 +22,21 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
+//
+// Generalize the types of program locations as much as possible, both to
+// eliminate unnecessarily refined types from the type section and (TODO) to
+// weaken casts that cast to unnecessarily refined types. If the casts are
+// weakened enough, they will be able to be removed by OptimizeInstructions.
+//
+// Perform an analysis on the types of program to discover how much the type of
+// each location can be generalized without breaking validation or changing
+// program behavior. The analysis is a basic flow operation: we find the
+// "static", unavoidable constraints and consider them roots, and then flow from
+// there to affect everything else. For example, when we update the type of a
+// block then the block's last child must then be flowed to, as the child must
+// be a subtype of the block, etc.
+//
+
 namespace wasm {
 
 namespace {
@@ -58,6 +73,9 @@ struct TypeGeneralizing
     }
   }
 
+  std::vector<LocalGet*> gets;
+  std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
+
   // Hooks that are called by SubtypingDiscoverer.
 
   void noteSubtype(Type sub, Type super) {
@@ -67,7 +85,8 @@ struct TypeGeneralizing
     // As above.
   }
   void noteSubtype(Expression* sub, Type super) {
-    // This expression's type must be a subtype of a fixed type.
+    // This expression's type must be a subtype of a fixed type, so it is a
+    // root.
     addRoot(sub, super);
   }
   void noteSubtype(Type sub, Expression* super) {
@@ -76,28 +95,26 @@ struct TypeGeneralizing
     // types, so we will not break these constraints.
   }
   void noteSubtype(Expression* sub, Expression* super) {
-    // Two expressions with subtyping between them. Add a link in the graph.
+    // Two expressions with subtyping between them. Add a link in the graph so
+    // that we flow requirements along.
     addExprSubtyping(sub, super);
   }
 
   void noteCast(HeapType src, HeapType dest) {
-    // Nothing to do; a totally static and fixed constraint.
+    // Same as in noteSubtype.
   }
   void noteCast(Expression* src, Type dest) {
-    // This expression's type is cast to a fixed dest type. This adds no
-    // constraints on us.
+    // Same as in noteSubtype.
   }
   void noteCast(Expression* src, Expression* dest) {
-    // Two expressions with subtyping between them. Add a link in the graph, the
-    // same as in noteSubtype.
+    // Same as in noteSubtype.
     addExprSubtyping(src, dest);
   }
 
-  // Internal graph. The main component is a graph of dependencies that we will
-  // need to update during the flow. Whenever we find out something about the
-  // type of an expression, that can then be propagated to those dependenents,
-  // who are typically its children. For example, when we update the type of a
-  // block then the block's last child must then be flowed to.
+  // Internal graph for the flow. We track the dependendents so that we know who
+  // to update after updating a location. For example, when we update the type
+  // of a block then the block's last child must then be flowed to, so the child
+  // is a dependent of the block.
   std::unordered_map<Location, std::vector<Location>> dependents;
 
   void addExprSubtyping(Expression* sub, Expression* super) {
@@ -117,37 +134,12 @@ struct TypeGeneralizing
     return ExpressionLocation{expr, 0}; // TODO: tuples
   }
 
-  // The second part of the graph are the "roots": expressions that have known
-  // types they must have (that type, or a subtype of which).
+  // The roots in the graph: constraints that we know from the start and from
+  // which the flow begins. Each root is a location and its type.
   std::unordered_map<Location, Type> roots;
 
   void addRoot(Expression* sub, Type super) { roots[getLocation(sub)] = super; }
 
-  // Can these be in subtype-exprs?
-  std::vector<LocalGet*> gets;
-  std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
-
-  // Main processing code on the graph. After the walk of the code, when we
-  // visit the Function we perform the analysis. We do a straightforward flow of
-  // constraints from the roots, until we know all the effects of the roots. For
-  // example, imagine we have this code:
-  //
-  //   (func $foo (result (ref $X))
-  //     (local $temp (ref $Y))
-  //     (local.set $temp
-  //       (call $get-something)
-  //     )
-  //     (local.get $temp)
-  //   )
-  //
-  // The final line in the function body forces that local.get to be a subtype
-  // of the results, which is our root. We flow from the root to the local.get,
-  // at which point we apply that to the local index as a whole. Separately, we
-  // know from the local.set that the call must be a subtype of the local, but
-  // that is not a constraint that we are in danger of breaking (since we only
-  // generalize the types of locals and expressoins), so we do nothing with it.
-  // (However, if the local.set's value was something else, then we could have
-  // more to flow here.)
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
