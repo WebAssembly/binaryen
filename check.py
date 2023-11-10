@@ -195,7 +195,7 @@ def run_spec_tests():
 
         def run_opt_test(wast):
             # check optimization validation
-            cmd = shared.WASM_OPT + [wast, '-O', '-all']
+            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
             support.run_command(cmd)
 
         def check_expected(actual, expected):
