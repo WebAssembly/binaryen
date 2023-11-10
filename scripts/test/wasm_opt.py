@@ -63,7 +63,7 @@ def test_wasm_opt():
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast']
+            cmd = shared.WASM_OPT + opts + ['split.wast', '-q']
             if 'noprint' not in t:
                 cmd.append('--print')
             curr = support.run_command(cmd)
