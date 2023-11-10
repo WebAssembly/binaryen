@@ -38,6 +38,8 @@ namespace wasm {
 //  * noteSubType(Type, Type) - A constraint not involving expressions at all,
 //                              for example, an element segment's type must be
 //                              a subtype of the corresponding table's.
+//  * noteSubType(HeapType, HeapType) - Ditto, with heap types, for example in a
+//                                      CallIndirect.
 //  * noteSubType(Type, Expression) - A fixed type must be a subtype of an
 //                                    expression's type, for example, in BrOn
 //                                    (the declared sent type must be a subtype
@@ -50,15 +52,17 @@ namespace wasm {
 //                                          subtype of anothers, for example,
 //                                          a block and its last child.
 //
-//  * noteCast(Type, Type) - A fixed type is cast to another, for example,
-//                           in a CallIndirect.
+//  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for example,
+//                                   in a CallIndirect.
 //  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
 //                                 for example, in RefTest.
 //  * noteCast(Expression, Expression) - An expression's type is cast to
 //                                       another, for example, in RefCast.
 //
-// Note that noteCast(Type, Expression) never occurs and does not need to be
-// implemented.
+// Note that noteCast(Type, Type) and noteCast(Type, Expression) never occur and
+// do not need to be implemented.
+//
+// The parent must also inherit from ControlFlowWalker (for findBreakTarget).
 //
 
 template<typename Parent>

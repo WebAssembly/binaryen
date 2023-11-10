@@ -23,7 +23,7 @@ namespace wasm {
 
 namespace {
 
-struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
+struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -33,8 +33,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   void runOnFunction(Module* wasm, Function* func) override {
     // Discover subtyping relationships in this function. This fills the graph,
     // that is, it sets up roots and links.
-    //SubtypingDiscoverer<TypeGeneralizing> discoverer(*this);
-    //discoverer.walkFunction(func);
+    walkFunction(func);
 
     // Process the graph and apply the results.
     process();
@@ -45,33 +44,48 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
   void noteSubtype(Type sub, Type super) {
     // Nothing to do; a totally static and fixed constraint.
   }
+  void noteSubtype(HeapType sub, HeapType super) {
+    // As above.
+  }
   void noteSubtype(Expression* sub, Type super) {
     // This expression's type must be a subtype of a fixed type.
     addRoot(sub, super);
   }
   void noteSubtype(Type sub, Expression* super) {
-    // A fixed type that must be a subtype of an expression's type.
-    addRoot(sub, super);
+    // A fixed type that must be a subtype of an expression's type. We do not
+    // need to do anything here, as we will just be generalizing expression
+    // types, so we will not break these constraints.
   }
   void noteSubtype(Expression* sub, Expression* super) {
     // Two expressions with subtyping between them. Add a link in the graph.
-    addSubtypeLink(sub, super);
+    addExprSubtyping(sub, super);
   }
 
-  void noteCast(Type src, Type dest) {
+  void noteCast(HeapType src, HeapType dest) {
     // Nothing to do; a totally static and fixed constraint.
   }
   void noteCast(Expression* src, Type dest) {
     // This expression's type is cast to a fixed dest type.
-    //addRoot(sub, super);
-  }
-  void noteCast(Type src, Expression* dest) {
-    // A fixed type that is cast to an expression's type.
-    //addRoot(sub, super);
+    // XXX addRoot(sub, super);
   }
   void noteCast(Expression* src, Expression* dest) {
     // Two expressions with subtyping between them. Add a link in the graph.
-    addSubtypeLink(sub, super);
+    // XXX addSubtypeLink(sub, super);
+  }
+
+  // Internal graph. First, a map of connections between expressions.
+  // map[A] => [B, C, ..]  indicates that A must be a subtype of B and C.
+  std::unordered_map<Expression*, std::vector<Expression*>> exprSubtyping;
+
+  // Second the "roots": expressions that must be subtypes of fixed types.
+  std::unordered_map<Expression*, Type> roots;
+
+  void addExprSubtyping(Expression* sub, Expression* super) {
+    exprSubtyping[sub].push_back(super);
+  }
+
+  void addRoot(Expression* sub, Type super) {
+    roots[sub] = super;
   }
 };
 
