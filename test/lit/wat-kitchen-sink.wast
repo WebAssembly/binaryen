@@ -112,6 +112,8 @@
 
  ;; CHECK:      (type $49 (func (param (ref $a2) i32 f32 i32)))
 
+ ;; CHECK:      (type $50 (func (param externref)))
+
  ;; CHECK:      (type $s2 (struct (field i32)))
  (type $s2 (struct i32))
  ;; CHECK:      (type $s3 (struct (field i64)))
@@ -160,7 +162,7 @@
  (global (import "mod" "") (ref null $many))
 
  (global (mut i32) i32.const 0)
- ;; CHECK:      (type $61 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
+ ;; CHECK:      (type $62 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$1 0))
 
@@ -2693,6 +2695,45 @@
   array.fill $a2
  )
 
+ ;; CHECK:      (func $ref-as-non-null (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-as-non-null (param anyref)
+  local.get 0
+  ref.as_non_null
+  drop
+ )
+
+ ;; CHECK:      (func $any-convert-extern (type $50) (param $0 externref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (extern.internalize
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $any-convert-extern (param externref)
+  local.get 0
+  extern.internalize
+  drop
+ )
+
+ ;; CHECK:      (func $extern-convert-any (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (extern.externalize
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $extern-convert-any (param anyref)
+  local.get 0
+  extern.externalize
+  drop
+ )
+
  ;; CHECK:      (func $call (type $16) (param $0 i32) (param $1 i64) (result f32)
  ;; CHECK-NEXT:  (call $call
  ;; CHECK-NEXT:   (local.get $0)
@@ -2717,7 +2758,7 @@
   return_call $return_call
  )
 
- ;; CHECK:      (func $use-types (type $61) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
+ ;; CHECK:      (func $use-types (type $62) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types

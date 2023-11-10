@@ -170,7 +170,7 @@ public:
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
   // [[nodiscard]] Result<> makeArrayInitData();
   // [[nodiscard]] Result<> makeArrayInitElem();
-  // [[nodiscard]] Result<> makeRefAs();
+  [[nodiscard]] Result<> makeRefAs(RefAsOp op);
   // [[nodiscard]] Result<> makeStringNew();
   // [[nodiscard]] Result<> makeStringConst();
   // [[nodiscard]] Result<> makeStringMeasure();

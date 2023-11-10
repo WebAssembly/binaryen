@@ -1048,7 +1048,12 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
 
 // Result<> IRBuilder::makeArrayInitElem() {}
 
-// Result<> IRBuilder::makeRefAs() {}
+Result<> IRBuilder::makeRefAs(RefAsOp op) {
+  RefAs curr;
+  CHECK_ERR(visitRefAs(&curr));
+  push(builder.makeRefAs(op, curr.value));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeStringNew() {}
 
