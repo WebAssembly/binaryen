@@ -169,7 +169,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         // This is an update to the GLB.
         locType = Type::getGreatestLowerBound(locType, newType);
       }
-std::cout << "combine " << old << " and " << newType << " to get " << locType << '\n';
+//std::cout << "combine " << old << " and " << newType << " to get " << locType << '\n';
       if (locType != old) {
         // Something changed; flow from here.
         if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
@@ -188,8 +188,7 @@ std::cout << "combine " << old << " and " << newType << " to get " << locType <<
 
     // The initial work is the set of roots we found as we walked the code.
     for (auto& [loc, super] : roots) {
-std::cout << "root " << super << " to ";
-dump(loc);
+//std::cout << "root " << super << " to "; dump(loc);
       update(loc, super);
     }
 
@@ -206,8 +205,7 @@ dump(loc);
     // Perform the flow.
     while (!work.empty()) {
       auto [loc, type] = work.pop();
-std::cout << "work iter " << type << " to ";
-dump(loc);
+//std::cout << "work iter " << type << " to "; dump(loc);
 
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
