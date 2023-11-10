@@ -230,8 +230,8 @@
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $local-get-set-chain (type $0) (result eqref)
- ;; ALTER-NEXT:  (local $a i31ref)
- ;; ALTER-NEXT:  (local $b i31ref)
+ ;; ALTER-NEXT:  (local $a eqref)
+ ;; ALTER-NEXT:  (local $b eqref)
  ;; ALTER-NEXT:  (local $c eqref)
  ;; ALTER-NEXT:  (local.set $b
  ;; ALTER-NEXT:   (local.get $a)
@@ -270,8 +270,8 @@
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $local-get-set-chain-out-of-order (type $0) (result eqref)
- ;; ALTER-NEXT:  (local $a i31ref)
- ;; ALTER-NEXT:  (local $b i31ref)
+ ;; ALTER-NEXT:  (local $a eqref)
+ ;; ALTER-NEXT:  (local $b eqref)
  ;; ALTER-NEXT:  (local $c eqref)
  ;; ALTER-NEXT:  (local.set $c
  ;; ALTER-NEXT:   (local.get $b)
