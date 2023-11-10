@@ -159,7 +159,24 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
     // Main update logic for a location: updates the type for the location, and
     // prepares further flow.
-    auto update = [&](const Location& loc, Type newType) {
+    auto update = [&](Location loc, Type newType) {
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
+        if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
+          // This is a local.get. The type reaching here actually reaches the
+          // LocalLocation, as all local.gets represent the same location.
+          //
+          // We could instead set up connections in the graph from each
+          // local.get to each corresponding local.set, but that would be of
+          // quadratic size.
+          loc = LocalLocation{func, get->index};
+        } else if (auto* set = exprLoc->expr->dynCast<LocalSet>()) {
+          // As above, but now with a tee.
+          assert(set->isTee());
+          loc = LocalLocation{func, set->index};
+        }
+      }
+//std::cout << "  update "; dump(loc); std::cout << " to " << newType << '\n';
+
       auto& locType = locTypes[loc];
       auto old = locType;
       if (old == Type::none) { // XXX needed? what is GLB(none, X)?
@@ -206,19 +223,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     while (!work.empty()) {
       auto [loc, type] = work.pop();
 //std::cout << "work iter " << type << " to "; dump(loc);
-
-      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-        if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
-          // This is a local.get. The type reaching here actually reaches the
-          // LocalLocation, as all local.gets represent the same location.
-          //
-          // We could instead set up connections in the graph from each
-          // local.get to each corresponding local.set, but that would be of
-          // quadratic size.
-          loc = LocalLocation{func, get->index};
-        }
-      }
-
       update(loc, type);
     }
 
