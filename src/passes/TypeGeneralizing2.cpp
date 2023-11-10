@@ -23,6 +23,9 @@
 #include "wasm.h"
 
 //
+// This is an alternative implementation of TypeGeneralizing, for comparison and
+// exploration.
+//
 // Generalize the types of program locations as much as possible, both to
 // eliminate unnecessarily refined types from the type section and (TODO) to
 // weaken casts that cast to unnecessarily refined types. If the casts are
