@@ -109,7 +109,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   // types for locals (and not values that flow around, for which we'd use a
   // LocalGraph).
   Location getLocation(Expression* expr) {
-    if (auto* get = expr->dynCast<LocalGet>(expr)) {
+    if (auto* get = expr->dynCast<LocalGet>()) {
       return LocalLocation{getFunction(), get->index};
     }
     return ExpressionLocation{expr, 0}; // TODO: tuples
@@ -128,7 +128,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // Main update logic for a location. Returns true if we changed anything.
-  void update(const Location& loc, Type type) {
+  bool update(const Location& loc, Type type) {
     auto iter = roots.find(loc);
     if (iter == roots.end()) {
       // This is the first time we see this location.
@@ -183,7 +183,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     for (Index i = 0; i < numLocals; i++) {
       auto type = func->getLocalType(i);
       if (type.isRef()) {
-        update(LocalLocation{func, i}, type.getTop());
+        update(LocalLocation{func, i}, Type(type.getHeapType().getTop(), Nullable));
       }
     }
 
@@ -191,7 +191,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     while (!work.empty()) {
       auto [loc, type] = work.pop();
 
-      if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
           // This is a local.get. The type reaching here actually reaches the
           // LocalLocation, as all local.gets represent the same location.
@@ -212,18 +212,16 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
       }
 
       // Something changed; flow from here.
-      if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-        // This is an expression, flow using the graph.
-        for (auto dep : dependents) {
-          work.push({dep, type});
-        }
-      } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
         // This is a local location. Changes here flow to the local.sets.
-        for (auto* set : setsByIndex[get->index]) {
+        for (auto* set : setsByIndex[localLoc->index]) {
           work.push({getLocation(set->value), type});
         }
       } else {
-        WASM_UNREACHABLE("bad loc");
+        // Flow using the graph generically.
+        for (auto dep : dependents[loc]) {
+          work.push({dep, type});
+        }
       }
     }
 
