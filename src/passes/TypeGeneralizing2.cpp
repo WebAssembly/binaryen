@@ -16,6 +16,7 @@
 
 #include "ir/possible-contents.h"
 #include "ir/subtype-exprs.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-traversal.h"
@@ -39,7 +40,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
   void visitLocalGet(LocalGet* curr) {
     Super::visitLocalGet(curr);
-//    gets.push_back(curr);
+    gets.push_back(curr);
   }
 
   void visitLocalSet(LocalSet* curr) {
@@ -57,6 +58,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   }
   void noteSubtype(Expression* sub, Type super) {
     // This expression's type must be a subtype of a fixed type.
+std::cout << "noteSubtype " << *sub << " is sub of " << super << '\n';
     addRoot(sub, super);
   }
   void noteSubtype(Type sub, Expression* super) {
@@ -115,7 +117,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   }
 
   // Can these be in subtype-exprs?
-  //std::vector<LocalGet*> gets;
+  std::vector<LocalGet*> gets;
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // Main update logic for a location. Returns true if we changed anything.
@@ -156,6 +158,9 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   // (However, if the local.set's value was something else, then we could have
   // more to flow here.)
   void visitFunction(Function* func) {
+    Super::visitFunction(func);
+
+std::cout << "flow1\n";
     // A work item is an expression and a type that we have learned it must be a
     // subtype of. XXX better to not put type in here. less efficient now since
     // we might update with (X, T1), (X, T2) which differ. apply type first!
@@ -165,6 +170,8 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // The initial work is the set of roots we found as we walked the code.
     UniqueDeferredQueue<WorkItem> work;
     for (auto& [loc, super] : roots) {
+std::cout << "root " << super << " to ";
+dump(loc);
       work.push({loc, super});
     }
 
@@ -221,6 +228,31 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     auto numParams = func->getNumParams();
     for (Index i = numParams; i < numLocals; i++) {
       func->vars[i - numParams] = roots[LocalLocation{func, i}];
+    }
+    for (auto* get : gets) {
+      get->type = func->getLocalType(get->index);
+    }
+    for (auto& [index, sets] : setsByIndex) {
+      for (auto* set : sets) {
+        if (set->isTee()) {
+          set->type = func->getLocalType(index);
+        }
+      }
+    }
+
+    // TODO: avoid when not needed
+    ReFinalize().walkFunctionInModule(func, getModule());
+  }
+
+  void dump(Location location) {
+    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
+      std::cout << "  exprloc \n"
+                << *loc->expr << " : " << loc->tupleIndex << '\n';
+    } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+      std::cout << "  localloc " << loc->index
+                << '\n';
+    } else {
+      std::cout << "  (other)\n";
     }
   }
 };
