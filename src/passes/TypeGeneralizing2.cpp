@@ -46,6 +46,13 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   void visitLocalSet(LocalSet* curr) {
     // Purposefully do not visit the super, as we handle locals ourselves.
     setsByIndex[curr->index].push_back(curr);
+
+    // If this is a parameter then we cannot modify it, and so we add a root
+    // here: the value written to the param must be a subtype of the never-to-
+    // change param type.
+    if (getFunction()->isParam(curr->index)) {
+      addRoot(curr->value, getFunction()->getLocalType(curr->index));
+    }
   }
 
   // Hooks that are called by SubtypingDiscoverer.
@@ -150,13 +157,18 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // these are the final types.
     std::unordered_map<Location, Type> locTypes;
 
-    // Start each local with the top type. If we see nothing else, that is what
-    // will remain.
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
       auto type = func->getLocalType(i);
       if (type.isRef()) {
-        locTypes[LocalLocation{func, i}] = Type(type.getHeapType().getTop(), Nullable);
+        if (func->isParam(i)) {
+          // We cannot alter params.
+          locTypes[LocalLocation{func, i}] = type;
+        } else {
+          // Start each var with the top type. If we see nothing else, that is what
+          // will remain.
+          locTypes[LocalLocation{func, i}] = Type(type.getHeapType().getTop(), Nullable);
+        }
       }
     }
 
