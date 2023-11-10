@@ -171,12 +171,9 @@ struct TypeGeneralizing
       }
     }
 
-    // A work item is an expression and a type that we have learned it must be a
-    // subtype of. XXX better to not put type in here. less efficient now since
-    // we might update with (X, T1), (X, T2) which differ. apply type first!
-    // then push
-    using WorkItem = std::pair<Location, Type>;
-    UniqueDeferredQueue<WorkItem> work;
+    // A list of locations from which we should flow onwards. A location is
+    // added here after we update it with new data.
+    UniqueDeferredQueue<Location> toFlow;
 
     // Main update logic for a location: updates the type for the location, and
     // prepares further flow.
@@ -213,30 +210,31 @@ struct TypeGeneralizing
       }
 
       if (locType != old) {
-        // Something changed; flow from here.
-        if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
-          // This is a local location. Changes here flow to the local.sets.
-          for (auto* set : setsByIndex[localLoc->index]) {
-            work.push({getLocation(set->value), locType});
-          }
-        } else {
-          // Flow using the graph generically.
-          for (auto dep : dependents[loc]) {
-            work.push({dep, locType});
-          }
-        }
+        toFlow.push(loc);
       }
     };
 
-    // The initial work is the set of roots we found as we walked the code.
+    // Apply the roots.
     for (auto& [loc, super] : roots) {
       update(loc, super);
     }
 
     // Perform the flow.
-    while (!work.empty()) {
-      auto [loc, type] = work.pop();
-      update(loc, type);
+    while (!toFlow.empty()) {
+      auto loc = toFlow.pop();
+      auto locType = locTypes[loc];
+
+      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
+        // This is a local location. Changes here flow to the local.sets.
+        for (auto* set : setsByIndex[localLoc->index]) {
+          update(getLocation(set->value), locType);
+        }
+      } else {
+        // Flow using the graph generically.
+        for (auto dep : dependents[loc]) {
+          update(dep, locType);
+        }
+      }
     }
 
     // Apply the results of the flow: the types at LocalLocations are now the
