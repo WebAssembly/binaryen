@@ -147,6 +147,7 @@ struct TypeGeneralizing
     // these are the final types.
     std::unordered_map<Location, Type> locTypes;
 
+    // Set up locals.
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
       auto type = func->getLocalType(i);
@@ -175,6 +176,7 @@ struct TypeGeneralizing
         return;
       }
 
+      // Canonicalize the location.
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
           // This is a local.get. The type reaching here actually reaches the
@@ -191,33 +193,34 @@ struct TypeGeneralizing
         }
       }
 
+      // Update the type for the location, and flow onwards if we changed it.
       auto& locType = locTypes[loc];
       auto old = locType;
       if (old == Type::none) {
         // This is the first time we see this location.
         locType = newType;
       } else {
-        // This is an update to the GLB.
+        // This is an update, which goes to the GLB.
         locType = Type::getGreatestLowerBound(locType, newType);
       }
-
       if (locType != old) {
         toFlow.push(loc);
       }
     };
 
-    // Apply the roots.
+    // First, apply the roots.
     for (auto& [loc, super] : roots) {
       update(loc, super);
     }
 
-    // Perform the flow.
+    // Second, perform the flow.
     while (!toFlow.empty()) {
       auto loc = toFlow.pop();
       auto locType = locTypes[loc];
 
       if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
-        // This is a local location. Changes here flow to the local.sets.
+        // This is a local location. Changes here flow to the local.sets. (See
+        // comment above about quadratic size for why we do it like this.)
         for (auto* set : setsByIndex[localLoc->index]) {
           update(getLocation(set->value), locType);
         }
@@ -229,8 +232,8 @@ struct TypeGeneralizing
       }
     }
 
-    // Apply the results of the flow: the types at LocalLocations are now the
-    // types of the locals.
+    // Finally, apply the results of the flow: the types at LocalLocations are
+    // now the types of the locals.
     auto numParams = func->getNumParams();
     for (Index i = numParams; i < numLocals; i++) {
       auto& localType = func->vars[i - numParams];
