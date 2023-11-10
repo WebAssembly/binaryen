@@ -125,7 +125,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
   // Can these be in subtype-exprs?
   //std::vector<LocalGet*> gets;
-  std::unordered_map<Index, LocalSet*> setsByIndex; // TODO vector
+  std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // Main update logic for a location. Returns true if we changed anything.
   void update(const Location& loc, Type type) {
