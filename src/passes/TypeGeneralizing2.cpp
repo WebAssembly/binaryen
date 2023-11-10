@@ -87,6 +87,10 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   void addRoot(Expression* sub, Type super) {
     roots[sub] = super;
   }
+
+  // Main processing code on the graph.
+  void process() {
+  }
 };
 
 } // anonymous namespace
