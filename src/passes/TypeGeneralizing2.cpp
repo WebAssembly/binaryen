@@ -160,6 +160,11 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // Main update logic for a location: updates the type for the location, and
     // prepares further flow.
     auto update = [&](Location loc, Type newType) {
+      if (!newType.isRef()) {
+        // Non-ref updates do not interest us.
+        return;
+      }
+
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
           // This is a local.get. The type reaching here actually reaches the
