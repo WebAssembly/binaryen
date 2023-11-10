@@ -120,22 +120,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   std::vector<LocalGet*> gets;
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
-  // Main update logic for a location. Returns true if we changed anything.
-  bool update(const Location& loc, Type type) {
-    auto iter = roots.find(loc);
-    if (iter == roots.end()) {
-      // This is the first time we see this location.
-      roots[loc] = type;
-      return true;
-    }
-
-    // This is an update to the GLB.
-    auto& root = iter->second;
-    auto old = root;
-    root = Type::getGreatestLowerBound(root, type);
-    return root != old;
-  }
-
   // Main processing code on the graph. After the walk of the code, when we
   // visit the Function we perform the analysis. We do a straightforward flow of
   // constraints from the roots, until we know all the effects of the roots. For
@@ -161,18 +145,52 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     Super::visitFunction(func);
 
 //std::cout << "flow1\n";
+
+    // The types of locations as we discover them. When the flow is complete,
+    // these are the final types.
+    std::unordered_map<Location, Type> locTypes;
+
     // A work item is an expression and a type that we have learned it must be a
     // subtype of. XXX better to not put type in here. less efficient now since
     // we might update with (X, T1), (X, T2) which differ. apply type first!
     // then push
     using WorkItem = std::pair<Location, Type>;
+    UniqueDeferredQueue<WorkItem> work;
+
+    // Main update logic for a location: updates the type for the location, and
+    // prepares further flow.
+    auto update = [&](const Location& loc, Type newType) {
+      auto& locType = locTypes[loc];
+      auto old = locType;
+      if (old == Type::none) { // XXX needed? what is GLB(none, X)?
+        // This is the first time we see this location.
+        locType = newType;
+      } else {
+        // This is an update to the GLB.
+        locType = Type::getGreatestLowerBound(locType, newType);
+      }
+std::cout << "combine " << old << " and " << newType << " to get " << locType << '\n';
+      if (locType != old) {
+        // Something changed; flow from here.
+        if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
+          // This is a local location. Changes here flow to the local.sets.
+          for (auto* set : setsByIndex[localLoc->index]) {
+            work.push({getLocation(set->value), locType});
+          }
+        } else {
+          // Flow using the graph generically.
+          for (auto dep : dependents[loc]) {
+            work.push({dep, locType});
+          }
+        }
+      }
+    };
 
     // The initial work is the set of roots we found as we walked the code.
-    UniqueDeferredQueue<WorkItem> work;
     for (auto& [loc, super] : roots) {
-//std::cout << "root " << super << " to ";
-//dump(loc);
-      work.push({loc, super});
+std::cout << "root " << super << " to ";
+dump(loc);
+      update(loc, super);
     }
 
     // Start each local with the top type. If we see nothing else, that is what
@@ -188,6 +206,8 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // Perform the flow.
     while (!work.empty()) {
       auto [loc, type] = work.pop();
+std::cout << "work iter " << type << " to ";
+dump(loc);
 
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
@@ -201,33 +221,14 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
         }
       }
 
-      // We use |roots| as we go, that is, as we learn more we add more roots,
-      // and we refine the types there. (The more we refine, the worst we can
-      // generalize.) // TODO root => outcome
-      if (!update(loc, type)) {
-        // Nothing changed here.
-        continue;
-      }
-
-      // Something changed; flow from here.
-      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
-        // This is a local location. Changes here flow to the local.sets.
-        for (auto* set : setsByIndex[localLoc->index]) {
-          work.push({getLocation(set->value), type});
-        }
-      } else {
-        // Flow using the graph generically.
-        for (auto dep : dependents[loc]) {
-          work.push({dep, type});
-        }
-      }
+      update(loc, type);
     }
 
     // Apply the results of the flow: the types at LocalLocations are now the
     // types of the locals.
     auto numParams = func->getNumParams();
     for (Index i = numParams; i < numLocals; i++) {
-      func->vars[i - numParams] = roots[LocalLocation{func, i}];
+      func->vars[i - numParams] = locTypes[LocalLocation{func, i}];
     }
     for (auto* get : gets) {
       get->type = func->getLocalType(get->index);
