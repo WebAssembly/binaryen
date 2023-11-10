@@ -69,8 +69,6 @@ template<typename Ctx> Result<> makeLocalTee(Ctx&, Index);
 template<typename Ctx> Result<> makeLocalSet(Ctx&, Index);
 template<typename Ctx> Result<> makeGlobalGet(Ctx&, Index);
 template<typename Ctx> Result<> makeGlobalSet(Ctx&, Index);
-template<typename Ctx> Result<> makeBlock(Ctx&, Index);
-template<typename Ctx> Result<> makeThenOrElse(Ctx&, Index);
 template<typename Ctx> Result<> makeConst(Ctx&, Index, Type type);
 template<typename Ctx>
 Result<>
@@ -100,10 +98,6 @@ template<typename Ctx> Result<> makeDataDrop(Ctx&, Index);
 template<typename Ctx> Result<> makeMemoryCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeMemoryFill(Ctx&, Index);
 template<typename Ctx> Result<> makePop(Ctx&, Index);
-template<typename Ctx> Result<> makeIf(Ctx&, Index);
-template<typename Ctx>
-Result<> makeMaybeBlock(Ctx&, Index, size_t i, Type type);
-template<typename Ctx> Result<> makeLoop(Ctx&, Index);
 template<typename Ctx> Result<> makeCall(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeCallIndirect(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeBreak(Ctx&, Index);
@@ -967,10 +961,6 @@ template<typename Ctx> Result<> makeGlobalSet(Ctx& ctx, Index pos) {
   return ctx.makeGlobalSet(pos, *global);
 }
 
-template<typename Ctx> Result<> makeBlock(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
 template<typename Ctx> Result<> makeConst(Ctx& ctx, Index pos, Type type) {
   assert(type.isBasic());
   switch (type.getBasic()) {
@@ -1189,19 +1179,6 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makePop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<> makeIf(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<> makeMaybeBlock(Ctx& ctx, Index pos, size_t i, Type type) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<> makeLoop(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

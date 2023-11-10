@@ -1202,6 +1202,13 @@ struct InfoCollector
     assert(handledPops == totalPops);
 
     // Handle local.get/sets: each set must write to the proper gets.
+    //
+    // Note that we do not use LocalLocation because LocalGraph gives us more
+    // precise information: we generate direct links from sets to relevant gets
+    // rather than consider each local index a single location, which
+    // LocalLocation does. (LocalLocation is useful in cases where we do need a
+    // single location, such as when we consider what type to give the local;
+    // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
     for (auto& [get, setsForGet] : localGraph.getSetses) {
