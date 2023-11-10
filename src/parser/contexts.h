@@ -395,6 +395,8 @@ struct NullInstrParserCtx {
   Result<> makeRefEq(Index) { return Ok{}; }
   Result<> makeRefI31(Index) { return Ok{}; }
   Result<> makeI31Get(Index, bool) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefTest(Index, TypeT) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefCast(Index, TypeT) { return Ok{}; }
 
   template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
     return Ok{};
@@ -1278,6 +1280,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeI31Get(Index pos, bool signed_) {
     return withLoc(pos, irBuilder.makeI31Get(signed_));
+  }
+
+  Result<> makeRefTest(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefTest(type));
+  }
+
+  Result<> makeRefCast(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefCast(type));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {

@@ -919,9 +919,19 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
 
 // Result<> IRBuilder::makeCallRef() {}
 
-// Result<> IRBuilder::makeRefTest() {}
+Result<> IRBuilder::makeRefTest(Type type) {
+  RefTest curr;
+  CHECK_ERR(visitRefTest(&curr));
+  push(builder.makeRefTest(curr.ref, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeRefCast() {}
+Result<> IRBuilder::makeRefCast(Type type) {
+  RefCast curr;
+  CHECK_ERR(visitRefCast(&curr));
+  push(builder.makeRefCast(curr.ref, type));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeBrOn() {}
 

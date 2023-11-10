@@ -1303,11 +1303,15 @@ template<typename Ctx> Result<> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
 }
 
 template<typename Ctx> Result<> makeRefTest(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefTest(pos, *type);
 }
 
 template<typename Ctx> Result<> makeRefCast(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefCast(pos, *type);
 }
 
 template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
