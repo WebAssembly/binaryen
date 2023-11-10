@@ -76,7 +76,8 @@ public:
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
   [[nodiscard]] Result<> makeBreak(Index label);
-  // [[nodiscard]] Result<> makeSwitch();
+  [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
+                                    Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
   // [[nodiscard]] Result<> makeCallIndirect();
@@ -191,6 +192,8 @@ public:
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<>
+  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
   [[nodiscard]] Result<> visitCall(Call*);
 
 private:
@@ -392,6 +395,9 @@ private:
   // the value, if they are different. May only be called directly after
   // hoistLastValue().
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+
+  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
+                                                   std::optional<Index> label);
 };
 
 } // namespace wasm

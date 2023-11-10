@@ -15,13 +15,13 @@
  (rec
   ;; CHECK:      (type $pair (struct (field (mut i32)) (field (mut i64))))
 
-  ;; CHECK:      (type $4 (func (param i32 i64)))
+  ;; CHECK:      (type $4 (func (result i32 i64)))
+
+  ;; CHECK:      (type $5 (func (param i32 i64)))
 
   ;; CHECK:      (type $a1 (array i64))
 
   ;; CHECK:      (type $a2 (array (mut f32)))
-
-  ;; CHECK:      (type $7 (func (result i32 i64)))
 
   ;; CHECK:      (type $8 (func (param i32)))
 
@@ -1569,8 +1569,8 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue (type $7) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $7) (result i32 i64)
+ ;; CHECK:      (func $br-multivalue (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (i32.const 0)
@@ -1585,9 +1585,9 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue-drop (type $7) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $7) (result i32 i64)
- ;; CHECK-NEXT:   (block (type $7) (result i32 i64)
+ ;; CHECK:      (func $br-multivalue-drop (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
+ ;; CHECK-NEXT:   (block (type $4) (result i32 i64)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (f32.const 0)
  ;; CHECK-NEXT:    )
@@ -1606,6 +1606,115 @@
   i64.const 2
   br 0
  )
+
+ ;; CHECK:      (func $br-table (type $void)
+ ;; CHECK-NEXT:  (block $a
+ ;; CHECK-NEXT:   (block $b
+ ;; CHECK-NEXT:    (block $c
+ ;; CHECK-NEXT:     (block $d
+ ;; CHECK-NEXT:      (br_table $a $b $d $c
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table
+  block $a
+   block $b
+    block $c
+     block $d
+      i32.const 0
+      br_table $a $b $d $c
+     end
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $br-table-index (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (block $l
+ ;; CHECK-NEXT:    (block $label_1
+ ;; CHECK-NEXT:     (block $label_0
+ ;; CHECK-NEXT:      (br_table $label $l $label_0 $label_1
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table-index
+  block
+   block $l
+    block
+     block
+      i32.const 0
+      br_table 3 2 0 1
+     end
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $br-table-return (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (br_table $label $label $label $label $label $label $label $label
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table-return
+  i32.const 0
+  br_table 0 0 0 0 0 0 0 0
+ )
+
+ ;; CHECK:      (func $br-table-value (type $1) (result i32)
+ ;; CHECK-NEXT:  (block $a (result i32)
+ ;; CHECK-NEXT:   (block $b (result i32)
+ ;; CHECK-NEXT:    (br_table $a $b
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table-value (result i32)
+  block $a (result i32)
+   block $b (result i32)
+    i32.const 42
+    i32.const 0
+    br_table $a $b
+   end
+  end
+ )
+
+ ;; CHECK:      (func $br-table-multivalue (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $a (type $4) (result i32 i64)
+ ;; CHECK-NEXT:   (block $b (type $4) (result i32 i64)
+ ;; CHECK-NEXT:    (br_table $a $b
+ ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:      (i64.const 42)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-table-multivalue (result i32 i64)
+  block $a (result i32 i64)
+   block $b (result i32 i64)
+    i32.const 42
+    i64.const 42
+    i32.const 0
+    br_table $a $b
+   end
+  end
+ )
+
 
  ;; CHECK:      (func $binary (type $16) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
  ;; CHECK-NEXT:  (drop
@@ -1718,7 +1827,7 @@
   drop
  )
 
- ;; CHECK:      (func $memory-grow (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $memory-grow (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.grow $mem
  ;; CHECK-NEXT:    (local.get $0)
@@ -1757,7 +1866,7 @@
   global.set 4
  )
 
- ;; CHECK:      (func $load (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $load (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load $mem offset=42
  ;; CHECK-NEXT:    (local.get $0)
@@ -1786,7 +1895,7 @@
   drop
  )
 
- ;; CHECK:      (func $store (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $store (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (i32.store $mem offset=42 align=1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1812,7 +1921,7 @@
   f32.store $mem-i64
  )
 
- ;; CHECK:      (func $atomic-rmw (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-rmw (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.atomic.rmw16.add_u $mem
  ;; CHECK-NEXT:    (local.get $0)
@@ -1837,7 +1946,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-cmpxchg (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-cmpxchg (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.atomic.rmw8.cmpxchg_u $mem
  ;; CHECK-NEXT:    (local.get $0)
@@ -1866,7 +1975,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-wait (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-wait (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.atomic.wait32 $mem
  ;; CHECK-NEXT:    (local.get $0)
@@ -1895,7 +2004,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-notify (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-notify (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.atomic.notify $mem offset=8
  ;; CHECK-NEXT:    (local.get $0)
@@ -1987,7 +2096,7 @@
   i8x16.shl
  )
 
- ;; CHECK:      (func $simd-load (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $simd-load (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (v128.load8x8_s $mem offset=8
  ;; CHECK-NEXT:    (local.get $0)
@@ -2103,7 +2212,7 @@
   memory.copy $mem-i64 3
  )
 
- ;; CHECK:      (func $memory-fill (type $4) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $memory-fill (type $5) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (memory.fill $mem
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i32.const 1)
@@ -2218,7 +2327,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 102
+  ref.func 107
   drop
  )
 

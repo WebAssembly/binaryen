@@ -383,6 +383,9 @@ struct NullInstrParserCtx {
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
   Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
   Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
+    return Ok{};
+  }
   Result<> makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
     return Ok{};
@@ -1244,6 +1247,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeBreak(Index pos, Index label) {
     return withLoc(pos, irBuilder.makeBreak(label));
+  }
+
+  Result<>
+  makeSwitch(Index pos, const std::vector<Index> labels, Index defaultLabel) {
+    return withLoc(pos, irBuilder.makeSwitch(labels, defaultLabel));
   }
 
   Result<> makeReturn(Index pos) {
