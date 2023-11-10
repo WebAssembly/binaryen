@@ -23,13 +23,13 @@
 
   ;; CHECK:      (type $a2 (array (mut f32)))
 
-  ;; CHECK:      (type $8 (func (param i32)))
+  ;; CHECK:      (type $8 (func (param anyref)))
 
-  ;; CHECK:      (type $9 (func (param i32 i32 i32)))
+  ;; CHECK:      (type $9 (func (param i32)))
 
-  ;; CHECK:      (type $10 (func (param v128 i32) (result v128)))
+  ;; CHECK:      (type $10 (func (param i32 i32 i32)))
 
-  ;; CHECK:      (type $11 (func (param anyref)))
+  ;; CHECK:      (type $11 (func (param v128 i32) (result v128)))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct ))
@@ -234,11 +234,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
- ;; CHECK:      (func $f1 (type $8) (param $0 i32)
+ ;; CHECK:      (func $f1 (type $9) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
- ;; CHECK:      (func $f2 (type $8) (param $x i32)
+ ;; CHECK:      (func $f2 (type $9) (param $x i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
@@ -1756,7 +1756,7 @@
   drop
  )
 
- ;; CHECK:      (func $select (type $9) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $select (type $10) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select
  ;; CHECK-NEXT:    (local.get $0)
@@ -2048,7 +2048,7 @@
   i32x4.extract_lane 3
  )
 
- ;; CHECK:      (func $simd-replace (type $10) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-replace (type $11) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i32x4.replace_lane 2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -2086,7 +2086,7 @@
   v128.bitselect
  )
 
- ;; CHECK:      (func $simd-shift (type $10) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-shift (type $11) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i8x16.shl
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -2141,7 +2141,7 @@
   v128.store64_lane 3 align=4 0
  )
 
- ;; CHECK:      (func $memory-init (type $9) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $memory-init (type $10) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (memory.init $mem-i32 $passive
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -2376,7 +2376,7 @@
   drop
  )
 
- ;; CHECK:      (func $ref-test (type $11) (param $0 anyref)
+ ;; CHECK:      (func $ref-test (type $8) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.test i31ref
  ;; CHECK-NEXT:    (local.get $0)
@@ -2397,7 +2397,7 @@
   drop
  )
 
- ;; CHECK:      (func $ref-cast (type $11) (param $0 anyref)
+ ;; CHECK:      (func $ref-cast (type $8) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.cast i31ref
  ;; CHECK-NEXT:    (local.get $0)
@@ -2415,6 +2415,90 @@
   drop
   local.get 0
   ref.cast (ref $s0)
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-null (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (br_on_null $label
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-null (param anyref)
+  local.get 0
+  br_on_null 0
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-non-null (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $label (result (ref any))
+ ;; CHECK-NEXT:    (br_on_non_null $label
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-non-null (param anyref)
+  block (result (ref any))
+   local.get 0
+   br_on_non_null 0
+   unreachable
+  end
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-cast (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $label (result i31ref)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref any))
+ ;; CHECK-NEXT:      (br_on_cast $label anyref i31ref
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast (param anyref)
+  block (result i31ref)
+   block (result (ref any))
+    local.get 0
+    br_on_cast 1 i31ref
+   end
+   unreachable
+  end
+  drop
+ )
+
+ ;; CHECK:      (func $br-on-cast-fail (type $8) (param $0 anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $label (result (ref any))
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i31ref)
+ ;; CHECK-NEXT:      (br_on_cast_fail $label anyref i31ref
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-on-cast-fail (param anyref)
+  block (result (ref any))
+   block (result i31ref)
+    local.get 0
+    br_on_cast_fail 1 i31ref
+   end
+   unreachable
+  end
   drop
  )
 

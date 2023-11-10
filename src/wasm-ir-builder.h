@@ -151,7 +151,8 @@ public:
   // [[nodiscard]] Result<> makeCallRef();
   [[nodiscard]] Result<> makeRefTest(Type type);
   [[nodiscard]] Result<> makeRefCast(Type type);
-  // [[nodiscard]] Result<> makeBrOn();
+  [[nodiscard]] Result<>
+  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>

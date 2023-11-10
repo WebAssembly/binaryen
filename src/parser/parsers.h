@@ -1315,11 +1315,17 @@ template<typename Ctx> Result<> makeRefCast(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnNonNull : BrOnNull);
 }
 
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
 }
 
 template<typename Ctx>

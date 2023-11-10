@@ -398,6 +398,12 @@ struct NullInstrParserCtx {
   template<typename TypeT> Result<> makeRefTest(Index, TypeT) { return Ok{}; }
   template<typename TypeT> Result<> makeRefCast(Index, TypeT) { return Ok{}; }
 
+  Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
+
+  template<typename TypeT> Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT) {
+    return Ok{};
+  }
+
   template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
     return Ok{};
   }
@@ -1288,6 +1294,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefCast(Index pos, Type type) {
     return withLoc(pos, irBuilder.makeRefCast(type));
+  }
+
+  Result<>
+  makeBrOn(Index pos, Index label, BrOnOp op, Type castType = Type::none) {
+    return withLoc(pos, irBuilder.makeBrOn(label, op, castType));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {
