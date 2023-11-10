@@ -23,6 +23,24 @@
  ;; CHECK-NEXT:  (local $z (anyref i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (type $0 (func (result eqref)))
+
+ ;; ALTER:      (type $1 (func))
+
+ ;; ALTER:      (type $2 (func (param anyref)))
+
+ ;; ALTER:      (type $3 (func (param i31ref)))
+
+ ;; ALTER:      (type $4 (func (param anyref eqref)))
+
+ ;; ALTER:      (type $5 (func (param eqref)))
+
+ ;; ALTER:      (func $unconstrained (type $1)
+ ;; ALTER-NEXT:  (local $x i32)
+ ;; ALTER-NEXT:  (local $y anyref)
+ ;; ALTER-NEXT:  (local $z (anyref i32))
+ ;; ALTER-NEXT:  (nop)
+ ;; ALTER-NEXT: )
  (func $unconstrained
   ;; This non-ref local should be unmodified
   (local $x i32)
@@ -36,6 +54,10 @@
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.get $var)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $implicit-return (type $0) (result eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local.get $var)
+ ;; ALTER-NEXT: )
  (func $implicit-return (result eqref)
   ;; This will be optimized, but only to eqref because of the constraint from the
   ;; implicit return.
@@ -47,6 +69,11 @@
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $implicit-return-unreachable (type $0) (result eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (unreachable)
+ ;; ALTER-NEXT:  (local.get $var)
+ ;; ALTER-NEXT: )
  (func $implicit-return-unreachable (result eqref)
   ;; We will optimize this all the way to anyref because we don't analyze
   ;; unreachable code. This would not validate if we didn't run DCE first.
@@ -64,6 +91,15 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $if (type $0) (result eqref)
+ ;; ALTER-NEXT:  (local $x eqref)
+ ;; ALTER-NEXT:  (local $y eqref)
+ ;; ALTER-NEXT:  (if (result eqref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $x)
+ ;; ALTER-NEXT:   (local.get $y)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $if (result (eqref))
   (local $x i31ref)
   (local $y i31ref)
@@ -84,6 +120,14 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-set (type $1)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (ref.i31
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $local-set
   ;; This will be optimized to anyref.
   (local $var i31ref)
@@ -101,6 +145,12 @@
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-get-set (type $2) (param $dest anyref)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (local.set $dest
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $local-get-set (param $dest anyref)
   ;; This will be optimized to anyref.
   (local $var i31ref)
@@ -114,6 +164,15 @@
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-get-set-unreachable (type $3) (param $dest i31ref)
+ ;; ALTER-NEXT:  (local $var i31ref)
+ ;; ALTER-NEXT:  (unreachable)
+ ;; ALTER-NEXT:  (local.set $dest
+ ;; ALTER-NEXT:   (local.tee $var
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $local-get-set-unreachable (param $dest i31ref)
   ;; This is not constrained by reachable code, so we will optimize it.
   (local $var i31ref)
@@ -136,6 +195,15 @@
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-get-set-join (type $4) (param $dest1 anyref) (param $dest2 eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local.set $dest1
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.set $dest2
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $local-get-set-join (param $dest1 anyref) (param $dest2 eqref)
   ;; This wll be optimized to eqref.
   (local $var i31ref)
@@ -161,6 +229,18 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-get-set-chain (type $0) (result eqref)
+ ;; ALTER-NEXT:  (local $a i31ref)
+ ;; ALTER-NEXT:  (local $b i31ref)
+ ;; ALTER-NEXT:  (local $c eqref)
+ ;; ALTER-NEXT:  (local.set $b
+ ;; ALTER-NEXT:   (local.get $a)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.set $c
+ ;; ALTER-NEXT:   (local.get $b)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.get $c)
+ ;; ALTER-NEXT: )
  (func $local-get-set-chain (result eqref)
   (local $a i31ref)
   (local $b i31ref)
@@ -189,6 +269,18 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-get-set-chain-out-of-order (type $0) (result eqref)
+ ;; ALTER-NEXT:  (local $a i31ref)
+ ;; ALTER-NEXT:  (local $b i31ref)
+ ;; ALTER-NEXT:  (local $c eqref)
+ ;; ALTER-NEXT:  (local.set $c
+ ;; ALTER-NEXT:   (local.get $b)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.set $b
+ ;; ALTER-NEXT:   (local.get $a)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.get $c)
+ ;; ALTER-NEXT: )
  (func $local-get-set-chain-out-of-order (result eqref)
   (local $a i31ref)
   (local $b i31ref)
@@ -218,6 +310,18 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $local-tee (type $5) (param $dest eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (local.tee $dest
+ ;; ALTER-NEXT:    (local.tee $var
+ ;; ALTER-NEXT:     (ref.i31
+ ;; ALTER-NEXT:      (i32.const 0)
+ ;; ALTER-NEXT:     )
+ ;; ALTER-NEXT:    )
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $local-tee (param $dest eqref)
   ;; This will be optimized to eqref.
   (local $var i31ref)
@@ -251,6 +355,25 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ALTER:      (func $i31-get (type $1)
+ ;; ALTER-NEXT:  (local $nullable i31ref)
+ ;; ALTER-NEXT:  (local $nonnullable i31ref)
+ ;; ALTER-NEXT:  (local.set $nonnullable
+ ;; ALTER-NEXT:   (ref.i31
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (i31.get_s
+ ;; ALTER-NEXT:    (local.get $nullable)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (i31.get_u
+ ;; ALTER-NEXT:    (local.get $nonnullable)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
  (func $i31-get
   ;; This must stay an i31ref.
   (local $nullable i31ref)

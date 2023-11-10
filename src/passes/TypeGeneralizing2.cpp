@@ -235,14 +235,19 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     // types of the locals.
     auto numParams = func->getNumParams();
     for (Index i = numParams; i < numLocals; i++) {
-      func->vars[i - numParams] = locTypes[LocalLocation{func, i}];
+      auto& localType = func->vars[i - numParams];
+      if (localType.isRef()) {
+        localType = locTypes[LocalLocation{func, i}];
+        assert(localType.isRef());
+      }
     }
     for (auto* get : gets) {
       get->type = func->getLocalType(get->index);
     }
     for (auto& [index, sets] : setsByIndex) {
       for (auto* set : sets) {
-        if (set->isTee()) {
+        // Leave none and unreachable alone.
+        if (set->type.isConcrete()) {
           set->type = func->getLocalType(index);
         }
       }
