@@ -380,6 +380,15 @@ struct ParamLocation {
   }
 };
 
+// The location of a value in a local.
+struct LocalLocation {
+  Function* func;
+  Index index;
+  bool operator==(const LocalLocation& other) const {
+    return func == other.func && index == other.index;
+  }
+};
+
 // The location of one of the results of a function.
 struct ResultLocation {
   Function* func;
@@ -494,6 +503,7 @@ struct ConeReadLocation {
 // have.
 using Location = std::variant<ExpressionLocation,
                               ParamLocation,
+                              LocalLocation,
                               ResultLocation,
                               BreakTargetLocation,
                               GlobalLocation,
@@ -529,6 +539,13 @@ template<> struct hash<wasm::ExpressionLocation> {
 
 template<> struct hash<wasm::ParamLocation> {
   size_t operator()(const wasm::ParamLocation& loc) const {
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.func), loc.index});
+  }
+};
+
+template<> struct hash<wasm::LocalLocation> {
+  size_t operator()(const wasm::LocalLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
   }
