@@ -82,7 +82,7 @@ def run_wasm_dis_tests():
 
         # also verify there are no validation errors
         def check():
-            cmd = shared.WASM_OPT + [t, '-all']
+            cmd = shared.WASM_OPT + [t, '-all', '-q']
             support.run_command(cmd)
 
         shared.with_pass_debug(check)
