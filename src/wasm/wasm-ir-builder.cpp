@@ -287,6 +287,15 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitArrayNewFixed(ArrayNewFixed* curr) {
+  for (size_t i = 0, size = curr->values.size(); i < size; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    curr->values[size - i - 1] = *val;
+  }
+  return Ok{};
+}
+
 Result<Expression*> IRBuilder::getBranchValue(Name labelName,
                                               std::optional<Index> label) {
   if (!label) {
@@ -1000,7 +1009,13 @@ Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayNewFixed() {}
+Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
+  ArrayNewFixed curr(wasm.allocator);
+  curr.values.resize(arity);
+  CHECK_ERR(visitArrayNewFixed(&curr));
+  push(builder.makeArrayNewFixed(type, curr.values));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeArrayGet(HeapType type, bool signed_) {
   ArrayGet curr;
