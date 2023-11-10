@@ -223,7 +223,15 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
-  void visitI31Get(I31Get* curr) {}
+  void visitI31Get(I31Get* curr) {
+
+
+    // XXX XXX XXX added past NFC!
+
+
+    self()->noteSubtype(curr->i31,
+                        Type(HeapType::i31, Nullable));
+  }
   void visitCallRef(CallRef* curr) {
     if (!curr->target->type.isSignature()) {
       return;

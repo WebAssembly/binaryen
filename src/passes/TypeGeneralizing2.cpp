@@ -58,7 +58,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   }
   void noteSubtype(Expression* sub, Type super) {
     // This expression's type must be a subtype of a fixed type.
-std::cout << "noteSubtype " << *sub << " is sub of " << super << '\n';
+//std::cout << "noteSubtype " << *sub << " is sub of " << super << '\n';
     addRoot(sub, super);
   }
   void noteSubtype(Type sub, Expression* super) {
@@ -160,7 +160,7 @@ std::cout << "noteSubtype " << *sub << " is sub of " << super << '\n';
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
-std::cout << "flow1\n";
+//std::cout << "flow1\n";
     // A work item is an expression and a type that we have learned it must be a
     // subtype of. XXX better to not put type in here. less efficient now since
     // we might update with (X, T1), (X, T2) which differ. apply type first!
@@ -170,8 +170,8 @@ std::cout << "flow1\n";
     // The initial work is the set of roots we found as we walked the code.
     UniqueDeferredQueue<WorkItem> work;
     for (auto& [loc, super] : roots) {
-std::cout << "root " << super << " to ";
-dump(loc);
+//std::cout << "root " << super << " to ";
+//dump(loc);
       work.push({loc, super});
     }
 
