@@ -250,8 +250,7 @@ struct TypeGeneralizing
     }
     for (auto& [index, sets] : setsByIndex) {
       for (auto* set : sets) {
-        // Leave none and unreachable alone.
-        if (set->type.isConcrete()) {
+        if (set->type.isRef()) {
           set->type = func->getLocalType(index);
         }
       }
@@ -259,17 +258,6 @@ struct TypeGeneralizing
 
     // TODO: avoid when not needed
     ReFinalize().walkFunctionInModule(func, getModule());
-  }
-
-  void dump(Location location) {
-    if (auto* loc = std::get_if<ExpressionLocation>(&location)) {
-      std::cout << "  exprloc \n"
-                << *loc->expr << " : " << loc->tupleIndex << '\n';
-    } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-      std::cout << "  localloc " << loc->index << '\n';
-    } else {
-      std::cout << "  (other)\n";
-    }
   }
 };
 
