@@ -349,6 +349,18 @@ Result<> IRBuilder::visitCall(Call* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitCallRef(CallRef* curr) {
+  auto target = pop();
+  CHECK_ERR(target);
+  curr->target = *target;
+  for (size_t i = 0, numArgs = curr->operands.size(); i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -923,7 +935,18 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallRef() {}
+Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn) {
+  CallRef curr(wasm.allocator);
+  if (!type.isSignature()) {
+    return Err{"expected function type"};
+  }
+  auto sig = type.getSignature();
+  curr.operands.resize(type.getSignature().params.size());
+  CHECK_ERR(visitCallRef(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.target));
+  push(builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefTest(Type type) {
   RefTest curr;
