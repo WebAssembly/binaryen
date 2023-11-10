@@ -26,8 +26,11 @@ namespace wasm {
 
 namespace {
 
-struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>> {
-  using Super = WalkerPass<ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>>;
+struct TypeGeneralizing
+  : WalkerPass<ControlFlowWalker<TypeGeneralizing,
+                                 SubtypingDiscoverer<TypeGeneralizing>>> {
+  using Super = WalkerPass<
+    ControlFlowWalker<TypeGeneralizing, SubtypingDiscoverer<TypeGeneralizing>>>;
 
   bool isFunctionParallel() override { return true; }
 
@@ -118,9 +121,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   // types they must have (that type, or a subtype of which).
   std::unordered_map<Location, Type> roots;
 
-  void addRoot(Expression* sub, Type super) {
-    roots[getLocation(sub)] = super;
-  }
+  void addRoot(Expression* sub, Type super) { roots[getLocation(sub)] = super; }
 
   // Can these be in subtype-exprs?
   std::vector<LocalGet*> gets;
@@ -162,9 +163,10 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
           // We cannot alter params.
           locTypes[LocalLocation{func, i}] = type;
         } else {
-          // Start each var with the top type. If we see nothing else, that is what
-          // will remain.
-          locTypes[LocalLocation{func, i}] = Type(type.getHeapType().getTop(), Nullable);
+          // Start each var with the top type. If we see nothing else, that is
+          // what will remain.
+          locTypes[LocalLocation{func, i}] =
+            Type(type.getHeapType().getTop(), Nullable);
         }
       }
     }
@@ -268,8 +270,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
       std::cout << "  exprloc \n"
                 << *loc->expr << " : " << loc->tupleIndex << '\n';
     } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
-      std::cout << "  localloc " << loc->index
-                << '\n';
+      std::cout << "  localloc " << loc->index << '\n';
     } else {
       std::cout << "  (other)\n";
     }
@@ -281,4 +282,3 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 Pass* createTypeGeneralizing2Pass() { return new TypeGeneralizing; }
 
 } // namespace wasm
-

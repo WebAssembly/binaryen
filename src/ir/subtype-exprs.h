@@ -52,7 +52,8 @@ namespace wasm {
 //                                          subtype of anothers, for example,
 //                                          a block and its last child.
 //
-//  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for example,
+//  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for
+//  example,
 //                                   in a CallIndirect.
 //  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
 //                                 for example, in RefTest.
@@ -225,12 +226,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
   void visitRefI31(RefI31* curr) {}
   void visitI31Get(I31Get* curr) {
 
-
     // XXX XXX XXX added past NFC!
 
-
-    self()->noteSubtype(curr->i31,
-                        Type(HeapType::i31, Nullable));
+    self()->noteSubtype(curr->i31, Type(HeapType::i31, Nullable));
   }
   void visitCallRef(CallRef* curr) {
     if (!curr->target->type.isSignature()) {
