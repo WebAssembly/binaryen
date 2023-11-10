@@ -2766,6 +2766,9 @@ void Flower::dump(Location location) {
   } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
     std::cout << "  paramloc " << loc->func->name << " : " << loc->index
               << '\n';
+  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+    std::cout << "  localloc " << loc->func->name << " : " << loc->index
+              << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc $" << loc->func->name << " : " << loc->index
               << '\n';
