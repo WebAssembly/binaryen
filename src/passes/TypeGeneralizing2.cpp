@@ -34,15 +34,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     return std::make_unique<TypeGeneralizing>();
   }
 
-  void runOnFunction(Module* wasm, Function* func) override {
-    // Discover subtyping relationships in this function. This fills the graph,
-    // that is, it sets up roots and links.
-    walkFunction(func);
-
-    // Process the graph and apply the results.
-    process();
-  }
-
   // Visitors during the walk. We track local operations so that we can
   // optimize them later.
 
@@ -143,7 +134,8 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
     return root != old;
   }
 
-  // Main processing code on the graph. We do a straightforward flow of
+  // Main processing code on the graph. After the walk of the code, when we
+  // visit the Function we perform the analysis. We do a straightforward flow of
   // constraints from the roots, until we know all the effects of the roots. For
   // example, imagine we have this code:
   //
@@ -163,7 +155,7 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
   // generalize the types of locals and expressoins), so we do nothing with it.
   // (However, if the local.set's value was something else, then we could have
   // more to flow here.)
-  void process() {
+  void visitFunction(Function* func) {
     // A work item is an expression and a type that we have learned it must be a
     // subtype of. XXX better to not put type in here. less efficient now since
     // we might update with (X, T1), (X, T2) which differ. apply type first!
@@ -178,7 +170,6 @@ struct TypeGeneralizing : WalkerPass<ControlFlowWalker<TypeGeneralizing, Subtypi
 
     // Start each local with the top type. If we see nothing else, that is what
     // will remain.
-    auto* func = getFunction();
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
       auto type = func->getLocalType(i);
