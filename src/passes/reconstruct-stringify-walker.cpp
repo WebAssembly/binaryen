@@ -23,7 +23,7 @@ void ReconstructStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
 
   // instrCounter is managed manually and incremented at the beginning of
   // addUniqueSymbol() and visitExpression(), except for the case where we are
-  // starting a new function, as that resets the counters back to 0
+  // starting a new function, as that resets the counters back to 0.
   instrCounter++;
   if (state == InSkipSeq) {
     return;
@@ -130,7 +130,7 @@ void ReconstructStringifyWalker::transitionToInSeq() {
       auto err = val.getErr()) {
     Fatal() << err->msg;
   }
-  // Add a local.get instruction for every parameter of the outlined function
+  // Add a local.get instruction for every parameter of the outlined function.
   Signature sig = outlinedFunc->type.getSignature();
   for (Index i = 0; i < sig.params.size(); i++) {
     if (auto val = outlinedBuilder.makeLocalGet(i); auto err = val.getErr()) {

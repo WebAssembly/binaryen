@@ -17,7 +17,7 @@ namespace wasm {
 
 struct Outlining : public Pass {
   void run(Module* module) {
-    HashStringifyWalker stringify = HashStringifyWalker();
+    HashStringifyWalker stringify;
     stringify.walkModule(module);
     auto substrings =
       StringifyProcessor::repeatSubstrings(stringify.hashString);
@@ -38,16 +38,16 @@ struct Outlining : public Pass {
                            const SuffixTree::RepeatedSubstring& substring,
                            const std::vector<Expression*>& exprs) {
     auto startIdx = substring.StartIndices[0];
-    // The outlined functions can be named anything. Using the start index of
-    // the first time the outlined sequence was seen in the module may help
-    // with debugging later
+    // The outlined functions can be named anything. Use the start index of
+    // the first time the outlined sequence was seen in the module to help
+    // with debugging later.
     Name outlinedFunc = Names::getValidFunctionName(
       *module, std::string("outline$") + std::to_string(startIdx));
+    // Calculate the function signature for the outlined sequence.
     StackSignature sig;
     for (uint32_t exprIdx = startIdx; exprIdx < startIdx + substring.Length;
          exprIdx++) {
-      Expression* expr = exprs[exprIdx];
-      sig += StackSignature(expr);
+      sig += StackSignature(exprs[exprIdx]);
     }
     module->addFunction(Builder::makeFunction(
       outlinedFunc, Signature(sig.params, sig.results), {}));
@@ -58,7 +58,7 @@ struct Outlining : public Pass {
     std::unordered_map<Name, std::vector<wasm::OutliningSequence>>;
 
   // Converts an array of SuffixTree::RepeatedSubstring to a mapping of original
-  // function to repeat sequences contained.
+  // functions to repeated sequences they contain.
   Sequences makeSequences(Module* module,
                           const Substrings& substrings,
                           const HashStringifyWalker& stringify) {
@@ -80,12 +80,12 @@ struct Outlining : public Pass {
   }
 
   void outline(Module* module, Sequences seqByFunc) {
-    ReconstructStringifyWalker reconstruct = ReconstructStringifyWalker(module);
+    // TODO: Make this a function-parallel sub-pass.
+    ReconstructStringifyWalker reconstruct(module);
     std::vector<Name> keys(seqByFunc.size());
-    auto key_selector = [](auto pair) { return pair.first; };
-    transform(seqByFunc.begin(), seqByFunc.end(), keys.begin(), key_selector);
+    std::transform(seqByFunc.begin(), seqByFunc.end(), keys.begin(), [](auto pair) { return pair.first; });
     for (auto func : keys) {
-      reconstruct.sequences = seqByFunc[func];
+      reconstruct.sequences = std::move(seqByFunc[func]);
       reconstruct.doWalkFunction(module->getFunction(func));
     }
   }

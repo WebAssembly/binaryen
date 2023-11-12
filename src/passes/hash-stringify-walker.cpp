@@ -86,8 +86,7 @@ HashStringifyWalker::makeRelative(uint32_t idx) const {
 std::vector<SuffixTree::RepeatedSubstring>
 StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   SuffixTree st(hashString);
-  std::vector<SuffixTree::RepeatedSubstring> substrings =
-    std::vector(st.begin(), st.end());
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
   for (auto substring : substrings) {
     std::sort(substring.StartIndices.begin(), substring.StartIndices.end());
   }
