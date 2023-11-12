@@ -13,7 +13,182 @@
 #define DBG(statement)
 #endif
 
+// Check a Result or MaybeResult for error and call Fatal() if the error exists.
+#define ASSERT_ERR(val)                                                        \
+  if (auto _val = (val); auto err = _val.getErr()) {                           \
+    Fatal() << err->msg;                                                       \
+  }
+
 namespace wasm {
+
+struct ReconstructStringifyWalker
+  : public StringifyWalker<ReconstructStringifyWalker> {
+
+  ReconstructStringifyWalker(Module* wasm)
+    : existingBuilder(*wasm), outlinedBuilder(*wasm) {
+    this->setModule(wasm);
+    DBG(std::cout << "\n\nexistingBuilder: " << &existingBuilder
+                  << " outlinedBuilder: " << &outlinedBuilder);
+  }
+
+  enum ReconstructState {
+    NotInSeq = 0,
+    InSeq = 1,
+    InSkipSeq = 2,
+  };
+  ReconstructState state = ReconstructState::NotInSeq;
+  uint32_t seqCounter = 0;
+  uint32_t instrCounter = 0;
+  std::vector<OutliningSequence> sequences;
+  std::unordered_map<Name, std::vector<OutliningSequence>> seqToFunc;
+  IRBuilder existingBuilder;
+  IRBuilder outlinedBuilder;
+
+  void addUniqueSymbol(SeparatorReason reason) {
+    if (auto curr = reason.getFuncStart()) {
+      startExistingFunction(curr->func);
+      return;
+    }
+
+    // instrCounter is managed manually and incremented at the beginning of
+    // addUniqueSymbol() and visitExpression(), except for the case where we are
+    // starting a new function, as that resets the counters back to 0.
+    instrCounter++;
+
+    DBG(std::string desc);
+    if (auto curr = reason.getBlockStart()) {
+      ASSERT_ERR(existingBuilder.visitBlockStart(curr->block));
+      DBG(desc = "Block Start for ";);
+    } else if (auto curr = reason.getIfStart()) {
+      ASSERT_ERR(existingBuilder.visitIfStart(curr->iff));
+      DBG(desc = "If Start for ";);
+    } else if (reason.getEnd()) {
+      ASSERT_ERR(existingBuilder.visitEnd());
+      DBG(desc = "End for ";);
+    } else {
+      DBG(desc = "addUniqueSymbol for unhandled instruction ";);
+      WASM_UNREACHABLE("unimplemented instruction");
+    }
+    DBG(printAddUniqueSymbol(desc););
+  }
+  void visitExpression(Expression* curr) {
+    maybeBeginSeq();
+
+    IRBuilder* builder = state == InSeq      ? &outlinedBuilder
+                         : state == NotInSeq ? &existingBuilder
+                                             : nullptr;
+    if (builder) {
+      ASSERT_ERR(builder->visit(curr));
+    }
+    DBG(printVisitExpression(curr));
+
+    if (state == InSeq || state == InSkipSeq) {
+      maybeEndSeq();
+    }
+  }
+  // Helpers
+  void startExistingFunction(Function* func) {
+    ASSERT_ERR(existingBuilder.build());
+    ASSERT_ERR(existingBuilder.visitFunctionStart(func));
+    instrCounter = 0;
+    seqCounter = 0;
+    state = NotInSeq;
+    DBG(std::cout << "\n\n$" << func->name << " Func Start "
+                  << &existingBuilder);
+  }
+  ReconstructState getCurrState() {
+    instrCounter++;
+    // We are either in a sequence or not in a sequence. If we are in a sequence
+    // and have already created the body of the outlined function that will be
+    // called, then we will skip instructions, otherwise we add the instructions
+    // to the outlined function. If we are not in a sequence, then the
+    // instructions are sent to the existing function.
+    if (seqCounter < sequences.size() &&
+        instrCounter >= sequences[seqCounter].startIdx &&
+        instrCounter < sequences[seqCounter].endIdx) {
+      return getModule()->getFunction(sequences[seqCounter].func)->body
+               ? InSkipSeq
+               : InSeq;
+    }
+    return NotInSeq;
+  }
+  void maybeBeginSeq() {
+    auto currState = getCurrState();
+    if (currState != state) {
+      switch (currState) {
+        case NotInSeq:
+          return;
+        case InSeq:
+          transitionToInSeq();
+          break;
+        case InSkipSeq:
+          transitionToInSkipSeq();
+          break;
+      }
+    }
+    state = currState;
+  }
+  void transitionToInSeq() {
+    Function* outlinedFunc =
+      getModule()->getFunction(sequences[seqCounter].func);
+    ASSERT_ERR(outlinedBuilder.visitFunctionStart(outlinedFunc));
+
+    // Add a local.get instruction for every parameter of the outlined function.
+    Signature sig = outlinedFunc->type.getSignature();
+    for (Index i = 0; i < sig.params.size(); i++) {
+      ASSERT_ERR(outlinedBuilder.makeLocalGet(i));
+    }
+
+    // Make a call from the existing function to the outlined function. This
+    // call will replace the instructions moved to the outlined function
+    ASSERT_ERR(existingBuilder.makeCall(outlinedFunc->name, false));
+    DBG(std::cout << "\ncreated outlined fn: " << outlinedFunc->name);
+  }
+
+  void transitionToInSkipSeq() {
+    Function* outlinedFunc =
+      getModule()->getFunction(sequences[seqCounter].func);
+    ASSERT_ERR(existingBuilder.makeCall(outlinedFunc->name, false));
+    DBG(std::cout << "\n\nstarting to skip instructions "
+                  << sequences[seqCounter].startIdx << " - "
+                  << sequences[seqCounter].endIdx - 1 << " to "
+                  << sequences[seqCounter].func
+                  << " and adding call() instead");
+  }
+  void maybeEndSeq() {
+    if (instrCounter + 1 == sequences[seqCounter].endIdx) {
+      transitionToNotInSeq();
+      state = NotInSeq;
+    }
+  }
+  void transitionToNotInSeq() {
+    if (state == InSeq) {
+      ASSERT_ERR(outlinedBuilder.visitEnd());
+      DBG(std::cout << "\n\nEnd of sequence to " << &outlinedBuilder);
+    }
+    // Completed a sequence so increase the seqCounter and reset the state
+    seqCounter++;
+  }
+
+#define RECONSTRUCT_DEBUG 0
+
+#if OUTLINING_DEBUG
+  void printAddUniqueSymbol(std::string desc) {
+    std::cout << "\n"
+              << desc << std::to_string(instrCounter) << " to "
+              << &existingBuilder;
+  }
+  void printVisitExpression(Expression* curr) {
+    auto* builder = state == InSeq      ? &outlinedBuilder
+                    : state == NotInSeq ? &existingBuilder
+                                        : nullptr;
+    auto verb = state == InSkipSeq ? "skipping " : "adding ";
+    std::cout << "\n"
+              << verb << std::to_string(instrCounter) << ": "
+              << ShallowExpression{curr} << " to " << builder;
+  }
+#endif
+};
 
 struct Outlining : public Pass {
   void run(Module* module) {

@@ -275,44 +275,6 @@ struct StringifyProcessor {
                                    const std::vector<Expression*>& exprs);
 };
 
-struct ReconstructStringifyWalker
-  : public StringifyWalker<ReconstructStringifyWalker> {
-  enum ReconstructState {
-    NotInSeq = 0,
-    InSeq = 1,
-    InSkipSeq = 2,
-  };
-
-  ReconstructStringifyWalker(Module* wasm);
-
-  void addUniqueSymbol(SeparatorReason reason);
-  void visitExpression(Expression* curr);
-  // Helpers
-  void startExistingFunction(Function* func);
-  ReconstructState getCurrState();
-  void transitionToNotInSeq();
-  void transitionToInSeq();
-  void transitionToInSkipSeq();
-  void maybeBeginSeq();
-  void maybeEndSeq();
-
-  std::unordered_map<Name, std::vector<OutliningSequence>> seqToFunc;
-  std::vector<OutliningSequence> sequences;
-  uint32_t seqCounter = 0;
-  uint32_t instrCounter = 0;
-  IRBuilder existingBuilder;
-  IRBuilder outlinedBuilder;
-
-  ReconstructState state = ReconstructState::NotInSeq;
-
-#define RECONSTRUCT_DEBUG 0
-
-#if RECONSTRUCT_DEBUG
-  void printAddUniqueSymbol(std::string desc);
-  void printVisitExpression(Expression* curr);
-#endif
-};
-
 } // namespace wasm
 
 #endif // wasm_passes_stringify_walker_h

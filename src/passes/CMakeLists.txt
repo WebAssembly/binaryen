@@ -83,7 +83,6 @@ set(passes_SOURCES
   PrintCallGraph.cpp
   PrintFeatures.cpp
   PrintFunctionMap.cpp
-  reconstruct-stringify-walker.cpp
   RoundTrip.cpp
   SetGlobals.cpp
   StackIR.cpp
@@ -132,6 +131,5 @@ if(EMSCRIPTEN)
   list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker-impl.h)
   list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
   list(REMOVE_ITEM passes_SOURCES "Outlining.cpp")
-  list(REMOVE_ITEM passes_SOURCES "reconstruct-stringify-walker.cpp")
 endif()
 add_library(passes OBJECT ${passes_SOURCES})
