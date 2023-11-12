@@ -46,6 +46,7 @@ void ReconstructStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
     DBG(desc = "End for ";);
   } else {
     DBG(desc = "addUniqueSymbol for unhandled instruction ";);
+    WASM_UNREACHABLE("unimplemented instruction");
   }
   DBG(printAddUniqueSymbol(desc););
 }
