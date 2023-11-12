@@ -52,15 +52,14 @@ void ReconstructStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
 void ReconstructStringifyWalker::visitExpression(Expression* curr) {
   maybeBeginSeq();
 
-  if (state == NotInSeq) {
-    ASSERT_ERR(existingBuilder.visit(curr));
+  IRBuilder* builder = state == InSeq      ? &outlinedBuilder
+                       : state == NotInSeq ? &existingBuilder
+                                           : nullptr;
+  if (builder) {
+    ASSERT_ERR(builder->visit(curr));
   }
-
-  if (state == InSeq) {
-    ASSERT_ERR(outlinedBuilder.visit(curr));
-  }
-
   DBG(printVisitExpression(curr));
+
   if (state == InSeq || state == InSkipSeq) {
     maybeEndSeq();
   }
