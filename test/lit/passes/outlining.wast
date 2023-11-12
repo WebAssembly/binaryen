@@ -2,6 +2,17 @@
 
 ;; RUN: foreach %s %t wasm-opt --outlining -S -o - | filecheck %s
 
+;; TODO: Add a test that creates an outlined function with a sequence at beginning
+;; TODO: Add a test that creates an outlined function with one return value
+;; TODO: Add a test that creates an outlined function that no arguments
+;; TODO: Add a test that creates an outlined function that returns multiple values
+;; TODO: Add a test that makes sure we filter localSets correctly
+;; TODO: Add a test that makes sure we filter localGets correctly
+;; TODO: Add a test that makes sure we filter branches correctly
+;; TODO: Add a test that makes sure we filter globals correctly
+;; TODO: Add a test that fails to outline a single control flow that repeats
+
+
 (module
   ;; CHECK:      (type $0 (func (result i32)))
 
@@ -36,6 +47,8 @@
     (return (i32.const 5))
   )
 )
+
+;; Tests that outlining occurs properly when the sequence is at the end of a function.
 
 ;; CHECK:      (func $outline$5 (param $0 i32)
 ;; CHECK-NEXT:  (drop
