@@ -88,6 +88,9 @@ StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   SuffixTree st(hashString);
   std::vector<SuffixTree::RepeatedSubstring> substrings =
     std::vector(st.begin(), st.end());
+  for (auto substring : substrings) {
+    std::sort(substring.StartIndices.begin(), substring.StartIndices.end());
+  }
   std::sort(
     substrings.begin(),
     substrings.end(),
