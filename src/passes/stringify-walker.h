@@ -243,7 +243,7 @@ private:
   // Contains the indices that mark the start of each function
   std::set<uint32_t> funcIndices;
   // Maps the start idx of each function to the function name
-  std::unordered_map<uint32_t, Name> idxToFuncName;
+  std::map<uint32_t, Name> idxToFuncName;
 };
 
 struct OutliningSequence {

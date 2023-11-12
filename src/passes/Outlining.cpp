@@ -83,7 +83,10 @@ struct Outlining : public Pass {
     // TODO: Make this a function-parallel sub-pass.
     ReconstructStringifyWalker reconstruct(module);
     std::vector<Name> keys(seqByFunc.size());
-    std::transform(seqByFunc.begin(), seqByFunc.end(), keys.begin(), [](auto pair) { return pair.first; });
+    std::transform(seqByFunc.begin(),
+                   seqByFunc.end(),
+                   keys.begin(),
+                   [](auto pair) { return pair.first; });
     for (auto func : keys) {
       reconstruct.sequences = std::move(seqByFunc[func]);
       reconstruct.doWalkFunction(module->getFunction(func));

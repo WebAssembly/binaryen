@@ -58,7 +58,6 @@ void HashStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
   assert((uint32_t)nextSeparatorVal >= nextVal);
   if (auto funcStart = reason.getFuncStart()) {
     idxToFuncName.insert({hashString.size(), funcStart->func->name});
-    funcIndices.insert(hashString.size());
   }
   hashString.push_back((uint32_t)nextSeparatorVal);
   nextSeparatorVal--;
@@ -79,8 +78,8 @@ HashStringifyWalker::makeRelative(uint32_t idx) const {
   // The upper_bound function returns an iterator to the first value in the set
   // that is true for idx < value. We subtract one from this returned value to
   // tell us which function actually contains the the idx
-  uint32_t funcStartIdx = *--funcIndices.upper_bound(idx);
-  return {idx - funcStartIdx, idxToFuncName.at(funcStartIdx)};
+  auto itr = *--idxToFuncName.upper_bound(idx);
+  return {idx - itr.first, itr.second};
 }
 
 std::vector<SuffixTree::RepeatedSubstring>
