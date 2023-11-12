@@ -137,6 +137,7 @@ void ReconstructStringifyWalker::transitionToInSkipSeq() {
 void ReconstructStringifyWalker::maybeEndSeq() {
   if (instrCounter + 1 == sequences[seqCounter].endIdx) {
     transitionToNotInSeq();
+    state = NotInSeq;
   }
 }
 
@@ -147,7 +148,6 @@ void ReconstructStringifyWalker::transitionToNotInSeq() {
   }
   // Completed a sequence so increase the seqCounter and reset the state
   seqCounter++;
-  state = NotInSeq;
 }
 
 #if RECONSTRUCT_DEBUG
