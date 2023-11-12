@@ -25,33 +25,29 @@ void ReconstructStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
   // addUniqueSymbol() and visitExpression(), except for the case where we are
   // starting a new function, as that resets the counters back to 0.
   instrCounter++;
-  if (state == InSkipSeq) {
-    return;
-  }
 
   DBG(std::string desc);
-  IRBuilder* builder = state == InSeq ? &outlinedBuilder : &existingBuilder;
   if (auto curr = reason.getBlockStart()) {
-    if (auto expr = builder->visitBlockStart(curr->block);
+    if (auto expr = existingBuilder.visitBlockStart(curr->block);
         auto err = expr.getErr()) {
       Fatal() << err->msg;
     }
     DBG(desc = "Block Start for ";);
   } else if (auto curr = reason.getIfStart()) {
-    if (auto expr = builder->visitIfStart(curr->iff);
+    if (auto expr = existingBuilder.visitIfStart(curr->iff);
         auto err = expr.getErr()) {
       Fatal() << err->msg;
     }
     DBG(desc = "If Start for ";);
   } else if (reason.getEnd()) {
-    if (auto expr = builder->visitEnd(); auto err = expr.getErr()) {
+    if (auto expr = existingBuilder.visitEnd(); auto err = expr.getErr()) {
       Fatal() << err->msg;
     }
     DBG(desc = "End for ";);
   } else {
     DBG(desc = "addUniqueSymbol for unhandled instruction ";);
   }
-  DBG(printAddUniqueSymbol(builder););
+  DBG(printAddUniqueSymbol(desc););
 }
 
 void ReconstructStringifyWalker::visitExpression(Expression* curr) {
@@ -177,8 +173,10 @@ void ReconstructStringifyWalker::transitionToNotInSeq() {
 }
 
 #if RECONSTRUCT_DEBUG
-void ReconstructStringifyWalker::printAddUniqueSymbol(IRBuilder* builder) {
-  std::cout << "\n" << std::to_string(instrCounter) << " to " << builder;
+void ReconstructStringifyWalker::printAddUniqueSymbol(std::string desc) {
+  std::cout << "\n"
+            << desc << std::to_string(instrCounter) << " to "
+            << &existingBuilder;
 }
 void ReconstructStringifyWalker::printVisitExpression(Expression* curr) {
   auto* builder = state == InSeq      ? &outlinedBuilder

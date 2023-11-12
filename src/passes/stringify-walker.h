@@ -308,7 +308,7 @@ struct ReconstructStringifyWalker
 #define RECONSTRUCT_DEBUG 0
 
 #if RECONSTRUCT_DEBUG
-  void printAddUniqueSymbol(IRBuilder* builder);
+  void printAddUniqueSymbol(std::string desc);
   void printVisitExpression(Expression* curr);
 #endif
 };
