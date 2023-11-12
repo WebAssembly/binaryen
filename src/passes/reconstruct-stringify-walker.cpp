@@ -6,6 +6,12 @@
 #define DBG(statement)
 #endif
 
+// Check a Result or MaybeResult for error and call Fatal() if the error exists.
+#define ASSERT_ERR(val)                                                        \
+  if (auto _val = (val); auto err = _val.getErr()) {                           \
+    Fatal() << err->msg;                                                       \
+  }
+
 namespace wasm {
 
 ReconstructStringifyWalker::ReconstructStringifyWalker(Module* wasm)
@@ -28,21 +34,13 @@ void ReconstructStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
 
   DBG(std::string desc);
   if (auto curr = reason.getBlockStart()) {
-    if (auto expr = existingBuilder.visitBlockStart(curr->block);
-        auto err = expr.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(existingBuilder.visitBlockStart(curr->block));
     DBG(desc = "Block Start for ";);
   } else if (auto curr = reason.getIfStart()) {
-    if (auto expr = existingBuilder.visitIfStart(curr->iff);
-        auto err = expr.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(existingBuilder.visitIfStart(curr->iff));
     DBG(desc = "If Start for ";);
   } else if (reason.getEnd()) {
-    if (auto expr = existingBuilder.visitEnd(); auto err = expr.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(existingBuilder.visitEnd());
     DBG(desc = "End for ";);
   } else {
     DBG(desc = "addUniqueSymbol for unhandled instruction ";);
@@ -55,15 +53,11 @@ void ReconstructStringifyWalker::visitExpression(Expression* curr) {
   maybeBeginSeq();
 
   if (state == NotInSeq) {
-    if (auto val = existingBuilder.visit(curr); auto err = val.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(existingBuilder.visit(curr));
   }
 
   if (state == InSeq) {
-    if (auto val = outlinedBuilder.visit(curr); auto err = val.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(outlinedBuilder.visit(curr));
   }
 
   DBG(printVisitExpression(curr));
@@ -73,13 +67,8 @@ void ReconstructStringifyWalker::visitExpression(Expression* curr) {
 }
 
 void ReconstructStringifyWalker::startExistingFunction(Function* func) {
-  if (auto val = existingBuilder.build(); auto err = val.getErr()) {
-    Fatal() << err->msg;
-  }
-  if (auto val = existingBuilder.visitFunctionStart(func);
-      auto err = val.getErr()) {
-    Fatal() << err->msg;
-  }
+  ASSERT_ERR(existingBuilder.build());
+  ASSERT_ERR(existingBuilder.visitFunctionStart(func));
   instrCounter = 0;
   seqCounter = 0;
   state = NotInSeq;
@@ -123,32 +112,23 @@ void ReconstructStringifyWalker::maybeBeginSeq() {
 
 void ReconstructStringifyWalker::transitionToInSeq() {
   Function* outlinedFunc = getModule()->getFunction(sequences[seqCounter].func);
-  if (auto val = outlinedBuilder.visitFunctionStart(outlinedFunc);
-      auto err = val.getErr()) {
-    Fatal() << err->msg;
-  }
+  ASSERT_ERR(outlinedBuilder.visitFunctionStart(outlinedFunc));
+
   // Add a local.get instruction for every parameter of the outlined function.
   Signature sig = outlinedFunc->type.getSignature();
   for (Index i = 0; i < sig.params.size(); i++) {
-    if (auto val = outlinedBuilder.makeLocalGet(i); auto err = val.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(outlinedBuilder.makeLocalGet(i));
   }
+
   // Make a call from the existing function to the outlined function. This call
   // will replace the instructions moved to the outlined function
-  if (auto val = existingBuilder.makeCall(outlinedFunc->name, false);
-      auto err = val.getErr()) {
-    Fatal() << err->msg;
-  }
+  ASSERT_ERR(existingBuilder.makeCall(outlinedFunc->name, false));
   DBG(std::cout << "\ncreated outlined fn: " << outlinedFunc->name);
 }
 
 void ReconstructStringifyWalker::transitionToInSkipSeq() {
   Function* outlinedFunc = getModule()->getFunction(sequences[seqCounter].func);
-  if (auto val = existingBuilder.makeCall(outlinedFunc->name, false);
-      auto err = val.getErr()) {
-    Fatal() << err->msg;
-  }
+  ASSERT_ERR(existingBuilder.makeCall(outlinedFunc->name, false));
   DBG(std::cout << "\n\nstarting to skip instructions "
                 << sequences[seqCounter].startIdx << " - "
                 << sequences[seqCounter].endIdx - 1 << " to "
@@ -163,9 +143,7 @@ void ReconstructStringifyWalker::maybeEndSeq() {
 
 void ReconstructStringifyWalker::transitionToNotInSeq() {
   if (state == InSeq) {
-    if (auto val = outlinedBuilder.visitEnd(); auto err = val.getErr()) {
-      Fatal() << err->msg;
-    }
+    ASSERT_ERR(outlinedBuilder.visitEnd());
     DBG(std::cout << "\n\nEnd of sequence to " << &outlinedBuilder);
   }
   // Completed a sequence so increase the seqCounter and reset the state
