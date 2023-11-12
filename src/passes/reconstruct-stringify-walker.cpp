@@ -84,7 +84,7 @@ ReconstructStringifyWalker::getCurrState() {
   // instructions are sent to the existing function.
   if (seqCounter < sequences.size() &&
       instrCounter >= sequences[seqCounter].startIdx &&
-      instrCounter <= sequences[seqCounter].endIdx) {
+      instrCounter < sequences[seqCounter].endIdx) {
     return getModule()->getFunction(sequences[seqCounter].func)->body
              ? InSkipSeq
              : InSeq;
