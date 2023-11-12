@@ -31,6 +31,17 @@ struct ReconstructStringifyWalker
                   << " outlinedBuilder: " << &outlinedBuilder);
   }
 
+  // As we reconstruct the IR during outlining, we need to know whether the
+  // expression being visited during walking is:
+  //
+  // - NotInSeq (meaning not part of a
+  // sequence that will be outlined into a new function)
+  // - InSeq (meaning part of
+  // a sequence that is being outlined into a new function)
+  // - InSkipSeq (meaning part of a sequence but has already been outlined into
+  // a new function)
+  //
+  // to know which IRBuilder to send the instruction.
   enum ReconstructState {
     NotInSeq = 0,
     InSeq = 1,
@@ -193,18 +204,34 @@ struct ReconstructStringifyWalker
 struct Outlining : public Pass {
   void run(Module* module) {
     HashStringifyWalker stringify;
+    // Walk the module and create a "string representation" of the program
     stringify.walkModule(module);
+    // Collect all of the substrings of the string representation that appear
+    // more than once in the program
     auto substrings =
       StringifyProcessor::repeatSubstrings(stringify.hashString);
     DBG(printHashString(stringify.hashString, stringify.exprs));
+    // Remove substrings that are substrings of longer repeat substrings
     substrings = StringifyProcessor::dedupe(substrings);
+    // Remove substrings with branch and return instructions until an analysis
+    // is performed to see if the intended destination of the branch is included
+    // in the substring to be outlined
     substrings =
       StringifyProcessor::filterBranches(substrings, stringify.exprs);
+    // Remove substrings with local.set instructions until Outlining is extended
+    // to support arranging for the written values to be returned from the
+    // outlined function and written back to the original locals
     substrings =
       StringifyProcessor::filterLocalSets(substrings, stringify.exprs);
+    // Remove substrings with local.get instructions until Outlining is extended
+    // to support passing the local values as additional arguments to the
+    // outlined function
     substrings =
       StringifyProcessor::filterLocalGets(substrings, stringify.exprs);
-
+    // Convert substrings to sequences that are more easily outlineable as we
+    // walk the functions in a module. Sequences contain indices that
+    // are relative to the enclosing function while substrings have indices
+    // relative to the entire program
     auto sequences = makeSequences(module, substrings, stringify);
     outline(module, sequences);
   }
@@ -233,7 +260,9 @@ struct Outlining : public Pass {
     std::unordered_map<Name, std::vector<wasm::OutliningSequence>>;
 
   // Converts an array of SuffixTree::RepeatedSubstring to a mapping of original
-  // functions to repeated sequences they contain.
+  // functions to repeated sequences they contain. These sequences are ordered
+  // by start index by construction because the substring's start indices are
+  // ordered.
   Sequences makeSequences(Module* module,
                           const Substrings& substrings,
                           const HashStringifyWalker& stringify) {
