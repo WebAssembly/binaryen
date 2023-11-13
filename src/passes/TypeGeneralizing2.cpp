@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "analysis/lattices/valtype.h"
 #include "ir/possible-contents.h"
 #include "ir/subtype-exprs.h"
 #include "ir/utils.h"
@@ -171,6 +172,10 @@ struct TypeGeneralizing
     // added here after we update it with new data.
     UniqueDeferredQueue<Location> toFlow;
 
+    // The analysis we do here is on types: each location will monotonically
+    // increase until all locations stabilize at the fixed point.
+    analysis::ValType typeLattice;
+
     // Main update logic for a location: updates the type for the location, and
     // prepares further flow.
     auto update = [&](Location loc, Type newType) {
@@ -197,16 +202,10 @@ struct TypeGeneralizing
       }
 
       // Update the type for the location, and flow onwards if we changed it.
+      // The update is a meet as we want the Greatest Lower Bound here: we start
+      // from unrefined values and the more we refine the "worse" things get.
       auto& locType = locTypes[loc];
-      auto old = locType;
-      if (old == Type::none) {
-        // This is the first time we see this location.
-        locType = newType;
-      } else {
-        // This is an update, which goes to the GLB.
-        locType = Type::getGreatestLowerBound(locType, newType);
-      }
-      if (locType != old) {
+      if (typeLattice.meet(locType, newType)) {
         toFlow.push(loc);
       }
     };
