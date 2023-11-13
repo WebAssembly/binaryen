@@ -28,9 +28,9 @@
   ;; CHECK-NEXT: )
   (func $a (result i32)
     (drop (i32.const 7))
-	(drop (i32.const 1))
-	(drop (i32.const 2))
-	(return (i32.const 4))
+    (drop (i32.const 1))
+    (drop (i32.const 2))
+    (return (i32.const 4))
   )
   ;; CHECK:      (func $b (result i32)
   ;; CHECK-NEXT:  (call $outline$5

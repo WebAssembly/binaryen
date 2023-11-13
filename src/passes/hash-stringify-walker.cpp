@@ -77,9 +77,9 @@ std::pair<uint32_t, Name>
 HashStringifyWalker::makeRelative(uint32_t idx) const {
   // The upper_bound function returns an iterator to the first value in the set
   // that is true for idx < value. We subtract one from this returned value to
-  // tell us which function actually contains the the idx
-  auto itr = *--idxToFuncName.upper_bound(idx);
-  return {idx - itr.first, itr.second};
+  // tell us which function actually contains the the idx.
+  auto [funcIdx, func] = *--idxToFuncName.upper_bound(idx);
+  return {idx - funcIdx, func};
 }
 
 std::vector<SuffixTree::RepeatedSubstring>
@@ -87,6 +87,7 @@ StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   SuffixTree st(hashString);
   std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
   for (auto substring : substrings) {
+    // Sort by increasing start index to ensure determinism.
     std::sort(substring.StartIndices.begin(),
               substring.StartIndices.end(),
               [](uint32_t a, uint32_t b) { return a < b; });

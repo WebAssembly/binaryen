@@ -53,13 +53,14 @@ namespace wasm {
  *
  * Of note:
  *   - The visits to if-True on line 4 and if-False on line 5 are deferred until
- *     after the rest of the siblings of the if expression on line 2 are visited
+ *     after the rest of the siblings of the if expression on line 2 are
+ *     visited.
  *   - The if-condition (i32.const 0) on line 3 is visited before the if
  *     expression on line 2. Similarly, the if-condition (i32.const 1) on line
  *     11 is visited before the if expression on line 10.
  *   - The add (line 7) binary operator's left and right children (lines 8 - 9)
  *     are visited first as they need to be on the stack before the add
- *     operation is executed
+ *     operation is executed.
  */
 
 template<typename SubType>
@@ -220,10 +221,10 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   // Expression or a separator to mark the end of control flow.
   std::vector<uint32_t> hashString;
   // A monotonic counter used to ensure that unique expressions in the
-  // module are assigned a unique value in the hashString
+  // module are assigned a unique value in the hashString.
   uint32_t nextVal = 0;
   // A monotonic counter used to ensure that each separator in the
-  // module is assigned a unique value in the hashString
+  // module is assigned a unique value in the hashString.
   int32_t nextSeparatorVal = -1;
   // Contains a mapping of expression pointer to value to ensure we
   // use the same value for matching expressions. A custom hasher and
@@ -236,13 +237,13 @@ struct HashStringifyWalker : public StringifyWalker<HashStringifyWalker> {
   void addUniqueSymbol(SeparatorReason reason);
   void visitExpression(Expression* curr);
   // Converts the idx from relative to the beginning of the program to
-  // relative to its enclosing function, and returns the name of its function
+  // relative to its enclosing function, and returns the name of its function.
   std::pair<uint32_t, Name> makeRelative(uint32_t idx) const;
 
 private:
-  // Contains the indices that mark the start of each function
+  // Contains the indices that mark the start of each function.
   std::set<uint32_t> funcIndices;
-  // Maps the start idx of each function to the function name
+  // Maps the start idx of each function to the function name.
   std::map<uint32_t, Name> idxToFuncName;
 };
 
@@ -263,7 +264,7 @@ struct StringifyProcessor {
   static Substrings dedupe(const Substrings& substrings);
   // Filter is the general purpose function backing subsequent filter functions.
   // It can be used directly, but generally prefer a wrapper function
-  // to encapsulate your condition and make it available for tests
+  // to encapsulate your condition and make it available for tests.
   static Substrings filter(const Substrings& substrings,
                            const std::vector<Expression*>& exprs,
                            std::function<bool(const Expression*)> condition);
