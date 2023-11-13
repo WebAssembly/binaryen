@@ -82,16 +82,31 @@ HashStringifyWalker::makeRelative(uint32_t idx) const {
   return {idx - funcIdx, func};
 }
 
+void printSubstrings(std::vector<SuffixTree::RepeatedSubstring> substrings) {
+  std::cout << "\n";
+  for (auto substring : substrings) {
+    std::cout << "[";
+    for (auto idx : substring.StartIndices) {
+      std::cout << idx << ", ";
+    }
+    std::cout << "]\n";
+  }
+}
+
 std::vector<SuffixTree::RepeatedSubstring>
 StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   SuffixTree st(hashString);
   std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+  std::cout << "\n\nsubstrings hot off the press";
+  printSubstrings(substrings);
   for (auto substring : substrings) {
     // Sort by increasing start index to ensure determinism.
     std::sort(substring.StartIndices.begin(),
               substring.StartIndices.end(),
               [](uint32_t a, uint32_t b) { return a < b; });
   }
+  std::cout << "\n\nsubstrings after sorting StarIndices less than";
+  printSubstrings(substrings);
   // Substrings are sorted so that the longest substring that repeats the most
   // times is ordered first. This is done so that we can assume the most
   // worthwhile substrings to outline come first.
@@ -106,6 +121,8 @@ StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
       }
       return aWeight > bWeight;
     });
+  std::cout << "\n\nsubstrings after sorting by length * size";
+  printSubstrings(substrings);
   return substrings;
 }
 
