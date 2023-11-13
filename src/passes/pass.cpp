@@ -311,6 +311,11 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
+// Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
+// when building Binaryen for Emscripten.
+#ifndef __EMSCRIPTEN__
+  registerPass("outlining", "outline instructions", createOutliningPass);
+#endif
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
