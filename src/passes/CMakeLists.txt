@@ -45,6 +45,7 @@ set(passes_SOURCES
   GlobalTypeOptimization.cpp
   GUFA.cpp
   hash-stringify-walker.cpp
+  Outlining.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
@@ -131,5 +132,6 @@ if(EMSCRIPTEN)
   list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker.h)
   list(REMOVE_ITEM passes_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/stringify-walker-impl.h)
   list(REMOVE_ITEM passes_SOURCES "hash-stringify-walker.cpp")
+  list(REMOVE_ITEM passes_SOURCES "Outlining.cpp")
 endif()
 add_library(passes OBJECT ${passes_SOURCES})

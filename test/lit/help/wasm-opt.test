@@ -317,6 +317,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --outlining                                   outline instructions
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-NEXT:

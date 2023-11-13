@@ -186,7 +186,8 @@ Result<Expression*> IRBuilder::build() {
 }
 
 Result<> IRBuilder::visit(Expression* curr) {
-  UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
+  auto val = UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
+  CHECK_ERR(val);
   if (auto* block = curr->dynCast<Block>()) {
     block->finalize(block->type);
   } else {
