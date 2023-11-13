@@ -139,7 +139,7 @@ struct ReconstructStringifyWalker
     if (currState != state) {
       switch (currState) {
         case NotInSeq:
-          return;
+          break;
         case InSeq:
           transitionToInSeq();
           break;
