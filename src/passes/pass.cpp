@@ -311,9 +311,9 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
-  if (createOutliningPass) {
-    registerPass("outlining", "outline instructions", createOutliningPass);
-  }
+#ifndef __EMSCRIPTEN__
+  registerPass("outlining", "outline instructions", createOutliningPass);
+#endif
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);

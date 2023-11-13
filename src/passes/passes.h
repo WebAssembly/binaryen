@@ -99,7 +99,9 @@ Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeCastsPass();
 Pass* createOptimizeForJSPass();
 Pass* createOptimizeStackIRPass();
-Pass* createOutliningPass() __attribute__((weak));
+#ifndef __EMSCRIPTEN__
+Pass* createOutliningPass();
+#endif
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
