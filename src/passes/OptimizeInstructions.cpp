@@ -2961,10 +2961,9 @@ private:
       return c;
     }
     Builder builder(*getModule());
-    return builder.makeBinary(
-      Abstract::getBinary(type, Abstract::Add),
-      walked,
-      builder.makeConst(toAdd));
+    return builder.makeBinary(Abstract::getBinary(type, Abstract::Add),
+                              walked,
+                              builder.makeConst(toAdd));
   }
 
   // Given an i64.wrap operation, see if we can remove it. If all the things
