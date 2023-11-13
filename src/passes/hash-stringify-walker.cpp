@@ -89,7 +89,7 @@ StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   for (auto substring : substrings) {
     std::sort(substring.StartIndices.begin(),
               substring.StartIndices.end(),
-              std::less<uint32_t>());
+              [](uint32_t a, uint32_t b) { return a < b; });
   }
   // Substrings are sorted so that the longest substring that repeats the most
   // times is ordered first. This is done so that we can assume the most
