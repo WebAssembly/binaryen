@@ -34,8 +34,7 @@ struct ReconstructStringifyWalker
   }
 
   // As we reconstruct the IR during outlining, we need to know what
-  // state we're in to determine which IRBuilder
-  // to send the instruction.
+  // state we're in to determine which IRBuilder to send the instruction to.
   enum ReconstructState {
     NotInSeq = 0,  // Will not be outlined into a new function.
     InSeq = 1,     // Currently being outlined into a new function.
@@ -48,7 +47,7 @@ struct ReconstructStringifyWalker
   // The list of sequences that will be outlined, contained in the function
   // currently being walked.
   std::vector<OutliningSequence> sequences;
-  // Tracks the OutliningSequence the walker is about to, or currently
+  // Tracks the OutliningSequence the walker is about to outline or is currently
   // outlining.
   uint32_t seqCounter = 0;
   // Counts the number of instructions visited since the function began,
@@ -58,8 +57,8 @@ struct ReconstructStringifyWalker
   // of instructions removed to be placed into an outlined function. The removed
   // sequences will be replaced by a call to the outlined function.
   IRBuilder existingBuilder;
-  // A reusable builder for constructing the outlined function that will contain
-  // repeat sequences found in the program.
+  // A reusable builder for constructing the outlined functions that will
+  // contain repeat sequences found in the program.
   IRBuilder outlinedBuilder;
 
   void addUniqueSymbol(SeparatorReason reason) {
@@ -253,11 +252,9 @@ struct Outlining : public Pass {
                            const SuffixTree::RepeatedSubstring& substring,
                            const std::vector<Expression*>& exprs) {
     auto startIdx = substring.StartIndices[0];
-    // The outlined functions can be named anything. Use the start index of
-    // the first time the outlined sequence was seen in the module to help
-    // with debugging later.
-    Name outlinedFunc = Names::getValidFunctionName(
-      *module, std::string("outline$") + std::to_string(startIdx));
+    // The outlined functions can be named anything.
+    Name outlinedFunc =
+      Names::getValidFunctionName(*module, std::string("outline$"));
     // Calculate the function signature for the outlined sequence.
     StackSignature sig;
     for (uint32_t exprIdx = startIdx; exprIdx < startIdx + substring.Length;

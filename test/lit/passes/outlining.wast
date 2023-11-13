@@ -19,7 +19,7 @@
   ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (func $a (result i32)
-  ;; CHECK-NEXT:  (call $outline$5
+  ;; CHECK-NEXT:  (call $outline$
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
@@ -33,7 +33,7 @@
     (return (i32.const 4))
   )
   ;; CHECK:      (func $b (result i32)
-  ;; CHECK-NEXT:  (call $outline$5
+  ;; CHECK-NEXT:  (call $outline$
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
@@ -50,7 +50,7 @@
 
 ;; Tests that outlining occurs properly when the sequence is at the end of a function.
 
-;; CHECK:      (func $outline$5 (param $0 i32)
+;; CHECK:      (func $outline$ (param $0 i32)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
@@ -70,7 +70,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $outline$7
+  ;; CHECK-NEXT:  (call $outline$
   ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -84,7 +84,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $outline$7
+  ;; CHECK-NEXT:  (call $outline$
   ;; CHECK-NEXT:   (i32.const 5)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -95,7 +95,7 @@
     (drop (i32.const 2))
   )
 )
-;; CHECK:      (func $outline$7 (param $0 i32)
+;; CHECK:      (func $outline$ (param $0 i32)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (local.get $0)
 ;; CHECK-NEXT:  )
