@@ -77,8 +77,8 @@ struct ReconstructStringifyWalker
       ASSERT_ERR(existingBuilder.visitEnd());
       DBG(desc = "End for ";);
     } else {
-      DBG(desc = "addUniqueSymbol for unhandled instruction ";);
-      WASM_UNREACHABLE("unimplemented instruction");
+      DBG(desc = "addUniqueSymbol for unimplemented control flow ";);
+      WASM_UNREACHABLE("unimplemented control flow");
     }
     DBG(printAddUniqueSymbol(desc););
   }
@@ -108,7 +108,6 @@ struct ReconstructStringifyWalker
                   << &existingBuilder);
   }
   ReconstructState getCurrState() {
-    instrCounter++;
     // We are either in a sequence or not in a sequence. If we are in a sequence
     // and have already created the body of the outlined function that will be
     // called, then we will skip instructions, otherwise we add the instructions
@@ -124,6 +123,7 @@ struct ReconstructStringifyWalker
     return NotInSeq;
   }
   void maybeBeginSeq() {
+    instrCounter++;
     auto currState = getCurrState();
     if (currState != state) {
       switch (currState) {
