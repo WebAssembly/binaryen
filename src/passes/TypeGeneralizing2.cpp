@@ -1,4 +1,4 @@
-//#define TYPEGEN_DEBUG 1
+#define TYPEGEN_DEBUG 1
 
 /*
  * Copyright 2023 WebAssembly Community Group participants
@@ -80,6 +80,7 @@ struct TypeGeneralizing
   }
 
   std::vector<LocalGet*> gets;
+  // TODO: flat like gets?
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // Hooks that are called by SubtypingDiscoverer.
@@ -127,8 +128,10 @@ struct TypeGeneralizing
   std::unordered_map<Location, std::vector<Location>> succs;
 
   void addExprSubtyping(Expression* sub, Expression* super) {
-    auto superLoc = getLocation(super);
-    auto subLoc = getLocation(sub);
+    connectSubToSuper(getLocation(sub), getLocation(super));
+  }
+
+  void connectSubToSuper(const Location& subLoc, const Location& superLoc) {
     preds[superLoc].push_back(subLoc);
     succs[subLoc].push_back(superLoc);
   }
@@ -175,6 +178,23 @@ struct TypeGeneralizing
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
+    // Finish setting up the graph: LocalLocals are "abstract" things that we
+    // did not walk, so set them up manually. Each LocalLocation is connected
+    // to the sets and gets for that index.
+    for (auto& [index, sets] : setsByIndex) {
+      addExprSubtyping(set->value, LocalLocation{func, index});
+    }
+    for (auto* get : gets) {
+      // This is not true subtyping here - really these have the same type - but
+      // this sets up the connections between them. This is important to prevent
+      // quadratic size of the graph: N gets for an index are connected to the
+      // single location for that index, which is connected to M sets for it,
+      // giving us N + M instead of N * M (which we'd get if we connected gets
+      // to sets directly).
+      connectSubToSuper(LocalLocation{func, get->index},
+                        ExpressionLocation{func, get});
+    }
+
     // The types of locations as we discover them. When the flow is complete,
     // these are the final types.
     std::unordered_map<Location, Type> locTypes;
@@ -208,19 +228,11 @@ struct TypeGeneralizing
       // We could instead set up connections in the graph from each local.get
       // to each corresponding local.set, but that would be of quadratic size.
       // Instead, it is simpler to canonicalize as we flow.
+      // TODO: can we assume all locs are already canonicalized? yes
       loc = canonicalizeLocation(loc);
 
-      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
-        // This is a local location. Changes here flow to the local.sets. (See
-        // comment above about quadratic size for why we do it like this.)
-        for (auto* set : setsByIndex[localLoc->index]) {
-          toFlow.push(getLocation(set->value));
-        }
-      } else {
-        // Flow using the graph generically.
-        for (auto dep : preds[loc]) {
-          toFlow.push(dep);
-        }
+      for (auto dep : preds[loc]) {
+        toFlow.push(dep);
       }
     };
 
@@ -229,11 +241,19 @@ struct TypeGeneralizing
     // there. If the type changed, then apply it and flow onwards.
     auto update = [&](Location loc) {
       loc = canonicalizeLocation(loc);
+#ifdef TYPEGEN_DEBUG
+      std::cout << "Updating \n";
+      dump(loc);
+#endif
       auto& locType = locTypes[loc];
 
       auto changed = false;
       auto& locSuccs = succs[loc];
       for (auto succ : locSuccs) {
+#ifdef TYPEGEN_DEBUG
+        std::cout << " with \n";
+        dump(succ);
+#endif
         assert(!(succ == loc)); // no loopey
         auto succType = locTypes[succ];
         if (!succType.isRef()) {
@@ -241,8 +261,6 @@ struct TypeGeneralizing
           continue;
         }
 #ifdef TYPEGEN_DEBUG
-        std::cout << "Updating \n";
-        dump(loc);
         std::cerr << "  old: " << locType << " new: " << succType << "\n";
 #endif
         if (typeLattice.meet(locType, succType)) {
