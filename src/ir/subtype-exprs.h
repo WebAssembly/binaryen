@@ -230,10 +230,23 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(curr->i31, Type(HeapType::i31, Nullable));
   }
   void visitCallRef(CallRef* curr) {
-    if (!curr->target->type.isSignature()) {
-      return;
+    // Even if we are unreachable, the target must be valid, and in particular
+    // it cannot be funcref - it must be a proper signature type. We could
+    // perhaps have |addStrictSubtype| to handle that, but for now just require
+    // that the target keep its type.
+    //
+    // Note that even if we are reachable, there is an interaction between the
+    // target and the the types of the parameters and results (the target's type
+    // must support the parameter and result types properly), and so it is not
+    // obvious how users would want to optimize here (if they are trying to
+    // generalize, should they generalize the target more or the parameters
+    // more? etc.), so we do the simple thing here for now of requiring the
+    // target type not generalize.
+    self()->noteSubtype(curr->target, curr->target->type);
+
+    if (curr->target->type.isSignature()) {
+      handleCall(curr, curr->target->type.getHeapType().getSignature());
     }
-    handleCall(curr, curr->target->type.getHeapType().getSignature());
   }
   void visitRefTest(RefTest* curr) {
     self()->noteCast(curr->ref, curr->castType);
