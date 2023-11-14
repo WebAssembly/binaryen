@@ -141,6 +141,9 @@
   (local $var1 i31ref)
   (local $var2 i31ref)
   (block $l (result i31ref)
+   ;; The call will be DCEd out, but this test and the implementation for `br`
+   ;; should be forward-compatible with a future where we do not have to run DCE
+   ;; before this pass.
    (call $helper-any_any
     ;; No requirements on $var1
     (local.get $var1)
@@ -166,6 +169,7 @@
  (func $br-no-sent
   (local $var i31ref)
   (block $l
+   ;; This call is DCEd out just like in the previous test.
    (call $helper-any_any
     ;; No requirements on $var
     (local.get $var)
