@@ -269,8 +269,41 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(curr->operands[i], fields[i].type);
     }
   }
-  void visitStructGet(StructGet* curr) {}
+
+  // For an expression that is a struct.get or set, this function receives the
+  // reference child and the index the struct.get or set operates on. It then
+  // adds the necessary constraints on that reference (specifically, that the
+  // type must provide a field at that index, which not all supers might).
+  void visitStructReference(Expression* ref, Index index) {
+    if (!ref->type.isStruct()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      self()->noteSubtype(ref, ref->type);
+      return;
+    }
+    auto curr = ref->type.getHeapType();
+    while (true) {
+      auto next = curr.getDeclaredSuperType();
+      if (!next) {
+        // There is no super. Stop, as curr is the one we want.
+        break;
+      }
+      auto last = curr;
+      curr = *next;
+      const auto& fields = curr.getStruct().fields;
+      if (index >= fields.size()) {
+        // There is no field at that index. Stop, as |last| is the one we want.
+        curr = last;
+        break;
+      }
+    }
+    self()->noteSubtype(ref, Type(curr, Nullable));
+  }
+
+  void visitStructGet(StructGet* curr) {
+    visitStructReference(curr->ref, curr->index);
+  }
   void visitStructSet(StructSet* curr) {
+    visitStructReference(curr->ref, curr->index);
     if (!curr->ref->type.isStruct()) {
       return;
     }
