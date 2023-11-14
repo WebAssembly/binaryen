@@ -286,6 +286,162 @@
       (drop
         (i32.const 10)
       )
+
+;; Tests that local.get instructions are correctly filtered from being outlined.
+;; CHECK:      (func $outline$
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $outline$_4 (param $0 i32)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.sub
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:    (i32.const 4)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
+
+  ;; CHECK:      (func $j (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $j (param i32) (result i32)
+    (drop (i32.const 7))
+    (drop (i32.add
+      (local.get 0)
+      (i32.const 1)))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+  ;; CHECK:      (func $k (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $k (param i32) (result i32)
+    (drop (i32.const 0))
+    (drop (i32.add
+      (local.get 0)
+      (i32.const 1)))
+    (drop (i32.const 2))
+    (return (i32.const 5))
+  )
+)
+
+;; Tests that local.set instructions are correctly filtered from being outlined.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (func $l (result i32)
+  ;; CHECK-NEXT:  (local $i i32)
+  ;; CHECK-NEXT:  (local.set $i
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $l (result i32)
+	(local $i i32)
+    (local.set $i
+      (i32.const 7))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+  ;; CHECK:      (func $m (result i32)
+  ;; CHECK-NEXT:  (local $i i32)
+  ;; CHECK-NEXT:  (local.set $i
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $m (result i32)
+	(local $i i32)
+    (local.set $i
+      (i32.const 7))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+)
+
+;; TODO: Add a test that makes sure we filter branches correctly
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $n
+  ;; CHECK-NEXT:  (block $label1
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $label1)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $label1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $n
+    (block $label1
+      (drop (i32.const 4))
+      (br $label1)
+      (drop (i32.const 2))
+      (drop (i32.const 4))
+      (br $label1)
     )
   )
 )
