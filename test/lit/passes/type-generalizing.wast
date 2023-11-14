@@ -4,38 +4,97 @@
 ;; RUN: foreach %s %t wasm-opt --experimental-type-generalizing2 -all -S -o - | filecheck %s --check-prefix=ALTER
 
 (module
+ ;; CHECK:      (type $void (func))
+ ;; ALTER:      (type $void (func))
+ (type $void (func))
 
- ;; CHECK:      (type $0 (func (result eqref)))
+ ;; CHECK:      (type $1 (func (result eqref)))
 
- ;; CHECK:      (type $1 (func))
+ ;; CHECK:      (type $2 (func (param eqref)))
 
- ;; CHECK:      (type $2 (func (param anyref)))
+ ;; CHECK:      (type $3 (func (param eqref anyref)))
 
- ;; CHECK:      (type $3 (func (param i31ref)))
+ ;; CHECK:      (type $4 (func (param anyref)))
 
- ;; CHECK:      (type $4 (func (param anyref eqref)))
+ ;; CHECK:      (type $5 (func (param i31ref)))
 
- ;; CHECK:      (type $5 (func (param eqref)))
+ ;; CHECK:      (type $6 (func (param anyref eqref)))
 
- ;; CHECK:      (func $unconstrained (type $1)
+ ;; CHECK:      (type $7 (func (result i32)))
+
+ ;; CHECK:      (type $8 (func (result nullref)))
+
+ ;; CHECK:      (type $9 (func (result structref)))
+
+ ;; CHECK:      (type $10 (func (result (ref eq))))
+
+ ;; CHECK:      (type $11 (func (param (ref noextern)) (result anyref)))
+
+ ;; CHECK:      (type $12 (func (param (ref noextern)) (result (ref any))))
+
+ ;; CHECK:      (type $13 (func (result externref)))
+
+ ;; CHECK:      (type $14 (func (result (ref extern))))
+
+ ;; CHECK:      (type $15 (func (param anyref anyref)))
+
+ ;; CHECK:      (global $global-eq (mut eqref) (ref.null none))
+ ;; ALTER:      (type $1 (func (result eqref)))
+
+ ;; ALTER:      (type $2 (func (param eqref)))
+
+ ;; ALTER:      (type $3 (func (param eqref anyref)))
+
+ ;; ALTER:      (type $4 (func (param anyref)))
+
+ ;; ALTER:      (type $5 (func (param i31ref)))
+
+ ;; ALTER:      (type $6 (func (param anyref eqref)))
+
+ ;; ALTER:      (type $7 (func (result i32)))
+
+ ;; ALTER:      (type $8 (func (result nullref)))
+
+ ;; ALTER:      (type $9 (func (result structref)))
+
+ ;; ALTER:      (type $10 (func (result (ref eq))))
+
+ ;; ALTER:      (type $11 (func (param (ref noextern)) (result anyref)))
+
+ ;; ALTER:      (type $12 (func (param (ref noextern)) (result (ref any))))
+
+ ;; ALTER:      (type $13 (func (result externref)))
+
+ ;; ALTER:      (type $14 (func (result (ref extern))))
+
+ ;; ALTER:      (type $15 (func (param anyref anyref)))
+
+ ;; ALTER:      (global $global-eq (mut eqref) (ref.null none))
+ (global $global-eq (mut eqref) (ref.null none))
+
+ ;; CHECK:      (global $global-i32 (mut i32) (i32.const 0))
+ ;; ALTER:      (global $global-i32 (mut i32) (i32.const 0))
+ (global $global-i32 (mut i32) (i32.const 0))
+
+ ;; CHECK:      (table $func-table 0 0 funcref)
+ ;; ALTER:      (table $func-table 0 0 funcref)
+ (table $func-table 0 0 funcref)
+
+ ;; CHECK:      (table $eq-table 0 0 eqref)
+ ;; ALTER:      (table $eq-table 0 0 eqref)
+ (table $eq-table 0 0 eqref)
+
+ ;; CHECK:      (elem declare func $ref-func)
+
+ ;; CHECK:      (func $unconstrained (type $void)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
  ;; CHECK-NEXT:  (local $z (anyref i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; ALTER:      (type $0 (func (result eqref)))
+ ;; ALTER:      (elem declare func $ref-func)
 
- ;; ALTER:      (type $1 (func))
-
- ;; ALTER:      (type $2 (func (param anyref)))
-
- ;; ALTER:      (type $3 (func (param i31ref)))
-
- ;; ALTER:      (type $4 (func (param anyref eqref)))
-
- ;; ALTER:      (type $5 (func (param eqref)))
-
- ;; ALTER:      (func $unconstrained (type $1)
+ ;; ALTER:      (func $unconstrained (type $void)
  ;; ALTER-NEXT:  (local $x i32)
  ;; ALTER-NEXT:  (local $y anyref)
  ;; ALTER-NEXT:  (local $z (anyref i32))
@@ -50,11 +109,11 @@
   (local $z (anyref i32))
  )
 
- ;; CHECK:      (func $implicit-return (type $0) (result eqref)
+ ;; CHECK:      (func $implicit-return (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.get $var)
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $implicit-return (type $0) (result eqref)
+ ;; ALTER:      (func $implicit-return (type $1) (result eqref)
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (local.get $var)
  ;; ALTER-NEXT: )
@@ -65,11 +124,11 @@
   (local.get $var)
  )
 
- ;; CHECK:      (func $implicit-return-unreachable (type $0) (result eqref)
+ ;; CHECK:      (func $implicit-return-unreachable (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $implicit-return-unreachable (type $0) (result eqref)
+ ;; ALTER:      (func $implicit-return-unreachable (type $1) (result eqref)
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (unreachable)
  ;; ALTER-NEXT:  (local.get $var)
@@ -82,7 +141,7 @@
   (local.get $var)
  )
 
- ;; CHECK:      (func $if (type $0) (result eqref)
+ ;; CHECK:      (func $if (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $x eqref)
  ;; CHECK-NEXT:  (local $y eqref)
  ;; CHECK-NEXT:  (if (result eqref)
@@ -91,7 +150,7 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $if (type $0) (result eqref)
+ ;; ALTER:      (func $if (type $1) (result eqref)
  ;; ALTER-NEXT:  (local $x eqref)
  ;; ALTER-NEXT:  (local $y eqref)
  ;; ALTER-NEXT:  (if (result eqref)
@@ -100,7 +159,7 @@
  ;; ALTER-NEXT:   (local.get $y)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
- (func $if (result (eqref))
+ (func $if (result eqref)
   (local $x i31ref)
   (local $y i31ref)
   (if (result i31ref)
@@ -112,7 +171,202 @@
   )
  )
 
- ;; CHECK:      (func $local-set (type $1)
+ ;; CHECK:      (func $loop (type $1) (result eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (loop $loop-in (result eqref)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $loop (type $1) (result eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (loop $loop-in (result eqref)
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $loop (result eqref)
+  (local $var i31ref)
+  ;; Require that typeof($var) <: eqref.
+  (loop (result i31ref)
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $br-sent (type $1) (result eqref)
+ ;; CHECK-NEXT:  (local $var1 anyref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (block $l (result eqref)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $var1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $l
+ ;; CHECK-NEXT:     (local.get $var2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $br-sent (type $1) (result eqref)
+ ;; ALTER-NEXT:  (local $var1 anyref)
+ ;; ALTER-NEXT:  (local $var2 eqref)
+ ;; ALTER-NEXT:  (block $l (result eqref)
+ ;; ALTER-NEXT:   (call $helper-any_any
+ ;; ALTER-NEXT:    (local.get $var1)
+ ;; ALTER-NEXT:    (br $l
+ ;; ALTER-NEXT:     (local.get $var2)
+ ;; ALTER-NEXT:    )
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $br-sent (result eqref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  (block $l (result i31ref)
+   (call $helper-any_any
+    ;; No requirements on $var1
+    (local.get $var1)
+    ;; Require that typeof($var2) <: eqref.
+    (br $l
+     (local.get $var2)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br-no-sent (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $var)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $l)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $br-no-sent (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (block $l
+ ;; ALTER-NEXT:   (call $helper-any_any
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:    (br $l)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $br-no-sent
+  (local $var i31ref)
+  (block $l
+   (call $helper-any_any
+    ;; No requirements on $var
+    (local.get $var)
+    (br $l)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_table-sent (type $3) (param $eq eqref) (param $any anyref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local.set $eq
+ ;; CHECK-NEXT:   (block $l1 (result eqref)
+ ;; CHECK-NEXT:    (local.set $any
+ ;; CHECK-NEXT:     (block $l2 (result eqref)
+ ;; CHECK-NEXT:      (br_table $l1 $l2
+ ;; CHECK-NEXT:       (local.get $var)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $br_table-sent (type $3) (param $eq eqref) (param $any anyref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local.set $eq
+ ;; ALTER-NEXT:   (block $l1 (result eqref)
+ ;; ALTER-NEXT:    (local.set $any
+ ;; ALTER-NEXT:     (block $l2 (result eqref)
+ ;; ALTER-NEXT:      (br_table $l1 $l2
+ ;; ALTER-NEXT:       (local.get $var)
+ ;; ALTER-NEXT:       (i32.const 0)
+ ;; ALTER-NEXT:      )
+ ;; ALTER-NEXT:     )
+ ;; ALTER-NEXT:    )
+ ;; ALTER-NEXT:    (unreachable)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $br_table-sent (param $eq eqref) (param $any anyref)
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (local.set $eq
+   (block $l1 (result i31ref)
+    ;; Require typeof($var) <: anyref.
+    (local.set $any
+     (block $l2 (result i31ref)
+      (br_table $l1 $l2
+       (local.get $var)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $br_table-sent-reversed (type $3) (param $eq eqref) (param $any anyref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local.set $any
+ ;; CHECK-NEXT:   (block $l1 (result eqref)
+ ;; CHECK-NEXT:    (local.set $eq
+ ;; CHECK-NEXT:     (block $l2 (result eqref)
+ ;; CHECK-NEXT:      (br_table $l1 $l2
+ ;; CHECK-NEXT:       (local.get $var)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $br_table-sent-reversed (type $3) (param $eq eqref) (param $any anyref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local.set $any
+ ;; ALTER-NEXT:   (block $l1 (result eqref)
+ ;; ALTER-NEXT:    (local.set $eq
+ ;; ALTER-NEXT:     (block $l2 (result eqref)
+ ;; ALTER-NEXT:      (br_table $l1 $l2
+ ;; ALTER-NEXT:       (local.get $var)
+ ;; ALTER-NEXT:       (i32.const 0)
+ ;; ALTER-NEXT:      )
+ ;; ALTER-NEXT:     )
+ ;; ALTER-NEXT:    )
+ ;; ALTER-NEXT:    (unreachable)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $br_table-sent-reversed (param $eq eqref) (param $any anyref)
+  ;; Same as above, but with the sources of requirements flipped.
+  (local $var i31ref)
+  ;; Require typeof($var) <: anyref.
+  (local.set $any
+   (block $l1 (result i31ref)
+    ;; Require typeof($var) <: eqref.
+    (local.set $eq
+     (block $l2 (result i31ref)
+      (br_table $l1 $l2
+       (local.get $var)
+       (i32.const 0)
+      )
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $local-set (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (ref.i31
@@ -120,7 +374,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-set (type $1)
+ ;; ALTER:      (func $local-set (type $void)
  ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (local.set $var
  ;; ALTER-NEXT:   (ref.i31
@@ -139,13 +393,13 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set (type $2) (param $dest anyref)
+ ;; CHECK:      (func $local-get-set (type $4) (param $dest anyref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (local.set $dest
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-get-set (type $2) (param $dest anyref)
+ ;; ALTER:      (func $local-get-set (type $4) (param $dest anyref)
  ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (local.set $dest
  ;; ALTER-NEXT:   (local.get $var)
@@ -160,11 +414,11 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-unreachable (type $3) (param $dest i31ref)
+ ;; CHECK:      (func $local-get-set-unreachable (type $5) (param $dest i31ref)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-get-set-unreachable (type $3) (param $dest i31ref)
+ ;; ALTER:      (func $local-get-set-unreachable (type $5) (param $dest i31ref)
  ;; ALTER-NEXT:  (local $var i31ref)
  ;; ALTER-NEXT:  (unreachable)
  ;; ALTER-NEXT:  (local.set $dest
@@ -186,7 +440,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-join (type $4) (param $dest1 anyref) (param $dest2 eqref)
+ ;; CHECK:      (func $local-get-set-join (type $6) (param $dest1 anyref) (param $dest2 eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (local.set $dest1
  ;; CHECK-NEXT:   (local.get $var)
@@ -195,7 +449,7 @@
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-get-set-join (type $4) (param $dest1 anyref) (param $dest2 eqref)
+ ;; ALTER:      (func $local-get-set-join (type $6) (param $dest1 anyref) (param $dest2 eqref)
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (local.set $dest1
  ;; ALTER-NEXT:   (local.get $var)
@@ -217,7 +471,7 @@
   )
  )
 
- ;; CHECK:      (func $local-get-set-chain (type $0) (result eqref)
+ ;; CHECK:      (func $local-get-set-chain (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $a eqref)
  ;; CHECK-NEXT:  (local $b eqref)
  ;; CHECK-NEXT:  (local $c eqref)
@@ -229,7 +483,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-get-set-chain (type $0) (result eqref)
+ ;; ALTER:      (func $local-get-set-chain (type $1) (result eqref)
  ;; ALTER-NEXT:  (local $a eqref)
  ;; ALTER-NEXT:  (local $b eqref)
  ;; ALTER-NEXT:  (local $c eqref)
@@ -257,7 +511,7 @@
   (local.get $c)
  )
 
- ;; CHECK:      (func $local-get-set-chain-out-of-order (type $0) (result eqref)
+ ;; CHECK:      (func $local-get-set-chain-out-of-order (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $a eqref)
  ;; CHECK-NEXT:  (local $b eqref)
  ;; CHECK-NEXT:  (local $c eqref)
@@ -269,7 +523,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $c)
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-get-set-chain-out-of-order (type $0) (result eqref)
+ ;; ALTER:      (func $local-get-set-chain-out-of-order (type $1) (result eqref)
  ;; ALTER-NEXT:  (local $a eqref)
  ;; ALTER-NEXT:  (local $b eqref)
  ;; ALTER-NEXT:  (local $c eqref)
@@ -298,7 +552,7 @@
   (local.get $c)
  )
 
- ;; CHECK:      (func $local-tee (type $5) (param $dest eqref)
+ ;; CHECK:      (func $local-tee (type $2) (param $dest eqref)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $dest
@@ -310,7 +564,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $local-tee (type $5) (param $dest eqref)
+ ;; ALTER:      (func $local-tee (type $2) (param $dest eqref)
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (drop
  ;; ALTER-NEXT:   (local.tee $dest
@@ -336,7 +590,7 @@
   )
  )
 
- ;; CHECK:      (func $i31-get (type $1)
+ ;; CHECK:      (func $i31-get (type $void)
  ;; CHECK-NEXT:  (local $nullable i31ref)
  ;; CHECK-NEXT:  (local $nonnullable i31ref)
  ;; CHECK-NEXT:  (local.set $nonnullable
@@ -355,7 +609,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $i31-get (type $1)
+ ;; ALTER:      (func $i31-get (type $void)
  ;; ALTER-NEXT:  (local $nullable i31ref)
  ;; ALTER-NEXT:  (local $nonnullable i31ref)
  ;; ALTER-NEXT:  (local.set $nonnullable
@@ -396,6 +650,1650 @@
    (i31.get_u
     (local.get $nonnullable)
    )
+  )
+ )
+
+ ;; CHECK:      (func $call (type $2) (param $x eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (call $call
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $call (type $2) (param $x eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (call $call
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call (param $x eqref)
+  ;; This will be optimized to eqref.
+  (local $var i31ref)
+  ;; Requires typeof($var) <: eqref.
+  (call $call
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $call_indirect (type $2) (param $x eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (call_indirect $func-table (type $2)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $call_indirect (type $2) (param $x eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (call_indirect $func-table (type $2)
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call_indirect (param $x eqref)
+  ;; This will be optimized to eqref.
+  (local $var i31ref)
+  ;; Requires typeof($var) <: eqref.
+  (call_indirect (param eqref)
+   (local.get $var)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $global-get (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local $i32 i32)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (global.get $global-eq)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $i32
+ ;; CHECK-NEXT:   (global.get $global-i32)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $global-get (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (local $i32 i32)
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (global.get $global-eq)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (local.set $i32
+ ;; ALTER-NEXT:   (global.get $global-i32)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $global-get
+  (local $var eqref)
+  (local $i32 i32)
+  ;; The global type will remain unchanged and the local will be generalized.
+  (local.set $var
+   (global.get $global-eq)
+  )
+  ;; Non-reference typed globals are ok, too.
+  (local.set $i32
+   (global.get $global-i32)
+  )
+ )
+
+ ;; CHECK:      (func $global-set (type $void)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local $i32 i32)
+ ;; CHECK-NEXT:  (global.set $global-eq
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global-i32
+ ;; CHECK-NEXT:   (local.get $i32)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $global-set (type $void)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local $i32 i32)
+ ;; ALTER-NEXT:  (global.set $global-eq
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (global.set $global-i32
+ ;; ALTER-NEXT:   (local.get $i32)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $global-set
+  (local $var i31ref)
+  (local $i32 i32)
+  ;; Requires typeof($var) <: eqref.
+  (global.set $global-eq
+   (local.get $var)
+  )
+  ;; Non-reference typed globals are ok, too.
+  (global.set $global-i32
+   (local.get $i32)
+  )
+ )
+
+ ;; CHECK:      (func $select (type $1) (result eqref)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (select (result eqref)
+ ;; CHECK-NEXT:   (local.get $var1)
+ ;; CHECK-NEXT:   (local.get $var2)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $select (type $1) (result eqref)
+ ;; ALTER-NEXT:  (local $var1 eqref)
+ ;; ALTER-NEXT:  (local $var2 eqref)
+ ;; ALTER-NEXT:  (select (result eqref)
+ ;; ALTER-NEXT:   (local.get $var1)
+ ;; ALTER-NEXT:   (local.get $var2)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $select (result eqref)
+  ;; Both of these will be generalized to eqref.
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  ;; Requires typeof($var1) <: eqref and typeof($var2) <: eqref.
+  (select (result i31ref)
+   (local.get $var1)
+   (local.get $var2)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $ref-null (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-null (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (ref.null none)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-null
+  (local $var i31ref)
+  ;; No constraints on $var.
+  (local.set $var
+   (ref.null none)
+  )
+ )
+
+ ;; CHECK:      (func $ref-is-null (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.is_null
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-is-null (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (ref.is_null
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-is-null
+  (local $var i31ref)
+  (drop
+   ;; No constraints on $var.
+   (ref.is_null
+    (local.get $var)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref-func (type $void)
+ ;; CHECK-NEXT:  (local $var funcref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-func (type $void)
+ ;; ALTER-NEXT:  (local $var funcref)
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (ref.func $ref-func)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-func
+  (local $var (ref null $void))
+  ;; No constraints on $var.
+  (local.set $var
+   (ref.func $ref-func)
+  )
+ )
+
+ ;; CHECK:      (func $ref-eq (type $void)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 eqref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $var1)
+ ;; CHECK-NEXT:    (local.get $var2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-eq (type $void)
+ ;; ALTER-NEXT:  (local $var1 eqref)
+ ;; ALTER-NEXT:  (local $var2 eqref)
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (ref.eq
+ ;; ALTER-NEXT:    (local.get $var1)
+ ;; ALTER-NEXT:    (local.get $var2)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-eq
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  (drop
+   ;; Require that typeof($var1) <: eqref and that typeof($var2) <: eqref.
+   (ref.eq
+    (local.get $var1)
+    (local.get $var2)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $table-get (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (table.get $eq-table
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $table-get (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (table.get $eq-table
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $table-get
+  (local $var eqref)
+  ;; No constraints on $var.
+  (local.set $var
+   (table.get $eq-table
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $table-set (type $void)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (table.set $eq-table
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $table-set (type $void)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (table.set $eq-table
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $table-set
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (table.set $eq-table
+   (i32.const 0)
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $table-fill (type $void)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (table.fill $eq-table
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $table-fill (type $void)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (table.fill $eq-table
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $table-fill
+  (local $var i31ref)
+  ;; Require typeof($var) <: eqref.
+  (table.fill $eq-table
+   (i32.const 0)
+   (local.get $var)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $ref-test (type $7) (result i32)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (ref.test nullref
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-test (type $7) (result i32)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (ref.test nullref
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-test (result i32)
+  (local $var i31ref)
+  ;; No constraint on $var.
+  (ref.test structref
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast (type $void)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast i31ref
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-cast (type $void)
+ ;; ALTER-NEXT:  (local $var anyref)
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (ref.cast i31ref
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-cast
+  (local $var i31ref)
+  ;; No constraint on $var.
+  (drop
+   (ref.cast i31ref
+    (local.get $var)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-limited (type $1) (result eqref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (ref.cast i31ref
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-cast-limited (type $1) (result eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (ref.cast i31ref
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-cast-limited (result eqref)
+  (local $var i31ref)
+  ;; Require that typeof($var) <: eqref so the cast can still be elimintated.
+  (ref.cast i31ref
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-more-limited (type $8) (result nullref)
+ ;; CHECK-NEXT:  (local $var i31ref)
+ ;; CHECK-NEXT:  (ref.cast nullref
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-cast-more-limited (type $8) (result nullref)
+ ;; ALTER-NEXT:  (local $var nullref)
+ ;; ALTER-NEXT:  (ref.cast nullref
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-cast-more-limited (result nullref)
+  ;; XXX waka different
+  (local $var i31ref)
+  ;; Require that typeof($var) <: i31ref for montonicity, even though it would
+  ;; be nice if we could require nothing of it since we will not be able to
+  ;; eliminate this cast.
+  (ref.cast nullref
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $ref-cast-lub (type $9) (result structref)
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (ref.cast nullref
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-cast-lub (type $9) (result structref)
+ ;; ALTER-NEXT:  (local $var structref)
+ ;; ALTER-NEXT:  (ref.cast nullref
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-cast-lub (result structref)
+  ;; XXX waka different
+  (local $var i31ref)
+  ;; Require that typeof($var) <: LUB(structref, i31ref).
+  (ref.cast structref
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $ref-as-non-null (type $10) (result (ref eq))
+ ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (ref.as_non_null
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $ref-as-non-null (type $10) (result (ref eq))
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (ref.as_non_null
+ ;; ALTER-NEXT:   (ref.as_non_null
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-as-non-null (result (ref eq))
+  (local $var i31ref)
+  ;; Require that typeof($var) <: eqref.
+  (ref.as_non_null
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $any-convert-extern-nullable (type $11) (param $x (ref noextern)) (result anyref)
+ ;; CHECK-NEXT:  (local $var externref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $any-convert-extern-nullable (type $11) (param $x (ref noextern)) (result anyref)
+ ;; ALTER-NEXT:  (local $var (ref extern))
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (local.get $x)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (extern.internalize
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $any-convert-extern-nullable (param $x (ref noextern)) (result anyref)
+  ;; XXX waka different
+  (local $var (ref noextern))
+  (local.set $var
+   (local.get $x)
+  )
+  ;; Require that typeof($var) <: externref.
+  (extern.internalize
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $any-convert-extern-non-nullable (type $12) (param $x (ref noextern)) (result (ref any))
+ ;; CHECK-NEXT:  (local $var (ref extern))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $any-convert-extern-non-nullable (type $12) (param $x (ref noextern)) (result (ref any))
+ ;; ALTER-NEXT:  (local $var (ref extern))
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (local.get $x)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (extern.internalize
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $any-convert-extern-non-nullable (param $x (ref noextern)) (result (ref any))
+  (local $var (ref noextern))
+  (local.set $var
+   (local.get $x)
+  )
+  ;; Require that typeof($var) <: (ref extern).
+  (extern.internalize
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $extern-convert-any-nullable (type $13) (result externref)
+ ;; CHECK-NEXT:  (local $var anyref)
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.i31
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $extern-convert-any-nullable (type $13) (result externref)
+ ;; ALTER-NEXT:  (local $var (ref any))
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (ref.i31
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (extern.externalize
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $extern-convert-any-nullable (result externref)
+  ;; XXX waka different
+  (local $var (ref i31))
+  (local.set $var
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  ;; Require that typeof($var) <: anyref.
+  (extern.externalize
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $extern-convert-any-non-nullable (type $14) (result (ref extern))
+ ;; CHECK-NEXT:  (local $var (ref any))
+ ;; CHECK-NEXT:  (local.set $var
+ ;; CHECK-NEXT:   (ref.i31
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $extern-convert-any-non-nullable (type $14) (result (ref extern))
+ ;; ALTER-NEXT:  (local $var (ref any))
+ ;; ALTER-NEXT:  (local.set $var
+ ;; ALTER-NEXT:   (ref.i31
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT:  (extern.externalize
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $extern-convert-any-non-nullable (result (ref extern))
+  (local $var (ref i31))
+  (local.set $var
+   (i31.new
+    (i32.const 0)
+   )
+  )
+  ;; Require that typeof($var) <: anyref.
+  (extern.externalize
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $helper-any_any (type $15) (param $0 anyref) (param $1 anyref)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $helper-any_any (type $15) (param $0 anyref) (param $1 anyref)
+ ;; ALTER-NEXT:  (unreachable)
+ ;; ALTER-NEXT: )
+ (func $helper-any_any (param anyref anyref)
+  (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (type $top (sub (func (param i31ref) (result anyref))))
+ ;; ALTER:      (type $top (sub (func (param i31ref) (result anyref))))
+ (type $top (sub (func (param i31ref) (result anyref))))
+ ;; CHECK:      (type $mid (sub $top (func (param eqref) (result anyref))))
+ ;; ALTER:      (type $mid (sub $top (func (param eqref) (result anyref))))
+ (type $mid (sub $top (func (param eqref) (result anyref))))
+ ;; CHECK:      (type $2 (func (result eqref)))
+
+ ;; CHECK:      (type $bot (sub $mid (func (param eqref) (result eqref))))
+ ;; ALTER:      (type $bot (sub $mid (func (param eqref) (result eqref))))
+ (type $bot (sub $mid (func (param eqref) (result eqref))))
+
+ ;; CHECK:      (type $4 (func (result anyref)))
+
+ ;; CHECK:      (func $call-ref-params-limited (type $4) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $mid))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (call_ref $mid
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (type $3 (func (result eqref)))
+
+ ;; ALTER:      (type $4 (func (result anyref)))
+
+ ;; ALTER:      (func $call-ref-params-limited (type $4) (result anyref)
+ ;; ALTER-NEXT:  (local $f (ref null $bot))
+ ;; ALTER-NEXT:  (local $arg eqref)
+ ;; ALTER-NEXT:  (call_ref $bot
+ ;; ALTER-NEXT:   (local.get $arg)
+ ;; ALTER-NEXT:   (local.get $f)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call-ref-params-limited (result anyref)
+  ;; XXX waka different
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Require that typeof($f) <: $mid and that typeof($arg) <: eqref. In
+  ;; principle we could generalize $f up to $top, but then we wouldn't be able
+  ;; to generalize $arg at all.
+  (call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-results-limited (type $2) (result eqref)
+ ;; CHECK-NEXT:  (local $f (ref null $bot))
+ ;; CHECK-NEXT:  (local $arg eqref)
+ ;; CHECK-NEXT:  (call_ref $bot
+ ;; CHECK-NEXT:   (local.get $arg)
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $call-ref-results-limited (type $3) (result eqref)
+ ;; ALTER-NEXT:  (local $f (ref null $bot))
+ ;; ALTER-NEXT:  (local $arg eqref)
+ ;; ALTER-NEXT:  (call_ref $bot
+ ;; ALTER-NEXT:   (local.get $arg)
+ ;; ALTER-NEXT:   (local.get $f)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call-ref-results-limited (result eqref)
+  (local $f (ref null $bot))
+  (local $arg i31ref)
+  ;; Require that typeof($f) <: $bot because anything better would require a
+  ;; cast on the output. Also require that typeof($arg) <: eqref.
+  (call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+
+ ;; CHECK:      (func $call-ref-impossible (type $2) (result eqref)
+ ;; CHECK-NEXT:  (local $f nullfuncref)
+ ;; CHECK-NEXT:  (local $arg anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $arg)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $f)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $call-ref-impossible (type $3) (result eqref)
+ ;; ALTER-NEXT:  (local $f nullfuncref)
+ ;; ALTER-NEXT:  (local $arg anyref)
+ ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $arg)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $f)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (unreachable)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call-ref-impossible (result eqref)
+  (local $f nullfuncref)
+  (local $arg i31ref)
+  ;; Require that typeof($f) <: nullref, but do not constrain $arg because the
+  ;; call_ref will not be reached.
+  (call_ref $bot
+   (local.get $arg)
+   (local.get $f)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $top (sub (func (result anyref))))
+ ;; ALTER:      (type $top (sub (func (result anyref))))
+ (type $top (sub (func (result anyref))))
+ ;; ALTER:      (type $mid (sub $top (func (result eqref))))
+ (type $mid (sub $top (func (result eqref))))
+ ;; ALTER:      (type $bot (sub $mid (func (result i31ref))))
+ (type $bot (sub $mid (func (result i31ref))))
+
+ ;; CHECK:      (type $1 (func (result anyref)))
+
+ ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
+ ;; CHECK-NEXT:  (local $f (ref null $top))
+ ;; CHECK-NEXT:  (call_ref $top
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (type $3 (func (result anyref)))
+
+ ;; ALTER:      (func $call-ref-no-limit (type $3) (result anyref)
+ ;; ALTER-NEXT:  (local $f (ref null $bot))
+ ;; ALTER-NEXT:  (call_ref $bot
+ ;; ALTER-NEXT:   (local.get $f)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $call-ref-no-limit (result anyref)
+  ;; XXX waka different
+  (local $f (ref null $bot))
+  ;; Require that typeof($f) <: $top because that does not limit us in any way
+  ;; and we cannot possibly do better.
+  (call_ref $bot
+   (local.get $f)
+  )
+ )
+)
+
+(module
+
+ ;; CHECK:      (type $0 (func (result anyref)))
+
+ ;; CHECK:      (type $top (sub (struct (field (mut eqref)) (field eqref))))
+ ;; ALTER:      (type $0 (func (result anyref)))
+
+ ;; ALTER:      (type $top (sub (struct (field (mut eqref)) (field eqref))))
+ (type $top (sub      (struct (field (mut eqref)) (field eqref))))
+ ;; CHECK:      (type $mid (sub $top (struct (field (mut eqref)) (field eqref) (field (mut eqref)))))
+ ;; ALTER:      (type $mid (sub $top (struct (field (mut eqref)) (field eqref) (field (mut eqref)))))
+ (type $mid (sub $top (struct (field (mut eqref)) (field eqref)  (field (mut eqref)))))
+ ;; CHECK:      (type $3 (func))
+
+ ;; CHECK:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+ ;; ALTER:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+ (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+
+ ;; CHECK:      (type $struct (struct (field eqref) (field anyref)))
+ ;; ALTER:      (type $4 (func))
+
+ ;; ALTER:      (type $struct (struct (field eqref) (field anyref)))
+ (type $struct (struct (field eqref) (field anyref)))
+
+ ;; CHECK:      (type $6 (func (result i31ref)))
+
+ ;; CHECK:      (func $struct-new (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var1 eqref)
+ ;; CHECK-NEXT:  (local $var2 anyref)
+ ;; CHECK-NEXT:  (struct.new $struct
+ ;; CHECK-NEXT:   (local.get $var1)
+ ;; CHECK-NEXT:   (local.get $var2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (type $6 (func (result i31ref)))
+
+ ;; ALTER:      (func $struct-new (type $0) (result anyref)
+ ;; ALTER-NEXT:  (local $var1 eqref)
+ ;; ALTER-NEXT:  (local $var2 anyref)
+ ;; ALTER-NEXT:  (struct.new $struct
+ ;; ALTER-NEXT:   (local.get $var1)
+ ;; ALTER-NEXT:   (local.get $var2)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-new (result anyref)
+  (local $var1 i31ref)
+  (local $var2 i31ref)
+  ;; Require that typeof($var1) <: eqref and that typeof($var2) <: anyref.
+  (struct.new $struct
+   (local.get $var1)
+   (local.get $var2)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $top))
+ ;; CHECK-NEXT:  (struct.get $top 1
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-get (type $0) (result anyref)
+ ;; ALTER-NEXT:  (local $var (ref null $bot))
+ ;; ALTER-NEXT:  (struct.get $bot 1
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-get (result anyref)
+  ;; XXX waka different
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $top) because it has a field of the
+  ;; right type at index 1.
+  (struct.get $bot 1
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-type (type $6) (result i31ref)
+ ;; CHECK-NEXT:  (local $var (ref null $bot))
+ ;; CHECK-NEXT:  (struct.get $bot 1
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-get-type (type $6) (result i31ref)
+ ;; ALTER-NEXT:  (local $var (ref null $bot))
+ ;; ALTER-NEXT:  (struct.get $bot 1
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-get-type (result i31ref)
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $bot) because further supertypes do
+  ;; not satisfy the requirement on the result type.
+  (struct.get $bot 1
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-index (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var (ref null $mid))
+ ;; CHECK-NEXT:  (struct.get $mid 2
+ ;; CHECK-NEXT:   (local.get $var)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-get-index (type $0) (result anyref)
+ ;; ALTER-NEXT:  (local $var (ref null $mid))
+ ;; ALTER-NEXT:  (struct.get $mid 2
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-get-index (result anyref)
+  (local $var (ref null $bot))
+  ;; Require that typeof($var) <: (ref null $mid) because further supertypes do
+  ;; not have a field at index 2.
+  (struct.get $bot 2
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-get-impossible (type $0) (result anyref)
+ ;; CHECK-NEXT:  (local $var nullref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $var)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-get-impossible (type $0) (result anyref)
+ ;; ALTER-NEXT:  (local $var nullref)
+ ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $var)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (unreachable)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-get-impossible (result anyref)
+  (local $var nullref)
+  (struct.get $bot 0
+   (local.get $var)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set (type $3)
+ ;; CHECK-NEXT:  (local $ref (ref null $top))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (struct.set $top 0
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-set (type $4)
+ ;; ALTER-NEXT:  (local $ref (ref null $top))
+ ;; ALTER-NEXT:  (local $val eqref)
+ ;; ALTER-NEXT:  (struct.set $top 0
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-set
+  (local $ref (ref null $bot))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $top) because it has a field at
+  ;; index 0 and require that typeof($val) <: eqref because that is the type of
+  ;; the field.
+  (struct.set $bot 0
+   (local.get $ref)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set-index (type $3)
+ ;; CHECK-NEXT:  (local $ref (ref null $mid))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (struct.set $mid 2
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-set-index (type $4)
+ ;; ALTER-NEXT:  (local $ref (ref null $mid))
+ ;; ALTER-NEXT:  (local $val eqref)
+ ;; ALTER-NEXT:  (struct.set $mid 2
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-set-index
+  (local $ref (ref null $bot))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $mid) because further supertypes do
+  ;; not have a field at index 2 and require that typeof($val) <: eqref because
+  ;; that is the type of the field.
+  (struct.set $bot 2
+   (local.get $ref)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $struct-set-impossible (type $3)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $val)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $struct-set-impossible (type $4)
+ ;; ALTER-NEXT:  (local $ref nullref)
+ ;; ALTER-NEXT:  (local $val anyref)
+ ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $ref)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $val)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (unreachable)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $struct-set-impossible
+  (local $ref nullref)
+  (local $val nullref)
+  ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  (struct.set $bot 0
+   (local.get $ref)
+   (local.get $val)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $super-mut (sub (array (mut eqref))))
+
+ ;; CHECK:      (type $super (sub (array eqref)))
+ ;; ALTER:      (type $0 (func))
+
+ ;; ALTER:      (type $super-mut (sub (array (mut eqref))))
+
+ ;; ALTER:      (type $super (sub (array eqref)))
+ (type $super (sub (array (field eqref))))
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $mut-bytes (sub (array (mut i8))))
+
+ ;; CHECK:      (type $bytes (sub (array i8)))
+
+ ;; CHECK:      (type $sub (sub $super (array i31ref)))
+ ;; ALTER:      (type $sub (sub $super (array i31ref)))
+ (type $sub (sub $super (array (field i31ref))))
+
+ (type $super-mut (sub (array (field (mut eqref)))))
+ (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
+
+ ;; ALTER:      (type $4 (func (result anyref)))
+
+ ;; ALTER:      (type $mut-bytes (sub (array (mut i8))))
+
+ ;; ALTER:      (type $bytes (sub (array i8)))
+ (type $bytes (sub (array i8)))
+ (type $sub-bytes (sub $bytes (array i8)))
+
+ (type $mut-bytes (sub (array (mut i8))))
+ (type $sub-mut-bytes (sub $mut-bytes (array (mut i8))))
+
+ ;; CHECK:      (data $data "")
+
+ ;; CHECK:      (elem $elem i31ref)
+ ;; ALTER:      (data $data "")
+
+ ;; ALTER:      (elem $elem i31ref)
+ (elem $elem i31ref)
+
+ (data $data "")
+
+ ;; CHECK:      (func $array-new (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (array.new $super
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-new (type $4) (result anyref)
+ ;; ALTER-NEXT:  (local $val eqref)
+ ;; ALTER-NEXT:  (array.new $super
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-new (result anyref)
+  (local $val i31ref)
+  ;; Require that typeof($val) <: eqref.
+  (array.new $super
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-new-data (type $0)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local.set $val
+ ;; CHECK-NEXT:   (array.new_data $bytes $data
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-new-data (type $0)
+ ;; ALTER-NEXT:  (local $val anyref)
+ ;; ALTER-NEXT:  (local.set $val
+ ;; ALTER-NEXT:   (array.new_data $bytes $data
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-new-data
+  (local $val arrayref)
+  ;; No constraint on $val.
+  (local.set $val
+   (array.new_data $bytes $data
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-new-elem (type $0)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local.set $val
+ ;; CHECK-NEXT:   (array.new_elem $sub $elem
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-new-elem (type $0)
+ ;; ALTER-NEXT:  (local $val anyref)
+ ;; ALTER-NEXT:  (local.set $val
+ ;; ALTER-NEXT:   (array.new_elem $sub $elem
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-new-elem
+  (local $val arrayref)
+  ;; No constraint on $val.
+  (local.set $val
+   (array.new_elem $sub $elem
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-new-fixed (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $val1 eqref)
+ ;; CHECK-NEXT:  (local $val2 eqref)
+ ;; CHECK-NEXT:  (array.new_fixed $super 2
+ ;; CHECK-NEXT:   (local.get $val1)
+ ;; CHECK-NEXT:   (local.get $val2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-new-fixed (type $4) (result anyref)
+ ;; ALTER-NEXT:  (local $val1 eqref)
+ ;; ALTER-NEXT:  (local $val2 eqref)
+ ;; ALTER-NEXT:  (array.new_fixed $super 2
+ ;; ALTER-NEXT:   (local.get $val1)
+ ;; ALTER-NEXT:   (local.get $val2)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-new-fixed (result anyref)
+  (local $val1 i31ref)
+  (local $val2 i31ref)
+  ;; Require that typeof($val1) <: eqref and that typeof($val2) <: eqref.
+  (array.new_fixed $super 2
+   (local.get $val1)
+   (local.get $val2)
+  )
+ )
+
+ ;; CHECK:      (func $array-get (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $val (ref null $super))
+ ;; CHECK-NEXT:  (array.get $super
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-get (type $4) (result anyref)
+ ;; ALTER-NEXT:  (local $val (ref null $sub))
+ ;; ALTER-NEXT:  (array.get $sub
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-get (result anyref)
+  ;; XXX waka different
+  (local $val (ref null $sub))
+  ;; Require that typeof($val) <: (ref null $super).
+  (array.get $sub
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-get-impossible (type $3) (result anyref)
+ ;; CHECK-NEXT:  (local $val nullref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $val)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-get-impossible (type $4) (result anyref)
+ ;; ALTER-NEXT:  (local $val nullref)
+ ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $val)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (unreachable)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-get-impossible (result anyref)
+  (local $val nullref)
+  ;; Require that typeof($val) <: nullref.
+  (array.get $sub
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-set (type $0)
+ ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (array.set $super-mut
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-set (type $0)
+ ;; ALTER-NEXT:  (local $ref (ref null $super-mut))
+ ;; ALTER-NEXT:  (local $val eqref)
+ ;; ALTER-NEXT:  (array.set $super-mut
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-set
+  (local $ref (ref null $sub-mut))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $super-mut) and that typeof($val) <:
+  ;; eqref.
+  (array.set $sub-mut
+   (local.get $ref)
+   (i32.const 0)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $array-set-impossible (type $0)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $val)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-set-impossible (type $0)
+ ;; ALTER-NEXT:  (local $ref nullref)
+ ;; ALTER-NEXT:  (local $val anyref)
+ ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $ref)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (i32.const 0)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (drop
+ ;; ALTER-NEXT:    (local.get $val)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (unreachable)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-set-impossible
+  (local $ref nullref)
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: nullref and do not constrain $ref.
+  (array.set $sub-mut
+   (local.get $ref)
+   (i32.const 0)
+   (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $array-len (type $0)
+ ;; CHECK-NEXT:  (local $ref arrayref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.len
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-len (type $0)
+ ;; ALTER-NEXT:  (local $ref (ref null $super))
+ ;; ALTER-NEXT:  (drop
+ ;; ALTER-NEXT:   (array.len
+ ;; ALTER-NEXT:    (local.get $ref)
+ ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-len
+  ;; XXX waka different
+  (local $ref (ref null $super))
+  (drop
+   ;; Require that typeof($ref) <: arrayref.
+   (array.len
+    (local.get $ref)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-ref (type $0)
+ ;; CHECK-NEXT:  (local $dest (ref null $super-mut))
+ ;; CHECK-NEXT:  (local $src (ref null $super))
+ ;; CHECK-NEXT:  (array.copy $super-mut $super
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-copy-ref (type $0)
+ ;; ALTER-NEXT:  (local $dest (ref null $super-mut))
+ ;; ALTER-NEXT:  (local $src (ref null $sub))
+ ;; ALTER-NEXT:  (array.copy $super-mut $sub
+ ;; ALTER-NEXT:   (local.get $dest)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $src)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-copy-ref
+  (local $dest (ref null $sub-mut))
+  (local $src (ref null $sub))
+  ;; Require that typeof($dest) <: $super-mut and that typeof($src) <: $super.
+  (array.copy $sub-mut $sub
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-i8 (type $0)
+ ;; CHECK-NEXT:  (local $dest (ref null $mut-bytes))
+ ;; CHECK-NEXT:  (local $src (ref null $bytes))
+ ;; CHECK-NEXT:  (array.copy $mut-bytes $bytes
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-copy-i8 (type $0)
+ ;; ALTER-NEXT:  (local $dest (ref null $mut-bytes))
+ ;; ALTER-NEXT:  (local $src (ref null $bytes))
+ ;; ALTER-NEXT:  (array.copy $mut-bytes $bytes
+ ;; ALTER-NEXT:   (local.get $dest)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $src)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-copy-i8
+  ;; Same as above, but now the copied element type is not a ref.
+  (local $dest (ref null $sub-mut-bytes))
+  (local $src (ref null $sub-bytes))
+  ;; Require that typeof($dest) <: $mut-bytes and that typeof($src) <: $bytes.
+  (array.copy $sub-mut-bytes $sub-bytes
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-impossible-dest (type $0)
+ ;; CHECK-NEXT:  (local $dest nullref)
+ ;; CHECK-NEXT:  (local $src anyref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-copy-impossible-dest (type $0)
+ ;; ALTER-NEXT:  (local $dest nullref)
+ ;; ALTER-NEXT:  (local $src (ref null $sub))
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $dest)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $src)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-copy-impossible-dest
+  ;; XXX waka different
+  ;; Same as above, but now the dest is bottom.
+  (local $dest nullref)
+  (local $src (ref null $sub))
+  ;; Require that typeof($dest) <: nullref but do not constrain $src.
+  (array.copy $sub-mut $sub
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-impossible-src (type $0)
+ ;; CHECK-NEXT:  (local $dest anyref)
+ ;; CHECK-NEXT:  (local $src nullref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-copy-impossible-src (type $0)
+ ;; ALTER-NEXT:  (local $dest (ref null $super-mut))
+ ;; ALTER-NEXT:  (local $src nullref)
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $dest)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $src)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-copy-impossible-src
+  ;; XXX waka different
+  ;; Same as above, but now the src is bottom instead.
+  (local $dest (ref null $sub-mut))
+  (local $src nullref)
+  ;; Require that typeof($src) <: nullref but do not constrain $dest.
+  (array.copy $sub-mut $sub
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-copy-impossible-both (type $0)
+ ;; CHECK-NEXT:  (local $dest nullref)
+ ;; CHECK-NEXT:  (local $src nullref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $dest)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $src)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-copy-impossible-both (type $0)
+ ;; ALTER-NEXT:  (local $dest nullref)
+ ;; ALTER-NEXT:  (local $src nullref)
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $dest)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $src)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-copy-impossible-both
+  ;; Same as above, but now both src and dest are bottom.
+  (local $dest nullref)
+  (local $src nullref)
+  ;; Do not constrain $src or $dest.
+  (array.copy $sub-mut $sub
+   (local.get $dest)
+   (i32.const 0)
+   (local.get $src)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-fill (type $0)
+ ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
+ ;; CHECK-NEXT:  (local $val eqref)
+ ;; CHECK-NEXT:  (array.fill $super-mut
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-fill (type $0)
+ ;; ALTER-NEXT:  (local $ref (ref null $super-mut))
+ ;; ALTER-NEXT:  (local $val eqref)
+ ;; ALTER-NEXT:  (array.fill $super-mut
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-fill
+  (local $ref (ref null $sub-mut))
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: (ref null $super-mut) and that typeof($val) <:
+  ;; eqref.
+  (array.fill $sub-mut
+   (local.get $ref)
+   (i32.const 0)
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-fill-impossible (type $0)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (local.get $val)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-fill-impossible (type $0)
+ ;; ALTER-NEXT:  (local $ref nullref)
+ ;; ALTER-NEXT:  (local $val anyref)
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (local.get $val)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-fill-impossible
+  (local $ref nullref)
+  (local $val i31ref)
+  ;; Require that typeof($ref) <: nullref, but do not constrain $val.
+  (array.fill $sub-mut
+   (local.get $ref)
+   (i32.const 0)
+   (local.get $val)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-init-data (type $0)
+ ;; CHECK-NEXT:  (local $ref (ref null $mut-bytes))
+ ;; CHECK-NEXT:  (array.init_data $mut-bytes $data
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-init-data (type $0)
+ ;; ALTER-NEXT:  (local $ref (ref null $mut-bytes))
+ ;; ALTER-NEXT:  (array.init_data $mut-bytes $data
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-init-data
+  (local $ref (ref null $sub-mut-bytes))
+  ;; Require that typeof($ref) <: (ref null $mut-bytes).
+  (array.init_data $sub-mut-bytes $data
+   (local.get $ref)
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-init-data-impossible (type $0)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-init-data-impossible (type $0)
+ ;; ALTER-NEXT:  (local $ref nullref)
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-init-data-impossible
+  (local $ref nullref)
+  ;; Require that typeof($ref) <: nullref.
+  (array.init_data $sub-mut-bytes $data
+   (local.get $ref)
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-init-elem (type $0)
+ ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
+ ;; CHECK-NEXT:  (array.init_elem $super-mut $elem
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-init-elem (type $0)
+ ;; ALTER-NEXT:  (local $ref (ref null $super-mut))
+ ;; ALTER-NEXT:  (array.init_elem $super-mut $elem
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-init-elem
+  (local $ref (ref null $sub-mut))
+  ;; Require that typeof($ref) <: (ref null $super-mut).
+  (array.init_elem $sub-mut $elem
+   (local.get $ref)
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $array-init-elem-impossible (type $0)
+ ;; CHECK-NEXT:  (local $ref nullref)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; ALTER:      (func $array-init-elem-impossible (type $0)
+ ;; ALTER-NEXT:  (local $ref nullref)
+ ;; ALTER-NEXT:  (block
+ ;; ALTER-NEXT:   (local.get $ref)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:   (i32.const 0)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $array-init-elem-impossible
+  (local $ref nullref)
+  ;; Require that typeof($ref) <: nullref.
+  (array.init_elem $sub-mut $elem
+   (local.get $ref)
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
   )
  )
 )
