@@ -113,18 +113,23 @@ struct TypeGeneralizing
     // Same as in noteSubtype.
   }
   void noteCast(Expression* src, Expression* dest) {
-    // Same as in noteSubtype.
-    addExprSubtyping(src, dest);
+    // We handle this in the transfer function below. TODO
+    addExprSubtyping(src, dest); // XXX
   }
 
-  // Internal graph for the flow. We track the dependendents so that we know who
+  // Internal graph for the flow. We track the predecessors so that we know who
   // to update after updating a location. For example, when we update the type
   // of a block then the block's last child must then be flowed to, so the child
-  // is a dependent of the block.
-  std::unordered_map<Location, std::vector<Location>> dependents;
+  // is a pred of the block. We also track successors so that we can tell where
+  // to read updates from (which the transfer function needs in some cases).
+  std::unordered_map<Location, std::vector<Location>> preds;
+  std::unordered_map<Location, std::vector<Location>> succs;
 
   void addExprSubtyping(Expression* sub, Expression* super) {
-    dependents[getLocation(super)].push_back(getLocation(sub));
+    auto superLoc = getLocation(super);
+    auto subLoc = getLocation(sub);
+    preds[superLoc].push_back(subLoc);
+    succs[subLoc].push_back(superLoc);
   }
 
   // Gets the location of an expression. Most are simply ExpressionLocation, but
@@ -246,7 +251,7 @@ struct TypeGeneralizing
         }
       } else {
         // Flow using the graph generically.
-        for (auto dep : dependents[loc]) {
+        for (auto dep : preds[loc]) {
           update(dep, locType);
         }
       }
