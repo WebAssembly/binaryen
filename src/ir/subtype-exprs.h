@@ -281,6 +281,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     auto curr = ref->type.getHeapType();
+    // We could in principle allow the reference type to generalize while
+    // allowing field generalization as well, but for now for simplicity keep it
+    // unchanged. TODO handle this with flexibility in the user.
+    auto fieldType = curr.getStruct().fields[index];
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
@@ -290,8 +294,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       auto last = curr;
       curr = *next;
       const auto& fields = curr.getStruct().fields;
-      if (index >= fields.size()) {
-        // There is no field at that index. Stop, as |last| is the one we want.
+      if (index >= fields.size() || fields[index] != fieldType) {
+        // There is no field at that index, or it has the wrong type. Stop, as
+        // |last| is the one we want.
         curr = last;
         break;
       }
