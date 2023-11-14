@@ -372,7 +372,7 @@
   )
 )
 
-;; Tests that local.set instructions are correctly filtered from being outlined.
+;; Tests local.set instructions are correctly filtered from being outlined.
 (module
   ;; CHECK:      (type $0 (func (result i32)))
 
@@ -416,7 +416,7 @@
   )
 )
 
-;; TODO: Add a test that makes sure we filter branches correctly
+;; Tests branch instructions are correctly filtered from being outlined.
 (module
   ;; CHECK:      (type $0 (func))
 
@@ -446,7 +446,7 @@
   )
 )
 
-;; TODO: Add a test that makes sure we filter returns correctly
+;; Tests return instructions are correctly filtered from being outlined.
 (module
   ;; CHECK:      (type $0 (func (result i32)))
 
