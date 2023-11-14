@@ -460,14 +460,14 @@
   )
  )
 
- ;; CHECK:      (func $call_indirect (type $2) (param $x eqref)
+ ;; CHECK:      (func $call_indirect (type $void)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (call_indirect $func-table (type $2)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $call_indirect (param $x eqref)
+ (func $call_indirect
   ;; This will be optimized to eqref.
   (local $var i31ref)
   ;; Requires typeof($var) <: eqref.

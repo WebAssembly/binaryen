@@ -813,7 +813,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitArrayInitData(ArrayInitData* curr) {
     auto type = curr->ref->type.getHeapType();
     if (type.isBottom()) {
-      // This will be emitted as unreahcalbe. Do not require anything of the
+      // This will be emitted as unreachable. Do not require anything of the
       // input, except that the ref remain bottom.
       clearStack();
       push(Type(HeapType::none, Nullable));
@@ -826,7 +826,7 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitArrayInitElem(ArrayInitElem* curr) {
     auto type = curr->ref->type.getHeapType();
     if (type.isBottom()) {
-      // This will be emitted as unreahcalbe. Do not require anything of the
+      // This will be emitted as unreachable. Do not require anything of the
       // input, except that the ref remain bottom.
       clearStack();
       push(Type(HeapType::none, Nullable));
