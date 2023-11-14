@@ -770,7 +770,9 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
     auto generalized = generalizeArrayType(type);
     push(Type(generalized, Nullable));
-    push(generalized.getArray().element.type);
+    if (auto elemType = generalized.getArray().element.type; elemType.isRef()) {
+      push(elemType);
+    }
   }
 
   void visitArrayLen(ArrayLen* curr) {
@@ -778,8 +780,36 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(Type(HeapType::array, Nullable));
   }
 
-  void visitArrayCopy(ArrayCopy* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayFill(ArrayFill* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitArrayCopy(ArrayCopy* curr) {
+    auto destType = curr->destRef->type.getHeapType();
+    auto srcType = curr->srcRef->type.getHeapType();
+    if (destType.isBottom() || srcType.isBottom()) {
+      // This will be emitted as unreachable. Do not require anything of the
+      // input, exept that the bottom refs remain bottom.
+      clearStack();
+      auto nullref = Type(HeapType::none, Nullable);
+      push(destType.isBottom() ? nullref : Type::none);
+      push(srcType.isBottom() ? nullref : Type::none);
+      return;
+    }
+    // Model the copy as a get + set.
+    ArraySet set;
+    set.ref = curr->destRef;
+    visitArraySet(&set);
+    ArrayGet get;
+    get.ref = curr->srcRef;
+    get.type = srcType.getArray().element.type;
+    visitArrayGet(&get);
+  }
+
+  void visitArrayFill(ArrayFill* curr) {
+    // Model the fill as a set.
+    ArraySet set;
+    set.ref = curr->ref;
+    set.value = curr->value;
+    visitArraySet(&set);
+  }
+
   void visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRefAs(RefAs* curr) { WASM_UNREACHABLE("TODO"); }
