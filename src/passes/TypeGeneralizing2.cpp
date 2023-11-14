@@ -200,14 +200,9 @@ struct TypeGeneralizing
     // transfer function for it and set up any further flow.
     UniqueDeferredQueue<Location> toFlow;
 
-    // Main update logic for a location: updates the type for the location, and
-    // prepares further flow.
-    auto update = [&](Location loc, Type newType) {
-      if (!newType.isRef()) {
-        // Non-ref updates do not interest us.
-        return;
-      }
-
+    // After we update a location's type, this function sets up the flow to
+    // reach all preds.
+    auto flowFrom = [&](Location loc) {
       // Canonicalize the location.
       //
       // We could instead set up connections in the graph from each local.get
@@ -215,20 +210,50 @@ struct TypeGeneralizing
       // Instead, it is simpler to canonicalize as we flow.
       loc = canonicalizeLocation(loc);
 
-      // Update the type for the location, and flow onwards if we changed it.
-      // The update is a meet as we want the Greatest Lower Bound here: we start
-      // from unrefined values and the more we refine the "worse" things get.
+      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
+        // This is a local location. Changes here flow to the local.sets. (See
+        // comment above about quadratic size for why we do it like this.)
+        for (auto* set : setsByIndex[localLoc->index]) {
+          toFlow.push(getLocation(set->value));
+        }
+      } else {
+        // Flow using the graph generically.
+        for (auto dep : preds[loc]) {
+          toFlow.push(dep);
+        }
+      }
+    };
+
+    // Update a location, that is, apply the transfer function there. This reads
+    // the information that affects this information and computes the new type
+    // there. If the type changed, then apply it and flow onwards.
+    auto update = [&](Location loc) {
+      loc = canonicalizeLocation(loc);
       auto& locType = locTypes[loc];
+
+      auto changed = false;
+      auto& locSuccs = succs[loc];
+      for (auto succ : locSuccs) {
+        assert(!(succ == loc)); // no loopey
+        auto succType = locTypes[succ];
+        if (!succType.isRef()) {
+          // Non-ref updates do not interest us.
+          continue;
+        }
 #ifdef TYPEGEN_DEBUG
-      std::cout << "Updating \n";
-      dump(loc);
-      std::cerr << "  old: " << locType << " new: " << newType << "\n";
+        std::cout << "Updating \n";
+        dump(loc);
+        std::cerr << "  old: " << locType << " new: " << succType << "\n";
 #endif
-      if (typeLattice.meet(locType, newType)) {
+        if (typeLattice.meet(locType, succType)) {
 #ifdef TYPEGEN_DEBUG
-        std::cerr << "    result: " << locType << "\n";
+          std::cerr << "    result: " << locType << "\n";
 #endif
-        toFlow.push(loc);
+          changed = true;
+        }
+      }
+      if (changed) {
+        flowFrom(loc);
       }
     };
 
@@ -238,26 +263,14 @@ struct TypeGeneralizing
       std::cerr << "root: " << super << "\n";
       dump(loc);
 #endif
-      update(loc, super);
+      // Set the type here, and prepare to flow onwards.
+      locTypes[loc] = super;
+      flowFrom(loc);
     }
 
     // Second, perform the flow.
     while (!toFlow.empty()) {
-      auto loc = toFlow.pop();
-      auto locType = locTypes[loc];
-
-      if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
-        // This is a local location. Changes here flow to the local.sets. (See
-        // comment above about quadratic size for why we do it like this.)
-        for (auto* set : setsByIndex[localLoc->index]) {
-          update(getLocation(set->value), locType);
-        }
-      } else {
-        // Flow using the graph generically.
-        for (auto dep : preds[loc]) {
-          update(dep, locType);
-        }
-      }
+      update(toFlow.pop());
     }
 
     // Finally, apply the results of the flow: the types at LocalLocations are
