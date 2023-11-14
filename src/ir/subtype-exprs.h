@@ -190,7 +190,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefNull(RefNull* curr) {}
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
-  void visitRefEq(RefEq* curr) {}
+  void visitRefEq(RefEq* curr) {
+    self()->noteSubtype(curr->left, Type(HeapType::eq, Nullable));
+    self()->noteSubtype(curr->right, Type(HeapType::eq, Nullable));
+  }
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {
     self()->noteSubtype(curr->value,
