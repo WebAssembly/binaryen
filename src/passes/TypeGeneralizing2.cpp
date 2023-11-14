@@ -182,7 +182,9 @@ struct TypeGeneralizing
     // did not walk, so set them up manually. Each LocalLocation is connected
     // to the sets and gets for that index.
     for (auto& [index, sets] : setsByIndex) {
-      addExprSubtyping(set->value, LocalLocation{func, index});
+      for (auto* set : sets) {
+        addExprSubtyping(set->value, LocalLocation{func, index});
+      }
     }
     for (auto* get : gets) {
       // This is not true subtyping here - really these have the same type - but
@@ -192,7 +194,7 @@ struct TypeGeneralizing
       // giving us N + M instead of N * M (which we'd get if we connected gets
       // to sets directly).
       connectSubToSuper(LocalLocation{func, get->index},
-                        ExpressionLocation{func, get});
+                        ExpressionLocation{get, 0}); // TODO: tuples
     }
 
     // The types of locations as we discover them. When the flow is complete,
