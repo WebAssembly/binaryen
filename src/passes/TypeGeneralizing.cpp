@@ -800,9 +800,12 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     // Model the copy as a get + set.
     ArraySet set;
     set.ref = curr->destRef;
+    set.index = nullptr;
+    set.value = nullptr;
     visitArraySet(&set);
     ArrayGet get;
     get.ref = curr->srcRef;
+    get.index = nullptr;
     get.type = srcType.getArray().element.type;
     visitArrayGet(&get);
   }
