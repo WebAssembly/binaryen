@@ -445,3 +445,41 @@
     )
   )
 )
+
+;; TODO: Add a test that makes sure we filter returns correctly
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (func $o (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $o (result i32)
+    (drop (i32.const 0))
+	(drop (i32.const 1))
+	(return (i32.const 2))
+  )
+  ;; CHECK:      (func $p (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $p (result i32)
+    (drop (i32.const 0))
+	(drop (i32.const 1))
+	(return (i32.const 2))
+  )
+)
