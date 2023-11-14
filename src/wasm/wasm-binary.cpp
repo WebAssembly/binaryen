@@ -4068,6 +4068,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitTableFill(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableCopy(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
       break;
     }
@@ -5438,6 +5441,28 @@ bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
   auto* dest = popNonVoidExpression();
   auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
   tableRefs[tableIdx].push_back(&ret->table);
+  out = ret;
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableCopy) {
+    return false;
+  }
+  Index destTableIdx = getU32LEB();
+  if (destTableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  Index sourceTableIdx = getU32LEB();
+  if (sourceTableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  auto* size = popNonVoidExpression();
+  auto* source = popNonVoidExpression();
+  auto* dest = popNonVoidExpression();
+  auto* ret = Builder(wasm).makeTableCopy(dest, source, size, Name(), Name());
+  tableRefs[destTableIdx].push_back(&ret->destTable);
+  tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
   out = ret;
   return true;
 }

@@ -696,6 +696,11 @@ private:
       parent.writesTable = true;
       parent.implicitTrap = true;
     }
+    void visitTableCopy(TableCopy* curr) {
+      parent.readsTable = true;
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);

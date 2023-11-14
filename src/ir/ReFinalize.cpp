@@ -125,6 +125,7 @@ void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
+void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }

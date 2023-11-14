@@ -771,6 +771,20 @@ public:
     ret->finalize();
     return ret;
   }
+  TableCopy* makeTableCopy(Expression* dest,
+                           Expression* source,
+                           Expression* size,
+                           Name destTable,
+                           Name sourceTable) {
+    auto* ret = wasm.allocator.alloc<TableCopy>();
+    ret->dest = dest;
+    ret->source = source;
+    ret->size = size;
+    ret->destTable = destTable;
+    ret->sourceTable = sourceTable;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,

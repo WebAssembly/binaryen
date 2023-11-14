@@ -69,8 +69,6 @@ template<typename Ctx> Result<> makeLocalTee(Ctx&, Index);
 template<typename Ctx> Result<> makeLocalSet(Ctx&, Index);
 template<typename Ctx> Result<> makeGlobalGet(Ctx&, Index);
 template<typename Ctx> Result<> makeGlobalSet(Ctx&, Index);
-template<typename Ctx> Result<> makeBlock(Ctx&, Index);
-template<typename Ctx> Result<> makeThenOrElse(Ctx&, Index);
 template<typename Ctx> Result<> makeConst(Ctx&, Index, Type type);
 template<typename Ctx>
 Result<>
@@ -100,10 +98,6 @@ template<typename Ctx> Result<> makeDataDrop(Ctx&, Index);
 template<typename Ctx> Result<> makeMemoryCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeMemoryFill(Ctx&, Index);
 template<typename Ctx> Result<> makePop(Ctx&, Index);
-template<typename Ctx> Result<> makeIf(Ctx&, Index);
-template<typename Ctx>
-Result<> makeMaybeBlock(Ctx&, Index, size_t i, Type type);
-template<typename Ctx> Result<> makeLoop(Ctx&, Index);
 template<typename Ctx> Result<> makeCall(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeCallIndirect(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeBreak(Ctx&, Index);
@@ -118,6 +112,7 @@ template<typename Ctx> Result<> makeTableSet(Ctx&, Index);
 template<typename Ctx> Result<> makeTableSize(Ctx&, Index);
 template<typename Ctx> Result<> makeTableGrow(Ctx&, Index);
 template<typename Ctx> Result<> makeTableFill(Ctx&, Index);
+template<typename Ctx> Result<> makeTableCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeTry(Ctx&, Index);
 template<typename Ctx>
 Result<> makeTryOrCatchBody(Ctx&, Index, Type type, bool isTry);
@@ -173,6 +168,7 @@ template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
+template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
@@ -966,10 +962,6 @@ template<typename Ctx> Result<> makeGlobalSet(Ctx& ctx, Index pos) {
   return ctx.makeGlobalSet(pos, *global);
 }
 
-template<typename Ctx> Result<> makeBlock(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
 template<typename Ctx> Result<> makeConst(Ctx& ctx, Index pos, Type type) {
   assert(type.isBasic());
   switch (type.getBasic()) {
@@ -1191,21 +1183,10 @@ template<typename Ctx> Result<> makePop(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<> makeIf(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<> makeMaybeBlock(Ctx& ctx, Index pos, size_t i, Type type) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx> Result<> makeLoop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
 template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+  return ctx.makeCall(pos, *func, isReturn);
 }
 
 template<typename Ctx>
@@ -1262,6 +1243,10 @@ template<typename Ctx> Result<> makeTableGrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTableFill(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<> makeTableCopy(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
@@ -1509,8 +1494,8 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
   return ctx.in.err("expected type index or identifier");
 }
 
-// fieldidx_t ::= x:u32 => x
-//              | v:id  => x (if t.fields[x] = v)
+// fieldidx ::= x:u32 => x
+//            | v:id  => x (if t.fields[x] = v)
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
                                          typename Ctx::HeapTypeT type) {
@@ -1521,6 +1506,18 @@ Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
     return ctx.getFieldFromName(type, *id);
   }
   return ctx.in.err("expected field index or identifier");
+}
+
+// funcidx ::= x:u32 => x
+//           | v:id => x (if t.funcs[x] = v)
+template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getFuncFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getFuncFromName(*id);
+  }
+  return ctx.in.err("expected function index or identifier");
 }
 
 // memidx ::= x:u32 => x

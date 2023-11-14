@@ -2255,6 +2255,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitTableCopy(TableCopy* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

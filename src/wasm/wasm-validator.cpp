@@ -441,6 +441,7 @@ public:
   void visitTableSize(TableSize* curr);
   void visitTableGrow(TableGrow* curr);
   void visitTableFill(TableFill* curr);
+  void visitTableCopy(TableCopy* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2314,6 +2315,27 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
     curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
+}
+
+void FunctionValidator::visitTableCopy(TableCopy* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.copy requires bulk-memory [--enable-bulk-memory]");
+  auto* sourceTable = getModule()->getTableOrNull(curr->sourceTable);
+  auto* destTable = getModule()->getTableOrNull(curr->destTable);
+  if (shouldBeTrue(!!sourceTable, curr, "table.copy source table must exist") &&
+      shouldBeTrue(!!destTable, curr, "table.copy dest table must exist")) {
+    shouldBeSubType(sourceTable->type,
+                    destTable->type,
+                    curr,
+                    "table.copy source must have right type for dest");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.copy dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->source->type, Type(Type::i32), curr, "table.copy source must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {

@@ -186,36 +186,4 @@ struct AsmConst {
   std::string code;
 };
 
-void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
-                                                   Address base) {
-  size_t lastEnd = 0;
-  for (auto& seg : wasm.dataSegments) {
-    if (seg->isPassive) {
-      Fatal() << "separating passive segments not implemented";
-    }
-    if (!seg->offset->is<Const>()) {
-      Fatal() << "separating relocatable segments not implemented";
-    }
-    size_t offset = seg->offset->cast<Const>()->value.getInteger();
-    offset -= base;
-    size_t fill = offset - lastEnd;
-    if (fill > 0) {
-      std::vector<char> buf(fill);
-      outfile->write(buf.data(), fill);
-    }
-    outfile->write(seg->data.data(), seg->data.size());
-    lastEnd = offset + seg->data.size();
-  }
-  wasm.dataSegments.clear();
-  // Remove the start/stop symbols that the PostEmscripten uses to remove
-  // em_asm/em_js data.  Since we just removed all the data segments from the
-  // file there is nothing more for that pass to do.
-  // TODO(sbc): Fix the ordering so that the removal the EM_ASM/EM_JS data comes
-  // before this pass.
-  wasm.removeExport("__start_em_asm");
-  wasm.removeExport("__stop_em_asm");
-  wasm.removeExport("__start_em_js");
-  wasm.removeExport("__stop_em_js");
-}
-
 } // namespace wasm

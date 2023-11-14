@@ -2949,19 +2949,21 @@ private:
     if (constant == 0ULL) {
       return walked; // nothing more to do
     }
+    // Add the total constant value we computed to the value remaining here.
+    // Note that if the value is 32 bits then |makeFromInt64| will wrap to 32
+    // bits for us; as all the operations before us and the add below us are
+    // adds and subtracts, any overflow is not a problem.
+    auto toAdd = Literal::makeFromInt64(constant, type);
     if (auto* c = walked->dynCast<Const>()) {
-      assert(c->value.isZero());
-      // Accumulated 64-bit constant value in 32-bit context will be wrapped
-      // during downcasting. So it's valid unification for 32-bit and 64-bit
-      // values.
-      c->value = Literal::makeFromInt64(constant, type);
+      // This is a constant, so just add it immediately (we could also leave
+      // this for Precompute, in principle).
+      c->value = c->value.add(toAdd);
       return c;
     }
     Builder builder(*getModule());
-    return builder.makeBinary(
-      Abstract::getBinary(type, Abstract::Add),
-      walked,
-      builder.makeConst(Literal::makeFromInt64(constant, type)));
+    return builder.makeBinary(Abstract::getBinary(type, Abstract::Add),
+                              walked,
+                              builder.makeConst(toAdd));
   }
 
   // Given an i64.wrap operation, see if we can remove it. If all the things

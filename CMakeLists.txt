@@ -280,6 +280,11 @@ else()
   add_compile_flag("-Wimplicit-fallthrough")
   add_compile_flag("-Wnon-virtual-dtor")
 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Google style requires this, so make sure we compile cleanly with it.
+    add_compile_flag("-Wctad-maybe-unsupported")
+  endif()
+
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")

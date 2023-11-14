@@ -548,10 +548,9 @@ instructions = [
     ("table.size",           "makeTableSize(s)"),
     ("table.grow",           "makeTableGrow(s)"),
     ("table.fill",           "makeTableFill(s)"),
+    ("table.copy",           "makeTableCopy(s)"),
     # TODO:
     # table.init
-    # table.fill
-    # table.copy
     #
     # exception handling instructions
     ("try",                  "makeTry(s)"),
@@ -711,6 +710,11 @@ class Node:
 
 def instruction_parser(new_parser=False):
     """Build a trie out of all the instructions, then emit it as C++ code."""
+    global instructions
+    if new_parser:
+        # Filter out instructions that the new parser does not need.
+        instructions = [(inst, code) for (inst, code) in instructions
+                        if inst not in ('block', 'loop', 'if', 'then', 'else')]
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:

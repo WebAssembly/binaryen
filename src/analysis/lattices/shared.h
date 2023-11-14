@@ -118,6 +118,9 @@ template<Lattice L> struct Shared {
   }
 };
 
+// Deduction guide.
+template<typename L> Shared(L&&) -> Shared<L>;
+
 #if __cplusplus >= 202002L
 static_assert(Lattice<Shared<Bool>>);
 #endif // __cplusplus >= 202002L

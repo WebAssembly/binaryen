@@ -101,14 +101,14 @@ struct RandomFullLattice {
   // The inner lattice and lattice element types. These must be defined later
   // because they depend on `RandomFullLattice` satisfying `FullLattice`, but
   // that requires the type to be complete.
-  struct L;
+  struct LatticeImpl;
   struct ElementImpl;
   using Element = RandomElement<RandomFullLattice>;
 
   Random& rand;
 
-  // Indirect because L recursively contains RandomFullLattice.
-  std::unique_ptr<L> lattice;
+  // Indirect because LatticeImpl recursively contains RandomFullLattice.
+  std::unique_ptr<LatticeImpl> lattice;
 
   RandomFullLattice(Random& rand,
                     size_t depth = 0,
@@ -128,14 +128,14 @@ struct RandomLattice {
   // The inner lattice and lattice element types. These must be defined later
   // because they depend on `RandomLattice` satisfying `Lattice`, but that
   // requires the type to be complete.
-  struct L;
+  struct LatticeImpl;
   struct ElementImpl;
   using Element = RandomElement<RandomLattice>;
 
   Random& rand;
 
   // Indirect because L recursively contains RandomLattice.
-  std::unique_ptr<L> lattice;
+  std::unique_ptr<LatticeImpl> lattice;
 
   RandomLattice(Random& rand, size_t depth = 0);
 
@@ -158,39 +158,47 @@ using ArrayLattice = analysis::Array<RandomLattice, 2>;
 using TupleFullLattice = analysis::Tuple<RandomFullLattice, RandomFullLattice>;
 using TupleLattice = analysis::Tuple<RandomLattice, RandomLattice>;
 
-struct RandomFullLattice::L : std::variant<Bool,
-                                           UInt32,
-                                           ValType,
-                                           Inverted<RandomFullLattice>,
-                                           ArrayFullLattice,
-                                           Vector<RandomFullLattice>,
-                                           TupleFullLattice> {};
+using FullLatticeVariant = std::variant<Bool,
+                                        UInt32,
+                                        ValType,
+                                        Inverted<RandomFullLattice>,
+                                        ArrayFullLattice,
+                                        Vector<RandomFullLattice>,
+                                        TupleFullLattice>;
 
-struct RandomFullLattice::ElementImpl
-  : std::variant<typename Bool::Element,
-                 typename UInt32::Element,
-                 typename ValType::Element,
-                 typename Inverted<RandomFullLattice>::Element,
-                 typename ArrayFullLattice::Element,
-                 typename Vector<RandomFullLattice>::Element,
-                 typename TupleFullLattice::Element> {};
+struct RandomFullLattice::LatticeImpl : FullLatticeVariant {};
 
-struct RandomLattice::L : std::variant<RandomFullLattice,
-                                       Flat<uint32_t>,
-                                       Lift<RandomLattice>,
-                                       ArrayLattice,
-                                       Vector<RandomLattice>,
-                                       TupleLattice,
-                                       Shared<RandomLattice>> {};
+using FullLatticeElementVariant =
+  std::variant<typename Bool::Element,
+               typename UInt32::Element,
+               typename ValType::Element,
+               typename Inverted<RandomFullLattice>::Element,
+               typename ArrayFullLattice::Element,
+               typename Vector<RandomFullLattice>::Element,
+               typename TupleFullLattice::Element>;
 
-struct RandomLattice::ElementImpl
-  : std::variant<typename RandomFullLattice::Element,
-                 typename Flat<uint32_t>::Element,
-                 typename Lift<RandomLattice>::Element,
-                 typename ArrayLattice::Element,
-                 typename Vector<RandomLattice>::Element,
-                 typename TupleLattice::Element,
-                 typename Shared<RandomLattice>::Element> {};
+struct RandomFullLattice::ElementImpl : FullLatticeElementVariant {};
+
+using LatticeVariant = std::variant<RandomFullLattice,
+                                    Flat<uint32_t>,
+                                    Lift<RandomLattice>,
+                                    ArrayLattice,
+                                    Vector<RandomLattice>,
+                                    TupleLattice,
+                                    Shared<RandomLattice>>;
+
+struct RandomLattice::LatticeImpl : LatticeVariant {};
+
+using LatticeElementVariant =
+  std::variant<typename RandomFullLattice::Element,
+               typename Flat<uint32_t>::Element,
+               typename Lift<RandomLattice>::Element,
+               typename ArrayLattice::Element,
+               typename Vector<RandomLattice>::Element,
+               typename TupleLattice::Element,
+               typename Shared<RandomLattice>::Element>;
+
+struct RandomLattice::ElementImpl : LatticeElementVariant {};
 
 constexpr int FullLatticePicks = 7;
 
@@ -202,30 +210,30 @@ RandomFullLattice::RandomFullLattice(Random& rand,
   uint32_t pick = maybePick ? *maybePick : rand.upTo(FullLatticePicks);
   switch (pick) {
     case 0:
-      lattice = std::make_unique<L>(L{Bool{}});
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{Bool{}});
       return;
     case 1:
-      lattice = std::make_unique<L>(L{UInt32{}});
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{UInt32{}});
       return;
     case 2:
-      lattice = std::make_unique<L>(L{ValType{}});
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{ValType{}});
       return;
     case 3:
-      lattice =
-        std::make_unique<L>(L{Inverted{RandomFullLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{Inverted{RandomFullLattice{rand, depth + 1}}});
       return;
     case 4:
-      lattice = std::make_unique<L>(
-        L{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{ArrayFullLattice{RandomFullLattice{rand, depth + 1}}});
       return;
     case 5:
-      lattice = std::make_unique<L>(
-        L{Vector{RandomFullLattice{rand, depth + 1}, rand.upTo(4)}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{Vector{RandomFullLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
     case 6:
-      lattice = std::make_unique<L>(
-        L{TupleFullLattice{RandomFullLattice{rand, depth + 1},
-                           RandomFullLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{TupleFullLattice{RandomFullLattice{rand, depth + 1},
+                                     RandomFullLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -236,31 +244,34 @@ RandomLattice::RandomLattice(Random& rand, size_t depth) : rand(rand) {
   uint32_t pick = rand.upTo(FullLatticePicks + 6);
 
   if (pick < FullLatticePicks) {
-    lattice = std::make_unique<L>(L{RandomFullLattice{rand, depth, pick}});
+    lattice = std::make_unique<LatticeImpl>(
+      LatticeImpl{RandomFullLattice{rand, depth, pick}});
     return;
   }
 
   switch (pick) {
     case FullLatticePicks + 0:
-      lattice = std::make_unique<L>(L{Flat<uint32_t>{}});
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{Flat<uint32_t>{}});
       return;
     case FullLatticePicks + 1:
-      lattice = std::make_unique<L>(L{Lift{RandomLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{Lift{RandomLattice{rand, depth + 1}}});
       return;
     case FullLatticePicks + 2:
-      lattice =
-        std::make_unique<L>(L{ArrayLattice{RandomLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{ArrayLattice{RandomLattice{rand, depth + 1}}});
       return;
     case FullLatticePicks + 3:
-      lattice = std::make_unique<L>(
-        L{Vector{RandomLattice{rand, depth + 1}, rand.upTo(4)}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{Vector{RandomLattice{rand, depth + 1}, rand.upTo(4)}});
       return;
     case FullLatticePicks + 4:
-      lattice = std::make_unique<L>(L{TupleLattice{
+      lattice = std::make_unique<LatticeImpl>(LatticeImpl{TupleLattice{
         RandomLattice{rand, depth + 1}, RandomLattice{rand, depth + 1}}});
       return;
     case FullLatticePicks + 5:
-      lattice = std::make_unique<L>(L{Shared{RandomLattice{rand, depth + 1}}});
+      lattice = std::make_unique<LatticeImpl>(
+        LatticeImpl{Shared{RandomLattice{rand, depth + 1}}});
       return;
   }
   WASM_UNREACHABLE("unexpected pick");
@@ -862,13 +873,15 @@ struct ReachingDefinitionsChecker {
 // Uninteresting implementation details for RandomFullLattice and RandomLattice.
 
 RandomFullLattice::Element RandomFullLattice::getBottom() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getBottom()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getBottom()}; },
+    (const FullLatticeVariant&)*lattice);
 }
 
 RandomFullLattice::Element RandomFullLattice::getTop() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getTop()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getTop()}; },
+    (const FullLatticeVariant&)*lattice);
 }
 
 // TODO: use std::remove_cvref_t from C++20 instead.
@@ -888,9 +901,9 @@ LatticeComparison RandomFullLattice::compare(const Element& a,
       }
       WASM_UNREACHABLE("unexpected element types");
     },
-    *lattice,
-    *a,
-    *b);
+    (const FullLatticeVariant&)*lattice,
+    (const FullLatticeElementVariant&)*a,
+    (const FullLatticeElementVariant&)*b);
 }
 
 bool RandomFullLattice::join(Element& a, const Element& b) const noexcept {
@@ -904,9 +917,9 @@ bool RandomFullLattice::join(Element& a, const Element& b) const noexcept {
       }
       WASM_UNREACHABLE("unexpected element types");
     },
-    *lattice,
-    *a,
-    *b);
+    (const FullLatticeVariant&)*lattice,
+    (FullLatticeElementVariant&)*a,
+    (const FullLatticeElementVariant&)*b);
 }
 
 bool RandomFullLattice::meet(Element& a, const Element& b) const noexcept {
@@ -920,14 +933,15 @@ bool RandomFullLattice::meet(Element& a, const Element& b) const noexcept {
       }
       WASM_UNREACHABLE("unexpected element types");
     },
-    *lattice,
-    *a,
-    *b);
+    (const FullLatticeVariant&)*lattice,
+    (FullLatticeElementVariant&)*a,
+    (const FullLatticeElementVariant&)*b);
 }
 
 RandomLattice::Element RandomLattice::getBottom() const noexcept {
-  return std::visit([](const auto& l) { return ElementImpl{l.getBottom()}; },
-                    *lattice);
+  return std::visit(
+    [](const auto& l) -> Element { return ElementImpl{l.getBottom()}; },
+    (const LatticeVariant&)*lattice);
 }
 
 LatticeComparison RandomLattice::compare(const Element& a,
@@ -944,9 +958,9 @@ LatticeComparison RandomLattice::compare(const Element& a,
       }
       WASM_UNREACHABLE("unexpected element types");
     },
-    *lattice,
-    *a,
-    *b);
+    (const LatticeVariant&)*lattice,
+    (const LatticeElementVariant&)*a,
+    (const LatticeElementVariant&)*b);
 }
 
 bool RandomLattice::join(Element& a, const Element& b) const noexcept {
@@ -960,9 +974,9 @@ bool RandomLattice::join(Element& a, const Element& b) const noexcept {
       }
       WASM_UNREACHABLE("unexpected element types");
     },
-    *lattice,
-    *a,
-    *b);
+    (const LatticeVariant&)*lattice,
+    (LatticeElementVariant&)*a,
+    (const LatticeElementVariant&)*b);
 }
 
 // The main entry point.

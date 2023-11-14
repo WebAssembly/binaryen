@@ -186,7 +186,8 @@ Result<Expression*> IRBuilder::build() {
 }
 
 Result<> IRBuilder::visit(Expression* curr) {
-  UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
+  auto val = UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
+  CHECK_ERR(val);
   if (auto* block = curr->dynCast<Block>()) {
     block->finalize(block->type);
   } else {
@@ -309,6 +310,17 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     curr->value = values[0];
   } else {
     curr->value = builder.makeTupleMake(values);
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitCall(Call* curr) {
+  auto numArgs = wasm.getFunction(curr->target)->getNumParams();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
   }
   return Ok{};
 }
@@ -546,7 +558,14 @@ Result<> IRBuilder::makeBreak(Index label) {
 
 // Result<> IRBuilder::makeSwitch() {}
 
-// Result<> IRBuilder::makeCall() {}
+Result<> IRBuilder::makeCall(Name func, bool isReturn) {
+  Call curr(wasm.allocator);
+  curr.target = func;
+  CHECK_ERR(visitCall(&curr));
+  auto type = wasm.getFunction(func)->getResults();
+  push(builder.makeCall(curr.target, curr.operands, type, isReturn));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeCallIndirect() {}
 

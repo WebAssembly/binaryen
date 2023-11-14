@@ -1941,6 +1941,12 @@ void BinaryInstWriter::visitTableFill(TableFill* curr) {
   o << U32LEB(parent.getTableIndex(curr->table));
 }
 
+void BinaryInstWriter::visitTableCopy(TableCopy* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableCopy);
+  o << U32LEB(parent.getTableIndex(curr->destTable));
+  o << U32LEB(parent.getTableIndex(curr->sourceTable));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);

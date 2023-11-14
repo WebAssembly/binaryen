@@ -56,6 +56,9 @@ void HashStringifyWalker::addUniqueSymbol(SeparatorReason reason) {
   // Use a negative value to distinguish symbols for separators from symbols
   // for Expressions
   assert((uint32_t)nextSeparatorVal >= nextVal);
+  if (auto funcStart = reason.getFuncStart()) {
+    idxToFuncName.insert({hashString.size(), funcStart->func->name});
+  }
   hashString.push_back((uint32_t)nextSeparatorVal);
   nextSeparatorVal--;
   exprs.push_back(nullptr);
@@ -68,6 +71,42 @@ void HashStringifyWalker::visitExpression(Expression* curr) {
   if (inserted) {
     nextVal++;
   }
+}
+
+std::pair<uint32_t, Name>
+HashStringifyWalker::makeRelative(uint32_t idx) const {
+  // The upper_bound function returns an iterator to the first value in the set
+  // that is true for idx < value. We subtract one from this returned value to
+  // tell us which function actually contains the the idx.
+  auto [funcIdx, func] = *--idxToFuncName.upper_bound(idx);
+  return {idx - funcIdx, func};
+}
+
+std::vector<SuffixTree::RepeatedSubstring>
+StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
+  SuffixTree st(hashString);
+  std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
+  for (auto substring : substrings) {
+    // Sort by increasing start index to ensure determinism.
+    std::sort(substring.StartIndices.begin(),
+              substring.StartIndices.end(),
+              [](uint32_t a, uint32_t b) { return a < b; });
+  }
+  // Substrings are sorted so that the longest substring that repeats the most
+  // times is ordered first. This is done so that we can assume the most
+  // worthwhile substrings to outline come first.
+  std::sort(
+    substrings.begin(),
+    substrings.end(),
+    [](SuffixTree::RepeatedSubstring a, SuffixTree::RepeatedSubstring b) {
+      size_t aWeight = a.Length * a.StartIndices.size();
+      size_t bWeight = b.Length * b.StartIndices.size();
+      if (aWeight == bWeight) {
+        return a.StartIndices[0] < b.StartIndices[0];
+      }
+      return aWeight > bWeight;
+    });
+  return substrings;
 }
 
 // Deduplicate substrings by iterating through the list of substrings, keeping
@@ -112,7 +151,7 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::dedupe(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs,
+  const std::vector<Expression*>& exprs,
   std::function<bool(const Expression*)> condition) {
 
   struct FilterStringifyWalker : public StringifyWalker<FilterStringifyWalker> {
@@ -168,19 +207,29 @@ std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filter(
 
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalSets(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs) {
+  const std::vector<Expression*>& exprs) {
   return StringifyProcessor::filter(
     substrings, exprs, [](const Expression* curr) {
       return curr->is<LocalSet>();
     });
 }
 
+std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterLocalGets(
+  const std::vector<SuffixTree::RepeatedSubstring>& substrings,
+  const std::vector<Expression*>& exprs) {
+  return StringifyProcessor::filter(
+    substrings, exprs, [](const Expression* curr) {
+      return curr->is<LocalGet>();
+    });
+}
+
 std::vector<SuffixTree::RepeatedSubstring> StringifyProcessor::filterBranches(
   const std::vector<SuffixTree::RepeatedSubstring>& substrings,
-  const std::vector<Expression*> exprs) {
+  const std::vector<Expression*>& exprs) {
   return StringifyProcessor::filter(
     substrings, exprs, [](const Expression* curr) {
       return Properties::isBranch(curr) || curr->is<Return>();
     });
 }
+
 } // namespace wasm

@@ -99,6 +99,11 @@ Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeCastsPass();
 Pass* createOptimizeForJSPass();
 Pass* createOptimizeStackIRPass();
+// Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
+// when building Binaryen for Emscripten.
+#ifndef __EMSCRIPTEN__
+Pass* createOutliningPass();
+#endif
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
@@ -129,6 +134,7 @@ Pass* createRedundantSetEliminationPass();
 Pass* createRoundTripPass();
 Pass* createSafeHeapPass();
 Pass* createSetGlobalsPass();
+Pass* createSeparateDataSegmentsPass();
 Pass* createSignaturePruningPass();
 Pass* createSignatureRefiningPass();
 Pass* createSignExtLoweringPass();
@@ -154,6 +160,7 @@ Pass* createSSAifyNoMergePass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
+Pass* createTypeGeneralizingPass();
 Pass* createTypeRefiningPass();
 Pass* createTypeFinalizingPass();
 Pass* createTypeMergingPass();

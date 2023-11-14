@@ -311,6 +311,11 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
+// Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
+// when building Binaryen for Emscripten.
+#ifndef __EMSCRIPTEN__
+  registerPass("outlining", "outline instructions", createOutliningPass);
+#endif
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
@@ -407,6 +412,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("separate-data-segments",
+               "write data segments to a file and strip them from the module",
+               createSeparateDataSegmentsPass);
   registerPass("signature-pruning",
                "remove params from function signature types where possible",
                createSignaturePruningPass);
@@ -509,6 +517,9 @@ void PassRegistry::registerPasses() {
   registerTestPass("catch-pop-fixup",
                    "fixup nested pops within catches",
                    createCatchPopFixupPass);
+  registerTestPass("experimental-type-generalizing",
+                   "generalize types (not yet sound)",
+                   createTypeGeneralizingPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {

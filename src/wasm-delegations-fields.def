@@ -576,6 +576,16 @@ switch (DELEGATE_ID) {
     DELEGATE_END(TableFill);
     break;
   }
+  case Expression::Id::TableCopyId: {
+    DELEGATE_START(TableCopy);
+    DELEGATE_FIELD_CHILD(TableCopy, size);
+    DELEGATE_FIELD_CHILD(TableCopy, source);
+    DELEGATE_FIELD_CHILD(TableCopy, dest);
+    DELEGATE_FIELD_NAME_KIND(TableCopy, sourceTable, ModuleItemKind::Table);
+    DELEGATE_FIELD_NAME_KIND(TableCopy, destTable, ModuleItemKind::Table);
+    DELEGATE_END(TableCopy);
+    break;
+  }
   case Expression::Id::TryId: {
     DELEGATE_START(Try);
     DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget);

@@ -282,6 +282,7 @@ private:
   Expression* makeTableSize(Element& s);
   Expression* makeTableGrow(Element& s);
   Expression* makeTableFill(Element& s);
+  Expression* makeTableCopy(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
