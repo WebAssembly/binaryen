@@ -140,10 +140,22 @@ struct TypeGeneralizing
   // types for locals (and not values that flow around, for which we'd use a
   // LocalGraph).
   Location getLocation(Expression* expr) {
-    if (auto* get = expr->dynCast<LocalGet>()) {
-      return LocalLocation{getFunction(), get->index};
+    return canonicalizeLocation(ExpressionLocation{expr, 0}); // TODO: tuples
+  }
+
+  Location canonicalizeLocation(const Location& loc) {
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
+      if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
+        return LocalLocation{getFunction(), get->index};
+      } else if (auto* set = exprLoc->expr->dynCast<LocalSet>()) {
+        if (set->type.isConcrete()) {
+          // This is a tee with a value, and that value shares the location of
+          // the local.
+          return LocalLocation{getFunction(), set->index};
+        }
+      }
     }
-    return ExpressionLocation{expr, 0}; // TODO: tuples
+    return loc;
   }
 
   // The roots in the graph: constraints that we know from the start and from
@@ -197,21 +209,11 @@ struct TypeGeneralizing
       }
 
       // Canonicalize the location.
-      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-        if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
-          // This is a local.get. The type reaching here actually reaches the
-          // LocalLocation, as all local.gets represent the same location.
-          //
-          // We could instead set up connections in the graph from each
-          // local.get to each corresponding local.set, but that would be of
-          // quadratic size.
-          loc = LocalLocation{func, get->index};
-        } else if (auto* set = exprLoc->expr->dynCast<LocalSet>()) {
-          // As above, but now with a tee.
-          assert(set->isTee());
-          loc = LocalLocation{func, set->index};
-        }
-      }
+      //
+      // We could instead set up connections in the graph from each local.get
+      // to each corresponding local.set, but that would be of quadratic size.
+      // Instead, it is simpler to canonicalize as we flow.
+      loc = canonicalizeLocation(loc);
 
       // Update the type for the location, and flow onwards if we changed it.
       // The update is a meet as we want the Greatest Lower Bound here: we start
