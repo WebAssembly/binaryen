@@ -83,6 +83,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
+  ;; CHECK:      (func $outline$ (param $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
   ;; CHECK:      (func $c
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
@@ -178,18 +190,6 @@
 ;; Tests multiple sequences being outlined from the same source function into different
 ;; outlined functions.
 (module
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (func $outline$
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-
-  ;; CHECK:      (func $outline$_4
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.sub
   ;; CHECK-NEXT:    (i32.const 3)
@@ -288,35 +288,6 @@
       )
 
 ;; Tests that local.get instructions are correctly filtered from being outlined.
-;; CHECK:      (func $outline$
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.add
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $outline$_4 (param $0 i32)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (i32.const 3)
-;; CHECK-NEXT:    (i32.const 4)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
   ;; CHECK:      (type $0 (func (param i32) (result i32)))
 
