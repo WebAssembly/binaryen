@@ -101,7 +101,10 @@ Pass* createOptimizeForJSPass();
 Pass* createOptimizeStackIRPass();
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+#define SKIP_OUTLINING
+#endif
+#ifndef SKIP_OUTLINING
 Pass* createOutliningPass();
 #endif
 Pass* createPickLoadSignsPass();
