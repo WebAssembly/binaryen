@@ -370,9 +370,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(ref, Type(curr, Nullable));
   }
 
-  void visitArrayGet(ArrayGet* curr) {
-    visitArrayReference(curr->ref);
-  }
+  void visitArrayGet(ArrayGet* curr) { visitArrayReference(curr->ref); }
   void visitArraySet(ArraySet* curr) {
     visitArrayReference(curr->ref);
     if (!curr->ref->type.isArray()) {
@@ -381,9 +379,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto array = curr->ref->type.getHeapType().getArray();
     self()->noteSubtype(curr->value, array.element.type);
   }
-  void visitArrayLen(ArrayLen* curr) {
-    visitArrayReference(curr->ref);
-  }
+  void visitArrayLen(ArrayLen* curr) { visitArrayReference(curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
     visitArrayReference(curr->srcRef);
     visitArrayReference(curr->destRef);
