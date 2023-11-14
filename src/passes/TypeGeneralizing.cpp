@@ -810,9 +810,49 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     visitArraySet(&set);
   }
 
-  void visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayInitElem(ArrayInitElem* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitRefAs(RefAs* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitArrayInitData(ArrayInitData* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreahcalbe. Do not require anything of the
+      // input, except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      return;
+    }
+    auto generalized = generalizeArrayType(type);
+    push(Type(generalized, Nullable));
+  }
+
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    auto type = curr->ref->type.getHeapType();
+    if (type.isBottom()) {
+      // This will be emitted as unreahcalbe. Do not require anything of the
+      // input, except that the ref remain bottom.
+      clearStack();
+      push(Type(HeapType::none, Nullable));
+      return;
+    }
+    auto generalized = generalizeArrayType(type);
+    push(Type(generalized, Nullable));
+    // Cannot yet generalize table types.
+  }
+
+  void visitRefAs(RefAs* curr) {
+    auto type = pop();
+    switch (curr->op) {
+      case RefAsNonNull:
+        push(Type(type.getHeapType(), Nullable));
+        return;
+      case ExternInternalize:
+        push(Type(HeapType::ext, type.getNullability()));
+        return;
+      case ExternExternalize:
+        push(Type(HeapType::any, type.getNullability()));
+        return;
+    }
+    WASM_UNREACHABLE("unexpected op");
+  }
+
   void visitStringNew(StringNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringConst(StringConst* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("TODO"); }
