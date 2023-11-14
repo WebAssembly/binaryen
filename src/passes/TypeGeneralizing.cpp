@@ -413,6 +413,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceIter(StringSliceIter* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
