@@ -4,10 +4,6 @@
 
 ;; TODO: Add a test that creates an outlined function with one return value
 ;; TODO: Add a test that creates an outlined function that returns multiple values
-;; TODO: Add a test that makes sure we filter localSets correctly
-;; TODO: Add a test that makes sure we filter localGets correctly
-;; TODO: Add a test that makes sure we filter branches correctly
-;; TODO: Add a test that makes sure we filter globals correctly
 ;; TODO: Add a test that fails to outline a single control flow that repeats
 
 
@@ -90,7 +86,7 @@
   ;; CHECK:      (func $c
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
-  (func $c
+  (func $a
     (drop
       (i32.const 1)
     )
@@ -101,7 +97,7 @@
   ;; CHECK:      (func $d
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
-  (func $d
+  (func $b
     (drop
       (i32.const 1)
     )
@@ -137,7 +133,7 @@
   ;; CHECK-NEXT:   (i32.const 6)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $e
+  (func $a
     (drop
       (i32.const 0)
     )
@@ -160,7 +156,7 @@
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $f
+  (func $b
     (drop
       (i32.const 0)
     )
@@ -206,7 +202,7 @@
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT:  (call $outline$_4)
   ;; CHECK-NEXT: )
-  (func $g
+  (func $a
     (drop
       (i32.add
         (i32.const 0)
@@ -223,7 +219,7 @@
   ;; CHECK:      (func $h
   ;; CHECK-NEXT:  (call $outline$_4)
   ;; CHECK-NEXT: )
-  (func $h
+  (func $b
     (drop
       (i32.sub
         (i32.const 3)
@@ -234,7 +230,7 @@
   ;; CHECK:      (func $i
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
-  (func $i
+  (func $c
     (drop
       (i32.add
         (i32.const 0)
@@ -243,7 +239,6 @@
     )
   )
 )
-
 
 ;; Tests that outlining works correctly with If control flow
 (module
@@ -291,6 +286,162 @@
       (drop
         (i32.const 10)
       )
+
+;; Tests that local.get instructions are correctly filtered from being outlined.
+;; CHECK:      (func $outline$
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 1)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $outline$_4 (param $0 i32)
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (local.get $0)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.const 2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.sub
+;; CHECK-NEXT:    (i32.const 3)
+;; CHECK-NEXT:    (i32.const 4)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
+
+  ;; CHECK:      (func $j (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $j (param i32) (result i32)
+    (drop (i32.const 7))
+    (drop (i32.add
+      (local.get 0)
+      (i32.const 1)))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+  ;; CHECK:      (func $k (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $k (param i32) (result i32)
+    (drop (i32.const 0))
+    (drop (i32.add
+      (local.get 0)
+      (i32.const 1)))
+    (drop (i32.const 2))
+    (return (i32.const 5))
+  )
+)
+
+;; Tests that local.set instructions are correctly filtered from being outlined.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (func $l (result i32)
+  ;; CHECK-NEXT:  (local $i i32)
+  ;; CHECK-NEXT:  (local.set $i
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $l (result i32)
+	(local $i i32)
+    (local.set $i
+      (i32.const 7))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+  ;; CHECK:      (func $m (result i32)
+  ;; CHECK-NEXT:  (local $i i32)
+  ;; CHECK-NEXT:  (local.set $i
+  ;; CHECK-NEXT:   (i32.const 7)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $m (result i32)
+	(local $i i32)
+    (local.set $i
+      (i32.const 7))
+    (drop (i32.const 2))
+    (return (i32.const 4))
+  )
+)
+
+;; TODO: Add a test that makes sure we filter branches correctly
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $n
+  ;; CHECK-NEXT:  (block $label1
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $label1)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $label1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $n
+    (block $label1
+      (drop (i32.const 4))
+      (br $label1)
+      (drop (i32.const 2))
+      (drop (i32.const 4))
+      (br $label1)
     )
   )
 )
