@@ -25,7 +25,7 @@ namespace wasm {
 
 //
 // Analyze subtyping relationships between expressions. This must CRTP with a
-// parent that implements:
+// class that implements:
 //
 //  * noteSubType(A, B) indicating A must be a subtype of B
 //  * noteCast(A, B) indicating A is cast to B
@@ -53,8 +53,7 @@ namespace wasm {
 //                                          a block and its last child.
 //
 //  * noteCast(HeapType, HeapType) - A fixed type is cast to another, for
-//  example,
-//                                   in a CallIndirect.
+//                                   example, in a CallIndirect.
 //  * noteCast(Expression, Type) - An expression's type is cast to a fixed type,
 //                                 for example, in RefTest.
 //  * noteCast(Expression, Expression) - An expression's type is cast to
@@ -66,9 +65,9 @@ namespace wasm {
 // The parent must also inherit from ControlFlowWalker (for findBreakTarget).
 //
 
-template<typename Parent>
-struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
-  Parent* self() { return (Parent*)this; }
+template<typename SubType>
+struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
+  SubType* self() { return (SubType*)this; }
 
   void visitFunction(Function* func) {
     if (func->body) {
