@@ -122,6 +122,7 @@ struct TypeGeneralizing
   // of a block then the block's last child must then be flowed to, so the child
   // is a pred of the block. We also track successors so that we can tell where
   // to read updates from (which the transfer function needs in some cases).
+  // TODO: SmallVector<1>s?
   std::unordered_map<Location, std::vector<Location>> preds;
   std::unordered_map<Location, std::vector<Location>> succs;
 
@@ -183,8 +184,8 @@ struct TypeGeneralizing
       }
     }
 
-    // A list of locations from which we should flow onwards. A location is
-    // added here after we update it with new data.
+    // A list of locations to process. When we process one, we compute the
+    // transfer function for it and set up any further flow.
     UniqueDeferredQueue<Location> toFlow;
 
     // Main update logic for a location: updates the type for the location, and
