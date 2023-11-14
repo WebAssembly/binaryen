@@ -250,7 +250,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitFunctionExit() {
     // We cannot change the types of results. Push a requirement that the stack
     // end up with the correct type.
-    if (auto result = func->getResults(); result.isRef()) {
+    auto result = func->getResults();
+    if (result.isRef()) {
       push(result);
     }
   }
@@ -401,7 +402,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (auto type = wasm.getGlobal(curr->name)->type; type.isRef()) {
+    auto type = wasm.getGlobal(curr->name)->type;
+    if (type.isRef()) {
       // Cannot generalize globals without interprocedural analysis.
       push(type);
     }
@@ -688,7 +690,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     pop();
     if (!curr->isWithDefault()) {
       auto type = curr->type.getHeapType();
-      if (auto fieldType = type.getArray().element.type; fieldType.isRef()) {
+      auto fieldType = type.getArray().element.type;
+      if (fieldType.isRef()) {
         push(fieldType);
       }
     }
@@ -709,7 +712,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     // reference type needed to initialize the array, if any.
     pop();
     auto type = curr->type.getHeapType();
-    if (auto fieldType = type.getArray().element.type; fieldType.isRef()) {
+    auto fieldType = type.getArray().element.type;
+    if (fieldType.isRef()) {
       for (size_t i = 0, n = curr->values.size(); i < n; ++i) {
         push(fieldType);
       }
@@ -770,7 +774,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
     auto generalized = generalizeArrayType(type);
     push(Type(generalized, Nullable));
-    if (auto elemType = generalized.getArray().element.type; elemType.isRef()) {
+    auto elemType = generalized.getArray().element.type;
+    if (elemType.isRef()) {
       push(elemType);
     }
   }
