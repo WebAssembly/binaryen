@@ -62,12 +62,12 @@ namespace wasm {
 // Note that noteCast(Type, Type) and noteCast(Type, Expression) never occur and
 // do not need to be implemented.
 //
-// The parent must also inherit from ControlFlowWalker (for findBreakTarget).
+// The class must also inherit from ControlFlowWalker (for findBreakTarget).
 //
 
 template<typename SubType>
 struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
-  SubType* self() { return (SubType*)this; }
+  SubType* self() { return static_cast<SubType*>(this); }
 
   void visitFunction(Function* func) {
     if (func->body) {
