@@ -68,7 +68,7 @@ namespace wasm {
 
 template<typename Parent>
 struct SubtypingDiscoverer : public OverriddenVisitor<Parent> {
-  Parent* self() { return (Parent*)this; }
+  Parent* self() { return static_cast<Parent*>(this); }
 
   void visitFunction(Function* func) {
     if (func->body) {
