@@ -17,6 +17,7 @@
 #include "wasm.h"
 #include "ir/branch-utils.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -1318,13 +1319,69 @@ void StringSliceIter::finalize() {
   }
 }
 
+ArenaVector<Type>& Resume::getSentTypes() {
+  if (this->sentTypes.size() != this->handlerBlocks.size()) {
+    Fatal() << "Types sent to blocks have not been determined, yet.";
+  }
+  return this->sentTypes;
+}
+
 void Resume::finalize() {
+  // Only performing some validation, but no finalization. The finalize(Module*)
+  // function must have been called previously.
+
   if (!(this->contType.isContinuation() &&
         this->contType.getContinuation().type.isSignature())) {
     Fatal() << "ill-formed Resume expression";
   }
-  const Signature& sig = this->contType.getContinuation().type.getSignature();
-  type = sig.results;
+
+  if (this->sentTypes.size() != this->handlerBlocks.size()) {
+    Fatal() << "Resume node was not finalized";
+  }
+}
+
+void Resume::finalize(Module* wasm) {
+  if (!(this->contType.isContinuation() &&
+        this->contType.getContinuation().type.isSignature())) {
+    Fatal() << "ill-formed Resume expression";
+  }
+  const Signature& contSig =
+    this->contType.getContinuation().type.getSignature();
+  type = contSig.results;
+
+  // Determine sentTypes based on tag information stored in the module.
+  //
+  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
+  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction (resume
+  // $ct ... (tag $tag $block) ... ) causes $block to receive values of the
+  // following types when suspending to $tag: tgp* (ref $ct') where ct' = (cont
+  // $ft') and ft' = [tgr*] -> [ctr*].
+  //
+  auto& ctrs = contSig.results;
+  this->sentTypes.clear();
+  this->sentTypes.resize(this->handlerTags.size());
+  for (size_t i = 0; i < this->handlerTags.size(); i++) {
+    auto& tag = this->handlerTags[i];
+    auto& tagSig = wasm->getTag(tag)->sig;
+
+    auto& tgps = tagSig.params;
+    auto& tgrs = tagSig.results;
+
+    HeapType ftPrime{Signature(tgrs, ctrs)};
+    HeapType ctPrime{Continuation(ftPrime)};
+    Type ctPrimeRef(ctPrime, Nullability::NonNullable);
+
+    if (tgps.size() > 0) {
+      TypeList sentValueTypes;
+      sentValueTypes.reserve(tgps.size() + 1);
+
+      sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
+      sentValueTypes.push_back(ctPrimeRef);
+      this->sentTypes[i] = Type(sentValueTypes);
+    } else {
+      this->sentTypes[i] = ctPrimeRef;
+    }
+  }
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

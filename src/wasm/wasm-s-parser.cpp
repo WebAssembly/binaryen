@@ -2910,7 +2910,7 @@ Expression* SExpressionWasmBuilder::makeResume(Element& s) {
 
   ret->cont = parseExpression(s[i]);
 
-  ret->finalize();
+  ret->finalize(&wasm);
   return ret;
 }
 

@@ -42,6 +42,8 @@
 
 namespace wasm {
 
+class Module;
+
 // An index in a wasm module
 using Index = uint32_t;
 
@@ -1939,7 +1941,8 @@ public:
 class Resume : public SpecificExpression<Expression::ResumeId> {
 public:
   Resume(MixedArena& allocator)
-    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator) {}
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
+      sentTypes(allocator) {}
 
   HeapType contType;
   ArenaVector<Name> handlerTags;
@@ -1948,7 +1951,16 @@ public:
   ExpressionList operands;
   Expression* cont;
 
+  ArenaVector<Type>& getSentTypes();
+
   void finalize();
+  void finalize(Module* wasm);
+
+private:
+  // sentTypes[i] contains the type of the values that will be sent to the block
+  // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
+  // instruction's syntax, but stored here for subsequent use.
+  ArenaVector<Type> sentTypes;
 };
 
 // Globals

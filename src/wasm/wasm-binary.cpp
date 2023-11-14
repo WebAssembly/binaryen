@@ -7720,7 +7720,7 @@ void WasmBinaryReader::visitResume(Resume* curr) {
     curr->operands[argsNum - i - 1] = popNonVoidExpression();
   }
 
-  curr->finalize();
+  curr->finalize(&wasm);
 }
 
 void WasmBinaryReader::throwError(std::string text) {

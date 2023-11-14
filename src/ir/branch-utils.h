@@ -69,37 +69,34 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
 void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  operateOnScopeNameUses(expr, [&](Name& name) {
-    // There isn't a delegate mechanism for getting a sent value, so do a direct
-    // if-else chain. This will need to be updated with new br variants.
-    if (auto* br = expr->dynCast<Break>()) {
-      func(name, br->value ? br->value->type : Type::none);
-    } else if (auto* sw = expr->dynCast<Switch>()) {
-      func(name, sw->value ? sw->value->type : Type::none);
-    } else if (auto* br = expr->dynCast<BrOn>()) {
-      func(name, br->getSentType());
-    } else if (auto* res = expr->dynCast<Resume>()) {
-      // FIXME(frank-emrich) For each of the (tag $t $b) entries for the resume
-      // instruction, we could determine the types of the values passed to block
-      // $b by looking up the signature of tag $t in the module, plus taking the
-      // type of the resumed continuation into account (the latter type is
-      // stored in the Resume node directly).
-      //
-      // However, we do not have access to that information at this point. We
-      // could get it from the Module (to look up the tag), but this would
-      // require additional plumbing at all the use sites of this function, such
-      // as users of BranchSeeker, which is in turn used by functions such as
-      // Block::finalize(). Plumbing the module through to that point would
-      // require chancing the re-finalisation code, for example.
-      //
-      // We could also store this information in the Resume node itself, but
-      // that would mean storing the signature of all the Tags that we have a
-      // handle clause for.
-      func(name, Type::none);
-    } else {
-      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+  struct SentTypesVisitor : public Visitor<SentTypesVisitor> {
+
+    T& func;
+
+    SentTypesVisitor(T& func) : func(func) {}
+
+    void visitBreak(Break* br) {
+      func(br->name, br->value ? br->value->type : Type::none);
     }
-  });
+
+    void visitSwitch(Switch* sw) {
+      for (Name& name : sw->targets) {
+        func(name, sw->value ? sw->value->type : Type::none);
+      }
+      func(sw->default_, sw->value ? sw->value->type : Type::none);
+    }
+
+    void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
+
+    void Resume(Resume* res) {
+      auto& sentTypes = res->getSentTypes();
+      for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
+        func(res->handlerBlocks[i], sentTypes[i]);
+      }
+    }
+  } visitor(func);
+
+  visitor.visit(expr);
 }
 
 // Similar to operateOnScopeNameUses, but also passes in the expression that is

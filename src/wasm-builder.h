@@ -1223,7 +1223,7 @@ public:
     ret->handlerBlocks.set(handlerBlocks);
     ret->operands.set(operands);
     ret->cont = cont;
-    ret->finalize();
+    ret->finalize(&wasm);
     return ret;
   }
 
