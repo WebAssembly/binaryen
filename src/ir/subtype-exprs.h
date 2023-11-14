@@ -328,10 +328,12 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
         self()->noteCast(curr->value, curr);
         break;
       case ExternInternalize:
-        self()->noteSubtype(curr->value, Type(HeapType::ext, curr->type.getNullability()));
+        self()->noteSubtype(curr->value,
+                            Type(HeapType::ext, curr->type.getNullability()));
         break;
       case ExternExternalize:
-        self()->noteSubtype(curr->value, Type(HeapType::any, curr->type.getNullability()));
+        self()->noteSubtype(curr->value,
+                            Type(HeapType::any, curr->type.getNullability()));
         break;
     }
   }
