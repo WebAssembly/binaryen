@@ -2951,8 +2951,8 @@ private:
     }
     // Add the total constant value we computed to the value remaining here.
     // Note that if the value is 32 bits then |makeFromInt64| will wrap to 32
-    // bits for us; as all the operations before us, and the add below us, are
-    // adds and subtracts then any overflow is not a problem.
+    // bits for us; as all the operations before us and the add below us are
+    // adds and subtracts, any overflow is not a problem.
     auto toAdd = Literal::makeFromInt64(constant, type);
     if (auto* c = walked->dynCast<Const>()) {
       // This is a constant, so just add it immediately (we could also leave
