@@ -1,3 +1,5 @@
+//#define TYPEGEN_DEBUG 1
+
 /*
  * Copyright 2023 WebAssembly Community Group participants
  *
@@ -142,7 +144,15 @@ struct TypeGeneralizing
   // which the flow begins. Each root is a location and its type.
   std::unordered_map<Location, Type> roots;
 
-  void addRoot(Expression* sub, Type super) { roots[getLocation(sub)] = super; }
+  void addRoot(Expression* sub, Type super) {
+    // There may already exist a type for a particular root, so merge them in,
+    // in the same manner as during the flow (a meet).
+    typeLattice.meet(roots[getLocation(sub)], super);
+  }
+
+  // The analysis we do here is on types: each location will monotonically
+  // increase until all locations stabilize at the fixed point.
+  analysis::ValType typeLattice;
 
   void visitFunction(Function* func) {
     Super::visitFunction(func);
@@ -171,10 +181,6 @@ struct TypeGeneralizing
     // A list of locations from which we should flow onwards. A location is
     // added here after we update it with new data.
     UniqueDeferredQueue<Location> toFlow;
-
-    // The analysis we do here is on types: each location will monotonically
-    // increase until all locations stabilize at the fixed point.
-    analysis::ValType typeLattice;
 
     // Main update logic for a location: updates the type for the location, and
     // prepares further flow.
@@ -205,13 +211,25 @@ struct TypeGeneralizing
       // The update is a meet as we want the Greatest Lower Bound here: we start
       // from unrefined values and the more we refine the "worse" things get.
       auto& locType = locTypes[loc];
+#ifdef TYPEGEN_DEBUG
+      std::cout << "Updating \n";
+      dump(loc);
+      std::cerr << "  old: " << locType << " new: " << newType << "\n";
+#endif
       if (typeLattice.meet(locType, newType)) {
+#ifdef TYPEGEN_DEBUG
+        std::cerr << "    result: " << locType << "\n";
+#endif
         toFlow.push(loc);
       }
     };
 
     // First, apply the roots.
     for (auto& [loc, super] : roots) {
+#ifdef TYPEGEN_DEBUG
+      std::cerr << "root: " << super << "\n";
+      dump(loc);
+#endif
       update(loc, super);
     }
 
@@ -258,6 +276,18 @@ struct TypeGeneralizing
     // TODO: avoid when not needed
     ReFinalize().walkFunctionInModule(func, getModule());
   }
+
+#ifdef TYPEGEN_DEBUG
+  void dump(const Location& loc) {
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
+      std::cerr << "exprLoc  " << *exprLoc->expr << '\n';
+    } else if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
+      std::cerr << "localloc " << localLoc->index << '\n';
+    } else {
+      std::cerr << "unknown location\n";
+    }
+  }
+#endif
 };
 
 } // anonymous namespace
