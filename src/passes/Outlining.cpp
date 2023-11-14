@@ -261,8 +261,17 @@ struct Outlining : public Pass {
          exprIdx++) {
       sig += StackSignature(exprs[exprIdx]);
     }
-    module->addFunction(Builder::makeFunction(
-      outlinedFunc, Signature(sig.params, sig.results), {}));
+    // Purposefully inserting the outlined functions at the beginning of the
+    // functions vector, so that outlined function assertions are positioned
+    // within the test module. This greatly improves readability of the
+    // outlining lit tests. Because of the direct manipulation of the functions
+    // vector, instead of using the addFunction() helper method, a call to
+    // updateFunctionsMap() is required.
+    module->functions.insert(
+      module->functions.begin(),
+      Builder::makeFunction(
+        outlinedFunc, Signature(sig.params, sig.results), {}));
+    module->updateFunctionsMap();
     return outlinedFunc;
   }
 

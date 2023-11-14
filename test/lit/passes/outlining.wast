@@ -16,6 +16,18 @@
 
   ;; CHECK:      (type $1 (func (param i32)))
 
+  ;; CHECK:      (func $outline$ (param $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
   ;; CHECK:      (func $a (result i32)
   ;; CHECK-NEXT:  (call $outline$
   ;; CHECK-NEXT:   (i32.const 7)
@@ -47,22 +59,22 @@
 )
 
 ;; Tests that outlining occurs properly when the sequence is at the end of a function.
-
-;; CHECK:      (func $outline$ (param $0 i32)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (func $outline$ (param $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $c
   ;; CHECK-NEXT:  (drop
@@ -94,20 +106,25 @@
   )
 )
 
-;; Tests that outlining occurs properly when the sequence is at the beginning of a function. Also tests that the outlined function has no arguments.
-;; CHECK:      (func $outline$ (param $0 i32)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+;; Tests that outlining occurs properly when the sequence is at the beginning of a function.
+;; Also tests that the outlined function has no arguments.
 (module
   ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $e
   ;; CHECK-NEXT:  (call $outline$)
@@ -139,99 +156,12 @@
   )
 )
 
-;; Tests multiple sequences being outlined from the same source function into different outlined functions.
-;; CHECK:      (func $outline$
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.add
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+;; Tests multiple sequences being outlined from the same source function into different
+;; outlined functions.
 (module
 ;; CHECK:      (type $0 (func))
 
-;; CHECK:      (type $1 (func (param i32)))
-
-;; CHECK:      (type $2 (func (result i32)))
-
-;; CHECK:      (func $g
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT:  (call $outline$_4
-;; CHECK-NEXT:   (i32.const 6)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-(func $g
-  (drop (i32.const 0))
-  (drop (i32.add
-	(i32.const 0)
-	(i32.const 1)))
-  (drop (i32.const 1))
-  (drop (i32.const 6))
-  (drop (i32.const 2))
-  (drop (i32.sub
-	(i32.const 3)
-	(i32.const 4)))
-)
-;; CHECK:      (func $h (result i32)
-;; CHECK-NEXT:  (call $outline$_4
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (return
-;; CHECK-NEXT:   (i32.const 5)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-(func $h (result i32)
-  (drop (i32.const 0))
-  (drop (i32.const 2))
-  (drop (i32.sub
-	(i32.const 3)
-	(i32.const 4)))
-  (return (i32.const 5))
-)
-;; CHECK:      (func $i (param $0 i32)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 7)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-(func $i (param i32)
-  (drop (i32.const 0))
-  (drop (i32.add
-	(i32.const 0)
-	(i32.const 1)))
-  (drop (i32.const 1))
-  (drop (i32.const 7))
-)
-)
-;; CHECK:      (func $outline$
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.add
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $outline$_4 (param $0 i32)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
+;; CHECK:      (func $outline$_4
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.sub
 ;; CHECK-NEXT:    (i32.const 3)
@@ -239,3 +169,42 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
+
+;; CHECK:      (func $outline$
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (i32.add
+;; CHECK-NEXT:    (i32.const 0)
+;; CHECK-NEXT:    (i32.const 1)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $g
+;; CHECK-NEXT:  (call $outline$)
+;; CHECK-NEXT:  (call $outline$_4)
+;; CHECK-NEXT: )
+(func $g
+  (drop (i32.add
+	(i32.const 0)
+	(i32.const 1)))
+  (drop (i32.sub
+	(i32.const 3)
+	(i32.const 4)))
+)
+;; CHECK:      (func $h
+;; CHECK-NEXT:  (call $outline$_4)
+;; CHECK-NEXT: )
+(func $h
+  (drop (i32.sub
+	(i32.const 3)
+	(i32.const 4)))
+)
+;; CHECK:      (func $i
+;; CHECK-NEXT:  (call $outline$)
+;; CHECK-NEXT: )
+(func $i
+  (drop (i32.add
+	(i32.const 0)
+	(i32.const 1)))
+)
+)
