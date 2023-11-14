@@ -694,8 +694,15 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     }
   }
 
-  void visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitArrayNewData(ArrayNewData* curr) {
+    // We cannot yet generalize allocations.
+    pop();
+  }
+
+  void visitArrayNewElem(ArrayNewElem* curr) {
+    // We cannot yet generalize allocations or tables.
+    pop();
+  }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     // We cannot yet generalize allocations. Push a requirements for the
@@ -766,7 +773,11 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     push(generalized.getArray().element.type);
   }
 
-  void visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitArrayLen(ArrayLen* curr) {
+    // The input must be an array.
+    push(Type(HeapType::array, Nullable));
+  }
+
   void visitArrayCopy(ArrayCopy* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayFill(ArrayFill* curr) { WASM_UNREACHABLE("TODO"); }
   void visitArrayInitData(ArrayInitData* curr) { WASM_UNREACHABLE("TODO"); }

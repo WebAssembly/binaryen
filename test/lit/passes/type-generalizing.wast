@@ -1001,19 +1001,32 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (result anyref)))
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result anyref)))
 
  ;; CHECK:      (type $super (sub (array eqref)))
  (type $super (sub (array (field eqref))))
+ ;; CHECK:      (type $super-mut (sub (array (mut eqref))))
+
+ ;; CHECK:      (type $bytes (array i8))
+
+ ;; CHECK:      (type $sub (sub $super (array i31ref)))
  (type $sub (sub $super (array (field i31ref))))
 
- ;; CHECK:      (type $2 (func))
-
- ;; CHECK:      (type $super-mut (sub (array (mut eqref))))
  (type $super-mut (sub (array (field (mut eqref)))))
  (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
 
- ;; CHECK:      (func $array-new (type $0) (result anyref)
+ (type $bytes (array i8))
+
+ ;; CHECK:      (data $data "")
+
+ ;; CHECK:      (elem $elem i31ref)
+ (elem $elem i31ref)
+
+ (data $data "")
+
+ ;; CHECK:      (func $array-new (type $1) (result anyref)
  ;; CHECK-NEXT:  (local $val eqref)
  ;; CHECK-NEXT:  (array.new $super
  ;; CHECK-NEXT:   (local.get $val)
@@ -1029,7 +1042,47 @@
   )
  )
 
- ;; CHECK:      (func $array-new-fixed (type $0) (result anyref)
+ ;; CHECK:      (func $array-new-data (type $0)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local.set $val
+ ;; CHECK-NEXT:   (array.new_data $bytes $data
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-new-data
+  (local $val arrayref)
+  ;; No constraint on $val.
+  (local.set $val
+   (array.new_data $bytes $data
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-new-elem (type $0)
+ ;; CHECK-NEXT:  (local $val anyref)
+ ;; CHECK-NEXT:  (local.set $val
+ ;; CHECK-NEXT:   (array.new_elem $sub $elem
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-new-elem
+  (local $val arrayref)
+  ;; No constraint on $val.
+  (local.set $val
+   (array.new_elem $sub $elem
+    (i32.const 0)
+    (i32.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $array-new-fixed (type $1) (result anyref)
  ;; CHECK-NEXT:  (local $val1 eqref)
  ;; CHECK-NEXT:  (local $val2 eqref)
  ;; CHECK-NEXT:  (array.new_fixed $super 2
@@ -1047,7 +1100,7 @@
   )
  )
 
- ;; CHECK:      (func $array-get (type $0) (result anyref)
+ ;; CHECK:      (func $array-get (type $1) (result anyref)
  ;; CHECK-NEXT:  (local $val (ref null $super))
  ;; CHECK-NEXT:  (array.get $super
  ;; CHECK-NEXT:   (local.get $val)
@@ -1063,7 +1116,7 @@
   )
  )
 
- ;; CHECK:      (func $array-get-impossible (type $0) (result anyref)
+ ;; CHECK:      (func $array-get-impossible (type $1) (result anyref)
  ;; CHECK-NEXT:  (local $val nullref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1084,7 +1137,7 @@
   )
  )
 
- ;; CHECK:      (func $array-set (type $2)
+ ;; CHECK:      (func $array-set (type $0)
  ;; CHECK-NEXT:  (local $ref (ref null $super-mut))
  ;; CHECK-NEXT:  (local $val eqref)
  ;; CHECK-NEXT:  (array.set $super-mut
@@ -1105,7 +1158,7 @@
   )
  )
 
- ;; CHECK:      (func $array-set-impossible (type $2)
+ ;; CHECK:      (func $array-set-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
  ;; CHECK-NEXT:  (local $val anyref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
@@ -1129,6 +1182,24 @@
    (local.get $ref)
    (i32.const 0)
    (local.get $val)
+  )
+ )
+
+ ;; CHECK:      (func $array-len (type $0)
+ ;; CHECK-NEXT:  (local $ref arrayref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.len
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-len
+  (local $ref (ref null $super))
+  (drop
+   ;; Require that typeof($ref) <: arrayref.
+   (array.len
+    (local.get $ref)
+   )
   )
  )
 )
