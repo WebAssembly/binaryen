@@ -1,4 +1,4 @@
-#define TYPEGEN_DEBUG 1
+//#define TYPEGEN_DEBUG 1
 
 /*
  * Copyright 2023 WebAssembly Community Group participants
