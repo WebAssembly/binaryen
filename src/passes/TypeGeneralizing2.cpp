@@ -131,34 +131,15 @@ struct TypeGeneralizing
     connectSubToSuper(getLocation(sub), getLocation(super));
   }
 
+  // TODO: rename to "connect value to where it arrives"
   void connectSubToSuper(const Location& subLoc, const Location& superLoc) {
     preds[superLoc].push_back(subLoc);
     succs[subLoc].push_back(superLoc);
   }
 
-  // Gets the location of an expression. Most are simply ExpressionLocation, but
-  // we track locals as well, so we use LocalLocation for the value in a
-  // particular local index. That gives all local.gets of an index the same
-  // location, which is what we want here, since we are computing new declared
-  // types for locals (and not values that flow around, for which we'd use a
-  // LocalGraph).
   Location getLocation(Expression* expr) {
-    return canonicalizeLocation(ExpressionLocation{expr, 0}); // TODO: tuples
-  }
-
-  Location canonicalizeLocation(const Location& loc) {
-    if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-      if (auto* get = exprLoc->expr->dynCast<LocalGet>()) {
-        return LocalLocation{getFunction(), get->index};
-      } else if (auto* set = exprLoc->expr->dynCast<LocalSet>()) {
-        if (set->type.isConcrete()) {
-          // This is a tee with a value, and that value shares the location of
-          // the local.
-          return LocalLocation{getFunction(), set->index};
-        }
-      }
-    }
-    return loc;
+    // TODO: tuples
+    return ExpressionLocation{expr, 0};
   }
 
   // The roots in the graph: constraints that we know from the start and from
@@ -181,11 +162,6 @@ struct TypeGeneralizing
     // Finish setting up the graph: LocalLocals are "abstract" things that we
     // did not walk, so set them up manually. Each LocalLocation is connected
     // to the sets and gets for that index.
-    for (auto& [index, sets] : setsByIndex) {
-      for (auto* set : sets) {
-        addExprSubtyping(set->value, LocalLocation{func, index});
-      }
-    }
     for (auto* get : gets) {
       // This is not true subtyping here - really these have the same type - but
       // this sets up the connections between them. This is important to prevent
@@ -194,7 +170,18 @@ struct TypeGeneralizing
       // giving us N + M instead of N * M (which we'd get if we connected gets
       // to sets directly).
       connectSubToSuper(LocalLocation{func, get->index},
-                        ExpressionLocation{get, 0}); // TODO: tuples
+                        getLocation(get));
+    }
+    for (auto& [index, sets] : setsByIndex) {
+      for (auto* set : sets) {
+        connectSubToSuper(getLocation(set->value), LocalLocation{func, index});
+        if (set->type.isConcrete()) {
+          // This is a tee with a value, and that value shares the location of
+          // the local.
+          connectSubToSuper(LocalLocation{func, set->index},
+                            getLocation(set));
+        }
+      }
     }
 
     // The types of locations as we discover them. When the flow is complete,
@@ -225,14 +212,6 @@ struct TypeGeneralizing
     // After we update a location's type, this function sets up the flow to
     // reach all preds.
     auto flowFrom = [&](Location loc) {
-      // Canonicalize the location.
-      //
-      // We could instead set up connections in the graph from each local.get
-      // to each corresponding local.set, but that would be of quadratic size.
-      // Instead, it is simpler to canonicalize as we flow.
-      // TODO: can we assume all locs are already canonicalized? yes
-      loc = canonicalizeLocation(loc);
-
       for (auto dep : preds[loc]) {
         toFlow.push(dep);
       }
@@ -242,7 +221,6 @@ struct TypeGeneralizing
     // the information that affects this information and computes the new type
     // there. If the type changed, then apply it and flow onwards.
     auto update = [&](Location loc) {
-      loc = canonicalizeLocation(loc);
 #ifdef TYPEGEN_DEBUG
       std::cout << "Updating \n";
       dump(loc);
