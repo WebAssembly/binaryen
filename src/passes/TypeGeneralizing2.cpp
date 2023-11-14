@@ -1,5 +1,3 @@
-//#define TYPEGEN_DEBUG 1
-
 /*
  * Copyright 2023 WebAssembly Community Group participants
  *
@@ -15,15 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "analysis/lattices/valtype.h"
-#include "ir/possible-contents.h"
-#include "ir/subtype-exprs.h"
-#include "ir/utils.h"
-#include "pass.h"
-#include "support/unique_deferring_queue.h"
-#include "wasm-traversal.h"
-#include "wasm.h"
 
 //
 // This is an alternative implementation of TypeGeneralizing, for comparison and
@@ -42,6 +31,23 @@
 // block then the block's last child must then be flowed to, as the child must
 // be a subtype of the block, etc.
 //
+
+#include "analysis/lattices/valtype.h"
+#include "ir/possible-contents.h"
+#include "ir/subtype-exprs.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
+
+#define TYPEGEN_DEBUG 0
+
+#if TYPEGEN_DEBUG
+#define DBG(statement) statement
+#else
+#define DBG(statement)
+#endif
 
 namespace wasm {
 
@@ -221,32 +227,32 @@ struct TypeGeneralizing
     // the information that affects this information and computes the new type
     // there. If the type changed, then apply it and flow onwards.
     auto update = [&](Location loc) {
-#ifdef TYPEGEN_DEBUG
-      std::cout << "Updating \n";
-      dump(loc);
-#endif
+      DBG({
+        std::cout << "Updating \n";
+        dump(loc);
+      });
       auto& locType = locTypes[loc];
 
       auto changed = false;
       auto& locSuccs = succs[loc];
       for (auto succ : locSuccs) {
-#ifdef TYPEGEN_DEBUG
-        std::cout << " with \n";
-        dump(succ);
-#endif
+        DBG({
+          std::cout << " with \n";
+          dump(succ);
+        });
         assert(!(succ == loc)); // no loopey
         auto succType = locTypes[succ];
         if (!succType.isRef()) {
           // Non-ref updates do not interest us.
           continue;
         }
-#ifdef TYPEGEN_DEBUG
-        std::cerr << "  old: " << locType << " new: " << succType << "\n";
-#endif
+        DBG({
+          std::cerr << "  old: " << locType << " new: " << succType << "\n";
+        });
         if (typeLattice.meet(locType, succType)) {
-#ifdef TYPEGEN_DEBUG
-          std::cerr << "    result: " << locType << "\n";
-#endif
+          DBG({
+            std::cerr << "    result: " << locType << "\n";
+          });
           changed = true;
         }
       }
@@ -257,10 +263,10 @@ struct TypeGeneralizing
 
     // First, apply the roots.
     for (auto& [loc, super] : roots) {
-#ifdef TYPEGEN_DEBUG
-      std::cerr << "root: " << super << "\n";
-      dump(loc);
-#endif
+      DBG({
+        std::cerr << "root: " << super << "\n";
+        dump(loc);
+      });
       // Set the type here, and prepare to flow onwards.
       locTypes[loc] = super;
       flowFrom(loc);
