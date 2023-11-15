@@ -411,19 +411,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     self()->noteSubtype(seg->type, array.element.type);
   }
   void visitRefAs(RefAs* curr) {
-    switch (curr->op) {
-      case RefAsNonNull:
-        self()->noteCast(curr->value, curr);
-        break;
-      case ExternInternalize:
-        self()->noteSubtype(curr->value,
-                            Type(HeapType::ext, curr->type.getNullability()));
-        break;
-      case ExternExternalize:
-        self()->noteSubtype(curr->value,
-                            Type(HeapType::any, curr->type.getNullability()));
-        break;
-    }
+    self()->noteCast(curr->value, curr);
   }
   void visitStringNew(StringNew* curr) {}
   void visitStringConst(StringConst* curr) {}

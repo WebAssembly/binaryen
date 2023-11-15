@@ -1124,7 +1124,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $any-convert-extern-nullable (type $11) (param $x (ref noextern)) (result anyref)
- ;; ALTER-NEXT:  (local $var (ref extern))
+ ;; ALTER-NEXT:  (local $var externref)
  ;; ALTER-NEXT:  (local.set $var
  ;; ALTER-NEXT:   (local.get $x)
  ;; ALTER-NEXT:  )
@@ -1133,7 +1133,6 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $any-convert-extern-nullable (param $x (ref noextern)) (result anyref)
-  ;; XXX waka different
   (local $var (ref noextern))
   (local.set $var
    (local.get $x)
@@ -1185,7 +1184,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $extern-convert-any-nullable (type $13) (result externref)
- ;; ALTER-NEXT:  (local $var (ref any))
+ ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (local.set $var
  ;; ALTER-NEXT:   (ref.i31
  ;; ALTER-NEXT:    (i32.const 0)
@@ -1196,7 +1195,6 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $extern-convert-any-nullable (result externref)
-  ;; XXX waka different
   (local $var (ref i31))
   (local.set $var
    (i31.new

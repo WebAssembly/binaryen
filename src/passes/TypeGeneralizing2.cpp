@@ -253,21 +253,31 @@ struct TypeGeneralizing
       bool handled = false;
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
-          if (refAs->op == RefAsNonNull) {
-            // ref.as_non_null does not require its input to be non-nullable -
-            // all it does is enforce non-nullability - but it does pass along
-            // the heap type requirement. To compute that, find the single
-            // successor (the place this RefAs sends a value to) and get the
-            // heap type from there.
-            auto succType = succValues[0];
-            // If we got an update, it must be a reference type (the initial
-            // value is none, and any improvement is a reference).
-            assert(succType.isRef());
-            // Simply copy the succ's heap type. We do not need to do a meet
-            // operation here because our monotonicity is proven by succ's.
-            locType = Type(succType.getHeapType(), Nullable);
-            handled = true;
+          // There is a single successor (the place this RefAs sends a value
+          // to).
+          auto succType = succValues[0];
+          // If we got an update, it must be a reference type (the initial
+          // value is none, and any improvement is a reference).
+          assert(succType.isRef());
+          switch (refAs->op) {
+            case RefAsNonNull:
+              // ref.as_non_null does not require its input to be non-nullable -
+              // all it does is enforce non-nullability - but it does pass along
+              // the heap type requirement. (We do not need to do a meet
+              // operation here because our monotonicity is proven by succ's.)
+              locType = Type(succType.getHeapType(), Nullable);
+              break;
+            case ExternInternalize:
+              // Internalize accepts any input of heap type extern. Pass along
+              // the nullability of the successor (whose monotonicity proves
+              // ours).
+              locType = Type(HeapType::ext, succType.getNullability());
+              break;
+            case ExternExternalize:
+              locType = Type(HeapType::any, succType.getNullability());
+              break;
           }
+          handled = true;
         }
       }
 
