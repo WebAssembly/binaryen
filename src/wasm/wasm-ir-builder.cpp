@@ -290,9 +290,10 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+Result<Expression*> IRBuilder::getBranchValue(Name labelName,
+                                              std::optional<Index> label) {
   if (!label) {
-    auto index = getLabelIndex(curr->name);
+    auto index = getLabelIndex(labelName);
     CHECK_ERR(index);
     label = *index;
   }
@@ -305,12 +306,29 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     values[size - 1 - i] = *val;
   }
   if (values.size() == 0) {
-    curr->value = nullptr;
+    return nullptr;
   } else if (values.size() == 1) {
-    curr->value = values[0];
+    return values[0];
   } else {
-    curr->value = builder.makeTupleMake(values);
+    return builder.makeTupleMake(values);
   }
+}
+
+Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  auto value = getBranchValue(curr->name, label);
+  CHECK_ERR(value);
+  curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitSwitch(Switch* curr,
+                                std::optional<Index> defaultLabel) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
+  auto value = getBranchValue(curr->default_, defaultLabel);
+  CHECK_ERR(value);
+  curr->value = *value;
   return Ok{};
 }
 
@@ -556,7 +574,22 @@ Result<> IRBuilder::makeBreak(Index label) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeSwitch() {}
+Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
+                               Index defaultLabel) {
+  std::vector<Name> names;
+  names.reserve(labels.size());
+  for (auto label : labels) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+    names.push_back(*name);
+  }
+  auto defaultName = getLabelName(defaultLabel);
+  CHECK_ERR(defaultName);
+  Switch curr(wasm.allocator);
+  CHECK_ERR(visitSwitch(&curr, defaultLabel));
+  push(builder.makeSwitch(names, *defaultName, curr.condition, curr.value));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   Call curr(wasm.allocator);
