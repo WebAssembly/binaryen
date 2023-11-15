@@ -7707,8 +7707,8 @@ void WasmBinaryReader::visitResume(Resume* curr) {
     curr->handlerTags[i] = tag;
     curr->handlerBlocks[i] = handler;
 
-    tagRefs[tagIndex].push_back(
-      &curr->handlerTags[i]); // we don't know the final name yet
+    // We don't know the final name yet
+    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
   }
 
   curr->cont = popNonVoidExpression();
