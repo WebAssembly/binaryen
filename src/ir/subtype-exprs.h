@@ -305,7 +305,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   }
 
   void visitStructGet(StructGet* curr) {
-    visitStructReference(curr->ref, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     visitStructReference(curr->ref, curr->index);
