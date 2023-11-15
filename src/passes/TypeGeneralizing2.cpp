@@ -65,16 +65,14 @@ struct TypeGeneralizing
     return std::make_unique<TypeGeneralizing>();
   }
 
-  // Visitors during the walk. We track local operations so that we can
-  // optimize them later.
+  // Visitors during the walk. We purposefully do not visit the super of any of
+  // these.
 
+  // We track local operations so that we can optimize them later.
   void visitLocalGet(LocalGet* curr) {
-    // Purposefully do not visit the super, as we handle locals ourselves.
     gets.push_back(curr);
   }
-
   void visitLocalSet(LocalSet* curr) {
-    // Purposefully do not visit the super, as we handle locals ourselves.
     setsByIndex[curr->index].push_back(curr);
 
     // If this is a parameter then we cannot modify it, and so we add a root
@@ -88,6 +86,19 @@ struct TypeGeneralizing
   std::vector<LocalGet*> gets;
   // TODO: flat like gets?
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
+
+  // StructGet/Set operations are handled dynamically during the flow.
+  void ZZvisitStructGet(StructGet* curr) {
+    // Connect the reference to us. As the reference becomes more refined, so do
+    // we. This is handled in the transfer function.
+    connectSourceToDest(curr->ref, curr);
+  }
+  void ZZvisitStructSet(StructSet* curr) {
+    // In addition to handling the reference as in visitStructGet, we also add a
+    // connection for the value, which depends on the reference.
+    connectSourceToDest(curr->ref, curr);
+    connectSourceToDest(curr->value, curr);
+  }
 
   // Hooks that are called by SubtypingDiscoverer.
 
@@ -146,13 +157,13 @@ struct TypeGeneralizing
 
   // Connect a source location to where that value arrives. For example, a
   // drop's value arrives in the drop.
-  void connectSourceToDest(Expression* sub, Expression* super) {
-    connectSourceToDest(getLocation(sub), getLocation(super));
+  void connectSourceToDest(Expression* source, Expression* dest) {
+    connectSourceToDest(getLocation(source), getLocation(dest));
   }
 
-  void connectSourceToDest(const Location& subLoc, const Location& superLoc) {
-    preds[superLoc].push_back(subLoc);
-    succs[subLoc].push_back(superLoc);
+  void connectSourceToDest(const Location& sourceLoc, const Location& destLoc) {
+    preds[destLoc].push_back(sourceLoc);
+    succs[sourceLoc].push_back(destLoc);
   }
 
   Location getLocation(Expression* expr) {
@@ -164,10 +175,10 @@ struct TypeGeneralizing
   // which the flow begins. Each root is a location and its type.
   std::unordered_map<Location, Type> roots;
 
-  void addRoot(Expression* sub, Type super) {
+  void addRoot(Expression* expr, Type type) {
     // There may already exist a type for a particular root, so merge them in,
     // in the same manner as during the flow (a meet).
-    typeLattice.meet(roots[getLocation(sub)], super);
+    typeLattice.meet(roots[getLocation(expr)], type);
   }
 
   // The analysis we do here is on types: each location will monotonically
