@@ -159,9 +159,9 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
     } else if (auto* res = expr->dynCast<Resume>()) {
-      // FIXME(frank-emrich) We can't really determine the values being sent
-      // here because they come from suspend instructions elsewhere. Is that a
-      // problem?
+      // The values are supplied by suspend instructions executed while running
+      // the continuation. Thus, we have no chance to get a hold of them here.
+      func(name, nullptr);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
