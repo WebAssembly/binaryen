@@ -148,7 +148,7 @@ public:
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
-  // [[nodiscard]] Result<> makeCallRef();
+  [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeRefTest(Type type);
   [[nodiscard]] Result<> makeRefCast(Type type);
   [[nodiscard]] Result<>
@@ -197,6 +197,7 @@ public:
   [[nodiscard]] Result<>
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
   [[nodiscard]] Result<> visitCall(Call*);
+  [[nodiscard]] Result<> visitCallRef(CallRef*);
 
 private:
   Module& wasm;

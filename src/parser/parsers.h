@@ -1291,7 +1291,9 @@ template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeCallRef(pos, *type, isReturn);
 }
 
 template<typename Ctx> Result<> makeRefI31(Ctx& ctx, Index pos) {
@@ -1374,11 +1376,7 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  auto data = dataidx(ctx);
-  CHECK_ERR(data);
-  return ctx.makeArrayNewElem(pos, *type, *data);
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
