@@ -65,85 +65,39 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #include "wasm-delegations-fields.def"
 }
 
-// This behaves just like an ordinary Visitor, but statically enforces the
-// following for its child classes: For all node types Foo that use a scope name
-// (according to wasm-delegations-fields.def), there must be a visitFoo method.
-// Alternatively, this may be viewed as an OverriddenVisitor that only enforces
-// overriding for some expression visiting functions.
-template<typename SubType, typename ReturnType = void>
-struct OverriddenScopeNameUseVisitor : Visitor<SubType, ReturnType> {
-
-  ReturnType visit(Expression* curr) {
-    assert(curr);
-
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
-  static_assert(                                                               \
-    &SubType::visit##id !=                                                     \
-      &OverriddenScopeNameUseVisitor<SubType, ReturnType>::visit##id,          \
-    "Any class derived from OverriddenScopeNameUseVisitor must implement "     \
-    "visit" #id " because expressions of type " #id " use a scope name");
-
-#define DELEGATE_END(id)                                                       \
-  return static_cast<SubType*>(this)->visit##id(static_cast<id*>(curr));
-
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
-  DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-
-#define DELEGATE_FIELD_CHILD(id, field)
-#define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_LITERAL(id, field)
-#define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_TYPE(id, field)
-#define DELEGATE_FIELD_HEAPTYPE(id, field)
-#define DELEGATE_FIELD_ADDRESS(id, field)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
-
-#include "wasm-delegations-fields.def"
-  }
-};
-
-template<typename T>
-struct SentTypesVisitor
-  : public OverriddenScopeNameUseVisitor<SentTypesVisitor<T>> {
-
-  T& func;
-
-  SentTypesVisitor(T& func) : func(func) {}
-
-  void visitBreak(Break* br) {
-    func(br->name, br->value ? br->value->type : Type::none);
-  }
-
-  void visitSwitch(Switch* sw) {
-    for (Name& name : sw->targets) {
-      func(name, sw->value ? sw->value->type : Type::none);
-    }
-    func(sw->default_, sw->value ? sw->value->type : Type::none);
-  }
-
-  void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
-
-  void visitResume(Resume* res) {
-    auto& sentTypes = res->getSentTypes();
-    for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
-      func(res->handlerBlocks[i], sentTypes[i]);
-    }
-  }
-
-  void visitTry(Try* res) {}
-  void visitRethrow(Rethrow* res) {}
-};
-
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
 void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  SentTypesVisitor<T> visitor(func);
+  struct SentTypesVisitor : public Visitor<SentTypesVisitor> {
+
+    T& func;
+
+    SentTypesVisitor(T& func) : func(func) {}
+
+    void visitBreak(Break* br) {
+      func(br->name, br->value ? br->value->type : Type::none);
+    }
+
+    void visitSwitch(Switch* sw) {
+      for (Name& name : sw->targets) {
+        func(name, sw->value ? sw->value->type : Type::none);
+      }
+      func(sw->default_, sw->value ? sw->value->type : Type::none);
+    }
+
+    void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
+
+    void visitResume(Resume* res) {
+      auto& sentTypes = res->getSentTypes();
+      for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
+        func(res->handlerBlocks[i], sentTypes[i]);
+      }
+    }
+
+    void visitTry(Try* res) {}
+    void visitRethrow(Rethrow* res) {}
+  } visitor(func);
 
   visitor.visit(expr);
 }
