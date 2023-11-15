@@ -1202,6 +1202,7 @@ template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {
   std::vector<typename Ctx::LabelIdxT> labels;
   while (true) {
+    // Parse at least one label; return an error only if we parse none.
     auto label = labelidx(ctx);
     if (labels.empty()) {
       CHECK_ERR(label);
