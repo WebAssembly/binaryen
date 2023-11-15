@@ -446,6 +446,7 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
     return Ok{};
   }
+  Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1351,6 +1352,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeArrayFill(Index pos, HeapType type) {
     return withLoc(pos, irBuilder.makeArrayFill(type));
+  }
+
+  Result<> makeRefAs(Index pos, RefAsOp op) {
+    return withLoc(pos, irBuilder.makeRefAs(op));
   }
 };
 

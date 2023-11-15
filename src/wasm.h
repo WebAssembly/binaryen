@@ -1760,6 +1760,7 @@ public:
 
 class RefAs : public SpecificExpression<Expression::RefAsId> {
 public:
+  RefAs() = default;
   RefAs(MixedArena& allocator) {}
 
   RefAsOp op;

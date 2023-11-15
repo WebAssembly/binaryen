@@ -1425,7 +1425,7 @@ template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefAs(pos, op);
 }
 
 template<typename Ctx>
