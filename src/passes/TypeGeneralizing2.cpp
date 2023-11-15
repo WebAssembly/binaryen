@@ -238,57 +238,54 @@ struct TypeGeneralizing
     // Update a location, that is, apply the transfer function there. This reads
     // the information that affects this information and computes the new type
     // there. If the type changed, then apply it and flow onwards.
-    auto update = [&](Location loc) {
+    //
+    // We are given the values at successor locations, that is, the values that
+    // influence us and that we read from to compute our new value.
+    auto update = [&](Location loc, const std::vector<Type>& succValues) {
       DBG({
-        std::cout << "Updating \n";
+        std::cerr << "Updating \n";
         dump(loc);
       });
       auto& locType = locTypes[loc];
       auto old = locType;
 
-      auto& locSuccs = succs[loc];
-
       // Some locations have special handling here in the transfer function.
       bool handled = false;
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
-          if (refAs->op == RefAsNonNull) {
+          if (0 && refAs->op == RefAsNonNull) {
             // ref.as_non_null does not require its input to be non-nullable -
             // all it does is enforce non-nullability - but it does pass along
             // the heap type requirement. To compute that, find the single
             // successor (the place this RefAs sends a value to) and get the
             // heap type from there.
-            assert(locSuccs.size() == 1);
-            auto succ = locSuccs[0];
-            auto succType = locTypes[succ];
+            auto succType = succValues[0];
             // If we got an update, it must be a reference type (the initial
             // value is none, and any improvement is a reference).
             assert(succType.isRef());
             // Simply copy the succ's heap type. We do not need to do a meet
             // operation here because our monotonicity is proven by succ's.
-            //locType = Type(succType.getHeapType(), Nullable);
-            //handled = true;
+            locType = Type(succType.getHeapType(), Nullable);
+            handled = true;
+            abort();
           }
         }
       }
 
       if (!handled) {
         // Perform a generic meet operation over all successors.
-        for (auto succ : locSuccs) {
+        for (auto value : succValues) {
           DBG({
-            std::cout << " with \n";
-            dump(succ);
+            std::cerr << " with " << value << "\n";
           });
-          assert(!(succ == loc)); // no loopey
-          auto succType = locTypes[succ];
-          if (!succType.isRef()) {
+          if (!value.isRef()) {
             // Non-ref updates do not interest us.
             continue;
           }
           DBG({
-            std::cerr << "  old: " << locType << " new: " << succType << "\n";
+            std::cerr << "  old: " << locType << " new: " << value << "\n";
           });
-          if (typeLattice.meet(locType, succType)) {
+          if (typeLattice.meet(locType, value)) {
             DBG({ std::cerr << "    result: " << locType << "\n"; });
           }
         }
@@ -304,20 +301,26 @@ struct TypeGeneralizing
       }
     };
 
-    // First, apply the roots.
-    for (auto& [loc, super] : roots) {
+    // First, apply the roots. Each is an update of a location with a single
+    // successor, the type we start that root from.
+    for (auto& [loc, value] : roots) {
       DBG({
-        std::cerr << "root: " << super << "\n";
+        std::cerr << "root: " << value << "\n";
         dump(loc);
       });
-      // Set the type here, and prepare to flow onwards.
-      locTypes[loc] = super;
-      flowFrom(loc);
+      update(loc, {value});
     }
 
-    // Second, perform the flow.
+    // Second, perform the flow: iteratively get an location that might change
+    // when we update it, as its successors changed, and if it does queue to
+    // flow from there.
     while (!toFlow.empty()) {
-      update(toFlow.pop());
+      auto loc = toFlow.pop();
+      std::vector<Type> succValues;
+      for (auto& succ : succs[loc]) {
+        succValues.push_back(locTypes[succ]);
+      }
+      update(loc, succValues);
     }
 
     // Finally, apply the results of the flow: the types at LocalLocations are
