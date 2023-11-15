@@ -840,7 +840,10 @@ Result<> IRBuilder::makeRefIsNull() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRefFunc() {}
+Result<> IRBuilder::makeRefFunc(Name func) {
+  push(builder.makeRefFunc(func, wasm.getFunction(func)->type));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefEq() {
   RefEq curr;

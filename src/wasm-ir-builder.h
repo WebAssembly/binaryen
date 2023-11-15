@@ -35,6 +35,9 @@ namespace wasm {
 //
 // To use, call CHECK_ERR(visit(...)) or CHECK_ERR(makeXYZ(...)) on each
 // expression in the sequence, then call build().
+//
+// Unlike `Builder`, `IRBuilder` requires referenced module-level items (e.g.
+// globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
   IRBuilder(Module& wasm, Function* func = nullptr)
@@ -129,7 +132,7 @@ public:
   // [[nodiscard]] Result<> makePop();
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
-  // [[nodiscard]] Result<> makeRefFunc();
+  [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
   // [[nodiscard]] Result<> makeTableGet();
   // [[nodiscard]] Result<> makeTableSet();
