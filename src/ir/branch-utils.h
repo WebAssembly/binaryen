@@ -106,41 +106,43 @@ struct OverriddenScopeNameUseVisitor : Visitor<SubType, ReturnType> {
   }
 };
 
+template<typename T>
+struct SentTypesVisitor
+  : public OverriddenScopeNameUseVisitor<SentTypesVisitor<T>> {
+
+  T& func;
+
+  SentTypesVisitor(T& func) : func(func) {}
+
+  void visitBreak(Break* br) {
+    func(br->name, br->value ? br->value->type : Type::none);
+  }
+
+  void visitSwitch(Switch* sw) {
+    for (Name& name : sw->targets) {
+      func(name, sw->value ? sw->value->type : Type::none);
+    }
+    func(sw->default_, sw->value ? sw->value->type : Type::none);
+  }
+
+  void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
+
+  void visitResume(Resume* res) {
+    auto& sentTypes = res->getSentTypes();
+    for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
+      func(res->handlerBlocks[i], sentTypes[i]);
+    }
+  }
+
+  void visitTry(Try* res) {}
+  void visitRethrow(Rethrow* res) {}
+};
+
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
 void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  struct SentTypesVisitor
-    : public OverriddenScopeNameUseVisitor<SentTypesVisitor> {
-
-    T& func;
-
-    SentTypesVisitor(T& func) : func(func) {}
-
-    void visitBreak(Break* br) {
-      func(br->name, br->value ? br->value->type : Type::none);
-    }
-
-    void visitSwitch(Switch* sw) {
-      for (Name& name : sw->targets) {
-        func(name, sw->value ? sw->value->type : Type::none);
-      }
-      func(sw->default_, sw->value ? sw->value->type : Type::none);
-    }
-
-    void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
-
-    void visitResume(Resume* res) {
-      auto& sentTypes = res->getSentTypes();
-      for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
-        func(res->handlerBlocks[i], sentTypes[i]);
-      }
-    }
-
-    void visitTry(Try* res) {}
-    void visitRethrow(Rethrow* res) {}
-
-  } visitor(func);
+  SentTypesVisitor<T> visitor(func);
 
   visitor.visit(expr);
 }
