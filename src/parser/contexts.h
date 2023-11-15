@@ -432,6 +432,10 @@ struct NullInstrParserCtx {
   Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeArrayNewFixed(Index, HeapTypeT, uint32_t) {
+    return Ok{};
+  }
   template<typename HeapTypeT> Result<> makeArrayGet(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -1332,6 +1336,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeArrayNewElem(Index pos, HeapType type, Name elem) {
     return withLoc(pos, irBuilder.makeArrayNewElem(type, elem));
+  }
+
+  Result<> makeArrayNewFixed(Index pos, HeapType type, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeArrayNewFixed(type, arity));
   }
 
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {

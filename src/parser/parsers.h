@@ -1382,7 +1382,13 @@ template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto arity = ctx.in.takeU32();
+  if (!arity) {
+    return ctx.in.err(pos, "expected array.new_fixed arity");
+  }
+  return ctx.makeArrayNewFixed(pos, *type, *arity);
 }
 
 template<typename Ctx>

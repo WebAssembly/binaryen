@@ -992,13 +992,18 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNewFixed* makeArrayNewFixed(HeapType type,
-                                   const std::vector<Expression*>& values) {
+  template<typename T>
+  ArrayNewFixed* makeArrayNewFixed(HeapType type, const T& values) {
     auto* ret = wasm.allocator.alloc<ArrayNewFixed>();
     ret->values.set(values);
     ret->type = Type(type, NonNullable);
     ret->finalize();
     return ret;
+  }
+  ArrayNewFixed*
+  makeArrayNewFixed(HeapType type,
+                    std::initializer_list<Expression*>&& values) {
+    return makeArrayNewFixed(type, values);
   }
   ArrayGet* makeArrayGet(Expression* ref,
                          Expression* index,

@@ -162,7 +162,7 @@ public:
   [[nodiscard]] Result<> makeArrayNewDefault(HeapType type);
   [[nodiscard]] Result<> makeArrayNewData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayNewElem(HeapType type, Name elem);
-  // [[nodiscard]] Result<> makeArrayNewFixed();
+  [[nodiscard]] Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   [[nodiscard]] Result<> makeArrayGet(HeapType type, bool signed_);
   [[nodiscard]] Result<> makeArraySet(HeapType type);
   [[nodiscard]] Result<> makeArrayLen();
@@ -191,6 +191,7 @@ public:
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
+  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
   [[nodiscard]] Result<>
