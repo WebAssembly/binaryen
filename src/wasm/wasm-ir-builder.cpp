@@ -220,18 +220,15 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   WASM_UNREACHABLE("should have called visit" #id " because " #id              \
                    " has child vector " #field);
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
-  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
-                   " has scope name use " #field);
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
-  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
-                   " has scope name use vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -933,7 +930,14 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeBrOn() {}
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type castType) {
+  BrOn curr;
+  CHECK_ERR(visitBrOn(&curr));
+  auto name = getLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeBrOn(op, *name, curr.ref, castType));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
   StructNew curr(wasm.allocator);

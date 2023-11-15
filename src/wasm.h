@@ -1566,6 +1566,7 @@ public:
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
+  BrOn() = default;
   BrOn(MixedArena& allocator) {}
 
   BrOnOp op;
