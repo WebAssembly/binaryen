@@ -579,19 +579,15 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitRefCast(RefCast* curr) {
-    // In principle, we do not have to require anything of the input. However,
-    // if our goal is to eliminate casts, then we want the input to be a subtype
-    // of the output, so we don't want the input to be generalized too much.
-    // Propagate the requirement on our output to our input if we can, and
-    // otherwise keep the input type unchanged. Unfortunately we cannot fall
-    // back to requiring nothing of our input because that would not be
-    // monotonic.
-    auto req = pop();
-    if (req == Type::none) {
-      push(Type::none);
-    } else {
-      push(Type::getLeastUpperBound(curr->ref->type, req));
-    }
+    // We do not have to require anything of the input, and not doing so might
+    // allow us generalize the output of previous casts enough that they can be
+    // optimized out. On the other hand, allowing the input to this cast to be
+    // generalized might prevent us from optimizing this cast out, so this is
+    // not a clear-cut decision. For now, leave the input unconstrained for
+    // simplicity. TODO: Experiment with requiring the LUB of the output
+    // requirement and the current input instead.
+    pop();
+    push(Type::none);
   }
 
   void visitBrOn(BrOn* curr) {

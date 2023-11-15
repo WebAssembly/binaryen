@@ -701,44 +701,43 @@
  )
 
  ;; CHECK:      (func $ref-cast-limited (type $1) (result eqref)
- ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast i31ref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-cast-limited (result eqref)
   (local $var i31ref)
-  ;; Require that typeof($var) <: eqref so the cast can still be elimintated.
+  ;; Do not constrain $var.
+  ;; TODO: We could eliminate the cast if we did constrain $var.
   (ref.cast i31ref
    (local.get $var)
   )
  )
 
  ;; CHECK:      (func $ref-cast-more-limited (type $8) (result nullref)
- ;; CHECK-NEXT:  (local $var i31ref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast nullref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-cast-more-limited (result nullref)
   (local $var i31ref)
-  ;; Require that typeof($var) <: i31ref for montonicity, even though it would
-  ;; be nice if we could require nothing of it since we will not be able to
-  ;; eliminate this cast.
+  ;; Do not constraint $var.
   (ref.cast nullref
    (local.get $var)
   )
  )
 
  ;; CHECK:      (func $ref-cast-lub (type $9) (result structref)
- ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast nullref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-cast-lub (result structref)
   (local $var i31ref)
-  ;; Require that typeof($var) <: LUB(structref, i31ref).
+  ;; Do not constrain $var.
   (ref.cast structref
    (local.get $var)
   )
