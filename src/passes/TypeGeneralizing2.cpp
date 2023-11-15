@@ -69,9 +69,7 @@ struct TypeGeneralizing
   // these.
 
   // We track local operations so that we can optimize them later.
-  void visitLocalGet(LocalGet* curr) {
-    gets.push_back(curr);
-  }
+  void visitLocalGet(LocalGet* curr) { gets.push_back(curr); }
   void visitLocalSet(LocalSet* curr) {
     setsByIndex[curr->index].push_back(curr);
 
@@ -103,8 +101,10 @@ struct TypeGeneralizing
 
     // TODO we can look at the dynamic reference and value during the flow; for
     //      now just do it statically.
-    auto minimalRefType = getLeastRefinedStructTypeWithField(refType.getHeapType(), curr->index,
-                                                           [&](Type candidate) { return Type::isSubType(curr->value->type, candidate); });
+    auto minimalRefType = getLeastRefinedStructTypeWithField(
+      refType.getHeapType(), curr->index, [&](Type candidate) {
+        return Type::isSubType(curr->value->type, candidate);
+      });
     addRoot(curr->ref, Type(minimalRefType, Nullable));
     const auto& fields = minimalRefType.getStruct().fields;
     addRoot(curr->value, fields[curr->index].type);
@@ -253,9 +253,8 @@ struct TypeGeneralizing
           // propagating the type onwards: the constraint on the reference is
           // that it be refined enough to provide a field at that index, and of
           // the right type.
-          succValues[0] = transferStructRef(succValues[0],
-                                            get->ref,
-                                            get->index);
+          succValues[0] =
+            transferStructRef(succValues[0], get->ref, get->index);
         }
       }
     }
@@ -305,9 +304,8 @@ struct TypeGeneralizing
           // Non-ref updates do not interest us.
           continue;
         }
-        DBG({
-          std::cerr << "  old: " << locType << " new: " << value << "\n";
-        });
+        DBG(
+          { std::cerr << "  old: " << locType << " new: " << value << "\n"; });
         if (typeLattice.meet(locType, value)) {
           DBG({ std::cerr << "    result: " << locType << "\n"; });
         }
@@ -337,9 +335,10 @@ struct TypeGeneralizing
     // Get the least-refined struct type that still has (at least) the necessary
     // type for that field. This is monotonic because as the field type
     // refines we will return something more refined (or equal) here.
-    auto heapType = getLeastRefinedStructTypeWithField(ref->type.getHeapType(),
-                                                       index,
-                                                       [&](Type candidate) { return Type::isSubType(candidate, outputType); });
+    auto heapType = getLeastRefinedStructTypeWithField(
+      ref->type.getHeapType(), index, [&](Type candidate) {
+        return Type::isSubType(candidate, outputType);
+      });
     return Type(heapType, Nullable);
   }
 
@@ -348,9 +347,8 @@ struct TypeGeneralizing
   // requirement function receives as a parameter the field type being
   // considered, and should return true if it is acceptable.
   template<typename T>
-  HeapType getLeastRefinedStructTypeWithField(HeapType curr,
-                                              Index index,
-                                              T fieldIsOk) {
+  HeapType
+  getLeastRefinedStructTypeWithField(HeapType curr, Index index, T fieldIsOk) {
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
