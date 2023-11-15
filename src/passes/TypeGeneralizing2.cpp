@@ -185,6 +185,95 @@ struct TypeGeneralizing
   // increase until all locations stabilize at the fixed point.
   analysis::ValType typeLattice;
 
+  // The types of locations as we discover them. When the flow is complete,
+  // these are the final types.
+  std::unordered_map<Location, Type> locTypes;
+
+  // A list of locations to process. When we process one, we compute the
+  // transfer function for it and set up any further flow.
+  UniqueDeferredQueue<Location> toFlow;
+
+  // After we update a location's type, this function sets up the flow to
+  // reach all preds.
+  void flowFrom(Location loc) {
+    for (auto dep : preds[loc]) {
+      toFlow.push(dep);
+    }
+  }
+
+  // Update a location, that is, apply the transfer function there. This reads
+  // the information that affects this information and computes the new type
+  // there. If the type changed, then apply it and flow onwards.
+  //
+  // We are given the values at successor locations, that is, the values that
+  // influence us and that we read from to compute our new value.
+  void update(Location loc, const std::vector<Type>& succValues) {
+    DBG({
+      std::cerr << "Updating \n";
+      dump(loc);
+    });
+    auto& locType = locTypes[loc];
+    auto old = locType;
+
+    // Some locations have special handling here in the transfer function.
+    bool handled = false;
+    if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
+      if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
+        // There is a single successor (the place this RefAs sends a value
+        // to).
+        auto succType = succValues[0];
+        // If we got an update, it must be a reference type (the initial
+        // value is none, and any improvement is a reference).
+        assert(succType.isRef());
+        switch (refAs->op) {
+          case RefAsNonNull:
+            // ref.as_non_null does not require its input to be non-nullable -
+            // all it does is enforce non-nullability - but it does pass along
+            // the heap type requirement. (We do not need to do a meet
+            // operation here because our monotonicity is proven by succ's.)
+            locType = Type(succType.getHeapType(), Nullable);
+            break;
+          case ExternInternalize:
+            // Internalize accepts any input of heap type extern. Pass along
+            // the nullability of the successor (whose monotonicity proves
+            // ours).
+            locType = Type(HeapType::ext, succType.getNullability());
+            break;
+          case ExternExternalize:
+            locType = Type(HeapType::any, succType.getNullability());
+            break;
+        }
+        handled = true;
+      }
+    }
+
+    if (!handled) {
+      // Perform a generic meet operation over all successors.
+      for (auto value : succValues) {
+        DBG({ std::cerr << " with " << value << "\n"; });
+        if (!value.isRef()) {
+          // Non-ref updates do not interest us.
+          continue;
+        }
+        DBG({
+          std::cerr << "  old: " << locType << " new: " << value << "\n";
+        });
+        if (typeLattice.meet(locType, value)) {
+          DBG({ std::cerr << "    result: " << locType << "\n"; });
+        }
+      }
+    }
+    if (locType != old) {
+      // We changed something here, so flow onwards.
+      flowFrom(loc);
+
+#ifndef NDEBUG
+      // Verify monotonicity.
+      assert(typeLattice.compare(locType, old) == analysis::LESS);
+#endif
+    }
+  }
+
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
@@ -213,10 +302,6 @@ struct TypeGeneralizing
       }
     }
 
-    // The types of locations as we discover them. When the flow is complete,
-    // these are the final types.
-    std::unordered_map<Location, Type> locTypes;
-
     // Set up locals.
     auto numLocals = func->getNumLocals();
     for (Index i = 0; i < numLocals; i++) {
@@ -233,91 +318,6 @@ struct TypeGeneralizing
         }
       }
     }
-
-    // A list of locations to process. When we process one, we compute the
-    // transfer function for it and set up any further flow.
-    UniqueDeferredQueue<Location> toFlow;
-
-    // After we update a location's type, this function sets up the flow to
-    // reach all preds.
-    auto flowFrom = [&](Location loc) {
-      for (auto dep : preds[loc]) {
-        toFlow.push(dep);
-      }
-    };
-
-    // Update a location, that is, apply the transfer function there. This reads
-    // the information that affects this information and computes the new type
-    // there. If the type changed, then apply it and flow onwards.
-    //
-    // We are given the values at successor locations, that is, the values that
-    // influence us and that we read from to compute our new value.
-    auto update = [&](Location loc, const std::vector<Type>& succValues) {
-      DBG({
-        std::cerr << "Updating \n";
-        dump(loc);
-      });
-      auto& locType = locTypes[loc];
-      auto old = locType;
-
-      // Some locations have special handling here in the transfer function.
-      bool handled = false;
-      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-        if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
-          // There is a single successor (the place this RefAs sends a value
-          // to).
-          auto succType = succValues[0];
-          // If we got an update, it must be a reference type (the initial
-          // value is none, and any improvement is a reference).
-          assert(succType.isRef());
-          switch (refAs->op) {
-            case RefAsNonNull:
-              // ref.as_non_null does not require its input to be non-nullable -
-              // all it does is enforce non-nullability - but it does pass along
-              // the heap type requirement. (We do not need to do a meet
-              // operation here because our monotonicity is proven by succ's.)
-              locType = Type(succType.getHeapType(), Nullable);
-              break;
-            case ExternInternalize:
-              // Internalize accepts any input of heap type extern. Pass along
-              // the nullability of the successor (whose monotonicity proves
-              // ours).
-              locType = Type(HeapType::ext, succType.getNullability());
-              break;
-            case ExternExternalize:
-              locType = Type(HeapType::any, succType.getNullability());
-              break;
-          }
-          handled = true;
-        }
-      }
-
-      if (!handled) {
-        // Perform a generic meet operation over all successors.
-        for (auto value : succValues) {
-          DBG({ std::cerr << " with " << value << "\n"; });
-          if (!value.isRef()) {
-            // Non-ref updates do not interest us.
-            continue;
-          }
-          DBG({
-            std::cerr << "  old: " << locType << " new: " << value << "\n";
-          });
-          if (typeLattice.meet(locType, value)) {
-            DBG({ std::cerr << "    result: " << locType << "\n"; });
-          }
-        }
-      }
-      if (locType != old) {
-        // We changed something here, so flow onwards.
-        flowFrom(loc);
-
-#ifndef NDEBUG
-        // Verify monotonicity.
-        assert(typeLattice.compare(locType, old) == analysis::LESS);
-#endif
-      }
-    };
 
     // First, apply the roots. Each is an update of a location with a single
     // successor, the type we start that root from.
