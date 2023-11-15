@@ -88,7 +88,7 @@ struct TypeGeneralizing
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // StructGet/Set operations are handled dynamically during the flow.
-  void XXvisitStructGet(StructGet* curr) {
+  void visitStructGet(StructGet* curr) {
     // Connect the reference to us. As the reference becomes more refined, so do
     // we. This is handled in the transfer function.
     connectSourceToDest(curr->ref, curr);
@@ -216,6 +216,7 @@ struct TypeGeneralizing
       std::cerr << "Updating \n";
       dump(loc);
     });
+
     auto& locType = locTypes[loc];
     auto old = locType;
 
@@ -243,6 +244,12 @@ struct TypeGeneralizing
         }
       }
     }
+
+    DBG({
+      for (auto value : succValues) {
+        std::cerr << "  succ value: " << value << '\n';
+      }
+    });
 
     // Some locations have special handling.
     bool handled = false;

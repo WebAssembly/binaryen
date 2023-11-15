@@ -1417,12 +1417,12 @@
  ;; CHECK:      (type $3 (func))
 
  ;; CHECK:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
+ ;; ALTER:      (type $3 (func))
+
  ;; ALTER:      (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
  (type $bot (sub $mid (struct (field (mut eqref)) (field i31ref) (field (mut eqref)))))
 
  ;; CHECK:      (type $struct (struct (field eqref) (field anyref)))
- ;; ALTER:      (type $4 (func))
-
  ;; ALTER:      (type $struct (struct (field eqref) (field anyref)))
  (type $struct (struct (field eqref) (field anyref)))
 
@@ -1463,13 +1463,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $struct-get (type $0) (result anyref)
- ;; ALTER-NEXT:  (local $var (ref null $bot))
- ;; ALTER-NEXT:  (struct.get $bot 1
+ ;; ALTER-NEXT:  (local $var (ref null $top))
+ ;; ALTER-NEXT:  (struct.get $top 1
  ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $struct-get (result anyref)
-  ;; XXX waka different
   (local $var (ref null $bot))
   ;; Require that typeof($var) <: (ref null $top) because it has a field of the
   ;; right type at index 1.
@@ -1553,7 +1552,7 @@
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $struct-set (type $4)
+ ;; ALTER:      (func $struct-set (type $3)
  ;; ALTER-NEXT:  (local $ref (ref null $top))
  ;; ALTER-NEXT:  (local $val eqref)
  ;; ALTER-NEXT:  (struct.set $top 0
@@ -1581,7 +1580,7 @@
  ;; CHECK-NEXT:   (local.get $val)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $struct-set-index (type $4)
+ ;; ALTER:      (func $struct-set-index (type $3)
  ;; ALTER-NEXT:  (local $ref (ref null $mid))
  ;; ALTER-NEXT:  (local $val eqref)
  ;; ALTER-NEXT:  (struct.set $mid 2
@@ -1614,7 +1613,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $struct-set-impossible (type $4)
+ ;; ALTER:      (func $struct-set-impossible (type $3)
  ;; ALTER-NEXT:  (local $ref nullref)
  ;; ALTER-NEXT:  (local $val anyref)
  ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
