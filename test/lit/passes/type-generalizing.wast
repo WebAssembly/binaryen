@@ -1100,7 +1100,13 @@
   )
  )
 
- (func $ref-as-non-null-unneeded (result eqref))
+ ;; ALTER:      (func $ref-as-non-null-unneeded (type $1) (result eqref)
+ ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (ref.as_non_null
+ ;; ALTER-NEXT:   (local.get $var)
+ ;; ALTER-NEXT:  )
+ ;; ALTER-NEXT: )
+ (func $ref-as-non-null-unneeded (result eqref)
   ;; XXX waka new test
   ;; As the above test, but now the output of the function is nullable, so the
   ;; ref.as_non_null is not technically needed.
