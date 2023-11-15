@@ -93,11 +93,21 @@ struct TypeGeneralizing
     // we. This is handled in the transfer function.
     connectSourceToDest(curr->ref, curr);
   }
-  void XXX______________visitStructSet(StructSet* curr) {
-    // In addition to handling the reference as in visitStructGet, we also add a
-    // connection for the value, which depends on the reference.
-    connectSourceToDest(curr->ref, curr);
-    connectSourceToDest(curr->value, curr);
+  void visitStructSet(StructSet* curr) {
+    auto refType = curr->ref->type;
+    if (!refType.isStruct()) {
+      // This is a bottom type or unreachable. Do not allow the ref to change.
+      addRoot(curr->ref, refType);
+      return;
+    }
+
+    // TODO we can look at the dynamic reference and value during the flow; for
+    //      now just do it statically.
+    auto minimalRefType = getLeastRefinedStructTypeWithField(refType.getHeapType(), curr->index,
+                                                           [&](Type candidate) { return Type::isSubType(curr->value->type, candidate); });
+    addRoot(curr->ref, Type(minimalRefType, Nullable));
+    const auto& fields = minimalRefType.getStruct().fields;
+    addRoot(curr->value, fields[curr->index].type);
   }
 
   // Hooks that are called by SubtypingDiscoverer.
@@ -176,6 +186,9 @@ struct TypeGeneralizing
   std::unordered_map<Location, Type> roots;
 
   void addRoot(Expression* expr, Type type) {
+    if (!type.isRef()) {
+      return;
+    }
     // There may already exist a type for a particular root, so merge them in,
     // in the same manner as during the flow (a meet).
     typeLattice.meet(roots[getLocation(expr)], type);
@@ -227,7 +240,7 @@ struct TypeGeneralizing
     if (succLocs && succLocs->size() == 1) {
       auto succLoc = (*succLocs)[0];
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&succLoc)) {
-        if (auto* structGet = exprLoc->expr->dynCast<StructGet>()) {
+        if (auto* get = exprLoc->expr->dynCast<StructGet>()) {
           // The situation is this:
           //
           //  (struct.get K  ;; succLoc
@@ -240,7 +253,9 @@ struct TypeGeneralizing
           // propagating the type onwards: the constraint on the reference is
           // that it be refined enough to provide a field at that index, and of
           // the right type.
-          succValues[0] = transferStructRef(succValues[0], structGet->ref, structGet->index);
+          succValues[0] = transferStructRef(succValues[0],
+                                            get->ref,
+                                            get->index);
         }
       }
     }
@@ -319,14 +334,23 @@ struct TypeGeneralizing
       return ref->type;
     }
 
-    // The reference's type must be refined enough to provide the type that the
-    // struct.get emits, that is, the struct type must have that field, and have
-    // it of the proper type; any more generalization is not allowed. To compute
-    // that, go up the supers until we find the last one that is valid.
-    //
-    // This is monotonic because as outputType decreases, we will stop earlier
-    // and emit something lower.
-    auto curr = ref->type.getHeapType();
+    // Get the least-refined struct type that still has (at least) the necessary
+    // type for that field. This is monotonic because as the field type
+    // refines we will return something more refined (or equal) here.
+    auto heapType = getLeastRefinedStructTypeWithField(ref->type.getHeapType(),
+                                                       index,
+                                                       [&](Type candidate) { return Type::isSubType(candidate, outputType); });
+    return Type(heapType, Nullable);
+  }
+
+  // Return the least refined struct type parent of a given type that still has
+  // a particular field and fulfills a custom field requirement. The field
+  // requirement function receives as a parameter the field type being
+  // considered, and should return true if it is acceptable.
+  template<typename T>
+  HeapType getLeastRefinedStructTypeWithField(HeapType curr,
+                                              Index index,
+                                              T fieldIsOk) {
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
@@ -336,15 +360,14 @@ struct TypeGeneralizing
       auto last = curr;
       curr = *next;
       const auto& fields = curr.getStruct().fields;
-      if (index >= fields.size() ||
-          !Type::isSubType(fields[index].type, outputType)) {
+      if (index >= fields.size() || !fieldIsOk(fields[index].type)) {
         // There is no field at that index, or it has the wrong type. Stop, as
         // |last| is the one we want.
         curr = last;
         break;
       }
     }
-    return Type(curr, Nullable);
+    return curr;
   }
 
   void visitFunction(Function* func) {
