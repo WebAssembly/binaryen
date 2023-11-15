@@ -1020,12 +1020,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $ref-cast-limited (type $1) (result eqref)
- ;; ALTER-NEXT:  (local $var eqref)
+ ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (ref.cast i31ref
  ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $ref-cast-limited (result eqref)
+  ;; XXX waka different
   (local $var i31ref)
   ;; Require that typeof($var) <: eqref so the cast can still be elimintated.
   (ref.cast i31ref
@@ -1040,7 +1041,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $ref-cast-more-limited (type $8) (result nullref)
- ;; ALTER-NEXT:  (local $var nullref)
+ ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (ref.cast nullref
  ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:  )
@@ -1063,7 +1064,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $ref-cast-lub (type $9) (result structref)
- ;; ALTER-NEXT:  (local $var structref)
+ ;; ALTER-NEXT:  (local $var anyref)
  ;; ALTER-NEXT:  (ref.cast nullref
  ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:  )

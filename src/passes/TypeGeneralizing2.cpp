@@ -110,7 +110,7 @@ struct TypeGeneralizing
   void noteSubtype(Expression* sub, Expression* super) {
     // Two expressions with subtyping between them. Add a link in the graph so
     // that we flow requirements along.
-    addExprSubtyping(sub, super);
+    connectSourceToDest(sub, super);
   }
 
   void noteCast(HeapType src, HeapType dest) {
@@ -120,8 +120,18 @@ struct TypeGeneralizing
     // Same as in noteSubtype.
   }
   void noteCast(Expression* src, Expression* dest) {
-    // We handle this in the transfer function below. TODO
-    addExprSubtyping(src, dest); // XXX
+    // TODO Handle this in the transfer function below? But for now, just add a
+    //      relevant root, which seems good enough.
+    if (dest->is<RefCast>()) {
+      // All a cast requires of its input is that it have the proper top type so
+      // it can be cast. TODO: do better with nullability
+      addRoot(src, Type(dest->type.getHeapType().getTop(),
+                        dest->type.getNullability()));
+    } else if (dest->is<RefAs>()) {
+      // Add a generic connection and handle this in an optimal manner in the
+      // tranfer function during the flow.
+      connectSourceToDest(src, dest);
+    }
   }
 
   // Internal graph for the flow. We track the predecessors so that we know who
@@ -133,12 +143,13 @@ struct TypeGeneralizing
   std::unordered_map<Location, std::vector<Location>> preds;
   std::unordered_map<Location, std::vector<Location>> succs;
 
-  void addExprSubtyping(Expression* sub, Expression* super) {
-    connectSubToSuper(getLocation(sub), getLocation(super));
+  // Connect a source location to where that value arrives. For example, a
+  // drop's value arrives in the drop.
+  void connectSourceToDest(Expression* sub, Expression* super) {
+    connectSourceToDest(getLocation(sub), getLocation(super));
   }
 
-  // TODO: rename to "connect value to where it arrives"
-  void connectSubToSuper(const Location& subLoc, const Location& superLoc) {
+  void connectSourceToDest(const Location& subLoc, const Location& superLoc) {
     preds[superLoc].push_back(subLoc);
     succs[subLoc].push_back(superLoc);
   }
@@ -175,17 +186,18 @@ struct TypeGeneralizing
       // single location for that index, which is connected to M sets for it,
       // giving us N + M instead of N * M (which we'd get if we connected gets
       // to sets directly).
-      connectSubToSuper(LocalLocation{func, get->index},
-                        getLocation(get));
+      connectSourceToDest(LocalLocation{func, get->index},
+                         getLocation(get));
     }
     for (auto& [index, sets] : setsByIndex) {
       for (auto* set : sets) {
-        connectSubToSuper(getLocation(set->value), LocalLocation{func, index});
+        connectSourceToDest(getLocation(set->value),
+                            LocalLocation{func, index});
         if (set->type.isConcrete()) {
           // This is a tee with a value, and that value shares the location of
           // the local.
-          connectSubToSuper(LocalLocation{func, set->index},
-                            getLocation(set));
+          connectSourceToDest(LocalLocation{func, set->index},
+                             getLocation(set));
         }
       }
     }
@@ -232,32 +244,64 @@ struct TypeGeneralizing
         dump(loc);
       });
       auto& locType = locTypes[loc];
+      auto old = locType;
 
-      auto changed = false;
       auto& locSuccs = succs[loc];
-      for (auto succ : locSuccs) {
-        DBG({
-          std::cout << " with \n";
-          dump(succ);
-        });
-        assert(!(succ == loc)); // no loopey
-        auto succType = locTypes[succ];
-        if (!succType.isRef()) {
-          // Non-ref updates do not interest us.
-          continue;
-        }
-        DBG({
-          std::cerr << "  old: " << locType << " new: " << succType << "\n";
-        });
-        if (typeLattice.meet(locType, succType)) {
-          DBG({
-            std::cerr << "    result: " << locType << "\n";
-          });
-          changed = true;
+
+      // Some locations have special handling here in the transfer function.
+      bool handled = false;
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
+        if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
+          if (refAs->op == RefAsNonNull) {
+            // ref.as_non_null does not require its input to be non-nullable -
+            // all it does is enforce non-nullability - but it does pass along
+            // the heap type requirement. To compute that, find the single
+            // successor (the place this RefAs sends a value to) and get the
+            // heap type from there.
+            assert(locSuccs.size() == 1);
+            auto succ = locSuccs[0];
+            auto succType = locTypes[succ];
+            // If we got an update, it must be a reference type (the initial
+            // value is none, and any improvement is a reference).
+            assert(succType.isRef());
+            // Simply copy the succ's heap type. We do not need to do a meet
+            // operation here because our monotonicity is proven by succ's.
+            locType = Type(succType.getHeapType(), Nullable);
+          }
         }
       }
-      if (changed) {
+
+      if (!handled) {
+        // Perform a generic meet operation over all successors.
+        for (auto succ : locSuccs) {
+          DBG({
+            std::cout << " with \n";
+            dump(succ);
+          });
+          assert(!(succ == loc)); // no loopey
+          auto succType = locTypes[succ];
+          if (!succType.isRef()) {
+            // Non-ref updates do not interest us.
+            continue;
+          }
+          DBG({
+            std::cerr << "  old: " << locType << " new: " << succType << "\n";
+          });
+          if (typeLattice.meet(locType, succType)) {
+            DBG({
+              std::cerr << "    result: " << locType << "\n";
+            });
+          }
+        }
+      }
+      if (locType != old) {
+        // We changed something here, so flow onwards.
         flowFrom(loc);
+
+#ifndef NDEBUG
+        // Verify monotonicity.
+        assert(typeLattice.compare(locType, old) == analysis::LESS);
+#endif
       }
     };
 
