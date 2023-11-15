@@ -149,8 +149,8 @@ public:
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   // [[nodiscard]] Result<> makeCallRef();
-  // [[nodiscard]] Result<> makeRefTest();
-  // [[nodiscard]] Result<> makeRefCast();
+  [[nodiscard]] Result<> makeRefTest(Type type);
+  [[nodiscard]] Result<> makeRefCast(Type type);
   // [[nodiscard]] Result<> makeBrOn();
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
