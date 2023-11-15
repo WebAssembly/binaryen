@@ -88,12 +88,12 @@ struct TypeGeneralizing
   std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
 
   // StructGet/Set operations are handled dynamically during the flow.
-  void ZZvisitStructGet(StructGet* curr) {
+  void XXvisitStructGet(StructGet* curr) {
     // Connect the reference to us. As the reference becomes more refined, so do
     // we. This is handled in the transfer function.
     connectSourceToDest(curr->ref, curr);
   }
-  void ZZvisitStructSet(StructSet* curr) {
+  void XXX______________visitStructSet(StructSet* curr) {
     // In addition to handling the reference as in visitStructGet, we also add a
     // connection for the value, which depends on the reference.
     connectSourceToDest(curr->ref, curr);
