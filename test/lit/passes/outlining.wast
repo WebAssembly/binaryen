@@ -286,104 +286,67 @@
       (drop
         (i32.const 10)
       )
+    )
+  )
+)
 
 ;; Tests that local.get instructions are correctly filtered from being outlined.
 (module
-  ;; CHECK:      (type $0 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func (param i32)))
 
-  ;; CHECK:      (func $j (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 7)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $j (param $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $j (param i32) (result i32)
-    (drop (i32.const 7))
+  (func $j (param i32)
     (drop (i32.add
       (local.get 0)
       (i32.const 1)))
-    (drop (i32.const 2))
-    (return (i32.const 4))
   )
-  ;; CHECK:      (func $k (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $k (param $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (i32.const 5)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $k (param i32) (result i32)
-    (drop (i32.const 0))
+  (func $k (param i32)
     (drop (i32.add
       (local.get 0)
       (i32.const 1)))
-    (drop (i32.const 2))
-    (return (i32.const 5))
   )
 )
 
 ;; Tests local.set instructions are correctly filtered from being outlined.
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $l (result i32)
+  ;; CHECK:      (func $l
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local.set $i
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $l (result i32)
-	(local $i i32)
+  (func $l
+    (local $i i32)
     (local.set $i
       (i32.const 7))
-    (drop (i32.const 2))
-    (return (i32.const 4))
   )
-  ;; CHECK:      (func $m (result i32)
+  ;; CHECK:      (func $m
   ;; CHECK-NEXT:  (local $i i32)
   ;; CHECK-NEXT:  (local.set $i
   ;; CHECK-NEXT:   (i32.const 7)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $m (result i32)
-	(local $i i32)
+  (func $m
+    (local $i i32)
     (local.set $i
       (i32.const 7))
-    (drop (i32.const 2))
-    (return (i32.const 4))
   )
 )
 
@@ -398,9 +361,6 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $label1)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 4)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br $label1)
@@ -410,7 +370,6 @@
     (block $label1
       (drop (i32.const 4))
       (br $label1)
-      (drop (i32.const 2))
       (drop (i32.const 4))
       (br $label1)
     )
@@ -422,35 +381,19 @@
   ;; CHECK:      (type $0 (func (result i32)))
 
   ;; CHECK:      (func $o (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $o (result i32)
-    (drop (i32.const 0))
-	(drop (i32.const 1))
 	(return (i32.const 2))
   )
   ;; CHECK:      (func $p (result i32)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $p (result i32)
-    (drop (i32.const 0))
-	(drop (i32.const 1))
 	(return (i32.const 2))
   )
 )
