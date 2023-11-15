@@ -246,6 +246,9 @@ struct Outlining : public Pass {
     // relative to the entire program.
     auto sequences = makeSequences(module, substrings, stringify);
     outline(module, sequences);
+    // Position the outlined functions first in the functions vector to make
+    // the outlining lit tests far more readable.
+    moveOutlinedFunctions(module, substrings.size());
   }
 
   Name addOutlinedFunction(Module* module,
@@ -253,26 +256,16 @@ struct Outlining : public Pass {
                            const std::vector<Expression*>& exprs) {
     auto startIdx = substring.StartIndices[0];
     // The outlined functions can be named anything.
-    Name outlinedFunc =
-      Names::getValidFunctionName(*module, std::string("outline$"));
+    Name func = Names::getValidFunctionName(*module, std::string("outline$"));
     // Calculate the function signature for the outlined sequence.
     StackSignature sig;
     for (uint32_t exprIdx = startIdx; exprIdx < startIdx + substring.Length;
          exprIdx++) {
       sig += StackSignature(exprs[exprIdx]);
     }
-    // Purposefully inserting the outlined functions at the beginning of the
-    // functions vector, so that outlined function assertions are positioned
-    // within the test module. This greatly improves readability of the
-    // outlining lit tests. Because of the direct manipulation of the functions
-    // vector, instead of using the addFunction() helper method, a call to
-    // updateFunctionsMap() is required.
-    module->functions.insert(
-      module->functions.begin(),
-      Builder::makeFunction(
-        outlinedFunc, Signature(sig.params, sig.results), {}));
-    module->updateFunctionsMap();
-    return outlinedFunc;
+    module->addFunction(
+      Builder::makeFunction(func, Signature(sig.params, sig.results), {}));
+    return func;
   }
 
   using Sequences =
@@ -287,15 +280,14 @@ struct Outlining : public Pass {
                           const HashStringifyWalker& stringify) {
     Sequences seqByFunc;
     for (auto& substring : substrings) {
-      Name outlinedFunc =
-        addOutlinedFunction(module, substring, stringify.exprs);
+      auto func = addOutlinedFunction(module, substring, stringify.exprs);
       for (auto seqIdx : substring.StartIndices) {
         // seqIdx is relative to the entire program; making the idx of the
         // sequence relative to its function is better for outlining because we
         // walk functions.
         auto [relativeIdx, existingFunc] = stringify.makeRelative(seqIdx);
-        auto seq = OutliningSequence(
-          relativeIdx, relativeIdx + substring.Length, outlinedFunc);
+        auto seq =
+          OutliningSequence(relativeIdx, relativeIdx + substring.Length, func);
         seqByFunc[existingFunc].push_back(seq);
       }
     }
@@ -314,6 +306,23 @@ struct Outlining : public Pass {
       reconstruct.sequences = std::move(seqByFunc[func]);
       reconstruct.doWalkFunction(module->getFunction(func));
     }
+  }
+
+  void moveOutlinedFunctions(Module* module, uint32_t outlinedCount) {
+    // Rearrange outlined functions to the beginning of the functions vector by
+    // using std::make_move_iterator to avoid making copies. A temp vector is
+    // created to avoid iterator invalidation.
+    auto count = module->functions.size();
+    std::vector<std::unique_ptr<Function>> temp(
+      std::make_move_iterator(module->functions.end() - outlinedCount),
+      std::make_move_iterator(module->functions.end()));
+    module->functions.insert(module->functions.begin(),
+                             std::make_move_iterator(temp.begin()),
+                             std::make_move_iterator(temp.end()));
+    module->functions.resize(count);
+    // After the functions vector is directly manipulated, we need to call
+    // updateFunctionsMap().
+    module->updateFunctionsMap();
   }
 
 #if OUTLINING_DEBUG
