@@ -1087,9 +1087,7 @@
  ;; ALTER:      (func $ref-as-non-null (type $10) (result (ref eq))
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (ref.as_non_null
- ;; ALTER-NEXT:   (ref.as_non_null
- ;; ALTER-NEXT:    (local.get $var)
- ;; ALTER-NEXT:   )
+ ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $ref-as-non-null (result (ref eq))

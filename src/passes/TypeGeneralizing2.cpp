@@ -253,7 +253,7 @@ struct TypeGeneralizing
       bool handled = false;
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
         if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
-          if (0 && refAs->op == RefAsNonNull) {
+          if (refAs->op == RefAsNonNull) {
             // ref.as_non_null does not require its input to be non-nullable -
             // all it does is enforce non-nullability - but it does pass along
             // the heap type requirement. To compute that, find the single
@@ -267,7 +267,6 @@ struct TypeGeneralizing
             // operation here because our monotonicity is proven by succ's.
             locType = Type(succType.getHeapType(), Nullable);
             handled = true;
-            abort();
           }
         }
       }
