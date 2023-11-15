@@ -125,8 +125,9 @@ struct TypeGeneralizing
     if (dest->is<RefCast>()) {
       // All a cast requires of its input is that it have the proper top type so
       // it can be cast. TODO: do better with nullability
-      addRoot(src, Type(dest->type.getHeapType().getTop(),
-                        dest->type.getNullability()));
+      addRoot(
+        src,
+        Type(dest->type.getHeapType().getTop(), dest->type.getNullability()));
     } else if (dest->is<RefAs>()) {
       // Add a generic connection and handle this in an optimal manner in the
       // tranfer function during the flow.
@@ -186,8 +187,7 @@ struct TypeGeneralizing
       // single location for that index, which is connected to M sets for it,
       // giving us N + M instead of N * M (which we'd get if we connected gets
       // to sets directly).
-      connectSourceToDest(LocalLocation{func, get->index},
-                         getLocation(get));
+      connectSourceToDest(LocalLocation{func, get->index}, getLocation(get));
     }
     for (auto& [index, sets] : setsByIndex) {
       for (auto* set : sets) {
@@ -197,7 +197,7 @@ struct TypeGeneralizing
           // This is a tee with a value, and that value shares the location of
           // the local.
           connectSourceToDest(LocalLocation{func, set->index},
-                             getLocation(set));
+                              getLocation(set));
         }
       }
     }
@@ -288,9 +288,7 @@ struct TypeGeneralizing
             std::cerr << "  old: " << locType << " new: " << succType << "\n";
           });
           if (typeLattice.meet(locType, succType)) {
-            DBG({
-              std::cerr << "    result: " << locType << "\n";
-            });
+            DBG({ std::cerr << "    result: " << locType << "\n"; });
           }
         }
       }
