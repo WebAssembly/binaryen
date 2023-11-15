@@ -80,7 +80,8 @@ struct OverriddenScopeNameUseVisitor : Visitor<SubType, ReturnType> {
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
   static_assert(                                                               \
-    &SubType::visit##id != &OverriddenScopeNameUseVisitor::visit##id,          \
+    &SubType::visit##id !=                                                     \
+      &OverriddenScopeNameUseVisitor<SubType, ReturnType>::visit##id,          \
     "Any class derived from OverriddenScopeNameUseVisitor must implement "     \
     "visit" #id " because expressions of type " #id " use a scope name");
 
