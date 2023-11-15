@@ -410,9 +410,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto* seg = self()->getModule()->getElementSegment(curr->segment);
     self()->noteSubtype(seg->type, array.element.type);
   }
-  void visitRefAs(RefAs* curr) {
-    self()->noteCast(curr->value, curr);
-  }
+  void visitRefAs(RefAs* curr) { self()->noteCast(curr->value, curr); }
   void visitStringNew(StringNew* curr) {}
   void visitStringConst(StringConst* curr) {}
   void visitStringMeasure(StringMeasure* curr) {}

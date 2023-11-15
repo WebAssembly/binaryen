@@ -284,9 +284,7 @@ struct TypeGeneralizing
       if (!handled) {
         // Perform a generic meet operation over all successors.
         for (auto value : succValues) {
-          DBG({
-            std::cerr << " with " << value << "\n";
-          });
+          DBG({ std::cerr << " with " << value << "\n"; });
           if (!value.isRef()) {
             // Non-ref updates do not interest us.
             continue;
