@@ -216,9 +216,6 @@
       )
     )
   )
-  ;; CHECK:      (func $h
-  ;; CHECK-NEXT:  (call $outline$_4)
-  ;; CHECK-NEXT: )
   (func $b
     (drop
       (i32.sub
@@ -227,9 +224,6 @@
       )
     )
   )
-  ;; CHECK:      (func $i
-  ;; CHECK-NEXT:  (call $outline$)
-  ;; CHECK-NEXT: )
   (func $c
     (drop
       (i32.add
@@ -386,7 +380,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $o (result i32)
-	(return (i32.const 2))
+    (return (i32.const 2))
   )
   ;; CHECK:      (func $p (result i32)
   ;; CHECK-NEXT:  (return
@@ -394,6 +388,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $p (result i32)
-	(return (i32.const 2))
+    (return (i32.const 2))
   )
 )
