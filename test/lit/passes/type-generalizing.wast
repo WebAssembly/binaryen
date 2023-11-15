@@ -1100,6 +1100,16 @@
   )
  )
 
+ (func $ref-as-non-null-unneeded (result eqref))
+  ;; XXX waka new test
+  ;; As the above test, but now the output of the function is nullable, so the
+  ;; ref.as_non_null is not technically needed.
+  (local $var i31ref)
+  (ref.as_non_null
+   (local.get $var)
+  )
+ )
+
  ;; CHECK:      (func $any-convert-extern-nullable (type $11) (param $x (ref noextern)) (result anyref)
  ;; CHECK-NEXT:  (local $var externref)
  ;; CHECK-NEXT:  (local.set $var

@@ -266,7 +266,8 @@ struct TypeGeneralizing
             assert(succType.isRef());
             // Simply copy the succ's heap type. We do not need to do a meet
             // operation here because our monotonicity is proven by succ's.
-            locType = Type(succType.getHeapType(), Nullable);
+            //locType = Type(succType.getHeapType(), Nullable);
+            //handled = true;
           }
         }
       }
