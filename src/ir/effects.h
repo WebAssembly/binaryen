@@ -968,10 +968,9 @@ private:
       // This acts as a kitchen sink effect.
       parent.calls = true;
 
-      // FIXME(frank-emrich) We should probably set parent.trap or
-      // parent.implicitTrap, because the resume instruction itself may trap:
-      // The continuation reference is nullable, and we trap if it is indeed
-      // null.
+      // resume instructions accept nullable continuation references and trap
+      // on null.
+      parent.implicitTrap = true;
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
