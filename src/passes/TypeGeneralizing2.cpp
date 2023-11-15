@@ -210,7 +210,7 @@ struct TypeGeneralizing
   // given the locations they arrive from, or an empty optional if this is a
   // root (roots are the initial values where the flow begins).
   void update(Location loc,
-              const std::vector<Type>& succValues,
+              std::vector<Type> succValues,
               std::optional<std::vector<Location>> succLocs) {
     DBG({
       std::cerr << "Updating \n";
@@ -219,7 +219,32 @@ struct TypeGeneralizing
     auto& locType = locTypes[loc];
     auto old = locType;
 
-    // Some locations have special handling here in the transfer function.
+    // Some successors have special handling. Where such handling exists, it
+    // updates succValues for the processing below (which typically ends up
+    // being used in the generic meet operation, but there is customization in
+    // some cases there as well).
+    if (succLocs && succLocs->size() == 1) {
+      auto succLoc = (*succLocs)[0];
+      if (auto* exprLoc = std::get_if<ExpressionLocation>(&succLoc)) {
+        if (auto* structGet = exprLoc->expr->dynCast<StructGet>()) {
+          // The situation is this:
+          //
+          //  (struct.get K  ;; succLoc
+          //   (loc)         ;; loc
+          //  )
+          //
+          // That is, our successor is a struct.get, so we are the reference of
+          // that struct.get. The current constraints on the struct.get affect
+          // the reference, but not in the normal "value" manner of just
+          // propagating the type onwards: the constraint on the reference is
+          // that it be refined enough to provide a field at that index, and of
+          // the right type.
+          succValues[0] = transferStructRef(succValues[0], structGet->ref, structGet->index);
+        }
+      }
+    }
+
+    // Some locations have special handling.
     bool handled = false;
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
       if (auto* refAs = exprLoc->expr->dynCast<RefAs>()) {
@@ -250,7 +275,6 @@ struct TypeGeneralizing
         handled = true;
       }
     }
-
     if (!handled) {
       // Perform a generic meet operation over all successors.
       for (auto value : succValues) {
@@ -276,6 +300,44 @@ struct TypeGeneralizing
       assert(typeLattice.compare(locType, old) == analysis::LESS);
 #endif
     }
+  }
+
+  // Given a struct.get operation, this receives the type the get must emit, the
+  // reference child of the struct.get, and the index it operates on. It then
+  // computes the type for the reference and returns that. This forms the core
+  // of the transfer logic for a struct.get.
+  Type transferStructRef(Type outputType, Expression* ref, Index index) {
+    if (!ref->type.isStruct()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      return ref->type;
+    }
+
+    // The reference's type must be refined enough to provide the type that the
+    // struct.get emits, that is, the struct type must have that field, and have
+    // it of the proper type; any more generalization is not allowed. To compute
+    // that, go up the supers until we find the last one that is valid.
+    //
+    // This is monotonic because as outputType decreases, we will stop earlier
+    // and emit something lower.
+    auto curr = ref->type.getHeapType();
+    while (true) {
+      auto next = curr.getDeclaredSuperType();
+      if (!next) {
+        // There is no super. Stop, as curr is the one we want.
+        break;
+      }
+      auto last = curr;
+      curr = *next;
+      const auto& fields = curr.getStruct().fields;
+      if (index >= fields.size() ||
+          !Type::isSubType(fields[index].type, outputType)) {
+        // There is no field at that index, or it has the wrong type. Stop, as
+        // |last| is the one we want.
+        curr = last;
+        break;
+      }
+    }
+    return Type(curr, Nullable);
   }
 
   void visitFunction(Function* func) {
