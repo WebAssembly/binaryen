@@ -206,8 +206,12 @@ struct TypeGeneralizing
   // there. If the type changed, then apply it and flow onwards.
   //
   // We are given the values at successor locations, that is, the values that
-  // influence us and that we read from to compute our new value.
-  void update(Location loc, const std::vector<Type>& succValues) {
+  // influence us and that we read from to compute our new value. We are also
+  // given the locations they arrive from, or an empty optional if this is a
+  // root (roots are the initial values where the flow begins).
+  void update(Location loc,
+              const std::vector<Type>& succValues,
+              std::optional<std::vector<Location>> succLocs) {
     DBG({
       std::cerr << "Updating \n";
       dump(loc);
@@ -326,7 +330,7 @@ struct TypeGeneralizing
         std::cerr << "root: " << value << "\n";
         dump(loc);
       });
-      update(loc, {value});
+      update(loc, {value}, {});
     }
 
     // Second, perform the flow: iteratively get an location that might change
@@ -334,11 +338,12 @@ struct TypeGeneralizing
     // flow from there.
     while (!toFlow.empty()) {
       auto loc = toFlow.pop();
+      auto& succLocs = succs[loc];
       std::vector<Type> succValues;
-      for (auto& succ : succs[loc]) {
+      for (auto& succ : succLocs) {
         succValues.push_back(locTypes[succ]);
       }
-      update(loc, succValues);
+      update(loc, succValues, succLocs);
     }
 
     // Finally, apply the results of the flow: the types at LocalLocations are
