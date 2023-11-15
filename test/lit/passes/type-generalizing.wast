@@ -708,7 +708,7 @@
  ;; CHECK-NEXT: )
  (func $ref-cast-limited (result eqref)
   (local $var i31ref)
-  ;; Do not constrain $var.
+  ;; No constraint on $var.
   ;; TODO: We could eliminate the cast if we did constrain $var.
   (ref.cast i31ref
    (local.get $var)
@@ -723,7 +723,7 @@
  ;; CHECK-NEXT: )
  (func $ref-cast-more-limited (result nullref)
   (local $var i31ref)
-  ;; Do not constraint $var.
+  ;; No constraint on $var.
   (ref.cast nullref
    (local.get $var)
   )
@@ -737,7 +737,7 @@
  ;; CHECK-NEXT: )
  (func $ref-cast-lub (result structref)
   (local $var i31ref)
-  ;; Do not constrain $var.
+  ;; No constraint on $var.
   (ref.cast structref
    (local.get $var)
   )
