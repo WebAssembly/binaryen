@@ -103,7 +103,7 @@ struct TypeGeneralizing
     //      now just do it statically.
     auto minimalRefType = getLeastRefinedStructTypeWithField(
       refType.getHeapType(), curr->index, [&](Type candidate) {
-        return Type::isSubType(curr->value->type, candidate);
+        return true;
       });
     addRoot(curr->ref, Type(minimalRefType, Nullable));
     const auto& fields = minimalRefType.getStruct().fields;
