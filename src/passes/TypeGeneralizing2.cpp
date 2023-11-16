@@ -348,13 +348,10 @@ struct TypeGeneralizing
     if (!handled) {
       // Perform a generic meet operation over all successors.
       for (auto value : succValues) {
-        DBG({ std::cerr << " with " << value << "\n"; });
-        if (!value.isRef()) {
-          // Non-ref updates do not interest us.
-          continue;
-        }
-        DBG(
-          { std::cerr << "  old: " << locType << " new: " << value << "\n"; });
+        DBG({
+          std::cerr << " with " << value << "\n";
+          std::cerr << "  old: " << locType << " new: " << value << "\n";
+        });
         if (typeLattice.meet(locType, value)) {
           DBG({ std::cerr << "    result: " << locType << "\n"; });
         }
