@@ -288,31 +288,31 @@ struct TypeGeneralizing
           //  )
           //
           // That is, our successor is a struct.get, so we are the reference of
-          // that struct.get. The current constraints on the struct.get affect
-          // the reference, but not in the normal "value" manner of just
-          // propagating the type onwards: the constraint on the reference is
-          // that it be refined enough to provide a field at that index, and of
-          // the right type.
+          // that struct.get.
           succValue =
             transferStructGet(succValue, get->ref, get->index);
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
           succValue = transferArrayGet(succValue, get->ref);
         } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
+          // This is an update for a copy, which happens when the source is
+          // refined. The copy itself stores no value, and instead we may update
+          // the dest.
           std::tie(loc, succValue) = transferArrayCopy(succValue, copy);
         }
       }
     }
 
-    DBG({ dump(loc); });
-
-    auto& locType = locTypes[loc];
-    auto old = locType;
-
+    // We now know the actual location to update, and the successor values
+    // relevant for us.
     DBG({
+      dump(loc);
       for (auto value : succValues) {
         std::cerr << "  succ value: " << value << '\n';
       }
     });
+
+    auto& locType = locTypes[loc];
+    auto old = locType;
 
     // Some locations have special handling.
     bool handled = false;
