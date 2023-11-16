@@ -108,7 +108,7 @@ struct TypeGeneralizing
     addRoot(curr->value, fields[curr->index].type);
   }
 
-  void requireArray(Expression* ref) {
+  void requireArray(Expression* ref) { // TODO dedupe
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
@@ -132,7 +132,23 @@ struct TypeGeneralizing
     }
     self()->noteSubtype(ref, Type(curr, Nullable));
   }
-
+  void requireNonBasicArray(Expression* ref) { // TODO dedupe
+    if (!ref->type.isArray()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      self()->noteSubtype(ref, ref->type);
+      return;
+    }
+    auto curr = ref->type.getHeapType();
+    while (true) {
+      auto next = curr.getDeclaredSuperType();
+      if (!next) {
+        // There is no super. Stop, as curr is the one we want.
+        break;
+      }
+      curr = *next;
+    }
+    self()->noteSubtype(ref, Type(curr, Nullable));
+  }
   void requireBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
@@ -149,9 +165,16 @@ struct TypeGeneralizing
   }
   void visitArrayLen(ArrayLen* curr) { requireBasicArray(curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
-    requireArray(curr->srcRef);
-    requireArray(curr->destRef);
-    Super::visitArrayCopy(curr);
+    // Start minimal; see the next comment for more.
+    requireNonBasicArray(curr->destRef);
+    requireNonBasicArray(curr->srcRef);
+    // As the source ref refines, we may need to refine the dest ref. Connect
+    // the source to the copy, and we will handle that in the transfer
+    // function (the copy itself has no value, and we will calculate the change
+    // for the dest there and apply it; we do not connect the source to the dest
+    // directly because the copy mediates between them and defines in what
+    // manner the source affects the dest). 
+    connectSourceToDest(curr->srcRef, curr);
   }
   void visitArrayFill(ArrayFill* curr) {
     requireArray(curr->ref);
@@ -283,9 +306,6 @@ struct TypeGeneralizing
       dump(loc);
     });
 
-    auto& locType = locTypes[loc];
-    auto old = locType;
-
     // Some successors have special handling. Where such handling exists, it
     // updates succValues for the processing below (which typically ends up
     // being used in the generic meet operation, but there is customization in
@@ -310,9 +330,18 @@ struct TypeGeneralizing
             transferStructGet(succValues[0], get->ref, get->index);
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
           succValues[0] = transferArrayGet(succValues[0], get->ref);
+        } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
+          std::tie(loc, succValues[0]) = transferArrayCopy(succValues[0], copy);
         }
       }
     }
+
+    DBG({
+      dump(loc);
+    });
+
+    auto& locType = locTypes[loc];
+    auto old = locType;
 
     DBG({
       for (auto value : succValues) {
@@ -435,6 +464,18 @@ struct TypeGeneralizing
     return Type(heapType, Nullable);
   }
 
+  // Given a new type for the source of an ArrayCopy, compute the new type for
+  // the dest. Return the location of the dest and that value, by which we
+  // transfer (no pun intended) the update of the ArrayCopy to an update of the
+  // copy's dest.
+  std::pair<Location, Type> transferArrayCopy(Type srcType, ArrayCopy* copy) {
+    // Similar to ArrayGet: We know the current output type, and can compute
+    // the input/dest.
+    auto destType = transferArrayGet(srcType, copy->destRef);
+    auto destLoc = ExpressionLocation{copy->destRef, 0};
+    return {destLoc, destType};
+  }
+
   template<typename T>
   HeapType getLeastRefinedArrayTypeWithElement(HeapType curr, T elementIsOk) {
     while (true) {
@@ -456,6 +497,8 @@ struct TypeGeneralizing
 
   void visitFunction(Function* func) {
     Super::visitFunction(func);
+
+    DBG({ std::cerr << "TG: " << func->name << "\n"; });
 
     // Finish setting up the graph: LocalLocals are "abstract" things that we
     // did not walk, so set them up manually. Each LocalLocation is connected
