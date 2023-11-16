@@ -21,7 +21,7 @@
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
 
-#define IR_BUILDER_DEBUG 1
+#define IR_BUILDER_DEBUG 0
 
 #if IR_BUILDER_DEBUG
 #define DBG(statement) statement
@@ -153,7 +153,9 @@ void IRBuilder::push(Expression* expr) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
-  DBG(std::cerr << "IRBuilder::push: ");
+
+  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(dump());
 }
 
 Result<Expression*> IRBuilder::pop() {
@@ -193,6 +195,53 @@ Result<Expression*> IRBuilder::build() {
   scopeStack.clear();
   labelDepths.clear();
   return expr;
+}
+
+void IRBuilder::dump() {
+#if IR_BUILDER_DEBUG
+  std::cerr << "Scope stack";
+  if (func) {
+    std::cerr << " in function $" << func->name;
+  }
+  std::cerr << ":\n";
+
+  for (auto& scope : scopeStack) {
+    std::cerr << "  scope ";
+    if (std::get_if<ScopeCtx::NoScope>(&scope.scope)) {
+      std::cerr << "none";
+    } else if (auto* f = std::get_if<ScopeCtx::FuncScope>(&scope.scope)) {
+      std::cerr << "func " << f->func->name;
+    } else if (std::get_if<ScopeCtx::BlockScope>(&scope.scope)) {
+      std::cerr << "block";
+    } else if (std::get_if<ScopeCtx::IfScope>(&scope.scope)) {
+      std::cerr << "if";
+    } else if (std::get_if<ScopeCtx::ElseScope>(&scope.scope)) {
+      std::cerr << "else";
+    } else if (std::get_if<ScopeCtx::LoopScope>(&scope.scope)) {
+      std::cerr << "loop";
+    } else {
+      WASM_UNREACHABLE("unexpected scope");
+    }
+
+    if (auto name = scope.getOriginalLabel()) {
+      std::cerr << " (original label: " << name << ")";
+    }
+
+    if (scope.label) {
+      std::cerr << " (label: " << scope.label << ")";
+    }
+
+    if (scope.unreachable) {
+      std::cerr << " (unreachable)";
+    }
+
+    std::cerr << ":\n";
+
+    for (auto* expr : scope.exprStack) {
+      std::cerr << "    " << ShallowExpression(expr) << "\n";
+    }
+  }
+#endif // IR_BUILDER_DEBUG
 }
 
 Result<> IRBuilder::visit(Expression* curr) {
