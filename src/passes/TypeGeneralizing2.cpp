@@ -108,7 +108,7 @@ struct TypeGeneralizing
     addRoot(curr->value, fields[curr->index].type);
   }
 
-  void requireArrayType(Expression* ref) {
+  void requireArray(Expression* ref) {
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
@@ -133,7 +133,7 @@ struct TypeGeneralizing
     self()->noteSubtype(ref, Type(curr, Nullable));
   }
 
-  void requireArrayReference(Expression* ref) {
+  void requireBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
@@ -144,22 +144,22 @@ struct TypeGeneralizing
 
   void visitArrayGet(ArrayGet* curr) { connectSourceToDest(curr->ref, curr); }
   void visitArraySet(ArraySet* curr) {
-    requireArrayType(curr->ref);
+    requireArray(curr->ref);
     Super::visitArraySet(curr);
   }
-  void visitArrayLen(ArrayLen* curr) { requireArrayReference(curr->ref); }
+  void visitArrayLen(ArrayLen* curr) { requireBasicArray(curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
-    requireArrayType(curr->srcRef);
-    requireArrayType(curr->destRef);
+    requireArray(curr->srcRef);
+    requireArray(curr->destRef);
     Super::visitArrayCopy(curr);
   }
   void visitArrayFill(ArrayFill* curr) {
-    requireArrayType(curr->ref);
+    requireArray(curr->ref);
     Super::visitArrayFill(curr);
   }
-  void visitArrayInitData(ArrayInitData* curr) { requireArrayType(curr->ref); }
+  void visitArrayInitData(ArrayInitData* curr) { requireArray(curr->ref); }
   void visitArrayInitElem(ArrayInitElem* curr) {
-    requireArrayType(curr->ref);
+    requireArray(curr->ref);
     Super::visitArrayInitElem(curr);
   }
 
