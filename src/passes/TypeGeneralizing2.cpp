@@ -321,7 +321,8 @@ struct TypeGeneralizing
     DBG({
       dump(loc);
       for (auto value : succValues) {
-        std::cerr << "  succ value: " << ModuleType(*getModule(), value) << '\n';
+        std::cerr << "  succ value: " << ModuleType(*getModule(), value)
+                  << '\n';
       }
     });
 
@@ -360,10 +361,14 @@ struct TypeGeneralizing
       // Perform a generic meet operation over all successors.
       for (auto value : succValues) {
         DBG({
-          std::cerr << "  old: " << ModuleType(*getModule(), locType) << " new: " << ModuleType(*getModule(), value) << "\n";
+          std::cerr << "  old: " << ModuleType(*getModule(), locType)
+                    << " new: " << ModuleType(*getModule(), value) << "\n";
         });
         if (typeLattice.meet(locType, value)) {
-          DBG({ std::cerr << "    result: " << ModuleType(*getModule(), locType) << "\n"; });
+          DBG({
+            std::cerr << "    result: " << ModuleType(*getModule(), locType)
+                      << "\n";
+          });
         }
       }
     }
@@ -487,7 +492,7 @@ struct TypeGeneralizing
     }
     for (auto* set : sets) {
       connectSrcToDest(getLocation(set->value),
-                          LocalLocation{func, set->index});
+                       LocalLocation{func, set->index});
       if (set->type.isConcrete()) {
         // This is a tee with a value, and that value shares the location of
         // the local.
@@ -561,7 +566,8 @@ struct TypeGeneralizing
 #ifdef TYPEGEN_DEBUG
   void dump(const Location& loc) {
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-      std::cerr << "exprLoc  " << ModuleExpression(*getModule(), exprLoc->expr) << '\n';
+      std::cerr << "exprLoc  " << ModuleExpression(*getModule(), exprLoc->expr)
+                << '\n';
     } else if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
       std::cerr << "localloc " << localLoc->index << '\n';
     } else {
