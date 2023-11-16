@@ -320,9 +320,6 @@ struct TypeGeneralizing
         // There is a single successor (the place this RefAs sends a value
         // to).
         auto succType = succValues[0];
-        // If we got an update, it must be a reference type (the initial
-        // value is none, and any improvement is a reference).
-        assert(succType.isRef());
         switch (refAs->op) {
           case RefAsNonNull:
             // ref.as_non_null does not require its input to be non-nullable -
