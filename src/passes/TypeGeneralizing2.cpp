@@ -121,7 +121,10 @@ struct TypeGeneralizing
     self()->noteSubtype(ref, Type(HeapType::array, Nullable));
   }
 
-  void visitArrayGet(ArrayGet* curr) { connectSourceToDest(curr->ref, curr); }
+  void visitArrayGet(ArrayGet* curr) {
+    // As with StructGet, this is handled in the transfer function.
+    connectSourceToDest(curr->ref, curr);
+  }
   void visitArraySet(ArraySet* curr) {
     requireNonBasicArray(curr->ref);
     Super::visitArraySet(curr);
@@ -182,17 +185,14 @@ struct TypeGeneralizing
     // Same as in noteSubtype.
   }
   void noteCast(Expression* src, Expression* dest) {
-    // TODO Handle this in the transfer function below? But for now, just add a
-    //      relevant root, which seems good enough.
     if (dest->is<RefCast>()) {
       // All a cast requires of its input is that it have the proper top type so
-      // it can be cast. TODO: do better with nullability
+      // it can be cast. TODO: Can we do better? Nullability?
       addRoot(
         src,
         Type(dest->type.getHeapType().getTop(), dest->type.getNullability()));
     } else if (dest->is<RefAs>()) {
-      // Add a generic connection and handle this in an optimal manner in the
-      // tranfer function during the flow.
+      // Handle this in an optimal manner in the transfer function.
       connectSourceToDest(src, dest);
     }
   }
@@ -207,7 +207,7 @@ struct TypeGeneralizing
   std::unordered_map<Location, std::vector<Location>> succs;
 
   // Connect a source location to where that value arrives. For example, a
-  // drop's value arrives in the drop.
+  // block's last element arrives in the block.
   void connectSourceToDest(Expression* source, Expression* dest) {
     connectSourceToDest(getLocation(source), getLocation(dest));
   }
@@ -222,6 +222,10 @@ struct TypeGeneralizing
     return ExpressionLocation{expr, 0};
   }
 
+  // The analysis we do here is on types: each location will monotonically
+  // increase until all locations stabilize at the fixed point.
+  analysis::ValType typeLattice;
+
   // The roots in the graph: constraints that we know from the start and from
   // which the flow begins. Each root is a location and its type.
   std::unordered_map<Location, Type> roots;
@@ -234,10 +238,6 @@ struct TypeGeneralizing
     // in the same manner as during the flow (a meet).
     typeLattice.meet(roots[getLocation(expr)], type);
   }
-
-  // The analysis we do here is on types: each location will monotonically
-  // increase until all locations stabilize at the fixed point.
-  analysis::ValType typeLattice;
 
   // The types of locations as we discover them. When the flow is complete,
   // these are the final types.
@@ -256,8 +256,8 @@ struct TypeGeneralizing
   }
 
   // Update a location, that is, apply the transfer function there. This reads
-  // the information that affects this information and computes the new type
-  // there. If the type changed, then apply it and flow onwards.
+  // the information that affects this location and computes the new type there.
+  // If the type changed, then apply it and flow onwards.
   //
   // We are given the values at successor locations, that is, the values that
   // influence us and that we read from to compute our new value. We are also
@@ -272,11 +272,13 @@ struct TypeGeneralizing
     });
 
     // Some successors have special handling. Where such handling exists, it
-    // updates succValues for the processing below (which typically ends up
+    // updates |succValues| for the processing below (which typically ends up
     // being used in the generic meet operation, but there is customization in
-    // some cases there as well).
+    // some cases there as well) and may also update |loc| (if the location to
+    // be updated is different).
     if (succLocs && succLocs->size() == 1) {
       auto succLoc = (*succLocs)[0];
+      auto& succValue = succValues[0];
       if (auto* exprLoc = std::get_if<ExpressionLocation>(&succLoc)) {
         if (auto* get = exprLoc->expr->dynCast<StructGet>()) {
           // The situation is this:
@@ -291,12 +293,12 @@ struct TypeGeneralizing
           // propagating the type onwards: the constraint on the reference is
           // that it be refined enough to provide a field at that index, and of
           // the right type.
-          succValues[0] =
-            transferStructGet(succValues[0], get->ref, get->index);
+          succValue =
+            transferStructGet(succValue, get->ref, get->index);
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
-          succValues[0] = transferArrayGet(succValues[0], get->ref);
+          succValue = transferArrayGet(succValue, get->ref);
         } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
-          std::tie(loc, succValues[0]) = transferArrayCopy(succValues[0], copy);
+          std::tie(loc, succValue) = transferArrayCopy(succValue, copy);
         }
       }
     }
