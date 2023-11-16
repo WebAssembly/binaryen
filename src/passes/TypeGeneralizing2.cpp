@@ -98,8 +98,6 @@ struct TypeGeneralizing
       return;
     }
 
-    // TODO we can look at the dynamic reference and value during the flow; for
-    //      now just do it statically.
     auto minimalRefType =
       getLeastRefinedStruct(refType.getHeapType(), curr->index);
     addRoot(curr->ref, Type(minimalRefType, Nullable));
@@ -109,7 +107,6 @@ struct TypeGeneralizing
 
   void requireNonBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
-      // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
       return;
     }
@@ -118,7 +115,6 @@ struct TypeGeneralizing
   }
   void requireBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
-      // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
       return;
     }
@@ -379,7 +375,6 @@ struct TypeGeneralizing
   // of the transfer logic for a struct.get.
   Type transferStructGet(Type outputType, Expression* ref, Index index) {
     if (!ref->type.isStruct()) {
-      // This is a bottom type or unreachable. Do not allow it to change.
       return ref->type;
     }
 
@@ -419,7 +414,6 @@ struct TypeGeneralizing
 
   Type transferArrayGet(Type outputType, Expression* ref) {
     if (!ref->type.isArray()) {
-      // This is a bottom type or unreachable. Do not allow it to change.
       return ref->type;
     }
 
