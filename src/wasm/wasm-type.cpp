@@ -2844,4 +2844,10 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+std::ostream& operator<<(std::ostream& os, wasm::ModuleType moduleType) {
+  return wasm::TypePrinter(os, [&](wasm::HeapType type) {
+    return moduleType.first.typeNames[type];
+  }).print(moduleType.second);
+}
+
 } // namespace std

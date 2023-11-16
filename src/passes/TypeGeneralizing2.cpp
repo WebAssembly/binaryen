@@ -41,7 +41,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#define TYPEGEN_DEBUG 0
+#define TYPEGEN_DEBUG 1
 
 #if TYPEGEN_DEBUG
 #define DBG(statement) statement
@@ -88,7 +88,7 @@ struct TypeGeneralizing
   void visitStructGet(StructGet* curr) {
     // Connect the reference to us. As the reference becomes more refined, so do
     // we. This is handled in the transfer function.
-    connectSourceToDest(curr->ref, curr);
+    connectSrcToDest(curr->ref, curr);
   }
   void visitStructSet(StructSet* curr) {
     auto refType = curr->ref->type;
@@ -123,7 +123,7 @@ struct TypeGeneralizing
 
   void visitArrayGet(ArrayGet* curr) {
     // As with StructGet, this is handled in the transfer function.
-    connectSourceToDest(curr->ref, curr);
+    connectSrcToDest(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
     requireNonBasicArray(curr->ref);
@@ -134,13 +134,14 @@ struct TypeGeneralizing
     // Start minimal; see the next comment for more.
     requireNonBasicArray(curr->destRef);
     requireNonBasicArray(curr->srcRef);
-    // As the source ref refines, we may need to refine the dest ref. Connect
-    // the source to the copy, and we will handle that in the transfer
+    // As the dest ref refines, we may need to refine the source ref. Connect
+    // those two through the copy, and we will handle that in the transfer
     // function (the copy itself has no value, and we will calculate the change
     // for the dest there and apply it; we do not connect the source to the dest
     // directly because the copy mediates between them and defines in what
     // manner the source affects the dest).
-    connectSourceToDest(curr->srcRef, curr);
+    connectSrcToDest(curr, curr->destRef);
+    connectSrcToDest(curr->srcRef, curr);
   }
   void visitArrayFill(ArrayFill* curr) {
     requireNonBasicArray(curr->ref);
@@ -175,7 +176,7 @@ struct TypeGeneralizing
   void noteSubtype(Expression* sub, Expression* super) {
     // Two expressions with subtyping between them. Add a link in the graph so
     // that we flow requirements along.
-    connectSourceToDest(sub, super);
+    connectSrcToDest(sub, super);
   }
 
   void noteCast(HeapType src, HeapType dest) {
@@ -193,7 +194,7 @@ struct TypeGeneralizing
         Type(dest->type.getHeapType().getTop(), dest->type.getNullability()));
     } else if (dest->is<RefAs>()) {
       // Handle this in an optimal manner in the transfer function.
-      connectSourceToDest(src, dest);
+      connectSrcToDest(src, dest);
     }
   }
 
@@ -208,13 +209,19 @@ struct TypeGeneralizing
 
   // Connect a source location to where that value arrives. For example, a
   // block's last element arrives in the block.
-  void connectSourceToDest(Expression* source, Expression* dest) {
-    connectSourceToDest(getLocation(source), getLocation(dest));
+  void connectSrcToDest(Expression* src, Expression* dest) {
+    connectSrcToDest(getLocation(src), getLocation(dest));
   }
 
-  void connectSourceToDest(const Location& sourceLoc, const Location& destLoc) {
-    preds[destLoc].push_back(sourceLoc);
-    succs[sourceLoc].push_back(destLoc);
+  void connectSrcToDest(const Location& srcLoc, const Location& destLoc) {
+    DBG({
+      std::cerr << "Connecting ";
+      dump(srcLoc);
+      std::cerr << " to ";
+      dump(destLoc);
+    });
+    preds[destLoc].push_back(srcLoc);
+    succs[srcLoc].push_back(destLoc);
   }
 
   Location getLocation(Expression* expr) {
@@ -250,7 +257,15 @@ struct TypeGeneralizing
   // After we update a location's type, this function sets up the flow to
   // reach all preds.
   void flowFrom(Location loc) {
+    DBG({
+      std::cerr << "Flowing from ";
+      dump(loc);
+    });
     for (auto dep : preds[loc]) {
+      DBG({
+        std::cerr << "  to ";
+        dump(dep);
+      });
       toFlow.push(dep);
     }
   }
@@ -293,9 +308,9 @@ struct TypeGeneralizing
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
           succValue = transferArrayGet(succValue, get->ref);
         } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
-          // This is an update for a copy, which happens when the source is
+          // This is an update from a copy, which happens when the dest is
           // refined. The copy itself stores no value, and instead we may update
-          // the dest.
+          // the source.
           std::tie(loc, succValue) = transferArrayCopy(succValue, copy);
         }
       }
@@ -306,7 +321,7 @@ struct TypeGeneralizing
     DBG({
       dump(loc);
       for (auto value : succValues) {
-        std::cerr << "  succ value: " << value << '\n';
+        std::cerr << "  succ value: " << ModuleType(*getModule(), value) << '\n';
       }
     });
 
@@ -345,11 +360,10 @@ struct TypeGeneralizing
       // Perform a generic meet operation over all successors.
       for (auto value : succValues) {
         DBG({
-          std::cerr << " with " << value << "\n";
-          std::cerr << "  old: " << locType << " new: " << value << "\n";
+          std::cerr << "  old: " << ModuleType(*getModule(), locType) << " new: " << ModuleType(*getModule(), value) << "\n";
         });
         if (typeLattice.meet(locType, value)) {
-          DBG({ std::cerr << "    result: " << locType << "\n"; });
+          DBG({ std::cerr << "    result: " << ModuleType(*getModule(), locType) << "\n"; });
         }
       }
     }
@@ -420,12 +434,17 @@ struct TypeGeneralizing
   // the dest. Return the location of the dest and that value, by which we
   // transfer (no pun intended) the update of the ArrayCopy to an update of the
   // copy's dest.
-  std::pair<Location, Type> transferArrayCopy(Type srcType, ArrayCopy* copy) {
+  std::pair<Location, Type> transferArrayCopy(Type destType, ArrayCopy* copy) {
+    auto srcLoc = ExpressionLocation{copy->srcRef, 0};
+    if (!destType.isArray()) {
+      // No constraint here.
+      return {srcLoc, Type(HeapType::array, Nullable)};
+    }
     // Similar to ArrayGet: We know the current output type, and can compute
     // the input/dest.
-    auto destType = transferArrayGet(srcType, copy->destRef);
-    auto destLoc = ExpressionLocation{copy->destRef, 0};
-    return {destLoc, destType};
+    auto destElementType = destType.getHeapType().getArray().element.type;
+    auto srcType = transferArrayGet(destElementType, copy->srcRef);
+    return {srcLoc, srcType};
   }
 
   // Similar to getLeastRefinedStruct.
@@ -464,15 +483,15 @@ struct TypeGeneralizing
       // single location for that index, which is connected to M sets for it,
       // giving us N + M instead of N * M (which we'd get if we connected gets
       // to sets directly).
-      connectSourceToDest(LocalLocation{func, get->index}, getLocation(get));
+      connectSrcToDest(LocalLocation{func, get->index}, getLocation(get));
     }
     for (auto* set : sets) {
-      connectSourceToDest(getLocation(set->value),
+      connectSrcToDest(getLocation(set->value),
                           LocalLocation{func, set->index});
       if (set->type.isConcrete()) {
         // This is a tee with a value, and that value shares the location of
         // the local.
-        connectSourceToDest(LocalLocation{func, set->index}, getLocation(set));
+        connectSrcToDest(LocalLocation{func, set->index}, getLocation(set));
       }
     }
 
@@ -542,7 +561,7 @@ struct TypeGeneralizing
 #ifdef TYPEGEN_DEBUG
   void dump(const Location& loc) {
     if (auto* exprLoc = std::get_if<ExpressionLocation>(&loc)) {
-      std::cerr << "exprLoc  " << *exprLoc->expr << '\n';
+      std::cerr << "exprLoc  " << ModuleExpression(*getModule(), exprLoc->expr) << '\n';
     } else if (auto* localLoc = std::get_if<LocalLocation>(&loc)) {
       std::cerr << "localloc " << localLoc->index << '\n';
     } else {
