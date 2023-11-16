@@ -173,7 +173,7 @@ struct TypeGeneralizing
     // function (the copy itself has no value, and we will calculate the change
     // for the dest there and apply it; we do not connect the source to the dest
     // directly because the copy mediates between them and defines in what
-    // manner the source affects the dest). 
+    // manner the source affects the dest).
     connectSourceToDest(curr->srcRef, curr);
   }
   void visitArrayFill(ArrayFill* curr) {
@@ -336,9 +336,7 @@ struct TypeGeneralizing
       }
     }
 
-    DBG({
-      dump(loc);
-    });
+    DBG({ dump(loc); });
 
     auto& locType = locTypes[loc];
     auto old = locType;
