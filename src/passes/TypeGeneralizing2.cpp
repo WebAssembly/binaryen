@@ -71,7 +71,7 @@ struct TypeGeneralizing
   // We track local operations so that we can optimize them later.
   void visitLocalGet(LocalGet* curr) { gets.push_back(curr); }
   void visitLocalSet(LocalSet* curr) {
-    setsByIndex[curr->index].push_back(curr);
+    sets.push_back(curr);
 
     // If this is a parameter then we cannot modify it, and so we add a root
     // here: the value written to the param must be a subtype of the never-to-
@@ -82,8 +82,7 @@ struct TypeGeneralizing
   }
 
   std::vector<LocalGet*> gets;
-  // TODO: flat like gets?
-  std::unordered_map<Index, std::vector<LocalSet*>> setsByIndex; // TODO vector
+  std::vector<LocalSet*> sets;
 
   // StructGet/Set operations are handled dynamically during the flow.
   void visitStructGet(StructGet* curr) {
@@ -478,16 +477,13 @@ struct TypeGeneralizing
       // to sets directly).
       connectSourceToDest(LocalLocation{func, get->index}, getLocation(get));
     }
-    for (auto& [index, sets] : setsByIndex) {
-      for (auto* set : sets) {
-        connectSourceToDest(getLocation(set->value),
-                            LocalLocation{func, index});
-        if (set->type.isConcrete()) {
-          // This is a tee with a value, and that value shares the location of
-          // the local.
-          connectSourceToDest(LocalLocation{func, set->index},
-                              getLocation(set));
-        }
+    for (auto* set : sets) {
+      connectSourceToDest(getLocation(set->value),
+                          LocalLocation{func, set->index});
+      if (set->type.isConcrete()) {
+        // This is a tee with a value, and that value shares the location of
+        // the local.
+        connectSourceToDest(LocalLocation{func, set->index}, getLocation(set));
       }
     }
 
@@ -544,11 +540,9 @@ struct TypeGeneralizing
     for (auto* get : gets) {
       get->type = func->getLocalType(get->index);
     }
-    for (auto& [index, sets] : setsByIndex) {
-      for (auto* set : sets) {
-        if (set->type.isRef()) {
-          set->type = func->getLocalType(index);
-        }
+    for (auto* set : sets) {
+      if (set->type.isRef()) {
+        set->type = func->getLocalType(set->index);
       }
     }
 
