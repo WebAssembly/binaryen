@@ -101,8 +101,8 @@ struct TypeGeneralizing
 
     // TODO we can look at the dynamic reference and value during the flow; for
     //      now just do it statically.
-    auto minimalRefType = getLeastRefinedStructTypeWithField(
-      refType.getHeapType(), curr->index, [&](Type candidate) { return true; });
+    auto minimalRefType =
+      getLeastRefinedStruct(refType.getHeapType(), curr->index);
     addRoot(curr->ref, Type(minimalRefType, Nullable));
     const auto& fields = minimalRefType.getStruct().fields;
     addRoot(curr->value, fields[curr->index].type);
@@ -114,7 +114,7 @@ struct TypeGeneralizing
       self()->noteSubtype(ref, ref->type);
       return;
     }
-    auto heapType = getLeastRefinedArrayTypeWithElement(ref->type.getHeapType(), [](Type candidate) { return true; });
+    auto heapType = getLeastRefinedArray(ref->type.getHeapType());
     self()->noteSubtype(ref, Type(heapType, Nullable));
   }
   void requireBasicArray(Expression* ref) {
@@ -148,7 +148,9 @@ struct TypeGeneralizing
     requireNonBasicArray(curr->ref);
     Super::visitArrayFill(curr);
   }
-  void visitArrayInitData(ArrayInitData* curr) { requireNonBasicArray(curr->ref); }
+  void visitArrayInitData(ArrayInitData* curr) {
+    requireNonBasicArray(curr->ref);
+  }
   void visitArrayInitElem(ArrayInitElem* curr) {
     requireNonBasicArray(curr->ref);
     Super::visitArrayInitElem(curr);
@@ -385,20 +387,17 @@ struct TypeGeneralizing
     // Get the least-refined struct type that still has (at least) the necessary
     // type for that field. This is monotonic because as the field type
     // refines we will return something more refined (or equal) here.
-    auto heapType = getLeastRefinedStructTypeWithField(
-      ref->type.getHeapType(), index, [&](Type candidate) {
-        return Type::isSubType(candidate, outputType);
-      });
+    auto heapType =
+      getLeastRefinedStruct(ref->type.getHeapType(), index, outputType);
     return Type(heapType, Nullable);
   }
 
   // Return the least refined struct type parent of a given type that still has
-  // a particular field and fulfills a custom field requirement. The field
-  // requirement function receives as a parameter the field type being
-  // considered, and should return true if it is acceptable.
-  template<typename T>
-  HeapType
-  getLeastRefinedStructTypeWithField(HeapType curr, Index index, T fieldIsOk) {
+  // a particular field, and if a field type is provided, that also has a field
+  // that is at least as refined as the given one.
+  HeapType getLeastRefinedStruct(HeapType curr,
+                                 Index index,
+                                 std::optional<Type> fieldType = {}) {
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
@@ -408,7 +407,7 @@ struct TypeGeneralizing
       auto last = curr;
       curr = *next;
       const auto& fields = curr.getStruct().fields;
-      if (index >= fields.size() || !fieldIsOk(fields[index].type)) {
+      if (index >= fields.size() || (fieldType && !Type::isSubType(fields[index].type, *fieldType))) {
         // There is no field at that index, or it has the wrong type. Stop, as
         // |last| is the one we want.
         curr = last;
@@ -424,9 +423,7 @@ struct TypeGeneralizing
       return ref->type;
     }
 
-    auto heapType = getLeastRefinedArrayTypeWithElement(
-      ref->type.getHeapType(),
-      [&](Type candidate) { return Type::isSubType(candidate, outputType); });
+    auto heapType = getLeastRefinedArray(ref->type.getHeapType(), outputType);
     return Type(heapType, Nullable);
   }
 
@@ -442,8 +439,9 @@ struct TypeGeneralizing
     return {destLoc, destType};
   }
 
-  template<typename T>
-  HeapType getLeastRefinedArrayTypeWithElement(HeapType curr, T elementIsOk) {
+  // Similar to getLeastRefinedStruct.
+  HeapType getLeastRefinedArray(HeapType curr,
+                                std::optional<Type> elementType = {}) {
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
@@ -452,7 +450,8 @@ struct TypeGeneralizing
       }
       auto last = curr;
       curr = *next;
-      if (!elementIsOk(curr.getArray().element.type)) {
+      if (elementType &&
+          !Type::isSubType(curr.getArray().element.type, *elementType)) {
         // Stop, as |last| is the one we want.
         curr = last;
         break;
