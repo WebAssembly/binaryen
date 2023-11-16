@@ -129,7 +129,7 @@ jobs:
     - name: install latest clang
       uses: egor-tensin/setup-clang@v1
       with:
-        version: latest
+        version: 15
         platform: x64
     - name: install ninja
       run: sudo apt-get install ninja-build
@@ -138,7 +138,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
