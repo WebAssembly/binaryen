@@ -142,9 +142,7 @@ struct TypeGeneralizing
     self()->noteSubtype(ref, Type(HeapType::array, Nullable));
   }
 
-  void visitArrayGet(ArrayGet* curr) {
-    connectSourceToDest(curr->ref, curr);
-  }
+  void visitArrayGet(ArrayGet* curr) { connectSourceToDest(curr->ref, curr); }
   void visitArraySet(ArraySet* curr) {
     requireArrayType(curr->ref);
     Super::visitArraySet(curr);
@@ -159,9 +157,7 @@ struct TypeGeneralizing
     requireArrayType(curr->ref);
     Super::visitArrayFill(curr);
   }
-  void visitArrayInitData(ArrayInitData* curr) {
-    requireArrayType(curr->ref);
-  }
+  void visitArrayInitData(ArrayInitData* curr) { requireArrayType(curr->ref); }
   void visitArrayInitElem(ArrayInitElem* curr) {
     requireArrayType(curr->ref);
     Super::visitArrayInitElem(curr);
@@ -313,8 +309,7 @@ struct TypeGeneralizing
           succValues[0] =
             transferStructGet(succValues[0], get->ref, get->index);
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
-          succValues[0] =
-            transferArrayGet(succValues[0], get->ref);
+          succValues[0] = transferArrayGet(succValues[0], get->ref);
         }
       }
     }
@@ -435,15 +430,13 @@ struct TypeGeneralizing
     }
 
     auto heapType = getLeastRefinedArrayTypeWithElement(
-      ref->type.getHeapType(), [&](Type candidate) {
-        return Type::isSubType(candidate, outputType);
-      });
+      ref->type.getHeapType(),
+      [&](Type candidate) { return Type::isSubType(candidate, outputType); });
     return Type(heapType, Nullable);
   }
 
   template<typename T>
-  HeapType
-  getLeastRefinedArrayTypeWithElement(HeapType curr, T elementIsOk) {
+  HeapType getLeastRefinedArrayTypeWithElement(HeapType curr, T elementIsOk) {
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
