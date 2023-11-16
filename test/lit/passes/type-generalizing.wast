@@ -1798,14 +1798,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $array-get (type $4) (result anyref)
- ;; ALTER-NEXT:  (local $val (ref null $sub))
- ;; ALTER-NEXT:  (array.get $sub
+ ;; ALTER-NEXT:  (local $val (ref null $super))
+ ;; ALTER-NEXT:  (array.get $super
  ;; ALTER-NEXT:   (local.get $val)
  ;; ALTER-NEXT:   (i32.const 0)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $array-get (result anyref)
-  ;; XXX waka different
   (local $val (ref null $sub))
   ;; Require that typeof($val) <: (ref null $super).
   (array.get $sub

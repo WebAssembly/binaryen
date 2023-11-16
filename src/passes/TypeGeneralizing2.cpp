@@ -137,7 +137,6 @@ struct TypeGeneralizing
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    visitArrayReference(curr->ref);
     connectSourceToDest(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
