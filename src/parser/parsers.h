@@ -56,6 +56,7 @@ template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx&);
 template<typename Ctx> MaybeResult<> block(Ctx&, bool);
 template<typename Ctx> MaybeResult<> ifelse(Ctx&, bool);
 template<typename Ctx> MaybeResult<> loop(Ctx&, bool);
+template<typename Ctx> MaybeResult<> trycatch(Ctx&, bool);
 template<typename Ctx> Result<> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<> makeNop(Ctx&, Index);
 template<typename Ctx> Result<> makeBinary(Ctx&, Index, BinaryOp op);
@@ -113,9 +114,6 @@ template<typename Ctx> Result<> makeTableSize(Ctx&, Index);
 template<typename Ctx> Result<> makeTableGrow(Ctx&, Index);
 template<typename Ctx> Result<> makeTableFill(Ctx&, Index);
 template<typename Ctx> Result<> makeTableCopy(Ctx&, Index);
-template<typename Ctx> Result<> makeTry(Ctx&, Index);
-template<typename Ctx>
-Result<> makeTryOrCatchBody(Ctx&, Index, Type type, bool isTry);
 template<typename Ctx> Result<> makeThrow(Ctx&, Index);
 template<typename Ctx> Result<> makeRethrow(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleMake(Ctx&, Index);
@@ -173,7 +171,8 @@ template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
-template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
@@ -573,6 +572,9 @@ template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = loop(ctx, true)) {
     return i;
   }
+  if (auto i = trycatch(ctx, true)) {
+    return i;
+  }
   // TODO: Other block instructions
   return {};
 }
@@ -585,6 +587,9 @@ template<typename Ctx> MaybeResult<> unfoldedBlockinstr(Ctx& ctx) {
     return i;
   }
   if (auto i = loop(ctx, false)) {
+    return i;
+  }
+  if (auto i = trycatch(ctx, false)) {
     return i;
   }
   // TODO: Other block instructions
@@ -619,7 +624,9 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
   // Check for valid strings that are not instructions.
   if (auto tok = ctx.in.peek()) {
     if (auto keyword = tok->getKeyword()) {
-      if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv) {
+      if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv ||
+          keyword == "catch"sv || keyword == "catch_all"sv ||
+          keyword == "delegate"sv) {
         return {};
       }
     }
@@ -860,7 +867,7 @@ template<typename Ctx> MaybeResult<> ifelse(Ctx& ctx, bool folded) {
   return ctx.visitEnd();
 }
 
-// loop ::= 'loop' label blocktype instr* end id?
+// loop ::= 'loop' label blocktype instr* 'end' id?
 //        | '(' 'loop' label blocktype instr* ')'
 template<typename Ctx> MaybeResult<> loop(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();
@@ -890,6 +897,139 @@ template<typename Ctx> MaybeResult<> loop(Ctx& ctx, bool folded) {
     auto id = ctx.in.takeID();
     if (id && id != label) {
       return ctx.in.err("end label does not match loop label");
+    }
+  }
+  return ctx.visitEnd();
+}
+
+// trycatch ::= 'try' label blocktype instr* ('catch' id? tagidx instr*)*
+//                  ('catch_all' id? instr*)? 'end' id?
+//            | '(' 'try' label blocktype '(' 'do' instr* ')'
+//                  ('(' 'catch' tagidx instr* ')')*
+//                  ('(' 'catch_all' instr* ')')? ')'
+//            | 'try' label blocktype instr* 'deledate' label
+//            | '(' 'try' label blocktype '(' 'do' instr* ')'
+//                '(' 'delegate' label ')' ')'
+template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if ((folded && !ctx.in.takeSExprStart("try"sv)) ||
+      (!folded && !ctx.in.takeKeyword("try"sv))) {
+    return {};
+  }
+
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  CHECK_ERR(ctx.makeTry(pos, label, *type));
+
+  if (folded) {
+    if (!ctx.in.takeSExprStart("do"sv)) {
+      return ctx.in.err("expected 'do' in try");
+    }
+  }
+
+  CHECK_ERR(instrs(ctx));
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of do");
+    }
+  }
+
+  if ((folded && ctx.in.takeSExprStart("delegate")) ||
+      (!folded && ctx.in.takeKeyword("delegate"))) {
+    auto delegatePos = ctx.in.getPos();
+
+    auto label = labelidx(ctx, true);
+    CHECK_ERR(label);
+
+    CHECK_ERR(ctx.visitDelegate(delegatePos, *label));
+    return Ok{};
+  }
+
+  while (true) {
+    auto catchPos = ctx.in.getPos();
+
+    if ((folded && !ctx.in.takeSExprStart("catch"sv)) ||
+        (!folded && !ctx.in.takeKeyword("catch"sv))) {
+      break;
+    }
+
+    // It can be ambiguous whether the name after `catch` is intended to be the
+    // optional ID or the tag identifier. First try parsing with the optional
+    // ID, then retry without parsing the ID if we run into an error.
+    bool parseID = !folded;
+    auto afterCatchPos = ctx.in.getPos();
+    while (true) {
+      if (!folded && parseID) {
+        auto id = ctx.in.takeID();
+        if (id && id != label) {
+          // Instead of returning an error, retry without the ID.
+          parseID = false;
+          ctx.in.lexer.setIndex(afterCatchPos);
+          continue;
+        }
+      }
+
+      auto tag = tagidx(ctx);
+      if (parseID && tag.getErr()) {
+        // Instead of returning an error, retry without the ID.
+        parseID = false;
+        ctx.in.lexer.setIndex(afterCatchPos);
+        continue;
+      }
+      CHECK_ERR(tag);
+
+      CHECK_ERR(ctx.visitCatch(catchPos, *tag));
+
+      CHECK_ERR(instrs(ctx));
+
+      if (folded) {
+        if (!ctx.in.takeRParen()) {
+          return ctx.in.err("expected ')' at end of catch");
+        }
+      }
+      break;
+    }
+  }
+
+  if ((folded && ctx.in.takeSExprStart("catch_all"sv)) ||
+      (!folded && ctx.in.takeKeyword("catch_all"sv))) {
+    auto catchPos = ctx.in.getPos();
+
+    if (!folded) {
+      auto id = ctx.in.takeID();
+      if (id && id != label) {
+        return ctx.in.err("catch_all label does not match try label");
+      }
+    }
+
+    CHECK_ERR(ctx.visitCatchAll(catchPos));
+
+    CHECK_ERR(instrs(ctx));
+
+    if (folded) {
+      if (!ctx.in.takeRParen()) {
+        return ctx.in.err("expected ')' at end of catch_all");
+      }
+    }
+  }
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of try");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of try");
+    }
+
+    auto id = ctx.in.takeID();
+    if (id && id != label) {
+      return ctx.in.err("end label does not match try label");
     }
   }
   return ctx.visitEnd();
@@ -1266,15 +1406,6 @@ template<typename Ctx> Result<> makeTableCopy(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
-template<typename Ctx> Result<> makeTry(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
-}
-
-template<typename Ctx>
-Result<> makeTryOrCatchBody(Ctx& ctx, Index pos, Type type, bool isTry) {
-  return ctx.in.err("unimplemented instruction");
-}
-
 template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
   auto tag = tagidx(ctx);
   CHECK_ERR(tag);
@@ -1621,12 +1752,13 @@ template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
 
 // labelidx ::= x:u32 => x
 //            | v:id => x (if labels[x] = v)
-template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx, bool inDelegate) {
   if (auto x = ctx.in.takeU32()) {
-    return ctx.getLabelFromIdx(*x);
+    return ctx.getLabelFromIdx(*x, inDelegate);
   }
   if (auto id = ctx.in.takeID()) {
-    return ctx.getLabelFromName(*id);
+    return ctx.getLabelFromName(*id, inDelegate);
   }
   return ctx.in.err("expected label index or identifier");
 }

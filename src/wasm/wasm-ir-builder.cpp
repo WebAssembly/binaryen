@@ -207,18 +207,33 @@ void IRBuilder::dump() {
 
   for (auto& scope : scopeStack) {
     std::cerr << "  scope ";
-    if (std::get_if<ScopeCtx::NoScope>(&scope.scope)) {
+    if (scope.isNone()) {
       std::cerr << "none";
-    } else if (auto* f = std::get_if<ScopeCtx::FuncScope>(&scope.scope)) {
-      std::cerr << "func " << f->func->name;
-    } else if (std::get_if<ScopeCtx::BlockScope>(&scope.scope)) {
+    } else if (auto* f = scope.getFunction()) {
+      std::cerr << "func " << f->name;
+    } else if (scope.getBlock()) {
       std::cerr << "block";
-    } else if (std::get_if<ScopeCtx::IfScope>(&scope.scope)) {
+    } else if (scope.getIf()) {
       std::cerr << "if";
-    } else if (std::get_if<ScopeCtx::ElseScope>(&scope.scope)) {
+    } else if (scope.getElse()) {
       std::cerr << "else";
-    } else if (std::get_if<ScopeCtx::LoopScope>(&scope.scope)) {
+    } else if (scope.getLoop()) {
       std::cerr << "loop";
+    } else if (auto* tryy = scope.getTry()) {
+      std::cerr << "try";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
+    } else if (auto* tryy = scope.getCatch()) {
+      std::cerr << "catch";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
+    } else if (auto* tryy = scope.getCatchAll()) {
+      std::cerr << "catch_all";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
     } else {
       WASM_UNREACHABLE("unexpected scope");
     }
@@ -483,6 +498,14 @@ Result<> IRBuilder::visitLoopStart(Loop* loop) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
+  // The delegate label will be regenerated if we need it. See `visitDelegate`
+  // for details.
+  tryy->name = Name();
+  pushScope(ScopeCtx::makeTry(tryy, label));
+  return Ok{};
+}
+
 Result<Expression*> IRBuilder::finishScope(Block* block) {
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
@@ -567,6 +590,16 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     labelDepths.at(label).pop_back();
   }
 
+  // If this was a scope for a try, fix up its delegate label if necessary. See
+  // `visitDelegate` for details.
+  Try* tryy;
+  if ((tryy = scope.getTry()) || (tryy = scope.getCatch()) ||
+      (tryy = scope.getCatchAll())) {
+    if (tryy->name) {
+      tryy->name = Name(std::string("__delegate__") + tryy->name.toString());
+    }
+  }
+
   scopeStack.pop_back();
   return ret;
 }
@@ -584,6 +617,97 @@ Result<> IRBuilder::visitElse() {
   iff->ifTrue = *expr;
   pushScope(ScopeCtx::makeElse(iff, originalLabel, label));
   return Ok{};
+}
+
+Result<> IRBuilder::visitCatch(Name tag) {
+  auto& scope = getScope();
+  bool wasTry = true;
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    wasTry = false;
+    tryy = scope.getCatch();
+  }
+  if (!tryy) {
+    return Err{"unexpected catch"};
+  }
+  auto originalLabel = scope.getOriginalLabel();
+  auto label = scope.label;
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  if (wasTry) {
+    tryy->body = *expr;
+  } else {
+    tryy->catchBodies.push_back(*expr);
+  }
+  tryy->catchTags.push_back(tag);
+  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label));
+  // Push a pop for the exception payload.
+  auto params = wasm.getTag(tag)->sig.params;
+  if (params != Type::none) {
+    push(builder.makePop(params));
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitCatchAll() {
+  auto& scope = getScope();
+  bool wasTry = true;
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    wasTry = false;
+    tryy = scope.getCatch();
+  }
+  if (!tryy) {
+    return Err{"unexpected catch"};
+  }
+  auto originalLabel = scope.getOriginalLabel();
+  auto label = scope.label;
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  if (wasTry) {
+    tryy->body = *expr;
+  } else {
+    tryy->catchBodies.push_back(*expr);
+  }
+  pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitDelegate(Index label) {
+  auto& scope = getScope();
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    return Err{"unexpected delegate"};
+  }
+  // In Binaryen IR, delegates can only target try or function scopes directly.
+  // Search upward to find the nearest enclosing try or function scope. Since
+  // the given label is relative the parent scope of the try, start by adjusting
+  // it to be relative to the try scope.
+  ++label;
+  for (size_t size = scopeStack.size(); label < size; ++label) {
+    auto& delegateScope = scopeStack[size - label - 1];
+    if (auto* delegateTry = delegateScope.getTry()) {
+      // Only delegates can reference the try name in Binaryen IR, so trys might
+      // need two labels: one for delegates and one for all other control flow.
+      // These labels must be different to satisfy the Binaryen validator. To
+      // keep this complexity contained within the handling of trys and
+      // delegates, pretend there is just the single normal label and add a
+      // prefix to it to generate the delegate label. The prefix is added on the
+      // try when its scope ends.
+      delegateTry->name = *getLabelName(label);
+      tryy->delegateTarget =
+        Name(std::string("__delegate__") + delegateTry->name.toString());
+      break;
+    } else if (delegateScope.getFunction()) {
+      tryy->delegateTarget = DELEGATE_CALLER_TARGET;
+      break;
+    }
+  }
+  if (label == scopeStack.size()) {
+    return Err{"unexpected delegate"};
+  }
+  // Delegate ends the try.
+  return visitEnd();
 }
 
 Result<> IRBuilder::visitEnd() {
@@ -634,18 +758,42 @@ Result<> IRBuilder::visitEnd() {
     iff->ifFalse = *expr;
     iff->finalize(iff->type);
     push(maybeWrapForLabel(iff));
+  } else if (auto* tryy = scope.getTry()) {
+    tryy->body = *expr;
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
+  } else if (Try * tryy;
+             (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
+    tryy->catchBodies.push_back(*expr);
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
 }
 
-Result<Index> IRBuilder::getLabelIndex(Name label) {
+Result<Index> IRBuilder::getLabelIndex(Name label, bool inDelegate) {
   auto it = labelDepths.find(label);
   if (it == labelDepths.end() || it->second.empty()) {
-    return Err{"unexpected label '"s + label.toString()};
+    return Err{"unexpected label '"s + label.toString() + "'"};
   }
-  return scopeStack.size() - it->second.back();
+  auto index = scopeStack.size() - it->second.back();
+  if (inDelegate) {
+    if (index == 0) {
+      // The real label we're referencing, if it exists, has been shadowed by
+      // the `try`. Get the previous label with this name instead.
+      if (it->second.size() <= 1) {
+        return Err{"unexpected self-referencing label '"s + label.toString() +
+                   "'"};
+      }
+      index = scopeStack.size() - it->second[it->second.size() - 2];
+      assert(index != 0);
+    }
+    // Adjust the index to be relative to the try.
+    --index;
+  }
+  return index;
 }
 
 Result<Name> IRBuilder::getLabelName(Index label) {
@@ -1014,7 +1162,11 @@ Result<> IRBuilder::makeRefEq() {
 
 // Result<> IRBuilder::makeTableGrow() {}
 
-// Result<> IRBuilder::makeTry() {}
+Result<> IRBuilder::makeTry(Name label, Type type) {
+  auto* tryy = wasm.allocator.alloc<Try>();
+  tryy->type = type;
+  return visitTryStart(tryy, label);
+}
 
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);
