@@ -198,6 +198,7 @@ public:
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
+  void push(Expression*);
 
 private:
   Module& wasm;
@@ -381,7 +382,6 @@ private:
   [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
-  void push(Expression*);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.

@@ -243,3 +243,54 @@
     )
   )
 )
+
+
+;; Tests that outlining works correctly with If control flow
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (func $outline$
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (param $0 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a (param i32)
+    (if
+      (i32.eqz
+        (local.get 0)
+      )
+      (drop
+        (i32.const 10)
+      )
+    )
+  )
+  ;; CHECK:      (func $b (param $0 i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b (param i32)
+    (if
+      (i32.eqz
+        (local.get 0)
+      )
+      (drop
+        (i32.const 10)
+      )
+    )
+  )
+)

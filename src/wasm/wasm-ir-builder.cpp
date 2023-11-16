@@ -21,6 +21,14 @@
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
 
+#define IR_BUILDER_DEBUG 1
+
+#if IR_BUILDER_DEBUG
+#define DBG(statement) statement
+#else
+#define DBG(statement)
+#endif
+
 using namespace std::string_literals;
 
 namespace wasm {
@@ -145,6 +153,7 @@ void IRBuilder::push(Expression* expr) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
+  DBG(std::cerr << "IRBuilder::push: ");
 }
 
 Result<Expression*> IRBuilder::pop() {
