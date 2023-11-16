@@ -451,17 +451,15 @@ struct TypeGeneralizing
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
-        // There is no super. Stop, as curr is the one we want.
+        // There is no super.
         break;
       }
-      auto last = curr;
-      curr = *next;
       if (elementType &&
-          !Type::isSubType(curr.getArray().element.type, *elementType)) {
-        // Stop, as |last| is the one we want.
-        curr = last;
+          !Type::isSubType(next->getArray().element.type, *elementType)) {
+        // The element is not suitable.
         break;
       }
+      curr = *next;
     }
     return curr;
   }
@@ -469,7 +467,7 @@ struct TypeGeneralizing
   void visitFunction(Function* func) {
     Super::visitFunction(func);
 
-    DBG({ std::cerr << "TG: " << func->name << "\n"; });
+    DBG({ std::cerr << "TypeGeneralizing: " << func->name << "\n"; });
 
     // Finish setting up the graph: LocalLocals are "abstract" things that we
     // did not walk, so set them up manually. Each LocalLocation is connected
