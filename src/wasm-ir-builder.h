@@ -52,6 +52,10 @@ public:
   // initialized to initialize the child fields and refinalize it.
   [[nodiscard]] Result<> visit(Expression*);
 
+  // Like visit, but pushes the expression onto the stack as-is without popping
+  // any children or refinalization.
+  void push(Expression*);
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
@@ -187,7 +191,7 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<> visitBlock(Block*);
+  [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
@@ -308,7 +312,7 @@ private:
       WASM_UNREACHABLE("unexpected scope kind");
     }
     Name getOriginalLabel() {
-      if (getFunction()) {
+      if (std::get_if<NoScope>(&scope) || getFunction()) {
         return Name{};
       }
       if (auto* block = getBlock()) {
@@ -381,7 +385,6 @@ private:
   [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
-  void push(Expression*);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -401,6 +404,8 @@ private:
 
   [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
                                                    std::optional<Index> label);
+
+  void dump();
 };
 
 } // namespace wasm

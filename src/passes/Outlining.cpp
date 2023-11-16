@@ -93,6 +93,11 @@ struct ReconstructStringifyWalker
       ASSERT_OK(existingBuilder.visitBlockStart(curr->block));
       DBG(desc = "Block Start for ");
     } else if (auto curr = reason.getIfStart()) {
+      // IR builder needs the condition of the If pushed onto the builder before
+      // visitIfStart(), which will expect to be able to pop the condition.
+      // This is always okay to do because the correct condition was installed
+      // onto the If when the outer scope was visited.
+      existingBuilder.push(curr->iff->condition);
       ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
       DBG(desc = "If Start for ");
     } else if (reason.getEnd()) {
