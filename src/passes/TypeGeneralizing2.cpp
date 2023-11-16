@@ -41,7 +41,7 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#define TYPEGEN_DEBUG 1
+#define TYPEGEN_DEBUG 0
 
 #if TYPEGEN_DEBUG
 #define DBG(statement) statement
@@ -308,10 +308,7 @@ struct TypeGeneralizing
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
           succValue = transferArrayGet(succValue, get->ref);
         } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
-          // This is an update from a copy, which happens when the dest is
-          // refined. The copy itself stores no value, and instead we may update
-          // the source.
-          std::tie(loc, succValue) = transferArrayCopy(succValue, copy);
+          succValue = transferArrayCopy(succValue, copy);
         }
       }
     }
@@ -436,20 +433,16 @@ struct TypeGeneralizing
   }
 
   // Given a new type for the source of an ArrayCopy, compute the new type for
-  // the dest. Return the location of the dest and that value, by which we
-  // transfer (no pun intended) the update of the ArrayCopy to an update of the
-  // copy's dest.
-  std::pair<Location, Type> transferArrayCopy(Type destType, ArrayCopy* copy) {
-    auto srcLoc = ExpressionLocation{copy->srcRef, 0};
+  // the dest.
+  Type transferArrayCopy(Type destType, ArrayCopy* copy) {
     if (!destType.isArray()) {
       // No constraint here.
-      return {srcLoc, Type(HeapType::array, Nullable)};
+      return Type(HeapType::array, Nullable);
     }
     // Similar to ArrayGet: We know the current output type, and can compute
     // the input/dest.
     auto destElementType = destType.getHeapType().getArray().element.type;
-    auto srcType = transferArrayGet(destElementType, copy->srcRef);
-    return {srcLoc, srcType};
+    return transferArrayGet(destElementType, copy->srcRef);
   }
 
   // Similar to getLeastRefinedStruct.
