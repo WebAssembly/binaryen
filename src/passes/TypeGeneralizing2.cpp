@@ -407,7 +407,8 @@ struct TypeGeneralizing
       auto last = curr;
       curr = *next;
       const auto& fields = curr.getStruct().fields;
-      if (index >= fields.size() || (fieldType && !Type::isSubType(fields[index].type, *fieldType))) {
+      if (index >= fields.size() ||
+          (fieldType && !Type::isSubType(fields[index].type, *fieldType))) {
         // There is no field at that index, or it has the wrong type. Stop, as
         // |last| is the one we want.
         curr = last;
