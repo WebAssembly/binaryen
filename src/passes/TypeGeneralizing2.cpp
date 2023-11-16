@@ -108,6 +108,75 @@ struct TypeGeneralizing
     addRoot(curr->value, fields[curr->index].type);
   }
 
+  void visitArrayReference(Expression* ref) {
+    if (!ref->type.isArray()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      self()->noteSubtype(ref, ref->type);
+      return;
+    }
+    auto curr = ref->type.getHeapType();
+    // We could in principle allow the reference type to generalize while
+    // allowing field generalization as well, but for now for simplicity keep it
+    // unchanged. TODO handle this with flexibility in the user.
+    auto element = curr.getArray().element;
+    while (true) {
+      auto next = curr.getDeclaredSuperType();
+      if (!next) {
+        // There is no super. Stop, as curr is the one we want.
+        break;
+      }
+      auto last = curr;
+      curr = *next;
+      if (curr.getArray().element != element) {
+        // The element changed. Stop, as |last| is the one we want.
+        curr = last;
+        break;
+      }
+    }
+    self()->noteSubtype(ref, Type(curr, Nullable));
+  }
+
+  void visitArrayGet(ArrayGet* curr) { visitArrayReference(curr->ref); }
+  void visitArraySet(ArraySet* curr) {
+    visitArrayReference(curr->ref);
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->value, array.element.type);
+  }
+  void visitArrayLen(ArrayLen* curr) { visitArrayReference(curr->ref); }
+  void visitArrayCopy(ArrayCopy* curr) {
+    visitArrayReference(curr->srcRef);
+    visitArrayReference(curr->destRef);
+    if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
+      return;
+    }
+    auto src = curr->srcRef->type.getHeapType().getArray();
+    auto dest = curr->destRef->type.getHeapType().getArray();
+    self()->noteSubtype(src.element.type, dest.element.type);
+  }
+  void visitArrayFill(ArrayFill* curr) {
+    visitArrayReference(curr->ref);
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    self()->noteSubtype(curr->value, array.element.type);
+  }
+  void visitArrayInitData(ArrayInitData* curr) {
+    visitArrayReference(curr->ref);
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    visitArrayReference(curr->ref);
+    if (!curr->ref->type.isArray()) {
+      return;
+    }
+    auto array = curr->ref->type.getHeapType().getArray();
+    auto* seg = self()->getModule()->getElementSegment(curr->segment);
+    self()->noteSubtype(seg->type, array.element.type);
+  }
+
   // Hooks that are called by SubtypingDiscoverer.
 
   void noteSubtype(Type sub, Type super) {
