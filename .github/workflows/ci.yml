@@ -129,7 +129,7 @@ jobs:
     - name: install latest clang
       uses: egor-tensin/setup-clang@v1
       with:
-        # version 15 may avoid asan flakes (#6116).
+        # version 15 may avoid asan flakes (#6116)..
         version: 15
         platform: x64
     - name: install ninja
