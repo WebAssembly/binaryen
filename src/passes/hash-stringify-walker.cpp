@@ -86,11 +86,9 @@ std::vector<SuffixTree::RepeatedSubstring>
 StringifyProcessor::repeatSubstrings(std::vector<uint32_t>& hashString) {
   SuffixTree st(hashString);
   std::vector<SuffixTree::RepeatedSubstring> substrings(st.begin(), st.end());
-  for (auto substring : substrings) {
+  for (auto& substring : substrings) {
     // Sort by increasing start index to ensure determinism.
-    std::sort(substring.StartIndices.begin(),
-              substring.StartIndices.end(),
-              [](uint32_t a, uint32_t b) { return a < b; });
+    std::sort(substring.StartIndices.begin(), substring.StartIndices.end());
   }
   // Substrings are sorted so that the longest substring that repeats the most
   // times is ordered first. This is done so that we can assume the most
