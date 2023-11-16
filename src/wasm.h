@@ -1540,6 +1540,7 @@ public:
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
+  RefTest() = default;
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1553,6 +1554,7 @@ public:
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
+  RefCast() = default;
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1564,6 +1566,7 @@ public:
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
+  BrOn() = default;
   BrOn(MixedArena& allocator) {}
 
   BrOnOp op;
@@ -1757,6 +1760,7 @@ public:
 
 class RefAs : public SpecificExpression<Expression::RefAsId> {
 public:
+  RefAs() = default;
   RefAs(MixedArena& allocator) {}
 
   RefAsOp op;

@@ -220,18 +220,15 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   WASM_UNREACHABLE("should have called visit" #id " because " #id              \
                    " has child vector " #field);
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                               \
-  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
-                   " has scope name use " #field);
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
-  WASM_UNREACHABLE("should have called visit" #id " because " #id              \
-                   " has scope name use vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -290,9 +287,19 @@ Result<> IRBuilder::visitArrayNew(ArrayNew* curr) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+Result<> IRBuilder::visitArrayNewFixed(ArrayNewFixed* curr) {
+  for (size_t i = 0, size = curr->values.size(); i < size; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    curr->values[size - i - 1] = *val;
+  }
+  return Ok{};
+}
+
+Result<Expression*> IRBuilder::getBranchValue(Name labelName,
+                                              std::optional<Index> label) {
   if (!label) {
-    auto index = getLabelIndex(curr->name);
+    auto index = getLabelIndex(labelName);
     CHECK_ERR(index);
     label = *index;
   }
@@ -305,12 +312,29 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     values[size - 1 - i] = *val;
   }
   if (values.size() == 0) {
-    curr->value = nullptr;
+    return nullptr;
   } else if (values.size() == 1) {
-    curr->value = values[0];
+    return values[0];
   } else {
-    curr->value = builder.makeTupleMake(values);
+    return builder.makeTupleMake(values);
   }
+}
+
+Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  auto value = getBranchValue(curr->name, label);
+  CHECK_ERR(value);
+  curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitSwitch(Switch* curr,
+                                std::optional<Index> defaultLabel) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
+  auto value = getBranchValue(curr->default_, defaultLabel);
+  CHECK_ERR(value);
+  curr->value = *value;
   return Ok{};
 }
 
@@ -318,6 +342,18 @@ Result<> IRBuilder::visitCall(Call* curr) {
   auto numArgs = wasm.getFunction(curr->target)->getNumParams();
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitCallRef(CallRef* curr) {
+  auto target = pop();
+  CHECK_ERR(target);
+  curr->target = *target;
+  for (size_t i = 0, numArgs = curr->operands.size(); i < numArgs; ++i) {
     auto arg = pop();
     CHECK_ERR(arg);
     curr->operands[numArgs - 1 - i] = *arg;
@@ -556,7 +592,22 @@ Result<> IRBuilder::makeBreak(Index label) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeSwitch() {}
+Result<> IRBuilder::makeSwitch(const std::vector<Index>& labels,
+                               Index defaultLabel) {
+  std::vector<Name> names;
+  names.reserve(labels.size());
+  for (auto label : labels) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+    names.push_back(*name);
+  }
+  auto defaultName = getLabelName(defaultLabel);
+  CHECK_ERR(defaultName);
+  Switch curr(wasm.allocator);
+  CHECK_ERR(visitSwitch(&curr, defaultLabel));
+  push(builder.makeSwitch(names, *defaultName, curr.condition, curr.value));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   Call curr(wasm.allocator);
@@ -840,7 +891,10 @@ Result<> IRBuilder::makeRefIsNull() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRefFunc() {}
+Result<> IRBuilder::makeRefFunc(Name func) {
+  push(builder.makeRefFunc(func, wasm.getFunction(func)->type));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefEq() {
   RefEq curr;
@@ -881,13 +935,41 @@ Result<> IRBuilder::makeI31Get(bool signed_) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallRef() {}
+Result<> IRBuilder::makeCallRef(HeapType type, bool isReturn) {
+  CallRef curr(wasm.allocator);
+  if (!type.isSignature()) {
+    return Err{"expected function type"};
+  }
+  auto sig = type.getSignature();
+  curr.operands.resize(type.getSignature().params.size());
+  CHECK_ERR(visitCallRef(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.target));
+  push(builder.makeCallRef(curr.target, curr.operands, sig.results, isReturn));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeRefTest() {}
+Result<> IRBuilder::makeRefTest(Type type) {
+  RefTest curr;
+  CHECK_ERR(visitRefTest(&curr));
+  push(builder.makeRefTest(curr.ref, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeRefCast() {}
+Result<> IRBuilder::makeRefCast(Type type) {
+  RefCast curr;
+  CHECK_ERR(visitRefCast(&curr));
+  push(builder.makeRefCast(curr.ref, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeBrOn() {}
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type castType) {
+  BrOn curr;
+  CHECK_ERR(visitBrOn(&curr));
+  auto name = getLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeBrOn(op, *name, curr.ref, castType));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeStructNew(HeapType type) {
   StructNew curr(wasm.allocator);
@@ -950,7 +1032,13 @@ Result<> IRBuilder::makeArrayNewElem(HeapType type, Name elem) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayNewFixed() {}
+Result<> IRBuilder::makeArrayNewFixed(HeapType type, uint32_t arity) {
+  ArrayNewFixed curr(wasm.allocator);
+  curr.values.resize(arity);
+  CHECK_ERR(visitArrayNewFixed(&curr));
+  push(builder.makeArrayNewFixed(type, curr.values));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeArrayGet(HeapType type, bool signed_) {
   ArrayGet curr;
@@ -998,7 +1086,12 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
 
 // Result<> IRBuilder::makeArrayInitElem() {}
 
-// Result<> IRBuilder::makeRefAs() {}
+Result<> IRBuilder::makeRefAs(RefAsOp op) {
+  RefAs curr;
+  CHECK_ERR(visitRefAs(&curr));
+  push(builder.makeRefAs(op, curr.value));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeStringNew() {}
 

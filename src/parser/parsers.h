@@ -1200,7 +1200,20 @@ template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  std::vector<typename Ctx::LabelIdxT> labels;
+  while (true) {
+    // Parse at least one label; return an error only if we parse none.
+    auto label = labelidx(ctx);
+    if (labels.empty()) {
+      CHECK_ERR(label);
+    } else if (label.getErr()) {
+      break;
+    }
+    labels.push_back(*label);
+  }
+  auto defaultLabel = labels.back();
+  labels.pop_back();
+  return ctx.makeSwitch(pos, labels, defaultLabel);
 }
 
 template<typename Ctx> Result<> makeReturn(Ctx& ctx, Index pos) {
@@ -1218,7 +1231,9 @@ template<typename Ctx> Result<> makeRefIsNull(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefFunc(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+  return ctx.makeRefFunc(pos, *func);
 }
 
 template<typename Ctx> Result<> makeRefEq(Ctx& ctx, Index pos) {
@@ -1276,7 +1291,9 @@ template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeCallRef(pos, *type, isReturn);
 }
 
 template<typename Ctx> Result<> makeRefI31(Ctx& ctx, Index pos) {
@@ -1288,19 +1305,29 @@ template<typename Ctx> Result<> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
 }
 
 template<typename Ctx> Result<> makeRefTest(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefTest(pos, *type);
 }
 
 template<typename Ctx> Result<> makeRefCast(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefCast(pos, *type);
 }
 
 template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnNonNull : BrOnNull);
 }
 
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
 }
 
 template<typename Ctx>
@@ -1349,15 +1376,17 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  auto data = dataidx(ctx);
-  CHECK_ERR(data);
-  return ctx.makeArrayNewElem(pos, *type, *data);
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto arity = ctx.in.takeU32();
+  if (!arity) {
+    return ctx.in.err(pos, "expected array.new_fixed arity");
+  }
+  return ctx.makeArrayNewFixed(pos, *type, *arity);
 }
 
 template<typename Ctx>
@@ -1400,7 +1429,7 @@ template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefAs(pos, op);
 }
 
 template<typename Ctx>

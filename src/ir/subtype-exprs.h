@@ -269,7 +269,6 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(curr->operands[i], fields[i].type);
     }
   }
-
   void visitStructGet(StructGet* curr) {}
   void visitStructSet(StructSet* curr) {
     if (!curr->ref->type.isStruct()) {

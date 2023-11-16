@@ -27,7 +27,7 @@ def test_wasm_opt():
         wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
         shared.delete_from_orbit('a.wat')
         out = 'a.wat'
-        cmd = shared.WASM_OPT + [wast, '-o', out, '-S'] + extra_args
+        cmd = shared.WASM_OPT + [wast, '-o', out, '-S', '-q'] + extra_args
         support.run_command(cmd)
         shared.fail_if_not_identical_to_file(open(out).read(), wast)
 
@@ -36,9 +36,9 @@ def test_wasm_opt():
     shutil.copyfile(os.path.join(shared.options.binaryen_test, 'hello_world.wat'), 'a.wat')
     shared.delete_from_orbit('a.wasm')
     shared.delete_from_orbit('b.wast')
-    support.run_command(shared.WASM_OPT + ['a.wat', '-o', 'a.wasm'])
+    support.run_command(shared.WASM_OPT + ['a.wat', '-o', 'a.wasm', '-q'])
     assert open('a.wasm', 'rb').read()[0] == 0, 'we emit binary by default'
-    support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S'])
+    support.run_command(shared.WASM_OPT + ['a.wasm', '-o', 'b.wast', '-S', '-q'])
     assert open('b.wast', 'rb').read()[0] != 0, 'we emit text with -S'
 
     print('\n[ checking wasm-opt passes... ]\n')
@@ -63,7 +63,7 @@ def test_wasm_opt():
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
             support.write_wast('split.wast', module)
-            cmd = shared.WASM_OPT + opts + ['split.wast']
+            cmd = shared.WASM_OPT + opts + ['split.wast', '-q']
             if 'noprint' not in t:
                 cmd.append('--print')
             curr = support.run_command(cmd)

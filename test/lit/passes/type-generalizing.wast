@@ -221,6 +221,9 @@
   (local $var1 i31ref)
   (local $var2 i31ref)
   (block $l (result i31ref)
+   ;; The call will be DCEd out, but this test and the implementation for `br`
+   ;; should be forward-compatible with a future where we do not have to run DCE
+   ;; before this pass.
    (call $helper-any_any
     ;; No requirements on $var1
     (local.get $var1)
@@ -255,6 +258,7 @@
  (func $br-no-sent
   (local $var i31ref)
   (block $l
+   ;; This call is DCEd out just like in the previous test.
    (call $helper-any_any
     ;; No requirements on $var
     (local.get $var)
@@ -674,21 +678,21 @@
   )
  )
 
- ;; CHECK:      (func $call_indirect (type $2) (param $x eqref)
+ ;; CHECK:      (func $call_indirect (type $void)
  ;; CHECK-NEXT:  (local $var eqref)
  ;; CHECK-NEXT:  (call_indirect $func-table (type $2)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $call_indirect (type $2) (param $x eqref)
+ ;; ALTER:      (func $call_indirect (type $void)
  ;; ALTER-NEXT:  (local $var eqref)
  ;; ALTER-NEXT:  (call_indirect $func-table (type $2)
  ;; ALTER-NEXT:   (local.get $var)
  ;; ALTER-NEXT:   (i32.const 0)
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
- (func $call_indirect (param $x eqref)
+ (func $call_indirect
   ;; This will be optimized to eqref.
   (local $var i31ref)
   ;; Requires typeof($var) <: eqref.
@@ -1014,7 +1018,7 @@
  )
 
  ;; CHECK:      (func $ref-cast-limited (type $1) (result eqref)
- ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast i31ref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
@@ -1026,16 +1030,16 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $ref-cast-limited (result eqref)
-  ;; XXX waka different
   (local $var i31ref)
-  ;; Require that typeof($var) <: eqref so the cast can still be elimintated.
+  ;; No constraint on $var.
+  ;; TODO: We could eliminate the cast if we did constrain $var.
   (ref.cast i31ref
    (local.get $var)
   )
  )
 
  ;; CHECK:      (func $ref-cast-more-limited (type $8) (result nullref)
- ;; CHECK-NEXT:  (local $var i31ref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast nullref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
@@ -1047,18 +1051,15 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $ref-cast-more-limited (result nullref)
-  ;; XXX waka different
   (local $var i31ref)
-  ;; Require that typeof($var) <: i31ref for montonicity, even though it would
-  ;; be nice if we could require nothing of it since we will not be able to
-  ;; eliminate this cast.
+  ;; No constraint on $var.
   (ref.cast nullref
    (local.get $var)
   )
  )
 
  ;; CHECK:      (func $ref-cast-lub (type $9) (result structref)
- ;; CHECK-NEXT:  (local $var eqref)
+ ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (ref.cast nullref
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
@@ -1070,9 +1071,8 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $ref-cast-lub (result structref)
-  ;; XXX waka different
   (local $var i31ref)
-  ;; Require that typeof($var) <: LUB(structref, i31ref).
+  ;; No constraint on $var.
   (ref.cast structref
    (local.get $var)
   )

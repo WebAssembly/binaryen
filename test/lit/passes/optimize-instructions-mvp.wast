@@ -16949,4 +16949,29 @@
       )
     )
   )
+
+  ;; CHECK:      (func $added-constants-remaining-constant (result i32)
+  ;; CHECK-NEXT:  (i32.const 32)
+  ;; CHECK-NEXT: )
+  (func $added-constants-remaining-constant (result i32)
+    ;; optimizeAddedConstants will simplify this step by step and end up with
+    ;; both an accumulated value and a constant to add it to (the 1 at the
+    ;; bottom). We should not hit an assert here and return the proper value,
+    ;; 32. (This is tricky for optimizeAddedConstants because of the shift that
+    ;; does nothing, which it correctly ignores, but it also leads to having
+    ;; something to add at the very end of the process.)
+    (i32.sub              ;; This subtracts 33 by 1 to get 32.
+      (i32.add            ;; This adds 1 to 32 to get 33.
+        (i32.shl          ;; This shift by 32 does nothing, so it is 1.
+         (i32.const 1)
+         (i32.add         ;; This is 32
+           (i32.const 0)
+           (i32.const 32)
+         )
+       )
+       (i32.const 32)
+      )
+      (i32.const 1)
+    )
+  )
 )

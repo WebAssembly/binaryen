@@ -383,16 +383,29 @@ struct NullInstrParserCtx {
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
   Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
   Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
+    return Ok{};
+  }
   Result<> makeReturn(Index) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
     return Ok{};
   }
   Result<> makeRefIsNull(Index) { return Ok{}; }
-
+  Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
   Result<> makeRefEq(Index) { return Ok{}; }
-
+  template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
+    return Ok{};
+  }
   Result<> makeRefI31(Index) { return Ok{}; }
   Result<> makeI31Get(Index, bool) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefTest(Index, TypeT) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefCast(Index, TypeT) { return Ok{}; }
+
+  Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
+
+  template<typename TypeT> Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT) {
+    return Ok{};
+  }
 
   template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
     return Ok{};
@@ -422,6 +435,10 @@ struct NullInstrParserCtx {
   Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeArrayNewFixed(Index, HeapTypeT, uint32_t) {
+    return Ok{};
+  }
   template<typename HeapTypeT> Result<> makeArrayGet(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -436,6 +453,7 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
     return Ok{};
   }
+  Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1247,6 +1265,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeBreak(label));
   }
 
+  Result<>
+  makeSwitch(Index pos, const std::vector<Index> labels, Index defaultLabel) {
+    return withLoc(pos, irBuilder.makeSwitch(labels, defaultLabel));
+  }
+
   Result<> makeReturn(Index pos) {
     return withLoc(pos, irBuilder.makeReturn());
   }
@@ -1259,7 +1282,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeRefIsNull());
   }
 
+  Result<> makeRefFunc(Index pos, Name func) {
+    return withLoc(pos, irBuilder.makeRefFunc(func));
+  }
+
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
+
+  Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {
+    return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
+  }
 
   Result<> makeRefI31(Index pos) {
     return withLoc(pos, irBuilder.makeRefI31());
@@ -1267,6 +1298,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeI31Get(Index pos, bool signed_) {
     return withLoc(pos, irBuilder.makeI31Get(signed_));
+  }
+
+  Result<> makeRefTest(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefTest(type));
+  }
+
+  Result<> makeRefCast(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefCast(type));
+  }
+
+  Result<>
+  makeBrOn(Index pos, Index label, BrOnOp op, Type castType = Type::none) {
+    return withLoc(pos, irBuilder.makeBrOn(label, op, castType));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {
@@ -1301,6 +1345,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeArrayNewElem(type, elem));
   }
 
+  Result<> makeArrayNewFixed(Index pos, HeapType type, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeArrayNewFixed(type, arity));
+  }
+
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
     return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
   }
@@ -1319,6 +1367,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeArrayFill(Index pos, HeapType type) {
     return withLoc(pos, irBuilder.makeArrayFill(type));
+  }
+
+  Result<> makeRefAs(Index pos, RefAsOp op) {
+    return withLoc(pos, irBuilder.makeRefAs(op));
   }
 };
 
