@@ -1656,18 +1656,17 @@
  ;; CHECK:      (type $bytes (sub (array i8)))
 
  ;; CHECK:      (type $sub (sub $super (array i31ref)))
- ;; ALTER:      (type $3 (func (result anyref)))
-
- ;; ALTER:      (type $mut-bytes (sub (array (mut i8))))
-
- ;; ALTER:      (type $bytes (sub (array i8)))
-
  ;; ALTER:      (type $sub (sub $super (array i31ref)))
  (type $sub (sub $super (array (field i31ref))))
 
  (type $super-mut (sub (array (field (mut eqref)))))
  (type $sub-mut (sub $super-mut (array (field (mut eqref)))))
 
+ ;; ALTER:      (type $4 (func (result anyref)))
+
+ ;; ALTER:      (type $mut-bytes (sub (array (mut i8))))
+
+ ;; ALTER:      (type $bytes (sub (array i8)))
  (type $bytes (sub (array i8)))
  (type $sub-bytes (sub $bytes (array i8)))
 
@@ -1691,7 +1690,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $array-new (type $3) (result anyref)
+ ;; ALTER:      (func $array-new (type $4) (result anyref)
  ;; ALTER-NEXT:  (local $val eqref)
  ;; ALTER-NEXT:  (array.new $super
  ;; ALTER-NEXT:   (local.get $val)
@@ -1773,7 +1772,7 @@
  ;; CHECK-NEXT:   (local.get $val2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $array-new-fixed (type $3) (result anyref)
+ ;; ALTER:      (func $array-new-fixed (type $4) (result anyref)
  ;; ALTER-NEXT:  (local $val1 eqref)
  ;; ALTER-NEXT:  (local $val2 eqref)
  ;; ALTER-NEXT:  (array.new_fixed $super 2
@@ -1798,7 +1797,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $array-get (type $3) (result anyref)
+ ;; ALTER:      (func $array-get (type $4) (result anyref)
  ;; ALTER-NEXT:  (local $val (ref null $super))
  ;; ALTER-NEXT:  (array.get $super
  ;; ALTER-NEXT:   (local.get $val)
@@ -1826,7 +1825,7 @@
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ALTER:      (func $array-get-impossible (type $3) (result anyref)
+ ;; ALTER:      (func $array-get-impossible (type $4) (result anyref)
  ;; ALTER-NEXT:  (local $val nullref)
  ;; ALTER-NEXT:  (block ;; (replaces something unreachable we can't emit)
  ;; ALTER-NEXT:   (drop
@@ -1929,7 +1928,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $array-len (type $0)
- ;; ALTER-NEXT:  (local $ref (ref null $super))
+ ;; ALTER-NEXT:  (local $ref arrayref)
  ;; ALTER-NEXT:  (drop
  ;; ALTER-NEXT:   (array.len
  ;; ALTER-NEXT:    (local.get $ref)
@@ -1937,7 +1936,6 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $array-len
-  ;; XXX waka different
   (local $ref (ref null $super))
   (drop
    ;; Require that typeof($ref) <: arrayref.
@@ -1960,8 +1958,8 @@
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $array-copy-ref (type $0)
  ;; ALTER-NEXT:  (local $dest (ref null $super-mut))
- ;; ALTER-NEXT:  (local $src (ref null $super))
- ;; ALTER-NEXT:  (array.copy $super-mut $super
+ ;; ALTER-NEXT:  (local $src (ref null $sub))
+ ;; ALTER-NEXT:  (array.copy $super-mut $sub
  ;; ALTER-NEXT:   (local.get $dest)
  ;; ALTER-NEXT:   (i32.const 0)
  ;; ALTER-NEXT:   (local.get $src)
@@ -1970,6 +1968,7 @@
  ;; ALTER-NEXT:  )
  ;; ALTER-NEXT: )
  (func $array-copy-ref
+  ;; XXX waka different
   (local $dest (ref null $sub-mut))
   (local $src (ref null $sub))
   ;; Require that typeof($dest) <: $super-mut and that typeof($src) <: $super.
@@ -2031,7 +2030,7 @@
  ;; CHECK-NEXT: )
  ;; ALTER:      (func $array-copy-impossible-dest (type $0)
  ;; ALTER-NEXT:  (local $dest nullref)
- ;; ALTER-NEXT:  (local $src (ref null $super))
+ ;; ALTER-NEXT:  (local $src (ref null $sub))
  ;; ALTER-NEXT:  (block
  ;; ALTER-NEXT:   (local.get $dest)
  ;; ALTER-NEXT:   (i32.const 0)

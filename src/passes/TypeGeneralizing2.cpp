@@ -108,46 +108,62 @@ struct TypeGeneralizing
     addRoot(curr->value, fields[curr->index].type);
   }
 
-  void visitArrayReference(Expression* ref) {
+  void requireArrayType(Expression* ref) {
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
       return;
     }
     auto curr = ref->type.getHeapType();
+    auto element = curr.getArray().element;
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
         // There is no super. Stop, as curr is the one we want.
         break;
       }
+      auto last = curr;
       curr = *next;
+      if (curr.getArray().element != element) {
+        // The element changed. Stop, as |last| is the one we want.
+        curr = last;
+        break;
+      }
     }
     self()->noteSubtype(ref, Type(curr, Nullable));
+  }
+
+  void requireArrayReference(Expression* ref) {
+    if (!ref->type.isArray()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      self()->noteSubtype(ref, ref->type);
+      return;
+    }
+    self()->noteSubtype(ref, Type(HeapType::array, Nullable));
   }
 
   void visitArrayGet(ArrayGet* curr) {
     connectSourceToDest(curr->ref, curr);
   }
   void visitArraySet(ArraySet* curr) {
-    visitArrayReference(curr->ref);
+    requireArrayType(curr->ref);
     Super::visitArraySet(curr);
   }
-  void visitArrayLen(ArrayLen* curr) { visitArrayReference(curr->ref); }
+  void visitArrayLen(ArrayLen* curr) { requireArrayReference(curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
-    visitArrayReference(curr->srcRef);
-    visitArrayReference(curr->destRef);
+    requireArrayType(curr->srcRef);
+    requireArrayType(curr->destRef);
     Super::visitArrayCopy(curr);
   }
   void visitArrayFill(ArrayFill* curr) {
-    visitArrayReference(curr->ref);
+    requireArrayType(curr->ref);
     Super::visitArrayFill(curr);
   }
   void visitArrayInitData(ArrayInitData* curr) {
-    visitArrayReference(curr->ref);
+    requireArrayType(curr->ref);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
-    visitArrayReference(curr->ref);
+    requireArrayType(curr->ref);
     Super::visitArrayInitElem(curr);
   }
 
