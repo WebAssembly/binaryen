@@ -108,22 +108,14 @@ struct TypeGeneralizing
     addRoot(curr->value, fields[curr->index].type);
   }
 
-  void requireNonBasicArray(Expression* ref) { // TODO dedupe
+  void requireNonBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       self()->noteSubtype(ref, ref->type);
       return;
     }
-    auto curr = ref->type.getHeapType();
-    while (true) {
-      auto next = curr.getDeclaredSuperType();
-      if (!next) {
-        // There is no super. Stop, as curr is the one we want.
-        break;
-      }
-      curr = *next;
-    }
-    self()->noteSubtype(ref, Type(curr, Nullable));
+    auto heapType = getLeastRefinedArrayTypeWithElement(ref->type.getHeapType(), [](Type candidate) { return true; });
+    self()->noteSubtype(ref, Type(heapType, Nullable));
   }
   void requireBasicArray(Expression* ref) {
     if (!ref->type.isArray()) {
