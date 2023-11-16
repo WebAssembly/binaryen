@@ -136,7 +136,10 @@ struct TypeGeneralizing
     self()->noteSubtype(ref, Type(curr, Nullable));
   }
 
-  void visitArrayGet(ArrayGet* curr) { visitArrayReference(curr->ref); }
+  void visitArrayGet(ArrayGet* curr) {
+    visitArrayReference(curr->ref);
+    connectSourceToDest(curr->ref, curr);
+  }
   void visitArraySet(ArraySet* curr) {
     visitArrayReference(curr->ref);
     if (!curr->ref->type.isArray()) {
@@ -321,7 +324,10 @@ struct TypeGeneralizing
           // that it be refined enough to provide a field at that index, and of
           // the right type.
           succValues[0] =
-            transferStructRef(succValues[0], get->ref, get->index);
+            transferStructGet(succValues[0], get->ref, get->index);
+        } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
+          succValues[0] =
+            transferArrayGet(succValues[0], get->ref);
         }
       }
     }
@@ -393,7 +399,7 @@ struct TypeGeneralizing
   // reference child of the struct.get, and the index it operates on. It then
   // computes the type for the reference and returns that. This forms the core
   // of the transfer logic for a struct.get.
-  Type transferStructRef(Type outputType, Expression* ref, Index index) {
+  Type transferStructGet(Type outputType, Expression* ref, Index index) {
     if (!ref->type.isStruct()) {
       // This is a bottom type or unreachable. Do not allow it to change.
       return ref->type;
@@ -428,6 +434,39 @@ struct TypeGeneralizing
       if (index >= fields.size() || !fieldIsOk(fields[index].type)) {
         // There is no field at that index, or it has the wrong type. Stop, as
         // |last| is the one we want.
+        curr = last;
+        break;
+      }
+    }
+    return curr;
+  }
+
+  Type transferArrayGet(Type outputType, Expression* ref) {
+    if (!ref->type.isArray()) {
+      // This is a bottom type or unreachable. Do not allow it to change.
+      return ref->type;
+    }
+
+    auto heapType = getLeastRefinedArrayTypeWithElement(
+      ref->type.getHeapType(), [&](Type candidate) {
+        return Type::isSubType(candidate, outputType);
+      });
+    return Type(heapType, Nullable);
+  }
+
+  template<typename T>
+  HeapType
+  getLeastRefinedArrayTypeWithElement(HeapType curr, T elementIsOk) {
+    while (true) {
+      auto next = curr.getDeclaredSuperType();
+      if (!next) {
+        // There is no super. Stop, as curr is the one we want.
+        break;
+      }
+      auto last = curr;
+      curr = *next;
+      if (!elementIsOk(curr.getArray().element.type)) {
+        // Stop, as |last| is the one we want.
         curr = last;
         break;
       }
