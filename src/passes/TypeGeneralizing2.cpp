@@ -115,23 +115,13 @@ struct TypeGeneralizing
       return;
     }
     auto curr = ref->type.getHeapType();
-    // We could in principle allow the reference type to generalize while
-    // allowing field generalization as well, but for now for simplicity keep it
-    // unchanged. TODO handle this with flexibility in the user.
-    auto element = curr.getArray().element;
     while (true) {
       auto next = curr.getDeclaredSuperType();
       if (!next) {
         // There is no super. Stop, as curr is the one we want.
         break;
       }
-      auto last = curr;
       curr = *next;
-      if (curr.getArray().element != element) {
-        // The element changed. Stop, as |last| is the one we want.
-        curr = last;
-        break;
-      }
     }
     self()->noteSubtype(ref, Type(curr, Nullable));
   }
