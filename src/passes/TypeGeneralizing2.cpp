@@ -102,9 +102,7 @@ struct TypeGeneralizing
     // TODO we can look at the dynamic reference and value during the flow; for
     //      now just do it statically.
     auto minimalRefType = getLeastRefinedStructTypeWithField(
-      refType.getHeapType(), curr->index, [&](Type candidate) {
-        return true;
-      });
+      refType.getHeapType(), curr->index, [&](Type candidate) { return true; });
     addRoot(curr->ref, Type(minimalRefType, Nullable));
     const auto& fields = minimalRefType.getStruct().fields;
     addRoot(curr->value, fields[curr->index].type);
