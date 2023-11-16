@@ -289,8 +289,7 @@ struct TypeGeneralizing
           //
           // That is, our successor is a struct.get, so we are the reference of
           // that struct.get.
-          succValue =
-            transferStructGet(succValue, get->ref, get->index);
+          succValue = transferStructGet(succValue, get->ref, get->index);
         } else if (auto* get = exprLoc->expr->dynCast<ArrayGet>()) {
           succValue = transferArrayGet(succValue, get->ref);
         } else if (auto* copy = exprLoc->expr->dynCast<ArrayCopy>()) {
