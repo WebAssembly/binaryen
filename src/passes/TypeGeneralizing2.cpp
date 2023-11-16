@@ -141,42 +141,24 @@ struct TypeGeneralizing
   }
   void visitArraySet(ArraySet* curr) {
     visitArrayReference(curr->ref);
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    self()->noteSubtype(curr->value, array.element.type);
+    Super::visitArraySet(curr);
   }
   void visitArrayLen(ArrayLen* curr) { visitArrayReference(curr->ref); }
   void visitArrayCopy(ArrayCopy* curr) {
     visitArrayReference(curr->srcRef);
     visitArrayReference(curr->destRef);
-    if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
-      return;
-    }
-    auto src = curr->srcRef->type.getHeapType().getArray();
-    auto dest = curr->destRef->type.getHeapType().getArray();
-    self()->noteSubtype(src.element.type, dest.element.type);
+    Super::visitArrayCopy(curr);
   }
   void visitArrayFill(ArrayFill* curr) {
     visitArrayReference(curr->ref);
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    self()->noteSubtype(curr->value, array.element.type);
+    Super::visitArrayFill(curr);
   }
   void visitArrayInitData(ArrayInitData* curr) {
     visitArrayReference(curr->ref);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
     visitArrayReference(curr->ref);
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    auto* seg = self()->getModule()->getElementSegment(curr->segment);
-    self()->noteSubtype(seg->type, array.element.type);
+    Super::visitArrayInitElem(curr);
   }
 
   // Hooks that are called by SubtypingDiscoverer.
