@@ -431,6 +431,17 @@ Result<> IRBuilder::visitCallRef(CallRef* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitThrow(Throw* curr) {
+  auto numArgs = wasm.getTag(curr->tag)->sig.params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -991,7 +1002,13 @@ Result<> IRBuilder::makeRefEq() {
 
 // Result<> IRBuilder::makeTry() {}
 
-// Result<> IRBuilder::makeThrow() {}
+Result<> IRBuilder::makeThrow(Name tag) {
+  Throw curr(wasm.allocator);
+  curr.tag = tag;
+  CHECK_ERR(visitThrow(&curr));
+  push(builder.makeThrow(tag, curr.operands));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeRethrow() {}
 

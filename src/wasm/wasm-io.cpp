@@ -25,12 +25,11 @@
 //
 
 #include "wasm-io.h"
+#include "parser/wat-parser.h"
 #include "support/debug.h"
 #include "support/path.h"
 #include "wasm-binary.h"
 #include "wasm-s-parser.h"
-#include "wat-parser.h"
-
 
 namespace wasm {
 

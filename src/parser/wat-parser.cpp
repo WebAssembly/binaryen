@@ -146,6 +146,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
     CHECK_ERR(parseDefs(ctx, decls.memoryDefs, memory));
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.tagDefs, tag));
     // TODO: Parse types of other module elements.
   }
   {
