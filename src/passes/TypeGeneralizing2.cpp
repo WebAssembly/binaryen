@@ -84,7 +84,6 @@ struct TypeGeneralizing
   std::vector<LocalGet*> gets;
   std::vector<LocalSet*> sets;
 
-  // StructGet/Set operations are handled dynamically during the flow.
   void visitStructGet(StructGet* curr) {
     // Connect the reference to us. As the reference becomes more refined, so do
     // we. This is handled in the transfer function.
@@ -98,6 +97,10 @@ struct TypeGeneralizing
       return;
     }
 
+    // Find the constraint on the ref and value and apply them. Note that these
+    // do not need any dynamic handling, because a struct.set implies
+    // mutability, which implies the field's type is identical in all supers and
+    // subs due to how the wasm type system works.
     auto minimalRefType =
       getLeastRefinedStruct(refType.getHeapType(), curr->index);
     addRoot(curr->ref, Type(minimalRefType, Nullable));
