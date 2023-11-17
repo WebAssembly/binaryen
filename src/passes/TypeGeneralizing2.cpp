@@ -236,11 +236,13 @@ struct TypeGeneralizing
   // increase until all locations stabilize at the fixed point.
   analysis::ValType typeLattice;
 
+  using LatticeElement = analysis::ValType::Element;
+
   // The roots in the graph: constraints that we know from the start and from
   // which the flow begins. Each root is a location and its type.
-  std::unordered_map<Location, Type> roots;
+  std::unordered_map<Location, LatticeElement> roots;
 
-  void addRoot(Expression* expr, Type type) {
+  void addRoot(Expression* expr, LatticeElement type) {
     if (!type.isRef()) {
       return;
     }
@@ -251,7 +253,7 @@ struct TypeGeneralizing
 
   // The types of locations as we discover them. When the flow is complete,
   // these are the final types.
-  std::unordered_map<Location, Type> locTypes;
+  std::unordered_map<Location, LatticeElement> locTypes;
 
   // A list of locations to process. When we process one, we compute the
   // transfer function for it and set up any further flow.
@@ -282,7 +284,7 @@ struct TypeGeneralizing
   // given the locations they arrive from, or an empty optional if this is a
   // root (roots are the initial values where the flow begins).
   void update(Location loc,
-              std::vector<Type> succValues,
+              std::vector<LatticeElement> succValues,
               std::optional<std::vector<Location>> succLocs) {
     DBG({
       std::cerr << "Updating \n";
@@ -384,7 +386,8 @@ struct TypeGeneralizing
   // reference child of the struct.get, and the index it operates on. It then
   // computes the type for the reference and returns that. This forms the core
   // of the transfer logic for a struct.get.
-  Type transferStructGet(Type outputType, Expression* ref, Index index) {
+  LatticeElement
+  transferStructGet(Type outputType, Expression* ref, Index index) {
     if (!ref->type.isStruct()) {
       return ref->type;
     }
@@ -420,7 +423,7 @@ struct TypeGeneralizing
     return curr;
   }
 
-  Type transferArrayGet(Type outputType, Expression* ref) {
+  LatticeElement transferArrayGet(LatticeElement outputType, Expression* ref) {
     if (!ref->type.isArray()) {
       return ref->type;
     }
@@ -431,7 +434,7 @@ struct TypeGeneralizing
 
   // Given a new type for the source of an ArrayCopy, compute the new type for
   // the dest.
-  Type transferArrayCopy(Type destType, ArrayCopy* copy) {
+  LatticeElement transferArrayCopy(LatticeElement destType, ArrayCopy* copy) {
     if (!destType.isArray()) {
       // No constraint here.
       return Type(HeapType::array, Nullable);
@@ -521,7 +524,7 @@ struct TypeGeneralizing
     while (!toFlow.empty()) {
       auto loc = toFlow.pop();
       auto& succLocs = succs[loc];
-      std::vector<Type> succValues;
+      std::vector<LatticeElement> succValues;
       for (auto& succ : succLocs) {
         succValues.push_back(locTypes[succ]);
       }
