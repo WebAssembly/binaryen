@@ -360,7 +360,7 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $a
+  ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (block $label1
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 4)
