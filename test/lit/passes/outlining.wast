@@ -303,9 +303,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a (param i32)
-    (drop (i32.add
-      (local.get 0)
-      (i32.const 1)))
+    (drop
+      (i32.add
+        (local.get 0)
+        (i32.const 1)
+      )
+    )
   )
   ;; CHECK:      (func $b (param $0 i32)
   ;; CHECK-NEXT:  (drop
@@ -316,9 +319,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $b (param i32)
-    (drop (i32.add
-      (local.get 0)
-      (i32.const 1)))
+    (drop
+      (i32.add
+        (local.get 0)
+        (i32.const 1)
+      )
+    )
   )
 )
 
@@ -335,7 +341,8 @@
   (func $a
     (local $i i32)
     (local.set $i
-      (i32.const 7))
+      (i32.const 7)
+    )
   )
   ;; CHECK:      (func $b
   ;; CHECK-NEXT:  (local $i i32)
@@ -346,7 +353,8 @@
   (func $b
     (local $i i32)
     (local.set $i
-      (i32.const 7))
+      (i32.const 7)
+    )
   )
 )
 
@@ -368,9 +376,13 @@
   ;; CHECK-NEXT: )
   (func $a
     (block $label1
-      (drop (i32.const 4))
+      (drop
+        (i32.const 4)
+      )
       (br $label1)
-      (drop (i32.const 4))
+      (drop
+        (i32.const 4)
+      )
       (br $label1)
     )
   )
