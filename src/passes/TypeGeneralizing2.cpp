@@ -313,10 +313,7 @@ struct TypeGeneralizing
       }
     }
 
-    // We now know the actual location to update, and the successor values
-    // relevant for us.
     DBG({
-      dump(loc);
       for (auto value : succValues) {
         std::cerr << "  succ value: " << ModuleType(*getModule(), value)
                   << '\n';
