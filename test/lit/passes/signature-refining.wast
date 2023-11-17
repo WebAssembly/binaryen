@@ -988,7 +988,8 @@
 
 ;; Test we consider call.without.effects when deciding what to refine. $A has
 ;; two subtypes, B1 and B2, and a call.without.effects sends in one while a
-;; normal call sends in the other. As a result, we cannot refine to either.
+;; normal call sends in the other. As a result, we cannot refine the parameter
+;; at all.
 (module
  (rec
   ;; CHECK:      (rec
@@ -1040,5 +1041,61 @@
  ;; CHECK-NEXT: )
  (func $target (param $x (ref $A))
   ;; Because of the two calls above, this cannot be refined.
+ )
+)
+
+;; As above, but now we can refine the parameter to the called function.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $0 (func (param (ref $B))))
+
+  ;; CHECK:       (type $A (sub (struct )))
+  (type $A (sub (struct)))
+
+  ;; CHECK:       (type $B (sub $A (struct )))
+  (type $B (sub $A (struct)))
+ )
+
+ ;; CHECK:       (type $3 (func))
+
+ ;; CHECK:       (type $4 (func (param (ref $A) funcref)))
+
+ ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects (type $4) (param (ref $A) funcref)))
+ (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects
+   (param (ref $A))
+   (param funcref)
+ ))
+
+ ;; CHECK:      (elem declare func $target)
+
+ ;; CHECK:      (func $calls (type $3)
+ ;; CHECK-NEXT:  (call $no.side.effects
+ ;; CHECK-NEXT:   (struct.new_default $B)
+ ;; CHECK-NEXT:   (ref.func $target)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $target
+ ;; CHECK-NEXT:   (struct.new_default $B)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $calls
+  (call $no.side.effects
+   (struct.new $B)        ;; this changed to $B
+   (ref.func $target)
+  )
+  (call $target
+   (struct.new $B)        ;; this also changed to $B
+  )
+ )
+
+ ;; CHECK:      (func $target (type $0) (param $x (ref $B))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $target (param $x (ref $A))
+  ;; The two calls above both send $B, so we can refine the parameter to $B.
+  ;;
+  ;; Note that the signature of the import $no.side.effects does *not* change;
+  ;; the refined values sent are valid to send to the old parameter types there
+  ;; (see tests above for how we handle refining of return values).
  )
 )

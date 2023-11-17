@@ -17,8 +17,17 @@
 #include <cassert>
 
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "wasm-ir-builder.h"
+
+#define IR_BUILDER_DEBUG 0
+
+#if IR_BUILDER_DEBUG
+#define DBG(statement) statement
+#else
+#define DBG(statement)
+#endif
 
 using namespace std::string_literals;
 
@@ -144,6 +153,9 @@ void IRBuilder::push(Expression* expr) {
     scope.unreachable = true;
   }
   scope.exprStack.push_back(expr);
+
+  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(dump());
 }
 
 Result<Expression*> IRBuilder::pop() {
@@ -185,7 +197,55 @@ Result<Expression*> IRBuilder::build() {
   return expr;
 }
 
+void IRBuilder::dump() {
+#if IR_BUILDER_DEBUG
+  std::cerr << "Scope stack";
+  if (func) {
+    std::cerr << " in function $" << func->name;
+  }
+  std::cerr << ":\n";
+
+  for (auto& scope : scopeStack) {
+    std::cerr << "  scope ";
+    if (std::get_if<ScopeCtx::NoScope>(&scope.scope)) {
+      std::cerr << "none";
+    } else if (auto* f = std::get_if<ScopeCtx::FuncScope>(&scope.scope)) {
+      std::cerr << "func " << f->func->name;
+    } else if (std::get_if<ScopeCtx::BlockScope>(&scope.scope)) {
+      std::cerr << "block";
+    } else if (std::get_if<ScopeCtx::IfScope>(&scope.scope)) {
+      std::cerr << "if";
+    } else if (std::get_if<ScopeCtx::ElseScope>(&scope.scope)) {
+      std::cerr << "else";
+    } else if (std::get_if<ScopeCtx::LoopScope>(&scope.scope)) {
+      std::cerr << "loop";
+    } else {
+      WASM_UNREACHABLE("unexpected scope");
+    }
+
+    if (auto name = scope.getOriginalLabel()) {
+      std::cerr << " (original label: " << name << ")";
+    }
+
+    if (scope.label) {
+      std::cerr << " (label: " << scope.label << ")";
+    }
+
+    if (scope.unreachable) {
+      std::cerr << " (unreachable)";
+    }
+
+    std::cerr << ":\n";
+
+    for (auto* expr : scope.exprStack) {
+      std::cerr << "    " << ShallowExpression(expr) << "\n";
+    }
+  }
+#endif // IR_BUILDER_DEBUG
+}
+
 Result<> IRBuilder::visit(Expression* curr) {
+  // Call either `visitExpression` or an expression-specific override.
   auto val = UnifiedExpressionVisitor<IRBuilder, Result<>>::visit(curr);
   CHECK_ERR(val);
   if (auto* block = curr->dynCast<Block>()) {
@@ -202,6 +262,12 @@ Result<> IRBuilder::visit(Expression* curr) {
 // Handle the common case of instructions with a constant number of children
 // uniformly.
 Result<> IRBuilder::visitExpression(Expression* curr) {
+  if (Properties::isControlFlowStructure(curr)) {
+    // Control flow structures (besides `if`, handled separately) do not consume
+    // stack values.
+    return Ok{};
+  }
+
 #define DELEGATE_ID curr->_id
 #define DELEGATE_START(id) [[maybe_unused]] auto* expr = curr->cast<id>();
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
@@ -238,8 +304,12 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitBlock(Block* curr) {
-  // No children; pushing and finalizing will be handled by `visit`.
+Result<> IRBuilder::visitIf(If* curr) {
+  // Only the condition is popped from the stack. The ifTrue and ifFalse are
+  // self-contained so we do not modify them.
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
   return Ok{};
 }
 
