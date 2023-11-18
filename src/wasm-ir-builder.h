@@ -84,7 +84,8 @@ public:
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
-  // [[nodiscard]] Result<> makeCallIndirect();
+  [[nodiscard]] Result<>
+  makeCallIndirect(Name func, HeapType heapType, bool isReturn);
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
   [[nodiscard]] Result<> makeLocalTee(Index local);
@@ -201,6 +202,7 @@ public:
   [[nodiscard]] Result<>
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
   [[nodiscard]] Result<> visitCall(Call*);
+  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
 
 private:

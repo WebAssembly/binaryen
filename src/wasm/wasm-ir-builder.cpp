@@ -419,6 +419,20 @@ Result<> IRBuilder::visitCall(Call* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitCallIndirect(CallIndirect* curr) {
+  auto target = pop();
+  CHECK_ERR(target);
+  curr->target = *target;
+  auto numArgs = curr->heapType.getSignature().params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitCallRef(CallRef* curr) {
   auto target = pop();
   CHECK_ERR(target);
@@ -688,7 +702,15 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallIndirect() {}
+Result<>
+IRBuilder::makeCallIndirect(Name table, HeapType heapType, bool isReturn) {
+  CallIndirect curr(wasm.allocator);
+  curr.table = table;
+  CHECK_ERR(visitCallIndirect(&curr));
+  push(builder.makeCallIndirect(
+    curr.table, curr.target, curr.operands, curr.heapType, isReturn));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
   push(builder.makeLocalGet(local, func->getLocalType(local)));
