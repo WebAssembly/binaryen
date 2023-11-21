@@ -419,6 +419,20 @@ Result<> IRBuilder::visitCall(Call* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitCallIndirect(CallIndirect* curr) {
+  auto target = pop();
+  CHECK_ERR(target);
+  curr->target = *target;
+  auto numArgs = curr->heapType.getSignature().params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; ++i) {
+    auto arg = pop();
+    CHECK_ERR(arg);
+    curr->operands[numArgs - 1 - i] = *arg;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitCallRef(CallRef* curr) {
   auto target = pop();
   CHECK_ERR(target);

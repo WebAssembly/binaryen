@@ -505,3 +505,40 @@
     )
   )
 )
+
+;; Test outlining works with call_indirect
+(module
+  (table funcref)
+  (func
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+)
+;; CHECK:      (type $0 (func))
+
+;; CHECK:      (type $1 (func (param i32 i32)))
+
+;; CHECK:      (table $0 0 funcref)
+
+;; CHECK:      (func $outline$ (type $0)
+;; CHECK-NEXT:  (call_indirect $0 (type $1)
+;; CHECK-NEXT:   (i32.const 0)
+;; CHECK-NEXT:   (i32.const 1)
+;; CHECK-NEXT:   (i32.const 2)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $0 (type $0)
+;; CHECK-NEXT:  (call $outline$)
+;; CHECK-NEXT:  (call $outline$)
+;; CHECK-NEXT: )
