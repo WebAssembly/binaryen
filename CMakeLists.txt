@@ -46,8 +46,8 @@ option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
-# Turn this on to compile binaryen.js for the browser.
-option(BUILD_FOR_BROWSER "Build binaryen.js for the browser" OFF)
+# Turn this on to compile binaryen toolchain utilities for the browser.
+option(BUILD_FOR_BROWSER "Build binaryen toolchain utilities for the browser" OFF)
 
 # Turn this on to use the Wasm EH feature instead of emscripten EH in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_WASM_EH "Enable Wasm EH feature in emscripten build" OFF)

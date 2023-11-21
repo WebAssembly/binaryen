@@ -352,9 +352,14 @@ To avoid the gtest dependency, you can pass `-DBUILD_TESTS=OFF` to cmake.
 
 Binaryen.js can be built using Emscripten, which can be installed via [the SDK](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
-```bash
-emcmake cmake . && emmake make binaryen_js
-```
+- Building for Node.js:
+  ```bash
+  emcmake cmake . && emmake make binaryen_js
+  ```
+- Building for the browser:
+  ```bash
+  emcmake cmake -DBUILD_FOR_BROWSER=ON . && emmake make
+  ```
 
 ### Visual C++
 
