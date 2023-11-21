@@ -46,6 +46,9 @@ option(BUILD_EMSCRIPTEN_TOOLS_ONLY "Build only tools needed by emscripten" OFF)
 # Turn this on to build binaryen.js as ES5, with additional compatibility configuration for js_of_ocaml.
 option(JS_OF_OCAML "Build binaryen.js for js_of_ocaml" OFF)
 
+# Turn this on to compile binaryen toolchain utilities for the browser.
+option(BUILD_FOR_BROWSER "Build binaryen toolchain utilities for the browser" OFF)
+
 # Turn this on to use the Wasm EH feature instead of emscripten EH in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_WASM_EH "Enable Wasm EH feature in emscripten build" OFF)
 
@@ -339,11 +342,24 @@ if(EMSCRIPTEN)
     add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
     add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
   endif()
-  # make the tools immediately usable on Node.js
-  add_link_flag("-sNODERAWFS")
-  # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-  add_nondebug_compile_flag("-flto")
-endif()
+  # In the browser, there is no natural place to provide commandline arguments
+  # for a commandline tool, so let the user run the main entry point themselves
+  # and pass in the arguments there.
+  if(BUILD_FOR_BROWSER)
+    add_link_flag("-sENVIRONMENT=web,worker")
+    add_link_flag("-sINVOKE_RUN=0")
+    add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")    
+    add_link_flag("-sMODULARIZE")
+    add_link_flag("-sEXPORT_ES6")
+    add_link_flag("-sFILESYSTEM")
+    add_link_flag("-sFORCE_FILESYSTEM")
+    # On Node.js, make the tools immediately usable.
+    else()
+    add_link_flag("-sNODERAWFS")
+  endif()
+    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+    add_nondebug_compile_flag("-flto")
+  endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
