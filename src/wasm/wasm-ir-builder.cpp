@@ -702,15 +702,7 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   return Ok{};
 }
 
-Result<>
-IRBuilder::makeCallIndirect(Name table, HeapType heapType, bool isReturn) {
-  CallIndirect curr(wasm.allocator);
-  curr.table = table;
-  CHECK_ERR(visitCallIndirect(&curr));
-  push(builder.makeCallIndirect(
-    curr.table, curr.target, curr.operands, curr.heapType, isReturn));
-  return Ok{};
-}
+// Result<> IRBuilder::makeCallIndirect() {}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
   push(builder.makeLocalGet(local, func->getLocalType(local)));
