@@ -95,8 +95,6 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       }
     }
 
-    void visitTry(Try* res) {}
-    void visitRethrow(Rethrow* res) {}
   } visitor(func);
 
   visitor.visit(expr);
