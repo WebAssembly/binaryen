@@ -342,7 +342,9 @@ if(EMSCRIPTEN)
     add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
     add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
   endif()
-  # make the tools immediately usable on Node.js, unless building for the browser
+  # In the browser, there is no natural place to provide commandline arguments
+  # for a commandline tool, so let the user run the main entry point themselves
+  # and pass in the arguments there.
   if (BUILD_FOR_BROWSER)
     add_link_flag("-sENVIRONMENT=web,worker")
     add_link_flag("-sINVOKE_RUN=0")
@@ -351,7 +353,8 @@ if(EMSCRIPTEN)
     add_link_flag("-sFILESYSTEM")
     add_link_flag("-sFORCE_FILESYSTEM")
     add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")
-  else()
+    # On Node.js, make the tools immediately usable.
+    else()
     add_link_flag("-sNODERAWFS")
   endif()
   # in opt builds, LTO helps so much (>20%) it's worth slow compile times
