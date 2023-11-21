@@ -345,7 +345,7 @@ if(EMSCRIPTEN)
   # In the browser, there is no natural place to provide commandline arguments
   # for a commandline tool, so let the user run the main entry point themselves
   # and pass in the arguments there.
-  if (BUILD_FOR_BROWSER)
+  if(BUILD_FOR_BROWSER)
     add_link_flag("-sENVIRONMENT=web,worker")
     add_link_flag("-sINVOKE_RUN=0")
     add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")    
@@ -357,9 +357,9 @@ if(EMSCRIPTEN)
     else()
     add_link_flag("-sNODERAWFS")
   endif()
-  # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-  add_nondebug_compile_flag("-flto")
-endif()
+    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+    add_nondebug_compile_flag("-flto")
+  endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
