@@ -584,10 +584,17 @@ Result<> IRBuilder::visitEnd() {
   CHECK_ERR(expr);
 
   // If the scope expression cannot be directly labeled, we may need to wrap it
-  // in a block.
+  // in a block. It's possible that the scope expression becomes typed
+  // unreachable when it is finalized, but if the wrapper block is targeted by
+  // any branches, the target block needs to have the original non-unreachable
+  // type of the scope expression.
+  auto originalScopeType = scope.getResultType();
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     if (scope.label) {
-      return builder.makeBlock(scope.label, {curr}, scope.getResultType());
+      return builder.makeBlock(scope.label,
+                               {curr},
+                               scope.labelUsed ? originalScopeType
+                                               : scope.getResultType());
     }
     return curr;
   };
@@ -638,6 +645,7 @@ Result<Name> IRBuilder::getLabelName(Index label) {
     // The scope does not already have a name, so we need to create one.
     scopeLabel = makeFresh("label");
   }
+  (*scope)->labelUsed = true;
   return scopeLabel;
 }
 

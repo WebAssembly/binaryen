@@ -1257,6 +1257,48 @@
   end
  )
 
+ ;; CHECK:      (func $if-else-brs (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (br $label)
+ ;; CHECK-NEXT:    (br $label)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-brs
+  i32.const 0
+  if
+   br 0
+  else
+   br 0
+  end
+ )
+
+ ;; CHECK:      (func $if-else-brs-i32 (type $1) (result i32)
+ ;; CHECK-NEXT:  (block $label (result i32)
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (br $label
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $label
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $if-else-brs-i32 (result i32)
+  i32.const 0
+  if (result i32)
+   i32.const 1
+   br 0
+  else
+   i32.const 2
+   br 0
+  end
+ )
+
  ;; CHECK:      (func $loop (type $void)
  ;; CHECK-NEXT:  (loop
  ;; CHECK-NEXT:   (nop)
@@ -2332,7 +2374,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 107
+  ref.func 109
   drop
  )
 
