@@ -238,6 +238,7 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+    bool labelUsed = false;
 
     std::vector<Expression*> exprStack;
     // Whether we have seen an unreachable instruction and are in
