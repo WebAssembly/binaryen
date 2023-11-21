@@ -2968,28 +2968,30 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeSubType(curr->srcRef->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.copy source should be an array reference")) {
+  if (!shouldBeTrue(curr->srcRef->type.isRef(),
+                    curr,
+                    "array.copy source should be a reference")) {
     return;
   }
-  if (!shouldBeSubType(curr->destRef->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.copy destination should be an array reference")) {
+  if (!shouldBeTrue(curr->destRef->type.isRef(),
+                    curr,
+                    "array.copy destination should be a reference")) {
     return;
   }
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
-  if (srcHeapType == HeapType::none ||
-      !shouldBeTrue(srcHeapType.isArray(),
+  // Normally both types need to be references to specifc arrays, but if either
+  // of the types are bottom, we don't further constrain the other at all
+  // because this will be emitted as an unreachable.
+  if (srcHeapType.isBottom() || destHeapType.isBottom()) {
+    return;
+  }
+  if (!shouldBeTrue(srcHeapType.isArray(),
                     curr,
                     "array.copy source should be an array reference")) {
     return;
   }
-  if (destHeapType == HeapType::none ||
-      !shouldBeTrue(destHeapType.isArray(),
+  if (!shouldBeTrue(destHeapType.isArray(),
                     curr,
                     "array.copy destination should be an array reference")) {
     return;

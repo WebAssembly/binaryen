@@ -481,7 +481,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     assert os.path.exists('ab.wast')
 
     # make sure it is a valid wast
-    cmd = WASM_OPT + ['ab.wast', '-all']
+    cmd = WASM_OPT + ['ab.wast', '-all', '-q']
     print('            ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
 

@@ -266,7 +266,7 @@ TEST_F(StringifyTest, Substrings) {
       // 10, 11, 6 appears at idx 18 and again at 27
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})},
       // 11, 6 appears at idx 32, 19 and again at 28
-      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{40, 24, 35})},
+      SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{24, 35, 40})},
       // 7, 6 appears at idx 11 and again at 24
       SuffixTree::RepeatedSubstring{2u, (std::vector<unsigned>{14, 30})}}));
 }

@@ -35,6 +35,9 @@ namespace wasm {
 //
 // To use, call CHECK_ERR(visit(...)) or CHECK_ERR(makeXYZ(...)) on each
 // expression in the sequence, then call build().
+//
+// Unlike `Builder`, `IRBuilder` requires referenced module-level items (e.g.
+// globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
   IRBuilder(Module& wasm, Function* func = nullptr)
@@ -48,6 +51,10 @@ public:
   // Call visit() on an existing Expression with its non-child fields
   // initialized to initialize the child fields and refinalize it.
   [[nodiscard]] Result<> visit(Expression*);
+
+  // Like visit, but pushes the expression onto the stack as-is without popping
+  // any children or refinalization.
+  void push(Expression*);
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -73,7 +80,8 @@ public:
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
   [[nodiscard]] Result<> makeBreak(Index label);
-  // [[nodiscard]] Result<> makeSwitch();
+  [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
+                                    Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
   // [[nodiscard]] Result<> makeCallIndirect();
@@ -129,7 +137,7 @@ public:
   // [[nodiscard]] Result<> makePop();
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
-  // [[nodiscard]] Result<> makeRefFunc();
+  [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
   // [[nodiscard]] Result<> makeTableGet();
   // [[nodiscard]] Result<> makeTableSet();
@@ -138,16 +146,17 @@ public:
   // [[nodiscard]] Result<> makeTableFill();
   // [[nodiscard]] Result<> makeTableCopy();
   // [[nodiscard]] Result<> makeTry();
-  // [[nodiscard]] Result<> makeThrow();
+  [[nodiscard]] Result<> makeThrow(Name tag);
   // [[nodiscard]] Result<> makeRethrow();
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
-  // [[nodiscard]] Result<> makeCallRef();
-  // [[nodiscard]] Result<> makeRefTest();
-  // [[nodiscard]] Result<> makeRefCast();
-  // [[nodiscard]] Result<> makeBrOn();
+  [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
+  [[nodiscard]] Result<> makeRefTest(Type type);
+  [[nodiscard]] Result<> makeRefCast(Type type);
+  [[nodiscard]] Result<>
+  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>
@@ -157,7 +166,7 @@ public:
   [[nodiscard]] Result<> makeArrayNewDefault(HeapType type);
   [[nodiscard]] Result<> makeArrayNewData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayNewElem(HeapType type, Name elem);
-  // [[nodiscard]] Result<> makeArrayNewFixed();
+  [[nodiscard]] Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   [[nodiscard]] Result<> makeArrayGet(HeapType type, bool signed_);
   [[nodiscard]] Result<> makeArraySet(HeapType type);
   [[nodiscard]] Result<> makeArrayLen();
@@ -165,7 +174,7 @@ public:
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
   // [[nodiscard]] Result<> makeArrayInitData();
   // [[nodiscard]] Result<> makeArrayInitElem();
-  // [[nodiscard]] Result<> makeRefAs();
+  [[nodiscard]] Result<> makeRefAs(RefAsOp op);
   // [[nodiscard]] Result<> makeStringNew();
   // [[nodiscard]] Result<> makeStringConst();
   // [[nodiscard]] Result<> makeStringMeasure();
@@ -182,13 +191,19 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<> visitBlock(Block*);
+  [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
+  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<>
+  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
   [[nodiscard]] Result<> visitCall(Call*);
+  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
+  [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitThrow(Throw*);
 
 private:
   Module& wasm;
@@ -225,6 +240,7 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+    bool labelUsed = false;
 
     std::vector<Expression*> exprStack;
     // Whether we have seen an unreachable instruction and are in
@@ -299,7 +315,7 @@ private:
       WASM_UNREACHABLE("unexpected scope kind");
     }
     Name getOriginalLabel() {
-      if (getFunction()) {
+      if (std::get_if<NoScope>(&scope) || getFunction()) {
         return Name{};
       }
       if (auto* block = getBlock()) {
@@ -372,7 +388,6 @@ private:
   [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
-  void push(Expression*);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -389,6 +404,11 @@ private:
   // the value, if they are different. May only be called directly after
   // hoistLastValue().
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+
+  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
+                                                   std::optional<Index> label);
+
+  void dump();
 };
 
 } // namespace wasm

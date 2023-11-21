@@ -175,6 +175,7 @@ template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
 MaybeResult<ImportNames> inlineImport(ParseInput&);
 Result<std::vector<Name>> inlineExports(ParseInput&);
@@ -187,6 +188,7 @@ template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
 template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx&);
 template<typename Ctx> MaybeResult<> data(Ctx&);
+template<typename Ctx> MaybeResult<> tag(Ctx&);
 template<typename Ctx> MaybeResult<> modulefield(Ctx&);
 template<typename Ctx> Result<> module(Ctx&);
 
@@ -1201,7 +1203,20 @@ template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  std::vector<typename Ctx::LabelIdxT> labels;
+  while (true) {
+    // Parse at least one label; return an error only if we parse none.
+    auto label = labelidx(ctx);
+    if (labels.empty()) {
+      CHECK_ERR(label);
+    } else if (label.getErr()) {
+      break;
+    }
+    labels.push_back(*label);
+  }
+  auto defaultLabel = labels.back();
+  labels.pop_back();
+  return ctx.makeSwitch(pos, labels, defaultLabel);
 }
 
 template<typename Ctx> Result<> makeReturn(Ctx& ctx, Index pos) {
@@ -1219,7 +1234,9 @@ template<typename Ctx> Result<> makeRefIsNull(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefFunc(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+  return ctx.makeRefFunc(pos, *func);
 }
 
 template<typename Ctx> Result<> makeRefEq(Ctx& ctx, Index pos) {
@@ -1260,7 +1277,9 @@ Result<> makeTryOrCatchBody(Ctx& ctx, Index pos, Type type, bool isTry) {
 }
 
 template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto tag = tagidx(ctx);
+  CHECK_ERR(tag);
+  return ctx.makeThrow(pos, *tag);
 }
 
 template<typename Ctx> Result<> makeRethrow(Ctx& ctx, Index pos) {
@@ -1277,7 +1296,9 @@ template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
 
 template<typename Ctx>
 Result<> makeCallRef(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  return ctx.makeCallRef(pos, *type, isReturn);
 }
 
 template<typename Ctx> Result<> makeRefI31(Ctx& ctx, Index pos) {
@@ -1289,19 +1310,29 @@ template<typename Ctx> Result<> makeI31Get(Ctx& ctx, Index pos, bool signed_) {
 }
 
 template<typename Ctx> Result<> makeRefTest(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefTest(pos, *type);
 }
 
 template<typename Ctx> Result<> makeRefCast(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeRefCast(pos, *type);
 }
 
 template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnNonNull : BrOnNull);
 }
 
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
 }
 
 template<typename Ctx>
@@ -1350,15 +1381,17 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  auto data = dataidx(ctx);
-  CHECK_ERR(data);
-  return ctx.makeArrayNewElem(pos, *type, *data);
+  return ctx.in.err("unimplemented instruction");
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto arity = ctx.in.takeU32();
+  if (!arity) {
+    return ctx.in.err(pos, "expected array.new_fixed arity");
+  }
+  return ctx.makeArrayNewFixed(pos, *type, *arity);
 }
 
 template<typename Ctx>
@@ -1401,7 +1434,7 @@ template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeRefAs(pos, op);
 }
 
 template<typename Ctx>
@@ -1601,6 +1634,18 @@ template<typename Ctx> Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx) {
     return ctx.getLabelFromName(*id);
   }
   return ctx.in.err("expected label index or identifier");
+}
+
+// tagidx ::= x:u32 => x
+//          | v:id => x (if tags[x] = v)
+template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getTagFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getTagFromName(*id);
+  }
+  return ctx.in.err("expected tag index or identifier");
 }
 
 // typeuse ::= '(' 'type' x:typeidx ')'                                => x, []
@@ -1987,6 +2032,36 @@ template<typename Ctx> MaybeResult<> data(Ctx& ctx) {
   return Ok{};
 }
 
+// tag ::= '(' 'tag' id? ('(' 'export' name ')')*
+//            ('(' 'import' mod:name nm:name ')')? typeuse ')'
+template<typename Ctx> MaybeResult<> tag(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("tag"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  auto exports = inlineExports(ctx.in);
+  CHECK_ERR(exports);
+
+  auto import = inlineImport(ctx.in);
+  CHECK_ERR(import);
+
+  auto type = typeuse(ctx);
+  CHECK_ERR(type);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of tag");
+  }
+
+  CHECK_ERR(ctx.addTag(name, *exports, import.getPtr(), *type, pos));
+  return Ok{};
+}
+
 // modulefield ::= deftype
 //               | import
 //               | func
@@ -1997,6 +2072,7 @@ template<typename Ctx> MaybeResult<> data(Ctx& ctx) {
 //               | start
 //               | elem
 //               | data
+//               | tag
 template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
   if (auto t = ctx.in.peek(); !t || t->isRParen()) {
     return {};
@@ -2018,6 +2094,10 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return Ok{};
   }
   if (auto res = data(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = tag(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }

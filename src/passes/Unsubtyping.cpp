@@ -16,7 +16,7 @@
 
 #include <unordered_map>
 
-#include "ir/branch-utils.h"
+#include "ir/subtype-exprs.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -105,7 +105,8 @@ namespace wasm {
 namespace {
 
 struct Unsubtyping
-  : WalkerPass<ControlFlowWalker<Unsubtyping, OverriddenVisitor<Unsubtyping>>> {
+  : WalkerPass<
+      ControlFlowWalker<Unsubtyping, SubtypingDiscoverer<Unsubtyping>>> {
   // The new set of supertype relations.
   std::unordered_map<HeapType, HeapType> supertypes;
 
@@ -181,6 +182,17 @@ struct Unsubtyping
     noteSubtype(sub.getHeapType(), super.getHeapType());
   }
 
+  // Note a subtyping where one or both sides are expressions.
+  void noteSubtype(Expression* sub, Type super) {
+    noteSubtype(sub->type, super);
+  }
+  void noteSubtype(Type sub, Expression* super) {
+    noteSubtype(sub, super->type);
+  }
+  void noteSubtype(Expression* sub, Expression* super) {
+    noteSubtype(sub->type, super->type);
+  }
+
   void noteCast(HeapType src, HeapType dest) {
     if (src == dest || dest.isBottom()) {
       return;
@@ -196,6 +208,12 @@ struct Unsubtyping
     }
     assert(src.isRef() && dest.isRef());
     noteCast(src.getHeapType(), dest.getHeapType());
+  }
+
+  // Note a cast where one or both sides are expressions.
+  void noteCast(Expression* src, Type dest) { noteCast(src->type, dest); }
+  void noteCast(Expression* src, Expression* dest) {
+    noteCast(src->type, dest->type);
   }
 
   void analyzePublicTypes(Module& wasm) {
@@ -316,269 +334,6 @@ struct Unsubtyping
     }
     // Visit the rest of the code that is not in functions.
     walkModuleCode(wasm);
-  }
-
-  void visitFunction(Function* func) {
-    if (func->body) {
-      noteSubtype(func->body->type, func->getResults());
-    }
-  }
-  void visitGlobal(Global* global) {
-    if (global->init) {
-      noteSubtype(global->init->type, global->type);
-    }
-  }
-  void visitElementSegment(ElementSegment* seg) {
-    if (seg->offset) {
-      noteSubtype(seg->type, getModule()->getTable(seg->table)->type);
-    }
-    for (auto init : seg->data) {
-      noteSubtype(init->type, seg->type);
-    }
-  }
-  void visitNop(Nop* curr) {}
-  void visitBlock(Block* curr) {
-    if (!curr->list.empty()) {
-      noteSubtype(curr->list.back()->type, curr->type);
-    }
-  }
-  void visitIf(If* curr) {
-    if (curr->ifFalse) {
-      noteSubtype(curr->ifTrue->type, curr->type);
-      noteSubtype(curr->ifFalse->type, curr->type);
-    }
-  }
-  void visitLoop(Loop* curr) { noteSubtype(curr->body->type, curr->type); }
-  void visitBreak(Break* curr) {
-    if (curr->value) {
-      noteSubtype(curr->value->type, findBreakTarget(curr->name)->type);
-    }
-  }
-  void visitSwitch(Switch* curr) {
-    if (curr->value) {
-      for (auto name : BranchUtils::getUniqueTargets(curr)) {
-        noteSubtype(curr->value->type, findBreakTarget(name)->type);
-      }
-    }
-  }
-  template<typename T> void handleCall(T* curr, Signature sig) {
-    assert(curr->operands.size() == sig.params.size());
-    for (size_t i = 0, size = sig.params.size(); i < size; ++i) {
-      noteSubtype(curr->operands[i]->type, sig.params[i]);
-    }
-    if (curr->isReturn) {
-      noteSubtype(sig.results, getFunction()->getResults());
-    }
-  }
-  void visitCall(Call* curr) {
-    handleCall(curr, getModule()->getFunction(curr->target)->getSig());
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    handleCall(curr, curr->heapType.getSignature());
-    auto* table = getModule()->getTable(curr->table);
-    auto tableType = table->type.getHeapType();
-    if (HeapType::isSubType(tableType, curr->heapType)) {
-      // Unlike other casts, where cast targets are always subtypes of cast
-      // sources, call_indirect target types may be supertypes of their source
-      // table types. In this case, the cast will always succeed, but only if we
-      // keep the types related.
-      noteSubtype(tableType, curr->heapType);
-    } else if (HeapType::isSubType(curr->heapType, tableType)) {
-      noteCast(tableType, curr->heapType);
-    } else {
-      // The types are unrelated and the cast will fail. We can keep the types
-      // unrelated.
-    }
-  }
-  void visitLocalGet(LocalGet* curr) {}
-  void visitLocalSet(LocalSet* curr) {
-    noteSubtype(curr->value->type, getFunction()->getLocalType(curr->index));
-  }
-  void visitGlobalGet(GlobalGet* curr) {}
-  void visitGlobalSet(GlobalSet* curr) {
-    noteSubtype(curr->value->type, getModule()->getGlobal(curr->name)->type);
-  }
-  void visitLoad(Load* curr) {}
-  void visitStore(Store* curr) {}
-  void visitAtomicRMW(AtomicRMW* curr) {}
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {}
-  void visitAtomicWait(AtomicWait* curr) {}
-  void visitAtomicNotify(AtomicNotify* curr) {}
-  void visitAtomicFence(AtomicFence* curr) {}
-  void visitSIMDExtract(SIMDExtract* curr) {}
-  void visitSIMDReplace(SIMDReplace* curr) {}
-  void visitSIMDShuffle(SIMDShuffle* curr) {}
-  void visitSIMDTernary(SIMDTernary* curr) {}
-  void visitSIMDShift(SIMDShift* curr) {}
-  void visitSIMDLoad(SIMDLoad* curr) {}
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {}
-  void visitMemoryInit(MemoryInit* curr) {}
-  void visitDataDrop(DataDrop* curr) {}
-  void visitMemoryCopy(MemoryCopy* curr) {}
-  void visitMemoryFill(MemoryFill* curr) {}
-  void visitConst(Const* curr) {}
-  void visitUnary(Unary* curr) {}
-  void visitBinary(Binary* curr) {}
-  void visitSelect(Select* curr) {
-    noteSubtype(curr->ifTrue->type, curr->type);
-    noteSubtype(curr->ifFalse->type, curr->type);
-  }
-  void visitDrop(Drop* curr) {}
-  void visitReturn(Return* curr) {
-    if (curr->value) {
-      noteSubtype(curr->value->type, getFunction()->getResults());
-    }
-  }
-  void visitMemorySize(MemorySize* curr) {}
-  void visitMemoryGrow(MemoryGrow* curr) {}
-  void visitUnreachable(Unreachable* curr) {}
-  void visitPop(Pop* curr) {}
-  void visitRefNull(RefNull* curr) {}
-  void visitRefIsNull(RefIsNull* curr) {}
-  void visitRefFunc(RefFunc* curr) {}
-  void visitRefEq(RefEq* curr) {}
-  void visitTableGet(TableGet* curr) {}
-  void visitTableSet(TableSet* curr) {
-    noteSubtype(curr->value->type, getModule()->getTable(curr->table)->type);
-  }
-  void visitTableSize(TableSize* curr) {}
-  void visitTableGrow(TableGrow* curr) {}
-  void visitTableFill(TableFill* curr) {
-    noteSubtype(curr->value->type, getModule()->getTable(curr->table)->type);
-  }
-  void visitTableCopy(TableCopy* curr) {
-    noteSubtype(getModule()->getTable(curr->sourceTable)->type,
-                getModule()->getTable(curr->destTable)->type);
-  }
-  void visitTry(Try* curr) {
-    noteSubtype(curr->body->type, curr->type);
-    for (auto* body : curr->catchBodies) {
-      noteSubtype(body->type, curr->type);
-    }
-  }
-  void visitThrow(Throw* curr) {
-    Type params = getModule()->getTag(curr->tag)->sig.params;
-    assert(params.size() == curr->operands.size());
-    for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
-      noteSubtype(curr->operands[i]->type, params[i]);
-    }
-  }
-  void visitRethrow(Rethrow* curr) {}
-  void visitTupleMake(TupleMake* curr) {}
-  void visitTupleExtract(TupleExtract* curr) {}
-  void visitRefI31(RefI31* curr) {}
-  void visitI31Get(I31Get* curr) {}
-  void visitCallRef(CallRef* curr) {
-    if (!curr->target->type.isSignature()) {
-      return;
-    }
-    handleCall(curr, curr->target->type.getHeapType().getSignature());
-  }
-  void visitRefTest(RefTest* curr) {
-    noteCast(curr->ref->type, curr->castType);
-  }
-  void visitRefCast(RefCast* curr) { noteCast(curr->ref->type, curr->type); }
-  void visitBrOn(BrOn* curr) {
-    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
-      noteCast(curr->ref->type, curr->castType);
-    }
-    noteSubtype(curr->getSentType(), findBreakTarget(curr->name)->type);
-  }
-  void visitStructNew(StructNew* curr) {
-    if (!curr->type.isStruct() || curr->isWithDefault()) {
-      return;
-    }
-    const auto& fields = curr->type.getHeapType().getStruct().fields;
-    assert(fields.size() == curr->operands.size());
-    for (size_t i = 0, size = fields.size(); i < size; ++i) {
-      noteSubtype(curr->operands[i]->type, fields[i].type);
-    }
-  }
-  void visitStructGet(StructGet* curr) {}
-  void visitStructSet(StructSet* curr) {
-    if (!curr->ref->type.isStruct()) {
-      return;
-    }
-    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    noteSubtype(curr->value->type, fields[curr->index].type);
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    if (!curr->type.isArray() || curr->isWithDefault()) {
-      return;
-    }
-    auto array = curr->type.getHeapType().getArray();
-    noteSubtype(curr->init->type, array.element.type);
-  }
-  void visitArrayNewData(ArrayNewData* curr) {}
-  void visitArrayNewElem(ArrayNewElem* curr) {
-    if (!curr->type.isArray()) {
-      return;
-    }
-    auto array = curr->type.getHeapType().getArray();
-    auto* seg = getModule()->getElementSegment(curr->segment);
-    noteSubtype(seg->type, array.element.type);
-  }
-  void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (!curr->type.isArray()) {
-      return;
-    }
-    auto array = curr->type.getHeapType().getArray();
-    for (auto* value : curr->values) {
-      noteSubtype(value->type, array.element.type);
-    }
-  }
-  void visitArrayGet(ArrayGet* curr) {}
-  void visitArraySet(ArraySet* curr) {
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    noteSubtype(curr->value->type, array.element.type);
-  }
-  void visitArrayLen(ArrayLen* curr) {}
-  void visitArrayCopy(ArrayCopy* curr) {
-    if (!curr->srcRef->type.isArray() || !curr->destRef->type.isArray()) {
-      return;
-    }
-    auto src = curr->srcRef->type.getHeapType().getArray();
-    auto dest = curr->destRef->type.getHeapType().getArray();
-    noteSubtype(src.element.type, dest.element.type);
-  }
-  void visitArrayFill(ArrayFill* curr) {
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    noteSubtype(curr->value->type, array.element.type);
-  }
-  void visitArrayInitData(ArrayInitData* curr) {}
-  void visitArrayInitElem(ArrayInitElem* curr) {
-    if (!curr->ref->type.isArray()) {
-      return;
-    }
-    auto array = curr->ref->type.getHeapType().getArray();
-    auto* seg = getModule()->getElementSegment(curr->segment);
-    noteSubtype(seg->type, array.element.type);
-  }
-  void visitRefAs(RefAs* curr) {}
-  void visitStringNew(StringNew* curr) {}
-  void visitStringConst(StringConst* curr) {}
-  void visitStringMeasure(StringMeasure* curr) {}
-  void visitStringEncode(StringEncode* curr) {}
-  void visitStringConcat(StringConcat* curr) {}
-  void visitStringEq(StringEq* curr) {}
-  void visitStringAs(StringAs* curr) {}
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {}
-  void visitStringWTF16Get(StringWTF16Get* curr) {}
-  void visitStringIterNext(StringIterNext* curr) {}
-  void visitStringIterMove(StringIterMove* curr) {}
-  void visitStringSliceWTF(StringSliceWTF* curr) {}
-  void visitStringSliceIter(StringSliceIter* curr) {}
-
-  void visitResume(Resume* curr) {
-    // TODO Implement this by exposing the subtyping relations that the
-    // validator expects to hold, once validation of resume is implemented
-    WASM_UNREACHABLE("not implemented");
   }
 };
 
