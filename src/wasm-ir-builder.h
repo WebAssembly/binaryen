@@ -146,7 +146,7 @@ public:
   // [[nodiscard]] Result<> makeTableFill();
   // [[nodiscard]] Result<> makeTableCopy();
   // [[nodiscard]] Result<> makeTry();
-  // [[nodiscard]] Result<> makeThrow();
+  [[nodiscard]] Result<> makeThrow(Name tag);
   // [[nodiscard]] Result<> makeRethrow();
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
@@ -203,6 +203,7 @@ public:
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitThrow(Throw*);
 
 private:
   Module& wasm;

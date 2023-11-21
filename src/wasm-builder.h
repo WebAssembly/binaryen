@@ -849,7 +849,7 @@ public:
   Throw* makeThrow(Tag* tag, const std::vector<Expression*>& args) {
     return makeThrow(tag->name, args);
   }
-  Throw* makeThrow(Name tag, const std::vector<Expression*>& args) {
+  template<typename T> Throw* makeThrow(Name tag, const T& args) {
     auto* ret = wasm.allocator.alloc<Throw>();
     ret->tag = tag;
     ret->operands.set(args);

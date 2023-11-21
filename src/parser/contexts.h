@@ -286,6 +286,7 @@ struct NullInstrParserCtx {
   using MemoryIdxT = Ok;
   using DataIdxT = Ok;
   using LabelIdxT = Ok;
+  using TagIdxT = Ok;
 
   using MemargT = Ok;
 
@@ -309,6 +310,8 @@ struct NullInstrParserCtx {
   DataIdxT getDataFromName(Name) { return Ok{}; }
   LabelIdxT getLabelFromIdx(uint32_t) { return Ok{}; }
   LabelIdxT getLabelFromName(Name) { return Ok{}; }
+  TagIdxT getTagFromIdx(uint32_t) { return Ok{}; }
+  TagIdxT getTagFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
@@ -393,6 +396,7 @@ struct NullInstrParserCtx {
   Result<> makeRefIsNull(Index) { return Ok{}; }
   Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
   Result<> makeRefEq(Index) { return Ok{}; }
+  Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -480,6 +484,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
   std::vector<DefPos> dataDefs;
+  std::vector<DefPos> tagDefs;
 
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
@@ -489,9 +494,21 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   int memoryCounter = 0;
   int globalCounter = 0;
   int dataCounter = 0;
+  int tagCounter = 0;
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
+
+  Result<> checkImport(Index pos, ImportNames* import) {
+    if (import) {
+      if (hasNonImport) {
+        return in.err(pos, "import after non-import");
+      }
+    } else {
+      hasNonImport = true;
+    }
+    return Ok{};
+  }
 
   ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
 
@@ -568,6 +585,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    std::optional<ExprT>,
                    std::vector<char>&& data,
                    Index pos);
+
+  Result<Tag*> addTagDecl(Index pos, Name name, ImportNames* importNames);
+
+  Result<> addTag(Name name,
+                  const std::vector<Name>& exports,
+                  ImportNames* import,
+                  TypeUseT type,
+                  Index pos);
 };
 
 // Phase 2: Parse type definitions into a TypeBuilder.
@@ -814,6 +839,16 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     g->type = type.type;
     return Ok{};
   }
+
+  Result<>
+  addTag(Name, const std::vector<Name>&, ImportNames*, TypeUse use, Index pos) {
+    auto& t = wasm.tags[index];
+    if (!use.type.isSignature()) {
+      return in.err(pos, "tag type must be a signature");
+    }
+    t->sig = use.type.getSignature();
+    return Ok{};
+  }
 };
 
 // Phase 5: Parse module element definitions, including instructions.
@@ -830,6 +865,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalIdxT = Name;
   using MemoryIdxT = Name;
   using DataIdxT = Name;
+  using TagIdxT = Name;
 
   using MemargT = Memarg;
 
@@ -990,6 +1026,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return irBuilder.getLabelIndex(name);
   }
 
+  Result<Name> getTagFromIdx(uint32_t idx) {
+    if (idx >= wasm.tags.size()) {
+      return in.err("tag index out of bounds");
+    }
+    return wasm.tags[idx]->name;
+  }
+
+  Result<Name> getTagFromName(Name name) {
+    if (!wasm.getTagOrNull(name)) {
+      return in.err("tag $" + name.toString() + " does not exist");
+    }
+    return name;
+  }
+
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
@@ -1009,6 +1059,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      Index);
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
   Result<Index> addScratchLocal(Index pos, Type type) {
     if (!func) {
       return in.err(pos,
@@ -1287,6 +1338,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
+
+  Result<> makeThrow(Index pos, Name tag) {
+    return withLoc(pos, irBuilder.makeThrow(tag));
+  }
 
   Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {
     return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
