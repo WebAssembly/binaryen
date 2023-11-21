@@ -331,6 +331,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringIterMove(StringIterMove* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
   void visitStringSliceIter(StringSliceIter* curr) {}
+
+  void visitResume(Resume* curr) { WASM_UNREACHABLE("not implemented"); }
 };
 
 } // namespace wasm
