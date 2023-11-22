@@ -82,8 +82,7 @@ struct WrappedPassRunner : public PassRunner {
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
-    PassRunner::doAdd(
-      std::make_unique<WrappedPass>(std::move(pass), funcs));
+    PassRunner::doAdd(std::make_unique<WrappedPass>(std::move(pass), funcs));
   }
 
 private:
