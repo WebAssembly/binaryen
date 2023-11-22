@@ -35,18 +35,26 @@ using FuncSet = std::unordered_set<Function*>;
 // functions.
 struct WrappedPass : public Pass {
   std::unique_ptr<Pass> create() override {
+    // Function-parallel passes get a new instance per function. Create a copy
+    // of the wrapped pass along with ourselves.
     return std::make_unique<WrappedPass>(pass->create(), funcs);
   }
 
   WrappedPass(std::unique_ptr<Pass> pass, const FuncSet& funcs)
     : pass(std::move(pass)), funcs(funcs) {}
 
-  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
+  bool isFunctionParallel() override {
+    assert(pass->isFunctionParallel());
+    return true;
+  }
 
   void runOnFunction(Module* module, Function* func) override {
     if (!funcs.count(func)) {
       return;
     }
+
+    // The pass runner calling us set our pass runner, which we must do for the
+    // wrapped pass.
     pass->setPassRunner(getPassRunner());
     pass->runOnFunction(module, func);
   }
@@ -74,7 +82,6 @@ struct WrappedPassRunner : public PassRunner {
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
-    pass->setPassRunner(this);
     PassRunner::doAdd(
       std::make_unique<WrappedPass>(std::move(pass), funcs));
   }
