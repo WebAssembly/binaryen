@@ -47,6 +47,7 @@ struct WrappedPass : public Pass {
     if (!funcs.count(func)) {
       return;
     }
+    pass->setPassRunner(getPassRunner());
     pass->runOnFunction(module, func);
   }
 
