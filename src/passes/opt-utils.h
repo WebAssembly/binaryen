@@ -23,6 +23,7 @@
 #include <ir/element-utils.h>
 #include <ir/module-utils.h>
 #include <pass.h>
+#include <passes/pass-utils.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -31,29 +32,16 @@ namespace OptUtils {
 
 // Run useful optimizations after inlining new code into a set
 // of functions.
-inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
+inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
-  // save the full list of functions on the side
-  std::vector<std::unique_ptr<Function>> all;
-  all.swap(module->functions);
-  module->updateFunctionsMap();
-  for (auto& func : funcs) {
-    module->addFunction(func);
-  }
-  PassRunner runner(module, parentRunner->options);
+  PassUtils::WrappedPassRunner runner(module, funcs);
+  runner.options = parentRunner->options;
   runner.setIsNested(true);
-  runner.setValidateGlobally(false); // not a full valid module
   // this is especially useful after inlining
   runner.add("precompute-propagate");
   runner.addDefaultFunctionOptimizationPasses(); // do all the usual stuff
   runner.run();
-  // restore all the funcs
-  for (auto& func : module->functions) {
-    func.release();
-  }
-  all.swap(module->functions);
-  module->updateFunctionsMap();
 }
 
 struct FunctionRefReplacer
