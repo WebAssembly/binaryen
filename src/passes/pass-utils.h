@@ -74,8 +74,8 @@ private:
   const FuncSet& relevantFuncs;
 };
 
-// A pass runner that wraps all passes, making them run only in select
-// functions.
+// A pass runner that wraps all passes, filtering so that they only run on
+// select functions.
 struct FilteredPassRunner : public PassRunner {
   FilteredPassRunner(Module* wasm, const FuncSet& relevantFuncs)
     : PassRunner(wasm), relevantFuncs(relevantFuncs) {}
