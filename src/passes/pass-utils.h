@@ -17,11 +17,8 @@
 #ifndef wasm_passes_pass_utils_h
 #define wasm_passes_pass_utils_h
 
-#include <functional>
 #include <unordered_set>
 
-#include <ir/element-utils.h>
-#include <ir/module-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
