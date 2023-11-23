@@ -30,12 +30,11 @@ namespace wasm {
 
 namespace OptUtils {
 
-// Run useful optimizations after inlining new code into a set
-// of functions.
+// Run useful optimizations after inlining new code into a set of functions.
 inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
-  PassUtils::WrappedPassRunner runner(module, funcs);
+  PassUtils::FilteredPassRunner runner(module, funcs);
   runner.options = parentRunner->options;
   runner.setIsNested(true);
   // this is especially useful after inlining

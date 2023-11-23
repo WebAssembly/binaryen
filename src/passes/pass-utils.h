@@ -31,17 +31,17 @@ namespace PassUtils {
 
 using FuncSet = std::unordered_set<Function*>;
 
-// A wrapper around a parallel pass that runs that pass only on select
+// A wrapper around a parallel pass that filters it to run run only on select
 // functions.
-struct WrappedPass : public Pass {
+struct FilteredPass : public Pass {
   std::unique_ptr<Pass> create() override {
     // Function-parallel passes get a new instance per function. Create a copy
     // of the wrapped pass along with ourselves.
-    return std::make_unique<WrappedPass>(pass->create(), funcs);
+    return std::make_unique<FilteredPass>(pass->create(), relevantFuncs);
   }
 
-  WrappedPass(std::unique_ptr<Pass> pass, const FuncSet& funcs)
-    : pass(std::move(pass)), funcs(funcs) {}
+  FilteredPass(std::unique_ptr<Pass> pass, const FuncSet& relevantFuncs)
+    : pass(std::move(pass)), relevantFuncs(relevantFuncs) {}
 
   bool isFunctionParallel() override {
     assert(pass->isFunctionParallel());
@@ -49,7 +49,7 @@ struct WrappedPass : public Pass {
   }
 
   void runOnFunction(Module* module, Function* func) override {
-    if (!funcs.count(func)) {
+    if (!relevantFuncs.count(func)) {
       return;
     }
 
@@ -71,22 +71,22 @@ struct WrappedPass : public Pass {
 
 private:
   std::unique_ptr<Pass> pass;
-  const FuncSet& funcs;
+  const FuncSet& relevantFuncs;
 };
 
 // A pass runner that wraps all passes, making them run only in select
 // functions.
-struct WrappedPassRunner : public PassRunner {
-  WrappedPassRunner(Module* wasm, const FuncSet& funcs)
-    : PassRunner(wasm), funcs(funcs) {}
+struct FilteredPassRunner : public PassRunner {
+  FilteredPassRunner(Module* wasm, const FuncSet& relevantFuncs)
+    : PassRunner(wasm), relevantFuncs(relevantFuncs) {}
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
-    PassRunner::doAdd(std::make_unique<WrappedPass>(std::move(pass), funcs));
+    PassRunner::doAdd(std::make_unique<FilteredPass>(std::move(pass), relevantFuncs));
   }
 
 private:
-  const FuncSet& funcs;
+  const FuncSet& relevantFuncs;
 };
 
 } // namespace PassUtils

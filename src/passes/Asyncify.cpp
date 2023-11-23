@@ -1671,7 +1671,7 @@ struct Asyncify : public Pass {
     // practical to add code around each call, without affecting
     // anything else.
     {
-      PassUtils::WrappedPassRunner runner(module, instrumentedFuncs);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
@@ -1712,7 +1712,7 @@ struct Asyncify : public Pass {
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      PassUtils::WrappedPassRunner runner(module, instrumentedFuncs);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }
