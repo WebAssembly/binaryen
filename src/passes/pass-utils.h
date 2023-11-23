@@ -82,7 +82,8 @@ struct FilteredPassRunner : public PassRunner {
 
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
-    PassRunner::doAdd(std::make_unique<FilteredPass>(std::move(pass), relevantFuncs));
+    PassRunner::doAdd(
+      std::make_unique<FilteredPass>(std::move(pass), relevantFuncs));
   }
 
 private:
