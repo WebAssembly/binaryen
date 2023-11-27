@@ -327,7 +327,9 @@ if(EMSCRIPTEN)
   endif()
 
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-    add_link_flag("-sSINGLE_FILE")
+    if(NOT BUILD_FOR_BROWSER)
+      add_link_flag("-sSINGLE_FILE")
+    endif()
     # Extra check that cmake has set -O3 in its release flags.
     # This is really as an assertion that cmake is behaving as we expect.
     if(NOT CMAKE_CXX_FLAGS_RELEASE_INIT MATCHES "-O3")
@@ -348,13 +350,14 @@ if(EMSCRIPTEN)
   if(BUILD_FOR_BROWSER)
     add_link_flag("-sENVIRONMENT=web,worker")
     add_link_flag("-sINVOKE_RUN=0")
-    add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")    
+    add_link_flag("-sEXPORTED_RUNTIME_METHODS=run,callMain,FS")
     add_link_flag("-sMODULARIZE")
     add_link_flag("-sEXPORT_ES6")
     add_link_flag("-sFILESYSTEM")
     add_link_flag("-sFORCE_FILESYSTEM")
-    # On Node.js, make the tools immediately usable.
-    else()
+    add_link_flag("-sSTACK_SIZE=5242880")
+  # On Node.js, make the tools immediately usable.
+  else()
     add_link_flag("-sNODERAWFS")
   endif()
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
