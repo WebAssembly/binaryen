@@ -34,8 +34,7 @@ namespace OptUtils {
 inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
-  PassUtils::FilteredPassRunner runner(module, funcs);
-  runner.options = parentRunner->options;
+  PassUtils::FilteredPassRunner runner(module, funcs, parentRunner->options);
   runner.setIsNested(true);
   // this is especially useful after inlining
   runner.add("precompute-propagate");

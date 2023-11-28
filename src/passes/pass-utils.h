@@ -77,6 +77,11 @@ struct FilteredPassRunner : public PassRunner {
   FilteredPassRunner(Module* wasm, const FuncSet& relevantFuncs)
     : PassRunner(wasm), relevantFuncs(relevantFuncs) {}
 
+  FilteredPassRunner(Module* wasm,
+                     const FuncSet& relevantFuncs,
+                     const PassOptions& options_)
+    : PassRunner(wasm, options), relevantFuncs(relevantFuncs) {}
+
 protected:
   void doAdd(std::unique_ptr<Pass> pass) override {
     PassRunner::doAdd(
