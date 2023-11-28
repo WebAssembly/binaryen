@@ -353,8 +353,8 @@ if(EMSCRIPTEN)
     add_link_flag("-sFILESYSTEM")
     add_link_flag("-sFORCE_FILESYSTEM")
     add_link_flag("-sSTACK_SIZE=5242880")
-  # On Node.js, make the tools immediately usable.
   else()
+    # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
     add_link_flag("-sSINGLE_FILE")
   endif()
