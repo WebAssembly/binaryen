@@ -77,7 +77,7 @@ struct FilteredPassRunner : public PassRunner {
 
   FilteredPassRunner(Module* wasm,
                      const FuncSet& relevantFuncs,
-                     const PassOptions& options_)
+                     const PassOptions& options)
     : PassRunner(wasm, options), relevantFuncs(relevantFuncs) {}
 
 protected:
