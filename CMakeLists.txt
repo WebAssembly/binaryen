@@ -335,7 +335,7 @@ if(EMSCRIPTEN)
   endif()
 
   add_link_flag("-sALLOW_MEMORY_GROWTH")
-  add_link_flag("-sSTACK_SIZE=5242880")
+  add_link_flag("-sSTACK_SIZE=5MB")
   if(EMSCRIPTEN_ENABLE_WASM_EH)
     add_compile_flag("-fwasm-exceptions")
   else()
