@@ -20,9 +20,6 @@
 ;; CHECK-NEXT:                                        output file. In this mode if no output
 ;; CHECK-NEXT:                                        file is specified, we write to stdout.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --global-base                        The address at which static globals were
-;; CHECK-NEXT:                                        placed
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --side-module                        Input is an emscripten side module
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
@@ -41,8 +38,6 @@
 ;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --separate-data-segments             Separate data segments to a file
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --check-stack-overflow               Check for stack overflows every time the
 ;; CHECK-NEXT:                                        stack is extended
@@ -143,6 +138,10 @@
 ;; CHECK-NEXT:   --enable-multimemory                 Enable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-multimemory                Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-continuations         Enable typed continuations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-continuations        Disable typed continuations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:

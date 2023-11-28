@@ -44,20 +44,23 @@ struct BasicBlock {
   reverse_iterator rbegin() const { return insts.rbegin(); }
   reverse_iterator rend() const { return insts.rend(); }
 
-  // Iterables for predecessor and successor blocks.
-  struct BasicBlockIterable;
-  BasicBlockIterable preds() const;
-  BasicBlockIterable succs() const;
+  const std::vector<const BasicBlock*>& preds() const { return predecessors; }
+  const std::vector<const BasicBlock*>& succs() const { return successors; }
 
   void print(std::ostream& os, Module* wasm = nullptr, size_t start = 0) const;
 
   Index getIndex() const { return index; }
 
+  bool isEntry() const { return entry; }
+  bool isExit() const { return exit; }
+
 private:
   Index index;
+  bool entry = false;
+  bool exit = false;
   std::vector<Expression*> insts;
-  std::vector<BasicBlock*> predecessors;
-  std::vector<BasicBlock*> successors;
+  std::vector<const BasicBlock*> predecessors;
+  std::vector<const BasicBlock*> successors;
 
   friend CFG;
 };
@@ -72,6 +75,8 @@ struct CFG {
   using reverse_iterator = std::vector<BasicBlock>::const_reverse_iterator;
   reverse_iterator rbegin() const { return blocks.rbegin(); }
   reverse_iterator rend() const { return blocks.rend(); }
+
+  const BasicBlock& operator[](size_t i) const { return *(begin() + i); }
 
   static CFG fromFunction(Function* func);
 
@@ -106,7 +111,5 @@ private:
 };
 
 } // namespace wasm::analysis
-
-#include "cfg-impl.h"
 
 #endif // wasm_analysis_cfg_h

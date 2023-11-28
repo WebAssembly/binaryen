@@ -32,6 +32,8 @@ namespace wasm {
 
 struct DeNaN : public WalkerPass<
                  ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>> {
+  // Adds calls.
+  bool addsEffects() override { return true; }
 
   Name deNan32, deNan64;
 

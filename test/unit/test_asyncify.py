@@ -15,7 +15,7 @@ class AsyncifyTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + args + [self.input_path('asyncify-stackOverflow.wat'), '--asyncify', '-o', 'c.wasm'])
             print('  file size: %d' % os.path.getsize('a.wasm'))
             if shared.NODEJS:
-                shared.run_process([shared.NODEJS, self.input_path('asyncify.js')])
+                shared.run_process([shared.NODEJS, self.input_path('asyncify.js')], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         test(['-g'])
         test([])

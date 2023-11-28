@@ -441,6 +441,7 @@ public:
   void visitTableSize(TableSize* curr);
   void visitTableGrow(TableGrow* curr);
   void visitTableFill(TableFill* curr);
+  void visitTableCopy(TableCopy* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -651,8 +652,11 @@ void FunctionValidator::visitBlock(Block* curr) {
     auto iter = breakTypes.find(curr->name);
     assert(iter != breakTypes.end()); // we set it ourselves
     for (Type breakType : iter->second) {
-      // none or unreachable means a poison value that we should ignore - if
-      // consumed, it will error
+      if (breakType == Type::none && curr->type == Type::unreachable) {
+        // We allow empty breaks to unreachable blocks.
+        continue;
+      }
+
       shouldBeSubType(breakType,
                       curr->type,
                       curr,
@@ -2312,6 +2316,27 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
     curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
 }
 
+void FunctionValidator::visitTableCopy(TableCopy* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.copy requires bulk-memory [--enable-bulk-memory]");
+  auto* sourceTable = getModule()->getTableOrNull(curr->sourceTable);
+  auto* destTable = getModule()->getTableOrNull(curr->destTable);
+  if (shouldBeTrue(!!sourceTable, curr, "table.copy source table must exist") &&
+      shouldBeTrue(!!destTable, curr, "table.copy dest table must exist")) {
+    shouldBeSubType(sourceTable->type,
+                    destTable->type,
+                    curr,
+                    "table.copy source must have right type for dest");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.copy dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->source->type, Type(Type::i32), curr, "table.copy source must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,
@@ -2369,32 +2394,36 @@ void FunctionValidator::visitTry(Try* curr) {
     auto* tag = getModule()->getTagOrNull(tagName);
     if (!shouldBeTrue(tag != nullptr, curr, "")) {
       getStream() << "tag name is invalid: " << tagName << "\n";
-    }
-
-    auto* catchBody = curr->catchBodies[i];
-    auto pops = EHUtils::findPops(catchBody);
-    if (tag->sig.params == Type::none) {
-      if (!shouldBeTrue(pops.empty(), curr, "")) {
-        getStream() << "catch's tag (" << tagName
-                    << ") doesn't have any params, but there are pops";
-      }
+    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      getStream()
+        << "catch's tag (" << tagName
+        << ") has result values, which is not allowed for exception handling";
     } else {
-      if (shouldBeTrue(pops.size() == 1, curr, "")) {
-        auto* pop = *pops.begin();
-        if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
-          getStream()
-            << "catch's tag (" << tagName
-            << ")'s pop doesn't have the same type as the tag's params";
-        }
-        if (!shouldBeTrue(
-              EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
-          getStream() << "catch's body (" << tagName
-                      << ")'s pop's location is not valid";
+      auto* catchBody = curr->catchBodies[i];
+      auto pops = EHUtils::findPops(catchBody);
+      if (tag->sig.params == Type::none) {
+        if (!shouldBeTrue(pops.empty(), curr, "")) {
+          getStream() << "catch's tag (" << tagName
+                      << ") doesn't have any params, but there are pops";
         }
       } else {
-        getStream() << "catch's tag (" << tagName
-                    << ") has params, so there should be a single pop within "
-                       "the catch body";
+        if (shouldBeTrue(pops.size() == 1, curr, "")) {
+          auto* pop = *pops.begin();
+          if (!shouldBeSubType(tag->sig.params, pop->type, curr, "")) {
+            getStream()
+              << "catch's tag (" << tagName
+              << ")'s pop doesn't have the same type as the tag's params";
+          }
+          if (!shouldBeTrue(
+                EHUtils::containsValidDanglingPop(catchBody), curr, "")) {
+            getStream() << "catch's body (" << tagName
+                        << ")'s pop's location is not valid";
+          }
+        } else {
+          getStream() << "catch's tag (" << tagName
+                      << ") has params, so there should be a single pop within "
+                         "the catch body";
+        }
       }
     }
   }
@@ -2429,6 +2458,11 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!shouldBeTrue(!!tag, curr, "throw's tag must exist")) {
     return;
   }
+  shouldBeEqual(
+    tag->sig.results,
+    Type(Type::none),
+    curr,
+    "tags with result types must not be used for exception handling");
   if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
                     curr,
                     "tag's param numbers must match")) {
@@ -2547,6 +2581,10 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
   }
   if (!shouldBeTrue(
         curr->ref->type.isRef(), curr, "ref.test ref must have ref type")) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->castType.isRef(), curr, "ref.test target must have ref type")) {
     return;
   }
   shouldBeEqual(
@@ -2929,28 +2967,30 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeSubType(curr->srcRef->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.copy source should be an array reference")) {
+  if (!shouldBeTrue(curr->srcRef->type.isRef(),
+                    curr,
+                    "array.copy source should be a reference")) {
     return;
   }
-  if (!shouldBeSubType(curr->destRef->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.copy destination should be an array reference")) {
+  if (!shouldBeTrue(curr->destRef->type.isRef(),
+                    curr,
+                    "array.copy destination should be a reference")) {
     return;
   }
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
-  if (srcHeapType == HeapType::none ||
-      !shouldBeTrue(srcHeapType.isArray(),
+  // Normally both types need to be references to specifc arrays, but if either
+  // of the types are bottom, we don't further constrain the other at all
+  // because this will be emitted as an unreachable.
+  if (srcHeapType.isBottom() || destHeapType.isBottom()) {
+    return;
+  }
+  if (!shouldBeTrue(srcHeapType.isArray(),
                     curr,
                     "array.copy source should be an array reference")) {
     return;
   }
-  if (destHeapType == HeapType::none ||
-      !shouldBeTrue(destHeapType.isArray(),
+  if (!shouldBeTrue(destHeapType.isArray(),
                     curr,
                     "array.copy destination should be an array reference")) {
     return;
@@ -3667,10 +3707,12 @@ static void validateTags(Module& module, ValidationInfo& info) {
       "Tags require exception-handling [--enable-exception-handling]");
   }
   for (auto& curr : module.tags) {
-    info.shouldBeEqual(curr->sig.results,
-                       Type(Type::none),
-                       curr->name,
-                       "Tag type's result type should be none");
+    if (curr->sig.results != Type(Type::none)) {
+      info.shouldBeTrue(module.features.hasTypedContinuations(),
+                        curr->name,
+                        "Tags with result types require typed continuations "
+                        "feature [--enable-typed-continuations]");
+    }
     if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(
         module.features.hasMultivalue(),
@@ -3716,18 +3758,32 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
 
 static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
   // Error if there are any publicly exposed heap types beyond the types of
-  // publicly exposed functions.
-  std::unordered_set<HeapType> publicFuncTypes;
-  ModuleUtils::iterImportedFunctions(
-    module, [&](Function* func) { publicFuncTypes.insert(func->type); });
+  // publicly exposed functions. Note that we must include all types in the rec
+  // groups that are used, as if a type if public then all types in its rec
+  // group are as well.
+  std::unordered_set<RecGroup> publicRecGroups;
+  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
+    publicRecGroups.insert(func->type.getRecGroup());
+  });
   for (auto& ex : module.exports) {
     if (ex->kind == ExternalKind::Function) {
-      publicFuncTypes.insert(module.getFunction(ex->value)->type);
+      publicRecGroups.insert(module.getFunction(ex->value)->type.getRecGroup());
     }
   }
 
+  std::unordered_set<HeapType> publicTypes;
+  for (auto& group : publicRecGroups) {
+    for (auto type : group) {
+      publicTypes.insert(type);
+    }
+  }
+
+  // Ignorable public types are public, but we can ignore them for purposes of
+  // erroring here: It is always ok that they are public.
+  auto ignorable = getIgnorablePublicTypes();
+
   for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
-    if (!publicFuncTypes.count(type)) {
+    if (!publicTypes.count(type) && !ignorable.count(type)) {
       auto name = type.toString();
       if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
         name = it->second.name.toString();

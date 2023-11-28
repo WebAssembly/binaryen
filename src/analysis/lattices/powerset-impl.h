@@ -1,13 +1,31 @@
-#ifndef wasm_analysis_lattice_impl_h
-#define wasm_analysis_lattice_impl_h
+/*
+ * Copyright 2023 WebAssembly Community Group participants
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include "lattice.h"
+#ifndef wasm_analysis_lattices_powerset_impl_h
+#define wasm_analysis_lattices_powerset_impl_h
+
+#include <iostream>
+
+#include "powerset.h"
 
 namespace wasm::analysis {
 
 inline LatticeComparison FiniteIntPowersetLattice::compare(
   const FiniteIntPowersetLattice::Element& left,
-  const FiniteIntPowersetLattice::Element& right) {
+  const FiniteIntPowersetLattice::Element& right) const noexcept {
   // Both must be from the powerset lattice of the same set.
   assert(left.bitvector.size() == right.bitvector.size());
 
@@ -41,7 +59,8 @@ inline LatticeComparison FiniteIntPowersetLattice::compare(
   return NO_RELATION;
 }
 
-inline FiniteIntPowersetLattice::Element FiniteIntPowersetLattice::getBottom() {
+inline FiniteIntPowersetLattice::Element
+FiniteIntPowersetLattice::getBottom() const noexcept {
   FiniteIntPowersetLattice::Element result(setSize);
   return result;
 }
@@ -59,17 +78,18 @@ inline size_t FiniteIntPowersetLattice::Element::count() const {
 // Least upper bound is implemented as a logical OR between the bitvectors on
 // both sides. We return true if a bit is flipped in-place on the left so the
 // worklist algorithm will know if when to enqueue more work.
-inline bool FiniteIntPowersetLattice::Element::makeLeastUpperBound(
-  const FiniteIntPowersetLattice::Element& other) {
+inline bool
+FiniteIntPowersetLattice::join(Element& joinee,
+                               const Element& joiner) const noexcept {
   // Both must be from powerset lattice of the same set.
-  assert(other.bitvector.size() == bitvector.size());
+  assert(joiner.bitvector.size() == joinee.bitvector.size());
 
   bool modified = false;
-  for (size_t i = 0; i < bitvector.size(); ++i) {
-    // Bit is flipped on self only if self is false and other is true when self
-    // and other are OR'ed together.
-    modified |= (!bitvector[i] && other.bitvector[i]);
-    bitvector[i] = bitvector[i] || other.bitvector[i];
+  for (size_t i = 0; i < joinee.bitvector.size(); ++i) {
+    // Bit is flipped on joinee only if joinee is false and joiner is true when
+    // joinee and joiner are OR'ed together.
+    modified |= (!joinee.bitvector[i] && joiner.bitvector[i]);
+    joinee.bitvector[i] = joinee.bitvector[i] || joiner.bitvector[i];
   }
 
   return modified;
@@ -84,4 +104,4 @@ inline void FiniteIntPowersetLattice::Element::print(std::ostream& os) {
 
 }; // namespace wasm::analysis
 
-#endif // wasm_analysis_lattice_impl_h
+#endif // wasm_analysis_lattices_powerset_impl_h

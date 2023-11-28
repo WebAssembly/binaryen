@@ -35,6 +35,11 @@ void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
   indexedTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*wasm);
+  for (Index i = 0, size = indexedTypes.types.size(); i < size; ++i) {
+    if (indexedTypes.types[i].isSignature()) {
+      signatureIndexes.insert({indexedTypes.types[i].getSignature(), i});
+    }
+  }
   importInfo = std::make_unique<ImportInfo>(*wasm);
 }
 
@@ -244,7 +249,7 @@ void WasmBinaryWriter::writeTypes() {
   // be safe to treat as final, i.e. types without subtypes.
   std::vector<bool> hasSubtypes(indexedTypes.types.size());
   for (auto type : indexedTypes.types) {
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       hasSubtypes[indexedTypes.indices[*super]] = true;
     }
   }
@@ -264,7 +269,7 @@ void WasmBinaryWriter::writeTypes() {
     lastGroup = currGroup;
     // Emit the type definition.
     BYN_TRACE("write " << type << std::endl);
-    auto super = type.getSuperType();
+    auto super = type.getDeclaredSuperType();
     if (super || type.isOpen()) {
       if (type.isOpen()) {
         o << S32LEB(BinaryConsts::EncodedType::Sub);
@@ -287,6 +292,9 @@ void WasmBinaryWriter::writeTypes() {
           writeType(type);
         }
       }
+    } else if (type.isContinuation()) {
+      o << S32LEB(BinaryConsts::EncodedType::Cont);
+      writeHeapType(type.getContinuation().type);
     } else if (type.isStruct()) {
       o << S32LEB(BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
@@ -680,6 +688,17 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
 #ifndef NDEBUG
   if (it == indexedTypes.indices.end()) {
     std::cout << "Missing type: " << type << '\n';
+    assert(0);
+  }
+#endif
+  return it->second;
+}
+
+uint32_t WasmBinaryWriter::getSignatureIndex(Signature sig) const {
+  auto it = signatureIndexes.find(sig);
+#ifndef NDEBUG
+  if (it == signatureIndexes.end()) {
+    std::cout << "Missing signature: " << sig << '\n';
     assert(0);
   }
 #endif
@@ -1256,6 +1275,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::StringsFeature;
       case FeatureSet::MultiMemory:
         return BinaryConsts::CustomSections::MultiMemoryFeature;
+      case FeatureSet::TypedContinuations:
+        return BinaryConsts::CustomSections::TypedContinuationsFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }
@@ -1559,7 +1580,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     }
   }
 
-  if (type.isSignature() || type.isStruct() || type.isArray()) {
+  if (type.isSignature() || type.isContinuation() || type.isStruct() ||
+      type.isArray()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
@@ -2037,7 +2059,11 @@ Type WasmBinaryReader::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
   if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSignatureByTypeIndex(initial).results;
+    auto sig = getSignatureByTypeIndex(initial);
+    if (sig.params != Type::none) {
+      throwError("control flow inputs are not supported yet");
+    }
+    return sig.results;
   }
   Type type;
   if (getBasicType(initial, type)) {
@@ -2088,7 +2114,7 @@ HeapType WasmBinaryReader::getIndexedHeapType() {
 Type WasmBinaryReader::getConcreteType() {
   auto type = getType();
   if (!type.isConcrete()) {
-    throw ParseException("non-concrete type when one expected");
+    throwError("non-concrete type when one expected");
   }
   return type;
 }
@@ -2162,6 +2188,17 @@ void WasmBinaryReader::readTypes() {
   TypeBuilder builder(getU32LEB());
   BYN_TRACE("num: " << builder.size() << std::endl);
 
+  auto readHeapType = [&]() {
+    int64_t htCode = getS64LEB(); // TODO: Actually s33
+    HeapType ht;
+    if (getBasicHeapType(htCode, ht)) {
+      return ht;
+    }
+    if (size_t(htCode) >= builder.size()) {
+      throwError("invalid type index: " + std::to_string(htCode));
+    }
+    return builder.getTempHeapType(size_t(htCode));
+  };
   auto makeType = [&](int32_t typeCode) {
     Type type;
     if (getBasicType(typeCode, type)) {
@@ -2174,22 +2211,19 @@ void WasmBinaryReader::readTypes() {
         auto nullability = typeCode == BinaryConsts::EncodedType::nullable
                              ? Nullable
                              : NonNullable;
-        int64_t htCode = getS64LEB(); // TODO: Actually s33
-        HeapType ht;
-        if (getBasicHeapType(htCode, ht)) {
+
+        HeapType ht = readHeapType();
+        if (ht.isBasic()) {
           return Type(ht, nullability);
         }
-        if (size_t(htCode) >= builder.size()) {
-          throwError("invalid type index: " + std::to_string(htCode));
-        }
-        return builder.getTempRefType(builder[size_t(htCode)], nullability);
+
+        return builder.getTempRefType(ht, nullability);
       }
       default:
         throwError("unexpected type index: " + std::to_string(typeCode));
     }
     WASM_UNREACHABLE("unexpected type");
   };
-
   auto readType = [&]() { return makeType(getS32LEB()); };
 
   auto readSignatureDef = [&]() {
@@ -2207,6 +2241,14 @@ void WasmBinaryReader::readTypes() {
     }
     return Signature(builder.getTempTupleType(params),
                      builder.getTempTupleType(results));
+  };
+
+  auto readContinuationDef = [&]() {
+    HeapType ht = readHeapType();
+    if (!ht.isSignature()) {
+      throw ParseException("cont types must be built from function types");
+    }
+    return Continuation(ht);
   };
 
   auto readMutability = [&]() {
@@ -2281,6 +2323,8 @@ void WasmBinaryReader::readTypes() {
     }
     if (form == BinaryConsts::EncodedType::Func) {
       builder[i] = readSignatureDef();
+    } else if (form == BinaryConsts::EncodedType::Cont) {
+      builder[i] = readContinuationDef();
     } else if (form == BinaryConsts::EncodedType::Struct) {
       builder[i] = readStructDef();
     } else if (form == BinaryConsts::EncodedType::Array) {
@@ -3704,6 +3748,9 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::Strings;
     } else if (name == BinaryConsts::CustomSections::MultiMemoryFeature) {
       feature = FeatureSet::MultiMemory;
+    } else if (name ==
+               BinaryConsts::CustomSections::TypedContinuationsFeature) {
+      feature = FeatureSet::TypedContinuations;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
@@ -4013,6 +4060,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitTableFill(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableCopy(curr, opcode)) {
         break;
       }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
@@ -5385,6 +5435,28 @@ bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
   auto* dest = popNonVoidExpression();
   auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
   tableRefs[tableIdx].push_back(&ret->table);
+  out = ret;
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableCopy) {
+    return false;
+  }
+  Index destTableIdx = getU32LEB();
+  if (destTableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  Index sourceTableIdx = getU32LEB();
+  if (sourceTableIdx >= wasm.tables.size()) {
+    throwError("bad table index");
+  }
+  auto* size = popNonVoidExpression();
+  auto* source = popNonVoidExpression();
+  auto* dest = popNonVoidExpression();
+  auto* ret = Builder(wasm).makeTableCopy(dest, source, size, Name(), Name());
+  tableRefs[destTableIdx].push_back(&ret->destTable);
+  tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
   out = ret;
   return true;
 }

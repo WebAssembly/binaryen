@@ -52,6 +52,7 @@ class Type;
 class HeapType;
 class RecGroup;
 struct Signature;
+struct Continuation;
 struct Field;
 struct Struct;
 struct Array;
@@ -163,6 +164,7 @@ public:
   bool isNonNullable() const;
   // Whether this type is only inhabited by null values.
   bool isNull() const;
+  bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
   bool isString() const;
@@ -344,6 +346,8 @@ public:
   // this signature.
   HeapType(Signature signature);
 
+  HeapType(Continuation cont);
+
   // Create a HeapType with the given structure. In equirecursive mode, this may
   // be the same as a previous HeapType created with the same contents. In
   // nominal mode, this will be a fresh type distinct from all previously
@@ -357,6 +361,7 @@ public:
   bool isFunction() const;
   bool isData() const;
   bool isSignature() const;
+  bool isContinuation() const;
   bool isStruct() const;
   bool isArray() const;
   bool isString() const;
@@ -364,11 +369,18 @@ public:
   bool isOpen() const;
 
   Signature getSignature() const;
+  Continuation getContinuation() const;
+
   const Struct& getStruct() const;
   Array getArray() const;
 
-  // If there is a nontrivial (i.e. non-basic) nominal supertype, return it,
-  // else an empty optional.
+  // If there is a nontrivial (i.e. non-basic, one that was declared by the
+  // module) nominal supertype, return it, else an empty optional.
+  std::optional<HeapType> getDeclaredSuperType() const;
+
+  // As |getDeclaredSuperType|, but also handles basic types, that is, if the
+  // super is a basic type, then we return it here. Declared types are returned
+  // as well, just like |getDeclaredSuperType|.
   std::optional<HeapType> getSuperType() const;
 
   // Return the depth of this heap type in the nominal type hierarchy, i.e. the
@@ -377,6 +389,9 @@ public:
 
   // Get the bottom heap type for this heap type's hierarchy.
   BasicHeapType getBottom() const;
+
+  // Get the top heap type for this heap type's hierarchy.
+  BasicHeapType getTop() const;
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
@@ -467,6 +482,16 @@ struct Signature {
     return params == other.params && results == other.results;
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
+  std::string toString() const;
+};
+
+struct Continuation {
+  HeapType type;
+  Continuation(HeapType type) : type(type) {}
+  bool operator==(const Continuation& other) const {
+    return type == other.type;
+  }
+  bool operator!=(const Continuation& other) const { return !(*this == other); }
   std::string toString() const;
 };
 
@@ -564,6 +589,7 @@ struct TypeBuilder {
 
   // Sets the heap type at index `i`. May only be called before `build`.
   void setHeapType(size_t i, Signature signature);
+  void setHeapType(size_t i, Continuation continuation);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
@@ -634,6 +660,10 @@ struct TypeBuilder {
       builder.setHeapType(index, signature);
       return *this;
     }
+    Entry& operator=(Continuation continuation) {
+      builder.setHeapType(index, continuation);
+      return *this;
+    }
     Entry& operator=(const Struct& struct_) {
       builder.setHeapType(index, struct_);
       return *this;
@@ -661,12 +691,27 @@ struct TypeBuilder {
   void dump();
 };
 
+// We consider certain specific types to always be public, to allow closed-
+// world to operate even if they escape. Specifically, "plain old data" types
+// like array of i8 and i16, which are used to represent strings, may cross
+// the boundary in Web environments.
+//
+// These are "ignorable as public", because we do not error on them being
+// public. That is, we
+//
+//  1. Consider them public, so that passes that do not operate on public types
+//     do not in fact operate on them, and
+//  2. Are ok with them being public in the validator.
+//
+std::unordered_set<HeapType> getIgnorablePublicTypes();
+
 std::ostream& operator<<(std::ostream&, Type);
 std::ostream& operator<<(std::ostream&, Type::Printed);
 std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, HeapType::Printed);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
+std::ostream& operator<<(std::ostream&, Continuation);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
@@ -683,6 +728,10 @@ public:
 template<> class hash<wasm::Signature> {
 public:
   size_t operator()(const wasm::Signature&) const;
+};
+template<> class hash<wasm::Continuation> {
+public:
+  size_t operator()(const wasm::Continuation&) const;
 };
 template<> class hash<wasm::Field> {
 public:

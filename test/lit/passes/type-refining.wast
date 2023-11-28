@@ -1240,7 +1240,7 @@
 
   ;; CHECK:      (type $6 (func))
 
-  ;; CHECK:      (tag $tag (param))
+  ;; CHECK:      (tag $tag)
   (tag $tag)
 
   ;; CHECK:      (func $struct.new (type $4) (param $extern externref) (result anyref)

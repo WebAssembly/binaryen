@@ -662,6 +662,7 @@ struct InfoCollector
   void visitTableSize(TableSize* curr) { addRoot(curr); }
   void visitTableGrow(TableGrow* curr) { addRoot(curr); }
   void visitTableFill(TableFill* curr) { addRoot(curr); }
+  void visitTableCopy(TableCopy* curr) { addRoot(curr); }
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -1201,6 +1202,13 @@ struct InfoCollector
     assert(handledPops == totalPops);
 
     // Handle local.get/sets: each set must write to the proper gets.
+    //
+    // Note that we do not use LocalLocation because LocalGraph gives us more
+    // precise information: we generate direct links from sets to relevant gets
+    // rather than consider each local index a single location, which
+    // LocalLocation does. (LocalLocation is useful in cases where we do need a
+    // single location, such as when we consider what type to give the local;
+    // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
     for (auto& [get, setsForGet] : localGraph.getSetses) {
@@ -1559,7 +1567,7 @@ void TNHOracle::infer() {
       }
       while (1) {
         typeFunctions[type].push_back(func.get());
-        if (auto super = type.getSuperType()) {
+        if (auto super = type.getDeclaredSuperType()) {
           type = *super;
         } else {
           break;
@@ -2764,6 +2772,9 @@ void Flower::dump(Location location) {
     std::cout << "  tagloc " << loc->tag << " : " << loc->tupleIndex << '\n';
   } else if (auto* loc = std::get_if<ParamLocation>(&location)) {
     std::cout << "  paramloc " << loc->func->name << " : " << loc->index
+              << '\n';
+  } else if (auto* loc = std::get_if<LocalLocation>(&location)) {
+    std::cout << "  localloc " << loc->func->name << " : " << loc->index
               << '\n';
   } else if (auto* loc = std::get_if<ResultLocation>(&location)) {
     std::cout << "  resultloc $" << loc->func->name << " : " << loc->index

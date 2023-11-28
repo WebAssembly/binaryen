@@ -31,6 +31,10 @@ struct Info {
   std::vector<Expression*> actions;
   // for each index, the last local.set for it
   std::unordered_map<Index, LocalSet*> lastSets;
+
+  void dump(Function* func) {
+    std::cout << "    info: " << actions.size() << " actions\n";
+  }
 };
 
 // flow helper class. flows the gets to their sets
@@ -104,8 +108,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     };
 
     auto numLocals = func->getNumLocals();
-    std::vector<std::vector<LocalGet*>> allGets;
-    allGets.resize(numLocals);
     std::vector<FlowBlock*> work;
 
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
@@ -116,8 +118,13 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     // Init mapping between basicblocks and flowBlocks
     std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
     for (Index i = 0; i < basicBlocks.size(); ++i) {
-      basicToFlowMap[basicBlocks[i].get()] = &flowBlocks[i];
+      auto* block = basicBlocks[i].get();
+      basicToFlowMap[block] = &flowBlocks[i];
     }
+
+    // We note which local indexes have local.sets, as that can help us
+    // optimize later (if there are none at all).
+    std::vector<bool> hasSet(numLocals, false);
 
     const size_t NULL_ITERATION = -1;
 
@@ -142,6 +149,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       flowBlock.lastSets.reserve(block->contents.lastSets.size());
       for (auto set : block->contents.lastSets) {
         flowBlock.lastSets.emplace_back(set);
+        hasSet[set.first] = true;
       }
     }
     assert(entryFlowBlock != nullptr);
@@ -157,9 +165,14 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
         std::cout << "  last set " << val.second << '\n';
       }
 #endif
+
+      // Track all gets in this block, by index.
+      std::vector<std::vector<LocalGet*>> allGets(numLocals);
+
       // go through the block, finding each get and adding it to its index,
       // and seeing how sets affect that
       auto& actions = block.actions;
+
       // move towards the front, handling things as we go
       for (int i = int(actions.size()) - 1; i >= 0; i--) {
         auto* action = actions[i];
@@ -180,6 +193,21 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       for (Index index = 0; index < numLocals; index++) {
         auto& gets = allGets[index];
         if (gets.empty()) {
+          continue;
+        }
+        if (!hasSet[index]) {
+          // This local index has no sets, so we know all gets will end up
+          // reaching the entry block. Do that here as an optimization to avoid
+          // flowing through the (potentially very many) blocks in the function.
+          //
+          // Note that we may be in unreachable code, and if so, we might add
+          // the entry values when they are not actually relevant. That is, we
+          // are not precise in the case of unreachable code. This can be
+          // confusing when debugging, but it does not have any downside for
+          // optimization (since unreachable code should be removed anyhow).
+          for (auto* get : gets) {
+            getSetses[get].insert(nullptr);
+          }
           continue;
         }
         work.push_back(&block);
@@ -222,7 +250,6 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             }
           }
         }
-        gets.clear();
         currentIteration++;
       }
     }

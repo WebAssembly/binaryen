@@ -26,7 +26,7 @@ void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     parent.writeType(Type::none);
   } else if (type.isTuple()) {
-    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+    o << S32LEB(parent.getSignatureIndex(Signature(Type::none, type)));
   } else {
     parent.writeType(type);
   }
@@ -1939,6 +1939,12 @@ void BinaryInstWriter::visitTableGrow(TableGrow* curr) {
 void BinaryInstWriter::visitTableFill(TableFill* curr) {
   o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableFill);
   o << U32LEB(parent.getTableIndex(curr->table));
+}
+
+void BinaryInstWriter::visitTableCopy(TableCopy* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableCopy);
+  o << U32LEB(parent.getTableIndex(curr->destTable));
+  o << U32LEB(parent.getTableIndex(curr->sourceTable));
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {

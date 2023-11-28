@@ -68,11 +68,8 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 ImportNames* import,
                                 TypeUseT type,
                                 std::optional<LocalsT>,
-                                std::optional<InstrsT>,
                                 Index pos) {
-  if (import && hasNonImport) {
-    return in.err(pos, "import after non-import");
-  }
+  CHECK_ERR(checkImport(pos, import));
   auto f = addFuncDecl(pos, name, import);
   CHECK_ERR(f);
   CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
@@ -110,9 +107,7 @@ Result<> ParseDeclsCtx::addMemory(Name name,
                                   ImportNames* import,
                                   MemType type,
                                   Index pos) {
-  if (import && hasNonImport) {
-    return in.err(pos, "import after non-import");
-  }
+  CHECK_ERR(checkImport(pos, import));
   auto m = addMemoryDecl(pos, name, import, type);
   CHECK_ERR(m);
   CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
@@ -157,9 +152,7 @@ Result<> ParseDeclsCtx::addGlobal(Name name,
                                   GlobalTypeT,
                                   std::optional<ExprT>,
                                   Index pos) {
-  if (import && hasNonImport) {
-    return in.err(pos, "import after non-import");
-  }
+  CHECK_ERR(checkImport(pos, import));
   auto g = addGlobalDecl(pos, name, import);
   CHECK_ERR(g);
   CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
@@ -188,6 +181,38 @@ Result<> ParseDeclsCtx::addData(Name name,
   d->data = std::move(data);
   dataDefs.push_back({name, pos, Index(wasm.dataSegments.size())});
   wasm.addDataSegment(std::move(d));
+  return Ok{};
+}
+
+Result<Tag*>
+ParseDeclsCtx::addTagDecl(Index pos, Name name, ImportNames* importNames) {
+  auto t = std::make_unique<Tag>();
+  if (name) {
+    if (wasm.getTagOrNull(name)) {
+      // TODO: if the existing tag is not explicitly named, fix its name and
+      // continue.
+      return in.err(pos, "repeated tag name");
+    }
+    t->setExplicitName(name);
+  } else {
+    name = (importNames ? "timport$" : "") + std::to_string(tagCounter++);
+    name = Names::getValidTagName(wasm, name);
+    t->name = name;
+  }
+  applyImportNames(*t, importNames);
+  return wasm.addTag(std::move(t));
+}
+
+Result<> ParseDeclsCtx::addTag(Name name,
+                               const std::vector<Name>& exports,
+                               ImportNames* import,
+                               TypeUseT type,
+                               Index pos) {
+  CHECK_ERR(checkImport(pos, import));
+  auto t = addTagDecl(pos, name, import);
+  CHECK_ERR(t);
+  CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Tag));
+  tagDefs.push_back({name, pos, Index(tagDefs.size())});
   return Ok{};
 }
 

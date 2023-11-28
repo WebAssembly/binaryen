@@ -56,7 +56,7 @@ struct Bool {
 
   operator bool() const { return value; }
 
-  void combine(bool other) { value = value || other; }
+  bool combine(bool other) { return value = value || other; }
 };
 
 using BoolStructValuesMap = StructUtils::StructValuesMap<Bool>;
@@ -185,10 +185,6 @@ struct PCVScanner
     // Note copies, as they must be considered later. See the comment on the
     // propagation of values below.
     functionCopyInfos[getFunction()][type][index] = true;
-
-    // TODO: This may be extensible to a copy from a subtype, and not just the
-    //       exact type (but this is already entering the realm of diminishing
-    //       returns).
   }
 
   void noteRead(HeapType type, Index index, PossibleConstantValues& info) {
@@ -222,6 +218,8 @@ struct ConstantFieldPropagation : public Pass {
     functionSetInfos.combineInto(combinedSetInfos);
     BoolStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
+
+    SubTypes subTypes(*module);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
@@ -264,10 +262,17 @@ struct ConstantFieldPropagation : public Pass {
     //   ..
     //   A1->f0 = A2->f0; // Either of these might refer to an A, B, or C.
     //   ..
-    //   foo(C->f0);      // This can contain 20, if the copy involved a C.
+    //   foo(A->f0);      // These can contain 20,
+    //   foo(C->f0);      // if the copy read from B.
     //
     // To handle that, copied fields are treated like struct.set ones (by
-    // copying the struct.new data to struct.set).
+    // copying the struct.new data to struct.set). Note that we must propagate
+    // copying to subtypes first, as in the example above the struct.new values
+    // of subtypes must be taken into account (that is, A or a subtype is being
+    // copied, so we want to do the same thing for B and C as well as A, since
+    // a copy of A means it could be a copy of B or C).
+    StructUtils::TypeHierarchyPropagator<Bool> boolPropagator(subTypes);
+    boolPropagator.propagateToSubTypes(combinedCopyInfos);
     for (auto& [type, copied] : combinedCopyInfos) {
       for (Index i = 0; i < copied.size(); i++) {
         if (copied[i]) {
@@ -277,7 +282,7 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     StructUtils::TypeHierarchyPropagator<PossibleConstantValues> propagator(
-      *module);
+      subTypes);
     propagator.propagateToSuperTypes(combinedNewInfos);
     propagator.propagateToSuperAndSubTypes(combinedSetInfos);
 

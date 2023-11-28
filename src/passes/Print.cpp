@@ -169,6 +169,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   int controlFlowDepth = 0;
 
   std::vector<HeapType> heapTypes;
+  std::unordered_map<Signature, HeapType> signatureTypes;
 
   // Track the print indent so that we can see when it changes. That affects how
   // we print debug annotations. In particular, we don't want to print repeated
@@ -240,6 +241,22 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   std::ostream& printParamType(Type type) {
     return printPrefixedTypes("param", type);
+  }
+
+  std::ostream& printBlockType(Signature sig) {
+    assert(sig.params == Type::none);
+    if (sig.results == Type::none) {
+      return o;
+    }
+    if (sig.results.isTuple()) {
+      if (auto it = signatureTypes.find(sig); it != signatureTypes.end()) {
+        o << "(type ";
+        printHeapType(it->second);
+        o << ") ";
+      }
+    }
+    printResultType(sig.results);
+    return o;
   }
 
   void printDebugLocation(const Function::DebugLocation& location);
@@ -370,6 +387,10 @@ struct PrintExpressionContents
     return parent.printParamType(type);
   }
 
+  std::ostream& printBlockType(Signature sig) {
+    return parent.printBlockType(sig);
+  }
+
   void visitBlock(Block* curr) {
     printMedium(o, "block");
     if (curr->name.is()) {
@@ -378,14 +399,14 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(curr->type);
+      printBlockType(Signature(Type::none, curr->type));
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(curr->type);
+      printBlockType(Signature(Type::none, curr->type));
     }
   }
   void visitLoop(Loop* curr) {
@@ -396,7 +417,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(curr->type);
+      printBlockType(Signature(Type::none, curr->type));
     }
   }
   void visitBreak(Break* curr) {
@@ -1929,6 +1950,12 @@ struct PrintExpressionContents
     printMedium(o, "table.fill ");
     printName(curr->table, o);
   }
+  void visitTableCopy(TableCopy* curr) {
+    printMedium(o, "table.copy ");
+    printName(curr->destTable, o);
+    o << ' ';
+    printName(curr->sourceTable, o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -1937,7 +1964,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultType(curr->type);
+      printBlockType(Signature(Type::none, curr->type));
     }
   }
   void visitThrow(Throw* curr) {
@@ -2369,8 +2396,14 @@ void PrintSExpression::setModule(Module* module) {
   currModule = module;
   if (module) {
     heapTypes = ModuleUtils::getOptimizedIndexedHeapTypes(*module).types;
+    for (auto type : heapTypes) {
+      if (type.isSignature()) {
+        signatureTypes.insert({type.getSignature(), type});
+      }
+    }
   } else {
     heapTypes = {};
+    signatureTypes = {};
   }
   // Reset the type printer for this module's types (or absence thereof).
   typePrinter.~TypePrinter();
@@ -2946,8 +2979,14 @@ void PrintSExpression::visitImportedTag(Tag* curr) {
   emitImportHeader(curr);
   o << "(tag ";
   printName(curr->name, o);
-  o << maybeSpace;
-  printParamType(curr->sig.params);
+  if (curr->sig.params != Type::none) {
+    o << maybeSpace;
+    printParamType(curr->sig.params);
+  }
+  if (curr->sig.results != Type::none) {
+    o << maybeSpace;
+    printResultType(curr->sig.results);
+  }
   o << "))";
   o << maybeNewLine;
 }
@@ -2957,8 +2996,14 @@ void PrintSExpression::visitDefinedTag(Tag* curr) {
   o << '(';
   printMedium(o, "tag ");
   printName(curr->name, o);
-  o << maybeSpace;
-  printParamType(curr->sig.params);
+  if (curr->sig.params != Type::none) {
+    o << maybeSpace;
+    printParamType(curr->sig.params);
+  }
+  if (curr->sig.results != Type::none) {
+    o << maybeSpace;
+    printResultType(curr->sig.results);
+  }
   o << ")" << maybeNewLine;
 }
 

@@ -94,6 +94,7 @@ def run_command(args, test, tmp, command):
     env = dict(os.environ)
     env['PATH'] = args.binaryen_bin + os.pathsep + env['PATH']
     command = command.replace('%s', test)
+    command = command.replace('%S', os.path.dirname(test))
     command = command.replace('%t', tmp)
     command = command.replace('foreach', os.path.join(script_dir, 'foreach.py'))
     return subprocess.check_output(command, shell=True, env=env).decode('utf-8')

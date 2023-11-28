@@ -29,4 +29,4 @@ Result<> parseModule(Module& wasm, std::string_view in);
 
 } // namespace wasm::WATParser
 
-#endif // paser_wat_parser_h
+#endif // parser_wat_parser_h

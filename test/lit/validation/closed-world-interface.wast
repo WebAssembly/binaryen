@@ -3,13 +3,9 @@
 ;; RUN: not wasm-opt -all --closed-world %s 2>&1 | filecheck %s
 
 
-;; This is pulled in because it is part of a rec group with $partial-pair-0.
-;; CHECK:      publicly exposed type disallowed with a closed world: $partial-pair-1, on
-;; CHECK-NEXT: (func)
-
 ;; This is pulled in by a global.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $array, on
-;; CHECK-NEXT: (array (mut i8))
+;; CHECK-NEXT: (array (mut i32))
 
 ;; This is pulled in only by a global, so it is disallowed even though it is a function type.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $private, on
@@ -21,7 +17,7 @@
 
 (module
   (type $struct (struct))
-  (type $array (array (mut i8)))
+  (type $array (array (mut i32)))
 
   (type $void (func))
   (type $abstract (func (param anyref)))
@@ -32,8 +28,13 @@
     (type $exported-pair-1 (func (param (ref $exported-pair-0))))
   )
   (rec
+    ;; This is on an exported function.
     (type $partial-pair-0 (func))
+    ;; The latter type types are not public, but allowed to be because the
+    ;; entire rec group is allowed due to the first.
     (type $partial-pair-1 (func))
+    ;; Test a non-function type.
+    (type $partial-pair-2 (struct))
   )
 
   (type $private (func (param v128)))
@@ -61,7 +62,7 @@
   ;; Ok even though it is an import instead of an export.
   (func $5 (import "env" "test5") (type $exported-pair-1))
 
-  ;; Not ok because another type in the group is not on the boundary.
+  ;; Ok, and we also allow the other type in the group.
   (func $6 (export "test6") (type $partial-pair-0)
     (unreachable)
   )

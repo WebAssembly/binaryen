@@ -107,7 +107,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
           assert(type.isArray());
           builder[i] = type.getArray();
         }
-        if (auto super = type.getSuperType()) {
+        if (auto super = type.getDeclaredSuperType()) {
           builder[i].subTypeOf(*super);
         }
         builder[i].setOpen(type.isOpen());
@@ -285,7 +285,7 @@ struct TypeSSA : public Pass {
 
       // If the old type has a nice name, make a nice name for the new one.
       if (typeNames.count(oldType)) {
-        auto intendedName = typeNames[oldType].name.toString() + '$' +
+        auto intendedName = typeNames[oldType].name.toString() + '_' +
                             std::to_string(++nameCounter);
         auto newName =
           Names::getValidNameGivenExisting(intendedName, existingTypeNames);

@@ -230,10 +230,18 @@ void renameFunction(Module& wasm, Name oldName, Name newName) {
 namespace {
 
 // Helper for collecting HeapTypes and their frequencies.
-struct Counts : public InsertOrderedMap<HeapType, size_t> {
+struct Counts {
+  InsertOrderedMap<HeapType, size_t> counts;
+
+  // Multivalue control flow structures need a function type, but the identity
+  // of the function type (i.e. what recursion group it is in or whether it is
+  // final) doesn't matter. Save them for the end to see if we can re-use an
+  // existing function type with the necessary signature.
+  InsertOrderedMap<Signature, size_t> controlFlowSignatures;
+
   void note(HeapType type) {
     if (!type.isBasic()) {
-      (*this)[type]++;
+      counts[type]++;
     }
   }
   void note(Type type) {
@@ -244,12 +252,24 @@ struct Counts : public InsertOrderedMap<HeapType, size_t> {
   // Ensure a type is included without increasing its count.
   void include(HeapType type) {
     if (!type.isBasic()) {
-      (*this)[type];
+      counts[type];
     }
   }
   void include(Type type) {
     for (HeapType ht : type.getHeapTypeChildren()) {
       include(ht);
+    }
+  }
+  void noteControlFlow(Signature sig) {
+    // TODO: support control flow input parameters.
+    assert(sig.params.size() == 0);
+    if (sig.results.isTuple()) {
+      // We have to use a function type.
+      controlFlowSignatures[sig]++;
+    } else if (sig.results != Type::none) {
+      // The result type can be emitted directly instead of using a function
+      // type.
+      note(sig.results[0]);
     }
   }
 };
@@ -319,12 +339,7 @@ struct CodeScanner
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
     } else if (Properties::isControlFlowStructure(curr)) {
-      if (curr->type.isTuple()) {
-        // TODO: Allow control flow to have input types as well
-        counts.note(Signature(Type::none, curr->type));
-      } else {
-        counts.note(curr->type);
-      }
+      counts.noteControlFlow(Signature(Type::none, curr->type));
     }
   }
 };
@@ -332,7 +347,8 @@ struct CodeScanner
 // Count the number of times each heap type that would appear in the binary is
 // referenced. If `prune`, exclude types that are never referenced, even though
 // a binary would be invalid without them.
-Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
+InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
+                                                     bool prune = false) {
   // Collect module-level info.
   Counts counts;
   CodeScanner(wasm, counts).walkModuleCode(&wasm);
@@ -363,18 +379,21 @@ Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
 
   // Combine the function info with the module info.
   for (auto& [_, functionCounts] : analysis.map) {
-    for (auto& [sig, count] : functionCounts) {
-      counts[sig] += count;
+    for (auto& [type, count] : functionCounts.counts) {
+      counts.counts[type] += count;
+    }
+    for (auto& [sig, count] : functionCounts.controlFlowSignatures) {
+      counts.controlFlowSignatures[sig] += count;
     }
   }
 
   if (prune) {
     // Remove types that are not actually used.
-    auto it = counts.begin();
-    while (it != counts.end()) {
+    auto it = counts.counts.begin();
+    while (it != counts.counts.end()) {
       if (it->second == 0) {
         auto deleted = it++;
-        counts.erase(deleted);
+        counts.counts.erase(deleted);
       } else {
         ++it;
       }
@@ -388,50 +407,75 @@ Counts getHeapTypeCounts(Module& wasm, bool prune = false) {
   // appear in the type section once, so we just need to visit it once. Also
   // track which recursion groups we've already processed to avoid quadratic
   // behavior when there is a single large group.
-  InsertOrderedSet<HeapType> newTypes;
-  for (auto& [type, _] : counts) {
-    newTypes.insert(type);
+  UniqueNonrepeatingDeferredQueue<HeapType> newTypes;
+  std::unordered_map<Signature, HeapType> seenSigs;
+  auto noteNewType = [&](HeapType type) {
+    newTypes.push(type);
+    if (type.isSignature()) {
+      seenSigs.insert({type.getSignature(), type});
+    }
+  };
+  for (auto& [type, _] : counts.counts) {
+    noteNewType(type);
   }
+  auto controlFlowIt = counts.controlFlowSignatures.begin();
   std::unordered_set<RecGroup> includedGroups;
   while (!newTypes.empty()) {
-    auto iter = newTypes.begin();
-    auto ht = *iter;
-    newTypes.erase(iter);
-    for (HeapType child : ht.getHeapTypeChildren()) {
-      if (!child.isBasic()) {
-        if (!counts.count(child)) {
-          newTypes.insert(child);
+    while (!newTypes.empty()) {
+      auto ht = newTypes.pop();
+      for (HeapType child : ht.getHeapTypeChildren()) {
+        if (!child.isBasic()) {
+          if (!counts.counts.count(child)) {
+            noteNewType(child);
+          }
+          counts.note(child);
         }
-        counts.note(child);
       }
-    }
 
-    if (auto super = ht.getSuperType()) {
-      if (!counts.count(*super)) {
-        newTypes.insert(*super);
-        // We should unconditionally count supertypes, but while the type system
-        // is in flux, skip counting them to keep the type orderings in nominal
-        // test outputs more similar to the orderings in the equirecursive
-        // outputs. FIXME
-        counts.include(*super);
+      if (auto super = ht.getDeclaredSuperType()) {
+        if (!counts.counts.count(*super)) {
+          noteNewType(*super);
+          // We should unconditionally count supertypes, but while the type
+          // system is in flux, skip counting them to keep the type orderings in
+          // nominal test outputs more similar to the orderings in the
+          // equirecursive outputs. FIXME
+          counts.include(*super);
+        }
       }
-    }
 
-    // Make sure we've noted the complete recursion group of each type as well.
-    if (!prune) {
-      auto recGroup = ht.getRecGroup();
-      if (includedGroups.insert(recGroup).second) {
-        for (auto type : recGroup) {
-          if (!counts.count(type)) {
-            newTypes.insert(type);
-            counts.include(type);
+      // Make sure we've noted the complete recursion group of each type as
+      // well.
+      if (!prune) {
+        auto recGroup = ht.getRecGroup();
+        if (includedGroups.insert(recGroup).second) {
+          for (auto type : recGroup) {
+            if (!counts.counts.count(type)) {
+              noteNewType(type);
+              counts.include(type);
+            }
           }
         }
       }
     }
+
+    // We've found all the types there are to find without considering more
+    // control flow types. Consider one more control flow type and repeat.
+    for (; controlFlowIt != counts.controlFlowSignatures.end();
+         ++controlFlowIt) {
+      auto& [sig, count] = *controlFlowIt;
+      if (auto it = seenSigs.find(sig); it != seenSigs.end()) {
+        counts.counts[it->second] += count;
+      } else {
+        // We've never seen this signature before, so add a type for it.
+        HeapType type(sig);
+        noteNewType(type);
+        counts.counts[type] += count;
+        break;
+      }
+    }
   }
 
-  return counts;
+  return counts.counts;
 }
 
 void setIndices(IndexedHeapTypes& indexedTypes) {
@@ -506,6 +550,11 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
     WASM_UNREACHABLE("unexpected export kind");
   }
 
+  // Ignorable public types are public.
+  for (auto type : getIgnorablePublicTypes()) {
+    notePublic(type);
+  }
+
   // Find all the other public types reachable from directly publicized types.
   std::vector<HeapType> workList(publicTypes.begin(), publicTypes.end());
   while (workList.size()) {
@@ -556,12 +605,11 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 }
 
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
-  Counts counts = getHeapTypeCounts(wasm);
+  auto counts = getHeapTypeCounts(wasm);
 
   // Types have to be arranged into topologically ordered recursion groups.
   // Under isorecrsive typing, the topological sort has to take all referenced
-  // rec groups into account but under nominal typing it only has to take
-  // supertypes into account. First, sort the groups by average use count among
+  // rec groups into account. First, sort the groups by average use count among
   // their members so that the later topological sort will place frequently used
   // types first.
   struct GroupInfo {

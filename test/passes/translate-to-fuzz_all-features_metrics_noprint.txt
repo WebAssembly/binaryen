@@ -1,47 +1,42 @@
 total
- [exports]      : 7       
- [funcs]        : 12      
+ [exports]      : 3       
+ [funcs]        : 6       
  [globals]      : 1       
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 3       
+ [table-data]   : 1       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 575     
- [vars]         : 17      
- ArrayLen       : 1       
- ArrayNew       : 4       
+ [total]        : 314     
+ [vars]         : 38      
+ ArrayNew       : 2       
  ArrayNewFixed  : 1       
- AtomicCmpxchg  : 1       
- Binary         : 75      
- Block          : 68      
+ AtomicFence    : 1       
+ Binary         : 58      
+ Block          : 28      
  Break          : 6       
- Call           : 15      
- CallRef        : 1       
- Const          : 148     
- Drop           : 4       
- GlobalGet      : 28      
- GlobalSet      : 28      
+ Call           : 10      
+ Const          : 72      
+ Drop           : 3       
+ GlobalGet      : 10      
+ GlobalSet      : 10      
  I31Get         : 1       
- If             : 24      
- Load           : 20      
- LocalGet       : 33      
- LocalSet       : 22      
- Loop           : 4       
- MemoryFill     : 2       
- Nop            : 7       
- RefFunc        : 6       
- RefI31         : 3       
- RefIsNull      : 1       
- RefNull        : 7       
- RefTest        : 1       
- Return         : 7       
- SIMDExtract    : 1       
- Select         : 2       
- Store          : 2       
- StructNew      : 7       
- StructSet      : 1       
- TupleMake      : 3       
- Unary          : 24      
- Unreachable    : 17      
+ If             : 7       
+ Load           : 18      
+ LocalGet       : 36      
+ LocalSet       : 21      
+ Loop           : 1       
+ Nop            : 2       
+ RefEq          : 1       
+ RefFunc        : 2       
+ RefI31         : 2       
+ RefNull        : 1       
+ Return         : 2       
+ Select         : 1       
+ Store          : 1       
+ StructGet      : 1       
+ StructNew      : 3       
+ TupleMake      : 2       
+ Unary          : 6       
+ Unreachable    : 5       

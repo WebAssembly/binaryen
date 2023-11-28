@@ -466,7 +466,7 @@
   )
 
   ;; CHECK:      (func $break-tuple (type $1) (result i32 i64)
-  ;; CHECK-NEXT:  (block $l (result i32 i64)
+  ;; CHECK-NEXT:  (block $l (type $1) (result i32 i64)
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (br $l

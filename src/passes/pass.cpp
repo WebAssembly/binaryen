@@ -311,6 +311,11 @@ void PassRegistry::registerPasses() {
                createOptimizeInstructionsPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
+// Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
+// when building Binaryen for Emscripten.
+#ifndef SKIP_OUTLINING
+  registerPass("outlining", "outline instructions", createOutliningPass);
+#endif
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
                createPickLoadSignsPass);
@@ -407,6 +412,9 @@ void PassRegistry::registerPasses() {
   registerPass("set-globals",
                "sets specified globals to specified values",
                createSetGlobalsPass);
+  registerPass("separate-data-segments",
+               "write data segments to a file and strip them from the module",
+               createSeparateDataSegmentsPass);
   registerPass("signature-pruning",
                "remove params from function signature types where possible",
                createSignaturePruningPass);
@@ -495,6 +503,9 @@ void PassRegistry::registerPasses() {
   registerPass("type-unfinalizing",
                "mark all types as non-final (open)",
                createTypeUnFinalizingPass);
+  registerPass("unsubtyping",
+               "removes unnecessary subtyping relationships",
+               createUnsubtypingPass);
   registerPass("untee",
                "removes local.tees, replacing them with sets and gets",
                createUnteePass);
@@ -506,6 +517,9 @@ void PassRegistry::registerPasses() {
   registerTestPass("catch-pop-fixup",
                    "fixup nested pops within catches",
                    createCatchPopFixupPass);
+  registerTestPass("experimental-type-generalizing",
+                   "generalize types (not yet sound)",
+                   createTypeGeneralizingPass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
@@ -1055,6 +1069,11 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
 
   if (pass->requiresNonNullableLocalFixups()) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);
+  }
+
+  if (options.funcEffectsMap && pass->addsEffects()) {
+    // Effects were added, so discard any computed effects for this function.
+    options.funcEffectsMap->erase(func->name);
   }
 }
 

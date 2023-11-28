@@ -388,17 +388,17 @@
 
   ;; CHECK:       (type $C (array i16))
 
-  ;; CHECK:       (type $B (array (mut i8)))
+  ;; CHECK:       (type $B (array (mut i32)))
 
   ;; CHECK:       (type $A (array i8))
   (type $A  (array i8))
   (type $A' (array i8))
-  (type $B  (array (mut i8)))
-  (type $B' (array (mut i8)))
   (type $C  (array i16))
   (type $C' (array i16))
   (type $D  (array i32))
   (type $D' (array i32))
+  (type $B  (array (mut i32)))
+  (type $B' (array (mut i32)))
   (type $E  (array i64))
   (type $E' (array i64))
   (type $F  (array anyref))
@@ -929,8 +929,6 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $B (sub (func)))
 
-  ;; CHECK:       (type $1 (func (result (ref any) (ref $B))))
-
   ;; CHECK:       (type $A (sub (func (result (ref any) (ref $B)))))
   (type $A (sub (func (result (ref any) (ref $C)))))
   (type $B (sub (func)))
@@ -939,10 +937,8 @@
   (type $D (sub final $A (func (result (ref any) (ref $C)))))
  )
 
- ;; CHECK:      (type $4 (func (result (ref any) (ref $B))))
-
  ;; CHECK:      (func $test (type $D) (result (ref any) (ref $B))
- ;; CHECK-NEXT:  (block $l (result (ref any) (ref $B))
+ ;; CHECK-NEXT:  (block $l (type $A) (result (ref any) (ref $B))
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

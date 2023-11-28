@@ -4,12 +4,14 @@ include_directories(../../src/wasm)
 set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
+  lattices.cpp
   possible-contents.cpp
   printing.cpp
   stringify.cpp
   suffix_tree.cpp
   type-builder.cpp
   wat-lexer.cpp
+  validator.cpp
 )
 
 # suffix_tree.cpp includes LLVM header using std::iterator (deprecated in C++17)

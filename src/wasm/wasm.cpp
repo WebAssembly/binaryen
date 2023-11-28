@@ -51,6 +51,7 @@ const char* RelaxedSIMDFeature = "relaxed-simd";
 const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
+const char* TypedContinuationsFeature = "typed-continuations";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -59,6 +60,7 @@ Name MODULE("module");
 Name START("start");
 Name GLOBAL("global");
 Name FUNC("func");
+Name CONT("cont");
 Name PARAM("param");
 Name RESULT("result");
 Name MEMORY("memory");
@@ -864,6 +866,14 @@ void TableFill::finalize() {
   }
 }
 
+void TableCopy::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void Try::finalize() {
   // If none of the component bodies' type is a supertype of the others, assume
   // the current type is already correct. TODO: Calculate a proper LUB.
@@ -953,6 +963,8 @@ void RefTest::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::i32;
+    // Do not unnecessarily lose type information.
+    castType = Type::getGreatestLowerBound(castType, ref->type);
   }
 }
 

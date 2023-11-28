@@ -119,7 +119,9 @@ struct FunctionStructValuesMap
 //   void noteDefault(Type fieldType, HeapType type, Index index, T& info);
 //
 // * Note a copied value (read from this field and written to the same, possibly
-//   in another object).
+//   in another object). Note that we require that the two types (the one read
+//   from, and written to) are identical; allowing subtyping is possible, but
+//   would add complexity amid diminishing returns.
 //
 //   void noteCopy(HeapType type, Index index, T& info);
 //
@@ -232,7 +234,12 @@ struct StructScanner
 // if we changed something.
 template<typename T> class TypeHierarchyPropagator {
 public:
+  // Constructor that gets a module and computes subtypes.
   TypeHierarchyPropagator(Module& wasm) : subTypes(wasm) {}
+
+  // Constructor that gets subtypes and uses them, avoiding a scan of a
+  // module. TODO: avoid a copy here?
+  TypeHierarchyPropagator(const SubTypes& subTypes) : subTypes(subTypes) {}
 
   SubTypes subTypes;
 
@@ -262,7 +269,7 @@ private:
 
       if (toSuperTypes) {
         // Propagate shared fields to the supertype.
-        if (auto superType = type.getSuperType()) {
+        if (auto superType = type.getDeclaredSuperType()) {
           auto& superInfos = combinedInfos[*superType];
           auto& superFields = superType->getStruct().fields;
           for (Index i = 0; i < superFields.size(); i++) {

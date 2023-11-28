@@ -317,7 +317,7 @@ struct PostEmscripten : public Pass {
         // The first operand is the function pointer index, which must be
         // constant if we are to optimize it statically.
         if (auto* index = curr->operands[0]->dynCast<Const>()) {
-          size_t indexValue = index->value.geti32();
+          size_t indexValue = index->value.getInteger();
           if (indexValue >= flatTable.names.size()) {
             // UB can lead to indirect calls to invalid pointers.
             return;

@@ -53,6 +53,7 @@ template<typename Subclass> struct TypeNameGeneratorBase {
 struct DefaultTypeNameGenerator
   : TypeNameGeneratorBase<DefaultTypeNameGenerator> {
   size_t funcCount = 0;
+  size_t contCount = 0;
   size_t structCount = 0;
   size_t arrayCount = 0;
 
@@ -94,6 +95,9 @@ struct IndexedTypeNameGenerator
   }
 };
 
+// Deduction guide.
+template<typename T> IndexedTypeNameGenerator(T&) -> IndexedTypeNameGenerator<>;
+
 // Prints heap types stored in a module, falling back to the given
 // FallbackGenerator if the module does not have a name for type type.
 template<typename FallbackGenerator = DefaultTypeNameGenerator>
@@ -120,6 +124,9 @@ struct ModuleTypeNameGenerator
     return fallback.getNames(type);
   }
 };
+
+// Deduction guide.
+ModuleTypeNameGenerator(const Module&) -> ModuleTypeNameGenerator<>;
 
 } // namespace wasm
 

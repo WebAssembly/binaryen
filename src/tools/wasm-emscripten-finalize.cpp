@@ -37,14 +37,11 @@
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {
-  const uint64_t INVALID_BASE = -1;
-
   std::string infile;
   std::string outfile;
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
-  std::string dataSegmentFile;
   bool emitBinary = true;
   bool debugInfo = false;
   bool DWARF = false;
@@ -52,7 +49,6 @@ int main(int argc, const char* argv[]) {
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
-  uint64_t globalBase = INVALID_BASE;
   bool standaloneWasm = false;
   // TODO: remove after https://github.com/WebAssembly/binaryen/issues/3043
   bool minimizeWasmChanges = false;
@@ -93,14 +89,6 @@ int main(int argc, const char* argv[]) {
          WasmEmscriptenFinalizeOption,
          Options::Arguments::Zero,
          [&emitBinary](Options*, const std::string&) { emitBinary = false; })
-    .add("--global-base",
-         "",
-         "The address at which static globals were placed",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::One,
-         [&globalBase](Options*, const std::string& argument) {
-           globalBase = std::stoull(argument);
-         })
     .add("--side-module",
          "",
          "Input is an emscripten side module",
@@ -149,14 +137,6 @@ int main(int argc, const char* argv[]) {
          Options::Arguments::One,
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
-         })
-    .add("--separate-data-segments",
-         "",
-         "Separate data segments to a file",
-         WasmEmscriptenFinalizeOption,
-         Options::Arguments::One,
-         [&dataSegmentFile](Options* o, const std::string& argument) {
-           dataSegmentFile = argument;
          })
     .add("--check-stack-overflow",
          "",
@@ -295,15 +275,6 @@ int main(int argc, const char* argv[]) {
   }
 
   passRunner.run();
-
-  // Finally, separate out data segments if relevant
-  if (!dataSegmentFile.empty()) {
-    Output memInitFile(dataSegmentFile, Flags::Binary);
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
-    generator.separateDataSegments(&memInitFile, globalBase);
-  }
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');

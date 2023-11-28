@@ -8,7 +8,7 @@
  ;; CHECK-NEXT:  (local $0 (funcref (ref $none)))
  ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (block $label$1 (result funcref (ref $none))
+ ;; CHECK-NEXT:   (block $label$1 (type $1) (result funcref (ref $none))
  ;; CHECK-NEXT:    (tuple.make
  ;; CHECK-NEXT:     (ref.null nofunc)
  ;; CHECK-NEXT:     (ref.func $foo)

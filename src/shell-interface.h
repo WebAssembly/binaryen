@@ -133,7 +133,7 @@ struct ShellExternalInterface : ModuleRunner::ExternalInterface {
     });
   }
 
-  Literals callImport(Function* import, Literals& arguments) override {
+  Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
         std::cout << argument << " : " << argument.type << '\n';

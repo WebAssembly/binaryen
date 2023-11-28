@@ -384,8 +384,8 @@ public:
   // Subclasses can override this method to modify supertypes. The new
   // supertype, if any, must be a supertype (or the same as) the original
   // supertype.
-  virtual std::optional<HeapType> getSuperType(HeapType oldType) {
-    return oldType.getSuperType();
+  virtual std::optional<HeapType> getDeclaredSuperType(HeapType oldType) {
+    return oldType.getDeclaredSuperType();
   }
 
   // Map an old type to a temp type. This can be called from the above hooks,
@@ -506,9 +506,9 @@ public:
     sig.params = getUpdatedTypeList(oldSig.params);
     sig.results = getUpdatedTypeList(oldSig.results);
   }
-  std::optional<HeapType> getSuperType(HeapType oldType) override {
+  std::optional<HeapType> getDeclaredSuperType(HeapType oldType) override {
     // If the super is mapped, get it from the mapping.
-    auto super = oldType.getSuperType();
+    auto super = oldType.getDeclaredSuperType();
     if (super) {
       if (auto it = mapping.find(*super); it != mapping.end()) {
         return it->second;

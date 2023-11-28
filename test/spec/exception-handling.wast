@@ -615,3 +615,41 @@
   )
   "catch's body (e-i32)'s pop's location is not valid"
 )
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32) (result i32))
+    (tag $e-f32 (param f32))
+    (func (export "try_throw_nocatch") (result i32)
+      (try (result i32)
+        (do
+          (throw $e-i32 (i32.const 5))
+        )
+        (catch $e-f32
+          (drop (pop f32))
+          (i32.const 3)
+        )
+      )
+    )
+  )
+  "tags with result types must not be used for exception handling"
+)
+
+(assert_invalid
+  (module
+    (tag $e-i32 (param i32))
+    (tag $e-f32 (param f32) (result i32))
+    (func (export "try_throw_nocatch") (result i32)
+      (try (result i32)
+        (do
+          (throw $e-i32 (i32.const 5))
+        )
+        (catch $e-f32
+          (drop (pop f32))
+          (i32.const 3)
+        )
+      )
+    )
+  )
+  "catch's tag (e-f32) has result values, which is not allowed for exception handling"
+)

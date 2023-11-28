@@ -251,9 +251,24 @@ struct Directize : public Pass {
         if (func->imported()) {
           return;
         }
-        for (auto* set : FindAll<TableSet>(func->body).list) {
-          tablesWithSet.insert(set->table);
-        }
+
+        struct Finder : public PostWalker<Finder> {
+          TablesWithSet& tablesWithSet;
+
+          Finder(TablesWithSet& tablesWithSet) : tablesWithSet(tablesWithSet) {}
+
+          void visitTableSet(TableSet* curr) {
+            tablesWithSet.insert(curr->table);
+          }
+          void visitTableFill(TableFill* curr) {
+            tablesWithSet.insert(curr->table);
+          }
+          void visitTableCopy(TableCopy* curr) {
+            tablesWithSet.insert(curr->destTable);
+          }
+        };
+
+        Finder(tablesWithSet).walkFunction(func);
       });
 
     for (auto& [_, names] : analysis.map) {

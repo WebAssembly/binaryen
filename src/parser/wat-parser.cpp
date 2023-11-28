@@ -146,6 +146,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
     CHECK_ERR(parseDefs(ctx, decls.memoryDefs, memory));
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.tagDefs, tag));
     // TODO: Parse types of other module elements.
   }
   {
@@ -157,8 +158,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
-      ctx.setFunction(wasm.functions[i].get());
-      CHECK_ERR(ctx.irBuilder.makeBlock(Name{}, ctx.func->getResults()));
+      CHECK_ERR(ctx.visitFunctionStart(wasm.functions[i].get()));
       WithPosition with(ctx, decls.funcDefs[i].pos);
       auto parsed = func(ctx);
       CHECK_ERR(parsed);

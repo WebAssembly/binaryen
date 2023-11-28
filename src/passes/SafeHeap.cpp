@@ -131,6 +131,8 @@ static std::set<Name> findCalledFunctions(Module* module, Name startFunc) {
 }
 
 struct SafeHeap : public Pass {
+  // Adds calls to new imports.
+  bool addsEffects() override { return true; }
 
   void run(Module* module) override {
     assert(!module->memories.empty());

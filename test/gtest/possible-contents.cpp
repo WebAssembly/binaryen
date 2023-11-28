@@ -552,9 +552,10 @@ TEST_F(PossibleContentsTest, TestStructCones) {
   auto C = types[2];
   auto D = types[3];
   auto E = types[4];
-  ASSERT_TRUE(B.getSuperType() == A);
-  ASSERT_TRUE(C.getSuperType() == A);
-  ASSERT_TRUE(D.getSuperType() == C);
+  ASSERT_FALSE(A.getDeclaredSuperType());
+  ASSERT_EQ(B.getDeclaredSuperType(), A);
+  ASSERT_EQ(C.getDeclaredSuperType(), A);
+  ASSERT_EQ(D.getDeclaredSuperType(), C);
 
   auto nullA = Type(A, Nullable);
   auto nullB = Type(B, Nullable);

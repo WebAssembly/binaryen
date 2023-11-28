@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
+#include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -378,6 +379,24 @@ void TranslateToFuzzReader::setupGlobals() {
       }
     }
   }
+
+  // Randomly assign some globals from initial content to be ignored for the
+  // fuzzer to use. Such globals will only be used from initial content. This is
+  // important to preserve some real-world patterns, like the "once" pattern in
+  // which a global is used in one function only. (If we randomly emitted gets
+  // and sets of such globals, we'd with very high probability end up breaking
+  // that pattern, and not fuzzing it at all.)
+  //
+  // Pick a percentage of initial globals to ignore later down when we decide
+  // which to allow uses from.
+  auto numInitialGlobals = wasm.globals.size();
+  unsigned percentIgnoredInitialGlobals = 0;
+  if (numInitialGlobals) {
+    // Only generate this random number if it will be used.
+    percentIgnoredInitialGlobals = upTo(100);
+  }
+
+  // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
     auto* init = makeConst(type);
@@ -393,11 +412,23 @@ void TranslateToFuzzReader::setupGlobals() {
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
-    globalsByType[type].push_back(global->name);
-    if (mutability == Builder::Mutable) {
-      mutableGlobalsByType[type].push_back(global->name);
-    }
     wasm.addGlobal(std::move(global));
+  }
+
+  // Set up data structures for picking globals later for get/set operations.
+  for (Index i = 0; i < wasm.globals.size(); i++) {
+    auto& global = wasm.globals[i];
+
+    // Apply the chance for initial globals to be ignored, see above.
+    if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
+      continue;
+    }
+
+    // This is a global we can use later, note it.
+    globalsByType[global->type].push_back(global->name);
+    if (global->mutable_) {
+      mutableGlobalsByType[global->type].push_back(global->name);
+    }
   }
 }
 
@@ -559,15 +590,37 @@ void TranslateToFuzzReader::addHashMemorySupport() {
 }
 
 TranslateToFuzzReader::FunctionCreationContext::~FunctionCreationContext() {
+  // We must ensure non-nullable locals validate. Later down we'll run
+  // TypeUpdating::handleNonDefaultableLocals which will make them validate by
+  // turning them nullable + add ref.as_non_null to fix up types. That has the
+  // downside of making them trap at runtime, however, and also we lose the non-
+  // nullability in the type, so we prefer to do a manual fixup that avoids a
+  // trap, which we do by writing a non-nullable value into the local at the
+  // function entry.
+  // TODO: We could be more precise and use a LocalGraph here, at the cost of
+  //       doing more work.
+  LocalStructuralDominance info(
+    func, parent.wasm, LocalStructuralDominance::NonNullableOnly);
+  for (auto index : info.nonDominatingIndices) {
+    // Do not always do this, but with high probability, to reduce the amount of
+    // traps.
+    if (!parent.oneIn(5)) {
+      auto* value = parent.makeTrivial(func->getLocalType(index));
+      func->body = parent.builder.makeSequence(
+        parent.builder.makeLocalSet(index, value), func->body);
+    }
+  }
+
+  // Then, to handle remaining cases we did not just fix up, do the general
+  // fixup to ensure we validate.
+  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
+
   if (HANG_LIMIT > 0) {
     parent.addHangLimitChecks(func);
   }
   assert(breakableStack.empty());
   assert(hangStack.empty());
   parent.funcContext = nullptr;
-
-  // We must ensure non-nullable locals validate.
-  TypeUpdating::handleNonDefaultableLocals(func, parent.wasm);
 }
 
 Expression* TranslateToFuzzReader::makeHangLimitCheck() {
@@ -621,11 +674,6 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
-    if (!type.isDefaultable()) {
-      // We can't use a nondefaultable type as a var, as those must be
-      // initialized to some default value.
-      continue;
-    }
     funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
     func->vars.push_back(type);
   }
@@ -765,7 +813,6 @@ void TranslateToFuzzReader::recombine(Function* func) {
 
       while (1) {
         ret.push_back(Type(heapType, nullability));
-        // TODO: handle basic supertypes too
         auto super = heapType.getSuperType();
         if (!super) {
           break;
@@ -1252,7 +1299,10 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
   } nester(*this);
 
   if (type.isConcrete()) {
-    if (oneIn(2) && funcContext) {
+    // If we have a function context, use a local half the time. Use a local
+    // less often if the local is non-nullable, however, as then we might be
+    // using it before it was set, which would trap.
+    if (funcContext && oneIn(type.isNonNullable() ? 10 : 2)) {
       return makeLocalGet(type);
     } else {
       return makeConst(type);
@@ -1622,10 +1672,38 @@ Expression* TranslateToFuzzReader::makeCallRef(Type type) {
 
 Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   auto& locals = funcContext->typeLocals[type];
-  if (locals.empty()) {
+  if (!locals.empty()) {
+    return builder.makeLocalGet(pick(locals), type);
+  }
+  // No existing local. When we want something trivial, just give up and emit a
+  // constant.
+  if (trivialNesting) {
     return makeConst(type);
   }
-  return builder.makeLocalGet(pick(locals), type);
+
+  // Otherwise, we have 3 cases: a const, as above (we do this randomly some of
+  // the time), or emit a local.get of a new local, or emit a local.tee of a new
+  // local.
+  auto choice = upTo(3);
+  if (choice == 0) {
+    return makeConst(type);
+  }
+  // Otherwise, add a new local. If the type is not non-nullable then we may
+  // just emit a get for it (which, as this is a brand-new local, will read the
+  // default value, unless we are in a loop; for that reason for a non-
+  // nullable local we prefer a tee later down.).
+  auto index = builder.addVar(funcContext->func, type);
+  LocalSet* tee = nullptr;
+  if (choice == 1 || type.isNonNullable()) {
+    // Create the tee here before adding the local to typeLocals (or else we
+    // might end up using it prematurely inside the make() call).
+    tee = builder.makeLocalTee(index, make(type), type);
+  }
+  funcContext->typeLocals[type].push_back(index);
+  if (tee) {
+    return tee;
+  }
+  return builder.makeLocalGet(index, type);
 }
 
 Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
@@ -1648,21 +1726,16 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
   }
 }
 
-bool TranslateToFuzzReader::isValidGlobal(Name name) {
-  return name != HANG_LIMIT_GLOBAL;
-}
-
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   auto it = globalsByType.find(type);
   if (it == globalsByType.end() || it->second.empty()) {
-    return makeConst(type);
-  }
-  auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalGet(name, type);
-  } else {
     return makeTrivial(type);
   }
+
+  auto name = pick(it->second);
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalGet(name, type);
 }
 
 Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
@@ -1672,12 +1745,11 @@ Expression* TranslateToFuzzReader::makeGlobalSet(Type type) {
   if (it == mutableGlobalsByType.end() || it->second.empty()) {
     return makeTrivial(Type::none);
   }
+
   auto name = pick(it->second);
-  if (isValidGlobal(name)) {
-    return builder.makeGlobalSet(name, make(type));
-  } else {
-    return makeTrivial(Type::none);
-  }
+  // We don't want random fuzz code to use the hang limit global.
+  assert(name != HANG_LIMIT_GLOBAL);
+  return builder.makeGlobalSet(name, make(type));
 }
 
 Expression* TranslateToFuzzReader::makeTupleMake(Type type) {
@@ -2475,8 +2547,8 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   if (percent < 70 || !funcContext) {
     return make(nonNull);
   }
-  // With significant probability, try to use an existing value. it is better to
-  // have patterns like this:
+  // With significant probability, try to use an existing value, that is, to
+  // get a value using local.get, as it is better to have patterns like this:
   //
   //  (local.set $ref (struct.new $..
   //  (struct.get (local.get $ref))
@@ -2488,17 +2560,10 @@ Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
   //
   // By using local values more, we get more coverage of interesting sequences
   // of reads and writes to the same objects.
-  auto& typeLocals = funcContext->typeLocals[nonNull];
-  if (!typeLocals.empty()) {
-    return builder.makeLocalGet(pick(typeLocals), nonNull);
-  }
-  // Add a new local and tee it, so later operations can use it.
-  auto index = builder.addVar(funcContext->func, nonNull);
-  // Note we must create the child ref here before adding the local to
-  // typeLocals (or else we might end up using it prematurely).
-  auto* tee = builder.makeLocalTee(index, make(nonNull), nonNull);
-  funcContext->typeLocals[nonNull].push_back(index);
-  return tee;
+  //
+  // Note that makeLocalGet will add a local if necessary, and even tee that
+  // value so it is usable later as well.
+  return makeLocalGet(nonNull);
 }
 
 Expression* TranslateToFuzzReader::buildUnary(const UnaryArgs& args) {
@@ -3885,7 +3950,7 @@ HeapType TranslateToFuzzReader::getSuperType(HeapType type) {
   std::vector<HeapType> supers;
   while (1) {
     supers.push_back(type);
-    if (auto super = type.getSuperType()) {
+    if (auto super = type.getDeclaredSuperType()) {
       type = *super;
     } else {
       break;

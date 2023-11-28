@@ -83,6 +83,7 @@ struct NullTypeParserCtx {
   using ResultsT = size_t;
   using BlockTypeT = Ok;
   using SignatureT = Ok;
+  using ContinuationT = Ok;
   using StorageT = Ok;
   using FieldT = Ok;
   using FieldsT = Ok;
@@ -122,6 +123,7 @@ struct NullTypeParserCtx {
   size_t getResultsSize(size_t results) { return results; }
 
   SignatureT makeFuncType(ParamsT*, ResultsT*) { return Ok{}; }
+  ContinuationT makeContType(HeapTypeT) { return Ok{}; }
 
   StorageT makeI8() { return Ok{}; }
   StorageT makeI16() { return Ok{}; }
@@ -162,6 +164,7 @@ template<typename Ctx> struct TypeParserCtx {
   using ResultsT = std::vector<Type>;
   using BlockTypeT = HeapType;
   using SignatureT = Signature;
+  using ContinuationT = Continuation;
   using StorageT = Field;
   using FieldT = Field;
   using FieldsT = std::pair<std::vector<Name>, std::vector<Field>>;
@@ -215,6 +218,8 @@ template<typename Ctx> struct TypeParserCtx {
     return Signature(self().makeTupleType(paramTypes),
                      self().makeTupleType(resultTypes));
   }
+
+  ContinuationT makeContType(HeapTypeT ft) { return Continuation(ft); }
 
   StorageT makeI8() { return Field(Field::i8, Immutable); }
   StorageT makeI16() { return Field(Field::i16, Immutable); }
@@ -272,24 +277,20 @@ template<typename Ctx> struct TypeParserCtx {
 };
 
 struct NullInstrParserCtx {
-  using InstrT = Ok;
-  using InstrsT = Ok;
   using ExprT = Ok;
 
   using FieldIdxT = Ok;
+  using FuncIdxT = Ok;
   using LocalIdxT = Ok;
   using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
   using DataIdxT = Ok;
+  using LabelIdxT = Ok;
+  using TagIdxT = Ok;
 
   using MemargT = Ok;
 
-  InstrsT makeInstrs() { return Ok{}; }
-  void appendInstr(InstrsT&, InstrT) {}
-  InstrsT finishInstrs(InstrsT&) { return Ok{}; }
-
-  ExprT makeExpr(InstrsT) { return Ok{}; }
-  Result<ExprT> instrToExpr(InstrT) { return Ok{}; }
+  Result<> makeExpr() { return Ok{}; }
 
   template<typename HeapTypeT> FieldIdxT getFieldFromIdx(HeapTypeT, uint32_t) {
     return Ok{};
@@ -297,6 +298,8 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> FieldIdxT getFieldFromName(HeapTypeT, Name) {
     return Ok{};
   }
+  FuncIdxT getFuncFromIdx(uint32_t) { return Ok{}; }
+  FuncIdxT getFuncFromName(Name) { return Ok{}; }
   LocalIdxT getLocalFromIdx(uint32_t) { return Ok{}; }
   LocalIdxT getLocalFromName(Name) { return Ok{}; }
   GlobalIdxT getGlobalFromIdx(uint32_t) { return Ok{}; }
@@ -305,119 +308,156 @@ struct NullInstrParserCtx {
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
   DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
   DataIdxT getDataFromName(Name) { return Ok{}; }
+  LabelIdxT getLabelFromIdx(uint32_t) { return Ok{}; }
+  LabelIdxT getLabelFromName(Name) { return Ok{}; }
+  TagIdxT getTagFromIdx(uint32_t) { return Ok{}; }
+  TagIdxT getTagFromName(Name) { return Ok{}; }
 
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
-  InstrT makeBlock(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeBlock(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
-  InstrT finishBlock(Index, InstrsT) { return Ok{}; }
+  template<typename BlockTypeT>
+  Result<> makeIf(Index, std::optional<Name>, BlockTypeT) {
+    return Ok{};
+  }
+  Result<> visitElse() { return Ok{}; }
+  template<typename BlockTypeT>
+  Result<> makeLoop(Index, std::optional<Name>, BlockTypeT) {
+    return Ok{};
+  }
+  Result<> visitEnd() { return Ok{}; }
 
-  InstrT makeUnreachable(Index) { return Ok{}; }
-  InstrT makeNop(Index) { return Ok{}; }
-  InstrT makeBinary(Index, BinaryOp) { return Ok{}; }
-  InstrT makeUnary(Index, UnaryOp) { return Ok{}; }
-  template<typename ResultsT> InstrT makeSelect(Index, ResultsT*) {
+  Result<> makeUnreachable(Index) { return Ok{}; }
+  Result<> makeNop(Index) { return Ok{}; }
+  Result<> makeBinary(Index, BinaryOp) { return Ok{}; }
+  Result<> makeUnary(Index, UnaryOp) { return Ok{}; }
+  template<typename ResultsT> Result<> makeSelect(Index, ResultsT*) {
     return Ok{};
   }
-  InstrT makeDrop(Index) { return Ok{}; }
-  InstrT makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
-  InstrT makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
-  InstrT makeLocalGet(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeLocalTee(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeLocalSet(Index, LocalIdxT) { return Ok{}; }
-  InstrT makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
-  InstrT makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
+  Result<> makeDrop(Index) { return Ok{}; }
+  Result<> makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeLocalGet(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeLocalTee(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeLocalSet(Index, LocalIdxT) { return Ok{}; }
+  Result<> makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
+  Result<> makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
 
-  InstrT makeI32Const(Index, uint32_t) { return Ok{}; }
-  InstrT makeI64Const(Index, uint64_t) { return Ok{}; }
-  InstrT makeF32Const(Index, float) { return Ok{}; }
-  InstrT makeF64Const(Index, double) { return Ok{}; }
-  InstrT makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
+  Result<> makeI32Const(Index, uint32_t) { return Ok{}; }
+  Result<> makeI64Const(Index, uint64_t) { return Ok{}; }
+  Result<> makeF32Const(Index, float) { return Ok{}; }
+  Result<> makeF64Const(Index, double) { return Ok{}; }
+  Result<> makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
+  Result<> makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
+  Result<> makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
+  Result<> makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
     return Ok{};
   }
-  InstrT makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeAtomicFence(Index) { return Ok{}; }
-  InstrT makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
-  InstrT makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
-  InstrT makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) { return Ok{}; }
-  InstrT makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
-  InstrT makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
-  InstrT makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) { return Ok{}; }
-  InstrT makeSIMDLoadStoreLane(
+  Result<> makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
+  Result<> makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
+  Result<> makeAtomicFence(Index) { return Ok{}; }
+  Result<> makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
+  Result<> makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
+  Result<> makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) {
+    return Ok{};
+  }
+  Result<> makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
+  Result<> makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
+  Result<> makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  Result<> makeSIMDLoadStoreLane(
     Index, SIMDLoadStoreLaneOp, MemoryIdxT*, MemargT, uint8_t) {
     return Ok{};
   }
-  InstrT makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
-  InstrT makeDataDrop(Index, DataIdxT) { return Ok{}; }
+  Result<> makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
+  Result<> makeDataDrop(Index, DataIdxT) { return Ok{}; }
 
-  InstrT makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
-  InstrT makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
-
-  InstrT makeReturn(Index) { return Ok{}; }
-  template<typename HeapTypeT> InstrT makeRefNull(Index, HeapTypeT) {
+  Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
+  Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
+  Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
+  Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
     return Ok{};
   }
-  InstrT makeRefIsNull(Index) { return Ok{}; }
-
-  InstrT makeRefEq(Index) { return Ok{}; }
-
-  InstrT makeRefI31(Index) { return Ok{}; }
-  InstrT makeI31Get(Index, bool) { return Ok{}; }
-
-  template<typename HeapTypeT> InstrT makeStructNew(Index, HeapTypeT) {
+  Result<> makeReturn(Index) { return Ok{}; }
+  template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeStructNewDefault(Index, HeapTypeT) {
+  Result<> makeRefIsNull(Index) { return Ok{}; }
+  Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
+  Result<> makeRefEq(Index) { return Ok{}; }
+  Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
+  template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
+    return Ok{};
+  }
+  Result<> makeRefI31(Index) { return Ok{}; }
+  Result<> makeI31Get(Index, bool) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefTest(Index, TypeT) { return Ok{}; }
+  template<typename TypeT> Result<> makeRefCast(Index, TypeT) { return Ok{}; }
+
+  Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
+
+  template<typename TypeT> Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT) {
+    return Ok{};
+  }
+
+  template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> Result<> makeStructNewDefault(Index, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
+  Result<> makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeStructSet(Index, HeapTypeT, FieldIdxT) {
+  Result<> makeStructSet(Index, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayNew(Index, HeapTypeT) {
+  template<typename HeapTypeT> Result<> makeArrayNew(Index, HeapTypeT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayNewDefault(Index, HeapTypeT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT>
-  InstrT makeArrayNewData(Index, HeapTypeT, DataIdxT) {
+  template<typename HeapTypeT> Result<> makeArrayNewDefault(Index, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  InstrT makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+  Result<> makeArrayNewData(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayGet(Index, HeapTypeT, bool) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> InstrT makeArraySet(Index, HeapTypeT) {
-    return Ok{};
-  }
-  InstrT makeArrayLen(Index) { return Ok{}; }
   template<typename HeapTypeT>
-  InstrT makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
+  Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
     return Ok{};
   }
-  template<typename HeapTypeT> InstrT makeArrayFill(Index, HeapTypeT) {
+  template<typename HeapTypeT>
+  Result<> makeArrayNewFixed(Index, HeapTypeT, uint32_t) {
     return Ok{};
   }
+  template<typename HeapTypeT> Result<> makeArrayGet(Index, HeapTypeT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> Result<> makeArraySet(Index, HeapTypeT) {
+    return Ok{};
+  }
+  Result<> makeArrayLen(Index) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<> makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
+    return Ok{};
+  }
+  Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -444,6 +484,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
   std::vector<DefPos> dataDefs;
+  std::vector<DefPos> tagDefs;
 
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
@@ -453,13 +494,26 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   int memoryCounter = 0;
   int globalCounter = 0;
   int dataCounter = 0;
+  int tagCounter = 0;
 
   // Used to verify that all imports come before all non-imports.
   bool hasNonImport = false;
 
+  Result<> checkImport(Index pos, ImportNames* import) {
+    if (import) {
+      if (hasNonImport) {
+        return in.err(pos, "import after non-import");
+      }
+    } else {
+      hasNonImport = true;
+    }
+    return Ok{};
+  }
+
   ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
+  void addContType(ContinuationT) {}
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
   void setOpen() {}
@@ -504,7 +558,6 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    ImportNames* import,
                    TypeUseT type,
                    std::optional<LocalsT>,
-                   std::optional<InstrsT>,
                    Index pos);
 
   Result<Memory*>
@@ -532,6 +585,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    std::optional<ExprT>,
                    std::vector<char>&& data,
                    Index pos);
+
+  Result<Tag*> addTagDecl(Index pos, Name name, ImportNames* importNames);
+
+  Result<> addTag(Name name,
+                  const std::vector<Name>& exports,
+                  ImportNames* import,
+                  TypeUseT type,
+                  Index pos);
 };
 
 // Phase 2: Parse type definitions into a TypeBuilder.
@@ -569,6 +630,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   }
 
   void addFuncType(SignatureT& type) { builder[index] = type; }
+  void addContType(ContinuationT& type) { builder[index] = type; }
 
   void addStructType(StructT& type) {
     auto& [fieldNames, str] = type;
@@ -740,7 +802,6 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
-                   std::optional<InstrsT>,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -778,6 +839,16 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     g->type = type.type;
     return Ok{};
   }
+
+  Result<>
+  addTag(Name, const std::vector<Name>&, ImportNames*, TypeUse use, Index pos) {
+    auto& t = wasm.tags[index];
+    if (!use.type.isSignature()) {
+      return in.err(pos, "tag type must be a signature");
+    }
+    t->sig = use.type.getSignature();
+    return Ok{};
+  }
 };
 
 // Phase 5: Parse module element definitions, including instructions.
@@ -785,17 +856,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalTypeT = Ok;
   using TypeUseT = HeapType;
 
-  // Keep track of instructions internally rather than letting the general
-  // parser collect them.
-  using InstrT = Ok;
-  using InstrsT = Ok;
   using ExprT = Expression*;
 
   using FieldIdxT = Index;
+  using FuncIdxT = Name;
   using LocalIdxT = Index;
+  using LabelIdxT = Index;
   using GlobalIdxT = Name;
   using MemoryIdxT = Name;
   using DataIdxT = Name;
+  using TagIdxT = Name;
 
   using MemargT = Memarg;
 
@@ -816,9 +886,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   IRBuilder irBuilder;
 
-  void setFunction(Function* func) {
+  Result<> visitFunctionStart(Function* func) {
     this->func = func;
-    irBuilder.setFunction(func);
+    CHECK_ERR(irBuilder.visitFunctionStart(func));
+    return Ok{};
   }
 
   ParseDefsCtx(std::string_view in,
@@ -848,14 +919,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
     return type;
   }
-
-  Ok makeInstrs() { return Ok{}; }
-
-  void appendInstr(Ok&, InstrT instr) {}
-
-  Result<InstrsT> finishInstrs(Ok&) { return Ok{}; }
-
-  Result<Expression*> instrToExpr(Ok&) { return irBuilder.build(); }
 
   GlobalTypeT makeGlobalType(Mutability, TypeT) { return Ok{}; }
 
@@ -889,6 +952,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return in.err("local index out of bounds");
     }
     return idx;
+  }
+
+  Result<Name> getFuncFromIdx(uint32_t idx) {
+    if (idx >= wasm.functions.size()) {
+      return in.err("function index out of bounds");
+    }
+    return wasm.functions[idx]->name;
+  }
+
+  Result<Name> getFuncFromName(Name name) {
+    if (!wasm.getFunctionOrNull(name)) {
+      return in.err("function $" + name.toString() + " does not exist");
+    }
+    return name;
   }
 
   Result<Index> getLocalFromName(Name name) {
@@ -943,6 +1020,26 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return name;
   }
 
+  Result<Index> getLabelFromIdx(uint32_t idx) { return idx; }
+
+  Result<Index> getLabelFromName(Name name) {
+    return irBuilder.getLabelIndex(name);
+  }
+
+  Result<Name> getTagFromIdx(uint32_t idx) {
+    if (idx >= wasm.tags.size()) {
+      return in.err("tag index out of bounds");
+    }
+    return wasm.tags[idx]->name;
+  }
+
+  Result<Name> getTagFromName(Name name) {
+    if (!wasm.getTagOrNull(name)) {
+      return in.err("tag $" + name.toString() + " does not exist");
+    }
+    return name;
+  }
+
   Result<TypeUseT> makeTypeUse(Index pos,
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
@@ -952,7 +1049,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
-                   std::optional<InstrsT>,
                    Index pos);
 
   Result<> addGlobal(Name,
@@ -963,6 +1059,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      Index);
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
   Result<Index> addScratchLocal(Index pos, Type type) {
     if (!func) {
       return in.err(pos,
@@ -972,7 +1069,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr(InstrsT& instrs) { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return irBuilder.build(); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
@@ -994,9 +1091,25 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                                        type.getSignature().results));
   }
 
-  Result<> finishBlock(Index pos, InstrsT) {
-    return withLoc(pos, irBuilder.visitEnd());
+  Result<> makeIf(Index pos, std::optional<Name> label, HeapType type) {
+    // TODO: validate labels?
+    // TODO: Move error on input types to here?
+    return withLoc(
+      pos,
+      irBuilder.makeIf(label ? *label : Name{}, type.getSignature().results));
   }
+
+  Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
+
+  Result<> makeLoop(Index pos, std::optional<Name> label, HeapType type) {
+    // TODO: validate labels?
+    // TODO: Move error on input types to here?
+    return withLoc(
+      pos,
+      irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> visitEnd() { return withLoc(irBuilder.visitEnd()); }
 
   Result<> makeUnreachable(Index pos) {
     return withLoc(pos, irBuilder.makeUnreachable());
@@ -1195,6 +1308,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
   }
 
+  Result<> makeCall(Index pos, Name func, bool isReturn) {
+    return withLoc(pos, irBuilder.makeCall(func, isReturn));
+  }
+
+  Result<> makeBreak(Index pos, Index label) {
+    return withLoc(pos, irBuilder.makeBreak(label));
+  }
+
+  Result<>
+  makeSwitch(Index pos, const std::vector<Index> labels, Index defaultLabel) {
+    return withLoc(pos, irBuilder.makeSwitch(labels, defaultLabel));
+  }
+
   Result<> makeReturn(Index pos) {
     return withLoc(pos, irBuilder.makeReturn());
   }
@@ -1207,7 +1333,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeRefIsNull());
   }
 
+  Result<> makeRefFunc(Index pos, Name func) {
+    return withLoc(pos, irBuilder.makeRefFunc(func));
+  }
+
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
+
+  Result<> makeThrow(Index pos, Name tag) {
+    return withLoc(pos, irBuilder.makeThrow(tag));
+  }
+
+  Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {
+    return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
+  }
 
   Result<> makeRefI31(Index pos) {
     return withLoc(pos, irBuilder.makeRefI31());
@@ -1215,6 +1353,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeI31Get(Index pos, bool signed_) {
     return withLoc(pos, irBuilder.makeI31Get(signed_));
+  }
+
+  Result<> makeRefTest(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefTest(type));
+  }
+
+  Result<> makeRefCast(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makeRefCast(type));
+  }
+
+  Result<>
+  makeBrOn(Index pos, Index label, BrOnOp op, Type castType = Type::none) {
+    return withLoc(pos, irBuilder.makeBrOn(label, op, castType));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {
@@ -1249,6 +1400,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeArrayNewElem(type, elem));
   }
 
+  Result<> makeArrayNewFixed(Index pos, HeapType type, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeArrayNewFixed(type, arity));
+  }
+
   Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
     return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
   }
@@ -1267,6 +1422,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeArrayFill(Index pos, HeapType type) {
     return withLoc(pos, irBuilder.makeArrayFill(type));
+  }
+
+  Result<> makeRefAs(Index pos, RefAsOp op) {
+    return withLoc(pos, irBuilder.makeRefAs(op));
   }
 };
 

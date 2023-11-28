@@ -73,6 +73,15 @@ struct SignatureRefining : public Pass {
       std::vector<Call*> calls;
       std::vector<CallRef*> callRefs;
 
+      // Additional calls to take into account. We store intrinsic calls here,
+      // as they must appear twice: call.without.effects is both a normal call
+      // and also takes a final parameter that is a function reference that is
+      // called, and so two signatures are relevant for it. For the latter, we
+      // add the call as an "extra call" (which is an unusual call, as it has an
+      // extra parameter at the end, the function reference, compared to what we
+      // expect for the signature being called).
+      std::vector<Call*> extraCalls;
+
       // A possibly improved LUB for the results.
       LUBFinder resultsLUB;
 
@@ -107,6 +116,17 @@ struct SignatureRefining : public Pass {
       // called.
       for (auto* call : info.calls) {
         allInfo[module->getFunction(call->target)->type].calls.push_back(call);
+
+        // For call.without.effects, we also add the effective function being
+        // called as well. The final operand is the function reference being
+        // called, which defines that type.
+        if (Intrinsics(*module).isCallWithoutEffects(call)) {
+          auto targetType = call->operands.back()->type;
+          if (!targetType.isRef()) {
+            continue;
+          }
+          allInfo[targetType.getHeapType()].extraCalls.push_back(call);
+        }
       }
 
       // For indirect calls, add each call_ref to the type the call_ref uses.
@@ -148,7 +168,7 @@ struct SignatureRefining : public Pass {
     for (auto& [type, info] : allInfo) {
       if (!subTypes.getImmediateSubTypes(type).empty()) {
         info.canModify = false;
-      } else if (type.getSuperType()) {
+      } else if (type.getDeclaredSuperType()) {
         // Also avoid modifying types with supertypes, as we do not handle
         // contravariance here. That is, when we refine parameters we look for
         // a more refined type, but the type must be *less* refined than the
@@ -186,6 +206,12 @@ struct SignatureRefining : public Pass {
       }
       for (auto* callRef : info.callRefs) {
         updateLUBs(callRef->operands);
+      }
+      for (auto* call : info.extraCalls) {
+        // Note that these intrinsic calls have an extra function reference
+        // param at the end, but updateLUBs looks at |numParams| only, so it
+        // considers just the relevant parameters.
+        updateLUBs(call->operands);
       }
 
       // Find the final LUBs, and see if we found an improvement.

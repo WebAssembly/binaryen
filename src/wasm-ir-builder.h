@@ -19,6 +19,7 @@
 
 #include <vector>
 
+#include "ir/names.h"
 #include "support/result.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -34,6 +35,9 @@ namespace wasm {
 //
 // To use, call CHECK_ERR(visit(...)) or CHECK_ERR(makeXYZ(...)) on each
 // expression in the sequence, then call build().
+//
+// Unlike `Builder`, `IRBuilder` requires referenced module-level items (e.g.
+// globals, tables, functions, etc.) to already exist in the module.
 class IRBuilder : public UnifiedExpressionVisitor<IRBuilder, Result<>> {
 public:
   IRBuilder(Module& wasm, Function* func = nullptr)
@@ -48,22 +52,38 @@ public:
   // initialized to initialize the child fields and refinalize it.
   [[nodiscard]] Result<> visit(Expression*);
 
+  // Like visit, but pushes the expression onto the stack as-is without popping
+  // any children or refinalization.
+  void push(Expression*);
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
+  [[nodiscard]] Result<> visitFunctionStart(Function* func);
   [[nodiscard]] Result<> visitBlockStart(Block* block);
+  [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
+  [[nodiscard]] Result<> visitElse();
+  [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitEnd();
 
-  // Alternatively, call makeXYZ to have the IRBuilder allocate the nodes. This
-  // is generally safer than calling `visit` because the function signatures
-  // ensure that there are no missing fields.
+  // Binaryen IR uses names to refer to branch targets, but in general there may
+  // be branches to constructs that do not yet have names, so in IRBuilder we
+  // use indices to refer to branch targets instead, just as the binary format
+  // does. This function converts a branch target name to the correct index.
+  [[nodiscard]] Result<Index> getLabelIndex(Name label);
+
+  // Instead of calling visit, call makeXYZ to have the IRBuilder allocate the
+  // nodes. This is generally safer than calling `visit` because the function
+  // signatures ensure that there are no missing fields.
   [[nodiscard]] Result<> makeNop();
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
-  // [[nodiscard]] Result<> makeIf();
-  // [[nodiscard]] Result<> makeLoop();
-  // [[nodiscard]] Result<> makeBreak();
-  // [[nodiscard]] Result<> makeSwitch();
-  // [[nodiscard]] Result<> makeCall();
+  [[nodiscard]] Result<> makeIf(Name label, Type type);
+  [[nodiscard]] Result<> makeLoop(Name label, Type type);
+  [[nodiscard]] Result<> makeBreak(Index label);
+  [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
+                                    Index defaultLabel);
+  // Unlike Builder::makeCall, this assumes the function already exists.
+  [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
   // [[nodiscard]] Result<> makeCallIndirect();
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
@@ -117,24 +137,26 @@ public:
   // [[nodiscard]] Result<> makePop();
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
-  // [[nodiscard]] Result<> makeRefFunc();
+  [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
   // [[nodiscard]] Result<> makeTableGet();
   // [[nodiscard]] Result<> makeTableSet();
   // [[nodiscard]] Result<> makeTableSize();
   // [[nodiscard]] Result<> makeTableGrow();
   // [[nodiscard]] Result<> makeTableFill();
+  // [[nodiscard]] Result<> makeTableCopy();
   // [[nodiscard]] Result<> makeTry();
-  // [[nodiscard]] Result<> makeThrow();
+  [[nodiscard]] Result<> makeThrow(Name tag);
   // [[nodiscard]] Result<> makeRethrow();
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
-  // [[nodiscard]] Result<> makeCallRef();
-  // [[nodiscard]] Result<> makeRefTest();
-  // [[nodiscard]] Result<> makeRefCast();
-  // [[nodiscard]] Result<> makeBrOn();
+  [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
+  [[nodiscard]] Result<> makeRefTest(Type type);
+  [[nodiscard]] Result<> makeRefCast(Type type);
+  [[nodiscard]] Result<>
+  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>
@@ -144,7 +166,7 @@ public:
   [[nodiscard]] Result<> makeArrayNewDefault(HeapType type);
   [[nodiscard]] Result<> makeArrayNewData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayNewElem(HeapType type, Name elem);
-  // [[nodiscard]] Result<> makeArrayNewFixed();
+  [[nodiscard]] Result<> makeArrayNewFixed(HeapType type, uint32_t arity);
   [[nodiscard]] Result<> makeArrayGet(HeapType type, bool signed_);
   [[nodiscard]] Result<> makeArraySet(HeapType type);
   [[nodiscard]] Result<> makeArrayLen();
@@ -152,7 +174,7 @@ public:
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
   // [[nodiscard]] Result<> makeArrayInitData();
   // [[nodiscard]] Result<> makeArrayInitElem();
-  // [[nodiscard]] Result<> makeRefAs();
+  [[nodiscard]] Result<> makeRefAs(RefAsOp op);
   // [[nodiscard]] Result<> makeStringNew();
   // [[nodiscard]] Result<> makeStringConst();
   // [[nodiscard]] Result<> makeStringMeasure();
@@ -167,14 +189,21 @@ public:
   // [[nodiscard]] Result<> makeStringSliceWTF();
   // [[nodiscard]] Result<> makeStringSliceIter();
 
-  void setFunction(Function* func) { this->func = func; }
-
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<> visitBlock(Block*);
+  [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
+  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
+  [[nodiscard]] Result<> visitBreak(Break*,
+                                    std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<>
+  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
+  [[nodiscard]] Result<> visitCall(Call*);
+  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
+  [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitThrow(Throw*);
 
 private:
   Module& wasm;
@@ -184,28 +213,181 @@ private:
   // The context for a single block scope, including the instructions parsed
   // inside that scope so far and the ultimate result type we expect this block
   // to have.
-  struct BlockCtx {
+  struct ScopeCtx {
+    struct NoScope {};
+    struct FuncScope {
+      Function* func;
+    };
+    struct BlockScope {
+      Block* block;
+    };
+    struct IfScope {
+      If* iff;
+      Name originalLabel;
+    };
+    struct ElseScope {
+      If* iff;
+      Name originalLabel;
+    };
+    struct LoopScope {
+      Loop* loop;
+    };
+    using Scope = std::
+      variant<NoScope, FuncScope, BlockScope, IfScope, ElseScope, LoopScope>;
+
+    // The control flow structure we are building expressions for.
+    Scope scope;
+
+    // The branch label name for this scope. Always fresh, never shadowed.
+    Name label;
+    bool labelUsed = false;
+
     std::vector<Expression*> exprStack;
-    Block* block;
     // Whether we have seen an unreachable instruction and are in
     // stack-polymorphic unreachable mode.
     bool unreachable = false;
+
+    ScopeCtx() : scope(NoScope{}) {}
+    ScopeCtx(Scope scope) : scope(scope) {}
+    ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
+
+    static ScopeCtx makeFunc(Function* func) {
+      return ScopeCtx(FuncScope{func});
+    }
+    static ScopeCtx makeBlock(Block* block) {
+      return ScopeCtx(BlockScope{block});
+    }
+    static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
+      return ScopeCtx(IfScope{iff, originalLabel});
+    }
+    static ScopeCtx makeElse(If* iff, Name originalLabel, Name label) {
+      return ScopeCtx(ElseScope{iff, originalLabel}, label);
+    }
+    static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
+
+    bool isNone() { return std::get_if<NoScope>(&scope); }
+    Function* getFunction() {
+      if (auto* funcScope = std::get_if<FuncScope>(&scope)) {
+        return funcScope->func;
+      }
+      return nullptr;
+    }
+    Block* getBlock() {
+      if (auto* blockScope = std::get_if<BlockScope>(&scope)) {
+        return blockScope->block;
+      }
+      return nullptr;
+    }
+    If* getIf() {
+      if (auto* ifScope = std::get_if<IfScope>(&scope)) {
+        return ifScope->iff;
+      }
+      return nullptr;
+    }
+    If* getElse() {
+      if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
+        return elseScope->iff;
+      }
+      return nullptr;
+    }
+    Loop* getLoop() {
+      if (auto* loopScope = std::get_if<LoopScope>(&scope)) {
+        return loopScope->loop;
+      }
+      return nullptr;
+    }
+    Type getResultType() {
+      if (auto* func = getFunction()) {
+        return func->type.getSignature().results;
+      }
+      if (auto* block = getBlock()) {
+        return block->type;
+      }
+      if (auto* iff = getIf()) {
+        return iff->type;
+      }
+      if (auto* iff = getElse()) {
+        return iff->type;
+      }
+      if (auto* loop = getLoop()) {
+        return loop->type;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
+    Name getOriginalLabel() {
+      if (std::get_if<NoScope>(&scope) || getFunction()) {
+        return Name{};
+      }
+      if (auto* block = getBlock()) {
+        return block->name;
+      }
+      if (auto* ifScope = std::get_if<IfScope>(&scope)) {
+        return ifScope->originalLabel;
+      }
+      if (auto* elseScope = std::get_if<ElseScope>(&scope)) {
+        return elseScope->originalLabel;
+      }
+      if (auto* loop = getLoop()) {
+        return loop->name;
+      }
+      WASM_UNREACHABLE("unexpected scope kind");
+    }
   };
 
   // The stack of block contexts currently being parsed.
-  std::vector<BlockCtx> scopeStack;
+  std::vector<ScopeCtx> scopeStack;
 
-  BlockCtx& getScope() {
+  // Map label names to stacks of label depths at which they appear. The
+  // relative index of a label name is the current depth minus the top depth on
+  // its stack.
+  std::unordered_map<Name, std::vector<Index>> labelDepths;
+
+  Name makeFresh(Name label) {
+    return Names::getValidName(label, [&](Name candidate) {
+      return labelDepths.insert({candidate, {}}).second;
+    });
+  }
+
+  void pushScope(ScopeCtx scope) {
+    if (auto label = scope.getOriginalLabel()) {
+      // Assign a fresh label to the scope, if necessary.
+      if (!scope.label) {
+        scope.label = makeFresh(label);
+      }
+      // Record the original label to handle references to it correctly.
+      labelDepths[label].push_back(scopeStack.size() + 1);
+    }
+    scopeStack.push_back(scope);
+  }
+
+  ScopeCtx& getScope() {
     if (scopeStack.empty()) {
       // We are not in a block context, so push a dummy scope.
-      scopeStack.push_back({{}, nullptr});
+      scopeStack.push_back({});
     }
     return scopeStack.back();
   }
 
+  Result<ScopeCtx*> getScope(Index label) {
+    Index numLabels = scopeStack.size();
+    if (!scopeStack.empty() && scopeStack[0].isNone()) {
+      --numLabels;
+    }
+    if (label >= numLabels) {
+      return Err{"label index out of bounds"};
+    }
+    return &scopeStack[scopeStack.size() - 1 - label];
+  }
+
+  // Collect the current scope into a single expression. If it has multiple
+  // top-level expressions, this requires collecting them into a block. If we
+  // are in a block context, we can collect them directly into the destination
+  // `block`, but otherwise we will have to allocate a new block.
+  Result<Expression*> finishScope(Block* block = nullptr);
+
+  [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
-  void push(Expression*);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -222,6 +404,11 @@ private:
   // the value, if they are different. May only be called directly after
   // hoistLastValue().
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+
+  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
+                                                   std::optional<Index> label);
+
+  void dump();
 };
 
 } // namespace wasm

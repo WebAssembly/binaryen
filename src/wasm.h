@@ -699,6 +699,7 @@ public:
     TableSizeId,
     TableGrowId,
     TableFillId,
+    TableCopyId,
     TryId,
     ThrowId,
     RethrowId,
@@ -1435,6 +1436,20 @@ public:
   void finalize();
 };
 
+class TableCopy : public SpecificExpression<Expression::TableCopyId> {
+public:
+  TableCopy() = default;
+  TableCopy(MixedArena& allocator) : TableCopy() {}
+
+  Expression* dest;
+  Expression* source;
+  Expression* size;
+  Name destTable;
+  Name sourceTable;
+
+  void finalize();
+};
+
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1525,6 +1540,7 @@ public:
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
+  RefTest() = default;
   RefTest(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1538,6 +1554,7 @@ public:
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
+  RefCast() = default;
   RefCast(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1549,6 +1566,7 @@ public:
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
+  BrOn() = default;
   BrOn(MixedArena& allocator) {}
 
   BrOnOp op;
@@ -1742,6 +1760,7 @@ public:
 
 class RefAs : public SpecificExpression<Expression::RefAsId> {
 public:
+  RefAs() = default;
   RefAs(MixedArena& allocator) {}
 
   RefAsOp op;

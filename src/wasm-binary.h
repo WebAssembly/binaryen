@@ -379,8 +379,8 @@ enum EncodedType {
   i8 = -0x8,  // 0x78
   i16 = -0x9, // 0x77
 #else
-  i8 = -0x6,                    // 0x7a
-  i16 = -0x7,                   // 0x79
+  i8 = -0x6,  // 0x7a
+  i16 = -0x7, // 0x79
 #endif
 // reference types
 #if STANDARD_GC_ENCODINGS
@@ -391,12 +391,12 @@ enum EncodedType {
   structref = -0x15,    // 0x6b
   arrayref = -0x16,     // 0x6a
 #else
-  nullexternref = -0x17,        // 0x69
-  nullfuncref = -0x18,          // 0x68
-  nullref = -0x1b,              // 0x65
-  i31ref = -0x16,               // 0x6a
-  structref = -0x19,            // 0x67
-  arrayref = -0x1a,             // 0x66
+  nullexternref = -0x17, // 0x69
+  nullfuncref = -0x18,   // 0x68
+  nullref = -0x1b,       // 0x65
+  i31ref = -0x16,        // 0x6a
+  structref = -0x19,     // 0x67
+  arrayref = -0x1a,      // 0x66
 #endif
   funcref = -0x10,   // 0x70
   externref = -0x11, // 0x6f
@@ -409,34 +409,35 @@ enum EncodedType {
   nonnullable = -0x1c, // 0x64
   nullable = -0x1d,    // 0x63
 #else
-  nullable = -0x14,             // 0x6c
-  nonnullable = -0x15,          // 0x6b
+  nullable = -0x14,    // 0x6c
+  nonnullable = -0x15, // 0x6b
 #endif
 // string reference types
 #if STANDARD_GC_ENCODINGS
   stringref = -0x19,       // 0x67
   stringview_wtf8 = -0x1a, // 0x66
 #else
-  stringref = -0x1c,            // 0x64
-  stringview_wtf8 = -0x1d,      // 0x63
+  stringref = -0x1c,       // 0x64
+  stringview_wtf8 = -0x1d, // 0x63
 #endif
   stringview_wtf16 = -0x1e, // 0x62
   stringview_iter = -0x1f,  // 0x61
   // type forms
   Func = -0x20,   // 0x60
+  Cont = -0x23,   // 0x5d
   Struct = -0x21, // 0x5f
   Array = -0x22,  // 0x5e
   Sub = -0x30,    // 0x50
 #if STANDARD_GC_ENCODINGS
   SubFinal = -0x31, // 0x4f
 #else
-  SubFinal = -0x32,             // 0x4e
+  SubFinal = -0x32, // 0x4e
 #endif
 // isorecursive recursion groups
 #if STANDARD_GC_ENCODINGS
   Rec = -0x32, // 0x4e
 #else
-  Rec = -0x31,                  // 0x4f
+  Rec = -0x31, // 0x4f
 #endif
   // block_type
   Empty = -0x40, // 0x40
@@ -502,6 +503,7 @@ extern const char* RelaxedSIMDFeature;
 extern const char* ExtendedConstFeature;
 extern const char* StringsFeature;
 extern const char* MultiMemoryFeature;
+extern const char* TypedContinuationsFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -1130,6 +1132,7 @@ enum ASTNodes {
   TableGrow = 0x0f,
   TableSize = 0x10,
   TableFill = 0x11,
+  TableCopy = 0x0e,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1421,6 +1424,7 @@ public:
   uint32_t getDataSegmentIndex(Name name) const;
   uint32_t getElementSegmentIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
+  uint32_t getSignatureIndex(Signature sig) const;
   uint32_t getStringIndex(Name string) const;
 
   void writeTableDeclarations();
@@ -1475,6 +1479,7 @@ private:
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
   ModuleUtils::IndexedHeapTypes indexedTypes;
+  std::unordered_map<Signature, uint32_t> signatureIndexes;
 
   bool debugInfo = true;
 
@@ -1840,6 +1845,7 @@ public:
   bool maybeVisitTableSize(Expression*& out, uint32_t code);
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitTableFill(Expression*& out, uint32_t code);
+  bool maybeVisitTableCopy(Expression*& out, uint32_t code);
   bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);

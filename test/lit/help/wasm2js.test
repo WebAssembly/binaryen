@@ -276,6 +276,8 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --outlining                                   outline instructions
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
 ;; CHECK-NEXT:                                                 uses
 ;; CHECK-NEXT:
@@ -353,6 +355,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --safe-heap                                   instrument loads and stores to
 ;; CHECK-NEXT:                                                 check for invalid behavior
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --separate-data-segments                      write data segments to a file
+;; CHECK-NEXT:                                                 and strip them from the module
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --set-globals                                 sets specified globals to
 ;; CHECK-NEXT:                                                 specified values
@@ -450,6 +455,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --type-unfinalizing                           mark all types as non-final
 ;; CHECK-NEXT:                                                 (open)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --unsubtyping                                 removes unnecessary subtyping
+;; CHECK-NEXT:                                                 relationships
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --untee                                       removes local.tees, replacing
 ;; CHECK-NEXT:                                                 them with sets and gets
@@ -635,6 +643,10 @@
 ;; CHECK-NEXT:   --enable-multimemory                          Enable multimemory
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-multimemory                         Disable multimemory
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-typed-continuations                  Enable typed continuations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-typed-continuations                 Disable typed continuations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

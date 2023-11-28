@@ -6,7 +6,7 @@
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
   ;; CHECK-NEXT:  (tuple.extract 0
-  ;; CHECK-NEXT:   (if (result i32 i32)
+  ;; CHECK-NEXT:   (if (type $2) (result i32 i32)
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (local.get $tuple)
   ;; CHECK-NEXT:    (local.get $tuple2)

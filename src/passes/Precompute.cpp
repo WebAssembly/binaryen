@@ -441,11 +441,19 @@ private:
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
               auto localType = getFunction()->getLocalType(get->index);
-              if (localType.isNonNullable()) {
-                Fatal() << "Non-nullable local accessing the default value in "
-                        << getFunction()->name << " (" << get->index << ')';
+              if (!localType.isDefaultable()) {
+                // This is a nondefaultable local that seems to read the default
+                // value at the function entry. This is either an internal error
+                // or a case of unreachable code; the latter is possible as
+                // LocalGraph is not precise in unreachable code.
+                //
+                // We cannot set zeros here (as applying them, even in
+                // unreachable code, would not validate), so just mark this as
+                // a hopeless case to ignore.
+                values = {};
+              } else {
+                curr = Literal::makeZeros(localType);
               }
-              curr = Literal::makeZeros(localType);
             } else {
               // it's a param, so it's hopeless
               values = {};

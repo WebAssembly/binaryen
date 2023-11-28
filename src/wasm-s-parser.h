@@ -73,7 +73,10 @@ public:
 
   // string methods
   IString str() const;
+  // convert a string to a string
   std::string toString() const;
+  // convert anything to a string
+  std::string forceString() const;
   Element* setString(IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
@@ -83,7 +86,7 @@ public:
   template<typename T> bool operator!=(T t) { return !(*this == t); }
 
   // printing
-  friend std::ostream& operator<<(std::ostream& o, Element& e);
+  friend std::ostream& operator<<(std::ostream& o, const Element& e);
   void dump();
 };
 
@@ -279,6 +282,7 @@ private:
   Expression* makeTableSize(Element& s);
   Expression* makeTableGrow(Element& s);
   Expression* makeTableFill(Element& s);
+  Expression* makeTableCopy(Element& s);
   Expression* makeTry(Element& s);
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
@@ -324,7 +328,7 @@ private:
   Expression* makeStringSliceIter(Element& s);
 
   // Helper functions
-  Type parseOptionalResultType(Element& s, Index& i);
+  Type parseBlockType(Element& s, Index& i);
   Index parseMemoryLimits(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryIndex(Element& s, Index i, std::unique_ptr<Memory>& memory);
   Index parseMemoryForInstruction(const std::string& instrName,

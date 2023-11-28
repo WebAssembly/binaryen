@@ -2,6 +2,7 @@
 ;; NOTE: This test was ported using port_passes_tests_to_lit.py and could be cleaned up.
 
 ;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-blacklist@foo,bar -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-blacklist@@%S/asyncify-foo,bar-nl.txt -S -o - | filecheck %s
 
 (module
   (memory 1 2)
@@ -80,12 +81,11 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (if (result i32)
+  ;; CHECK-NEXT:       (i32.or
   ;; CHECK-NEXT:        (i32.eq
   ;; CHECK-NEXT:         (global.get $__asyncify_state)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:        (i32.eq
   ;; CHECK-NEXT:         (local.get $1)
   ;; CHECK-NEXT:         (i32.const 0)
@@ -176,12 +176,11 @@
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (if
-  ;; CHECK-NEXT:       (if (result i32)
+  ;; CHECK-NEXT:       (i32.or
   ;; CHECK-NEXT:        (i32.eq
   ;; CHECK-NEXT:         (global.get $__asyncify_state)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (i32.const 1)
   ;; CHECK-NEXT:        (i32.eq
   ;; CHECK-NEXT:         (local.get $1)
   ;; CHECK-NEXT:         (i32.const 0)

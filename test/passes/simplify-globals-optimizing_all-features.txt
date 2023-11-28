@@ -15,8 +15,8 @@
  (type $0 (func))
  (import "env" "global-1" (global $g1 i32))
  (global $g2 i32 (global.get $g1))
- (global $g3 i32 (global.get $g2))
- (global $g4 i32 (global.get $g3))
+ (global $g3 i32 (global.get $g1))
+ (global $g4 i32 (global.get $g1))
  (func $foo (type $0)
   (drop
    (global.get $g1)
