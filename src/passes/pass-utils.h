@@ -35,7 +35,7 @@ struct FilteredPass : public Pass {
     return std::make_unique<FilteredPass>(pass->create(), relevantFuncs);
   }
 
-  FilteredPass(std::unique_ptr<Pass> pass, const FuncSet& relevantFuncs)
+  FilteredPass(std::unique_ptr<Pass>&& pass, const FuncSet& relevantFuncs)
     : pass(std::move(pass)), relevantFuncs(relevantFuncs) {}
 
   bool isFunctionParallel() override {
