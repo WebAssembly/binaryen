@@ -327,9 +327,6 @@ if(EMSCRIPTEN)
   endif()
 
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-    if(NOT BUILD_FOR_BROWSER)
-      add_link_flag("-sSINGLE_FILE")
-    endif()
     # Extra check that cmake has set -O3 in its release flags.
     # This is really as an assertion that cmake is behaving as we expect.
     if(NOT CMAKE_CXX_FLAGS_RELEASE_INIT MATCHES "-O3")
@@ -359,6 +356,7 @@ if(EMSCRIPTEN)
   # On Node.js, make the tools immediately usable.
   else()
     add_link_flag("-sNODERAWFS")
+    add_link_flag("-sSINGLE_FILE")
   endif()
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
     add_nondebug_compile_flag("-flto")
