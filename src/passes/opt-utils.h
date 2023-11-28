@@ -26,9 +26,7 @@
 #include <passes/pass-utils.h>
 #include <wasm.h>
 
-namespace wasm {
-
-namespace OptUtils {
+namespace wasm::OptUtils {
 
 // Run useful optimizations after inlining new code into a set of functions.
 inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
@@ -88,7 +86,6 @@ inline void replaceFunctions(PassRunner* runner,
   }
 }
 
-} // namespace OptUtils
-} // namespace wasm
+} // namespace wasm::OptUtils
 
 #endif // wasm_passes_opt_utils_h
