@@ -22,9 +22,7 @@
 #include <pass.h>
 #include <wasm.h>
 
-namespace wasm {
-
-namespace PassUtils {
+namespace wasm::PassUtils {
 
 using FuncSet = std::unordered_set<Function*>;
 
@@ -92,7 +90,6 @@ private:
   const FuncSet& relevantFuncs;
 };
 
-} // namespace PassUtils
-} // namespace wasm
+} // namespace wasm::PassUtils
 
 #endif // wasm_passes_pass_utils_h
