@@ -526,11 +526,9 @@ public:
       reached.insert(root);
       queue.push_back(root);
     }
-    dump();
     while (queue.size() > 0) {
       auto name = queue.back();
       queue.pop_back();
-std::cout << "popped " << name << '\n';
       auto& node = nodes[name];
       for (auto target : node.reaches) {
         if (reached.emplace(target).second) {

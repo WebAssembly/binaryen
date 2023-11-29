@@ -1,6 +1,6 @@
-unused: dseg$0$6
-unused: dseg$1$7
-unused: eseg$0$5
+unused: dseg$0$5
+unused: dseg$1$6
+unused: eseg$0$7
 unused: export$wasm_func_unused$15
 unused: func$an_unused_wasm_func$1
 unused: global$__THREW__unused$4
