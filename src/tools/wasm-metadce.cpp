@@ -154,8 +154,7 @@ struct MetaDCEGraph {
     {ModuleItemKind::Global, "global"},
     {ModuleItemKind::Tag, "tag"},
     {ModuleItemKind::DataSegment, "dseg"},
-    {ModuleItemKind::ElementSegment, "eseg"}
-  };
+    {ModuleItemKind::ElementSegment, "eseg"}};
 
   // populate the graph with info from the wasm, integrating with
   // potentially-existing nodes for imports and exports that the graph may
@@ -264,7 +263,8 @@ struct MetaDCEGraph {
       }
     };
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      InitScanner scanner(this, itemToDCENode[{ModuleItemKind::Global, global->name}]);
+      InitScanner scanner(
+        this, itemToDCENode[{ModuleItemKind::Global, global->name}]);
       scanner.setModule(&wasm);
       scanner.walk(global->init);
     });
@@ -283,7 +283,8 @@ struct MetaDCEGraph {
       wasm, [&](DataSegment* segment) { rooter.walk(segment->offset); });
 
     // A parallel scanner for function bodies
-    struct Scanner : public WalkerPass<PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
+    struct Scanner : public WalkerPass<
+                       PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>>> {
       bool isFunctionParallel() override { return true; }
 
       Scanner(MetaDCEGraph* parent) : parent(parent) {}
@@ -365,38 +366,38 @@ struct MetaDCEGraph {
       }
 
       void handleFunction(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getFunctionDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getFunctionDCEName(name));
       }
 
       void handleGlobal(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getGlobalDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getGlobalDCEName(name));
       }
 
       void handleTag(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getTagDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getTagDCEName(name));
       }
 
       void handleTable(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getTableDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getTableDCEName(name));
       }
 
       void handleMemory(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getMemoryDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getMemoryDCEName(name));
       }
 
       void handleElementSegment(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getElementSegmentDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getElementSegmentDCEName(name));
       }
 
       void handleDataSegment(Name name) {
-        getCurrentFunctionDCENode()
-          .reaches.push_back(parent->getDataSegmentDCEName(name));
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getDataSegmentDCEName(name));
       }
     };
 
