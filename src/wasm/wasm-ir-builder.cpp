@@ -590,16 +590,6 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     labelDepths.at(label).pop_back();
   }
 
-  // If this was a scope for a try, fix up its delegate label if necessary. See
-  // `visitDelegate` for details.
-  Try* tryy;
-  if ((tryy = scope.getTry()) || (tryy = scope.getCatch()) ||
-      (tryy = scope.getCatchAll())) {
-    if (tryy->name) {
-      tryy->name = Name(std::string("__delegate__") + tryy->name.toString());
-    }
-  }
-
   scopeStack.pop_back();
   return ret;
 }
@@ -692,11 +682,11 @@ Result<> IRBuilder::visitDelegate(Index label) {
       // These labels must be different to satisfy the Binaryen validator. To
       // keep this complexity contained within the handling of trys and
       // delegates, pretend there is just the single normal label and add a
-      // prefix to it to generate the delegate label. The prefix is added on the
-      // try when its scope ends.
-      delegateTry->name = *getLabelName(label);
-      tryy->delegateTarget =
-        Name(std::string("__delegate__") + delegateTry->name.toString());
+      // prefix to it to generate the delegate label.
+      auto delegateName =
+        Name(std::string("__delegate__") + getLabelName(label)->toString());
+      delegateTry->name = delegateName;
+      tryy->delegateTarget = delegateName;
       break;
     } else if (delegateScope.getFunction()) {
       tryy->delegateTarget = DELEGATE_CALLER_TARGET;
