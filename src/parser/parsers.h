@@ -959,8 +959,23 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
     }
 
     // It can be ambiguous whether the name after `catch` is intended to be the
-    // optional ID or the tag identifier. First try parsing with the optional
-    // ID, then retry without parsing the ID if we run into an error.
+    // optional ID or the tag identifier. For example:
+    //
+    // (tag $t)
+    // (func $ambiguous
+    //   try $t
+    //   catch $t
+    //   end
+    // )
+    //
+    // When parsing the `catch`, the parser first tries to parse an optional ID
+    // that must match the label of the `try`, and it succeeds because it sees
+    // `$t` after the catch. However, when it then tries to parse the mandatory
+    // tag index, it fails because the next token is `end`. The problem is that
+    // the `$t` after the `catch` was the tag name and there was no optional ID
+    // after all. The parser sets `parseID = false` and resets to just after the
+    // `catch`, and now it skips parsing the optional ID so it correctly parses
+    // the `$t` as a tag name.
     bool parseID = !folded;
     auto afterCatchPos = ctx.in.getPos();
     while (true) {

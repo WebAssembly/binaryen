@@ -772,7 +772,15 @@ Result<Index> IRBuilder::getLabelIndex(Name label, bool inDelegate) {
   if (inDelegate) {
     if (index == 0) {
       // The real label we're referencing, if it exists, has been shadowed by
-      // the `try`. Get the previous label with this name instead.
+      // the `try`. Get the previous label with this name instead. For example:
+      //
+      // block $l
+      //  try $l
+      //  delegate $l
+      // end
+      //
+      // The `delegate $l` should target the block, not the try, even though a
+      // normal branch to $l in the try's scope would target the try.
       if (it->second.size() <= 1) {
         return Err{"unexpected self-referencing label '"s + label.toString() +
                    "'"};
