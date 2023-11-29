@@ -346,21 +346,10 @@ public:
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
       }
-#if 0
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
         std::cout << "  is export " << DCENodeToExport[name] << ", "
                   << wasm.getExport(DCENodeToExport[name])->value << '\n';
       }
-      if (DCENodeToFunction.find(name) != DCENodeToFunction.end()) {
-        std::cout << "  is function " << DCENodeToFunction[name] << '\n';
-      }
-      if (DCENodeToGlobal.find(name) != DCENodeToGlobal.end()) {
-        std::cout << "  is global " << DCENodeToGlobal[name] << '\n';
-      }
-      if (DCENodeToTag.find(name) != DCENodeToTag.end()) {
-        std::cout << "  is tag " << DCENodeToTag[name] << '\n';
-      }
-#endif
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target << '\n';
       }
