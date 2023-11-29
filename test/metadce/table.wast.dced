@@ -1,5 +1,6 @@
 (module
  (type $0 (func))
+ (table $table 10 funcref)
  (elem declare func $func)
  (export "test" (func $func))
  (func $func (type $0)
