@@ -25,18 +25,6 @@
 
   ;; CHECK:      (type $8 (func (param anyref)))
 
-  ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
-
-  ;; CHECK:      (type $10 (func))
-
-  ;; CHECK:      (type $11 (func (param i32)))
-
-  ;; CHECK:      (type $a0 (array i32))
-
-  ;; CHECK:      (type $13 (func (param i32 i32 i32)))
-
-  ;; CHECK:      (type $14 (func (param v128 i32) (result v128)))
-
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct ))
   (type $s0 (sub (struct)))
@@ -45,6 +33,18 @@
  )
 
  (rec)
+
+ ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+
+ ;; CHECK:      (type $12 (func))
+
+ ;; CHECK:      (type $13 (func (param i32)))
+
+ ;; CHECK:      (type $a0 (array i32))
+
+ ;; CHECK:      (type $15 (func (param i32 i32 i32)))
+
+ ;; CHECK:      (type $16 (func (param v128 i32) (result v128)))
 
  ;; CHECK:      (type $packed-i8 (array (mut i8)))
 
@@ -167,6 +167,9 @@
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
 
+ ;; imported tables
+ (table (export "tab") (export "tab2") (import "" "tab") 0 funcref)
+
  ;; imported functions
  (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
 
@@ -179,6 +182,8 @@
  ;; CHECK:      (type $63 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
+
+ ;; CHECK:      (import "" "tab" (table $timport$0 0 18446744073709551615 funcref))
 
  ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
@@ -237,10 +242,52 @@
 
  (data (memory 4) (offset i64.const 0) "64-bit")
 
- ;; tags
- (tag)
+ ;; tables
  ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
 
+ ;; CHECK:      (table $funcs 1 1 funcref)
+ (table $funcs 1 1 (ref null func))
+
+ ;; CHECK:      (table $table-any 3 3 anyref)
+ (table $table-any anyref (elem (item i32.const 0 ref.i31) (ref.null any) (item (ref.i31 (i32.const 0)))))
+
+ ;; elems
+ ;; CHECK:      (elem $implicit-elem (table $table-any) (i32.const 0) anyref (ref.i31
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: ) (ref.null none) (ref.i31
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: ))
+
+ ;; CHECK:      (elem $implicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc) (ref.null nofunc) (ref.null nofunc))
+ (elem $implicit-table (offset i32.const 0) funcref (ref.null func) (item ref.null func) (item (ref.null func)))
+
+ ;; CHECK:      (elem $implicit-table-2 (table $timport$0) (i32.const 1) func)
+ (elem $implicit-table-2 (i32.const 1) funcref)
+
+ ;; CHECK:      (elem $implicit-table-indices (table $timport$0) (i32.const 2) func $fimport$0 $1 $f1)
+ (elem $implicit-table-indices (offset (i32.const 2)) func 0 1 2)
+
+ ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (i32.const 3) func $fimport$0 $1 $f1 $f2)
+ (elem $implicit-table-legacy-indices (i32.const 3) 0 1 2 3)
+
+ ;; CHECK:      (elem $explicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc))
+ (elem $explicit-table (table 0) (offset (i32.const 0)) funcref (item ref.null func))
+
+ ;; CHECK:      (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
+ (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
+
+ ;; CHECK:      (elem $passive (ref null $s0) (struct.new_default $s0) (struct.new_default $s0))
+ (elem $passive (ref null $s0) (item struct.new $s0) (struct.new $s0))
+
+ ;; CHECK:      (elem $passive-2 anyref (struct.new_default $s0) (struct.new_default $s0))
+ (elem $passive-2 anyref (item struct.new $s0) (struct.new $s0))
+
+ (elem $declare declare func 0 1 2 3)
+
+ (elem $declare-2 declare funcref (item ref.func 0) (ref.func 1) (item (ref.func 2)))
+
+ ;; tags
+ (tag)
  ;; CHECK:      (elem declare func $ref-func)
 
  ;; CHECK:      (tag $1)
@@ -265,6 +312,10 @@
 
  ;; CHECK:      (export "mem2" (memory $mimport$0))
 
+ ;; CHECK:      (export "tab" (table $timport$0))
+
+ ;; CHECK:      (export "tab2" (table $timport$0))
+
  ;; CHECK:      (export "f5.0" (func $fimport$0))
 
  ;; CHECK:      (export "f5.1" (func $fimport$0))
@@ -277,11 +328,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
- ;; CHECK:      (func $f1 (type $11) (param $0 i32)
+ ;; CHECK:      (func $f1 (type $13) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
- ;; CHECK:      (func $f2 (type $11) (param $x i32)
+ ;; CHECK:      (func $f2 (type $13) (param $x i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
@@ -2294,7 +2345,7 @@
   drop
  )
 
- ;; CHECK:      (func $select (type $13) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $select (type $15) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select
  ;; CHECK-NEXT:    (local.get $0)
@@ -2586,7 +2637,7 @@
   i32x4.extract_lane 3
  )
 
- ;; CHECK:      (func $simd-replace (type $14) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-replace (type $16) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i32x4.replace_lane 2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -2624,7 +2675,7 @@
   v128.bitselect
  )
 
- ;; CHECK:      (func $simd-shift (type $14) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-shift (type $16) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i8x16.shl
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -2679,7 +2730,7 @@
   v128.store64_lane 4 align=4 0
  )
 
- ;; CHECK:      (func $memory-init (type $13) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $memory-init (type $15) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (memory.init $mem-i32 $passive
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)

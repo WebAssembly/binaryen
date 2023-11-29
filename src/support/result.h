@@ -75,6 +75,9 @@ template<typename T = Ok> struct MaybeResult {
   // conditions where errors should not get lost.
   operator bool() const { return !std::holds_alternative<None>(val); }
 
+  MaybeResult<T>& operator=(const MaybeResult<T>&) = default;
+  MaybeResult<T>& operator=(MaybeResult<T>&&) = default;
+
   Err* getErr() { return std::get_if<Err>(&val); }
   T& operator*() { return *std::get_if<T>(&val); }
   T* operator->() { return std::get_if<T>(&val); }

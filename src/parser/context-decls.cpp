@@ -77,6 +77,60 @@ Result<> ParseDeclsCtx::addFunc(Name name,
   return Ok{};
 }
 
+Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
+                                           Name name,
+                                           ImportNames* importNames,
+                                           Limits limits) {
+  auto t = std::make_unique<Table>();
+  t->initial = limits.initial;
+  t->max = limits.max;
+  if (name.is()) {
+    if (wasm.getTableOrNull(name)) {
+      // TODO: if the existing table is not explicitly named, fix its name and
+      // continue.
+      return in.err(pos, "repeated table name");
+    }
+    t->setExplicitName(name);
+  } else {
+    name = (importNames ? "timport$" : "") + std::to_string(tableCounter++);
+    name = Names::getValidTableName(wasm, name);
+    t->name = name;
+  }
+  applyImportNames(*t, importNames);
+  return wasm.addTable(std::move(t));
+}
+
+Result<> ParseDeclsCtx::addTable(Name name,
+                                 const std::vector<Name>& exports,
+                                 ImportNames* import,
+                                 Limits limits,
+                                 Index pos) {
+  CHECK_ERR(checkImport(pos, import));
+  auto t = addTableDecl(pos, name, import, limits);
+  CHECK_ERR(t);
+  CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Table));
+  tableDefs.push_back({name, pos, Index(tableDefs.size())});
+  return Ok{};
+}
+
+Result<> ParseDeclsCtx::addImplicitElems(TypeT, ElemListT&& elems) {
+  // CHECK_ERR(addElem(Name(), nullptr, std::nullopt, std::move(elems), 0));
+  auto& table = *wasm.tables.back();
+  auto e = std::make_unique<ElementSegment>();
+  e->table = table.name;
+  e->offset = Builder(wasm).makeConstPtr(0, Type::i32);
+  e->name = Names::getValidElementSegmentName(wasm, "implicit-elem");
+  wasm.addElementSegment(std::move(e));
+
+  // Record the index mapping so we can find this segment again to set its type
+  // and elements in later phases.
+  Index tableIndex = wasm.tables.size() - 1;
+  Index elemIndex = wasm.elementSegments.size() - 1;
+  implicitElemIndices[tableIndex] = elemIndex;
+
+  return Ok{};
+}
+
 Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
                                              Name name,
                                              ImportNames* importNames,
@@ -157,6 +211,26 @@ Result<> ParseDeclsCtx::addGlobal(Name name,
   CHECK_ERR(g);
   CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
   globalDefs.push_back({name, pos, Index(globalDefs.size())});
+  return Ok{};
+}
+
+Result<> ParseDeclsCtx::addElem(
+  Name name, TableIdxT*, std::optional<ExprT>, ElemListT&&, Index pos) {
+  auto e = std::make_unique<ElementSegment>();
+  if (name) {
+    if (wasm.getElementSegmentOrNull(name)) {
+      // TDOO: if the existing segment is not explicitly named, fix its name and
+      // continue.
+      return in.err(pos, "repeated element segment name");
+    }
+    e->setExplicitName(name);
+  } else {
+    name = std::to_string(elemCounter++);
+    name = Names::getValidElementSegmentName(wasm, name);
+    e->name = name;
+  }
+  elemDefs.push_back({name, pos, Index(wasm.elementSegments.size())});
+  wasm.addElementSegment(std::move(e));
   return Ok{};
 }
 
