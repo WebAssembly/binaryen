@@ -407,7 +407,7 @@ struct MetaDCEGraph {
 
       void handleDataSegment(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDataSegmentDCEName(name));
+          parent->getDCEName(ModuleItemKind::DataSegment, name));
       }
     };
 
@@ -421,10 +421,6 @@ struct MetaDCEGraph {
     } else {
       return itemToDCENode[{kind, name}];
     }
-  }
-
-  Name getDataSegmentDCEName(Name name) {
-    return itemToDCENode[{ModuleItemKind::DataSegment, name}];
   }
 
 private:
