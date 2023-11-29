@@ -228,7 +228,7 @@ struct MetaDCEGraph {
       if (exp->kind == ExternalKind::Function) {
         node.reaches.push_back(getDCEName(ModuleItemKind::Function, exp->value));
       } else if (exp->kind == ExternalKind::Global) {
-        node.reaches.push_back(getGlobalDCEName(exp->value));
+        node.reaches.push_back(getDCEName(ModuleItemKind::Global, exp->value));
       } else if (exp->kind == ExternalKind::Tag) {
         node.reaches.push_back(getTagDCEName(exp->value));
       } else if (exp->kind == ExternalKind::Table) {
@@ -382,7 +382,7 @@ struct MetaDCEGraph {
 
       void handleGlobal(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getGlobalDCEName(name));
+          parent->getDCEName(ModuleItemKind::Global, name));
       }
 
       void handleTag(Name name) {
@@ -420,14 +420,6 @@ struct MetaDCEGraph {
       return importIdToDCENode[getImportId(kind, name)];
     } else {
       return itemToDCENode[{kind, name}];
-    }
-  }
-
-  Name getGlobalDCEName(Name name) {
-    if (!wasm.getGlobal(name)->imported()) {
-      return itemToDCENode[{ModuleItemKind::Global, name}];
-    } else {
-      return importIdToDCENode[getImportId(ModuleItemKind::Global, name)];
     }
   }
 
