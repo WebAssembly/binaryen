@@ -64,6 +64,59 @@ template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
   }
 }
 
+// Find the given item (identified by its kind and name) and return it (or
+// nullptr, as get*OrNull() methods do).
+Named* getItemOrNull(Module& wasm, ModuleItemKind kind, Name name) {
+  switch (kind) {
+    case ModuleItemKind::Function:
+      return wasm.getFunctionOrNull(name);
+    case ModuleItemKind::Table:
+      return wasm.getTableOrNull(name);
+    case ModuleItemKind::Memory:
+      return wasm.getMemoryOrNull(name);
+    case ModuleItemKind::Global:
+      return wasm.getGlobalOrNull(name);
+    case ModuleItemKind::Tag:
+      return wasm.getTagOrNull(name);
+    case ModuleItemKind::DataSegment:
+      return wasm.getDataSegmentOrNull(name);
+    case ModuleItemKind::ElementSegment:
+      return wasm.getElementSegmentOrNull(name);
+    default:
+      WASM_UNREACHABLE("invalid kind");
+  }
+}
+
+// Return an Importable if the the given item (identified by its kind and name)
+// is an import (or nullptr, as get*OrNull() methods do).
+Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
+  Importable* importable;
+  switch (kind) {
+    case ModuleItemKind::Function:
+      importable = wasm.getFunctionOrNull(name);
+      break;
+    case ModuleItemKind::Table:
+      importable = wasm.getTableOrNull(name);
+      break;
+    case ModuleItemKind::Memory:
+      importable = wasm.getMemoryOrNull(name);
+      break;
+    case ModuleItemKind::Global:
+      importable = wasm.getGlobalOrNull(name);
+      break;
+    case ModuleItemKind::Tag:
+      importable = wasm.getTagOrNull(name);
+      break;
+    case ModuleItemKind::DataSegment:
+      return nullptr;
+    case ModuleItemKind::ElementSegment:
+      return nullptr;
+    default:
+      WASM_UNREACHABLE("invalid kind");
+  }
+  return importable->imported() ? importable : nullptr;
+}
+
 // Generic reachability graph of abstract nodes
 
 struct DCENode {
@@ -78,22 +131,15 @@ struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
   std::unordered_set<Name> roots;
 
-  // Kind and exported name => DCE name
   std::unordered_map<Name, Name> exportToDCENode;
 
   using KindName = std::pair<ModuleItemKind, Name>;
 
+  // Kind and exported name => DCE name
   std::unordered_map<KindName, Name> itemToDCENode;
 
   // Reverse maps
   std::unordered_map<Name, Name> DCENodeToExport;
-  std::unordered_map<Name, Name> DCENodeToFunction;
-  std::unordered_map<Name, Name> DCENodeToGlobal;
-  std::unordered_map<Name, Name> DCENodeToTag;
-  std::unordered_map<Name, Name> DCENodeToTable;
-  std::unordered_map<Name, Name> DCENodeToMemory;
-  std::unordered_map<Name, Name> DCENodeToDataSeg;
-  std::unordered_map<Name, Name> DCENodeToElemSeg;
 
   // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
   // be imported twice, for example. So we don't map a DCE node to an Import,
@@ -164,8 +210,11 @@ struct MetaDCEGraph {
     // does not alter parent state, just adds to things pointed by it,
     // independently (each thread will add for one function, etc.)
     iterModuleItems(wasm, [&](ModuleItemKind kind, Named* item) {
+      if (getImportOrNull(wasm, kind, item->name)) {
+        // Imports are handled below.
+        return;
+      }
       auto dceName = getName(kindPrefixes[kind], item->name.toString());
-      DCENodeToFunction[dceName] = item->name;
       itemToDCENode[{kind, item->name}] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
@@ -477,9 +526,11 @@ public:
       reached.insert(root);
       queue.push_back(root);
     }
+    dump();
     while (queue.size() > 0) {
       auto name = queue.back();
       queue.pop_back();
+std::cout << "popped " << name << '\n';
       auto& node = nodes[name];
       for (auto target : node.reaches) {
         if (reached.emplace(target).second) {
@@ -540,6 +591,7 @@ public:
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
       }
+#if 0
       if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
         std::cout << "  is export " << DCENodeToExport[name] << ", "
                   << wasm.getExport(DCENodeToExport[name])->value << '\n';
@@ -553,6 +605,7 @@ public:
       if (DCENodeToTag.find(name) != DCENodeToTag.end()) {
         std::cout << "  is tag " << DCENodeToTag[name] << '\n';
       }
+#endif
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target << '\n';
       }
