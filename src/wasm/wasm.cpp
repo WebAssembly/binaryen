@@ -1482,23 +1482,22 @@ Tag* Module::getTagOrNull(Name name) {
   return getModuleElementOrNull(tagsMap, name);
 }
 
-Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
-  Importable* importable;
+Importable* Module::getImport(ModuleItemKind kind, Name name) {
   switch (kind) {
     case ModuleItemKind::Function:
-      return wasm.getFunction(name);
+      return getFunction(name);
       break;
     case ModuleItemKind::Table:
-      return wasm.getTable(name);
+      return getTable(name);
       break;
     case ModuleItemKind::Memory:
-      return wasm.getMemory(name);
+      return getMemory(name);
       break;
     case ModuleItemKind::Global:
-      return wasm.getGlobal(name);
+      return getGlobal(name);
       break;
     case ModuleItemKind::Tag:
-      return wasm.getTag(name);
+      return getTag(name);
       break;
     case ModuleItemKind::DataSegment:
     case ModuleItemKind::ElementSegment:
@@ -1509,23 +1508,23 @@ Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
 
 // Return an Importable if the the given item (identified by its kind and name)
 // is an import (or nullptr, as get*OrNull() methods do).
-Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
+Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
   Importable* importable;
   switch (kind) {
     case ModuleItemKind::Function:
-      importable = wasm.getFunctionOrNull(name);
+      importable = getFunctionOrNull(name);
       break;
     case ModuleItemKind::Table:
-      importable = wasm.getTableOrNull(name);
+      importable = getTableOrNull(name);
       break;
     case ModuleItemKind::Memory:
-      importable = wasm.getMemoryOrNull(name);
+      importable = getMemoryOrNull(name);
       break;
     case ModuleItemKind::Global:
-      importable = wasm.getGlobalOrNull(name);
+      importable = getGlobalOrNull(name);
       break;
     case ModuleItemKind::Tag:
-      importable = wasm.getTagOrNull(name);
+      importable = getTagOrNull(name);
       break;
     case ModuleItemKind::DataSegment:
     case ModuleItemKind::ElementSegment:
