@@ -134,18 +134,8 @@ struct MetaDCEGraph {
       }
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
-      if (exp->kind == ExternalKind::Function) {
-        node.reaches.push_back(
-          getDCEName(ModuleItemKind::Function, exp->value));
-      } else if (exp->kind == ExternalKind::Global) {
-        node.reaches.push_back(getDCEName(ModuleItemKind::Global, exp->value));
-      } else if (exp->kind == ExternalKind::Tag) {
-        node.reaches.push_back(getDCEName(ModuleItemKind::Tag, exp->value));
-      } else if (exp->kind == ExternalKind::Table) {
-        node.reaches.push_back(getDCEName(ModuleItemKind::Table, exp->value));
-      } else if (exp->kind == ExternalKind::Memory) {
-        node.reaches.push_back(getDCEName(ModuleItemKind::Memory, exp->value));
-      }
+      node.reaches.push_back(
+        getDCEName(ModuleItemKind(exp->kind), exp->value));
     }
     // Add initializer dependencies
     // if we provide a parent DCE name, that is who can reach what we see
