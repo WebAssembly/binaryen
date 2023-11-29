@@ -326,88 +326,23 @@ struct MetaDCEGraph {
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
   if (cast->field.is()) {                                                      \
-    handleNameAndKind(cast->field, kind);                                      \
+    handle(kind, cast->field);                                                 \
   }
 
 #include "wasm-delegations-fields.def"
       }
 
-      void visitThrow(Throw* curr) { handleTag(curr->tag); }
-      void visitTry(Try* curr) {
-        for (auto tag : curr->catchTags) {
-          handleTag(tag);
-        }
-      }
-
     private:
       MetaDCEGraph* parent;
 
-      void handleNameAndKind(Name name, ModuleItemKind kind) {
-        switch (kind) {
-          case ModuleItemKind::Function:
-            handleFunction(name);
-            break;
-          case ModuleItemKind::Table:
-            handleTable(name);
-            break;
-          case ModuleItemKind::Memory:
-            handleMemory(name);
-            break;
-          case ModuleItemKind::Global:
-            handleGlobal(name);
-            break;
-          case ModuleItemKind::Tag:
-            handleTag(name);
-            break;
-          case ModuleItemKind::DataSegment:
-            handleDataSegment(name);
-            break;
-          case ModuleItemKind::ElementSegment:
-            handleElementSegment(name);
-            break;
-          default:
-            WASM_UNREACHABLE("invalid kind");
-        }
+      void handle(ModuleItemKind kind, Name name) {
+        getCurrentFunctionDCENode().reaches.push_back(
+          parent->getDCEName(kind, name));
       }
 
       DCENode& getCurrentFunctionDCENode() {
         return parent->nodes[parent->itemToDCENode[{ModuleItemKind::Function,
                                                     getFunction()->name}]];
-      }
-
-      void handleFunction(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::Function, name));
-      }
-
-      void handleGlobal(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::Global, name));
-      }
-
-      void handleTag(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::Tag, name));
-      }
-
-      void handleTable(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::Table, name));
-      }
-
-      void handleMemory(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::Memory, name));
-      }
-
-      void handleElementSegment(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::ElementSegment, name));
-      }
-
-      void handleDataSegment(Name name) {
-        getCurrentFunctionDCENode().reaches.push_back(
-          parent->getDCEName(ModuleItemKind::DataSegment, name));
       }
     };
 
