@@ -134,8 +134,7 @@ struct MetaDCEGraph {
       }
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
-      node.reaches.push_back(
-        getDCEName(ModuleItemKind(exp->kind), exp->value));
+      node.reaches.push_back(getDCEName(ModuleItemKind(exp->kind), exp->value));
     }
     // Add initializer dependencies
     // if we provide a parent DCE name, that is who can reach what we see
