@@ -230,11 +230,11 @@ struct MetaDCEGraph {
       } else if (exp->kind == ExternalKind::Global) {
         node.reaches.push_back(getDCEName(ModuleItemKind::Global, exp->value));
       } else if (exp->kind == ExternalKind::Tag) {
-        node.reaches.push_back(getTagDCEName(exp->value));
+        node.reaches.push_back(getDCEName(ModuleItemKind::Tag, exp->value));
       } else if (exp->kind == ExternalKind::Table) {
-        node.reaches.push_back(getTableDCEName(exp->value));
+        node.reaches.push_back(getDCEName(ModuleItemKind::Table, exp->value));
       } else if (exp->kind == ExternalKind::Memory) {
-        node.reaches.push_back(getMemoryDCEName(exp->value));
+        node.reaches.push_back(getDCEName(ModuleItemKind::Memory, exp->value));
       }
     }
     // Add initializer dependencies
@@ -387,17 +387,17 @@ struct MetaDCEGraph {
 
       void handleTag(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getTagDCEName(name));
+          parent->getDCEName(ModuleItemKind::Tag, name));
       }
 
       void handleTable(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getTableDCEName(name));
+          parent->getDCEName(ModuleItemKind::Table, name));
       }
 
       void handleMemory(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getMemoryDCEName(name));
+          parent->getDCEName(ModuleItemKind::Memory, name));
       }
 
       void handleElementSegment(Name name) {
@@ -420,30 +420,6 @@ struct MetaDCEGraph {
       return importIdToDCENode[getImportId(kind, name)];
     } else {
       return itemToDCENode[{kind, name}];
-    }
-  }
-
-  Name getTagDCEName(Name name) {
-    if (!wasm.getTag(name)->imported()) {
-      return itemToDCENode[{ModuleItemKind::Tag, name}];
-    } else {
-      return importIdToDCENode[getImportId(ModuleItemKind::Tag, name)];
-    }
-  }
-
-  Name getTableDCEName(Name name) {
-    if (!wasm.getTable(name)->imported()) {
-      return itemToDCENode[{ModuleItemKind::Table, name}];
-    } else {
-      return importIdToDCENode[getImportId(ModuleItemKind::Table, name)];
-    }
-  }
-
-  Name getMemoryDCEName(Name name) {
-    if (!wasm.getMemory(name)->imported()) {
-      return itemToDCENode[{ModuleItemKind::Memory, name}];
-    } else {
-      return importIdToDCENode[getImportId(ModuleItemKind::Memory, name)];
     }
   }
 
