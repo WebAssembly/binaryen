@@ -40,95 +40,6 @@
 
 using namespace wasm;
 
-template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
-  for (auto& curr : wasm.functions) {
-    visitor(ModuleItemKind::Function, curr.get());
-  }
-  for (auto& curr : wasm.tables) {
-    visitor(ModuleItemKind::Table, curr.get());
-  }
-  for (auto& curr : wasm.memories) {
-    visitor(ModuleItemKind::Memory, curr.get());
-  }
-  for (auto& curr : wasm.globals) {
-    visitor(ModuleItemKind::Global, curr.get());
-  }
-  for (auto& curr : wasm.tags) {
-    visitor(ModuleItemKind::Tag, curr.get());
-  }
-  for (auto& curr : wasm.dataSegments) {
-    visitor(ModuleItemKind::DataSegment, curr.get());
-  }
-  for (auto& curr : wasm.elementSegments) {
-    visitor(ModuleItemKind::ElementSegment, curr.get());
-  }
-}
-
-// Find the given item (identified by its kind and name) and return it (or
-// nullptr, as get*OrNull() methods do).
-Named* getItemOrNull(Module& wasm, ModuleItemKind kind, Name name) {
-  switch (kind) {
-    case ModuleItemKind::Function:
-      return wasm.getFunctionOrNull(name);
-    case ModuleItemKind::Table:
-      return wasm.getTableOrNull(name);
-    case ModuleItemKind::Memory:
-      return wasm.getMemoryOrNull(name);
-    case ModuleItemKind::Global:
-      return wasm.getGlobalOrNull(name);
-    case ModuleItemKind::Tag:
-      return wasm.getTagOrNull(name);
-    case ModuleItemKind::DataSegment:
-      return wasm.getDataSegmentOrNull(name);
-    case ModuleItemKind::ElementSegment:
-      return wasm.getElementSegmentOrNull(name);
-    default:
-      WASM_UNREACHABLE("invalid kind");
-  }
-}
-
-Named* getItem(Module& wasm, ModuleItemKind kind, Name name) {
-  auto* item = getItemOrNull(wasm, kind, name);
-  assert(item);
-  return item;
-}
-
-// Return an Importable if the the given item (identified by its kind and name)
-// is an import (or nullptr, as get*OrNull() methods do).
-Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
-  Importable* importable;
-  switch (kind) {
-    case ModuleItemKind::Function:
-      importable = wasm.getFunctionOrNull(name);
-      break;
-    case ModuleItemKind::Table:
-      importable = wasm.getTableOrNull(name);
-      break;
-    case ModuleItemKind::Memory:
-      importable = wasm.getMemoryOrNull(name);
-      break;
-    case ModuleItemKind::Global:
-      importable = wasm.getGlobalOrNull(name);
-      break;
-    case ModuleItemKind::Tag:
-      importable = wasm.getTagOrNull(name);
-      break;
-    case ModuleItemKind::DataSegment:
-      return nullptr;
-    case ModuleItemKind::ElementSegment:
-      return nullptr;
-    default:
-      WASM_UNREACHABLE("invalid kind");
-  }
-  return importable->imported() ? importable : nullptr;
-}
-
-Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
-  auto* item = getImportOrNull(wasm, kind, name);
-  assert(item);
-  return item;
-}
-
 // Generic reachability graph of abstract nodes
 
 struct DCENode {
@@ -174,7 +85,7 @@ struct MetaDCEGraph {
   }
 
   ImportId getImportId(ModuleItemKind kind, Name name) {
-    auto* imp = getImport(wasm, kind, name);
+    auto* imp = wasm.getImport(kind, name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -201,8 +112,8 @@ struct MetaDCEGraph {
     // Add an entry for everything we might need ahead of time, so parallel work
     // does not alter parent state, just adds to things pointed by it,
     // independently (each thread will add for one function, etc.)
-    iterModuleItems(wasm, [&](ModuleItemKind kind, Named* item) {
-      if (auto* import = getImportOrNull(wasm, kind, item->name)) {
+    ModuleUtils::iterModuleItems(wasm, [&](ModuleItemKind kind, Named* item) {
+      if (auto* import = wasm.getImportOrNull(kind, item->name)) {
         auto id = getImportId(import->module, import->base);
         if (importIdToDCENode.find(id) == importIdToDCENode.end()) {
           auto dceName = getName("importId", import->name.toString());
@@ -352,7 +263,7 @@ struct MetaDCEGraph {
   }
 
   Name getDCEName(ModuleItemKind kind, Name name) {
-    if (getImportOrNull(wasm, kind, name)) {
+    if (wasm.getImportOrNull(kind, name)) {
       return importIdToDCENode[getImportId(kind, name)];
     } else {
       return itemToDCENode[{kind, name}];

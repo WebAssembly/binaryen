@@ -1482,6 +1482,60 @@ Tag* Module::getTagOrNull(Name name) {
   return getModuleElementOrNull(tagsMap, name);
 }
 
+Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
+  Importable* importable;
+  switch (kind) {
+    case ModuleItemKind::Function:
+      return wasm.getFunction(name);
+      break;
+    case ModuleItemKind::Table:
+      return wasm.getTable(name);
+      break;
+    case ModuleItemKind::Memory:
+      return wasm.getMemory(name);
+      break;
+    case ModuleItemKind::Global:
+      return wasm.getGlobal(name);
+      break;
+    case ModuleItemKind::Tag:
+      return wasm.getTag(name);
+      break;
+    case ModuleItemKind::DataSegment:
+    case ModuleItemKind::ElementSegment:
+    default:
+      WASM_UNREACHABLE("invalid kind");
+  }
+}
+
+// Return an Importable if the the given item (identified by its kind and name)
+// is an import (or nullptr, as get*OrNull() methods do).
+Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
+  Importable* importable;
+  switch (kind) {
+    case ModuleItemKind::Function:
+      importable = wasm.getFunctionOrNull(name);
+      break;
+    case ModuleItemKind::Table:
+      importable = wasm.getTableOrNull(name);
+      break;
+    case ModuleItemKind::Memory:
+      importable = wasm.getMemoryOrNull(name);
+      break;
+    case ModuleItemKind::Global:
+      importable = wasm.getGlobalOrNull(name);
+      break;
+    case ModuleItemKind::Tag:
+      importable = wasm.getTagOrNull(name);
+      break;
+    case ModuleItemKind::DataSegment:
+    case ModuleItemKind::ElementSegment:
+      return nullptr;
+    default:
+      WASM_UNREACHABLE("invalid kind");
+  }
+  return importable->imported() ? importable : nullptr;
+}
+
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
 template<typename Vector, typename Map, typename Elem>
 Elem* addModuleElement(Vector& v, Map& m, Elem* curr, std::string funcName) {
