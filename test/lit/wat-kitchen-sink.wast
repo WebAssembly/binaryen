@@ -1791,6 +1791,78 @@
   end $l
  )
 
+ ;; CHECK:      (func $try-delegate-nested-catch-shadowing (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (catch $empty
+ ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:         (try
+ ;; CHECK-NEXT:          (do
+ ;; CHECK-NEXT:           (nop)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (delegate $__delegate__l)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-catch-shadowing
+  try $l
+   try $l
+   catch $empty
+    try $l
+    ;; goes to the outermost try, not the middle one
+    delegate $l
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-catch_all-shadowing (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (catch_all
+ ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:         (try
+ ;; CHECK-NEXT:          (do
+ ;; CHECK-NEXT:           (nop)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (delegate $__delegate__l)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-catch_all-shadowing
+  try $l
+   try $l
+   catch_all
+    try $l
+    ;; goes to the outermost try, not the middle one
+    delegate $l
+   end
+  end
+ )
+
  ;; CHECK:      (func $try-br-index (type $void)
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (try
@@ -1879,6 +1951,21 @@
     (nop)
     nop
    )
+  )
+ )
+
+ ;; CHECK:      (func $try-delegate-folded (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (delegate 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-folded
+  (try
+   (do)
+   (delegate 0)
   )
  )
 
@@ -2780,7 +2867,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 126
+  ref.func 129
   drop
  )
 

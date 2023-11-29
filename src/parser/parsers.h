@@ -946,6 +946,15 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
     auto label = labelidx(ctx, true);
     CHECK_ERR(label);
 
+    if (folded) {
+      if (!ctx.in.takeRParen()) {
+        return ctx.in.err("expected ')' at end of delegate");
+      }
+      if (!ctx.in.takeRParen()) {
+        return ctx.in.err("expected ')' at end of try");
+      }
+    }
+
     CHECK_ERR(ctx.visitDelegate(delegatePos, *label));
     return Ok{};
   }
