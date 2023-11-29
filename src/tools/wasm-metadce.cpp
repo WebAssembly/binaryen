@@ -129,7 +129,6 @@ Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
   return item;
 }
 
-
 // Generic reachability graph of abstract nodes
 
 struct DCENode {
@@ -173,7 +172,6 @@ struct MetaDCEGraph {
     }
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
-
 
   ImportId getImportId(ModuleItemKind kind, Name name) {
     auto* imp = getImport(wasm, kind, name);
@@ -226,7 +224,8 @@ struct MetaDCEGraph {
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
       if (exp->kind == ExternalKind::Function) {
-        node.reaches.push_back(getDCEName(ModuleItemKind::Function, exp->value));
+        node.reaches.push_back(
+          getDCEName(ModuleItemKind::Function, exp->value));
       } else if (exp->kind == ExternalKind::Global) {
         node.reaches.push_back(getDCEName(ModuleItemKind::Global, exp->value));
       } else if (exp->kind == ExternalKind::Tag) {
@@ -263,7 +262,8 @@ struct MetaDCEGraph {
           dceName = parent->itemToDCENode[{ModuleItemKind::Global, name}];
         } else {
           // it's an import.
-          dceName = parent->importIdToDCENode[parent->getImportId(ModuleItemKind::Global, name)];
+          dceName = parent->importIdToDCENode[parent->getImportId(
+            ModuleItemKind::Global, name)];
         }
         if (parentDceName.isNull()) {
           parent->roots.insert(dceName);
@@ -285,8 +285,9 @@ struct MetaDCEGraph {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
       ElementUtils::iterElementSegmentFunctionNames(
-        segment,
-        [&](Name name, Index) { roots.insert(getDCEName(ModuleItemKind::Function, name)); });
+        segment, [&](Name name, Index) {
+          roots.insert(getDCEName(ModuleItemKind::Function, name));
+        });
       rooter.walk(segment->offset);
     });
     ModuleUtils::iterActiveDataSegments(
