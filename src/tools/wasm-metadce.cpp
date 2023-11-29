@@ -87,6 +87,12 @@ Named* getItemOrNull(Module& wasm, ModuleItemKind kind, Name name) {
   }
 }
 
+Named* getItem(Module& wasm, ModuleItemKind kind, Name name) {
+  auto* item = getItemOrNull(wasm, kind, name);
+  assert(item);
+  return item;
+}
+
 // Return an Importable if the the given item (identified by its kind and name)
 // is an import (or nullptr, as get*OrNull() methods do).
 Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
@@ -116,6 +122,13 @@ Importable* getImportOrNull(Module& wasm, ModuleItemKind kind, Name name) {
   }
   return importable->imported() ? importable : nullptr;
 }
+
+Importable* getImport(Module& wasm, ModuleItemKind kind, Name name) {
+  auto* item = getImportOrNull(wasm, kind, name);
+  assert(item);
+  return item;
+}
+
 
 // Generic reachability graph of abstract nodes
 
@@ -161,28 +174,9 @@ struct MetaDCEGraph {
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
 
-  ImportId getFunctionImportId(Name name) {
-    auto* imp = wasm.getFunction(name);
-    return getImportId(imp->module, imp->base);
-  }
 
-  ImportId getGlobalImportId(Name name) {
-    auto* imp = wasm.getGlobal(name);
-    return getImportId(imp->module, imp->base);
-  }
-
-  ImportId getTagImportId(Name name) {
-    auto* imp = wasm.getTag(name);
-    return getImportId(imp->module, imp->base);
-  }
-
-  ImportId getTableImportId(Name name) {
-    auto* imp = wasm.getTable(name);
-    return getImportId(imp->module, imp->base);
-  }
-
-  ImportId getMemoryImportId(Name name) {
-    auto* imp = wasm.getMemory(name);
+  ImportId getImportId(ModuleItemKind kind, Name name) {
+    auto* imp = getImport(wasm, kind, name);
     return getImportId(imp->module, imp->base);
   }
 
@@ -269,7 +263,7 @@ struct MetaDCEGraph {
           dceName = parent->itemToDCENode[{ModuleItemKind::Global, name}];
         } else {
           // it's an import.
-          dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
+          dceName = parent->importIdToDCENode[parent->getImportId(ModuleItemKind::Global, name)];
         }
         if (parentDceName.isNull()) {
           parent->roots.insert(dceName);
@@ -425,7 +419,7 @@ struct MetaDCEGraph {
     if (!wasm.getFunction(name)->imported()) {
       return itemToDCENode[{ModuleItemKind::Function, name}];
     } else {
-      return importIdToDCENode[getFunctionImportId(name)];
+      return importIdToDCENode[getImportId(ModuleItemKind::Function, name)];
     }
   }
 
@@ -433,7 +427,7 @@ struct MetaDCEGraph {
     if (!wasm.getGlobal(name)->imported()) {
       return itemToDCENode[{ModuleItemKind::Global, name}];
     } else {
-      return importIdToDCENode[getGlobalImportId(name)];
+      return importIdToDCENode[getImportId(ModuleItemKind::Global, name)];
     }
   }
 
@@ -441,7 +435,7 @@ struct MetaDCEGraph {
     if (!wasm.getTag(name)->imported()) {
       return itemToDCENode[{ModuleItemKind::Tag, name}];
     } else {
-      return importIdToDCENode[getTagImportId(name)];
+      return importIdToDCENode[getImportId(ModuleItemKind::Tag, name)];
     }
   }
 
@@ -449,7 +443,7 @@ struct MetaDCEGraph {
     if (!wasm.getTable(name)->imported()) {
       return itemToDCENode[{ModuleItemKind::Table, name}];
     } else {
-      return importIdToDCENode[getTableImportId(name)];
+      return importIdToDCENode[getImportId(ModuleItemKind::Table, name)];
     }
   }
 
@@ -457,7 +451,7 @@ struct MetaDCEGraph {
     if (!wasm.getMemory(name)->imported()) {
       return itemToDCENode[{ModuleItemKind::Memory, name}];
     } else {
-      return importIdToDCENode[getMemoryImportId(name)];
+      return importIdToDCENode[getImportId(ModuleItemKind::Memory, name)];
     }
   }
 
