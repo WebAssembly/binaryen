@@ -415,12 +415,16 @@ struct MetaDCEGraph {
     Scanner(this).run(&runner, &wasm);
   }
 
-  Name getFunctionDCEName(Name name) {
-    if (!wasm.getFunction(name)->imported()) {
-      return itemToDCENode[{ModuleItemKind::Function, name}];
+  Name getDCEName(ModuleItemKind kind, Name name) {
+    if (getImportOrNull(wasm, kind, name)) {
+      return importIdToDCENode[getImportId(kind, name)];
     } else {
-      return importIdToDCENode[getImportId(ModuleItemKind::Function, name)];
+      return itemToDCENode[{kind, name}];
     }
+  }
+
+  Name getFunctionDCEName(Name name) {
+    return getDCEName(ModuleItemKind::Function, name);
   }
 
   Name getGlobalDCEName(Name name) {
