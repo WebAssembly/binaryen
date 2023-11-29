@@ -226,7 +226,7 @@ struct MetaDCEGraph {
       // we can also link the export to the thing being exported
       auto& node = nodes[exportToDCENode[exp->name]];
       if (exp->kind == ExternalKind::Function) {
-        node.reaches.push_back(getFunctionDCEName(exp->value));
+        node.reaches.push_back(getDCEName(ModuleItemKind::Function, exp->value));
       } else if (exp->kind == ExternalKind::Global) {
         node.reaches.push_back(getGlobalDCEName(exp->value));
       } else if (exp->kind == ExternalKind::Tag) {
@@ -249,7 +249,7 @@ struct MetaDCEGraph {
       void visitRefFunc(RefFunc* curr) {
         assert(!parentDceName.isNull());
         parent->nodes[parentDceName].reaches.push_back(
-          parent->getFunctionDCEName(curr->func));
+          parent->getDCEName(ModuleItemKind::Function, curr->func));
       }
 
     private:
@@ -286,7 +286,7 @@ struct MetaDCEGraph {
       //       should add an option to refine that
       ElementUtils::iterElementSegmentFunctionNames(
         segment,
-        [&](Name name, Index) { roots.insert(getFunctionDCEName(name)); });
+        [&](Name name, Index) { roots.insert(getDCEName(ModuleItemKind::Function, name)); });
       rooter.walk(segment->offset);
     });
     ModuleUtils::iterActiveDataSegments(
@@ -377,7 +377,7 @@ struct MetaDCEGraph {
 
       void handleFunction(Name name) {
         getCurrentFunctionDCENode().reaches.push_back(
-          parent->getFunctionDCEName(name));
+          parent->getDCEName(ModuleItemKind::Function, name));
       }
 
       void handleGlobal(Name name) {
@@ -421,10 +421,6 @@ struct MetaDCEGraph {
     } else {
       return itemToDCENode[{kind, name}];
     }
-  }
-
-  Name getFunctionDCEName(Name name) {
-    return getDCEName(ModuleItemKind::Function, name);
   }
 
   Name getGlobalDCEName(Name name) {
