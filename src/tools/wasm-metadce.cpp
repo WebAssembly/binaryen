@@ -40,6 +40,30 @@
 
 using namespace wasm;
 
+template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
+  for (auto& curr : wasm.functions) {
+    visitor(ModuleItemKind::Function, curr.get());
+  }
+  for (auto& curr : wasm.tables) {
+    visitor(ModuleItemKind::Table, curr.get());
+  }
+  for (auto& curr : wasm.memories) {
+    visitor(ModuleItemKind::Memory, curr.get());
+  }
+  for (auto& curr : wasm.globals) {
+    visitor(ModuleItemKind::Global, curr.get());
+  }
+  for (auto& curr : wasm.tags) {
+    visitor(ModuleItemKind::Tag, curr.get());
+  }
+  for (auto& curr : wasm.dataSegments) {
+    visitor(ModuleItemKind::DataSegment, curr.get());
+  }
+  for (auto& curr : wasm.elementSegments) {
+    visitor(ModuleItemKind::ElementSegment, curr.get());
+  }
+}
+
 // Generic reachability graph of abstract nodes
 
 struct DCENode {
@@ -54,17 +78,15 @@ struct MetaDCEGraph {
   std::unordered_map<Name, DCENode> nodes;
   std::unordered_set<Name> roots;
 
-  // export exported name => DCE name
+  // Kind and exported name => DCE name
   std::unordered_map<Name, Name> exportToDCENode;
-  std::unordered_map<Name, Name> functionToDCENode; // function name => DCE name
-  std::unordered_map<Name, Name> globalToDCENode;   // global name => DCE name
-  std::unordered_map<Name, Name> tagToDCENode;      // tag name => DCE name
-  std::unordered_map<Name, Name> tableToDCENode;    // table name => DCE name
-  std::unordered_map<Name, Name> memoryToDCENode;   // memory name => DCE name
-  std::unordered_map<Name, Name> dataSegToDCENode;  // seg name => DCE name
-  std::unordered_map<Name, Name> elemSegToDCENode;  // seg name => DCE name
 
-  std::unordered_map<Name, Name> DCENodeToExport; // reverse maps
+  using KindName = std::pair<ModuleItemKind, Name>;
+
+  std::unordered_map<KindName, Name> itemToDCENode;
+
+  // Reverse maps
+  std::unordered_map<Name, Name> DCENodeToExport;
   std::unordered_map<Name, Name> DCENodeToFunction;
   std::unordered_map<Name, Name> DCENodeToGlobal;
   std::unordered_map<Name, Name> DCENodeToTag;
@@ -125,6 +147,16 @@ struct MetaDCEGraph {
 
   MetaDCEGraph(Module& wasm) : wasm(wasm) {}
 
+  std::unordered_map<ModuleItemKind, std::string> kindPrefixes = {
+    {ModuleItemKind::Function, "func"},
+    {ModuleItemKind::Table, "table"},
+    {ModuleItemKind::Memory, "memory"},
+    {ModuleItemKind::Global, "global"},
+    {ModuleItemKind::Tag, "tag"},
+    {ModuleItemKind::DataSegment, "dseg"},
+    {ModuleItemKind::ElementSegment, "eseg"}
+  };
+
   // populate the graph with info from the wasm, integrating with
   // potentially-existing nodes for imports and exports that the graph may
   // already contain.
@@ -132,48 +164,12 @@ struct MetaDCEGraph {
     // Add an entry for everything we might need ahead of time, so parallel work
     // does not alter parent state, just adds to things pointed by it,
     // independently (each thread will add for one function, etc.)
-    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      auto dceName = getName("func", func->name.toString());
-      DCENodeToFunction[dceName] = func->name;
-      functionToDCENode[func->name] = dceName;
+    iterModuleItems(wasm, [&](ModuleItemKind kind, Named* item) {
+      auto dceName = getName(kindPrefixes[kind], item->name.toString());
+      DCENodeToFunction[dceName] = item->name;
+      itemToDCENode[{kind, item->name}] = dceName;
       nodes[dceName] = DCENode(dceName);
     });
-    ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      auto dceName = getName("global", global->name.toString());
-      DCENodeToGlobal[dceName] = global->name;
-      globalToDCENode[global->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    });
-    ModuleUtils::iterDefinedTags(wasm, [&](Tag* tag) {
-      auto dceName = getName("tag", tag->name.toString());
-      DCENodeToTag[dceName] = tag->name;
-      tagToDCENode[tag->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    });
-    ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
-      auto dceName = getName("table", table->name.toString());
-      DCENodeToTable[dceName] = table->name;
-      tableToDCENode[table->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    });
-    ModuleUtils::iterDefinedMemories(wasm, [&](Memory* memory) {
-      auto dceName = getName("memory", memory->name.toString());
-      DCENodeToMemory[dceName] = memory->name;
-      memoryToDCENode[memory->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    });
-    for (auto& seg : wasm.elementSegments) {
-      auto dceName = getName("eseg", seg->name.toString());
-      DCENodeToElemSeg[dceName] = seg->name;
-      elemSegToDCENode[seg->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    }
-    for (auto& seg : wasm.dataSegments) {
-      auto dceName = getName("dseg", seg->name.toString());
-      DCENodeToDataSeg[dceName] = seg->name;
-      dataSegToDCENode[seg->name] = dceName;
-      nodes[dceName] = DCENode(dceName);
-    }
     // only process function, global, and tag imports - the table and memory are
     // always there
     ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
@@ -255,7 +251,7 @@ struct MetaDCEGraph {
         Name dceName;
         if (!getModule()->getGlobal(name)->imported()) {
           // its a defined global
-          dceName = parent->globalToDCENode[name];
+          dceName = parent->itemToDCENode[{ModuleItemKind::Global, name}];
         } else {
           // it's an import.
           dceName = parent->importIdToDCENode[parent->getGlobalImportId(name)];
@@ -268,7 +264,7 @@ struct MetaDCEGraph {
       }
     };
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
-      InitScanner scanner(this, globalToDCENode[global->name]);
+      InitScanner scanner(this, itemToDCENode[{ModuleItemKind::Global, global->name}]);
       scanner.setModule(&wasm);
       scanner.walk(global->init);
     });
@@ -363,38 +359,43 @@ struct MetaDCEGraph {
         }
       }
 
+      DCENode& getCurrentFunctionDCENode() {
+        return parent->nodes[parent->itemToDCENode[{ModuleItemKind::Function,
+                                                    getFunction()->name}]];
+      }
+
       void handleFunction(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getFunctionDCEName(name));
       }
 
       void handleGlobal(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getGlobalDCEName(name));
       }
 
       void handleTag(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getTagDCEName(name));
       }
 
       void handleTable(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getTableDCEName(name));
       }
 
       void handleMemory(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getMemoryDCEName(name));
       }
 
       void handleElementSegment(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getElementSegmentDCEName(name));
       }
 
       void handleDataSegment(Name name) {
-        parent->nodes[parent->functionToDCENode[getFunction()->name]]
+        getCurrentFunctionDCENode()
           .reaches.push_back(parent->getDataSegmentDCEName(name));
       }
     };
@@ -405,7 +406,7 @@ struct MetaDCEGraph {
 
   Name getFunctionDCEName(Name name) {
     if (!wasm.getFunction(name)->imported()) {
-      return functionToDCENode[name];
+      return itemToDCENode[{ModuleItemKind::Function, name}];
     } else {
       return importIdToDCENode[getFunctionImportId(name)];
     }
@@ -413,7 +414,7 @@ struct MetaDCEGraph {
 
   Name getGlobalDCEName(Name name) {
     if (!wasm.getGlobal(name)->imported()) {
-      return globalToDCENode[name];
+      return itemToDCENode[{ModuleItemKind::Global, name}];
     } else {
       return importIdToDCENode[getGlobalImportId(name)];
     }
@@ -421,7 +422,7 @@ struct MetaDCEGraph {
 
   Name getTagDCEName(Name name) {
     if (!wasm.getTag(name)->imported()) {
-      return tagToDCENode[name];
+      return itemToDCENode[{ModuleItemKind::Tag, name}];
     } else {
       return importIdToDCENode[getTagImportId(name)];
     }
@@ -429,7 +430,7 @@ struct MetaDCEGraph {
 
   Name getTableDCEName(Name name) {
     if (!wasm.getTable(name)->imported()) {
-      return tableToDCENode[name];
+      return itemToDCENode[{ModuleItemKind::Table, name}];
     } else {
       return importIdToDCENode[getTableImportId(name)];
     }
@@ -437,18 +438,18 @@ struct MetaDCEGraph {
 
   Name getMemoryDCEName(Name name) {
     if (!wasm.getMemory(name)->imported()) {
-      return memoryToDCENode[name];
+      return itemToDCENode[{ModuleItemKind::Memory, name}];
     } else {
       return importIdToDCENode[getMemoryImportId(name)];
     }
   }
 
   Name getElementSegmentDCEName(Name name) {
-    return elemSegToDCENode[name];
+    return itemToDCENode[{ModuleItemKind::ElementSegment, name}];
   }
 
   Name getDataSegmentDCEName(Name name) {
-    return dataSegToDCENode[name];
+    return itemToDCENode[{ModuleItemKind::DataSegment, name}];
   }
 
 private:
