@@ -546,7 +546,7 @@
 ;; outline if-true.
 ;; TODO: Ideally outlining would keep the if-true inline in $outline$, instead
 ;; of moving this to another outlined function ($outline$_3) because of the
-;; unique symbol between the if-condition and if-true
+;; unique symbol between the if-condition and if-true.
 (module
   ;; CHECK:      (type $0 (func))
 
