@@ -1486,51 +1486,47 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
   switch (kind) {
     case ModuleItemKind::Function:
       return getFunction(name);
-      break;
     case ModuleItemKind::Table:
       return getTable(name);
-      break;
     case ModuleItemKind::Memory:
       return getMemory(name);
-      break;
     case ModuleItemKind::Global:
       return getGlobal(name);
-      break;
     case ModuleItemKind::Tag:
       return getTag(name);
-      break;
     case ModuleItemKind::DataSegment:
     case ModuleItemKind::ElementSegment:
-    default:
+    case ModuleItemKind::Invalid:
       WASM_UNREACHABLE("invalid kind");
   }
+
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
-  Importable* importable;
+  auto doReturn = [](Importable* importable) {
+    return importable->imported() ? importable : nullptr;
+  };
+
   switch (kind) {
     case ModuleItemKind::Function:
-      importable = getFunctionOrNull(name);
-      break;
+      return doReturn(getFunctionOrNull(name));
     case ModuleItemKind::Table:
-      importable = getTableOrNull(name);
-      break;
+      return doReturn(getTableOrNull(name));
     case ModuleItemKind::Memory:
-      importable = getMemoryOrNull(name);
-      break;
+      return doReturn(getMemoryOrNull(name));
     case ModuleItemKind::Global:
-      importable = getGlobalOrNull(name);
-      break;
+      return doReturn(getGlobalOrNull(name));
     case ModuleItemKind::Tag:
-      importable = getTagOrNull(name);
-      break;
+      return doReturn(getTagOrNull(name));
     case ModuleItemKind::DataSegment:
     case ModuleItemKind::ElementSegment:
       return nullptr;
-    default:
+    case ModuleItemKind::Invalid:
       WASM_UNREACHABLE("invalid kind");
   }
-  return importable->imported() ? importable : nullptr;
+
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
