@@ -5953,6 +5953,12 @@ BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table) {
 void BinaryenTableSetMax(BinaryenTableRef table, BinaryenIndex max) {
   ((Table*)table)->max = max;
 }
+BinaryenType BinaryenTableGetType(BinaryenTableRef table) {
+  return ((Table*)table)->type.getID();
+}
+void BinaryenTableSetType(BinaryenTableRef table, BinaryenType tableType) {
+  ((Table*)table)->type = Type(tableType);
+}
 
 //
 // =========== ElementSegment operations ===========

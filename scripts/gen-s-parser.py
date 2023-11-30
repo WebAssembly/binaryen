@@ -709,15 +709,13 @@ class Node:
 def instruction_parser(new_parser=False):
     """Build a trie out of all the instructions, then emit it as C++ code."""
     global instructions
-    if new_parser:
-        # Filter out instructions that the new parser does not need.
-        instructions = [(inst, code) for (inst, code) in instructions
-                        if inst not in ('block', 'loop', 'if', 'then', 'else')]
     trie = Node()
     inst_length = 0
     for inst, expr in instructions:
-        if new_parser and inst in {"then", "else"}:
-            # These are not real instructions! skip them.
+        if new_parser and inst in {"block", "loop", "if", "try", "then",
+                                   "else"}:
+            # These are either control flow handled manually or not real
+            # instructions. Skip them.
             continue
         inst_length = max(inst_length, len(inst))
         trie.insert(inst, expr)

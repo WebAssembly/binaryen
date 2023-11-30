@@ -8649,12 +8649,6 @@ switch (buf[0]) {
           return Ok{};
         }
         goto parse_error;
-      case 'r':
-        if (op == "try"sv) {
-          CHECK_ERR(makeTry(ctx, pos));
-          return Ok{};
-        }
-        goto parse_error;
       case 'u': {
         switch (buf[6]) {
           case 'e':
