@@ -1515,6 +1515,460 @@
   )
  )
 
+ ;; CHECK:      (func $try (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try
+  try
+   nop
+  end
+ )
+
+ ;; CHECK:      (func $try-catch (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-catch
+  try
+  catch $empty
+  end
+ )
+
+ ;; CHECK:      (func $try-catch-params (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (try (type $5) (result i32 i64)
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i64.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $tag-pair
+ ;; CHECK-NEXT:    (pop i32 i64)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-catch-params (result i32 i64)
+  try (result i32 i64)
+   i32.const 0
+   i64.const 1
+  catch $tag-pair
+  end
+ )
+
+
+ ;; CHECK:      (func $try-catch_all (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-catch_all
+  try
+  catch_all
+  end
+ )
+
+ ;; CHECK:      (func $try-catch-catch_all (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $timport$0
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-catch-catch_all
+  try
+  catch $empty
+  catch 1
+  catch_all
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (delegate 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate
+  try
+  delegate 0
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-func-direct (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (delegate 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-func-direct
+  block $l
+   try
+   delegate 1
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-func-indirect-index (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (delegate 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-func-indirect-index
+  block $l
+   try
+   delegate 0
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-func-indirect-name (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (delegate 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-func-indirect-name
+  block $l
+   try
+   delegate $l
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-try-direct-index (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (delegate $__delegate__label)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-try-direct-index
+  try
+   block
+    try
+    delegate 1
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-try-direct-name (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (delegate $__delegate__l)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-try-direct-name
+  try $l
+   block
+    try
+    delegate $l
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-try-indirect-index (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (delegate $__delegate__label)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-try-indirect-index
+  try
+   block
+    try
+    delegate 0
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-try-indirect-name (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l
+ ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (delegate $__delegate__label)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-try-indirect-name
+  try
+   block $l
+    try
+    delegate $l
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-try-shadowing (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:      (block $l_1
+ ;; CHECK-NEXT:       (try
+ ;; CHECK-NEXT:        (do
+ ;; CHECK-NEXT:         (nop)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (delegate $__delegate__l)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-try-shadowing
+  try $l
+   block $l
+    try $l
+    delegate $l
+   end
+  end $l
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-catch-shadowing (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (catch $empty
+ ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:         (try
+ ;; CHECK-NEXT:          (do
+ ;; CHECK-NEXT:           (nop)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (delegate $__delegate__l)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-catch-shadowing
+  try $l
+   try $l
+   catch $empty
+    try $l
+    ;; goes to the outermost try, not the middle one
+    delegate $l
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-delegate-nested-catch_all-shadowing (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:       (do
+ ;; CHECK-NEXT:        (nop)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (catch_all
+ ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:         (try
+ ;; CHECK-NEXT:          (do
+ ;; CHECK-NEXT:           (nop)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (delegate $__delegate__l)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-nested-catch_all-shadowing
+  try $l
+   try $l
+   catch_all
+    try $l
+    ;; goes to the outermost try, not the middle one
+    delegate $l
+   end
+  end
+ )
+
+ ;; CHECK:      (func $try-br-index (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch_all
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-br-index
+  try
+   br 0
+  catch $empty
+   br 0
+  catch_all
+   br 0
+  end
+ )
+
+ ;; CHECK:      (func $try-br-name (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch_all
+ ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-br-name
+  try $l
+   br $l
+  catch $l $empty
+   br $l
+  catch_all $l
+   br $l
+  end $l
+ )
+
+ ;; CHECK:      (func $try-folded (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $timport$0
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch_all
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-folded
+  (try
+   (do
+    nop
+    (nop)
+   )
+   (catch $empty
+    (nop)
+    nop
+   )
+   (catch 1
+    nop
+    (nop)
+   )
+   (catch_all
+    (nop)
+    nop
+   )
+  )
+ )
+
+ ;; CHECK:      (func $try-delegate-folded (type $void)
+ ;; CHECK-NEXT:  (try
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (delegate 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $try-delegate-folded
+  (try
+   (do)
+   (delegate 0)
+  )
+ )
+
  ;; CHECK:      (func $label-siblings (type $void)
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (br $l)
@@ -2413,7 +2867,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 109
+  ref.func 129
   drop
  )
 

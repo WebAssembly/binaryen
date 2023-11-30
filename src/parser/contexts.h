@@ -308,8 +308,8 @@ struct NullInstrParserCtx {
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
   DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
   DataIdxT getDataFromName(Name) { return Ok{}; }
-  LabelIdxT getLabelFromIdx(uint32_t) { return Ok{}; }
-  LabelIdxT getLabelFromName(Name) { return Ok{}; }
+  LabelIdxT getLabelFromIdx(uint32_t, bool) { return Ok{}; }
+  LabelIdxT getLabelFromName(Name, bool) { return Ok{}; }
   TagIdxT getTagFromIdx(uint32_t) { return Ok{}; }
   TagIdxT getTagFromName(Name) { return Ok{}; }
 
@@ -328,6 +328,13 @@ struct NullInstrParserCtx {
   Result<> makeLoop(Index, std::optional<Name>, BlockTypeT) {
     return Ok{};
   }
+  template<typename BlockTypeT>
+  Result<> makeTry(Index, std::optional<Name>, BlockTypeT) {
+    return Ok{};
+  }
+  Result<> visitCatch(Index, TagIdxT) { return Ok{}; }
+  Result<> visitCatchAll(Index) { return Ok{}; }
+  Result<> visitDelegate(Index, LabelIdxT) { return Ok{}; }
   Result<> visitEnd() { return Ok{}; }
 
   Result<> makeUnreachable(Index) { return Ok{}; }
@@ -1020,10 +1027,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return name;
   }
 
-  Result<Index> getLabelFromIdx(uint32_t idx) { return idx; }
+  Result<Index> getLabelFromIdx(uint32_t idx, bool) { return idx; }
 
-  Result<Index> getLabelFromName(Name name) {
-    return irBuilder.getLabelIndex(name);
+  Result<Index> getLabelFromName(Name name, bool inDelegate) {
+    return irBuilder.getLabelIndex(name, inDelegate);
   }
 
   Result<Name> getTagFromIdx(uint32_t idx) {
@@ -1107,6 +1114,26 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(
       pos,
       irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> makeTry(Index pos, std::optional<Name> label, HeapType type) {
+    // TODO: validate labels?
+    // TODO: Move error on input types to here?
+    return withLoc(
+      pos,
+      irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> visitCatch(Index pos, Name tag) {
+    return withLoc(pos, irBuilder.visitCatch(tag));
+  }
+
+  Result<> visitCatchAll(Index pos) {
+    return withLoc(pos, irBuilder.visitCatchAll());
+  }
+
+  Result<> visitDelegate(Index pos, Index label) {
+    return withLoc(pos, irBuilder.visitDelegate(label));
   }
 
   Result<> visitEnd() { return withLoc(irBuilder.visitEnd()); }
