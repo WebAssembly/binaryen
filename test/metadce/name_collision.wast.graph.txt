@@ -1,6 +1,6 @@
 [
   {
-    "name": "func$test",
+    "name": "func$other",
     "root": true,
     "export": "test"
   }
