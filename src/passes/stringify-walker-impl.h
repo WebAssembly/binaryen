@@ -43,7 +43,12 @@ template<typename SubType>
 inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
-    self->controlFlowQueue.push(currp);
+    Expression* copy = curr;
+    // To ensure control flow children are walked consistently during outlining,
+    // we push a copy of the control flow expression. This avoids an issue where
+    // control flow no longer points to the same expression after being
+    // outlined into a new function.
+    self->controlFlowQueue.push(copy);
     self->pushTask(doVisitExpression, currp);
     // The if-condition is a value child consumed by the if control flow, which
     // makes the if-condition a true sibling rather than part of its contents in
@@ -60,9 +65,8 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
 // of control flow.
 template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   auto& queue = controlFlowQueue;
-  Expression** currp = queue.front();
+  Expression* curr = queue.front();
   queue.pop();
-  Expression* curr = *currp;
 
   // TODO: Issue #5796, Make a ControlChildIterator
   switch (curr->_id) {
@@ -80,7 +84,7 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
       addUniqueSymbol(SeparatorReason::makeIfStart(iff));
       Super::walk(iff->ifTrue);
       if (iff->ifFalse) {
-        addUniqueSymbol(SeparatorReason::makeElseStart(iff));
+        addUniqueSymbol(SeparatorReason::makeElseStart());
         Super::walk(iff->ifFalse);
       }
       addUniqueSymbol(SeparatorReason::makeEnd());
