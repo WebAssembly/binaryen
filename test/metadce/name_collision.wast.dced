@@ -1,0 +1,7 @@
+(module
+ (type $0 (func))
+ (export "test" (func $test))
+ (func $test (type $0)
+  (nop)
+ )
+)
