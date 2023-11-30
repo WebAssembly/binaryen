@@ -582,24 +582,19 @@
 
  ;; CHECK:      (func $top (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (loop $loop
- ;; CHECK-NEXT:   (call $top
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (br $loop)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $top (param $x i32) (param $y i32) (param $z i32)
   ;; This top function will not be inlined.
   (loop $loop
-   (call $top
-    (i32.const 0)
-    (i32.const 0)
-    (i32.const 0)
-   )
    (br $loop)
   )
+  ;; Add to the size so it isn't inlined as a tiny function.
+  (nop)
+  (nop)
  )
 
  ;; CHECK:      (func $middle1 (param $x i32) (param $y i32) (param $z i32)
