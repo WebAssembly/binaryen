@@ -1,0 +1,7 @@
+[
+  {
+    "name": "func$test",
+    "root": true,
+    "export": "test"
+  }
+]
