@@ -187,8 +187,7 @@ struct MetaDCEGraph {
       rooter.walk(segment->offset);
       roots.insert(getDCEName(ModuleItemKind::ElementSegment, segment->name));
     });
-    ModuleUtils::iterActiveDataSegments(
-      wasm, [&](DataSegment* segment) {
+    ModuleUtils::iterActiveDataSegments(wasm, [&](DataSegment* segment) {
       rooter.walk(segment->offset);
       roots.insert(getDCEName(ModuleItemKind::DataSegment, segment->name));
     });
