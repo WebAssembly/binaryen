@@ -154,7 +154,7 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
-  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
 
@@ -253,7 +253,7 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression(expr) << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << "\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
