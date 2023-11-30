@@ -563,3 +563,163 @@
   (unreachable)
  )
 )
+
+;; Inlining of trivial calls in the middle.
+(module
+ (table 10 funcref)
+
+ ;; Refer to the middle functions so that we do not inline them as single-use
+ ;; functions (which would be a trivial case, not related to trivial calls).
+ (elem (i32.const 0) $middle1 $middle2 $middle3)
+
+ ;; CHECK:      (type $0 (func (param i32 i32 i32)))
+
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (table $0 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 0) $middle1 $middle2 $middle3)
+
+ ;; CHECK:      (func $top (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (loop $loop
+ ;; CHECK-NEXT:   (call $top
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $loop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $top (param $x i32) (param $y i32) (param $z i32)
+  ;; This top function will not be inlined.
+  (loop $loop
+   (call $top
+    (i32.const 0)
+    (i32.const 0)
+    (i32.const 0)
+   )
+   (br $loop)
+  )
+ )
+
+ ;; CHECK:      (func $middle1 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call $top
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $middle1 (param $x i32) (param $y i32) (param $z i32)
+  ;; This function is a trivial call, which we can inline to the bottom.
+  (call $top
+   (local.get $x)
+   (local.get $y)
+   (local.get $z)
+  )
+ )
+
+ ;; CHECK:      (func $middle2 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call $top
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $middle2 (param $x i32) (param $y i32) (param $z i32)
+  ;; Also trivial, even though the order of params is different and we have a
+  ;; const.
+  (call $top
+   (local.get $z)
+   (i32.const 42)
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $middle3 (param $x i32) (param $y i32) (param $z i32)
+ ;; CHECK-NEXT:  (call $top
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $middle3 (param $x i32) (param $y i32) (param $z i32)
+  ;; Not trivial, becaues of the eqz.
+  (call $top
+   (local.get $z)
+   (i32.eqz
+    (i32.const 42)
+   )
+   (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $bottom
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local $4 i32)
+ ;; CHECK-NEXT:  (local $5 i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (block $__inlined_func$middle1
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $2
+ ;; CHECK-NEXT:     (i32.const 3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $top
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (block $__inlined_func$middle2$1
+ ;; CHECK-NEXT:    (local.set $3
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $4
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $5
+ ;; CHECK-NEXT:     (i32.const 3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $top
+ ;; CHECK-NEXT:     (local.get $5)
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $middle3
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $bottom
+  ;; The first two will be inlined.
+  (call $middle1
+   (i32.const 1)
+   (i32.const 2)
+   (i32.const 3)
+  )
+  (call $middle2
+   (i32.const 1)
+   (i32.const 2)
+   (i32.const 3)
+  )
+  (call $middle3
+   (i32.const 1)
+   (i32.const 2)
+   (i32.const 3)
+  )
+ )
+)
