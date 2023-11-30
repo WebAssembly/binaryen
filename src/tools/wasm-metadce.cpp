@@ -175,6 +175,7 @@ struct MetaDCEGraph {
       scanner.walk(global->init);
     });
     // We can't remove active segments, so root them and what they use.
+    // TODO: treat them as in a cycle with their parent memory/table
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
