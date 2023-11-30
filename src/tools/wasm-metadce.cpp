@@ -174,7 +174,7 @@ struct MetaDCEGraph {
       scanner.setModule(&wasm);
       scanner.walk(global->init);
     });
-    // we can't remove segments, so root what they need
+    // We can't remove active segments, so root them and what they use.
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
@@ -185,9 +185,13 @@ struct MetaDCEGraph {
           roots.insert(getDCEName(ModuleItemKind::Function, name));
         });
       rooter.walk(segment->offset);
+      roots.insert(getDCEName(ModuleItemKind::ElementSegment, segment->name));
     });
     ModuleUtils::iterActiveDataSegments(
-      wasm, [&](DataSegment* segment) { rooter.walk(segment->offset); });
+      wasm, [&](DataSegment* segment) {
+      rooter.walk(segment->offset);
+      roots.insert(getDCEName(ModuleItemKind::DataSegment, segment->name));
+    });
 
     // A parallel scanner for function bodies
     struct Scanner : public WalkerPass<
