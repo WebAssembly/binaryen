@@ -100,8 +100,12 @@ struct ReconstructStringifyWalker
       existingBuilder.push(curr->iff->condition);
       ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
       DBG(desc = "If Start for ");
+    } else if (reason.getElseStart()) {
+      ASSERT_OK(existingBuilder.visitElse());
+      DBG(desc = "Else Start at ");
     } else if (reason.getEnd()) {
       ASSERT_OK(existingBuilder.visitEnd());
+      ASSERT_OK(existingBuilder.build());
       DBG(desc = "End for ");
     } else {
       DBG(desc = "addUniqueSymbol for unimplemented control flow ");

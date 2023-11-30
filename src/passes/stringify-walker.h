@@ -82,9 +82,7 @@ struct StringifyWalker
       If* iff;
     };
 
-    struct ElseStart {
-      If* iff;
-    };
+    struct ElseStart {};
 
     struct LoopStart {
       Loop* loop;
@@ -119,8 +117,8 @@ struct StringifyWalker
     static SeparatorReason makeIfStart(If* iff) {
       return SeparatorReason(IfStart{iff});
     }
-    static SeparatorReason makeElseStart(If* iff) {
-      return SeparatorReason(ElseStart{iff});
+    static SeparatorReason makeElseStart() {
+      return SeparatorReason(ElseStart{});
     }
     static SeparatorReason makeLoopStart(Loop* loop) {
       return SeparatorReason(LoopStart{loop});
@@ -170,7 +168,7 @@ struct StringifyWalker
     return o << "~~~Undefined in operator<< overload~~~";
   }
 
-  std::queue<Expression**> controlFlowQueue;
+  std::queue<Expression*> controlFlowQueue;
 
   /*
    * To initiate the walk, subclasses should call walkModule with a pointer to

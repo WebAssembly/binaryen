@@ -509,7 +509,25 @@
 ;; Test outlining works with call_indirect
 (module
   (table funcref)
-  (func
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32 i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
     (call_indirect
       (param i32 i32)
       (i32.const 0)
@@ -524,21 +542,59 @@
     )
   )
 )
-;; CHECK:      (type $0 (func))
 
-;; CHECK:      (type $1 (func (param i32 i32)))
+;; outline if-true.
+;; TODO: Ideally outlining would keep the if-true inline in $outline$, instead
+;; of moving this to another outlined function ($outline$_3) because of the
+;; unique symbol between the if-condition and if-true
+(module
+  ;; CHECK:      (type $0 (func))
 
-;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
+  (global $global$1 (mut i32) (i32.const 100))
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (global.get $global$1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$_3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
 
-;; CHECK:      (func $outline$ (type $0)
-;; CHECK-NEXT:  (call_indirect $0 (type $1)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+  ;; CHECK:      (func $outline$_3 (type $0)
+  ;; CHECK-NEXT:  (global.set $global$1
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
 
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT: )
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (block
+        (global.set $global$1
+          (i32.const 100)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $b
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (block
+        (global.set $global$1
+          (i32.const 100)
+        )
+      )
+    )
+  )
+)
