@@ -3261,7 +3261,7 @@ BINARYEN_API void BinaryenTableSetMax(BinaryenTableRef table,
 // Gets the table type of the specified `Table`.
 BINARYEN_API BinaryenType BinaryenTableGetType(BinaryenTableRef table);
 // Sets the table type of the specified `Table`.
-BINARYEN_API void BinaryenTableSetType(BinaryenTableRef table, 
+BINARYEN_API void BinaryenTableSetType(BinaryenTableRef table,
                                        BinaryenType tableType);
 
 //
