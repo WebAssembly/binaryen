@@ -258,9 +258,12 @@ struct MetaDCEGraph {
 private:
   // gets a unique name for the graph
   Name getName(std::string prefix1, std::string prefix2) {
+    auto base = prefix1 + '$' + prefix2;
+    if (nodes.find(base) == nodes.end()) {
+      return base;
+    }
     while (1) {
-      auto curr =
-        Name(prefix1 + '$' + prefix2 + '$' + std::to_string(nameIndex++));
+      Name curr = base + '$' + std::to_string(nameIndex++);
       if (nodes.find(curr) == nodes.end()) {
         return curr;
       }
