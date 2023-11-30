@@ -61,9 +61,6 @@ struct MetaDCEGraph {
   // Kind and exported name => DCE name
   std::unordered_map<KindName, Name> itemToDCENode;
 
-  // Reverse maps
-  std::unordered_map<Name, Name> DCENodeToExport;
-
   // imports are not mapped 1:1 to DCE nodes in the wasm, since env.X might
   // be imported twice, for example. So we don't map a DCE node to an Import,
   // but rather the module.base pair ("id") for the import.
@@ -128,7 +125,6 @@ struct MetaDCEGraph {
     for (auto& exp : wasm.exports) {
       if (exportToDCENode.find(exp->name) == exportToDCENode.end()) {
         auto dceName = getName("export", exp->name.toString());
-        DCENodeToExport[dceName] = exp->name;
         exportToDCENode[exp->name] = dceName;
         nodes[dceName] = DCENode(dceName);
       }
@@ -346,10 +342,6 @@ public:
       if (importMap.find(name) != importMap.end()) {
         std::cout << "  is import " << importMap[name] << '\n';
       }
-      if (DCENodeToExport.find(name) != DCENodeToExport.end()) {
-        std::cout << "  is export " << DCENodeToExport[name] << ", "
-                  << wasm.getExport(DCENodeToExport[name])->value << '\n';
-      }
       for (auto target : node.reaches) {
         std::cout << "  reaches: " << target << '\n';
       }
@@ -549,7 +541,6 @@ int main(int argc, const char* argv[]) {
                    "for the form";
       }
       graph.exportToDCENode[exp->getIString()] = node.name;
-      graph.DCENodeToExport[node.name] = exp->getIString();
     }
     if (ref->has(IMPORT)) {
       json::Ref imp = ref[IMPORT];
