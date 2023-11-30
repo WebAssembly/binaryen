@@ -1506,8 +1506,6 @@ Importable* Module::getImport(ModuleItemKind kind, Name name) {
   }
 }
 
-// Return an Importable if the the given item (identified by its kind and name)
-// is an import (or nullptr, as get*OrNull() methods do).
 Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
   Importable* importable;
   switch (kind) {
