@@ -4,7 +4,7 @@
 ;; using --no-*-inline
 
 ;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining                          --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE__ALL
-;; RzUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-partial-inline=*no* --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_FULL
+;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-partial-inline=*no* --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_FULL
 ;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-full-inline=*no*    --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_PART
 ;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-inline=*no*         --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_NONE
 
@@ -12,6 +12,9 @@
   ;; INLINE__ALL:      (type $0 (func))
 
   ;; INLINE__ALL:      (import "a" "b" (func $import))
+  ;; INLINE_FULL:      (type $0 (func))
+
+  ;; INLINE_FULL:      (import "a" "b" (func $import))
   ;; INLINE_PART:      (type $0 (func))
 
   ;; INLINE_PART:      (import "a" "b" (func $import))
@@ -106,6 +109,62 @@
   ;; INLINE__ALL-NEXT:   )
   ;; INLINE__ALL-NEXT:  )
   ;; INLINE__ALL-NEXT: )
+  ;; INLINE_FULL:      (func $caller
+  ;; INLINE_FULL-NEXT:  (local $0 i32)
+  ;; INLINE_FULL-NEXT:  (local $1 i32)
+  ;; INLINE_FULL-NEXT:  (local $2 i32)
+  ;; INLINE_FULL-NEXT:  (local $3 i32)
+  ;; INLINE_FULL-NEXT:  (block
+  ;; INLINE_FULL-NEXT:   (block $__inlined_func$full-yes-inline
+  ;; INLINE_FULL-NEXT:    (local.set $0
+  ;; INLINE_FULL-NEXT:     (i32.const 0)
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:    (call $import)
+  ;; INLINE_FULL-NEXT:   )
+  ;; INLINE_FULL-NEXT:  )
+  ;; INLINE_FULL-NEXT:  (block
+  ;; INLINE_FULL-NEXT:   (block $__inlined_func$full-no-inline$1
+  ;; INLINE_FULL-NEXT:    (local.set $1
+  ;; INLINE_FULL-NEXT:     (i32.const 1)
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:    (call $import)
+  ;; INLINE_FULL-NEXT:   )
+  ;; INLINE_FULL-NEXT:  )
+  ;; INLINE_FULL-NEXT:  (block
+  ;; INLINE_FULL-NEXT:   (block $__inlined_func$partial-yes-inline$2
+  ;; INLINE_FULL-NEXT:    (local.set $2
+  ;; INLINE_FULL-NEXT:     (i32.const 2)
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:    (block
+  ;; INLINE_FULL-NEXT:     (if
+  ;; INLINE_FULL-NEXT:      (local.get $2)
+  ;; INLINE_FULL-NEXT:      (br $__inlined_func$partial-yes-inline$2)
+  ;; INLINE_FULL-NEXT:     )
+  ;; INLINE_FULL-NEXT:     (loop $l
+  ;; INLINE_FULL-NEXT:      (call $import)
+  ;; INLINE_FULL-NEXT:      (br $l)
+  ;; INLINE_FULL-NEXT:     )
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:   )
+  ;; INLINE_FULL-NEXT:  )
+  ;; INLINE_FULL-NEXT:  (block
+  ;; INLINE_FULL-NEXT:   (block $__inlined_func$partial-no-inline$3
+  ;; INLINE_FULL-NEXT:    (local.set $3
+  ;; INLINE_FULL-NEXT:     (i32.const 3)
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:    (block
+  ;; INLINE_FULL-NEXT:     (if
+  ;; INLINE_FULL-NEXT:      (local.get $3)
+  ;; INLINE_FULL-NEXT:      (br $__inlined_func$partial-no-inline$3)
+  ;; INLINE_FULL-NEXT:     )
+  ;; INLINE_FULL-NEXT:     (loop $l0
+  ;; INLINE_FULL-NEXT:      (call $import)
+  ;; INLINE_FULL-NEXT:      (br $l0)
+  ;; INLINE_FULL-NEXT:     )
+  ;; INLINE_FULL-NEXT:    )
+  ;; INLINE_FULL-NEXT:   )
+  ;; INLINE_FULL-NEXT:  )
+  ;; INLINE_FULL-NEXT: )
   ;; INLINE_PART:      (func $caller
   ;; INLINE_PART-NEXT:  (local $0 i32)
   ;; INLINE_PART-NEXT:  (local $1 i32)
