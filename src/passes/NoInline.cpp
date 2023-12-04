@@ -30,7 +30,7 @@ enum NoInlineMode {
   Full = 0,
   Partial = 1,
   Both = 2
-}
+};
 
 struct NoInline : public Pass {
   NoInlineMode mode;
@@ -38,12 +38,12 @@ struct NoInline : public Pass {
   NoInline(NoInlineMode mode) : mode(mode) {}
 
   void run(Module* module) override {
-    Name pattern = getPassOptions().getArgument(
+    std::string pattern = getPassOptions().getArgument(
       "no-inline",
       "Usage usage:  wasm-opt --no-inline=WILDCARD");
 
     for (auto& func : module->functions) {
-      if (!String::wildcardMatch(pattern, func->name)) {
+      if (!String::wildcardMatch(pattern, func->name.toString())) {
         continue;
       }
 
