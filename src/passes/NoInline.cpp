@@ -15,7 +15,21 @@
  */
 
 //
-// Mark functions as no-inline based on name wildcards.
+// Mark functions as no-inline based on name wildcards. For example:
+//
+//  --no-inline=*leave-alone* --inlining
+//
+// That will mark all functions with names like "runtime-leave-alone-1234" as
+// no-inline, and as a result the inlining pass that happens afterwards will not
+// inline them.
+//
+// Note that this is itself a pass, which does work - it marks things in the
+// IR - and so the order of operations matters. If we did
+//
+//  --inlining --no-inline=*leave-alone*
+//
+// then we'd first perform the inlining and then the marking, which would mean
+// the marking has no effect.
 //
 
 #include "pass.h"
@@ -43,9 +57,11 @@ struct NoInline : public Pass {
       "Usage usage:  wasm-opt --" + name + "=WILDCARD");
 
     for (auto& func : module->functions) {
+std::cout << "visit " << func->name << "\n";
       if (!String::wildcardMatch(pattern, func->name.toString())) {
         continue;
       }
+std::cout << "  MATCH\n";
 
       if (mode == Full || mode == Both) {
         func->noFullInline = true;
