@@ -1163,7 +1163,9 @@ struct Inlining : public Pass {
   // See explanation in doInlining() for the parameter nameHint.
   Index inlinedNameHint = 0;
 
+  // Decide for a given function whether to inline, and if so in what mode.
   InliningMode getInliningMode(Name name) {
+    auto* func = module->getFunction(name);
     auto& info = infos[name];
 
     if (info.inliningMode != InliningMode::Unknown) {
@@ -1171,19 +1173,19 @@ struct Inlining : public Pass {
     }
 
     // Check if the function itself is worth inlining as it is.
-    if (info.worthFullInlining(getPassOptions())) {
-      info.inliningMode = InliningMode::Full;
-      return info.inliningMode;
+    if (!func->noFullInline && info.worthFullInlining(getPassOptions())) {
+      return info.inliningMode = InliningMode::Full;
     }
 
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
-    if (functionSplitter) {
+    if (!func->noPartialInline && functionSplitter) {
       info.inliningMode = functionSplitter->getSplitDrivenInliningMode(
         module->getFunction(name), info);
       return info.inliningMode;
     }
 
+    // Cannot be fully or partially inlined => uninlineable.
     info.inliningMode = InliningMode::Uninlineable;
     return info.inliningMode;
   }

@@ -70,6 +70,7 @@ set(passes_SOURCES
   MultiMemoryLowering.cpp
   NameList.cpp
   NameTypes.cpp
+  NoInline.cpp
   OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeCasts.cpp

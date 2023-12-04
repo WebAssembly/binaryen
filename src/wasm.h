@@ -2072,6 +2072,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  // Inlining metadata: whether to disallow full and/or partial inlining (for
+  // details on what those mean, see Inlining.cpp).
+  bool noFullInline = false;
+  bool noPartialInline = false;
+
+  // Methods
   Signature getSig() { return type.getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }

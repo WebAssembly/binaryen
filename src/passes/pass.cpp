@@ -294,6 +294,9 @@ void PassRegistry::registerPasses() {
     createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
+  registerPass("no-inline", "mark functions as no-inline", createNoInlinePass);
+  registerPass("no-full-inline", "mark functions as no-inline (for full inlining only)", createNoFullInlinePass);
+  registerPass("no-partial-inline", "mark functions as no-inline (for partial inlining only)", createNoPartialInlinePass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);
