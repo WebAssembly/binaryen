@@ -40,11 +40,7 @@ namespace wasm {
 
 namespace {
 
-enum NoInlineMode {
-  Full = 0,
-  Partial = 1,
-  Both = 2
-};
+enum NoInlineMode { Full = 0, Partial = 1, Both = 2 };
 
 struct NoInline : public Pass {
   NoInlineMode mode;
@@ -53,8 +49,7 @@ struct NoInline : public Pass {
 
   void run(Module* module) override {
     std::string pattern = getPassOptions().getArgument(
-      name,
-      "Usage usage:  wasm-opt --" + name + "=WILDCARD");
+      name, "Usage usage:  wasm-opt --" + name + "=WILDCARD");
 
     for (auto& func : module->functions) {
       if (!String::wildcardMatch(pattern, func->name.toString())) {
@@ -75,6 +70,8 @@ struct NoInline : public Pass {
 
 Pass* createNoInlinePass() { return new NoInline(NoInlineMode::Both); }
 Pass* createNoFullInlinePass() { return new NoInline(NoInlineMode::Full); }
-Pass* createNoPartialInlinePass() { return new NoInline(NoInlineMode::Partial); }
+Pass* createNoPartialInlinePass() {
+  return new NoInline(NoInlineMode::Partial);
+}
 
 } // namespace wasm
