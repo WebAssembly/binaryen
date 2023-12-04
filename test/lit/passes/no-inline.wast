@@ -3,9 +3,15 @@
 ;; Enable both normal and partial inlining, and show how we filter out functions
 ;; using --no-*-inline
 
-;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix NORMAL
+;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining                          --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE__ALL
+;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-partial-inline=*no* --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_FULL
+;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-full-inline=*no*    --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_PART
+;; RUN: foreach %s %t wasm-opt --optimize-level=3 --inlining --no-inline=*no*         --partial-inlining-ifs=1 -S -o - | filecheck %s --check-prefix INLINE_NONE
 
 (module
+  ;; NORMAL:      (type $0 (func))
+
+  ;; NORMAL:      (import "a" "b" (func $import))
   (import "a" "b" (func $import))
 
   (func $full-yes-inline (param $x i32)
@@ -38,11 +44,75 @@
     )
   )
 
+  ;; NORMAL:      (func $caller
+  ;; NORMAL-NEXT:  (local $0 i32)
+  ;; NORMAL-NEXT:  (local $1 i32)
+  ;; NORMAL-NEXT:  (local $2 i32)
+  ;; NORMAL-NEXT:  (local $3 i32)
+  ;; NORMAL-NEXT:  (block
+  ;; NORMAL-NEXT:   (block $__inlined_func$full-yes-inline
+  ;; NORMAL-NEXT:    (local.set $0
+  ;; NORMAL-NEXT:     (i32.const 0)
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:    (call $import)
+  ;; NORMAL-NEXT:   )
+  ;; NORMAL-NEXT:  )
+  ;; NORMAL-NEXT:  (block
+  ;; NORMAL-NEXT:   (block $__inlined_func$full-no-inline$1
+  ;; NORMAL-NEXT:    (local.set $1
+  ;; NORMAL-NEXT:     (i32.const 1)
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:    (call $import)
+  ;; NORMAL-NEXT:   )
+  ;; NORMAL-NEXT:  )
+  ;; NORMAL-NEXT:  (block
+  ;; NORMAL-NEXT:   (block $__inlined_func$partial-yes-inline$2
+  ;; NORMAL-NEXT:    (local.set $2
+  ;; NORMAL-NEXT:     (i32.const 2)
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:    (block
+  ;; NORMAL-NEXT:     (if
+  ;; NORMAL-NEXT:      (local.get $2)
+  ;; NORMAL-NEXT:      (br $__inlined_func$partial-yes-inline$2)
+  ;; NORMAL-NEXT:     )
+  ;; NORMAL-NEXT:     (loop $l
+  ;; NORMAL-NEXT:      (call $import)
+  ;; NORMAL-NEXT:      (br $l)
+  ;; NORMAL-NEXT:     )
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:   )
+  ;; NORMAL-NEXT:  )
+  ;; NORMAL-NEXT:  (block
+  ;; NORMAL-NEXT:   (block $__inlined_func$partial-no-inline$3
+  ;; NORMAL-NEXT:    (local.set $3
+  ;; NORMAL-NEXT:     (i32.const 3)
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:    (block
+  ;; NORMAL-NEXT:     (if
+  ;; NORMAL-NEXT:      (local.get $3)
+  ;; NORMAL-NEXT:      (br $__inlined_func$partial-no-inline$3)
+  ;; NORMAL-NEXT:     )
+  ;; NORMAL-NEXT:     (loop $l0
+  ;; NORMAL-NEXT:      (call $import)
+  ;; NORMAL-NEXT:      (br $l0)
+  ;; NORMAL-NEXT:     )
+  ;; NORMAL-NEXT:    )
+  ;; NORMAL-NEXT:   )
+  ;; NORMAL-NEXT:  )
+  ;; NORMAL-NEXT: )
   (func $caller
     ;; The "yes" functions will be inlined, but no the "no"
-    (call $full-yes-inline)
-    (call $full-no-inline)
-    (call $partial-yes-inline)
-    (call $partial-no-inline)
+    (call $full-yes-inline
+      (i32.const 0)
+    )
+    (call $full-no-inline
+      (i32.const 1)
+    )
+    (call $partial-yes-inline
+      (i32.const 2)
+    )
+    (call $partial-no-inline
+      (i32.const 3)
+    )
   )
 )
