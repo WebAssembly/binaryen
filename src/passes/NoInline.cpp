@@ -57,11 +57,9 @@ struct NoInline : public Pass {
       "Usage usage:  wasm-opt --" + name + "=WILDCARD");
 
     for (auto& func : module->functions) {
-std::cout << "visit " << func->name << "\n";
       if (!String::wildcardMatch(pattern, func->name.toString())) {
         continue;
       }
-std::cout << "  MATCH\n";
 
       if (mode == Full || mode == Both) {
         func->noFullInline = true;
