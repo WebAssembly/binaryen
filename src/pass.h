@@ -67,13 +67,15 @@ struct InliningOptions {
   // Typically a size so small that after optimizations, the inlined code will
   // be smaller than the call instruction itself. 2 is a safe number because
   // there is no risk of things like
+  //
   //  (func $reverse (param $x i32) (param $y i32)
   //   (call $something (local.get $y) (local.get $x))
   //  )
-  // in which case the reversing of the params means we'll possibly need
-  // a block and a temp local. But that takes at least 3 nodes, and 2 < 3.
-  // More generally, with 2 items we may have a local.get, but no way to
-  // require it to be saved instead of directly consumed.
+  //
+  // in which case the reversing of the params means we'll possibly need a temp
+  // local. But that takes at least 3 nodes, and 2 < 3, while with 2 items we
+  // may have a local.get, but no way to require it to be saved instead of
+  // directly consumed.
   Index alwaysInlineMaxSize = 2;
   // Function size which we inline when there is only one caller. By default we
   // inline all such functions (as after inlining we can remove the original

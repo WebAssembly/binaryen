@@ -73,7 +73,19 @@ struct FunctionInfo {
   bool hasCalls;
   bool hasLoops;
   bool hasTryDelegate;
-  bool usedGlobally; // in a table or export
+  // Something is used globally if there is a reference to it in a table or
+  // export etc.
+  bool usedGlobally;
+  // We consider a function to be a trivial call if the body is just a call with
+  // trivial arguments, like this:
+  //
+  //  (func $forward (param $x) (param $y)
+  //    (call $target (local.get $x) (local.get $y))
+  //  )
+  //
+  // Specifically the body must be a call, and the operands to the call must be
+  // of size 1 (generally, LocalGet or Const).
+  bool isTrivialCall;
   InliningMode inliningMode;
 
   FunctionInfo() { clear(); }
@@ -85,6 +97,7 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
+    isTrivialCall = false;
     inliningMode = InliningMode::Unknown;
   }
 
@@ -96,6 +109,7 @@ struct FunctionInfo {
     hasLoops = other.hasLoops;
     hasTryDelegate = other.hasTryDelegate;
     usedGlobally = other.usedGlobally;
+    isTrivialCall = other.isTrivialCall;
     inliningMode = other.inliningMode;
     return *this;
   }
@@ -122,16 +136,28 @@ struct FunctionInfo {
     if (size > options.inlining.flexibleInlineMaxSize) {
       return false;
     }
-    // More than one use, so we can't eliminate it after inlining,
-    // so only worth it if we really care about speed and don't care
-    // about size. First, check if it has calls. In that case it is not
-    // likely to speed us up, and also if we want to inline such
-    // functions we would need to be careful to avoid infinite recursion.
-    if (hasCalls) {
+    // More than one use, so we can't eliminate it after inlining, and inlining
+    // it will hurt code size. Stop if we are focused on size or not heavily
+    // focused on speed.
+    if (options.shrinkLevel > 0 || options.optimizeLevel < 3) {
       return false;
     }
-    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (!hasLoops || options.inlining.allowFunctionsWithLoops);
+    if (hasCalls) {
+      // This has calls. If it is just a trivial call itself then inline, as we
+      // will save a call that way - basically we skip a trampoline in the
+      // middle - but if it is something more complex, leave it alone, as we may
+      // not help much (and with recursion we may end up with a wasteful
+      // increase in code size).
+      //
+      // Note that inlining trivial calls may increase code size, e.g. if they
+      // use a parameter more than once (forcing us after inlining to save that
+      // value to a local, etc.), but here we are optimizing for speed and not
+      // size, so we risk it.
+      return isTrivialCall;
+    }
+    // This doesn't have calls. Inline if loops do not prevent us (normally, a
+    // loop suggests a lot of work and so inlining is less useful).
+    return !hasLoops || options.inlining.allowFunctionsWithLoops;
   }
 };
 
@@ -198,6 +224,14 @@ struct FunctionInfoScanner
     }
 
     info.size = Measurer::measure(curr->body);
+
+    if (auto* call = curr->body->dynCast<Call>()) {
+      if (info.size == call->operands.size() + 1) {
+        // This function body is a call with some trivial (size 1) operands like
+        // LocalGet or Const, so it is a trivial call.
+        info.isTrivialCall = true;
+      }
+    }
   }
 
 private:
