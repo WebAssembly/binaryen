@@ -905,7 +905,7 @@
  (func $caller
   ;; In YES_ALL we will fully inline all of these. In NO_FULL we will partially
   ;; inline. In NO_PART and NO_BOTH we will not inline at all (in theory we
-  ;; could do full inlining when only partial inlining is enabled, but we only
+  ;; could do full inlining when only partial inlining is disabled, but we only
   ;; see that full inlining is possible as a result of partial inlining, so if
   ;; partial is disabled we don't get there, and full inlining is not
   ;; justified).
