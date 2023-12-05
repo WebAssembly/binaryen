@@ -652,8 +652,10 @@ struct FunctionSplitter {
 
       auto outlinedFunctionSize = info.size - Measurer::measure(iff);
       // If outlined function will be worth normal inline, skip the intermediate
-      // state and inline fully now.
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      // state and inline fully now. Note that if full inlining is disabled we
+      // will not do this, and instead inline partially.
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
 
@@ -737,10 +739,12 @@ struct FunctionSplitter {
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
-    // intermediate state and inline fully now.
+    // intermediate state and inline fully now. (As above, if full inlining is
+    // disabled, we only partially inline.)
     if (numIfs == 1) {
       auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
     }
