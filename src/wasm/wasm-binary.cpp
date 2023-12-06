@@ -1502,6 +1502,9 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::array:
           o << S32LEB(BinaryConsts::EncodedType::arrayref);
           return;
+        case HeapType::exn:
+          o << S32LEB(BinaryConsts::EncodedType::exnref);
+          return;
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
@@ -1522,6 +1525,9 @@ void WasmBinaryWriter::writeType(Type type) {
           return;
         case HeapType::nofunc:
           o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
+          return;
+        case HeapType::noexn:
+          o << S32LEB(BinaryConsts::EncodedType::nullexnref);
           return;
       }
     }
@@ -1609,6 +1615,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     case HeapType::array:
       ret = BinaryConsts::EncodedHeapType::array;
       break;
+    case HeapType::exn:
+      ret = BinaryConsts::EncodedHeapType::exn;
+      break;
     case HeapType::string:
       ret = BinaryConsts::EncodedHeapType::string;
       break;
@@ -1629,6 +1638,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       break;
     case HeapType::nofunc:
       ret = BinaryConsts::EncodedHeapType::nofunc;
+      break;
+    case HeapType::noexn:
+      ret = BinaryConsts::EncodedHeapType::noexn;
       break;
   }
   o << S64LEB(ret); // TODO: Actually s33

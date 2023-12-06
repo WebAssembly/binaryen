@@ -133,12 +133,14 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
+        case HeapType::noexn:
           WASM_UNREACHABLE("null literals should already have been handled");
         case HeapType::any:
         case HeapType::eq:
         case HeapType::func:
         case HeapType::struct_:
         case HeapType::array:
+        case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
         case HeapType::stringview_wtf8:
@@ -613,8 +615,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::nofunc:
           o << "nullfuncref";
           break;
+        case HeapType::noexn:
+          o << "nullexnref";
+          break;
         case HeapType::ext:
           o << "externref";
+          break;
+        case HeapType::exn:
+          o << "exnref";
           break;
         case HeapType::any:
         case HeapType::eq:
