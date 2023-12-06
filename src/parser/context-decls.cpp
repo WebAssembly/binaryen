@@ -83,7 +83,7 @@ Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
                                            Limits limits) {
   auto t = std::make_unique<Table>();
   t->initial = limits.initial;
-  t->max = limits.max;
+  t->max = limits.max ? *limits.max : Table::kUnlimitedSize;
   if (name.is()) {
     if (wasm.getTableOrNull(name)) {
       // TODO: if the existing table is not explicitly named, fix its name and
@@ -114,7 +114,6 @@ Result<> ParseDeclsCtx::addTable(Name name,
 }
 
 Result<> ParseDeclsCtx::addImplicitElems(TypeT, ElemListT&& elems) {
-  // CHECK_ERR(addElem(Name(), nullptr, std::nullopt, std::move(elems), 0));
   auto& table = *wasm.tables.back();
   auto e = std::make_unique<ElementSegment>();
   e->table = table.name;
@@ -138,7 +137,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
   auto m = std::make_unique<Memory>();
   m->indexType = type.type;
   m->initial = type.limits.initial;
-  m->max = type.limits.max;
+  m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;
   if (name) {
     // TODO: if the existing memory is not explicitly named, fix its name

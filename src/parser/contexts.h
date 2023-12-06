@@ -41,7 +41,7 @@ inline std::vector<Type> getUnnamedTypes(const std::vector<NameType>& named) {
 
 struct Limits {
   uint64_t initial;
-  uint64_t max;
+  std::optional<uint64_t> max;
 };
 
 struct MemType {
@@ -506,7 +506,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<Index> implicitTypeDefs;
 
   // Map table indices to the indices of their implicit, in-line element
-  // segments.
+  // segments. We need these to find associated segments in later parsing phases
+  // where we can parse their types and instructions.
   std::unordered_map<Index, Index> implicitElemIndices;
 
   // Counters used for generating names for module elements.
@@ -550,7 +551,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   }
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
-    return m ? Limits{n, *m} : Limits{n, Memory::kUnlimitedSize};
+    return Limits{n, m};
   }
 
   Index makeElemList(TypeT) { return 0; }

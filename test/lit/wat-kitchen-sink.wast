@@ -183,7 +183,7 @@
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
 
- ;; CHECK:      (import "" "tab" (table $timport$0 0 18446744073709551615 funcref))
+ ;; CHECK:      (import "" "tab" (table $timport$0 0 funcref))
 
  ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
@@ -245,8 +245,8 @@
  ;; tables
  ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
 
- ;; CHECK:      (table $funcs 1 1 funcref)
- (table $funcs 1 1 (ref null func))
+ ;; CHECK:      (table $funcs 1 2 funcref)
+ (table $funcs 1 2 (ref null func))
 
  ;; CHECK:      (table $table-any 3 3 anyref)
  (table $table-any anyref (elem (item i32.const 0 ref.i31) (ref.null any) (item (ref.i31 (i32.const 0)))))
