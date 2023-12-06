@@ -686,8 +686,10 @@ struct FunctionSplitter {
 
       auto outlinedFunctionSize = info.size - Measurer::measure(iff);
       // If outlined function will be worth normal inline, skip the intermediate
-      // state and inline fully now.
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      // state and inline fully now. Note that if full inlining is disabled we
+      // will not do this, and instead inline partially.
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
 
@@ -771,10 +773,12 @@ struct FunctionSplitter {
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
-    // intermediate state and inline fully now.
+    // intermediate state and inline fully now. (As above, if full inlining is
+    // disabled, we only partially inline.)
     if (numIfs == 1) {
       auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
     }
@@ -1197,7 +1201,9 @@ struct Inlining : public Pass {
   // See explanation in doInlining() for the parameter nameHint.
   Index inlinedNameHint = 0;
 
+  // Decide for a given function whether to inline, and if so in what mode.
   InliningMode getInliningMode(Name name) {
+    auto* func = module->getFunction(name);
     auto& info = infos[name];
 
     if (info.inliningMode != InliningMode::Unknown) {
@@ -1205,19 +1211,19 @@ struct Inlining : public Pass {
     }
 
     // Check if the function itself is worth inlining as it is.
-    if (info.worthFullInlining(getPassOptions())) {
-      info.inliningMode = InliningMode::Full;
-      return info.inliningMode;
+    if (!func->noFullInline && info.worthFullInlining(getPassOptions())) {
+      return info.inliningMode = InliningMode::Full;
     }
 
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
-    if (functionSplitter) {
+    if (!func->noPartialInline && functionSplitter) {
       info.inliningMode = functionSplitter->getSplitDrivenInliningMode(
         module->getFunction(name), info);
       return info.inliningMode;
     }
 
+    // Cannot be fully or partially inlined => uninlineable.
     info.inliningMode = InliningMode::Uninlineable;
     return info.inliningMode;
   }
