@@ -82,9 +82,7 @@ struct StringifyWalker
       If* iff;
     };
 
-    struct ElseStart {
-      If* iff;
-    };
+    struct ElseStart {};
 
     struct LoopStart {
       Loop* loop;
@@ -119,8 +117,8 @@ struct StringifyWalker
     static SeparatorReason makeIfStart(If* iff) {
       return SeparatorReason(IfStart{iff});
     }
-    static SeparatorReason makeElseStart(If* iff) {
-      return SeparatorReason(ElseStart{iff});
+    static SeparatorReason makeElseStart() {
+      return SeparatorReason(ElseStart{});
     }
     static SeparatorReason makeLoopStart(Loop* loop) {
       return SeparatorReason(LoopStart{loop});
@@ -170,7 +168,11 @@ struct StringifyWalker
     return o << "~~~Undefined in operator<< overload~~~";
   }
 
-  std::queue<Expression**> controlFlowQueue;
+  // To ensure control flow children are walked consistently during outlining,
+  // we push a copy of the control flow expression. This avoids an issue where
+  // control flow no longer points to the same expression after being
+  // outlined into a new function.
+  std::queue<Expression*> controlFlowQueue;
 
   /*
    * To initiate the walk, subclasses should call walkModule with a pointer to
