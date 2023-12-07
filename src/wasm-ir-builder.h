@@ -92,7 +92,8 @@ public:
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
-  // [[nodiscard]] Result<> makeCallIndirect();
+  [[nodiscard]] Result<>
+  makeCallIndirect(Name table, HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
   [[nodiscard]] Result<> makeLocalTee(Index local);
