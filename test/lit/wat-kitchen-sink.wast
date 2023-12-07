@@ -292,7 +292,7 @@
 
  ;; tags
  (tag)
- ;; CHECK:      (elem declare func $ref-func)
+ ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)
 
  ;; CHECK:      (tag $1)
 
@@ -2955,6 +2955,171 @@
   local.get 0
   local.get 1
   ref.eq
+ )
+
+ ;; CHECK:      (func $table-get (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.get $timport$0
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.get $funcs
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.get $table-any
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-get
+  i32.const 0
+  table.get
+  drop
+  i32.const 1
+  table.get 1
+  drop
+  i32.const 2
+  table.get $table-any
+  drop
+ )
+
+ ;; CHECK:      (func $table-set (type $void)
+ ;; CHECK-NEXT:  (table.set $timport$0
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (ref.null nofunc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (table.set $funcs
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (ref.func $table-set)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (table.set $table-any
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-set
+  i32.const 0
+  ref.null func
+  table.set
+  i32.const 1
+  ref.func $table-set
+  table.set 1
+  i32.const 2
+  ref.null any
+  table.set $table-any
+ )
+
+ ;; CHECK:      (func $table-size (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.size $timport$0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.size $funcs)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.size $table-any)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-size
+  table.size
+  drop
+  table.size 1
+  drop
+  table.size $table-any
+  drop
+ )
+
+ ;; CHECK:      (func $table-grow (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $timport$0
+ ;; CHECK-NEXT:    (ref.null nofunc)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $funcs
+ ;; CHECK-NEXT:    (ref.func $table-grow)
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (table.grow $table-any
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-grow
+  ref.null func
+  i32.const 0
+  table.grow
+  drop
+  ref.func $table-grow
+  i32.const 1
+  table.grow 1
+  drop
+  ref.null any
+  i32.const 2
+  table.grow $table-any
+  drop
+ )
+
+ ;; CHECK:      (func $table-fill (type $void)
+ ;; CHECK-NEXT:  (table.fill $timport$0
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (ref.null nofunc)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (table.fill $funcs
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (ref.func $table-fill)
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (table.fill $table-any
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (i32.const 5)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-fill
+  i32.const 0
+  ref.null func
+  i32.const 1
+  table.fill
+  i32.const 2
+  ref.func $table-fill
+  i32.const 3
+  table.fill 1
+  i32.const 4
+  ref.null any
+  i32.const 5
+  table.fill $table-any
+ )
+
+ ;; CHECK:      (func $table-copy (type $void)
+ ;; CHECK-NEXT:  (table.copy $timport$0 $timport$0
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (table.copy $funcs $funcs
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:   (i32.const 5)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-copy
+  i32.const 0
+  i32.const 1
+  i32.const 2
+  table.copy
+  i32.const 3
+  i32.const 4
+  i32.const 5
+  table.copy 1 $funcs
  )
 
  ;; CHECK:      (func $i31-new (type $34) (param $0 i32) (result i31ref)

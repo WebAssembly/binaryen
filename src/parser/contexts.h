@@ -411,6 +411,12 @@ struct NullInstrParserCtx {
   Result<> makeRefIsNull(Index) { return Ok{}; }
   Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
   Result<> makeRefEq(Index) { return Ok{}; }
+  Result<> makeTableGet(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableSet(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableSize(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableGrow(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableFill(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
   Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
     return Ok{};
@@ -1523,6 +1529,44 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
+
+  Result<> makeTableGet(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableGet(*t));
+  }
+
+  Result<> makeTableSet(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableSet(*t));
+  }
+
+  Result<> makeTableSize(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableSize(*t));
+  }
+
+  Result<> makeTableGrow(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableGrow(*t));
+  }
+
+  Result<> makeTableFill(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableFill(*t));
+  }
+
+  Result<> makeTableCopy(Index pos, Name* destTable, Name* srcTable) {
+    auto dest = getTable(pos, destTable);
+    CHECK_ERR(dest);
+    auto src = getTable(pos, srcTable);
+    CHECK_ERR(src);
+    return withLoc(pos, irBuilder.makeTableCopy(*dest, *src));
+  }
 
   Result<> makeThrow(Index pos, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
