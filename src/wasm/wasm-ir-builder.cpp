@@ -341,6 +341,7 @@ Result<> IRBuilder::visitDrop(Drop* curr) {
     auto val = pop(curr->value->type.size());
     CHECK_ERR(val);
     curr->value = *val;
+    return Ok{};
   }
   return visitExpression(curr);
 }
