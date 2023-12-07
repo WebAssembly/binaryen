@@ -795,7 +795,7 @@
 )
 
 ;; Test outlining works with call_indirect
-;; 2 results, 0 params, 1 operand
+;; 1 results, 0 params, 1 operand
 (module
   (table funcref)
   ;; CHECK:      (type $0 (func))
