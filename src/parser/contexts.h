@@ -396,6 +396,10 @@ struct NullInstrParserCtx {
   Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
   Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
+  template<typename TypeUseT>
+  Result<> makeCallIndirect(Index, TableIdxT*, TypeUseT, bool) {
+    return Ok{};
+  }
   Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
   Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
     return Ok{};
@@ -1217,6 +1221,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
+  Result<Name> getTable(Index pos, Name* table) {
+    if (table) {
+      return *table;
+    }
+    if (wasm.tables.empty()) {
+      return in.err(pos, "table required, but there is no table");
+    }
+    return wasm.tables[0]->name;
+  }
+
   Result<Name> getMemory(Index pos, Name* mem) {
     if (mem) {
       return *mem;
@@ -1474,6 +1488,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeCall(Index pos, Name func, bool isReturn) {
     return withLoc(pos, irBuilder.makeCall(func, isReturn));
+  }
+
+  Result<>
+  makeCallIndirect(Index pos, Name* table, HeapType type, bool isReturn) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
   Result<> makeBreak(Index pos, Index label) {
