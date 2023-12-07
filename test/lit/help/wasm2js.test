@@ -256,6 +256,14 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --nm                                          name list
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-full-inline                              mark functions as no-inline (for
+;; CHECK-NEXT:                                                 full inlining only)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-inline                                   mark functions as no-inline
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-partial-inline                           mark functions as no-inline (for
+;; CHECK-NEXT:                                                 partial inlining only)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --once-reduction                              reduces calls to code that only
 ;; CHECK-NEXT:                                                 runs once
 ;; CHECK-NEXT:

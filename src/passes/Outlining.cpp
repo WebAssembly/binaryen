@@ -105,6 +105,14 @@ struct ReconstructStringifyWalker
       DBG(desc = "Else Start at ");
     } else if (reason.getEnd()) {
       ASSERT_OK(existingBuilder.visitEnd());
+      // Outlining performs an unnested walk of the Wasm module, visiting
+      // each scope one at a time. IRBuilder, in contrast, expects to
+      // visit several nested scopes at a time. Thus, calling end() finalizes
+      // the control flow and places it on IRBuilder's internal stack, ready for
+      // the enclosing scope to consume its expressions off the stack. Since
+      // outlining walks unnested, the enclosing scope never arrives to retrieve
+      // its expressions off the stack, so we must call build() after visitEnd()
+      // to clear the internal stack IRBuilder manages.
       ASSERT_OK(existingBuilder.build());
       DBG(desc = "End for ");
     } else {
