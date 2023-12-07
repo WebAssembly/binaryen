@@ -38,10 +38,10 @@ using AssignmentCountMap = std::unordered_map<Name, Index>;
 
 // TODO: parallel
 class GlobalAssignmentCollector
-    : public WalkerPass<PostWalker<GlobalAssignmentCollector>> {
- public:
+  : public WalkerPass<PostWalker<GlobalAssignmentCollector>> {
+public:
   GlobalAssignmentCollector(AssignmentCountMap& assignmentCounts)
-      : assignmentCounts(assignmentCounts) {}
+    : assignmentCounts(assignmentCounts) {}
 
   void visitGlobalSet(GlobalSet* curr) {
     // Avoid optimizing class initialization condition variable itself.
@@ -51,15 +51,15 @@ class GlobalAssignmentCollector
     assignmentCounts[curr->name]++;
   }
 
- private:
+private:
   AssignmentCountMap& assignmentCounts;
 };
 
 // TODO: parallel
 class ConstantHoister : public WalkerPass<PostWalker<ConstantHoister>> {
- public:
+public:
   ConstantHoister(AssignmentCountMap& assignmentCounts)
-      : assignmentCounts(assignmentCounts) {}
+    : assignmentCounts(assignmentCounts) {}
 
   int optimized = 0;
 
@@ -124,9 +124,9 @@ using RenamedFunctions = std::map<Name, Name>;
 
 // TODO: parallel
 class RenameFunctions : public WalkerPass<PostWalker<RenameFunctions>> {
- public:
+public:
   RenameFunctions(RenamedFunctions& renamedFunctions)
-      : renamedFunctions(renamedFunctions) {}
+    : renamedFunctions(renamedFunctions) {}
   void visitFunction(Function* curr) {
     if (!isOnceFunction(curr)) {
       return;
@@ -140,7 +140,7 @@ class RenameFunctions : public WalkerPass<PostWalker<RenameFunctions>> {
     }
   }
 
- private:
+private:
   Name removeStr(Name name, Name toBeRemoved) {
     std::string str = {name.str.begin(), name.str.end()};
     return Name(str.replace(str.find(toBeRemoved.str), toBeRemoved.size(), ""));
@@ -209,4 +209,4 @@ struct J2clOpts : public Pass {
 
 Pass* createJ2clOptsPass() { return new J2clOpts(); }
 
-}  // namespace wasm
+} // namespace wasm
