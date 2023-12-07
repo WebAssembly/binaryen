@@ -103,6 +103,9 @@ struct ReconstructStringifyWalker
     } else if (reason.getElseStart()) {
       ASSERT_OK(existingBuilder.visitElse());
       DBG(desc = "Else Start at ");
+    } else if (auto curr = reason.getLoopStart()) {
+      ASSERT_OK(existingBuilder.visitLoopStart(curr->loop));
+      DBG(desc = "Loop Start at ");
     } else if (reason.getEnd()) {
       ASSERT_OK(existingBuilder.visitEnd());
       // Outlining performs an unnested walk of the Wasm module, visiting
