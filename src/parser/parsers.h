@@ -1479,7 +1479,9 @@ template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRethrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeRethrow(pos, *label);
 }
 
 template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {
