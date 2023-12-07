@@ -736,7 +736,7 @@ module binaryen {
                 reinterpret_f32: (value: ExpressionRef) => unary(Operations.ReinterpretFloat32, value),
                 extend8_s: (value: ExpressionRef) => unary(Operations.ExtendS8Int32, value),
                 extend16_s: (value: ExpressionRef) => unary(Operations.ExtendS16Int32, value),
-                wrap_int64: (value: ExpressionRef) => unary(Operations.WrapInt64, value),
+                wrap_i64: (value: ExpressionRef) => unary(Operations.WrapInt64, value),
                 add: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AddInt32, left, right),
                 sub: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.SubInt32, left, right),
                 mul: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MulInt32, left, right),
@@ -1010,7 +1010,7 @@ module binaryen {
                 trunc: (value: ExpressionRef) => unary(Operations.TruncFloat32, value),
                 nearest: (value: ExpressionRef) => unary(Operations.NearestFloat32, value),
                 sqrt: (value: ExpressionRef) => unary(Operations.SqrtFloat32, value),
-                reinterpret_int32: (value: ExpressionRef) => unary(Operations.ReinterpretInt32, value),
+                reinterpret_i32: (value: ExpressionRef) => unary(Operations.ReinterpretInt32, value),
                 convert_s: {
                     i32: (value: ExpressionRef) => unary(Operations.ConvertSInt32ToFloat32, value),
                     i64: (value: ExpressionRef) => unary(Operations.ConvertSInt64ToFloat32, value)
@@ -1065,7 +1065,7 @@ module binaryen {
                 trunc: (value: ExpressionRef) => unary(Operations.TruncFloat64, value),
                 nearest: (value: ExpressionRef) => unary(Operations.NearestFloat64, value),
                 sqrt: (value: ExpressionRef) => unary(Operations.SqrtFloat64, value),
-                reinterpret_int64: (value: ExpressionRef) => unary(Operations.ReinterpretInt64, value),
+                reinterpret_i64: (value: ExpressionRef) => unary(Operations.ReinterpretInt64, value),
                 convert_s: {
                     i32: (value: ExpressionRef) => unary(Operations.ConvertSInt32ToFloat64, value),
                     i64: (value: ExpressionRef) => unary(Operations.ConvertSInt64ToFloat64, value)
