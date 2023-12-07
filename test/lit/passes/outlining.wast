@@ -291,9 +291,6 @@
 )
 
 ;; Outline if-true.
-;; TODO: Ideally outlining would keep the if-true inline in $outline$, instead
-;; of moving this to another outlined function ($outline$_3) because of the
-;; unique symbol between the if-condition and if-true.
 (module
   ;; CHECK:      (type $0 (func (param i32)))
 
@@ -410,6 +407,10 @@
 )
 
 ;; Outline if control flow, with matching if-condition, if-true, if-false
+;; TODO: Ideally outlining would keep the if-true and if-false inline in
+;; $outline$, instead of moving them to another outlined function ($outline$_3
+;; & $outline$_4) because of the unique symbol between the if-condition and
+;; if-true and the unique symbol between if-true and if-false.
 (module
   ;; CHECK:      (type $0 (func))
 
