@@ -414,7 +414,7 @@ enum EncodedType {
 #endif
   // exception handling
   exnref = -0x17,     // 0x69
-  nullexnref = -0x00, // 0x00 TODO
+  nullexnref = -0xff, // TODO
 // string reference types
 #if STANDARD_GC_ENCODINGS
   stringref = -0x19,       // 0x67
@@ -461,7 +461,7 @@ enum EncodedHeapType {
   any = -0x12,   // 0x6e
   eq = -0x13,    // 0x6d
   exn = -0x17,   // 0x69
-  noexn = -0x00, // 0x00 TODO
+  noexn = -0xff, // TODO
 #if STANDARD_GC_ENCODINGS
   i31 = -0x14,     // 0x6c
   struct_ = -0x15, // 0x6b

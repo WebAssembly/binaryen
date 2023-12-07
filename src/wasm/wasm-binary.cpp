@@ -1472,6 +1472,10 @@ void WasmBinaryWriter::writeType(Type type) {
         o << S32LEB(BinaryConsts::EncodedType::externref);
         return;
       }
+      if (Type::isSubType(type, Type(HeapType::exn, Nullable))) {
+        o << S32LEB(BinaryConsts::EncodedType::exnref);
+        return;
+      }
       if (Type::isSubType(type, Type(HeapType::string, Nullable))) {
         o << S32LEB(BinaryConsts::EncodedType::stringref);
         return;
@@ -1576,6 +1580,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       type = HeapType::func;
     } else if (HeapType::isSubType(type, HeapType::ext)) {
       type = HeapType::ext;
+    } else if (HeapType::isSubType(type, HeapType::exn)) {
+      type = HeapType::exn;
     } else if (wasm->features.hasStrings()) {
       // Strings are enabled, and this isn't a func or an ext, so it must be a
       // string type (string or stringview), which we'll emit below, or a bottom
@@ -1992,6 +1998,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::arrayref:
       out = Type(HeapType::array, Nullable);
       return true;
+    case BinaryConsts::EncodedType::exnref:
+      out = Type(HeapType::exn, Nullable);
+      return true;
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
       return true;
@@ -2012,6 +2021,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
       return true;
     case BinaryConsts::EncodedType::nullfuncref:
       out = Type(HeapType::nofunc, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::nullexnref:
+      out = Type(HeapType::noexn, Nullable);
       return true;
     default:
       return false;
@@ -2041,6 +2053,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
     case BinaryConsts::EncodedHeapType::array:
       out = HeapType::array;
       return true;
+    case BinaryConsts::EncodedHeapType::exn:
+      out = HeapType::exn;
+      return true;
     case BinaryConsts::EncodedHeapType::string:
       out = HeapType::string;
       return true;
@@ -2061,6 +2076,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::nofunc:
       out = HeapType::nofunc;
+      return true;
+    case BinaryConsts::EncodedHeapType::noexn:
+      out = HeapType::noexn;
       return true;
     default:
       return false;

@@ -925,7 +925,8 @@ FeatureSet Type::getFeatures() const {
                 return;
               case HeapType::exn:
               case HeapType::noexn:
-                feats |= FeatureSet::ExceptionHandling;
+                feats |=
+                  FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
                 return;
             }
           }
