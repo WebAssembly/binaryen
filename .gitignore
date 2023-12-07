@@ -50,3 +50,5 @@ test/lit/lit.site.cfg.py
 
 # files related to clangd cache
 .cache/*
+src/ts/binaryen.d.ts
+src/ts/binaryen.js
