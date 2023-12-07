@@ -44,8 +44,6 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
     self->controlFlowQueue.push(curr);
-    DBG(std::cerr << "controlFlowQueue.push: " << ShallowExpression{curr}
-                  << ", " << curr << "\n");
     self->pushTask(doVisitExpression, currp);
     // The if-condition is a value child consumed by the if control flow, which
     // makes the if-condition a true sibling rather than part of its contents in
