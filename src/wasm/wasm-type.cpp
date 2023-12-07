@@ -803,7 +803,9 @@ bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
-bool Type::isException() const { return isRef() && getHeapType().isException(); }
+bool Type::isException() const {
+  return isRef() && getHeapType().isException();
+}
 
 bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
