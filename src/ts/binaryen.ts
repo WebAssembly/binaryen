@@ -2,6 +2,7 @@
 
 module binaryen {
 
+    declare var HEAP8: Int8Array;
     declare var HEAP32: Int32Array;
     declare var HEAPU32: Uint32Array;
     declare var stackSave: () => number;
@@ -26,18 +27,17 @@ module binaryen {
       return str ? allocateUTF8OnStack(str) : 0;
     }
 
-    function i32sToStack(i32s: number[]): number {
+    function i32sToStack(i32s: ArrayLike<number>): number {
       const ret = stackAlloc(i32s.length << 2);
       HEAP32.set(i32s, ret >>> 2);
       return ret;
     }
-    /*
-    function i8sToStack(i8s) {
+
+    function i8sToStack(i8s: ArrayLike<number>): number {
       const ret = stackAlloc(i8s.length);
       HEAP8.set(i8s, ret);
       return ret;
     }
-    */
 
     export type Type = number;
     export type ElementSegmentRef = number;
@@ -1091,6 +1091,71 @@ module binaryen {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, f64) as ExpressionRef
             };
         }
+        get v128 () {
+            const simd_load = (op: Operations, offset: number, align: number, ptr: ExpressionRef, name: string) =>
+                JSModule['_BinaryenSIMDLoad'](this.ptr, op, offset, align, ptr, strToStack(name)) as ExpressionRef;
+            const simd_lane = (op: Operations, offset: number, align: number, index: number, ptr: ExpressionRef, vec: number, name: string) =>
+                JSModule['_BinaryenSIMDLoadStoreLane'](this.ptr, op, offset, align, index, ptr, vec, strToStack(name)) as ExpressionRef;
+            return {
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    Module['_BinaryenLoad'](this.ptr, 16, false, offset, align, v128, ptr, strToStack(name)) as ExpressionRef,
+                load8_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load8SplatVec128, offset, align, ptr, name),
+                load16_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load16SplatVec128, offset, align, ptr, name),
+                load32_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load32SplatVec128, offset, align, ptr, name),
+                load64_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load64SplatVec128, offset, align, ptr, name),
+                load8x8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load8x8SVec128, offset, align, ptr, name),
+                load8x8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load8x8UVec128, offset, align, ptr, name),
+                load16x4_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load16x4SVec128, offset, align, ptr, name),
+                load16x4_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load16x4UVec128, offset, align, ptr, name),
+                load32x2_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load32x2SVec128, offset, align, ptr, name),
+                load32x2_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load32x2UVec128, offset, align, ptr, name),
+                load32_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load32ZeroVec128, offset, align, ptr, name),
+                load64_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                    simd_load(Operations.Load64ZeroVec128, offset, align, ptr, name),
+                load8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Load8LaneVec128, offset, align, index, ptr, vec, name),
+                load16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Load16LaneVec128, offset, align, index, ptr, vec, name),
+                load32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Load32LaneVec128, offset, align, index, ptr, vec, name),
+                load64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Load64LaneVec128, offset, align, index, ptr, vec, name),
+                store8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Store8LaneVec128, offset, align, index, ptr, vec, name),
+                store16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Store16LaneVec128, offset, align, index, ptr, vec, name),
+                store32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Store32LaneVec128, offset, align, index, ptr, vec, name),
+                store64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                    simd_lane(Operations.Store64LaneVec128, offset, align, index, ptr, vec, name),
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                    JSModule['_BinaryenStore'](this.ptr, 16, offset, align, ptr, value, v128, strToStack(name)),
+                const: (i8s: ArrayLike<number>) => {
+                           const tempLiteral = stackAlloc(sizeOfLiteral);
+                           JSModule['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
+                           return JSModule['_BinaryenConst'](this.ptr, tempLiteral) as ExpressionRef;
+                         },
+                not: (value: ExpressionRef) => JSModule['_BinaryenUnary'](this.ptr, Operations.NotVec128, value) as ExpressionRef,
+                any_true: (value: ExpressionRef) => JSModule['_BinaryenUnary'](this.ptr, Operations.AnyTrueVec128, value) as ExpressionRef,
+                and: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.AndVec128, left, right) as ExpressionRef,
+                or: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.OrVec128, left, right) as ExpressionRef,
+                xor: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.XorVec128, left, right) as ExpressionRef,
+                andnot: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.AndNotVec128, left, right) as ExpressionRef,
+                bitselect: (left: ExpressionRef, right: ExpressionRef, cond: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.BitselectVec128, left, right) as ExpressionRef,
+                pop: () => JSModule['_BinaryenPop'](this.ptr, v128) as ExpressionRef
+            }
+        };
     }
 }
 
