@@ -168,6 +168,10 @@ struct StringifyWalker
     return o << "~~~Undefined in operator<< overload~~~";
   }
 
+  // To ensure control flow children are walked consistently during outlining,
+  // we push a copy of the control flow expression. This avoids an issue where
+  // control flow no longer points to the same expression after being
+  // outlined into a new function.
   std::queue<Expression*> controlFlowQueue;
 
   /*

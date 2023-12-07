@@ -16,9 +16,9 @@
 
  ;; CHECK:      (type $FUNCSIG$i (func (result i32)))
 
- ;; CHECK:      (type $5 (func (param i32 i32 i32 i32) (result i32)))
-
  ;; CHECK:      (type $FUNCSIG$vii (func (param i32 i32)))
+
+ ;; CHECK:      (type $6 (func (param i32 i32 i32 i32) (result i32)))
 
  ;; CHECK:      (type $FUNCSIG$v (func))
  (type $FUNCSIG$v (func))
@@ -6487,10 +6487,11 @@
  ;; CHECK-NEXT:                                   )
  ;; CHECK-NEXT:                                  )
  ;; CHECK-NEXT:                                  (local.set $12
- ;; CHECK-NEXT:                                   (call $___udivdi3
+ ;; CHECK-NEXT:                                   (call $___udivmoddi4
  ;; CHECK-NEXT:                                    (local.get $12)
  ;; CHECK-NEXT:                                    (local.get $20)
  ;; CHECK-NEXT:                                    (i32.const 1000000000)
+ ;; CHECK-NEXT:                                    (i32.const 0)
  ;; CHECK-NEXT:                                    (i32.const 0)
  ;; CHECK-NEXT:                                   )
  ;; CHECK-NEXT:                                  )
@@ -14813,10 +14814,11 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (call $___udivdi3
+ ;; CHECK-NEXT:     (call $___udivmoddi4
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:      (i32.const 10)
+ ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -30696,15 +30698,6 @@
   )
   (local.get $3)
  )
- ;; CHECK:      (func $___udivdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
- ;; CHECK-NEXT:  (call $___udivmoddi4
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:   (local.get $3)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $___udivdi3 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   (call $___udivmoddi4
    (local.get $0)
