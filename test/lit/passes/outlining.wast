@@ -691,9 +691,28 @@
 )
 
 ;; Test outlining works with call_indirect
+;; 0 results, 2 params, 3 operands
 (module
   (table funcref)
-  (func
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32 i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
     (call_indirect
       (param i32 i32)
       (i32.const 0)
@@ -708,24 +727,110 @@
     )
   )
 )
-;; CHECK:      (type $0 (func))
 
-;; CHECK:      (type $1 (func (param i32 i32)))
+;; Test outlining works with call_indirect
+;; 0 results, 2 params, 3 operands
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
 
-;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (type $1 (func (param i32 i32)))
 
-;; CHECK:      (func $outline$ (type $0)
-;; CHECK-NEXT:  (call_indirect $0 (type $1)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+  ;; CHECK:      (table $0 0 funcref)
 
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT: )
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 0 results, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (call_indirect
+      (i32.const 0)
+    )
+    (call_indirect
+      (i32.const 0)
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 1 result, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (drop
+      (call_indirect
+        (result i32)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call_indirect
+        (result i32)
+        (i32.const 0)
+      )
+    )
+  )
+)
 
 ;; Outline a loop
 ;; TODO: Ideally, a loop (like any control flow) repeated within a program can
