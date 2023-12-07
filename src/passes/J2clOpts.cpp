@@ -69,9 +69,7 @@ public:
     }
     int optimizedBefore = optimized;
     if (auto* block = curr->body->dynCast<Block>()) {
-      auto& list = block->list;
-      for (int i = 0; i < list.size(); ++i) {
-        auto*& expr = list[i];
+      for (auto*& expr : block->list) {
         maybeHoistConstant(expr);
       }
     } else {
