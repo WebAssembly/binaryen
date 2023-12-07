@@ -45,8 +45,8 @@ struct ReconstructStringifyWalker
   ReconstructStringifyWalker(Module* wasm)
     : existingBuilder(*wasm), outlinedBuilder(*wasm) {
     this->setModule(wasm);
-    DBG(std::cout << "\n\nexistingBuilder: " << &existingBuilder
-                  << " outlinedBuilder: " << &outlinedBuilder);
+    DBG(std::cerr << "\nexistingBuilder: " << &existingBuilder
+                  << " outlinedBuilder: " << &outlinedBuilder << "\n");
   }
 
   // As we reconstruct the IR during outlining, we need to know what
@@ -91,7 +91,7 @@ struct ReconstructStringifyWalker
     DBG(std::string desc);
     if (auto curr = reason.getBlockStart()) {
       ASSERT_OK(existingBuilder.visitBlockStart(curr->block));
-      DBG(desc = "Block Start for ");
+      DBG(desc = "Block Start at ");
     } else if (auto curr = reason.getIfStart()) {
       // IR builder needs the condition of the If pushed onto the builder before
       // visitIfStart(), which will expect to be able to pop the condition.
@@ -99,7 +99,7 @@ struct ReconstructStringifyWalker
       // onto the If when the outer scope was visited.
       existingBuilder.push(curr->iff->condition);
       ASSERT_OK(existingBuilder.visitIfStart(curr->iff));
-      DBG(desc = "If Start for ");
+      DBG(desc = "If Start at ");
     } else if (reason.getElseStart()) {
       ASSERT_OK(existingBuilder.visitElse());
       DBG(desc = "Else Start at ");
@@ -114,7 +114,7 @@ struct ReconstructStringifyWalker
       // its expressions off the stack, so we must call build() after visitEnd()
       // to clear the internal stack IRBuilder manages.
       ASSERT_OK(existingBuilder.build());
-      DBG(desc = "End for ");
+      DBG(desc = "End at ");
     } else {
       DBG(desc = "addUniqueSymbol for unimplemented control flow ");
       WASM_UNREACHABLE("unimplemented control flow");
@@ -145,8 +145,9 @@ struct ReconstructStringifyWalker
     instrCounter = 0;
     seqCounter = 0;
     state = NotInSeq;
-    DBG(std::cout << "\n\n$" << func->name << " Func Start "
-                  << &existingBuilder);
+    DBG(std::cerr << "\n"
+                  << "Func Start to $" << func->name << " at "
+                  << &existingBuilder << "\n");
   }
 
   ReconstructState getCurrState() {
@@ -197,18 +198,18 @@ struct ReconstructStringifyWalker
     // Make a call from the existing function to the outlined function. This
     // call will replace the instructions moved to the outlined function.
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
-    DBG(std::cout << "\ncreated outlined fn: " << outlinedFunc->name);
+    DBG(std::cerr << "\ncreated outlined fn: " << outlinedFunc->name << "\n");
   }
 
   void transitionToInSkipSeq() {
     Function* outlinedFunc =
       getModule()->getFunction(sequences[seqCounter].func);
     ASSERT_OK(existingBuilder.makeCall(outlinedFunc->name, false));
-    DBG(std::cout << "\n\nstarting to skip instructions "
+    DBG(std::cerr << "\nstarting to skip instructions "
                   << sequences[seqCounter].startIdx << " - "
                   << sequences[seqCounter].endIdx - 1 << " to "
                   << sequences[seqCounter].func
-                  << " and adding call() instead");
+                  << " and adding call() instead\n");
   }
 
   void maybeEndSeq() {
@@ -219,19 +220,20 @@ struct ReconstructStringifyWalker
   }
 
   void transitionToNotInSeq() {
+    DBG(std::cerr << "End of sequence ");
     if (state == InSeq) {
       ASSERT_OK(outlinedBuilder.visitEnd());
-      DBG(std::cout << "\n\nEnd of sequence to " << &outlinedBuilder);
+      DBG(std::cerr << "to " << &outlinedBuilder);
     }
+    DBG(std::cerr << "\n\n");
     // Completed a sequence so increase the seqCounter and reset the state.
     seqCounter++;
   }
 
 #if OUTLINING_DEBUG
   void printAddUniqueSymbol(std::string desc) {
-    std::cout << "\n"
-              << desc << std::to_string(instrCounter) << " to "
-              << &existingBuilder;
+    std::cerr << desc << std::to_string(instrCounter) << " to "
+              << &existingBuilder << "\n";
   }
 
   void printVisitExpression(Expression* curr) {
@@ -239,9 +241,9 @@ struct ReconstructStringifyWalker
                     : state == NotInSeq ? &existingBuilder
                                         : nullptr;
     auto verb = state == InSkipSeq ? "skipping " : "adding ";
-    std::cout << "\n"
-              << verb << std::to_string(instrCounter) << ": "
-              << ShallowExpression{curr} << " to " << builder;
+    std::cerr << verb << std::to_string(instrCounter) << ": "
+              << ShallowExpression{curr} << "(" << curr << ") to " << builder
+              << "\n";
   }
 #endif
 };
@@ -361,14 +363,14 @@ struct Outlining : public Pass {
 #if OUTLINING_DEBUG
   void printHashString(const std::vector<uint32_t>& hashString,
                        const std::vector<Expression*>& exprs) {
-    std::cout << "\n\n";
+    std::cerr << "\n\n";
     for (Index idx = 0; idx < hashString.size(); idx++) {
       Expression* expr = exprs[idx];
       if (expr) {
-        std::cout << idx << " - " << hashString[idx] << ": "
+        std::cerr << idx << " - " << hashString[idx] << ": "
                   << ShallowExpression{expr} << "\n";
       } else {
-        std::cout << idx << ": unique symbol\n";
+        std::cerr << idx << ": unique symbol\n";
       }
     }
   }

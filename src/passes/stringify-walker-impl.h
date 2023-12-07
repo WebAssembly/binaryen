@@ -16,6 +16,14 @@
 
 #include "stringify-walker.h"
 
+#define STRINGIFY_DEBUG 0
+
+#if STRINGIFY_DEBUG
+#define DBG(statement) statement
+#else
+#define DBG(statement)
+#endif
+
 #ifndef wasm_passes_stringify_walker_impl_h
 #define wasm_passes_stringify_walker_impl_h
 
@@ -44,6 +52,8 @@ inline void StringifyWalker<SubType>::scan(SubType* self, Expression** currp) {
   Expression* curr = *currp;
   if (Properties::isControlFlowStructure(curr)) {
     self->controlFlowQueue.push(curr);
+    DBG(std::cerr << "controlFlowQueue.push: " << ShallowExpression{curr}
+                  << ", " << curr << "\n");
     self->pushTask(doVisitExpression, currp);
     // The if-condition is a value child consumed by the if control flow, which
     // makes the if-condition a true sibling rather than part of its contents in
@@ -62,6 +72,8 @@ template<typename SubType> void StringifyWalker<SubType>::dequeueControlFlow() {
   auto& queue = controlFlowQueue;
   Expression* curr = queue.front();
   queue.pop();
+  DBG(std::cerr << "controlFlowQueue.pop: " << ShallowExpression{curr} << ", "
+                << curr << "\n");
 
   // TODO: Issue #5796, Make a ControlChildIterator
   switch (curr->_id) {
