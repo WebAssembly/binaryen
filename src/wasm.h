@@ -2072,6 +2072,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  // Inlining metadata: whether to disallow full and/or partial inlining (for
+  // details on what those mean, see Inlining.cpp).
+  bool noFullInline = false;
+  bool noPartialInline = false;
+
+  // Methods
   Signature getSig() { return type.getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }
@@ -2309,6 +2315,13 @@ public:
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Tag* getTagOrNull(Name name);
+
+  // get* methods that are generic over the kind, that is, items are identified
+  // by their kind and their name. Otherwise, they are similar to the above
+  // get* methods. These return items that can be imports.
+  // TODO: Add methods for things that cannot be imports (segments).
+  Importable* getImport(ModuleItemKind kind, Name name);
+  Importable* getImportOrNull(ModuleItemKind kind, Name name);
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
