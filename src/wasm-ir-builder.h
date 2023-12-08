@@ -181,8 +181,8 @@ public:
   [[nodiscard]] Result<> makeArrayLen();
   [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
-  // [[nodiscard]] Result<> makeArrayInitData();
-  // [[nodiscard]] Result<> makeArrayInitElem();
+  [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
+  [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
   // [[nodiscard]] Result<> makeStringNew();
   // [[nodiscard]] Result<> makeStringConst();

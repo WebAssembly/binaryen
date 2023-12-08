@@ -284,8 +284,9 @@ struct NullInstrParserCtx {
   using FuncIdxT = Ok;
   using LocalIdxT = Ok;
   using TableIdxT = Ok;
-  using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
+  using GlobalIdxT = Ok;
+  using ElemIdxT = Ok;
   using DataIdxT = Ok;
   using LabelIdxT = Ok;
   using TagIdxT = Ok;
@@ -310,6 +311,8 @@ struct NullInstrParserCtx {
   TableIdxT getTableFromName(Name) { return Ok{}; }
   MemoryIdxT getMemoryFromIdx(uint32_t) { return Ok{}; }
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
+  ElemIdxT getElemFromIdx(uint32_t) { return Ok{}; }
+  ElemIdxT getElemFromName(Name) { return Ok{}; }
   DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
   DataIdxT getDataFromName(Name) { return Ok{}; }
   LabelIdxT getLabelFromIdx(uint32_t, bool) { return Ok{}; }
@@ -458,7 +461,7 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+  Result<> makeArrayNewElem(Index, HeapTypeT, ElemIdxT) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -477,6 +480,14 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitData(Index, HeapTypeT, DataIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitElem(Index, HeapTypeT, ElemIdxT) {
     return Ok{};
   }
   Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
@@ -968,6 +979,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalIdxT = Name;
   using TableIdxT = Name;
   using MemoryIdxT = Name;
+  using ElemIdxT = Name;
   using DataIdxT = Name;
   using TagIdxT = Name;
 
@@ -1137,6 +1149,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<Name> getMemoryFromName(Name name) {
     if (!wasm.getMemoryOrNull(name)) {
       return in.err("memory $" + name.toString() + " does not exist");
+    }
+    return name;
+  }
+
+  Result<Name> getElemFromIdx(uint32_t idx) {
+    if (idx >= wasm.elementSegments.size()) {
+      return in.err("elem index out of bounds");
+    }
+    return wasm.elementSegments[idx]->name;
+  }
+
+  Result<Name> getElemFromName(Name name) {
+    if (!wasm.getElementSegmentOrNull(name)) {
+      return in.err("elem $" + name.toString() + " does not exist");
     }
     return name;
   }
@@ -1656,6 +1682,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeArrayFill(Index pos, HeapType type) {
     return withLoc(pos, irBuilder.makeArrayFill(type));
+  }
+
+  Result<> makeArrayInitData(Index pos, HeapType type, Name data) {
+    return withLoc(pos, irBuilder.makeArrayInitData(type, data));
+  }
+
+  Result<> makeArrayInitElem(Index pos, HeapType type, Name elem) {
+    return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
   }
 
   Result<> makeRefAs(Index pos, RefAsOp op) {

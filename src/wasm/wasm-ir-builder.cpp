@@ -1408,9 +1408,23 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayInitData() {}
+Result<> IRBuilder::makeArrayInitData(HeapType type, Name data) {
+  ArrayInitData curr;
+  CHECK_ERR(visitArrayInitData(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitData(
+    data, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeArrayInitElem() {}
+Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
+  ArrayInitElem curr;
+  CHECK_ERR(visitArrayInitElem(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitElem(
+    elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefAs(RefAsOp op) {
   RefAs curr;
