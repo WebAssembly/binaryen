@@ -1377,7 +1377,11 @@ template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
 
 template<typename Ctx>
 Result<> makeCallIndirect(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  auto type = typeuse(ctx);
+  CHECK_ERR(type);
+  return ctx.makeCallIndirect(pos, table.getPtr(), *type, isReturn);
 }
 
 template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {

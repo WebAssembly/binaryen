@@ -154,7 +154,7 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
-  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
 
@@ -253,7 +253,7 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression(expr) << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << "\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -867,7 +867,14 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallIndirect() {}
+Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
+  CallIndirect curr(wasm.allocator);
+  curr.heapType = type;
+  CHECK_ERR(visitCallIndirect(&curr));
+  push(builder.makeCallIndirect(
+    table, curr.target, curr.operands, type, isReturn));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
   push(builder.makeLocalGet(local, func->getLocalType(local)));

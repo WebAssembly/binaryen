@@ -178,7 +178,7 @@ struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
-  FunctionInfoScanner(NameInfoMap* infos) : infos(infos) {}
+  FunctionInfoScanner(NameInfoMap& infos) : infos(infos) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<FunctionInfoScanner>(infos);
@@ -186,15 +186,15 @@ struct FunctionInfoScanner
 
   void visitLoop(Loop* curr) {
     // having a loop
-    (*infos)[getFunction()->name].hasLoops = true;
+    infos[getFunction()->name].hasLoops = true;
   }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
-    assert(infos->count(curr->target) > 0);
-    (*infos)[curr->target].refs++;
+    assert(infos.count(curr->target) > 0);
+    infos[curr->target].refs++;
     // having a call
-    (*infos)[getFunction()->name].hasCalls = true;
+    infos[getFunction()->name].hasCalls = true;
   }
 
   // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
@@ -207,17 +207,17 @@ struct FunctionInfoScanner
 
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
-      (*infos)[getFunction()->name].hasTryDelegate = true;
+      infos[getFunction()->name].hasTryDelegate = true;
     }
   }
 
   void visitRefFunc(RefFunc* curr) {
-    assert(infos->count(curr->func) > 0);
-    (*infos)[curr->func].refs++;
+    assert(infos.count(curr->func) > 0);
+    infos[curr->func].refs++;
   }
 
   void visitFunction(Function* curr) {
-    auto& info = (*infos)[curr->name];
+    auto& info = infos[curr->name];
 
     if (!canHandleParams(curr)) {
       info.inliningMode = InliningMode::Uninlineable;
@@ -235,7 +235,7 @@ struct FunctionInfoScanner
   }
 
 private:
-  NameInfoMap* infos;
+  NameInfoMap& infos;
 };
 
 struct InliningAction {
@@ -1094,7 +1094,7 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     {
-      FunctionInfoScanner scanner(&infos);
+      FunctionInfoScanner scanner(infos);
       scanner.run(getPassRunner(), module);
       scanner.walkModuleCode(module);
     }

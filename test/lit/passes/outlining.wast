@@ -238,7 +238,59 @@
   )
 )
 
-;; Tests that outlining works correctly with If control flow
+;; Tests that outlining works correctly with if-condition
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
+  (global $global$1 (mut i32) (i32.const 100))
+  ;; CHECK:      (func $outline$ (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (global.get $global$1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (global.set $global$1
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (global.set $global$1
+        (i32.const 15)
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (global.set $global$1
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (global.set $global$1
+        (i32.const 20)
+      )
+    )
+  )
+)
+
+;; Outline if-true.
 (module
   ;; CHECK:      (type $0 (func (param i32)))
 
@@ -283,6 +335,138 @@
       )
       (drop
         (i32.const 10)
+      )
+    )
+  )
+)
+
+;; Outline if-false.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
+  (global $global$1 (mut i32) (i32.const 100))
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (global.set $global$1
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (global.get $global$1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $global$1
+  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (global.set $global$1
+        (i32.const 15)
+      )
+      (block
+        (global.set $global$1
+          (i32.const 100)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.ctz
+  ;; CHECK-NEXT:    (global.get $global$1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (global.set $global$1
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b
+    (if
+      (i32.ctz
+        (global.get $global$1)
+      )
+      (global.set $global$1
+        (i32.const 30)
+      )
+      (block
+        (global.set $global$1
+          (i32.const 100)
+        )
+      )
+    )
+  )
+)
+
+;; Outline if control flow, with matching if-condition, if-true, if-false
+;; TODO: Ideally outlining would keep the if-true and if-false inline in
+;; $outline$, instead of moving them to another outlined function ($outline$_3
+;; & $outline$_4) because of the unique symbol between the if-condition and
+;; if-true and the unique symbol between if-true and if-false.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $global$1 (mut i32) (i32.const 100))
+  (global $global$1 (mut i32) (i32.const 100))
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (global.get $global$1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$_3)
+  ;; CHECK-NEXT:   (call $outline$_4)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $outline$_3 (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $outline$_4 (type $0)
+  ;; CHECK-NEXT:  (global.set $global$1
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (drop
+        (i32.const 10)
+      )
+      (global.set $global$1
+        (i32.const 20)
+      )
+    )
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $b
+    (if
+      (i32.eqz
+        (global.get $global$1)
+      )
+      (drop
+        (i32.const 10)
+      )
+      (global.set $global$1
+        (i32.const 20)
       )
     )
   )
@@ -507,9 +691,28 @@
 )
 
 ;; Test outlining works with call_indirect
+;; 0 results, 2 params, 3 operands
 (module
   (table funcref)
-  (func
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32 i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
     (call_indirect
       (param i32 i32)
       (i32.const 0)
@@ -524,21 +727,144 @@
     )
   )
 )
-;; CHECK:      (type $0 (func))
 
-;; CHECK:      (type $1 (func (param i32 i32)))
+;; Test outlining works with call_indirect
+;; 0 results, 2 params, 3 operands
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
 
-;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (type $1 (func (param i32 i32)))
 
-;; CHECK:      (func $outline$ (type $0)
-;; CHECK-NEXT:  (call_indirect $0 (type $1)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:   (i32.const 2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+  ;; CHECK:      (table $0 0 funcref)
 
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT:  (call $outline$)
-;; CHECK-NEXT: )
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+    (call_indirect
+      (param i32 i32)
+      (i32.const 0)
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 0 results, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (call_indirect $0 (type $0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (call_indirect
+      (i32.const 0)
+    )
+    (call_indirect
+      (i32.const 0)
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 1 result, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (drop
+      (call_indirect
+        (result i32)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call_indirect
+        (result i32)
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+;; Outline a loop
+;; TODO: Ideally, a loop (like any control flow) repeated within a program can
+;; be outlined by itself. Right now this is not possible since a control flow
+;; is represented by a single symbol and only sequences of symbols >= 2 are
+;; candidates for outlining.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $loop-in
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (drop
+      (i32.const 0)
+    )
+    (loop (nop))
+  )
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $b
+    (drop
+      (i32.const 0)
+    )
+    (loop (nop))
+  )
+)
