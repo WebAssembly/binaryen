@@ -2429,6 +2429,14 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
       return builder.makeArrayNewFixed(trivialArray, {});
     }
+    case HeapType::exn: {
+      auto null = builder.makeRefNull(HeapType::ext);
+      if (!type.isNullable()) {
+        assert(funcContext);
+        return builder.makeRefAs(RefAsNonNull, null);
+      }
+      return null;
+    }
     case HeapType::string:
       return builder.makeStringConst(std::to_string(upTo(1024)));
     case HeapType::stringview_wtf8:
@@ -2437,7 +2445,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       WASM_UNREACHABLE("TODO: strings");
     case HeapType::none:
     case HeapType::noext:
-    case HeapType::nofunc: {
+    case HeapType::nofunc:
+    case HeapType::noexn: {
       auto null = builder.makeRefNull(heapType);
       if (!type.isNullable()) {
         assert(funcContext);
@@ -3888,6 +3897,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return pick(HeapType::struct_, HeapType::none);
       case HeapType::array:
         return pick(HeapType::array, HeapType::none);
+      case HeapType::exn:
+        return HeapType::exn;
       case HeapType::string:
         return HeapType::string;
       case HeapType::stringview_wtf8:
@@ -3897,6 +3908,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::noexn:
         break;
     }
   }

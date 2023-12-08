@@ -1279,6 +1279,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 8) == "arrayref" && (prefix || str.size() == 8)) {
     return Type(HeapType::array, Nullable);
   }
+  if (str.substr(0, 6) == "exnref" && (prefix || str.size() == 6)) {
+    return Type(HeapType::exn, Nullable);
+  }
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
@@ -1299,6 +1302,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   }
   if (str.substr(0, 11) == "nullfuncref" && (prefix || str.size() == 11)) {
     return Type(HeapType::nofunc, Nullable);
+  }
+  if (str.substr(0, 10) == "nullexnref" && (prefix || str.size() == 10)) {
+    return Type(HeapType::noexn, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -1330,6 +1336,9 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   if (str.substr(0, 5) == "array" && (prefix || str.size() == 5)) {
     return HeapType::array;
   }
+  if (str.substr(0, 3) == "exn" && (prefix || str.size() == 3)) {
+    return HeapType::exn;
+  }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
     return HeapType::string;
   }
@@ -1350,6 +1359,12 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   }
   if (str.substr(0, 6) == "nofunc" && (prefix || str.size() == 6)) {
     return HeapType::nofunc;
+  }
+  if (str.substr(0, 6) == "nofunc" && (prefix || str.size() == 6)) {
+    return HeapType::nofunc;
+  }
+  if (str.substr(0, 5) == "noexn" && (prefix || str.size() == 5)) {
+    return HeapType::noexn;
   }
   throw ParseException(std::string("invalid wasm heap type: ") +
                        std::string(str.data(), str.size()));

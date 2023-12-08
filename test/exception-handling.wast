@@ -8,6 +8,9 @@
   (func $foo)
   (func $bar)
 
+  ;; ---------------------------------------------------------------------------
+  ;; Old Phase 3 exception handling
+
   (func $eh-test (local $x (i32 i64))
     ;; Simple try-catch
     (try
@@ -364,5 +367,20 @@
       )
     )
     (nop)
+  )
+
+  ;; ---------------------------------------------------------------------------
+  ;; New exception handling
+
+  (func $exnref-test (result exnref) (local $exn exnref) (local $null-exn nullexnref)
+    (if (result exnref)
+      (i32.const 1)
+      (if (result nullexnref)
+        (i32.const 1)
+        (local.get $null-exn)
+        (ref.null noexn)
+      )
+      (local.get $exn)
+    )
   )
 )
