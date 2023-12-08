@@ -175,6 +175,8 @@ template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
@@ -1579,7 +1581,11 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeArrayNewElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
@@ -1624,11 +1630,18 @@ template<typename Ctx> Result<> makeArrayFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayInitData(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayInitData(pos, *type, *data);
 }
 
 template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  return ctx.makeArrayInitElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
@@ -1838,8 +1851,20 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
   return ctx.in.err("expected global index or identifier");
 }
 
+// elemidx ::= x:u32 => x
+//           | v:id => x (if elems[x] = v)
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getElemFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getElemFromName(*id);
+  }
+  return ctx.in.err("expected elem index or identifier");
+}
+
 // dataidx ::= x:u32 => x
-//           | v:id => x (if data[x] = v)
+//           | v:id => x (if datas[x] = v)
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getDataFromIdx(*x);

@@ -1736,6 +1736,7 @@ public:
 
 class ArrayInitData : public SpecificExpression<Expression::ArrayInitDataId> {
 public:
+  ArrayInitData() = default;
   ArrayInitData(MixedArena& allocator) {}
 
   Name segment;
@@ -1749,6 +1750,7 @@ public:
 
 class ArrayInitElem : public SpecificExpression<Expression::ArrayInitElemId> {
 public:
+  ArrayInitElem() = default;
   ArrayInitElem(MixedArena& allocator) {}
 
   Name segment;
