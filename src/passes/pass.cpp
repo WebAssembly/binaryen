@@ -194,7 +194,7 @@ void PassRegistry::registerPasses() {
                "GUFA plus local optimizations in functions we modified",
                createGUFAOptimizingPass);
   registerPass(
-    "optimize-j2cl", "Optimizes J2CL specific constructs.", createJ2clOptsPass);
+    "optimize-j2cl", "optimizes J2CL specific constructs.", createJ2clOptsPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);

@@ -30,13 +30,13 @@ namespace wasm {
 
 namespace {
 
-static bool isOnceFunction(Function* f) {
-  return f->name.hasSubstring("_@once@_");
-}
+bool isOnceFunction(Function* f) { return f->name.hasSubstring("_@once@_"); }
 
 using AssignmentCountMap = std::unordered_map<Name, Index>;
 
-// TODO: parallel
+// A visitor to count the number of GlobalSets of each global so we can later
+// identify the number of assignments of the global.
+// TODO: parallelize
 class GlobalAssignmentCollector
   : public WalkerPass<PostWalker<GlobalAssignmentCollector>> {
 public:
@@ -44,7 +44,9 @@ public:
     : assignmentCounts(assignmentCounts) {}
 
   void visitGlobalSet(GlobalSet* curr) {
-    // Avoid optimizing class initialization condition variable itself.
+    // Avoid optimizing class initialization condition variable itself. If we
+    // were optimizing it then it would become "true" and would defeat its
+    // functionality and the clinit would never trigger during runtime.
     if (curr->name.startsWith("f_$initialized__")) {
       return;
     }
@@ -55,7 +57,9 @@ private:
   AssignmentCountMap& assignmentCounts;
 };
 
-// TODO: parallel
+// A visitor that moves initialization of constant-like globals from "once"
+// functions to global init.
+// TODO: parallelize
 class ConstantHoister : public WalkerPass<PostWalker<ConstantHoister>> {
 public:
   ConstantHoister(AssignmentCountMap& assignmentCounts)
@@ -120,7 +124,10 @@ private:
 
 using RenamedFunctions = std::map<Name, Name>;
 
-// TODO: parallel
+// A visitor that marks trivial once functions for removal. It assumes that
+// once functions are prevented from inlining using `--no-inline *_@once_*`
+// hence it just renames them if they are identified to be trivial.
+// TODO: parallelize
 class RenameFunctions : public WalkerPass<PostWalker<RenameFunctions>> {
 public:
   RenameFunctions(RenamedFunctions& renamedFunctions)
@@ -132,6 +139,16 @@ public:
     auto* body = curr->body;
     if (Measurer::measure(body) <= 2) {
       // Once function has become trivial: rename so could be removed/inlined.
+      //
+      // Note that the size of a trivial function is set to 2 to cover things
+      // like
+      //  - nop (e.g. a clinit that is emptied)
+      //  - call (e.g. a clinit just calling another one)
+      //  - return global.get abc (e.g. a string literal moved to global)
+      //  - global.set abc 1 (e.g. partially inlined clinit that is empty)
+      // while rejecting more complex scenario like condition checks. Optimizing
+      // complex functions could change the shape of "once" functions and make
+      // the ConstantHoister in this pass and OnceReducer ineffective.
       Name newName = removeStr(curr->name, "_@once@_");
       renamedFunctions[curr->name] = newName;
       curr->name = newName;
