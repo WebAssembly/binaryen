@@ -14,17 +14,14 @@
   ;; CHECK-BIN:      (type $0 (func (param f32) (result f32)))
   ;; CHECK-BIN-NODEBUG:      (type $0 (func (param f32) (result f32)))
   (type $0 (func (param f32) (result f32)))
-
   ;; CHECK-TEXT:      (type $1 (func (param i32 i32) (result f32)))
   ;; CHECK-BIN:      (type $1 (func (param i32 i32) (result f32)))
   ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 i32) (result f32)))
   (type $1 (func (param i32 i32) (result f32)))
-
   ;; CHECK-TEXT:      (type $2 (func (param i32) (result i32)))
   ;; CHECK-BIN:      (type $2 (func (param i32) (result i32)))
   ;; CHECK-BIN-NODEBUG:      (type $2 (func (param i32) (result i32)))
   (type $2 (func (param i32) (result i32)))
-
   ;; CHECK-TEXT:      (type $3 (func (param i32 i32 i32) (result i32)))
   ;; CHECK-BIN:      (type $3 (func (param i32 i32 i32) (result i32)))
   ;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32 i32 i32) (result i32)))
@@ -33,7 +30,6 @@
   ;; CHECK-BIN:      (memory $0 256 256)
   ;; CHECK-BIN-NODEBUG:      (memory $0 256 256)
   (memory $0 256 256)
-
   ;; CHECK-TEXT:      (export "floats" (func $floats))
   ;; CHECK-BIN:      (export "floats" (func $floats))
   ;; CHECK-BIN-NODEBUG:      (export "floats" (func $0))

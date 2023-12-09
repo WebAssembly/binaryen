@@ -13,7 +13,6 @@
  ;; CHECK-TEXT:      (type $v (func))
  ;; CHECK-BIN:      (type $v (func))
  (type $v (func))
-
  ;; CHECK-TEXT:      (import "env" "test2" (global $test2 i32))
  ;; CHECK-BIN:      (import "env" "test2" (global $test2 i32))
  ;; CHECK-BIN-NODEBUG:      (type $0 (func))
@@ -24,7 +23,6 @@
  ;; CHECK-BIN:      (import "env" "test1" (func $test1 (type $v)))
  ;; CHECK-BIN-NODEBUG:      (import "env" "test1" (func $fimport$0 (type $0)))
  (import "env" "test2" (global $test2 i32))
-
  ;; CHECK-TEXT:      (export "test1" (func $test1))
  ;; CHECK-BIN:      (export "test1" (func $test1))
  ;; CHECK-BIN-NODEBUG:      (export "test1" (func $fimport$0))

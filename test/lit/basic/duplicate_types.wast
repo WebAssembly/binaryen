@@ -13,18 +13,13 @@
  (type (func))
  (type (func))
  (type (func))
-
  (type (func (param i32)))
-
  ;; CHECK-TEXT:      (type $0 (func (param i32)))
  ;; CHECK-BIN:      (type $0 (func (param i32)))
  ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32)))
  (type $0 (func (param i32)))
-
  (type (func (param i32)))
-
  (type $b (func (param i32) (result f32)))
-
  (type (func (param i32) (result f32)))
 
  ;; CHECK-TEXT:      (type $1 (func (param i32) (result i32)))

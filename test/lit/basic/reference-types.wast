@@ -29,9 +29,7 @@
 
   ;; CHECK-BIN:      (type $sig_eqref (func (param eqref)))
   (type $sig_eqref (func (param eqref)))
-
   (type $sig_funcref (func (param funcref)))
-
   (type $sig_anyref (func (param anyref)))
 
   ;; CHECK-TEXT:      (type $5 (func))
@@ -176,7 +174,6 @@
 
   (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
   (import "env" "import_global" (global $import_global eqref))
-
   ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
 
   ;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))

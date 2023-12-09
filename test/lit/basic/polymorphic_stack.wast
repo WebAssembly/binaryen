@@ -371,7 +371,6 @@
     )
   )
 )
-
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)

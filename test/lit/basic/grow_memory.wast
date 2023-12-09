@@ -14,7 +14,6 @@
  ;; CHECK-BIN:      (type $0 (func (param i32) (result i32)))
  ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
  (type $0 (func (param i32) (result i32)))
-
  ;; CHECK-TEXT:      (type $1 (func (result i32)))
  ;; CHECK-BIN:      (type $1 (func (result i32)))
  ;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32)))
@@ -27,12 +26,10 @@
  ;; CHECK-BIN:      (export "memory" (memory $0))
  ;; CHECK-BIN-NODEBUG:      (export "memory" (memory $0))
  (export "memory" (memory $0))
-
  ;; CHECK-TEXT:      (export "grow" (func $0))
  ;; CHECK-BIN:      (export "grow" (func $0))
  ;; CHECK-BIN-NODEBUG:      (export "grow" (func $0))
  (export "grow" (func $0))
-
  ;; CHECK-TEXT:      (export "current" (func $1))
  ;; CHECK-BIN:      (export "current" (func $1))
  ;; CHECK-BIN-NODEBUG:      (export "current" (func $1))

@@ -13,11 +13,9 @@
  ;; CHECK-TEXT:      (type $i32_=>_v128 (func (param i32) (result v128)))
  ;; CHECK-BIN:      (type $i32_=>_v128 (func (param i32) (result v128)))
  (type $i32_=>_v128 (func (param i32) (result v128)))
-
  ;; CHECK-TEXT:      (type $i32_v128_=>_none (func (param i32 v128)))
  ;; CHECK-BIN:      (type $i32_v128_=>_none (func (param i32 v128)))
  (type $i32_v128_=>_none (func (param i32 v128)))
-
  ;; CHECK-TEXT:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
  ;; CHECK-BIN:      (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
  (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
@@ -1020,7 +1018,6 @@
   )
  )
 )
-
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result v128)))
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 v128)))

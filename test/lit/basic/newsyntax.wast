@@ -34,7 +34,6 @@
     (call_indirect (i32.const 1))
   )
 )
-
 ;; CHECK-TEXT:      (export "call_indirect" (func $0))
 
 ;; CHECK-TEXT:      (func $0 (type $0)

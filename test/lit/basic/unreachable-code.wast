@@ -267,7 +267,6 @@
     )
   )
 )
-
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)

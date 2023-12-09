@@ -13,7 +13,6 @@
  ;; CHECK-TEXT:      (type $none_=>_none (func))
  ;; CHECK-BIN:      (type $none_=>_none (func))
  (type $none_=>_none (func))
-
  ;; CHECK-TEXT:      (type $none_=>_i32 (func (result i32)))
  ;; CHECK-BIN:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
@@ -368,7 +367,6 @@
   )
  )
 )
-
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 500)
 
 ;; CHECK-BIN-NODEBUG:      (memory $1 1 800)

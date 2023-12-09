@@ -1064,7 +1064,6 @@
   (atomic.fence)
  )
 )
-
 ;; CHECK-BIN-NODEBUG:      (memory $0 (shared i64 23 256))
 
 ;; CHECK-BIN-NODEBUG:      (memory $1 (shared i64 23 256))
