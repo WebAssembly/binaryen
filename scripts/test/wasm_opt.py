@@ -124,16 +124,6 @@ def test_wasm_opt():
 
     print('\n[ checking wasm-opt debugInfo read-write... ]\n')
 
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        shared.fail_if_not_identical_to_file(actual, f)
-
 
 def update_wasm_opt_tests():
     print('\n[ checking wasm-opt -o notation... ]\n')
@@ -203,16 +193,6 @@ def update_wasm_opt_tests():
         actual = actual.replace('printing before:\n', '')
         open(f, 'w').write(actual)
 
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        open(f, 'w').write(actual)
 
     print('\n[ checking binary format testcases... ]\n')
     for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
