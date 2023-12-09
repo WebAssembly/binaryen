@@ -143,7 +143,8 @@ public:
       // Note that the size of a trivial function is set to 2 to cover things
       // like
       //  - nop (e.g. a clinit that is emptied)
-      //  - call (e.g. a clinit just calling another one)
+      //  - call (e.g. a clinit just calling another one; note that clinits take
+      //  no parameters)
       //  - return global.get abc (e.g. a string literal moved to global)
       //  - global.set abc 1 (e.g. partially inlined clinit that is empty)
       // while rejecting more complex scenario like condition checks. Optimizing
