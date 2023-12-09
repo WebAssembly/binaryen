@@ -104,6 +104,10 @@ struct NullTypeParserCtx {
   HeapTypeT makeI31() { return Ok{}; }
   HeapTypeT makeStructType() { return Ok{}; }
   HeapTypeT makeArrayType() { return Ok{}; }
+  HeapTypeT makeStringType() { return Ok{}; }
+  HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
+  HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
+  HeapTypeT makeStringViewIterType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -190,6 +194,10 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeI31() { return HeapType::i31; }
   HeapTypeT makeStructType() { return HeapType::struct_; }
   HeapTypeT makeArrayType() { return HeapType::array; }
+  HeapTypeT makeStringType() { return HeapType::string; }
+  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
+  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
+  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -491,6 +499,19 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
+  Result<> makeStringNew(Index, StringNewOp, bool, MemoryIdxT*) { return Ok{}; }
+  Result<> makeStringConst(Index, std::string_view) { return Ok{}; }
+  Result<> makeStringMeasure(Index, StringMeasureOp) { return Ok{}; }
+  Result<> makeStringEncode(Index, StringEncodeOp, MemoryIdxT*) { return Ok{}; }
+  Result<> makeStringConcat(Index) { return Ok{}; }
+  Result<> makeStringEq(Index, StringEqOp) { return Ok{}; }
+  Result<> makeStringAs(Index, StringAsOp) { return Ok{}; }
+  Result<> makeStringWTF8Advance(Index) { return Ok{}; }
+  Result<> makeStringWTF16Get(Index) { return Ok{}; }
+  Result<> makeStringIterNext(Index) { return Ok{}; }
+  Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
+  Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
+  Result<> makeStringSliceIter(Index) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1694,6 +1715,62 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefAs(Index pos, RefAsOp op) {
     return withLoc(pos, irBuilder.makeRefAs(op));
+  }
+
+  Result<> makeStringNew(Index pos, StringNewOp op, bool try_, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    return withLoc(pos, irBuilder.makeStringNew(op, try_, *m));
+  }
+
+  Result<> makeStringConst(Index pos, std::string_view str) {
+    return withLoc(pos, irBuilder.makeStringConst(Name(str)));
+  }
+
+  Result<> makeStringMeasure(Index pos, StringMeasureOp op) {
+    return withLoc(pos, irBuilder.makeStringMeasure(op));
+  }
+
+  Result<> makeStringEncode(Index pos, StringEncodeOp op, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    return withLoc(pos, irBuilder.makeStringEncode(op, *m));
+  }
+
+  Result<> makeStringConcat(Index pos) {
+    return withLoc(pos, irBuilder.makeStringConcat());
+  }
+
+  Result<> makeStringEq(Index pos, StringEqOp op) {
+    return withLoc(pos, irBuilder.makeStringEq(op));
+  }
+
+  Result<> makeStringAs(Index pos, StringAsOp op) {
+    return withLoc(pos, irBuilder.makeStringAs(op));
+  }
+
+  Result<> makeStringWTF8Advance(Index pos) {
+    return withLoc(pos, irBuilder.makeStringWTF8Advance());
+  }
+
+  Result<> makeStringWTF16Get(Index pos) {
+    return withLoc(pos, irBuilder.makeStringWTF16Get());
+  }
+
+  Result<> makeStringIterNext(Index pos) {
+    return withLoc(pos, irBuilder.makeStringIterNext());
+  }
+
+  Result<> makeStringIterMove(Index pos, StringIterMoveOp op) {
+    return withLoc(pos, irBuilder.makeStringIterMove(op));
+  }
+
+  Result<> makeStringSliceWTF(Index pos, StringSliceWTFOp op) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
+  }
+
+  Result<> makeStringSliceIter(Index pos) {
+    return withLoc(pos, irBuilder.makeStringSliceIter());
   }
 };
 

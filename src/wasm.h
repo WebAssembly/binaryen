@@ -1776,6 +1776,7 @@ public:
 
 class StringNew : public SpecificExpression<Expression::StringNewId> {
 public:
+  StringNew() = default;
   StringNew(MixedArena& allocator) {}
 
   StringNewOp op;
@@ -1800,6 +1801,7 @@ public:
 
 class StringConst : public SpecificExpression<Expression::StringConstId> {
 public:
+  StringConst() = default;
   StringConst(MixedArena& allocator) {}
 
   // TODO: Use a different type to allow null bytes in the middle -
@@ -1812,6 +1814,7 @@ public:
 
 class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
 public:
+  StringMeasure() = default;
   StringMeasure(MixedArena& allocator) {}
 
   StringMeasureOp op;
@@ -1823,6 +1826,7 @@ public:
 
 class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
 public:
+  StringEncode() = default;
   StringEncode(MixedArena& allocator) {}
 
   StringEncodeOp op;
@@ -1842,6 +1846,7 @@ public:
 
 class StringConcat : public SpecificExpression<Expression::StringConcatId> {
 public:
+  StringConcat() = default;
   StringConcat(MixedArena& allocator) {}
 
   Expression* left;
@@ -1852,6 +1857,7 @@ public:
 
 class StringEq : public SpecificExpression<Expression::StringEqId> {
 public:
+  StringEq() = default;
   StringEq(MixedArena& allocator) {}
 
   StringEqOp op;
@@ -1864,6 +1870,7 @@ public:
 
 class StringAs : public SpecificExpression<Expression::StringAsId> {
 public:
+  StringAs() = default;
   StringAs(MixedArena& allocator) {}
 
   StringAsOp op;
@@ -1876,6 +1883,7 @@ public:
 class StringWTF8Advance
   : public SpecificExpression<Expression::StringWTF8AdvanceId> {
 public:
+  StringWTF8Advance() = default;
   StringWTF8Advance(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1887,6 +1895,7 @@ public:
 
 class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
+  StringWTF16Get() = default;
   StringWTF16Get(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1897,6 +1906,7 @@ public:
 
 class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
 public:
+  StringIterNext() = default;
   StringIterNext(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1906,6 +1916,7 @@ public:
 
 class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
 public:
+  StringIterMove() = default;
   StringIterMove(MixedArena& allocator) {}
 
   // Whether the movement is to advance or reverse.
@@ -1921,6 +1932,7 @@ public:
 
 class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
+  StringSliceWTF() = default;
   StringSliceWTF(MixedArena& allocator) {}
 
   StringSliceWTFOp op;
@@ -1935,6 +1947,7 @@ public:
 class StringSliceIter
   : public SpecificExpression<Expression::StringSliceIterId> {
 public:
+  StringSliceIter() = default;
   StringSliceIter(MixedArena& allocator) {}
 
   Expression* ref;
