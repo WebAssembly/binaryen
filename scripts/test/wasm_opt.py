@@ -193,7 +193,6 @@ def update_wasm_opt_tests():
         actual = actual.replace('printing before:\n', '')
         open(f, 'w').write(actual)
 
-
     print('\n[ checking binary format testcases... ]\n')
     for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
         for debug_info in [0, 1]:
