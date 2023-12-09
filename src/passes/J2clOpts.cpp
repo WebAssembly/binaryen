@@ -43,17 +43,36 @@ public:
   GlobalAssignmentCollector(AssignmentCountMap& assignmentCounts)
     : assignmentCounts(assignmentCounts) {}
 
-  void visitGlobalSet(GlobalSet* curr) {
+  void visitGlobal(Global* curr) {
+    if (isInitialValue(curr->init)) {
+      return;
+    }
+    // J2CL normally doesn't set non-default initial value however just in
+    // case if other passes in bineryen does something we should back off
+    // by recording this as an assignment.
+    recordGlobalAssignment(curr->name);
+  }
+  void visitGlobalSet(GlobalSet* curr) { recordGlobalAssignment(curr->name); }
+
+private:
+  bool isInitialValue(Expression* expr) {
+    if (auto* constExpr = expr->dynCast<Const>()) {
+      return constExpr->value.isZero();
+    } else {
+      return expr->is<RefNull>();
+    }
+  }
+
+  void recordGlobalAssignment(Name name) {
     // Avoid optimizing class initialization condition variable itself. If we
     // were optimizing it then it would become "true" and would defeat its
     // functionality and the clinit would never trigger during runtime.
-    if (curr->name.startsWith("f_$initialized__")) {
+    if (name.startsWith("f_$initialized__")) {
       return;
     }
-    assignmentCounts[curr->name]++;
+    assignmentCounts[name]++;
   }
 
-private:
   AssignmentCountMap& assignmentCounts;
 };
 
