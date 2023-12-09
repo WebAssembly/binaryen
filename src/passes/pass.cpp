@@ -160,6 +160,10 @@ void PassRegistry::registerPasses() {
                "emulates function pointer casts, allowing incorrect indirect "
                "calls to (sometimes) work",
                createFuncCastEmulationPass);
+  registerPass("js-call-indirect",
+               "Redirects all call_indirects to occur from JS side, allowing "
+               "these to be audited e.g. for debugging purposes",
+               createJsCallIndirectPass);
   registerPass(
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass("generate-dyncalls",

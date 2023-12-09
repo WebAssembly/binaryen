@@ -42,7 +42,7 @@ std::string getSigFromStructs(Type result, const ListType& operands) {
   std::string ret;
   ret += getSig(result);
   for (auto operand : operands) {
-    ret += getSig(operand.type);
+    ret += getSig(operand->type);
   }
   return ret;
 }
