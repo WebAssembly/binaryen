@@ -1251,7 +1251,7 @@ module binaryen {
                 extract_lane_u: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneUVecI16x8, vec, index) as ExpressionRef,
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDReplace'](this.ptr, Module['ReplaceLaneVecI16x8'], vec, index, value),
+                    JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecI16x8, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
                     binary(Operations.EqVecI16x8, left, right),
                 ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1311,7 +1311,7 @@ module binaryen {
                 q15mulr_sat_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
                     binary(Operations.Q15MulrSatSVecI16x8, left, right),
                 extmul_low_i8x16_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
-                    binary(Operations.ExtMulHighSVecI16x8, left, right),
+                    binary(Operations.ExtMulLowSVecI16x8, left, right),
                 extmul_high_i8x16_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
                     binary(Operations.ExtMulHighSVecI16x8, left, right),
                 extmul_low_i8x16_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1334,6 +1334,98 @@ module binaryen {
                     unary(Operations.ExtendLowUVecI8x16ToVecI16x8, value),
                 extend_high_i8x16_u: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.ExtendHighUVecI8x16ToVecI16x8, value)
+            }
+        };
+        get i32x4 () {
+            const unary = (op: Operations, value: ExpressionRef) =>
+                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+            const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+            return {
+                splat: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.SplatVecI32x4, value),
+                extract_lane: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecI32x4, vec, index) as ExpressionRef,
+                replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
+                    JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecI32x4, vec, index, value),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.EqVecI32x4, left, right),
+                ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.NeVecI32x4, left, right),
+                lt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.LtSVecI32x4, left, right),
+                lt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.LtUVecI32x4, left, right),
+                gt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.GtSVecI32x4, left, right),
+                gt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.GtUVecI32x4, left, right),
+                le_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.LeSVecI32x4, left, right),
+                le_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.LeUVecI32x4, left, right),
+                ge_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.GeSVecI32x4, left, right),
+                ge_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.GeUVecI32x4, left, right),
+                abs: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.AbsVecI32x4, value),
+                neg: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.NegVecI32x4, value),
+                all_true: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.AllTrueVecI32x4, value),
+                bitmask: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.BitmaskVecI32x4, value),
+                shl: (vec: ExpressionRef, shift: ExpressionRef): ExpressionRef =>
+                    JSModule['_BinaryenSIMDShift'](this.ptr, Operations.ShlVecI32x4, vec, shift),
+                shr_s: (vec: ExpressionRef, shift: ExpressionRef): ExpressionRef =>
+                    JSModule['_BinaryenSIMDShift'](this.ptr, Operations.ShrSVecI32x4, vec, shift),
+                shr_u: (vec: ExpressionRef, shift: ExpressionRef): ExpressionRef =>
+                    JSModule['_BinaryenSIMDShift'](this.ptr, Operations.ShrUVecI32x4, vec, shift),
+                add: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.AddVecI32x4, left, right),
+                sub: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.SubVecI32x4, left, right),
+                mul: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.MulVecI32x4, left, right),
+                min_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.MinSVecI32x4, left, right),
+                min_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.MinUVecI32x4, left, right),
+                max_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.MaxSVecI32x4, left, right),
+                max_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.MaxUVecI32x4, left, right),
+                dot_i16x8_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.DotSVecI16x8ToVecI32x4, left, right),
+                extmul_low_i16x8_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.ExtMulLowSVecI32x4, left, right),
+                extmul_high_i16x8_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.ExtMulHighSVecI32x4, left, right),
+                extmul_low_i16x8_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.ExtMulLowUVecI32x4, left, right),
+                extmul_high_i16x8_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.ExtMulHighUVecI32x4, left, right),
+                extadd_pairwise_i16x8_s: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtAddPairwiseSVecI16x8ToI32x4, value),
+                extadd_pairwise_i16x8_u: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtAddPairwiseUVecI16x8ToI32x4, value),
+                trunc_sat_f32x4_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.TruncSatSVecF32x4ToVecI32x4, left, right),
+                trunc_sat_f32x4_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.TruncSatUVecF32x4ToVecI32x4, left, right),
+                extend_low_i16x8_s: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtendLowSVecI16x8ToVecI32x4, value),
+                extend_high_i16x8_s: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtendHighSVecI16x8ToVecI32x4, value),
+                extend_low_i16x8_u: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtendLowUVecI16x8ToVecI32x4, value),
+                extend_high_i16x8_u: (value: ExpressionRef): ExpressionRef =>
+                    unary(Operations.ExtendHighUVecI16x8ToVecI32x4, value),
+                trunc_sat_f64x2_s_zero: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.TruncSatZeroSVecF64x2ToVecI32x4, left, right),
+                trunc_sat_f64x2_u_zero: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
+                    binary(Operations.TruncSatZeroUVecF64x2ToVecI32x4, left, right)
             }
         };
     }
