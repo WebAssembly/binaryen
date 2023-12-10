@@ -386,6 +386,7 @@ def get_tests(test_dir, extensions=[], recursive=False):
         tests += glob.glob(os.path.join(test_dir, star + ext), recursive=True)
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
+    tests = [item for item in tests if os.path.isfile(item)]
     return sorted(tests)
 
 
