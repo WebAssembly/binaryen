@@ -69,8 +69,7 @@
   ;; ---------------------------------------------------------------------------
   ;; Old Phase 3 exception handling
 
-  ;; CHECK-TEXT:      (func $eh-test (type $0)
-  ;; CHECK-TEXT-NEXT:  (local $x (i32 i64))
+  ;; CHECK-TEXT:      (func $simple-try-catch (type $0)
   ;; CHECK-TEXT-NEXT:  (try $try
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (throw $e-i32
@@ -83,7 +82,35 @@
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try0
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $simple-try-catch (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (throw $e-i32
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $simple-try-catch
+    (try
+      (do
+        (throw $e-i32 (i32.const 0))
+      )
+      (catch $e-i32
+        (drop (pop i32))
+      )
+    )
+  )
+
+  ;; CHECK-TEXT:      (func $try-catch-multivalue-tag (type $0)
+  ;; CHECK-TEXT-NEXT:  (local $x (i32 i64))
+  ;; CHECK-TEXT-NEXT:  (try $try
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (throw $e-i32-i64
   ;; CHECK-TEXT-NEXT:     (i32.const 0)
@@ -101,157 +128,13 @@
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (block $l11
-  ;; CHECK-TEXT-NEXT:   (try $l1
-  ;; CHECK-TEXT-NEXT:    (do
-  ;; CHECK-TEXT-NEXT:     (br $l11)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (catch $e-i32
-  ;; CHECK-TEXT-NEXT:     (drop
-  ;; CHECK-TEXT-NEXT:      (pop i32)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (br $l11)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try2
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i32
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i32)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try3
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:    (call $bar)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i32
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i32)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:    (call $bar)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try4
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (throw $e-i32
-  ;; CHECK-TEXT-NEXT:     (i32.const 0)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i32
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i32)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i64
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i64)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try5
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (throw $e-i32
-  ;; CHECK-TEXT-NEXT:     (i32.const 0)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (nop)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try6
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (throw $e-i32
-  ;; CHECK-TEXT-NEXT:     (i32.const 0)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i32
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i32)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i64
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i64)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:    (call $bar)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try7
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (try $try8
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (throw $e-i32
-  ;; CHECK-TEXT-NEXT:       (i32.const 0)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch $e-i32
-  ;; CHECK-TEXT-NEXT:      (drop
-  ;; CHECK-TEXT-NEXT:       (pop i32)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-i32
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop i32)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (try $try9
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (throw $e-i32
-  ;; CHECK-TEXT-NEXT:       (i32.const 0)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch $e-i32
-  ;; CHECK-TEXT-NEXT:      (drop
-  ;; CHECK-TEXT-NEXT:       (pop i32)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try10
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (throw $e-i32
-  ;; CHECK-TEXT-NEXT:     (i32.const 0)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $eh-test (type $0)
+  ;; CHECK-BIN:      (func $try-catch-multivalue-tag (type $0)
   ;; CHECK-BIN-NEXT:  (local $x i32)
   ;; CHECK-BIN-NEXT:  (local $1 i64)
   ;; CHECK-BIN-NEXT:  (local $2 (i32 i64))
   ;; CHECK-BIN-NEXT:  (local $3 i32)
   ;; CHECK-BIN-NEXT:  (try $label$3
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (throw $e-i32
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$6
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (throw $e-i32-i64
   ;; CHECK-BIN-NEXT:     (i32.const 0)
@@ -282,151 +165,8 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (block $label$7
-  ;; CHECK-BIN-NEXT:   (try $label$10
-  ;; CHECK-BIN-NEXT:    (do
-  ;; CHECK-BIN-NEXT:     (br $label$7)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (catch $e-i32
-  ;; CHECK-BIN-NEXT:     (drop
-  ;; CHECK-BIN-NEXT:      (pop i32)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (br $label$7)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$13
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$16
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:    (call $bar)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:    (call $bar)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$19
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (throw $e-i32
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i64
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i64)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$22
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (throw $e-i32
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$25
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (throw $e-i32
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i64
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i64)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:    (call $bar)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$34
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (try $label$29
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (throw $e-i32
-  ;; CHECK-BIN-NEXT:       (i32.const 0)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch $e-i32
-  ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (pop i32)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-i32
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop i32)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (try $label$33
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (throw $e-i32
-  ;; CHECK-BIN-NEXT:       (i32.const 0)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch $e-i32
-  ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (pop i32)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$37
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (throw $e-i32
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $eh-test (local $x (i32 i64))
-    ;; Simple try-catch
-    (try
-      (do
-        (throw $e-i32 (i32.const 0))
-      )
-      (catch $e-i32
-        (drop (pop i32))
-      )
-    )
-
-    ;; try-catch with multivalue tag
+  (func $try-catch-multivalue-tag (local $x (i32 i64))
     (try
       (do
         (throw $e-i32-i64 (i32.const 0) (i64.const 0))
@@ -440,8 +180,39 @@
         )
       )
     )
+  )
 
-    ;; Try with a block label
+  ;; CHECK-TEXT:      (func $try-with-block-label (type $0)
+  ;; CHECK-TEXT-NEXT:  (block $l10
+  ;; CHECK-TEXT-NEXT:   (try $l1
+  ;; CHECK-TEXT-NEXT:    (do
+  ;; CHECK-TEXT-NEXT:     (br $l10)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (catch $e-i32
+  ;; CHECK-TEXT-NEXT:     (drop
+  ;; CHECK-TEXT-NEXT:      (pop i32)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (br $l10)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $try-with-block-label (type $0)
+  ;; CHECK-BIN-NEXT:  (block $label$1
+  ;; CHECK-BIN-NEXT:   (try $label$4
+  ;; CHECK-BIN-NEXT:    (do
+  ;; CHECK-BIN-NEXT:     (br $label$1)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (catch $e-i32
+  ;; CHECK-BIN-NEXT:     (drop
+  ;; CHECK-BIN-NEXT:      (pop i32)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (br $label$1)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $try-with-block-label
     (try $l1
       (do
         (br $l1)
@@ -451,16 +222,72 @@
         (br $l1)
       )
     )
+  )
 
-    ;; Empty try body
+  ;; CHECK-TEXT:      (func $empty-try-body (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i32
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i32)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $empty-try-body (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $empty-try-body
     (try
       (do)
       (catch $e-i32
         (drop (pop i32))
       )
     )
+  )
 
-    ;; Multiple instructions within try and catch bodies
+  ;; CHECK-TEXT:      (func $multiple-insts-within-try-and-catch-bodies (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:    (call $bar)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i32
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i32)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:    (call $bar)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $multiple-insts-within-try-and-catch-bodies (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:    (call $bar)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:    (call $bar)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $multiple-insts-within-try-and-catch-bodies
     (try
       (do
         (call $foo)
@@ -472,8 +299,47 @@
         (call $bar)
       )
     )
+  )
 
-    ;; Multiple catch clauses
+  ;; CHECK-TEXT:      (func $multiple-catches (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (throw $e-i32
+  ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i32
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i32)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i64
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i64)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $multiple-catches (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (throw $e-i32
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i64
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i64)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $multiple-catches
     (try
       (do
         (throw $e-i32 (i32.const 0))
@@ -485,16 +351,88 @@
         (drop (pop i64))
       )
     )
+  )
 
-    ;; Single catch-all clause
+  ;; CHECK-TEXT:      (func $catch-all (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (throw $e-i32
+  ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $catch-all (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (throw $e-i32
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $catch-all
     (try
       (do
         (throw $e-i32 (i32.const 0))
       )
       (catch_all)
     )
+  )
 
-    ;; catch and catch-all clauses together
+  ;; CHECK-TEXT:      (func $catch-and-catch-all-together (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (throw $e-i32
+  ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i32
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i32)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i64
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i64)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:    (call $bar)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $catch-and-catch-all-together (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (throw $e-i32
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i64
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i64)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:    (call $bar)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $catch-and-catch-all-together
     (try
       (do
         (throw $e-i32 (i32.const 0))
@@ -510,8 +448,95 @@
         (call $bar)
       )
     )
+  )
 
-    ;; nested try-catch
+  ;; CHECK-TEXT:      (func $nested-try-catch (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (try $try1
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (throw $e-i32
+  ;; CHECK-TEXT-NEXT:       (i32.const 0)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch $e-i32
+  ;; CHECK-TEXT-NEXT:      (drop
+  ;; CHECK-TEXT-NEXT:       (pop i32)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (nop)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-i32
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop i32)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (try $try2
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (throw $e-i32
+  ;; CHECK-TEXT-NEXT:       (i32.const 0)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch $e-i32
+  ;; CHECK-TEXT-NEXT:      (drop
+  ;; CHECK-TEXT-NEXT:       (pop i32)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (nop)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $nested-try-catch (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$9
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (try $label$4
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (throw $e-i32
+  ;; CHECK-BIN-NEXT:       (i32.const 0)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch $e-i32
+  ;; CHECK-BIN-NEXT:      (drop
+  ;; CHECK-BIN-NEXT:       (pop i32)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (nop)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-i32
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop i32)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (try $label$8
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (throw $e-i32
+  ;; CHECK-BIN-NEXT:       (i32.const 0)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch $e-i32
+  ;; CHECK-BIN-NEXT:      (drop
+  ;; CHECK-BIN-NEXT:       (pop i32)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (nop)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $nested-try-catch
     (try
       (do
         (try
@@ -539,8 +564,27 @@
         )
       )
     )
+  )
 
-    ;; try without catch or delegate
+  ;; CHECK-TEXT:      (func $catchless-delegateless-try (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (throw $e-i32
+  ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $catchless-delegateless-try (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (throw $e-i32
+  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $catchless-delegateless-try
     (try
       (do
         (throw $e-i32 (i32.const 0))
@@ -548,7 +592,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $delegate-test (type $0)
+  ;; CHECK-TEXT:      (func $inner-delegate-target-outer-catch (type $0)
   ;; CHECK-TEXT-NEXT:  (try $l0
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (try $try
@@ -557,7 +601,7 @@
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:     (delegate $l0)
   ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (try $try11
+  ;; CHECK-TEXT-NEXT:    (try $try3
   ;; CHECK-TEXT-NEXT:     (do
   ;; CHECK-TEXT-NEXT:      (call $foo)
   ;; CHECK-TEXT-NEXT:     )
@@ -568,52 +612,8 @@
   ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (block $l015
-  ;; CHECK-TEXT-NEXT:   (try $l012
-  ;; CHECK-TEXT-NEXT:    (do
-  ;; CHECK-TEXT-NEXT:     (try $try13
-  ;; CHECK-TEXT-NEXT:      (do
-  ;; CHECK-TEXT-NEXT:       (br_if $l015
-  ;; CHECK-TEXT-NEXT:        (i32.const 1)
-  ;; CHECK-TEXT-NEXT:       )
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (delegate $l012)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (try $try14
-  ;; CHECK-TEXT-NEXT:      (do
-  ;; CHECK-TEXT-NEXT:       (br_if $l015
-  ;; CHECK-TEXT-NEXT:        (i32.const 1)
-  ;; CHECK-TEXT-NEXT:       )
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (delegate $l012)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (catch_all
-  ;; CHECK-TEXT-NEXT:     (nop)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $l016
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (try $try17
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (call $foo)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (delegate $l016)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (delegate 0)
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try18
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-empty
-  ;; CHECK-TEXT-NEXT:    (nop)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $delegate-test (type $0)
+  ;; CHECK-BIN:      (func $inner-delegate-target-outer-catch (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$9
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (block $label$1
@@ -635,57 +635,8 @@
   ;; CHECK-BIN-NEXT:    (nop)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (block $label$10
-  ;; CHECK-BIN-NEXT:   (try $label$19
-  ;; CHECK-BIN-NEXT:    (do
-  ;; CHECK-BIN-NEXT:     (block $label$11
-  ;; CHECK-BIN-NEXT:      (try $label$14
-  ;; CHECK-BIN-NEXT:       (do
-  ;; CHECK-BIN-NEXT:        (br_if $label$10
-  ;; CHECK-BIN-NEXT:         (i32.const 1)
-  ;; CHECK-BIN-NEXT:        )
-  ;; CHECK-BIN-NEXT:       )
-  ;; CHECK-BIN-NEXT:       (delegate $label$19)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (try $label$17
-  ;; CHECK-BIN-NEXT:       (do
-  ;; CHECK-BIN-NEXT:        (br_if $label$10
-  ;; CHECK-BIN-NEXT:         (i32.const 1)
-  ;; CHECK-BIN-NEXT:        )
-  ;; CHECK-BIN-NEXT:       )
-  ;; CHECK-BIN-NEXT:       (delegate $label$19)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (catch_all
-  ;; CHECK-BIN-NEXT:     (nop)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$25
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (block $label$20
-  ;; CHECK-BIN-NEXT:     (try $label$23
-  ;; CHECK-BIN-NEXT:      (do
-  ;; CHECK-BIN-NEXT:       (call $foo)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (delegate $label$25)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (delegate 0)
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$28
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-empty
-  ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $delegate-test
-    ;; Inner delegates target an outer catch
+  (func $inner-delegate-target-outer-catch
     (try $l0
       (do
         (try
@@ -703,7 +654,65 @@
       )
       (catch_all)
     )
+  )
 
+  ;; CHECK-TEXT:      (func $branch-and-delegate-target-same-try-label (type $0)
+  ;; CHECK-TEXT-NEXT:  (block $l05
+  ;; CHECK-TEXT-NEXT:   (try $l0
+  ;; CHECK-TEXT-NEXT:    (do
+  ;; CHECK-TEXT-NEXT:     (try $try
+  ;; CHECK-TEXT-NEXT:      (do
+  ;; CHECK-TEXT-NEXT:       (br_if $l05
+  ;; CHECK-TEXT-NEXT:        (i32.const 1)
+  ;; CHECK-TEXT-NEXT:       )
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (delegate $l0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (try $try4
+  ;; CHECK-TEXT-NEXT:      (do
+  ;; CHECK-TEXT-NEXT:       (br_if $l05
+  ;; CHECK-TEXT-NEXT:        (i32.const 1)
+  ;; CHECK-TEXT-NEXT:       )
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (delegate $l0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (catch_all
+  ;; CHECK-TEXT-NEXT:     (nop)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $branch-and-delegate-target-same-try-label (type $0)
+  ;; CHECK-BIN-NEXT:  (block $label$1
+  ;; CHECK-BIN-NEXT:   (try $label$10
+  ;; CHECK-BIN-NEXT:    (do
+  ;; CHECK-BIN-NEXT:     (block $label$2
+  ;; CHECK-BIN-NEXT:      (try $label$5
+  ;; CHECK-BIN-NEXT:       (do
+  ;; CHECK-BIN-NEXT:        (br_if $label$1
+  ;; CHECK-BIN-NEXT:         (i32.const 1)
+  ;; CHECK-BIN-NEXT:        )
+  ;; CHECK-BIN-NEXT:       )
+  ;; CHECK-BIN-NEXT:       (delegate $label$10)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (try $label$8
+  ;; CHECK-BIN-NEXT:       (do
+  ;; CHECK-BIN-NEXT:        (br_if $label$1
+  ;; CHECK-BIN-NEXT:         (i32.const 1)
+  ;; CHECK-BIN-NEXT:        )
+  ;; CHECK-BIN-NEXT:       )
+  ;; CHECK-BIN-NEXT:       (delegate $label$10)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (catch_all
+  ;; CHECK-BIN-NEXT:     (nop)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $branch-and-delegate-target-same-try-label
     ;; When there are both a branch and a delegate that target the same try
     ;; label. Because binaryen only allows blocks and loops to be targetted by
     ;; branches, we wrap the try with a block and make branches that block
@@ -726,7 +735,37 @@
       )
       (catch_all)
     )
+  )
 
+  ;; CHECK-TEXT:      (func $inner-delegate-target-outer-delegate (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $l0
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (try $try
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (call $foo)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (delegate $l0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (delegate 0)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $inner-delegate-target-outer-delegate (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$6
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (block $label$1
+  ;; CHECK-BIN-NEXT:     (try $label$4
+  ;; CHECK-BIN-NEXT:      (do
+  ;; CHECK-BIN-NEXT:       (call $foo)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (delegate $label$6)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (delegate 0)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $inner-delegate-target-outer-delegate
     ;; The inner delegate targets the outer delegate, which in turn targets the
     ;; caller.
     (try $l0
@@ -740,7 +779,29 @@
       )
       (delegate 0)
     )
+  )
 
+  ;; CHECK-TEXT:      (func $empty-catch-body (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-empty
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $empty-catch-body (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-empty
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $empty-catch-body
     ;; 'catch' body can be empty when the tag's type is none.
     (try
       (do)
@@ -748,7 +809,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $rethrow-test (type $0)
+  ;; CHECK-TEXT:      (func $try-catch-rethrow (type $0)
   ;; CHECK-TEXT-NEXT:  (try $l0
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (call $foo)
@@ -763,100 +824,8 @@
   ;; CHECK-TEXT-NEXT:    (rethrow $l0)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (block $l020
-  ;; CHECK-TEXT-NEXT:   (try $l019
-  ;; CHECK-TEXT-NEXT:    (do
-  ;; CHECK-TEXT-NEXT:     (call $foo)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (catch $e-i32
-  ;; CHECK-TEXT-NEXT:     (drop
-  ;; CHECK-TEXT-NEXT:      (pop i32)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (rethrow $l019)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:    (catch_all
-  ;; CHECK-TEXT-NEXT:     (br $l020)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $l021
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (try $try
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (call $foo)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch $e-i32
-  ;; CHECK-TEXT-NEXT:      (drop
-  ;; CHECK-TEXT-NEXT:       (pop i32)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (rethrow $l021)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (rethrow $l021)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $l022
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (try $try23
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (call $foo)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch $e-i32
-  ;; CHECK-TEXT-NEXT:      (drop
-  ;; CHECK-TEXT-NEXT:       (pop i32)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:      (block $b0
-  ;; CHECK-TEXT-NEXT:       (rethrow $l022)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (block $b1
-  ;; CHECK-TEXT-NEXT:       (rethrow $l022)
-  ;; CHECK-TEXT-NEXT:      )
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $l024
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (try $try25
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (rethrow $l024)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $l026
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (call $foo)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch_all
-  ;; CHECK-TEXT-NEXT:    (try $try27
-  ;; CHECK-TEXT-NEXT:     (do
-  ;; CHECK-TEXT-NEXT:      (rethrow $l026)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:     (catch_all
-  ;; CHECK-TEXT-NEXT:      (nop)
-  ;; CHECK-TEXT-NEXT:     )
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $rethrow-test (type $0)
+  ;; CHECK-BIN:      (func $try-catch-rethrow (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$3
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (call $foo)
@@ -871,98 +840,8 @@
   ;; CHECK-BIN-NEXT:    (rethrow $label$3)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (block $label$4
-  ;; CHECK-BIN-NEXT:   (try $label$7
-  ;; CHECK-BIN-NEXT:    (do
-  ;; CHECK-BIN-NEXT:     (call $foo)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (catch $e-i32
-  ;; CHECK-BIN-NEXT:     (drop
-  ;; CHECK-BIN-NEXT:      (pop i32)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (rethrow $label$7)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (catch_all
-  ;; CHECK-BIN-NEXT:     (br $label$4)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$13
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (try $label$12
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (call $foo)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch $e-i32
-  ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (pop i32)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (rethrow $label$13)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (rethrow $label$13)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$20
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (try $label$19
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (call $foo)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch $e-i32
-  ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (pop i32)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (block $label$18
-  ;; CHECK-BIN-NEXT:       (rethrow $label$20)
-  ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (rethrow $label$20)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$26
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (try $label$25
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (rethrow $label$26)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$32
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (call $foo)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch_all
-  ;; CHECK-BIN-NEXT:    (try $label$31
-  ;; CHECK-BIN-NEXT:     (do
-  ;; CHECK-BIN-NEXT:      (rethrow $label$32)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (catch_all
-  ;; CHECK-BIN-NEXT:      (nop)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $rethrow-test
+  (func $try-catch-rethrow
     ;; Simple try-catch-rethrow
     (try $l0
       (do
@@ -976,7 +855,45 @@
         (rethrow 0) ;; by depth
       )
     )
+  )
 
+  ;; CHECK-TEXT:      (func $branch-and-rethrow-target-same-try-label (type $0)
+  ;; CHECK-TEXT-NEXT:  (block $l06
+  ;; CHECK-TEXT-NEXT:   (try $l0
+  ;; CHECK-TEXT-NEXT:    (do
+  ;; CHECK-TEXT-NEXT:     (call $foo)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (catch $e-i32
+  ;; CHECK-TEXT-NEXT:     (drop
+  ;; CHECK-TEXT-NEXT:      (pop i32)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (catch_all
+  ;; CHECK-TEXT-NEXT:     (br $l06)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $branch-and-rethrow-target-same-try-label (type $0)
+  ;; CHECK-BIN-NEXT:  (block $label$1
+  ;; CHECK-BIN-NEXT:   (try $label$4
+  ;; CHECK-BIN-NEXT:    (do
+  ;; CHECK-BIN-NEXT:     (call $foo)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (catch $e-i32
+  ;; CHECK-BIN-NEXT:     (drop
+  ;; CHECK-BIN-NEXT:      (pop i32)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (rethrow $label$4)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (catch_all
+  ;; CHECK-BIN-NEXT:     (br $label$1)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $branch-and-rethrow-target-same-try-label
     ;; When there are both a branch and a rethrow that target the same try
     ;; label. Because binaryen only allows blocks and loops to be targetted by
     ;; branches, we wrap the try with a block and make branches that block
@@ -994,7 +911,55 @@
         (br $l0)
       )
     )
+  )
 
+  ;; CHECK-TEXT:      (func $nested-rethrow (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $l0
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (try $try
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (call $foo)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch $e-i32
+  ;; CHECK-TEXT-NEXT:      (drop
+  ;; CHECK-TEXT-NEXT:       (pop i32)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $nested-rethrow (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$6
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (try $label$5
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (call $foo)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch $e-i32
+  ;; CHECK-BIN-NEXT:      (drop
+  ;; CHECK-BIN-NEXT:       (pop i32)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (rethrow $label$6)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (rethrow $label$6)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $nested-rethrow
     ;; One more level deep
     (try $l0
       (do
@@ -1015,7 +980,61 @@
         )
       )
     )
+  )
 
+  ;; CHECK-TEXT:      (func $rnested-rethrow-with-interleaving-block (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $l0
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (try $try
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (call $foo)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch $e-i32
+  ;; CHECK-TEXT-NEXT:      (drop
+  ;; CHECK-TEXT-NEXT:       (pop i32)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (block $b0
+  ;; CHECK-TEXT-NEXT:       (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (block $b1
+  ;; CHECK-TEXT-NEXT:       (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $rnested-rethrow-with-interleaving-block (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$7
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (try $label$6
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (call $foo)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch $e-i32
+  ;; CHECK-BIN-NEXT:      (drop
+  ;; CHECK-BIN-NEXT:       (pop i32)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (block $label$5
+  ;; CHECK-BIN-NEXT:       (rethrow $label$7)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (rethrow $label$7)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $rnested-rethrow-with-interleaving-block
     ;; Interleaving block
     (try $l0
       (do
@@ -1040,7 +1059,73 @@
         )
       )
     )
+  )
 
+  ;; CHECK-TEXT:      (func $rethrow-within-nested-try-part (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $l0
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (try $try
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (rethrow $l0)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (nop)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT:  (try $l07
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (call $foo)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch_all
+  ;; CHECK-TEXT-NEXT:    (try $try8
+  ;; CHECK-TEXT-NEXT:     (do
+  ;; CHECK-TEXT-NEXT:      (rethrow $l07)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:     (catch_all
+  ;; CHECK-TEXT-NEXT:      (nop)
+  ;; CHECK-TEXT-NEXT:     )
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $rethrow-within-nested-try-part (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$6
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (try $label$5
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (rethrow $label$6)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (nop)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (try $label$12
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (call $foo)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch_all
+  ;; CHECK-BIN-NEXT:    (try $label$11
+  ;; CHECK-BIN-NEXT:     (do
+  ;; CHECK-BIN-NEXT:      (rethrow $label$12)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:     (catch_all
+  ;; CHECK-BIN-NEXT:      (nop)
+  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $rethrow-within-nested-try-part
     ;; Within nested try, but rather in 'try' part and not 'catch'
     (try $l0
       (do
@@ -1070,7 +1155,7 @@
     )
   )
 
-  ;; CHECK-TEXT:      (func $pop-test (type $0)
+  ;; CHECK-TEXT:      (func $pop-within-if-condition (type $0)
   ;; CHECK-TEXT-NEXT:  (try $try
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (nop)
@@ -1085,18 +1170,8 @@
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
-  ;; CHECK-TEXT-NEXT:  (try $try28
-  ;; CHECK-TEXT-NEXT:   (do
-  ;; CHECK-TEXT-NEXT:    (nop)
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:   (catch $e-eqref
-  ;; CHECK-TEXT-NEXT:    (drop
-  ;; CHECK-TEXT-NEXT:     (pop anyref)
-  ;; CHECK-TEXT-NEXT:    )
-  ;; CHECK-TEXT-NEXT:   )
-  ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $pop-test (type $0)
+  ;; CHECK-BIN:      (func $pop-within-if-condition (type $0)
   ;; CHECK-BIN-NEXT:  (try $label$5
   ;; CHECK-BIN-NEXT:   (do
   ;; CHECK-BIN-NEXT:    (nop)
@@ -1111,18 +1186,8 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (try $label$8
-  ;; CHECK-BIN-NEXT:   (do
-  ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:   (catch $e-eqref
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (pop eqref)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $pop-test
+  (func $pop-within-if-condition
     (try
       (do)
       (catch $e-i32
@@ -1136,7 +1201,33 @@
         )
       )
     )
+  )
 
+  ;; CHECK-TEXT:      (func $pop-can-be-supertype (type $0)
+  ;; CHECK-TEXT-NEXT:  (try $try
+  ;; CHECK-TEXT-NEXT:   (do
+  ;; CHECK-TEXT-NEXT:    (nop)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (catch $e-eqref
+  ;; CHECK-TEXT-NEXT:    (drop
+  ;; CHECK-TEXT-NEXT:     (pop anyref)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $pop-can-be-supertype (type $0)
+  ;; CHECK-BIN-NEXT:  (try $label$3
+  ;; CHECK-BIN-NEXT:   (do
+  ;; CHECK-BIN-NEXT:    (nop)
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (catch $e-eqref
+  ;; CHECK-BIN-NEXT:    (drop
+  ;; CHECK-BIN-NEXT:     (pop eqref)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $pop-can-be-supertype
     (try
       (do)
       (catch $e-eqref
@@ -1192,10 +1283,7 @@
     )
   )
 
-  ;; When 'delegate' is next to a nested block, make sure its delegate argument
-  ;; is parsed correctly.
-
-  ;; CHECK-TEXT:      (func $nested-block-and-try (type $0)
+  ;; CHECK-TEXT:      (func $nested-delegate-within-block (type $0)
   ;; CHECK-TEXT-NEXT:  (block $l0
   ;; CHECK-TEXT-NEXT:   (block $l1
   ;; CHECK-TEXT-NEXT:   )
@@ -1208,7 +1296,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $nested-block-and-try (type $0)
+  ;; CHECK-BIN:      (func $nested-delegate-within-block (type $0)
   ;; CHECK-BIN-NEXT:  (block $label$1
   ;; CHECK-BIN-NEXT:   (block $label$2
   ;; CHECK-BIN-NEXT:   )
@@ -1221,7 +1309,9 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
-  (func $nested-block-and-try
+  (func $nested-delegate-within-block
+    ;; When 'delegate' is next to a nested block, make sure its delegate
+    ;; argument is parsed correctly.
     (block $l0
       (block $l1)
       (try
@@ -1235,7 +1325,7 @@
   ;; ---------------------------------------------------------------------------
   ;; New exception handling
 
-  ;; CHECK-TEXT:      (func $exnref-test (type $5) (result exnref)
+  ;; CHECK-TEXT:      (func $exnref-nullexnref-test (type $5) (result exnref)
   ;; CHECK-TEXT-NEXT:  (local $exn exnref)
   ;; CHECK-TEXT-NEXT:  (local $null-exn nullexnref)
   ;; CHECK-TEXT-NEXT:  (if (result exnref)
@@ -1248,7 +1338,7 @@
   ;; CHECK-TEXT-NEXT:   (local.get $exn)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $exnref-test (type $5) (result exnref)
+  ;; CHECK-BIN:      (func $exnref-nullexnref-test (type $5) (result exnref)
   ;; CHECK-BIN-NEXT:  (local $exn exnref)
   ;; CHECK-BIN-NEXT:  (local $null-exn nullexnref)
   ;; CHECK-BIN-NEXT:  (if (result exnref)
@@ -1261,7 +1351,7 @@
   ;; CHECK-BIN-NEXT:   (local.get $exn)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $exnref-test (result exnref) (local $exn exnref) (local $null-exn nullexnref)
+  (func $exnref-nullexnref-test (result exnref) (local $exn exnref) (local $null-exn nullexnref)
     (if (result exnref)
       (i32.const 1)
       (if (result nullexnref)
@@ -1304,10 +1394,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (i32 i64))
-;; CHECK-BIN-NODEBUG-NEXT:  (local $3 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
@@ -1320,7 +1406,14 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$6
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $3 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$2
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -1351,20 +1444,26 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$7
-;; CHECK-BIN-NODEBUG-NEXT:   (try $label$10
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:   (try $label$4
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
-;; CHECK-BIN-NODEBUG-NEXT:     (br $label$7)
+;; CHECK-BIN-NODEBUG-NEXT:     (br $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (catch $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (drop
 ;; CHECK-BIN-NODEBUG-NEXT:      (pop i32)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (br $label$7)
+;; CHECK-BIN-NODEBUG-NEXT:     (br $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$13
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1374,7 +1473,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$16
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $1)
@@ -1387,7 +1489,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$19
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $7 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -1404,7 +1509,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$22
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $8 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -1414,7 +1522,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$25
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $9 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -1435,9 +1546,12 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$34
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $10 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$9
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$29
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$4
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
 ;; CHECK-BIN-NODEBUG-NEXT:      (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 0)
@@ -1459,7 +1573,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$33
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$8
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
 ;; CHECK-BIN-NODEBUG-NEXT:      (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 0)
@@ -1476,7 +1590,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$37
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $11 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
@@ -1485,7 +1602,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $12 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$9
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$1
@@ -1507,25 +1624,28 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$10
-;; CHECK-BIN-NODEBUG-NEXT:   (try $label$19
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $13 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:   (try $label$10
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
-;; CHECK-BIN-NODEBUG-NEXT:     (block $label$11
-;; CHECK-BIN-NODEBUG-NEXT:      (try $label$14
+;; CHECK-BIN-NODEBUG-NEXT:     (block $label$2
+;; CHECK-BIN-NODEBUG-NEXT:      (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:       (do
-;; CHECK-BIN-NODEBUG-NEXT:        (br_if $label$10
+;; CHECK-BIN-NODEBUG-NEXT:        (br_if $label$1
 ;; CHECK-BIN-NODEBUG-NEXT:         (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
-;; CHECK-BIN-NODEBUG-NEXT:       (delegate $label$19)
+;; CHECK-BIN-NODEBUG-NEXT:       (delegate $label$10)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (try $label$17
+;; CHECK-BIN-NODEBUG-NEXT:      (try $label$8
 ;; CHECK-BIN-NODEBUG-NEXT:       (do
-;; CHECK-BIN-NODEBUG-NEXT:        (br_if $label$10
+;; CHECK-BIN-NODEBUG-NEXT:        (br_if $label$1
 ;; CHECK-BIN-NODEBUG-NEXT:         (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:        )
 ;; CHECK-BIN-NODEBUG-NEXT:       )
-;; CHECK-BIN-NODEBUG-NEXT:       (delegate $label$19)
+;; CHECK-BIN-NODEBUG-NEXT:       (delegate $label$10)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
@@ -1534,20 +1654,26 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$25
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $14 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$6
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
-;; CHECK-BIN-NODEBUG-NEXT:    (block $label$20
-;; CHECK-BIN-NODEBUG-NEXT:     (try $label$23
+;; CHECK-BIN-NODEBUG-NEXT:    (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:     (try $label$4
 ;; CHECK-BIN-NODEBUG-NEXT:      (do
 ;; CHECK-BIN-NODEBUG-NEXT:       (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (delegate $label$25)
+;; CHECK-BIN-NODEBUG-NEXT:      (delegate $label$6)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (delegate 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$28
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $15 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1557,7 +1683,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $16 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
@@ -1572,8 +1698,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (rethrow $label$3)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$4
-;; CHECK-BIN-NODEBUG-NEXT:   (try $label$7
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $17 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:   (try $label$4
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
 ;; CHECK-BIN-NODEBUG-NEXT:     (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
@@ -1581,19 +1710,22 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (drop
 ;; CHECK-BIN-NODEBUG-NEXT:      (pop i32)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (rethrow $label$7)
+;; CHECK-BIN-NODEBUG-NEXT:     (rethrow $label$4)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:     (br $label$4)
+;; CHECK-BIN-NODEBUG-NEXT:     (br $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$13
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $18 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$6
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$12
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
 ;; CHECK-BIN-NODEBUG-NEXT:      (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
@@ -1601,20 +1733,23 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      (drop
 ;; CHECK-BIN-NODEBUG-NEXT:       (pop i32)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$13)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$6)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$13)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$6)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$20
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $19 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$7
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$19
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$6
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
 ;; CHECK-BIN-NODEBUG-NEXT:      (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
@@ -1622,24 +1757,27 @@
 ;; CHECK-BIN-NODEBUG-NEXT:      (drop
 ;; CHECK-BIN-NODEBUG-NEXT:       (pop i32)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (block $label$18
-;; CHECK-BIN-NODEBUG-NEXT:       (rethrow $label$20)
+;; CHECK-BIN-NODEBUG-NEXT:      (block $label$5
+;; CHECK-BIN-NODEBUG-NEXT:       (rethrow $label$7)
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$20)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$7)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$26
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $20 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$6
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$25
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$26)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$6)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
 ;; CHECK-BIN-NODEBUG-NEXT:      (nop)
@@ -1647,14 +1785,14 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$32
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$12
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (call $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch_all
-;; CHECK-BIN-NODEBUG-NEXT:    (try $label$31
+;; CHECK-BIN-NODEBUG-NEXT:    (try $label$11
 ;; CHECK-BIN-NODEBUG-NEXT:     (do
-;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$32)
+;; CHECK-BIN-NODEBUG-NEXT:      (rethrow $label$12)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:     (catch_all
 ;; CHECK-BIN-NODEBUG-NEXT:      (nop)
@@ -1664,7 +1802,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $21 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$5
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
@@ -1679,7 +1817,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (try $label$8
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $22 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1691,7 +1832,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $23 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$6
 ;; CHECK-BIN-NODEBUG-NEXT:   (do
 ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$1
@@ -1708,7 +1849,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $24 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -1722,7 +1863,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $5) (result exnref)
+;; CHECK-BIN-NODEBUG:      (func $25 (type $5) (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 nullexnref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if (result exnref)
