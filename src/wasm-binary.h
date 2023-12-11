@@ -412,8 +412,15 @@ enum EncodedType {
   nullable = -0x14,    // 0x6c
   nonnullable = -0x15, // 0x6b
 #endif
+#if STANDARD_GC_ENCODINGS
   // exception handling
   exnref = -0x17,     // 0x69
+#else
+  // Currently the legacy GC encoding's nullexternref encoding overlaps with
+  // exnref's. We assume the legacy GC encoding won't be used with the exnref
+  // for the moment and assign a random value to it to prevent the clash.
+  exnref = -0xfe,
+#endif
   nullexnref = -0xff, // TODO
 // string reference types
 #if STANDARD_GC_ENCODINGS
@@ -460,7 +467,14 @@ enum EncodedHeapType {
   ext = -0x11,   // 0x6f
   any = -0x12,   // 0x6e
   eq = -0x13,    // 0x6d
+#if STANDARD_GC_ENCODINGS
   exn = -0x17,   // 0x69
+#else
+  // Currently the legacy GC encoding's nullexternref encoding overlaps with
+  // exnref's. We assume the legacy GC encoding won't be used with the exnref
+  // for the moment and assign a random value to it to prevent the clash.
+  exn = -0xfe,
+#endif
   noexn = -0xff, // TODO
 #if STANDARD_GC_ENCODINGS
   i31 = -0x14,     // 0x6c
