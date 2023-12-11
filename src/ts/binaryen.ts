@@ -622,6 +622,31 @@ module binaryen {
                 JSModule['_BinaryenReturnCallIndirect'](this.ptr, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
             );
         }
+        select(condition: ExpressionRef, ifTrue: ExpressionRef, ifFalse: ExpressionRef, type?: Type): ExpressionRef {
+            return JSModule['_BinaryenSelect'](this.ptr, condition, ifTrue, ifFalse, typeof type !== 'undefined' ? type : JSModule['auto']);
+        }
+        drop(value: ExpressionRef): ExpressionRef {
+            return JSModule['_BinaryenDrop'](this.ptr, value);
+        }
+        return(value?: ExpressionRef): ExpressionRef {
+            return JSModule['_BinaryenReturn'](this.ptr, value);
+        }
+        nop(): ExpressionRef {
+            return JSModule['_BinaryenNop'](this.ptr);
+        }
+        unreachable(): ExpressionRef {
+            return JSModule['_BinaryenUnreachable'](this.ptr);
+        }
+        try(name: string, body: ExpressionRef, catchTags: string[], catchBodies: ExpressionRef[], delegateTarget?: string): ExpressionRef {
+            return preserveStack(() =>
+              JSModule['_BinaryenTry'](this.ptr, name ? strToStack(name) : 0, body, i32sToStack(catchTags.map(strToStack)), catchTags.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
+        }
+        throw(tag: string, operands: ExpressionRef[]): ExpressionRef {
+            return preserveStack(() => JSModule['_BinaryenThrow'](this.ptr, strToStack(tag), i32sToStack(operands), operands.length));
+        }
+        rethrow(target: string): ExpressionRef {
+            return JSModule['_BinaryenRethrow'](this.ptr, strToStack(target));
+        }
         get local () {
             return {
                 get: (index: number, type: Type) => JSModule['_BinaryenLocalGet'](this.ptr, index, type) as ExpressionRef,
@@ -1614,6 +1639,74 @@ module binaryen {
                     unary(Operations.PromoteLowVecF32x4ToVecF64x2, value)
             }
         };
+        get funcref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, funcref) as ExpressionRef
+            }
+        }
+        get externref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, externref) as ExpressionRef
+            }
+        }
+        get anyref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, anyref) as ExpressionRef
+            }
+        }
+        get eqref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, eqref) as ExpressionRef
+            }
+        }
+        get i31ref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, i31ref) as ExpressionRef
+            }
+        }
+        get structref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, structref) as ExpressionRef
+            }
+        }
+        /* explicitly skipping string stuff until it's reprioritized
+        get stringref() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringref) as ExpressionRef
+            }
+        }
+        get stringview_wtf8() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf8) as ExpressionRef
+            }
+        }
+        get stringview_wtf16() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf16) as ExpressionRef
+            }
+        }
+        get stringview_iter() {
+            return {
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_iter) as ExpressionRef
+            }
+        }
+        */
+        get ref() {
+            return {
+                null: (type: Type) => JSModule['_BinaryenRefNull'](this.ptr, type) as ExpressionRef,
+                is_null: (value: ExpressionRef) => JSModule['_BinaryenRefIsNull'](this.ptr, value) as ExpressionRef,
+                i31: (value: ExpressionRef) => JSModule['_BinaryenRefI31'](this.ptr, value) as ExpressionRef,
+                func: (name: string, type: Type) => JSModule['_BinaryenRefFunc'](this.ptr, strToStack(name), type) as ExpressionRef,
+                eq: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenRefEq'](this.ptr, left, right) as ExpressionRef,
+                as_non_null: (value: ExpressionRef) => JSModule['_BinaryenRefAs'](this.ptr, Operations.RefAsNonNull, value) as ExpressionRef
+            }
+        };
+        get i31 () {
+             return {
+                get_s: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 1) as ExpressionRef,
+                get_u: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 0) as ExpressionRef
+             }
+        }
     }
 }
 
