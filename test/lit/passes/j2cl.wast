@@ -29,41 +29,50 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (global $fieldNotOptimizable (mut anyref) (ref.null none))
-
-  ;; CHECK:      (global $referredFieldMut (mut i32) (i32.const 42))
+  ;; CHECK:      (global $field2 (mut anyref) (ref.null none))
 
   ;; CHECK:      (global $referredField i32 (i32.const 42))
   (global $referredField (i32) (i32.const 42))
 
-  (global $referredFieldMut (mut i32) (i32.const 42))
-
-  ;; CHECK:      (global $field anyref (struct.new $A
+  ;; CHECK:      (global $field1 anyref (struct.new $A
   ;; CHECK-NEXT:  (global.get $referredField)
   ;; CHECK-NEXT: ))
-  (global $field (mut anyref) (ref.null none))
 
-  (global $fieldNotOptimizable (mut anyref) (ref.null none))
+  ;; CHECK:      (global $referredFieldMut (mut i32) (i32.const 42))
+  (global $referredFieldMut (mut i32) (i32.const 42))
+
+  (global $field1 (mut anyref) (ref.null none))
+
+  (global $field2 (mut anyref) (ref.null none))
+
+  ;; CHECK:      (global $field3 anyref (global.get $field1))
+  (global $field3 (mut anyref) (ref.null none))
 
   ;; CHECK:      (func $clinit_@once@_ (type $1)
-  ;; CHECK-NEXT:  (global.set $fieldNotOptimizable
+  ;; CHECK-NEXT:  (global.set $field2
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (global.get $referredFieldMut)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $clinit_@once@_
-    (global.set $field (struct.new $A (
+    ;; Referred field is immutable, should hoist
+    (global.set $field1 (struct.new $A (
       global.get $referredField)
     ))
 
-    (global.set $fieldNotOptimizable (struct.new $A
+    ;; Referred field is mutable, should not hoist
+    (global.set $field2 (struct.new $A
       (global.get $referredFieldMut)
     ))
+
+    ;; Referred field is mutable but hoistable hence also this one.
+    ;; (Note that requires multiple iterations in a single run)
+    (global.set $field3 (global.get $field1))
   )
 )
 
-;; Fields are initialized to a non-default value shoud be intact.
+;; Fields are initialized to a non-default value shoudn't be hoisted
 (module
   ;; CHECK:      (type $A (struct ))
   (type $A (struct))
