@@ -7,6 +7,7 @@ module binaryen {
     declare var HEAP32: Int32Array;
     declare var HEAPU32: Uint32Array;
     declare var out: (s: string) => void;
+    declare var stringToAscii: (s: string, ptr: number) => void;
     declare var _malloc: (size: number) => number;
     declare var _free: (size: number) => void;
     declare var stackSave: () => number;
@@ -61,6 +62,7 @@ module binaryen {
     export type TableRef = number;
     export type TagRef = number;
     export type RelooperBlockRef = number;
+    export type ExpressionRunnerRef = number;
 
     export interface SegmentInfo {
         offset: ExpressionRef;
@@ -646,16 +648,166 @@ module binaryen {
         setDebugLocation(expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
             JSModule['_BinaryenFunctionSetDebugLocation'](this.func, expr, fileIndex, lineNumber, columnNumber);
         }
-
+        getInfo() {
+            return {
+                'name': this.getName(),
+                'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](this.func)),
+                'base': UTF8ToString(Module['_BinaryenFunctionImportGetBase'](this.func)),
+                'params': this.getParams(),
+                'results': this.getResults(),
+                'vars': getAllNested<Type>(this.func, this.getNumVars, this.getVar),
+                'body':this.getBody()
+            } as FunctionInfo;
+        }
     };
 
+    export interface FunctionInfo {
+        name: string;
+        module: string | null;
+        base: string | null;
+        params: Type;
+        results: Type;
+        vars: Type[];
+        body: ExpressionRef;
+    }
+
+    export interface TableInfo {
+        name: string;
+        module: string | null;
+        base: string | null;
+        initial: number;
+        max?: number;
+    }
+
+    export interface ElementSegmentInfo {
+        name: string,
+        table: string,
+        offset: number,
+        data: string[]
+    }
+
+    export interface GlobalInfo {
+        name: string;
+        module: string | null;
+        base: string | null;
+        type: Type;
+        mutable: boolean;
+        init: ExpressionRef;
+    }
+
+    export interface TagInfo {
+        name: string;
+        module: string | null;
+        base: string | null;
+        params: Type;
+        results: Type;
+    }
+
+    export interface ExportInfo {
+        kind: ExternalKinds;
+        name: string;
+        value: string;
+    }
+
+    function getOptimizeLevel(): number {
+        return Module['_BinaryenGetOptimizeLevel']();
+    }
+    function setOptimizeLevel(level: number): void {
+        Module['_BinaryenSetOptimizeLevel'](level);
+    }
+    function getShrinkLevel(): number {
+        return Module['_BinaryenGetShrinkLevel']();
+    }
+    function setShrinkLevel(level: number): void {
+        Module['_BinaryenSetShrinkLevel'](level);
+    }
+    function getDebugInfo(): boolean {
+        return Boolean(Module['_BinaryenGetDebugInfo']());
+    }
+    function setDebugInfo(on: boolean): void {
+        Module['_BinaryenSetDebugInfo'](on);
+    }
+    function getLowMemoryUnused(): boolean {
+        return Boolean(Module['_BinaryenGetLowMemoryUnused']());
+    }
+    function setLowMemoryUnused(on: boolean): void {
+        Module['_BinaryenSetLowMemoryUnused'](on);
+    }
+    function getZeroFilledMemory(): boolean {
+        return Boolean(Module['_BinaryenGetZeroFilledMemory']());
+    }
+    function setZeroFilledMemory(on: boolean): void {
+        Module['_BinaryenSetZeroFilledMemory'](on);
+    }
+    function getFastMath(): boolean {
+        return Boolean(Module['_BinaryenGetFastMath']());
+    }
+    function setFastMath(on: boolean): void {
+        Module['_BinaryenSetFastMath'](on);
+    }
+    function getPassArgument(key: string): string | null {
+        return preserveStack(() => {
+            const ret = Module['_BinaryenGetPassArgument'](strToStack(key));
+            return ret !== 0 ? UTF8ToString(ret) : null;
+          });
+    }
+    function setPassArgument(key: string, value: string | null): void {
+        preserveStack(() => { Module['_BinaryenSetPassArgument'](strToStack(key), strToStack(value)) });
+    }
+    function clearPassArguments(): void {
+        Module['_BinaryenClearPassArguments']();
+    }
+    function getAlwaysInlineMaxSize(): number {
+        return Module['_BinaryenGetAlwaysInlineMaxSize']();
+    }
+    function setAlwaysInlineMaxSize(size: number): void {
+        Module['_BinaryenSetAlwaysInlineMaxSize'](size);
+    }
+    function getFlexibleInlineMaxSize(): number {
+        return Module['_BinaryenGetFlexibleInlineMaxSize']();
+    }
+    function setFlexibleInlineMaxSize(size: number): void {
+        Module['_BinaryenSetFlexibleInlineMaxSize'](size);
+    }
+    function getOneCallerInlineMaxSize(): number {
+        return Module['_BinaryenGetOneCallerInlineMaxSize']();
+    }
+    function setOneCallerInlineMaxSize(size: number): void {
+        Module['_BinaryenSetOneCallerInlineMaxSize'](size);
+    }
+    function getAllowInliningFunctionsWithLoops(): boolean {
+        return Boolean(Module['_BinaryenGetAllowInliningFunctionsWithLoops']());
+    }
+    function setAllowInliningFunctionsWithLoops(on: boolean): void {
+        Module['_BinaryenSetAllowInliningFunctionsWithLoops'](on);
+    }
+    function exit(status: number): void {
+        if (status != 0)
+            throw new Error('Exiting due to error: ' + status);
+    }
 
     export class Module {
 
+        static readBinary(data: Uint8Array): Module {
+              const buffer = _malloc(data.length);
+              HEAP8.set(data, buffer);
+              const ptr = JSModule['_BinaryenModuleRead'](buffer, data.length);
+              _free(buffer);
+              return new Module(ptr);
+        }
+
+        static parseText(text: string): Module {
+              const buffer = _malloc(text.length + 1);
+              stringToAscii(text, buffer);
+              const ptr = Module['_BinaryenModuleParse'](buffer);
+              _free(buffer);
+              return new Module(ptr);
+        }
+
         readonly ptr: number;
 
-        constructor() {
-            this.ptr = JSModule['_BinaryenModuleCreate']();
+        constructor(ptr?: number) {
+            this.ptr = ptr || JSModule['_BinaryenModuleCreate']();
         }
         dispose(): void {
             JSModule['_BinaryenModuleDispose'](this.ptr);
@@ -1846,7 +1998,17 @@ module binaryen {
                 addImport: (internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean) =>
                     preserveStack(() => JSModule['_BinaryenAddGlobalImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)) as void,
                 addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddGlobalExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+                    preserveStack(() => JSModule['_BinaryenAddGlobalExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
+                getInfo: (ref: GlobalRef) => {
+                    return {
+                        'name': UTF8ToString(Module['_BinaryenGlobalGetName'](ref)) as string,
+                        'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](ref)) as string | null,
+                        'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](ref)) as string | null,
+                        'type': Module['_BinaryenGlobalGetType'](ref) as Type,
+                        'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](ref)),
+                        'init': Module['_BinaryenGlobalGetInitExpr'](ref) as ExpressionRef
+                    } as GlobalInfo;
+                }
             };
         }
         get tables () {
@@ -1866,7 +2028,17 @@ module binaryen {
                 addImport: (internalName: string, externalModuleName: string, externalBaseName: string) =>
                     preserveStack(() => JSModule['_BinaryenAddTableImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))) as void,
                 addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddTableExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+                    preserveStack(() => JSModule['_BinaryenAddTableExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
+                getInfo: (table: TableRef) => {
+                        const hasMax = Boolean(JSModule['_BinaryenTableHasMax'](this.ptr, strToStack(name)));
+                        const withMax = hasMax ? { max: JSModule['_BinaryenTableGetMax'](this.ptr, strToStack(name))} : {};
+                        return Object.assign({
+                            'name': UTF8ToString(Module['_BinaryenTableGetName'](table)),
+                            'module': UTF8ToString(Module['_BinaryenTableImportGetModule'](table)),
+                            'base': UTF8ToString(Module['_BinaryenTableImportGetBase'](table)),
+                            'initial': Module['_BinaryenTableGetInitial'](table),
+                        }, withMax) as TableInfo;
+                }
             };
             /* TODO
             a._BinaryenTableGetName = Q.My;
@@ -1919,7 +2091,16 @@ module binaryen {
                 addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) =>
                     preserveStack(() => JSModule['_BinaryenAddTagImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)) as void,
                 addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddTagExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+                    preserveStack(() => JSModule['_BinaryenAddTagExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
+                getInfo: (tag: TagRef) => {
+                    return {
+                        'name': UTF8ToString(Module['_BinaryenTagGetName'](tag)),
+                        'module': UTF8ToString(Module['_BinaryenTagImportGetModule'](tag)),
+                        'base': UTF8ToString(Module['_BinaryenTagImportGetBase'](tag)),
+                        'params': Module['_BinaryenTagGetParams'](tag),
+                        'results': Module['_BinaryenTagGetResults'](tag)
+                      } as TagInfo;
+                }
             };
         }
         get memory () {
@@ -1990,6 +2171,19 @@ module binaryen {
                     },
                 countElementSegments: () => JSModule['_BinaryenGetNumElementSegments'](this.ptr) as number,
                 getElementSegmentByIndex: (index: number) => JSModule['_BinaryenGetElementSegmentByIndex'](this.ptr, index) as ElementSegmentRef,
+                getElementSegmentInfo: (segment: ElementSegmentRef) => {
+                      const segmentLength = Module['_BinaryenElementSegmentGetLength'](segment);
+                      const names = new Array(segmentLength);
+                      for (let j = 0; j < segmentLength; j++) {
+                        names[j] = UTF8ToString(Module['_BinaryenElementSegmentGetData'](segment, j));
+                      }
+                      return {
+                        'name': UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment)),
+                        'table': UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment)),
+                        'offset': Module['_BinaryenElementSegmentGetOffset'](segment),
+                        'data': names
+                      } as ElementSegmentInfo;
+                    },
                 addImport: (internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean) =>
                     preserveStack(() => JSModule['_BinaryenAddMemoryImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)) as void,
                 addExport: (internalName: string, externalName: string) =>
@@ -2015,484 +2209,83 @@ module binaryen {
                     preserveStack(() => JSModule['_BinaryenGetExport'](this.ptr, strToStack(externalName))) as ExportRef,
                 getRefByIndex: (index: number) => JSModule['_BinaryenGetExportByIndex'](this.ptr, index) as ExportRef,
                 remove: (externalName: string) => preserveStack(() => JSModule['_BinaryenRemoveExport'](this.ptr, strToStack(externalName))) as void,
-                count: () => JSModule['_BinaryenGetNumExports'](this.ptr) as number
+                count: () => JSModule['_BinaryenGetNumExports'](this.ptr) as number,
+                getInfo: (export_: ExportRef) => {
+                      return {
+                        'kind': Module['_BinaryenExportGetKind'](export_),
+                        'name': UTF8ToString(Module['_BinaryenExportGetName'](export_)),
+                        'value': UTF8ToString(Module['_BinaryenExportGetValue'](export_))
+                      } as ExportInfo;
+                }
 
             };
         }
-        copyExpression(expr: ExpressionRef): ExpressionRef {
-            return JSModule['_BinaryenExpressionCopy'](expr, this.ptr);
-        }
-        getExpressionType(expression: ExpressionRef): Type {
-            return JSModule['_BinaryenExpressionGetType'](expression);
-        }
-        getExpressionInfo(expression: ExpressionRef): ExpressionInfo {
-            const id = JSModule['_BinaryenExpressionGetId'](expression);
-            const type = Module['_BinaryenExpressionGetType'](expression);
-            switch (id) {
-            case JSModule['BlockId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenBlockGetName'](expression)),
-                'children': getAllNested<ExpressionRef>(expression, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
-                } as BlockInfo;
-            case Module['IfId']:
-                return {
-                'id': id,
-                'type': type,
-                'condition': Module['_BinaryenIfGetCondition'](expression),
-                'ifTrue': Module['_BinaryenIfGetIfTrue'](expression),
-                'ifFalse': Module['_BinaryenIfGetIfFalse'](expression)
-                } as IfInfo;
-            case Module['LoopId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenLoopGetName'](expression)),
-                'body': Module['_BinaryenLoopGetBody'](expression)
-                } as LoopInfo;
-            case Module['BreakId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenBreakGetName'](expression)),
-                'condition': Module['_BinaryenBreakGetCondition'](expression),
-                'value': Module['_BinaryenBreakGetValue'](expression)
-                } as BreakInfo;
-            case Module['SwitchId']:
-                return {
-                'id': id,
-                'type': type,
-                // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
-                'names': getAllNested<ExpressionRef>(expression, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p)),
-                'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expression)),
-                'condition': Module['_BinaryenSwitchGetCondition'](expression),
-                'value': Module['_BinaryenSwitchGetValue'](expression)
-                } as SwitchInfo;
-            case Module['CallId']:
-                return {
-                'id': id,
-                'type': type,
-                'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expression)),
-                'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expression)),
-                'operands': getAllNested<ExpressionRef>(expression, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt'])
-                } as CallInfo;
-            case Module['CallIndirectId']:
-                return {
-                'id': id,
-                'type': type,
-                'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expression)),
-                'target': Module['_BinaryenCallIndirectGetTarget'](expression),
-                'table': Module['_BinaryenCallIndirectGetTable'](expression),
-                'operands': getAllNested<ExpressionRef>(expression, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
-                } as CallIndirectInfo;
-            case Module['LocalGetId']:
-                return {
-                'id': id,
-                'type': type,
-                'index': Module['_BinaryenLocalGetGetIndex'](expression)
-                } as LocalGetInfo;
-            case Module['LocalSetId']:
-                return {
-                'id': id,
-                'type': type,
-                'isTee': Boolean(Module['_BinaryenLocalSetIsTee'](expression)),
-                'index': Module['_BinaryenLocalSetGetIndex'](expression),
-                'value': Module['_BinaryenLocalSetGetValue'](expression)
-                } as LocalSetInfo;
-            case Module['GlobalGetId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenGlobalGetGetName'](expression))
-                } as GlobalGetInfo;
-            case Module['GlobalSetId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expression)),
-                'value': Module['_BinaryenGlobalSetGetValue'](expression)
-                } as GlobalSetInfo;
-            case Module['TableGetId']:
-                return {
-                'id': id,
-                'type': type,
-                'table': UTF8ToString(Module['_BinaryenTableGetGetTable'](expression)),
-                'index': Module['_BinaryenTableGetGetIndex'](expression)
-                } as TableGetInfo;
-            case Module['TableSetId']:
-                return {
-                'id': id,
-                'type': type,
-                'table': UTF8ToString(Module['_BinaryenTableSetGetTable'](expression)),
-                'index': Module['_BinaryenTableSetGetIndex'](expression),
-                'value': Module['_BinaryenTableSetGetValue'](expression)
-                } as TableSetInfo;
-            case Module['TableSizeId']:
-                return {
-                'id': id,
-                'type': type,
-                'table': UTF8ToString(Module['_BinaryenTableSizeGetTable'](expression)),
-                } as TableSizeInfo;
-            case Module['TableGrowId']:
-                return {
-                'id': id,
-                'type': type,
-                'table': UTF8ToString(Module['_BinaryenTableGrowGetTable'](expression)),
-                'value': Module['_BinaryenTableGrowGetValue'](expression),
-                'delta': Module['_BinaryenTableGrowGetDelta'](expression),
-                } as TableGrowInfo;
-            case Module['LoadId']:
-                return {
-                'id': id,
-                'type': type,
-                'isAtomic': Boolean(Module['_BinaryenLoadIsAtomic'](expression)),
-                'isSigned': Boolean(Module['_BinaryenLoadIsSigned'](expression)),
-                'offset': Module['_BinaryenLoadGetOffset'](expression),
-                'bytes': Module['_BinaryenLoadGetBytes'](expression),
-                'align': Module['_BinaryenLoadGetAlign'](expression),
-                'ptr': Module['_BinaryenLoadGetPtr'](expression)
-                } as LoadInfo;
-            case Module['StoreId']:
-                return {
-                'id': id,
-                'type': type,
-                'isAtomic': Boolean(Module['_BinaryenStoreIsAtomic'](expression)),
-                'offset': Module['_BinaryenStoreGetOffset'](expression),
-                'bytes': Module['_BinaryenStoreGetBytes'](expression),
-                'align': Module['_BinaryenStoreGetAlign'](expression),
-                'ptr': Module['_BinaryenStoreGetPtr'](expression),
-                'value': Module['_BinaryenStoreGetValue'](expression)
-                } as StoreInfo;
-            case Module['ConstId']: {
-                let value;
-                switch (type) {
-                case i32:
-                    value = Module['_BinaryenConstGetValueI32'](expression);
-                    break;
-                case i64:
-                    value = {
-                    'low':  Module['_BinaryenConstGetValueI64Low'](expression),
-                    'high': Module['_BinaryenConstGetValueI64High'](expression)
-                    };
-                    break;
-                case f32:
-                    value = Module['_BinaryenConstGetValueF32'](expression);
-                    break;
-                case f64:
-                    value = Module['_BinaryenConstGetValueF64'](expression);
-                    break;
-                case v128: {
-                    preserveStack(() => {
-                            const tempBuffer = stackAlloc(16);
-                            Module['_BinaryenConstGetValueV128'](expression, tempBuffer);
-                            value = new Array(16);
-                            for (let i = 0; i < 16; i++) {
-                              value[i] = HEAPU8[tempBuffer + i];
-                            }
-                        });
-                    }
-                    break;
-                default:
-                    throw new Error('unexpected type: ' + type);
+        get expressions () {
+            return {
+                copy: (expr: ExpressionRef) => JSModule['_BinaryenExpressionCopy'](expr, this.ptr) as ExpressionRef,
+                getType: (expression: ExpressionRef) => JSModule['_BinaryenExpressionGetType'](expression) as Type,
+                getInfo: (expression: ExpressionRef) => getExpressionInfo(expression) as ExpressionInfo,
+                getSideEffects: (expression: ExpressionRef) => JSModule['_BinaryenExpressionGetSideEffects'](expression, this.ptr) as SideEffects,
+                emitText: (expression: ExpressionRef) => {
+                      const old = out;
+                      let text = '';
+                      out = x => { text += x + '\n' };
+                      JSModule['_BinaryenExpressionPrint'](expression);
+                      out = old;
+                      return text;
                 }
-                return {
-                'id': id,
-                'type': type,
-                'value': value
-                } as ConstInfo;
-            }
-            case Module['UnaryId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenUnaryGetOp'](expression),
-                'value': Module['_BinaryenUnaryGetValue'](expression)
-                } as UnaryInfo;
-            case Module['BinaryId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenBinaryGetOp'](expression),
-                'left': Module['_BinaryenBinaryGetLeft'](expression),
-                'right':  Module['_BinaryenBinaryGetRight'](expression)
-                } as BinaryInfo;
-            case Module['SelectId']:
-                return {
-                'id': id,
-                'type': type,
-                'ifTrue': Module['_BinaryenSelectGetIfTrue'](expression),
-                'ifFalse': Module['_BinaryenSelectGetIfFalse'](expression),
-                'condition': Module['_BinaryenSelectGetCondition'](expression)
-                } as SelectInfo;
-            case Module['DropId']:
-                return {
-                'id': id,
-                'type': type,
-                'value': Module['_BinaryenDropGetValue'](expression)
-                } as DropInfo;
-            case Module['ReturnId']:
-                return {
-                'id': id,
-                'type': type,
-                'value': Module['_BinaryenReturnGetValue'](expression)
-                } as ReturnInfo;
-            case Module['NopId']:
-                return {
-                'id': id,
-                'type': type
-                } as NopInfo;
-            case Module['UnreachableId']:
-                return {
-                'id': id,
-                'type': type
-                } as UnreachableInfo;
-            case Module['PopId']:
-                return {
-                'id': id,
-                'type': type
-                } as PopInfo;
-            case Module['MemorySizeId']:
-                return {
-                'id': id,
-                'type': type
-                } as MemorySizeInfo;
-            case Module['MemoryGrowId']:
-                return {
-                'id': id,
-                'type': type,
-                'delta': Module['_BinaryenMemoryGrowGetDelta'](expression)
-                } as MemoryGrowInfo;
-            case Module['AtomicRMWId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenAtomicRMWGetOp'](expression),
-                'bytes': Module['_BinaryenAtomicRMWGetBytes'](expression),
-                'offset': Module['_BinaryenAtomicRMWGetOffset'](expression),
-                'ptr': Module['_BinaryenAtomicRMWGetPtr'](expression),
-                'value': Module['_BinaryenAtomicRMWGetValue'](expression)
-                } as AtomicRMWInfo;
-            case Module['AtomicCmpxchgId']:
-                return {
-                'id': id,
-                'type': type,
-                'bytes': Module['_BinaryenAtomicCmpxchgGetBytes'](expression),
-                'offset': Module['_BinaryenAtomicCmpxchgGetOffset'](expression),
-                'ptr': Module['_BinaryenAtomicCmpxchgGetPtr'](expression),
-                'expected': Module['_BinaryenAtomicCmpxchgGetExpected'](expression),
-                'replacement': Module['_BinaryenAtomicCmpxchgGetReplacement'](expression)
-                } as AtomicCmpxchgInfo;
-            case Module['AtomicWaitId']:
-                return {
-                'id': id,
-                'type': type,
-                'ptr': Module['_BinaryenAtomicWaitGetPtr'](expression),
-                'expected': Module['_BinaryenAtomicWaitGetExpected'](expression),
-                'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expression),
-                'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expression)
-                } as AtomicWaitInfo;
-            case Module['AtomicNotifyId']:
-                return {
-                'id': id,
-                'type': type,
-                'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expression),
-                'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expression)
-                } as AtomicNotifyInfo;
-            case Module['AtomicFenceId']:
-                return {
-                'id': id,
-                'type': type,
-                'order': Module['_BinaryenAtomicFenceGetOrder'](expression)
-                } as AtomicFenceInfo;
-            case Module['SIMDExtractId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDExtractGetOp'](expression),
-                'vec': Module['_BinaryenSIMDExtractGetVec'](expression),
-                'index': Module['_BinaryenSIMDExtractGetIndex'](expression)
-                } as SIMDExtractInfo;
-            case Module['SIMDReplaceId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDReplaceGetOp'](expression),
-                'vec': Module['_BinaryenSIMDReplaceGetVec'](expression),
-                'index': Module['_BinaryenSIMDReplaceGetIndex'](expression),
-                'value': Module['_BinaryenSIMDReplaceGetValue'](expression)
-                } as SIMDReplaceInfo;
-            case Module['SIMDShuffleId']:
-                return preserveStack(() => {
-                    const tempBuffer = stackAlloc(16);
-                    Module['_BinaryenSIMDShuffleGetMask'](expression, tempBuffer);
-                    const mask = new Array(16);
-                    for (let i = 0; i < 16; i++) {
-                        mask[i] = HEAPU8[tempBuffer + i];
-                    }
-                    return {
-                    'id': id,
-                    'type': type,
-                    'left': Module['_BinaryenSIMDShuffleGetLeft'](expression),
-                    'right': Module['_BinaryenSIMDShuffleGetRight'](expression),
-                    'mask': mask
-                    } as SIMDShuffleInfo;
-                });
-            case Module['SIMDTernaryId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDTernaryGetOp'](expression),
-                'a': Module['_BinaryenSIMDTernaryGetA'](expression),
-                'b': Module['_BinaryenSIMDTernaryGetB'](expression),
-                'c': Module['_BinaryenSIMDTernaryGetC'](expression)
-                } as SIMDTernaryInfo;
-            case Module['SIMDShiftId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDShiftGetOp'](expression),
-                'vec': Module['_BinaryenSIMDShiftGetVec'](expression),
-                'shift': Module['_BinaryenSIMDShiftGetShift'](expression)
-                } as SIMDShiftInfo;
-            case Module['SIMDLoadId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDLoadGetOp'](expression),
-                'offset': Module['_BinaryenSIMDLoadGetOffset'](expression),
-                'align': Module['_BinaryenSIMDLoadGetAlign'](expression),
-                'ptr': Module['_BinaryenSIMDLoadGetPtr'](expression)
-                } as SIMDLoadInfo;
-            case Module['SIMDLoadStoreLaneId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expression),
-                'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expression),
-                'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expression),
-                'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expression),
-                'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expression),
-                'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expression)
-                } as SIMDLoadStoreLaneInfo;
-            case Module['MemoryInitId']:
-                return {
-                'id': id,
-                'type': type,
-                'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expression)),
-                'dest': Module['_BinaryenMemoryInitGetDest'](expression) as ExpressionRef,
-                'offset': Module['_BinaryenMemoryInitGetOffset'](expression) as ExpressionRef,
-                'size': Module['_BinaryenMemoryInitGetSize'](expression) as ExpressionRef
-                } as MemoryInitInfo;
-            case Module['DataDropId']:
-                return {
-                'id': id,
-                'type': type,
-                'segment': UTF8ToString(Module['_BinaryenDataDropGetSegment'](expression)),
-                } as DataDropInfo;
-            case Module['MemoryCopyId']:
-                return {
-                'id': id,
-                'type': type,
-                'dest': Module['_BinaryenMemoryCopyGetDest'](expression),
-                'source': Module['_BinaryenMemoryCopyGetSource'](expression),
-                'size': Module['_BinaryenMemoryCopyGetSize'](expression)
-                } as MemoryCopyInfo;
-            case Module['MemoryFillId']:
-                return {
-                'id': id,
-                'type': type,
-                'dest': Module['_BinaryenMemoryFillGetDest'](expression),
-                'value': Module['_BinaryenMemoryFillGetValue'](expression),
-                'size': Module['_BinaryenMemoryFillGetSize'](expression)
-                } as MemoryFillInfo;
-            case Module['RefNullId']:
-                return {
-                'id': id,
-                'type': type
-                } as RefNullInfo;
-            case Module['RefIsNullId']:
-                return {
-                'id': id,
-                'type': type,
-                'value': Module['_BinaryenRefIsNullGetValue'](expression)
-                } as RefIsNullInfo;
-            case Module['RefAsId']:
-                return {
-                'id': id,
-                'type': type,
-                'op': Module['_BinaryenRefAsGetOp'](expression),
-                'value': Module['_BinaryenRefAsGetValue'](expression)
-                } as RefAsInfo;
-            case Module['RefFuncId']:
-                return {
-                'id': id,
-                'type': type,
-                'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expression)),
-                } as RefFuncInfo;
-            case Module['RefEqId']:
-                return {
-                'id': id,
-                'type': type,
-                'left': Module['_BinaryenRefEqGetLeft'](expression),
-                'right': Module['_BinaryenRefEqGetRight'](expression)
-                } as RefEqInfo;
-            case Module['TryId']:
-                return {
-                'id': id,
-                'type': type,
-                'name': UTF8ToString(Module['_BinaryenTryGetName'](expression)),
-                'body': Module['_BinaryenTryGetBody'](expression) as ExpressionRef,
-                'catchTags': getAllNested<string>(expression, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
-                'catchBodies': getAllNested<ExpressionRef>(expression, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
-                'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expression) as boolean,
-                'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expression)) as string,
-                'isDelegate': Module['_BinaryenTryIsDelegate'](expression) as boolean
-                } as TryInfo;
-            case Module['ThrowId']:
-                return {
-                'id': id,
-                'type': type,
-                'tag': UTF8ToString(Module['_BinaryenThrowGetTag'](expression)),
-                'operands': getAllNested(expression, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
-                } as ThrowInfo;
-            case Module['RethrowId']:
-                return {
-                'id': id,
-                'type': type,
-                'target': UTF8ToString(Module['_BinaryenRethrowGetTarget'](expression))
-                } as RethrowInfo;
-            case Module['TupleMakeId']:
-                return {
-                'id': id,
-                'type': type,
-                'operands': getAllNested(expression, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperandAt'])
-                } as TupleMakeInfo;
-            case Module['TupleExtractId']:
-                return {
-                'id': id,
-                'type': type,
-                'tuple': Module['_BinaryenTupleExtractGetTuple'](expression),
-                'index': Module['_BinaryenTupleExtractGetIndex'](expression)
-                } as TupleExtractInfo;
-            case Module['RefI31Id']:
-                return {
-                'id': id,
-                'type': type,
-                'value': Module['_BinaryenRefI31GetValue'](expression)
-                } as RefI31Info;
-            case Module['I31GetId']:
-                return {
-                'id': id,
-                'type': type,
-                'i31': Module['_BinaryenI31GetGetI31'](expression),
-                'isSigned': Boolean(Module['_BinaryenI31GetIsSigned'](expression))
-                } as I31GetInfo;
-            default:
-                throw Error('unexpected id: ' + id);
-            }
+           };
+       }
+    }
+
+    export class Relooper {
+
+        readonly ref: RelooperBlockRef
+
+        constructor(module: Module, ref?: RelooperBlockRef) {
+            this.ref = ref || JSModule['_RelooperCreate'](module.ptr);
+        }
+        addBlock(code: ExpressionRef): RelooperBlockRef {
+            return JSModule['_RelooperAddBlock'](this.ref, code);
+        }
+        addBranch(from: RelooperBlockRef, to: RelooperBlockRef, condition: ExpressionRef, code: ExpressionRef): void {
+            Module['_RelooperAddBranch'](from, to, condition, code);
+        }
+        addBlockWithSwitch(code: ExpressionRef, condition: ExpressionRef): RelooperBlockRef {
+            return Module['_RelooperAddBlockWithSwitch'](this.ref, code, condition);
+        }
+        addBranchForSwitch(from: RelooperBlockRef, to: RelooperBlockRef, indexes: number[], code: ExpressionRef): void {
+            preserveStack(() => Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code));
+        }
+        renderAndDispose(entry: RelooperBlockRef, labelHelper: number): ExpressionRef {
+            return Module['_RelooperRenderAndDispose'](this.ref, entry, labelHelper);
         }
     }
+
+    export enum ExpressionRunnerFlags {
+        Default,
+        PreserveSideeffects,
+        TraverseCalls
+    }
+
+    export class ExpressionRunner {
+
+        readonly ref: ExpressionRunnerRef;
+
+        constructor(module: Module, flags: ExpressionRunnerFlags, maxDepth: number, maxLoopIterations: number) {
+            this.ref = Module['_ExpressionRunnerCreate'](module.ptr, flags, maxDepth, maxLoopIterations);
+        }
+        setLocalValue(index: number, valueExpr: ExpressionRef): boolean {
+            return Boolean(Module['_ExpressionRunnerSetLocalValue'](this.ref, index, valueExpr));
+        }
+        setGlobalValue(name: string, valueExpr: ExpressionRef): boolean {
+            return preserveStack(() => Boolean(Module['_ExpressionRunnerSetGlobalValue'](this.ref, strToStack(name), valueExpr)));
+        }
+        runAndDispose(expr: ExpressionRef): ExpressionRef {
+            return Module['_ExpressionRunnerRunAndDispose'](this.ref, expr);
+        }
+    }
+
     export interface ExpressionInfo {
         id: number;
         type: Type;
@@ -2803,6 +2596,474 @@ module binaryen {
         i31: ExpressionRef;
         isSigned: boolean;
       }
+
+  function getExpressionInfo(expression: ExpressionRef) {
+      const id = JSModule['_BinaryenExpressionGetId'](expression);
+      const type = Module['_BinaryenExpressionGetType'](expression);
+      switch (id) {
+      case JSModule['BlockId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenBlockGetName'](expression)),
+          'children': getAllNested<ExpressionRef>(expression, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt'])
+          } as BlockInfo;
+      case Module['IfId']:
+          return {
+          'id': id,
+          'type': type,
+          'condition': Module['_BinaryenIfGetCondition'](expression),
+          'ifTrue': Module['_BinaryenIfGetIfTrue'](expression),
+          'ifFalse': Module['_BinaryenIfGetIfFalse'](expression)
+          } as IfInfo;
+      case Module['LoopId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenLoopGetName'](expression)),
+          'body': Module['_BinaryenLoopGetBody'](expression)
+          } as LoopInfo;
+      case Module['BreakId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenBreakGetName'](expression)),
+          'condition': Module['_BinaryenBreakGetCondition'](expression),
+          'value': Module['_BinaryenBreakGetValue'](expression)
+          } as BreakInfo;
+      case Module['SwitchId']:
+          return {
+          'id': id,
+          'type': type,
+          // Do not pass the index as the second parameter to UTF8ToString as that will cut off the string.
+          'names': getAllNested<ExpressionRef>(expression, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p)),
+          'defaultName': UTF8ToString(Module['_BinaryenSwitchGetDefaultName'](expression)),
+          'condition': Module['_BinaryenSwitchGetCondition'](expression),
+          'value': Module['_BinaryenSwitchGetValue'](expression)
+          } as SwitchInfo;
+      case Module['CallId']:
+          return {
+          'id': id,
+          'type': type,
+          'isReturn': Boolean(Module['_BinaryenCallIsReturn'](expression)),
+          'target': UTF8ToString(Module['_BinaryenCallGetTarget'](expression)),
+          'operands': getAllNested<ExpressionRef>(expression, Module[ '_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt'])
+          } as CallInfo;
+      case Module['CallIndirectId']:
+          return {
+          'id': id,
+          'type': type,
+          'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expression)),
+          'target': Module['_BinaryenCallIndirectGetTarget'](expression),
+          'table': Module['_BinaryenCallIndirectGetTable'](expression),
+          'operands': getAllNested<ExpressionRef>(expression, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
+          } as CallIndirectInfo;
+      case Module['LocalGetId']:
+          return {
+          'id': id,
+          'type': type,
+          'index': Module['_BinaryenLocalGetGetIndex'](expression)
+          } as LocalGetInfo;
+      case Module['LocalSetId']:
+          return {
+          'id': id,
+          'type': type,
+          'isTee': Boolean(Module['_BinaryenLocalSetIsTee'](expression)),
+          'index': Module['_BinaryenLocalSetGetIndex'](expression),
+          'value': Module['_BinaryenLocalSetGetValue'](expression)
+          } as LocalSetInfo;
+      case Module['GlobalGetId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenGlobalGetGetName'](expression))
+          } as GlobalGetInfo;
+      case Module['GlobalSetId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenGlobalSetGetName'](expression)),
+          'value': Module['_BinaryenGlobalSetGetValue'](expression)
+          } as GlobalSetInfo;
+      case Module['TableGetId']:
+          return {
+          'id': id,
+          'type': type,
+          'table': UTF8ToString(Module['_BinaryenTableGetGetTable'](expression)),
+          'index': Module['_BinaryenTableGetGetIndex'](expression)
+          } as TableGetInfo;
+      case Module['TableSetId']:
+          return {
+          'id': id,
+          'type': type,
+          'table': UTF8ToString(Module['_BinaryenTableSetGetTable'](expression)),
+          'index': Module['_BinaryenTableSetGetIndex'](expression),
+          'value': Module['_BinaryenTableSetGetValue'](expression)
+          } as TableSetInfo;
+      case Module['TableSizeId']:
+          return {
+          'id': id,
+          'type': type,
+          'table': UTF8ToString(Module['_BinaryenTableSizeGetTable'](expression)),
+          } as TableSizeInfo;
+      case Module['TableGrowId']:
+          return {
+          'id': id,
+          'type': type,
+          'table': UTF8ToString(Module['_BinaryenTableGrowGetTable'](expression)),
+          'value': Module['_BinaryenTableGrowGetValue'](expression),
+          'delta': Module['_BinaryenTableGrowGetDelta'](expression),
+          } as TableGrowInfo;
+      case Module['LoadId']:
+          return {
+          'id': id,
+          'type': type,
+          'isAtomic': Boolean(Module['_BinaryenLoadIsAtomic'](expression)),
+          'isSigned': Boolean(Module['_BinaryenLoadIsSigned'](expression)),
+          'offset': Module['_BinaryenLoadGetOffset'](expression),
+          'bytes': Module['_BinaryenLoadGetBytes'](expression),
+          'align': Module['_BinaryenLoadGetAlign'](expression),
+          'ptr': Module['_BinaryenLoadGetPtr'](expression)
+          } as LoadInfo;
+      case Module['StoreId']:
+          return {
+          'id': id,
+          'type': type,
+          'isAtomic': Boolean(Module['_BinaryenStoreIsAtomic'](expression)),
+          'offset': Module['_BinaryenStoreGetOffset'](expression),
+          'bytes': Module['_BinaryenStoreGetBytes'](expression),
+          'align': Module['_BinaryenStoreGetAlign'](expression),
+          'ptr': Module['_BinaryenStoreGetPtr'](expression),
+          'value': Module['_BinaryenStoreGetValue'](expression)
+          } as StoreInfo;
+      case Module['ConstId']: {
+          let value;
+          switch (type) {
+          case i32:
+              value = Module['_BinaryenConstGetValueI32'](expression);
+              break;
+          case i64:
+              value = {
+              'low':  Module['_BinaryenConstGetValueI64Low'](expression),
+              'high': Module['_BinaryenConstGetValueI64High'](expression)
+              };
+              break;
+          case f32:
+              value = Module['_BinaryenConstGetValueF32'](expression);
+              break;
+          case f64:
+              value = Module['_BinaryenConstGetValueF64'](expression);
+              break;
+          case v128: {
+              preserveStack(() => {
+                      const tempBuffer = stackAlloc(16);
+                      Module['_BinaryenConstGetValueV128'](expression, tempBuffer);
+                      value = new Array(16);
+                      for (let i = 0; i < 16; i++) {
+                        value[i] = HEAPU8[tempBuffer + i];
+                      }
+                  });
+              }
+              break;
+          default:
+              throw new Error('unexpected type: ' + type);
+          }
+          return {
+          'id': id,
+          'type': type,
+          'value': value
+          } as ConstInfo;
+      }
+      case Module['UnaryId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenUnaryGetOp'](expression),
+          'value': Module['_BinaryenUnaryGetValue'](expression)
+          } as UnaryInfo;
+      case Module['BinaryId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenBinaryGetOp'](expression),
+          'left': Module['_BinaryenBinaryGetLeft'](expression),
+          'right':  Module['_BinaryenBinaryGetRight'](expression)
+          } as BinaryInfo;
+      case Module['SelectId']:
+          return {
+          'id': id,
+          'type': type,
+          'ifTrue': Module['_BinaryenSelectGetIfTrue'](expression),
+          'ifFalse': Module['_BinaryenSelectGetIfFalse'](expression),
+          'condition': Module['_BinaryenSelectGetCondition'](expression)
+          } as SelectInfo;
+      case Module['DropId']:
+          return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenDropGetValue'](expression)
+          } as DropInfo;
+      case Module['ReturnId']:
+          return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenReturnGetValue'](expression)
+          } as ReturnInfo;
+      case Module['NopId']:
+          return {
+          'id': id,
+          'type': type
+          } as NopInfo;
+      case Module['UnreachableId']:
+          return {
+          'id': id,
+          'type': type
+          } as UnreachableInfo;
+      case Module['PopId']:
+          return {
+          'id': id,
+          'type': type
+          } as PopInfo;
+      case Module['MemorySizeId']:
+          return {
+          'id': id,
+          'type': type
+          } as MemorySizeInfo;
+      case Module['MemoryGrowId']:
+          return {
+          'id': id,
+          'type': type,
+          'delta': Module['_BinaryenMemoryGrowGetDelta'](expression)
+          } as MemoryGrowInfo;
+      case Module['AtomicRMWId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenAtomicRMWGetOp'](expression),
+          'bytes': Module['_BinaryenAtomicRMWGetBytes'](expression),
+          'offset': Module['_BinaryenAtomicRMWGetOffset'](expression),
+          'ptr': Module['_BinaryenAtomicRMWGetPtr'](expression),
+          'value': Module['_BinaryenAtomicRMWGetValue'](expression)
+          } as AtomicRMWInfo;
+      case Module['AtomicCmpxchgId']:
+          return {
+          'id': id,
+          'type': type,
+          'bytes': Module['_BinaryenAtomicCmpxchgGetBytes'](expression),
+          'offset': Module['_BinaryenAtomicCmpxchgGetOffset'](expression),
+          'ptr': Module['_BinaryenAtomicCmpxchgGetPtr'](expression),
+          'expected': Module['_BinaryenAtomicCmpxchgGetExpected'](expression),
+          'replacement': Module['_BinaryenAtomicCmpxchgGetReplacement'](expression)
+          } as AtomicCmpxchgInfo;
+      case Module['AtomicWaitId']:
+          return {
+          'id': id,
+          'type': type,
+          'ptr': Module['_BinaryenAtomicWaitGetPtr'](expression),
+          'expected': Module['_BinaryenAtomicWaitGetExpected'](expression),
+          'timeout': Module['_BinaryenAtomicWaitGetTimeout'](expression),
+          'expectedType': Module['_BinaryenAtomicWaitGetExpectedType'](expression)
+          } as AtomicWaitInfo;
+      case Module['AtomicNotifyId']:
+          return {
+          'id': id,
+          'type': type,
+          'ptr': Module['_BinaryenAtomicNotifyGetPtr'](expression),
+          'notifyCount': Module['_BinaryenAtomicNotifyGetNotifyCount'](expression)
+          } as AtomicNotifyInfo;
+      case Module['AtomicFenceId']:
+          return {
+          'id': id,
+          'type': type,
+          'order': Module['_BinaryenAtomicFenceGetOrder'](expression)
+          } as AtomicFenceInfo;
+      case Module['SIMDExtractId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDExtractGetOp'](expression),
+          'vec': Module['_BinaryenSIMDExtractGetVec'](expression),
+          'index': Module['_BinaryenSIMDExtractGetIndex'](expression)
+          } as SIMDExtractInfo;
+      case Module['SIMDReplaceId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDReplaceGetOp'](expression),
+          'vec': Module['_BinaryenSIMDReplaceGetVec'](expression),
+          'index': Module['_BinaryenSIMDReplaceGetIndex'](expression),
+          'value': Module['_BinaryenSIMDReplaceGetValue'](expression)
+          } as SIMDReplaceInfo;
+      case Module['SIMDShuffleId']:
+          return preserveStack(() => {
+              const tempBuffer = stackAlloc(16);
+              Module['_BinaryenSIMDShuffleGetMask'](expression, tempBuffer);
+              const mask = new Array(16);
+              for (let i = 0; i < 16; i++) {
+                  mask[i] = HEAPU8[tempBuffer + i];
+              }
+              return {
+              'id': id,
+              'type': type,
+              'left': Module['_BinaryenSIMDShuffleGetLeft'](expression),
+              'right': Module['_BinaryenSIMDShuffleGetRight'](expression),
+              'mask': mask
+              } as SIMDShuffleInfo;
+          });
+      case Module['SIMDTernaryId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDTernaryGetOp'](expression),
+          'a': Module['_BinaryenSIMDTernaryGetA'](expression),
+          'b': Module['_BinaryenSIMDTernaryGetB'](expression),
+          'c': Module['_BinaryenSIMDTernaryGetC'](expression)
+          } as SIMDTernaryInfo;
+      case Module['SIMDShiftId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDShiftGetOp'](expression),
+          'vec': Module['_BinaryenSIMDShiftGetVec'](expression),
+          'shift': Module['_BinaryenSIMDShiftGetShift'](expression)
+          } as SIMDShiftInfo;
+      case Module['SIMDLoadId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDLoadGetOp'](expression),
+          'offset': Module['_BinaryenSIMDLoadGetOffset'](expression),
+          'align': Module['_BinaryenSIMDLoadGetAlign'](expression),
+          'ptr': Module['_BinaryenSIMDLoadGetPtr'](expression)
+          } as SIMDLoadInfo;
+      case Module['SIMDLoadStoreLaneId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expression),
+          'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expression),
+          'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expression),
+          'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expression),
+          'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expression),
+          'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expression)
+          } as SIMDLoadStoreLaneInfo;
+      case Module['MemoryInitId']:
+          return {
+          'id': id,
+          'type': type,
+          'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expression)),
+          'dest': Module['_BinaryenMemoryInitGetDest'](expression) as ExpressionRef,
+          'offset': Module['_BinaryenMemoryInitGetOffset'](expression) as ExpressionRef,
+          'size': Module['_BinaryenMemoryInitGetSize'](expression) as ExpressionRef
+          } as MemoryInitInfo;
+      case Module['DataDropId']:
+          return {
+          'id': id,
+          'type': type,
+          'segment': UTF8ToString(Module['_BinaryenDataDropGetSegment'](expression)),
+          } as DataDropInfo;
+      case Module['MemoryCopyId']:
+          return {
+          'id': id,
+          'type': type,
+          'dest': Module['_BinaryenMemoryCopyGetDest'](expression),
+          'source': Module['_BinaryenMemoryCopyGetSource'](expression),
+          'size': Module['_BinaryenMemoryCopyGetSize'](expression)
+          } as MemoryCopyInfo;
+      case Module['MemoryFillId']:
+          return {
+          'id': id,
+          'type': type,
+          'dest': Module['_BinaryenMemoryFillGetDest'](expression),
+          'value': Module['_BinaryenMemoryFillGetValue'](expression),
+          'size': Module['_BinaryenMemoryFillGetSize'](expression)
+          } as MemoryFillInfo;
+      case Module['RefNullId']:
+          return {
+          'id': id,
+          'type': type
+          } as RefNullInfo;
+      case Module['RefIsNullId']:
+          return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenRefIsNullGetValue'](expression)
+          } as RefIsNullInfo;
+      case Module['RefAsId']:
+          return {
+          'id': id,
+          'type': type,
+          'op': Module['_BinaryenRefAsGetOp'](expression),
+          'value': Module['_BinaryenRefAsGetValue'](expression)
+          } as RefAsInfo;
+      case Module['RefFuncId']:
+          return {
+          'id': id,
+          'type': type,
+          'func': UTF8ToString(Module['_BinaryenRefFuncGetFunc'](expression)),
+          } as RefFuncInfo;
+      case Module['RefEqId']:
+          return {
+          'id': id,
+          'type': type,
+          'left': Module['_BinaryenRefEqGetLeft'](expression),
+          'right': Module['_BinaryenRefEqGetRight'](expression)
+          } as RefEqInfo;
+      case Module['TryId']:
+          return {
+          'id': id,
+          'type': type,
+          'name': UTF8ToString(Module['_BinaryenTryGetName'](expression)),
+          'body': Module['_BinaryenTryGetBody'](expression) as ExpressionRef,
+          'catchTags': getAllNested<string>(expression, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
+          'catchBodies': getAllNested<ExpressionRef>(expression, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
+          'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expression) as boolean,
+          'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expression)) as string,
+          'isDelegate': Module['_BinaryenTryIsDelegate'](expression) as boolean
+          } as TryInfo;
+      case Module['ThrowId']:
+          return {
+          'id': id,
+          'type': type,
+          'tag': UTF8ToString(Module['_BinaryenThrowGetTag'](expression)),
+          'operands': getAllNested(expression, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
+          } as ThrowInfo;
+      case Module['RethrowId']:
+          return {
+          'id': id,
+          'type': type,
+          'target': UTF8ToString(Module['_BinaryenRethrowGetTarget'](expression))
+          } as RethrowInfo;
+      case Module['TupleMakeId']:
+          return {
+          'id': id,
+          'type': type,
+          'operands': getAllNested(expression, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperandAt'])
+          } as TupleMakeInfo;
+      case Module['TupleExtractId']:
+          return {
+          'id': id,
+          'type': type,
+          'tuple': Module['_BinaryenTupleExtractGetTuple'](expression),
+          'index': Module['_BinaryenTupleExtractGetIndex'](expression)
+          } as TupleExtractInfo;
+      case Module['RefI31Id']:
+          return {
+          'id': id,
+          'type': type,
+          'value': Module['_BinaryenRefI31GetValue'](expression)
+          } as RefI31Info;
+      case Module['I31GetId']:
+          return {
+          'id': id,
+          'type': type,
+          'i31': Module['_BinaryenI31GetGetI31'](expression),
+          'isSigned': Boolean(Module['_BinaryenI31GetIsSigned'](expression))
+          } as I31GetInfo;
+      default:
+          throw Error('unexpected id: ' + id);
+      }
+   }
 }
 
 
