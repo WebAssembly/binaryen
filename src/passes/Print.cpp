@@ -1985,7 +1985,10 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
-  void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
+  void visitTupleMake(TupleMake* curr) {
+    printMedium(o, "tuple.make ");
+    o << curr->operands.size();
+  }
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
     o << curr->index;

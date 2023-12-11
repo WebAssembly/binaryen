@@ -1758,7 +1758,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:     (tuple.make 2
   ;; CHECK-NEXT:      (i32.load
   ;; CHECK-NEXT:       (local.get $5)
   ;; CHECK-NEXT:      )

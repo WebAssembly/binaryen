@@ -33,7 +33,7 @@
   ;; f32 on the stack where an f32 and i32 would be expected. We disable stack
   ;; IR optimizations on tuples to avoid this.
   (local.set $pair
-   (tuple.make
+   (tuple.make 2
     (f32.const 0)
     (i32.const 0)
    )

@@ -2843,7 +2843,11 @@ Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
   auto ret = allocator.alloc<TupleMake>();
-  parseCallOperands(s, 1, s.size(), ret);
+  size_t arity = std::stoll(s[1]->toString());
+  if (arity != s.size() - 2) {
+    throw SParseException("unexpected number of elements", s, *s[1]);
+  }
+  parseCallOperands(s, 2, s.size(), ret);
   ret->finalize();
   return ret;
 }

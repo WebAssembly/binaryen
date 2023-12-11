@@ -68,7 +68,7 @@
   (func $extract-make (param $x i32) (param $y i32) (result i32)
     ;; An extraction from a make can be simplified to just get the right lane.
     (tuple.extract 0
-      (tuple.make
+      (tuple.make 2
         (local.get $x)
         (local.get $y)
       )
@@ -87,7 +87,7 @@
   (func $extract-make-2 (param $x i32) (param $y i32) (result i32)
     ;; As above, but the second lane.
     (tuple.extract 1
-      (tuple.make
+      (tuple.make 2
         (local.get $x)
         (local.get $y)
       )
@@ -96,7 +96,7 @@
 
   ;; CHECK:      (func $extract-make-unreachable (param $x i32) (param $y i32) (result i32)
   ;; CHECK-NEXT:  (tuple.extract 0
-  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
@@ -104,7 +104,7 @@
   ;; CHECK-NEXT: )
   (func $extract-make-unreachable (param $x i32) (param $y i32) (result i32)
     (tuple.extract 0
-      (tuple.make
+      (tuple.make 2
         (unreachable) ;; because of this we should do nothing
         (local.get $y)
       )

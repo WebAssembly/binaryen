@@ -55,7 +55,7 @@
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
-  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:     (tuple.make 3
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (ref.as_non_null
   ;; CHECK-NEXT:       (ref.null none)
@@ -66,7 +66,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:     (tuple.make 3
   ;; CHECK-NEXT:      (tuple.extract 0
   ;; CHECK-NEXT:       (local.get $nn)
   ;; CHECK-NEXT:      )
@@ -87,7 +87,7 @@
     ;; Same as above, but now the local is a tuple containing a non-nullable element
     (local $nn (i32 (ref any) i64))
     (local.set $nn
-      (tuple.make
+      (tuple.make 3
         (i32.const 0)
         (ref.as_non_null
           (ref.null any)
@@ -166,7 +166,7 @@
     (if
       (i32.const 0)
       (local.set $temp
-        (tuple.make
+        (tuple.make 2
           (ref.func $if-return-tuple-nn)
           (ref.null none)
         )

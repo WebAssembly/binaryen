@@ -2,8 +2,8 @@
 ;; even if the target features section is stripped first
 
 (module
-  (func $foo (result v128 externref )
-    (tuple.make
+  (func $foo (result v128 externref)
+    (tuple.make 2
       (v128.const i32x4 0 0 0 0)
       (ref.null extern)
     )

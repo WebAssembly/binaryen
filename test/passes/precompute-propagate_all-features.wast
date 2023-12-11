@@ -184,18 +184,18 @@
    (local $i32s (i32 i32))
    (local $i64s (i64 i64))
    (local.set $i32s
-    (tuple.make
+    (tuple.make 2
      (i32.const 42)
      (i32.const 0)
     )
    )
    (local.set $i64s
-    (tuple.make
+    (tuple.make 2
      (i64.const 42)
      (i64.const 0)
     )
    )
-   (tuple.make
+   (tuple.make 2
     (tuple.extract 0
      (local.get $i32s)
     )

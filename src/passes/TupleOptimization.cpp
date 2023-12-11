@@ -20,7 +20,7 @@
 // like this:
 //
 //  (local.set $tuple
-//    (tuple.make (A) (B) (C)))
+//    (tuple.make 3 (A) (B) (C)))
 //  (use
 //    (tuple.extract 0
 //      (local.get $tuple)))
