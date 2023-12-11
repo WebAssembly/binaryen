@@ -2,31 +2,68 @@
 
 ;; RUN: foreach %s %t wasm-opt --optimize-j2cl -all -S -o - | filecheck %s
 
+;; Simple primitives are hoisted
 (module
-  ;; CHECK:      (type $A (struct ))
-  (type $A (struct))
+  ;; CHECK:      (type $0 (func))
 
-
-  ;; CHECK:      (type $1 (func))
-
-  ;; CHECK:      (global $field-any anyref (struct.new_default $A))
+  ;; CHECK:      (global $field-f64 f64 (f64.const 0))
 
   ;; CHECK:      (global $field-i32 i32 (i32.const 1))
   (global $field-i32 (mut i32) (i32.const 0))
-  (global $field-any (mut anyref) (ref.null none))
+  (global $field-f64 (mut f64) (f64.const 0))
 
-  ;; CHECK:      (func $clinit_@once@_ (type $1)
+  ;; CHECK:      (func $clinit_@once@_ (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $clinit_@once@_
     (global.set $field-i32 (i32.const 1))
-    (global.set $field-any (struct.new $A))
+    (global.set $field-f64 (f64.const 0))
   )
 )
 
+;; Fields with more complex constant initialization are hoisted.
+(module
+
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $fieldNotOptimizable (mut anyref) (ref.null none))
+
+  ;; CHECK:      (global $referredFieldMut (mut i32) (i32.const 42))
+
+  ;; CHECK:      (global $referredField i32 (i32.const 42))
+  (global $referredField (i32) (i32.const 42))
+
+  (global $referredFieldMut (mut i32) (i32.const 42))
+
+  ;; CHECK:      (global $field anyref (struct.new $A
+  ;; CHECK-NEXT:  (global.get $referredField)
+  ;; CHECK-NEXT: ))
+  (global $field (mut anyref) (ref.null none))
+
+  (global $fieldNotOptimizable (mut anyref) (ref.null none))
+
+  ;; CHECK:      (func $clinit_@once@_ (type $1)
+  ;; CHECK-NEXT:  (global.set $fieldNotOptimizable
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (global.get $referredFieldMut)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit_@once@_
+    (global.set $field (struct.new $A (
+      global.get $referredField)
+    ))
+
+    (global.set $fieldNotOptimizable (struct.new $A
+      (global.get $referredFieldMut)
+    ))
+  )
+)
 
 ;; Fields are initialized to a non-default value shoud be intact.
-
 (module
   ;; CHECK:      (type $A (struct ))
   (type $A (struct))
@@ -53,3 +90,36 @@
   )
 )
 
+;; Non-block body is optimized
+(module
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $field-i32 i32 (i32.const 1))
+  (global $field-i32 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit_@once@_ (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $clinit_@once@_
+    (global.set $field-i32 (i32.const 1))
+  )
+)
+
+;; f_$initialized__ are not hoisted
+(module
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $f_$initialized__ (mut i32) (i32.const 0))
+  (global $f_$initialized__ (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit_@once@_ (type $0)
+  ;; CHECK-NEXT:  (global.set $f_$initialized__
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $clinit_@once@_
+    (global.set $f_$initialized__ (i32.const 1))
+  )
+)
