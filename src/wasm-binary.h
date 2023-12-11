@@ -414,7 +414,7 @@ enum EncodedType {
 #endif
 #if STANDARD_GC_ENCODINGS
   // exception handling
-  exnref = -0x17,     // 0x69
+  exnref = -0x17, // 0x69
 #else
   // Currently the legacy GC encoding's nullexternref encoding overlaps with
   // exnref's. We assume the legacy GC encoding won't be used with the exnref
@@ -463,12 +463,12 @@ enum EncodedHeapType {
   nofunc = -0x18, // 0x68
   none = -0x1b,   // 0x65
 #endif
-  func = -0x10,  // 0x70
-  ext = -0x11,   // 0x6f
-  any = -0x12,   // 0x6e
-  eq = -0x13,    // 0x6d
+  func = -0x10, // 0x70
+  ext = -0x11,  // 0x6f
+  any = -0x12,  // 0x6e
+  eq = -0x13,   // 0x6d
 #if STANDARD_GC_ENCODINGS
-  exn = -0x17,   // 0x69
+  exn = -0x17, // 0x69
 #else
   // Currently the legacy GC encoding's nullexternref encoding overlaps with
   // exnref's. We assume the legacy GC encoding won't be used with the exnref
