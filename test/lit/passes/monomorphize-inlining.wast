@@ -86,10 +86,12 @@
   ;; YESINLINE-NEXT: )
   (func $calls
     ;; Two calls with $A, two with $B. The calls to $B will both go to the
-    ;; same new monomorphized function which has a refined parameter of $B. We
-    ;; then inline that function. We can tell it is that one that was inlined
-    ;; since the name includes "refinable_noinline_2" in it (the function itself
-    ;; is removed after inlining, so we can't see it).
+    ;; same new monomorphized function which has a refined parameter of $B.
+    ;;
+    ;; In NO_INLINE we will not inline any of these 4 calls (if we did not
+    ;; propagate the no-inline flag to the copied function, we would incorrectly
+    ;; inline the monomorphized ones). In YESINLINE mode we will inline all 4.
+    ;;
     (call $refinable_noinline
       (struct.new $A)
     )
