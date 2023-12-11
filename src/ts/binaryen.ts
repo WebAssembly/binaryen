@@ -582,41 +582,45 @@ module binaryen {
             this.func = func;
         }
 
-        getName(func: FunctionRef): string {
+        getName(): string {
             return UTF8ToString(JSModule['_BinaryenFunctionGetName'](this.func));
         }
-        getParams(func: FunctionRef): Type {
-            return JSModule['_BinaryenFunctionGetParams'](func);
+        getParams(): Type {
+            return JSModule['_BinaryenFunctionGetParams'](this.func);
         }
-        getResults(func: FunctionRef): Type {
-            return Module['_BinaryenFunctionGetResults'](func);
+        getResults(): Type {
+            return JSModule['_BinaryenFunctionGetResults'](this.func);
         }
-        getNumVars(func: FunctionRef): number {
-            return Module['_BinaryenFunctionGetNumVars'](func);
+        getNumVars(): number {
+            return JSModule['_BinaryenFunctionGetNumVars'](this.func);
         }
-        getVar(func: FunctionRef, index: number): Type {
-            return Module['_BinaryenFunctionGetVar'](func, index);
+        getVar(index: number): Type {
+            return JSModule['_BinaryenFunctionGetVar'](this.func, index);
         }
-        getNumLocals(func: FunctionRef): number {
-            return Module['_BinaryenFunctionGetNumLocals'](func);
+        getNumLocals(): number {
+            return JSModule['_BinaryenFunctionGetNumLocals'](this.func);
         }
-        hasLocalName(func: FunctionRef, index: number): boolean {
-            return Boolean(Module['_BinaryenFunctionHasLocalName'](func, index));
+        hasLocalName(index: number): boolean {
+            return Boolean(JSModule['_BinaryenFunctionHasLocalName'](this.func, index));
         }
-        getLocalName(func: FunctionRef, index: number): string {
-            return UTF8ToString(Module['_BinaryenFunctionGetLocalName'](func, index));
+        getLocalName(index: number): string {
+            return UTF8ToString(JSModule['_BinaryenFunctionGetLocalName'](this.func, index));
         }
-        setLocalName(func: ExpressionRef, index: number, name: string): void {
+        setLocalName(index: number, name: string): void {
             preserveStack(() => {
-                  Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
+                  JSModule['_BinaryenFunctionSetLocalName'](this.func, index, strToStack(name));
                 });
         }
-        getBody(func: FunctionRef): ExpressionRef {
-            return Module['_BinaryenFunctionGetBody'](func);
+        getBody(): ExpressionRef {
+            return JSModule['_BinaryenFunctionGetBody'](this.func);
         }
-        setBody(func: FunctionRef, bodyExpr: ExpressionRef): void {
-            Module['_BinaryenFunctionSetBody'](func, bodyExpr);
+        setBody(bodyExpr: ExpressionRef): void {
+            JSModule['_BinaryenFunctionSetBody'](this.func, bodyExpr);
         }
+        setDebugLocation(expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
+            JSModule['_BinaryenFunctionSetDebugLocation'](this.func, expr, fileIndex, lineNumber, columnNumber);
+        }
+
     };
 
 
@@ -1799,10 +1803,11 @@ module binaryen {
         }
         get memory () {
             return {
-                size: (name?: string, memory64?: boolean) => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64) as ExpressionRef,
-                grow: (value: ExpressionRef, name?: string, memory64?: boolean) => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64) as ExpressionRef,
                 init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string) =>
                     preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))) as ExpressionRef,
+                has: () => Boolean(JSModule['_BinaryenHasMemory'](this.ptr)),
+                size: (name?: string, memory64?: boolean) => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64) as ExpressionRef,
+                grow: (value: ExpressionRef, name?: string, memory64?: boolean) => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64) as ExpressionRef,
                 copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destName?: string, sourceName?: string) =>
                     JSModule['_BinaryenMemoryCopy'](this.ptr, dest, source, size, strToStack(destName), strToStack(sourceName)) as ExpressionRef,
                 fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name?: string) =>
