@@ -485,8 +485,7 @@ Result<> IRBuilder::visitStringNew(StringNew* curr) {
     case StringNewUTF8Array:
     case StringNewWTF8Array:
     case StringNewLossyUTF8Array:
-    case StringNewWTF16Array:
-    case StringNewFromCodePoint: {
+    case StringNewWTF16Array: {
       auto end = pop();
       CHECK_ERR(end);
       curr->end = *end;
@@ -495,6 +494,8 @@ Result<> IRBuilder::visitStringNew(StringNew* curr) {
       curr->start = *start;
       break;
     }
+    case StringNewFromCodePoint:
+      break;
   }
   auto ptr = pop();
   CHECK_ERR(ptr);
@@ -1496,8 +1497,24 @@ Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
   curr.op = op;
   CHECK_ERR(visitStringNew(&curr));
   // TODO: Store the memory in the IR.
-  push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
-  return Ok{};
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16:
+      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
+      return Ok{};
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array:
+      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
+      return Ok{};
+    case StringNewFromCodePoint:
+      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
+      return Ok{};
+  }
+  WASM_UNREACHABLE("unexpected op");
 }
 
 Result<> IRBuilder::makeStringConst(Name string) {
