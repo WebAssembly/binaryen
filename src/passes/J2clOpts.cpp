@@ -141,23 +141,19 @@ private:
   AssignmentCountMap& assignmentCounts;
 };
 
-using RenamedFunctions = std::map<Name, Name>;
 
-// A visitor that marks trivial once functions for removal. It assumes that
-// once functions are prevented from inlining using `--no-inline *_@once_*`
-// hence it just renames them if they are identified to be trivial.
+// A visitor that marks trivial once functions for removal.
 // TODO: parallelize
-class RenameFunctions : public WalkerPass<PostWalker<RenameFunctions>> {
+class EnableInline : public WalkerPass<PostWalker<EnableInline>> {
 public:
-  RenameFunctions(RenamedFunctions& renamedFunctions)
-    : renamedFunctions(renamedFunctions) {}
   void visitFunction(Function* curr) {
     if (!isOnceFunction(curr)) {
       return;
     }
     auto* body = curr->body;
     if (Measurer::measure(body) <= 2) {
-      // Once function has become trivial: rename so could be removed/inlined.
+      // Once function has become trivial: enable inlining so it could be
+      // removed.
       //
       // Note that the size of a trivial function is set to 2 to cover things
       // like
@@ -169,19 +165,10 @@ public:
       // while rejecting more complex scenario like condition checks. Optimizing
       // complex functions could change the shape of "once" functions and make
       // the ConstantHoister in this pass and OnceReducer ineffective.
-      Name newName = removeStr(curr->name, "_@once@_");
-      renamedFunctions[curr->name] = newName;
-      curr->name = newName;
+      curr->noFullInline = false;
+      curr->noPartialInline = false;
     }
   }
-
-private:
-  Name removeStr(Name name, Name toBeRemoved) {
-    std::string str = {name.str.begin(), name.str.end()};
-    return Name(str.replace(str.find(toBeRemoved.str), toBeRemoved.size(), ""));
-  }
-
-  RenamedFunctions& renamedFunctions;
 };
 
 struct J2clOpts : public Pass {
@@ -206,19 +193,6 @@ struct J2clOpts : public Pass {
     }
   }
 
-  void renameTrivialOnceFunctions(Module* module) {
-    RenamedFunctions renamedFunctions;
-    RenameFunctions renameFunctions(renamedFunctions);
-    renameFunctions.run(getPassRunner(), module);
-    if (renamedFunctions.size() > 0) {
-      module->updateFunctionsMap();
-      OptUtils::replaceFunctions(getPassRunner(), *module, renamedFunctions);
-    }
-#ifdef J2CL_OPT_DEBUG
-    std::cout << "Optimized " << renamedFunctions.size() << " once functions\n";
-#endif
-  }
-
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -227,8 +201,8 @@ struct J2clOpts : public Pass {
     // initialization.
     hoistConstants(module);
 
-    // Rename trivial "once" functions to enable their inlining and removal.
-    renameTrivialOnceFunctions(module);
+    EnableInline enableInline;
+    enableInline.run(getPassRunner(), module);
 
     // We might have introduced new globals depending on other globals. Reorder
     // order them so they follow initialization order.

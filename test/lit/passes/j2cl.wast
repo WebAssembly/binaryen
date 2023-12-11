@@ -15,6 +15,9 @@
   (global $field-i32 (mut i32) (i32.const 0))
   (global $field-any (mut anyref) (ref.null none))
 
+  ;; CHECK:      (func $clinit_@once@_ (type $1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $clinit_@once@_
     (global.set $field-i32 (i32.const 1))
     (global.set $field-any (struct.new $A))
