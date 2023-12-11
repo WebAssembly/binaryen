@@ -10,6 +10,7 @@ module binaryen {
     declare var stackRestore: (ref: number) => void;
     declare var allocateUTF8OnStack: (s: string) => number;
     declare var _BinaryenSizeofLiteral: () => number;
+    declare var UTF8ToString: (ptr: number) => string;
     const sizeOfLiteral = _BinaryenSizeofLiteral();
     // avoid name clash with binaryen class Module
     const JSModule = self["Module"] as {};
@@ -573,6 +574,52 @@ module binaryen {
         Any = JSModule['_BinaryenSideEffectAny']()
     }
 
+    export class Function {
+
+        readonly func: FunctionRef;
+
+        constructor(func: FunctionRef) {
+            this.func = func;
+        }
+
+        getName(func: FunctionRef): string {
+            return UTF8ToString(JSModule['_BinaryenFunctionGetName'](this.func));
+        }
+        getParams(func: FunctionRef): Type {
+            return JSModule['_BinaryenFunctionGetParams'](func);
+        }
+        getResults(func: FunctionRef): Type {
+            return Module['_BinaryenFunctionGetResults'](func);
+        }
+        getNumVars(func: FunctionRef): number {
+            return Module['_BinaryenFunctionGetNumVars'](func);
+        }
+        getVar(func: FunctionRef, index: number): Type {
+            return Module['_BinaryenFunctionGetVar'](func, index);
+        }
+        getNumLocals(func: FunctionRef): number {
+            return Module['_BinaryenFunctionGetNumLocals'](func);
+        }
+        hasLocalName(func: FunctionRef, index: number): boolean {
+            return Boolean(Module['_BinaryenFunctionHasLocalName'](func, index));
+        }
+        getLocalName(func: FunctionRef, index: number): string {
+            return UTF8ToString(Module['_BinaryenFunctionGetLocalName'](func, index));
+        }
+        setLocalName(func: ExpressionRef, index: number, name: string): void {
+            preserveStack(() => {
+                  Module['_BinaryenFunctionSetLocalName'](func, index, strToStack(name));
+                });
+        }
+        getBody(func: FunctionRef): ExpressionRef {
+            return Module['_BinaryenFunctionGetBody'](func);
+        }
+        setBody(func: FunctionRef, bodyExpr: ExpressionRef): void {
+            Module['_BinaryenFunctionSetBody'](func, bodyExpr);
+        }
+    };
+
+
     export class Module {
 
         readonly ptr: number;
@@ -647,68 +694,6 @@ module binaryen {
         rethrow(target: string): ExpressionRef {
             return JSModule['_BinaryenRethrow'](this.ptr, strToStack(target));
         }
-        get local () {
-            return {
-                get: (index: number, type: Type) => JSModule['_BinaryenLocalGet'](this.ptr, index, type) as ExpressionRef,
-                set: (index: number, value: ExpressionRef) => JSModule['_BinaryenLocalSet'](this.ptr, index, value) as ExpressionRef,
-                tee: (index: number, value: ExpressionRef, type: Type) => {
-                    if (typeof type === 'undefined') {
-                        throw new Error("local.tee's type should be defined");
-                    }
-                    return JSModule['_BinaryenLocalTee'](this.ptr, index, value, type) as ExpressionRef;
-                }
-            };
-        }
-        get global () {
-            return {
-                get: (name: string, type: Type) => JSModule['_BinaryenLocalGet'](this.ptr, strToStack(name), type) as ExpressionRef,
-                set: (name: string, value: ExpressionRef) => JSModule['_BinaryenGlobalSet'](this.ptr, strToStack(name), value) as ExpressionRef
-            };
-        }
-        get table () {
-            return {
-                get: (name: string, index: ExpressionRef, type: Type) => JSModule['_BinaryenTableGet'](this.ptr, strToStack(name), index, type) as ExpressionRef,
-                set: (name: string, index: ExpressionRef, value: ExpressionRef) => JSModule['_BinaryenTableSet'](this.ptr, strToStack(name), index, value) as ExpressionRef,
-                size: (name: string) => JSModule['_BinaryenTableSize'](this.ptr, strToStack(name)) as ExpressionRef,
-                grow: (name: string, value: ExpressionRef, delta: ExpressionRef) => JSModule['_BinaryenTableGrow'](this.ptr, strToStack(name), value, delta) as ExpressionRef
-            };
-            /* TODO
-            a._BinaryenTableGetName = Q.My;
-            a._BinaryenTableSetName = Q.Ny;
-            a._BinaryenTableGetInitial = Q.Oy;
-            a._BinaryenTableSetInitial = Q.Py;
-            a._BinaryenTableHasMax = Q.Qy;
-            a._BinaryenTableGetMax = Q.Ry;
-            a._BinaryenTableSetMax = Q.Sy;
-            a._BinaryenTableGetType = Q.Ty;
-            a._BinaryenTableSetType = Q.Uy;
-            */
-        }
-        get memory () {
-            return {
-                size: (name?: string, memory64?: boolean) => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64) as ExpressionRef,
-                grow: (value: ExpressionRef, name?: string, memory64?: boolean) => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64) as ExpressionRef,
-                init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string) =>
-                    preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))) as ExpressionRef,
-                copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destName?: string, sourceName?: string) =>
-                    JSModule['_BinaryenMemoryCopy'](this.ptr, dest, source, size, strToStack(destName), strToStack(sourceName)) as ExpressionRef,
-                fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name?: string) =>
-                    JSModule['_BinaryenMemoryFill'](this.ptr, dest, value, size, strToStack(name)) as ExpressionRef,
-                atomic: {
-                    notify: (ptr: ExpressionRef, notifyCount: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicNotify'](this.ptr, ptr, notifyCount, strToStack(name)) as ExpressionRef,
-                    wait32: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i32'], strToStack(name)) as ExpressionRef,
-                    wait64: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i64'], strToStack(name)) as ExpressionRef
-                }
-            };
-        }
-        get data () {
-            return {
-                drop: (segment: number) => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment))) as ExpressionRef
-            };
-        };
         get i32 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1179,8 +1164,8 @@ module binaryen {
                 andnot: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.AndNotVec128, left, right) as ExpressionRef,
                 bitselect: (left: ExpressionRef, right: ExpressionRef, cond: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.BitselectVec128, left, right) as ExpressionRef,
                 pop: () => JSModule['_BinaryenPop'](this.ptr, v128) as ExpressionRef
-            }
-        };
+            };
+        }
         get i8x16 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1261,8 +1246,8 @@ module binaryen {
                     binary(Operations.NarrowSVecI16x8ToVecI8x16, left, right),
                 narrow_i16x8_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
                     binary(Operations.NarrowUVecI16x8ToVecI8x16, left, right)
-            }
-        };
+            };
+        }
         get i16x8 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1359,8 +1344,8 @@ module binaryen {
                     unary(Operations.ExtendLowUVecI8x16ToVecI16x8, value),
                 extend_high_i8x16_u: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.ExtendHighUVecI8x16ToVecI16x8, value)
-            }
-        };
+            };
+        }
         get i32x4 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1451,8 +1436,8 @@ module binaryen {
                     binary(Operations.TruncSatZeroSVecF64x2ToVecI32x4, left, right),
                 trunc_sat_f64x2_u_zero: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
                     binary(Operations.TruncSatZeroUVecF64x2ToVecI32x4, left, right)
-            }
-        };
+            };
+        }
         get i64x2 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1513,8 +1498,8 @@ module binaryen {
                     unary(Operations.ExtendLowUVecI32x4ToVecI64x2, value),
                 extend_high_i32x4_u: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.ExtendHighUVecI32x4ToVecI64x2, value)
-            }
-        };
+            };
+        }
         get f32x4 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1575,8 +1560,8 @@ module binaryen {
                     unary(Operations.ConvertUVecI32x4ToVecF32x4, value),
                 demote_f64x2_zero: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.DemoteZeroVecF64x2ToVecF32x4, value)
-            }
-        };
+            };
+        }
         get f64x2 () {
             const unary = (op: Operations, value: ExpressionRef) =>
                  JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
@@ -1637,37 +1622,37 @@ module binaryen {
                     unary(Operations.ConvertLowUVecI32x4ToVecF64x2, value),
                 promote_low_f32x4: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.PromoteLowVecF32x4ToVecF64x2, value)
-            }
-        };
+            };
+        }
         get funcref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, funcref) as ExpressionRef
-            }
+            };
         }
         get externref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, externref) as ExpressionRef
-            }
+            };
         }
         get anyref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, anyref) as ExpressionRef
-            }
+            };
         }
         get eqref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, eqref) as ExpressionRef
-            }
+            };
         }
         get i31ref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, i31ref) as ExpressionRef
-            }
+            };
         }
         get structref() {
             return {
                 pop: () => JSModule['_BinaryenPop'](this.ptr, structref) as ExpressionRef
-            }
+            };
         }
         /* explicitly skipping string stuff until it's reprioritized
         get stringref() {
@@ -1699,13 +1684,157 @@ module binaryen {
                 func: (name: string, type: Type) => JSModule['_BinaryenRefFunc'](this.ptr, strToStack(name), type) as ExpressionRef,
                 eq: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenRefEq'](this.ptr, left, right) as ExpressionRef,
                 as_non_null: (value: ExpressionRef) => JSModule['_BinaryenRefAs'](this.ptr, Operations.RefAsNonNull, value) as ExpressionRef
-            }
-        };
+            };
+        }
         get i31 () {
              return {
                 get_s: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 1) as ExpressionRef,
                 get_u: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 0) as ExpressionRef
-             }
+             };
+        }
+        get atomic () {
+            return {
+                fence: () =>  JSModule['_BinaryenAtomicFence'](this.ptr) as ExpressionRef
+            };
+        }
+        get locals () {
+            return {
+                get: (index: number, type: Type) => JSModule['_BinaryenLocalGet'](this.ptr, index, type) as ExpressionRef,
+                set: (index: number, value: ExpressionRef) => JSModule['_BinaryenLocalSet'](this.ptr, index, value) as ExpressionRef,
+                tee: (index: number, value: ExpressionRef, type: Type) => {
+                    if (typeof type === 'undefined') {
+                        throw new Error("local.tee's type should be defined");
+                    }
+                    return JSModule['_BinaryenLocalTee'](this.ptr, index, value, type) as ExpressionRef;
+                }
+            };
+        }
+        get globals () {
+            return {
+                add: (name: string, type: Type, mutable: boolean, init: ExpressionRef) =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobal'](this.ptr, strToStack(name), type, mutable, init)) as GlobalRef,
+                getRefByName: (name: string) => preserveStack(() => JSModule['_BinaryenGetGlobal'](this.ptr, strToStack(name))) as GlobalRef,
+                getRefByIndex: (index: number) => JSModule['_BinaryenGetGlobalByIndex'](this.ptr, index) as GlobalRef,
+                remove: (name: string) => preserveStack(() => JSModule['_BinaryenRemoveGlobal'](this.ptr, strToStack(name))) as void,
+                count: () => JSModule['_BinaryenGetNumGlobals'](this.ptr) as number,
+                set: (name: string, value: ExpressionRef) => JSModule['_BinaryenGlobalSet'](this.ptr, strToStack(name), value) as ExpressionRef,
+                get: (name: string, type: Type) => JSModule['_BinaryenGlobalGet'](this.ptr, strToStack(name), type) as ExpressionRef,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean) =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobalImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)) as void,
+                addExport: (internalName: string, externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobalExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+            };
+        }
+        get tables () {
+            return {
+                add: (name: string, initial: number, maximum: number, type: Type) =>
+                    preserveStack(() => JSModule['_BinaryenAddTable'](this.ptr, strToStack(name), initial, maximum, type)) as TableRef,
+                getRefByName: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenGetTable'](this.ptr, strToStack(name))) as TableRef,
+                remove: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenRemoveTable'](this.ptr, strToStack(name))) as void,
+
+                get: (name: string, index: ExpressionRef, type: Type) => JSModule['_BinaryenTableGet'](this.ptr, strToStack(name), index, type) as ExpressionRef,
+                set: (name: string, index: ExpressionRef, value: ExpressionRef) => JSModule['_BinaryenTableSet'](this.ptr, strToStack(name), index, value) as ExpressionRef,
+                size: (name: string) => JSModule['_BinaryenTableSize'](this.ptr, strToStack(name)) as ExpressionRef,
+                grow: (name: string, value: ExpressionRef, delta: ExpressionRef) => JSModule['_BinaryenTableGrow'](this.ptr, strToStack(name), value, delta) as ExpressionRef,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddTableImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))) as void,
+                addExport: (internalName: string, externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddTableExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+            };
+            /* TODO
+            a._BinaryenTableGetName = Q.My;
+            a._BinaryenTableSetName = Q.Ny;
+            a._BinaryenTableGetInitial = Q.Oy;
+            a._BinaryenTableSetInitial = Q.Py;
+            a._BinaryenTableHasMax = Q.Qy;
+            a._BinaryenTableGetMax = Q.Ry;
+            a._BinaryenTableSetMax = Q.Sy;
+            a._BinaryenTableGetType = Q.Ty;
+            a._BinaryenTableSetType = Q.Uy;
+            */
+        }
+        get tuples () {
+            return {
+                make: (elements: ExportRef[]) =>
+                    preserveStack(() => JSModule['_BinaryenTupleMake'](this.ptr, i32sToStack(elements), elements.length)) as ExpressionRef,
+                extract: (tuple: ExpressionRef, index: number) =>
+                    JSModule['_BinaryenTupleExtract'](this.ptr, tuple, index) as ExpressionRef
+            };
+        }
+        get functions () {
+            return {
+                add: (name: string, params: Type, results: Type, varTypes: Type[], body: ExpressionRef) =>
+                    preserveStack(() =>
+                          JSModule['_BinaryenAddFunction'](this.ptr, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body)) as FunctionRef,
+                getRefByName: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenGetFunction'](this.ptr, strToStack(name))) as FunctionRef,
+                getRefByIndex: (index: number) =>
+                    JSModule['_BinaryenGetFunctionByIndex'](this.ptr, index) as FunctionRef,
+                remove: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenRemoveFunction'](this.ptr, strToStack(name))) as void,
+                count: () => JSModule['_BinaryenGetNumFunctions'](this.ptr) as number,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) =>
+                    preserveStack(() =>
+                          JSModule['_BinaryenAddFunctionImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
+                        ) as void,
+                addExport: (internalName: string, externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddFunctionExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+              };
+        }
+        get tags() {
+            return {
+                add: (name: string, params: Type, results: Type) =>
+                    preserveStack(() => JSModule['_BinaryenAddTag'](this.ptr, strToStack(name), params, results)) as TagRef,
+                getRefByName: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenGetTag'](this.ptr, strToStack(name))) as TagRef,
+                remove: (name: string) =>
+                    preserveStack(() => JSModule['_BinaryenRemoveTag'](this.ptr, strToStack(name))) as void,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) =>
+                    preserveStack(() => JSModule['_BinaryenAddTagImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)) as void,
+                addExport: (internalName: string, externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddTagExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+            };
+        }
+        get memory () {
+            return {
+                size: (name?: string, memory64?: boolean) => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64) as ExpressionRef,
+                grow: (value: ExpressionRef, name?: string, memory64?: boolean) => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64) as ExpressionRef,
+                init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string) =>
+                    preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))) as ExpressionRef,
+                copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destName?: string, sourceName?: string) =>
+                    JSModule['_BinaryenMemoryCopy'](this.ptr, dest, source, size, strToStack(destName), strToStack(sourceName)) as ExpressionRef,
+                fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name?: string) =>
+                    JSModule['_BinaryenMemoryFill'](this.ptr, dest, value, size, strToStack(name)) as ExpressionRef,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean) =>
+                    preserveStack(() => JSModule['_BinaryenAddMemoryImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)) as void,
+                addExport: (internalName: string, externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenAddMemoryExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
+                atomic: {
+                    notify: (ptr: ExpressionRef, notifyCount: ExpressionRef, name?: string) =>
+                        JSModule['_BinaryenAtomicNotify'](this.ptr, ptr, notifyCount, strToStack(name)) as ExpressionRef,
+                    wait32: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
+                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i32'], strToStack(name)) as ExpressionRef,
+                    wait64: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
+                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i64'], strToStack(name)) as ExpressionRef
+                }
+            };
+        }
+        get data () {
+            return {
+                drop: (segment: number) => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment))) as ExpressionRef
+            };
+        }
+        get exports () {
+            return {
+                getRefByName: (externalName: string) =>
+                    preserveStack(() => JSModule['_BinaryenGetExport'](this.ptr, strToStack(externalName))) as ExportRef,
+                getRefByIndex: (index: number) => JSModule['_BinaryenGetExportByIndex'](this.ptr, index) as ExportRef,
+                remove: (externalName: string) => preserveStack(() => JSModule['_BinaryenRemoveExport'](this.ptr, strToStack(externalName))) as void,
+                count: () => JSModule['_BinaryenGetNumExports'](this.ptr) as number
+
+            };
         }
     }
 }
