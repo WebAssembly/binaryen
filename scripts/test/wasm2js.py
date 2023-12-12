@@ -127,8 +127,8 @@ def test_asserts_output():
 
         asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
         traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-        asserts_expected_file = os.path.join(shared.options.binaryen_test, asserts)
-        traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
+        asserts_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', asserts)
+        traps_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', traps)
 
         wasm = os.path.join(shared.get_test_dir('wasm2js'), wasm)
         cmd = shared.WASM2JS + [wasm, '--allow-asserts', '-all',
@@ -203,8 +203,8 @@ def update_wasm2js_tests():
 
         asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
         traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-        asserts_expected_file = os.path.join(shared.options.binaryen_test, asserts)
-        traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
+        asserts_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', asserts)
+        traps_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', traps)
 
         cmd = shared.WASM2JS + [os.path.join(shared.get_test_dir('wasm2js'), wasm), '--allow-asserts', '-all', '--disable-exception-handling']
         out = support.run_command(cmd)
