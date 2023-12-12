@@ -16,10 +16,11 @@ module binaryen {
     declare var allocateUTF8OnStack: (s: string) => number;
     declare var _BinaryenSizeofLiteral: () => number;
     declare var _BinaryenSizeofAllocateAndWriteResult: () => number;
-    declare var UTF8ToString: (ptr: number) => string;
+    declare var UTF8ToString: (ptr: number) => string | null;
+
     const sizeOfLiteral = _BinaryenSizeofLiteral();
     // avoid name clash with binaryen class Module
-    const JSModule = self["Module"] as {};
+    const JSModule: object = self["Module"];
 
     function preserveStack<R>(func: () => R): R {
       try {
@@ -64,37 +65,6 @@ module binaryen {
     export type RelooperBlockRef = number;
     export type ExpressionRunnerRef = number;
 
-    export interface SegmentInfo {
-        offset: ExpressionRef;
-        data: Uint8Array;
-        passive?: boolean;
-    }
-
-    export interface MemoryInfo {
-        module: string | null;
-        base: string | null;
-        shared: boolean;
-        is64: boolean;
-        initial: number;
-        max?: number;
-    }
-
-    export function createType(types: Type[]): Type {
-        return preserveStack(() => JSModule['_BinaryenTypeCreate'](i32sToStack(types), types.length));
-    }
-    export function expandType(type: Type): Type[] {
-        return preserveStack(() => {
-            const numTypes = JSModule['_BinaryenTypeArity'](type);
-            const array = stackAlloc(numTypes << 2);
-            JSModule['_BinaryenTypeExpand'](type, array);
-            const types = new Array(numTypes);
-            for (let i = 0; i < numTypes; i++) {
-              types[i] = HEAPU32[(array >>> 2) + i];
-            }
-            return types;
-        });
-    }
-
     export const none: Type = JSModule['_BinaryenTypeNone']();
     export const i32: Type = JSModule['_BinaryenTypeInt32']();
     export const i64: Type = JSModule['_BinaryenTypeInt64']();
@@ -115,6 +85,22 @@ module binaryen {
     */
     export const unreachable: Type = JSModule['_BinaryenTypeUnreachable']();
     export const auto: Type = JSModule['_BinaryenTypeAuto']();
+
+    export function createType(types: Type[]): Type {
+        return preserveStack(() => JSModule['_BinaryenTypeCreate'](i32sToStack(types), types.length));
+    }
+    export function expandType(type: Type): Type[] {
+        return preserveStack(() => {
+            const numTypes = JSModule['_BinaryenTypeArity'](type);
+            const array = stackAlloc(numTypes << 2);
+            JSModule['_BinaryenTypeExpand'](type, array);
+            const types = new Array(numTypes);
+            for (let i = 0; i < numTypes; i++) {
+              types[i] = HEAPU32[(array >>> 2) + i];
+            }
+            return types;
+        });
+    }
 
     export enum ExternalKinds {
         Function = JSModule['_BinaryenExternalFunction'](),
@@ -648,7 +634,7 @@ module binaryen {
         setDebugLocation(expr: ExpressionRef, fileIndex: number, lineNumber: number, columnNumber: number): void {
             JSModule['_BinaryenFunctionSetDebugLocation'](this.func, expr, fileIndex, lineNumber, columnNumber);
         }
-        getInfo() {
+        getInfo(): FunctionInfo {
             return {
                 'name': this.getName(),
                 'module': UTF8ToString(Module['_BinaryenFunctionImportGetModule'](this.func)),
@@ -657,7 +643,7 @@ module binaryen {
                 'results': this.getResults(),
                 'vars': getAllNested<Type>(this.func, this.getNumVars, this.getVar),
                 'body':this.getBody()
-            } as FunctionInfo;
+            };
         }
     };
 
@@ -830,7 +816,7 @@ module binaryen {
                 );
         }
         addDebugInfoFileName(filename: string): number {
-            return preserveStack(() => JSModule['_BinaryenModuleAddDebugInfoFileName'](this.ptr, strToStack(filename))) as number;
+            return preserveStack(() => JSModule['_BinaryenModuleAddDebugInfoFileName'](this.ptr, strToStack(filename)));
         }
         getDebugInfoFileName(index: number): string | null {
             return UTF8ToString(JSModule['_BinaryenModuleGetDebugInfoFileName'](this.ptr, index));
@@ -972,495 +958,495 @@ module binaryen {
         }
         get i32 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             const load = (size: number, signed: boolean, offset: number, align: number, ptr: ExpressionRef, name: string) =>
-                JSModule['_BinaryenLoad'](this.ptr, size, signed, offset, align, i32, ptr, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenLoad'](this.ptr, size, signed, offset, align, i32, ptr, strToStack(name));
             const store = (size: number, offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenStore'](this.ptr, size, offset, align, ptr, value, i32, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenStore'](this.ptr, size, offset, align, ptr, value, i32, strToStack(name));
             const atomic_load = (size: number, offset: number, ptr: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicLoad'](this.ptr, size, offset, i32, ptr, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicLoad'](this.ptr, size, offset, i32, ptr, strToStack(name));
             const atomic_store = (size: number, offset: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicStore'](this.ptr, size, offset, ptr, value, i32, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicStore'](this.ptr, size, offset, ptr, value, i32, strToStack(name));
             const atomic_rmw = (op: Operations, size: number, offset: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicRMW'](this.ptr, op, size, offset, ptr, value, i32, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicRMW'](this.ptr, op, size, offset, ptr, value, i32, strToStack(name));
             return {
-                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(4, true, offset, align, ptr, name) as ExpressionRef,
-                load8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(1, true, offset, align, ptr, name) as ExpressionRef,
-                load8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(1, false, offset, align, ptr, name) as ExpressionRef,
-                load16_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(2, true, offset, align, ptr, name) as ExpressionRef,
-                load16_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(2, false, offset, align, ptr, name) as ExpressionRef,
-                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(4, offset, align, ptr, value, name) as ExpressionRef,
-                store8: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(1, offset, align, ptr, value, name) as ExpressionRef,
-                store16: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(2, offset, align, ptr, value, name) as ExpressionRef,
-                const: (value: number) => preserveStack(() => {
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(4, true, offset, align, ptr, name),
+                load8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(1, true, offset, align, ptr, name),
+                load8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(1, false, offset, align, ptr, name),
+                load16_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(2, true, offset, align, ptr, name),
+                load16_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(2, false, offset, align, ptr, name),
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(4, offset, align, ptr, value, name),
+                store8: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(1, offset, align, ptr, value, name),
+                store16: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(2, offset, align, ptr, value, name),
+                const: (value: number): ExpressionRef => preserveStack(() => {
                                                   const tempLiteral = stackAlloc(sizeOfLiteral);
                                                   JSModule['_BinaryenLiteralInt32'](tempLiteral, value);
                                                   return JSModule['_BinaryenConst'](this.ptr, tempLiteral);
                                                 }),
-                clz: (value: ExpressionRef) => unary(Operations.ClzInt32, value),
-                ctz: (value: ExpressionRef) => unary(Operations.CtzInt32, value),
-                popcnt: (value: ExpressionRef) => unary(Operations.PopcntInt32, value),
-                eqz: (value: ExpressionRef) => unary(Operations.EqZInt32, value),
+                clz: (value: ExpressionRef): ExpressionRef => unary(Operations.ClzInt32, value),
+                ctz: (value: ExpressionRef): ExpressionRef => unary(Operations.CtzInt32, value),
+                popcnt: (value: ExpressionRef): ExpressionRef => unary(Operations.PopcntInt32, value),
+                eqz: (value: ExpressionRef): ExpressionRef => unary(Operations.EqZInt32, value),
                 trunc_s: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSFloat32ToInt32, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSFloat64ToInt32, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSFloat32ToInt32, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSFloat64ToInt32, value)
                 },
                 trunc_u: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncUFloat32ToInt32, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncUFloat64ToInt32, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncUFloat32ToInt32, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncUFloat64ToInt32, value)
                 },
                 trunc_s_sat: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSatSFloat32ToInt32, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSatSFloat64ToInt32, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatSFloat32ToInt32, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatSFloat64ToInt32, value)
                 },
                 trunc_u_sat: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSatUFloat32ToInt32, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSatUFloat64ToInt32, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatUFloat32ToInt32, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatUFloat64ToInt32, value)
                 },
                 /** @deprecated use reinterpret_f32 */
-                reinterpret: (value: ExpressionRef) => unary(Operations.ReinterpretFloat32, value),
-                reinterpret_f32: (value: ExpressionRef) => unary(Operations.ReinterpretFloat32, value),
-                extend8_s: (value: ExpressionRef) => unary(Operations.ExtendS8Int32, value),
-                extend16_s: (value: ExpressionRef) => unary(Operations.ExtendS16Int32, value),
+                reinterpret: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretFloat32, value),
+                reinterpret_f32: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretFloat32, value),
+                extend8_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendS8Int32, value),
+                extend16_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendS16Int32, value),
                 /** @deprecated use wrap_i64 */
-                wrap: (value: ExpressionRef) => unary(Operations.WrapInt64, value),
-                wrap_i64: (value: ExpressionRef) => unary(Operations.WrapInt64, value),
-                add: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AddInt32, left, right),
-                sub: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.SubInt32, left, right),
-                mul: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MulInt32, left, right),
-                div_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivSInt32, left, right),
-                div_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivUInt32, left, right),
-                rem_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RemSInt32, left, right),
-                rem_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RemUInt32, left, right),
-                and: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AndInt32, left, right),
-                or: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.OrInt32, left, right),
-                xor: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.XorInt32, left, right),
-                shl: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShlInt32, left, right),
-                shr_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShrUInt32, left, right),
-                shr_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShrSInt32, left, right),
-                rotl: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RotLInt32, left, right),
-                rotr: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RotRInt32, left, right),
-                eq: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.EqInt32, left, right),
-                ne: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.NeInt32, left, right),
-                lt_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtSInt32, left, right),
-                lt_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtUInt32, left, right),
-                le_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeSInt32, left, right),
-                le_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeUInt32, left, right),
-                gt_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtSInt32, left, right),
-                gt_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtUInt32, left, right),
-                ge_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeSInt32, left, right),
-                ge_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeUInt32, left, right),
-                pop: () => JSModule['_BinaryenPop'](this.ptr, i32) as ExpressionRef,
+                wrap: (value: ExpressionRef): ExpressionRef => unary(Operations.WrapInt64, value),
+                wrap_i64: (value: ExpressionRef): ExpressionRef => unary(Operations.WrapInt64, value),
+                add: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AddInt32, left, right),
+                sub: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.SubInt32, left, right),
+                mul: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MulInt32, left, right),
+                div_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivSInt32, left, right),
+                div_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivUInt32, left, right),
+                rem_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RemSInt32, left, right),
+                rem_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RemUInt32, left, right),
+                and: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AndInt32, left, right),
+                or: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.OrInt32, left, right),
+                xor: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.XorInt32, left, right),
+                shl: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShlInt32, left, right),
+                shr_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShrUInt32, left, right),
+                shr_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShrSInt32, left, right),
+                rotl: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RotLInt32, left, right),
+                rotr: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RotRInt32, left, right),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.EqInt32, left, right),
+                ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.NeInt32, left, right),
+                lt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtSInt32, left, right),
+                lt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtUInt32, left, right),
+                le_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeSInt32, left, right),
+                le_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeUInt32, left, right),
+                gt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtSInt32, left, right),
+                gt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtUInt32, left, right),
+                ge_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeSInt32, left, right),
+                ge_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeUInt32, left, right),
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, i32),
                 atomic: {
-                    load: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(4, offset, ptr, name),
-                    load8_u: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(1, offset, ptr, name),
-                    load16_u: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(2, offset, ptr, name),
-                    store: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(4, offset, ptr, value, name),
-                    store8: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(1, offset, ptr, value, name),
-                    store16: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(2, offset, ptr, value, name),
+                    load: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(4, offset, ptr, name),
+                    load8_u: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(1, offset, ptr, name),
+                    load16_u: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(2, offset, ptr, name),
+                    store: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(4, offset, ptr, value, name),
+                    store8: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(1, offset, ptr, value, name),
+                    store16: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(2, offset, ptr, value, name),
                     rmw: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 4, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 4, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 4, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 4, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 4, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 4, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 4, offset, ptr, expected, replacement, i32, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 4, offset, ptr, expected, replacement, i32, strToStack(name))
                     },
                     rmw8_u: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 1, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 1, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 1, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 1, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 1, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 1, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 1, offset, ptr, expected, replacement, i32, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 1, offset, ptr, expected, replacement, i32, strToStack(name))
                     },
                     rmw16_u: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 2, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 2, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 2, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 2, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 2, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 2, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 2, offset, ptr, expected, replacement, i32, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 2, offset, ptr, expected, replacement, i32, strToStack(name))
                     }
                 }
             };
         }
         get i64 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
-            const load = (size: number, signed: boolean, offset: number, align: number, ptr: ExpressionRef, name: string) =>
-                JSModule['_BinaryenLoad'](this.ptr, size, signed, offset, align, i64, ptr, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
+            const load = (size: number, signed: boolean, offset: number, align: number, ptr: ExpressionRef, name: string): ExpressionRef =>
+                JSModule['_BinaryenLoad'](this.ptr, size, signed, offset, align, i64, ptr, strToStack(name));
             const store = (size: number, offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenStore'](this.ptr, size, offset, align, ptr, value, i64, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenStore'](this.ptr, size, offset, align, ptr, value, i64, strToStack(name));
             const atomic_load = (size: number, offset: number, ptr: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicLoad'](this.ptr, size, offset, i64, ptr, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicLoad'](this.ptr, size, offset, i64, ptr, strToStack(name));
             const atomic_store = (size: number, offset: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicStore'](this.ptr, size, offset, ptr, value, i64, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicStore'](this.ptr, size, offset, ptr, value, i64, strToStack(name));
             const atomic_rmw = (op: Operations, size: number, offset: number, ptr: ExpressionRef, value: ExpressionRef, name: string) =>
-                JSModule['_BinaryenAtomicRMW'](this.ptr, op, size, offset, ptr, value, i64, strToStack(name)) as ExpressionRef;
+                JSModule['_BinaryenAtomicRMW'](this.ptr, op, size, offset, ptr, value, i64, strToStack(name));
             return {
-                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(8, true, offset, align, ptr, name) as ExpressionRef,
-                load8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(1, true, offset, align, ptr, name) as ExpressionRef,
-                load8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(1, false, offset, align, ptr, name) as ExpressionRef,
-                load16_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(2, true, offset, align, ptr, name) as ExpressionRef,
-                load16_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(2, false, offset, align, ptr, name) as ExpressionRef,
-                load32_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(4, true, offset, align, ptr, name) as ExpressionRef,
-                load32_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) => load(4, false, offset, align, ptr, name) as ExpressionRef,
-                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(4, offset, align, ptr, value, name) as ExpressionRef,
-                store8: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(1, offset, align, ptr, value, name) as ExpressionRef,
-                store16: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(2, offset, align, ptr, value, name) as ExpressionRef,
-                store32: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => store(4, offset, align, ptr, value, name) as ExpressionRef,
-                const: (low: number, high: number) => preserveStack(() => {
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(8, true, offset, align, ptr, name),
+                load8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(1, true, offset, align, ptr, name),
+                load8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(1, false, offset, align, ptr, name),
+                load16_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(2, true, offset, align, ptr, name),
+                load16_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(2, false, offset, align, ptr, name),
+                load32_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(4, true, offset, align, ptr, name),
+                load32_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef => load(4, false, offset, align, ptr, name),
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(4, offset, align, ptr, value, name),
+                store8: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(1, offset, align, ptr, value, name),
+                store16: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(2, offset, align, ptr, value, name),
+                store32: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => store(4, offset, align, ptr, value, name),
+                const: (low: number, high: number): ExpressionRef => preserveStack(() => {
                                                   const tempLiteral = stackAlloc(sizeOfLiteral);
                                                   JSModule['_BinaryenLiteralInt64'](tempLiteral, low, high);
                                                   return JSModule['_BinaryenConst'](this.ptr, tempLiteral);
                                                 }),
-                clz: (value: ExpressionRef) => unary(Operations.ClzInt64, value),
-                ctz: (value: ExpressionRef) => unary(Operations.CtzInt64, value),
-                popcnt: (value: ExpressionRef) => unary(Operations.PopcntInt64, value),
-                eqz: (value: ExpressionRef) => unary(Operations.EqZInt64, value),
+                clz: (value: ExpressionRef): ExpressionRef => unary(Operations.ClzInt64, value),
+                ctz: (value: ExpressionRef): ExpressionRef => unary(Operations.CtzInt64, value),
+                popcnt: (value: ExpressionRef): ExpressionRef => unary(Operations.PopcntInt64, value),
+                eqz: (value: ExpressionRef): ExpressionRef => unary(Operations.EqZInt64, value),
                 trunc_s: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSFloat32ToInt64, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSFloat64ToInt64, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSFloat32ToInt64, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSFloat64ToInt64, value)
                 },
                 trunc_u: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncUFloat32ToInt64, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncUFloat64ToInt64, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncUFloat32ToInt64, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncUFloat64ToInt64, value)
                 },
                 trunc_s_sat: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSatSFloat32ToInt64, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSatSFloat64ToInt64, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatSFloat32ToInt64, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatSFloat64ToInt64, value)
                 },
                 trunc_u_sat: {
-                    f32: (value: ExpressionRef) => unary(Operations.TruncSatUFloat32ToInt64, value),
-                    f64: (value: ExpressionRef) => unary(Operations.TruncSatUFloat64ToInt64, value)
+                    f32: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatUFloat32ToInt64, value),
+                    f64: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncSatUFloat64ToInt64, value)
                 },
                 /** @deprecated use reinterpret_f64 */
-                reinterpret: (value: ExpressionRef) => unary(Operations.ReinterpretFloat64, value),
-                reinterpret_f64: (value: ExpressionRef) => unary(Operations.ReinterpretFloat64, value),
-                extend8_s: (value: ExpressionRef) => unary(Operations.ExtendS8Int64, value),
-                extend16_s: (value: ExpressionRef) => unary(Operations.ExtendS16Int64, value),
-                extend32_s: (value: ExpressionRef) => unary(Operations.ExtendS32Int64, value),
-                extend_s: (value: ExpressionRef) => unary(Operations.ExtendSInt32, value),
-                extend_u: (value: ExpressionRef) => unary(Operations.ExtendUInt32, value),
-                add: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AddInt64, left, right),
-                sub: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.SubInt64, left, right),
-                mul: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MulInt32, left, right),
-                div_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivSInt64, left, right),
-                div_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivUInt64, left, right),
-                rem_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RemSInt64, left, right),
-                rem_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RemUInt64, left, right),
-                and: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AndInt64, left, right),
-                or: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.OrInt64, left, right),
-                xor: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.XorInt64, left, right),
-                shl: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShlInt64, left, right),
-                shr_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShrUInt64, left, right),
-                shr_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.ShrSInt64, left, right),
-                rotl: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RotLInt64, left, right),
-                rotr: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.RotRInt64, left, right),
-                eq: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.EqInt64, left, right),
-                ne: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.NeInt64, left, right),
-                lt_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtSInt64, left, right),
-                lt_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtUInt64, left, right),
-                le_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeSInt64, left, right),
-                le_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeUInt64, left, right),
-                gt_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtSInt64, left, right),
-                gt_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtUInt64, left, right),
-                ge_s: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeSInt64, left, right),
-                ge_u: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeUInt64, left, right),
-                pop: () => JSModule['_BinaryenPop'](this.ptr, i64) as ExpressionRef,
+                reinterpret: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretFloat64, value),
+                reinterpret_f64: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretFloat64, value),
+                extend8_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendS8Int64, value),
+                extend16_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendS16Int64, value),
+                extend32_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendS32Int64, value),
+                extend_s: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendSInt32, value),
+                extend_u: (value: ExpressionRef): ExpressionRef => unary(Operations.ExtendUInt32, value),
+                add: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AddInt64, left, right),
+                sub: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.SubInt64, left, right),
+                mul: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MulInt32, left, right),
+                div_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivSInt64, left, right),
+                div_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivUInt64, left, right),
+                rem_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RemSInt64, left, right),
+                rem_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RemUInt64, left, right),
+                and: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AndInt64, left, right),
+                or: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.OrInt64, left, right),
+                xor: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.XorInt64, left, right),
+                shl: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShlInt64, left, right),
+                shr_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShrUInt64, left, right),
+                shr_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.ShrSInt64, left, right),
+                rotl: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RotLInt64, left, right),
+                rotr: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.RotRInt64, left, right),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.EqInt64, left, right),
+                ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.NeInt64, left, right),
+                lt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtSInt64, left, right),
+                lt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtUInt64, left, right),
+                le_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeSInt64, left, right),
+                le_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeUInt64, left, right),
+                gt_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtSInt64, left, right),
+                gt_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtUInt64, left, right),
+                ge_s: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeSInt64, left, right),
+                ge_u: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeUInt64, left, right),
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, i64),
                 atomic: {
-                    load: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(8, offset, ptr, name),
-                    load8_u: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(1, offset, ptr, name),
-                    load16_u: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(2, offset, ptr, name),
-                    load32_u: (offset: number, ptr: ExpressionRef, name?: string) => atomic_load(4, offset, ptr, name),
-                    store: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(4, offset, ptr, value, name),
-                    store8: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(1, offset, ptr, value, name),
-                    store16: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(2, offset, ptr, value, name),
-                    store32: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) => atomic_store(4, offset, ptr, value, name),
+                    load: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(8, offset, ptr, name),
+                    load8_u: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(1, offset, ptr, name),
+                    load16_u: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(2, offset, ptr, name),
+                    load32_u: (offset: number, ptr: ExpressionRef, name?: string): ExpressionRef => atomic_load(4, offset, ptr, name),
+                    store: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(4, offset, ptr, value, name),
+                    store8: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(1, offset, ptr, value, name),
+                    store16: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(2, offset, ptr, value, name),
+                    store32: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef => atomic_store(4, offset, ptr, value, name),
                     rmw: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 8, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 8, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 8, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 8, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 8, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 8, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 8, offset, ptr, expected, replacement, i64, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 8, offset, ptr, expected, replacement, i64, strToStack(name))
                     },
                     rmw8_u: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 1, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 1, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 1, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 1, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 1, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 1, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 1, offset, ptr, expected, replacement, i64, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 1, offset, ptr, expected, replacement, i64, strToStack(name))
                     },
                     rmw16_u: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 2, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 2, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 2, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 2, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 2, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 2, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 2, offset, ptr, expected, replacement, i32, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 2, offset, ptr, expected, replacement, i32, strToStack(name))
                     },
                     rmw32_u: {
-                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        add: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAdd, 4, offset, ptr, value, name),
-                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        sub: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWSub, 4, offset, ptr, value, name),
-                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        and: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWAnd, 4, offset, ptr, value, name),
-                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        or: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWOr, 4, offset, ptr, value, name),
-                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xor: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXor, 4, offset, ptr, value, name),
-                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                        xchg: (offset: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                             atomic_rmw(Operations.AtomicRMWXchg, 4, offset, ptr, value, name),
-                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string) =>
-                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 4, offset, ptr, expected, replacement, i32, strToStack(name)) as ExpressionRef
+                        cmpxchg: (offset: number, ptr: ExpressionRef, expected: ExpressionRef, replacement: ExpressionRef, name?: string): ExpressionRef =>
+                            JSModule['_BinaryenAtomicCmpxchg'](this.ptr, 4, offset, ptr, expected, replacement, i32, strToStack(name))
                     }
                 }
             };
         }
         get f32 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
-                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
-                    Module['_BinaryenLoad'](this.ptr, 4, true, offset, align, f32, ptr, strToStack(name)) as ExpressionRef,
-                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
-                    Module['_BinaryenStore'](this.ptr, 4, offset, align, ptr, value, f32, strToStack(name)) as ExpressionRef,
-                const: (value: number) =>
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
+                    Module['_BinaryenLoad'](this.ptr, 4, true, offset, align, f32, ptr, strToStack(name)),
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
+                    Module['_BinaryenStore'](this.ptr, 4, offset, align, ptr, value, f32, strToStack(name)),
+                const: (value: number): ExpressionRef =>
                     preserveStack(() => {
                             const tempLiteral = stackAlloc(sizeOfLiteral);
                             Module['_BinaryenLiteralFloat32'](tempLiteral, value);
                             return Module['_BinaryenConst'](this.ptr, tempLiteral);
-                          }) as ExpressionRef,
-                const_bits: (value: number) =>
+                          }),
+                const_bits: (value: number): ExpressionRef =>
                     preserveStack(() => {
                             const tempLiteral = stackAlloc(sizeOfLiteral);
                             Module['_BinaryenLiteralFloat32Bits'](tempLiteral, value);
                             return Module['_BinaryenConst'](this.ptr, tempLiteral);
-                          }) as ExpressionRef,
-                neg: (value: ExpressionRef) => unary(Operations.NegFloat32, value),
-                abs: (value: ExpressionRef) => unary(Operations.AbsFloat32, value),
-                ceil: (value: ExpressionRef) => unary(Operations.CeilFloat32, value),
-                floor: (value: ExpressionRef) => unary(Operations.FloorFloat32, value),
-                trunc: (value: ExpressionRef) => unary(Operations.TruncFloat32, value),
-                nearest: (value: ExpressionRef) => unary(Operations.NearestFloat32, value),
-                sqrt: (value: ExpressionRef) => unary(Operations.SqrtFloat32, value),
+                          }),
+                neg: (value: ExpressionRef): ExpressionRef => unary(Operations.NegFloat32, value),
+                abs: (value: ExpressionRef): ExpressionRef => unary(Operations.AbsFloat32, value),
+                ceil: (value: ExpressionRef): ExpressionRef => unary(Operations.CeilFloat32, value),
+                floor: (value: ExpressionRef): ExpressionRef => unary(Operations.FloorFloat32, value),
+                trunc: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncFloat32, value),
+                nearest: (value: ExpressionRef): ExpressionRef => unary(Operations.NearestFloat32, value),
+                sqrt: (value: ExpressionRef): ExpressionRef => unary(Operations.SqrtFloat32, value),
                 /** @deprecated use reinterpret_i32 */
-                reinterpret: (value: ExpressionRef) => unary(Operations.ReinterpretInt32, value),
-                reinterpret_i32: (value: ExpressionRef) => unary(Operations.ReinterpretInt32, value),
+                reinterpret: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretInt32, value),
+                reinterpret_i32: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretInt32, value),
                 convert_s: {
-                    i32: (value: ExpressionRef) => unary(Operations.ConvertSInt32ToFloat32, value),
-                    i64: (value: ExpressionRef) => unary(Operations.ConvertSInt64ToFloat32, value)
+                    i32: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertSInt32ToFloat32, value),
+                    i64: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertSInt64ToFloat32, value)
                 },
                 convert_u: {
-                    i32: (value: ExpressionRef) => unary(Operations.ConvertUInt32ToFloat32, value),
-                    i64: (value: ExpressionRef) => unary(Operations.ConvertUInt64ToFloat32, value)
+                    i32: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertUInt32ToFloat32, value),
+                    i64: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertUInt64ToFloat32, value)
                 },
                 /** @deprecated use demote_f64 */
-                demote: (value: ExpressionRef)=> unary(Operations.DemoteFloat64, value),
-                demote_f64: (value: ExpressionRef)=> unary(Operations.DemoteFloat64, value),
-                add: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AddFloat32, left, right),
-                sub: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.SubFloat32, left, right),
-                mul: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MulFloat32, left, right),
-                div: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivFloat32, left, right),
-                copysign: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.CopySignFloat32, left, right),
-                min: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MinFloat32, left, right),
-                max: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MaxFloat32, left, right),
-                eq: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.EqFloat32, left, right),
-                ne: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.NeFloat32, left, right),
-                lt: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtFloat32, left, right),
-                le: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeFloat32, left, right),
-                gt: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtFloat32, left, right),
-                ge: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeFloat32, left, right),
-                pop: () => JSModule['_BinaryenPop'](this.ptr, f32) as ExpressionRef
+                demote: (value: ExpressionRef): ExpressionRef => unary(Operations.DemoteFloat64, value),
+                demote_f64: (value: ExpressionRef): ExpressionRef => unary(Operations.DemoteFloat64, value),
+                add: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AddFloat32, left, right),
+                sub: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.SubFloat32, left, right),
+                mul: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MulFloat32, left, right),
+                div: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivFloat32, left, right),
+                copysign: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.CopySignFloat32, left, right),
+                min: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MinFloat32, left, right),
+                max: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MaxFloat32, left, right),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.EqFloat32, left, right),
+                ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.NeFloat32, left, right),
+                lt: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtFloat32, left, right),
+                le: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeFloat32, left, right),
+                gt: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtFloat32, left, right),
+                ge: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeFloat32, left, right),
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, f32)
             };
         }
         get f64 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
-                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
-                    Module['_BinaryenLoad'](this.ptr, 8, true, offset, align, f64, ptr, strToStack(name)) as ExpressionRef,
-                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
-                    Module['_BinaryenStore'](this.ptr, 8, offset, align, ptr, value, f64, strToStack(name)) as ExpressionRef,
-                const: (value: number) =>
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
+                    Module['_BinaryenLoad'](this.ptr, 8, true, offset, align, f64, ptr, strToStack(name)),
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
+                    Module['_BinaryenStore'](this.ptr, 8, offset, align, ptr, value, f64, strToStack(name)),
+                const: (value: number): ExpressionRef =>
                     preserveStack(() => {
                             const tempLiteral = stackAlloc(sizeOfLiteral);
                             Module['_BinaryenLiteralFloat64'](tempLiteral, value);
                             return Module['_BinaryenConst'](this.ptr, tempLiteral);
-                          }) as ExpressionRef,
-                const_bits: (value: number) =>
+                          }),
+                const_bits: (value: number): ExpressionRef =>
                     preserveStack(() => {
                             const tempLiteral = stackAlloc(sizeOfLiteral);
                             Module['_BinaryenLiteralFloat64Bits'](tempLiteral, value);
                             return Module['_BinaryenConst'](this.ptr, tempLiteral);
-                          }) as ExpressionRef,
-                neg: (value: ExpressionRef) => unary(Operations.NegFloat64, value),
-                abs: (value: ExpressionRef) => unary(Operations.AbsFloat64, value),
-                ceil: (value: ExpressionRef) => unary(Operations.CeilFloat64, value),
-                floor: (value: ExpressionRef) => unary(Operations.FloorFloat64, value),
-                trunc: (value: ExpressionRef) => unary(Operations.TruncFloat64, value),
-                nearest: (value: ExpressionRef) => unary(Operations.NearestFloat64, value),
-                sqrt: (value: ExpressionRef) => unary(Operations.SqrtFloat64, value),
+                          }),
+                neg: (value: ExpressionRef): ExpressionRef => unary(Operations.NegFloat64, value),
+                abs: (value: ExpressionRef): ExpressionRef => unary(Operations.AbsFloat64, value),
+                ceil: (value: ExpressionRef): ExpressionRef => unary(Operations.CeilFloat64, value),
+                floor: (value: ExpressionRef): ExpressionRef => unary(Operations.FloorFloat64, value),
+                trunc: (value: ExpressionRef): ExpressionRef => unary(Operations.TruncFloat64, value),
+                nearest: (value: ExpressionRef): ExpressionRef => unary(Operations.NearestFloat64, value),
+                sqrt: (value: ExpressionRef): ExpressionRef => unary(Operations.SqrtFloat64, value),
                 /** @deprecated use reinterpret_i64 */
-                reinterpret: (value: ExpressionRef) => unary(Operations.ReinterpretInt64, value),
-                reinterpret_i64: (value: ExpressionRef) => unary(Operations.ReinterpretInt64, value),
+                reinterpret: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretInt64, value),
+                reinterpret_i64: (value: ExpressionRef): ExpressionRef => unary(Operations.ReinterpretInt64, value),
                 convert_s: {
-                    i32: (value: ExpressionRef) => unary(Operations.ConvertSInt32ToFloat64, value),
-                    i64: (value: ExpressionRef) => unary(Operations.ConvertSInt64ToFloat64, value)
+                    i32: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertSInt32ToFloat64, value),
+                    i64: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertSInt64ToFloat64, value)
                 },
                 convert_u: {
-                    i32: (value: ExpressionRef) => unary(Operations.ConvertUInt32ToFloat64, value),
-                    i64: (value: ExpressionRef) => unary(Operations.ConvertUInt64ToFloat64, value)
+                    i32: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertUInt32ToFloat64, value),
+                    i64: (value: ExpressionRef): ExpressionRef => unary(Operations.ConvertUInt64ToFloat64, value)
                 },
                 /** @deprecated use promote_f32 */
-                promote: (value: ExpressionRef)=> unary(Operations.PromoteFloat32, value),
-                promote_f32: (value: ExpressionRef)=> unary(Operations.PromoteFloat32, value),
-                add: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.AddFloat64, left, right),
-                sub: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.SubFloat64, left, right),
-                mul: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MulFloat64, left, right),
-                div: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.DivFloat64, left, right),
-                copysign: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.CopySignFloat64, left, right),
-                min: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MinFloat64, left, right),
-                max: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.MaxFloat64, left, right),
-                eq: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.EqFloat64, left, right),
-                ne: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.NeFloat64, left, right),
-                lt: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LtFloat64, left, right),
-                le: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.LeFloat64, left, right),
-                gt: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GtFloat64, left, right),
-                ge: (left: ExpressionRef, right: ExpressionRef) => binary(Operations.GeFloat64, left, right),
-                pop: () => JSModule['_BinaryenPop'](this.ptr, f64) as ExpressionRef
+                promote: (value: ExpressionRef): ExpressionRef => unary(Operations.PromoteFloat32, value),
+                promote_f32: (value: ExpressionRef): ExpressionRef => unary(Operations.PromoteFloat32, value),
+                add: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.AddFloat64, left, right),
+                sub: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.SubFloat64, left, right),
+                mul: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MulFloat64, left, right),
+                div: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.DivFloat64, left, right),
+                copysign: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.CopySignFloat64, left, right),
+                min: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MinFloat64, left, right),
+                max: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.MaxFloat64, left, right),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.EqFloat64, left, right),
+                ne: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.NeFloat64, left, right),
+                lt: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LtFloat64, left, right),
+                le: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.LeFloat64, left, right),
+                gt: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GtFloat64, left, right),
+                ge: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => binary(Operations.GeFloat64, left, right),
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, f64)
             };
         }
         get v128 () {
-            const simd_load = (op: Operations, offset: number, align: number, ptr: ExpressionRef, name: string) =>
-                JSModule['_BinaryenSIMDLoad'](this.ptr, op, offset, align, ptr, strToStack(name)) as ExpressionRef;
-            const simd_lane = (op: Operations, offset: number, align: number, index: number, ptr: ExpressionRef, vec: number, name: string) =>
-                JSModule['_BinaryenSIMDLoadStoreLane'](this.ptr, op, offset, align, index, ptr, vec, strToStack(name)) as ExpressionRef;
+            const simd_load = (op: Operations, offset: number, align: number, ptr: ExpressionRef, name: string): ExpressionRef =>
+                JSModule['_BinaryenSIMDLoad'](this.ptr, op, offset, align, ptr, strToStack(name));
+            const simd_lane = (op: Operations, offset: number, align: number, index: number, ptr: ExpressionRef, vec: number, name: string): ExpressionRef =>
+                JSModule['_BinaryenSIMDLoadStoreLane'](this.ptr, op, offset, align, index, ptr, vec, strToStack(name));
             return {
-                load: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
-                    Module['_BinaryenLoad'](this.ptr, 16, false, offset, align, v128, ptr, strToStack(name)) as ExpressionRef,
-                load8_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
+                    JSModule['_BinaryenLoad'](this.ptr, 16, false, offset, align, v128, ptr, strToStack(name)),
+                load8_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load8SplatVec128, offset, align, ptr, name),
-                load16_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load16_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load16SplatVec128, offset, align, ptr, name),
-                load32_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load32_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load32SplatVec128, offset, align, ptr, name),
-                load64_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load64_splat: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load64SplatVec128, offset, align, ptr, name),
-                load8x8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load8x8_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load8x8SVec128, offset, align, ptr, name),
-                load8x8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load8x8_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load8x8UVec128, offset, align, ptr, name),
-                load16x4_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load16x4_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load16x4SVec128, offset, align, ptr, name),
-                load16x4_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load16x4_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load16x4UVec128, offset, align, ptr, name),
-                load32x2_s: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load32x2_s: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load32x2SVec128, offset, align, ptr, name),
-                load32x2_u: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load32x2_u: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load32x2UVec128, offset, align, ptr, name),
-                load32_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load32_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load32ZeroVec128, offset, align, ptr, name),
-                load64_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string) =>
+                load64_zero: (offset: number, align: number, ptr: ExpressionRef, name?: string): ExpressionRef =>
                     simd_load(Operations.Load64ZeroVec128, offset, align, ptr, name),
-                load8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                load8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Load8LaneVec128, offset, align, index, ptr, vec, name),
-                load16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                load16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Load16LaneVec128, offset, align, index, ptr, vec, name),
-                load32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                load32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Load32LaneVec128, offset, align, index, ptr, vec, name),
-                load64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                load64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Load64LaneVec128, offset, align, index, ptr, vec, name),
-                store8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                store8_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Store8LaneVec128, offset, align, index, ptr, vec, name),
-                store16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                store16_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Store16LaneVec128, offset, align, index, ptr, vec, name),
-                store32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                store32_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Store32LaneVec128, offset, align, index, ptr, vec, name),
-                store64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string) =>
+                store64_lane: (offset: number, align: number, index: number, ptr: ExpressionRef, vec: ExpressionRef, name?: string): ExpressionRef =>
                     simd_lane(Operations.Store64LaneVec128, offset, align, index, ptr, vec, name),
-                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string) =>
+                store: (offset: number, align: number, ptr: ExpressionRef, value: ExpressionRef, name?: string): ExpressionRef =>
                     JSModule['_BinaryenStore'](this.ptr, 16, offset, align, ptr, value, v128, strToStack(name)),
-                const: (i8s: ArrayLike<number>) => {
+                const: (i8s: ArrayLike<number>): ExpressionRef => {
                            const tempLiteral = stackAlloc(sizeOfLiteral);
                            JSModule['_BinaryenLiteralVec128'](tempLiteral, i8sToStack(i8s));
-                           return JSModule['_BinaryenConst'](this.ptr, tempLiteral) as ExpressionRef;
+                           return JSModule['_BinaryenConst'](this.ptr, tempLiteral);
                          },
-                not: (value: ExpressionRef) => JSModule['_BinaryenUnary'](this.ptr, Operations.NotVec128, value) as ExpressionRef,
-                any_true: (value: ExpressionRef) => JSModule['_BinaryenUnary'](this.ptr, Operations.AnyTrueVec128, value) as ExpressionRef,
-                and: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.AndVec128, left, right) as ExpressionRef,
-                or: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.OrVec128, left, right) as ExpressionRef,
-                xor: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.XorVec128, left, right) as ExpressionRef,
-                andnot: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.AndNotVec128, left, right) as ExpressionRef,
-                bitselect: (left: ExpressionRef, right: ExpressionRef, cond: ExpressionRef) => JSModule['_BinaryenBinary'](this.ptr, Operations.BitselectVec128, left, right) as ExpressionRef,
-                pop: () => JSModule['_BinaryenPop'](this.ptr, v128) as ExpressionRef
+                not: (value: ExpressionRef): ExpressionRef => JSModule['_BinaryenUnary'](this.ptr, Operations.NotVec128, value),
+                any_true: (value: ExpressionRef): ExpressionRef => JSModule['_BinaryenUnary'](this.ptr, Operations.AnyTrueVec128, value),
+                and: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => JSModule['_BinaryenBinary'](this.ptr, Operations.AndVec128, left, right),
+                or: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => JSModule['_BinaryenBinary'](this.ptr, Operations.OrVec128, left, right),
+                xor: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => JSModule['_BinaryenBinary'](this.ptr, Operations.XorVec128, left, right),
+                andnot: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => JSModule['_BinaryenBinary'](this.ptr, Operations.AndNotVec128, left, right),
+                bitselect: (left: ExpressionRef, right: ExpressionRef, cond: ExpressionRef): ExpressionRef => JSModule['_BinaryenBinary'](this.ptr, Operations.BitselectVec128, left, right),
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, v128)
             };
         }
         get i8x16 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 shuffle: (left: ExpressionRef, right: ExpressionRef, mask: ArrayLike<number>): ExpressionRef =>
                     preserveStack(() => JSModule['_BinaryenSIMDShuffle'](this.ptr, left, right, i8sToStack(mask))),
@@ -1469,9 +1455,9 @@ module binaryen {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecI8x16, value),
                 extract_lane_s: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneSVecI8x16, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneSVecI8x16, vec, index),
                 extract_lane_u: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneUVecI8x16, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneUVecI8x16, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Module['ReplaceLaneVecI8x16'], vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1540,16 +1526,16 @@ module binaryen {
         }
         get i16x8 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecI16x8, value),
                 extract_lane_s: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneSVecI16x8, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneSVecI16x8, vec, index),
                 extract_lane_u: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneUVecI16x8, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneUVecI16x8, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecI16x8, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1638,14 +1624,14 @@ module binaryen {
         }
         get i32x4 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecI32x4, value),
                 extract_lane: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecI32x4, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecI32x4, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecI32x4, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1730,14 +1716,14 @@ module binaryen {
         }
         get i64x2 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecI64x2, value),
                 extract_lane: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecI64x2, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecI64x2, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecI64x2, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1792,14 +1778,14 @@ module binaryen {
         }
         get f32x4 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecF32x4, value),
                 extract_lane: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecF32x4, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecF32x4, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecF32x4, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1854,14 +1840,14 @@ module binaryen {
         }
         get f64x2 () {
             const unary = (op: Operations, value: ExpressionRef) =>
-                 JSModule['_BinaryenUnary'](this.ptr, op, value) as ExpressionRef;
+                 JSModule['_BinaryenUnary'](this.ptr, op, value);
             const binary = (op: Operations, left: ExpressionRef, right: ExpressionRef) =>
-                JSModule['_BinaryenBinary'](this.ptr, op, left, right) as ExpressionRef;
+                JSModule['_BinaryenBinary'](this.ptr, op, left, right);
             return {
                 splat: (value: ExpressionRef): ExpressionRef =>
                     unary(Operations.SplatVecF64x2, value),
                 extract_lane: (vec: ExpressionRef, index: ExpressionRef): ExpressionRef =>
-                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecF64x2, vec, index) as ExpressionRef,
+                    JSModule['_BinaryenSIMDExtract'](this.ptr, Operations.ExtractLaneVecF64x2, vec, index),
                 replace_lane: (vec: ExpressionRef, index: ExpressionRef, value: ExpressionRef): ExpressionRef =>
                     JSModule['_BinaryenSIMDReplace'](this.ptr, Operations.ReplaceLaneVecF64x2, vec, index, value),
                 eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef =>
@@ -1916,134 +1902,134 @@ module binaryen {
         }
         get funcref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, funcref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, funcref)
             };
         }
         get externref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, externref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, externref)
             };
         }
         get anyref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, anyref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, anyref)
             };
         }
         get eqref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, eqref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, eqref)
             };
         }
         get i31ref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, i31ref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, i31ref)
             };
         }
         get structref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, structref) as ExpressionRef
+                pop: (): ExpressionRef => JSModule['_BinaryenPop'](this.ptr, structref)
             };
         }
         /* explicitly skipping string stuff until it's reprioritized
         get stringref() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, stringref) as ExpressionRef
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringref)
             }
         }
         get stringview_wtf8() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf8) as ExpressionRef
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf8)
             }
         }
         get stringview_wtf16() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf16) as ExpressionRef
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_wtf16)
             }
         }
         get stringview_iter() {
             return {
-                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_iter) as ExpressionRef
+                pop: () => JSModule['_BinaryenPop'](this.ptr, stringview_iter)
             }
         }
         */
         get ref() {
             return {
-                null: (type: Type) => JSModule['_BinaryenRefNull'](this.ptr, type) as ExpressionRef,
-                is_null: (value: ExpressionRef) => JSModule['_BinaryenRefIsNull'](this.ptr, value) as ExpressionRef,
-                i31: (value: ExpressionRef) => JSModule['_BinaryenRefI31'](this.ptr, value) as ExpressionRef,
-                func: (name: string, type: Type) => JSModule['_BinaryenRefFunc'](this.ptr, strToStack(name), type) as ExpressionRef,
-                eq: (left: ExpressionRef, right: ExpressionRef) => JSModule['_BinaryenRefEq'](this.ptr, left, right) as ExpressionRef,
-                as_non_null: (value: ExpressionRef) => JSModule['_BinaryenRefAs'](this.ptr, Operations.RefAsNonNull, value) as ExpressionRef
+                null: (type: Type): ExpressionRef => JSModule['_BinaryenRefNull'](this.ptr, type),
+                is_null: (value: ExpressionRef): ExpressionRef => JSModule['_BinaryenRefIsNull'](this.ptr, value),
+                i31: (value: ExpressionRef): ExpressionRef => JSModule['_BinaryenRefI31'](this.ptr, value),
+                func: (name: string, type: Type): ExpressionRef => JSModule['_BinaryenRefFunc'](this.ptr, strToStack(name), type),
+                eq: (left: ExpressionRef, right: ExpressionRef): ExpressionRef => JSModule['_BinaryenRefEq'](this.ptr, left, right),
+                as_non_null: (value: ExpressionRef): ExpressionRef => JSModule['_BinaryenRefAs'](this.ptr, Operations.RefAsNonNull, value)
             };
         }
         get i31 () {
              return {
-                get_s: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 1) as ExpressionRef,
-                get_u: (i31: ExpressionRef) => JSModule['_BinaryenI31Get'](this.ptr, i31, 0) as ExpressionRef
+                get_s: (i31: ExpressionRef): ExpressionRef => JSModule['_BinaryenI31Get'](this.ptr, i31, 1),
+                get_u: (i31: ExpressionRef): ExpressionRef => JSModule['_BinaryenI31Get'](this.ptr, i31, 0)
              };
         }
         get atomic () {
             return {
-                fence: () =>  JSModule['_BinaryenAtomicFence'](this.ptr) as ExpressionRef
+                fence: (): ExpressionRef =>  JSModule['_BinaryenAtomicFence'](this.ptr)
             };
         }
         get locals () {
             return {
-                get: (index: number, type: Type) => JSModule['_BinaryenLocalGet'](this.ptr, index, type) as ExpressionRef,
-                set: (index: number, value: ExpressionRef) => JSModule['_BinaryenLocalSet'](this.ptr, index, value) as ExpressionRef,
-                tee: (index: number, value: ExpressionRef, type: Type) => {
+                get: (index: number, type: Type): ExpressionRef => JSModule['_BinaryenLocalGet'](this.ptr, index, type),
+                set: (index: number, value: ExpressionRef): ExpressionRef => JSModule['_BinaryenLocalSet'](this.ptr, index, value),
+                tee: (index: number, value: ExpressionRef, type: Type): ExpressionRef => {
                     if (typeof type === 'undefined') {
                         throw new Error("local.tee's type should be defined");
                     }
-                    return JSModule['_BinaryenLocalTee'](this.ptr, index, value, type) as ExpressionRef;
+                    return JSModule['_BinaryenLocalTee'](this.ptr, index, value, type);
                 }
             };
         }
         get globals () {
             return {
-                add: (name: string, type: Type, mutable: boolean, init: ExpressionRef) =>
-                    preserveStack(() => JSModule['_BinaryenAddGlobal'](this.ptr, strToStack(name), type, mutable, init)) as GlobalRef,
-                getRefByName: (name: string) => preserveStack(() => JSModule['_BinaryenGetGlobal'](this.ptr, strToStack(name))) as GlobalRef,
-                getRefByIndex: (index: number) => JSModule['_BinaryenGetGlobalByIndex'](this.ptr, index) as GlobalRef,
-                remove: (name: string) => preserveStack(() => JSModule['_BinaryenRemoveGlobal'](this.ptr, strToStack(name))) as void,
-                count: () => JSModule['_BinaryenGetNumGlobals'](this.ptr) as number,
-                set: (name: string, value: ExpressionRef) => JSModule['_BinaryenGlobalSet'](this.ptr, strToStack(name), value) as ExpressionRef,
-                get: (name: string, type: Type) => JSModule['_BinaryenGlobalGet'](this.ptr, strToStack(name), type) as ExpressionRef,
-                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean) =>
-                    preserveStack(() => JSModule['_BinaryenAddGlobalImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)) as void,
-                addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddGlobalExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
-                getInfo: (ref: GlobalRef) => {
+                add: (name: string, type: Type, mutable: boolean, init: ExpressionRef): GlobalRef =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobal'](this.ptr, strToStack(name), type, mutable, init)),
+                getRefByName: (name: string): GlobalRef => preserveStack(() => JSModule['_BinaryenGetGlobal'](this.ptr, strToStack(name))),
+                getRefByIndex: (index: number): GlobalRef => JSModule['_BinaryenGetGlobalByIndex'](this.ptr, index),
+                remove: (name: string): void => preserveStack(() => JSModule['_BinaryenRemoveGlobal'](this.ptr, strToStack(name))),
+                count: (): number => JSModule['_BinaryenGetNumGlobals'](this.ptr),
+                set: (name: string, value: ExpressionRef): ExpressionRef => JSModule['_BinaryenGlobalSet'](this.ptr, strToStack(name), value),
+                get: (name: string, type: Type): ExpressionRef => JSModule['_BinaryenGlobalGet'](this.ptr, strToStack(name), type),
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, globalType: Type, mutable: boolean): void =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobalImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)),
+                addExport: (internalName: string, externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenAddGlobalExport'](this.ptr, strToStack(internalName), strToStack(externalName))),
+                getInfo: (ref: GlobalRef): GlobalInfo => {
                     return {
-                        'name': UTF8ToString(Module['_BinaryenGlobalGetName'](ref)) as string,
-                        'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](ref)) as string | null,
-                        'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](ref)) as string | null,
-                        'type': Module['_BinaryenGlobalGetType'](ref) as Type,
+                        'name': UTF8ToString(Module['_BinaryenGlobalGetName'](ref)),
+                        'module': UTF8ToString(Module['_BinaryenGlobalImportGetModule'](ref)),
+                        'base': UTF8ToString(Module['_BinaryenGlobalImportGetBase'](ref)),
+                        'type': Module['_BinaryenGlobalGetType'](ref),
                         'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](ref)),
-                        'init': Module['_BinaryenGlobalGetInitExpr'](ref) as ExpressionRef
-                    } as GlobalInfo;
+                        'init': Module['_BinaryenGlobalGetInitExpr'](ref)
+                    };
                 }
             };
         }
         get tables () {
             return {
-                add: (name: string, initial: number, maximum: number, type: Type) =>
-                    preserveStack(() => JSModule['_BinaryenAddTable'](this.ptr, strToStack(name), initial, maximum, type)) as TableRef,
-                getRefByName: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenGetTable'](this.ptr, strToStack(name))) as TableRef,
-                getRefByIndex: (index: number) => JSModule['_BinaryenGetTableByIndex'](this.ptr, index) as TableRef,
-                remove: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenRemoveTable'](this.ptr, strToStack(name))) as void,
-                count: () => JSModule['_BinaryenGetNumTables'](this.ptr) as number,
-                get: (name: string, index: ExpressionRef, type: Type) => JSModule['_BinaryenTableGet'](this.ptr, strToStack(name), index, type) as ExpressionRef,
-                set: (name: string, index: ExpressionRef, value: ExpressionRef) => JSModule['_BinaryenTableSet'](this.ptr, strToStack(name), index, value) as ExpressionRef,
-                size: (name: string) => JSModule['_BinaryenTableSize'](this.ptr, strToStack(name)) as ExpressionRef,
-                grow: (name: string, value: ExpressionRef, delta: ExpressionRef) => JSModule['_BinaryenTableGrow'](this.ptr, strToStack(name), value, delta) as ExpressionRef,
-                addImport: (internalName: string, externalModuleName: string, externalBaseName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddTableImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))) as void,
-                addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddTableExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
-                getInfo: (table: TableRef) => {
+                add: (name: string, initial: number, maximum: number, type: Type): TableRef =>
+                    preserveStack(() => JSModule['_BinaryenAddTable'](this.ptr, strToStack(name), initial, maximum, type)),
+                getRefByName: (name: string): TableRef =>
+                    preserveStack(() => JSModule['_BinaryenGetTable'](this.ptr, strToStack(name))),
+                getRefByIndex: (index: number): TableRef => JSModule['_BinaryenGetTableByIndex'](this.ptr, index),
+                remove: (name: string): void =>
+                    preserveStack(() => JSModule['_BinaryenRemoveTable'](this.ptr, strToStack(name))),
+                count: (): number => JSModule['_BinaryenGetNumTables'](this.ptr),
+                get: (name: string, index: ExpressionRef, type: Type): ExpressionRef => JSModule['_BinaryenTableGet'](this.ptr, strToStack(name), index, type),
+                set: (name: string, index: ExpressionRef, value: ExpressionRef): ExpressionRef => JSModule['_BinaryenTableSet'](this.ptr, strToStack(name), index, value),
+                size: (name: string): ExpressionRef => JSModule['_BinaryenTableSize'](this.ptr, strToStack(name)),
+                grow: (name: string, value: ExpressionRef, delta: ExpressionRef): ExpressionRef => JSModule['_BinaryenTableGrow'](this.ptr, strToStack(name), value, delta),
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string): void =>
+                    preserveStack(() => JSModule['_BinaryenAddTableImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName))),
+                addExport: (internalName: string, externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenAddTableExport'](this.ptr, strToStack(internalName), strToStack(externalName))),
+                getInfo: (table: TableRef): TableInfo => {
                         const hasMax = Boolean(JSModule['_BinaryenTableHasMax'](this.ptr, strToStack(name)));
                         const withMax = hasMax ? { max: JSModule['_BinaryenTableGetMax'](this.ptr, strToStack(name))} : {};
                         return Object.assign({
@@ -2051,7 +2037,7 @@ module binaryen {
                             'module': UTF8ToString(Module['_BinaryenTableImportGetModule'](table)),
                             'base': UTF8ToString(Module['_BinaryenTableImportGetBase'](table)),
                             'initial': Module['_BinaryenTableGetInitial'](table),
-                        }, withMax) as TableInfo;
+                        }, withMax);
                 }
             };
             /* TODO
@@ -2068,67 +2054,67 @@ module binaryen {
         }
         get tuples () {
             return {
-                make: (elements: ExportRef[]) =>
-                    preserveStack(() => JSModule['_BinaryenTupleMake'](this.ptr, i32sToStack(elements), elements.length)) as ExpressionRef,
-                extract: (tuple: ExpressionRef, index: number) =>
-                    JSModule['_BinaryenTupleExtract'](this.ptr, tuple, index) as ExpressionRef
+                make: (elements: ExportRef[]): ExpressionRef =>
+                    preserveStack(() => JSModule['_BinaryenTupleMake'](this.ptr, i32sToStack(elements), elements.length)),
+                extract: (tuple: ExpressionRef, index: number): ExpressionRef =>
+                    JSModule['_BinaryenTupleExtract'](this.ptr, tuple, index)
             };
         }
         get functions () {
             return {
-                add: (name: string, params: Type, results: Type, varTypes: Type[], body: ExpressionRef) =>
+                add: (name: string, params: Type, results: Type, varTypes: Type[], body: ExpressionRef): FunctionRef =>
                     preserveStack(() =>
-                          JSModule['_BinaryenAddFunction'](this.ptr, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body)) as FunctionRef,
-                getRefByName: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenGetFunction'](this.ptr, strToStack(name))) as FunctionRef,
-                getRefByIndex: (index: number) =>
-                    JSModule['_BinaryenGetFunctionByIndex'](this.ptr, index) as FunctionRef,
-                remove: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenRemoveFunction'](this.ptr, strToStack(name))) as void,
-                count: () => JSModule['_BinaryenGetNumFunctions'](this.ptr) as number,
-                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) =>
+                          JSModule['_BinaryenAddFunction'](this.ptr, strToStack(name), params, results, i32sToStack(varTypes), varTypes.length, body)),
+                getRefByName: (name: string): FunctionRef =>
+                    preserveStack(() => JSModule['_BinaryenGetFunction'](this.ptr, strToStack(name))),
+                getRefByIndex: (index: number): FunctionRef =>
+                    JSModule['_BinaryenGetFunctionByIndex'](this.ptr, index),
+                remove: (name: string): void =>
+                    preserveStack(() => JSModule['_BinaryenRemoveFunction'](this.ptr, strToStack(name))),
+                count: (): number => JSModule['_BinaryenGetNumFunctions'](this.ptr),
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void =>
                     preserveStack(() =>
                           JSModule['_BinaryenAddFunctionImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
-                        ) as void,
-                addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddFunctionExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef
+                        ),
+                addExport: (internalName: string, externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenAddFunctionExport'](this.ptr, strToStack(internalName), strToStack(externalName)))
               };
         }
         get tags() {
             return {
-                add: (name: string, params: Type, results: Type) =>
-                    preserveStack(() => JSModule['_BinaryenAddTag'](this.ptr, strToStack(name), params, results)) as TagRef,
-                getRefByName: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenGetTag'](this.ptr, strToStack(name))) as TagRef,
-                remove: (name: string) =>
-                    preserveStack(() => JSModule['_BinaryenRemoveTag'](this.ptr, strToStack(name))) as void,
-                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type) =>
-                    preserveStack(() => JSModule['_BinaryenAddTagImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)) as void,
-                addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddTagExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
-                getInfo: (tag: TagRef) => {
+                add: (name: string, params: Type, results: Type): TagRef =>
+                    preserveStack(() => JSModule['_BinaryenAddTag'](this.ptr, strToStack(name), params, results)),
+                getRefByName: (name: string): TagRef =>
+                    preserveStack(() => JSModule['_BinaryenGetTag'](this.ptr, strToStack(name))),
+                remove: (name: string): void =>
+                    preserveStack(() => JSModule['_BinaryenRemoveTag'](this.ptr, strToStack(name))),
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, params: Type, results: Type): void =>
+                    preserveStack(() => JSModule['_BinaryenAddTagImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)),
+                addExport: (internalName: string, externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenAddTagExport'](this.ptr, strToStack(internalName), strToStack(externalName))),
+                getInfo: (tag: TagRef): TagInfo => {
                     return {
                         'name': UTF8ToString(Module['_BinaryenTagGetName'](tag)),
                         'module': UTF8ToString(Module['_BinaryenTagImportGetModule'](tag)),
                         'base': UTF8ToString(Module['_BinaryenTagImportGetBase'](tag)),
                         'params': Module['_BinaryenTagGetParams'](tag),
                         'results': Module['_BinaryenTagGetResults'](tag)
-                      } as TagInfo;
+                      };
                 }
             };
         }
         get memory () {
             return {
-                init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string) =>
-                    preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))) as ExpressionRef,
+                init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
+                    preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))),
                 has: () => Boolean(JSModule['_BinaryenHasMemory'](this.ptr)),
-                size: (name?: string, memory64?: boolean) => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64) as ExpressionRef,
-                grow: (value: ExpressionRef, name?: string, memory64?: boolean) => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64) as ExpressionRef,
-                copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destName?: string, sourceName?: string) =>
-                    JSModule['_BinaryenMemoryCopy'](this.ptr, dest, source, size, strToStack(destName), strToStack(sourceName)) as ExpressionRef,
-                fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name?: string) =>
-                    JSModule['_BinaryenMemoryFill'](this.ptr, dest, value, size, strToStack(name)) as ExpressionRef,
-                set: (initial: number, maximum: number, exportName?: string | null, segments?: SegmentInfo[] | null, shared?: boolean, memory64?: boolean, internalName?: string) =>
+                size: (name?: string, memory64?: boolean): ExpressionRef => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64),
+                grow: (value: ExpressionRef, name?: string, memory64?: boolean): ExpressionRef => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64),
+                copy: (dest: ExpressionRef, source: ExpressionRef, size: ExpressionRef, destName?: string, sourceName?: string): ExpressionRef =>
+                    JSModule['_BinaryenMemoryCopy'](this.ptr, dest, source, size, strToStack(destName), strToStack(sourceName)),
+                fill: (dest: ExpressionRef, value: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
+                    JSModule['_BinaryenMemoryFill'](this.ptr, dest, value, size, strToStack(name)),
+                set: (initial: number, maximum: number, exportName?: string | null, segments?: SegmentInfo[] | null, shared?: boolean, memory64?: boolean, internalName?: string): void =>
                     preserveStack(() => {
                           const segmentsLen = segments ? segments.length : 0;
                           const segmentData = new Array(segmentsLen);
@@ -2158,8 +2144,8 @@ module binaryen {
                             _free(segmentData[i]);
                           }
                           return ret;
-                        }) as void,
-                getInfo: (name?: string) => {
+                        }),
+                getInfo: (name?: string): MemoryInfo => {
                         const hasMax = Boolean(JSModule['_BinaryenMemoryHasMax'](this.ptr, strToStack(name)));
                         const withMax = hasMax ? { max: JSModule['_BinaryenMemoryGetMax'](this.ptr, strToStack(name))} : {};
                         return Object.assign({
@@ -2168,24 +2154,23 @@ module binaryen {
                             initial: JSModule['_BinaryenMemoryGetInitial'](this.ptr, strToStack(name)),
                             shared: Boolean(JSModule['_BinaryenMemoryIsShared'](this.ptr, strToStack(name))),
                             is64: Boolean(JSModule['_BinaryenMemoryIs64'](this.ptr, strToStack(name))),
-                        }, withMax) as MemoryInfo;
+                        }, withMax);
                     },
-                countSegments: () => JSModule['_BinaryenGetNumMemorySegments'](this.ptr) as number,
-                getSegmentInfoByIndex: (index: number) => {
+                countSegments: (): number => JSModule['_BinaryenGetNumMemorySegments'](this.ptr),
+                getSegmentInfoByIndex: (index: number): SegmentInfo => {
                         const passive = Boolean(JSModule['_BinaryenGetMemorySegmentPassive'](this.ptr, index));
                         const offset = passive ? 0 : JSModule['_BinaryenGetMemorySegmentByteOffset'](this.ptr, index);
                         const size = JSModule['_BinaryenGetMemorySegmentByteLength'](this.ptr, index);
                         const ptr = _malloc(size);
                         JSModule['_BinaryenCopyMemorySegmentData'](this.ptr, index, ptr);
-                        const bytes = new Uint8Array(size);
-                        bytes.set(HEAP8.subarray(ptr, ptr + size));
+                        const data = new Uint8Array(size);
+                        data.set(HEAP8.subarray(ptr, ptr + size));
                         _free(ptr);
-                        const data = bytes.buffer;
-                        return { offset, data, passive } as SegmentInfo;
+                        return { offset, data, passive };
                     },
-                countElementSegments: () => JSModule['_BinaryenGetNumElementSegments'](this.ptr) as number,
-                getElementSegmentByIndex: (index: number) => JSModule['_BinaryenGetElementSegmentByIndex'](this.ptr, index) as ElementSegmentRef,
-                getElementSegmentInfo: (segment: ElementSegmentRef) => {
+                countElementSegments: (): number => JSModule['_BinaryenGetNumElementSegments'](this.ptr),
+                getElementSegmentByIndex: (index: number): ElementSegmentRef => JSModule['_BinaryenGetElementSegmentByIndex'](this.ptr, index),
+                getElementSegmentInfo: (segment: ElementSegmentRef): ElementSegmentInfo => {
                       const segmentLength = Module['_BinaryenElementSegmentGetLength'](segment);
                       const names = new Array(segmentLength);
                       for (let j = 0; j < segmentLength; j++) {
@@ -2196,51 +2181,51 @@ module binaryen {
                         'table': UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment)),
                         'offset': Module['_BinaryenElementSegmentGetOffset'](segment),
                         'data': names
-                      } as ElementSegmentInfo;
+                      };
                     },
-                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean) =>
-                    preserveStack(() => JSModule['_BinaryenAddMemoryImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)) as void,
-                addExport: (internalName: string, externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenAddMemoryExport'](this.ptr, strToStack(internalName), strToStack(externalName))) as ExportRef,
+                addImport: (internalName: string, externalModuleName: string, externalBaseName: string, shared: boolean): void =>
+                    preserveStack(() => JSModule['_BinaryenAddMemoryImport'](this.ptr, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), shared)),
+                addExport: (internalName: string, externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenAddMemoryExport'](this.ptr, strToStack(internalName), strToStack(externalName))),
                 atomic: {
-                    notify: (ptr: ExpressionRef, notifyCount: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicNotify'](this.ptr, ptr, notifyCount, strToStack(name)) as ExpressionRef,
-                    wait32: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i32'], strToStack(name)) as ExpressionRef,
-                    wait64: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string) =>
-                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i64'], strToStack(name)) as ExpressionRef
+                    notify: (ptr: ExpressionRef, notifyCount: ExpressionRef, name?: string): ExpressionRef =>
+                        JSModule['_BinaryenAtomicNotify'](this.ptr, ptr, notifyCount, strToStack(name)),
+                    wait32: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string): ExpressionRef =>
+                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i32'], strToStack(name)),
+                    wait64: (ptr: ExpressionRef, expected: ExpressionRef, timeout: ExpressionRef, name?: string): ExpressionRef =>
+                        JSModule['_BinaryenAtomicWait'](this.ptr, ptr, expected, timeout, Module['i64'], strToStack(name))
                 }
             };
         }
         get data () {
             return {
-                drop: (segment: number) => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment))) as ExpressionRef
+                drop: (segment: number): ExpressionRef => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment)))
             };
         }
         get exports () {
             return {
-                getRefByName: (externalName: string) =>
-                    preserveStack(() => JSModule['_BinaryenGetExport'](this.ptr, strToStack(externalName))) as ExportRef,
-                getRefByIndex: (index: number) => JSModule['_BinaryenGetExportByIndex'](this.ptr, index) as ExportRef,
-                remove: (externalName: string) => preserveStack(() => JSModule['_BinaryenRemoveExport'](this.ptr, strToStack(externalName))) as void,
-                count: () => JSModule['_BinaryenGetNumExports'](this.ptr) as number,
-                getInfo: (export_: ExportRef) => {
+                getRefByName: (externalName: string): ExportRef =>
+                    preserveStack(() => JSModule['_BinaryenGetExport'](this.ptr, strToStack(externalName))),
+                getRefByIndex: (index: number): ExportRef => JSModule['_BinaryenGetExportByIndex'](this.ptr, index),
+                remove: (externalName: string): void => preserveStack(() => JSModule['_BinaryenRemoveExport'](this.ptr, strToStack(externalName))),
+                count: (): number => JSModule['_BinaryenGetNumExports'](this.ptr),
+                getInfo: (export_: ExportRef): ExportInfo => {
                       return {
                         'kind': Module['_BinaryenExportGetKind'](export_),
                         'name': UTF8ToString(Module['_BinaryenExportGetName'](export_)),
                         'value': UTF8ToString(Module['_BinaryenExportGetValue'](export_))
-                      } as ExportInfo;
+                      };
                 }
 
             };
         }
         get expressions () {
             return {
-                copy: (expr: ExpressionRef) => JSModule['_BinaryenExpressionCopy'](expr, this.ptr) as ExpressionRef,
-                getType: (expression: ExpressionRef) => JSModule['_BinaryenExpressionGetType'](expression) as Type,
-                getInfo: (expression: ExpressionRef) => getExpressionInfo(expression) as ExpressionInfo,
-                getSideEffects: (expression: ExpressionRef) => JSModule['_BinaryenExpressionGetSideEffects'](expression, this.ptr) as SideEffects,
-                emitText: (expression: ExpressionRef) => {
+                copy: (expr: ExpressionRef): ExpressionRef => JSModule['_BinaryenExpressionCopy'](expr, this.ptr),
+                getType: (expression: ExpressionRef): Type => JSModule['_BinaryenExpressionGetType'](expression),
+                getInfo: (expression: ExpressionRef): ExpressionInfo => getExpressionInfo(expression),
+                getSideEffects: (expression: ExpressionRef): SideEffects => JSModule['_BinaryenExpressionGetSideEffects'](expression, this.ptr),
+                emitText: (expression: ExpressionRef): string => {
                       const old = out;
                       let text = '';
                       out = x => { text += x + '\n' };
@@ -2263,16 +2248,16 @@ module binaryen {
             return JSModule['_RelooperAddBlock'](this.ref, code);
         }
         addBranch(from: RelooperBlockRef, to: RelooperBlockRef, condition: ExpressionRef, code: ExpressionRef): void {
-            Module['_RelooperAddBranch'](from, to, condition, code);
+            JSModule['_RelooperAddBranch'](from, to, condition, code);
         }
         addBlockWithSwitch(code: ExpressionRef, condition: ExpressionRef): RelooperBlockRef {
-            return Module['_RelooperAddBlockWithSwitch'](this.ref, code, condition);
+            return JSModule['_RelooperAddBlockWithSwitch'](this.ref, code, condition);
         }
         addBranchForSwitch(from: RelooperBlockRef, to: RelooperBlockRef, indexes: number[], code: ExpressionRef): void {
-            preserveStack(() => Module['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code));
+            preserveStack(() => JSModule['_RelooperAddBranchForSwitch'](from, to, i32sToStack(indexes), indexes.length, code));
         }
         renderAndDispose(entry: RelooperBlockRef, labelHelper: number): ExpressionRef {
-            return Module['_RelooperRenderAndDispose'](this.ref, entry, labelHelper);
+            return JSModule['_RelooperRenderAndDispose'](this.ref, entry, labelHelper);
         }
     }
 
@@ -2287,17 +2272,32 @@ module binaryen {
         readonly ref: ExpressionRunnerRef;
 
         constructor(module: Module, flags: ExpressionRunnerFlags, maxDepth: number, maxLoopIterations: number) {
-            this.ref = Module['_ExpressionRunnerCreate'](module.ptr, flags, maxDepth, maxLoopIterations);
+            this.ref = JSModule['_ExpressionRunnerCreate'](module.ptr, flags, maxDepth, maxLoopIterations);
         }
         setLocalValue(index: number, valueExpr: ExpressionRef): boolean {
-            return Boolean(Module['_ExpressionRunnerSetLocalValue'](this.ref, index, valueExpr));
+            return Boolean(JSModule['_ExpressionRunnerSetLocalValue'](this.ref, index, valueExpr));
         }
         setGlobalValue(name: string, valueExpr: ExpressionRef): boolean {
-            return preserveStack(() => Boolean(Module['_ExpressionRunnerSetGlobalValue'](this.ref, strToStack(name), valueExpr)));
+            return preserveStack(() => Boolean(JSModule['_ExpressionRunnerSetGlobalValue'](this.ref, strToStack(name), valueExpr)));
         }
         runAndDispose(expr: ExpressionRef): ExpressionRef {
-            return Module['_ExpressionRunnerRunAndDispose'](this.ref, expr);
+            return JSModule['_ExpressionRunnerRunAndDispose'](this.ref, expr);
         }
+    }
+
+    export interface SegmentInfo {
+        offset: ExpressionRef;
+        data: Uint8Array;
+        passive?: boolean;
+    }
+
+    export interface MemoryInfo {
+        module: string | null;
+        base: string | null;
+        shared: boolean;
+        is64: boolean;
+        initial: number;
+        max?: number;
     }
 
     export interface ExpressionInfo {
@@ -2966,9 +2966,9 @@ module binaryen {
           'id': id,
           'type': type,
           'segment': UTF8ToString(Module['_BinaryenMemoryInitGetSegment'](expression)),
-          'dest': Module['_BinaryenMemoryInitGetDest'](expression) as ExpressionRef,
-          'offset': Module['_BinaryenMemoryInitGetOffset'](expression) as ExpressionRef,
-          'size': Module['_BinaryenMemoryInitGetSize'](expression) as ExpressionRef
+          'dest': Module['_BinaryenMemoryInitGetDest'](expression),
+          'offset': Module['_BinaryenMemoryInitGetOffset'](expression),
+          'size': Module['_BinaryenMemoryInitGetSize'](expression)
           } as MemoryInitInfo;
       case Module['DataDropId']:
           return {
@@ -3028,7 +3028,7 @@ module binaryen {
           'id': id,
           'type': type,
           'name': UTF8ToString(Module['_BinaryenTryGetName'](expression)),
-          'body': Module['_BinaryenTryGetBody'](expression) as ExpressionRef,
+          'body': Module['_BinaryenTryGetBody'](expression),
           'catchTags': getAllNested<string>(expression, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
           'catchBodies': getAllNested<ExpressionRef>(expression, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
           'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expression) as boolean,
