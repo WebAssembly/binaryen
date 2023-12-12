@@ -133,7 +133,7 @@
   )
 )
 
-;; Fields from different classes are not hoisted
+;; Fields from different classes are not hoisted.
 (module
 
   ;; CHECK:      (type $0 (func))
