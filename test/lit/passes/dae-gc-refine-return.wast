@@ -243,7 +243,7 @@
  ;; CHECK-NEXT:    (call $refine-return-tuple)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (local.get $i31)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -258,7 +258,7 @@
    )
   )
 
-  (tuple.make
+  (tuple.make 2
    (local.get $i31)
    (i32.const 1)
   )

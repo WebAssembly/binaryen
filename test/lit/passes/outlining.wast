@@ -634,7 +634,7 @@
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (func $outline$ (type $0) (result i32 i32)
-  ;; CHECK-NEXT:  (tuple.make
+  ;; CHECK-NEXT:  (tuple.make 2
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )

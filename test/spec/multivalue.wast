@@ -1,7 +1,7 @@
 (module
- (global $global_pair (mut (i32 i64)) (tuple.make (i32.const 0) (i64.const 0)))
+ (global $global_pair (mut (i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 0)))
  (func $pair (export "pair") (result i32 i64)
-  (tuple.make
+  (tuple.make 2
    (i32.const 42)
    (i64.const 7)
   )
@@ -15,7 +15,7 @@
  )
  (func (export "tuple-global-set")
   (global.set $global_pair
-   (tuple.make
+   (tuple.make 2
     (i32.const 42)
     (i64.const 7)
    )
@@ -27,9 +27,9 @@
  )
 )
 
-(assert_return (invoke "pair") (tuple.make (i32.const 42) (i64.const 7)))
-(assert_return (invoke "tuple-local") (tuple.make (i32.const 0) (i64.const 0)))
-(assert_return (invoke "tuple-global-get") (tuple.make (i32.const 0) (i64.const 0)))
+(assert_return (invoke "pair") (tuple.make 2 (i32.const 42) (i64.const 7)))
+(assert_return (invoke "tuple-local") (tuple.make 2 (i32.const 0) (i64.const 0)))
+(assert_return (invoke "tuple-global-get") (tuple.make 2 (i32.const 0) (i64.const 0)))
 (assert_return (invoke "tuple-global-set"))
-(assert_return (invoke "tuple-global-get") (tuple.make (i32.const 42) (i64.const 7)))
-(assert_return (invoke "tail-call") (tuple.make (i32.const 42) (i64.const 7)))
+(assert_return (invoke "tuple-global-get") (tuple.make 2 (i32.const 42) (i64.const 7)))
+(assert_return (invoke "tail-call") (tuple.make 2 (i32.const 42) (i64.const 7)))

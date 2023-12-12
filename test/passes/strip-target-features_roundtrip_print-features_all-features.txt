@@ -18,7 +18,7 @@
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)
-  (tuple.make
+  (tuple.make 2
    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
    (ref.null noextern)
   )

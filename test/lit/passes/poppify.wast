@@ -282,7 +282,7 @@
   ;; CHECK-NEXT:  (i64.const 1)
   ;; CHECK-NEXT: )
   (func $tuple (result i32 i64)
-    (tuple.make
+    (tuple.make 2
       (i32.const 0)
       (i64.const 1)
     )
@@ -301,7 +301,7 @@
   ;; CHECK-NEXT: )
   (func $extract-first (result i32)
     (tuple.extract 0
-      (tuple.make
+      (tuple.make 3
         (i32.const 0)
         (i64.const 1)
         (f32.const 2)
@@ -327,7 +327,7 @@
   ;; CHECK-NEXT: )
   (func $extract-middle (result i64)
     (tuple.extract 1
-      (tuple.make
+      (tuple.make 3
         (i32.const 0)
         (i64.const 1)
         (f32.const 2)
@@ -353,7 +353,7 @@
   ;; CHECK-NEXT: )
   (func $extract-last (result f32)
     (tuple.extract 2
-      (tuple.make
+      (tuple.make 3
         (i32.const 0)
         (i64.const 1)
         (f32.const 2)
@@ -385,7 +385,7 @@
   ;; CHECK-NEXT: )
   (func $drop-tuple
     (drop
-      (tuple.make
+      (tuple.make 2
         (i32.const 0)
         (i64.const 1)
       )
@@ -434,7 +434,7 @@
   (func $local-set-tuple
     (local $x (i32 i64))
     (local.set $x
-      (tuple.make
+      (tuple.make 2
         (i32.const 0)
         (i64.const 1)
       )
@@ -458,7 +458,7 @@
   (func $local-tee-tuple (result i32 i64)
     (local $x (i32 i64))
     (local.tee $x
-      (tuple.make
+      (tuple.make 2
         (i32.const 0)
         (i64.const 1)
       )
@@ -477,7 +477,7 @@
   (func $break-tuple (result i32 i64)
     (block $l (result i32 i64)
       (br $l
-        (tuple.make
+        (tuple.make 2
           (i32.const 0)
           (i64.const 1)
         )
@@ -494,7 +494,7 @@
   ;; CHECK-NEXT: )
   (func $return-tuple (result i32 i64)
     (return
-      (tuple.make
+      (tuple.make 2
         (i32.const 0)
         (i64.const 1)
       )

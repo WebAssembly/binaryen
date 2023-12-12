@@ -574,7 +574,7 @@
  )
 
  ;; CHECK:      (func $add-twice (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:    (i32.const 2)
@@ -596,7 +596,7 @@
 
  ;; CHECK:      (func $add-twice-stacky (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (i32.add
@@ -625,7 +625,7 @@
 
  ;; CHECK:      (func $add-twice-stacky-2 (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:    (i32.const 2)
@@ -870,7 +870,7 @@
  ;; CHECK-NEXT:      (block (result i32)
  ;; CHECK-NEXT:       (local.set $scratch_1
  ;; CHECK-NEXT:        (block $1 (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:         (tuple.make
+ ;; CHECK-NEXT:         (tuple.make 2
  ;; CHECK-NEXT:          (block $2 (result i32)
  ;; CHECK-NEXT:           (local.set $scratch
  ;; CHECK-NEXT:            (block $3 (result i32)
@@ -924,7 +924,7 @@
  ;; CHECK-NEXT:  (local.set $scratch
  ;; CHECK-NEXT:   (block (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:    (block (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (i32.const 1)
  ;; CHECK-NEXT:     )
@@ -1602,7 +1602,7 @@
  ;; CHECK:      (func $try-catch-params (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (try (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (do
- ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (i64.const 1)
  ;; CHECK-NEXT:    )
@@ -2167,7 +2167,7 @@
  ;; CHECK:      (func $br-multivalue (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (block $label (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (br $label
- ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:     (i64.const 1)
  ;; CHECK-NEXT:    )
@@ -2187,7 +2187,7 @@
  ;; CHECK-NEXT:     (f32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (br $label
- ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 1)
  ;; CHECK-NEXT:      (i64.const 2)
  ;; CHECK-NEXT:     )
@@ -2290,7 +2290,7 @@
  ;; CHECK-NEXT:  (block $a (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (block $b (type $5) (result i32 i64)
  ;; CHECK-NEXT:    (br_table $a $b
- ;; CHECK-NEXT:     (tuple.make
+ ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:      (i64.const 42)
  ;; CHECK-NEXT:     )
@@ -2858,7 +2858,7 @@
 
  ;; CHECK:      (func $return-two (type $29) (param $0 i32) (param $1 i64) (result i32 i64)
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
@@ -2872,7 +2872,7 @@
 
  ;; CHECK:      (func $return-two-first-unreachable (type $30) (param $0 i64) (result i32 i64)
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
@@ -2889,7 +2889,7 @@
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )

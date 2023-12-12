@@ -24,7 +24,7 @@
    )
   )
   (local.set $1
-   (tuple.make
+   (tuple.make 2
     (local.get $0)   ;; This will turn into 42.
     (i32.const 1000)
    )

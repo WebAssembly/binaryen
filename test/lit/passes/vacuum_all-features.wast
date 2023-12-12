@@ -1295,7 +1295,7 @@
     ;; the way.
     (drop
      (br_if $block
-      (tuple.make
+      (tuple.make 2
        (ref.func $1)
        (i32.const 0)
       )
@@ -1303,7 +1303,7 @@
      )
     )
     (nop)
-    (tuple.make
+    (tuple.make 2
      (ref.func $1)
      (i32.const 1)
     )

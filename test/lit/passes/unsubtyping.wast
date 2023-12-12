@@ -705,7 +705,7 @@
 
  ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (struct.new_default $sub1)
  ;; CHECK-NEXT:    (struct.new_default $sub2)
  ;; CHECK-NEXT:   )
@@ -714,7 +714,7 @@
  (func $return-many (result (ref $super1) (ref $super2))
   ;; This requires $sub1 <: $super1 and $sub2 <: super2.
   (return
-   (tuple.make
+   (tuple.make 2
     (struct.new $sub1)
     (struct.new $sub2)
    )

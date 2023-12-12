@@ -4206,7 +4206,7 @@
 
   ;; CHECK:      (func $tuples (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
@@ -4214,7 +4214,7 @@
   ;; CHECK-NEXT: )
   (func $tuples
     (drop
-      (tuple.make
+      (tuple.make 2
         (i32.const 1)
         (i32.const 2)
       )

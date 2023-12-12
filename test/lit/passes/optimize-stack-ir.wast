@@ -1404,7 +1404,7 @@
   ;; CHECK-NEXT:  (local $f32 f32)
   ;; CHECK-NEXT:  f32.const 0
   ;; CHECK-NEXT:  i32.const 0
-  ;; CHECK-NEXT:  tuple.make
+  ;; CHECK-NEXT:  tuple.make 2
   ;; CHECK-NEXT:  local.set $pair
   ;; CHECK-NEXT:  local.get $pair
   ;; CHECK-NEXT:  tuple.extract 0
@@ -1416,7 +1416,7 @@
     ;; We should not optimize out this get-set pair in Stack IR since we can do
     ;; better in the binary writer.
     (local.set $pair
-      (tuple.make
+      (tuple.make 2
         (f32.const 0)
         (i32.const 0)
       )

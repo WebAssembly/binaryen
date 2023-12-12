@@ -24,7 +24,7 @@
 //       (func $foo
 //        (drop
 //         (block (result funcref (ref $none))
-//          (tuple.make
+//          (tuple.make 2
 //           (ref.null func)
 //           (ref.func $foo)
 //          )
