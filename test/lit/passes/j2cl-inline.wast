@@ -18,7 +18,7 @@
   ;; CHECK:      (global $f_$initialized__ (mut i32) (i32.const 0))
   (global $f_$initialized__ (mut i32) (i32.const 0))
 
-  ;; not hoisted but trivial
+  ;; Not hoisted but trivial.
   ;; CHECK:      (func $clinit-non-trivial_@once@_ (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $f_$initialized__)
