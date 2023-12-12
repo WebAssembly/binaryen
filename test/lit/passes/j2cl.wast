@@ -72,7 +72,7 @@
   )
 )
 
-;; Fields are initialized to a non-default value shoudn't be hoisted
+;; Fields initialized to a non-default value shouldn't be hoisted.
 (module
   ;; CHECK:      (type $A (struct ))
   (type $A (struct))
