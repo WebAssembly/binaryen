@@ -313,21 +313,21 @@
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (tuple.make 2
  ;; CHECK-NEXT:       (ref.as_non_null
- ;; CHECK-NEXT:        (tuple.extract 0
+ ;; CHECK-NEXT:        (tuple.extract 2 0
  ;; CHECK-NEXT:         (local.get $1)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:       (tuple.extract 2 1
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (tuple.make 2
  ;; CHECK-NEXT:       (ref.as_non_null
- ;; CHECK-NEXT:        (tuple.extract 0
+ ;; CHECK-NEXT:        (tuple.extract 2 0
  ;; CHECK-NEXT:         (local.get $1)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:       (tuple.extract 2 1
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -335,11 +335,11 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (ref.as_non_null
- ;; CHECK-NEXT:      (tuple.extract 0
+ ;; CHECK-NEXT:      (tuple.extract 2 0
  ;; CHECK-NEXT:       (local.get $1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -347,11 +347,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (tuple.extract 0
+ ;; CHECK-NEXT:    (tuple.extract 2 0
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

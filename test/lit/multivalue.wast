@@ -36,19 +36,19 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block (result i32)
  ;; CHECK-NEXT:   (local.set $2
- ;; CHECK-NEXT:    (tuple.extract 0
+ ;; CHECK-NEXT:    (tuple.extract 3 0
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block (result i64)
  ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (tuple.extract 1
+ ;; CHECK-NEXT:      (tuple.extract 3 1
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (tuple.extract 2
+ ;; CHECK-NEXT:      (tuple.extract 3 2
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -59,7 +59,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $get-first (result i32)
-  (tuple.extract 0
+  (tuple.extract 3 0
    (call $triple)
   )
  )
@@ -75,19 +75,19 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $3
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 3 0
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.set $0
  ;; CHECK-NEXT:     (block (result i64)
  ;; CHECK-NEXT:      (local.set $2
- ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:       (tuple.extract 3 1
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (drop
- ;; CHECK-NEXT:       (tuple.extract 2
+ ;; CHECK-NEXT:       (tuple.extract 3 2
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -100,7 +100,7 @@
  ;; CHECK-NEXT:  (local.get $0)
  ;; CHECK-NEXT: )
  (func $get-second (result i64)
-  (tuple.extract 1
+  (tuple.extract 3 1
    (call $triple)
   )
  )
@@ -116,19 +116,19 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $3
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 3 0
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i64)
  ;; CHECK-NEXT:      (local.set $2
- ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:       (tuple.extract 3 1
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (local.set $0
- ;; CHECK-NEXT:       (tuple.extract 2
+ ;; CHECK-NEXT:       (tuple.extract 3 2
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -141,7 +141,7 @@
  ;; CHECK-NEXT:  (local.get $0)
  ;; CHECK-NEXT: )
  (func $get-third (result f32)
-  (tuple.extract 2
+  (tuple.extract 3 2
    (call $triple)
   )
  )
@@ -161,19 +161,19 @@
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $7
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 3 0
  ;; CHECK-NEXT:      (local.get $5)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.set $1
  ;; CHECK-NEXT:     (block (result i64)
  ;; CHECK-NEXT:      (local.set $6
- ;; CHECK-NEXT:       (tuple.extract 1
+ ;; CHECK-NEXT:       (tuple.extract 3 1
  ;; CHECK-NEXT:        (local.get $5)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (local.set $3
- ;; CHECK-NEXT:       (tuple.extract 2
+ ;; CHECK-NEXT:       (tuple.extract 3 2
  ;; CHECK-NEXT:        (local.get $5)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -195,13 +195,13 @@
    (call $triple)
   )
   (tuple.make 3
-   (tuple.extract 2
+   (tuple.extract 3 2
     (local.get $x)
    )
-   (tuple.extract 1
+   (tuple.extract 3 1
     (local.get $x)
    )
-   (tuple.extract 0
+   (tuple.extract 3 0
     (local.get $x)
    )
   )
@@ -217,7 +217,7 @@
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $unreachable (result i64)
-  (tuple.extract 1
+  (tuple.extract 3 1
    (tuple.make 3
     (i32.const 42)
     (i64.const 7)
@@ -257,7 +257,7 @@
    )
   )
   (drop
-   (tuple.extract 1
+   (tuple.extract 2 1
     (global.get $g1)
    )
   )
@@ -274,12 +274,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -330,12 +330,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -404,10 +404,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 2 0
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -438,20 +438,20 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 2 0
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -486,13 +486,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 3
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 3 0
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 3 1
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 2
+ ;; CHECK-NEXT:   (tuple.extract 3 2
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -524,10 +524,10 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 2 0
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -558,20 +558,20 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (tuple.make 2
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (tuple.make 2
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 2 0
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

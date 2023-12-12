@@ -1407,7 +1407,7 @@
   ;; CHECK-NEXT:  tuple.make 2
   ;; CHECK-NEXT:  local.set $pair
   ;; CHECK-NEXT:  local.get $pair
-  ;; CHECK-NEXT:  tuple.extract 0
+  ;; CHECK-NEXT:  tuple.extract 2 0
   ;; CHECK-NEXT:  local.set $f32
   ;; CHECK-NEXT: )
   (func $tuple-local2stack
@@ -1422,7 +1422,7 @@
       )
     )
     (local.set $f32
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $pair)
       )
     )

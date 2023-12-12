@@ -50,13 +50,13 @@
     )
     (tuple.drop 2
      (tuple.make 2
-      (tuple.extract 0
+      (tuple.extract 2 0
        (tuple.make 2
         (i32.const 42)
         (i32.const 0)
        )
       )
-      (tuple.extract 1
+      (tuple.extract 2 1
        (tuple.make 2
         (i64.const 0)
         (i64.const 42)
@@ -355,13 +355,13 @@
   )
   (func $tuple-precompute (result i32 i64)
    (tuple.make 2
-    (tuple.extract 0
+    (tuple.extract 2 0
      (tuple.make 2
       (i32.const 42)
       (i32.const 0)
      )
     )
-    (tuple.extract 1
+    (tuple.extract 2 1
      (tuple.make 2
       (i64.const 0)
       (i64.const 42)

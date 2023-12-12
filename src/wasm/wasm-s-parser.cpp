@@ -2872,11 +2872,16 @@ Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
-  ret->index = parseIndex(*s[1]);
-  ret->tuple = parseExpression(s[2]);
-  if (ret->tuple->type != Type::unreachable &&
-      ret->index >= ret->tuple->type.size()) {
-    throw SParseException("Bad index on tuple.extract", s, *s[1]);
+  size_t arity = std::stoll(s[1]->toString());
+  ret->index = parseIndex(*s[2]);
+  ret->tuple = parseExpression(s[3]);
+  if (ret->tuple->type != Type::unreachable) {
+    if (arity != ret->tuple->type.size()) {
+      throw SParseException("Unexpected tuple.extract arity", s, *s[1]);
+    }
+    if (ret->index >= ret->tuple->type.size()) {
+      throw SParseException("Bad index on tuple.extract", s, *s[2]);
+    }
   }
   ret->finalize();
   return ret;

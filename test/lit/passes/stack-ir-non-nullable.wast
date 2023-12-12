@@ -346,7 +346,7 @@
  ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -364,7 +364,7 @@
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
   (local $temp (i32 (ref eq)))
@@ -379,7 +379,7 @@
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
@@ -403,7 +403,7 @@
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )
@@ -415,7 +415,7 @@
  ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -433,7 +433,7 @@
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-defaultable (param $param (ref null eq)) (result (ref null eq))
   (local $temp (i32 (ref null eq)))
@@ -447,7 +447,7 @@
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
@@ -471,7 +471,7 @@
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )

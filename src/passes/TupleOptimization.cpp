@@ -22,7 +22,7 @@
 //  (local.set $tuple
 //    (tuple.make 3 (A) (B) (C)))
 //  (use
-//    (tuple.extract 0
+//    (tuple.extract 3 0
 //      (local.get $tuple)))
 //
 // If there are no other uses, then we just need one of the three lanes. By

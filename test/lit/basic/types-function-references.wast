@@ -206,19 +206,19 @@
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block (result i32)
   ;; CHECK-BIN-NEXT:    (local.set $2
-  ;; CHECK-BIN-NEXT:     (tuple.extract 0
+  ;; CHECK-BIN-NEXT:     (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:      (local.get $0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (drop
   ;; CHECK-BIN-NEXT:     (block (result (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:      (local.set $1
-  ;; CHECK-BIN-NEXT:       (tuple.extract 1
+  ;; CHECK-BIN-NEXT:       (tuple.extract 3 1
   ;; CHECK-BIN-NEXT:        (local.get $0)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (tuple.extract 2
+  ;; CHECK-BIN-NEXT:       (tuple.extract 3 2
   ;; CHECK-BIN-NEXT:        (local.get $0)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
@@ -444,19 +444,19 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.set $2
-;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 0
+;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 3 0
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
 ;; CHECK-BIN-NODEBUG-NEXT:     (block (result (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 1
+;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 1
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:      (drop
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 2
+;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 2
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )

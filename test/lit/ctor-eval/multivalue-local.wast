@@ -35,7 +35,7 @@
   ;; Use the locals so they are not trivally removed.
   (i32.add
    (local.get $0)
-   (tuple.extract 0
+   (tuple.extract 2 0
     (local.get $1)
    )
   )

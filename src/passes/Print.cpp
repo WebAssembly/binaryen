@@ -1998,6 +1998,7 @@ struct PrintExpressionContents
   }
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
+    o << curr->tuple->type.size() << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }

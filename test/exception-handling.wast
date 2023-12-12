@@ -30,7 +30,7 @@
       (catch $e-i32-i64
         (local.set $x (pop i32 i64))
         (drop
-          (tuple.extract 0
+          (tuple.extract 2 0
             (local.get $x)
           )
         )

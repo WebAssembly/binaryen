@@ -323,7 +323,7 @@
 )
 
 # TupleExtract
-(tuple.extract 0
+(tuple.extract 2 0
  (tuple.make 2
   (f64.const 3)
   (f64.const 4)

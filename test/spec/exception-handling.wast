@@ -84,7 +84,7 @@
         (local.set $x
           (pop i32 f32)
         )
-        (tuple.extract 0
+        (tuple.extract 2 0
           (local.get $x)
         )
       )

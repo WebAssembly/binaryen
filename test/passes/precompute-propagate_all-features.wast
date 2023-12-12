@@ -196,10 +196,10 @@
     )
    )
    (tuple.make 2
-    (tuple.extract 0
+    (tuple.extract 2 0
      (local.get $i32s)
     )
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $i64s)
     )
    )

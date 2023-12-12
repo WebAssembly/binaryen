@@ -2164,7 +2164,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (tuple.extract 1
+  ;; CHECK-NEXT:     (tuple.extract 2 1
   ;; CHECK-NEXT:      (pop anyref anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2182,7 +2182,7 @@
       (do)
       (catch $tag
         (drop
-          (tuple.extract 0
+          (tuple.extract 2 0
             (pop (ref null any) (ref null any))
           )
         )
@@ -2193,7 +2193,7 @@
       (do)
       (catch $tag
         (drop
-          (tuple.extract 1
+          (tuple.extract 2 1
             (pop (ref null any) (ref null any))
           )
         )

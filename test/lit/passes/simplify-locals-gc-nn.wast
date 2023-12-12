@@ -67,15 +67,15 @@
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (tuple.drop 3
   ;; CHECK-NEXT:     (tuple.make 3
-  ;; CHECK-NEXT:      (tuple.extract 0
+  ;; CHECK-NEXT:      (tuple.extract 3 0
   ;; CHECK-NEXT:       (local.get $nn)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.as_non_null
-  ;; CHECK-NEXT:       (tuple.extract 1
+  ;; CHECK-NEXT:       (tuple.extract 3 1
   ;; CHECK-NEXT:        (local.get $nn)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (tuple.extract 2
+  ;; CHECK-NEXT:      (tuple.extract 3 2
   ;; CHECK-NEXT:       (local.get $nn)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
