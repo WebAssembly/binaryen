@@ -128,7 +128,7 @@ private:
       // Only hoist fields initialized by its own class.
       // If it is only initialized once but by another class (although it is
       // very uncommon / edge scenario) then we cannot be sure if the clinit was
-      // trigger before the field access so it is better to leave it alone.
+      // triggered before the field access so it is better to leave it alone.
       return;
     }
 
