@@ -141,7 +141,6 @@ private:
   AssignmentCountMap& assignmentCounts;
 };
 
-
 // A visitor that marks trivial once functions for removal.
 // TODO: parallelize
 class EnableInline : public WalkerPass<PostWalker<EnableInline>> {
@@ -171,7 +170,7 @@ public:
   }
 };
 
-struct J2clOpts : public Pass {
+struct J2CLOpts : public Pass {
   void hoistConstants(Module* module) {
     AssignmentCountMap assignmentCounts;
 
@@ -216,6 +215,6 @@ struct J2clOpts : public Pass {
 
 } // anonymous namespace
 
-Pass* createJ2clOptsPass() { return new J2clOpts(); }
+Pass* createJ2CLOptsPass() { return new J2CLOpts(); }
 
 } // namespace wasm

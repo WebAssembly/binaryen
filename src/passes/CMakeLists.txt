@@ -52,7 +52,7 @@ set(passes_SOURCES
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
-  J2clOpts.cpp
+  J2CLOpts.cpp
   JSPI.cpp
   LegalizeJSInterface.cpp
   LimitSegments.cpp
