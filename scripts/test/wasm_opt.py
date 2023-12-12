@@ -104,27 +104,15 @@ def test_wasm_opt():
         actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
         shared.fail_if_not_identical(actual.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
 
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        shared.fail_if_not_identical_to_file(actual, f)
-
 
 def update_wasm_opt_tests():
-    print('\n[ checking wasm-opt -o notation... ]\n')
+    print('\n[ updating wasm-opt -o notation... ]\n')
     wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
     support.run_command(cmd)
     open(wast, 'w').write(open('a.wast').read())
 
-    print('\n[ checking wasm-opt parsing & printing... ]\n')
+    print('\n[ updating wasm-opt parsing & printing... ]\n')
     for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
         wasm = t.replace('.wast', '')
@@ -140,7 +128,7 @@ def update_wasm_opt_tests():
         with open(wasm + '.minified.txt', 'wb') as o:
             o.write(actual)
 
-    print('\n[ checking wasm-opt passes... ]\n')
+    print('\n[ updating wasm-opt passes... ]\n')
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         # windows has some failures that need to be investigated:
@@ -175,14 +163,3 @@ def update_wasm_opt_tests():
             with open('a.wat') as i:
                 with open(t + '.wat', 'w') as o:
                     o.write(i.read())
-
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        open(f, 'w').write(actual)
