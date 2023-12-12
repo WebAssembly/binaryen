@@ -48,7 +48,7 @@
         (i32.const 1)
       )
     )
-    (drop
+    (tuple.drop 2
      (tuple.make 2
       (tuple.extract 0
        (tuple.make 2

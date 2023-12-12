@@ -32,7 +32,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $foo
-  (drop
+  (tuple.drop 2
    ;; a tuple type with a non-nullable element, that must be carefully handled
    (block $block (result funcref (ref $none))
     (tuple.make 2

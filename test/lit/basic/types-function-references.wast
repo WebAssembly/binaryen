@@ -188,7 +188,7 @@
   )
 
   ;; CHECK-TEXT:      (func $type-only-in-tuple-block (type $void)
-  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:  (tuple.drop 3
   ;; CHECK-TEXT-NEXT:   (block $block (type $3) (result i32 (ref null $mixed_results) f64)
   ;; CHECK-TEXT-NEXT:    (unreachable)
   ;; CHECK-TEXT-NEXT:   )
@@ -230,7 +230,7 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $type-only-in-tuple-block
-    (drop
+    (tuple.drop 3
       (block $block (result i32 (ref null $mixed_results) f64)
         (unreachable)
       )

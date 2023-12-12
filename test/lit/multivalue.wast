@@ -288,7 +288,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $drop-call
-  (drop
+  (tuple.drop 2
    (call $pair)
   )
  )
@@ -308,7 +308,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $drop-tuple-make
-  (drop
+  (tuple.drop 2
    (tuple.make 2
     (i32.const 42)
     (i64.const 42)
@@ -344,7 +344,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $drop-block
-  (drop
+  (tuple.drop 2
    (block $block (result i32 i64)
     (tuple.make 2
      (i32.const 42)
