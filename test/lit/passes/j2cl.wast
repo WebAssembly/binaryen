@@ -2,7 +2,7 @@
 
 ;; RUN: foreach %s %t wasm-opt --optimize-j2cl -all -S -o - | filecheck %s
 
-;; Simple primitives are hoisted
+;; Simple primitives are hoisted.
 (module
   ;; CHECK:      (type $0 (func))
 
