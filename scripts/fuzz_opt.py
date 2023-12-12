@@ -315,6 +315,8 @@ INITIAL_CONTENTS_IGNORE = [
     'multi-memory-lowering-import-error.wast',
     # the fuzzer does not support typed continuations
     'typed_continuations.wast',
+    # New EH implementation is in progress
+    'exception-handling.wast',
 ]
 
 
