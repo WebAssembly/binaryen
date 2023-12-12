@@ -1286,14 +1286,14 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $1
-  (drop
+  (tuple.drop 2
    (block $block (result funcref i32)
     ;; we can vaccum out all parts of this block: the br_if is not taken, there
     ;; is a nop, and the tuple at the end goes to a dropped block anyhow. this
     ;; test specifically verifies handling of tuples containing non-nullable
     ;; types, for which we try to create a zero in an intermediate step along
     ;; the way.
-    (drop
+    (tuple.drop 2
      (br_if $block
       (tuple.make 2
        (ref.func $1)

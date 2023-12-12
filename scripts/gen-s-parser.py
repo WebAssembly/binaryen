@@ -559,6 +559,7 @@ instructions = [
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
+    ("tuple.drop",           "makeTupleDrop(s)"),
     ("pop",                  "makePop(s)"),
     # Typed function references instructions
     ("call_ref",             "makeCallRef(s, /*isReturn=*/false)"),

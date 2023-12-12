@@ -840,7 +840,7 @@
 
  ;; CHECK:      (func $block-folded (type $void)
  ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (block $l (type $ret2) (result i32 i32)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)

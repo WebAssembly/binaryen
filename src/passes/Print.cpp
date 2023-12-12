@@ -1910,7 +1910,14 @@ struct PrintExpressionContents
       printResultType(curr->type);
     }
   }
-  void visitDrop(Drop* curr) { printMedium(o, "drop"); }
+  void visitDrop(Drop* curr) {
+    if (curr->value->type.isTuple()) {
+      printMedium(o, "tuple.drop ");
+      o << curr->value->type.size();
+    } else {
+      printMedium(o, "drop");
+    }
+  }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitMemorySize(MemorySize* curr) {
     printMedium(o, "memory.size");

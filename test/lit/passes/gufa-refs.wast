@@ -2150,7 +2150,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:      (tuple.drop 2
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.null none)
@@ -4205,7 +4205,7 @@
   )
 
   ;; CHECK:      (func $tuples (type $0)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
@@ -4213,7 +4213,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tuples
-    (drop
+    (tuple.drop 2
       (tuple.make 2
         (i32.const 1)
         (i32.const 2)

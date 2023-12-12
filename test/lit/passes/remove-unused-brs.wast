@@ -326,9 +326,9 @@
   )
 
   ;; CHECK:      (func $restructure-select-no-multivalue (type $1)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $block (type $2) (result i32 i32)
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:    (tuple.drop 2
   ;; CHECK-NEXT:     (br_if $block
   ;; CHECK-NEXT:      (tuple.make 2
   ;; CHECK-NEXT:       (i32.const 1)
@@ -347,9 +347,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $restructure-select-no-multivalue
-    (drop
+    (tuple.drop 2
       (block $block (result i32 i32)
-        (drop
+        (tuple.drop 2
           (br_if $block
             (tuple.make 2
               (i32.const 1)

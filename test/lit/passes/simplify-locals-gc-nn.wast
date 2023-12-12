@@ -65,7 +65,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:    (tuple.drop 3
   ;; CHECK-NEXT:     (tuple.make 3
   ;; CHECK-NEXT:      (tuple.extract 0
   ;; CHECK-NEXT:       (local.get $nn)
@@ -97,12 +97,12 @@
     )
     (try
       (do
-        (drop
+        (tuple.drop 3
           (local.get $nn)
         )
       )
       (catch_all
-        (drop
+        (tuple.drop 3
           (local.get $nn)
         )
       )

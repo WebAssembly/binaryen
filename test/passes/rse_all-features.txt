@@ -56,7 +56,7 @@
     (i64.const 42)
    )
   )
-  (drop
+  (tuple.drop 2
    (tuple.make 2
     (i32.const 42)
     (i64.const 42)

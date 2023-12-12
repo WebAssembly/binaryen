@@ -119,6 +119,7 @@ template<typename Ctx> Result<> makeThrow(Ctx&, Index);
 template<typename Ctx> Result<> makeRethrow(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleMake(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleExtract(Ctx&, Index);
+template<typename Ctx> Result<> makeTupleDrop(Ctx&, Index);
 template<typename Ctx> Result<> makeCallRef(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeRefI31(Ctx&, Index);
 template<typename Ctx> Result<> makeI31Get(Ctx&, Index, bool signed_);
@@ -1470,6 +1471,10 @@ template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
+  return ctx.in.err("unimplemented instruction");
+}
+
+template<typename Ctx> Result<> makeTupleDrop(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 

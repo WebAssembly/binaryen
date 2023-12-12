@@ -285,7 +285,7 @@
 
  ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
  ;; CHECK-NEXT:  (local $1 (anyref i32))
- ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:    (i32.const 0)

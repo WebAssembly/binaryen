@@ -384,7 +384,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-tuple
-    (drop
+    (tuple.drop 2
       (tuple.make 2
         (i32.const 0)
         (i64.const 1)
