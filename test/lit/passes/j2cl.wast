@@ -6,7 +6,7 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $field-f64 f64 (f64.const 0))
+  ;; CHECK:      (global $field-f64 f64 (f64.const 1))
 
   ;; CHECK:      (global $field-i32 i32 (i32.const 1))
   (global $field-i32 (mut i32) (i32.const 0))
@@ -17,7 +17,7 @@
   ;; CHECK-NEXT: )
   (func $clinit_@once@_
     (global.set $field-i32 (i32.const 1))
-    (global.set $field-f64 (f64.const 0))
+    (global.set $field-f64 (f64.const 1))
   )
 )
 
