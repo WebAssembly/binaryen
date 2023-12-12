@@ -1159,13 +1159,47 @@ Result<> IRBuilder::makeRefEq() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeTableGet() {}
+Result<> IRBuilder::makeTableGet(Name table) {
+  TableGet curr;
+  CHECK_ERR(visitTableGet(&curr));
+  auto type = wasm.getTable(table)->type;
+  push(builder.makeTableGet(table, curr.index, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSet() {}
+Result<> IRBuilder::makeTableSet(Name table) {
+  TableSet curr;
+  CHECK_ERR(visitTableSet(&curr));
+  push(builder.makeTableSet(table, curr.index, curr.value));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSize() {}
+Result<> IRBuilder::makeTableSize(Name table) {
+  push(builder.makeTableSize(table));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableGrow() {}
+Result<> IRBuilder::makeTableGrow(Name table) {
+  TableGrow curr;
+  CHECK_ERR(visitTableGrow(&curr));
+  push(builder.makeTableGrow(table, curr.value, curr.delta));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableFill(Name table) {
+  TableFill curr;
+  CHECK_ERR(visitTableFill(&curr));
+  push(builder.makeTableFill(table, curr.dest, curr.value, curr.size));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
+  TableCopy curr;
+  CHECK_ERR(visitTableCopy(&curr));
+  push(builder.makeTableCopy(
+    curr.dest, curr.source, curr.size, destTable, srcTable));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeTry(Name label, Type type) {
   auto* tryy = wasm.allocator.alloc<Try>();

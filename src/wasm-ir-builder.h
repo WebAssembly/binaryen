@@ -148,12 +148,12 @@ public:
   [[nodiscard]] Result<> makeRefIsNull();
   [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
-  // [[nodiscard]] Result<> makeTableGet();
-  // [[nodiscard]] Result<> makeTableSet();
-  // [[nodiscard]] Result<> makeTableSize();
-  // [[nodiscard]] Result<> makeTableGrow();
-  // [[nodiscard]] Result<> makeTableFill();
-  // [[nodiscard]] Result<> makeTableCopy();
+  [[nodiscard]] Result<> makeTableGet(Name table);
+  [[nodiscard]] Result<> makeTableSet(Name table);
+  [[nodiscard]] Result<> makeTableSize(Name table);
+  [[nodiscard]] Result<> makeTableGrow(Name table);
+  [[nodiscard]] Result<> makeTableFill(Name table);
+  [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeThrow(Name tag);
   // [[nodiscard]] Result<> makeRethrow();

@@ -1380,6 +1380,7 @@ public:
 
 class TableGet : public SpecificExpression<Expression::TableGetId> {
 public:
+  TableGet() = default;
   TableGet(MixedArena& allocator) {}
 
   Name table;
@@ -1391,6 +1392,7 @@ public:
 
 class TableSet : public SpecificExpression<Expression::TableSetId> {
 public:
+  TableSet() = default;
   TableSet(MixedArena& allocator) {}
 
   Name table;

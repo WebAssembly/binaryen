@@ -1433,27 +1433,44 @@ template<typename Ctx> Result<> makeRefEq(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTableGet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableGet(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableSet(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableSize(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableSize(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableGrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableGrow(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableFill(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableFill(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableCopy(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto destTable = maybeTableidx(ctx);
+  CHECK_ERR(destTable);
+  auto srcTable = maybeTableidx(ctx);
+  CHECK_ERR(srcTable);
+  if (destTable && !srcTable) {
+    return ctx.in.err("expected table index or identifier");
+  }
+  return ctx.makeTableCopy(pos, destTable.getPtr(), srcTable.getPtr());
 }
 
 template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
