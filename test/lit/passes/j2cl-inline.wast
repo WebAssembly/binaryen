@@ -6,41 +6,41 @@
 (module
 
   ;; A once function that has become empty
-  (func $clinit-trivial-1_@once@_  )
+  (func $clinit-trivial-1_@once@_@Foo  )
 
   ;; A once function that just calls another
-  (func $clinit-trivial-2_@once@_
-    (call $clinit-trivial-1_@once@_)
+  (func $clinit-trivial-2_@once@_@Bar
+    (call $clinit-trivial-1_@once@_@Foo)
   )
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $f_$initialized__ (mut i32) (i32.const 0))
-  (global $f_$initialized__ (mut i32) (i32.const 0))
+  ;; CHECK:      (global $$class-initialized@Zoo (mut i32) (i32.const 0))
+  (global $$class-initialized@Zoo (mut i32) (i32.const 0))
 
   ;; Not hoisted but trivial.
-  ;; CHECK:      (func $clinit-non-trivial_@once@_ (type $0)
+  ;; CHECK:      (func $clinit-non-trivial_@once@_@Zoo (type $0)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $f_$initialized__)
+  ;; CHECK-NEXT:   (global.get $$class-initialized@Zoo)
   ;; CHECK-NEXT:   (return)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $f_$initialized__
+  ;; CHECK-NEXT:  (global.set $$class-initialized@Zoo
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $clinit-non-trivial_@once@_
-    (if (global.get $f_$initialized__)
+  (func $clinit-non-trivial_@once@_@Zoo
+    (if (global.get $$class-initialized@Zoo)
      (return)
     )
-    (global.set $f_$initialized__ (i32.const 1))
+    (global.set $$class-initialized@Zoo (i32.const 1))
   )
 
   ;; CHECK:      (func $main (type $0)
-  ;; CHECK-NEXT:  (call $clinit-non-trivial_@once@_)
+  ;; CHECK-NEXT:  (call $clinit-non-trivial_@once@_@Zoo)
   ;; CHECK-NEXT: )
   (func $main
-    (call $clinit-trivial-1_@once@_)
-    (call $clinit-trivial-2_@once@_)
-    (call $clinit-non-trivial_@once@_)
+    (call $clinit-trivial-1_@once@_@Foo)
+    (call $clinit-trivial-2_@once@_@Bar)
+    (call $clinit-non-trivial_@once@_@Zoo)
   )
 )
