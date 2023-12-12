@@ -317,14 +317,14 @@
 (rethrow $l1)
 
 # TupleMake
-(tuple.make
+(tuple.make 2
  (i32.const 6)
  (i32.const 7)
 )
 
 # TupleExtract
 (tuple.extract 0
- (tuple.make
+ (tuple.make 2
   (f64.const 3)
   (f64.const 4)
  )
