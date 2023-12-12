@@ -147,7 +147,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $clinit_@once@_@Bar
-    ;; Note that $clinit is @Bar and field is @Foo
+    ;; Note that $clinit is @Bar and field is @Foo.
     (global.set $field@Foo (i32.const 1))
   )
 )
