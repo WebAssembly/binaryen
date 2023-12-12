@@ -282,6 +282,9 @@
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction
 ;; CHECK-NEXT:                                                 combinations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific
+;; CHECK-NEXT:                                                 constructs.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --outlining                                   outline instructions
