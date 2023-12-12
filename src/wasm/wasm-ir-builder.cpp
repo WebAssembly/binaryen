@@ -471,6 +471,65 @@ Result<> IRBuilder::visitThrow(Throw* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitStringNew(StringNew* curr) {
+  switch (curr->op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16: {
+      auto len = pop();
+      CHECK_ERR(len);
+      curr->length = *len;
+      break;
+    }
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array: {
+      auto end = pop();
+      CHECK_ERR(end);
+      curr->end = *end;
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+      break;
+    }
+    case StringNewFromCodePoint:
+      break;
+  }
+  auto ptr = pop();
+  CHECK_ERR(ptr);
+  curr->ptr = *ptr;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
+  switch (curr->op) {
+    case StringEncodeUTF8Array:
+    case StringEncodeLossyUTF8Array:
+    case StringEncodeWTF8Array:
+    case StringEncodeWTF16Array: {
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+    }
+      [[fallthrough]];
+    case StringEncodeUTF8:
+    case StringEncodeLossyUTF8:
+    case StringEncodeWTF8:
+    case StringEncodeWTF16: {
+      auto ptr = pop();
+      CHECK_ERR(ptr);
+      curr->ptr = *ptr;
+      auto ref = pop();
+      CHECK_ERR(ref);
+      curr->ref = *ref;
+      return Ok{};
+    }
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -1433,30 +1492,113 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeStringNew() {}
+Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+  StringNew curr;
+  curr.op = op;
+  CHECK_ERR(visitStringNew(&curr));
+  // TODO: Store the memory in the IR.
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16:
+      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
+      return Ok{};
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array:
+      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
+      return Ok{};
+    case StringNewFromCodePoint:
+      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
+      return Ok{};
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
 
-// Result<> IRBuilder::makeStringConst() {}
+Result<> IRBuilder::makeStringConst(Name string) {
+  push(builder.makeStringConst(string));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringMeasure() {}
+Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
+  StringMeasure curr;
+  CHECK_ERR(visitStringMeasure(&curr));
+  push(builder.makeStringMeasure(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEncode() {}
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+  StringEncode curr;
+  curr.op = op;
+  CHECK_ERR(visitStringEncode(&curr));
+  // TODO: Store the memory in the IR.
+  push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringConcat() {}
+Result<> IRBuilder::makeStringConcat() {
+  StringConcat curr;
+  CHECK_ERR(visitStringConcat(&curr));
+  push(builder.makeStringConcat(curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEq() {}
+Result<> IRBuilder::makeStringEq(StringEqOp op) {
+  StringEq curr;
+  CHECK_ERR(visitStringEq(&curr));
+  push(builder.makeStringEq(op, curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringAs() {}
+Result<> IRBuilder::makeStringAs(StringAsOp op) {
+  StringAs curr;
+  CHECK_ERR(visitStringAs(&curr));
+  push(builder.makeStringAs(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF8Advance() {}
+Result<> IRBuilder::makeStringWTF8Advance() {
+  StringWTF8Advance curr;
+  CHECK_ERR(visitStringWTF8Advance(&curr));
+  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF16Get() {}
+Result<> IRBuilder::makeStringWTF16Get() {
+  StringWTF16Get curr;
+  CHECK_ERR(visitStringWTF16Get(&curr));
+  push(builder.makeStringWTF16Get(curr.ref, curr.pos));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterNext() {}
+Result<> IRBuilder::makeStringIterNext() {
+  StringIterNext curr;
+  CHECK_ERR(visitStringIterNext(&curr));
+  push(builder.makeStringIterNext(curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterMove() {}
+Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
+  StringIterMove curr;
+  CHECK_ERR(visitStringIterMove(&curr));
+  push(builder.makeStringIterMove(op, curr.ref, curr.num));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceWTF() {}
+Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+  StringSliceWTF curr;
+  CHECK_ERR(visitStringSliceWTF(&curr));
+  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceIter() {}
+Result<> IRBuilder::makeStringSliceIter() {
+  StringSliceIter curr;
+  CHECK_ERR(visitStringSliceIter(&curr));
+  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
 
 } // namespace wasm

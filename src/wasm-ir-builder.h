@@ -184,19 +184,19 @@ public:
   [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  // [[nodiscard]] Result<> makeStringNew();
-  // [[nodiscard]] Result<> makeStringConst();
-  // [[nodiscard]] Result<> makeStringMeasure();
-  // [[nodiscard]] Result<> makeStringEncode();
-  // [[nodiscard]] Result<> makeStringConcat();
-  // [[nodiscard]] Result<> makeStringEq();
-  // [[nodiscard]] Result<> makeStringAs();
-  // [[nodiscard]] Result<> makeStringWTF8Advance();
-  // [[nodiscard]] Result<> makeStringWTF16Get();
-  // [[nodiscard]] Result<> makeStringIterNext();
-  // [[nodiscard]] Result<> makeStringIterMove();
-  // [[nodiscard]] Result<> makeStringSliceWTF();
-  // [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringConst(Name string);
+  [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringConcat();
+  [[nodiscard]] Result<> makeStringEq(StringEqOp op);
+  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
+  [[nodiscard]] Result<> makeStringWTF8Advance();
+  [[nodiscard]] Result<> makeStringWTF16Get();
+  [[nodiscard]] Result<> makeStringIterNext();
+  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
+  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
+  [[nodiscard]] Result<> makeStringSliceIter();
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
@@ -213,6 +213,8 @@ public:
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
   [[nodiscard]] Result<> visitThrow(Throw*);
+  [[nodiscard]] Result<> visitStringNew(StringNew*);
+  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
 
 private:
   Module& wasm;
