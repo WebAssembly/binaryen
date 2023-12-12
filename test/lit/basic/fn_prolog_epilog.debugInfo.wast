@@ -11,7 +11,6 @@
 
 (module
   ;;@ src.cpp:1:1
-
   (func
     (nop)
     ;;@ src.cpp:2:1
