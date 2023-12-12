@@ -41,6 +41,8 @@ def check_for_stale_files():
 
     all_files = os.listdir(shared.get_test_dir('wasm2js'))
     for f in all_files:
+        if f in assert_tests:
+            continue
         prefix = f.split('.')[0]
         if prefix not in all_tests:
             shared.fail_with_error('orphan test output: %s' % f)
