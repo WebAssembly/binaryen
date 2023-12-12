@@ -43,7 +43,7 @@ def check_for_stale_files():
     for f in all_files:
         prefix = f.split('.')[0]
         if prefix in [t.split('.')[0] for t in assert_tests]:
-          continue
+            continue
         if prefix not in all_tests:
             shared.fail_with_error('orphan test output: %s' % f)
 
