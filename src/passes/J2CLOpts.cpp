@@ -67,7 +67,7 @@ private:
     // Avoid optimizing class initialization condition variable itself. If we
     // were optimizing it then it would become "true" and would defeat its
     // functionality and the clinit would never trigger during runtime.
-    if (name.startsWith("f_$initialized__")) {
+    if (name.startsWith("$class-initialized@")) {
       return;
     }
     assignmentCounts[name]++;
@@ -90,13 +90,14 @@ public:
     if (!isOnceFunction(curr)) {
       return;
     }
+    Name enclosingClassName = getEnclosingClass(curr->name);
     int optimizedBefore = optimized;
     if (auto* block = curr->body->dynCast<Block>()) {
       for (auto*& expr : block->list) {
-        maybeHoistConstant(expr);
+        maybeHoistConstant(expr, enclosingClassName);
       }
     } else {
-      maybeHoistConstant(curr->body);
+      maybeHoistConstant(curr->body, enclosingClassName);
     }
 
     if (optimized != optimizedBefore) {
@@ -111,7 +112,7 @@ public:
   }
 
 private:
-  void maybeHoistConstant(Expression* expr) {
+  void maybeHoistConstant(Expression* expr, Name enclosingClassName) {
     auto set = expr->dynCast<GlobalSet>();
     if (!set) {
       return;
@@ -120,6 +121,14 @@ private:
     if (assignmentCounts[set->name] != 1) {
       // The global assigned in multiple places, so it is not safe to
       // hoist them as global constants.
+      return;
+    }
+
+    if (getEnclosingClass(set->name) != enclosingClassName) {
+      // Only hoist fields initialized by its own class.
+      // If it is only initialized once but by another class (although it is
+      // very uncommon / edge scenario) then we cannot be sure if the clinit was
+      // trigger before the field access so it is better to leave it alone.
       return;
     }
 
@@ -136,6 +145,10 @@ private:
     ExpressionManipulator::nop(expr);
 
     optimized++;
+  }
+
+  Name getEnclosingClass(Name name) {
+    return Name(name.str.substr(name.str.find_last_of('@')));
   }
 
   AssignmentCountMap& assignmentCounts;
