@@ -418,6 +418,7 @@ struct NullInstrParserCtx {
   Result<> makeTableFill(Index, TableIdxT*) { return Ok{}; }
   Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
   Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
+  Result<> makeRethrow(Index, LabelIdxT) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -1570,6 +1571,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeThrow(Index pos, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
+  }
+
+  Result<> makeRethrow(Index pos, Index label) {
+    return withLoc(pos, irBuilder.makeRethrow(label));
   }
 
   Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {

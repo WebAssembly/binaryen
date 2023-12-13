@@ -156,7 +156,7 @@ public:
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeThrow(Name tag);
-  // [[nodiscard]] Result<> makeRethrow();
+  [[nodiscard]] Result<> makeRethrow(Index label);
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
@@ -459,6 +459,7 @@ private:
   Result<Expression*> finishScope(Block* block = nullptr);
 
   [[nodiscard]] Result<Name> getLabelName(Index label);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
 

@@ -2024,6 +2024,162 @@
   )
  )
 
+ ;; CHECK:      (func $rethrow (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (rethrow $__delegate__label)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow
+  try
+  catch $empty
+   rethrow 0
+  end
+ )
+
+ ;; CHECK:      (func $rethrow-named (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (rethrow $__delegate__l)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow-named
+  try $l
+  catch $empty
+   rethrow $l
+  end
+ )
+
+ ;; CHECK:      (func $rethrow-nested (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (catch $empty
+ ;; CHECK-NEXT:       (rethrow $__delegate__label)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow-nested
+  try
+  catch $empty
+   block
+    try
+    catch $empty
+     rethrow 2
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $rethrow-nested-named (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (catch $empty
+ ;; CHECK-NEXT:       (rethrow $__delegate__l)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow-nested-named
+  try $l
+  catch $empty
+   block
+    try
+    catch $empty
+     rethrow $l
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $rethrow-try-nested (type $void)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $__delegate__label
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (rethrow $__delegate__label)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow-try-nested
+  try
+  catch $empty
+   block
+    try
+     ;; Same as before, but now the rethrow is in the inner try instead of the
+     ;; inner catch.
+     rethrow 2
+    end
+   end
+  end
+ )
+
+ ;; CHECK:      (func $rethrow-try-nested-named (type $void)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (try $__delegate__l
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (catch $empty
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (rethrow $__delegate__l)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $rethrow-try-nested-named
+  try $l
+  catch $empty
+   block
+    try
+     rethrow $l
+    end
+   end
+  end
+ )
+
  ;; CHECK:      (func $label-siblings (type $void)
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (br $l)
@@ -2922,7 +3078,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 129
+  ref.func 135
   drop
  )
 

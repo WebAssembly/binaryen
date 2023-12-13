@@ -499,8 +499,8 @@ Result<> IRBuilder::visitLoopStart(Loop* loop) {
 }
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
-  // The delegate label will be regenerated if we need it. See `visitDelegate`
-  // for details.
+  // The delegate label will be regenerated if we need it. See
+  // `getDelegateLabelName` for details.
   tryy->name = Name();
   pushScope(ScopeCtx::makeTry(tryy, label));
   return Ok{};
@@ -663,6 +663,33 @@ Result<> IRBuilder::visitCatchAll() {
   return Ok{};
 }
 
+Result<Name> IRBuilder::getDelegateLabelName(Index label) {
+  if (label >= scopeStack.size()) {
+    return Err{"invalid label: " + std::to_string(label)};
+  }
+  auto& scope = scopeStack[scopeStack.size() - label - 1];
+  auto* delegateTry = scope.getTry();
+  if (!delegateTry) {
+    delegateTry = scope.getCatch();
+  }
+  if (!delegateTry) {
+    delegateTry = scope.getCatchAll();
+  }
+  if (!delegateTry) {
+    return Err{"expected try scope at label " + std::to_string(label)};
+  }
+  // Only delegate and rethrow can reference the try name in Binaryen IR, so
+  // trys might need two labels: one for delegate/rethrow and one for all
+  // other control flow. These labels must be different to satisfy the
+  // Binaryen validator. To keep this complexity contained within the
+  // handling of trys and delegates, pretend there is just the single normal
+  // label and add a prefix to it to generate the delegate label.
+  auto delegateName =
+    Name(std::string("__delegate__") + getLabelName(label)->toString());
+  delegateTry->name = delegateName;
+  return delegateName;
+}
+
 Result<> IRBuilder::visitDelegate(Index label) {
   auto& scope = getScope();
   auto* tryy = scope.getTry();
@@ -676,17 +703,10 @@ Result<> IRBuilder::visitDelegate(Index label) {
   ++label;
   for (size_t size = scopeStack.size(); label < size; ++label) {
     auto& delegateScope = scopeStack[size - label - 1];
-    if (auto* delegateTry = delegateScope.getTry()) {
-      // Only delegates can reference the try name in Binaryen IR, so trys might
-      // need two labels: one for delegates and one for all other control flow.
-      // These labels must be different to satisfy the Binaryen validator. To
-      // keep this complexity contained within the handling of trys and
-      // delegates, pretend there is just the single normal label and add a
-      // prefix to it to generate the delegate label.
-      auto delegateName =
-        Name(std::string("__delegate__") + getLabelName(label)->toString());
-      delegateTry->name = delegateName;
-      tryy->delegateTarget = delegateName;
+    if (delegateScope.getTry()) {
+      auto delegateName = getDelegateLabelName(label);
+      CHECK_ERR(delegateName);
+      tryy->delegateTarget = *delegateName;
       break;
     } else if (delegateScope.getFunction()) {
       tryy->delegateTarget = DELEGATE_CALLER_TARGET;
@@ -1215,7 +1235,13 @@ Result<> IRBuilder::makeThrow(Name tag) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRethrow() {}
+Result<> IRBuilder::makeRethrow(Index label) {
+  // Rethrow references `Try` labels directly, just like `delegate`.
+  auto name = getDelegateLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeRethrow(*name));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeTupleMake() {}
 
