@@ -54,6 +54,6 @@ test/lit/lit.site.cfg.py
 # files related to tsc compilation
 /src/ts/binaryen-post.js
 /src/ts/binaryen-post.d.ts
-/src/ts/binaryen-wrapper.d.ts
-/src/ts/binaryen-wrapper.js
+/src/ts/binaryen_ts.d.ts
+/src/ts/binaryen_ts.js
 /*.map
