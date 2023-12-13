@@ -59,7 +59,7 @@ struct ParseInput {
   std::optional<uint8_t> takeU8();
   std::optional<double> takeF64();
   std::optional<float> takeF32();
-  std::optional<std::string_view> takeString();
+  std::optional<std::string> takeString();
   std::optional<Name> takeName();
   bool takeSExprStart(std::string_view expected);
   bool peekSExprStart(std::string_view expected);

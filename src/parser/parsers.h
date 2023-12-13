@@ -176,6 +176,8 @@ template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
@@ -249,6 +251,18 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("array"sv)) {
     return ctx.makeArrayType();
   }
+  if (ctx.in.takeKeyword("string"sv)) {
+    return ctx.makeStringType();
+  }
+  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
+    return ctx.makeStringViewWTF8Type();
+  }
+  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
+    return ctx.makeStringViewWTF16Type();
+  }
+  if (ctx.in.takeKeyword("stringview_iter"sv)) {
+    return ctx.makeStringViewIterType();
+  }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   return *type;
@@ -282,7 +296,19 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
     return ctx.makeRefType(ctx.makeStructType(), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.in.err("arrayref not yet supported");
+    return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringref"sv)) {
+    return ctx.makeRefType(ctx.makeStringType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewWTF8Type(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewWTF16Type(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_iter"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
@@ -1584,7 +1610,11 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeArrayNewElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
@@ -1629,11 +1659,18 @@ template<typename Ctx> Result<> makeArrayFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayInitData(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayInitData(pos, *type, *data);
 }
 
 template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  return ctx.makeArrayInitElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
@@ -1642,61 +1679,69 @@ template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
 
 template<typename Ctx>
 Result<> makeStringNew(Ctx& ctx, Index pos, StringNewOp op, bool try_) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeStringNew(pos, op, try_, mem.getPtr());
 }
 
 template<typename Ctx> Result<> makeStringConst(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto str = ctx.in.takeString();
+  if (!str) {
+    return ctx.in.err("expected string");
+  }
+  return ctx.makeStringConst(pos, *str);
 }
 
 template<typename Ctx>
 Result<> makeStringMeasure(Ctx& ctx, Index pos, StringMeasureOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringMeasure(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringEncode(Ctx& ctx, Index pos, StringEncodeOp op) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeStringEncode(pos, op, mem.getPtr());
 }
 
 template<typename Ctx> Result<> makeStringConcat(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringConcat(pos);
 }
 
 template<typename Ctx>
 Result<> makeStringEq(Ctx& ctx, Index pos, StringEqOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringEq(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringAs(Ctx& ctx, Index pos, StringAsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringAs(pos, op);
 }
 
 template<typename Ctx> Result<> makeStringWTF8Advance(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringWTF8Advance(pos);
 }
 
 template<typename Ctx> Result<> makeStringWTF16Get(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringWTF16Get(pos);
 }
 
 template<typename Ctx> Result<> makeStringIterNext(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringIterNext(pos);
 }
 
 template<typename Ctx>
 Result<> makeStringIterMove(Ctx& ctx, Index pos, StringIterMoveOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringIterMove(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx& ctx, Index pos, StringSliceWTFOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringSliceWTF(pos, op);
 }
 
 template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringSliceIter(pos);
 }
 
 // =======
@@ -1843,8 +1888,20 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
   return ctx.in.err("expected global index or identifier");
 }
 
+// elemidx ::= x:u32 => x
+//           | v:id => x (if elems[x] = v)
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getElemFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getElemFromName(*id);
+  }
+  return ctx.in.err("expected elem index or identifier");
+}
+
 // dataidx ::= x:u32 => x
-//           | v:id => x (if data[x] = v)
+//           | v:id => x (if datas[x] = v)
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getDataFromIdx(*x);
