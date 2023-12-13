@@ -645,12 +645,9 @@
   ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
@@ -660,12 +657,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.mul
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_1
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch_1
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch_1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
