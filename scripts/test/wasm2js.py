@@ -18,9 +18,9 @@ import subprocess
 from . import shared
 from . import support
 
-tests = shared.get_tests(shared.options.binaryen_test)
+basic_tests = shared.get_tests(os.path.join(shared.options.binaryen_test, 'lit', 'basic'))
 # memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
-tests = [t for t in tests if '64.wast' not in t]
+basic_tests = [t for t in basic_tests if '64.wast' not in t]
 spec_tests = shared.options.spec_tests
 spec_tests = [t for t in spec_tests if '.fail' not in t]
 spec_tests = [t for t in spec_tests if '64.wast' not in t]
@@ -36,7 +36,7 @@ def check_for_stale_files():
 
     # TODO(sbc): Generalize and apply other test suites
     all_tests = []
-    for t in tests + spec_tests + wasm2js_tests:
+    for t in basic_tests + spec_tests + wasm2js_tests:
         all_tests.append(os.path.basename(os.path.splitext(t)[0]))
 
     all_files = os.listdir(shared.get_test_dir('wasm2js'))
@@ -50,7 +50,7 @@ def check_for_stale_files():
 
 def test_wasm2js_output():
     for opt in (0, 1):
-        for t in tests + spec_tests + wasm2js_tests:
+        for t in basic_tests + spec_tests + wasm2js_tests:
             basename = os.path.basename(t)
             if basename in wasm2js_blacklist:
                 continue
@@ -154,7 +154,7 @@ def update_wasm2js_tests():
     print('\n[ checking wasm2js ]\n')
 
     for opt in (0, 1):
-        for wasm in tests + spec_tests + wasm2js_tests:
+        for wasm in basic_tests + spec_tests + wasm2js_tests:
             if not wasm.endswith('.wast'):
                 continue
 

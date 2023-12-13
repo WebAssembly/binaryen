@@ -1,8 +1,0 @@
-(module
- (type $0 (func))
- (memory $0 (shared 1 1))
- (func $test (type $0)
-  (unreachable)
- )
-)
-
