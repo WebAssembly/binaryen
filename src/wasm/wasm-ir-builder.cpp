@@ -341,7 +341,7 @@ Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
     arity = curr->value->type.size();
   }
   if (*arity >= 2) {
-    auto val = pop(curr->value->type.size());
+    auto val = pop(*arity);
     CHECK_ERR(val);
     curr->value = *val;
     return Ok{};
