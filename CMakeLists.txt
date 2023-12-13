@@ -528,18 +528,18 @@ if(EMSCRIPTEN)
 
   # binaryen.ts TypeScript variant (leverages the wasm variant)
   # compile the typescript file that wraps the wasm
-  add_custom_target(binaryen_wrap_ts
+  add_custom_target(binaryen_ts_wrapper
               COMMAND tsc --target ES2020 --module ES2022 --declaration --declarationMap
-                      ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.ts &&
-                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.js ${CMAKE_BINARY_DIR}/bin/binaryen_ts.js &&
-                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.d.ts ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts &&
-                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.d.ts.map ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts.map)
+                      ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_ts.ts &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_ts.js ${CMAKE_BINARY_DIR}/bin/binaryen_ts.js &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_ts.d.ts ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_ts.d.ts.map ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts.map)
   add_custom_target(binaryen_post_ts
               COMMAND tsc --target ES2020 --module ES2022
                       ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-post.ts)
   add_executable(binaryen_wasm_ts
                  ${binaryen_emscripten_SOURCES})
-  add_dependencies(binaryen_wasm_ts binaryen_wrap_ts binaryen_post_ts)
+  add_dependencies(binaryen_wasm_ts binaryen_ts_wrapper binaryen_post_ts)
   target_link_libraries(binaryen_wasm_ts wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_wasm_ts "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm_ts "-sEXPORT_NAME=Binaryen")
