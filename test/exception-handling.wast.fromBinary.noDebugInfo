@@ -47,12 +47,12 @@
     (local.set $0
      (block (result i32)
       (local.set $3
-       (tuple.extract 0
+       (tuple.extract 2 0
         (local.get $2)
        )
       )
       (local.set $1
-       (tuple.extract 1
+       (tuple.extract 2 1
         (local.get $2)
        )
       )

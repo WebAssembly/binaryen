@@ -18,12 +18,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result funcref)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )

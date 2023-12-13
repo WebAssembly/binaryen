@@ -41,12 +41,12 @@
     ;; The default value of the tuple lanes is used here in the new locals we
     ;; add.
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple)
       )
     )
@@ -55,12 +55,12 @@
   ;; CHECK:      (func $just-get-bad (type $1) (result i32 i32)
   ;; CHECK-NEXT:  (local $tuple (i32 i32))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (local.get $tuple)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1
+  ;; CHECK-NEXT:   (tuple.extract 2 1
   ;; CHECK-NEXT:    (local.get $tuple)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -69,12 +69,12 @@
   (func $just-get-bad (result i32 i32)
     (local $tuple (i32 i32))
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple)
       )
     )
@@ -114,18 +114,18 @@
       )
     )
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple)
       )
     )
     ;; Add another get for more coverage
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
@@ -180,23 +180,23 @@
     )
     ;; Read the first tuple.
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple)
       )
     )
     ;; Read the second tuple.
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple2)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple2)
       )
     )
@@ -223,7 +223,7 @@
   (func $just-tee
     (local $tuple (i32 i32))
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.tee $tuple
           (tuple.make 2
             (i32.const 1)
@@ -481,7 +481,7 @@
 
   ;; CHECK:      (func $make-extract-no-local (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (tuple.make 2
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -493,7 +493,7 @@
     ;; Tuple operations without locals. We do nothing here; other passes can
     ;; help on this kind of thing.
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (tuple.make 2
           (i32.const 1)
           (i32.const 2)
@@ -515,7 +515,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (tuple.make 2
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (i32.const 2)
@@ -534,7 +534,7 @@
     ;; The code below is as in the previous testcase, but now before us there
     ;; is an unrelated local that can be optimized. We should remain as before.
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (tuple.make 2
           (i32.const 1)
           (i32.const 2)
@@ -580,12 +580,12 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 1 0
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1
+  ;; CHECK-NEXT:   (tuple.extract 1 1
   ;; CHECK-NEXT:    (local.tee $tuple
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -613,12 +613,12 @@
       (unreachable)
     )
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (unreachable)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.tee $tuple
           (unreachable)
         )
@@ -682,7 +682,7 @@
     (local $tuple2 (i32 i32))
     (local $tuple3 (i32 i32))
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.tee $tuple
           (local.tee $tuple2
             (local.tee $tuple3
@@ -773,17 +773,17 @@
     )
     ;; Read from each.
     (drop
-      (tuple.extract 0
+      (tuple.extract 3 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 3 1
         (local.get $tuple2)
       )
     )
     (drop
-      (tuple.extract 2
+      (tuple.extract 3 2
         (local.get $tuple3)
       )
     )
@@ -807,17 +807,17 @@
   ;; CHECK-NEXT:   (local.get $tuple2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 3 0
   ;; CHECK-NEXT:    (local.get $tuple)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1
+  ;; CHECK-NEXT:   (tuple.extract 3 1
   ;; CHECK-NEXT:    (local.get $tuple2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 2
+  ;; CHECK-NEXT:   (tuple.extract 3 2
   ;; CHECK-NEXT:    (local.get $tuple3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -844,17 +844,17 @@
     )
     ;; Read from each.
     (drop
-      (tuple.extract 0
+      (tuple.extract 3 0
         (local.get $tuple)
       )
     )
     (drop
-      (tuple.extract 1
+      (tuple.extract 3 1
         (local.get $tuple2)
       )
     )
     (drop
-      (tuple.extract 2
+      (tuple.extract 3 2
         (local.get $tuple3)
       )
     )
@@ -867,7 +867,7 @@
   ;; CHECK-NEXT:   (call $set-call)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 0
+  ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (local.get $tuple)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -883,7 +883,7 @@
       (call $set-call)
     )
     (drop
-      (tuple.extract 0
+      (tuple.extract 2 0
         (local.get $tuple)
       )
     )
@@ -938,10 +938,10 @@
     )
     (local.set $tuple3
       (tuple.make 3
-        (tuple.extract 0
+        (tuple.extract 2 0
           (local.get $tuple2)
         )
-        (tuple.extract 1
+        (tuple.extract 2 1
           (local.get $tuple2)
         )
         (i32.const 3)
@@ -949,12 +949,12 @@
     )
     ;; Read from each.
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple2)
       )
     )
     (drop
-      (tuple.extract 2
+      (tuple.extract 3 2
         (local.get $tuple3)
       )
     )
@@ -1006,22 +1006,22 @@
     )
     (local.set $tuple2
       (tuple.make 2
-        (tuple.extract 0
+        (tuple.extract 3 0
           (local.get $tuple3)
         )
-        (tuple.extract 1
+        (tuple.extract 3 1
           (local.get $tuple3)
         )
       )
     )
     ;; Read from each.
     (drop
-      (tuple.extract 1
+      (tuple.extract 2 1
         (local.get $tuple2)
       )
     )
     (drop
-      (tuple.extract 2
+      (tuple.extract 3 2
         (local.get $tuple3)
       )
     )

@@ -649,11 +649,11 @@
   ;; CHECK-NEXT:     (local.set $scratch
   ;; CHECK-NEXT:      (call $outline$)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 0
+  ;; CHECK-NEXT:     (tuple.extract 2 0
   ;; CHECK-NEXT:      (local.get $scratch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (tuple.extract 1
+  ;; CHECK-NEXT:    (tuple.extract 2 1
   ;; CHECK-NEXT:     (local.get $scratch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -664,11 +664,11 @@
   ;; CHECK-NEXT:     (local.set $scratch_1
   ;; CHECK-NEXT:      (call $outline$)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 0
+  ;; CHECK-NEXT:     (tuple.extract 2 0
   ;; CHECK-NEXT:      (local.get $scratch_1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (tuple.extract 1
+  ;; CHECK-NEXT:    (tuple.extract 2 1
   ;; CHECK-NEXT:     (local.get $scratch_1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

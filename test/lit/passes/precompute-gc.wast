@@ -794,7 +794,7 @@
   )
   (drop
    (struct.get $B 0
-    (tuple.extract 0
+    (tuple.extract 2 0
      (local.get $temp)
     )
    )

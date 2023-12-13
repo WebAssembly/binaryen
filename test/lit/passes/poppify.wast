@@ -300,7 +300,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $extract-first (result i32)
-    (tuple.extract 0
+    (tuple.extract 3 0
       (tuple.make 3
         (i32.const 0)
         (i64.const 1)
@@ -326,7 +326,7 @@
   ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $extract-middle (result i64)
-    (tuple.extract 1
+    (tuple.extract 3 1
       (tuple.make 3
         (i32.const 0)
         (i64.const 1)
@@ -352,7 +352,7 @@
   ;; CHECK-NEXT:  (local.get $0)
   ;; CHECK-NEXT: )
   (func $extract-last (result f32)
-    (tuple.extract 2
+    (tuple.extract 3 2
       (tuple.make 3
         (i32.const 0)
         (i64.const 1)

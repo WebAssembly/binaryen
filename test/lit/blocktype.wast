@@ -33,20 +33,20 @@
  ;; RTRIP-NEXT:     (call $f1)
  ;; RTRIP-NEXT:    )
  ;; RTRIP-NEXT:    (tuple.make 2
- ;; RTRIP-NEXT:     (tuple.extract 0
+ ;; RTRIP-NEXT:     (tuple.extract 2 0
  ;; RTRIP-NEXT:      (local.get $0)
  ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:     (tuple.extract 1
+ ;; RTRIP-NEXT:     (tuple.extract 2 1
  ;; RTRIP-NEXT:      (local.get $0)
  ;; RTRIP-NEXT:     )
  ;; RTRIP-NEXT:    )
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (tuple.make 2
- ;; RTRIP-NEXT:   (tuple.extract 0
+ ;; RTRIP-NEXT:   (tuple.extract 2 0
  ;; RTRIP-NEXT:    (local.get $1)
  ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:   (tuple.extract 1
+ ;; RTRIP-NEXT:   (tuple.extract 2 1
  ;; RTRIP-NEXT:    (local.get $1)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
@@ -72,20 +72,20 @@
  ;; RTRIP-NEXT:     (call $f2)
  ;; RTRIP-NEXT:    )
  ;; RTRIP-NEXT:    (tuple.make 2
- ;; RTRIP-NEXT:     (tuple.extract 0
+ ;; RTRIP-NEXT:     (tuple.extract 2 0
  ;; RTRIP-NEXT:      (local.get $0)
  ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:     (tuple.extract 1
+ ;; RTRIP-NEXT:     (tuple.extract 2 1
  ;; RTRIP-NEXT:      (local.get $0)
  ;; RTRIP-NEXT:     )
  ;; RTRIP-NEXT:    )
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT:  (tuple.make 2
- ;; RTRIP-NEXT:   (tuple.extract 0
+ ;; RTRIP-NEXT:   (tuple.extract 2 0
  ;; RTRIP-NEXT:    (local.get $1)
  ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:   (tuple.extract 1
+ ;; RTRIP-NEXT:   (tuple.extract 2 1
  ;; RTRIP-NEXT:    (local.get $1)
  ;; RTRIP-NEXT:   )
  ;; RTRIP-NEXT:  )
