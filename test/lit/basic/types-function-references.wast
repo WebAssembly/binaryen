@@ -188,7 +188,7 @@
   )
 
   ;; CHECK-TEXT:      (func $type-only-in-tuple-block (type $void)
-  ;; CHECK-TEXT-NEXT:  (drop
+  ;; CHECK-TEXT-NEXT:  (tuple.drop 3
   ;; CHECK-TEXT-NEXT:   (block $block (type $3) (result i32 (ref null $mixed_results) f64)
   ;; CHECK-TEXT-NEXT:    (unreachable)
   ;; CHECK-TEXT-NEXT:   )
@@ -206,19 +206,19 @@
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block (result i32)
   ;; CHECK-BIN-NEXT:    (local.set $2
-  ;; CHECK-BIN-NEXT:     (tuple.extract 0
+  ;; CHECK-BIN-NEXT:     (tuple.extract 3 0
   ;; CHECK-BIN-NEXT:      (local.get $0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (drop
   ;; CHECK-BIN-NEXT:     (block (result (ref null $mixed_results))
   ;; CHECK-BIN-NEXT:      (local.set $1
-  ;; CHECK-BIN-NEXT:       (tuple.extract 1
+  ;; CHECK-BIN-NEXT:       (tuple.extract 3 1
   ;; CHECK-BIN-NEXT:        (local.get $0)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:      (drop
-  ;; CHECK-BIN-NEXT:       (tuple.extract 2
+  ;; CHECK-BIN-NEXT:       (tuple.extract 3 2
   ;; CHECK-BIN-NEXT:        (local.get $0)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
@@ -230,7 +230,7 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $type-only-in-tuple-block
-    (drop
+    (tuple.drop 3
       (block $block (result i32 (ref null $mixed_results) f64)
         (unreachable)
       )
@@ -444,19 +444,19 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.set $2
-;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 0
+;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 3 0
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
 ;; CHECK-BIN-NODEBUG-NEXT:     (block (result (ref null $0))
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 1
+;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 1
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:      (drop
-;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 2
+;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 2
 ;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )

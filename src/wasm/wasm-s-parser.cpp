@@ -1503,6 +1503,9 @@ Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
 Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
   auto ret = allocator.alloc<Drop>();
   ret->value = parseExpression(s[1]);
+  if (ret->value->type.isTuple()) {
+    throw SParseException("expected tuple.drop, found drop", s, *s[0]);
+  }
   ret->finalize();
   return ret;
 }
@@ -2858,18 +2861,39 @@ Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
   auto ret = allocator.alloc<TupleMake>();
-  parseCallOperands(s, 1, s.size(), ret);
+  size_t arity = std::stoll(s[1]->toString());
+  if (arity != s.size() - 2) {
+    throw SParseException("unexpected number of elements", s, *s[1]);
+  }
+  parseCallOperands(s, 2, s.size(), ret);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
-  ret->index = parseIndex(*s[1]);
-  ret->tuple = parseExpression(s[2]);
-  if (ret->tuple->type != Type::unreachable &&
-      ret->index >= ret->tuple->type.size()) {
-    throw SParseException("Bad index on tuple.extract", s, *s[1]);
+  size_t arity = std::stoll(s[1]->toString());
+  ret->index = parseIndex(*s[2]);
+  ret->tuple = parseExpression(s[3]);
+  if (ret->tuple->type != Type::unreachable) {
+    if (arity != ret->tuple->type.size()) {
+      throw SParseException("Unexpected tuple.extract arity", s, *s[1]);
+    }
+    if (ret->index >= ret->tuple->type.size()) {
+      throw SParseException("Bad index on tuple.extract", s, *s[2]);
+    }
+  }
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeTupleDrop(Element& s) {
+  size_t arity = std::stoll(s[1]->toString());
+  auto ret = allocator.alloc<Drop>();
+  ret->value = parseExpression(s[2]);
+  if (ret->value->type != Type::unreachable &&
+      ret->value->type.size() != arity) {
+    throw SParseException("unexpected tuple.drop arity", s, *s[1]);
   }
   ret->finalize();
   return ret;

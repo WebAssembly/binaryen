@@ -148,15 +148,15 @@ public:
   [[nodiscard]] Result<> makeRefIsNull();
   [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
-  // [[nodiscard]] Result<> makeTableGet();
-  // [[nodiscard]] Result<> makeTableSet();
-  // [[nodiscard]] Result<> makeTableSize();
-  // [[nodiscard]] Result<> makeTableGrow();
-  // [[nodiscard]] Result<> makeTableFill();
-  // [[nodiscard]] Result<> makeTableCopy();
+  [[nodiscard]] Result<> makeTableGet(Name table);
+  [[nodiscard]] Result<> makeTableSet(Name table);
+  [[nodiscard]] Result<> makeTableSize(Name table);
+  [[nodiscard]] Result<> makeTableGrow(Name table);
+  [[nodiscard]] Result<> makeTableFill(Name table);
+  [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeThrow(Name tag);
-  // [[nodiscard]] Result<> makeRethrow();
+  [[nodiscard]] Result<> makeRethrow(Index label);
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
@@ -181,22 +181,22 @@ public:
   [[nodiscard]] Result<> makeArrayLen();
   [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
-  // [[nodiscard]] Result<> makeArrayInitData();
-  // [[nodiscard]] Result<> makeArrayInitElem();
+  [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
+  [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  // [[nodiscard]] Result<> makeStringNew();
-  // [[nodiscard]] Result<> makeStringConst();
-  // [[nodiscard]] Result<> makeStringMeasure();
-  // [[nodiscard]] Result<> makeStringEncode();
-  // [[nodiscard]] Result<> makeStringConcat();
-  // [[nodiscard]] Result<> makeStringEq();
-  // [[nodiscard]] Result<> makeStringAs();
-  // [[nodiscard]] Result<> makeStringWTF8Advance();
-  // [[nodiscard]] Result<> makeStringWTF16Get();
-  // [[nodiscard]] Result<> makeStringIterNext();
-  // [[nodiscard]] Result<> makeStringIterMove();
-  // [[nodiscard]] Result<> makeStringSliceWTF();
-  // [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringConst(Name string);
+  [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringConcat();
+  [[nodiscard]] Result<> makeStringEq(StringEqOp op);
+  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
+  [[nodiscard]] Result<> makeStringWTF8Advance();
+  [[nodiscard]] Result<> makeStringWTF16Get();
+  [[nodiscard]] Result<> makeStringIterNext();
+  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
+  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
+  [[nodiscard]] Result<> makeStringSliceIter();
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
@@ -213,6 +213,8 @@ public:
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
   [[nodiscard]] Result<> visitThrow(Throw*);
+  [[nodiscard]] Result<> visitStringNew(StringNew*);
+  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
 
 private:
   Module& wasm;
@@ -459,6 +461,7 @@ private:
   Result<Expression*> finishScope(Block* block = nullptr);
 
   [[nodiscard]] Result<Name> getLabelName(Index label);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
 

@@ -391,8 +391,8 @@ def pick_initial_contents():
         #   (select
         #    (struct.new $other)
         #    (struct.new $other)
-        #    (tuple.extract 1
-        #     (tuple.make
+        #    (tuple.extract 2 1
+        #     (tuple.make 2
         #      (i32.const 0)
         #      (i32.const 0)
         #     )

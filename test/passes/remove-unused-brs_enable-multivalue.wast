@@ -195,13 +195,13 @@
       (if (result i32 i64)
         (i32.const 1)
         (block $block1 (result i32 i64)
-          (tuple.make
+          (tuple.make 2
             (i32.const 12)
             (i64.const 12)
           )
         )
         (block $block3 (result i32 i64)
-          (tuple.make
+          (tuple.make 2
             (i32.const 27)
             (i64.const 27)
           )
