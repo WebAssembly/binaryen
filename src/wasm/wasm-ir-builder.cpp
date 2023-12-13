@@ -90,7 +90,8 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   return HoistedVal{Index(index), get};
 }
 
-Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
+Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
+                                        size_t sizeHint) {
   auto& scope = getScope();
   assert(!scope.exprStack.empty());
 
@@ -106,7 +107,7 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
 
   auto type = scope.exprStack.back()->type;
 
-  if (!type.isTuple()) {
+  if (type.size() == sizeHint) {
     if (hoisted.get) {
       packageAsBlock(type);
     }
@@ -158,7 +159,8 @@ void IRBuilder::push(Expression* expr) {
   DBG(dump());
 }
 
-Result<Expression*> IRBuilder::pop() {
+Result<Expression*> IRBuilder::pop(size_t size) {
+  assert(size >= 1);
   auto& scope = getScope();
 
   // Find the suffix of expressions that do not produce values.
@@ -173,11 +175,25 @@ Result<Expression*> IRBuilder::pop() {
     return Err{"popping from empty stack"};
   }
 
-  CHECK_ERR(packageHoistedValue(*hoisted));
+  CHECK_ERR(packageHoistedValue(*hoisted, size));
 
   auto* ret = scope.exprStack.back();
-  scope.exprStack.pop_back();
-  return ret;
+  if (ret->type.size() == size) {
+    scope.exprStack.pop_back();
+    return ret;
+  }
+
+  // The last value-producing expression did not produce exactly the right
+  // number of values, so we need to construct a tuple piecewise instead.
+  assert(size > 1);
+  std::vector<Expression*> elems;
+  elems.resize(size);
+  for (int i = size - 1; i >= 0; --i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    elems[i] = *elem;
+  }
+  return builder.makeTupleMake(elems);
 }
 
 Result<Expression*> IRBuilder::build() {
@@ -317,6 +333,20 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #include "wasm-delegations-fields.def"
 
   return Ok{};
+}
+
+Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
+  // Multivalue drops must remain multivalue drops.
+  if (!arity) {
+    arity = curr->value->type.size();
+  }
+  if (*arity >= 2) {
+    auto val = pop(*arity);
+    CHECK_ERR(val);
+    curr->value = *val;
+    return Ok{};
+  }
+  return visitExpression(curr);
 }
 
 Result<> IRBuilder::visitIf(If* curr) {
@@ -1183,7 +1213,7 @@ Result<> IRBuilder::makeSelect(std::optional<Type> type) {
 
 Result<> IRBuilder::makeDrop() {
   Drop curr;
-  CHECK_ERR(visitDrop(&curr));
+  CHECK_ERR(visitDrop(&curr, 1));
   push(builder.makeDrop(curr.value));
   return Ok{};
 }

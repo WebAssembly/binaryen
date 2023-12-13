@@ -200,6 +200,8 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
+  [[nodiscard]] Result<>
+  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
   [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
@@ -463,7 +465,7 @@ private:
   [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop();
+  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -478,8 +480,12 @@ private:
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after
-  // hoistLastValue().
-  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+  // hoistLastValue(). `sizeHint` is the size of the type we ultimately want to
+  // consume, so if the hoisted value has `sizeHint` elements, it is left intact
+  // even if it is a tuple. Otherwise, hoisted tuple values will be broken into
+  // pieces.
+  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
+                                             size_t sizeHint = 1);
 
   [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
                                                    std::optional<Index> label);
