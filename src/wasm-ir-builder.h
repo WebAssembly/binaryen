@@ -157,8 +157,9 @@ public:
   [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeThrow(Name tag);
   [[nodiscard]] Result<> makeRethrow(Index label);
-  // [[nodiscard]] Result<> makeTupleMake();
-  // [[nodiscard]] Result<> makeTupleExtract();
+  [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
+  [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
+  [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
@@ -217,6 +218,10 @@ public:
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
+  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
+  [[nodiscard]] Result<>
+  visitTupleExtract(TupleExtract*,
+                    std::optional<uint32_t> arity = std::nullopt);
 
 private:
   Module& wasm;
