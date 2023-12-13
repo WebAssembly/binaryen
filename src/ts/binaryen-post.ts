@@ -1,8 +1,4 @@
 declare var Module: object;
-declare var HEAP8: Int8Array;
-declare var HEAPU8: Uint8Array;
-declare var HEAP32: Int32Array;
-declare var HEAPU32: Uint32Array;
 declare var out: (s: string) => void;
 declare var stringToAscii: (s: string, ptr: number) => void;
 declare var stackSave: () => number;
@@ -20,4 +16,14 @@ function swapOut(writer: Writer): Writer {
     return saved;
 }
 
-Module['utils'] = { HEAP8, HEAPU8, HEAP32, HEAPU32, swapOut, stringToAscii, stackSave, stackAlloc, stackRestore, allocateUTF8OnStack, _BinaryenSizeofLiteral, _BinaryenSizeofAllocateAndWriteResult, UTF8ToString  };
+Module['utils'] = {
+    "swapOut": swapOut,
+    "stringToAscii": stringToAscii,
+    "stackSave": stackSave,
+    "stackAlloc": stackAlloc,
+    "stackRestore": stackRestore,
+    "allocateUTF8OnStack": allocateUTF8OnStack,
+    "_BinaryenSizeofLiteral": _BinaryenSizeofLiteral,
+    "_BinaryenSizeofAllocateAndWriteResult": _BinaryenSizeofAllocateAndWriteResult,
+    "UTF8ToString": UTF8ToString
+};

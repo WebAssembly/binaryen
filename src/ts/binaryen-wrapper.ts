@@ -1,13 +1,14 @@
+// @ts-ignore
 import Binaryen from "./binaryen_wasm_ts.js"
 const JSModule = await Binaryen();
 const _malloc: (size: number) => number = JSModule._malloc;
 const _free: (size: number) => void = JSModule._free;
+const HEAP8: Int8Array = JSModule.HEAP8;
+const HEAPU8: Uint8Array = JSModule.HEAPU8;
+const HEAP32: Int32Array = JSModule.HEAP32;
+const HEAPU32: Uint32Array = JSModule.HEAPU32;
 type Writer = (s: string) => void;
 const utils = JSModule['utils'];
-const HEAP8: Int8Array = utils.HEAP8;
-const HEAPU8: Uint8Array = utils.HEAPU8;
-const HEAP32: Int32Array = utils.HEAP32;
-const HEAPU32: Uint32Array = utils.HEAPU32;
 const swapOut: (func: Writer) => Writer = utils.swapOut;
 const stringToAscii: (s: string, ptr: number) => void = utils.stringToAscii;
 const stackSave: () => number = utils.stackSave;
@@ -17,6 +18,9 @@ const allocateUTF8OnStack: (s: string) => number = utils.allocateUTF8OnStack;
 const _BinaryenSizeofLiteral: () => number = utils._BinaryenSizeofLiteral;
 const _BinaryenSizeofAllocateAndWriteResult: () => number = utils._BinaryenSizeofAllocateAndWriteResult;
 const UTF8ToString: (ptr: number) => string | null = utils.UTF8ToString;
+const __i32_store: (offset: number, value: number) => void = JSModule['__i32_store'];
+const __i32_load: (offset: number) => number = JSModule['__i32_load'];
+
 
 function preserveStack<R>(func: () => R): R {
   try {
@@ -27,7 +31,7 @@ function preserveStack<R>(func: () => R): R {
   }
 }
 
-function strToStack(str) {
+function strToStack(str: string) {
   return str ? allocateUTF8OnStack(str) : 0;
 }
 
@@ -50,7 +54,7 @@ function getAllNested<T>(ref: ExpressionRef, numFn: (ref: ExpressionRef) => numb
   return ret;
 }
 
-export const sizeOfLiteral: number = 0;
+export const sizeOfLiteral: number = _BinaryenSizeofLiteral();
 
 export type Type = number;
 export type ElementSegmentRef = number;
@@ -62,6 +66,8 @@ export type TableRef = number;
 export type TagRef = number;
 export type RelooperBlockRef = number;
 export type ExpressionRunnerRef = number;
+export type TypeBuilderRef = number;
+export type HeapType = number;
 
 export const none: Type = JSModule['_BinaryenTypeNone']();
 export const i32: Type = JSModule['_BinaryenTypeInt32']();
@@ -586,6 +592,12 @@ export enum SideEffects {
     Any = JSModule['_BinaryenSideEffectAny']()
 }
 
+export enum PackedType {
+    NotPacked = JSModule['_BinaryenPackedTypeNotPacked'](),
+    Int8 = JSModule['_BinaryenPackedTypeInt8'](),
+    Int16 = JSModule['_BinaryenPackedTypeInt16']()
+}
+
 export class Function {
 
     readonly func: FunctionRef;
@@ -643,7 +655,7 @@ export class Function {
             'body':this.getBody()
         };
     }
-};
+}
 
 export interface FunctionInfo {
     name: string;
@@ -2088,7 +2100,7 @@ export class Module {
     }
     get memory () {
         return {
-            init: (segment: number, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
+            init: (segment: string, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
                 preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))),
             has: () => Boolean(JSModule['_BinaryenHasMemory'](this.ptr)),
             size: (name?: string, memory64?: boolean): ExpressionRef => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64),
@@ -2182,7 +2194,7 @@ export class Module {
     }
     get data () {
         return {
-            drop: (segment: number): ExpressionRef => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment)))
+            drop: (segment: string): ExpressionRef => preserveStack(() => JSModule['_BinaryenDataDrop'](this.ptr, strToStack(segment)))
         };
     }
     get exports () {
@@ -2216,6 +2228,21 @@ export class Module {
                   return text;
             }
        };
+   }
+   get arrays () {
+        return {
+            fromValues: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
+                const ptr = _malloc(Math.max(8, values.length * 4));
+                let offset = ptr;
+                values.forEach(value => {
+                    __i32_store(offset, value);
+                    offset += 4;
+                })
+                return JSModule['_BinaryenArrayNewFixed'](this.ptr, heapType, ptr, values.length);
+             }
+
+
+        }
    }
 }
 
@@ -2266,6 +2293,56 @@ export class ExpressionRunner {
         return JSModule['_ExpressionRunnerRunAndDispose'](this.ref, expr);
     }
 }
+
+export interface TypeBuilderResult {
+    heapTypes: HeapType[];
+    errorIndex: number | null;
+    errorReason: number | null;
+}
+
+export class TypeBuilder {
+
+    static typeFromTempHeapType(heapType: HeapType, nullable: boolean): Type {
+        return JSModule['_BinaryenTypeFromHeapType'](heapType, nullable);
+    }
+
+    readonly ref: TypeBuilderRef;
+
+    constructor(slots: number) {
+        this.ref = JSModule['_TypeBuilderCreate'](slots);
+    }
+
+    setArrayType(slot: number, elementType: Type, elementPackedType: PackedType, mutable: boolean): TypeBuilder {
+        JSModule['_TypeBuilderSetArrayType'](this.ref, slot, elementType, elementPackedType, mutable);
+        return this;
+    }
+
+    getTempHeapType(slot: number): HeapType {
+        return JSModule['_TypeBuilderGetTempHeapType'](this.ref, slot);
+    }
+
+    buildAndDispose(): TypeBuilderResult {
+        const size = JSModule['_TypeBuilderGetSize'](this.ref) as number;
+        const ptr = _malloc( 4 + 4 + (4 * size)); // assume 4-bytes memory reference
+        const errorIndexPtr = ptr;
+        const errorReasonPtr = ptr + 4;
+        const heapTypesPtr = ptr + 8;
+        const ok = JSModule['_TypeBuilderBuildAndDispose'](this.ref, heapTypesPtr, errorIndexPtr, errorReasonPtr);
+        const errorIndex = __i32_load(errorIndexPtr);
+        const errorReason = __i32_load(errorReasonPtr);
+        const heapTypes: HeapType[] = [];
+        if (ok) {
+            for(let i=0, offset = heapTypesPtr;i < size; i++, offset += 4) {
+                const type = __i32_load(offset);
+                heapTypes.push(type);
+            }
+        }
+        _free(ptr);
+        return { heapTypes, errorIndex, errorReason};
+    }
+
+}
+
 
 export interface SegmentInfo {
     offset: ExpressionRef;
