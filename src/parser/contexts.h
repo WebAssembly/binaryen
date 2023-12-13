@@ -548,6 +548,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
 
+  // Positions of export definitions.
+  std::vector<Index> exportDefs;
+
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
 
@@ -684,6 +687,31 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                   ImportNames* import,
                   TypeUseT type,
                   Index pos);
+
+  Result<> addFuncExport(Index pos, FuncIdxT, Name) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
+
+  Result<> addTableExport(Index pos, TableIdxT, Name) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
+
+  Result<> addMemoryExport(Index pos, MemoryIdxT, Name) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
+
+  Result<> addGlobalExport(Index pos, GlobalIdxT, Name) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
+
+  Result<> addTagExport(Index pos, TagIdxT, Name) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
 };
 
 // Phase 2: Parse type definitions into a TypeBuilder.
@@ -1264,6 +1292,31 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
+  Result<> addFuncExport(Index pos, Name func, Name name) {
+    wasm.addExport(builder.makeExport(name, func, ExternalKind::Function));
+    return Ok{};
+  }
+
+  Result<> addTableExport(Index pos, Name table, Name name) {
+    wasm.addExport(builder.makeExport(name, table, ExternalKind::Table));
+    return Ok{};
+  }
+
+  Result<> addMemoryExport(Index pos, Name mem, Name name) {
+    wasm.addExport(builder.makeExport(name, mem, ExternalKind::Memory));
+    return Ok{};
+  }
+
+  Result<> addGlobalExport(Index pos, Name global, Name name) {
+    wasm.addExport(builder.makeExport(name, global, ExternalKind::Global));
+    return Ok{};
+  }
+
+  Result<> addTagExport(Index pos, Name tag, Name name) {
+    wasm.addExport(builder.makeExport(name, tag, ExternalKind::Tag));
+    return Ok{};
+  }
 
   Result<Index> addScratchLocal(Index pos, Type type) {
     if (!func) {
