@@ -2736,18 +2736,19 @@ void PrintSExpression::visitResume(Resume* curr) {
   printExpressionContents(curr);
   o << ' ';
   printHeapType(curr->contType);
-  incIndent();
 
+  // We deliberate keep all (tag ...) clauses on the same line as the resume
+  // itself to work around a quirk in update_lit_checks.py
   for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-    doIndent(o, indent);
-
-    o << '(';
+    o << maybeSpace << '(';
     printMedium(o, "tag ");
     printName(curr->handlerTags[i], o);
     o << " ";
     printName(curr->handlerBlocks[i], o);
-    o << ")\n";
+    o << ")";
   }
+
+  incIndent();
 
   for (size_t i = 0; i < curr->operands.size(); i++) {
     printFullLine(curr->operands[i]);
