@@ -114,7 +114,7 @@ export enum ExternalKinds {
     Tag = JSModule['_BinaryenExternalTag']()
 }
 
-export enum Features {
+export enum Feature {
     MVP = JSModule['_BinaryenFeatureMVP'](),
     Atomics = JSModule['_BinaryenFeatureAtomics'](),
     BulkMemory = JSModule['_BinaryenFeatureBulkMemory'](),
@@ -811,12 +811,34 @@ export class Module {
     setStart(start: FunctionRef): void {
         JSModule['_BinaryenSetStart'](this.ptr, start);
     }
-    setFeatures(features: Features): void {
-        JSModule['_BinaryenModuleSetFeatures'](this.ptr, features);
+    setFeatures(... features: Feature[]): void {
+        const flags = features.reduce((previous, current) => previous |= current, 0);
+        JSModule['_BinaryenModuleSetFeatures'](this.ptr, flags);
     }
-    getFeatures(): Features {
-        return JSModule['_BinaryenModuleGetFeatures'](this.ptr);
+    getFeatures(): Set<Feature> {
+        const flags = JSModule['_BinaryenModuleGetFeatures'](this.ptr);
+        const features = new Set<Feature>();
+        Object.keys(Feature).forEach(key => {
+            const entry = Feature[key as keyof typeof Feature];
+            if(typeof(entry) == "string" && entry != "All") {
+                const value = Feature[entry as keyof typeof Feature];
+                if ((flags & value) != 0)
+                    features.add(value);
     }
+        });
+        return features;
+    }
+    addFeature(feature: Feature): void {
+        let flags = JSModule['_BinaryenModuleGetFeatures'](this.ptr);
+        flags |= feature;
+        JSModule['_BinaryenModuleSetFeatures'](this.ptr, flags);
+    }
+
+    hasFeature(feature: Feature): boolean {
+        const flags = JSModule['_BinaryenModuleGetFeatures'](this.ptr);
+        return (flags & feature) != 0;
+    }
+
     autoDrop(): void {
         JSModule['_BinaryenModuleAutoDrop'](this.ptr);
     }
