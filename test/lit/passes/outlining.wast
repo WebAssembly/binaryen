@@ -805,7 +805,7 @@
   ;; CHECK:      (table $0 0 funcref)
 
   ;; CHECK:      (func $outline$ (type $0)
-  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (call_indirect $0 (type $1)
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
@@ -817,13 +817,13 @@
   ;; CHECK-NEXT:  (call $outline$)
   ;; CHECK-NEXT: )
   (func $a
-    (drop
+    (tuple.drop 2
       (call_indirect
         (result i32 i32)
         (i32.const 0)
       )
     )
-    (drop
+    (tuple.drop 2
       (call_indirect
         (result i32 i32)
         (i32.const 0)
