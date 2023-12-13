@@ -14,6 +14,8 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+ - The `tuple.make` pseudoinstruction now requires an immediate giving its
+   arity. For example, to make a tuple of two elements, use `tuple.make 2`.
 
 v116
 ----

@@ -1728,7 +1728,7 @@ console.log("# TupleMake");
   assert(
     theTupleMake.toText()
     ==
-    "(tuple.make\n (i32.const 6)\n (i32.const 7)\n)\n"
+    "(tuple.make 2\n (i32.const 6)\n (i32.const 7)\n)\n"
   );
 
   module.dispose();
@@ -1765,7 +1765,7 @@ console.log("# TupleExtract");
   assert(
     theTupleExtract.toText()
     ==
-    "(tuple.extract 0\n (tuple.make\n  (f64.const 3)\n  (f64.const 4)\n )\n)\n"
+    "(tuple.extract 2 0\n (tuple.make 2\n  (f64.const 3)\n  (f64.const 4)\n )\n)\n"
   );
 
   module.dispose();

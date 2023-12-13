@@ -6,7 +6,7 @@ class EmscriptenFinalizeTest(utils.BinaryenTestCase):
     def do_output_test(self, args):
         # without any output file specified, don't error, don't write the wasm
         p = shared.run_process(shared.WASM_EMSCRIPTEN_FINALIZE + [
-            self.input_path('empty_lld.wat'), '--global-base=1024'
+            self.input_path('empty_lld.wat')
         ] + args, capture_output=True)
         return p.stdout
 

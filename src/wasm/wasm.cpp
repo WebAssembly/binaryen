@@ -1548,6 +1548,53 @@ Tag* Module::getTagOrNull(Name name) {
   return getModuleElementOrNull(tagsMap, name);
 }
 
+Importable* Module::getImport(ModuleItemKind kind, Name name) {
+  switch (kind) {
+    case ModuleItemKind::Function:
+      return getFunction(name);
+    case ModuleItemKind::Table:
+      return getTable(name);
+    case ModuleItemKind::Memory:
+      return getMemory(name);
+    case ModuleItemKind::Global:
+      return getGlobal(name);
+    case ModuleItemKind::Tag:
+      return getTag(name);
+    case ModuleItemKind::DataSegment:
+    case ModuleItemKind::ElementSegment:
+    case ModuleItemKind::Invalid:
+      WASM_UNREACHABLE("invalid kind");
+  }
+
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+Importable* Module::getImportOrNull(ModuleItemKind kind, Name name) {
+  auto doReturn = [](Importable* importable) {
+    return importable->imported() ? importable : nullptr;
+  };
+
+  switch (kind) {
+    case ModuleItemKind::Function:
+      return doReturn(getFunctionOrNull(name));
+    case ModuleItemKind::Table:
+      return doReturn(getTableOrNull(name));
+    case ModuleItemKind::Memory:
+      return doReturn(getMemoryOrNull(name));
+    case ModuleItemKind::Global:
+      return doReturn(getGlobalOrNull(name));
+    case ModuleItemKind::Tag:
+      return doReturn(getTagOrNull(name));
+    case ModuleItemKind::DataSegment:
+    case ModuleItemKind::ElementSegment:
+      return nullptr;
+    case ModuleItemKind::Invalid:
+      WASM_UNREACHABLE("invalid kind");
+  }
+
+  WASM_UNREACHABLE("unexpected kind");
+}
+
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
 template<typename Vector, typename Map, typename Elem>
 Elem* addModuleElement(Vector& v, Map& m, Elem* curr, std::string funcName) {

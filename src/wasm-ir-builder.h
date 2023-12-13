@@ -64,13 +64,21 @@ public:
   [[nodiscard]] Result<> visitIfStart(If* iff, Name label = {});
   [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
+  [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
+  [[nodiscard]] Result<> visitCatch(Name tag);
+  [[nodiscard]] Result<> visitCatchAll();
+  [[nodiscard]] Result<> visitDelegate(Index label);
   [[nodiscard]] Result<> visitEnd();
 
   // Binaryen IR uses names to refer to branch targets, but in general there may
   // be branches to constructs that do not yet have names, so in IRBuilder we
   // use indices to refer to branch targets instead, just as the binary format
   // does. This function converts a branch target name to the correct index.
-  [[nodiscard]] Result<Index> getLabelIndex(Name label);
+  //
+  // Labels in delegates need special handling because the indexing needs to be
+  // relative to the try's enclosing scope rather than the try itself.
+  [[nodiscard]] Result<Index> getLabelIndex(Name label,
+                                            bool inDelegate = false);
 
   // Instead of calling visit, call makeXYZ to have the IRBuilder allocate the
   // nodes. This is generally safer than calling `visit` because the function
@@ -84,7 +92,8 @@ public:
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
-  // [[nodiscard]] Result<> makeCallIndirect();
+  [[nodiscard]] Result<>
+  makeCallIndirect(Name table, HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
   [[nodiscard]] Result<> makeLocalTee(Index local);
@@ -139,15 +148,15 @@ public:
   [[nodiscard]] Result<> makeRefIsNull();
   [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
-  // [[nodiscard]] Result<> makeTableGet();
-  // [[nodiscard]] Result<> makeTableSet();
-  // [[nodiscard]] Result<> makeTableSize();
-  // [[nodiscard]] Result<> makeTableGrow();
-  // [[nodiscard]] Result<> makeTableFill();
-  // [[nodiscard]] Result<> makeTableCopy();
-  // [[nodiscard]] Result<> makeTry();
+  [[nodiscard]] Result<> makeTableGet(Name table);
+  [[nodiscard]] Result<> makeTableSet(Name table);
+  [[nodiscard]] Result<> makeTableSize(Name table);
+  [[nodiscard]] Result<> makeTableGrow(Name table);
+  [[nodiscard]] Result<> makeTableFill(Name table);
+  [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
+  [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeThrow(Name tag);
-  // [[nodiscard]] Result<> makeRethrow();
+  [[nodiscard]] Result<> makeRethrow(Index label);
   // [[nodiscard]] Result<> makeTupleMake();
   // [[nodiscard]] Result<> makeTupleExtract();
   [[nodiscard]] Result<> makeRefI31();
@@ -172,22 +181,22 @@ public:
   [[nodiscard]] Result<> makeArrayLen();
   [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
-  // [[nodiscard]] Result<> makeArrayInitData();
-  // [[nodiscard]] Result<> makeArrayInitElem();
+  [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
+  [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  // [[nodiscard]] Result<> makeStringNew();
-  // [[nodiscard]] Result<> makeStringConst();
-  // [[nodiscard]] Result<> makeStringMeasure();
-  // [[nodiscard]] Result<> makeStringEncode();
-  // [[nodiscard]] Result<> makeStringConcat();
-  // [[nodiscard]] Result<> makeStringEq();
-  // [[nodiscard]] Result<> makeStringAs();
-  // [[nodiscard]] Result<> makeStringWTF8Advance();
-  // [[nodiscard]] Result<> makeStringWTF16Get();
-  // [[nodiscard]] Result<> makeStringIterNext();
-  // [[nodiscard]] Result<> makeStringIterMove();
-  // [[nodiscard]] Result<> makeStringSliceWTF();
-  // [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringConst(Name string);
+  [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringConcat();
+  [[nodiscard]] Result<> makeStringEq(StringEqOp op);
+  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
+  [[nodiscard]] Result<> makeStringWTF8Advance();
+  [[nodiscard]] Result<> makeStringWTF16Get();
+  [[nodiscard]] Result<> makeStringIterNext();
+  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
+  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
+  [[nodiscard]] Result<> makeStringSliceIter();
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
@@ -204,6 +213,8 @@ public:
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
   [[nodiscard]] Result<> visitThrow(Throw*);
+  [[nodiscard]] Result<> visitStringNew(StringNew*);
+  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
 
 private:
   Module& wasm;
@@ -232,8 +243,27 @@ private:
     struct LoopScope {
       Loop* loop;
     };
-    using Scope = std::
-      variant<NoScope, FuncScope, BlockScope, IfScope, ElseScope, LoopScope>;
+    struct TryScope {
+      Try* tryy;
+      Name originalLabel;
+    };
+    struct CatchScope {
+      Try* tryy;
+      Name originalLabel;
+    };
+    struct CatchAllScope {
+      Try* tryy;
+      Name originalLabel;
+    };
+    using Scope = std::variant<NoScope,
+                               FuncScope,
+                               BlockScope,
+                               IfScope,
+                               ElseScope,
+                               LoopScope,
+                               TryScope,
+                               CatchScope,
+                               CatchAllScope>;
 
     // The control flow structure we are building expressions for.
     Scope scope;
@@ -264,6 +294,15 @@ private:
       return ScopeCtx(ElseScope{iff, originalLabel}, label);
     }
     static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
+    static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
+      return ScopeCtx(TryScope{tryy, originalLabel});
+    }
+    static ScopeCtx makeCatch(Try* tryy, Name originalLabel, Name label) {
+      return ScopeCtx(CatchScope{tryy, originalLabel}, label);
+    }
+    static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
+      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    }
 
     bool isNone() { return std::get_if<NoScope>(&scope); }
     Function* getFunction() {
@@ -296,6 +335,24 @@ private:
       }
       return nullptr;
     }
+    Try* getTry() {
+      if (auto* tryScope = std::get_if<TryScope>(&scope)) {
+        return tryScope->tryy;
+      }
+      return nullptr;
+    }
+    Try* getCatch() {
+      if (auto* catchScope = std::get_if<CatchScope>(&scope)) {
+        return catchScope->tryy;
+      }
+      return nullptr;
+    }
+    Try* getCatchAll() {
+      if (auto* catchAllScope = std::get_if<CatchAllScope>(&scope)) {
+        return catchAllScope->tryy;
+      }
+      return nullptr;
+    }
     Type getResultType() {
       if (auto* func = getFunction()) {
         return func->type.getSignature().results;
@@ -311,6 +368,15 @@ private:
       }
       if (auto* loop = getLoop()) {
         return loop->type;
+      }
+      if (auto* tryy = getTry()) {
+        return tryy->type;
+      }
+      if (auto* tryy = getCatch()) {
+        return tryy->type;
+      }
+      if (auto* tryy = getCatchAll()) {
+        return tryy->type;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -329,6 +395,15 @@ private:
       }
       if (auto* loop = getLoop()) {
         return loop->name;
+      }
+      if (auto* tryScope = std::get_if<TryScope>(&scope)) {
+        return tryScope->originalLabel;
+      }
+      if (auto* catchScope = std::get_if<CatchScope>(&scope)) {
+        return catchScope->originalLabel;
+      }
+      if (auto* catchAllScope = std::get_if<CatchAllScope>(&scope)) {
+        return catchAllScope->originalLabel;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -386,6 +461,7 @@ private:
   Result<Expression*> finishScope(Block* block = nullptr);
 
   [[nodiscard]] Result<Name> getLabelName(Index label);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
   [[nodiscard]] Result<Expression*> pop();
 

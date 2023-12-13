@@ -289,6 +289,7 @@ private:
   Expression* makeRethrow(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
+  Expression* makeTupleDrop(Element& s);
   Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeRefI31(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);

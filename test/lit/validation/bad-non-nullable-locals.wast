@@ -65,7 +65,7 @@
     ;; Since this tuple local has a non-nullable element, it is subject to the
     ;; non-nullability rules.
     (local $x (i32 (ref any) i64))
-    (drop
+    (tuple.drop 3
       (local.get $x)
     )
   )

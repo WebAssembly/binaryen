@@ -226,11 +226,11 @@ inline std::optional<float> ParseInput::takeF32() {
   return std::nullopt;
 }
 
-inline std::optional<std::string_view> ParseInput::takeString() {
+inline std::optional<std::string> ParseInput::takeString() {
   if (auto t = peek()) {
     if (auto s = t->getString()) {
       ++lexer;
-      return s;
+      return std::string(*s);
     }
   }
   return {};

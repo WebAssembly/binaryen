@@ -2150,7 +2150,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:      (tuple.drop 2
   ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.null none)
@@ -2164,7 +2164,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (tuple.extract 1
+  ;; CHECK-NEXT:     (tuple.extract 2 1
   ;; CHECK-NEXT:      (pop anyref anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -2182,7 +2182,7 @@
       (do)
       (catch $tag
         (drop
-          (tuple.extract 0
+          (tuple.extract 2 0
             (pop (ref null any) (ref null any))
           )
         )
@@ -2193,7 +2193,7 @@
       (do)
       (catch $tag
         (drop
-          (tuple.extract 1
+          (tuple.extract 2 1
             (pop (ref null any) (ref null any))
           )
         )
@@ -4205,16 +4205,16 @@
   )
 
   ;; CHECK:      (func $tuples (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tuples
-    (drop
-      (tuple.make
+    (tuple.drop 2
+      (tuple.make 2
         (i32.const 1)
         (i32.const 2)
       )

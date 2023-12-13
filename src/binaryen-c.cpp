@@ -87,6 +87,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::func:
       case HeapType::struct_:
       case HeapType::array:
+      case HeapType::exn:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
       case HeapType::stringview_wtf8:
@@ -96,6 +97,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::noexn:
         // Null.
         return ret;
     }
@@ -140,6 +142,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::func:
       case HeapType::struct_:
       case HeapType::array:
+      case HeapType::exn:
         WASM_UNREACHABLE("invalid type");
       case HeapType::string:
       case HeapType::stringview_wtf8:
@@ -149,6 +152,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
+      case HeapType::noexn:
         assert(type.isNullable());
         return Literal::makeNull(heapType);
     }
@@ -5952,6 +5956,12 @@ BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table) {
 }
 void BinaryenTableSetMax(BinaryenTableRef table, BinaryenIndex max) {
   ((Table*)table)->max = max;
+}
+BinaryenType BinaryenTableGetType(BinaryenTableRef table) {
+  return ((Table*)table)->type.getID();
+}
+void BinaryenTableSetType(BinaryenTableRef table, BinaryenType tableType) {
+  ((Table*)table)->type = Type(tableType);
 }
 
 //

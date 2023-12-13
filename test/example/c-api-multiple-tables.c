@@ -62,6 +62,11 @@ int main() {
     assert(BinaryenElementSegmentGetLength(elem1) == 1);
     assert(strcmp(BinaryenElementSegmentGetData(elem1, 0), funcNames[0]) == 0);
 
+    assert(BinaryenTableGetType(t2) == BinaryenTypeFuncref());
+    BinaryenTableSetType(t2, BinaryenTypeExternref());
+    assert(BinaryenTableGetType(t2) == BinaryenTypeExternref());
+    BinaryenTableSetType(t2, BinaryenTypeFuncref());
+
     assert(strcmp(BinaryenTableGetName(t2), "t2") == 0);
     BinaryenTableSetName(t2, "table2");
     BinaryenModuleUpdateMaps(module);

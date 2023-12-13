@@ -3258,6 +3258,11 @@ BINARYEN_API BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table);
 // Sets the maximum number of pages of the specified `Table`.
 BINARYEN_API void BinaryenTableSetMax(BinaryenTableRef table,
                                       BinaryenIndex max);
+// Gets the table type of the specified `Table`.
+BINARYEN_API BinaryenType BinaryenTableGetType(BinaryenTableRef table);
+// Sets the table type of the specified `Table`.
+BINARYEN_API void BinaryenTableSetType(BinaryenTableRef table,
+                                       BinaryenType tableType);
 
 //
 // ========== Elem Segment Operations ==========

@@ -315,6 +315,7 @@
 #include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "passes/pass-utils.h"
 #include "support/file.h"
 #include "support/string.h"
 #include "wasm-builder.h"
@@ -843,56 +844,6 @@ public:
                       makeGlobalGet(ASYNCIFY_STATE, Type::i32),
                       makeConst(Literal(int32_t(value))));
   }
-};
-
-// Proxy that runs wrapped pass for instrumented functions only
-struct InstrumentedProxy : public Pass {
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<InstrumentedProxy>(analyzer, pass->create());
-  }
-
-  InstrumentedProxy(ModuleAnalyzer* analyzer, std::unique_ptr<Pass> pass)
-    : analyzer(analyzer), pass(std::move(pass)) {}
-
-  bool isFunctionParallel() override { return pass->isFunctionParallel(); }
-
-  void runOnFunction(Module* module, Function* func) override {
-    if (!analyzer->needsInstrumentation(func)) {
-      return;
-    }
-    if (pass->getPassRunner() == nullptr) {
-      pass->setPassRunner(getPassRunner());
-    }
-    pass->runOnFunction(module, func);
-  }
-
-  bool modifiesBinaryenIR() override { return pass->modifiesBinaryenIR(); }
-
-  bool invalidatesDWARF() override { return pass->invalidatesDWARF(); }
-
-  bool addsEffects() override { return pass->addsEffects(); }
-
-  bool requiresNonNullableLocalFixups() override {
-    return pass->requiresNonNullableLocalFixups();
-  }
-
-private:
-  ModuleAnalyzer* analyzer;
-  std::unique_ptr<Pass> pass;
-};
-
-struct InstrumentedPassRunner : public PassRunner {
-  InstrumentedPassRunner(Module* wasm, ModuleAnalyzer* analyzer)
-    : PassRunner(wasm), analyzer(analyzer) {}
-
-protected:
-  void doAdd(std::unique_ptr<Pass> pass) override {
-    PassRunner::doAdd(
-      std::unique_ptr<Pass>(new InstrumentedProxy(analyzer, std::move(pass))));
-  }
-
-private:
-  ModuleAnalyzer* analyzer;
 };
 
 // Instrument control flow, around calls and adding skips for rewinding.
@@ -1706,12 +1657,21 @@ struct Asyncify : public Pass {
     // Add necessary globals before we emit code to use them.
     addGlobals(module, relocatable);
 
+    // Compute the set of functions we will instrument. All of the passes we run
+    // below only need to run there.
+    PassUtils::FuncSet instrumentedFuncs;
+    for (auto& func : module->functions) {
+      if (analyzer.needsInstrumentation(func.get())) {
+        instrumentedFuncs.insert(func.get());
+      }
+    }
+
     // Instrument the flow of code, adding code instrumentation and
     // skips for when rewinding. We do this on flat IR so that it is
     // practical to add code around each call, without affecting
     // anything else.
     {
-      InstrumentedPassRunner runner(module, &analyzer);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       runner.add("flatten");
       // Dce is useful here, since AsyncifyFlow makes control flow conditional,
       // which may make unreachable code look reachable. It also lets us ignore
@@ -1752,7 +1712,7 @@ struct Asyncify : public Pass {
     // restore those locals). We also and optimize after as well to simplify
     // the code as much as possible.
     {
-      InstrumentedPassRunner runner(module, &analyzer);
+      PassUtils::FilteredPassRunner runner(module, instrumentedFuncs);
       if (optimize) {
         runner.addDefaultFunctionOptimizationPasses();
       }

@@ -3407,6 +3407,9 @@ switch (buf[0]) {
         goto parse_error;
       case 'u': {
         switch (buf[6]) {
+          case 'd':
+            if (op == "tuple.drop"sv) { return makeTupleDrop(s); }
+            goto parse_error;
           case 'e':
             if (op == "tuple.extract"sv) { return makeTupleExtract(s); }
             goto parse_error;
@@ -8658,14 +8661,14 @@ switch (buf[0]) {
           return Ok{};
         }
         goto parse_error;
-      case 'r':
-        if (op == "try"sv) {
-          CHECK_ERR(makeTry(ctx, pos));
-          return Ok{};
-        }
-        goto parse_error;
       case 'u': {
         switch (buf[6]) {
+          case 'd':
+            if (op == "tuple.drop"sv) {
+              CHECK_ERR(makeTupleDrop(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
           case 'e':
             if (op == "tuple.extract"sv) {
               CHECK_ERR(makeTupleExtract(ctx, pos));

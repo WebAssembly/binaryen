@@ -24,7 +24,7 @@
    )
   )
   (local.set $1
-   (tuple.make
+   (tuple.make 2
     (local.get $0)   ;; This will turn into 42.
     (i32.const 1000)
    )
@@ -35,7 +35,7 @@
   ;; Use the locals so they are not trivally removed.
   (i32.add
    (local.get $0)
-   (tuple.extract 0
+   (tuple.extract 2 0
     (local.get $1)
    )
   )

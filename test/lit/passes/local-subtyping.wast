@@ -302,7 +302,7 @@
   ;; CHECK:      (func $nondefaultable (type $0)
   ;; CHECK-NEXT:  (local $x (funcref funcref))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (ref.func $i32)
   ;; CHECK-NEXT:    (ref.func $i32)
   ;; CHECK-NEXT:   )
@@ -313,7 +313,7 @@
     ;; This tuple is assigned non-nullable values, which means the subtype is
     ;; nondefaultable, and we must not apply it.
     (local.set $x
-      (tuple.make
+      (tuple.make 2
         (ref.func $i32)
         (ref.func $i32)
       )

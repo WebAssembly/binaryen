@@ -18,9 +18,9 @@ import subprocess
 from . import shared
 from . import support
 
-tests = shared.get_tests(shared.options.binaryen_test)
+basic_tests = shared.get_tests(os.path.join(shared.options.binaryen_test, 'lit', 'basic'))
 # memory64 is not supported in wasm2js yet (but may be with BigInt eventually).
-tests = [t for t in tests if '64.wast' not in t]
+basic_tests = [t for t in basic_tests if '64.wast' not in t]
 spec_tests = shared.options.spec_tests
 spec_tests = [t for t in spec_tests if '.fail' not in t]
 spec_tests = [t for t in spec_tests if '64.wast' not in t]
@@ -36,19 +36,21 @@ def check_for_stale_files():
 
     # TODO(sbc): Generalize and apply other test suites
     all_tests = []
-    for t in tests + spec_tests + wasm2js_tests:
+    for t in basic_tests + spec_tests + wasm2js_tests:
         all_tests.append(os.path.basename(os.path.splitext(t)[0]))
 
     all_files = os.listdir(shared.get_test_dir('wasm2js'))
     for f in all_files:
         prefix = f.split('.')[0]
+        if prefix in [t.split('.')[0] for t in assert_tests]:
+            continue
         if prefix not in all_tests:
             shared.fail_with_error('orphan test output: %s' % f)
 
 
 def test_wasm2js_output():
     for opt in (0, 1):
-        for t in tests + spec_tests + wasm2js_tests:
+        for t in basic_tests + spec_tests + wasm2js_tests:
             basename = os.path.basename(t)
             if basename in wasm2js_blacklist:
                 continue
@@ -125,8 +127,8 @@ def test_asserts_output():
 
         asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
         traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-        asserts_expected_file = os.path.join(shared.options.binaryen_test, asserts)
-        traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
+        asserts_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', asserts)
+        traps_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', traps)
 
         wasm = os.path.join(shared.get_test_dir('wasm2js'), wasm)
         cmd = shared.WASM2JS + [wasm, '--allow-asserts', '-all',
@@ -152,7 +154,7 @@ def update_wasm2js_tests():
     print('\n[ checking wasm2js ]\n')
 
     for opt in (0, 1):
-        for wasm in tests + spec_tests + wasm2js_tests:
+        for wasm in basic_tests + spec_tests + wasm2js_tests:
             if not wasm.endswith('.wast'):
                 continue
 
@@ -201,8 +203,8 @@ def update_wasm2js_tests():
 
         asserts = os.path.basename(wasm).replace('.wast.asserts', '.asserts.js')
         traps = os.path.basename(wasm).replace('.wast.asserts', '.traps.js')
-        asserts_expected_file = os.path.join(shared.options.binaryen_test, asserts)
-        traps_expected_file = os.path.join(shared.options.binaryen_test, traps)
+        asserts_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', asserts)
+        traps_expected_file = os.path.join(shared.options.binaryen_test, 'wasm2js', traps)
 
         cmd = shared.WASM2JS + [os.path.join(shared.get_test_dir('wasm2js'), wasm), '--allow-asserts', '-all', '--disable-exception-handling']
         out = support.run_command(cmd)

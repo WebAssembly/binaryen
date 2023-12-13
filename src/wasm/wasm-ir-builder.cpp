@@ -154,7 +154,7 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
-  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
 
@@ -207,18 +207,33 @@ void IRBuilder::dump() {
 
   for (auto& scope : scopeStack) {
     std::cerr << "  scope ";
-    if (std::get_if<ScopeCtx::NoScope>(&scope.scope)) {
+    if (scope.isNone()) {
       std::cerr << "none";
-    } else if (auto* f = std::get_if<ScopeCtx::FuncScope>(&scope.scope)) {
-      std::cerr << "func " << f->func->name;
-    } else if (std::get_if<ScopeCtx::BlockScope>(&scope.scope)) {
+    } else if (auto* f = scope.getFunction()) {
+      std::cerr << "func " << f->name;
+    } else if (scope.getBlock()) {
       std::cerr << "block";
-    } else if (std::get_if<ScopeCtx::IfScope>(&scope.scope)) {
+    } else if (scope.getIf()) {
       std::cerr << "if";
-    } else if (std::get_if<ScopeCtx::ElseScope>(&scope.scope)) {
+    } else if (scope.getElse()) {
       std::cerr << "else";
-    } else if (std::get_if<ScopeCtx::LoopScope>(&scope.scope)) {
+    } else if (scope.getLoop()) {
       std::cerr << "loop";
+    } else if (auto* tryy = scope.getTry()) {
+      std::cerr << "try";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
+    } else if (auto* tryy = scope.getCatch()) {
+      std::cerr << "catch";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
+    } else if (auto* tryy = scope.getCatchAll()) {
+      std::cerr << "catch_all";
+      if (tryy->name) {
+        std::cerr << " " << tryy->name;
+      }
     } else {
       WASM_UNREACHABLE("unexpected scope");
     }
@@ -238,7 +253,7 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression(expr) << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << "\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -456,6 +471,65 @@ Result<> IRBuilder::visitThrow(Throw* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitStringNew(StringNew* curr) {
+  switch (curr->op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16: {
+      auto len = pop();
+      CHECK_ERR(len);
+      curr->length = *len;
+      break;
+    }
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array: {
+      auto end = pop();
+      CHECK_ERR(end);
+      curr->end = *end;
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+      break;
+    }
+    case StringNewFromCodePoint:
+      break;
+  }
+  auto ptr = pop();
+  CHECK_ERR(ptr);
+  curr->ptr = *ptr;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
+  switch (curr->op) {
+    case StringEncodeUTF8Array:
+    case StringEncodeLossyUTF8Array:
+    case StringEncodeWTF8Array:
+    case StringEncodeWTF16Array: {
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+    }
+      [[fallthrough]];
+    case StringEncodeUTF8:
+    case StringEncodeLossyUTF8:
+    case StringEncodeWTF8:
+    case StringEncodeWTF16: {
+      auto ptr = pop();
+      CHECK_ERR(ptr);
+      curr->ptr = *ptr;
+      auto ref = pop();
+      CHECK_ERR(ref);
+      curr->ref = *ref;
+      return Ok{};
+    }
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -480,6 +554,14 @@ Result<> IRBuilder::visitIfStart(If* iff, Name label) {
 
 Result<> IRBuilder::visitLoopStart(Loop* loop) {
   pushScope(ScopeCtx::makeLoop(loop));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
+  // The delegate label will be regenerated if we need it. See
+  // `getDelegateLabelName` for details.
+  tryy->name = Name();
+  pushScope(ScopeCtx::makeTry(tryy, label));
   return Ok{};
 }
 
@@ -586,6 +668,117 @@ Result<> IRBuilder::visitElse() {
   return Ok{};
 }
 
+Result<> IRBuilder::visitCatch(Name tag) {
+  auto& scope = getScope();
+  bool wasTry = true;
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    wasTry = false;
+    tryy = scope.getCatch();
+  }
+  if (!tryy) {
+    return Err{"unexpected catch"};
+  }
+  auto originalLabel = scope.getOriginalLabel();
+  auto label = scope.label;
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  if (wasTry) {
+    tryy->body = *expr;
+  } else {
+    tryy->catchBodies.push_back(*expr);
+  }
+  tryy->catchTags.push_back(tag);
+  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label));
+  // Push a pop for the exception payload.
+  auto params = wasm.getTag(tag)->sig.params;
+  if (params != Type::none) {
+    push(builder.makePop(params));
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitCatchAll() {
+  auto& scope = getScope();
+  bool wasTry = true;
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    wasTry = false;
+    tryy = scope.getCatch();
+  }
+  if (!tryy) {
+    return Err{"unexpected catch"};
+  }
+  auto originalLabel = scope.getOriginalLabel();
+  auto label = scope.label;
+  auto expr = finishScope();
+  CHECK_ERR(expr);
+  if (wasTry) {
+    tryy->body = *expr;
+  } else {
+    tryy->catchBodies.push_back(*expr);
+  }
+  pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label));
+  return Ok{};
+}
+
+Result<Name> IRBuilder::getDelegateLabelName(Index label) {
+  if (label >= scopeStack.size()) {
+    return Err{"invalid label: " + std::to_string(label)};
+  }
+  auto& scope = scopeStack[scopeStack.size() - label - 1];
+  auto* delegateTry = scope.getTry();
+  if (!delegateTry) {
+    delegateTry = scope.getCatch();
+  }
+  if (!delegateTry) {
+    delegateTry = scope.getCatchAll();
+  }
+  if (!delegateTry) {
+    return Err{"expected try scope at label " + std::to_string(label)};
+  }
+  // Only delegate and rethrow can reference the try name in Binaryen IR, so
+  // trys might need two labels: one for delegate/rethrow and one for all
+  // other control flow. These labels must be different to satisfy the
+  // Binaryen validator. To keep this complexity contained within the
+  // handling of trys and delegates, pretend there is just the single normal
+  // label and add a prefix to it to generate the delegate label.
+  auto delegateName =
+    Name(std::string("__delegate__") + getLabelName(label)->toString());
+  delegateTry->name = delegateName;
+  return delegateName;
+}
+
+Result<> IRBuilder::visitDelegate(Index label) {
+  auto& scope = getScope();
+  auto* tryy = scope.getTry();
+  if (!tryy) {
+    return Err{"unexpected delegate"};
+  }
+  // In Binaryen IR, delegates can only target try or function scopes directly.
+  // Search upward to find the nearest enclosing try or function scope. Since
+  // the given label is relative the parent scope of the try, start by adjusting
+  // it to be relative to the try scope.
+  ++label;
+  for (size_t size = scopeStack.size(); label < size; ++label) {
+    auto& delegateScope = scopeStack[size - label - 1];
+    if (delegateScope.getTry()) {
+      auto delegateName = getDelegateLabelName(label);
+      CHECK_ERR(delegateName);
+      tryy->delegateTarget = *delegateName;
+      break;
+    } else if (delegateScope.getFunction()) {
+      tryy->delegateTarget = DELEGATE_CALLER_TARGET;
+      break;
+    }
+  }
+  if (label == scopeStack.size()) {
+    return Err{"unexpected delegate"};
+  }
+  // Delegate ends the try.
+  return visitEnd();
+}
+
 Result<> IRBuilder::visitEnd() {
   auto scope = getScope();
   if (scope.isNone()) {
@@ -634,18 +827,50 @@ Result<> IRBuilder::visitEnd() {
     iff->ifFalse = *expr;
     iff->finalize(iff->type);
     push(maybeWrapForLabel(iff));
+  } else if (auto* tryy = scope.getTry()) {
+    tryy->body = *expr;
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
+  } else if (Try * tryy;
+             (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
+    tryy->catchBodies.push_back(*expr);
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
   return Ok{};
 }
 
-Result<Index> IRBuilder::getLabelIndex(Name label) {
+Result<Index> IRBuilder::getLabelIndex(Name label, bool inDelegate) {
   auto it = labelDepths.find(label);
   if (it == labelDepths.end() || it->second.empty()) {
-    return Err{"unexpected label '"s + label.toString()};
+    return Err{"unexpected label '"s + label.toString() + "'"};
   }
-  return scopeStack.size() - it->second.back();
+  auto index = scopeStack.size() - it->second.back();
+  if (inDelegate) {
+    if (index == 0) {
+      // The real label we're referencing, if it exists, has been shadowed by
+      // the `try`. Get the previous label with this name instead. For example:
+      //
+      // block $l
+      //  try $l
+      //  delegate $l
+      // end
+      //
+      // The `delegate $l` should target the block, not the try, even though a
+      // normal branch to $l in the try's scope would target the try.
+      if (it->second.size() <= 1) {
+        return Err{"unexpected self-referencing label '"s + label.toString() +
+                   "'"};
+      }
+      index = scopeStack.size() - it->second[it->second.size() - 2];
+      assert(index != 0);
+    }
+    // Adjust the index to be relative to the try.
+    --index;
+  }
+  return index;
 }
 
 Result<Name> IRBuilder::getLabelName(Index label) {
@@ -721,7 +946,14 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallIndirect() {}
+Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
+  CallIndirect curr(wasm.allocator);
+  curr.heapType = type;
+  CHECK_ERR(visitCallIndirect(&curr));
+  push(builder.makeCallIndirect(
+    table, curr.target, curr.operands, type, isReturn));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -1006,15 +1238,53 @@ Result<> IRBuilder::makeRefEq() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeTableGet() {}
+Result<> IRBuilder::makeTableGet(Name table) {
+  TableGet curr;
+  CHECK_ERR(visitTableGet(&curr));
+  auto type = wasm.getTable(table)->type;
+  push(builder.makeTableGet(table, curr.index, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSet() {}
+Result<> IRBuilder::makeTableSet(Name table) {
+  TableSet curr;
+  CHECK_ERR(visitTableSet(&curr));
+  push(builder.makeTableSet(table, curr.index, curr.value));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSize() {}
+Result<> IRBuilder::makeTableSize(Name table) {
+  push(builder.makeTableSize(table));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableGrow() {}
+Result<> IRBuilder::makeTableGrow(Name table) {
+  TableGrow curr;
+  CHECK_ERR(visitTableGrow(&curr));
+  push(builder.makeTableGrow(table, curr.value, curr.delta));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTry() {}
+Result<> IRBuilder::makeTableFill(Name table) {
+  TableFill curr;
+  CHECK_ERR(visitTableFill(&curr));
+  push(builder.makeTableFill(table, curr.dest, curr.value, curr.size));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
+  TableCopy curr;
+  CHECK_ERR(visitTableCopy(&curr));
+  push(builder.makeTableCopy(
+    curr.dest, curr.source, curr.size, destTable, srcTable));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTry(Name label, Type type) {
+  auto* tryy = wasm.allocator.alloc<Try>();
+  tryy->type = type;
+  return visitTryStart(tryy, label);
+}
 
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);
@@ -1024,7 +1294,13 @@ Result<> IRBuilder::makeThrow(Name tag) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRethrow() {}
+Result<> IRBuilder::makeRethrow(Index label) {
+  // Rethrow references `Try` labels directly, just like `delegate`.
+  auto name = getDelegateLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeRethrow(*name));
+  return Ok{};
+}
 
 // Result<> IRBuilder::makeTupleMake() {}
 
@@ -1191,9 +1467,23 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayInitData() {}
+Result<> IRBuilder::makeArrayInitData(HeapType type, Name data) {
+  ArrayInitData curr;
+  CHECK_ERR(visitArrayInitData(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitData(
+    data, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeArrayInitElem() {}
+Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
+  ArrayInitElem curr;
+  CHECK_ERR(visitArrayInitElem(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitElem(
+    elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefAs(RefAsOp op) {
   RefAs curr;
@@ -1202,30 +1492,113 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeStringNew() {}
+Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+  StringNew curr;
+  curr.op = op;
+  CHECK_ERR(visitStringNew(&curr));
+  // TODO: Store the memory in the IR.
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16:
+      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
+      return Ok{};
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array:
+      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
+      return Ok{};
+    case StringNewFromCodePoint:
+      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
+      return Ok{};
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
 
-// Result<> IRBuilder::makeStringConst() {}
+Result<> IRBuilder::makeStringConst(Name string) {
+  push(builder.makeStringConst(string));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringMeasure() {}
+Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
+  StringMeasure curr;
+  CHECK_ERR(visitStringMeasure(&curr));
+  push(builder.makeStringMeasure(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEncode() {}
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+  StringEncode curr;
+  curr.op = op;
+  CHECK_ERR(visitStringEncode(&curr));
+  // TODO: Store the memory in the IR.
+  push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringConcat() {}
+Result<> IRBuilder::makeStringConcat() {
+  StringConcat curr;
+  CHECK_ERR(visitStringConcat(&curr));
+  push(builder.makeStringConcat(curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEq() {}
+Result<> IRBuilder::makeStringEq(StringEqOp op) {
+  StringEq curr;
+  CHECK_ERR(visitStringEq(&curr));
+  push(builder.makeStringEq(op, curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringAs() {}
+Result<> IRBuilder::makeStringAs(StringAsOp op) {
+  StringAs curr;
+  CHECK_ERR(visitStringAs(&curr));
+  push(builder.makeStringAs(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF8Advance() {}
+Result<> IRBuilder::makeStringWTF8Advance() {
+  StringWTF8Advance curr;
+  CHECK_ERR(visitStringWTF8Advance(&curr));
+  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF16Get() {}
+Result<> IRBuilder::makeStringWTF16Get() {
+  StringWTF16Get curr;
+  CHECK_ERR(visitStringWTF16Get(&curr));
+  push(builder.makeStringWTF16Get(curr.ref, curr.pos));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterNext() {}
+Result<> IRBuilder::makeStringIterNext() {
+  StringIterNext curr;
+  CHECK_ERR(visitStringIterNext(&curr));
+  push(builder.makeStringIterNext(curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterMove() {}
+Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
+  StringIterMove curr;
+  CHECK_ERR(visitStringIterMove(&curr));
+  push(builder.makeStringIterMove(op, curr.ref, curr.num));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceWTF() {}
+Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+  StringSliceWTF curr;
+  CHECK_ERR(visitStringSliceWTF(&curr));
+  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceIter() {}
+Result<> IRBuilder::makeStringSliceIter() {
+  StringSliceIter curr;
+  CHECK_ERR(visitStringSliceIter(&curr));
+  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
 
 } // namespace wasm

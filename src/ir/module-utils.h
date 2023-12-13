@@ -218,6 +218,32 @@ template<typename T> inline void iterImportable(Module& wasm, T visitor) {
   }
 }
 
+// Iterates over all module items. The visitor provided should have signature
+// void(ModuleItemKind, Named*).
+template<typename T> inline void iterModuleItems(Module& wasm, T visitor) {
+  for (auto& curr : wasm.functions) {
+    visitor(ModuleItemKind::Function, curr.get());
+  }
+  for (auto& curr : wasm.tables) {
+    visitor(ModuleItemKind::Table, curr.get());
+  }
+  for (auto& curr : wasm.memories) {
+    visitor(ModuleItemKind::Memory, curr.get());
+  }
+  for (auto& curr : wasm.globals) {
+    visitor(ModuleItemKind::Global, curr.get());
+  }
+  for (auto& curr : wasm.tags) {
+    visitor(ModuleItemKind::Tag, curr.get());
+  }
+  for (auto& curr : wasm.dataSegments) {
+    visitor(ModuleItemKind::DataSegment, curr.get());
+  }
+  for (auto& curr : wasm.elementSegments) {
+    visitor(ModuleItemKind::ElementSegment, curr.get());
+  }
+}
+
 // Helper class for performing an operation on all the functions in the module,
 // in parallel, with an Info object for each one that can contain results of
 // some computation that the operation performs.
