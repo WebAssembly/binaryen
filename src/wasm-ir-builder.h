@@ -200,7 +200,8 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<> visitDrop(Drop*);
+  [[nodiscard]] Result<>
+  visitDrop(Drop*, std::optional<uint32_t> arith = std::nullopt);
   [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);

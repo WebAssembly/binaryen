@@ -335,9 +335,12 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
   return Ok{};
 }
 
-Result<> IRBuilder::visitDrop(Drop* curr) {
+Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
   // Multivalue drops must remain multivalue drops.
-  if (curr->value->type.isTuple()) {
+  if (!arity) {
+    arity = curr->value->type.size();
+  }
+  if (*arity >= 2) {
     auto val = pop(curr->value->type.size());
     CHECK_ERR(val);
     curr->value = *val;
@@ -1210,7 +1213,7 @@ Result<> IRBuilder::makeSelect(std::optional<Type> type) {
 
 Result<> IRBuilder::makeDrop() {
   Drop curr;
-  CHECK_ERR(visitDrop(&curr));
+  CHECK_ERR(visitDrop(&curr, 1));
   push(builder.makeDrop(curr.value));
   return Ok{};
 }
