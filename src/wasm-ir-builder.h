@@ -481,9 +481,9 @@ private:
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after
   // hoistLastValue(). `sizeHint` is the size of the type we ultimately want to
-  // consume, so if the hoisted values has `sizeHint` elements, it is left
-  // intact even if it is a tuple. Otherwise, hoisted tuple values will be
-  // broken into pieces.
+  // consume, so if the hoisted value has `sizeHint` elements, it is left intact
+  // even if it is a tuple. Otherwise, hoisted tuple values will be broken into
+  // pieces.
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
                                              size_t sizeHint = 1);
 
