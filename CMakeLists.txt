@@ -464,6 +464,8 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
   target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  # useful when working on --post-js file
+  # target_link_libraries(binaryen_wasm "--minify=0")
   target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   target_link_libraries(binaryen_wasm "-msign-ext")
   target_link_libraries(binaryen_wasm "-mbulk-memory")
@@ -503,6 +505,8 @@ if(EMSCRIPTEN)
   endif()
   target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
   target_link_libraries(binaryen_js "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  # useful when working on --post-js file
+  # target_link_libraries(binaryen_js "--minify=0")
   target_link_libraries(binaryen_js "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
@@ -521,6 +525,41 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-sASSERTIONS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  # binaryen.ts TypeScript variant (leverages the wasm variant)
+  # compile the typescript file that wraps the wasm
+  add_custom_target(binaryen_wrap_ts
+              COMMAND tsc --target ES2020 --module ES2022 --declaration --declarationMap
+                      ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.ts &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.js ${CMAKE_BINARY_DIR}/bin/binaryen_ts.js &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.d.ts ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts &&
+                      mv ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-wrapper.d.ts.map ${CMAKE_BINARY_DIR}/bin/binaryen_ts.d.ts.map)
+  add_custom_target(binaryen_post_ts
+              COMMAND tsc --target ES2020 --module ES2022
+                      ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-post.ts)
+  add_executable(binaryen_wasm_ts
+                 ${binaryen_emscripten_SOURCES})
+  add_dependencies(binaryen_wasm_ts binaryen_wrap_ts binaryen_post_ts)
+  target_link_libraries(binaryen_wasm_ts wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
+  target_link_libraries(binaryen_wasm_ts "-sFILESYSTEM")
+  target_link_libraries(binaryen_wasm_ts "-sEXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_wasm_ts "-sNODERAWFS=0")
+  target_link_libraries(binaryen_wasm_ts "-sEXPORT_ES6")
+  target_link_libraries(binaryen_wasm_ts "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_wasm_ts "-sEXPORTED_FUNCTIONS=_malloc,_free")
+  # useful when working on --post-js file
+  # target_link_libraries(binaryen_wasm_ts "--minify=0")
+  target_link_libraries(binaryen_wasm_ts "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen-post.js")
+  target_link_libraries(binaryen_wasm_ts "-msign-ext")
+  target_link_libraries(binaryen_wasm_ts "-mbulk-memory")
+  target_link_libraries(binaryen_wasm_ts optimized "--closure=1")
+  target_link_libraries(binaryen_wasm_ts optimized "--closure-args=\"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
+  # TODO: Fix closure warnings! (#5062)
+  target_link_libraries(binaryen_wasm_ts optimized "-Wno-error=closure")
+  target_link_libraries(binaryen_wasm_ts optimized "-flto")
+  target_link_libraries(binaryen_wasm_ts debug "--profiling")
+  install(TARGETS binaryen_wasm_ts DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 endif()
 
 configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)

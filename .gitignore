@@ -50,5 +50,10 @@ test/lit/lit.site.cfg.py
 
 # files related to clangd cache
 .cache/*
-src/ts/binaryen.d.ts
-src/ts/binaryen.js
+
+# files related to tsc compilation
+/src/ts/binaryen-post.js
+/src/ts/binaryen-post.d.ts
+/src/ts/binaryen-wrapper.d.ts
+/src/ts/binaryen-wrapper.js
+/*.map
