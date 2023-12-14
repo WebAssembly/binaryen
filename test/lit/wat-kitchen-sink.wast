@@ -34,11 +34,11 @@
 
  (rec)
 
+ ;; CHECK:      (type $11 (func))
+
  ;; CHECK:      (type $packed-i8 (array (mut i8)))
 
  ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
-
- ;; CHECK:      (type $13 (func))
 
  ;; CHECK:      (type $14 (func (param i32)))
 
@@ -210,33 +210,27 @@
  ;; CHECK:      (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
  (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
+ ;; imported memories
+ (memory (export "mem") (export "mem2") (import "" "mem") 0)
+ ;; CHECK:      (type $88 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
+
+ ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
+
+ ;; CHECK:      (import "mod" "imported-m" (memory $m-imported (shared 1 2)))
+ (import "mod" "imported-m" (memory $m-imported 1 2 shared))
+
+ ;; imported tables
+ (table (export "tab") (export "tab2") (import "" "tab") 0 funcref)
+ (import "mod" "imported-tab" (table 2 3 externref))
+
  ;; imported globals
  (global $g1 (export "g1") (export "g1.1") (import "mod" "g1") i32)
  (global $g2 (import "mod" "g2") (mut i64))
  (global (import "" "g3") (ref 0))
  (global (import "mod" "") (ref null $many))
-
- ;; imported memories
- (memory (export "mem") (export "mem2") (import "" "mem") 0)
-
- ;; imported tables
- (table (export "tab") (export "tab2") (import "" "tab") 0 funcref)
-
- ;; imported functions
- (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
-
- ;; imported tags
- (tag $imported (export "t0.0") (export "t0.1") (import "mod" "t0") (param i32 i64))
- (tag (import "mod" "t1"))
-
- ;; globals
- (global (mut i32) i32.const 0)
-
- ;; CHECK:      (type $88 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
-
- ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
-
  ;; CHECK:      (import "" "tab" (table $timport$0 0 funcref))
+
+ ;; CHECK:      (import "mod" "imported-tab" (table $timport$1 2 3 externref))
 
  ;; CHECK:      (import "mod" "g1" (global $g1 i32))
 
@@ -246,11 +240,30 @@
 
  ;; CHECK:      (import "mod" "" (global $gimport$1 (ref null $many)))
 
+ ;; CHECK:      (import "mod" "imported-g" (global $g-imported (mut i32)))
+ (import "mod" "imported-g" (global $g-imported (mut i32)))
+
+ ;; imported functions
+ (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
+ (import "mod" "imported-f" (func (param) (result)))
+
+ ;; imported tags
+ (tag $imported (export "t0.0") (export "t0.1") (import "mod" "t0") (param i32 i64))
+ (tag (import "mod" "t1"))
+ (import "mod" "imported-tag" (tag (param) (result)))
+
+ ;; globals
+ (global (mut i32) i32.const 0)
+
  ;; CHECK:      (import "mod" "f5" (func $fimport$0 (type $void)))
+
+ ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $void)))
 
  ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
 
  ;; CHECK:      (import "mod" "t1" (tag $timport$0))
+
+ ;; CHECK:      (import "mod" "imported-tag" (tag $timport$1))
 
  ;; CHECK:      (global $2 (mut i32) (i32.const 0))
 
@@ -293,7 +306,7 @@
  ;; CHECK:      (data $active4 (memory $mem-i32) (i32.const 16) "")
  (data $active4 (memory $mem-i32) (i32.const 16) "")
 
- (data (memory 4) (offset i64.const 0) "64-bit")
+ (data (memory 5) (offset i64.const 0) "64-bit")
 
  ;; tables
  ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
@@ -317,10 +330,10 @@
  ;; CHECK:      (elem $implicit-table-2 (table $timport$0) (i32.const 1) func)
  (elem $implicit-table-2 (i32.const 1) funcref)
 
- ;; CHECK:      (elem $implicit-table-indices (table $timport$0) (i32.const 2) func $fimport$0 $1 $f1)
+ ;; CHECK:      (elem $implicit-table-indices (table $timport$0) (i32.const 2) func $fimport$0 $fimport$1 $2)
  (elem $implicit-table-indices (offset (i32.const 2)) func 0 1 2)
 
- ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (i32.const 3) func $fimport$0 $1 $f1 $f2)
+ ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (i32.const 3) func $fimport$0 $fimport$1 $2 $f1)
  (elem $implicit-table-legacy-indices (i32.const 3) 0 1 2 3)
 
  ;; CHECK:      (elem $explicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc))
@@ -335,14 +348,15 @@
  ;; CHECK:      (elem $passive-2 anyref (struct.new_default $s0) (struct.new_default $s0))
  (elem $passive-2 anyref (item struct.new $s0) (struct.new $s0))
 
- ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)
+ ;; CHECK:      (elem declare func $ref-func $ref-is-null $table-fill $table-grow $table-set)
  (elem declare func 0 1 2 3)
 
  (elem $declare-2 declare funcref (item ref.func 0) (ref.func 1) (item (ref.func 2)))
 
  ;; tags
  (tag)
- ;; CHECK:      (tag $1)
+
+ ;; CHECK:      (tag $2)
 
  ;; CHECK:      (tag $empty)
  (tag $empty)
@@ -355,10 +369,6 @@
 
  ;; explicit exports
  (export "exported-func" (func 0))
- ;; CHECK:      (export "g1" (global $g1))
-
- ;; CHECK:      (export "g1.1" (global $g1))
-
  ;; CHECK:      (export "mem" (memory $mimport$0))
 
  ;; CHECK:      (export "mem2" (memory $mimport$0))
@@ -366,6 +376,10 @@
  ;; CHECK:      (export "tab" (table $timport$0))
 
  ;; CHECK:      (export "tab2" (table $timport$0))
+
+ ;; CHECK:      (export "g1" (global $g1))
+
+ ;; CHECK:      (export "g1.1" (global $g1))
 
  ;; CHECK:      (export "f5.0" (func $fimport$0))
 
@@ -391,7 +405,7 @@
 
  ;; CHECK:      (export "exported-tag" (tag $imported))
 
- ;; CHECK:      (func $1 (type $void)
+ ;; CHECK:      (func $2 (type $void)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
@@ -2623,7 +2637,7 @@
  ;; CHECK-NEXT:   (memory.size $mimport$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (memory.size $mem)
+ ;; CHECK-NEXT:   (memory.size $m-imported)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.size $mem-i64)
@@ -2645,7 +2659,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (memory.grow $mem
+ ;; CHECK-NEXT:   (memory.grow $m-imported
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2668,7 +2682,7 @@
  )
 
  ;; CHECK:      (func $globals (type $void)
- ;; CHECK-NEXT:  (global.set $2
+ ;; CHECK-NEXT:  (global.set $g-imported
  ;; CHECK-NEXT:   (global.get $i32)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2684,7 +2698,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i64.load8_s $mem
+ ;; CHECK-NEXT:   (i64.load8_s $m-imported
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2711,7 +2725,7 @@
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (i64.atomic.store8 $mem
+ ;; CHECK-NEXT:  (i64.atomic.store8 $m-imported
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i64.const 1)
  ;; CHECK-NEXT:  )
@@ -2777,12 +2791,12 @@
   local.get 0
   i32.const 1
   i32.const 2
-  i32.atomic.rmw8.cmpxchg_u 1 align=1
+  i32.atomic.rmw8.cmpxchg_u 2 align=1
   drop
   local.get 1
   i64.const 3
   i64.const 4
-  i64.atomic.rmw32.cmpxchg_u 4 offset=16
+  i64.atomic.rmw32.cmpxchg_u 5 offset=16
   drop
  )
 
@@ -2947,7 +2961,7 @@
   drop
   local.get 1
   local.get 2
-  v128.store64_lane 4 align=4 0
+  v128.store64_lane 5 align=4 0
  )
 
  ;; CHECK:      (func $memory-init (type $17) (param $0 i32) (param $1 i32) (param $2 i32)
@@ -2975,7 +2989,7 @@
   i64.const 0
   local.get 1
   local.get 2
-  memory.init 4 1
+  memory.init 5 1
   local.get 0
   local.get 1
   local.get 2
@@ -3016,11 +3030,11 @@
   local.get 0
   local.get 1
   i32.const 3
-  memory.copy 1 $mem-i32
+  memory.copy 2 $mem-i32
   local.get 2
   local.get 3
   i64.const 4
-  memory.copy $mem-i64 4
+  memory.copy $mem-i64 5
  )
 
  ;; CHECK:      (func $memory-fill (type $4) (param $0 i32) (param $1 i64)
@@ -3132,7 +3146,7 @@
  ;; CHECK-NEXT:   (ref.func $ref-func)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:   (ref.func $ref-is-null)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-func
@@ -3143,7 +3157,7 @@
  )
 
  ;; CHECK:      (func $throw (type $void)
- ;; CHECK-NEXT:  (throw $1)
+ ;; CHECK-NEXT:  (throw $timport$1)
  ;; CHECK-NEXT:  (throw $tag-i32
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -3180,7 +3194,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (table.get $funcs
+ ;; CHECK-NEXT:   (table.get $timport$1
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -3222,7 +3236,7 @@
   table.set
   i32.const 1
   ref.func $table-set
-  table.set 1
+  table.set 2
   i32.const 2
   ref.null any
   table.set $table-any
@@ -3233,7 +3247,7 @@
  ;; CHECK-NEXT:   (table.size $timport$0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (table.size $funcs)
+ ;; CHECK-NEXT:   (table.size $timport$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (table.size $table-any)
@@ -3275,7 +3289,7 @@
   drop
   ref.func $table-grow
   i32.const 1
-  table.grow 1
+  table.grow 2
   drop
   ref.null any
   i32.const 2
@@ -3308,7 +3322,7 @@
   i32.const 2
   ref.func $table-fill
   i32.const 3
-  table.fill 1
+  table.fill 2
   i32.const 4
   ref.null any
   i32.const 5
@@ -3335,7 +3349,7 @@
   i32.const 3
   i32.const 4
   i32.const 5
-  table.copy 1 $funcs
+  table.copy 2 $funcs
  )
 
  ;; CHECK:      (func $i31-new (type $37) (param $0 i32) (result i31ref)
@@ -4276,19 +4290,19 @@
   local.get 0
   call_indirect
   local.get 0
-  call_indirect 1
+  call_indirect 2
   local.get 0
   call_indirect $funcs
   local.get 0
   call_indirect (type $void)
   local.get 0
-  call_indirect 1 (type $void) (param) (result)
+  call_indirect 2 (type $void) (param) (result)
   local.get 0
   call_indirect $funcs (type $void)
   local.get 0
   call_indirect (param) (result)
   local.get 0
-  call_indirect 1 (param) (result)
+  call_indirect 2 (param) (result)
   local.get 0
   call_indirect $funcs (param) (result)
   local.get 1
@@ -4336,19 +4350,19 @@
   local.get 0
   return_call_indirect
   local.get 0
-  return_call_indirect 1
+  return_call_indirect 2
   local.get 0
   return_call_indirect $funcs
   local.get 0
   return_call_indirect (type $void)
   local.get 0
-  return_call_indirect 1 (type $void) (param) (result)
+  return_call_indirect 2 (type $void) (param) (result)
   local.get 0
   return_call_indirect $funcs (type $void)
   local.get 0
   return_call_indirect (param) (result)
   local.get 0
-  return_call_indirect 1 (param) (result)
+  return_call_indirect 2 (param) (result)
   local.get 0
   return_call_indirect $funcs (param) (result)
   local.get 1

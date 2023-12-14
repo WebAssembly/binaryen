@@ -191,6 +191,7 @@ template<typename Ctx> Result<> strtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
+template<typename Ctx> MaybeResult<> import_(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
@@ -2168,6 +2169,71 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   return {};
 }
 
+// import ::= '(' 'import' mod:name nm:name importdesc ')'
+// importdesc ::= '(' 'func' id? typeuse ')'
+//              | '(' 'table' id? tabletype ')'
+//              | '(' 'memory' id? memtype ')'
+//              | '(' 'global' id? globaltype ')'
+//              | '(' 'tag' id? typeuse ')'
+template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+
+  if (!ctx.in.takeSExprStart("import"sv)) {
+    return {};
+  }
+
+  auto mod = ctx.in.takeName();
+  if (!mod) {
+    return ctx.in.err("expected import module name");
+  }
+
+  auto nm = ctx.in.takeName();
+  if (!nm) {
+    return ctx.in.err("expected import name");
+  }
+  ImportNames names{*mod, *nm};
+
+  if (ctx.in.takeSExprStart("func"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = typeuse(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(
+      ctx.addFunc(name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+  } else if (ctx.in.takeSExprStart("table"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = tabletype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTable(name ? *name : Name{}, {}, &names, *type, pos));
+  } else if (ctx.in.takeSExprStart("memory"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = memtype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addMemory(name ? *name : Name{}, {}, &names, *type, pos));
+  } else if (ctx.in.takeSExprStart("global"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = globaltype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addGlobal(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+  } else if (ctx.in.takeSExprStart("tag"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = typeuse(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTag(name ? *name : Name{}, {}, &names, *type, pos));
+  } else {
+    return ctx.in.err("expected import description");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of import description");
+  }
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of import");
+  }
+
+  return Ok{};
+}
+
 // func ::= '(' 'func' id? ('(' 'export' name ')')*
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
@@ -2648,6 +2714,10 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return {};
   }
   if (auto res = deftype(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = import_(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
