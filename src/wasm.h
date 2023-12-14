@@ -1543,6 +1543,7 @@ public:
 
 class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
 public:
+  TupleExtract() = default;
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;

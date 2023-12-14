@@ -41,6 +41,7 @@ template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
+template<typename Ctx> Result<uint32_t> tupleArity(Ctx&);
 
 // Instructions
 template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx&);
@@ -604,6 +605,18 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
   }
 
   return ctx.makeGlobalType(mutability, *type);
+}
+
+// arity ::= x:u32    (if x >=2 )
+template<typename Ctx> Result<uint32_t> tupleArity(Ctx& ctx) {
+  auto arity = ctx.in.takeU32();
+  if (!arity) {
+    return ctx.in.err("expected tuple arity");
+  }
+  if (*arity < 2) {
+    return ctx.in.err("tuple arity must be at least 2");
+  }
+  return *arity;
 }
 
 // ============
@@ -1517,15 +1530,25 @@ template<typename Ctx> Result<> makeThrowRef(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  return ctx.makeTupleMake(pos, *arity);
 }
 
 template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  auto index = ctx.in.takeU32();
+  if (!index) {
+    return ctx.in.err("expected tuple index");
+  }
+  return ctx.makeTupleExtract(pos, *arity, *index);
 }
 
 template<typename Ctx> Result<> makeTupleDrop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  return ctx.makeTupleDrop(pos, *arity);
 }
 
 template<typename Ctx>

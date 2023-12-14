@@ -430,6 +430,9 @@ struct NullInstrParserCtx {
   Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
   Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
   Result<> makeRethrow(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeTupleMake(Index, uint32_t) { return Ok{}; }
+  Result<> makeTupleExtract(Index, uint32_t, uint32_t) { return Ok{}; }
+  Result<> makeTupleDrop(Index, uint32_t) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -1622,6 +1625,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRethrow(Index pos, Index label) {
     return withLoc(pos, irBuilder.makeRethrow(label));
+  }
+
+  Result<> makeTupleMake(Index pos, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeTupleMake(arity));
+  }
+
+  Result<> makeTupleExtract(Index pos, uint32_t arity, uint32_t index) {
+    return withLoc(pos, irBuilder.makeTupleExtract(arity, index));
+  }
+
+  Result<> makeTupleDrop(Index pos, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeTupleDrop(arity));
   }
 
   Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {

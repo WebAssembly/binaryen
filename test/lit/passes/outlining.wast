@@ -645,12 +645,9 @@
   ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
@@ -660,12 +657,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.mul
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_1
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch_1
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch_1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
@@ -686,44 +680,6 @@
         (i32.const 0)
         (i32.const 1)
       )
-    )
-  )
-)
-
-;; Test outlining works with call_indirect
-;; 0 results, 2 params, 3 operands
-(module
-  (table funcref)
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (type $1 (func (param i32 i32)))
-
-  ;; CHECK:      (table $0 0 funcref)
-
-  ;; CHECK:      (func $outline$ (type $0)
-  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-
-  ;; CHECK:      (func $a (type $0)
-  ;; CHECK-NEXT:  (call $outline$)
-  ;; CHECK-NEXT:  (call $outline$)
-  ;; CHECK-NEXT: )
-  (func $a
-    (call_indirect
-      (param i32 i32)
-      (i32.const 0)
-      (i32.const 1)
-      (i32.const 2)
-    )
-    (call_indirect
-      (param i32 i32)
-      (i32.const 0)
-      (i32.const 1)
-      (i32.const 2)
     )
   )
 )
@@ -826,6 +782,44 @@
     (drop
       (call_indirect
         (result i32)
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 2 results, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32 i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (tuple.drop 2
+      (call_indirect
+        (result i32 i32)
+        (i32.const 0)
+      )
+    )
+    (tuple.drop 2
+      (call_indirect
+        (result i32 i32)
         (i32.const 0)
       )
     )
