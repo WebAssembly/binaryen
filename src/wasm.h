@@ -1494,8 +1494,8 @@ public:
 
   bool hasCatchAll() const;
 
-  void finalize(Module* wasm=nullptr);
-  void finalize(Type type_, Module* wasm=nullptr);
+  void finalize(Module* wasm = nullptr);
+  void finalize(Type type_, Module* wasm = nullptr);
 
   // Caches tags' types in the catch clauses in order not to query the module
   // every time we query the sent types
