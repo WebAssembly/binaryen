@@ -1494,6 +1494,9 @@ public:
 
   bool hasCatchAll() const;
 
+  // When 'Module*' parameter is given, we cache catch tags' types into
+  // 'sentTypes' array, so that the types can be accessed in other analyses
+  // without accessing the module.
   void finalize(Module* wasm = nullptr);
   void finalize(Type type_, Module* wasm = nullptr);
 
