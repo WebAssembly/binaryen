@@ -192,9 +192,6 @@ def which(program):
                     return exe_file + '.bat'
 
 
-WATERFALL_BUILD_DIR = os.path.join(options.binaryen_test, 'wasm-install')
-BIN_DIR = os.path.abspath(os.path.join(WATERFALL_BUILD_DIR, 'wasm-install', 'bin'))
-
 NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
@@ -386,6 +383,7 @@ def get_tests(test_dir, extensions=[], recursive=False):
         tests += glob.glob(os.path.join(test_dir, star + ext), recursive=True)
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
+    tests = [item for item in tests if os.path.isfile(item)]
     return sorted(tests)
 
 

@@ -343,10 +343,10 @@
  ;; CHECK-NEXT:  (local $temp (i32 (ref eq)))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make
+ ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -354,17 +354,17 @@
  ;; CHECK-NEXT:   i32.const 2
  ;; CHECK-NEXT:   i32.const 3
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 4
  ;; CHECK-NEXT:   i32.const 5
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
   (local $temp (i32 (ref eq)))
@@ -372,14 +372,14 @@
   ;; than a non-nullable reference by itself. We cannot remove the first set
   ;; here.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (i32.const 0)
     (local.get $param)
    )
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
@@ -387,7 +387,7 @@
     )
    )
    (local.set $temp
-    (tuple.make
+    (tuple.make 2
      (i32.const 2)
      (i31.new
       (i32.const 3)
@@ -395,7 +395,7 @@
     )
    )
    (local.set $temp
-    (tuple.make
+    (tuple.make 2
      (i32.const 4)
      (i31.new
       (i32.const 5)
@@ -403,7 +403,7 @@
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )
@@ -412,10 +412,10 @@
  ;; CHECK-NEXT:  (local $temp (i32 eqref))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make
+ ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -423,31 +423,31 @@
  ;; CHECK-NEXT:   i32.const 2
  ;; CHECK-NEXT:   i32.const 3
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 4
  ;; CHECK-NEXT:   i32.const 5
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-defaultable (param $param (ref null eq)) (result (ref null eq))
   (local $temp (i32 (ref null eq)))
   ;; As the last testcase, but now $temp is a defaultable tuple. We still do not
   ;; optimize away the set here, as we ignore tuples in local2stack.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (i32.const 0)
     (local.get $param)
    )
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
@@ -455,7 +455,7 @@
     )
    )
    (local.set $temp
-    (tuple.make
+    (tuple.make 2
      (i32.const 2)
      (i31.new
       (i32.const 3)
@@ -463,7 +463,7 @@
     )
    )
    (local.set $temp
-    (tuple.make
+    (tuple.make 2
      (i32.const 4)
      (i31.new
       (i32.const 5)
@@ -471,7 +471,7 @@
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )

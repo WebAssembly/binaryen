@@ -1758,7 +1758,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (tuple.make
+  ;; CHECK-NEXT:     (tuple.make 2
   ;; CHECK-NEXT:      (i32.load
   ;; CHECK-NEXT:       (local.get $5)
   ;; CHECK-NEXT:      )
@@ -1867,13 +1867,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.store
   ;; CHECK-NEXT:    (local.get $6)
-  ;; CHECK-NEXT:    (tuple.extract 0
+  ;; CHECK-NEXT:    (tuple.extract 2 0
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i64.store offset=4 align=4
   ;; CHECK-NEXT:    (local.get $6)
-  ;; CHECK-NEXT:    (tuple.extract 1
+  ;; CHECK-NEXT:    (tuple.extract 2 1
   ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

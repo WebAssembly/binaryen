@@ -767,7 +767,7 @@
  ;; CHECK:      (func $odd-cast-and-get-tuple (type $3)
  ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (i32.const 10)
  ;; CHECK-NEXT:   )
@@ -785,7 +785,7 @@
   (local $temp ((ref null $B) i32))
   ;; As above, but with a tuple.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (ref.cast (ref null $B)
      (ref.null $A)
     )
@@ -794,7 +794,7 @@
   )
   (drop
    (struct.get $B 0
-    (tuple.extract 0
+    (tuple.extract 2 0
      (local.get $temp)
     )
    )

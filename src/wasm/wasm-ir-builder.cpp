@@ -90,7 +90,8 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   return HoistedVal{Index(index), get};
 }
 
-Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
+Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
+                                        size_t sizeHint) {
   auto& scope = getScope();
   assert(!scope.exprStack.empty());
 
@@ -106,17 +107,17 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
 
   auto type = scope.exprStack.back()->type;
 
-  if (!type.isTuple()) {
+  if (type.size() == sizeHint || type.size() <= 1) {
     if (hoisted.get) {
       packageAsBlock(type);
     }
     return Ok{};
   }
 
-  // We need to break up the hoisted tuple. Create and push a block setting the
-  // tuple to a local and returning its first element, then push additional gets
-  // of each of its subsequent elements. Reuse the scratch local we used for
-  // hoisting, if it exists.
+  // We need to break up the hoisted tuple. Create and push an expression
+  // setting the tuple to a local and returning its first element, then push
+  // additional gets of each of its subsequent elements. Reuse the scratch local
+  // we used for hoisting, if it exists.
   Index scratchIdx;
   if (hoisted.get) {
     // Update the get on top of the stack to just return the first element.
@@ -126,12 +127,8 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
   } else {
     auto scratch = addScratchLocal(type);
     CHECK_ERR(scratch);
-    auto* block = builder.makeSequence(
-      builder.makeLocalSet(*scratch, scope.exprStack.back()),
-      builder.makeTupleExtract(builder.makeLocalGet(*scratch, type), 0),
-      type[0]);
-    scope.exprStack.pop_back();
-    push(block);
+    scope.exprStack.back() = builder.makeTupleExtract(
+      builder.makeLocalTee(*scratch, scope.exprStack.back(), type), 0);
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
@@ -158,7 +155,8 @@ void IRBuilder::push(Expression* expr) {
   DBG(dump());
 }
 
-Result<Expression*> IRBuilder::pop() {
+Result<Expression*> IRBuilder::pop(size_t size) {
+  assert(size >= 1);
   auto& scope = getScope();
 
   // Find the suffix of expressions that do not produce values.
@@ -173,11 +171,25 @@ Result<Expression*> IRBuilder::pop() {
     return Err{"popping from empty stack"};
   }
 
-  CHECK_ERR(packageHoistedValue(*hoisted));
+  CHECK_ERR(packageHoistedValue(*hoisted, size));
 
   auto* ret = scope.exprStack.back();
-  scope.exprStack.pop_back();
-  return ret;
+  if (ret->type.size() == size) {
+    scope.exprStack.pop_back();
+    return ret;
+  }
+
+  // The last value-producing expression did not produce exactly the right
+  // number of values, so we need to construct a tuple piecewise instead.
+  assert(size > 1);
+  std::vector<Expression*> elems;
+  elems.resize(size);
+  for (int i = size - 1; i >= 0; --i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    elems[i] = *elem;
+  }
+  return builder.makeTupleMake(elems);
 }
 
 Result<Expression*> IRBuilder::build() {
@@ -317,6 +329,20 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #include "wasm-delegations-fields.def"
 
   return Ok{};
+}
+
+Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
+  // Multivalue drops must remain multivalue drops.
+  if (!arity) {
+    arity = curr->value->type.size();
+  }
+  if (*arity >= 2) {
+    auto val = pop(*arity);
+    CHECK_ERR(val);
+    curr->value = *val;
+    return Ok{};
+  }
+  return visitExpression(curr);
 }
 
 Result<> IRBuilder::visitIf(If* curr) {
@@ -471,6 +497,92 @@ Result<> IRBuilder::visitThrow(Throw* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitStringNew(StringNew* curr) {
+  switch (curr->op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16: {
+      auto len = pop();
+      CHECK_ERR(len);
+      curr->length = *len;
+      break;
+    }
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array: {
+      auto end = pop();
+      CHECK_ERR(end);
+      curr->end = *end;
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+      break;
+    }
+    case StringNewFromCodePoint:
+      break;
+  }
+  auto ptr = pop();
+  CHECK_ERR(ptr);
+  curr->ptr = *ptr;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
+  switch (curr->op) {
+    case StringEncodeUTF8Array:
+    case StringEncodeLossyUTF8Array:
+    case StringEncodeWTF8Array:
+    case StringEncodeWTF16Array: {
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+    }
+      [[fallthrough]];
+    case StringEncodeUTF8:
+    case StringEncodeLossyUTF8:
+    case StringEncodeWTF8:
+    case StringEncodeWTF16: {
+      auto ptr = pop();
+      CHECK_ERR(ptr);
+      curr->ptr = *ptr;
+      auto ref = pop();
+      CHECK_ERR(ref);
+      curr->ref = *ref;
+      return Ok{};
+    }
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
+Result<> IRBuilder::visitTupleMake(TupleMake* curr) {
+  assert(curr->operands.size() >= 2);
+  for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    curr->operands[size - 1 - i] = *elem;
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitTupleExtract(TupleExtract* curr,
+                                      std::optional<uint32_t> arity) {
+  if (!arity) {
+    if (curr->tuple->type == Type::unreachable) {
+      // Fallback to an arbitrary valid arity.
+      arity = 2;
+    } else {
+      arity = curr->tuple->type.size();
+    }
+  }
+  assert(*arity >= 2);
+  auto tuple = pop(*arity);
+  CHECK_ERR(tuple);
+  curr->tuple = *tuple;
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -499,8 +611,8 @@ Result<> IRBuilder::visitLoopStart(Loop* loop) {
 }
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
-  // The delegate label will be regenerated if we need it. See `visitDelegate`
-  // for details.
+  // The delegate label will be regenerated if we need it. See
+  // `getDelegateLabelName` for details.
   tryy->name = Name();
   pushScope(ScopeCtx::makeTry(tryy, label));
   return Ok{};
@@ -666,6 +778,33 @@ Result<> IRBuilder::visitCatchAll() {
   return Ok{};
 }
 
+Result<Name> IRBuilder::getDelegateLabelName(Index label) {
+  if (label >= scopeStack.size()) {
+    return Err{"invalid label: " + std::to_string(label)};
+  }
+  auto& scope = scopeStack[scopeStack.size() - label - 1];
+  auto* delegateTry = scope.getTry();
+  if (!delegateTry) {
+    delegateTry = scope.getCatch();
+  }
+  if (!delegateTry) {
+    delegateTry = scope.getCatchAll();
+  }
+  if (!delegateTry) {
+    return Err{"expected try scope at label " + std::to_string(label)};
+  }
+  // Only delegate and rethrow can reference the try name in Binaryen IR, so
+  // trys might need two labels: one for delegate/rethrow and one for all
+  // other control flow. These labels must be different to satisfy the
+  // Binaryen validator. To keep this complexity contained within the
+  // handling of trys and delegates, pretend there is just the single normal
+  // label and add a prefix to it to generate the delegate label.
+  auto delegateName =
+    Name(std::string("__delegate__") + getLabelName(label)->toString());
+  delegateTry->name = delegateName;
+  return delegateName;
+}
+
 Result<> IRBuilder::visitDelegate(Index label) {
   auto& scope = getScope();
   auto* tryy = scope.getTry();
@@ -679,17 +818,10 @@ Result<> IRBuilder::visitDelegate(Index label) {
   ++label;
   for (size_t size = scopeStack.size(); label < size; ++label) {
     auto& delegateScope = scopeStack[size - label - 1];
-    if (auto* delegateTry = delegateScope.getTry()) {
-      // Only delegates can reference the try name in Binaryen IR, so trys might
-      // need two labels: one for delegates and one for all other control flow.
-      // These labels must be different to satisfy the Binaryen validator. To
-      // keep this complexity contained within the handling of trys and
-      // delegates, pretend there is just the single normal label and add a
-      // prefix to it to generate the delegate label.
-      auto delegateName =
-        Name(std::string("__delegate__") + getLabelName(label)->toString());
-      delegateTry->name = delegateName;
-      tryy->delegateTarget = delegateName;
+    if (delegateScope.getTry()) {
+      auto delegateName = getDelegateLabelName(label);
+      CHECK_ERR(delegateName);
+      tryy->delegateTarget = *delegateName;
       break;
     } else if (delegateScope.getFunction()) {
       tryy->delegateTarget = DELEGATE_CALLER_TARGET;
@@ -1110,7 +1242,7 @@ Result<> IRBuilder::makeSelect(std::optional<Type> type) {
 
 Result<> IRBuilder::makeDrop() {
   Drop curr;
-  CHECK_ERR(visitDrop(&curr));
+  CHECK_ERR(visitDrop(&curr, 1));
   push(builder.makeDrop(curr.value));
   return Ok{};
 }
@@ -1165,13 +1297,47 @@ Result<> IRBuilder::makeRefEq() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeTableGet() {}
+Result<> IRBuilder::makeTableGet(Name table) {
+  TableGet curr;
+  CHECK_ERR(visitTableGet(&curr));
+  auto type = wasm.getTable(table)->type;
+  push(builder.makeTableGet(table, curr.index, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSet() {}
+Result<> IRBuilder::makeTableSet(Name table) {
+  TableSet curr;
+  CHECK_ERR(visitTableSet(&curr));
+  push(builder.makeTableSet(table, curr.index, curr.value));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSize() {}
+Result<> IRBuilder::makeTableSize(Name table) {
+  push(builder.makeTableSize(table));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableGrow() {}
+Result<> IRBuilder::makeTableGrow(Name table) {
+  TableGrow curr;
+  CHECK_ERR(visitTableGrow(&curr));
+  push(builder.makeTableGrow(table, curr.value, curr.delta));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableFill(Name table) {
+  TableFill curr;
+  CHECK_ERR(visitTableFill(&curr));
+  push(builder.makeTableFill(table, curr.dest, curr.value, curr.size));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
+  TableCopy curr;
+  CHECK_ERR(visitTableCopy(&curr));
+  push(builder.makeTableCopy(
+    curr.dest, curr.source, curr.size, destTable, srcTable));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeTry(Name label, Type type) {
   auto* tryy = wasm.allocator.alloc<Try>();
@@ -1187,11 +1353,35 @@ Result<> IRBuilder::makeThrow(Name tag) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRethrow() {}
+Result<> IRBuilder::makeRethrow(Index label) {
+  // Rethrow references `Try` labels directly, just like `delegate`.
+  auto name = getDelegateLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeRethrow(*name));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTupleMake() {}
+Result<> IRBuilder::makeTupleMake(uint32_t arity) {
+  TupleMake curr(wasm.allocator);
+  curr.operands.resize(arity);
+  CHECK_ERR(visitTupleMake(&curr));
+  push(builder.makeTupleMake(curr.operands));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTupleExtract() {}
+Result<> IRBuilder::makeTupleExtract(uint32_t arity, uint32_t index) {
+  TupleExtract curr;
+  CHECK_ERR(visitTupleExtract(&curr, arity));
+  push(builder.makeTupleExtract(curr.tuple, index));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTupleDrop(uint32_t arity) {
+  Drop curr;
+  CHECK_ERR(visitDrop(&curr, arity));
+  push(builder.makeDrop(curr.value));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefI31() {
   RefI31 curr;
@@ -1354,9 +1544,23 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayInitData() {}
+Result<> IRBuilder::makeArrayInitData(HeapType type, Name data) {
+  ArrayInitData curr;
+  CHECK_ERR(visitArrayInitData(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitData(
+    data, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeArrayInitElem() {}
+Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
+  ArrayInitElem curr;
+  CHECK_ERR(visitArrayInitElem(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitElem(
+    elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefAs(RefAsOp op) {
   RefAs curr;
@@ -1365,30 +1569,113 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeStringNew() {}
+Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+  StringNew curr;
+  curr.op = op;
+  CHECK_ERR(visitStringNew(&curr));
+  // TODO: Store the memory in the IR.
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16:
+      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
+      return Ok{};
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array:
+      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
+      return Ok{};
+    case StringNewFromCodePoint:
+      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
+      return Ok{};
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
 
-// Result<> IRBuilder::makeStringConst() {}
+Result<> IRBuilder::makeStringConst(Name string) {
+  push(builder.makeStringConst(string));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringMeasure() {}
+Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
+  StringMeasure curr;
+  CHECK_ERR(visitStringMeasure(&curr));
+  push(builder.makeStringMeasure(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEncode() {}
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+  StringEncode curr;
+  curr.op = op;
+  CHECK_ERR(visitStringEncode(&curr));
+  // TODO: Store the memory in the IR.
+  push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringConcat() {}
+Result<> IRBuilder::makeStringConcat() {
+  StringConcat curr;
+  CHECK_ERR(visitStringConcat(&curr));
+  push(builder.makeStringConcat(curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEq() {}
+Result<> IRBuilder::makeStringEq(StringEqOp op) {
+  StringEq curr;
+  CHECK_ERR(visitStringEq(&curr));
+  push(builder.makeStringEq(op, curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringAs() {}
+Result<> IRBuilder::makeStringAs(StringAsOp op) {
+  StringAs curr;
+  CHECK_ERR(visitStringAs(&curr));
+  push(builder.makeStringAs(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF8Advance() {}
+Result<> IRBuilder::makeStringWTF8Advance() {
+  StringWTF8Advance curr;
+  CHECK_ERR(visitStringWTF8Advance(&curr));
+  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF16Get() {}
+Result<> IRBuilder::makeStringWTF16Get() {
+  StringWTF16Get curr;
+  CHECK_ERR(visitStringWTF16Get(&curr));
+  push(builder.makeStringWTF16Get(curr.ref, curr.pos));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterNext() {}
+Result<> IRBuilder::makeStringIterNext() {
+  StringIterNext curr;
+  CHECK_ERR(visitStringIterNext(&curr));
+  push(builder.makeStringIterNext(curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterMove() {}
+Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
+  StringIterMove curr;
+  CHECK_ERR(visitStringIterMove(&curr));
+  push(builder.makeStringIterMove(op, curr.ref, curr.num));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceWTF() {}
+Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+  StringSliceWTF curr;
+  CHECK_ERR(visitStringSliceWTF(&curr));
+  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceIter() {}
+Result<> IRBuilder::makeStringSliceIter() {
+  StringSliceIter curr;
+  CHECK_ERR(visitStringSliceIter(&curr));
+  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
 
 } // namespace wasm

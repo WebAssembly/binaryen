@@ -1279,6 +1279,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 8) == "arrayref" && (prefix || str.size() == 8)) {
     return Type(HeapType::array, Nullable);
   }
+  if (str.substr(0, 6) == "exnref" && (prefix || str.size() == 6)) {
+    return Type(HeapType::exn, Nullable);
+  }
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
@@ -1299,6 +1302,9 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   }
   if (str.substr(0, 11) == "nullfuncref" && (prefix || str.size() == 11)) {
     return Type(HeapType::nofunc, Nullable);
+  }
+  if (str.substr(0, 10) == "nullexnref" && (prefix || str.size() == 10)) {
+    return Type(HeapType::noexn, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -1330,6 +1336,9 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   if (str.substr(0, 5) == "array" && (prefix || str.size() == 5)) {
     return HeapType::array;
   }
+  if (str.substr(0, 3) == "exn" && (prefix || str.size() == 3)) {
+    return HeapType::exn;
+  }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
     return HeapType::string;
   }
@@ -1350,6 +1359,12 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   }
   if (str.substr(0, 6) == "nofunc" && (prefix || str.size() == 6)) {
     return HeapType::nofunc;
+  }
+  if (str.substr(0, 6) == "nofunc" && (prefix || str.size() == 6)) {
+    return HeapType::nofunc;
+  }
+  if (str.substr(0, 5) == "noexn" && (prefix || str.size() == 5)) {
+    return HeapType::noexn;
   }
   throw ParseException(std::string("invalid wasm heap type: ") +
                        std::string(str.data(), str.size()));
@@ -1488,6 +1503,9 @@ Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
 Expression* SExpressionWasmBuilder::makeDrop(Element& s) {
   auto ret = allocator.alloc<Drop>();
   ret->value = parseExpression(s[1]);
+  if (ret->value->type.isTuple()) {
+    throw SParseException("expected tuple.drop, found drop", s, *s[0]);
+  }
   ret->finalize();
   return ret;
 }
@@ -2843,18 +2861,39 @@ Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeTupleMake(Element& s) {
   auto ret = allocator.alloc<TupleMake>();
-  parseCallOperands(s, 1, s.size(), ret);
+  size_t arity = std::stoll(s[1]->toString());
+  if (arity != s.size() - 2) {
+    throw SParseException("unexpected number of elements", s, *s[1]);
+  }
+  parseCallOperands(s, 2, s.size(), ret);
   ret->finalize();
   return ret;
 }
 
 Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
-  ret->index = parseIndex(*s[1]);
-  ret->tuple = parseExpression(s[2]);
-  if (ret->tuple->type != Type::unreachable &&
-      ret->index >= ret->tuple->type.size()) {
-    throw SParseException("Bad index on tuple.extract", s, *s[1]);
+  size_t arity = std::stoll(s[1]->toString());
+  ret->index = parseIndex(*s[2]);
+  ret->tuple = parseExpression(s[3]);
+  if (ret->tuple->type != Type::unreachable) {
+    if (arity != ret->tuple->type.size()) {
+      throw SParseException("Unexpected tuple.extract arity", s, *s[1]);
+    }
+    if (ret->index >= ret->tuple->type.size()) {
+      throw SParseException("Bad index on tuple.extract", s, *s[2]);
+    }
+  }
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeTupleDrop(Element& s) {
+  size_t arity = std::stoll(s[1]->toString());
+  auto ret = allocator.alloc<Drop>();
+  ret->value = parseExpression(s[2]);
+  if (ret->value->type != Type::unreachable &&
+      ret->value->type.size() != arity) {
+    throw SParseException("unexpected tuple.drop arity", s, *s[1]);
   }
   ret->finalize();
   return ret;

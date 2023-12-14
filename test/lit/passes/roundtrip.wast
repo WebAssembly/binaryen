@@ -9,7 +9,7 @@
  ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (block $label$1 (type $1) (result funcref (ref $none))
- ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (ref.null nofunc)
  ;; CHECK-NEXT:     (ref.func $foo)
  ;; CHECK-NEXT:    )
@@ -18,12 +18,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result funcref)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (tuple.extract 0
+ ;; CHECK-NEXT:     (tuple.extract 2 0
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -32,10 +32,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $foo
-  (drop
+  (tuple.drop 2
    ;; a tuple type with a non-nullable element, that must be carefully handled
    (block $block (result funcref (ref $none))
-    (tuple.make
+    (tuple.make 2
      (ref.null func)
      (ref.func $foo)
     )

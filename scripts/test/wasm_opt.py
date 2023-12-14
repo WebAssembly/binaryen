@@ -104,45 +104,15 @@ def test_wasm_opt():
         actual, err = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()
         shared.fail_if_not_identical(actual.strip(), open(os.path.join(shared.get_test_dir('print'), wasm + '.minified.txt')).read().strip())
 
-    print('\n[ checking wasm-opt testcases... ]\n')
-
-    for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        print('..', os.path.basename(t))
-        f = t + '.from-wast'
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        actual = support.run_command(cmd)
-        actual = actual.replace('printing before:\n', '')
-
-        shared.fail_if_not_identical_to_file(actual, f)
-
-        # FIXME Remove this condition after nullref is implemented in V8
-        if 'reference-types.wast' not in t:
-            shared.binary_format_check(t, wasm_as_args=['-g'])  # test with debuginfo
-            shared.binary_format_check(t, wasm_as_args=[], binary_suffix='.fromBinary.noDebugInfo')  # test without debuginfo
-
-        shared.minify_check(t)
-
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        shared.fail_if_not_identical_to_file(actual, f)
-
 
 def update_wasm_opt_tests():
-    print('\n[ checking wasm-opt -o notation... ]\n')
+    print('\n[ updating wasm-opt -o notation... ]\n')
     wast = os.path.join(shared.options.binaryen_test, 'hello_world.wat')
     cmd = shared.WASM_OPT + [wast, '-o', 'a.wast', '-S']
     support.run_command(cmd)
     open(wast, 'w').write(open('a.wast').read())
 
-    print('\n[ checking wasm-opt parsing & printing... ]\n')
+    print('\n[ updating wasm-opt parsing & printing... ]\n')
     for t in shared.get_tests(shared.get_test_dir('print'), ['.wast']):
         print('..', os.path.basename(t))
         wasm = t.replace('.wast', '')
@@ -158,7 +128,7 @@ def update_wasm_opt_tests():
         with open(wasm + '.minified.txt', 'wb') as o:
             o.write(actual)
 
-    print('\n[ checking wasm-opt passes... ]\n')
+    print('\n[ updating wasm-opt passes... ]\n')
     for t in shared.get_tests(shared.get_test_dir('passes'), ['.wast', '.wasm']):
         print('..', os.path.basename(t))
         # windows has some failures that need to be investigated:
@@ -193,49 +163,3 @@ def update_wasm_opt_tests():
             with open('a.wat') as i:
                 with open(t + '.wat', 'w') as o:
                     o.write(i.read())
-
-    print('\n[ checking wasm-opt testcases... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        print('..', os.path.basename(t))
-        f = t + '.from-wast'
-        cmd = shared.WASM_OPT + [t, '--print', '-all']
-        actual = support.run_command(cmd)
-        actual = actual.replace('printing before:\n', '')
-        open(f, 'w').write(actual)
-
-    print('\n[ checking wasm-opt debugInfo read-write... ]\n')
-    for t in shared.get_tests(shared.options.binaryen_test, ['.fromasm']):
-        if 'debugInfo' not in t:
-            continue
-        print('..', os.path.basename(t))
-        f = t + '.read-written'
-        support.run_command(shared.WASM_AS + [t, '--source-map=a.map', '-o', 'a.wasm', '-g'])
-        support.run_command(shared.WASM_OPT + ['a.wasm', '--input-source-map=a.map', '-o', 'b.wasm', '--output-source-map=b.map', '-g'])
-        actual = support.run_command(shared.WASM_DIS + ['b.wasm', '--source-map=b.map'])
-        open(f, 'w').write(actual)
-
-    print('\n[ checking binary format testcases... ]\n')
-    for wast in shared.get_tests(shared.options.binaryen_test, ['.wast']):
-        for debug_info in [0, 1]:
-            cmd = shared.WASM_AS + [wast, '-o', 'a.wasm', '-all']
-            if debug_info:
-                cmd += ['-g']
-            print(' '.join(cmd))
-            if os.path.exists('a.wasm'):
-                os.unlink('a.wasm')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wasm')
-
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast', '-all']
-            print(' '.join(cmd))
-            if os.path.exists('a.wast'):
-                os.unlink('a.wast')
-            subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert os.path.exists('a.wast')
-            actual = open('a.wast').read()
-            binary_file = wast + '.fromBinary'
-            if not debug_info:
-                binary_file += '.noDebugInfo'
-            with open(binary_file, 'w') as o:
-                print('writey', binary_file)
-                o.write(actual)

@@ -239,11 +239,11 @@
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:   (tuple.extract 2 0
  ;; CHECK-NEXT:    (call $refine-return-tuple)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (local.get $i31)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -253,12 +253,12 @@
   (local $i31 (ref null i31))
 
   (local.set $temp
-   (tuple.extract 0
+   (tuple.extract 2 0
     (call $refine-return-tuple)
    )
   )
 
-  (tuple.make
+  (tuple.make 2
    (local.get $i31)
    (i32.const 1)
   )

@@ -23,10 +23,10 @@
   (func $tuple-value
     (local $x (i32 i64))
     (local.set $x
-      (tuple.make (i32.const 42) (i64.const 42))
+      (tuple.make 2 (i32.const 42) (i64.const 42))
     )
     (local.set $x
-      (tuple.make (i32.const 42) (i64.const 42))
+      (tuple.make 2 (i32.const 42) (i64.const 42))
     )
   )
   (func $unreach

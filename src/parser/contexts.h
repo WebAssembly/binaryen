@@ -104,6 +104,10 @@ struct NullTypeParserCtx {
   HeapTypeT makeI31() { return Ok{}; }
   HeapTypeT makeStructType() { return Ok{}; }
   HeapTypeT makeArrayType() { return Ok{}; }
+  HeapTypeT makeStringType() { return Ok{}; }
+  HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
+  HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
+  HeapTypeT makeStringViewIterType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -190,6 +194,10 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeI31() { return HeapType::i31; }
   HeapTypeT makeStructType() { return HeapType::struct_; }
   HeapTypeT makeArrayType() { return HeapType::array; }
+  HeapTypeT makeStringType() { return HeapType::string; }
+  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
+  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
+  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -284,8 +292,9 @@ struct NullInstrParserCtx {
   using FuncIdxT = Ok;
   using LocalIdxT = Ok;
   using TableIdxT = Ok;
-  using GlobalIdxT = Ok;
   using MemoryIdxT = Ok;
+  using GlobalIdxT = Ok;
+  using ElemIdxT = Ok;
   using DataIdxT = Ok;
   using LabelIdxT = Ok;
   using TagIdxT = Ok;
@@ -310,6 +319,8 @@ struct NullInstrParserCtx {
   TableIdxT getTableFromName(Name) { return Ok{}; }
   MemoryIdxT getMemoryFromIdx(uint32_t) { return Ok{}; }
   MemoryIdxT getMemoryFromName(Name) { return Ok{}; }
+  ElemIdxT getElemFromIdx(uint32_t) { return Ok{}; }
+  ElemIdxT getElemFromName(Name) { return Ok{}; }
   DataIdxT getDataFromIdx(uint32_t) { return Ok{}; }
   DataIdxT getDataFromName(Name) { return Ok{}; }
   LabelIdxT getLabelFromIdx(uint32_t, bool) { return Ok{}; }
@@ -411,7 +422,17 @@ struct NullInstrParserCtx {
   Result<> makeRefIsNull(Index) { return Ok{}; }
   Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
   Result<> makeRefEq(Index) { return Ok{}; }
+  Result<> makeTableGet(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableSet(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableSize(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableGrow(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableFill(Index, TableIdxT*) { return Ok{}; }
+  Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
   Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
+  Result<> makeRethrow(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeTupleMake(Index, uint32_t) { return Ok{}; }
+  Result<> makeTupleExtract(Index, uint32_t, uint32_t) { return Ok{}; }
+  Result<> makeTupleDrop(Index, uint32_t) { return Ok{}; }
   template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
     return Ok{};
   }
@@ -451,7 +472,7 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayNewElem(Index, HeapTypeT, DataIdxT) {
+  Result<> makeArrayNewElem(Index, HeapTypeT, ElemIdxT) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -472,7 +493,28 @@ struct NullInstrParserCtx {
   template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
     return Ok{};
   }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitData(Index, HeapTypeT, DataIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitElem(Index, HeapTypeT, ElemIdxT) {
+    return Ok{};
+  }
   Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
+  Result<> makeStringNew(Index, StringNewOp, bool, MemoryIdxT*) { return Ok{}; }
+  Result<> makeStringConst(Index, std::string_view) { return Ok{}; }
+  Result<> makeStringMeasure(Index, StringMeasureOp) { return Ok{}; }
+  Result<> makeStringEncode(Index, StringEncodeOp, MemoryIdxT*) { return Ok{}; }
+  Result<> makeStringConcat(Index) { return Ok{}; }
+  Result<> makeStringEq(Index, StringEqOp) { return Ok{}; }
+  Result<> makeStringAs(Index, StringAsOp) { return Ok{}; }
+  Result<> makeStringWTF8Advance(Index) { return Ok{}; }
+  Result<> makeStringWTF16Get(Index) { return Ok{}; }
+  Result<> makeStringIterNext(Index) { return Ok{}; }
+  Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
+  Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
+  Result<> makeStringSliceIter(Index) { return Ok{}; }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -961,6 +1003,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using GlobalIdxT = Name;
   using TableIdxT = Name;
   using MemoryIdxT = Name;
+  using ElemIdxT = Name;
   using DataIdxT = Name;
   using TagIdxT = Name;
 
@@ -1130,6 +1173,20 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<Name> getMemoryFromName(Name name) {
     if (!wasm.getMemoryOrNull(name)) {
       return in.err("memory $" + name.toString() + " does not exist");
+    }
+    return name;
+  }
+
+  Result<Name> getElemFromIdx(uint32_t idx) {
+    if (idx >= wasm.elementSegments.size()) {
+      return in.err("elem index out of bounds");
+    }
+    return wasm.elementSegments[idx]->name;
+  }
+
+  Result<Name> getElemFromName(Name name) {
+    if (!wasm.getElementSegmentOrNull(name)) {
+      return in.err("elem $" + name.toString() + " does not exist");
     }
     return name;
   }
@@ -1524,8 +1581,62 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
 
+  Result<> makeTableGet(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableGet(*t));
+  }
+
+  Result<> makeTableSet(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableSet(*t));
+  }
+
+  Result<> makeTableSize(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableSize(*t));
+  }
+
+  Result<> makeTableGrow(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableGrow(*t));
+  }
+
+  Result<> makeTableFill(Index pos, Name* table) {
+    auto t = getTable(pos, table);
+    CHECK_ERR(t);
+    return withLoc(pos, irBuilder.makeTableFill(*t));
+  }
+
+  Result<> makeTableCopy(Index pos, Name* destTable, Name* srcTable) {
+    auto dest = getTable(pos, destTable);
+    CHECK_ERR(dest);
+    auto src = getTable(pos, srcTable);
+    CHECK_ERR(src);
+    return withLoc(pos, irBuilder.makeTableCopy(*dest, *src));
+  }
+
   Result<> makeThrow(Index pos, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
+  }
+
+  Result<> makeRethrow(Index pos, Index label) {
+    return withLoc(pos, irBuilder.makeRethrow(label));
+  }
+
+  Result<> makeTupleMake(Index pos, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeTupleMake(arity));
+  }
+
+  Result<> makeTupleExtract(Index pos, uint32_t arity, uint32_t index) {
+    return withLoc(pos, irBuilder.makeTupleExtract(arity, index));
+  }
+
+  Result<> makeTupleDrop(Index pos, uint32_t arity) {
+    return withLoc(pos, irBuilder.makeTupleDrop(arity));
   }
 
   Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {
@@ -1609,8 +1720,72 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeArrayFill(type));
   }
 
+  Result<> makeArrayInitData(Index pos, HeapType type, Name data) {
+    return withLoc(pos, irBuilder.makeArrayInitData(type, data));
+  }
+
+  Result<> makeArrayInitElem(Index pos, HeapType type, Name elem) {
+    return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
+  }
+
   Result<> makeRefAs(Index pos, RefAsOp op) {
     return withLoc(pos, irBuilder.makeRefAs(op));
+  }
+
+  Result<> makeStringNew(Index pos, StringNewOp op, bool try_, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    return withLoc(pos, irBuilder.makeStringNew(op, try_, *m));
+  }
+
+  Result<> makeStringConst(Index pos, std::string_view str) {
+    return withLoc(pos, irBuilder.makeStringConst(Name(str)));
+  }
+
+  Result<> makeStringMeasure(Index pos, StringMeasureOp op) {
+    return withLoc(pos, irBuilder.makeStringMeasure(op));
+  }
+
+  Result<> makeStringEncode(Index pos, StringEncodeOp op, Name* mem) {
+    auto m = getMemory(pos, mem);
+    CHECK_ERR(m);
+    return withLoc(pos, irBuilder.makeStringEncode(op, *m));
+  }
+
+  Result<> makeStringConcat(Index pos) {
+    return withLoc(pos, irBuilder.makeStringConcat());
+  }
+
+  Result<> makeStringEq(Index pos, StringEqOp op) {
+    return withLoc(pos, irBuilder.makeStringEq(op));
+  }
+
+  Result<> makeStringAs(Index pos, StringAsOp op) {
+    return withLoc(pos, irBuilder.makeStringAs(op));
+  }
+
+  Result<> makeStringWTF8Advance(Index pos) {
+    return withLoc(pos, irBuilder.makeStringWTF8Advance());
+  }
+
+  Result<> makeStringWTF16Get(Index pos) {
+    return withLoc(pos, irBuilder.makeStringWTF16Get());
+  }
+
+  Result<> makeStringIterNext(Index pos) {
+    return withLoc(pos, irBuilder.makeStringIterNext());
+  }
+
+  Result<> makeStringIterMove(Index pos, StringIterMoveOp op) {
+    return withLoc(pos, irBuilder.makeStringIterMove(op));
+  }
+
+  Result<> makeStringSliceWTF(Index pos, StringSliceWTFOp op) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
+  }
+
+  Result<> makeStringSliceIter(Index pos) {
+    return withLoc(pos, irBuilder.makeStringSliceIter());
   }
 };
 

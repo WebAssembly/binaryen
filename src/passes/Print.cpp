@@ -1910,7 +1910,14 @@ struct PrintExpressionContents
       printResultType(curr->type);
     }
   }
-  void visitDrop(Drop* curr) { printMedium(o, "drop"); }
+  void visitDrop(Drop* curr) {
+    if (curr->value->type.isTuple()) {
+      printMedium(o, "tuple.drop ");
+      o << curr->value->type.size();
+    } else {
+      printMedium(o, "drop");
+    }
+  }
   void visitReturn(Return* curr) { printMedium(o, "return"); }
   void visitMemorySize(MemorySize* curr) {
     printMedium(o, "memory.size");
@@ -1985,9 +1992,13 @@ struct PrintExpressionContents
     }
     restoreNormalColor(o);
   }
-  void visitTupleMake(TupleMake* curr) { printMedium(o, "tuple.make"); }
+  void visitTupleMake(TupleMake* curr) {
+    printMedium(o, "tuple.make ");
+    o << curr->operands.size();
+  }
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
+    o << curr->tuple->type.size() << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }

@@ -3,7 +3,6 @@
 
 ;; RUN: foreach %s %t wasm-opt --inlining-optimizing --optimize-level=3 -S -o - | filecheck %s
 
-;; similar to test/emcc_hello_world.fromasm.clamp ;;
 (module
  ;; CHECK:      (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
  (type $FUNCSIG$iiii (func (param i32 i32 i32) (result i32)))
