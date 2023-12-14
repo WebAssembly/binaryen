@@ -735,13 +735,19 @@ Result<> IRBuilder::visitCatch(Name tag) {
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
   auto expr = finishScope();
-  auto index = 0;
+  size_t index = 0;
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
     index = scope.getIndex();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
     tryy->catchBodies[index] = *expr;
+  }
+  if (index > tryy->catchTags.size()) {
+    tryy->catchTags.resize(index + 1);
   }
   tryy->catchTags[index] = tag;
   pushScope(ScopeCtx::makeCatch(tryy, originalLabel, index, label));
@@ -771,7 +777,10 @@ Result<> IRBuilder::visitCatchAll() {
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    auto lastTagIdx = tryy->catchTags.size();
+    size_t lastTagIdx = tryy->catchTags.size();
+    if (lastTagIdx > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(lastTagIdx + 1);
+    }
     tryy->catchBodies[lastTagIdx] = *expr;
   }
   pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label));
@@ -888,11 +897,19 @@ Result<> IRBuilder::visitEnd() {
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (Try * tryy; (tryy = scope.getCatch())) {
-    tryy->catchBodies[scope.getIndex()] = *expr;
+    auto index = scope.getIndex();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
+    tryy->catchBodies[index] = *expr;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (Try * tryy; (tryy = scope.getCatchAll())) {
-    tryy->catchBodies[tryy->catchTags.size()] = *expr;
+    auto index = tryy->catchTags.size();
+    if (index > tryy->catchBodies.size()) {
+      tryy->catchBodies.resize(index + 1);
+    }
+    tryy->catchBodies[index] = *expr;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else {
