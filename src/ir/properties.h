@@ -447,13 +447,10 @@ inline Index getNumChildren(Expression* curr) {
   }
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)

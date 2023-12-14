@@ -297,6 +297,7 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 #define DELEGATE_START(id) [[maybe_unused]] auto* expr = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) expr->field
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
   auto field = pop();                                                          \
   CHECK_ERR(field);                                                            \
@@ -315,12 +316,9 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
                    " has child vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
