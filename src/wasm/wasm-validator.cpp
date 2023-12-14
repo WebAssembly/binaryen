@@ -2446,7 +2446,79 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitTryTable(TryTable* curr) {
-  // TODO
+  shouldBeTrue(
+    getModule()->features.hasExceptionHandling(),
+    curr,
+    "try_table requires exception-handling [--enable-exception-handling]");
+  if (curr->type != Type::unreachable) {
+    shouldBeSubType(curr->body->type,
+                    curr->type,
+                    curr->body,
+                    "try_table's type does not match try_table body's type");
+  } else {
+    shouldBeEqual(curr->body->type,
+                  Type(Type::unreachable),
+                  curr,
+                  "unreachable try_table must have unreachable try_table body");
+  }
+
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchDests.size(),
+                curr,
+                "the number of catch tags and catch destinations do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchRefs.size(),
+                curr,
+                "the number of catch tags and catch refs do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->sentTypes.size(),
+                curr,
+                "the number of catch tags and sent types do not match");
+
+  Type exnref = Type(HeapType::exn, Nullable);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    Name tagName = curr->catchTags[i];
+    if (!tagName) {
+      continue;
+    }
+
+    // Check tag validity
+    auto* tag = getModule()->getTagOrNull(tagName);
+    if (!shouldBeTrue(tag != nullptr, curr, "")) {
+      getStream() << "catch's tag name is invalid: " << tagName << "\n";
+    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+      getStream()
+        << "catch's tag (" << tagName
+        << ") has result values, which is not allowed for exception handling";
+    }
+
+    // Check types in sentTypes is valid
+    auto tagType = tag->sig.params;
+    auto sentType = curr->sentTypes[i];
+    if (tagType.size() == 0 && !curr->catchRefs[i]) {
+      if (shouldBeTrue(sentType.size() == 1, curr, "")) {
+        shouldBeEqual(sentType,
+                      Type(Type::none),
+                      curr,
+                      "invalid catch sent type information");
+      }
+    }
+    for (Index j = 0; j < tagType.size(); j++) {
+      shouldBeEqual(
+        tagType[j], sentType[j], curr, "invalid catch sent type information");
+    }
+    if (curr->catchRefs[i]) {
+      if (shouldBeTrue(sentType.size() == tagType.size() + 1, curr, "")) {
+        shouldBeEqual(sentType[sentType.size() - 1],
+                      exnref,
+                      curr,
+                      "invalid catch sent type information");
+      }
+    }
+
+    // Note catch destinations with sent types
+    noteBreak(curr->catchDests[i], curr->sentTypes[i], curr);
+  }
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2470,9 +2542,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
     Type(Type::none),
     curr,
     "tags with result types must not be used for exception handling");
-  if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
-                    curr,
-                    "tag's param numbers must match")) {
+  if (!shouldBeEqual(curr->operands.size(),
+                     tag->sig.params.size(),
+                     curr,
+                     "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
@@ -2524,7 +2597,11 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
 }
 
 void FunctionValidator::visitThrowRef(ThrowRef* curr) {
-  // TODO
+  Type exnref = Type(HeapType::exn, Nullable);
+  shouldBeSubType(curr->exnref->type,
+                  exnref,
+                  curr,
+                  "throw_ref's argument should be a subtype of exnref");
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
