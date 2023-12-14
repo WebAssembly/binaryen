@@ -2446,8 +2446,7 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitTryTable(TryTable* curr) {
-  // check all array's length is the same including sentTypes
-  //
+  // TODO
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2524,7 +2523,9 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
                   "Type of tuple.make does not match types of its operands");
 }
 
-void FunctionValidator::visitThrowRef(ThrowRef* curr) {}
+void FunctionValidator::visitThrowRef(ThrowRef* curr) {
+  // TODO
+}
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
   shouldBeTrue(getModule()->features.hasMultivalue(),
