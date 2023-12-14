@@ -392,9 +392,9 @@
   )
 
   ;; CHECK-TEXT:      (func $try-table-with-label-and-br (type $2) (result i32)
-  ;; CHECK-TEXT-NEXT:  (block $outer (result i32)
+  ;; CHECK-TEXT-NEXT:  (block $l-catch (result i32)
   ;; CHECK-TEXT-NEXT:   (block $l (result i32)
-  ;; CHECK-TEXT-NEXT:    (try_table (result i32) (catch_all $outer)
+  ;; CHECK-TEXT-NEXT:    (try_table (result i32) (catch $e-i32 $l-catch)
   ;; CHECK-TEXT-NEXT:     (br $l
   ;; CHECK-TEXT-NEXT:      (i32.const 0)
   ;; CHECK-TEXT-NEXT:     )
@@ -405,7 +405,7 @@
   ;; CHECK-BIN:      (func $try-table-with-label-and-br (type $2) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (block $label$2 (result i32)
-  ;; CHECK-BIN-NEXT:    (try_table (result i32) (catch_all $label$1)
+  ;; CHECK-BIN-NEXT:    (try_table (result i32) (catch $e-i32 $label$1)
   ;; CHECK-BIN-NEXT:     (br $label$2
   ;; CHECK-BIN-NEXT:      (i32.const 0)
   ;; CHECK-BIN-NEXT:     )
@@ -414,8 +414,8 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $try-table-with-label-and-br (result i32)
-    (block $outer (result i32)
-      (try_table $l (result i32) (catch_all $outer)
+    (block $l-catch (result i32)
+      (try_table $l (result i32) (catch $e-i32 $l-catch)
         (br $l (i32.const 0))
       )
     )
@@ -674,7 +674,7 @@
 ;; CHECK-BIN-NODEBUG:      (func $7 (type $2) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:    (try_table (result i32) (catch_all $label$1)
+;; CHECK-BIN-NODEBUG-NEXT:    (try_table (result i32) (catch $tag$0 $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:     (br $label$2
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
