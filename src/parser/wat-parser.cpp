@@ -178,6 +178,16 @@ Result<> parseModule(Module& wasm, std::string_view input) {
       CHECK_ERR(parsed);
       assert(parsed);
     }
+
+    // Parse exports.
+    // TODO: It would be more technically correct to interleave these properly
+    // with the implicit inline exports in other module field definitions.
+    for (auto pos : decls.exportDefs) {
+      WithPosition with(ctx, pos);
+      auto parsed = export_(ctx);
+      CHECK_ERR(parsed);
+      assert(parsed);
+    }
   }
 
   return Ok{};

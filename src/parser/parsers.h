@@ -194,6 +194,7 @@ template<typename Ctx> MaybeResult<> func(Ctx&);
 template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
+template<typename Ctx> MaybeResult<> export_(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx&);
 template<typename Ctx> Result<typename Ctx::ElemListT> elemlist(Ctx&, bool);
 template<typename Ctx> MaybeResult<> elem(Ctx&);
@@ -2371,6 +2372,56 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
   return Ok{};
 }
 
+// export ::= '(' 'export' nm:name exportdesc ')'
+// exportdesc ::= '(' 'func' x:funcidx ')'
+//              | '(' 'table' x:tableidx ')'
+//              | '(' 'memory' x:memidx ')'
+//              | '(' 'global' x:globalidx ')'
+//              | '(' 'tag' x:tagidx ')'
+template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("export"sv)) {
+    return {};
+  }
+
+  auto name = ctx.in.takeName();
+  if (!name) {
+    return ctx.in.err("expected export name");
+  }
+
+  if (ctx.in.takeSExprStart("func"sv)) {
+    auto idx = funcidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Function));
+  } else if (ctx.in.takeSExprStart("table"sv)) {
+    auto idx = tableidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Table));
+  } else if (ctx.in.takeSExprStart("memory"sv)) {
+    auto idx = memidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Memory));
+  } else if (ctx.in.takeSExprStart("global"sv)) {
+    auto idx = globalidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Global));
+  } else if (ctx.in.takeSExprStart("tag"sv)) {
+    auto idx = tagidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Tag));
+  } else {
+    return ctx.in.err("expected export description");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of export description");
+  }
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of export");
+  }
+  return Ok{};
+}
+
 // elemexpr ::= '(' 'item' expr ')' | '(' instr ')'
 template<typename Ctx>
 MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
@@ -2608,6 +2659,10 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return Ok{};
   }
   if (auto res = global(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = export_(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
