@@ -623,14 +623,16 @@ Result<> IRBuilder::visitCatch(Name tag) {
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
   auto expr = finishScope();
+  auto index = 0;
   CHECK_ERR(expr);
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    index = scope.getIndex();
+    tryy->catchBodies[index] = *expr;
   }
-  tryy->catchTags.push_back(tag);
-  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label));
+  tryy->catchTags[index] = tag;
+  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, index, label));
   // Push a pop for the exception payload.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
@@ -657,7 +659,8 @@ Result<> IRBuilder::visitCatchAll() {
   if (wasTry) {
     tryy->body = *expr;
   } else {
-    tryy->catchBodies.push_back(*expr);
+    auto lastTagIdx = tryy->catchTags.size();
+    tryy->catchBodies[lastTagIdx] = *expr;
   }
   pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label));
   return Ok{};
@@ -752,9 +755,12 @@ Result<> IRBuilder::visitEnd() {
     tryy->body = *expr;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
-  } else if (Try * tryy;
-             (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
-    tryy->catchBodies.push_back(*expr);
+  } else if (Try * tryy; (tryy = scope.getCatch())) {
+    tryy->catchBodies[scope.getIndex()] = *expr;
+    tryy->finalize(tryy->type);
+    push(maybeWrapForLabel(tryy));
+  } else if (Try * tryy; (tryy = scope.getCatchAll())) {
+    tryy->catchBodies[tryy->catchTags.size()] = *expr;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else {
