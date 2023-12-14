@@ -54,13 +54,10 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 
 #include "wasm-delegations-fields.def"
 }
@@ -121,20 +118,18 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 
 #define DELEGATE_START(id) [[maybe_unused]] auto* cast = expr->cast<id>();
 
+#define DELEGATE_GET_FIELD(id, field) cast->field
+
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
 
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 
 #include "wasm-delegations-fields.def"
 }

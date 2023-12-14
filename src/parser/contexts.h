@@ -548,6 +548,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
 
+  // Positions of export definitions.
+  std::vector<Index> exportDefs;
+
   // Positions of typeuses that might implicitly define new types.
   std::vector<Index> implicitTypeDefs;
 
@@ -684,6 +687,11 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                   ImportNames* import,
                   TypeUseT type,
                   Index pos);
+
+  Result<> addExport(Index pos, Ok, Name, ExternalKind) {
+    exportDefs.push_back(pos);
+    return Ok{};
+  }
 };
 
 // Phase 2: Parse type definitions into a TypeBuilder.
@@ -1264,6 +1272,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
+  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+    wasm.addExport(builder.makeExport(name, value, kind));
+    return Ok{};
+  }
 
   Result<Index> addScratchLocal(Index pos, Type type) {
     if (!func) {
