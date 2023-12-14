@@ -1987,11 +1987,10 @@ struct PrintExpressionContents
         printMedium(o, curr->catchRefs[i] ? "catch_ref " : "catch ");
         printName(curr->catchTags[i], o);
         o << ' ';
-        printName(curr->catchDests[i], o);
       } else {
         printMedium(o, curr->catchRefs[i] ? "catch_all_ref " : "catch_all ");
-        printName(curr->catchDests[i], o);
       }
+      printName(curr->catchDests[i], o);
       o << ')';
     }
   }
