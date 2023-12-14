@@ -688,27 +688,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                   TypeUseT type,
                   Index pos);
 
-  Result<> addFuncExport(Index pos, FuncIdxT, Name) {
-    exportDefs.push_back(pos);
-    return Ok{};
-  }
-
-  Result<> addTableExport(Index pos, TableIdxT, Name) {
-    exportDefs.push_back(pos);
-    return Ok{};
-  }
-
-  Result<> addMemoryExport(Index pos, MemoryIdxT, Name) {
-    exportDefs.push_back(pos);
-    return Ok{};
-  }
-
-  Result<> addGlobalExport(Index pos, GlobalIdxT, Name) {
-    exportDefs.push_back(pos);
-    return Ok{};
-  }
-
-  Result<> addTagExport(Index pos, TagIdxT, Name) {
+  Result<> addExport(Index pos, Ok, Name, ExternalKind) {
     exportDefs.push_back(pos);
     return Ok{};
   }
@@ -1293,28 +1273,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
 
-  Result<> addFuncExport(Index pos, Name func, Name name) {
-    wasm.addExport(builder.makeExport(name, func, ExternalKind::Function));
-    return Ok{};
-  }
-
-  Result<> addTableExport(Index pos, Name table, Name name) {
-    wasm.addExport(builder.makeExport(name, table, ExternalKind::Table));
-    return Ok{};
-  }
-
-  Result<> addMemoryExport(Index pos, Name mem, Name name) {
-    wasm.addExport(builder.makeExport(name, mem, ExternalKind::Memory));
-    return Ok{};
-  }
-
-  Result<> addGlobalExport(Index pos, Name global, Name name) {
-    wasm.addExport(builder.makeExport(name, global, ExternalKind::Global));
-    return Ok{};
-  }
-
-  Result<> addTagExport(Index pos, Name tag, Name name) {
-    wasm.addExport(builder.makeExport(name, tag, ExternalKind::Tag));
+  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+    wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
   }
 

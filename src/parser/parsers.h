@@ -2392,23 +2392,23 @@ template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
   if (ctx.in.takeSExprStart("func"sv)) {
     auto idx = funcidx(ctx);
     CHECK_ERR(idx);
-    CHECK_ERR(ctx.addFuncExport(pos, *idx, *name));
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Function));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto idx = tableidx(ctx);
     CHECK_ERR(idx);
-    CHECK_ERR(ctx.addTableExport(pos, *idx, *name));
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Table));
   } else if (ctx.in.takeSExprStart("memory"sv)) {
     auto idx = memidx(ctx);
     CHECK_ERR(idx);
-    CHECK_ERR(ctx.addMemoryExport(pos, *idx, *name));
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Memory));
   } else if (ctx.in.takeSExprStart("global"sv)) {
     auto idx = globalidx(ctx);
     CHECK_ERR(idx);
-    CHECK_ERR(ctx.addGlobalExport(pos, *idx, *name));
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Global));
   } else if (ctx.in.takeSExprStart("tag"sv)) {
     auto idx = tagidx(ctx);
     CHECK_ERR(idx);
-    CHECK_ERR(ctx.addTagExport(pos, *idx, *name));
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Tag));
   } else {
     return ctx.in.err("expected export description");
   }
