@@ -904,7 +904,7 @@ void ThrowRef::finalize() { type = Type::unreachable; }
 
 bool TryTable::hasCatchAll() const {
   return std::any_of(
-    catchTags.begin(), catchTags.end(), [](bool t) { return !t; });
+    catchTags.begin(), catchTags.end(), [](Name t) { return !t; });
 }
 
 static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
