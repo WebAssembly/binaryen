@@ -77,10 +77,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, br->getSentType());
     } else if (auto* tt = expr->dynCast<TryTable>()) {
       for (Index i = 0; i < tt->catchTags.size(); i++) {
-        auto dest = tt->catchDests[i];
-        if (dest == name) {
-          func(name, tt->sentTypes[i]);
-        }
+        func(name, tt->sentTypes[i]);
       }
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
@@ -89,7 +86,8 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
 }
 
 // Similar to operateOnScopeNameUses, but also passes in the expression that is
-// sent if the branch is taken. nullptr is given if there is no value.
+// sent if the branch is taken. nullptr is given if there is no value or there
+// is a value but it is not known statically.
 template<typename T>
 void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
   operateOnScopeNameUses(expr, [&](Name& name) {

@@ -1955,7 +1955,6 @@ void BinaryInstWriter::visitTry(Try* curr) {
 }
 
 void BinaryInstWriter::visitTryTable(TryTable* curr) {
-  // the binary format requires this; we have a block if we need one
   o << int8_t(BinaryConsts::TryTable);
   emitResultType(curr->type);
   o << U32LEB(curr->catchTags.size());
@@ -1970,6 +1969,7 @@ void BinaryInstWriter::visitTryTable(TryTable* curr) {
     }
     o << U32LEB(getBreakIndex(curr->catchDests[i]));
   }
+  // the binary format requires this; we have a block if we need one
   // catch_*** clauses should refer to block labels without entering the try
   // scope. So we do this at the end.
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);

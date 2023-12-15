@@ -1169,10 +1169,7 @@ struct InfoCollector
     }
   }
   void visitRethrow(Rethrow* curr) {}
-  void visitThrowRef(ThrowRef* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
-  }
+  void visitThrowRef(ThrowRef* curr) {}
 
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
