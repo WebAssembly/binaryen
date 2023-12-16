@@ -828,23 +828,21 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type purely based on its contents. this scans the block, so it is
-  // not fast.
-  void finalize();
-
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed (which may require scanning the block)
-  void finalize(Type type_);
-
   enum Breakability { Unknown, HasBreak, NoBreak };
 
-  // set the type given you know its type, and you know if there is a break to
-  // this block. this avoids the need to scan the contents of the block in the
-  // case that it might be unreachable, so it is recommended if you already know
-  // the type and breakability anyhow.
-  void finalize(Type type_, Breakability breakability);
+  // If type_ is not given, set the type purely based on its contents. this
+  // scans the block, so it is not fast.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed (which may require scanning the block)
+  //
+  // If breakability is given, you know if there is a break to this block. this
+  // avoids the need to scan the contents of the block in the case that it might
+  // be unreachable, so it is recommended if you already know the type and
+  // breakability anyhow.
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Breakability breakability = Unknown);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -856,14 +854,12 @@ public:
   Expression* ifTrue;
   Expression* ifFalse;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
@@ -874,14 +870,12 @@ public:
   Name name;
   Expression* body;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Break : public SpecificExpression<Expression::BreakId> {
@@ -1472,8 +1466,7 @@ public:
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
-  void finalize();
-  void finalize(Type type_);
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 // 'try_table' from the new EH proposal
@@ -1497,8 +1490,8 @@ public:
   // When 'Module*' parameter is given, we cache catch tags' types into
   // 'sentTypes' array, so that the types can be accessed in other analyses
   // without accessing the module.
-  void finalize(Module* wasm = nullptr);
-  void finalize(Type type_, Module* wasm = nullptr);
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Module* wasm = nullptr);
 
   // Caches tags' types in the catch clauses in order not to query the module
   // every time we query the sent types
