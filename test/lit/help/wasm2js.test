@@ -445,6 +445,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-eh-old-to-new                     translate old EH instructions to
+;; CHECK-NEXT:                                                 new ones
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
 ;; CHECK-NEXT:                                                 clamping semantics
 ;; CHECK-NEXT:

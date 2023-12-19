@@ -1328,8 +1328,8 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize(type);
     }
+    block->finalize(type);
     return block;
   }
 
