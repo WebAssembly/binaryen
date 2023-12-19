@@ -1303,9 +1303,7 @@ public:
   }
 
   template<typename... Ts>
-  Block* blockify(Expression* any,
-                  Expression* append,
-                  Ts... args) {
+  Block* blockify(Expression* any, Expression* append, Ts... args) {
     return blockify(blockify(any, append), args...);
   }
 
