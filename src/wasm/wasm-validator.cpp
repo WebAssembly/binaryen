@@ -354,7 +354,8 @@ public:
         case Expression::ReturnId:
         case Expression::UnreachableId:
         case Expression::ThrowId:
-        case Expression::RethrowId: {
+        case Expression::RethrowId:
+        case Expression::ThrowRefId: {
           // These can all be unreachable without an unreachable child.
           return;
         }
@@ -445,8 +446,10 @@ public:
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
+  void visitTryTable(TryTable* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
+  void visitThrowRef(ThrowRef* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
@@ -2442,6 +2445,10 @@ void FunctionValidator::visitTry(Try* curr) {
   rethrowTargetNames.erase(curr->name);
 }
 
+void FunctionValidator::visitTryTable(TryTable* curr) {
+  // TODO
+}
+
 void FunctionValidator::visitThrow(Throw* curr) {
   shouldBeTrue(
     getModule()->features.hasExceptionHandling(),
@@ -2514,6 +2521,10 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
                   curr->type,
                   curr,
                   "Type of tuple.make does not match types of its operands");
+}
+
+void FunctionValidator::visitThrowRef(ThrowRef* curr) {
+  // TODO
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {

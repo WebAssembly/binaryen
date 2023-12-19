@@ -284,9 +284,10 @@ private:
   Expression* makeTableFill(Element& s);
   Expression* makeTableCopy(Element& s);
   Expression* makeTry(Element& s);
-  Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
+  Expression* makeTryTable(Element& s);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
+  Expression* makeThrowRef(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
   Expression* makeTupleDrop(Element& s);

@@ -846,6 +846,31 @@ public:
   Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
     return makeTry(name, body, {}, {}, delegateTarget, type, true);
   }
+  TryTable* makeTryTable(Expression* body,
+                         const std::vector<Name>& catchTags,
+                         const std::vector<Name>& catchDests,
+                         const std::vector<bool>& catchRefs) {
+    auto* ret = wasm.allocator.alloc<TryTable>();
+    ret->body = body;
+    ret->catchTags.set(catchTags);
+    ret->catchDests.set(catchDests);
+    ret->catchRefs.set(catchRefs);
+    ret->finalize(&wasm);
+    return ret;
+  }
+  TryTable* makeTryTable(Expression* body,
+                         const std::vector<Name>& catchTags,
+                         const std::vector<Name>& catchDests,
+                         const std::vector<bool>& catchRefs,
+                         Type type) {
+    auto* ret = wasm.allocator.alloc<TryTable>();
+    ret->body = body;
+    ret->catchTags.set(catchTags);
+    ret->catchDests.set(catchDests);
+    ret->catchRefs.set(catchRefs);
+    ret->finalize(type, &wasm);
+    return ret;
+  }
   Throw* makeThrow(Tag* tag, const std::vector<Expression*>& args) {
     return makeThrow(tag->name, args);
   }

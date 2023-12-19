@@ -299,6 +299,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
+  void visitTryTable(TryTable* curr);
   void maybePrintUnreachableReplacement(Expression* curr, Type type);
   void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
   void visitCallRef(CallRef* curr) {
@@ -1974,6 +1975,25 @@ struct PrintExpressionContents
       printBlockType(Signature(Type::none, curr->type));
     }
   }
+  void visitTryTable(TryTable* curr) {
+    printMedium(o, "try_table");
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
+    for (Index i = 0; i < curr->catchTags.size(); i++) {
+      o << " (";
+      if (curr->catchTags[i]) {
+        printMedium(o, curr->catchRefs[i] ? "catch_ref " : "catch ");
+        printName(curr->catchTags[i], o);
+        o << ' ';
+      } else {
+        printMedium(o, curr->catchRefs[i] ? "catch_all_ref " : "catch_all ");
+      }
+      printName(curr->catchDests[i], o);
+      o << ')';
+    }
+  }
   void visitThrow(Throw* curr) {
     printMedium(o, "throw ");
     printName(curr->tag, o);
@@ -1982,6 +2002,7 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     printName(curr->target, o);
   }
+  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref "); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
@@ -2726,6 +2747,19 @@ void PrintSExpression::visitTry(Try* curr) {
   if (full) {
     o << " ;; end try";
   }
+}
+
+void PrintSExpression::visitTryTable(TryTable* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  incIndent();
+  maybePrintImplicitBlock(curr->body, true);
+  decIndent();
+  if (full) {
+    o << " ;; end if";
+  }
+  controlFlowDepth--;
 }
 
 void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,

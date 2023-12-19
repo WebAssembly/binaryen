@@ -42,6 +42,8 @@
 
 namespace wasm {
 
+class Module;
+
 // An index in a wasm module
 using Index = uint32_t;
 
@@ -701,8 +703,10 @@ public:
     TableFillId,
     TableCopyId,
     TryId,
+    TryTableId,
     ThrowId,
     RethrowId,
+    ThrowRefId,
     TupleMakeId,
     TupleExtractId,
     RefI31Id,
@@ -1452,6 +1456,7 @@ public:
   void finalize();
 };
 
+// 'try' from the old (Phase 3) EH proposal
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1471,6 +1476,35 @@ public:
   void finalize(Type type_);
 };
 
+// 'try_table' from the new EH proposal
+class TryTable : public SpecificExpression<Expression::TryTableId> {
+public:
+  TryTable(MixedArena& allocator)
+    : catchTags(allocator), catchDests(allocator), catchRefs(allocator),
+      sentTypes(allocator) {}
+
+  Expression* body;
+
+  // Tag names. Empty names (Name()) for catch_all and catch_all_ref
+  ArenaVector<Name> catchTags;
+  // catches' destination blocks
+  ArenaVector<Name> catchDests;
+  // true for catch_ref and catch_all_ref
+  ArenaVector<bool> catchRefs;
+
+  bool hasCatchAll() const;
+
+  // When 'Module*' parameter is given, we cache catch tags' types into
+  // 'sentTypes' array, so that the types can be accessed in other analyses
+  // without accessing the module.
+  void finalize(Module* wasm = nullptr);
+  void finalize(Type type_, Module* wasm = nullptr);
+
+  // Caches tags' types in the catch clauses in order not to query the module
+  // every time we query the sent types
+  ArenaVector<Type> sentTypes;
+};
+
 class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
   Throw(MixedArena& allocator) : operands(allocator) {}
@@ -1481,11 +1515,22 @@ public:
   void finalize();
 };
 
+// 'rethrow' from the old (Phase 3) EH proposal
 class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
   Name target;
+
+  void finalize();
+};
+
+// 'throw_ref' from the new EH proposal
+class ThrowRef : public SpecificExpression<Expression::ThrowRefId> {
+public:
+  ThrowRef(MixedArena& allocator) {}
+
+  Expression* exnref;
 
   void finalize();
 };

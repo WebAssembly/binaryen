@@ -1337,6 +1337,8 @@ Result<> IRBuilder::makeTry(Name label, Type type) {
   return visitTryStart(tryy, label);
 }
 
+// Result<> IRBuilder::makeTryTable() {}
+
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);
   curr.tag = tag;
@@ -1352,6 +1354,8 @@ Result<> IRBuilder::makeRethrow(Index label) {
   push(builder.makeRethrow(*name));
   return Ok{};
 }
+
+// Result<> IRBuilder::makeThrowRef() {}
 
 Result<> IRBuilder::makeTupleMake(uint32_t arity) {
   TupleMake curr(wasm.allocator);

@@ -155,8 +155,10 @@ public:
   [[nodiscard]] Result<> makeTableFill(Name table);
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
+  // [[nodiscard]] Result<> makeTryTable();
   [[nodiscard]] Result<> makeThrow(Name tag);
   [[nodiscard]] Result<> makeRethrow(Index label);
+  // [[nodiscard]] Result<> makeThrowRef();
   [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
   [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
   [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);

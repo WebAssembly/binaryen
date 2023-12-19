@@ -2794,7 +2794,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     if (!wasm.getTagOrNull(tag)) {
       throw SParseException("bad tag name", s, inner);
     }
-    ret->catchTags.push_back(getTagName(*inner[1]));
+    ret->catchTags.push_back(tag);
     ret->catchBodies.push_back(makeMaybeBlock(inner, 2, type));
   }
 
@@ -2837,6 +2837,65 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeTryTable(Element& s) {
+  auto ret = allocator.alloc<TryTable>();
+  Index i = 1;
+  Name sName;
+  if (s.size() > i && s[i]->dollared()) {
+    // the try_table is labeled
+    sName = s[i++]->str();
+  } else {
+    sName = "try_table";
+  }
+  auto label = nameMapper.pushLabelName(sName);
+  Type type = parseBlockType(s, i); // signature
+
+  while (i < s.size()) {
+    Element& inner = *s[i];
+
+    if (elementStartsWith(inner, "catch") ||
+        elementStartsWith(inner, "catch_ref")) {
+      bool isRef = elementStartsWith(inner, "catch_ref");
+      if (inner.size() < 3) {
+        throw SParseException("invalid catch/catch_ref block", s, inner);
+      }
+      Name tag = getTagName(*inner[1]);
+      if (!wasm.getTagOrNull(tag)) {
+        throw SParseException("bad tag name", s, inner);
+      }
+      ret->catchTags.push_back(tag);
+      ret->catchDests.push_back(getLabel(*inner[2]));
+      ret->catchRefs.push_back(isRef);
+    } else if (elementStartsWith(inner, "catch_all") ||
+               elementStartsWith(inner, "catch_all_ref")) {
+      bool isRef = elementStartsWith(inner, "catch_all_ref");
+      if (inner.size() < 2) {
+        throw SParseException(
+          "invalid catch_all/catch_all_ref block", s, inner);
+      }
+      ret->catchTags.push_back(Name());
+      ret->catchDests.push_back(getLabel(*inner[1]));
+      ret->catchRefs.push_back(isRef);
+    } else {
+      break;
+    }
+    i++;
+  }
+
+  ret->body = makeMaybeBlock(s, i, type);
+  ret->finalize(type, &wasm);
+  nameMapper.popLabelName(label);
+  // create a break target if we must
+  if (BranchUtils::BranchSeeker::has(ret, label)) {
+    auto* block = allocator.alloc<Block>();
+    block->name = label;
+    block->list.push_back(ret);
+    block->finalize(type);
+    return block;
+  }
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
   auto ret = allocator.alloc<Throw>();
   Index i = 1;
@@ -2855,6 +2914,13 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
 Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
   auto ret = allocator.alloc<Rethrow>();
   ret->target = getLabel(*s[1], LabelType::Exception);
+  ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeThrowRef(Element& s) {
+  auto ret = allocator.alloc<ThrowRef>();
+  ret->exnref = parseExpression(s[1]);
   ret->finalize();
   return ret;
 }
