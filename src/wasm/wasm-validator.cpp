@@ -2455,11 +2455,6 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
                     curr->type,
                     curr->body,
                     "try_table's type does not match try_table body's type");
-  } else {
-    shouldBeEqual(curr->body->type,
-                  Type(Type::unreachable),
-                  curr,
-                  "unreachable try_table must have unreachable try_table body");
   }
 
   shouldBeEqual(curr->catchTags.size(),
@@ -2475,45 +2470,47 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
                 curr,
                 "the number of catch tags and sent types do not match");
 
+  const char* invalidSentTypeMsg = "invalid catch sent type information";
   Type exnref = Type(HeapType::exn, Nullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
-    Name tagName = curr->catchTags[i];
-    if (!tagName) {
-      continue;
-    }
-
-    // Check tag validity
-    auto* tag = getModule()->getTagOrNull(tagName);
-    if (!shouldBeTrue(tag != nullptr, curr, "")) {
-      getStream() << "catch's tag name is invalid: " << tagName << "\n";
-    } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
-      getStream()
-        << "catch's tag (" << tagName
-        << ") has result values, which is not allowed for exception handling";
-    }
-
-    // Check types in sentTypes are valid.
-    auto tagType = tag->sig.params;
     auto sentType = curr->sentTypes[i];
-    if (tagType.size() == 0 && !curr->catchRefs[i]) {
-      if (shouldBeTrue(sentType.size() == 1, curr, "")) {
-        shouldBeEqual(sentType,
-                      Type(Type::none),
-                      curr,
-                      "invalid catch sent type information");
+    size_t tagTypeSize;
+
+    Name tagName = curr->catchTags[i];
+    if (!tagName) { // catch_all or catch_all_ref
+      tagTypeSize = 0;
+
+    } else { // catch or catch_ref
+      // Check tag validity
+      auto* tag = getModule()->getTagOrNull(tagName);
+      if (!shouldBeTrue(tag != nullptr, curr, "")) {
+        getStream() << "catch's tag name is invalid: " << tagName << "\n";
+      } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+        getStream()
+          << "catch's tag (" << tagName
+          << ") has result values, which is not allowed for exception handling";
+      }
+
+      // tagType and sentType should be the same (except for the possible exnref
+      // at the end of sentType)
+      auto tagType = tag->sig.params;
+      tagTypeSize = tagType.size();
+      for (Index j = 0; j < tagType.size(); j++) {
+        shouldBeEqual(tagType[j], sentType[j], curr, invalidSentTypeMsg);
       }
     }
-    for (Index j = 0; j < tagType.size(); j++) {
-      shouldBeEqual(
-        tagType[j], sentType[j], curr, "invalid catch sent type information");
-    }
+
+    // If this is catch_ref or catch_all_ref, sentType.size() should be
+    // tagType.size() + 1 because there is an exrnef tacked at the end. If
+    // this is catch/catch_all, the two sizes should be the same.
     if (curr->catchRefs[i]) {
-      if (shouldBeTrue(sentType.size() == tagType.size() + 1, curr, "")) {
-        shouldBeEqual(sentType[sentType.size() - 1],
-                      exnref,
-                      curr,
-                      "invalid catch sent type information");
+      if (shouldBeTrue(
+            sentType.size() == tagTypeSize + 1, curr, invalidSentTypeMsg)) {
+        shouldBeEqual(
+          sentType[sentType.size() - 1], exnref, curr, invalidSentTypeMsg);
       }
+    } else {
+      shouldBeTrue(sentType.size() == tagTypeSize, curr, invalidSentTypeMsg);
     }
 
     // Note catch destinations with sent types
