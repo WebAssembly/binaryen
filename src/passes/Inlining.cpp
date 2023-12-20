@@ -765,8 +765,8 @@ struct FunctionSplitter {
           return InliningMode::Uninlineable;
         }
       } else {
-        // This is an if without an else, and so the type is either none of
-        // unreachable;
+        // This is an if without an else, and so the type is either none or
+        // unreachable, and we ruled out none before.
         assert(iff->ifTrue->type == Type::unreachable);
       }
     }
