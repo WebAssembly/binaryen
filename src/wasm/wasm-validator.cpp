@@ -2479,7 +2479,6 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
     Name tagName = curr->catchTags[i];
     if (!tagName) { // catch_all or catch_all_ref
       tagTypeSize = 0;
-
     } else { // catch or catch_ref
       // Check tag validity
       auto* tag = getModule()->getTagOrNull(tagName);
