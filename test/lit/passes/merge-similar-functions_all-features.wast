@@ -100,7 +100,7 @@
 
   ;; CHECK:      (type $1 (func (param (ref $0)) (result i32)))
 
-  ;; CHECK:      (elem $decl declare func$return_a$return_b)
+  ;; CHECK:      (elem declare func $return_a $return_b)
 
   ;; CHECK:      (func $return_call_a (type $0) (result i32)
   ;; CHECK-NEXT:  (call $byn$mgfn-shared$return_call_a

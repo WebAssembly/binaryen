@@ -7,7 +7,7 @@
  ;; CHECK:      (type $refined (func (param (ref $refined)) (result (ref $refined))))
  (type $refined (func (param (ref $refined)) (result (ref $refined))))
 
- ;; CHECK:      (elem $decl declare func$foo)
+ ;; CHECK:      (elem declare func $foo)
 
  ;; CHECK:      (func $foo (type $refined) (param $0 (ref $refined)) (result (ref $refined))
  ;; CHECK-NEXT:  (drop
@@ -38,7 +38,7 @@
  (type $1 (func (param f32 funcref) (result funcref)))
 
 
- ;; CHECK:      (elem $decl declare func$bar$foo)
+ ;; CHECK:      (elem declare func $bar $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop
@@ -92,7 +92,7 @@
   (type $1 (func (param funcref)))
  )
 
- ;; CHECK:      (elem $decl declare func$foo)
+ ;; CHECK:      (elem declare func $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 (ref $0))
  ;; CHECK-NEXT:  (call $foo
@@ -134,7 +134,7 @@
  (type $2 (func (param funcref) (result funcref)))
 
 
- ;; CHECK:      (elem $decl declare func$bar$foo)
+ ;; CHECK:      (elem declare func $bar $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 i32) (param $1 (ref $0)) (result (ref $1))
  ;; CHECK-NEXT:  (drop

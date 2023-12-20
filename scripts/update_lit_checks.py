@@ -39,7 +39,11 @@ MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 
 ALL_ITEMS = '|'.join(['type', 'import', 'global', 'memory', 'data', 'table',
                       'elem', 'tag', 'export', 'start', 'func'])
-ITEM_NAME = r'\$[^\s()]*|"[^\s()]*"'
+
+# Regular names as well as the "declare" in (elem declare ... to get declarative
+# segments included in the output.
+ITEM_NAME = r'\$[^\s()]*|"[^\s()]*"|declare'
+
 # FIXME: This does not handle nested string contents. For example,
 #  (data (i32.const 10) "hello(")
 # will look unterminated, due to the '(' inside the string. As a result, the

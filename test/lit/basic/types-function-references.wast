@@ -55,7 +55,7 @@
 
   ;; CHECK-TEXT:      (type $10 (func (param (ref null $mixed_results))))
 
-  ;; CHECK-TEXT:      (elem $decl declare func$call-ref$call-ref-more)
+  ;; CHECK-TEXT:      (elem declare func $call-ref $call-ref-more)
 
   ;; CHECK-TEXT:      (func $call-ref (type $void)
   ;; CHECK-TEXT-NEXT:  (call_ref $void
@@ -64,7 +64,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $10 (func (param (ref null $mixed_results))))
 
-  ;; CHECK-BIN:      (elem $decl declare func$call-ref$call-ref-more)
+  ;; CHECK-BIN:      (elem declare func $call-ref $call-ref-more)
 
   ;; CHECK-BIN:      (func $call-ref (type $void)
   ;; CHECK-BIN-NEXT:  (call_ref $void
@@ -375,7 +375,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $10 (func (param (ref null $0))))
 
-;; CHECK-BIN-NODEBUG:      (elem $decl declare func$0$2)
+;; CHECK-BIN-NODEBUG:      (elem declare func $0 $2)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  (call_ref $1

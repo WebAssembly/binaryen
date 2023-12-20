@@ -9,7 +9,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (elem $decl declare func$calls$ref.func)
+  ;; CHECK:      (elem declare func $calls $ref.func)
 
   ;; CHECK:      (func $calls (type $f) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop

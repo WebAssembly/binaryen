@@ -17,7 +17,7 @@
   ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
-  ;; CHECK:      (elem $decl declare func$func$funcs)
+  ;; CHECK:      (elem declare func $func $funcs)
 
   ;; CHECK:      (export "export1" (func $ref))
 

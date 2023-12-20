@@ -107,7 +107,7 @@
 
   ;; CHECK:      (type $1 (func (param funcref)))
 
-  ;; CHECK:      (elem $decl declare func$possible)
+  ;; CHECK:      (elem declare func $possible)
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -144,7 +144,7 @@
 
   ;; CHECK:      (type $1 (func (param funcref)))
 
-  ;; CHECK:      (elem $decl declare func$possible)
+  ;; CHECK:      (elem declare func $possible)
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -239,7 +239,7 @@
 
   ;; CHECK:      (type $2 (func (param funcref)))
 
-  ;; CHECK:      (elem $decl declare func$possible-2)
+  ;; CHECK:      (elem declare func $possible-2)
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -313,7 +313,7 @@
 
   ;; CHECK:      (type $5 (func))
 
-  ;; CHECK:      (elem $decl declare func$possible-Y1$possible-Y2)
+  ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
 
   ;; CHECK:      (export "out" (func $caller))
 
@@ -440,7 +440,7 @@
 
   ;; CHECK:      (type $6 (func))
 
-  ;; CHECK:      (elem $decl declare func$possible-Y1$possible-Y2)
+  ;; CHECK:      (elem declare func $possible-Y1 $possible-Y2)
 
   ;; CHECK:      (export "out" (func $caller1))
 
@@ -676,7 +676,7 @@
 
   ;; CHECK:      (type $5 (func))
 
-  ;; CHECK:      (elem $decl declare func$possible-1$possible-2)
+  ;; CHECK:      (elem declare func $possible-1 $possible-2)
 
   ;; CHECK:      (export "out" (func $caller1))
 
@@ -902,7 +902,7 @@
 
   ;; CHECK:      (type $5 (func))
 
-  ;; CHECK:      (elem $decl declare func$possible-1$possible-2)
+  ;; CHECK:      (elem declare func $possible-1 $possible-2)
 
   ;; CHECK:      (export "out" (func $caller1))
 

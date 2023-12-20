@@ -58,7 +58,7 @@
 
   ;; CHECK-TEXT:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
 
-  ;; CHECK-TEXT:      (elem $decl declare func$foo$ref-taken-but-not-in-table)
+  ;; CHECK-TEXT:      (elem declare func $foo $ref-taken-but-not-in-table)
 
   ;; CHECK-TEXT:      (tag $e-i32 (param i32))
 
@@ -95,7 +95,7 @@
 
   ;; CHECK-BIN:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
 
-  ;; CHECK-BIN:      (elem $decl declare func$foo$ref-taken-but-not-in-table)
+  ;; CHECK-BIN:      (elem declare func $foo $ref-taken-but-not-in-table)
 
   ;; CHECK-BIN:      (tag $e-i32 (param i32))
 
@@ -133,8 +133,6 @@
   (func $foo)
 
   (table funcref (elem $take_eqref $take_funcref $take_anyref))
-  (elem declare func $ref-taken-but-not-in-table)
-
   ;; CHECK-BIN-NODEBUG:      (type $0 (func (result anyref)))
 
   ;; CHECK-BIN-NODEBUG:      (type $1 (func (param anyref)))
@@ -154,9 +152,9 @@
   ;; CHECK-BIN-NODEBUG:      (type $8 (func (param eqref) (result funcref)))
 
   ;; CHECK-BIN-NODEBUG:      (import "env" "import_global" (global $gimport$0 eqref))
-  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
+
   ;; CHECK-BIN-NODEBUG:      (import "env" "import_func" (func $fimport$0 (type $8) (param eqref) (result funcref)))
-  (import "env" "import_global" (global $import_global eqref))
+
   ;; CHECK-BIN-NODEBUG:      (global $global$0 (mut eqref) (ref.null none))
 
   ;; CHECK-BIN-NODEBUG:      (global $global$1 (mut funcref) (ref.null nofunc))
@@ -171,8 +169,11 @@
 
   ;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $0 $1 $2)
 
-  ;; CHECK-BIN-NODEBUG:      (elem $decl declare func$23$3)
+  ;; CHECK-BIN-NODEBUG:      (elem declare func $23 $3)
+  (elem declare func $ref-taken-but-not-in-table)
 
+  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
+  (import "env" "import_global" (global $import_global eqref))
   ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
 
   ;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))

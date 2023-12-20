@@ -20,7 +20,6 @@
 
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
-#include <ir/names.h>
 #include <ir/table-utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
@@ -3279,14 +3278,11 @@ void PrintSExpression::visitModule(Module* curr) {
   }
   auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
   if (!elemDeclareNames.empty()) {
-    // Generate a name for the declarative segment to include it in generated
-    // lit test output.
-    auto segName = Names::getValidElementSegmentName(*curr, "decl");
     doIndent(o, indent);
-    printMedium(o, "(elem ");
-    printName(segName, o);
+    printMedium(o, "(elem");
     o << " declare func";
     for (auto name : elemDeclareNames) {
+      o << ' ';
       printName(name, o);
     }
     o << ')' << maybeNewLine;

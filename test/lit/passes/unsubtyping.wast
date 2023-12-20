@@ -921,7 +921,7 @@
  ;; CHECK:       (type $f (func (param (ref $super))))
  (type $f (func (param (ref $super))))
 
- ;; CHECK:      (elem $decl declare func$call-ref)
+ ;; CHECK:      (elem declare func $call-ref)
 
  ;; CHECK:      (func $call-ref (type $f) (param $0 (ref $super))
  ;; CHECK-NEXT:  (call_ref $f
@@ -978,7 +978,7 @@
 
  ;; CHECK:       (type $3 (func (result (ref $super))))
 
- ;; CHECK:      (elem $decl declare func$callee)
+ ;; CHECK:      (elem declare func $callee)
 
  ;; CHECK:      (func $return-call-ref (type $3) (result (ref $super))
  ;; CHECK-NEXT:  (return_call_ref $f

@@ -7,7 +7,7 @@
 
   ;; CHECK:      (type $1 (func (result funcref)))
 
-  ;; CHECK:      (elem $decl declare func$foo)
+  ;; CHECK:      (elem declare func $foo)
 
   ;; CHECK:      (export "ref_func_test" (func $ref_func_test))
   (export "ref_func_test" (func $ref_func_test))
@@ -117,7 +117,7 @@
 
  ;; CHECK:      (type $0 (func (result (ref func))))
 
- ;; CHECK:      (elem $decl declare func$1)
+ ;; CHECK:      (elem declare func $1)
 
  ;; CHECK:      (func $1 (type $0) (result (ref func))
  ;; CHECK-NEXT:  (local $0 (ref func))

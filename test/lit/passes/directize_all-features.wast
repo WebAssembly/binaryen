@@ -1105,14 +1105,14 @@
 
  ;; CHECK:      (elem $0 (i32.const 10) $foo-ref $foo-ref)
 
- ;; CHECK:      (elem $decl declare func$select-non-nullable)
+ ;; CHECK:      (elem declare func $select-non-nullable)
 
  ;; CHECK:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (elem $0 (i32.const 10) $foo-ref $foo-ref)
 
- ;; IMMUT:      (elem $decl declare func$select-non-nullable)
+ ;; IMMUT:      (elem declare func $select-non-nullable)
 
  ;; IMMUT:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; IMMUT-NEXT:  (unreachable)
@@ -1469,12 +1469,12 @@
 
  ;; CHECK:      (elem $0 (i32.const 0) $func-A)
 
- ;; CHECK:      (elem $decl declare func$func-B)
+ ;; CHECK:      (elem declare func $func-B)
 
  ;; CHECK:      (export "a" (func $fill))
  ;; IMMUT:      (elem $0 (i32.const 0) $func-A)
 
- ;; IMMUT:      (elem $decl declare func$func-B)
+ ;; IMMUT:      (elem declare func $func-B)
 
  ;; IMMUT:      (export "a" (func $fill))
  (export "a" (func $fill))

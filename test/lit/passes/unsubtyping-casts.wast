@@ -210,7 +210,7 @@
  ;; CHECK:      (table $t 1 1 (ref null $top))
  (table $t 1 1 (ref null $top))
 
- ;; CHECK:      (elem $decl declare func$cast)
+ ;; CHECK:      (elem declare func $cast)
 
  ;; CHECK:      (func $cast (type $bot)
  ;; CHECK-NEXT:  (local $l (ref null $top))

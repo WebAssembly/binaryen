@@ -11,7 +11,7 @@
 
   ;; CHECK:      (type $2 (func (param funcref) (result i32)))
 
-  ;; CHECK:      (elem $decl declare func$helper)
+  ;; CHECK:      (elem declare func $helper)
 
   ;; CHECK:      (func $no-uses (type $0)
   ;; CHECK-NEXT:  (local $x (ref func))

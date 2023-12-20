@@ -10,7 +10,7 @@
  ;; CHECK:      (global $global$0 funcref (ref.func $func))
  (global $global$0 (mut funcref) (ref.func $func))
 
- ;; CHECK:      (elem $decl declare func$func)
+ ;; CHECK:      (elem declare func $func)
 
  ;; CHECK:      (func $func (type $A)
  ;; CHECK-NEXT:  (drop

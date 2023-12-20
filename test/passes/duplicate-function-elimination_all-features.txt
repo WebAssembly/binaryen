@@ -1,7 +1,7 @@
 (module
  (type $0 (func (result i32)))
  (type $1 (func (result funcref)))
- (elem $decl declare func$0)
+ (elem declare func $0)
  (func $0 (type $0) (result i32)
   (i32.const 0)
  )

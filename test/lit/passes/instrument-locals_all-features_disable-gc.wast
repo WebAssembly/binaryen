@@ -48,7 +48,7 @@
 
   ;; CHECK:      (import "env" "set_v128" (func $set_v128 (param i32 i32 v128) (result v128)))
 
-  ;; CHECK:      (elem $decl declare func$test)
+  ;; CHECK:      (elem declare func $test)
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $x i32)

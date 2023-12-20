@@ -58,7 +58,7 @@
   )
  ))
 
- ;; CHECK:      (elem $decl declare func$func1$func2)
+ ;; CHECK:      (elem declare func $func1 $func2)
 
  ;; CHECK:      (export "test-A" (func $test-A))
 

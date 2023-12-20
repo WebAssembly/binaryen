@@ -464,7 +464,7 @@
 
  ;; CHECK:      (type $1 (func (param f32) (result funcref)))
 
- ;; CHECK:      (elem $decl declare func$0)
+ ;; CHECK:      (elem declare func $0)
 
  ;; CHECK:      (export "export" (func $export))
 
