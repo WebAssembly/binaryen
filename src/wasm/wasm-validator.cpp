@@ -2492,7 +2492,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
         << ") has result values, which is not allowed for exception handling";
     }
 
-    // Check types in sentTypes is valid
+    // Check types in sentTypes are valid.
     auto tagType = tag->sig.params;
     auto sentType = curr->sentTypes[i];
     if (tagType.size() == 0 && !curr->catchRefs[i]) {
