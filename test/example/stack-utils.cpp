@@ -24,7 +24,7 @@ void test_remove_nops() {
       builder.makeNop(),
       builder.makeNop(),
     },
-    {Type::i32, Type::i64});
+    Type{Type::i32, Type::i64});
   std::cout << *block << '\n';
   StackUtils::removeNops(block);
   std::cout << *block << '\n';
