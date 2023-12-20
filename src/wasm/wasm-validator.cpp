@@ -2123,6 +2123,11 @@ void FunctionValidator::visitDrop(Drop* curr) {
                  curr->value->type == Type::unreachable,
                curr,
                "can only drop a valid value");
+  if (curr->value->type.isTuple()) {
+    shouldBeTrue(getModule()->features.hasMultivalue(),
+                 curr,
+                 "Tuples drops are not allowed unless multivalue is enabled");
+  }
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
@@ -2446,7 +2451,75 @@ void FunctionValidator::visitTry(Try* curr) {
 }
 
 void FunctionValidator::visitTryTable(TryTable* curr) {
-  // TODO
+  shouldBeTrue(
+    getModule()->features.hasExceptionHandling(),
+    curr,
+    "try_table requires exception-handling [--enable-exception-handling]");
+  if (curr->type != Type::unreachable) {
+    shouldBeSubType(curr->body->type,
+                    curr->type,
+                    curr->body,
+                    "try_table's type does not match try_table body's type");
+  }
+
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchDests.size(),
+                curr,
+                "the number of catch tags and catch destinations do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchRefs.size(),
+                curr,
+                "the number of catch tags and catch refs do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->sentTypes.size(),
+                curr,
+                "the number of catch tags and sent types do not match");
+
+  const char* invalidSentTypeMsg = "invalid catch sent type information";
+  Type exnref = Type(HeapType::exn, Nullable);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    auto sentType = curr->sentTypes[i];
+    size_t tagTypeSize;
+
+    Name tagName = curr->catchTags[i];
+    if (!tagName) { // catch_all or catch_all_ref
+      tagTypeSize = 0;
+    } else { // catch or catch_ref
+      // Check tag validity
+      auto* tag = getModule()->getTagOrNull(tagName);
+      if (!shouldBeTrue(tag != nullptr, curr, "")) {
+        getStream() << "catch's tag name is invalid: " << tagName << "\n";
+      } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+        getStream()
+          << "catch's tag (" << tagName
+          << ") has result values, which is not allowed for exception handling";
+      }
+
+      // tagType and sentType should be the same (except for the possible exnref
+      // at the end of sentType)
+      auto tagType = tag->sig.params;
+      tagTypeSize = tagType.size();
+      for (Index j = 0; j < tagType.size(); j++) {
+        shouldBeEqual(tagType[j], sentType[j], curr, invalidSentTypeMsg);
+      }
+    }
+
+    // If this is catch_ref or catch_all_ref, sentType.size() should be
+    // tagType.size() + 1 because there is an exrnef tacked at the end. If
+    // this is catch/catch_all, the two sizes should be the same.
+    if (curr->catchRefs[i]) {
+      if (shouldBeTrue(
+            sentType.size() == tagTypeSize + 1, curr, invalidSentTypeMsg)) {
+        shouldBeEqual(
+          sentType[sentType.size() - 1], exnref, curr, invalidSentTypeMsg);
+      }
+    } else {
+      shouldBeTrue(sentType.size() == tagTypeSize, curr, invalidSentTypeMsg);
+    }
+
+    // Note catch destinations with sent types
+    noteBreak(curr->catchDests[i], curr->sentTypes[i], curr);
+  }
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2470,9 +2543,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
     Type(Type::none),
     curr,
     "tags with result types must not be used for exception handling");
-  if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
-                    curr,
-                    "tag's param numbers must match")) {
+  if (!shouldBeEqual(curr->operands.size(),
+                     tag->sig.params.size(),
+                     curr,
+                     "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
@@ -2524,7 +2598,11 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
 }
 
 void FunctionValidator::visitThrowRef(ThrowRef* curr) {
-  // TODO
+  Type exnref = Type(HeapType::exn, Nullable);
+  shouldBeSubType(curr->exnref->type,
+                  exnref,
+                  curr,
+                  "throw_ref's argument should be a subtype of exnref");
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
