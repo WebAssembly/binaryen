@@ -7,12 +7,12 @@
 
   ;; CHECK:      [fuzz-exec] calling throw
   ;; CHECK-NEXT: [exception thrown: e-i32 1]
-  (func "throw"
+  (func $throw (export "throw")
     (throw $e-i32 (i32.const 1))
   )
 
   ;; CHECK:      [fuzz-exec] calling try-catch
-  (func "try-catch"
+  (func $try-catch (export "try-catch")
     (try
       (do
         (throw $e-i32 (i32.const 2))
@@ -25,7 +25,7 @@
 
   ;; CHECK:      [fuzz-exec] calling catchless-try
   ;; CHECK-NEXT: [exception thrown: e-i32 3]
-  (func "catchless-try"
+  (func $catchless-try (export "catchless-try")
     (try
       (do
         (throw $e-i32 (i32.const 3))
@@ -35,7 +35,7 @@
 
   ;; CHECK:      [fuzz-exec] calling try-delegate
   ;; CHECK-NEXT: [exception thrown: e-i32 4]
-  (func "try-delegate"
+  (func $try-delegate (export "try-delegate")
     (try $l0
       (do
         (try

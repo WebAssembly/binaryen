@@ -5,7 +5,7 @@
 (module
  ;; CHECK:      [fuzz-exec] calling min1
  ;; CHECK-NEXT: [fuzz-exec] note result: min1 => -0
- (func "min1" (result f64)
+ (func $min1 (export "min1") (result f64)
   ;; This should return -0.
   (f64.min
    (f64.const 0)
@@ -15,7 +15,7 @@
 
  ;; CHECK:      [fuzz-exec] calling min2
  ;; CHECK-NEXT: [fuzz-exec] note result: min2 => -0
- (func "min2" (result f64)
+ (func $min2 (export "min2") (result f64)
   ;; Flipped arms; still -0.
   (f64.min
    (f64.const -0)
@@ -25,7 +25,7 @@
 
  ;; CHECK:      [fuzz-exec] calling min1-f32
  ;; CHECK-NEXT: [fuzz-exec] note result: min1-f32 => -0
- (func "min1-f32" (result f32)
+ (func $min1-f32 (export "min1-f32") (result f32)
   ;; As above, but f32 and not f64
   (f32.min
    (f32.const 0)
@@ -35,7 +35,7 @@
 
  ;; CHECK:      [fuzz-exec] calling min2-f32
  ;; CHECK-NEXT: [fuzz-exec] note result: min2-f32 => -0
- (func "min2-f32" (result f32)
+ (func $min2-f32 (export "min2-f32") (result f32)
   ;; Flipped arms; still -0.
   (f32.min
    (f32.const -0)
@@ -45,7 +45,7 @@
 
  ;; CHECK:      [fuzz-exec] calling max1
  ;; CHECK-NEXT: [fuzz-exec] note result: max1 => 0
- (func "max1" (result f64)
+ (func $max1 (export "max1") (result f64)
   ;; This should return 0.
   (f64.max
    (f64.const 0)
@@ -55,7 +55,7 @@
 
  ;; CHECK:      [fuzz-exec] calling max2
  ;; CHECK-NEXT: [fuzz-exec] note result: max2 => 0
- (func "max2" (result f64)
+ (func $max2 (export "max2") (result f64)
   ;; Flipped arms; still 0.
   (f64.max
    (f64.const -0)
@@ -65,7 +65,7 @@
 
  ;; CHECK:      [fuzz-exec] calling max1-f32
  ;; CHECK-NEXT: [fuzz-exec] note result: max1-f32 => 0
- (func "max1-f32" (result f32)
+ (func $max1-f32 (export "max1-f32") (result f32)
   ;; As above, but f32 and not f64
   (f32.max
    (f32.const 0)
@@ -76,7 +76,7 @@
  ;; CHECK:      [fuzz-exec] calling max2-f32
  ;; CHECK-NEXT: [fuzz-exec] note result: max2-f32 => 0
  ;; CHECK-NEXT: warning: no passes specified, not doing any work
- (func "max2-f32" (result f32)
+ (func $max2-f32 (export "max2-f32") (result f32)
   ;; Flipped arms; still 0.
   (f32.max
    (f32.const -0)

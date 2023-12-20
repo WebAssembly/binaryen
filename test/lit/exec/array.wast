@@ -7,7 +7,7 @@
 
  ;; CHECK:      [fuzz-exec] calling func
  ;; CHECK-NEXT: [fuzz-exec] note result: func => 1
- (func "func" (result i32)
+ (func $func (export "func") (result i32)
   ;; Verifies the order of execution is correct - we should return 1, not 2.
   (array.new $array
    (return (i32.const 1))

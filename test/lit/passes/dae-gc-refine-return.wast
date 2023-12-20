@@ -395,9 +395,9 @@
   (unreachable)
  )
  ;; CHECK:      (func $tail-caller-call_ref-yes (type $return_{}) (result (ref ${}))
- ;; CHECK-NEXT:  (local $return_{} (ref null $return_{}))
+ ;; CHECK-NEXT:  (local $"return_{}" (ref null $return_{}))
  ;; CHECK-NEXT:  (return_call_ref $return_{}
- ;; CHECK-NEXT:   (local.get $return_{})
+ ;; CHECK-NEXT:   (local.get $"return_{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-yes (result anyref)
@@ -407,7 +407,7 @@
  )
  ;; CHECK:      (func $tail-caller-call_ref-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
- ;; CHECK-NEXT:  (local $return_{} (ref null $return_{}))
+ ;; CHECK-NEXT:  (local $"return_{}" (ref null $return_{}))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (return
@@ -415,7 +415,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return_call_ref $return_{}
- ;; CHECK-NEXT:   (local.get $return_{})
+ ;; CHECK-NEXT:   (local.get $"return_{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-no (result anyref)

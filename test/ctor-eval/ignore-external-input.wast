@@ -10,7 +10,7 @@
   (memory 256 256)
   (data (i32.const 0) "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") ;; the final 4 'a's will remain
 
-  (func "test1"
+  (func $test1 (export "test1")
     ;; This is ok to call: when ignoring external input we assume there is no
     ;; environment to read.
     (i32.store
@@ -29,7 +29,7 @@
     )
   )
 
-  (func "test2"
+  (func $test2 (export "test2")
     ;; This is also ok to call: when ignoring external input we assume there are
     ;; not args passed to main.
     (i32.store
@@ -48,7 +48,7 @@
     )
   )
 
-  (func "test2b" (param $x i32)
+  (func $test2b (export "test2b") (param $x i32)
     ;; This is also ok to call: when ignoring external input we assume the
     ;; args are zeros.
     (i32.store
@@ -57,7 +57,7 @@
     )
   )
 
-  (func "test3"
+  (func $test3 (export "test3")
     ;; This is *not* ok to call, and we will *not* reach the final store after
     ;; this call. This function will not be evalled and will remain in the
     ;; output.

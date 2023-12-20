@@ -10,12 +10,12 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $1() {
+ function exp() {
   
  }
  
  return {
-  "exp": $1
+  "exp": exp
  };
 }
 

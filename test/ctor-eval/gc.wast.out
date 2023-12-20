@@ -14,9 +14,9 @@
  (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
   (i32.const 99)
  ))
- (export "test1" (func $0_3))
- (export "keepalive" (func $1))
- (func $1 (type $2) (result i32)
+ (export "test1" (func $test1_3))
+ (export "keepalive" (func $keepalive))
+ (func $keepalive (type $2) (result i32)
   (i32.add
    (struct.get $struct 0
     (global.get $global1)
@@ -26,7 +26,7 @@
    )
   )
  )
- (func $0_3 (type $3)
+ (func $test1_3 (type $3)
   (local $0 (ref $struct))
   (local.set $0
    (global.get $ctor-eval$global_4)

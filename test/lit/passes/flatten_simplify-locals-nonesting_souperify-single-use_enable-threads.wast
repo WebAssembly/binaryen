@@ -33,7 +33,7 @@
   ;; CHECK:      (memory $0 (shared 1 1))
   (memory $0 (shared 1 1))
   ;; Figure 1a from the Souper paper https://arxiv.org/pdf/1711.04422.pdf
-  ;; CHECK:      (export "replaced-print-internal" (func $55))
+  ;; CHECK:      (export "replaced-print-internal" (func $replaced-print-internal))
 
   ;; CHECK:      (func $figure-1a (param $a i64) (param $x i64) (param $y i64) (result i32)
   ;; CHECK-NEXT:  (local $i i32)
@@ -3827,48 +3827,7 @@
       )
     )
   )
- (func "replaced-print-internal" (param $var$0 i32)
-  (local $var$1 i32)
-  (local $var$2 i32)
-  (local $var$3 i32)
-  (if
-   (local.tee $var$0
-    (i32.add
-     (local.get $var$0)
-     (i32.const -7)
-    )
-   )
-   (block $label$2
-    (block $label$3
-     (local.set $var$1
-      (local.get $var$0)
-     )
-     (br_if $label$3
-      (local.tee $var$3
-       (i32.const 12)
-      )
-     )
-     (unreachable)
-    )
-    (br_if $label$2
-     (i32.eqz
-      (local.get $var$1)
-     )
-    )
-    (if
-     (i32.ne
-      (i32.load
-       (i32.const 0)
-      )
-      (local.get $var$0)
-     )
-     (unreachable)
-    )
-    (unreachable)
-   )
-  )
- )
- ;; CHECK:      (func $55 (param $var$0 i32)
+ ;; CHECK:      (func $replaced-print-internal (param $var$0 i32)
  ;; CHECK-NEXT:  (local $var$1 i32)
  ;; CHECK-NEXT:  (local $var$2 i32)
  ;; CHECK-NEXT:  (local $var$3 i32)
@@ -3944,7 +3903,47 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
-
+ (func $replaced-print-internal (export "replaced-print-internal") (param $var$0 i32)
+  (local $var$1 i32)
+  (local $var$2 i32)
+  (local $var$3 i32)
+  (if
+   (local.tee $var$0
+    (i32.add
+     (local.get $var$0)
+     (i32.const -7)
+    )
+   )
+   (block $label$2
+    (block $label$3
+     (local.set $var$1
+      (local.get $var$0)
+     )
+     (br_if $label$3
+      (local.tee $var$3
+       (i32.const 12)
+      )
+     )
+     (unreachable)
+    )
+    (br_if $label$2
+     (i32.eqz
+      (local.get $var$1)
+     )
+    )
+    (if
+     (i32.ne
+      (i32.load
+       (i32.const 0)
+      )
+      (local.get $var$0)
+     )
+     (unreachable)
+    )
+    (unreachable)
+   )
+  )
+ )
  ;; CHECK:      (func $multiple-uses-to-non-expression (param $x i32)
  ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (local $2 i32)

@@ -59,7 +59,7 @@ BinaryenFeatureAll: 131071
 )
 (table.set $0
  (i32.const 0)
- (ref.func "$kitchen()sinker")
+ (ref.func $"kitchen()sinker")
 )
 (table.get $0
  (i32.const 0)
@@ -93,13 +93,13 @@ BinaryenFeatureAll: 131071
  (data $1 "I am passive")
  (table $tab 0 100 funcref)
  (table $0 1 1 funcref)
- (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
- (elem $passive func "$kitchen()sinker")
+ (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")
+ (elem $passive func $"kitchen()sinker")
  (tag $a-tag (param i32))
  (export "mem" (memory $0))
- (export "kitchen_sinker" (func "$kitchen()sinker"))
+ (export "kitchen_sinker" (func $"kitchen()sinker"))
  (start $starter)
- (func "$kitchen()sinker" (type $2) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
+ (func $"kitchen()sinker" (type $2) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 externref)
   (block $the-body (result i32)
@@ -2014,7 +2014,7 @@ BinaryenFeatureAll: 131071
       )
       (drop
        (i32.eqz
-        (call "$kitchen()sinker"
+        (call $"kitchen()sinker"
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -2092,7 +2092,7 @@ BinaryenFeatureAll: 131071
       (return
        (i32.const 1337)
       )
-      (return_call "$kitchen()sinker"
+      (return_call $"kitchen()sinker"
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -2112,13 +2112,13 @@ BinaryenFeatureAll: 131071
       )
       (drop
        (ref.is_null
-        (ref.func "$kitchen()sinker")
+        (ref.func $"kitchen()sinker")
        )
       )
       (drop
        (select (result funcref)
         (ref.null nofunc)
-        (ref.func "$kitchen()sinker")
+        (ref.func $"kitchen()sinker")
         (i32.const 1)
        )
       )

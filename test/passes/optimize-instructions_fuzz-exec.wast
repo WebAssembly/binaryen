@@ -1,7 +1,7 @@
 (module
  (import "fuzzing-support" "log-f32" (func $logf32 (param f32)))
  (import "fuzzing-support" "log-f64" (func $logf64 (param f64)))
- (func "test32"
+ (func $test32 (export "test32")
   (call $logf32
    (f32.add
     (f32.const -nan:0xffff82)
@@ -59,7 +59,7 @@
    )
   )
  )
- (func "test64"
+ (func $test64 (export "test64")
   (call $logf64
    (f64.add
     (f64.const -nan:0xfffffffffff82)
@@ -117,7 +117,7 @@
    )
   )
  )
- (func "just-one-nan"
+ (func $just-one-nan (export "just-one-nan")
   (call $logf32
    (f32.add
     (f32.const 0)
@@ -167,7 +167,7 @@
    )
   )
  )
- (func "ignore"
+ (func $ignore (export "ignore")
   ;; none of these are nan inputs, so the interpreter must not change the sign
   (call $logf32
    (f32.div
@@ -246,7 +246,7 @@
    )
   )
  )
- (func "foo" (param $0 i32)
+ (func $foo (export "foo") (param $0 i32)
   ;; 8 - 0x80000000 < 0
   ;;
   ;; is not the same as
@@ -307,7 +307,7 @@
    )
   )
  )
- (func "do-shift"
+ (func $do-shift (export "do-shift")
   (call $shift
    (i32.const 65419)
   )
@@ -326,7 +326,7 @@
    (i32.const 128)
   )
  )
- (func "call-compare-maybe-signed-eq" (result i32)
+ (func $call-compare-maybe-signed-eq (export "call-compare-maybe-signed-eq") (result i32)
   (call $compare-maybe-signed-eq
    (i32.const 128)
   )
@@ -344,7 +344,7 @@
    (i32.const 128)
   )
  )
- (func "call-compare-maybe-signed-ne" (result i32)
+ (func $call-compare-maybe-signed-ne (export "call-compare-maybe-signed-ne") (result i32)
   (call $compare-maybe-signed-ne
    (i32.const 128)
   )

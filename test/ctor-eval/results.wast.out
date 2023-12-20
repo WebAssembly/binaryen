@@ -10,7 +10,7 @@
  (export "test1" (func $test1_7))
  (export "test3" (func $test3_8))
  (export "test5" (func $test5_9))
- (export "keepalive" (func $5))
+ (export "keepalive" (func $keepalive))
  (func $test1 (type $1)
   (global.set $global1
    (i32.const 11)
@@ -40,7 +40,7 @@
   (call $import)
   (i32.const 100)
  )
- (func $5 (type $0) (result i32)
+ (func $keepalive (type $0) (result i32)
   (call $test1)
   (call $test2)
   (drop

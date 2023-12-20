@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
- (export "foo" (func $0))
- (func $0
+ (export "foo" (func $foo))
+ (func $foo
   (unreachable)
  )
 )

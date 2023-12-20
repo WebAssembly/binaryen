@@ -6,7 +6,7 @@
  (tag $tag (param externref))
 
  ;; CHECK:      [fuzz-exec] calling catch-null
- (func "catch-null"
+ (func $catch-null (export "catch-null")
   (try $label$3
    (do
     ;; Throw a null.

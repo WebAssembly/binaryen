@@ -10,8 +10,8 @@
   (i32.const 1337)
  ))
  (global $global1 (ref any) (global.get $ctor-eval$global))
- (export "keepalive" (func $1))
- (func $1 (type $1) (result i32)
+ (export "keepalive" (func $keepalive))
+ (func $keepalive (type $1) (result i32)
   (select
    (struct.get $struct 0
     (ref.cast (ref $struct)

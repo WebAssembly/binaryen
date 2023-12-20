@@ -9,7 +9,17 @@
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
- (func "foo" (result i32)
+ ;; CHECK:      (export "foo" (func $foo))
+
+ ;; CHECK:      (func $foo (result i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.load align=1
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $foo (export "foo") (result i32)
   (i32.load offset=4 align=1
    (i32.and
     (block $label$1 (result i32)
@@ -31,13 +41,3 @@
 )
 
 
-;; CHECK:      (export "foo" (func $0))
-
-;; CHECK:      (func $0 (result i32)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.load align=1
-;; CHECK-NEXT:   (i32.const 4)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )

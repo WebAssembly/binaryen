@@ -7,7 +7,7 @@
 
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
-  (func "new_wtf16_array" (result stringref)
+  (func $new_wtf16_array (export "new_wtf16_array") (result stringref)
     (string.new_wtf16_array
       (array.new_fixed $array16 5
         (i32.const 104) ;; h
@@ -23,13 +23,13 @@
 
   ;; CHECK:      [fuzz-exec] calling const
   ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
-  (func "const" (result stringref)
+  (func $const (export "const") (result stringref)
     (string.const "world")
   )
 
   ;; CHECK:      [fuzz-exec] calling eq.1
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.1 => 0
-  (func "eq.1" (result i32)
+  (func $eq.1 (export "eq.1") (result i32)
     (string.eq
       (string.const "hello")
       (string.const "world")
@@ -38,7 +38,7 @@
 
   ;; CHECK:      [fuzz-exec] calling eq.2
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.2 => 1
-  (func "eq.2" (result i32)
+  (func $eq.2 (export "eq.2") (result i32)
     (string.eq
       (string.const "hello")
       (string.const "hello")
@@ -47,7 +47,7 @@
 
   ;; CHECK:      [fuzz-exec] calling eq.3
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.3 => 0
-  (func "eq.3" (result i32)
+  (func $eq.3 (export "eq.3") (result i32)
     (string.eq
       (string.const "hello")
       (ref.null string)
@@ -56,7 +56,7 @@
 
   ;; CHECK:      [fuzz-exec] calling eq.4
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.4 => 0
-  (func "eq.4" (result i32)
+  (func $eq.4 (export "eq.4") (result i32)
     (string.eq
       (ref.null string)
       (string.const "world")
@@ -65,7 +65,7 @@
 
   ;; CHECK:      [fuzz-exec] calling eq.5
   ;; CHECK-NEXT: [fuzz-exec] note result: eq.5 => 1
-  (func "eq.5" (result i32)
+  (func $eq.5 (export "eq.5") (result i32)
     (string.eq
       (ref.null string)
       (ref.null string)
@@ -74,7 +74,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.1
   ;; CHECK-NEXT: [trap null ref]
-  (func "compare.1" (result i32)
+  (func $compare.1 (export "compare.1") (result i32)
     (string.compare
       (string.const "hello")
       (ref.null string)
@@ -83,7 +83,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.2
   ;; CHECK-NEXT: [trap null ref]
-  (func "compare.2" (result i32)
+  (func $compare.2 (export "compare.2") (result i32)
     (string.compare
       (ref.null string)
       (string.const "world")
@@ -92,7 +92,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.3
   ;; CHECK-NEXT: [trap null ref]
-  (func "compare.3" (result i32)
+  (func $compare.3 (export "compare.3") (result i32)
     (string.compare
       (ref.null string)
       (ref.null string)
@@ -101,7 +101,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.4
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.4 => 0
-  (func "compare.4" (result i32)
+  (func $compare.4 (export "compare.4") (result i32)
     (string.compare
       (string.const "hello")
       (string.const "hello")
@@ -110,7 +110,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.5
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.5 => -1
-  (func "compare.5" (result i32)
+  (func $compare.5 (export "compare.5") (result i32)
     (string.compare
       (string.const "hello")
       (string.const "hezlo")
@@ -119,7 +119,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.6
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.6 => 1
-  (func "compare.6" (result i32)
+  (func $compare.6 (export "compare.6") (result i32)
     (string.compare
       (string.const "hezlo")
       (string.const "hello")
@@ -128,7 +128,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.7
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.7 => -1
-  (func "compare.7" (result i32)
+  (func $compare.7 (export "compare.7") (result i32)
     (string.compare
       (string.const "he")
       (string.const "hello")
@@ -137,7 +137,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.8
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.8 => 1
-  (func "compare.8" (result i32)
+  (func $compare.8 (export "compare.8") (result i32)
     (string.compare
       (string.const "hello")
       (string.const "he")
@@ -146,7 +146,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.9
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.9 => 1
-  (func "compare.9" (result i32)
+  (func $compare.9 (export "compare.9") (result i32)
     (string.compare
       (string.const "hf")
       (string.const "hello")
@@ -155,7 +155,7 @@
 
   ;; CHECK:      [fuzz-exec] calling compare.10
   ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
-  (func "compare.10" (result i32)
+  (func $compare.10 (export "compare.10") (result i32)
     (string.compare
       (string.const "hello")
       (string.const "hf")

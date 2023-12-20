@@ -3481,7 +3481,7 @@
 
  ;; CHECK:      (type $1 (func (result i32)))
 
- ;; CHECK:      (export "test" (func $1))
+ ;; CHECK:      (export "test" (func $test))
 
  ;; CHECK:      (func $0 (type $0) (param $0 i64) (param $1 f32)
  ;; CHECK-NEXT:  (nop)
@@ -3489,7 +3489,18 @@
  (func $0 (param $0 i64) (param $1 f32)
   (nop)
  )
- (func "test" (result i32)
+ ;; CHECK:      (func $test (type $1) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (i32.const -111)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $test (export "test") (result i32)
   (call $0
    (unreachable) ;; the unreachable should be handled properly, and not be
                  ;; reordered with the return
@@ -3501,17 +3512,6 @@
 )
 ;; non-nullable temp vars we add must be handled properly, as non-nullable
 ;; locals are not allowed
-;; CHECK:      (func $1 (type $1) (result i32)
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT:  (return
-;; CHECK-NEXT:   (i32.const -111)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $0
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
 (module
  (type $none_=>_none (func))
  ;; CHECK:      (type $0 (func (result funcref)))

@@ -5,7 +5,7 @@
   (import "env" "yield" (func $yield (param i32)))
   (export "memory" (memory 0))
   ;; simple linear progression in a loop
-  (func "linear" (result i32)
+  (func $linear (export "linear") (result i32)
     (local $x i32)
     (loop $l
       (call $yield (local.get $x))
@@ -16,7 +16,7 @@
     )
   )
   ;; exponential in a loop
-  (func "exponential" (result i32)
+  (func $exponential (export "exponential") (result i32)
     (local $x i32)
     (local.set $x
       (i32.const 1)
@@ -30,7 +30,7 @@
     )
   )
   ;; just some weird numbers, no loop
-  (func "weird" (result i32)
+  (func $weird (export "weird") (result i32)
     (call $yield (i32.const 42))
     (call $yield (i32.const 1337))
     (call $yield (i32.const 0))
@@ -41,4 +41,3 @@
     (unreachable)
   )
 )
-
