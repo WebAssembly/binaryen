@@ -460,7 +460,7 @@
   (type $struct (struct funcref))
   ;; CHECK:      (type $1 (func (param (ref null $struct))))
 
-  ;; CHECK:      (elem declare func $test)
+  ;; CHECK:      (elem $decl declare func$test)
 
   ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop

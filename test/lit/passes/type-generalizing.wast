@@ -48,7 +48,7 @@
  ;; CHECK:      (table $eq-table 0 0 eqref)
  (table $eq-table 0 0 eqref)
 
- ;; CHECK:      (elem declare func $ref-func)
+ ;; CHECK:      (elem $decl declare func$ref-func)
 
  ;; CHECK:      (func $unconstrained (type $void)
  ;; CHECK-NEXT:  (local $x i32)

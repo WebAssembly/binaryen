@@ -63,7 +63,7 @@
     (i32.const 100)
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     ;; Keep everything alive to see the changes.
 
     ;; These should call the original $test1, not the one that is nopped out

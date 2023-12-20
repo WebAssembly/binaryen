@@ -27,7 +27,7 @@
  (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none)
   (ref.func $foo))
 
- ;; CHECK:      (elem declare func $bar $fallthrough-no-params $fallthrough-non-nullable $return-nothing)
+ ;; CHECK:      (elem $decl declare func$bar$fallthrough-no-params$fallthrough-non-nullable$return-nothing)
 
  ;; CHECK:      (func $foo (type $i32_i32_=>_none) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)

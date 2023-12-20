@@ -8,17 +8,17 @@
   (global $temp (mut i32) (i32.const 0))
   (table 10 funcref)
   (elem (i32.const 5) $tablefunc)
-  (func "minimal" (result i32)
+  (func $minimal (export "minimal") (result i32)
     (call $sleep)
     (i32.const 21)
   )
-  (func "repeat" (result i32)
+  (func $repeat (export "repeat") (result i32)
     ;; sleep twice, then return 42
     (call $sleep)
     (call $sleep)
     (i32.const 42)
   )
-  (func "local" (result i32)
+  (func $local (export "local") (result i32)
     (local $x i32)
     (local.set $x (i32.load (i32.const 0))) ;; a zero that the optimizer won't see
     (local.set $x
@@ -27,7 +27,7 @@
     (call $sleep)
     (local.get $x)
   )
-  (func "local2" (result i32)
+  (func $local2 (export "local2") (result i32)
     (local $x i32)
     (local.set $x (i32.load (i32.const 0))) ;; a zero that the optimizer won't see
     (local.set $x
@@ -39,7 +39,7 @@
     )
     (local.get $x)
   )
-  (func "params" (param $x i32) (param $y i32) (result i32)
+  (func $params (export "params") (param $x i32) (param $y i32) (result i32)
     (local.set $x
       (i32.add (local.get $x) (i32.const 17)) ;; add 10
     )
@@ -65,7 +65,7 @@
       )
     )
   )
-  (func "deeper" (param $x i32) (result i32)
+  (func $deeper (export "deeper") (param $x i32) (result i32)
     (call $pre)
     (call $inner (local.get $x))
     (call $post)
@@ -92,7 +92,7 @@
       )
     )
   )
-  (func "factorial-loop" (param $x i32) (result i32)
+  (func $factorial-loop (export "factorial-loop") (param $x i32) (result i32)
     (local $i i32)
     (local $ret i32)
     (local.set $ret (i32.const 1))
@@ -121,14 +121,14 @@
       (br $l)
     )
   )
-  (func "end_tunnel" (param $x i32) (result i32)
+  (func $end_tunnel (export "end_tunnel") (param $x i32) (result i32)
     (local.set $x
       (i32.add (local.get $x) (i32.const 22))
     )
     (call $sleep)
     (i32.add (local.get $x) (i32.const 5))
   )
-  (func "do_tunnel" (param $x i32) (result i32)
+  (func $do_tunnel (export "do_tunnel") (param $x i32) (result i32)
     (local.set $x
       (i32.add (local.get $x) (i32.const 11))
     )
@@ -145,7 +145,7 @@
     (call $sleep)
     (i32.add (local.get $y) (i32.const 30))
   )
-  (func "call_indirect" (param $x i32) (param $y i32) (result i32)
+  (func $call_indirect (export "call_indirect") (param $x i32) (param $y i32) (result i32)
     (local.set $x
       (i32.add (local.get $x) (i32.const 1))
     )
@@ -162,7 +162,7 @@
     (call $sleep)
     (i32.add (local.get $y) (i32.const 300)) ;; total is 10+30+90+300=430 + y's original value
   )
-  (func "if_else" (param $x i32) (param $y i32) (result i32)
+  (func $if_else (export "if_else") (param $x i32) (param $y i32) (result i32)
     (if (i32.eq (local.get $x) (i32.const 1))
       (local.set $y
         (i32.add (local.get $y) (i32.const 10))
@@ -197,4 +197,3 @@
     (local.get $y)
   )
 )
-

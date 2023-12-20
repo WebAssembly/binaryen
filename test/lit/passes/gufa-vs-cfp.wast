@@ -426,7 +426,7 @@
   (type $struct (struct funcref))
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (elem declare func $test)
+  ;; CHECK:      (elem $decl declare func$test)
 
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop

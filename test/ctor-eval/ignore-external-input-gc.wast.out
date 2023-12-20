@@ -3,14 +3,14 @@
  (type $1 (func (result i32)))
  (global $global1 (mut i32) (i32.const 11))
  (global $global2 (mut i32) (i32.const 20))
- (export "test2" (func $1))
- (export "keepalive" (func $2))
- (func $1 (type $0) (param $any (ref any))
+ (export "test2" (func $test2))
+ (export "keepalive" (func $keepalive))
+ (func $test2 (type $0) (param $any (ref any))
   (global.set $global2
    (i32.const 22)
   )
  )
- (func $2 (type $1) (result i32)
+ (func $keepalive (type $1) (result i32)
   (i32.add
    (global.get $global1)
    (global.get $global2)

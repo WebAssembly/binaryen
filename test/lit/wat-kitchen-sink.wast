@@ -341,7 +341,7 @@
 
  ;; tags
  (tag)
- ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)
+ ;; CHECK:      (elem $decl declare func$ref-func$table-fill$table-grow$table-set)
 
  ;; CHECK:      (tag $1)
 

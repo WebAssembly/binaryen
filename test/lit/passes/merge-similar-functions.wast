@@ -133,7 +133,7 @@
 
   ;; CHECK:      (type $3 (func (param (ref $1) i32) (result i32)))
 
-  ;; CHECK:      (elem declare func $callee-0 $callee-1 $callee-2 $callee-take-arg-0 $callee-take-arg-1)
+  ;; CHECK:      (elem $decl declare func$callee-0$callee-1$callee-2$callee-take-arg-0$callee-take-arg-1)
 
   ;; CHECK:      (func $callee-0 (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 0)

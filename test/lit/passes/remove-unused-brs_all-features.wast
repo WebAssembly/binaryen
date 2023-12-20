@@ -28,7 +28,7 @@
 
  ;; CHECK:      (import "out" "log" (func $log (type $2) (param i32)))
  (import "out" "log" (func $log (param i32)))
- ;; CHECK:      (elem declare func $br_on_non_null $br_on_null $i32_=>_none $none_=>_i32)
+ ;; CHECK:      (elem $decl declare func$br_on_non_null$br_on_null$i32_=>_none$none_=>_i32)
 
  ;; CHECK:      (func $foo (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))

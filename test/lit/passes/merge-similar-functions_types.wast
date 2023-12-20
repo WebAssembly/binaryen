@@ -14,7 +14,7 @@
  (type $type$4 (sub (func (param f64) (result f64))))
  ;; CHECK:      (type $1 (func (param (ref $type$0))))
 
- ;; CHECK:      (elem declare func $2 $3)
+ ;; CHECK:      (elem $decl declare func$2$3)
 
  ;; CHECK:      (func $0 (type $type$0)
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0
@@ -123,7 +123,7 @@
  ;; CHECK:      (memory $0 (shared 16 17))
  (memory $0 (shared 16 17))
 
- ;; CHECK:      (elem declare func $2 $3)
+ ;; CHECK:      (elem $decl declare func$2$3)
 
  ;; CHECK:      (func $0 (type $type$0)
  ;; CHECK-NEXT:  (call $byn$mgfn-shared$0

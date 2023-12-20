@@ -14,42 +14,42 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0($0_1) {
-  $0_1 = $0_1 | 0;
-  return $0_1 << 24 >> 24;
+ function test8($0) {
+  $0 = $0 | 0;
+  return $0 << 24 >> 24;
  }
  
- function $1($0_1) {
-  $0_1 = $0_1 | 0;
-  return $0_1 << 16 >> 16;
+ function test16($0) {
+  $0 = $0 | 0;
+  return $0 << 16 >> 16;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 << 24 >> 24;
-  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+ function legalstub$test8_i64($0, $1) {
+  $0 = $0 << 24 >> 24;
+  i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
+  return $0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 << 16 >> 16;
-  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+ function legalstub$test16_i64($0, $1) {
+  $0 = $0 << 16 >> 16;
+  i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
+  return $0;
  }
  
- function legalstub$4($0_1, $1_1) {
-  i64toi32_i32$HIGH_BITS = $0_1 >> 31;
+ function legalstub$test32_i64($0, $1) {
+  i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
+  return $0;
  }
  
  return {
-  "test8": $0, 
-  "test16": $1, 
-  "test8_i64": legalstub$2, 
-  "test16_i64": legalstub$3, 
-  "test32_i64": legalstub$4
+  "test8": test8, 
+  "test16": test16, 
+  "test8_i64": legalstub$test8_i64, 
+  "test16_i64": legalstub$test16_i64, 
+  "test32_i64": legalstub$test32_i64
  };
 }
 

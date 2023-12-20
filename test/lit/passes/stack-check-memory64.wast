@@ -11,48 +11,47 @@
 
  ;; CHECK:      (global $sp (mut i64) (i64.const 0))
  (global $sp (mut i64) (i64.const 0))
- (func "use_stack" (result i64)
+ ;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
+
+ ;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))
+
+ ;; CHECK:      (memory $0 i64 0 65536)
+
+ ;; CHECK:      (data $0 (i64.const 0) "")
+
+ ;; CHECK:      (export "use_stack" (func $use_stack))
+
+ ;; CHECK:      (export "__set_stack_limits" (func $__set_stack_limits))
+
+ ;; CHECK:      (func $use_stack (result i64)
+ ;; CHECK-NEXT:  (local $0 i64)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.or
+ ;; CHECK-NEXT:     (i64.gt_u
+ ;; CHECK-NEXT:      (local.tee $0
+ ;; CHECK-NEXT:       (i64.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (global.get $__stack_base)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i64.lt_u
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (global.get $__stack_limit)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $sp
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.get $sp)
+ ;; CHECK-NEXT: )
+ (func $use_stack (export "use_stack") (result i64)
   (global.set $sp (i64.const 42))
   (global.get $sp)
  )
 )
-;; CHECK:      (global $__stack_base (mut i64) (i64.const 0))
-
-;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))
-
-;; CHECK:      (memory $0 i64 0 65536)
-
-;; CHECK:      (data $0 (i64.const 0) "")
-
-;; CHECK:      (export "use_stack" (func $0))
-
-;; CHECK:      (export "__set_stack_limits" (func $__set_stack_limits))
-
-;; CHECK:      (func $0 (result i64)
-;; CHECK-NEXT:  (local $0 i64)
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (if
-;; CHECK-NEXT:    (i32.or
-;; CHECK-NEXT:     (i64.gt_u
-;; CHECK-NEXT:      (local.tee $0
-;; CHECK-NEXT:       (i64.const 42)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (global.get $__stack_base)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i64.lt_u
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:      (global.get $__stack_limit)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (global.set $sp
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.get $sp)
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $__set_stack_limits (param $0 i64) (param $1 i64)
 ;; CHECK-NEXT:  (global.set $__stack_base
 ;; CHECK-NEXT:   (local.get $0)

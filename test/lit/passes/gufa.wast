@@ -938,7 +938,7 @@
   (import "other" "import"
     (func $other-import (param funcref)))
 
-  ;; CHECK:      (elem declare func $target-drop $target-keep)
+  ;; CHECK:      (elem $decl declare func$target-drop$target-keep)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -1008,7 +1008,7 @@
   (import "other" "import"
     (func $other-import (param funcref)))
 
-  ;; CHECK:      (elem declare func $target-keep $target-keep-2)
+  ;; CHECK:      (elem $decl declare func$target-keep$target-keep-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 

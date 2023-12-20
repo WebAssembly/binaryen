@@ -78,7 +78,7 @@
   ;; CLOSD:      (global $func-func-init (mut (ref $0)) (ref.func $foo))
   (global $func-func-init (mut funcref) (ref.func $foo))
 
-  ;; CHECK:      (elem declare func $foo)
+  ;; CHECK:      (elem $decl declare func$foo)
 
   ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (global.set $func-null-init
@@ -88,7 +88,7 @@
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; CLOSD:      (elem declare func $foo)
+  ;; CLOSD:      (elem $decl declare func$foo)
 
   ;; CLOSD:      (func $foo (type $0)
   ;; CLOSD-NEXT:  (global.set $func-null-init

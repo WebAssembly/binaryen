@@ -1675,7 +1675,7 @@
 (module
  (memory $0 (shared 1 1))
  (data "data")
- (func "foo" (result i32)
+ (func $foo (export "foo") (result i32)
   (local $0 i32)
   (block (result i32)
    (local.set $0
@@ -1693,7 +1693,7 @@
 ;; it is no longer equivalent
 ;; (see https://github.com/WebAssembly/binaryen/issues/3266)
 (module
- (func "test" (param $0 eqref) (param $1 (ref null i31)) (result i32)
+ (func $test (export "test") (param $0 eqref) (param $1 (ref null i31)) (result i32)
   (local $2 eqref)
   (local $3 (ref null i31))
   (local.set $2

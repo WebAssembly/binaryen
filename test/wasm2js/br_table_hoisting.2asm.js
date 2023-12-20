@@ -15,7 +15,7 @@ function asmFunc(imports) {
   zed($0 | 0);
  }
  
- function $1(x) {
+ function foo1(x) {
   x = x | 0;
   a : {
    b : {
@@ -44,7 +44,7 @@ function asmFunc(imports) {
   zed(-10 | 0);
  }
  
- function $2(x) {
+ function foo2(x) {
   x = x | 0;
   a : {
    b : {
@@ -81,7 +81,7 @@ function asmFunc(imports) {
   zed(-10 | 0);
  }
  
- function $3(x) {
+ function foo3(x) {
   x = x | 0;
   a : {
    b : {
@@ -121,7 +121,7 @@ function asmFunc(imports) {
   zed(-10 | 0);
  }
  
- function $4(x) {
+ function foo4(x) {
   x = x | 0;
   a : {
    b : {
@@ -167,10 +167,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "foo1": $1, 
-  "foo2": $2, 
-  "foo3": $3, 
-  "foo4": $4
+  "foo1": foo1, 
+  "foo2": foo2, 
+  "foo3": foo3, 
+  "foo4": foo4
  };
 }
 

@@ -1097,7 +1097,7 @@
   ;; NO_TNH:       (type $C (sub $B (func)))
   (type $C (sub $B (func)))
 
-  ;; YESTNH:      (elem declare func $A $C)
+  ;; YESTNH:      (elem $decl declare func$A$C)
 
   ;; YESTNH:      (export "A" (func $A))
 
@@ -1106,7 +1106,7 @@
   ;; YESTNH-NEXT:   (ref.func $A)
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
-  ;; NO_TNH:      (elem declare func $A $C)
+  ;; NO_TNH:      (elem $decl declare func$A$C)
 
   ;; NO_TNH:      (export "A" (func $A))
 

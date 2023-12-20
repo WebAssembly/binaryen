@@ -16,7 +16,29 @@
 
  ;; CHECK:      (memory $0 (shared 1 1))
  (memory $0 (shared 1 1))
- (func "one"
+ ;; CHECK:      (export "one" (func $one))
+
+ ;; CHECK:      (export "two" (func $two))
+
+ ;; CHECK:      (export "use-var" (func $use-var))
+
+ ;; CHECK:      (export "bad1" (func $bad1))
+
+ ;; CHECK:      (export "only-dfo" (func $only-dfo))
+
+ ;; CHECK:      (export "dfo-tee-get" (func $dfo-tee-get))
+
+ ;; CHECK:      (func $one (; has Stack IR ;)
+ ;; CHECK-NEXT:  (block $label$3
+ ;; CHECK-NEXT:   (br_if $label$3
+ ;; CHECK-NEXT:    (i32.load
+ ;; CHECK-NEXT:     (i32.const 3060)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $one (export "one")
   (loop $label$2
    (br_if $label$2
     (block $label$3 (result i32)
@@ -34,7 +56,10 @@
   )
   (unreachable)
  )
- (func "two" (param $var$0 i32) (param $var$1 i32) (result i32)
+ ;; CHECK:      (func $two (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $two (export "two") (param $var$0 i32) (param $var$1 i32) (result i32)
   (nop)
   (nop)
   (nop)
@@ -81,7 +106,15 @@
   (nop)
   (i32.const 0)
  )
- (func "use-var" (param $var$0 i64) (param $var$1 i32) (result f64)
+ ;; CHECK:      (func $use-var (; has Stack IR ;) (param $0 i64) (param $1 i32) (result f64)
+ ;; CHECK-NEXT:  (loop $label$8
+ ;; CHECK-NEXT:   (br_if $label$8
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $use-var (export "use-var") (param $var$0 i64) (param $var$1 i32) (result f64)
   (local $var$2 i32)
   (block $label$1
    (br_table $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1 $label$1
@@ -133,7 +166,13 @@
   )
   (unreachable)
  )
- (func "bad1"
+ ;; CHECK:      (func $bad1 (; has Stack IR ;)
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (i32.const -16384)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $bad1 (export "bad1")
   (local $var$2 i32)
   (local $var$4 i32)
   (block $label$1
@@ -175,7 +214,13 @@
    )
   )
  )
- (func "only-dfo" (param $var$0 f64) (result f64)
+ ;; CHECK:      (func $only-dfo (; has Stack IR ;) (param $0 f64) (result f64)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (loop $label$1
+ ;; CHECK-NEXT:   (br $label$1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $only-dfo (export "only-dfo") (param $var$0 f64) (result f64)
   (local $var$1 i32)
   (local $var$2 i32)
   (loop $label$1
@@ -199,7 +244,10 @@
    (br $label$1)
   )
  )
- (func "dfo-tee-get" (result i32)
+ ;; CHECK:      (func $dfo-tee-get (; has Stack IR ;) (result i32)
+ ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT: )
+ (func $dfo-tee-get (export "dfo-tee-get") (result i32)
   (local $0 i32)
   (if (result i32)
    (local.tee $0
@@ -217,56 +265,3 @@
  )
 )
 
-;; CHECK:      (export "one" (func $0))
-
-;; CHECK:      (export "two" (func $1))
-
-;; CHECK:      (export "use-var" (func $2))
-
-;; CHECK:      (export "bad1" (func $3))
-
-;; CHECK:      (export "only-dfo" (func $4))
-
-;; CHECK:      (export "dfo-tee-get" (func $5))
-
-;; CHECK:      (func $0 (; has Stack IR ;)
-;; CHECK-NEXT:  (block $label$3
-;; CHECK-NEXT:   (br_if $label$3
-;; CHECK-NEXT:    (i32.load
-;; CHECK-NEXT:     (i32.const 3060)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $1 (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
-;; CHECK-NEXT:  (i32.const 0)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $2 (; has Stack IR ;) (param $0 i64) (param $1 i32) (result f64)
-;; CHECK-NEXT:  (loop $label$8
-;; CHECK-NEXT:   (br_if $label$8
-;; CHECK-NEXT:    (local.get $1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $3 (; has Stack IR ;)
-;; CHECK-NEXT:  (i32.store
-;; CHECK-NEXT:   (i32.const 1)
-;; CHECK-NEXT:   (i32.const -16384)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $4 (; has Stack IR ;) (param $0 f64) (result f64)
-;; CHECK-NEXT:  (local $1 i32)
-;; CHECK-NEXT:  (loop $label$1
-;; CHECK-NEXT:   (br $label$1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $5 (; has Stack IR ;) (result i32)
-;; CHECK-NEXT:  (i32.const 1)
-;; CHECK-NEXT: )

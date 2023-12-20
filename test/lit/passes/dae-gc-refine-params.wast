@@ -21,12 +21,12 @@
 
  ;; CHECK:      (func $call-various-params-no (type $0)
  ;; CHECK-NEXT:  (call $various-params-no
- ;; CHECK-NEXT:   (call $get_{})
- ;; CHECK-NEXT:   (call $get_{i32})
+ ;; CHECK-NEXT:   (call $"get_{}")
+ ;; CHECK-NEXT:   (call $"get_{i32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-no
- ;; CHECK-NEXT:   (call $get_{i32})
- ;; CHECK-NEXT:   (call $get_{f64})
+ ;; CHECK-NEXT:   (call $"get_{i32}")
+ ;; CHECK-NEXT:   (call $"get_{f64}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-no
@@ -59,35 +59,26 @@
   (drop (local.get $y))
  )
 
- ;; CHECK:      (func $get_{} (type $8) (result (ref null ${}))
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $get_{} (result (ref null ${}))
   (unreachable)
  )
- ;; CHECK:      (func $get_{i32} (type $5) (result (ref null ${i32}))
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $get_{i32} (result (ref null ${i32}))
   (unreachable)
  )
- ;; CHECK:      (func $get_{f64} (type $10) (result (ref null ${f64}))
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
  (func $get_{f64} (result (ref null ${f64}))
   (unreachable)
  )
 
  ;; CHECK:      (func $call-various-params-yes (type $0)
  ;; CHECK-NEXT:  (call $various-params-yes
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-yes
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (call $get_null_{i32_i64})
+ ;; CHECK-NEXT:   (call $"get_null_{i32_i64}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-yes
@@ -127,12 +118,12 @@
 
  ;; CHECK:      (func $call-various-params-set (type $0)
  ;; CHECK-NEXT:  (call $various-params-set
- ;; CHECK-NEXT:   (call $get_null_{i32})
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-set
- ;; CHECK-NEXT:   (call $get_null_{i32})
- ;; CHECK-NEXT:   (call $get_null_{i32_i64})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
+ ;; CHECK-NEXT:   (call $"get_null_{i32_i64}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-set
@@ -169,7 +160,7 @@
  ;; CHECK-NEXT:    (local.get $2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $y
- ;; CHECK-NEXT:    (call $get_null_{i32_i64})
+ ;; CHECK-NEXT:    (call $"get_null_{i32_i64}")
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $y)
@@ -198,7 +189,7 @@
 
  ;; CHECK:      (func $call-various-params-tee (type $0)
  ;; CHECK-NEXT:  (call $various-params-tee
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-tee
@@ -214,7 +205,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result (ref null ${i32}))
  ;; CHECK-NEXT:    (local.tee $x
- ;; CHECK-NEXT:     (call $get_null_{i32_i64})
+ ;; CHECK-NEXT:     (call $"get_null_{i32_i64}")
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -237,7 +228,7 @@
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (call $get_null_{i32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-null
  ;; CHECK-NEXT:   (ref.as_non_null
@@ -288,10 +279,10 @@
 
  ;; CHECK:      (func $call-various-params-middle (type $0)
  ;; CHECK-NEXT:  (call $various-params-middle
- ;; CHECK-NEXT:   (call $get_null_{i32_i64})
+ ;; CHECK-NEXT:   (call $"get_null_{i32_i64}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $various-params-middle
- ;; CHECK-NEXT:   (call $get_null_{i32_f32})
+ ;; CHECK-NEXT:   (call $"get_null_{i32_f32}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-middle
@@ -399,13 +390,6 @@
   (drop (local.get $x))
  )
 
- ;; CHECK:      (func $get_null_{i32} (type $5) (result (ref null ${i32}))
- ;; CHECK-NEXT:  (select (result (ref null ${i32}))
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32})
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $get_null_{i32} (result (ref null ${i32}))
   ;; Helper function that returns a null value of ${i32}. We use this instead of
   ;; a direct ref.null because those can be rewritten by LUBFinder.
@@ -416,13 +400,6 @@
   )
  )
 
- ;; CHECK:      (func $get_null_{i32_i64} (type $16) (result (ref null ${i32_i64}))
- ;; CHECK-NEXT:  (select (result (ref null ${i32_i64}))
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32_i64})
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $get_null_{i32_i64} (result (ref null ${i32_i64}))
   (select
    (ref.null none)
@@ -431,13 +408,6 @@
   )
  )
 
- ;; CHECK:      (func $get_null_{i32_f32} (type $17) (result (ref null ${i32_f32}))
- ;; CHECK-NEXT:  (select (result (ref null ${i32_f32}))
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32_f32})
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $get_null_{i32_f32} (result (ref null ${i32_f32}))
   (select
    (ref.null none)

@@ -817,7 +817,7 @@
   ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
   (type $two-params (func (param (ref $struct)) (param (ref $struct))))
 
-  ;; CHECK:      (elem declare func $func-2params-a)
+  ;; CHECK:      (elem $decl declare func$func-2params-a)
 
   ;; CHECK:      (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop
@@ -2330,7 +2330,7 @@
     )
   )
 
-  ;; CHECK:      (elem declare func $foo $test)
+  ;; CHECK:      (elem $decl declare func$foo$test)
 
   ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
@@ -4464,7 +4464,7 @@
   ;; CHECK:      (global $func (ref func) (ref.func $reffed-in-global-code))
   (global $func (ref func) (ref.func $reffed-in-global-code))
 
-  ;; CHECK:      (elem declare func $reffed1 $reffed2)
+  ;; CHECK:      (elem $decl declare func$reffed1$reffed2)
 
   ;; CHECK:      (func $reffed1 (type $i1) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -5500,7 +5500,7 @@
 
   ;; CHECK:      (elem $0 func)
 
-  ;; CHECK:      (elem declare func $test)
+  ;; CHECK:      (elem $decl declare func$test)
 
   ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (local $ref (ref $vector))

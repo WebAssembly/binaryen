@@ -21,7 +21,7 @@
     )
   )
 
-  (func "test1"
+  (func $test1 (export "test1")
     (array.set $array
       (global.get $global2)
       (i32.const 1)
@@ -29,7 +29,7 @@
     )
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     (i32.add
       (array.get $array
         (global.get $global1)
@@ -42,4 +42,3 @@
     )
   )
 )
-

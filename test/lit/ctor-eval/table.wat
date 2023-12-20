@@ -12,7 +12,7 @@
 
  ;; CHECK:      (elem $0 (i32.const 0) $nop)
 
- ;; CHECK:      (elem declare func $trap)
+ ;; CHECK:      (elem $decl declare func$trap)
 
  ;; CHECK:      (export "run" (func $run_3))
  (export "run" (func $run))

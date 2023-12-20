@@ -29,7 +29,7 @@
 
   ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
+  ;; CHECK:      (elem $decl declare func$target-A$target-A-sub$target-A-super$target-B)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -59,7 +59,7 @@
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (type $4 (func))
 
-  ;; OPEN_WORLD:      (elem declare func $target-A $target-A-sub $target-A-super $target-B)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-A$target-A-sub$target-A-super$target-B)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -176,7 +176,7 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (elem declare func $target-A)
+  ;; CHECK:      (elem $decl declare func$target-A)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -189,7 +189,7 @@
   ;; CHECK-NEXT:   (ref.func $target-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-A)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-A)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -234,7 +234,7 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
+  ;; CHECK:      (elem $decl declare func$target-A-1$target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -253,7 +253,7 @@
   ;; CHECK-NEXT:   (ref.func $target-A-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-A-1 $target-A-2)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-A-1$target-A-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -322,7 +322,7 @@
   (type $A (func))
   (type $B (func))
 
-  ;; CHECK:      (elem declare func $target-A-1 $target-A-2)
+  ;; CHECK:      (elem $decl declare func$target-A-1$target-A-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -341,7 +341,7 @@
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-A-1 $target-A-2)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-A-1$target-A-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -412,7 +412,7 @@
   ;; OPEN_WORLD:      (table $table 22 funcref)
   (table $table 22 funcref)
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (export "run" (func $run))
 
@@ -425,7 +425,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $func)
+  ;; OPEN_WORLD:      (elem $decl declare func$func)
 
   ;; OPEN_WORLD:      (export "run" (func $run))
 
@@ -483,7 +483,7 @@
   (import "other" "import"
     (func $other-import (param funcref)))
 
-  ;; CHECK:      (elem declare func $target-drop $target-keep)
+  ;; CHECK:      (elem $decl declare func$target-drop$target-keep)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -495,7 +495,7 @@
   ;; CHECK-NEXT:   (ref.func $target-drop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-drop $target-keep)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-drop$target-keep)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -560,7 +560,7 @@
   (import "other" "import"
     (func $other-import (param funcref)))
 
-  ;; CHECK:      (elem declare func $target-keep $target-keep-2)
+  ;; CHECK:      (elem $decl declare func$target-keep$target-keep-2)
 
   ;; CHECK:      (export "foo" (func $foo))
 
@@ -576,7 +576,7 @@
   ;; CHECK-NEXT:   (ref.func $target-keep-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $target-keep $target-keep-2)
+  ;; OPEN_WORLD:      (elem $decl declare func$target-keep$target-keep-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
 
@@ -775,7 +775,7 @@
     (ref.func $b)
   ))
 
-  ;; CHECK:      (elem declare func $c $d $e $f $g $h $void)
+  ;; CHECK:      (elem $decl declare func$c$d$e$f$g$h$void)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -836,7 +836,7 @@
   ;; CHECK-NEXT:   (ref.func $void)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $c $d $e $f $g $h $void)
+  ;; OPEN_WORLD:      (elem $decl declare func$c$d$e$f$g$h$void)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1074,7 +1074,7 @@
   ;; OPEN_WORLD:      (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
   (type $vtable (sub (struct (field (ref $void)) (field (ref $void)))))
 
-  ;; CHECK:      (elem declare func $a $b $void)
+  ;; CHECK:      (elem $decl declare func$a$b$void)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1093,7 +1093,7 @@
   ;; CHECK-NEXT:   (ref.func $void)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $a $b $void)
+  ;; OPEN_WORLD:      (elem $decl declare func$a$b$void)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1181,7 +1181,7 @@
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (elem declare func $a $b $c $d)
+  ;; CHECK:      (elem $decl declare func$a$b$c$d)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1209,7 +1209,7 @@
   ;; CHECK-NEXT: )
   ;; OPEN_WORLD:      (type $2 (func))
 
-  ;; OPEN_WORLD:      (elem declare func $a $b $c $d)
+  ;; OPEN_WORLD:      (elem $decl declare func$a$b$c$d)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1410,7 +1410,7 @@
     (ref.func $subsubf)
   ))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1435,7 +1435,7 @@
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $func)
+  ;; OPEN_WORLD:      (elem $decl declare func$func)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1542,7 +1542,7 @@
   ;; OPEN_WORLD:      (global $g2 (ref func) (ref.func $f2))
   (global $g2 (ref func) (ref.func $f2))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1559,7 +1559,7 @@
   ;; CHECK-NEXT:   (ref.func $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $func)
+  ;; OPEN_WORLD:      (elem $decl declare func$func)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1646,7 +1646,7 @@
     (ref.func $f)
   ))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1667,7 +1667,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $func)
+  ;; OPEN_WORLD:      (elem $decl declare func$func)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1753,7 +1753,7 @@
     (ref.func $f)
   ))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (export "func" (func $func))
 
@@ -1781,7 +1781,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $func)
+  ;; OPEN_WORLD:      (elem $decl declare func$func)
 
   ;; OPEN_WORLD:      (export "func" (func $func))
 
@@ -1876,7 +1876,7 @@
   ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $0) (param funcref) (result i32)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param funcref) (result i32)))
 
-  ;; CHECK:      (elem declare func $getter)
+  ;; CHECK:      (elem $decl declare func$getter)
 
   ;; CHECK:      (export "main" (func $main))
 
@@ -1889,7 +1889,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; OPEN_WORLD:      (elem declare func $getter)
+  ;; OPEN_WORLD:      (elem $decl declare func$getter)
 
   ;; OPEN_WORLD:      (export "main" (func $main))
 

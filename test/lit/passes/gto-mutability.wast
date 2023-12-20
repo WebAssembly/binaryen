@@ -28,7 +28,7 @@
 
   ;; CHECK:      (table $0 0 funcref)
 
-  ;; CHECK:      (elem declare func $func-two-params)
+  ;; CHECK:      (elem $decl declare func$func-two-params)
 
   ;; CHECK:      (tag $tag (param (ref $struct)))
   (tag $tag (param (ref $struct)))

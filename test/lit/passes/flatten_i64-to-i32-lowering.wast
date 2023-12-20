@@ -472,19 +472,96 @@
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
- ;; CHECK:      (export "exp" (func $1))
+ ;; CHECK:      (export "exp" (func $exp))
 
- ;; CHECK:      (export "unreach" (func $2))
+ ;; CHECK:      (export "unreach" (func $unreach))
 
  ;; CHECK:      (func $call (type $1) (param $0 i32) (param $0$hi i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
- (func "exp"
+ ;; CHECK:      (func $exp (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $0$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (global.get $f$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.get $f)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $0$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $call
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:     (local.get $0$hi)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (global.set $f
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (i32.const 287454020)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 1432778632)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $f$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $exp (export "exp")
   (call $call (global.get $f))
   (global.set $f (i64.const 0x1122334455667788))
  )
- (func "unreach"
+ ;; CHECK:      (func $unreach (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $0$hi i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (local $1$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
+ ;; CHECK-NEXT:  (block $label$1
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $0$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $1$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (global.set $f
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (local.get $1$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $f$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $unreach (export "unreach")
   (global.set $f
    (block $label$1 (result i64)
     (unreachable)
@@ -492,84 +569,6 @@
   )
  )
 )
-;; CHECK:      (func $1 (type $0)
-;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local $0$hi i32)
-;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (local.set $0
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (global.get $f$hi)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.get $f)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.set $0$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $call
-;; CHECK-NEXT:   (block (result i32)
-;; CHECK-NEXT:    (local.set $i64toi32_i32$0
-;; CHECK-NEXT:     (local.get $0$hi)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (global.set $f
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (i32.const 287454020)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 1432778632)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (global.set $f$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $2 (type $0)
-;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local $0$hi i32)
-;; CHECK-NEXT:  (local $1 i32)
-;; CHECK-NEXT:  (local $1$hi i32)
-;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
-;; CHECK-NEXT:  (block $label$1
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (local.set $1
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (local.get $0$hi)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (local.get $0)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.set $1$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (global.set $f
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (local.get $1$hi)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (local.get $1)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (global.set $f$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
  ;; CHECK:      (type $0 (func (param i32 i32)))
 
@@ -581,57 +580,57 @@
 
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
- ;; CHECK:      (export "exp" (func $1))
+ ;; CHECK:      (export "exp" (func $exp))
 
  ;; CHECK:      (func $call (type $0) (param $0 i32) (param $0$hi i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $call (param i64))
- (func "exp"
+ ;; CHECK:      (func $exp (type $1)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $0$hi i32)
+ ;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (global.get $f$hi)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.get $f)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $0$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $call
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:     (local.get $0$hi)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (global.set $f
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $i64toi32_i32$0
+ ;; CHECK-NEXT:      (i32.const 287454020)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 1432778632)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.set $f$hi
+ ;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $exp (export "exp")
   (call $call (global.get $f))
   (global.set $f (i64.const 0x1122334455667788))
  )
 )
-;; CHECK:      (func $1 (type $1)
-;; CHECK-NEXT:  (local $0 i32)
-;; CHECK-NEXT:  (local $0$hi i32)
-;; CHECK-NEXT:  (local $i64toi32_i32$0 i32)
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (local.set $0
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (global.get $f$hi)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.get $f)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.set $0$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (call $call
-;; CHECK-NEXT:   (block (result i32)
-;; CHECK-NEXT:    (local.set $i64toi32_i32$0
-;; CHECK-NEXT:     (local.get $0$hi)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (local.get $0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (block
-;; CHECK-NEXT:   (global.set $f
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $i64toi32_i32$0
-;; CHECK-NEXT:      (i32.const 287454020)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 1432778632)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (global.set $f$hi
-;; CHECK-NEXT:    (local.get $i64toi32_i32$0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
  (type $i64_f64_i32_=>_none (func (param i64 f64 i32)))
  ;; CHECK:      (type $0 (func))

@@ -46,7 +46,7 @@
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (sub (func (param anyref))))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -82,7 +82,7 @@
   ;; CHECK:       (type $sig (sub (func (param eqref))))
   (type $sig (sub (func (param anyref))))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $sig) (param $x eqref)
   ;; CHECK-NEXT:  (nop)
@@ -221,7 +221,7 @@
 
   (type $struct (sub (struct (field (ref $sig)))))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct)) (param $f (ref $sig))
   ;; CHECK-NEXT:  (local $temp (ref null $sig))
@@ -285,7 +285,7 @@
   ;; CHECK:       (type $sig (sub (func (param (ref $struct)))))
   (type $sig (sub (func (param anyref))))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $sig) (param $x (ref $struct))
   ;; CHECK-NEXT:  (nop)
@@ -324,7 +324,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $sig) (param $x anyref)
   ;; CHECK-NEXT:  (nop)
@@ -378,7 +378,7 @@
     (type $sig-2 (sub (func (param anyref) (param anyref))))
   )
 
-  ;; CHECK:      (elem declare func $func-2)
+  ;; CHECK:      (elem $decl declare func$func-2)
 
   ;; CHECK:      (func $func-1 (type $sig-1) (param $x structref) (param $y anyref)
   ;; CHECK-NEXT:  (nop)
@@ -534,7 +534,7 @@
     (type $sig-unreachable (sub (func (result anyref))))
   )
 
-  ;; CHECK:      (elem declare func $func-can-refine $func-cannot-refine)
+  ;; CHECK:      (elem $decl declare func$func-can-refine$func-cannot-refine)
 
   ;; CHECK:      (func $func-can-refine (type $sig-can-refine) (result (ref $struct))
   ;; CHECK-NEXT:  (struct.new_default $struct)
@@ -789,7 +789,7 @@
     (type $B (sub $A (func (param (ref null $A)) (result (ref null $B)))))
   )
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $func (type $A) (param $0 (ref null $B)) (result (ref null $A))
   ;; CHECK-NEXT:  (ref.func $func)
@@ -928,7 +928,7 @@
 
  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $no.side.effects_5 (type $8) (param funcref) (result (ref $C))))
 
- ;; CHECK:      (elem declare func $other $other2)
+ ;; CHECK:      (elem $decl declare func$other$other2)
 
  ;; CHECK:      (func $func (type $5)
  ;; CHECK-NEXT:  (drop
@@ -1015,7 +1015,7 @@
    (param funcref)
  ))
 
- ;; CHECK:      (elem declare func $target)
+ ;; CHECK:      (elem $decl declare func$target)
 
  ;; CHECK:      (func $calls (type $4)
  ;; CHECK-NEXT:  (call $no.side.effects
@@ -1067,7 +1067,7 @@
    (param funcref)
  ))
 
- ;; CHECK:      (elem declare func $target)
+ ;; CHECK:      (elem $decl declare func$target)
 
  ;; CHECK:      (func $calls (type $3)
  ;; CHECK-NEXT:  (call $no.side.effects

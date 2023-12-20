@@ -361,21 +361,20 @@
   )
 )
 (module ;; both operations at once: remove params and return value
-  (func "a"
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (export "a" (func $a))
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $b)
+  ;; CHECK-NEXT: )
+  (func $a (export "a")
     (drop
       (call $b
         (i32.const 1)
       )
     )
   )
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (export "a" (func $0))
-
-  ;; CHECK:      (func $0 (type $0)
-  ;; CHECK-NEXT:  (call $b)
-  ;; CHECK-NEXT: )
-
   ;; CHECK:      (func $b (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
@@ -465,9 +464,9 @@
 
  ;; CHECK:      (type $1 (func (param f32) (result funcref)))
 
- ;; CHECK:      (elem declare func $0)
+ ;; CHECK:      (elem $decl declare func$0)
 
- ;; CHECK:      (export "export" (func $1))
+ ;; CHECK:      (export "export" (func $export))
 
  ;; CHECK:      (func $0 (type $0) (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
  ;; CHECK-NEXT:  (nop)
@@ -477,15 +476,15 @@
   (nop)
   (unreachable)
  )
- (func "export" (param $0 f32) (result funcref)
+ ;; CHECK:      (func $export (type $1) (param $0 f32) (result funcref)
+ ;; CHECK-NEXT:  (ref.func $0)
+ ;; CHECK-NEXT: )
+ (func $export (export "export") (param $0 f32) (result funcref)
   ;; a ref.func should prevent us from changing the type of a function, as it
   ;; may escape
   (ref.func $0)
  )
 )
-;; CHECK:      (func $1 (type $1) (param $0 f32) (result funcref)
-;; CHECK-NEXT:  (ref.func $0)
-;; CHECK-NEXT: )
 (module
  ;; CHECK:      (type $i64 (func (param i64)))
  (type $i64 (func (param i64)))

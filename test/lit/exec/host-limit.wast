@@ -18,10 +18,9 @@
  ;; CHECK:      [fuzz-exec] calling export
  ;; CHECK-NEXT: [LoggingExternalInterface logging 42]
  ;; CHECK-NEXT: ignoring comparison of ExecutionResults!
- (func "export"
+ (func $export (export "export")
   (call $log
    (i32.const 42)
   )
  )
 )
-

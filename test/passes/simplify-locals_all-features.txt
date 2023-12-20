@@ -1886,8 +1886,8 @@
  (type $0 (func (result i32)))
  (memory $0 (shared 1 1))
  (data $0 "data")
- (export "foo" (func $0))
- (func $0 (type $0) (result i32)
+ (export "foo" (func $foo))
+ (func $foo (type $0) (result i32)
   (local $0 i32)
   (local.set $0
    (i32.rem_u
@@ -1901,8 +1901,8 @@
 )
 (module
  (type $0 (func (param eqref i31ref) (result i32)))
- (export "test" (func $0))
- (func $0 (type $0) (param $0 eqref) (param $1 i31ref) (result i32)
+ (export "test" (func $test))
+ (func $test (type $0) (param $0 eqref) (param $1 i31ref) (result i32)
   (local $2 eqref)
   (local $3 i31ref)
   (local.set $2

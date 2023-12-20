@@ -26,7 +26,7 @@
 
   ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (type $0) (result i32)))
 
-  ;; CHECK:      (elem declare func $legalfunc$ref-func-arg)
+  ;; CHECK:      (elem $decl declare func$legalfunc$ref-func-arg)
 
   ;; CHECK:      (export "func" (func $legalstub$func))
   (export "func" (func $func))

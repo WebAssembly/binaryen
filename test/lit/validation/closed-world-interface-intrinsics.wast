@@ -19,7 +19,7 @@
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $cwe (type $1) (param (ref $struct) funcref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $cwe (param (ref $struct)) (param funcref)))
 
-  ;; CHECK:      (elem declare func $func)
+  ;; CHECK:      (elem $decl declare func$func)
 
   ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (call $cwe

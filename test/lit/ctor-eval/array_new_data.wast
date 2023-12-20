@@ -14,7 +14,17 @@
  ;; CHECK:      (data $1 (i32.const 0) "")
  (data $1 (i32.const 0) "")
 
- (func "test"
+ ;; CHECK:      (export "test" (func $test))
+
+ ;; CHECK:      (func $test (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (array.new_data $[i8] $1
+ ;; CHECK-NEXT:    (i32.const 16)
+ ;; CHECK-NEXT:    (i32.const 8)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (export "test")
   ;; An array.new_data cannot be evalled since ctor-eval flattens memory segments
   ;; atm. In fact the module would not validate as we refer to segment 1 here
   ;; but after flattening only segment 0 exists.
@@ -26,13 +36,3 @@
   )
  )
 )
-;; CHECK:      (export "test" (func $0))
-
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (array.new_data $[i8] $1
-;; CHECK-NEXT:    (i32.const 16)
-;; CHECK-NEXT:    (i32.const 8)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )

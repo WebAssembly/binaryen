@@ -7,7 +7,7 @@
  ;; CHECK:      (memory $0 1616)
  (memory $0 1616) ;; 101 MB
 
- (func "test1"
+ (func $test1 (export "test1")
   ;; This write will be evalled into a data segment and removed.
   (i32.store8
    (i32.const 0x63fffff) ;; 100 MB - 1
@@ -15,7 +15,19 @@
   )
  )
 
- (func "test2"
+ ;; CHECK:      (data $0 (i32.const 104857599) "*")
+
+ ;; CHECK:      (export "test1" (func $test1_2))
+
+ ;; CHECK:      (export "test2" (func $test2))
+
+ ;; CHECK:      (func $test2 (type $0)
+ ;; CHECK-NEXT:  (i32.store8
+ ;; CHECK-NEXT:   (i32.const 104857600)
+ ;; CHECK-NEXT:   (i32.const 43)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test2 (export "test2")
   ;; We stop at this write to a high address (wasm-ctor-eval generally only
   ;; writes to low addresses, so it is tuned for that)
   (i32.store8
@@ -24,19 +36,6 @@
   )
  )
 )
-;; CHECK:      (data $0 (i32.const 104857599) "*")
-
-;; CHECK:      (export "test1" (func $0_2))
-
-;; CHECK:      (export "test2" (func $1))
-
-;; CHECK:      (func $1 (type $0)
-;; CHECK-NEXT:  (i32.store8
-;; CHECK-NEXT:   (i32.const 104857600)
-;; CHECK-NEXT:   (i32.const 43)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $0_2 (type $0)
+;; CHECK:      (func $test1_2 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

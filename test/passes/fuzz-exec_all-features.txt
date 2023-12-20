@@ -76,34 +76,34 @@
  (type $3 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $1) (param i32)))
  (memory $0 (shared 1 1))
- (export "unaligned_load" (func $0))
- (export "unaligned_load_offset" (func $1))
- (export "aligned_for_size" (func $2))
- (export "unaligned_notify" (func $3))
- (export "wrap_cmpxchg" (func $4))
- (export "oob_notify" (func $5))
- (func $0 (type $0) (result i32)
+ (export "unaligned_load" (func $unaligned_load))
+ (export "unaligned_load_offset" (func $unaligned_load_offset))
+ (export "aligned_for_size" (func $aligned_for_size))
+ (export "unaligned_notify" (func $unaligned_notify))
+ (export "wrap_cmpxchg" (func $wrap_cmpxchg))
+ (export "oob_notify" (func $oob_notify))
+ (func $unaligned_load (type $0) (result i32)
   (i32.atomic.load
    (i32.const 1)
   )
  )
- (func $1 (type $0) (result i32)
+ (func $unaligned_load_offset (type $0) (result i32)
   (i32.atomic.load offset=1
    (i32.const 0)
   )
  )
- (func $2 (type $0) (result i32)
+ (func $aligned_for_size (type $0) (result i32)
   (i32.atomic.load16_u offset=2
    (i32.const 0)
   )
  )
- (func $3 (type $0) (result i32)
+ (func $unaligned_notify (type $0) (result i32)
   (memory.atomic.notify
    (i32.const 1)
    (i32.const 1)
   )
  )
- (func $4 (type $2) (param $0 i32) (param $1 i32)
+ (func $wrap_cmpxchg (type $2) (param $0 i32) (param $1 i32)
   (drop
    (i32.atomic.rmw8.cmpxchg_u
     (i32.const 0)
@@ -117,7 +117,7 @@
    )
   )
  )
- (func $5 (type $3)
+ (func $oob_notify (type $3)
   (drop
    (memory.atomic.notify offset=22
     (i32.const -104)
@@ -150,8 +150,8 @@
  (type $0 (func (result i32)))
  (memory $0 (shared 1 1))
  (data $0 (i32.const 0) "\ff\ff")
- (export "unsigned_2_bytes" (func $0))
- (func $0 (type $0) (result i32)
+ (export "unsigned_2_bytes" (func $unsigned_2_bytes))
+ (func $unsigned_2_bytes (type $0) (result i32)
   (i32.atomic.rmw16.xor_u
    (i32.const 0)
    (i32.const 0)
@@ -168,8 +168,8 @@
  (type $1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
  (memory $0 (shared 1 1))
- (export "rmw-reads-modifies-and-writes" (func $0))
- (func $0 (type $1)
+ (export "rmw-reads-modifies-and-writes" (func $rmw-reads-modifies-and-writes))
+ (func $rmw-reads-modifies-and-writes (type $1)
   (drop
    (i64.atomic.rmw16.and_u offset=4
     (i32.const 0)
@@ -193,8 +193,8 @@
  (type $1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
  (memory $0 (shared 1 1))
- (export "rmw-reads-modifies-and-writes-asymmetrical" (func $0))
- (func $0 (type $1)
+ (export "rmw-reads-modifies-and-writes-asymmetrical" (func $rmw-reads-modifies-and-writes-asymmetrical))
+ (func $rmw-reads-modifies-and-writes-asymmetrical (type $1)
   (drop
    (i32.atomic.rmw8.sub_u
     (i32.const 3)
@@ -215,7 +215,7 @@
 [fuzz-exec] note result: func => funcref
 (module
  (type $0 (func (result funcref)))
- (elem declare func $func)
+ (elem $decl declare func$func)
  (export "func" (func $func))
  (func $func (type $0) (result funcref)
   (ref.func $func)
