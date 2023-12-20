@@ -4,6 +4,10 @@
 ;; RUN: foreach %s %t wasm-opt --legalize-js-interface --all-features -S -o - | filecheck %s
 
 (module
+  (import "env" "imported" (func $imported (result i64)))
+  (import "env" "other" (func $other (param i32) (param i64) (param i64)))
+  (import "env" "ref-func-arg" (func $ref-func-arg (result i64)))
+  (export "func" (func $func))
   ;; CHECK:      (type $0 (func (result i32)))
 
   ;; CHECK:      (type $1 (func (result i64)))
@@ -17,11 +21,11 @@
   ;; CHECK:      (type $5 (func (param i32 i64 i64)))
 
   ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $4) (param i32)))
-  (import "env" "imported" (func $imported (result i64)))
+
   ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $0) (result i32)))
-  (import "env" "other" (func $other (param i32) (param i64) (param i64)))
+
   ;; CHECK:      (import "env" "imported" (func $legalimport$imported (type $0) (result i32)))
-  (import "env" "ref-func-arg" (func $ref-func-arg (result i64)))
+
   ;; CHECK:      (import "env" "other" (func $legalimport$other (type $2) (param i32 i32 i32 i32 i32)))
 
   ;; CHECK:      (import "env" "ref-func-arg" (func $legalimport$ref-func-arg (type $0) (result i32)))
@@ -29,15 +33,18 @@
   ;; CHECK:      (elem declare func $legalfunc$ref-func-arg)
 
   ;; CHECK:      (export "func" (func $legalstub$func))
-  (export "func" (func $func))
+
   ;; CHECK:      (export "ref-func-test" (func $ref-func-test))
   (export "ref-func-test" (func $ref-func-test))
-  ;; CHECK:      (export "imported" (func $legalstub$imported))
   (export "imported" (func $imported))
-  ;; CHECK:      (export "imported_again" (func $legalstub$imported))
   (export "imported_again" (func $imported))
-  ;; CHECK:      (export "other" (func $legalstub$other))
   (export "other" (func $other))
+  ;; CHECK:      (export "imported" (func $legalstub$imported))
+
+  ;; CHECK:      (export "imported_again" (func $legalstub$imported))
+
+  ;; CHECK:      (export "other" (func $legalstub$other))
+
   ;; CHECK:      (func $func (type $1) (result i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported)

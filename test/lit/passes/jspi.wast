@@ -4,6 +4,19 @@
 
 (module
 
+  (import "js" "compute_delta" (func $compute_delta (param f64) (result i32)))
+  (import "js" "import_and_export" (func $import_and_export (param i32) (result i32)))
+  (import "js" "import_void_return" (func $import_void_return (param i32)))
+  (export "update_state_void" (func $update_state_void))
+  (export "update_state" (func $update_state))
+  ;; Test duplicating an export.
+  (export "update_state_again" (func $update_state))
+  ;; Test that a name collision on the parameters is handled.
+  (export "update_state_param_collision" (func $update_state_param_collision))
+  ;; Test function that is imported and exported.
+  (export "import_and_export" (func $import_and_export))
+
+
   ;; CHECK:      (type $0 (func (param externref f64) (result i32)))
 
   ;; CHECK:      (type $1 (func (param f64) (result i32)))
@@ -19,27 +32,22 @@
   ;; CHECK:      (type $6 (func (param externref i32)))
 
   ;; CHECK:      (import "js" "compute_delta" (func $import$compute_delta (type $0) (param externref f64) (result i32)))
-  (import "js" "compute_delta" (func $compute_delta (param f64) (result i32)))
+
   ;; CHECK:      (import "js" "import_and_export" (func $import$import_and_export (type $2) (param externref i32) (result i32)))
-  (import "js" "import_and_export" (func $import_and_export (param i32) (result i32)))
+
   ;; CHECK:      (import "js" "import_void_return" (func $import$import_void_return (type $6) (param externref i32)))
-  (import "js" "import_void_return" (func $import_void_return (param i32)))
+
   ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 
   ;; CHECK:      (export "update_state_void" (func $export$update_state_void))
-  (export "update_state_void" (func $update_state_void))
-  ;; CHECK:      (export "update_state" (func $export$update_state))
-  (export "update_state" (func $update_state))
-  ;; Test duplicating an export.
-  ;; CHECK:      (export "update_state_again" (func $export$update_state))
-  (export "update_state_again" (func $update_state))
-  ;; Test that a name collision on the parameters is handled.
-  ;; CHECK:      (export "update_state_param_collision" (func $export$update_state_param_collision))
-  (export "update_state_param_collision" (func $update_state_param_collision))
-  ;; Test function that is imported and exported.
-  ;; CHECK:      (export "import_and_export" (func $export$import_and_export))
-  (export "import_and_export" (func $import_and_export))
 
+  ;; CHECK:      (export "update_state" (func $export$update_state))
+
+  ;; CHECK:      (export "update_state_again" (func $export$update_state))
+
+  ;; CHECK:      (export "update_state_param_collision" (func $export$update_state_param_collision))
+
+  ;; CHECK:      (export "import_and_export" (func $export$import_and_export))
 
   ;; CHECK:      (func $update_state (type $1) (param $param f64) (result i32)
   ;; CHECK-NEXT:  (call $compute_delta

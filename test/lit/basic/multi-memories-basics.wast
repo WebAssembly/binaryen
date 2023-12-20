@@ -18,11 +18,6 @@
  (type $none_=>_i32 (func (result i32)))
  ;; CHECK-TEXT:      (import "env" "memory" (memory $importedMemory 1 1))
  ;; CHECK-BIN:      (import "env" "memory" (memory $importedMemory 1 1))
- ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
- ;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32)))
-
- ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 1 1))
  (import "env" "memory" (memory $importedMemory 1 1))
  ;; CHECK-TEXT:      (memory $memory1 1 500)
  ;; CHECK-BIN:      (memory $memory1 1 500)
@@ -367,6 +362,12 @@
   )
  )
 )
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 1 1))
+
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 500)
 
 ;; CHECK-BIN-NODEBUG:      (memory $1 1 800)

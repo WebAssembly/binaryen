@@ -583,6 +583,8 @@
     (ref.func $reffed)
   )
 
+  (export "table" (table 0))
+
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (table $0 10 funcref)
@@ -590,7 +592,6 @@
   ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (export "table" (table $0))
-  (export "table" (table 0))
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -924,6 +925,12 @@
   ;; CHECK:      (type $A (func (param i32)))
   (type $A (func (param i32)))
 
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
   ;; CHECK:      (type $1 (func (param i32 funcref)))
 
   ;; CHECK:      (type $2 (func (param funcref)))
@@ -931,12 +938,8 @@
   ;; CHECK:      (type $3 (func))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param i32 funcref)))
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $call-without-effects (param i32 funcref)))
 
   ;; CHECK:      (import "other" "import" (func $other-import (type $2) (param funcref)))
-  (import "other" "import"
-    (func $other-import (param funcref)))
 
   ;; CHECK:      (elem declare func $target-drop $target-keep)
 
@@ -994,6 +997,12 @@
   ;; CHECK:      (type $A (func (param i32)))
   (type $A (func (param i32)))
 
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
   ;; CHECK:      (type $1 (func (param i32 funcref)))
 
   ;; CHECK:      (type $2 (func (param funcref)))
@@ -1001,12 +1010,8 @@
   ;; CHECK:      (type $3 (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param i32 funcref)))
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $call-without-effects (param i32 funcref)))
 
   ;; CHECK:      (import "other" "import" (func $other-import (type $2) (param funcref)))
-  (import "other" "import"
-    (func $other-import (param funcref)))
 
   ;; CHECK:      (elem declare func $target-keep $target-keep-2)
 

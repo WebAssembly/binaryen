@@ -25,9 +25,6 @@
   ;; CHECK-BIN:      (global $g2 i32 (i32.const 0))
   (global $g2 i32 (i32.const 0))
 
-  ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
-  ;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $timport$0 1 10 funcref))
   (import "a" "b" (table $t1 1 10 funcref))
   ;; CHECK-TEXT:      (table $t2 3 3 funcref)
   ;; CHECK-BIN:      (table $t2 3 3 funcref)
@@ -116,6 +113,10 @@
   ;; CHECK-BIN-NEXT: )
   (func $h)
 )
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $timport$0 1 10 funcref))
+
 ;; CHECK-BIN-NODEBUG:      (global $global$0 (ref null $0) (ref.func $0))
 
 ;; CHECK-BIN-NODEBUG:      (global $global$1 i32 (i32.const 0))

@@ -9,10 +9,11 @@
   ;; CHECK:      (memory $0 (shared 16 17))
   (memory $0 (shared 16 17))
 
+  (export "v128" (func $v128))
   ;; CHECK:      (data $0 (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")
 
   ;; CHECK:      (export "v128" (func $v128_2))
-  (export "v128" (func $v128))
+
   ;; CHECK:      (export "keepalive" (func $keepalive))
   (export "keepalive" (func $keepalive))
 

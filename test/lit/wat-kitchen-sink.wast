@@ -354,6 +354,7 @@
  (tag $tag-pair (param i32 i64))
 
  ;; explicit exports
+ (export "exported-func" (func 0))
  ;; CHECK:      (export "g1" (global $g1))
 
  ;; CHECK:      (export "g1.1" (global $g1))
@@ -375,18 +376,20 @@
  ;; CHECK:      (export "t0.1" (tag $imported))
 
  ;; CHECK:      (export "exported-func" (func $fimport$0))
- (export "exported-func" (func 0))
- ;; CHECK:      (export "exported-table" (table $timport$0))
- (export "exported-table" (table 0))
- ;; CHECK:      (export "exported-memory" (memory $mimport$0))
+
+ ;; CHECK:      (export "exported-table" (table $funcs))
+ (export "exported-table" (table $funcs))
  (export "exported-memory" (memory 0))
+ ;; CHECK:      (export "exported-memory" (memory $mimport$0))
+
  ;; CHECK:      (export "exported-global" (global $g1))
- (export "exported-global" (global 0))
- ;; CHECK:      (export "exported-tag" (tag $imported))
+ (export "exported-global" (global $g1))
  (export "exported-tag" (tag 0))
 
  ;; functions
  (func)
+
+ ;; CHECK:      (export "exported-tag" (tag $imported))
 
  ;; CHECK:      (func $1 (type $void)
  ;; CHECK-NEXT:  (nop)
