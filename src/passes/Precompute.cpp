@@ -278,11 +278,13 @@ struct Precompute
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (!canEmitConstantFor(flow.values)) {
-      tryToPartiallyPrecompute(curr);
       return;
     }
     if (flow.breaking()) {
       if (flow.breakTo == NONCONSTANT_FLOW) {
+        // This cannot be turned into a constant, but perhaps we can partially
+        // precompute it.
+        tryToPartiallyPrecompute(curr);
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
