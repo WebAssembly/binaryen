@@ -52,7 +52,7 @@
   )
   ;; The length should be 50
   (call $log
-   (array.len $bytes (local.get $x))
+   (array.len (local.get $x))
   )
   ;; The value should be 42
   (call $log
@@ -281,7 +281,7 @@
   )
   ;; The length should be 2
   (call $log
-   (array.len $bytes (local.get $x))
+   (array.len (local.get $x))
   )
   ;; The first value should be 42
   (call $log
