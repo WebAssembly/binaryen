@@ -5,9 +5,9 @@
  (import "env" "waka" (func $wrong (param i32)))
  (table $0 2 2 funcref)
  (elem $0 (i32.const 0) $foo $foo)
- (export "baz" (func $0))
+ (export "baz" (func $baz))
  (start $foo)
- (func $0
+ (func $baz
   (call $foo)
   (call $foo)
   (call $wrong

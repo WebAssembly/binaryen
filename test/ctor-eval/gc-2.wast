@@ -29,13 +29,13 @@
     )
   )
 
-  (func "test1"
+  (func $test (export "test1")
     (global.set $global2
       (global.get $global3)
     )
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     (select
       (struct.get $struct 0
         (ref.cast (ref $struct)

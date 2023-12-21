@@ -13,7 +13,7 @@
   ;; signature pruning. The fuzzer should not complain about this.
   ;; CHECK:      [fuzz-exec] calling return-ref
   ;; CHECK-NEXT: [fuzz-exec] note result: return-ref => funcref
-  (func "return-ref" (result funcref)
+  (func $return-ref (export "return-ref") (result funcref)
     (ref.func $no-use-param)
   )
 )

@@ -1073,11 +1073,7 @@ size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
                                                   Name& exportName) {
   size_t i = 1;
   while (i < s.size() && i < 3 && s[i]->isStr()) {
-    if (s[i]->quoted()) {
-      // an export name
-      exportName = s[i]->str();
-      i++;
-    } else if (s[i]->dollared()) {
+    if (s[i]->dollared()) {
       name = s[i]->str();
       i++;
     } else {

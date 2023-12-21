@@ -11,8 +11,8 @@
   (i32.const 42)
   (i32.const 1337)
  ))
- (export "keepalive" (func $1))
- (func $1 (type $1) (result i32)
+ (export "keepalive" (func $keepalive))
+ (func $keepalive (type $1) (result i32)
   (i32.add
    (array.get $array
     (global.get $global1)

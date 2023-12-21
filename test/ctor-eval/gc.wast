@@ -21,7 +21,7 @@
   ;; so a new (immutable) global will appear, and we will read from it.
   (global $global2 (mut (ref null $struct)) (ref.null $struct))
 
-  (func "test1"
+  (func $test1 (export "test1")
     ;; The locals will be optimized into a single non-nullable one by the
     ;; optimizer.
     (local $temp1 (ref null $struct))
@@ -51,7 +51,7 @@
     (call $import (local.get $temp2))
   )
 
-  (func "keepalive" (result i32)
+  (func $keepalive (export "keepalive") (result i32)
     (i32.add
       (struct.get $struct 0
         (global.get $global1)

@@ -1040,7 +1040,7 @@
  (global $global$1 (mut i32) (i32.const 0))
  ;; CHECK:      (memory $0 1 1)
 
- ;; CHECK:      (export "compress" (func $3))
+ ;; CHECK:      (export "compress" (func $compress))
 
  ;; CHECK:      (func $_deflate (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflate
@@ -1066,7 +1066,100 @@
  (func $_deflateEnd (param i32) (result i32)
   (call $_deflateEnd (local.get $0))
  )
- (func "compress" (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $compress (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (global.get $global$1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$1
+ ;; CHECK-NEXT:   (i32.sub
+ ;; CHECK-NEXT:    (global.get $global$1)
+ ;; CHECK-NEXT:    (i32.const -64)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 100000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=12
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=16
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.load
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=32
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=36
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=40
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (call $_deflateInit2_
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (global.set $global$1
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.eq
+ ;; CHECK-NEXT:     (local.tee $0
+ ;; CHECK-NEXT:      (call $_deflate
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (i32.store
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (i32.load offset=20
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $0
+ ;; CHECK-NEXT:      (call $_deflateEnd
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.set $global$1
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (call $_deflateEnd
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.set $global$1
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compress (export "compress") (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (global.get $global$1)
@@ -1165,99 +1258,6 @@
  )
 )
 
-;; CHECK:      (func $3 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
-;; CHECK-NEXT:  (local $3 i32)
-;; CHECK-NEXT:  (local.set $3
-;; CHECK-NEXT:   (global.get $global$1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.set $global$1
-;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (global.get $global$1)
-;; CHECK-NEXT:    (i32.const -64)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (local.get $2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=4
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 100000)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=12
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=16
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.load
-;; CHECK-NEXT:    (local.get $1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=32
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=36
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=40
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (call $_deflateInit2_
-;; CHECK-NEXT:    (local.get $3)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (block
-;; CHECK-NEXT:    (global.set $global$1
-;; CHECK-NEXT:     (local.get $3)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (return)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (if (result i32)
-;; CHECK-NEXT:    (i32.eq
-;; CHECK-NEXT:     (local.tee $0
-;; CHECK-NEXT:      (call $_deflate
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 1)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (i32.store
-;; CHECK-NEXT:      (local.get $1)
-;; CHECK-NEXT:      (i32.load offset=20
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (local.set $0
-;; CHECK-NEXT:      (call $_deflateEnd
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.set $global$1
-;; CHECK-NEXT:      (local.get $3)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 0)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (call $_deflateEnd
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.set $global$1
-;; CHECK-NEXT:      (local.get $3)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 0)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
  (type $A (struct (field (mut i32))))
  ;; CHECK:      (type $0 (func))

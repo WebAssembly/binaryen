@@ -9,7 +9,20 @@
   (data (i32.const 0) "__________")
   (data (i32.const 20) "__________")
 
-  (func "test"
+  ;; CHECK:      (data $0 (i32.const 0) "__________")
+
+  ;; CHECK:      (data $1 (i32.const 20) "__________")
+
+  ;; CHECK:      (export "test" (func $test))
+
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  (i32.store8
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (data.drop $1)
+  ;; CHECK-NEXT: )
+  (func $test (export "test")
     ;; A store that can be evalled, but we do not do so because of the
     ;; instruction after us.
     (i32.store8
@@ -23,16 +36,3 @@
     (data.drop 1)
   )
 )
-;; CHECK:      (data $0 (i32.const 0) "__________")
-
-;; CHECK:      (data $1 (i32.const 20) "__________")
-
-;; CHECK:      (export "test" (func $0))
-
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (i32.store8
-;; CHECK-NEXT:   (i32.const 4)
-;; CHECK-NEXT:   (i32.const 100)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (data.drop $1)
-;; CHECK-NEXT: )

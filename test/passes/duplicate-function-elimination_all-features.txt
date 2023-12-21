@@ -22,11 +22,11 @@
 (module
  (type $func (func (result i32)))
  (global $global$0 (ref $func) (ref.func $foo))
- (export "export" (func $2))
+ (export "export" (func $export))
  (func $foo (type $func) (result i32)
   (unreachable)
  )
- (func $2 (type $func) (result i32)
+ (func $export (type $func) (result i32)
   (call_ref $func
    (global.get $global$0)
   )

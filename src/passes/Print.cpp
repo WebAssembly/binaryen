@@ -51,40 +51,6 @@ bool isFullForced() {
   return false;
 }
 
-std::ostream& printName(Name name, std::ostream& o) {
-  assert(name && "Cannot print an empty name");
-  // We need to quote names if they have tricky chars.
-  // TODO: This is not spec-compliant since the spec does not support quoted
-  // identifiers and has a limited set of valid idchars. We need a more robust
-  // escaping scheme here. Reusing `printEscapedString` is not sufficient,
-  // either.
-  if (name.str.find_first_of("()") == std::string_view::npos) {
-    o << '$' << name.str;
-  } else {
-    o << "\"$" << name.str << '"';
-  }
-  return o;
-}
-
-std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
-  if (!wasm || wasm->memories.size() > 1) {
-    o << ' ';
-    printName(name, o);
-  }
-  return o;
-}
-
-std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
-  Name name;
-  if (func) {
-    name = func->getLocalNameOrDefault(index);
-  }
-  if (!name) {
-    name = Name::fromInt(index);
-  }
-  return printName(name, o);
-}
-
 std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
   os << '"';
   for (unsigned char c : str) {
@@ -117,6 +83,56 @@ std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
     }
   }
   return os << '"';
+}
+
+// TODO: Use unicode rather than char.
+bool isIDChar(char c) {
+  if ('0' <= c && c <= '9') {
+    return true;
+  }
+  if ('A' <= c && c <= 'Z') {
+    return true;
+  }
+  if ('a' <= c && c <= 'z') {
+    return true;
+  }
+  static std::array<char, 23> otherIDChars = {
+    {'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '/', ':',
+     '<', '=', '>', '?', '@', '\\', '^', '_', '`', '|', '~'}};
+  return std::find(otherIDChars.begin(), otherIDChars.end(), c) !=
+         otherIDChars.end();
+}
+
+std::ostream& printName(Name name, std::ostream& o) {
+  assert(name && "Cannot print an empty name");
+  // We need to quote names if they have tricky chars.
+  // TODO: This is not spec-compliant since the spec does not yet support quoted
+  // identifiers and has a limited set of valid idchars.
+  o << '$';
+  if (std::all_of(name.str.begin(), name.str.end(), isIDChar)) {
+    return o << name.str;
+  } else {
+    return printEscapedString(o, name.str);
+  }
+}
+
+std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
+  if (!wasm || wasm->memories.size() > 1) {
+    o << ' ';
+    printName(name, o);
+  }
+  return o;
+}
+
+std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+  Name name;
+  if (func) {
+    name = func->getLocalNameOrDefault(index);
+  }
+  if (!name) {
+    name = Name::fromInt(index);
+  }
+  return printName(name, o);
 }
 
 // Print a name from the type section, if available. Otherwise print the type
@@ -3266,7 +3282,8 @@ void PrintSExpression::visitModule(Module* curr) {
     printMedium(o, "(elem");
     o << " declare func";
     for (auto name : elemDeclareNames) {
-      o << " $" << name;
+      o << ' ';
+      printName(name, o);
     }
     o << ')' << maybeNewLine;
   }

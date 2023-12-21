@@ -2,7 +2,7 @@
   (memory $0 1)
   (data (i32.const 0) "__________")
   (data (i32.const 20) "__________")
-  (func "test1"
+  (func $test1 (export "test1")
     ;; A store that can be evalled.
     (i32.store8
       (i32.const 4)
@@ -19,4 +19,3 @@
     )
   )
 )
-

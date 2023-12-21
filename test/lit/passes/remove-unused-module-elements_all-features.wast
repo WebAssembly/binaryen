@@ -732,7 +732,22 @@
  (memory $B 1 1)
  (memory $C-unused 1 1)
 
- (func "func"
+ ;; CHECK:      (export "func" (func $func))
+
+ ;; CHECK:      (func $func (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load64_splat $A
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load16_lane $B 0
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $func (export "func")
   (drop
    (v128.load64_splat $A
     (i32.const 0)
@@ -747,21 +762,6 @@
  )
 )
 
-;; CHECK:      (export "func" (func $0))
-
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (v128.load64_splat $A
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (v128.load16_lane $B 0
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
   ;; When we export a function that calls another, we can export the called
   ;; function, skipping the one in the middle. The exports of $middle and
