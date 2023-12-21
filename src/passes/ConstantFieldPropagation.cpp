@@ -73,11 +73,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // Only modifies struct.get operations.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  // We receive the propagated infos, that is, info about field types in a form
+  // that takes into account subtypes for quick computation, and also the raw
+  // subtyping and new infos (information about struct.news).
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<FunctionOptimizer>(infos);
+    return std::make_unique<FunctionOptimizer>(propagatedInfos, subTypes, rawNewInfos);
   }
 
-  FunctionOptimizer(PCVStructValuesMap& infos) : infos(infos) {}
+  FunctionOptimizer(const PCVStructValuesMap& propagatedInfos, const SubTypes& subTypes, const PCVStructValuesMap& rawNewInfos) : propagatedInfos(propagatedInfos), subTypes(subTypes), rawNewInfos(rawNewInfos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -92,8 +95,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
-    auto iter = infos.find(type.getHeapType());
-    if (iter != infos.end()) {
+    auto iter = propagatedInfos.find(type.getHeapType());
+    if (iter != propagatedInfos.end()) {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
     }
@@ -148,7 +151,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  PCVStructValuesMap& infos;
+  const PCVStructValuesMap& propagatedInfos;
+  const SubTypes& subTypes;
+  const PCVStructValuesMap& rawNewInfos;
 
   bool changed = false;
 };
@@ -219,6 +224,8 @@ struct ConstantFieldPropagation : public Pass {
     BoolStructValuesMap combinedCopyInfos;
     functionCopyInfos.combineInto(combinedCopyInfos);
 
+    // Prepare data we will need later.
+    auto rawNewInfos = combinedNewInfos;
     SubTypes subTypes(*module);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
@@ -293,10 +300,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos).run(runner, module);
-
-    // TODO: Actually remove the field from the type, where possible? That might
-    //       be best in another pass.
+    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos).run(runner, module);
   }
 };
 
