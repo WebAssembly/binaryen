@@ -27,16 +27,17 @@
 // looked at.
 //
 
-#include <ir/literal-utils.h>
-#include <ir/local-graph.h>
-#include <ir/manipulation.h>
-#include <ir/properties.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <support/unique_deferring_queue.h>
-#include <wasm-builder.h>
-#include <wasm-interpreter.h>
-#include <wasm.h>
+#include "ir/iteration.h"
+#include "ir/literal-utils.h"
+#include "ir/local-graph.h"
+#include "ir/manipulation.h"
+#include "ir/properties.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-builder.h"
+#include "wasm-interpreter.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -277,6 +278,7 @@ struct Precompute
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (!canEmitConstantFor(flow.values)) {
+      tryToPartiallyPrecompute(curr);
       return;
     }
     if (flow.breaking()) {
@@ -316,6 +318,62 @@ struct Precompute
       replaceCurrent(flow.getConstExpression(*getModule()));
     } else {
       ExpressionManipulator::nop(curr);
+    }
+  }
+
+  // If we failed to precompute a constant, perhaps we can still precompute part
+  // of this expression. Specifically, consider this case:
+  //
+  //  (A
+  //    (select
+  //      (B)
+  //      (C)
+  //      (condition)
+  //    )
+  //  )
+  //
+  // Perhaps we can compute A(B) and A(C). If so, we can emit a better select:
+  //
+  //    (select
+  //      (result of A-of-B)
+  //      (result of A-of-C)
+  //      (condition)
+  //    )
+  //  )
+  //
+  // Note that in general for code size we want to move operations *out* of
+  // selects and ifs (OptimizeInstructions does that), but here we are
+  // computing a constant to replace nonconstant code, and it is definitely
+  // worthwhile.
+  void tryToPartiallyPrecompute(Expression* curr) {
+    // TODO: only when optlevel = 3? measure speeds
+
+    ChildIterator children(curr);
+    if (children.getNumChildren() != 1) {
+      return;
+    }
+    if (auto* select = children.getChild(0)->dynCast<Select>()) {
+      // Copy the entire expression. Then in the copy, replace the select with
+      // each of its arms and precompute those.
+      auto *copy = ExpressionManipulator::copy(curr, *getModule());
+      ChildIterator copyChildren(copy);
+      copyChildren.getChild(0) = select->ifTrue;
+      auto ifTrue = precomputeExpression(copy);
+      if (!canEmitConstantFor(ifTrue.values) || !ifTrue.values.isConcrete()) {
+        // We failed to precompute anything, or it is a break and not a value.
+        // TODO: handle breaks
+        return;
+      }
+      copyChildren.getChild(0) = select->ifFalse;
+      auto ifFalse = precomputeExpression(copy);
+      if (!canEmitConstantFor(ifFalse.values) || !ifFalse.values.isConcrete()) {
+        return;
+      }
+
+      // We precomputed them both successfully! Apply them.
+      select->ifTrue = ifTrue.getConstExpression(*getModule());
+      select->ifFalse = ifFalse.getConstExpression(*getModule());
+      replaceCurrent(select);
     }
   }
 
