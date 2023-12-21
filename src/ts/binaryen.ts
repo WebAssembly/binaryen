@@ -1,5 +1,6 @@
 // @ts-ignore
-const JSModule = await import("./binaryen_raw_TARGET.js");
+import Binaryen from "./binaryen_raw_TARGET.js";
+const JSModule = await Binaryen();
 const _malloc: (size: number) => number = JSModule._malloc;
 const _free: (size: number) => void = JSModule._free;
 const HEAP8: Int8Array = JSModule.HEAP8;
