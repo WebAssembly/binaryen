@@ -517,6 +517,14 @@ struct NullInstrParserCtx {
   Result<> makeStringSliceIter(Index) { return Ok{}; }
 };
 
+struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
+  ParseInput in;
+  NullCtx(const ParseInput& in) : in(in) {}
+  Result<> makeTypeUse(Index, std::optional<HeapTypeT>, ParamsT*, ResultsT*) {
+    return Ok{};
+  }
+};
+
 // Phase 1: Parse definition spans for top-level module elements and determine
 // their indices and names.
 struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
