@@ -56,7 +56,7 @@
     (i32.const 2)
   )
 
-  ;; CHECK:      (func $simple-1 (type $1) (param $param i32) (result i32)
+  ;; CHECK:      (func $simple-1 (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -74,7 +74,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-2 (type $1) (param $param i32) (result i32)
+  ;; CHECK:      (func $simple-2 (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -91,7 +91,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-3 (type $1) (param $param i32) (result i32)
+  ;; CHECK:      (func $simple-3 (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -108,7 +108,7 @@
     )
   )
 
-  ;; CHECK:      (func $simple-4 (type $1) (param $param i32) (result i32)
+  ;; CHECK:      (func $simple-4 (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 1)
@@ -121,6 +121,28 @@
         (i32.const 0)
         (i32.const 0)
         (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $unreachable (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unreachable (param $param i32) (result i32)
+    ;; We should ignore unreachable code like this. We would need to make sure
+    ;; to emit the proper type on the outside, and it's simpler to just defer
+    ;; this to DCE.
+    (i32.eqz
+      (select
+        (i32.const 0)
+        (i32.const 0)
+        (unreachable)
       )
     )
   )

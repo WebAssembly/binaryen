@@ -350,6 +350,10 @@ struct Precompute
   void tryToPartiallyPrecompute(Expression* curr) {
     // TODO: only when optlevel = 3? measure speeds
 
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     ChildIterator children(curr);
     if (children.getNumChildren() != 1) {
       return;
@@ -375,6 +379,8 @@ struct Precompute
       // We precomputed them both successfully! Apply them.
       select->ifTrue = ifTrue.getConstExpression(*getModule());
       select->ifFalse = ifFalse.getConstExpression(*getModule());
+      select->type = select->ifTrue->type;
+      assert(select->type == select->ifFalse->type);
       replaceCurrent(select);
     }
   }
