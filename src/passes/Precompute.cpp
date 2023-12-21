@@ -357,7 +357,7 @@ struct Precompute
     if (auto* select = children.getChild(0)->dynCast<Select>()) {
       // Copy the entire expression. Then in the copy, replace the select with
       // each of its arms and precompute those.
-      auto *copy = ExpressionManipulator::copy(curr, *getModule());
+      auto* copy = ExpressionManipulator::copy(curr, *getModule());
       ChildIterator copyChildren(copy);
       copyChildren.getChild(0) = select->ifTrue;
       auto ifTrue = precomputeExpression(copy);
