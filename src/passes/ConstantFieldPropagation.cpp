@@ -77,10 +77,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // that takes into account subtypes for quick computation, and also the raw
   // subtyping and new infos (information about struct.news).
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<FunctionOptimizer>(propagatedInfos, subTypes, rawNewInfos);
+    return std::make_unique<FunctionOptimizer>(
+      propagatedInfos, subTypes, rawNewInfos);
   }
 
-  FunctionOptimizer(const PCVStructValuesMap& propagatedInfos, const SubTypes& subTypes, const PCVStructValuesMap& rawNewInfos) : propagatedInfos(propagatedInfos), subTypes(subTypes), rawNewInfos(rawNewInfos) {}
+  FunctionOptimizer(const PCVStructValuesMap& propagatedInfos,
+                    const SubTypes& subTypes,
+                    const PCVStructValuesMap& rawNewInfos)
+    : propagatedInfos(propagatedInfos), subTypes(subTypes),
+      rawNewInfos(rawNewInfos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
