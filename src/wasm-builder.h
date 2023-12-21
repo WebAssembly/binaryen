@@ -1285,9 +1285,7 @@ public:
 
   // ensure a node is a block, if it isn't already, and optionally append to the
   // block
-  Block* blockify(Expression* any,
-                  Expression* append = nullptr,
-                  std::optional<Type> type = std::nullopt) {
+  Block* blockify(Expression* any, Expression* append = nullptr) {
     Block* block = nullptr;
     if (any) {
       block = any->dynCast<Block>();
@@ -1297,7 +1295,7 @@ public:
     }
     if (append) {
       block->list.push_back(append);
-      block->finalize(type);
+      block->finalize();
     }
     return block;
   }
