@@ -31,6 +31,7 @@
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
@@ -42,6 +43,7 @@
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
+
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -71,6 +73,7 @@ std::string GetLastErrorStdStr() {
   return std::string();
 }
 #endif
+
 using namespace wasm;
 
 // A timeout on every execution of the command.
@@ -1139,33 +1142,43 @@ struct Reducer
     return false;
   }
 
-  // try to replace a concrete value with a trivial constant
+  // Try to replace a concrete value with a trivial constant.
   bool tryToReduceCurrentToConst() {
     auto* curr = getCurrent();
-    if (curr->is<Const>()) {
-      return false;
-    }
-    // try to replace with a trivial value
-    if (curr->type.isNullable()) {
+
+    // References.
+    if (curr->type.isNullable() && !curr->is<RefNull>()) {
       RefNull* n = builder->makeRefNull(curr->type.getHeapType());
       return tryToReplaceCurrent(n);
     }
+
+    // Tuples.
     if (curr->type.isTuple() && curr->type.isDefaultable()) {
       Expression* n =
         builder->makeConstantExpression(Literal::makeZeros(curr->type));
+      if (ExpressionAnalyzer::equal(n, curr)) {
+        return false;
+      }
       return tryToReplaceCurrent(n);
     }
+
+    // Numbers. We try to replace them with a 0 or a 1.
     if (!curr->type.isNumber()) {
       return false;
     }
-    // It's a number: try to replace it with a 0 or a 1 (trying more values
-    // could make sense too, but these handle most cases).
     auto* c = builder->makeConst(Literal::makeZero(curr->type));
+    if (ExpressionAnalyzer::equal(c, curr)) {
+      // It's already a zero.
+      return false;
+    }
     if (tryToReplaceCurrent(c)) {
       return true;
     }
+    // It's not a zero. Try to make it a 1, if it isn't already.
     c->value = Literal::makeOne(curr->type);
-    c->type = curr->type;
+    if (ExpressionAnalyzer::equal(c, curr)) {
+      return false;
+    }
     return tryToReplaceCurrent(c);
   }
 
