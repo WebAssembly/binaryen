@@ -20,6 +20,7 @@
 #include "ir/manipulation.h"
 #include "parsing.h"
 #include "wasm.h"
+#include <optional>
 
 namespace wasm {
 
@@ -189,15 +190,7 @@ public:
                      bool>;
 
   template<typename T, bool_if_not_expr_t<T> = true>
-  Block* makeBlock(const T& items) {
-    auto* ret = wasm.allocator.alloc<Block>();
-    ret->list.set(items);
-    ret->finalize();
-    return ret;
-  }
-
-  template<typename T, bool_if_not_expr_t<T> = true>
-  Block* makeBlock(const T& items, Type type) {
+  Block* makeBlock(const T& items, std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->list.set(items);
     ret->finalize(type);
@@ -205,38 +198,29 @@ public:
   }
 
   template<typename T, bool_if_not_expr_t<T> = true>
-  Block* makeBlock(Name name, const T& items, Type type) {
+  Block* makeBlock(Name name,
+                   const T& items,
+                   std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
     ret->finalize(type);
     return ret;
   }
-  Block* makeBlock(std::initializer_list<Expression*>&& items) {
-    return makeBlock(items);
-  }
-  Block* makeBlock(std::initializer_list<Expression*>&& items, Type type) {
+  Block* makeBlock(std::initializer_list<Expression*>&& items,
+                   std::optional<Type> type = std::nullopt) {
     return makeBlock(items, type);
   }
-  Block*
-  makeBlock(Name name, std::initializer_list<Expression*>&& items, Type type) {
+  Block* makeBlock(Name name,
+                   std::initializer_list<Expression*>&& items,
+                   std::optional<Type> type = std::nullopt) {
     return makeBlock(name, items, type);
   }
 
   If* makeIf(Expression* condition,
              Expression* ifTrue,
-             Expression* ifFalse = nullptr) {
-    auto* ret = wasm.allocator.alloc<If>();
-    ret->condition = condition;
-    ret->ifTrue = ifTrue;
-    ret->ifFalse = ifFalse;
-    ret->finalize();
-    return ret;
-  }
-  If* makeIf(Expression* condition,
-             Expression* ifTrue,
-             Expression* ifFalse,
-             Type type) {
+             Expression* ifFalse = nullptr,
+             std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<If>();
     ret->condition = condition;
     ret->ifTrue = ifTrue;
@@ -244,14 +228,9 @@ public:
     ret->finalize(type);
     return ret;
   }
-  Loop* makeLoop(Name name, Expression* body) {
-    auto* ret = wasm.allocator.alloc<Loop>();
-    ret->name = name;
-    ret->body = body;
-    ret->finalize();
-    return ret;
-  }
-  Loop* makeLoop(Name name, Expression* body, Type type) {
+  Loop* makeLoop(Name name,
+                 Expression* body,
+                 std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<Loop>();
     ret->name = name;
     ret->body = body;
@@ -792,77 +771,47 @@ private:
                const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
                Name delegateTarget,
-               Type type,
-               bool hasType) { // differentiate whether a type was passed in
+               std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<Try>();
     ret->name = name;
     ret->body = body;
     ret->catchTags.set(catchTags);
     ret->catchBodies.set(catchBodies);
-    if (hasType) {
-      ret->finalize(type);
-    } else {
-      ret->finalize();
-    }
+    ret->finalize(type);
     return ret;
   }
 
 public:
-  Try* makeTry(Expression* body,
-               const std::vector<Name>& catchTags,
-               const std::vector<Expression*>& catchBodies) {
-    return makeTry(
-      Name(), body, catchTags, catchBodies, Name(), Type::none, false);
-  }
+  // TODO delete?
   Try* makeTry(Expression* body,
                const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
-               Type type) {
-    return makeTry(Name(), body, catchTags, catchBodies, Name(), type, true);
-  }
-  Try* makeTry(Name name,
-               Expression* body,
-               const std::vector<Name>& catchTags,
-               const std::vector<Expression*>& catchBodies) {
-    return makeTry(
-      name, body, catchTags, catchBodies, Name(), Type::none, false);
+               std::optional<Type> type = std::nullopt) {
+    return makeTry(Name(), body, catchTags, catchBodies, Name(), type);
   }
   Try* makeTry(Name name,
                Expression* body,
                const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
-               Type type) {
-    return makeTry(name, body, catchTags, catchBodies, Name(), type, true);
+               std::optional<Type> type = std::nullopt) {
+    return makeTry(name, body, catchTags, catchBodies, Name(), type);
   }
-  Try* makeTry(Expression* body, Name delegateTarget) {
-    return makeTry(Name(), body, {}, {}, delegateTarget, Type::none, false);
+  Try* makeTry(Expression* body,
+               Name delegateTarget,
+               std::optional<Type> type = std::nullopt) {
+    return makeTry(Name(), body, {}, {}, delegateTarget, type);
   }
-  Try* makeTry(Expression* body, Name delegateTarget, Type type) {
-    return makeTry(Name(), body, {}, {}, delegateTarget, type, true);
-  }
-  Try* makeTry(Name name, Expression* body, Name delegateTarget) {
-    return makeTry(name, body, {}, {}, delegateTarget, Type::none, false);
-  }
-  Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
-    return makeTry(name, body, {}, {}, delegateTarget, type, true);
-  }
-  TryTable* makeTryTable(Expression* body,
-                         const std::vector<Name>& catchTags,
-                         const std::vector<Name>& catchDests,
-                         const std::vector<bool>& catchRefs) {
-    auto* ret = wasm.allocator.alloc<TryTable>();
-    ret->body = body;
-    ret->catchTags.set(catchTags);
-    ret->catchDests.set(catchDests);
-    ret->catchRefs.set(catchRefs);
-    ret->finalize(&wasm);
-    return ret;
+  Try* makeTry(Name name,
+               Expression* body,
+               Name delegateTarget,
+               std::optional<Type> type = std::nullopt) {
+    return makeTry(name, body, {}, {}, delegateTarget, type);
   }
   TryTable* makeTryTable(Expression* body,
                          const std::vector<Name>& catchTags,
                          const std::vector<Name>& catchDests,
                          const std::vector<bool>& catchRefs,
-                         Type type) {
+                         std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<TryTable>();
     ret->body = body;
     ret->catchTags.set(catchTags);
@@ -1359,8 +1308,10 @@ public:
   // ensure a node is a block, if it isn't already, and optionally append to the
   // block this variant sets a name for the block, so it will not reuse a block
   // already named
-  Block*
-  blockifyWithName(Expression* any, Name name, Expression* append = nullptr) {
+  Block* blockifyWithName(Expression* any,
+                          Name name,
+                          Expression* append = nullptr,
+                          std::optional<Type> type = std::nullopt) {
     Block* block = nullptr;
     if (any) {
       block = any->dynCast<Block>();
@@ -1371,21 +1322,16 @@ public:
     block->name = name;
     if (append) {
       block->list.push_back(append);
-      block->finalize();
+      block->finalize(type);
     }
     return block;
   }
 
   // a helper for the common pattern of a sequence of two expressions. Similar
   // to blockify, but does *not* reuse a block if the first is one.
-  Block* makeSequence(Expression* left, Expression* right) {
-    auto* block = makeBlock(left);
-    block->list.push_back(right);
-    block->finalize();
-    return block;
-  }
-
-  Block* makeSequence(Expression* left, Expression* right, Type type) {
+  Block* makeSequence(Expression* left,
+                      Expression* right,
+                      std::optional<Type> type = std::nullopt) {
     auto* block = makeBlock(left);
     block->list.push_back(right);
     block->finalize(type);

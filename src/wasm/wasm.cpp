@@ -141,9 +141,7 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
 
-static void
-handleUnreachable(Block* block,
-                  Block::Breakability breakability = Block::Unknown) {
+static void handleUnreachable(Block* block, Block::Breakability breakability) {
   if (block->type == Type::unreachable) {
     return; // nothing to do
   }
@@ -174,13 +172,21 @@ handleUnreachable(Block* block,
   }
 }
 
-void Block::finalize() {
+void Block::finalize(std::optional<Type> type_, Breakability breakability) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && list.size() > 0) {
+      handleUnreachable(this, breakability);
+    }
+    return;
+  }
+
   if (list.size() == 0) {
     type = Type::none;
     return;
   }
-  // The default type is what is at the end. Next we need to see if breaks and/
-  // or unreachability change that.
+  // The default type is what is at the end. Next we need to see if breaks
+  // and/ or unreachability change that.
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
@@ -193,10 +199,7 @@ void Block::finalize() {
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {
-    // Calculate the supertype of the branch types and the flowed-out type. If
-    // there is no supertype among the available types, assume the current type
-    // is already correct. TODO: calculate proper LUBs to compute a new correct
-    // type in this situation.
+    // Calculate the LUB of the branch types and the flowed-out type.
     seeker.types.insert(type);
     type = Type::getLeastUpperBound(seeker.types);
   } else {
@@ -205,30 +208,17 @@ void Block::finalize() {
   }
 }
 
-void Block::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this);
+void If::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && (condition->type == Type::unreachable ||
+                               (ifFalse && ifTrue->type == Type::unreachable &&
+                                ifFalse->type == Type::unreachable))) {
+      type = Type::unreachable;
+    }
+    return;
   }
-}
 
-void Block::finalize(Type type_, Breakability breakability) {
-  type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, breakability);
-  }
-}
-
-void If::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && (condition->type == Type::unreachable ||
-                             (ifFalse && ifTrue->type == Type::unreachable &&
-                              ifFalse->type == Type::unreachable))) {
-    type = Type::unreachable;
-  }
-}
-
-void If::finalize() {
   type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
                  : Type::none;
   // if the arms return a value, leave it even if the condition
@@ -244,14 +234,16 @@ void If::finalize() {
   }
 }
 
-void Loop::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && body->type == Type::unreachable) {
-    type = Type::unreachable;
+void Loop::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && body->type == Type::unreachable) {
+      type = Type::unreachable;
+    }
+  } else {
+    type = body->type;
   }
 }
-
-void Loop::finalize() { type = body->type; }
 
 void Break::finalize() {
   if (condition) {
@@ -874,25 +866,25 @@ void TableCopy::finalize() {
   }
 }
 
-void Try::finalize() {
-  // If none of the component bodies' type is a supertype of the others, assume
-  // the current type is already correct. TODO: Calculate a proper LUB.
-  std::unordered_set<Type> types{body->type};
-  types.reserve(catchBodies.size());
-  for (auto catchBody : catchBodies) {
-    types.insert(catchBody->type);
-  }
-  type = Type::getLeastUpperBound(types);
-}
+void Try::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    bool allUnreachable = body->type == Type::unreachable;
+    for (auto catchBody : catchBodies) {
+      allUnreachable &= catchBody->type == Type::unreachable;
+    }
+    if (type == Type::none && allUnreachable) {
+      type = Type::unreachable;
+    }
 
-void Try::finalize(Type type_) {
-  type = type_;
-  bool allUnreachable = body->type == Type::unreachable;
-  for (auto catchBody : catchBodies) {
-    allUnreachable &= catchBody->type == Type::unreachable;
-  }
-  if (type == Type::none && allUnreachable) {
-    type = Type::unreachable;
+  } else {
+    // Calculate the LUB of catch bodies' types.
+    std::unordered_set<Type> types{body->type};
+    types.reserve(catchBodies.size());
+    for (auto catchBody : catchBodies) {
+      types.insert(catchBody->type);
+    }
+    type = Type::getLeastUpperBound(types);
   }
 }
 
@@ -928,15 +920,14 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
   }
 }
 
-void TryTable::finalize(Module* wasm) {
-  type = body->type;
-  populateTryTableSentTypes(this, wasm);
-}
-
-void TryTable::finalize(Type type_, Module* wasm) {
-  type = type_;
-  if (type == Type::none && body->type == Type::unreachable) {
-    type = Type::unreachable;
+void TryTable::finalize(std::optional<Type> type_, Module* wasm) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && body->type == Type::unreachable) {
+      type = Type::unreachable;
+    }
+  } else {
+    type = body->type;
   }
   populateTryTableSentTypes(this, wasm);
 }
