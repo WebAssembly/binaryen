@@ -121,8 +121,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // If the value is not a constant, then it is unknown and we must give up.
+    // If the value is not a constant, then it is unknown and we must give up
+    // on simply applying a constant. However, we can try to use subtyping.
     if (!info.isConstant()) {
+      optimizeUsingSubTyping(curr);
       return;
     }
 
@@ -143,6 +145,32 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
+  }
+
+  // If a field has more than one possible value based on our propagation of
+  // subtype values, we can try to look at subtypes in a more sophisticated
+  // manner. For example, consider types A :> B1, B2 (B1, B2 are sibling
+  // subtypes of A). If we have a struct.get of A, and B1 and B2 have different
+  // values for the field, then we do not have one possible value as we look for
+  // above. But imagine that A is never constructed - it is an abstract type -
+  // and the field is immutable and constant in each of B1 and B2, such as for
+  // example a vtable is (as instances of a class always get the same vtable).
+  // Then we can replace the struct.get with this:
+  //
+  //  (select
+  //    (global.get $B1$vtable)
+  //    (global.get $B2$vtable)
+  //    (ref.test $B1 (..ref..))
+  //  )
+  //
+  // That is, we need to differentiate between the two types in order to pick
+  // between two values, and we can do that with a ref.test. By itself this is
+  // likely not faster than just doing a struct.get, but imagine that the parent
+  // of the select is an itable call (another get, and then a call_ref): then
+  // having a select here allows us to further optimize all the way down into a
+  // ref.test that picks between two *direct* calls.
+  void optimizeUsingSubTyping(StructGet* curr) {
+    // TODO
   }
 
   void doWalkFunction(Function* func) {
