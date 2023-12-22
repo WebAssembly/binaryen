@@ -1594,9 +1594,11 @@ template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
-  auto type = reftype(ctx);
-  CHECK_ERR(type);
-  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
+  auto in = reftype(ctx);
+  CHECK_ERR(in);
+  auto out = reftype(ctx);
+  CHECK_ERR(out);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *in, *out);
 }
 
 template<typename Ctx>

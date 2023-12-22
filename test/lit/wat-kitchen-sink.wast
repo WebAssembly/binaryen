@@ -3549,7 +3549,7 @@
   block (result i31ref)
    block (result (ref any))
     local.get 0
-    br_on_cast 1 i31ref
+    br_on_cast 1 anyref i31ref
    end
    unreachable
   end
@@ -3574,7 +3574,7 @@
   block (result (ref any))
    block (result i31ref)
     local.get 0
-    br_on_cast_fail 1 i31ref
+    br_on_cast_fail 1 anyref i31ref
    end
    unreachable
   end
