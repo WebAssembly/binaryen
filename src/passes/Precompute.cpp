@@ -350,7 +350,26 @@ struct Precompute
   void tryToPartiallyPrecompute(Expression* curr) {
     // TODO: only when optlevel = 3? measure speeds
 
+    // Avoid fixing up unreachable code here; leave it for DCE.
     if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // In normal precomputing we replace the entire expression with the result.
+    // Here we only precompute part of the expression, so we can have dangling
+    // references like this:
+    //
+    //  (block $name
+    //    (select
+    //      ..
+    //      ..
+    //      (block
+    //        (br_if $target
+    //
+    // That is, the condition can refer to a control flow structure, and the
+    // condition would remain in the output. Ignore all control flow for
+    // simplicity.
+    if (Properties::isControlFlowStructure(curr)) {
       return;
     }
 

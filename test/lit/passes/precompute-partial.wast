@@ -149,4 +149,34 @@
       )
     )
   )
+
+  ;; CHECK:      (func $control-flow (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (block $target (result i32)
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (br_if $target
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $control-flow (param $param i32) (result i32)
+    ;; We ignore control flow structures to avoid issues with removing them but
+    ;; still having references to their name.
+    (block $target (result i32)
+      (select
+        (i32.const 0)
+        ;; Something nonconstant to avoid the entire testcase becoming trivial.
+        (local.get $param)
+        ;; If we precomputed the block into the select arms, this br_if
+        ;; would have nowhere to go.
+        (br_if $target
+          (i32.const 1)
+          (local.get $param)
+        )
+      )
+    )
+  )
 )
