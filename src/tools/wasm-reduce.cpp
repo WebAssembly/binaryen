@@ -1166,19 +1166,23 @@ struct Reducer
     if (!curr->type.isNumber()) {
       return false;
     }
-    auto* c = builder->makeConst(Literal::makeZero(curr->type));
-    if (ExpressionAnalyzer::equal(c, curr)) {
+    auto* existing = curr->dynCast<Const>();
+    if (existing && existing->value.isZero()) {
       // It's already a zero.
       return false;
     }
+    auto* c = builder->makeConst(Literal::makeZero(curr->type));
     if (tryToReplaceCurrent(c)) {
       return true;
     }
-    // It's not a zero. Try to make it a 1, if it isn't already.
-    c->value = Literal::makeOne(curr->type);
-    if (ExpressionAnalyzer::equal(c, curr)) {
+    // It's not a zero, and can't be replaced with a zero. Try to make it a one,
+    // if it isn't already.
+    if (existing &&
+        existing->value == Literal::makeFromInt32(1, existing->type)) {
+      // It's already a one.
       return false;
     }
+    c->value = Literal::makeOne(curr->type);
     return tryToReplaceCurrent(c);
   }
 
