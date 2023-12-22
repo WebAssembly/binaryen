@@ -31,6 +31,9 @@
     ;; We can apply the struct.get to the select arms: As the globals are all
     ;; immutable, we can read the function references from them, and emit a
     ;; select on those values, saving the struct.get operation entirely.
+    ;;
+    ;; Note that this test also checks updating the type of the select, which
+    ;; initially returned a struct, and afterwards returns a func.
     (struct.get $vtable 0
       (select
         (global.get $A$vtable)
