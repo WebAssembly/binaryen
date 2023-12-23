@@ -69,35 +69,27 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
 void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  struct SentTypesVisitor : public Visitor<SentTypesVisitor> {
-
-    T& func;
-
-    SentTypesVisitor(T& func) : func(func) {}
-
-    void visitBreak(Break* br) {
-      func(br->name, br->value ? br->value->type : Type::none);
-    }
-
-    void visitSwitch(Switch* sw) {
-      for (Name& name : sw->targets) {
-        func(name, sw->value ? sw->value->type : Type::none);
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value ? br->value->type : Type::none);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value ? sw->value->type : Type::none);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->getSentType());
+    } else if (auto* r = expr->dynCast<Resume>()) {
+      auto& sentTypes = r->getSentTypes();
+      for (Index i = 0; i < r->handlerTags.size(); i++) {
+        auto dest = r->handlerTags[i];
+        if (dest == name) {
+          func(name, sentTypes[i]);
+        }
       }
-      func(sw->default_, sw->value ? sw->value->type : Type::none);
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
-
-    void visitBrOn(BrOn* br) { func(br->name, br->getSentType()); }
-
-    void visitResume(Resume* res) {
-      auto& sentTypes = res->getSentTypes();
-      for (size_t i = 0; i < res->handlerBlocks.size(); i++) {
-        func(res->handlerBlocks[i], sentTypes[i]);
-      }
-    }
-
-  } visitor(func);
-
-  visitor.visit(expr);
+  });
 }
 
 // Similar to operateOnScopeNameUses, but also passes in the expression that is
