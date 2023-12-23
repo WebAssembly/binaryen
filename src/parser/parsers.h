@@ -2094,7 +2094,7 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   }
 
   if (ctx.in.takeSExprStart("sub"sv)) {
-    if (ctx.in.takeKeyword("open"sv)) {
+    if (!ctx.in.takeKeyword("final"sv)) {
       ctx.setOpen();
     }
     if (auto super = maybeTypeidx(ctx)) {

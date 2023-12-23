@@ -29,7 +29,7 @@
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct ))
-  (type $s0 (sub (struct)))
+  (type $s0 (struct))
   ;; CHECK:       (type $s1 (struct ))
   (type $s1 (struct (field)))
  )
@@ -198,17 +198,17 @@
  (type $any-array (array (mut anyref)))
 
  (rec
-   (type $void (sub open (func)))
+   (type $void (sub (func)))
  )
 
  ;; CHECK:      (type $subvoid (sub final $void (func)))
- (type $subvoid (sub $void (func)))
+ (type $subvoid (sub final $void (func)))
 
- (type $many (sub open (func (param $x i32) (param i64 f32) (param) (param $y f64)
+ (type $many (sub (func (param $x i32) (param i64 f32) (param) (param $y f64)
                              (result anyref (ref func)))))
 
  ;; CHECK:      (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
- (type $submany (sub $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
+ (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
