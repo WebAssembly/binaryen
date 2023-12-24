@@ -3087,7 +3087,9 @@ private:
     if (options.optimizeLevel < 2 || options.shrinkLevel > 0) {
       return nullptr;
     }
-    const auto MIN_COST = 7;
+    // This should be synced with TooCostlyToRunUnconditionally
+    // in src/passes/RemoveUnusedBrs.cpp
+    const auto MIN_COST = 9;
     assert(binary->op == AndInt32 || binary->op == OrInt32);
     if (binary->right->is<Const>()) {
       return nullptr; // trivial
