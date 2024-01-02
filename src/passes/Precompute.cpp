@@ -386,16 +386,19 @@ struct Precompute
 
     // This has the general shape, so do the more intensive work to see if it
     // can be optimized. First, exit early if there are any side effects that
-    // would prevent us from operating. Specifically, we need to check the
+    // would prevent us from optimizing. Specifically, we need to check the
     // operation outside the select and the select's arms, but not the select's
     // condition (which will remain as-is). We can also ignore trap side effects
     // as those will be handled in precomputeExpression below (if we trap, we'll
-    // fail to precompute).
+    // fail to precompute). TODO: We could also ignore exceptions, like traps,
+    // if they are not actually thrown, if/when wasm gets throwing variants of
+    // trapping operations.
     auto& options = getPassOptions();
     auto& wasm = *getModule();
     if (ShallowEffectAnalyzer(options, wasm, curr).hasNonTrapSideEffects() ||
         EffectAnalyzer(options, wasm, select->ifTrue).hasNonTrapSideEffects() ||
-        EffectAnalyzer(options, wasm, select->ifFalse).hasNonTrapSideEffects()) {
+        EffectAnalyzer(options, wasm, select->ifFalse)
+          .hasNonTrapSideEffects()) {
       return;
     }
 
