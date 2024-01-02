@@ -300,9 +300,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto heapType = curr->ref->type.getHeapType();
     auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
     replaceCurrent(builder.makeSelect(
+      builder.makeRefTest(nnRef, Type(testType, NonNullable)),
       makeExpression(values[testIndex], heapType, curr->index),
-      makeExpression(values[1 - testIndex], heapType, curr->index),
-      builder.makeRefTest(nnRef, Type(testType, NonNullable))));
+      makeExpression(values[1 - testIndex], heapType, curr->index)));
     changed = true;
   }
 
