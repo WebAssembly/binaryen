@@ -3,18 +3,20 @@
 
 (module
   ;; sleep_async should have a wrapper function built.
+  (import "js" "sleep_async" (func $sleep_async (param f64) (result i32)))
   ;; CHECK:      (type $0 (func (param f64) (result i32)))
 
   ;; CHECK:      (type $1 (func (param externref f64) (result i32)))
 
   ;; CHECK:      (import "js" "sleep_sync" (func $sleep_sync (type $0) (param f64) (result i32)))
-  (import "js" "sleep_async" (func $sleep_async (param f64) (result i32)))
-  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (type $1) (param externref f64) (result i32)))
   (import "js" "sleep_sync" (func $sleep_sync (param f64) (result i32)))
+  (export "update_state_async" (func $update_state_async))
+  ;; CHECK:      (import "js" "sleep_async" (func $import$sleep_async (type $1) (param externref f64) (result i32)))
+
   ;; CHECK:      (global $suspender (mut externref) (ref.null noextern))
 
   ;; CHECK:      (export "update_state_async" (func $export$update_state_async))
-  (export "update_state_async" (func $update_state_async))
+
   ;; CHECK:      (export "update_state_sync" (func $update_state_sync))
   (export "update_state_sync" (func $update_state_sync))
   ;; This function calls an async sleep so a wrapper should be created for it.

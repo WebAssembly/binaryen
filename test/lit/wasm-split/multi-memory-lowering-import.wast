@@ -3,14 +3,15 @@
 ;; RUN: wasm-opt %s --multi-memory-lowering -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
-
-  ;; CHECK:      (type $1 (func (param i32) (result i32)))
-
-  ;; CHECK:      (import "env" "mem" (memory $combined_memory 2 2))
   (import "env" "mem" (memory $memory1 1 1))
   (memory $memory2 1 1)
 )
+
+;; CHECK:      (type $0 (func (result i32)))
+
+;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+;; CHECK:      (import "env" "mem" (memory $combined_memory 2 2))
 
 ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
 

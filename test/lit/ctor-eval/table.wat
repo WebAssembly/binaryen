@@ -10,11 +10,6 @@
 
  (elem (i32.const 0) $nop)
 
- ;; CHECK:      (elem $0 (i32.const 0) $nop)
-
- ;; CHECK:      (elem declare func $trap)
-
- ;; CHECK:      (export "run" (func $run_3))
  (export "run" (func $run))
 
  (func $run (type $none_=>_none)
@@ -34,6 +29,12 @@
    (i32.const 0)
   )
  )
+
+ ;; CHECK:      (elem $0 (i32.const 0) $nop)
+
+ ;; CHECK:      (elem declare func $trap)
+
+ ;; CHECK:      (export "run" (func $run_3))
 
  ;; CHECK:      (func $nop (type $none_=>_none)
  ;; CHECK-NEXT:  (nop)

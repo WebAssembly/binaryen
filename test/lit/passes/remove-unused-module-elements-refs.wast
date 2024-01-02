@@ -469,19 +469,17 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $1 (func (param funcref)))
-
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
-  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
-
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
+
+  ;; CHECK:      (type $1 (func (param funcref)))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+
+  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
 
   ;; CHECK:      (elem declare func $target-drop $target-keep)
 
@@ -495,6 +493,12 @@
   ;; CHECK-NEXT:   (ref.func $target-drop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
+
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
+
   ;; OPEN_WORLD:      (elem declare func $target-drop $target-keep)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))
@@ -546,19 +550,17 @@
   ;; OPEN_WORLD:      (type $A (func))
   (type $A (func))
 
-  ;; CHECK:      (type $1 (func (param funcref)))
-
-  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
-  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
-
-  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
   (import "binaryen-intrinsics" "call.without.effects"
     (func $call-without-effects (param funcref)))
 
-  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
-  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
   (import "other" "import"
     (func $other-import (param funcref)))
+
+  ;; CHECK:      (type $1 (func (param funcref)))
+
+  ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+
+  ;; CHECK:      (import "other" "import" (func $other-import (type $1) (param funcref)))
 
   ;; CHECK:      (elem declare func $target-keep $target-keep-2)
 
@@ -576,6 +578,12 @@
   ;; CHECK-NEXT:   (ref.func $target-keep-2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; OPEN_WORLD:      (type $1 (func (param funcref)))
+
+  ;; OPEN_WORLD:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param funcref)))
+
+  ;; OPEN_WORLD:      (import "other" "import" (func $other-import (type $1) (param funcref)))
+
   ;; OPEN_WORLD:      (elem declare func $target-keep $target-keep-2)
 
   ;; OPEN_WORLD:      (export "foo" (func $foo))

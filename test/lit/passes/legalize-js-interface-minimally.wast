@@ -16,14 +16,16 @@
 
   ;; CHECK:      (import "env" "imported" (func $imported (result i64)))
   (import "env" "imported" (func $imported (result i64)))
-  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
   (import "env" "invoke_vj" (func $invoke_vj (param i64)))
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
+
   ;; CHECK:      (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
 
   ;; CHECK:      (export "func" (func $func))
   (export "func" (func $func))
-  ;; CHECK:      (export "dynCall_foo" (func $legalstub$dyn))
   (export "dynCall_foo" (func $dyn))
+  ;; CHECK:      (export "dynCall_foo" (func $legalstub$dyn))
+
   ;; CHECK:      (func $func (result i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $imported)

@@ -10,22 +10,13 @@
 ;; RUN: cat %t.bin.nodebug.wast | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
 (module
+  (import "env" "table" (table 9 9 funcref))
+
   ;; CHECK-TEXT:      (type $0 (func))
 
   ;; CHECK-TEXT:      (type $1 (func (param i32 f64) (result i32)))
 
   ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 9 9 funcref))
-  ;; CHECK-BIN:      (type $0 (func))
-
-  ;; CHECK-BIN:      (type $1 (func (param i32 f64) (result i32)))
-
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
-  ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
-  ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 f64) (result i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
-  (import "env" "table" (table 9 9 funcref))
 
   ;; CHECK-TEXT:      (export "call_indirect" (func $call_indirect))
 
@@ -41,6 +32,12 @@
   ;; CHECK-TEXT-NEXT:   (i32.const 1)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (type $0 (func))
+
+  ;; CHECK-BIN:      (type $1 (func (param i32 f64) (result i32)))
+
+  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
+
   ;; CHECK-BIN:      (export "call_indirect" (func $call_indirect))
 
   ;; CHECK-BIN:      (func $call_indirect (type $0)
@@ -62,6 +59,12 @@
     (call_indirect (i32.const 1))
   )
 )
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 f64) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
+
 ;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $0))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)

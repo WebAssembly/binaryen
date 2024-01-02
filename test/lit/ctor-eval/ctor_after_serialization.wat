@@ -10,15 +10,7 @@
  ;; CHECK:      (type $A (struct ))
  (type $A (struct))
 
- ;; CHECK:      (type $1 (func (result (ref any))))
-
- ;; CHECK:      (type $2 (func))
-
- ;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
-
- ;; CHECK:      (export "new" (func $new_2))
  (export "new" (func $new))
- ;; CHECK:      (export "nop" (func $nop_3))
  (export "nop" (func $nop))
 
  (func $new (result (ref any))
@@ -29,6 +21,16 @@
   (nop)
  )
 )
+
+;; CHECK:      (type $1 (func (result (ref any))))
+
+;; CHECK:      (type $2 (func))
+
+;; CHECK:      (global $ctor-eval$global (ref $A) (struct.new_default $A))
+
+;; CHECK:      (export "new" (func $new_2))
+
+;; CHECK:      (export "nop" (func $nop_3))
 
 ;; CHECK:      (func $new_2 (type $1) (result (ref any))
 ;; CHECK-NEXT:  (global.get $ctor-eval$global)
@@ -53,11 +55,7 @@
   (struct.new_default $A)
  )
 
- ;; CHECK:      (global $ctor-eval$global_1 (ref $A) (struct.new_default $A))
-
- ;; CHECK:      (export "new" (func $new_2))
  (export "new" (func $new))
- ;; CHECK:      (export "nop" (func $nop_3))
  (export "nop" (func $nop))
 
  (func $new (result (ref any))
@@ -69,6 +67,12 @@
   (global.get $ctor-eval$global)
  )
 )
+;; CHECK:      (global $ctor-eval$global_1 (ref $A) (struct.new_default $A))
+
+;; CHECK:      (export "new" (func $new_2))
+
+;; CHECK:      (export "nop" (func $nop_3))
+
 ;; CHECK:      (func $new_2 (type $1) (result (ref any))
 ;; CHECK-NEXT:  (global.get $ctor-eval$global_1)
 ;; CHECK-NEXT: )

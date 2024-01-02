@@ -12,10 +12,13 @@
 (module
   ;; CHECK-TEXT:      (import "env" "memory" (memory $0 256))
   ;; CHECK-BIN:      (import "env" "memory" (memory $0 256))
-  ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 256))
   (import "env" "memory" (memory $0 256))
-  ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 256 funcref))
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 256 funcref))
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 256 funcref))
   (import "env" "table" (table 256 funcref))
 )
+;; CHECK-TEXT:      (import "env" "table" (table $timport$0 256 funcref))
+
+;; CHECK-BIN:      (import "env" "table" (table $timport$0 256 funcref))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 256))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 256 funcref))

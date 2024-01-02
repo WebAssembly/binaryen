@@ -174,11 +174,7 @@
 
   (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
   (import "env" "import_global" (global $import_global eqref))
-  ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
-
-  ;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))
   (export "export_func" (func $import_func (param eqref) (result funcref)))
-  ;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
   (export "export_global" (global $import_global))
 
   ;; Test global initializer expressions
@@ -1846,6 +1842,12 @@
   ;; CHECK-BIN-NEXT: )
   (func $ref-taken-but-not-in-table)
 )
+;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32))
+
+;; CHECK-BIN-NODEBUG:      (export "export_func" (func $fimport$0))
+
+;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
+
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
