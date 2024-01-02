@@ -32,7 +32,7 @@
     (ref.func $B$func)
   ))
 
-  ;; CHECK:      (func $test-expanded (type $5) (param $x i32) (result funcref)
+  ;; CHECK:      (func $test-expanded (type $1) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (select (result (ref $specific-func))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
@@ -55,7 +55,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-subtyping (type $5) (param $x i32) (result funcref)
+  ;; CHECK:      (func $test-subtyping (type $1) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (select (result (ref $specific-func))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
@@ -95,6 +95,27 @@
           (global.get $B$vtable)
           (local.get $x)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-trap (type $1) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (struct.get $vtable 0
+  ;; CHECK-NEXT:   (select (result (ref null $vtable))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (global.get $B$vtable)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-trap (export "test-trap") (param $x i32) (result funcref)
+    ;; One arm has a null, which makes the struct.get trap, so there is nothing
+    ;; to optimize here.
+    (struct.get $vtable 0
+      (select
+        (ref.null $vtable)
+        (global.get $B$vtable)
+        (local.get $x)
       )
     )
   )
