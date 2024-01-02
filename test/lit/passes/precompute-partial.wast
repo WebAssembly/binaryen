@@ -240,8 +240,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $control-flow (param $param i32) (result i32)
-    ;; We ignore control flow structures to avoid issues with removing them but
-    ;; still having references to their name.
+    ;; We ignore control flow structures to avoid issues with removing them (as
+    ;; the condition might refer to them, as in this testcase).
     (block $target (result i32)
       (select
         (i32.const 0)
