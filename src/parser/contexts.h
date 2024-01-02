@@ -1249,6 +1249,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
+  Result<>
+  addMemory(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
+    return Ok{};
+  }
+
   Result<> addGlobal(Name,
                      const std::vector<Name>&,
                      ImportNames*,
@@ -1259,7 +1264,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> addImplicitElems(Type type, std::vector<Expression*>&& elems);
 
   Result<> addDeclareElem(Name, std::vector<Expression*>&&, Index) {
-    // TODO: Validate that referenced functions appear in a declaratve element
+    // TODO: Validate that referenced functions appear in a declarative element
     // segment.
     return Ok{};
   }
@@ -1272,6 +1277,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
+  Result<>
+  addTag(Name, const std::vector<Name>, ImportNames*, TypeUseT, Index) {
+    return Ok{};
+  }
 
   Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
     wasm.addExport(builder.makeExport(name, value, kind));
