@@ -231,7 +231,7 @@
   ;; CHECK-NEXT:  (block $target (result i32)
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (br_if $target
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:     (local.get $param)
@@ -245,8 +245,7 @@
     (block $target (result i32)
       (select
         (i32.const 0)
-        ;; Something nonconstant to avoid the entire testcase becoming trivial.
-        (local.get $param)
+        (i32.const 1)
         ;; If we precomputed the block into the select arms, this br_if
         ;; would have nowhere to go.
         (br_if $target
