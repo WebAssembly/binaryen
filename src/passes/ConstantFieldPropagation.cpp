@@ -144,7 +144,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   // Given information about a constant value, and the struct type and index it
   // is read from, create an expression for that value.
-  Expression* makeExpression(const PossibleConstantValues& info, HeapType type, Index index) {
+  Expression* makeExpression(const PossibleConstantValues& info,
+                             HeapType type,
+                             Index index) {
     auto* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
@@ -251,7 +253,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // type cleanly distinguishes between them). Note that the returned type may
     // not actually be in that group, but it is computed from it (see below).
     auto findTestType = [&](Index index) -> std::optional<HeapType> {
-      auto& types = valueTypes[index];// TODO make these params
+      auto& types = valueTypes[index]; // TODO make these params
       auto& otherTypes = valueTypes[1 - index];
       // Compute the LUB of this set of types. That is the best type we can use
       // that includes all the types in it.
