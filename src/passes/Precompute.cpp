@@ -389,7 +389,7 @@ struct Precompute
       auto ifTrue = precomputeExpression(copy);
       if (!canEmitConstantFor(ifTrue.values) || !ifTrue.values.isConcrete()) {
         // We failed to precompute anything, or it is a break and not a value.
-        // TODO: handle breaks
+        // TODO: optimize breaks
         return;
       }
       copyChildren.getChild(0) = select->ifFalse;
