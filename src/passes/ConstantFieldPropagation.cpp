@@ -241,9 +241,14 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // We should not have reached this function at all if there is a single
-    // value or no value, as those simple cases are optimized before.
-    assert(values[0].hasNoted() && values[1].hasNoted());
+    if (!values[1].hasNoted()) {
+      // We did not see two constant values (we might have seen just one, or
+      // even no constant values at all).
+      return;
+    }
+    // If we notes in index 1, we must have in 0, and also we must have types
+    // for both.
+    assert(values[0].hasNoted());
     assert(!valueTypes[0].empty() && !valueTypes[1].empty());
 
     // We have exactly two values to pick between. We can pick between those
