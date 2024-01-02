@@ -302,8 +302,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     replaceCurrent(builder.makeSelect(
       makeExpression(values[testIndex], heapType, curr->index),
       makeExpression(values[1 - testIndex], heapType, curr->index),
-      builder.makeRefTest(nnRef, Type(testType, NonNullable))
-    ));
+      builder.makeRefTest(nnRef, Type(testType, NonNullable))));
     changed = true;
   }
 
