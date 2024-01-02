@@ -27,6 +27,7 @@
 // looked at.
 //
 
+#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
@@ -347,10 +348,9 @@ struct Precompute
   // selects and ifs (OptimizeInstructions does that), but here we are
   // computing two constant which replace four expressions, so it is worthwhile.
   void tryToPartiallyPrecompute(Expression* curr) {
-    // TODO: only when optlevel = 3? measure speeds
-
-    // Avoid fixing up unreachable code here; leave it for DCE.
-    if (curr->type == Type::unreachable) {
+    // We can only optimize concrete types, so that the select has something to
+    // return.
+    if (!curr->type.isConcrete()) {
       return;
     }
 
@@ -374,36 +374,53 @@ struct Precompute
       return;
     }
 
-    // We are lookin
+    // We are looking for a single child which is a select.
     ChildIterator children(curr);
     if (children.getNumChildren() != 1) {
       return;
     }
-
-    if (auto* select = children.getChild(0)->dynCast<Select>()) {
-      // Copy the entire expression. Then in the copy, replace the select with
-      // each of its arms and precompute those.
-      auto* copy = ExpressionManipulator::copy(curr, *getModule());
-      ChildIterator copyChildren(copy);
-      copyChildren.getChild(0) = select->ifTrue;
-      auto ifTrue = precomputeExpression(copy);
-      if (!canEmitConstantFor(ifTrue.values) || !ifTrue.values.isConcrete()) {
-        // We failed to precompute anything, or it is a break and not a value.
-        // TODO: optimize breaks
-        return;
-      }
-      copyChildren.getChild(0) = select->ifFalse;
-      auto ifFalse = precomputeExpression(copy);
-      if (!canEmitConstantFor(ifFalse.values) || !ifFalse.values.isConcrete()) {
-        return;
-      }
-
-      // We precomputed them both successfully! Apply them.
-      select->ifTrue = ifTrue.getConstExpression(*getModule());
-      select->ifFalse = ifFalse.getConstExpression(*getModule());
-      select->type = select->ifTrue->type;
-      replaceCurrent(select);
+    auto* select = children.getChild(0)->dynCast<Select>();
+    if (!select) {
+      return;
     }
+
+    // This has the general shape, so do the more intensive work to see if it
+    // can be optimized. First, exit early if there are any side effects that
+    // would prevent us from operating. Specifically, we need to check the
+    // operation outside the select and the select's arms, but not the select's
+    // condition (which will remain as-is). We can also ignore trap side effects
+    // as those will be handled in precomputeExpression below (if we trap, we'll
+    // fail to precompute).
+    auto& options = getPassOptions();
+    auto& wasm = *getModule();
+    if (ShallowEffectAnalyzer(options, wasm, curr).hasNonTrapSideEffects() ||
+        EffectAnalyzer(options, wasm, select->ifTrue).hasNonTrapSideEffects() ||
+        EffectAnalyzer(options, wasm, select->ifFalse).hasNonTrapSideEffects()) {
+      return;
+    }
+
+    // Copy the entire expression. Then in the copy, replace the select with
+    // each of its arms and precompute those.
+    auto* copy = ExpressionManipulator::copy(curr, *getModule());
+    ChildIterator copyChildren(copy);
+    copyChildren.getChild(0) = select->ifTrue;
+    auto ifTrue = precomputeExpression(copy);
+    if (!canEmitConstantFor(ifTrue.values) || !ifTrue.values.isConcrete()) {
+      // We failed to precompute anything, or it is a break and not a value.
+      // TODO: optimize breaks
+      return;
+    }
+    copyChildren.getChild(0) = select->ifFalse;
+    auto ifFalse = precomputeExpression(copy);
+    if (!canEmitConstantFor(ifFalse.values) || !ifFalse.values.isConcrete()) {
+      return;
+    }
+
+    // We precomputed them both successfully! Apply them.
+    select->ifTrue = ifTrue.getConstExpression(*getModule());
+    select->ifFalse = ifFalse.getConstExpression(*getModule());
+    select->type = select->ifTrue->type;
+    replaceCurrent(select);
   }
 
   void visitFunction(Function* curr) {
