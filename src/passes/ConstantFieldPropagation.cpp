@@ -272,6 +272,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
           return {};
         }
       }
+      return lub;
     };
 
     Index testIndex = -1;
@@ -288,13 +289,17 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // Success!
+    // Success! We can replace the struct.get with a select over the two values
+    // (and a trap on null) with the proper ref.test.
     Builder builder(*getModule());
-    return builder.makeSelect(
-      makeExpression(values[testIndex], curr->ref->type, curr->index),
-      makeExpression(values[1 - testIndex], curr->ref->type, curr->index),
-      builder.makeRefTest(Type(testType, NonNullable)) // XXX trap on null etc
-    );
+    auto heapType = curr->ref->type.getHeapType();
+    auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
+    replaceCurrent(builder.makeSelect(
+      makeExpression(values[testIndex], heapType, curr->index),
+      makeExpression(values[1 - testIndex], heapType, curr->index),
+      builder.makeRefTest(nnRef, Type(testType, NonNullable))
+    ));
+    changed = true;
   }
 
   void doWalkFunction(Function* func) {
