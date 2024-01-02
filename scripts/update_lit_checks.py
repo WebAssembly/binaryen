@@ -40,7 +40,7 @@ MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 DECL_ITEMS = '|'.join(['type', 'global', 'memory', 'data', 'table',
                        'elem', 'tag', 'start', 'func'])
 IMPORT_ITEM = r'import\s*"[^"]*"\s*"[^"]*"\s*\((?:' + DECL_ITEMS + ')'
-EXPORT_ITEM = f'export\s*"[^"]*"\s*\((?:' + DECL_ITEMS + ')'
+EXPORT_ITEM = r'export\s*"[^"]*"\s*\((?:' + DECL_ITEMS + ')'
 ALL_ITEMS = DECL_ITEMS + '|' + IMPORT_ITEM + '|' + EXPORT_ITEM
 
 # Regular names as well as the "declare" in (elem declare ... to get declarative
