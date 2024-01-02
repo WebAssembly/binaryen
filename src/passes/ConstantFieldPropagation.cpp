@@ -267,15 +267,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       }
       // For that lub to work, the other types must all be disjoint.
       for (auto otherType : otherTypes) {
-        if (HeapType::isSubType(lub)) {
+        if (HeapType::isSubType(otherType, lub)) {
           // There is an intersection. Give up.
           return {};
         }
       }
     };
 
-    HeapType testType;
     Index testIndex = -1;
+    HeapType testType;
     for (Index i = 0; i < 2; i++) {
       if (auto test = findTestType(i)) {
         testType = *test;
@@ -283,8 +283,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         break;
       }
     }
-
-    if (testIndex = Index(-1)) {
+    if (testIndex == Index(-1)) {
       // We failed to find a simple way to separate the types.
       return;
     }
