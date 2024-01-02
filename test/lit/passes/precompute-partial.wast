@@ -78,6 +78,27 @@
     )
   )
 
+  ;; CHECK:      (func $test-expanded-twice (type $0) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded-twice (export "test-expanded-twice") (param $x i32) (result i32)
+    ;; As $test-expanded, but we have two operations that can be applied. Both
+    ;; references are non-null, so the select arms will become 0.
+    (ref.is_null
+      (struct.get $vtable 0
+        (select
+          (global.get $A$vtable)
+          (global.get $B$vtable)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $A$func (type $specific-func) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
