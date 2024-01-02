@@ -234,9 +234,52 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // We should not have reached this function at all if there is a single
     // value or no value, as those simple cases are optimized before.
     assert(values[0].hasNoted() && values[1].hasNoted());
+    assert(!valueTypes[0].empty() && !valueTypes[1].empty());
 
     // We have exactly two values to pick between. We can pick between those
-    // values using a single ref.test if the two sets of types are disjoint.
+    // values using a single ref.test if the two sets of types are actually
+    // disjoint. To do that, this helper function receives an index (0 or 1)
+    // and returns a type from that group that can be used in a ref.test, where
+    // yes will return that group and no will return the other group (i.e. the
+    // type cleanly distinguishes between them). Note that the returned type may
+    // not actually be in that group, but it is computed from it (see below).
+    auto findTestType = [&](Index index) -> std::optional<HeapType> {
+      auto& types = valueTypes[index];// TODO make these params
+      auto& otherTypes = valueTypes[1 - index];
+      // Compute the LUB of this set of types. That is the best type we can use
+      // that includes all the types in it.
+      HeapType lub = types[0];
+      for (Index i = 1; i < types.size(); i++) {
+        auto newLub = HeapType::getLeastUpperBound(lub, types[i]);
+        // These are both struct types, so there must be a lub.
+        assert(newLub);
+        lub = *newLub;
+      }
+      // For that lub to work, the other types must all be disjoint.
+      for (auto otherType : otherTypes) {
+        if (HeapType::isSubType(lub)) {
+          // There is an intersection. Give up.
+          return {};
+        }
+      }
+    };
+
+    HeapType testType;
+    Index testIndex = -1;
+    for (Index i = 0; i < 2; i++) {
+      if (auto test = findTestType(i)) {
+        testType = *test;
+        testIndex = i;
+        break;
+      }
+    }
+
+    if (testIndex = Index(-1)) {
+      // We failed to find a simple way to separate the types.
+      return;
+    }
+
+    // Success!
 ..
   }
 
