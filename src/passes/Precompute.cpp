@@ -324,7 +324,7 @@ struct Precompute
   }
 
   // If we failed to precompute a constant, perhaps we can still precompute part
-  // of this expression. Specifically, consider this case:
+  // of an expression. Specifically, consider this case:
   //
   //  (A
   //    (select
@@ -337,16 +337,15 @@ struct Precompute
   // Perhaps we can compute A(B) and A(C). If so, we can emit a better select:
   //
   //    (select
-  //      (result of A-of-B)
-  //      (result of A-of-C)
+  //      (constant result of A(B))
+  //      (constant result of A(C))
   //      (condition)
   //    )
   //  )
   //
   // Note that in general for code size we want to move operations *out* of
   // selects and ifs (OptimizeInstructions does that), but here we are
-  // computing a constant to replace nonconstant code, and it is definitely
-  // worthwhile.
+  // computing two constant which replace four expressions, so it is worthwhile.
   void tryToPartiallyPrecompute(Expression* curr) {
     // TODO: only when optlevel = 3? measure speeds
 
@@ -361,22 +360,26 @@ struct Precompute
     //
     //  (block $name
     //    (select
-    //      ..
-    //      ..
-    //      (block
+    //      (B)
+    //      (C)
+    //      (block ;; condition
     //        (br_if $target
     //
     // That is, the condition can refer to a control flow structure, and the
-    // condition would remain in the output. Ignore all control flow for
-    // simplicity.
+    // condition remain in the output, so if we remove that structure - which
+    // can happen if it is A in the comment above - then we have a problem.
+    // Ignore all control flow for simplicity, as they don't control and useful
+    // computation we want to precompute away anyhow.
     if (Properties::isControlFlowStructure(curr)) {
       return;
     }
 
+    // We are lookin
     ChildIterator children(curr);
     if (children.getNumChildren() != 1) {
       return;
     }
+
     if (auto* select = children.getChild(0)->dynCast<Select>()) {
       // Copy the entire expression. Then in the copy, replace the select with
       // each of its arms and precompute those.
@@ -399,7 +402,6 @@ struct Precompute
       select->ifTrue = ifTrue.getConstExpression(*getModule());
       select->ifFalse = ifFalse.getConstExpression(*getModule());
       select->type = select->ifTrue->type;
-      assert(select->type == select->ifFalse->type);
       replaceCurrent(select);
     }
   }

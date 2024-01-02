@@ -3,8 +3,20 @@
 ;; RUN: wasm-opt %s --precompute-propagate -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $vtable (struct (field funcref)))
-  (type $vtable (struct funcref))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
+    (type $vtable (sub (struct funcref)))
+
+    ;; CHECK:       (type $specific-func (sub (func (result i32))))
+    (type $specific-func (sub (func (result i32))))
+
+    ;; CHECK:       (type $specific-func.sub (sub $specific-func (func (result i32))))
+    (type $specific-func.sub (sub $specific-func (func (result i32))))
+
+    ;; CHECK:       (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
+    (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
+  )
 
   ;; CHECK:      (global $A$vtable (ref $vtable) (struct.new $vtable
   ;; CHECK-NEXT:  (ref.func $A$func)
@@ -20,8 +32,8 @@
     (ref.func $B$func)
   ))
 
-  ;; CHECK:      (func $test-expanded (type $3) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (select (result (ref $2))
+  ;; CHECK:      (func $test-expanded (type $5) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (select (result (ref $specific-func))
   ;; CHECK-NEXT:   (ref.func $A$func)
   ;; CHECK-NEXT:   (ref.func $B$func)
   ;; CHECK-NEXT:   (local.get $x)
@@ -43,18 +55,41 @@
     )
   )
 
-  ;; CHECK:      (func $A$func (type $2) (result i32)
+  ;; CHECK:      (func $test-subtyping (type $5) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (select (result (ref $specific-func))
+  ;; CHECK-NEXT:   (ref.func $A$func)
+  ;; CHECK-NEXT:   (ref.func $B$func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-subtyping (export "test-subtyping") (param $x i32) (result funcref)
+    ;; As above, but now we have struct.news directly in the arms, and one is
+    ;; of a subtype of the final result (which should not prevent optimization).
+    (struct.get $vtable.sub 0
+      (select
+        (struct.new $vtable.sub
+          (ref.func $A$func)
+        )
+        (struct.new $vtable.sub
+          (ref.func $B$func) ;; this function is of a subtype of the field type
+        )
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $A$func (type $specific-func) (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
-  (func $A$func (result i32)
+  (func $A$func (type $specific-func) (result i32)
     ;; Helper for above.
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $B$func (type $2) (result i32)
+  ;; CHECK:      (func $B$func (type $specific-func.sub) (result i32)
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
-  (func $B$func (result i32)
+  (func $B$func (type $specific-func.sub) (result i32)
     ;; Helper for above.
     (i32.const 2)
   )
