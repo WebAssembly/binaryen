@@ -92,6 +92,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (type == Type::unreachable) {
       return;
     }
+    auto heapType = type.getHeapType();
+    if (!heapType.isStruct()) {
+      return;
+    }
 
     Builder builder(*getModule());
 
@@ -100,7 +104,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
-    auto iter = propagatedInfos.find(type.getHeapType());
+    auto iter = propagatedInfos.find(heapType);
     if (iter != propagatedInfos.end()) {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
@@ -154,8 +158,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // values for the field, then we do not have one possible value as we look for
   // above. But imagine that A is never constructed - it is an abstract type -
   // and the field is immutable and constant in each of B1 and B2, such as for
-  // example a vtable is (as instances of a class always get the same vtable).
-  // Then we can replace the struct.get with this:
+  // example a vtable often is (as instances of a class always get the same
+  // vtable, in several toolchains). Then we can replace the struct.get with
+  // this:
   //
   //  (select
   //    (global.get $B1$vtable)
@@ -170,7 +175,69 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // having a select here allows us to further optimize all the way down into a
   // ref.test that picks between two *direct* calls.
   void optimizeUsingSubTyping(StructGet* curr) {
-    // TODO
+    // TODO: chak immutable
+
+    // We seek two possible values, and we track which types each use.
+    PossibleConstantValues values[2];
+    // TODO: SmallVector
+    std::vector<HeapType> valueTypes[2];
+
+    auto fail = false;
+
+    subTypes.iterSubTypes(curr->ref->type.getHeapType(), [&](HeapType type, Index depth) {
+      if (fail) {
+        // TODO: Add a mechanism to halt the iteration in the middle.
+        return;
+      }
+
+      auto iter = rawNewInfos.find(type);
+      if (iter == rawNewInfos.end()) {
+        // This type has no struct.news, so we can ignore it: it is abstract.
+        return;
+      }
+
+      auto value = iter->second[curr->index];
+      if (!value.isConstant()) {
+        // The value here is not constant, so give up entirely.
+        fail = true;
+        return;
+      }
+
+      // Consider the constant value compared to previous ones.
+      for (Index i = 0; i < 2; i++) {
+        if (!values[i].hasNoted()) {
+          // There is nothing in this slot: place this value there.
+          values[i] = value;
+          valueTypes[i].push_back(type);
+          break;
+        }
+        if (values[i] == value) {
+          // This value is the same as a previous one. Note the type.
+          valueTypes[i].push_back(type);
+          break;
+        }
+        // Otherwise, this value is different than values[i], which is fine:
+        // we can add it as the second value in the next loop iteration - at
+        // least, we can do that if there is another iteration: If it's already
+        // the last, we've failed to find only two values.
+        if (i == 1) {
+          fail = true;
+          return;
+        }
+      }
+    });
+
+    if (fail) {
+      return;
+    }
+
+    // We should not have reached this function at all if there is a single
+    // value or no value, as those simple cases are optimized before.
+    assert(values[0].hasNoted() && values[1].hasNoted());
+
+    // We have exactly two values to pick between. We can pick between those
+    // values using a single ref.test if the two sets of types are disjoint.
+..
   }
 
   void doWalkFunction(Function* func) {
