@@ -37,12 +37,15 @@ RUN_LINE_RE = re.compile(r'^\s*;;\s*RUN:\s*(.*)$')
 CHECK_PREFIX_RE = re.compile(r'.*--check-prefix[= ](\S+).*')
 MODULE_RE = re.compile(r'^\(module.*$', re.MULTILINE)
 
-ALL_ITEMS = '|'.join(['type', 'import', 'global', 'memory', 'data', 'table',
-                      'elem', 'tag', 'export', 'start', 'func'])
+DECL_ITEMS = '|'.join(['type', 'global', 'memory', 'data', 'table',
+                       'elem', 'tag', 'start', 'func'])
+IMPORT_ITEM = r'import\s*"[^"]*"\s*"[^"]*"\s*\((?:' + DECL_ITEMS + ')'
+EXPORT_ITEM = r'export\s*"[^"]*"\s*\((?:' + DECL_ITEMS + ')'
+ALL_ITEMS = DECL_ITEMS + '|' + IMPORT_ITEM + '|' + EXPORT_ITEM
 
 # Regular names as well as the "declare" in (elem declare ... to get declarative
 # segments included in the output.
-ITEM_NAME = r'\$[^\s()]*|"[^\s()]*"|declare'
+ITEM_NAME = r'\$[^\s()]*|\$"[^"]*"|declare'
 
 # FIXME: This does not handle nested string contents. For example,
 #  (data (i32.const 10) "hello(")
@@ -53,6 +56,11 @@ ITEM_RE = re.compile(r'(?:^\s*\(rec\s*)?(^\s*)\((' + ALL_ITEMS + r')\s+(' + ITEM
                      re.MULTILINE)
 
 FUZZ_EXEC_FUNC = re.compile(r'^\[fuzz-exec\] calling (?P<name>\S*)$')
+
+
+def indentKindName(match):
+    # Return the indent, kind, and name from an ITEM_RE match
+    return (match[1], match[2].split()[0], match[3])
 
 
 def warn(msg):
@@ -141,7 +149,7 @@ def parse_output_modules(text):
     for module in split_modules(text):
         items = []
         for match in ITEM_RE.finditer(module):
-            kind, name = match[2], match[3]
+            _, kind, name = indentKindName(match)
             end = find_end(module, match.end(1))
             lines = module[match.start():end].split('\n')
             items.append(((kind, name), lines))
@@ -247,7 +255,7 @@ def update_test(args, test, lines, tmp):
     for line in lines:
         match = ITEM_RE.match(line)
         if match:
-            kind, name = match[2], match[3]
+            _, kind, name = indentKindName(match)
             named_items.append((kind, name))
 
     script = script_name
@@ -286,7 +294,7 @@ def update_test(args, test, lines, tmp):
                 output_lines.append(line)
                 continue
 
-            indent, kind, name = match.groups()
+            indent, kind, name = indentKindName(match)
 
             for prefix, items in output.items():
                 # If the output for this prefix contains an item with this

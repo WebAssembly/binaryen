@@ -21,7 +21,6 @@
  (memory $0 256 256)
  ;; CHECK-TEXT:      (export "add" (func $add))
  ;; CHECK-BIN:      (export "add" (func $add))
- ;; CHECK-BIN-NODEBUG:      (export "add" (func $0))
  (export "add" (func $add))
  ;; CHECK-TEXT:      (func $add (type $i32_i32_=>_i32) (param $x i32) (param $y i32) (result i32)
  ;; CHECK-TEXT-NEXT:  (i32.add
@@ -42,6 +41,8 @@
   )
  )
 )
+;; CHECK-BIN-NODEBUG:      (export "add" (func $0))
+
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)

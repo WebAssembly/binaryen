@@ -13,9 +13,9 @@
   ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
 
   ;; CHECK:      (export "func" (func $legalstub$func))
-  (export "func" (func $func))
-  ;; CHECK:      (export "orig$func" (func $func))
 
+  ;; CHECK:      (export "orig$func" (func $func))
+  (export "func" (func $func))
   ;; CHECK:      (func $func (result i64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )

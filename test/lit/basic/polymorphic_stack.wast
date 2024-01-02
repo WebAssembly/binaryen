@@ -17,26 +17,13 @@
 
   ;; CHECK-BIN:      (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
+  (import "env" "table" (table 9 9 funcref))
+
   ;; CHECK-TEXT:      (type $2 (func))
 
   ;; CHECK-TEXT:      (type $3 (func (param i32)))
 
   ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 9 9 funcref))
-  ;; CHECK-BIN:      (type $2 (func))
-
-  ;; CHECK-BIN:      (type $3 (func (param i32)))
-
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
-  ;; CHECK-BIN-NODEBUG:      (type $0 (func (result i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32) (result i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (type $2 (func))
-
-  ;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
-
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
-  (import "env" "table" (table 9 9 funcref))
 
   ;; CHECK-TEXT:      (func $break-and-binary (type $0) (result i32)
   ;; CHECK-TEXT-NEXT:  (block $x (result i32)
@@ -53,6 +40,12 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (type $2 (func))
+
+  ;; CHECK-BIN:      (type $3 (func (param i32)))
+
+  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
+
   ;; CHECK-BIN:      (func $break-and-binary (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (unreachable)
@@ -371,6 +364,16 @@
     )
   )
 )
+;; CHECK-BIN-NODEBUG:      (type $0 (func (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32) (result i32)))
+
+;; CHECK-BIN-NODEBUG:      (type $2 (func))
+
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
+
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)

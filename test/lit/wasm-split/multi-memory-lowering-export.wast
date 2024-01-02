@@ -5,17 +5,18 @@
 (module
   (memory $memory1 1)
   (memory $memory2 1 1)
-  ;; CHECK:      (type $0 (func (result i32)))
-
-  ;; CHECK:      (type $1 (func (param i32) (result i32)))
-
-  ;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
-
-  ;; CHECK:      (memory $combined_memory 1 1)
-
-  ;; CHECK:      (export "mem" (memory $combined_memory))
   (export "mem" (memory $memory1))
 )
+
+;; CHECK:      (type $0 (func (result i32)))
+
+;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+;; CHECK:      (global $memory2_byte_offset (mut i32) (i32.const 65536))
+
+;; CHECK:      (memory $combined_memory 1 1)
+
+;; CHECK:      (export "mem" (memory $combined_memory))
 
 ;; CHECK:      (func $memory1_size (type $0) (result i32)
 ;; CHECK-NEXT:  (return
