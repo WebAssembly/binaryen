@@ -136,7 +136,16 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    Expression* value = info.makeExpression(*getModule());
+    auto* value = makeExpression(info, type, curr->index);
+    replaceCurrent(builder.makeSequence(
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
+    changed = true;
+  }
+
+  // Given information about a constant value, and the struct type and index it
+  // is read from, create an expression for that value.
+  Expression* makeExpression(const PossibleConstantValues& info, HeapType type, Index index) {
+    auto* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
     if (field->isPacked()) {
@@ -146,9 +155,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       value =
         builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
     }
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
-    changed = true;
+    return value;
   }
 
   // If a field has more than one possible value based on our propagation of
@@ -280,7 +287,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     }
 
     // Success!
-..
+    Builder builder(*getModule());
+    return builder.makeSelect(
+      makeExpression(values[testIndex], curr->ref->type, curr->index),
+      makeExpression(values[1 - testIndex], curr->ref->type, curr->index),
+      builder.makeRefTest(Type(testType, NonNullable)) // XXX trap on null etc
+    );
   }
 
   void doWalkFunction(Function* func) {
