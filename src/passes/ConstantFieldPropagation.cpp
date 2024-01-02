@@ -190,8 +190,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     std::vector<HeapType> valueTypes[2];
 
     auto fail = false;
-
-    subTypes.iterSubTypes(curr->ref->type.getHeapType(), [&](HeapType type, Index depth) {
+    auto handleType = [&](HeapType type, Index depth) {
       if (fail) {
         // TODO: Add a mechanism to halt the iteration in the middle.
         return;
@@ -232,7 +231,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
           return;
         }
       }
-    });
+    };
+    subTypes.iterSubTypes(curr->ref->type.getHeapType(), handleType);
 
     if (fail) {
       return;
