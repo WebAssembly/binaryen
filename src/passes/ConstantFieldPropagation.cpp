@@ -136,7 +136,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    auto* value = makeExpression(info, type, curr->index);
+    auto* value = makeExpression(info, heapType, curr->index);
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
@@ -148,12 +148,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
                              HeapType type,
                              Index index) {
     auto* value = info.makeExpression(*getModule());
-    auto field = GCTypeUtils::getField(type, curr->index);
+    auto field = GCTypeUtils::getField(type, index);
     assert(field);
     if (field->isPacked()) {
       // We cannot just pass through a value that is packed, as the input gets
       // truncated.
       auto mask = Bits::lowBitMask(field->getByteSize() * 8);
+      Builder builder(*getModule());
       value =
         builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
     }
