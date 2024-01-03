@@ -10,7 +10,7 @@
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (param (ref null $struct))))
+  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
@@ -38,24 +38,22 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:    (ref.test (ref $substruct)
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $struct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get (param $struct (ref null $struct))
-    (drop
-      (struct.get $struct 0
-        (local.get $struct)
-      )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; Rather than load from the struct, we can test between the two types
+    ;; possible here.
+    (struct.get $struct 0
+      (local.get $struct)
     )
   )
 )
