@@ -369,3 +369,72 @@
     )
   )
 )
+
+;; Three types with two values, but non-consecutive (see below).
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
+  (type $subsubstruct (sub $substruct (struct i32 f64 anyref)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $subsubstruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 20) ;; this changed
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 10) ;; this changed
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (struct.new $subsubstruct
+        (i32.const 20)
+        (f64.const 3.14159)
+        (ref.null any)
+      )
+    )
+  )
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; Three types are possible here, and two have the same value, but we still
+    ;; cannot optimize: the chain of types has values A->B->A so there is no
+    ;; ref.test that can differentiate the two sets.
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
