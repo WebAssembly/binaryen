@@ -168,7 +168,7 @@ public:
   [[nodiscard]] Result<> makeRefTest(Type type);
   [[nodiscard]] Result<> makeRefCast(Type type);
   [[nodiscard]] Result<>
-  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
+  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>
