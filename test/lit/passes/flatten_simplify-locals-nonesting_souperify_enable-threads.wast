@@ -30,8 +30,8 @@
 
   ;; CHECK:      (type $12 (func (param i32 i32 i32 i32 i32) (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 1 1))
-  (memory $0 (shared 1 1))
+  ;; CHECK:      (memory $0 1 1 shared)
+  (memory $0 1 1 shared)
   ;; Figure 1a from the Souper paper https://arxiv.org/pdf/1711.04422.pdf
   ;; CHECK:      (export "replaced-print-internal" (func $replaced-print-internal))
 

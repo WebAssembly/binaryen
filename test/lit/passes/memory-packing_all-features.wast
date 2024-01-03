@@ -2279,8 +2279,8 @@
  ;; the wrong segments in the presence of unreferenced segments.
  ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (memory $0 (shared 1 1))
- (memory $0 (shared 1 1))
+ ;; CHECK:      (memory $0 1 1 shared)
+ (memory $0 1 1 shared)
  (data (i32.const 0) "")
  (data "foo")
  ;; CHECK:      (data $1 "foo")
@@ -2394,8 +2394,8 @@
  (type $array (array (mut i32)))
  ;; CHECK:      (type $1 (func (param (ref $array) i32 i32 i32)))
 
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
  ;; CHECK:      (data $0 "")
  (data $0 "")
  ;; CHECK:      (func $0 (type $1) (param $0 (ref $array)) (param $1 i32) (param $2 i32) (param $3 i32)

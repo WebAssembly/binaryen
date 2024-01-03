@@ -216,7 +216,7 @@
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
 
- ;; CHECK:      (import "mod" "imported-m" (memory $m-imported (shared 1 2)))
+ ;; CHECK:      (import "mod" "imported-m" (memory $m-imported 1 2 shared))
  (import "mod" "imported-m" (memory $m-imported 1 2 shared))
 
  ;; imported tables
@@ -271,10 +271,10 @@
  (global $i32 i32 i32.const 42)
 
  ;; memories
- ;; CHECK:      (memory $mem (shared 1 1))
+ ;; CHECK:      (memory $mem 1 1 shared)
  (memory $mem 1 1 shared)
  (memory 0 1 shared)
- ;; CHECK:      (memory $1 (shared 0 1))
+ ;; CHECK:      (memory $1 0 1 shared)
 
  ;; CHECK:      (memory $mem-i32 0 1)
  (memory $mem-i32 i32 0 1)

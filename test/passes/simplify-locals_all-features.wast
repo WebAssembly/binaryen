@@ -1087,7 +1087,7 @@
   )
 )
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
@@ -1673,7 +1673,7 @@
 )
 ;; data.drop has global side effects
 (module
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (data "data")
  (func $foo (export "foo") (result i32)
   (local $0 i32)

@@ -1,6 +1,6 @@
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 16 16))
+ (memory $0 16 16)
  (func $atomics-are-always-unsigned (type $0) (result i32)
   (local $0 i32)
   (drop

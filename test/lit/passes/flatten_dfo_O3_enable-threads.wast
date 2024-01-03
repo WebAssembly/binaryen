@@ -14,8 +14,8 @@
 
  ;; CHECK:      (type $4 (func (result i32)))
 
- ;; CHECK:      (memory $0 (shared 1 1))
- (memory $0 (shared 1 1))
+ ;; CHECK:      (memory $0 1 1 shared)
+ (memory $0 1 1 shared)
  ;; CHECK:      (export "one" (func $one))
 
  ;; CHECK:      (export "two" (func $two))
@@ -264,4 +264,3 @@
   )
  )
 )
-

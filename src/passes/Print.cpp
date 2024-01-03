@@ -3148,10 +3148,6 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   o << '(';
   printMedium(o, "memory") << ' ';
   printName(curr->name, o) << ' ';
-  if (curr->shared) {
-    o << '(';
-    printMedium(o, "shared ");
-  }
   if (curr->is64()) {
     o << "i64 ";
   }
@@ -3160,7 +3156,7 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
     o << ' ' << curr->max;
   }
   if (curr->shared) {
-    o << ")";
+    printMedium(o, " shared");
   }
   o << ")";
 }

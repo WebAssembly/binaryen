@@ -32,7 +32,7 @@
 )
 (module
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (func $unaligned_load (export "unaligned_load") (result i32)
   (i32.atomic.load
    (i32.const 1) ;; unaligned ptr
@@ -78,7 +78,7 @@
  )
 )
 (module
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (data (i32.const 0) "\ff\ff")
  (func $unsigned_2_bytes (export "unsigned_2_bytes") (result i32)
   (i32.atomic.rmw16.xor_u ;; should be unsigned
@@ -89,7 +89,7 @@
 )
 (module
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (func $rmw-reads-modifies-and-writes (export "rmw-reads-modifies-and-writes")
   (drop
    (i64.atomic.rmw16.and_u offset=4
@@ -106,7 +106,7 @@
 )
 (module
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (func $rmw-reads-modifies-and-writes-asymmetrical (export "rmw-reads-modifies-and-writes-asymmetrical")
   (drop
    (i32.atomic.rmw8.sub_u

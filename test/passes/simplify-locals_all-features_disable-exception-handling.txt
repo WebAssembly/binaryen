@@ -1130,7 +1130,7 @@
  (import "fuzzing-support" "log2" (func $fimport$1 (type $4) (param i32)))
  (import "fuzzing-support" "log3" (func $fimport$2 (type $5) (param f32)))
  (global $global$0 (mut i32) (i32.const 10))
- (memory $0 (shared 256 256))
+ (memory $0 256 256 shared)
  (func $nonatomics (type $FUNCSIG$i) (result i32)
   (local $x i32)
   (nop)

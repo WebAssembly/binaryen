@@ -17,7 +17,7 @@
 )
 
 ;; Check that a memory import has been added for secondary memory
-;; CHECK: (import "env" "profile-data" (memory $profile-data (shared 1 1)))
+;; CHECK: (import "env" "profile-data" (memory $profile-data 1 1 shared))
 
 ;; And the profiling function exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
