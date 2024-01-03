@@ -185,8 +185,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // having a select here allows us to further optimize all the way down into a
   // ref.test that picks between two *direct* calls.
   void optimizeUsingSubTyping(StructGet* curr) {
+    auto refType = curr->ref->type;
+    auto refHeapType = refType.getHeapType();
+
     // The field must be immutable.
-    if (GCTypeUtils::getField(curr->ref->type, curr->index)->mutable_ ==
+    if (GCTypeUtils::getField(refType, curr->index)->mutable_ ==
         Mutable) {
       return;
     }
@@ -239,7 +242,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
         }
       }
     };
-    subTypes.iterSubTypes(curr->ref->type.getHeapType(), handleType);
+    subTypes.iterSubTypes(refHeapType, handleType);
 
     if (fail) {
       return;
@@ -301,12 +304,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Success! We can replace the struct.get with a select over the two values
     // (and a trap on null) with the proper ref.test.
     Builder builder(*getModule());
-    auto heapType = curr->ref->type.getHeapType();
     auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
     replaceCurrent(builder.makeSelect(
       builder.makeRefTest(nnRef, Type(testType, NonNullable)),
-      makeExpression(values[testIndex], heapType, curr->index),
-      makeExpression(values[1 - testIndex], heapType, curr->index)));
+      makeExpression(values[testIndex], refHeapType, curr->index),
+      makeExpression(values[1 - testIndex], refHeapType, curr->index)));
     changed = true;
   }
 
