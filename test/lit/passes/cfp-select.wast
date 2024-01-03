@@ -201,8 +201,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
-    ;; Rather than load from the struct, we can test between the two types
-    ;; possible here.
+    ;; We cannot optimize here.
     (struct.get $struct 0
       (local.get $struct)
     )
