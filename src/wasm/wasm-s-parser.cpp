@@ -3160,14 +3160,7 @@ Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
-  // There may or may not be a type annotation.
-  Index i = 1;
-  try {
-    parseHeapType(*s[i]);
-    ++i;
-  } catch (...) {
-  }
-  auto ref = parseExpression(*s[i]);
+  auto ref = parseExpression(*s[1]);
   return Builder(wasm).makeArrayLen(ref);
 }
 

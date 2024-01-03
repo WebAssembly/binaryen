@@ -1803,7 +1803,7 @@
       (i32.const 3)
     )
     (drop
-      (array.len $B
+      (array.len
         (local.get $array.len)
       )
     )

@@ -4153,7 +4153,7 @@
   ;; CHECK-NEXT: )
   (func $arrays (param $B (ref $B))
     (drop
-      (array.len $B
+      (array.len
         (array.new_fixed $B 2
           (ref.null none)
           (ref.null none)
