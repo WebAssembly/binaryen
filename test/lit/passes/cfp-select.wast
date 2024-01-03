@@ -208,7 +208,7 @@
   )
 )
 
-;; Three types with three values.
+;; Three types (in a chain) with three values.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
@@ -500,3 +500,72 @@
     )
   )
 )
+
+;; Three types with three values, now in a triangle.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  (type $substruct.A (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  (type $substruct.B (sub $struct (struct i32 f64 anyref)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct.A
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct.B
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $substruct.A
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (struct.new $substruct.B
+        (i32.const 30)
+        (f64.const 3.14159)
+        (ref.null any)
+      )
+    )
+  )
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; Three types are possible here, with three different values, so we do not
+    ;; optimize.
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
+
