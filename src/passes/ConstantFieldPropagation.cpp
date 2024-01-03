@@ -185,7 +185,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // having a select here allows us to further optimize all the way down into a
   // ref.test that picks between two *direct* calls.
   void optimizeUsingSubTyping(StructGet* curr) {
-    // TODO: chak immutable
+    // The field must be immutable.
+    if (GCTypeUtils::getField(curr->ref->type, curr->index)->mutable_ ==
+        Mutable) {
+      return;
+    }
 
     // We seek two possible values, and we track which types each use.
     PossibleConstantValues values[2];
