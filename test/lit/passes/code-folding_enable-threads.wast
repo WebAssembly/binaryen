@@ -262,8 +262,8 @@
 (module
  ;; CHECK:      (type $0 (func (result i32)))
 
- ;; CHECK:      (memory $0 (shared 1 1))
- (memory $0 (shared 1 1))
+ ;; CHECK:      (memory $0 1 1 shared)
+ (memory $0 1 1 shared)
  ;; CHECK:      (export "func_2224" (func $0))
  (export "func_2224" (func $0))
  ;; CHECK:      (func $0 (result i32)
@@ -420,4 +420,3 @@
   )
  )
 )
-

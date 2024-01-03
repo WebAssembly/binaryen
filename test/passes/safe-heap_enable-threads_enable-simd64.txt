@@ -14,7 +14,7 @@
  (import "env" "emscripten_get_sbrk_ptr" (func $emscripten_get_sbrk_ptr (result i64)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
- (memory $0 (shared i64 100 100))
+ (memory $0 i64 100 100 shared)
  (func $loads
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_4
@@ -5627,7 +5627,7 @@
  (import "env" "emscripten_get_sbrk_ptr" (func $foo (result i64)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
- (memory $0 (shared i64 100 100))
+ (memory $0 i64 100 100 shared)
  (func $actions
   (drop
    (call $SAFE_HEAP_LOAD_i32_4_4

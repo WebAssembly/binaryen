@@ -101,28 +101,28 @@
   )
 )
 (module ;; more use checks
-  (memory $0 (shared 23 256))
+  (memory $0 23 256 shared)
   (export "user" $user)
   (func $user
     (i32.store (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
-  (memory $0 (shared 23 256))
+  (memory $0 23 256 shared)
   (export "user" $user)
   (func $user (result i32)
     (i32.atomic.rmw.add (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
-  (memory $0 (shared 23 256))
+  (memory $0 23 256 shared)
   (export "user" $user)
   (func $user (result i32)
     (i32.atomic.rmw8.cmpxchg_u (i32.const 0) (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
-  (memory $0 (shared 23 256))
+  (memory $0 23 256 shared)
   (export "user" $user)
   (func $user
     (local $0 i32)
@@ -137,7 +137,7 @@
   )
 )
 (module ;; more use checks
-  (memory $0 (shared 23 256))
+  (memory $0 23 256 shared)
   (export "user" $user)
   (func $user (result i32)
     (memory.atomic.notify (i32.const 0) (i32.const 0))

@@ -2,7 +2,7 @@
 [fuzz-exec] note result: func_0 => 16384
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (table $0 0 0 funcref)
  (export "func_0" (func $0))
  (func $0 (result i32)

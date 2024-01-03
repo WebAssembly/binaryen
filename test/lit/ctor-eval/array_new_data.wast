@@ -7,8 +7,8 @@
  ;; CHECK:      (type $[i8] (array i8))
  (type $[i8] (array i8))
 
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
  ;; CHECK:      (data $0 (i32.const 40) "")
  (data $0 (i32.const 40) "")
  ;; CHECK:      (data $1 (i32.const 0) "")

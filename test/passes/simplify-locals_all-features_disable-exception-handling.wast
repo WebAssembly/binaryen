@@ -1087,7 +1087,7 @@
   )
 )
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))

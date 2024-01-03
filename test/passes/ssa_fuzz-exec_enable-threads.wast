@@ -2,7 +2,7 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (table 0 0 funcref)
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (export "func_0" (func $0))
  (func $0 (; 0 ;) (type $0) (result i32)
   (local $var$0 i32)
@@ -109,4 +109,3 @@
   )
  )
 )
-

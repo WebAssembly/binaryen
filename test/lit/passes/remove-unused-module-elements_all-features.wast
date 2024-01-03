@@ -260,8 +260,8 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
   ;; CHECK:      (export "user" (func $user))
 
@@ -278,8 +278,8 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
   ;; CHECK:      (export "user" (func $user))
 
@@ -296,8 +296,8 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
   ;; CHECK:      (export "user" (func $user))
 
@@ -315,8 +315,8 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
   ;; CHECK:      (export "user" (func $user))
 
@@ -346,8 +346,8 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
   ;; CHECK:      (export "user" (func $user))
 
@@ -362,7 +362,7 @@
   )
 )
 (module ;; atomic.fence and data.drop do not use a memory, so should not keep the memory alive.
-  (memory $0 (shared 1 1))
+  (memory $0 1 1 shared)
   (data "")
   (export "fake-user" $user)
   ;; CHECK:      (type $0 (func))

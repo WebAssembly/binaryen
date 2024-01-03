@@ -132,7 +132,7 @@
 )
 (module
  (type $0 (func))
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
  (export "user" (func $user))
  (func $user (type $0)
   (i32.store
@@ -143,7 +143,7 @@
 )
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
  (export "user" (func $user))
  (func $user (type $0) (result i32)
   (i32.atomic.rmw.add
@@ -154,7 +154,7 @@
 )
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
  (export "user" (func $user))
  (func $user (type $0) (result i32)
   (i32.atomic.rmw8.cmpxchg_u
@@ -166,7 +166,7 @@
 )
 (module
  (type $0 (func))
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
  (export "user" (func $user))
  (func $user (type $0)
   (local $0 i32)
@@ -182,7 +182,7 @@
 )
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 23 256))
+ (memory $0 23 256 shared)
  (export "user" (func $user))
  (func $user (type $0) (result i32)
   (memory.atomic.notify
