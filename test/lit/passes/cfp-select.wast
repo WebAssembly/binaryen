@@ -85,12 +85,62 @@
   (func $create (param $x i32)
     (drop
       (struct.new $struct
-        (local.get $x)
+        (local.get $x) ;; this changed
       )
     )
     (drop
       (struct.new $substruct
         (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+  )
+  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    ;; We cannot optimize here.
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
+
+;; As above, but now the other value is not constant.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $1) (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create (param $x i32)
+    (drop
+      (struct.new $struct
+        (i32.const 10) ;; this changed
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (local.get $x) ;; this changed
         (f64.const 3.14159)
       )
     )
