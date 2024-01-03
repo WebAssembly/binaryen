@@ -2018,7 +2018,7 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     printName(curr->target, o);
   }
-  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref "); }
+  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref"); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {

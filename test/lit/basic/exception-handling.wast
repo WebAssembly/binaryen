@@ -162,7 +162,7 @@
   )
 
   ;; CHECK-TEXT:      (func $try-table-and-throw-ref (type $0)
-  ;; CHECK-TEXT-NEXT:  (throw_ref 
+  ;; CHECK-TEXT-NEXT:  (throw_ref
   ;; CHECK-TEXT-NEXT:   (block $l-catch-all-ref (result exnref)
   ;; CHECK-TEXT-NEXT:    (try_table (catch_all_ref $l-catch-all-ref)
   ;; CHECK-TEXT-NEXT:     (throw $e-i64
@@ -173,7 +173,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-table-and-throw-ref (type $0)
-  ;; CHECK-BIN-NEXT:  (throw_ref 
+  ;; CHECK-BIN-NEXT:  (throw_ref
   ;; CHECK-BIN-NEXT:   (block $label$1 (result exnref)
   ;; CHECK-BIN-NEXT:    (try_table (catch_all_ref $label$1)
   ;; CHECK-BIN-NEXT:     (throw $e-i64
@@ -300,7 +300,7 @@
   ;; CHECK-TEXT-NEXT:    (drop
   ;; CHECK-TEXT-NEXT:     (block $l-catch-ref (result exnref)
   ;; CHECK-TEXT-NEXT:      (block $l-catch-all
-  ;; CHECK-TEXT-NEXT:       (throw_ref 
+  ;; CHECK-TEXT-NEXT:       (throw_ref
   ;; CHECK-TEXT-NEXT:        (block $l-catch-all-ref (result exnref)
   ;; CHECK-TEXT-NEXT:         (try_table (catch $e-empty $l-catch) (catch_ref $e-empty $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
   ;; CHECK-TEXT-NEXT:          (call $foo)
@@ -323,7 +323,7 @@
   ;; CHECK-BIN-NEXT:    (drop
   ;; CHECK-BIN-NEXT:     (block $label$3 (result exnref)
   ;; CHECK-BIN-NEXT:      (block $label$4
-  ;; CHECK-BIN-NEXT:       (throw_ref 
+  ;; CHECK-BIN-NEXT:       (throw_ref
   ;; CHECK-BIN-NEXT:        (block $label$5 (result exnref)
   ;; CHECK-BIN-NEXT:         (try_table (catch $e-empty $label$2) (catch_ref $e-empty $label$3) (catch_all $label$4) (catch_all_ref $label$5)
   ;; CHECK-BIN-NEXT:          (call $foo)
@@ -376,7 +376,7 @@
   ;; CHECK-TEXT-NEXT:     (tuple.drop 2
   ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $5) (result i32 exnref)
   ;; CHECK-TEXT-NEXT:       (block $l-catch-all
-  ;; CHECK-TEXT-NEXT:        (throw_ref 
+  ;; CHECK-TEXT-NEXT:        (throw_ref
   ;; CHECK-TEXT-NEXT:         (block $l-catch-all-ref (result exnref)
   ;; CHECK-TEXT-NEXT:          (try_table (catch $e-i32 $l-catch) (catch_ref $e-i32 $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
   ;; CHECK-TEXT-NEXT:           (call $foo)
@@ -403,7 +403,7 @@
   ;; CHECK-BIN-NEXT:     (local.set $0
   ;; CHECK-BIN-NEXT:      (block $label$3 (type $5) (result i32 exnref)
   ;; CHECK-BIN-NEXT:       (block $label$4
-  ;; CHECK-BIN-NEXT:        (throw_ref 
+  ;; CHECK-BIN-NEXT:        (throw_ref
   ;; CHECK-BIN-NEXT:         (block $label$5 (result exnref)
   ;; CHECK-BIN-NEXT:          (try_table (catch $e-i32 $label$2) (catch_ref $e-i32 $label$3) (catch_all $label$4) (catch_all_ref $label$5)
   ;; CHECK-BIN-NEXT:           (call $foo)
@@ -474,7 +474,7 @@
   ;; CHECK-TEXT-NEXT:     (tuple.drop 3
   ;; CHECK-TEXT-NEXT:      (block $l-catch-ref (type $2) (result i32 i64 exnref)
   ;; CHECK-TEXT-NEXT:       (block $l-catch-all
-  ;; CHECK-TEXT-NEXT:        (throw_ref 
+  ;; CHECK-TEXT-NEXT:        (throw_ref
   ;; CHECK-TEXT-NEXT:         (block $l-catch-all-ref (result exnref)
   ;; CHECK-TEXT-NEXT:          (try_table (catch $e-i32-i64 $l-catch) (catch_ref $e-i32-i64 $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
   ;; CHECK-TEXT-NEXT:           (call $foo)
@@ -504,7 +504,7 @@
   ;; CHECK-BIN-NEXT:     (local.set $0
   ;; CHECK-BIN-NEXT:      (block $label$3 (type $2) (result i32 i64 exnref)
   ;; CHECK-BIN-NEXT:       (block $label$4
-  ;; CHECK-BIN-NEXT:        (throw_ref 
+  ;; CHECK-BIN-NEXT:        (throw_ref
   ;; CHECK-BIN-NEXT:         (block $label$5 (result exnref)
   ;; CHECK-BIN-NEXT:          (try_table (catch $e-i32-i64 $label$2) (catch_ref $e-i32-i64 $label$3) (catch_all $label$4) (catch_all_ref $label$5)
   ;; CHECK-BIN-NEXT:           (call $foo)
@@ -754,7 +754,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (throw_ref 
+;; CHECK-BIN-NODEBUG-NEXT:  (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$1 (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (try_table (catch_all_ref $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:     (throw $tag$1
@@ -836,7 +836,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
 ;; CHECK-BIN-NODEBUG-NEXT:     (block $label$3 (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:      (block $label$4
-;; CHECK-BIN-NODEBUG-NEXT:       (throw_ref 
+;; CHECK-BIN-NODEBUG-NEXT:       (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:        (block $label$5 (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:         (try_table (catch $tag$4 $label$2) (catch_ref $tag$4 $label$3) (catch_all $label$4) (catch_all_ref $label$5)
 ;; CHECK-BIN-NODEBUG-NEXT:          (call $0)
@@ -863,7 +863,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:      (block $label$3 (type $5) (result i32 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:       (block $label$4
-;; CHECK-BIN-NODEBUG-NEXT:        (throw_ref 
+;; CHECK-BIN-NODEBUG-NEXT:        (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:         (block $label$5 (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:          (try_table (catch $tag$0 $label$2) (catch_ref $tag$0 $label$3) (catch_all $label$4) (catch_all_ref $label$5)
 ;; CHECK-BIN-NODEBUG-NEXT:           (call $0)
@@ -909,7 +909,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:     (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:      (block $label$3 (type $2) (result i32 i64 exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:       (block $label$4
-;; CHECK-BIN-NODEBUG-NEXT:        (throw_ref 
+;; CHECK-BIN-NODEBUG-NEXT:        (throw_ref
 ;; CHECK-BIN-NODEBUG-NEXT:         (block $label$5 (result exnref)
 ;; CHECK-BIN-NODEBUG-NEXT:          (try_table (catch $tag$2 $label$2) (catch_ref $tag$2 $label$3) (catch_all $label$4) (catch_all_ref $label$5)
 ;; CHECK-BIN-NODEBUG-NEXT:           (call $0)

@@ -836,6 +836,12 @@ public:
     ret->finalize();
     return ret;
   }
+  ThrowRef* makeThrowRef(Expression* exnref) {
+    auto* ret = wasm.allocator.alloc<ThrowRef>();
+    ret->exnref = exnref;
+    ret->finalize();
+    return ret;
+  }
   Unreachable* makeUnreachable() { return wasm.allocator.alloc<Unreachable>(); }
   Pop* makePop(Type type) {
     auto* ret = wasm.allocator.alloc<Pop>();
