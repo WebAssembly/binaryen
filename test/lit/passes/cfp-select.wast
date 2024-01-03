@@ -529,7 +529,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $substruct.B
-  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (i32.const -20)
   ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
@@ -549,7 +549,7 @@
     )
     (drop
       (struct.new $substruct.B
-        (i32.const 30)
+        (i32.const -20)
         (f64.const 3.14159)
         (ref.null any)
       )
