@@ -72,6 +72,74 @@
     )
   )
 
+  ;; CHECK:      (func $binary (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 11)
+  ;; CHECK-NEXT:   (i32.const 21)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $binary (param $param i32) (result i32)
+    (i32.add
+      (select
+        (i32.const 10)
+        (i32.const 20)
+        (local.get $param)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $binary-2 (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 11)
+  ;; CHECK-NEXT:   (i32.const 21)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $binary-2 (param $param i32) (result i32)
+    ;; As above but with the select in the other arm.
+    (i32.add
+      (i32.const 1)
+      (select
+        (i32.const 10)
+        (i32.const 20)
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $binary-3 (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $binary-3 (param $param i32) (result i32)
+    ;; Two selects. We do not optimize here (but in theory could, as the
+    ;; condition is identical - other passes should merge that).
+    (i32.add
+      (select
+        (i32.const 10)
+        (i32.const 20)
+        (local.get $param)
+      )
+      (select
+        (i32.const 30)
+        (i32.const 40)
+        (local.get $param)
+      )
+    )
+  )
+
   ;; CHECK:      (func $unreachable (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (select
