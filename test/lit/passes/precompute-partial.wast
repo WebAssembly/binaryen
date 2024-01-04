@@ -100,17 +100,16 @@
   )
 
   ;; CHECK:      (func $test-trap (type $1) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (struct.get $vtable 0
-  ;; CHECK-NEXT:   (select (result (ref null $vtable))
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:    (global.get $B$vtable)
-  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-trap (export "test-trap") (param $x i32) (result funcref)
-    ;; One arm has a null, which makes the struct.get trap, so there is nothing
-    ;; to optimize here.
+    ;; One arm has a null, which makes the struct.get trap, so we can turn this
+    ;; into an unreachable.
     (struct.get $vtable 0
       (select
         (ref.null $vtable)

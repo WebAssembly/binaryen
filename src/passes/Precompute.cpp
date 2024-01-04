@@ -364,12 +364,12 @@ struct Precompute
   void considerPartiallyPrecomputing(Expression* curr) {
     if (auto* select = curr->dynCast<Select>()) {
       // We only have a reasonable hope of success if the select arms are things
-      // like constants or global gets.
-      auto isValid = [](Expression* arm) {
-        // TODO: more?
-        return arm->is<Const>() || arm->is<RefFunc>() || arm->is<GlobalGet>();
-      };
-      if (isValid(select->ifTrue) && isValid(select->ifFalse)) {
+      // like constants or global gets. At a first approximation, allow the set
+      // of things we allow in constant initializers (but we can probably allow
+      // more here TODO).
+      auto& wasm = *getModule();
+      if (Properties::isValidConstantExpression(wasm, select->ifTrue) &&
+          Properties::isValidConstantExpression(wasm, select->ifFalse)) {
         partiallyPrecomputable.insert(select);
       }
     }
