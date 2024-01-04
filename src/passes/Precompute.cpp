@@ -464,22 +464,17 @@ struct Precompute
 
     // TODO determinism
 
-    for (auto& [select_, stack] : stackFinder.stackMap) {
-      // We will be iterating on the select as we go (see below), so use a new
-      // variable.
-      auto* select = select_;
-
+    for (auto& [select, stack] : stackFinder.stackMap) {
       // Each stack ends in the select itself, and contains more than the select
-      // itself.
+      // itself (otherwise we'd have ignored the select), i.e., the select has a
+      // parent.
       assert(stack.back() == select);
       assert(stack.size() >= 2);
-
-      // The select must have a parent.
       Index selectIndex = stack.size() - 1;
       assert(selectIndex >= 1);
 
       // Go up through the parents, until we can't do any more work.
-      Index parentIndex = stack.size() - 2;
+      Index parentIndex = selectIndex - 1;
       while (1) {
         auto* parent = stack[parentIndex];
         if (!parent->type.isConcrete()) {
@@ -514,12 +509,14 @@ struct Precompute
         // and once with the right. If both succeed then we can create a new
         // select (with the same condition as before) whose arms are the
         // precomputed values.
-        // auto* originalIfTrue = select->ifTrue;
-        // auto* originalIfFalse = select->ifFalse;
 
-        // Find the pointer to the select in its immediate parent.
+std::cout << "working on this func:\n" << *func->body << '\n';
+std::cout << "  select:\n" << *select << '\n';
+std::cout << "  parent:\n" << *parent << '\n';
+        // Find the pointer to the select in its immediate parent so that we can
+        // replace it first with one arm and then the other.
         auto** pointerToSelect =
-          getChildPointerInParent(stack, selectIndex, func);
+          getChildPointerInImmediateParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
         auto ifTrue = precomputeExpression(parent);
         // TODO: We could handle breaks here perhaps, and remove the isConcrete
@@ -535,14 +532,19 @@ struct Precompute
             select->ifFalse = ifFalse.getConstExpression(*getModule());
             select->finalize();
 
+std::cout << "NEXT, working on this func:\n" << *func->body << '\n';
             // And the parent of the select is replaced by the select.
             auto** pointerToParent =
-              getChildPointerInParent(stack, parentIndex, func);
+              getChildPointerInImmediateParent(stack, parentIndex, func);
             *pointerToParent = select;
 
             // Update state for further iterations, as we may push this select
-            // even further in the parents.
+            // even further in the parents. The new stack now ends at the
+            // select we just moved (as we do not need to consider anything
+            // below it, as before).
             selectIndex = parentIndex;
+            stack[selectIndex] = select;
+            stack.resize(selectIndex + 1);
           }
         }
 
@@ -774,19 +776,20 @@ private:
   // Given a stack of expressions and the index of an expression in it, find
   // the pointer to that expression in the parent. This gives us a pointer that
   // allows us to replace the expression.
-  Expression** getChildPointerInParent(const ExpressionStack& stack,
-                                       Index index,
-                                       Function* func) {
+  Expression** getChildPointerInImmediateParent(const ExpressionStack& stack,
+                                                Index index,
+                                                Function* func) {
     if (index == 0) {
-      // There is nothing above this expression, so it is the entire function
-      // body.
+      // There is nothing above this expression, so the pointer referring to it
+      // is the function's body pointer.
       return &func->body;
     }
 
     auto* child = stack[index];
-    auto parentIndex = index - 1;
-    auto* parent = stack[parentIndex];
-    for (auto** currChild : ChildIterator(parent).children) {
+std::cout << "child:\n" << *child << '\n';
+std::cout << "parent:\n" << *stack[index - 1] << '\n';
+    for (auto** currChild : ChildIterator(stack[index - 1]).children) {
+std::cout << "  currChild:\n" << **currChild << '\n';
       if (*currChild == child) {
         return currChild;
       }
