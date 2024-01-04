@@ -510,9 +510,6 @@ struct Precompute
         // select (with the same condition as before) whose arms are the
         // precomputed values.
 
-std::cout << "working on this func:\n" << *func->body << '\n';
-std::cout << "  select:\n" << *select << '\n';
-std::cout << "  parent:\n" << *parent << '\n';
         // Find the pointer to the select in its immediate parent so that we can
         // replace it first with one arm and then the other.
         auto** pointerToSelect =
@@ -532,7 +529,6 @@ std::cout << "  parent:\n" << *parent << '\n';
             select->ifFalse = ifFalse.getConstExpression(*getModule());
             select->finalize();
 
-std::cout << "NEXT, working on this func:\n" << *func->body << '\n';
             // And the parent of the select is replaced by the select.
             auto** pointerToParent =
               getChildPointerInImmediateParent(stack, parentIndex, func);
@@ -786,10 +782,7 @@ private:
     }
 
     auto* child = stack[index];
-std::cout << "child:\n" << *child << '\n';
-std::cout << "parent:\n" << *stack[index - 1] << '\n';
     for (auto** currChild : ChildIterator(stack[index - 1]).children) {
-std::cout << "  currChild:\n" << **currChild << '\n';
       if (*currChild == child) {
         return currChild;
       }
