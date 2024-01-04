@@ -425,6 +425,11 @@ struct Precompute
   // apply the outer struct.get we arrive at the outer struct.new, which is in
   // fact the global $C, and we succeed.
   void partiallyPrecompute(Function* func) {
+    if (partiallyPrecomputable.empty()) {
+      // Nothing to do.
+      return;
+    }
+
     // Walk the function to find the parent stacks of the selects.
     struct StackFinder : public ExpressionStackWalker<StackFinder> {
       Precompute& parent;
@@ -459,16 +464,24 @@ struct Precompute
 
     // TODO determinism
 
-    for (auto& [select, stack] : stackFinder.stackMap) {
+    for (auto& [select_, stack] : stackFinder.stackMap) {
+      // We will be iterating on the select as we go (see below), so use a new
+      // variable.
+      auto* select = select_;
+
       // Each stack ends in the select itself, and contains more than the select
       // itself.
       assert(stack.back() == select);
       assert(stack.size() >= 2);
 
+      // The select must have a parent.
+      Index selectIndex = stack.size() - 1;
+      assert(selectIndex >= 1);
+
       // Go up through the parents, until we can't do any more work.
-      Index i = stack.size() - 2;
+      Index parentIndex = stack.size() - 2;
       while (1) {
-        auto* parent = stack[i];
+        auto* parent = stack[parentIndex];
         if (!parent->type.isConcrete()) {
           // The parent does not have a concrete type, so we can't move it
           // into the select: the select needs a concrete type. (For example,
@@ -496,68 +509,48 @@ struct Precompute
           break;
         }
 
+        // This looks promising, so try to precompute here. What we do is
+        // precompute twice, once with the select replaced with the left arm,
+        // and once with the right. If both succeed then we can create a new
+        // select (with the same condition as before) whose arms are the
+        // precomputed values.
+        //auto* originalIfTrue = select->ifTrue;
+        //auto* originalIfFalse = select->ifFalse;
+
+        // Find the pointer to the select in its immediate parent.
+        auto** pointerToSelect = getChildPointerInParent(stack, selectIndex, func);
+        *pointerToSelect = select->ifTrue;
+        auto ifTrue = precomputeExpression(copy);
+        // TODO: We could handle breaks here perhaps, and remove the isConcrete
+        //       check in that case.
+        if (canEmitConstantFor(ifTrue.values) && ifTrue.values.isConcrete()) {
+          *pointerToSelect = select->ifFalse;
+          auto ifFalse = precomputeExpression(copy);
+          if (canEmitConstantFor(ifFalse.values) &&
+              ifFalse.values.isConcrete()) {
+            // Wonderful, we can precompute here! The select can now contain the
+            // computed values in its arms.
+            select->ifTrue = ifTrue.getConstExpression(*getModule());
+            select->ifFalse = ifFalse.getConstExpression(*getModule());
+            select->finalize();
+
+            // And the parent of the select is replaced by the select.
+            auto** pointerToParent = getChildPointerInParent(stack, parentIndex, func);
+            *pointerToParent = select;
+
+            // Update state for further iterations, as we may push this select
+            // even further in the parents.
+            selectIndex = parentIndex;
+          }
+        }
+
         // Continue to the next parent, if there is one.
         if (i == 0) {
           break;
         }
         i--;
       }
-
-
-
-    // We are looking for a single child which is a select.
-    ChildIterator children(curr);
-    if (children.getNumChildren() != 1) {
-      return;
     }
-    // TODO: maybe only do this if the select arms have depth 1? They must be
-    //       constant, or global, for us to have any hope..? avoids N^2 too
-    auto* select = children.getChild(0)->dynCast<Select>();
-    if (!select) {
-      return;
-    }
-
-    // This has the general shape, so do the more intensive work to see if it
-    // can be optimized. First, exit early if there are any side effects that
-    // would prevent us from optimizing. Specifically, we need to check the
-    // operation outside the select and the select's arms, but not the select's
-    // condition (which will remain as-is). We can also ignore trap side effects
-    // as those will be handled in precomputeExpression below (if we trap, we'll
-    // fail to precompute). TODO: We could also ignore exceptions, like traps,
-    // if they are not actually thrown, if/when wasm gets throwing variants of
-    // trapping operations.
-    auto& options = getPassOptions();
-    auto& wasm = *getModule();
-    if (ShallowEffectAnalyzer(options, wasm, curr).hasNonTrapSideEffects() ||
-        EffectAnalyzer(options, wasm, select->ifTrue).hasNonTrapSideEffects() ||
-        EffectAnalyzer(options, wasm, select->ifFalse)
-          .hasNonTrapSideEffects()) {
-      return;
-    }
-
-    // Copy the entire expression. Then in the copy, replace the select with
-    // each of its arms and precompute those.
-    // TODO: must we copy? Can we not replace twice or thrice?
-    auto* copy = ExpressionManipulator::copy(curr, *getModule());
-    ChildIterator copyChildren(copy);
-    copyChildren.getChild(0) = select->ifTrue;
-    auto ifTrue = precomputeExpression(copy);
-    if (!canEmitConstantFor(ifTrue.values) || !ifTrue.values.isConcrete()) {
-      // We failed to precompute anything, or it is a break and not a value.
-      // TODO: optimize breaks
-      return;
-    }
-    copyChildren.getChild(0) = select->ifFalse;
-    auto ifFalse = precomputeExpression(copy);
-    if (!canEmitConstantFor(ifFalse.values) || !ifFalse.values.isConcrete()) {
-      return;
-    }
-
-    // We precomputed them both successfully! Apply them.
-    select->ifTrue = ifTrue.getConstExpression(*getModule());
-    select->ifFalse = ifFalse.getConstExpression(*getModule());
-    select->type = select->ifTrue->type;
-    replaceCurrent(select);
   }
 
   void visitFunction(Function* curr) {
@@ -771,6 +764,32 @@ private:
     }
 
     return true;
+  }
+
+  // Helpers for partial precomputing.
+
+  // Given a stack of expressions and the index of an expression in it, find
+  // the pointer to that expression in the parent. This gives us a pointer that
+  // allows us to replace the expression.
+  Expression** getChildPointerInParent(const ExpressionList& stack,
+                                       Index index,
+                                       Function* func) {
+    if (index == 0) {
+      // There is nothing above this expression, so it is the entire function
+      // body.
+      return &func->body;
+    }
+
+    auto* child = stack[index];
+    auto parentIndex = index - 1;
+    auto* parent = stack[parentIndex];
+    for (auto** currChild : ChildIterator(parent).children) {
+      if (*currChild == child) {
+        return currChild;
+      }
+    }
+
+    WASM_UNREACHABLE("child not found in parent");
   }
 };
 
