@@ -290,3 +290,55 @@
     (i32.const 2)
   )
 )
+
+;; References with nesting.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
+    (type $vtable (sub (struct funcref)))
+
+    (type $itable (sub (struct (ref $vtable))))
+  )
+
+  ;; CHECK:      (global $A$vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $A$func)
+  ;; CHECK-NEXT: ))
+  (global $A$itable (ref $itable) (struct.new $itable
+    (struct.new $vtable
+      (ref.func $A$func)
+    )
+  ))
+
+  ;; CHECK:      (global $B$vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $B$func)
+  ;; CHECK-NEXT: ))
+  (global $B$itable (ref $itable) (struct.new $itable
+    (struct.new $vtable
+      (ref.func $B$func)
+    )
+  ))
+
+  (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
+    ;; Nesting in the global declarations means we cannot precompute the inner
+    ;; struct.get by itself (as that would return the inner struct.new), but
+    ;; when we do the outer struct.get, it all comes together.
+    (struct.get $vtable 0
+      (struct.get $itable 0
+        (select
+          (global.get $A$itable)
+          (global.get $B$itable)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  (func $A$func
+    ;; Helper for above.
+  )
+
+  (func $B$func
+    ;; Helper for above.
+  )
+)
