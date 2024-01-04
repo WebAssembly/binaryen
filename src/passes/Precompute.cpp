@@ -514,11 +514,12 @@ struct Precompute
         // and once with the right. If both succeed then we can create a new
         // select (with the same condition as before) whose arms are the
         // precomputed values.
-        //auto* originalIfTrue = select->ifTrue;
-        //auto* originalIfFalse = select->ifFalse;
+        // auto* originalIfTrue = select->ifTrue;
+        // auto* originalIfFalse = select->ifFalse;
 
         // Find the pointer to the select in its immediate parent.
-        auto** pointerToSelect = getChildPointerInParent(stack, selectIndex, func);
+        auto** pointerToSelect =
+          getChildPointerInParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
         auto ifTrue = precomputeExpression(copy);
         // TODO: We could handle breaks here perhaps, and remove the isConcrete
@@ -535,7 +536,8 @@ struct Precompute
             select->finalize();
 
             // And the parent of the select is replaced by the select.
-            auto** pointerToParent = getChildPointerInParent(stack, parentIndex, func);
+            auto** pointerToParent =
+              getChildPointerInParent(stack, parentIndex, func);
             *pointerToParent = select;
 
             // Update state for further iterations, as we may push this select
